@@ -8,6 +8,6 @@ Early development. The tech stack and architecture are still being decided.
 
 ## Repository layout
 
-```
+```text
 docs/   Project documentation, standards, and design notes
 ```
