@@ -1,7 +1,7 @@
 # Fathom — Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-27
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Workflow](../../AGENTS.md#workflow), and the [Data](../../AGENTS.md#data) rules.
 
@@ -9,14 +9,11 @@ A proposed way to build the first stage of the [Roadmap](../product/roadmap.md):
 
 These come before the first line of application code:
 
-- **Component evaluation:** The evaluation in the roadmap's [Before Development](../product/roadmap.md#before-development) section.
-- **Library choices:** An ADR choosing the API framework, database access library and migrations, validation, authentication and password hashing, and test tools, within the stack set by [ADR 0001](../adr/0001-tech-stack.md).
-- **Testing standard:** A standard in `docs/standards/` defining test types, what each slice must test, and how security tests cover every role and data tier.
-- **Code review standard for source code:** The source code section of the [Code Review Standards](../standards/code-review.md), drawing where it applies on the code review guide the owner provided from another project.
+- **Library choices:** Recorded in [ADR 0002](../adr/0002-libraries.md).
+- **Testing standard:** Recorded in the [Testing Standards](../standards/testing.md).
+- **Code review standard for source code:** Recorded in the [Code Review Standards](../standards/code-review.md).
 - **Build process:** Where builds and scans run, answering the open question in the [Security Plan](../security/security-plan.md). Until it is answered, builds and scans run locally.
-- **Repository layout:** A layout for the front end, the server, shared code, and container and deployment files.
-- **Local development:** How developers run Fathom, its tests, and its scans on their own machines, including development-only secrets kept out of the repository and a local HTTPS certificate. Developers may use any container runtime listed for development in [Supported Platforms](../operations/supported-platforms.md), as long as their use of it needs no paid licence. Development may happen on machines not managed by IT, using fictional data only.
-- **Fictional seed data:** A generator for realistic fictional people, teams, and plans, used from the walking skeleton onward.
+- **Development setup:** The repository layout, local development, and fictional seed data, as described in [Development Setup](development-setup.md).
 - **Shared repository:** When a shared remote is created, the branching rules in `AGENTS.md` and the repository proposals in the Security Plan apply.
 
 ## Definition of Done for Each Slice
@@ -27,15 +24,19 @@ Beyond the workflow, each slice adds the [access control tests](../standards/tes
 
 The slices are built in this order, which may change as work progresses.
 
-### Walking Skeleton
+### Hello Fathom
 
-A "Hello, Fathom" page that proves the foundation works end to end:
+The smallest version of Fathom: a single page that proves the foundation works end to end.
 
 - A React page served by the application server over HTTPS.
 - The page calls the server, which reads from PostgreSQL through the migrations and data access chosen in the groundwork, and shows the result.
 - Both containers run with Docker Compose. The database is reachable only from the application, and neither container can reach the internet.
 - Unit and integration tests, type checking, linting, and the build-time scans from the Security Plan all run with one command.
 - Tests prove that outbound internet access from the containers fails.
+
+### Component Evaluation
+
+The evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section. It is not a vertical slice, so the definition of done for slices does not apply to it.
 
 ### Accounts and Access Control
 

@@ -3,10 +3,11 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
+- **Revised:** 2026-10-27, to add Faker for fictional data and to point to the roadmap's After Hello Fathom section
 
 ## Context
 
-[ADR 0001](0001-tech-stack.md) chose TypeScript end to end, React with Vite, Node.js, and PostgreSQL, and left specific libraries to a follow-up decision. The [Implementation Plan](../design/implementation-plan.md) needs them before the walking skeleton.
+[ADR 0001](0001-tech-stack.md) chose TypeScript end to end, React with Vite, Node.js, and PostgreSQL, and left specific libraries to a follow-up decision. The [Implementation Plan](../design/implementation-plan.md) needs them before Hello Fathom.
 
 What matters most in these choices:
 
@@ -29,20 +30,21 @@ What matters most in these choices:
 | Database access | Drizzle ORM | Kysely, Prisma | TypeScript-first and close to SQL, so the queries behind tier checks stay explicit |
 | Migrations | drizzle-kit, generating SQL migration files | Hand-written SQL | Migrations are plain SQL files reviewed like any other change |
 | Authentication and sessions | Better Auth, with sessions stored in the database | A small in-house implementation | A maintained library for local accounts, password hashing, sessions, and sign-in rate limiting, rather than writing security-critical code ourselves |
-| Password hashing | Better Auth's default, scrypt | Argon2id through Better Auth's custom hashing hooks | scrypt is an accepted password hashing algorithm and needs no native module; to be confirmed in the walking skeleton |
+| Password hashing | Better Auth's default, scrypt | Argon2id through Better Auth's custom hashing hooks | scrypt is an accepted password hashing algorithm and needs no native module; to be confirmed in Hello Fathom |
 | Logging | Pino, Fastify's built-in logger | Winston | Structured logs, with redaction of known fields |
 | Front-end routing and data fetching | TanStack Router and TanStack Query | React Router | Type-safe routes and consistent loading, caching, and error handling |
 | Tables | TanStack Table | A component library's table | The first stage is mostly tables; headless, so styling stays separate |
 | Unit and integration tests | Vitest, with Testcontainers for PostgreSQL | Jest | Fast and Vite-native; integration tests run against a real PostgreSQL database |
+| Fictional data | Faker, as a development-only dependency | Hand-written generators | Widely used, with locale-aware realistic names and a fixed seed for repeatable data |
 | UI tests | Playwright | Cypress | Cross-browser; these are UI tests, so they are not run in the workflow's test step |
 | Linting and formatting | ESLint with typescript-eslint's strict type-checked rules and eslint-plugin-security, and Prettier | Biome | Type-aware rules and security rules |
 | Static analysis | Semgrep Community Edition, run with metrics off | CodeQL | Runs locally and in any build process; CodeQL is free only for public repositories |
 
-UI components, styling, charts, and the Gantt, timeline, and org chart components are left to the component evaluation in the roadmap's [Before Development](../product/roadmap.md#before-development) section.
+UI components, styling, charts, and the Gantt, timeline, and org chart components are left to the component evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section.
 
 ### Versions
 
-Node.js runs on its current Active LTS release, and PostgreSQL on its latest major release, when the walking skeleton is built. All versions are pinned and updated deliberately.
+Node.js runs on its current Active LTS release, and PostgreSQL on its latest major release, when Hello Fathom is built. All versions are pinned and updated deliberately.
 
 ### Security Responsibilities
 
@@ -71,7 +73,7 @@ Better Auth settings that the security plan relies on:
 
 ## Consequences
 
-- **Authentication library maturity:** Better Auth is newer than the other choices. If it proves unsuitable, the alternative is a small in-house session layer following established guidance, with Argon2id password hashing. The walking skeleton and the Accounts and Access Control slice confirm it, including its password hashing.
+- **Authentication library maturity:** Better Auth is newer than the other choices. If it proves unsuitable, the alternative is a small in-house session layer following established guidance, with Argon2id password hashing. Hello Fathom and the Accounts and Access Control slice confirm it, including its password hashing.
 - **Database access:** Drizzle keeps queries explicit, but tier checks are not automatic; the shared data access layer and its tests enforce them.
 - **Native modules:** If a native module is ever added, dependencies are installed inside the linux/amd64 build, never copied from a machine with a different processor, and the module is explicitly allowed to run its install script in pnpm.
 - **Testcontainers:** Must be verified on each development runtime in [Supported Platforms](../operations/supported-platforms.md). Runtimes other than Docker need extra configuration, and tests need access to the container images they use.

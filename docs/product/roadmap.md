@@ -1,7 +1,7 @@
 # Fathom — Roadmap
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-27
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
 
@@ -14,9 +14,11 @@ A proposed order for delivering Fathom's goals. Goals are defined in the [Produc
 
 ## Before Development
 
-- **Component evaluation:** UI components, styling, and charts are chosen, and Gantt, timeline, and org chart components are evaluated, before UI work starts, as [ADR 0001](../adr/0001-tech-stack.md) calls for.
-
 Development uses fictional data only.
+
+## After Hello Fathom
+
+- **Component evaluation:** UI components, styling, and charts are chosen, and Gantt, timeline, and org chart components are evaluated, before any UI work beyond Hello Fathom. By the owner's choice, Hello Fathom's placeholder page counts as groundwork rather than UI work.
 
 ## Before Going Live
 

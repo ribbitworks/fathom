@@ -3,7 +3,7 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom
 
 ## Context
 
@@ -72,7 +72,7 @@ Specific libraries (API framework, ORM, Gantt and org chart components, test too
 
 - **Maintainers** work in one language, which suits a group effort within the department.
 - **Dependencies** need active care: Node.js stays on an LTS release, and dependency upgrades are planned rather than ad hoc.
-- **Gantt and timeline components** are the biggest technical risk. Free and commercial options vary widely in features and licensing. Some are GPL-licensed, which would require Fathom, if distributed, to be released under the GPL instead of Apache 2.0. A short evaluation should come before UI work starts.
+- **Gantt and timeline components** are the biggest technical risk. Free and commercial options vary widely in features and licensing. Some are GPL-licensed, which would require Fathom, if distributed, to be released under the GPL instead of Apache 2.0. A short evaluation should come before UI work beyond Hello Fathom starts.
 - **Access control** depends on discipline: all data access must go through the shared layer, which the code review standards should check.
 - **Each supported platform** has its own setup needs, which the team operating Fathom will own, as recorded in [Supported Platforms](../operations/supported-platforms.md).
 - **Internet exposure:** The host may have internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Where builds run and how releases reach the server is an open question in the [Security Plan](../security/security-plan.md).
