@@ -3,7 +3,7 @@
 **Status:** Proposal for the owner's review
 **Last updated:** 2026-10-26
 
-A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, prerequisites, stage contents, and order are not yet agreed.
+A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
 
 ## Guiding Principles
 
@@ -12,12 +12,17 @@ A proposed order for delivering Fathom's goals. Goals are defined in the [Produc
 - **Only the sensitive data each stage needs:** Each stage holds only the employee details it uses, so the first privacy review stays small.
 - **Owner's requirements first:** Each feature meets the owner's requirements and use cases first, then becomes as configurable as practical. Configuration already decided in the [Decisions Log](decisions.md) ships with its feature.
 
-## Before the First Stage
+## Before Development
 
-- **Privacy approval:** HR approves the data protection document for the data the first stage holds.
-- **Roles:** A first set of roles is agreed.
-- **Hosting:** Hosting and backups are set up as described in [ADR 0001](../adr/0001-tech-stack.md).
 - **Component evaluation:** Gantt and timeline components are evaluated before UI work starts, as [ADR 0001](../adr/0001-tech-stack.md) calls for.
+
+Development uses fictional data only.
+
+## Before Going Live
+
+- **Privacy approval:** Before the first stage goes live, HR approves the data protection document for the data it holds.
+- **Roles:** A first set of roles is agreed, from the proposal in [Roles](roles.md).
+- **Hosting:** Hosting and backups are set up as described in [ADR 0001](../adr/0001-tech-stack.md).
 
 ## Stage: Who Is Working on What
 
@@ -60,5 +65,5 @@ These four stages make up v1. Broader configuration for other domains, and the f
 
 1. **First stage scope:** Is the first stage the right size, and are the cut-down versions acceptable?
 1. **Editing before approval:** Is it acceptable for edits to go straight to the live plan until plan approval arrives?
-1. **Prerequisites:** Should HR approval and agreed roles be required before the first stage goes live?
+1. **Roles timing:** Should roles be agreed before the first stage goes live, or before access control is developed?
 1. **Stage order:** Is the order after the first stage right? For example, should the org chart come before plan approval?

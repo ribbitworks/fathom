@@ -105,7 +105,7 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Manage Users and Roles
 
-- **Actor:** A Fathom administrator (persona to be confirmed)
+- **Actor:** A Fathom administrator, as defined in [Roles](roles.md)
 - **Goal:** Create local accounts and assign each user one or more roles.
 - **Outcome:** Each user sees and changes only what their roles allow.
 

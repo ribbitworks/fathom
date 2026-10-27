@@ -38,7 +38,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Gender:** Recorded because the company works across several countries, and colleagues cannot always tell someone's gender from their name.
 - **System of record:** Fathom holds a manually maintained copy of employee details from the HR system.
 - **Former employees:** People who leave are marked inactive rather than deleted.
-- **Access control:** Access is role-based, and a user can have one or more roles. Roles are to be proposed.
+- **Access control:** Access is role-based, and a user can have one or more roles. Roles are proposed in [Roles](roles.md).
 - **Sensitivity tiers:** Roles grant access to tiers of data, not to individual screens. Adding a field means assigning it to a tier. The initial tiers, subject to the privacy review, are:
   - *General:* preferred name, team, feature teams, feature leads, position, site, manager, and assignments.
   - *Restricted:* gender, level, start and end dates, and active status.

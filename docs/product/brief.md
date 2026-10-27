@@ -20,8 +20,8 @@ About 20–30 users in one private company operating in British Columbia, with e
 | Software Project Manager | Build and maintain project timelines and milestones, often own projects | Edit |
 | Software Engineering Manager | Assign engineers, balance load across the team | Edit |
 | Software Product Manager | Shape the roadmap, prioritize initiatives | Edit |
-| Director | See status and capacity across teams, decide on trade-offs, maintain the hiring plan and employee details | View, and edit workforce data |
-| VP | See the roadmap and risks at a glance | View |
+| Director | See status and capacity across teams, decide on trade-offs, maintain the hiring plan and employee details | Edit, including workforce data |
+| VP | See the roadmap and risks at a glance | View, including sensitive data |
 
 ## Goals for v1
 
@@ -85,7 +85,7 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 ## Open questions
 
 1. **What-if scenarios:** The owner wants to compare a draft with the approved plan, and drafts with each other. Is this the same feature as drafting changes for approval? The owner thinks it is. It could mature incrementally across versions of Fathom.
-1. **Roles and approval:** Which roles exist, what can each see, edit, and approve, and which changes need approval? The owner has asked for a proposal.
+1. **Roles and approval:** Which roles exist, what can each see, edit, and approve, and which changes need approval? See the proposal in [Roles](roles.md).
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
 1. **Project Manager input:** What input do Software Project Managers have on whether teams are in place, for example comments, proposals, or approval?
