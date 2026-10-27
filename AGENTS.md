@@ -58,5 +58,13 @@ chore: initialize repository
 ## Documentation
 
 - Follow the standards in `docs/standards/` when writing or editing files they cover
+- Record each fact in one document only, and link to it from others instead of repeating it. Each document owns:
+  - Product brief (`docs/product/brief.md`): problem, vision, users, goals, scope, and constraints, with one-line key decisions that link to the decisions log or an ADR
+  - Domain concepts (`docs/product/domain.md`): definitions of terms
+  - Decisions log (`docs/product/decisions.md`): product decisions and their details
+  - Use cases (`docs/product/use-cases.md`): scenarios
+  - Domain model (`docs/design/domain-model.md`): entities, relationships, and modeling proposals
+  - Architecture decision records (`docs/adr/`): technical decisions
+- Keep each open question in the document that will own its answer
 - Markdown formatting rules: [Markdown Style Guidelines](docs/standards/markdown-style-guidelines.md)
 - Code review process: [Code Review Standards](docs/standards/code-review.md)

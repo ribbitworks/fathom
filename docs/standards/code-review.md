@@ -31,6 +31,10 @@ All changed `.md` files must comply with the [Markdown Style Guidelines](markdow
 - **Links**: URLs are written as `[text](url)`, never as bare URLs.
 - **Nested lists**: Nested items use consistent indentation, typically two spaces.
 
+### Documentation Content
+
+- **No duplication**: Facts are not repeated across documents. Each fact lives in the document that owns it, as listed in `AGENTS.md`, and other documents link to it.
+
 ### Markdown Linting
 
 When `markdownlint` is available, run it against changed markdown files and include any errors in the review. Line length (MD013) is not enforced.
