@@ -31,6 +31,8 @@ About 20–30 users in one private company operating in British Columbia, with e
 - **Hiring plan:** Track the roles that need to be hired and when, and include planned hires in the plan before they are hired.
 - **Team composition:** Evaluate teams for balance, such as test-to-development ratios and the number of reports per manager compared with a target.
 - **Unified people view:** See current staff and planned hires together, with their reporting lines and high-level assignments.
+- **Release planning:** See which features will be delivered in which cycles, and which cycles will be releases.
+- **Demand forecasting:** See rough estimates (ROMs and SWAGs) for features over the next 6 months, 12 months, 2 years, and beyond, to know what may come and what resources are needed.
 - **Resource assignment:** Assign people to projects or features by month.
 - **Capacity visibility:** Show over- and under-allocation by person and by team.
 - **Timeline / Gantt view:** Show work interactively, with drag-and-drop to change dates and assignments.
@@ -71,7 +73,7 @@ About 20–30 users in one private company operating in British Columbia, with e
 - **Authentication:** Local accounts managed in Fathom for v1.
 - **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
 
-Detailed decisions are recorded in the [Decisions Log](decisions.md).
+Detailed decisions are recorded in the [Decisions Log](decisions.md). The order in which goals are delivered is in the [Roadmap](roadmap.md).
 
 ## Future possibilities
 
@@ -86,4 +88,5 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md).
 1. **Roles and approval:** Which roles exist, what can each see, edit, and approve, and which changes need approval? The owner has asked for a proposal.
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
+1. **Project Manager input:** What input do Software Project Managers have on whether teams are in place, for example comments, proposals, or approval?
 1. **Capacity in v1:** Does v1 need variable capacity per person, such as for part-time staff, or can it assume a full month for everyone? The owner thinks it may not be needed in v1.

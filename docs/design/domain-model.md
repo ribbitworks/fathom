@@ -99,4 +99,5 @@ Roadmap themes and priorities depend on the open question below. How projects re
 
 ## Open Questions
 
+1. **Estimated features:** Are estimated features that may come the same as planned features, perhaps with a status, or a separate pipeline?
 1. **Roadmap themes and priorities:** Do themes and priorities apply to initiatives or to features? What does an initiative contain?

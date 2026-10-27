@@ -10,7 +10,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Allocation unit:** A percentage of a person's month, chosen from 10%, 25%, 50%, 75%, 90%, or 100%. The default is 100%.
 - **Multiple assignments:** Fathom warns, but does not block, when a person has more than two assignments in a month.
 - **Project allocations:** People can be allocated to a project directly. See the [Domain Model](../design/domain-model.md) for how this may be modeled.
-- **Project ownership:** Projects have an owner, such as a Project Manager.
+- **Project ownership:** Projects have an owner, such as a Software Project Manager.
 - **Employment dates:** A person cannot be allocated before their start date or after their end date.
 - **Plan approval:** Draft plan changes are approved by a user with an approver role before they reach the live plan.
 - **Editing model:** No live collaboration. Saving a change (subject to approval) and refreshing to see others' changes is acceptable.
@@ -24,11 +24,12 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Hiring target date:** The date the new hire starts work. Onboarding time is handled with a reduced allocation percentage.
 - **Hiring workflow:** Moving a planned hire between states is controlled by role.
 - **Reporting lines:** Each person has exactly one manager. Dotted-line relationships, described in [Domain Concepts](domain.md), exist in some cases but are kept to a minimum. Future-dated manager reassignments, for example for a reorg, can be planned.
+- **People ownership:** Software Engineering Managers own their people, including when those people work on features led by someone else.
 - **Feature ownership:** Features are owned and delivered by a feature team. A feature's owner is the feature lead of its feature team.
 - **Feature team membership:** A person can be on more than one feature team at a time. Membership changes can be planned ahead, like reporting changes.
 - **Feature team approval:** Software Engineering Managers propose and maintain feature teams, and the Director reviews and approves them.
 - **Team names:** Teams can be named.
-- **Team composition:** Balance is evaluated for both teams and feature teams. The measures, their targets, and how positions count toward them are configurable.
+- **Team composition:** Balance is evaluated for both teams and feature teams. The measures, their targets, and how positions count toward them are configurable. Planned hires count toward a manager's reports, with a filter to exclude them in a later stage or release.
 - **Reporting view:** Reporting lines appear both as an org chart and within the unified people view.
 
 ## People and Privacy

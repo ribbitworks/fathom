@@ -63,6 +63,7 @@ chore: initialize repository
   - Domain concepts (`docs/product/domain.md`): definitions of terms
   - Decisions log (`docs/product/decisions.md`): product decisions and their details
   - Use cases (`docs/product/use-cases.md`): scenarios
+  - Roadmap (`docs/product/roadmap.md`): the order in which Fathom's goals are delivered
   - Domain model (`docs/design/domain-model.md`): entities, relationships, and modeling proposals
   - Architecture decision records (`docs/adr/`): technical decisions
 - Keep each open question in the document that will own its answer
