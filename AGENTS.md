@@ -11,10 +11,11 @@ Complete these steps, in order, for every change before it is committed:
 1. **Code review:** Have a separate agent, acting as a senior staff engineer, review the changes against the [Code Review Standards](docs/standards/code-review.md). If you cannot start a separate agent, tell the user and ask how to proceed.
 1. **Review findings:** Address every finding. For any finding you do not fix, tell the user which one and why, and get their approval before committing.
 1. **UI verification:** Have the user verify any UI change before proceeding.
+1. **User review:** Summarize the changes for the user and wait for their explicit approval before committing.
 1. **Commit:** Commit the changes, following the branching and commit message rules below.
 1. **Stop:** After committing, stop and wait for instructions.
 
-If addressing findings or UI feedback changes the code, repeat the test and build steps. Repeat the code review as well if those changes go beyond fixing the reported review findings or UI feedback.
+If addressing findings, UI feedback, or user review feedback changes the code, repeat the test and build steps. Repeat the code review as well if those changes go beyond fixing the reported review findings or UI feedback, or if user review feedback adds new content. Then return to the user review step and get explicit approval of the updated changes before committing.
 
 ## Branching
 
