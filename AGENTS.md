@@ -76,3 +76,4 @@ chore: initialize repository
 - Keep each open question in the document that will own its answer
 - Markdown formatting rules: [Markdown Style Guidelines](docs/standards/markdown-style-guidelines.md)
 - Code review process: [Code Review Standards](docs/standards/code-review.md)
+- Testing rules: [Testing Standards](docs/standards/testing.md)

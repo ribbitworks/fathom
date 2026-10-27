@@ -2,8 +2,8 @@
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
-dependencies: ["docs/standards/markdown-style-guidelines.md"]
-last_updated: "2026-10-26"
+dependencies: ["docs/standards/markdown-style-guidelines.md", "docs/standards/testing.md"]
+last_updated: "2026-10-27"
 ---
 
 # Code Review Standards
@@ -52,4 +52,4 @@ Every change is reviewed against the [Security Plan](../security/security-plan.m
 
 ## Source Code
 
-Add language- and framework-specific review criteria here as each is adopted.
+Tests are reviewed against the [Testing Standards](testing.md). Add language- and framework-specific review criteria here as each is adopted.

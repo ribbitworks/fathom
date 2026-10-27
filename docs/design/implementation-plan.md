@@ -21,7 +21,7 @@ These come before the first line of application code:
 
 ## Definition of Done for Each Slice
 
-Beyond the workflow, each slice adds role and tier security tests for the data it introduces, records access history for any Restricted or Confidential data it introduces, and updates the threat model as the [Code Review Standards](../standards/code-review.md) require.
+Beyond the workflow, each slice adds the [access control tests](../standards/testing.md#access-control-tests) for the data it introduces, records access history for any Restricted or Confidential data it introduces, and updates the threat model as the [Code Review Standards](../standards/code-review.md) require.
 
 ## Slices
 
