@@ -44,6 +44,12 @@ tmp/
 .cache/
 .tmp/
 
+# --- Local development secrets and certificates ---
+.dev/
+
+# --- Generated reports ---
+output/
+
 # --- Local data ---
 private/
 *.sqlite

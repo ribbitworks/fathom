@@ -1,0 +1,33 @@
+{
+  "name": "fathom",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": ">=24.22.1 <25"
+  },
+  "scripts": {
+    "bootstrap": "bash scripts/dev-bootstrap.sh",
+    "lint": "eslint --max-warnings 0 .",
+    "lint:md": "markdownlint --ignore-path .gitignore \"**/*.md\"",
+    "lint:shell": "bash scripts/lint-shell.sh",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm lint && pnpm format:check && pnpm lint:md && pnpm lint:shell && pnpm lint:powershell && pnpm test && pnpm security",
+    "lint:powershell": "bash scripts/lint-powershell.sh",
+    "security": "bash scripts/security-report.sh",
+    "test": "node --test \"scripts/*.test.mjs\""
+  },
+  "devDependencies": {
+    "@eslint/compat": "2.1.1",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.13.0",
+    "eslint-plugin-security": "4.2.0",
+    "globals": "17.13.0",
+    "markdownlint-cli": "0.49.1",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0"
+  }
+}

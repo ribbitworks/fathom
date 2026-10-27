@@ -1,7 +1,7 @@
 # Fathom — Supported Platforms
 
 **Status:** Draft
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-27
 
 Fathom runs as Linux containers for the x86-64 architecture (linux/amd64), managed with Docker Compose. Any host that can run those containers can in principle run Fathom. This document lists the platforms Fathom is tested on and supported on, and what each needs.
 
@@ -22,13 +22,14 @@ Running Fathom on Windows Server with WSL 2 needs this setup:
 - **Start-up:** WSL and Docker do not start at boot by default, so the host needs a start-up task, with systemd enabled in the Linux distribution.
 - **Networking:** WSL 2 uses NAT networking by default, so users cannot reach Fathom until port forwarding or mirrored networking is configured.
 - **Storage:** The database and backup staging folders live on the Linux filesystem, not the Windows drive, for performance and file permissions.
+- **Windows packages:** Setup scripts install Windows packages with winget. winget is built into Windows Server 2025; on earlier versions it may need installing separately or may not be supported, so the scripts must say how to proceed without it.
 
 ## Development Platforms
 
 | Platform | Container runtime | Status |
 | --- | --- | --- |
 | macOS | Docker Desktop, which needs a paid subscription for larger companies | In use for development; not yet tested, since there is no code yet |
-| macOS, Linux, or Windows | A container runtime without a paid licence, such as Docker Engine, Colima, or Podman | Planned |
+| macOS, Linux, or Windows | A container runtime without a paid licence, such as Docker Engine, Colima, or Podman | Planned; the Windows bootstrap script has not yet been run on Windows |
 
 Container files must not depend on features of a particular container runtime, and images must be built for linux/amd64 even on machines with a different processor.
 

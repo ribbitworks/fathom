@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":pinAllExceptPeerDependencies"],
+  "minimumReleaseAge": "7 days",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Container images pinned by digest in scripts",
+      "managerFilePatterns": ["/^scripts/.+\\.sh$/"],
+      "matchStrings": [
+        "_image=\"(?<depName>[^\":@]+):(?<currentValue>[^\"@]+)@(?<currentDigest>sha256:[a-f0-9]+)\""
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "PSScriptAnalyzer version in lint-powershell.sh; its pinned SHA-256 must be updated by hand, and the lint fails until it is",
+      "managerFilePatterns": ["/^scripts/lint-powershell\\.sh$/"],
+      "matchStrings": ["analyzer_version=\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "PSScriptAnalyzer",
+      "datasourceTemplate": "nuget",
+      "registryUrlTemplate": "https://www.powershellgallery.com/api/v2/"
+    }
+  ]
+}

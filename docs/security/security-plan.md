@@ -1,7 +1,7 @@
 # Fathom — Security Plan
 
 **Status:** Proposal for review by the owner and IT
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-27
 
 How Fathom is protected: what it must protect, the threats against it, how each threat is mitigated and verified, how its technology is scanned for vulnerabilities, how confidence in its source code is established, and how the plan is enforced. It builds on [ADR 0001](../adr/0001-tech-stack.md), the [Decisions Log](../product/decisions.md), and [Roles](../product/roles.md). Everything here is proposed until reviewed.
 
@@ -75,11 +75,11 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 
 | What is scanned | When | Proposed tooling |
 | --- | --- | --- |
-| Application dependencies (npm packages) | Every build, and daily | A dependency scanner such as npm audit or Trivy |
-| Container images, both as built and as running | Every build, and daily | A container image scanner such as Trivy or Grype |
-| Application source code | Every build | Static analysis for common security flaws |
-| Secrets in the repository | Every build | A secret scanner |
-| Docker and Compose configuration | Every build, and after any change | A configuration scanner, such as a Trivy configuration scan or the CIS Docker benchmark |
+| Application dependencies (npm packages) | Every build, and daily | pnpm audit and Trivy |
+| Container images, both as built and as running | Every build, and daily | Trivy |
+| Application source code | Every build | Semgrep |
+| Secrets in the repository, including its history | Every build | Gitleaks |
+| Docker and Compose configuration | Every build, and after any change | Trivy configuration scan |
 | The running web application | Before each stage goes live, and monthly | A web application scanner such as OWASP ZAP |
 | HTTPS configuration | Before each stage goes live, and monthly | A TLS configuration scanner |
 | Host operating system and container runtime | Weekly, or on IT's existing schedule if more frequent | IT's existing host vulnerability scanner |
@@ -115,7 +115,7 @@ The threat model is enforced by making each mitigation verifiable, and by checki
   - Host and environment login, credentials, user accounts, and the access history are reviewed quarterly.
   - The threat model is reviewed before each stage of the [Roadmap](../product/roadmap.md) goes live, and at least once a year.
 - **Self-review:** While Fathom's owner holds every role, reviews of the access history are self-reviews. A second reviewer is planned once someone else takes the Administrator role.
-- **Records:** Scan results, exceptions, and accepted risks are kept for at least one year, in a location agreed with IT.
+- **Records:** Each security report is written locally, as described in [Development Setup](../design/development-setup.md). Scan results, exceptions, and accepted risks are kept for at least one year, in a location agreed with IT.
 - **Accepted risks:** Remaining risks are accepted by Fathom's owner, with IT's agreement.
 
 ## Open Questions

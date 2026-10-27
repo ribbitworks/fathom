@@ -139,8 +139,8 @@ When the change affects the user interface:
 
 #### Markdown Linting
 
-Run markdownlint against changed Markdown files and include any errors in the review. Line length (MD013) is not enforced.
+Run the project's Markdown linter and include any errors in the review. Line length (MD013) is not enforced.
 
 ```bash
-npx -y markdownlint-cli@0.45.0 --disable MD013 -- <changed files>
+pnpm lint:md
 ```

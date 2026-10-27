@@ -1,0 +1,16 @@
+packages:
+  - apps/*
+  - packages/*
+
+engineStrict: true
+saveExact: true
+strictDepBuilds: true
+minimumReleaseAge: 10080
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+
+# Patched versions of indirect dependencies with known vulnerabilities.
+overrides:
+  js-yaml: 5.4.1
+  smol-toml: 1.9.0
+  katex: 0.18.2

@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data and to point to the roadmap's After Hello Fathom section
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, and to add the development and scanning tools
 
 ## Context
 
@@ -39,6 +39,11 @@ What matters most in these choices:
 | UI tests | Playwright | Cypress | Cross-browser; these are UI tests, so they are not run in the workflow's test step |
 | Linting and formatting | ESLint with typescript-eslint's strict type-checked rules and eslint-plugin-security, and Prettier | Biome | Type-aware rules and security rules |
 | Static analysis | Semgrep Community Edition, run with metrics off | CodeQL | Runs locally and in any build process; CodeQL is free only for public repositories |
+| Secret scanning | Gitleaks | TruffleHog | Fast, runs offline, and scans both files and git history |
+| Vulnerability, misconfiguration, and licence scanning | Trivy, with telemetry off | Grype | One tool for dependencies, container images, configuration, and licences |
+| Shell script linting | ShellCheck | | The standard linter for shell scripts |
+| PowerShell linting | PSScriptAnalyzer | | The standard linter for PowerShell, including checks for compatibility with Windows PowerShell 5.1 |
+| Node.js version management | fnm | nvm, Volta | Fast, works on macOS, Linux, and Windows, and switches versions automatically from `.node-version` |
 
 UI components, styling, charts, and the Gantt, timeline, and org chart components are left to the component evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section.
 

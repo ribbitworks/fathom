@@ -37,11 +37,13 @@ Developers may use any machine and container runtime listed for development in S
 
 ### Prerequisites
 
-- **Node.js:** The version pinned in the repository.
-- **pnpm:** Installed with pnpm's standalone installer or `npm install -g pnpm`. The repository's `packageManager` field pins the exact version, and pnpm switches to it automatically.
-- **A container runtime:** One listed for development in Supported Platforms.
+- **A container runtime:** One listed for development in Supported Platforms, installed and running.
 - **mkcert:** For the local HTTPS certificate.
-- **Check tools:** The scanners the [Security Plan](../security/security-plan.md) requires, such as Trivy, a secret scanner, and Semgrep. They run as containers where possible, with images pinned by digest. Image scans read an exported image file rather than being given access to the container runtime.
+- **Bootstrap script:** `bash scripts/dev-bootstrap.sh` on macOS and Linux, or `scripts/dev-bootstrap.ps1` on Windows, installs everything else: fnm, the Node.js version pinned in `.node-version`, the pnpm version pinned in `package.json`, and the project's dependencies. It is safe to run again at any time.
+- **Check tools:** The scanners the [Security Plan](../security/security-plan.md) requires run as containers, with images pinned by digest, so nothing extra is installed. Image scans read an exported image file rather than being given access to the container runtime.
+- **Ignored files:** Every tool reads `.gitignore`. ShellCheck, PSScriptAnalyzer, Gitleaks, Semgrep, and Trivy run in containers that see only a copy of the files git would track, made under the git-ignored `.tmp/` folder, so ignored folders such as `private/` are never read. Trivy also reads `node_modules`, read-only, to find package licences, and the scan of git history sees only git's own folder. ESLint, Prettier, markdownlint, and `pnpm audit` run directly on the machine.
+- **Windows:** If PowerShell blocks the bootstrap script, allow local scripts with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. `pnpm check` runs bash scripts, so it needs Git Bash or WSL.
+- **Downloads during checks:** Most scanners run without network access. Semgrep downloads its rules, Trivy its vulnerability database, `pnpm audit` queries the package registry, and the PowerShell linter downloads PSScriptAnalyzer once and checks its hash.
 
 ### Ways to Run Fathom
 
@@ -67,6 +69,10 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm db:migrate` | Apply migration files using the migration role |
 | `pnpm db:reset` | Recreate the development database and load seed data |
 | `pnpm check` | The single command from the [Testing Standards](../standards/testing.md#running-tests) |
+| `pnpm test` | Tests for the project's scripts |
+| `pnpm security` | The security report, written to a dated folder under the git-ignored `output/security/` folder |
+| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell` | Individual linters, also run by `pnpm check` |
+| `pnpm format` | Format source files |
 | `pnpm test:containers` | Container tests, in production-like mode |
 | `pnpm test:ui` | UI tests |
 

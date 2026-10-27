@@ -1,0 +1,41 @@
+# shellcheck shell=bash
+# Shared helpers for Fathom's bash scripts. Source this file; do not run it.
+
+info() { printf '==> %s\n' "$*"; }
+fail() {
+  printf 'error: %s\n' "$*" >&2
+  exit 1
+}
+
+require_git_repository() {
+  git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "Run this inside the Fathom git repository"
+}
+
+require_container_runtime() {
+  command -v docker >/dev/null 2>&1 || fail "A container runtime is required; see docs/operations/supported-platforms.md"
+  docker info >/dev/null 2>&1 || fail "The container runtime is installed but not running"
+}
+
+# Prints the files git would track, committed or new but never ignored, that exist on disk.
+# Optional arguments are git pathspecs, such as '*.sh'.
+list_project_files() {
+  local files
+  files="$(git ls-files --cached --others --exclude-standard -- "$@")" || fail "Could not list the project's files"
+  printf '%s\n' "$files" | while IFS= read -r file; do
+    if [ -f "$file" ]; then printf '%s\n' "$file"; fi
+  done
+}
+
+# Copies the files git would track into a new folder under the git-ignored .tmp/, and prints its
+# path. Scanners mount this copy, so they never see ignored folders such as private/. It lives
+# inside the repository because every container runtime can share the repository folder.
+make_scan_copy() {
+  local copy
+  mkdir -p .tmp || return 1
+  copy="$(mktemp -d "$PWD/.tmp/scan.XXXXXX")" || return 1
+  list_project_files . | tar -cf - -T - | tar -xf - -C "$copy" || {
+    rm -rf "$copy"
+    fail "Could not copy the project's files to $copy"
+  }
+  printf '%s\n' "$copy"
+}

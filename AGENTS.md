@@ -55,6 +55,14 @@ chore: initialize repository
 - If you are given or find real company or employee data, do not use, copy, or commit it; stop and tell the user
 - Real data the owner keeps locally belongs only in `private/`, which is git-ignored, and only on company-managed machines; agents do not read from it
 
+## Automation
+
+- Automate every repeatable setup, development, and operations task with a script in `scripts/`, rather than documenting manual steps
+- Use bash for macOS, Linux, and WSL, written to run on the older bash that ships with macOS
+- Use PowerShell for Windows hosts, installing any Windows packages with winget
+- Scripts are safe to run repeatedly, stop on the first error with a clear message, and are checked by the project's linters
+- Name scripts with lowercase words joined by hyphens and the extension for their shell, `.sh` or `.ps1`, such as `lint-shell.sh` or `dev-bootstrap.ps1`; the linters find scripts by extension
+
 ## Documentation
 
 - Follow the standards in `docs/standards/` when writing or editing files they cover
