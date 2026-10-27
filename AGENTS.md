@@ -46,6 +46,14 @@ chore: initialize repository
 - Add docs directory for project documentation
 ```
 
+## Data
+
+- Never commit real company or employee information, including names, org structure, company plans, internal documents, or exports
+- Sample, seed, and test data must be fictional, and must not be derived from real people or real company data, including anonymized or masked copies
+- Do not put real data into prompts you write (including to subagents), issues, pull requests, commit messages, screenshots, logs, or documentation examples
+- If you are given or find real company or employee data, do not use, copy, or commit it; stop and tell the user
+- Real data the owner keeps locally belongs only in `private/`, which is git-ignored; agents do not read from it
+
 ## Documentation
 
 - Follow the standards in `docs/standards/` when writing or editing files they cover

@@ -45,6 +45,7 @@ tmp/
 .tmp/
 
 # --- Local data ---
+private/
 *.sqlite
 *.sqlite3
 *.db
