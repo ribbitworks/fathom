@@ -43,6 +43,13 @@ When `markdownlint` is available, run it against changed markdown files and incl
 npx markdownlint-cli2 "**/*.md" "#node_modules"
 ```
 
+## Security
+
+Every change is reviewed against the [Security Plan](../security/security-plan.md):
+
+- **Threat model kept current**: A change that adds data, a way in, a role, a dependency, or infrastructure updates the threat model in the same change.
+- **Mitigations verified**: Each mitigation the change touches still has its check, such as a test or scan.
+
 ## Source Code
 
 Add language- and framework-specific review criteria here as each is adopted.

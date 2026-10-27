@@ -3,12 +3,13 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet
 
 ## Context
 
 Fathom's [Product Brief](../product/brief.md) sets the constraints that drive the stack:
 
-- **Hosting:** Runs in Docker containers under WSL 2 on a Windows Server, on-premises, with intranet access only. Nothing may depend on internet services at runtime, including CDNs and web fonts.
+- **Hosting:** Runs in Docker containers under WSL 2 on a Windows Server, on-premises. The server has internet access, but Fathom must be reachable only from the internal network. Nothing may depend on internet services at runtime, including CDNs and web fonts.
 - **Scale:** Tens of users and a modest amount of data. Simplicity matters more than horizontal scaling.
 - **Front end:** Rich, interactive timeline, Gantt, org chart, and capacity views, with drag-and-drop. The strongest choice of components for these is in the React ecosystem, so every option below uses a React front end.
 - **Security:** Local accounts, role-based access to tiers of data, enforced the same way in screens, exports, snapshots, and search. Personal data is kept out of logs.
@@ -76,7 +77,7 @@ Specific libraries (API framework, ORM, Gantt and org chart components, test too
 - **Running on WSL 2 on Windows Server** needs setup the department will own:
   - WSL and Docker do not start at boot by default, so the host needs a startup task, with systemd enabled in the Linux distribution.
   - WSL 2 uses NAT networking by default, so intranet users cannot reach Fathom until port forwarding or mirrored networking is configured.
-  - The server is intranet-only, so container images and dependencies must be built elsewhere and transferred, or pulled from an internal registry.
+  - The server has internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Where builds run and how releases reach the server is an open question in the [Security Plan](../security/security-plan.md).
   - The database and backup staging folders live on the Linux filesystem, not the Windows drive, for performance and file permissions.
 - **Two containers** instead of one, a small operational cost in exchange for PostgreSQL.
 - **Python** remains a reasonable alternative if the department's maintainers are much more comfortable with it than with TypeScript.

@@ -67,6 +67,8 @@ chore: initialize repository
   - Roadmap (`docs/product/roadmap.md`): the order in which Fathom's goals are delivered
   - Domain model (`docs/design/domain-model.md`): entities, relationships, and modeling proposals
   - Architecture decision records (`docs/adr/`): technical decisions
+  - Security plan (`docs/security/security-plan.md`): threat model, vulnerability scanning, source code assurance, and enforcement
+  - IT overview (`docs/operations/it-overview.md`): a standalone summary for IT of facts owned by the documents above; update it whenever those facts change
   - Data protection summary (`docs/privacy/data-protection.md`): a standalone summary for HR of facts owned by the documents above; update it whenever those facts change
 - Keep each open question in the document that will own its answer
 - Markdown formatting rules: [Markdown Style Guidelines](docs/standards/markdown-style-guidelines.md)
