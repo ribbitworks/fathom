@@ -4,12 +4,13 @@ Fathom is a tool for high-level software project planning, resource assignment, 
 
 ## Status
 
-Early development. The tech stack and architecture are still being decided.
+Early development. The tech stack is recorded in [ADR 0001](docs/adr/0001-tech-stack.md); the architecture is still being designed.
 
 ## Repository layout
 
 ```text
-docs/   Project documentation, standards, and design notes
+docs/          Project documentation, standards, and design notes
+docs/adr/      Architecture decision records
 ```
 
 ## License

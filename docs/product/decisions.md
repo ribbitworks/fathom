@@ -53,5 +53,6 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 
 ## Platform and Operations
 
+- **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
 - **Authentication:** Local accounts managed in Fathom for v1.
 - **Snapshots:** Taken both manually and on a schedule. The schedule is to be decided.

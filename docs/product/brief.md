@@ -50,7 +50,7 @@ About 20–30 users in one private company operating in British Columbia, with e
 
 ## Constraints
 
-- **Deployment:** Runs from a Docker container under WSL 2 on a Windows Server, on-premises. No managed cloud services can be assumed.
+- **Deployment:** Runs in Docker containers under WSL 2 on a Windows Server, on-premises. No managed cloud services can be assumed.
 - **Network:** The server has intranet access only. Fathom must not depend on internet services at runtime, including CDNs, fonts, or external APIs.
 - **Scale:** Small. Tens of users and a modest amount of data. Simple, easy-to-run choices matter more than horizontal scaling.
 - **Personal data:** Fathom holds employee personal information, expected to be governed by BC's Personal Information Protection Act (PIPA). Access is limited by role, and personal data not needed for planning is kept out of logs and other output.
@@ -64,6 +64,7 @@ About 20–30 users in one private company operating in British Columbia, with e
 - **Editing:** No live collaboration. Draft changes are approved before they reach the live plan.
 - **Employee data:** A manually maintained copy of details held in the HR system.
 - **Authentication:** Local accounts managed in Fathom for v1.
+- **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
 
 Detailed decisions are recorded in the [Decisions Log](decisions.md).
 
