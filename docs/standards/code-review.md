@@ -33,7 +33,7 @@ All changed `.md` files must comply with the [Markdown Style Guidelines](markdow
 
 ### Documentation Content
 
-- **No duplication**: Facts are not repeated across documents. Each fact lives in the document that owns it, as listed in `AGENTS.md`, and other documents link to it.
+- **No duplication**: Facts are not repeated across documents. Each fact lives in the document that owns it, as listed in `AGENTS.md`, and other documents link to it. Standalone summaries for outside readers, listed as exceptions in `AGENTS.md`, may repeat facts but must stay consistent with their owners.
 
 ### Markdown Linting
 
