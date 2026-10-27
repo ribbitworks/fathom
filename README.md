@@ -13,6 +13,10 @@ docs/          Project documentation, standards, and design notes
 docs/adr/      Architecture decision records
 ```
 
+## Supported Platforms
+
+Fathom runs as Linux containers. See [Supported Platforms](docs/operations/supported-platforms.md) for where it is tested and supported.
+
 ## License
 
 Copyright 2026 Jared La Rue. Licensed under the [Apache License, Version 2.0](LICENSE).

@@ -20,10 +20,11 @@ Development uses fictional data only.
 
 ## Before Going Live
 
+- **IT approval:** IT approves the [IT Overview](../operations/it-overview.md), the Security Plan, and the [Deployment](../operations/deployment.md) document before Fathom is deployed to company infrastructure, including for deployment testing.
 - **Privacy approval:** Before the first stage goes live, HR approves the data protection document for the data it holds.
 - **Roles:** A first set of roles is agreed, from the proposal in [Roles](roles.md).
-- **Hosting:** Hosting and backups are set up as described in [ADR 0001](../adr/0001-tech-stack.md).
-- **Security:** IT has reviewed the [Security Plan](../security/security-plan.md), scanning is in place, and the threat model has been reviewed for the stage going live.
+- **Hosting:** Hosting and backups are set up as described in [ADR 0001](../adr/0001-tech-stack.md) and [Supported Platforms](../operations/supported-platforms.md).
+- **Security:** Scanning from the [Security Plan](../security/security-plan.md) is in place, and the threat model has been reviewed for the stage going live.
 
 ## Stage: Who Is Working on What
 

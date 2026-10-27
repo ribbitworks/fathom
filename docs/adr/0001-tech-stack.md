@@ -3,13 +3,13 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms
 
 ## Context
 
 Fathom's [Product Brief](../product/brief.md) sets the constraints that drive the stack:
 
-- **Hosting:** Runs in Docker containers under WSL 2 on a Windows Server, on-premises. The server has internet access, but Fathom must be reachable only from the internal network. Nothing may depend on internet services at runtime, including CDNs and web fonts.
+- **Hosting:** Runs as containers on an on-premises host with a supported container runtime, as listed in [Supported Platforms](../operations/supported-platforms.md). The first deployment is described in [Deployment](../operations/deployment.md). The host may have internet access, but Fathom must be reachable only from the internal network. Nothing may depend on internet services at runtime, including CDNs and web fonts.
 - **Scale:** Tens of users and a modest amount of data. Simplicity matters more than horizontal scaling.
 - **Front end:** Rich, interactive timeline, Gantt, org chart, and capacity views, with drag-and-drop. The strongest choice of components for these is in the React ecosystem, so every option below uses a React front end.
 - **Security:** Local accounts, role-based access to tiers of data, enforced the same way in screens, exports, snapshots, and search. Personal data is kept out of logs.
@@ -18,7 +18,7 @@ Fathom's [Product Brief](../product/brief.md) sets the constraints that drive th
 The owner's preferences:
 
 - **Maintainers:** In the short term, a group effort within the department, including the owner. Software Engineering Managers are technical.
-- **Language:** Modern languages. The owner dislikes Windows, so development and operations should avoid Windows-specific tooling where the Windows Server host allows.
+- **Language:** Modern languages. The owner dislikes Windows, so development and operations should avoid Windows-specific tooling where the host platform allows.
 - **Database:** PostgreSQL is the owner's favourite, with openness to lighter-weight options.
 
 ## Options Considered
@@ -63,7 +63,7 @@ ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server
 - **Access control:** Implemented once in the server's data access layer, so every screen, export, snapshot, and search goes through the same tier-based checks.
 - **Transport security:** HTTPS using an internal certificate, since passwords and personal data cross the intranet.
 - **Packaging:** Docker Compose with two containers, the application and PostgreSQL. The application server also serves the built front end.
-- **Docker runtime:** Docker Engine installed directly inside WSL 2, rather than Docker Desktop, which is not supported on Windows Server and requires a paid subscription for larger companies.
+- **Container runtime:** Docker Engine with Compose on servers; on Windows Server it runs inside WSL 2, since Docker Desktop is not supported there and requires a paid subscription for larger companies. Development machines may use any runtime that runs the same containers.
 - **Backups:** A scheduled job runs `pg_dump`, encrypts the output with a public key whose private key is held by someone other than the person running the job, and writes it to an approved location. Restores are tested regularly.
 
 Specific libraries (API framework, ORM, Gantt and org chart components, test tools) are chosen in follow-up decisions.
@@ -74,10 +74,7 @@ Specific libraries (API framework, ORM, Gantt and org chart components, test too
 - **Dependencies** need active care: Node.js stays on an LTS release, and dependency upgrades are planned rather than ad hoc.
 - **Gantt and timeline components** are the biggest technical risk. Free and commercial options vary widely in features and licensing. Some are GPL-licensed, which would require Fathom, if distributed, to be released under the GPL instead of Apache 2.0. A short evaluation should come before UI work starts.
 - **Access control** depends on discipline: all data access must go through the shared layer, which the code review standards should check.
-- **Running on WSL 2 on Windows Server** needs setup the department will own:
-  - WSL and Docker do not start at boot by default, so the host needs a startup task, with systemd enabled in the Linux distribution.
-  - WSL 2 uses NAT networking by default, so intranet users cannot reach Fathom until port forwarding or mirrored networking is configured.
-  - The server has internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Where builds run and how releases reach the server is an open question in the [Security Plan](../security/security-plan.md).
-  - The database and backup staging folders live on the Linux filesystem, not the Windows drive, for performance and file permissions.
+- **Each supported platform** has its own setup needs, which the team operating Fathom will own, as recorded in [Supported Platforms](../operations/supported-platforms.md).
+- **Internet exposure:** The host may have internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Where builds run and how releases reach the server is an open question in the [Security Plan](../security/security-plan.md).
 - **Two containers** instead of one, a small operational cost in exchange for PostgreSQL.
 - **Python** remains a reasonable alternative if the department's maintainers are much more comfortable with it than with TypeScript.

@@ -10,18 +10,19 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 - **Employee personal information:** General, Restricted, and Confidential data, including the hiring plan.
 - **User accounts:** Credentials, sessions, and role assignments.
 - **Access history:** The record of who viewed or changed sensitive data.
-- **Secrets:** The database password, the HTTPS private key, and the backup encryption key.
+- **Secrets:** The credentials listed under Credentials and Secrets.
 - **Backups**
-- **The server:** The Windows Server host, the WSL 2 Linux environment, Docker, and Fathom's containers.
+- **The host:** Its operating system, any virtualization layer such as WSL 2, the container runtime, and Fathom's containers.
 - **Source code, dependencies, and the build process**
 
 ## Trust Boundaries
 
 - **Users to Fathom:** Browsers on the internal network connect to Fathom over HTTPS.
-- **Internet and Fathom:** Fathom must not be reachable from the internet. The server has outbound internet access, which Fathom's containers must not use at runtime.
+- **Internet and Fathom:** Fathom must not be reachable from the internet. The host may have outbound internet access, which Fathom's containers must not use at runtime.
 - **Fathom to its database:** The application container talks to the database container on a private Docker network.
 - **Server operators to Fathom's data:** People who can log in to the server or run Docker can reach the database directly, outside Fathom's role checks.
-- **Host to containers:** The Windows host runs WSL 2, which runs Docker and the containers.
+- **Other applications on the host:** A shared host may run other applications, whose administrators and vulnerabilities are outside Fathom's control.
+- **Host to containers:** The host runs the container runtime, inside any virtualization layer, which runs the containers.
 - **Backups leaving the server:** Encrypted backups are copied to an approved location.
 - **Code entering the server:** Source code, dependencies, and container images are built and brought onto the server through a build process still to be decided.
 
@@ -39,17 +40,34 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | Sessions are hijacked, or requests forged from another site | Secure, HttpOnly, SameSite session cookies and cross-site request forgery protection | Automated tests; web application scan |
 | Traffic is intercepted on the internal network | HTTPS with an internal certificate; no unencrypted access | TLS configuration scan |
 | Injection attacks, such as SQL injection or cross-site scripting | Parameterized queries, output encoding, and input validation with shared schemas | Automated tests; static analysis; web application scan |
-| Server operators read the database directly | Server login limited to named people; database credentials stored as secrets. The remaining risk is accepted and recorded | Review of who has server login |
+| Server operators read the database directly | Server login limited to named people; database credentials stored as secrets. Anyone who can run commands in Fathom's containers can reach the database without a password. The remaining risk is accepted and recorded | Review of who has server login |
+| Another application on a shared host is compromised and used to reach Fathom | Fathom has its own container network and no shared database; only Fathom's HTTPS port is published, the database port never is, and published ports are restricted by bind address and firewall. A separate WSL 2 distribution is not full isolation, since all distributions on a host share one virtual machine, kernel, and by default network; if other applications on the host use WSL 2 or Docker, the remaining risk is recorded or a separate virtual machine is requested | Configuration review; internal port scan |
+| Administrators of other applications on a shared host reach Fathom's data | Fathom's environment is registered to a dedicated account used only by its named operators. Anyone with full administrator access to the host can still reach the data and the secrets stored on it; this remaining risk is accepted and recorded | Review of who has host and environment login |
+| Database administrator credentials are misused over the network | Fathom connects with a limited database account; administrator credentials are kept in the secret store, not on the host, and used only for maintenance. Direct access from inside the containers is covered by the server operators row | Configuration review; credential review |
 | The access history is altered or deleted | Access history can only be added to; no role can edit or delete it | Automated tests |
 | Secrets leak | Secrets are kept out of the repository and container images | Secret scanning |
 | A vulnerable or malicious dependency or container image | Pinned versions from trusted sources; dependency and image scanning | Scans on every build and on a schedule |
 | The build environment or a developer machine is compromised | Builds come from a known environment, each release is tagged and built repeatably, and releases are compared with their source | Release verification |
-| An unpatched host, WSL environment, Docker, or database | Regular patching of every layer | Host and container vulnerability scans |
+| An unpatched host, virtualization layer, container runtime, or database | Regular patching of every layer | Host and container vulnerability scans |
 | Personal data leaks through logs or error messages | Personal data kept out of logs; generic error messages to users | Code review; log review |
 | Backups are stolen or read | Encrypted backups, with the key held by someone other than the backup operator | Restore tests; key custody check |
 | A former user keeps access | Accounts are disabled when users leave | Account review |
 | Real data leaks into development | Fictional data only in development; real data never committed | Code review; repository scanning |
 | Fathom is overwhelmed with requests | Resource limits on containers and request rate limiting | Configuration review |
+
+## Credentials and Secrets
+
+Every credential has an owner. Its master copy is kept in a password manager or secret store, never in the repository or container images. Credentials Fathom needs while running, such as the HTTPS private key and the database application password, also have a runtime copy on the host, readable only by Fathom's service account, and so are exposed to anyone with full administrator access to the host. Each credential is changed by its owner when someone with access to it leaves, and at an interval set at the quarterly credential review.
+
+| Credential | Owner | Notes |
+| --- | --- | --- |
+| Database administrator account | Fathom's operators | Used only for maintenance, never by the application |
+| Database application account | Fathom's operators | Limited to what the application needs |
+| HTTPS private key | Fathom's operators, with the certificate issued by IT | Renewed before expiry |
+| Backup encryption key | To be decided; someone outside the team that runs backups | Old keys are kept for as long as backups made with them are kept, so those backups can still be restored |
+| Fathom Administrator accounts | Each named Administrator | Personal accounts, not shared |
+| Host administrator accounts | IT, under IT's own process | Personal accounts, not shared |
+| Fathom's environment and service accounts | Fathom's operators | Limited to Fathom's named operators |
 
 ## Vulnerability Scanning
 
@@ -64,20 +82,21 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 | Docker and Compose configuration | Every build, and after any change | A configuration scanner, such as a Trivy configuration scan or the CIS Docker benchmark |
 | The running web application | Before each stage goes live, and monthly | A web application scanner such as OWASP ZAP |
 | HTTPS configuration | Before each stage goes live, and monthly | A TLS configuration scanner |
-| Windows Server host and Docker | Weekly, or on IT's existing schedule if more frequent | IT's existing host vulnerability scanner |
-| The WSL 2 Linux environment's packages | Weekly | IT's scanner if it can see inside WSL, otherwise a Linux package scanner |
+| Host operating system and container runtime | Weekly, or on IT's existing schedule if more frequent | IT's existing host vulnerability scanner |
+| The Linux environment inside any virtualization layer, such as WSL 2 | Weekly | IT's scanner if it can see inside it, otherwise a Linux package scanner |
 | Exposure to the internet and the internal network | Monthly, and after any network change | External and internal port scans |
 | The backup location | On IT's existing schedule | IT's existing scanning |
-| The build environment and developer machines | On IT's existing schedule | IT's existing endpoint scanning |
+| Company build environments and developer machines | On IT's existing schedule | IT's existing endpoint scanning |
+| Developer machines not managed by IT, which may run builds until the build process is decided | To be agreed | See the open questions |
 
-**Fix times by severity:** critical within 7 days, high within 30 days, medium within 90 days, and low at the next planned update. Any exception is recorded with a reason and an expiry date, and approved by the Director.
+**Fix times by severity:** critical within 7 days, high within 30 days, medium within 90 days, and low at the next planned update. Any exception is recorded with a reason and an expiry date, and approved by Fathom's owner.
 
 ## Source Code Assurance
 
 How IT and the company can be confident in Fathom's source code:
 
 - **Open source:** Fathom is licensed under Apache 2.0, and IT will be given read access to its full source code.
-- **AI-assisted development:** Fathom is built with an AI coding assistant, and each change is also reviewed by a separate AI agent. The Director, as Fathom's owner, is the human reviewer and approves every change before it is committed.
+- **AI-assisted development:** Fathom is built with an AI coding assistant, and each change is also reviewed by a separate AI agent. Fathom's owner is the human reviewer and approves every change before it is committed.
 - **Development workflow:** Every change follows the [Workflow](../../AGENTS.md#workflow), which includes running the tests once code exists.
 - **Planned from the first code:** Security tests for every role and data tier, and static analysis on every change.
 - **Planned once the build process is decided:** Pinned dependency versions from trusted sources, a list of every component in each release (a software bill of materials), and tagged releases built in a repeatable way, so IT can match what is running to its source code.
@@ -92,16 +111,20 @@ The threat model is enforced by making each mitigation verifiable, and by checki
 - **Code review:** Every change is reviewed against this plan, as set out in the Security section of the [Code Review Standards](../standards/code-review.md).
 - **Responsibilities and intervals:**
   - Fathom's operators review scan results weekly and track fixes against the fix times.
-  - The Director approves exceptions.
-  - Server login, user accounts, and the access history are reviewed quarterly.
+  - Fathom's owner approves exceptions.
+  - Host and environment login, credentials, user accounts, and the access history are reviewed quarterly.
   - The threat model is reviewed before each stage of the [Roadmap](../product/roadmap.md) goes live, and at least once a year.
-- **Self-review:** While the Director holds every role, reviews of the access history are self-reviews. A second reviewer is planned once someone else takes the Administrator role.
-- **Records:** Scan results and exceptions are kept for at least one year, in a location agreed with IT.
+- **Self-review:** While Fathom's owner holds every role, reviews of the access history are self-reviews. A second reviewer is planned once someone else takes the Administrator role.
+- **Records:** Scan results, exceptions, and accepted risks are kept for at least one year, in a location agreed with IT.
+- **Accepted risks:** Remaining risks are accepted by Fathom's owner, with IT's agreement.
 
 ## Open Questions
 
-1. **Host scanning:** Which tool does IT already use for host vulnerability scanning, and can it see inside the WSL 2 environment and Docker?
+1. **Host scanning:** Which tool does IT already use for host vulnerability scanning, and can it see inside any virtualization layer and the container runtime?
 1. **Fix times:** Are the proposed fix times by severity acceptable to IT?
 1. **Build process:** Where will builds and scans run, and how will releases reach the server?
 1. **Port scans:** Who runs the external and internal port scans?
-1. **Endpoint protection:** Is IT's antivirus or endpoint protection compatible with WSL 2 and Docker on the server?
+1. **Developer machines not managed by IT:** How should they be protected and scanned while they run builds with fictional data only?
+1. **Backup key holder:** Who outside the team that runs backups should hold the backup encryption key?
+1. **Secret store:** Which password manager or secret store should hold Fathom's credentials?
+1. **Endpoint protection:** Is IT's antivirus or endpoint protection compatible with the container runtime and any virtualization layer on the host?

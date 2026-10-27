@@ -56,8 +56,8 @@ About 20–30 users in one private company operating in British Columbia, with e
 
 ## Constraints
 
-- **Deployment:** Runs in Docker containers under WSL 2 on a Windows Server, on-premises in Canada. No managed cloud services can be assumed.
-- **Network:** The server has internet access, but Fathom must be reachable only from the internal network, never from the internet. Fathom must not depend on internet services at runtime, including CDNs, fonts, or external APIs, so personal data stays inside the company.
+- **Deployment:** Runs on-premises, on a server shared with other applications. No managed cloud services can be assumed. Details are in [Deployment](../operations/deployment.md).
+- **Network:** Fathom must be reachable only from the internal network, never from the internet, even though its server has internet access. Fathom must not depend on internet services at runtime, including CDNs, fonts, or external APIs, so personal data stays inside the company.
 - **Scale:** Small. Tens of users and a modest amount of data. Simple, easy-to-run choices matter more than horizontal scaling.
 - **Personal data:** Fathom holds personal information about employees, including employees and managers in India. It is expected to be governed by BC's Personal Information Protection Act (PIPA), and Indian law may also apply. Access is limited by role, and personal data not needed for planning is kept out of logs and other output.
 - **Configurability:** Fathom needs to be as configurable as possible, to suit multiple domains and organizational structures, but must meet the owner's requirements and use cases first.

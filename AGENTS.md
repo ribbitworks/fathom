@@ -53,7 +53,7 @@ chore: initialize repository
 - Sample, seed, and test data must be fictional, and must not be derived from real people or real company data, including anonymized or masked copies
 - Do not put real data into prompts you write (including to subagents), issues, pull requests, commit messages, screenshots, logs, or documentation examples
 - If you are given or find real company or employee data, do not use, copy, or commit it; stop and tell the user
-- Real data the owner keeps locally belongs only in `private/`, which is git-ignored; agents do not read from it
+- Real data the owner keeps locally belongs only in `private/`, which is git-ignored, and only on company-managed machines; agents do not read from it
 
 ## Documentation
 
@@ -66,8 +66,11 @@ chore: initialize repository
   - Roles (`docs/product/roles.md`): role definitions and what each role can do
   - Roadmap (`docs/product/roadmap.md`): the order in which Fathom's goals are delivered
   - Domain model (`docs/design/domain-model.md`): entities, relationships, and modeling proposals
+  - Implementation plan (`docs/design/implementation-plan.md`): how the roadmap's stages are built, slice by slice
   - Architecture decision records (`docs/adr/`): technical decisions
   - Security plan (`docs/security/security-plan.md`): threat model, vulnerability scanning, source code assurance, and enforcement
+  - Supported platforms (`docs/operations/supported-platforms.md`): the platforms Fathom is tested and supported on, and their setup needs
+  - Deployment (`docs/operations/deployment.md`): the specifics of Fathom's first deployment and what it asks of IT
   - IT overview (`docs/operations/it-overview.md`): a standalone summary for IT of facts owned by the documents above; update it whenever those facts change
   - Data protection summary (`docs/privacy/data-protection.md`): a standalone summary for HR of facts owned by the documents above; update it whenever those facts change
 - Keep each open question in the document that will own its answer
