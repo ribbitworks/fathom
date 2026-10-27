@@ -14,7 +14,7 @@ A proposed order for delivering Fathom's goals. Goals are defined in the [Produc
 
 ## Before Development
 
-- **Component evaluation:** Gantt and timeline components are evaluated before UI work starts, as [ADR 0001](../adr/0001-tech-stack.md) calls for.
+- **Component evaluation:** UI components, styling, and charts are chosen, and Gantt, timeline, and org chart components are evaluated, before UI work starts, as [ADR 0001](../adr/0001-tech-stack.md) calls for.
 
 Development uses fictional data only.
 
