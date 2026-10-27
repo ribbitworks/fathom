@@ -2,7 +2,7 @@
 
 **Last updated:** 2026-10-26
 
-Detailed product decisions made so far. The [Product Brief](brief.md) holds the high-level picture. Open questions at this level of detail are raised when the related feature is worked on.
+Detailed product decisions made so far. The [Product Brief](brief.md) holds the high-level picture. Domain terms are defined in [Domain Concepts](domain.md). Open questions at this level of detail are raised when the related feature is worked on.
 
 ## Planning
 
@@ -23,7 +23,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Hiring target date:** The date the new hire starts work. Onboarding time is handled with a reduced allocation percentage.
 - **Hiring workflow:** Moving a planned hire between states is controlled by role.
 - **Hiring plan ownership:** The Director maintains the hiring plan and employee details.
-- **Reporting lines:** Each person has exactly one manager. Future-dated manager reassignments, for example for a reorg, can be planned.
+- **Reporting lines:** Each person has exactly one manager. Dotted-line relationships exist in some cases, such as Software Engineering Managers to the Project Managers of the projects their team works on, but are kept to a minimum. Future-dated manager reassignments, for example for a reorg, can be planned.
 - **Reporting view:** Reporting lines appear both as an org chart and within the unified people view.
 
 ## People and Privacy
