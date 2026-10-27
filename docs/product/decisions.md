@@ -9,12 +9,13 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Planning granularity:** Monthly, open to revisiting.
 - **Allocation unit:** A percentage of a person's month, chosen from 10%, 25%, 50%, 75%, 90%, or 100%. The default is 100%.
 - **Multiple assignments:** Fathom warns, but does not block, when a person has more than two assignments in a month.
-- **Project allocations:** People can be allocated to a project directly. This may be modeled as a general feature owned by the project.
-- **Project ownership:** Projects and features have an owner, such as a Project Manager.
+- **Project allocations:** People can be allocated to a project directly. See the [Domain Model](../design/domain-model.md) for how this may be modeled.
+- **Project ownership:** Projects have an owner, such as a Project Manager.
 - **Employment dates:** A person cannot be allocated before their start date or after their end date.
 - **Plan approval:** Draft plan changes are approved by a user with an approver role before they reach the live plan.
 - **Editing model:** No live collaboration. Saving a change (subject to approval) and refreshing to see others' changes is acceptable.
-- **Cost:** Not tracked. Allocations record people against projects or features per month.
+- **Cycles and releases:** Cycle length, which cycles a release includes, and patch frequency are all configurable in Fathom.
+- **Release contents:** Fathom records which features ship in which release.
 
 ## Workforce
 
@@ -22,8 +23,12 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Hiring entries:** A planned hire records role, level, team, manager, target date, status, and approval state. Budget is not tracked.
 - **Hiring target date:** The date the new hire starts work. Onboarding time is handled with a reduced allocation percentage.
 - **Hiring workflow:** Moving a planned hire between states is controlled by role.
-- **Hiring plan ownership:** The Director maintains the hiring plan and employee details.
-- **Reporting lines:** Each person has exactly one manager. Dotted-line relationships exist in some cases, such as Software Engineering Managers to the Project Managers of the projects their team works on, but are kept to a minimum. Future-dated manager reassignments, for example for a reorg, can be planned.
+- **Reporting lines:** Each person has exactly one manager. Dotted-line relationships, described in [Domain Concepts](domain.md), exist in some cases but are kept to a minimum. Future-dated manager reassignments, for example for a reorg, can be planned.
+- **Feature ownership:** Features are owned and delivered by a feature team. A feature's owner is the feature lead of its feature team.
+- **Feature team membership:** A person can be on more than one feature team at a time. Membership changes can be planned ahead, like reporting changes.
+- **Feature team approval:** Software Engineering Managers propose and maintain feature teams, and the Director reviews and approves them.
+- **Team names:** Teams can be named.
+- **Team composition:** Balance is evaluated for both teams and feature teams. The measures, their targets, and how positions count toward them are configurable.
 - **Reporting view:** Reporting lines appear both as an org chart and within the unified people view.
 
 ## People and Privacy
@@ -32,20 +37,19 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Gender:** Recorded because the company works across several countries, and colleagues cannot always tell someone's gender from their name.
 - **System of record:** Fathom holds a manually maintained copy of employee details from the HR system.
 - **Former employees:** People who leave are marked inactive rather than deleted.
-- **Access control:** Access is role-based, and a user can have one or more roles. The owner will define the roles.
+- **Access control:** Access is role-based, and a user can have one or more roles. Roles are to be proposed.
 - **Sensitivity tiers:** Roles grant access to tiers of data, not to individual screens. Adding a field means assigning it to a tier. The initial tiers, subject to the privacy review, are:
-  - *General:* preferred name, team, position, site, manager, and assignments.
+  - *General:* preferred name, team, feature teams, feature leads, position, site, manager, and assignments.
   - *Restricted:* gender, level, start and end dates, and active status.
   - *Confidential:* the hiring plan and future-dated reorgs.
 - **Consistent enforcement:** Exports, snapshots, and search results follow the same access rules as screens.
 - **Access history:** Fathom records who viewed or changed Restricted or Confidential data, without recording the values.
-- **Logging:** Personal data not needed for planning is kept out of logs and other output.
 - **Separation of duties:** Running the system, such as backups and updates, does not require access to people data in Fathom.
 - **Data outside the app:** Backups are encrypted, server login is restricted, and backup files are kept only in approved locations.
 
 ## Privacy Law Context
 
-The company is a private company in British Columbia, so BC PIPA is expected to govern employee personal information, unless the company is federally regulated. Employees in other countries may bring their own local laws. These notes are a general understanding, not legal advice, and are to be confirmed in the privacy review:
+The company is a private company in British Columbia, so BC PIPA is expected to govern employee personal information, unless the company is federally regulated. Employees in other countries may bring their own local laws. In particular, the company has employees and managers in India, whose personal data may be subject to Indian law, such as India's Digital Personal Data Protection Act, 2023. These notes are a general understanding, not legal advice, and are to be confirmed in the privacy review:
 
 - Employers can generally collect and use employee information that is reasonably needed to manage employment without consent, if employees are told beforehand and given the purposes.
 - Employees can ask to see or correct their information.
@@ -53,6 +57,8 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 
 ## Platform and Operations
 
-- **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
+- **Tech stack:** Recorded in [ADR 0001](../adr/0001-tech-stack.md).
 - **Authentication:** Local accounts managed in Fathom for v1.
-- **Snapshots:** Taken both manually and on a schedule. The schedule is to be decided.
+- **Snapshots:** Taken both manually and on a schedule, and contain projects, features, and allocations only. The schedule is to be decided.
+- **Exports:** PDF, and CSV or TSV for use in Excel.
+- **Backup operations:** Run and monitored by the owner's department, since IT is too busy to support custom applications.

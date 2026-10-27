@@ -57,6 +57,18 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 - **Goal:** Plan a role that needs to be filled, with its target date, and track it through the hiring states.
 - **Outcome:** The planned hire appears in the plan and can be allocated to work. When the role is filled, the new hire takes over its allocations.
 
+### Maintain Feature Teams
+
+- **Actors:** Software Engineering Managers, with the Director approving
+- **Goal:** Keep feature teams, their members, and their feature leads current.
+- **Outcome:** Once approved, each feature has a feature team that owns and delivers it.
+
+### Evaluate Team Composition
+
+- **Actor:** To be confirmed
+- **Goal:** Check teams and feature teams for balance, such as test-to-development ratios and reports per manager compared with a target.
+- **Outcome:** Imbalances are visible and can be addressed in the plan.
+
 ### Plan a Reporting Change
 
 - **Actor:** Director
@@ -75,7 +87,13 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 - **Actor:** VP
 - **Goal:** See where the roadmap stands without asking for a status deck.
-- **Outcome:** The VP has a current view of projects and milestones by quarter and theme.
+- **Outcome:** The VP has a current view of the roadmap by quarter and theme.
+
+### Export the Plan
+
+- **Actors:** Users, according to their roles
+- **Goal:** Share the plan or roadmap outside Fathom.
+- **Outcome:** The export contains only what the user's roles allow, in one of the formats in the Decisions Log.
 
 ### View an Earlier Snapshot
 
@@ -93,11 +111,11 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Back Up and Restore
 
-- **Actor:** The team operating Fathom (to be confirmed)
+- **Actor:** The owner's department
 - **Goal:** Make sure Fathom's data can be recovered from automated, encrypted backups.
 - **Outcome:** Fathom's data can be recovered after a failure.
 
 ## Not Yet Covered
 
-- **What-if scenarios:** Creating and comparing alternative plans is an open question in the brief.
-- **Exports:** Exporting the plan or roadmap depends on the open question on export formats.
+- **What-if scenarios:** Comparing drafts with the approved plan and with each other depends on an open question in the brief.
+- **Configuring cycles and releases:** Setting cycle length, release contents, and patch frequency is configurable, but has no use case yet.
