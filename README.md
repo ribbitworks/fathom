@@ -11,3 +11,7 @@ Early development. The tech stack and architecture are still being decided.
 ```text
 docs/   Project documentation, standards, and design notes
 ```
+
+## License
+
+Copyright 2026 Jared La Rue. Licensed under the [Apache License, Version 2.0](LICENSE).
