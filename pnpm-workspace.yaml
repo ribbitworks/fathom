@@ -9,8 +9,18 @@ minimumReleaseAge: 10080
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
 
+# Install scripts of dependencies are blocked unless listed here. These are denied because none is
+# needed: esbuild's only checks its binary, ssh2 and cpu-features build optional native speed-ups
+# for SSH connections to Docker, which are not used, and protobufjs's only prints a notice.
+allowBuilds:
+  esbuild: false
+  ssh2: false
+  cpu-features: false
+  protobufjs: false
+
 # Patched versions of indirect dependencies with known vulnerabilities.
 overrides:
   js-yaml: 5.4.1
   smol-toml: 1.9.0
   katex: 0.18.2
+  "@esbuild-kit/core-utils>esbuild": 0.25.12

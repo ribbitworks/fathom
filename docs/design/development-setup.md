@@ -26,7 +26,7 @@ scripts/        Development and check scripts
 docs/           Documentation
 ```
 
-- **Data access layer:** Lives in `apps/server`, so every read of protected data goes through the server's tier checks. `packages/db` holds only the schema and migrations. A lint rule allows only the server's data access layer, `seed`, and `test-utils` to import the database client.
+- **Data access layer:** Lives in `apps/server`, so every read of protected data goes through the server's tier checks. `packages/db` holds the schema, the migrations, and the database client. A lint rule allows only the server's data access layer, `seed`, and `test-utils` to import it.
 - **Shared code:** Only `packages/shared` is used by both the front end and the server, so server-only code never reaches the browser.
 - **Development-only packages:** `fixtures`, `seed`, and `test-utils` are never included in the runtime image.
 - **Root configuration:** The workspace definition, shared TypeScript, linting, and formatting settings, the pinned Node.js and pnpm versions, and the Renovate configuration.
@@ -48,7 +48,8 @@ Developers may use any machine and container runtime listed for development in S
 ### Ways to Run Fathom
 
 - **Development mode:** PostgreSQL runs in a container, and the server and front end run directly on the machine with automatic reloading. The front end's development server forwards API requests to the server, so the browser sees one HTTPS origin.
-- **Production-like mode:** Both containers run with Docker Compose, over HTTPS, with the same network isolation as production. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Container tests run in this mode.
+- **Production-like mode:** Both containers run with Docker Compose, over HTTPS, with the same network isolation as production. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Tests of the running containers run in this mode.
+- **Tests and the database:** Development mode and the database tests build images for the machine's own processor, so they run at full speed. The security report scans separate linux/amd64 builds, so what is scanned is what production runs.
 
 ### HTTPS
 
@@ -64,12 +65,14 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm run dev:setup` | Create development secrets and the local certificate |
+| `pnpm run dev:setup` | Create development secrets, such as random database passwords, in the private `.dev/` folder |
+| `pnpm db:up` and `pnpm db:down` | Start and stop the development database, whose port is published only on this machine |
 | `pnpm dev` | Start development mode |
 | `pnpm db:migrate` | Apply migration files using the migration role |
-| `pnpm db:reset` | Recreate the development database and load seed data |
+| `pnpm db:reset` | Delete and recreate the development database, and apply migrations |
+| `pnpm typecheck` | Check types across the workspace |
 | `pnpm check` | The single command from the [Testing Standards](../standards/testing.md#running-tests) |
-| `pnpm test` | Tests for the project's scripts |
+| `pnpm test` | All tests, including database tests that run against a throwaway PostgreSQL container |
 | `pnpm security` | The security report, written to a dated folder under the git-ignored `output/security/` folder |
 | `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell` | Individual linters, also run by `pnpm check` |
 | `pnpm format` | Format source files |

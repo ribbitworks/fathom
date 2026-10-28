@@ -33,6 +33,10 @@ const cleanResults = {
     paths: { scanned: ["package.json"] },
   },
   "files.json": { Results: [lockfileTarget] },
+  "configuration.json": { SchemaVersion: 2 },
+  "container-images.json": [
+    { image: "example/image:1", report: { SchemaVersion: 2, Results: [] } },
+  ],
 };
 
 let reportDir;
@@ -165,7 +169,7 @@ describe("security summary", () => {
     const { failed, markdown } = summarize(reportDir);
     assert.equal(failed, true);
     assert.match(
-      rowFor(markdown, "Vulnerabilities, misconfiguration, and licences"),
+      rowFor(markdown, "Dependency vulnerabilities and licences"),
       /Did not complete/,
     );
   });
@@ -219,7 +223,7 @@ describe("security summary", () => {
     const { failed, markdown } = summarize(reportDir);
     assert.equal(failed, true);
     assert.match(
-      rowFor(markdown, "Vulnerabilities, misconfiguration, and licences"),
+      rowFor(markdown, "Dependency vulnerabilities and licences"),
       /Did not complete/,
     );
   });
@@ -229,26 +233,101 @@ describe("security summary", () => {
     const { failed, markdown } = summarize(reportDir);
     assert.equal(failed, true);
     assert.match(
-      rowFor(markdown, "Vulnerabilities, misconfiguration, and licences"),
+      rowFor(markdown, "Dependency vulnerabilities and licences"),
       /Did not complete/,
     );
   });
 
-  it("counts Trivy misconfigurations", () => {
+  it("counts vulnerabilities across every scanned container image and names the images", () => {
     writeResults({
-      "files.json": {
+      "container-images.json": [
+        {
+          image: "example/one:1",
+          report: {
+            SchemaVersion: 2,
+            Results: [{ Vulnerabilities: [{ Severity: "CRITICAL" }] }],
+          },
+        },
+        {
+          image: "example/two:1",
+          report: {
+            SchemaVersion: 2,
+            Results: [{ Vulnerabilities: [{ Severity: "LOW" }] }],
+          },
+        },
+      ],
+    });
+    const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, true);
+    assert.match(
+      rowFor(markdown, "Container images"),
+      /\| Fail \| 1 \| 0 \| 0 \| 1 \|$/,
+    );
+    assert.match(markdown, /Images scanned: example\/one:1, example\/two:1\./);
+  });
+
+  it("counts every secret built into a container image as high", () => {
+    writeResults({
+      "container-images.json": [
+        {
+          image: "example/image:1",
+          report: {
+            SchemaVersion: 2,
+            Results: [
+              { Secrets: [{ Severity: "LOW" }, { Severity: "MEDIUM" }] },
+            ],
+          },
+        },
+      ],
+    });
+    const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, true);
+    assert.match(
+      rowFor(markdown, "Container images"),
+      /\| Fail \| 0 \| 2 \| 0 \| 0 \|$/,
+    );
+  });
+
+  it("does not complete the container image scan when no image was scanned or a scan failed", () => {
+    for (const results of [[], [{ image: "example/image:1", report: null }]]) {
+      writeResults({ "container-images.json": results });
+      const { failed, markdown } = summarize(reportDir);
+      assert.equal(failed, true);
+      assert.match(rowFor(markdown, "Container images"), /Did not complete/);
+    }
+  });
+
+  it("counts Trivy misconfigurations in the project's configuration", () => {
+    writeResults({
+      "configuration.json": {
+        SchemaVersion: 2,
         Results: [
-          lockfileTarget,
-          { Target: "Dockerfile", Misconfigurations: [{ Severity: "HIGH" }] },
+          {
+            Target: "Dockerfile",
+            Misconfigurations: [{ Severity: "HIGH" }, { Severity: "LOW" }],
+          },
         ],
       },
     });
     const { failed, markdown } = summarize(reportDir);
     assert.equal(failed, true);
     assert.match(
-      rowFor(markdown, "Vulnerabilities, misconfiguration, and licences"),
-      /\| Fail \| 0 \| 1 \| 0 \| 0 \|$/,
+      rowFor(markdown, "Configuration"),
+      /\| Fail \| 0 \| 1 \| 0 \| 1 \|$/,
     );
+  });
+
+  it("passes the configuration scan when there are no configuration files to check", () => {
+    writeResults({ "configuration.json": { SchemaVersion: 2 } });
+    const { markdown } = summarize(reportDir);
+    assert.match(rowFor(markdown, "Configuration"), /\| Pass \|/);
+  });
+
+  it("does not complete the configuration scan without a Trivy report", () => {
+    writeResults({ "configuration.json": { message: "unexpected" } });
+    const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, true);
+    assert.match(rowFor(markdown, "Configuration"), /Did not complete/);
   });
 
   it("ignores permissive licences and counts unclassified ones and unknown severities as medium", () => {
@@ -266,7 +345,7 @@ describe("security summary", () => {
     const { failed, markdown } = summarize(reportDir);
     assert.equal(failed, false);
     assert.match(
-      rowFor(markdown, "Vulnerabilities, misconfiguration, and licences"),
+      rowFor(markdown, "Dependency vulnerabilities and licences"),
       /\| Pass \| 0 \| 0 \| 2 \| 0 \|$/,
     );
   });

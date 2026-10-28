@@ -40,10 +40,13 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | Sessions are hijacked, or requests forged from another site | Secure, HttpOnly, SameSite session cookies and cross-site request forgery protection | Automated tests; web application scan |
 | Traffic is intercepted on the internal network | HTTPS with an internal certificate; no unencrypted access | TLS configuration scan |
 | Injection attacks, such as SQL injection or cross-site scripting | Parameterized queries, output encoding, and input validation with shared schemas | Automated tests; static analysis; web application scan |
-| Server operators read the database directly | Server login limited to named people; database credentials stored as secrets. Anyone who can run commands in Fathom's containers can reach the database without a password. The remaining risk is accepted and recorded | Review of who has server login |
+| Server operators read the database directly | Server login limited to named people; database credentials stored as secrets, and every database login, including inside the container, requires a password. Anyone who can run commands in Fathom's containers can still read those passwords from the container's secrets. The remaining risk is accepted and recorded | Review of who has server login |
 | Another application on a shared host is compromised and used to reach Fathom | Fathom has its own container network and no shared database; only Fathom's HTTPS port is published, the database port never is, and published ports are restricted by bind address and firewall. A separate WSL 2 distribution is not full isolation, since all distributions on a host share one virtual machine, kernel, and by default network; if other applications on the host use WSL 2 or Docker, the remaining risk is recorded or a separate virtual machine is requested | Configuration review; internal port scan |
 | Administrators of other applications on a shared host reach Fathom's data | Fathom's environment is registered to a dedicated account used only by its named operators. Anyone with full administrator access to the host can still reach the data and the secrets stored on it; this remaining risk is accepted and recorded | Review of who has host and environment login |
-| Database administrator credentials are misused over the network | Fathom connects with a limited database account; administrator credentials are kept in the secret store, not on the host, and used only for maintenance. Direct access from inside the containers is covered by the server operators row | Configuration review; credential review |
+| The application changes the database schema or the record of applied migrations | The application connects with a role that can only read and write data in Fathom's schema. Only the migration role, used for upgrades, can change the schema, and the record of applied migrations is closed to the application | Database tests for each permission the application role has and lacks |
+| A database role connects to databases other than Fathom's, or uses the shared public schema | Connection rights are removed from every role except Fathom's two roles on Fathom's database, and nobody may create objects in the public schema | Database tests |
+| Database passwords are weak, reused, or stored insecurely | Passwords are random for each installation, stored with SCRAM-SHA-256, and every connection, including over the local socket, requires one | Database tests; credential review |
+| Database administrator credentials are misused over the network | Fathom connects with a limited database account; administrator credentials are kept in the secret store, not on the host, and used only for maintenance; the database refuses superuser logins over the network, including for replication. Direct access from inside the containers is covered by the server operators row | Database tests; configuration review; credential review |
 | The access history is altered or deleted | Access history can only be added to; no role can edit or delete it | Automated tests |
 | Secrets leak | Secrets are kept out of the repository and container images | Secret scanning |
 | A vulnerable or malicious dependency or container image | Pinned versions from trusted sources; dependency and image scanning | Scans on every build and on a schedule |
@@ -63,6 +66,7 @@ Every credential has an owner. Its master copy is kept in a password manager or 
 | --- | --- | --- |
 | Database administrator account | Fathom's operators | Used only for maintenance, never by the application |
 | Database application account | Fathom's operators | Limited to what the application needs |
+| Database migration account | Fathom's operators | Used only to apply migrations during upgrades |
 | HTTPS private key | Fathom's operators, with the certificate issued by IT | Renewed before expiry |
 | Backup encryption key | To be decided; someone outside the team that runs backups | Old keys are kept for as long as backups made with them are kept, so those backups can still be restored |
 | Fathom Administrator accounts | Each named Administrator | Personal accounts, not shared |
@@ -76,10 +80,10 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 | What is scanned | When | Proposed tooling |
 | --- | --- | --- |
 | Application dependencies (npm packages) | Every build, and daily | pnpm audit and Trivy |
-| Container images, both as built and as running | Every build, and daily | Trivy |
+| Container images, both as built and as running | Every build, and daily | Trivy, scanning each image saved to a file for vulnerable operating system packages and built-in secrets. Trivy cannot see PostgreSQL itself, which is built from source; its releases are tracked through PostgreSQL's release notes and Renovate |
 | Application source code | Every build | Semgrep |
 | Secrets in the repository, including its history | Every build | Gitleaks |
-| Docker and Compose configuration | Every build, and after any change | Trivy configuration scan |
+| Docker and Compose configuration | Every build, and after any change | Trivy configuration scan for Dockerfiles; automated tests for Compose settings, which Trivy cannot scan |
 | The running web application | Before each stage goes live, and monthly | A web application scanner such as OWASP ZAP |
 | HTTPS configuration | Before each stage goes live, and monthly | A TLS configuration scanner |
 | Host operating system and container runtime | Weekly, or on IT's existing schedule if more frequent | IT's existing host vulnerability scanner |

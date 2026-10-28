@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, and to add the development and scanning tools
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image
 
 ## Context
 
@@ -28,6 +28,7 @@ What matters most in these choices:
 | API contract | Shared Zod schemas and TypeScript types | OpenAPI | The front end and API live in one repository, so shared types are enough for now |
 | Forms | React Hook Form with its Zod resolver | TanStack Form | Widely used, and validates with the same shared schemas |
 | Database access | Drizzle ORM | Kysely, Prisma | TypeScript-first and close to SQL, so the queries behind tier checks stay explicit |
+| PostgreSQL driver | node-postgres (`pg`) | postgres.js | The most widely used PostgreSQL driver for Node.js, and fully supported by Drizzle |
 | Migrations | drizzle-kit, generating SQL migration files | Hand-written SQL | Migrations are plain SQL files reviewed like any other change |
 | Authentication and sessions | Better Auth, with sessions stored in the database | A small in-house implementation | A maintained library for local accounts, password hashing, sessions, and sign-in rate limiting, rather than writing security-critical code ourselves |
 | Password hashing | Better Auth's default, scrypt | Argon2id through Better Auth's custom hashing hooks | scrypt is an accepted password hashing algorithm and needs no native module; to be confirmed in Hello Fathom |
@@ -74,6 +75,8 @@ Better Auth settings that the security plan relies on:
 - **Configuration:** Settings come from environment variables and secrets from mounted files, all validated with Zod at start-up.
 - **Migrations:** Run as a separate step before the application starts, using a migration database role that can change the schema. The application's own database role can only read and write data. Schema changes are never pushed directly with drizzle-kit; only reviewed migration files reach the database.
 - **Base images:** Builds use Debian slim images, so prebuilt binaries for glibc work. The application runs on a minimal distroless image, to reduce what can be attacked.
+- **Database image:** Fathom's own image, based on the official PostgreSQL Alpine image. It applies the security fixes released up to the day it is built, removes gosu, which is only needed to start as root, and includes Fathom's first-time setup scripts. Alpine was chosen over Debian because its known vulnerabilities all have fixes available. Development, tests, the security report, and production all build the image from the same Dockerfile.
+- **Sorting:** The database sorts text with ICU's international rules, set when the database is created because it cannot be changed afterwards. When an image update changes the ICU version, affected indexes must be rebuilt (`REINDEX`) and the collation version refreshed (`ALTER DATABASE ... REFRESH COLLATION VERSION`).
 - **Dependency updates:** Renovate finds dependency updates, run locally until there is a shared repository. Its updates are reviewed like any other change.
 
 ## Consequences

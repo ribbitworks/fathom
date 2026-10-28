@@ -14,14 +14,20 @@
     "lint:shell": "bash scripts/lint-shell.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm lint && pnpm format:check && pnpm lint:md && pnpm lint:shell && pnpm lint:powershell && pnpm test && pnpm security",
+    "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm lint:md && pnpm lint:shell && pnpm lint:powershell && pnpm test && pnpm security",
     "lint:powershell": "bash scripts/lint-powershell.sh",
     "security": "bash scripts/security-report.sh",
-    "test": "node --test \"scripts/*.test.mjs\"",
+    "test": "node --test \"scripts/*.test.mjs\" && pnpm --recursive --if-present test",
     "updates": "bash scripts/check-updates.sh",
     "update:analyzer": "bash scripts/update-script-analyzer.sh",
     "reset-caches": "bash scripts/reset-caches.sh",
-    "prune-reports": "node scripts/prune-reports.mjs"
+    "prune-reports": "node scripts/prune-reports.mjs",
+    "dev:setup": "bash scripts/dev-setup.sh",
+    "db:up": "bash scripts/dev-db.sh up",
+    "db:down": "bash scripts/dev-db.sh down",
+    "db:migrate": "bash scripts/dev-db.sh migrate",
+    "db:reset": "bash scripts/dev-db.sh reset",
+    "typecheck": "tsc --build"
   },
   "devDependencies": {
     "@eslint/compat": "2.1.1",

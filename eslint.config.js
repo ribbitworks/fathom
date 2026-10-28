@@ -27,8 +27,8 @@ export default defineConfig(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
-    // Scripts read and write files in folders they create themselves, not paths from users.
-    files: ["scripts/**"],
+    // Scripts and tests read and write files in folders they create themselves, not paths from users.
+    files: ["scripts/**", "**/*.test.ts", "**/test-support/**"],
     rules: { "security/detect-non-literal-fs-filename": "off" },
   },
 );

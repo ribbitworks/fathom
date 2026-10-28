@@ -1,0 +1,48 @@
+# The development database. Its port is published only on this machine.
+name: fathom-dev
+
+services:
+  postgres:
+    build:
+      context: ./docker/postgres
+      args:
+        SECURITY_FIXES_DATE: ${FATHOM_SECURITY_FIXES_DATE:-unset}
+    # Development builds for this machine's processor. The security report sets the tag and platform
+    # to scan a separate build for the production server's processor.
+    image: fathom-postgres:${FATHOM_IMAGE_TAG:-dev}
+    environment:
+      POSTGRES_DB: fathom
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      # Every connection, including over the local socket, must give a password.
+      # Names are sorted with ICU's international rules, which cannot be changed once the database exists.
+      POSTGRES_INITDB_ARGS: --auth-local=scram-sha-256 --auth-host=scram-sha-256 --locale-provider=icu --icu-locale=und
+    secrets:
+      - postgres_superuser_password
+      - fathom_migrator_password
+      - fathom_app_password
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    ports:
+      - "127.0.0.1:${FATHOM_DEV_DB_PORT:-5432}:5432"
+    # Runs as the unprivileged postgres user, with no Linux capabilities and a read-only filesystem.
+    user: postgres
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql:uid=70,gid=70
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+secrets:
+  postgres_superuser_password:
+    file: ../.dev/secrets/postgres_superuser_password
+  fathom_migrator_password:
+    file: ../.dev/secrets/fathom_migrator_password
+  fathom_app_password:
+    file: ../.dev/secrets/fathom_app_password
+
+volumes:
+  postgres-data:

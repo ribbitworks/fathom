@@ -82,7 +82,7 @@ export const scans = [
         : [],
   },
   {
-    name: "Vulnerabilities, misconfiguration, and licences",
+    name: "Dependency vulnerabilities and licences",
     tool: "Trivy",
     file: "files.json",
     // The dependency lockfile must have been read, or the vulnerability scan saw nothing.
@@ -95,15 +95,57 @@ export const scans = [
     count(results) {
       const counts = emptyCounts();
       for (const target of results.Results) {
-        for (const item of [
-          ...(target.Vulnerabilities ?? []),
-          ...(target.Misconfigurations ?? []),
-        ]) {
-          addSeverity(counts, item.Severity);
+        for (const vulnerability of target.Vulnerabilities ?? []) {
+          addSeverity(counts, vulnerability.Severity);
         }
         // Trivy lists every package's licence; permissive licences are not findings.
         for (const licence of target.Licenses ?? []) {
           if (licence.Severity !== "LOW") addSeverity(counts, licence.Severity);
+        }
+      }
+      return counts;
+    },
+  },
+  {
+    name: "Container images",
+    tool: "Trivy",
+    file: "container-images.json",
+    // Every image must have been scanned, and there must be at least one.
+    completed: (results) =>
+      Array.isArray(results) &&
+      results.length > 0 &&
+      results.every((scan) => typeof scan.report?.SchemaVersion === "number"),
+    count(results) {
+      const counts = emptyCounts();
+      for (const scan of results) {
+        for (const target of scan.report.Results ?? []) {
+          for (const vulnerability of target.Vulnerabilities ?? []) {
+            addSeverity(counts, vulnerability.Severity);
+          }
+          // Any secret built into an image is serious, whatever severity Trivy gives it.
+          counts.set(
+            "high",
+            counts.get("high") + (target.Secrets ?? []).length,
+          );
+        }
+      }
+      return counts;
+    },
+    notes: (results) => [
+      `Images scanned: ${results.map((scan) => scan.image).join(", ")}.`,
+    ],
+  },
+  {
+    name: "Configuration",
+    tool: "Trivy",
+    file: "configuration.json",
+    // A project may have no configuration files Trivy checks, so any well-formed Trivy report counts.
+    completed: (results) => typeof results.SchemaVersion === "number",
+    count(results) {
+      const counts = emptyCounts();
+      for (const target of results.Results ?? []) {
+        for (const misconfiguration of target.Misconfigurations ?? []) {
+          addSeverity(counts, misconfiguration.Severity);
         }
       }
       return counts;

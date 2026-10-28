@@ -11,6 +11,11 @@ require_git_repository() {
   git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "Run this inside the Fathom git repository"
 }
 
+# Container images built today pick up the security fixes released up to today; see the Dockerfiles.
+# Setting another value, such as the current time, fetches fixes again within the same day.
+FATHOM_SECURITY_FIXES_DATE="${FATHOM_SECURITY_FIXES_DATE:-$(date -u +%Y-%m-%d)}"
+export FATHOM_SECURITY_FIXES_DATE
+
 require_container_runtime() {
   command -v docker >/dev/null 2>&1 || fail "A container runtime is required; see docs/operations/supported-platforms.md"
   docker info >/dev/null 2>&1 || fail "The container runtime is installed but not running"

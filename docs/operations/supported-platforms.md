@@ -31,7 +31,7 @@ Running Fathom on Windows Server with WSL 2 needs this setup:
 | macOS | Docker Desktop, which needs a paid subscription for larger companies | In use for development; not yet tested, since there is no code yet |
 | macOS, Linux, or Windows | A container runtime without a paid licence, such as Docker Engine, Colima, or Podman | Planned; the Windows bootstrap script has not yet been run on Windows |
 
-Container files must not depend on features of a particular container runtime, and images must be built for linux/amd64 even on machines with a different processor.
+Container files must not depend on features of a particular container runtime. Production images are built for linux/amd64; [Development Setup](../design/development-setup.md#ways-to-run-fathom) describes which development builds use the machine's own processor.
 
 ## Browsers
 

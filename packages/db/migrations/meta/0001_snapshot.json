@@ -1,0 +1,46 @@
+{
+  "id": "360d5d5e-b001-49a9-8328-b2c92b476d43",
+  "prevId": "f0577438-2e93-4894-8cef-c7d6b3eb9b5f",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "fathom.app_info": {
+      "name": "app_info",
+      "schema": "fathom",
+      "columns": {
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {
+    "fathom": "fathom"
+  },
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

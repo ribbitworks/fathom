@@ -45,12 +45,69 @@ docker run --rm --volume "$scan_copy:/src:ro" --workdir /src "$semgrep_image" \
   semgrep scan --config p/default --metrics=off --disable-version-check --quiet --json . \
   >"$report_dir/code.json" || info "The scan of code for security flaws did not complete"
 
-info "Scanning files for vulnerabilities, misconfiguration, and licences"
+info "Scanning dependencies for vulnerabilities and licences"
 # Trivy also reads installed packages, read-only, to find their licences.
 docker run --rm --volume "$scan_copy:/src:ro" --volume "$PWD/node_modules:/src/node_modules:ro" \
   --volume fathom-trivy-cache:/root/.cache/trivy "$trivy_image" \
   fs --quiet --skip-version-check --disable-telemetry --include-dev-deps \
-  --scanners vuln,misconfig,license --format json --exit-code 0 /src \
-  >"$report_dir/files.json" || info "The scan of files for vulnerabilities did not complete"
+  --scanners vuln,license --format json --exit-code 0 /src \
+  >"$report_dir/files.json" || info "The scan of dependencies for vulnerabilities did not complete"
+
+info "Scanning configuration for misconfiguration"
+# Only the project's own files are scanned; configuration files inside dependencies are not ours.
+docker run --rm --volume "$scan_copy:/src:ro" \
+  --volume fathom-trivy-cache:/root/.cache/trivy "$trivy_image" \
+  fs --quiet --skip-version-check --disable-telemetry \
+  --scanners misconfig --format json --exit-code 0 /src \
+  >"$report_dir/configuration.json" || info "The scan of configuration did not complete"
+
+info "Building and scanning container images for the production server's processor"
+# Runs Docker Compose for linux/amd64, with images tagged separately, so the development images
+# built for this machine are untouched.
+compose_for_scan() {
+  DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_IMAGE_TAG=security-scan docker compose "$@"
+}
+# Each image is saved to a file that Trivy reads, so Trivy is never given access to the container
+# runtime. Every image is passed to the summary, and anything that fails is recorded as not scanned,
+# so the report can never pass on a partial or stale scan.
+images_dir="$(mktemp -d "$PWD/.tmp/images.XXXXXX")"
+trap 'rm -rf "$scan_copy" "$images_dir"' EXIT
+image_reports=()
+index=0
+for compose_file in deploy/compose*.yaml deploy/compose*.yml; do
+  [ -f "$compose_file" ] || continue
+  # An image that could not be pulled may be stale, so it counts as not scanned.
+  if ! compose_for_scan --file "$compose_file" --profile '*' pull --quiet --ignore-buildable; then
+    info "Could not pull the images in $compose_file"
+    image_reports+=("images pulled by $compose_file=$images_dir/missing.json")
+    continue
+  fi
+  if ! compose_for_scan --file "$compose_file" --profile '*' build --quiet; then
+    info "Could not build the images in $compose_file"
+    image_reports+=("images built by $compose_file=$images_dir/missing.json")
+    continue
+  fi
+  if ! images="$(compose_for_scan --file "$compose_file" --profile '*' config --images)"; then
+    info "Could not list the images in $compose_file"
+    image_reports+=("images listed by $compose_file=$images_dir/missing.json")
+    continue
+  fi
+  while IFS= read -r image; do
+    [ -n "$image" ] || continue
+    index=$((index + 1))
+    report="$images_dir/$index.json"
+    # Saving fails if the image has no linux/amd64 build, so only what production runs is scanned.
+    if ! docker save --platform linux/amd64 --output "$images_dir/$index.tar" "$image" ||
+      ! docker run --rm --volume "$images_dir/$index.tar:/image.tar:ro" \
+        --volume fathom-trivy-cache:/root/.cache/trivy "$trivy_image" \
+        image --quiet --skip-version-check --disable-telemetry --scanners vuln,secret \
+        --format json --exit-code 0 --input /image.tar >"$report"; then
+      info "The scan of $image did not complete"
+      rm -f "$report"
+    fi
+    image_reports+=("$image=$report")
+  done <<<"$images"
+done
+node scripts/combine-image-reports.mjs ${image_reports[@]+"${image_reports[@]}"} >"$report_dir/container-images.json"
 
 node scripts/security-summary.mjs "$report_dir"

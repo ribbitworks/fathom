@@ -21,5 +21,14 @@
       "datasourceTemplate": "nuget",
       "registryUrlTemplate": "https://www.powershellgallery.com/api/v2/"
     }
+  ],
+  "packageRules": [
+    {
+      "description": "PostgreSQL's minor releases, such as 18.6 to 18.7, and image digest updates carry security fixes from the official publisher. Docker Hub's dates change on every routine rebuild, so the seven-day minimum release age would hold these fixes back; major releases and other images keep it.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["postgres"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "minimumReleaseAge": null
+    }
   ]
 }

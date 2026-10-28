@@ -64,6 +64,7 @@ When findings are later addressed, an "Updates Made After Review" section is add
 
 - The change does what it is meant to, including edge cases and error paths.
 - It matches the agreed requirements and decisions, and does not add behavior nobody asked for.
+- Database migrations that have been applied anywhere are never edited; a change is made in a new migration.
 
 ### Architecture and Design
 
