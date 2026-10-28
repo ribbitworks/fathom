@@ -17,7 +17,11 @@
     "check": "pnpm lint && pnpm format:check && pnpm lint:md && pnpm lint:shell && pnpm lint:powershell && pnpm test && pnpm security",
     "lint:powershell": "bash scripts/lint-powershell.sh",
     "security": "bash scripts/security-report.sh",
-    "test": "node --test \"scripts/*.test.mjs\""
+    "test": "node --test \"scripts/*.test.mjs\"",
+    "updates": "bash scripts/check-updates.sh",
+    "update:analyzer": "bash scripts/update-script-analyzer.sh",
+    "reset-caches": "bash scripts/reset-caches.sh",
+    "prune-reports": "node scripts/prune-reports.mjs"
   },
   "devDependencies": {
     "@eslint/compat": "2.1.1",

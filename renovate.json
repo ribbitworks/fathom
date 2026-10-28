@@ -14,7 +14,7 @@
     },
     {
       "customType": "regex",
-      "description": "PSScriptAnalyzer version in lint-powershell.sh; its pinned SHA-256 must be updated by hand, and the lint fails until it is",
+      "description": "PSScriptAnalyzer version in lint-powershell.sh; update it with 'pnpm update:analyzer <version>', which also updates its pinned SHA-256",
       "managerFilePatterns": ["/^scripts/lint-powershell\\.sh$/"],
       "matchStrings": ["analyzer_version=\"(?<currentValue>[^\"]+)\""],
       "depNameTemplate": "PSScriptAnalyzer",

@@ -3,13 +3,20 @@
 .SYNOPSIS
 Prepares a Windows development machine for Fathom. Safe to run repeatedly.
 
+.PARAMETER ConfigureShell
+Also adds fnm to your PowerShell profile for all hosts, such as the terminal and VS Code, so
+Node.js switches automatically. Windows PowerShell 5.1 and PowerShell 7 keep separate profiles, so
+run this in each edition you use.
+
 .NOTES
 Not yet run on Windows; checked only with PSScriptAnalyzer.
 If PowerShell blocks scripts, allow local scripts for your account first:
     Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 #>
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '', Justification = 'fnm emits its environment setup as PowerShell code, which must be evaluated.')]
-param()
+param(
+    [switch] $ConfigureShell
+)
 
 $ErrorActionPreference = 'Stop'
 
@@ -66,9 +73,25 @@ try {
     pnpm install
     Assert-ExitCode 'Installing dependencies'
 
-    if (-not (Test-Path $PROFILE) -or -not (Select-String -Path $PROFILE -SimpleMatch 'fnm env' -Quiet)) {
-        Write-Step "Add this line to $PROFILE so Node.js switches automatically in this folder:"
-        Write-Step '    fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression'
+    $fnmLine = 'fnm env --use-on-cd --shell powershell | Out-String | Invoke-Expression'
+    $profilePath = $PROFILE.CurrentUserAllHosts
+    $knownProfiles = @($profilePath, $PROFILE.CurrentUserCurrentHost) | Where-Object { Test-Path $_ }
+    $alreadyConfigured = $knownProfiles -and (Select-String -Path $knownProfiles -SimpleMatch 'fnm env' -Quiet)
+    $editionName = if ($PSVersionTable.PSEdition -eq 'Core') { 'PowerShell' } else { 'Windows PowerShell' }
+    if (-not $alreadyConfigured) {
+        if ($ConfigureShell) {
+            Write-Step "Adding fnm to the $editionName $($PSVersionTable.PSVersion) profile at $profilePath"
+            if (-not (Test-Path $profilePath)) {
+                # -Force here creates the profile's folder too; it is never used on an existing profile.
+                New-Item -ItemType File -Force -Path $profilePath | Out-Null
+            }
+            Add-Content -Path $profilePath -Value "`n# fnm: switch Node.js versions automatically per project`n$fnmLine"
+        }
+        else {
+            Write-Step "To switch Node.js automatically in this folder, add this line to $profilePath,"
+            Write-Step 'or run this script again with -ConfigureShell:'
+            Write-Step "    $fnmLine"
+        }
     }
 
     Write-Step 'Done'

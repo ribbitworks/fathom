@@ -28,14 +28,16 @@ list_project_files() {
 
 # Copies the files git would track into a new folder under the git-ignored .tmp/, and prints its
 # path. Scanners mount this copy, so they never see ignored folders such as private/. It lives
-# inside the repository because every container runtime can share the repository folder.
+# inside the repository because every container runtime can share the repository folder, and it is
+# made readable to all users because some scanner images run as a non-root user.
 make_scan_copy() {
   local copy
-  mkdir -p .tmp || return 1
+  mkdir -p .tmp && chmod 700 .tmp || return 1
   copy="$(mktemp -d "$PWD/.tmp/scan.XXXXXX")" || return 1
   list_project_files . | tar -cf - -T - | tar -xf - -C "$copy" || {
     rm -rf "$copy"
     fail "Could not copy the project's files to $copy"
   }
+  chmod -R a+rX "$copy" || return 1
   printf '%s\n' "$copy"
 }

@@ -79,6 +79,13 @@ Coverage numbers support review; they do not replace judgment about whether the 
 - **No sleeping:** Tests wait for conditions, never for fixed amounts of time.
 - **Flaky tests:** A test that fails intermittently is fixed, or reported to the user. Tests are never removed, skipped, or weakened without the user's approval.
 
+## Test Location
+
+- **Unit and integration tests:** Next to the code they test, named after it with `.test` before the extension, such as `people-service.test.ts` beside `people-service.ts`.
+- **UI tests:** In their own folder within the application they test, such as `e2e/`, since they test whole user journeys rather than one file.
+- **Shared test helpers and factories:** In a shared package rather than copied between tests.
+- **Builds:** Test files are excluded from builds, so tests never reach the runtime image.
+
 ## Running Tests
 
 One command runs linting, type checking, and the unit, integration, access control, and security tests, along with the build-time security scans. Container tests and UI tests have their own commands. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
