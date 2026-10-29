@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // ESLint settings for all JavaScript and TypeScript in the repository: strict type-aware rules for
-// TypeScript, security rules for all of it, and the boundary of the server's data access layer,
-// skipping the files git ignores.
+// TypeScript, security rules for all of it, browser globals and React's rules of hooks for the front
+// end, and the boundary of the server's data access layer, skipping the files git ignores.
 
 import { includeIgnoreFile } from "@eslint/compat";
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
+import reactHooks from "eslint-plugin-react-hooks";
 import security from "eslint-plugin-security";
 import globals from "globals";
 import { fileURLToPath } from "node:url";
@@ -21,12 +22,21 @@ export default defineConfig(
   security.configs.recommended,
   {
     languageOptions: {
-      globals: globals.node,
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
+  },
+  {
+    ignores: ["apps/web/src/**"],
+    languageOptions: { globals: globals.node },
+  },
+  {
+    // The front end runs in the browser, so Node.js globals such as process are not available.
+    files: ["apps/web/src/**"],
+    extends: [reactHooks.configs.flat.recommended],
+    languageOptions: { globals: globals.browser },
   },
   {
     files: ["**/*.js", "**/*.mjs"],

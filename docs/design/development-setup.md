@@ -1,7 +1,7 @@
 # Fathom — Development Setup
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-28
+**Last updated:** 2026-10-29
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
 
@@ -24,6 +24,7 @@ deploy/
   docker/       Container image definitions and database initialization
 scripts/        Development and check scripts
 docs/           Documentation
+LICENSES/       Licence texts, as the REUSE specification requires
 ```
 
 - **Data access layer:** Lives in `apps/server/src/data/`, so every read of protected data goes through the server's tier checks. `packages/db` holds the schema, the migrations, and the database client. A lint rule allows only the data access layer, the server's start-up code, `seed`, `test-utils`, and tests to import it; other code may use only its types.
@@ -47,7 +48,7 @@ Developers may use any machine and container runtime listed for development in S
 
 ### Ways to Run Fathom
 
-- **Development mode:** PostgreSQL runs in a container, and the server and front end run directly on the machine with automatic reloading. The front end's development server forwards API requests to the server, so the browser sees one HTTPS origin.
+- **Development mode:** PostgreSQL runs in a container, and the server and front end run directly on the machine with automatic reloading. The front end's development server forwards API requests to the server, so the browser sees one HTTPS origin. It does not send the server's security headers, so the built front end is also tested to need no inline scripts or styles, which those headers block.
 - **Production-like mode:** Both containers run with Docker Compose, over HTTPS, with the same network isolation as production. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Tests of the running containers run in this mode.
 - **Tests and the database:** Development mode and the database tests build images for the machine's own processor, so they run at full speed. The security report scans separate linux/amd64 builds, so what is scanned is what production runs.
 
@@ -67,7 +68,8 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | --- | --- |
 | `pnpm dev:setup` | Create development secrets, such as random database passwords, and the locally trusted HTTPS certificate in the private `.dev/` folder |
 | `pnpm db:up` and `pnpm db:down` | Start and stop the development database, whose port is published only on this machine |
-| `pnpm dev` | Start development mode: the database, with migrations applied, and the server at `https://localhost:8443`, restarted when its code changes. Ctrl+C stops the server; the database keeps running until `pnpm db:down` |
+| `pnpm dev` | Start development mode: the database, with migrations applied, the server, and the front end, and open Fathom at `https://localhost:8443` in the browser. The server and the front end reload when their code changes. Ctrl+C stops them; the database keeps running until `pnpm db:down` |
+| `pnpm build` | Build the front end into `apps/web/dist`, which the server serves when `FATHOM_WEB_ROOT` points to it |
 | `pnpm db:migrate` | Apply migration files using the migration role |
 | `pnpm db:reset` | Delete and recreate the development database, and apply migrations |
 | `pnpm typecheck` | Check types across the workspace |

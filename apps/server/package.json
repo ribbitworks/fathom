@@ -12,6 +12,7 @@
   "dependencies": {
     "@fastify/helmet": "13.2.0",
     "@fastify/rate-limit": "11.2.1",
+    "@fastify/static": "10.1.7",
     "@fathom/db": "workspace:*",
     "@fathom/shared": "workspace:*",
     "drizzle-orm": "0.45.4",

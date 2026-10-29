@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting
 
 ## Context
 
@@ -38,7 +38,7 @@ What matters most in these choices:
 | Unit and integration tests | Vitest, with Testcontainers for PostgreSQL | Jest | Fast and Vite-native; integration tests run against a real PostgreSQL database |
 | Fictional data | Faker, as a development-only dependency | Hand-written generators | Widely used, with locale-aware realistic names and a fixed seed for repeatable data |
 | UI tests | Playwright | Cypress | Cross-browser; these are UI tests, so they are not run in the workflow's test step |
-| Linting and formatting | ESLint with typescript-eslint's strict type-checked rules and eslint-plugin-security, and Prettier | Biome | Type-aware rules and security rules |
+| Linting and formatting | ESLint with typescript-eslint's strict type-checked rules, eslint-plugin-security, and eslint-plugin-react-hooks for the front end, and Prettier | Biome | Type-aware rules, security rules, and React's rules of hooks |
 | Static analysis | Semgrep Community Edition, run with metrics off | CodeQL | Runs locally and in any build process; CodeQL is free only for public repositories |
 | Secret scanning | Gitleaks | TruffleHog | Fast, runs offline, and scans both files and git history |
 | Vulnerability, misconfiguration, and licence scanning | Trivy, with telemetry off | Grype | One tool for dependencies, container images, configuration, and licences |

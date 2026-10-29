@@ -1,7 +1,7 @@
 # Fathom — Security Plan
 
 **Status:** Proposal for review by the owner and IT
-**Last updated:** 2026-10-28
+**Last updated:** 2026-10-29
 
 How Fathom is protected: what it must protect, the threats against it, how each threat is mitigated and verified, how its technology is scanned for vulnerabilities, how confidence in its source code is established, and how the plan is enforced. It builds on [ADR 0001](../adr/0001-tech-stack.md), the [Decisions Log](../product/decisions.md), and [Roles](../product/roles.md). Everything here is proposed until reviewed.
 
@@ -39,7 +39,7 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | Passwords are guessed or stolen | Strong password hashing, sign-in rate limiting, and session expiry | Automated tests; configuration review |
 | Sessions are hijacked, or requests forged from another site | Secure, HttpOnly, SameSite session cookies and cross-site request forgery protection | Automated tests; web application scan |
 | Traffic is intercepted on the internal network | HTTPS with an internal certificate; no unencrypted access | TLS configuration scan |
-| Injection attacks, such as SQL injection or cross-site scripting | Parameterized queries, output encoding, and input validation with shared schemas | Automated tests; static analysis; web application scan |
+| Injection attacks, such as SQL injection or cross-site scripting | Parameterized queries, output encoding, input validation with shared schemas, and a content security policy that allows scripts and styles only from Fathom's own files | Automated tests, including a check that the built front end needs nothing the policy blocks; static analysis; web application scan |
 | Server operators read the database directly | Server login limited to named people; database credentials stored as secrets, and every database login, including inside the container, requires a password. Anyone who can run commands in Fathom's containers can still read those passwords from the container's secrets. The remaining risk is accepted and recorded | Review of who has server login |
 | Another application on a shared host is compromised and used to reach Fathom | Fathom has its own container network and no shared database; only Fathom's HTTPS port is published, the database port never is, and published ports are restricted by bind address and firewall. A separate WSL 2 distribution is not full isolation, since all distributions on a host share one virtual machine, kernel, and by default network; if other applications on the host use WSL 2 or Docker, the remaining risk is recorded or a separate virtual machine is requested | Configuration review; internal port scan |
 | Administrators of other applications on a shared host reach Fathom's data | Fathom's environment is registered to a dedicated account used only by its named operators. Anyone with full administrator access to the host can still reach the data and the secrets stored on it; this remaining risk is accepted and recorded | Review of who has host and environment login |

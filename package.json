@@ -29,12 +29,14 @@
     "db:down": "bash scripts/dev-db.sh down",
     "db:migrate": "bash scripts/dev-db.sh migrate",
     "db:reset": "bash scripts/dev-db.sh reset",
-    "typecheck": "tsc --build"
+    "typecheck": "tsc --build",
+    "build": "pnpm --filter @fathom/web build"
   },
   "devDependencies": {
     "@eslint/compat": "2.1.1",
     "@eslint/js": "10.0.1",
     "eslint": "10.13.0",
+    "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-security": "4.2.0",
     "globals": "17.13.0",
     "markdownlint-cli": "0.49.1",

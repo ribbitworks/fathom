@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 
-# Starts development mode: the development database, with migrations applied, and Fathom's server
-# over HTTPS at https://localhost:8443, connected as the application's database role and restarted
-# when its code changes. Run 'pnpm dev:setup' first. Set FATHOM_DEV_PORT to use another port.
+# Starts development mode: the development database, with migrations applied, Fathom's server, and
+# Vite's development server for the front end, which opens Fathom at https://localhost:8443 in the
+# browser. Vite forwards API requests to the server over HTTPS, and both reload when their code
+# changes. Run 'pnpm dev:setup' first. Set FATHOM_DEV_PORT and FATHOM_DEV_API_PORT to use other
+# ports, and FATHOM_DEV_OPEN=false to not open the browser.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -13,13 +15,22 @@ source scripts/lib.sh
 for file in .dev/certs/localhost.pem .dev/certs/localhost-key.pem; do
   [ -s "$file" ] || fail "The development certificate is missing; run 'pnpm dev:setup' first"
 done
+command -v mkcert >/dev/null 2>&1 ||
+  fail "mkcert is required to trust the development certificate (https://github.com/FiloSottile/mkcert)"
+ca_file="$(mkcert -CAROOT)/rootCA.pem"
+[ -s "$ca_file" ] || fail "mkcert's certificate authority is missing; run 'pnpm dev:setup' again"
 
 bash scripts/dev-db.sh up
 bash scripts/dev-db.sh migrate
 
-info "Starting the server at https://localhost:${FATHOM_DEV_PORT:-8443}"
-FATHOM_HOST=127.0.0.1 \
-  FATHOM_PORT="${FATHOM_DEV_PORT:-8443}" \
+port="${FATHOM_DEV_PORT:-8443}"
+info "Starting Fathom at https://localhost:$port"
+# Both processes get these settings: the server listens on FATHOM_PORT, and Vite serves the page on
+# FATHOM_DEV_PORT with the same certificate, forwarding to the server. NODE_EXTRA_CA_CERTS lets
+# Vite check the server's certificate.
+FATHOM_DEV_PORT="$port" \
+  FATHOM_HOST=127.0.0.1 \
+  FATHOM_PORT="${FATHOM_DEV_API_PORT:-8444}" \
   FATHOM_TLS_CERT_FILE="$PWD/.dev/certs/localhost.pem" \
   FATHOM_TLS_KEY_FILE="$PWD/.dev/certs/localhost-key.pem" \
   FATHOM_DB_HOST=127.0.0.1 \
@@ -27,4 +38,5 @@ FATHOM_HOST=127.0.0.1 \
   FATHOM_DB_NAME=fathom \
   FATHOM_DB_USER=fathom_app \
   FATHOM_DB_PASSWORD_FILE="$PWD/.dev/secrets/fathom_app_password" \
-  pnpm --filter @fathom/server dev
+  NODE_EXTRA_CA_CERTS="$ca_file" \
+  pnpm --parallel --filter @fathom/server --filter @fathom/web dev

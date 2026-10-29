@@ -23,7 +23,7 @@ pnpm dev:setup
 pnpm dev
 ```
 
-Fathom is then at <https://localhost:8443>. Until the first page is added, open <https://localhost:8443/api/greeting> to see the server read its greeting from the database.
+`pnpm dev` opens Fathom in your browser.
 
 Check everything, including the tests and the security report:
 
@@ -38,8 +38,10 @@ See [Development Setup](docs/design/development-setup.md#common-commands) for wh
 ```text
 apps/       Applications (front end and server)
 packages/   Shared packages
+deploy/     Deployment configuration
 scripts/    Automation scripts
 docs/       Documentation, standards, and decision records
+LICENSES/   Licence texts, as the REUSE specification requires
 ```
 
 ## Supported Platforms

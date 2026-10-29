@@ -8,6 +8,11 @@ strictDepBuilds: true
 minimumReleaseAge: 10080
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
+# A backport to the 6.x line, published in July 2023 without the provenance attestation that newer
+# 7.x releases already had, so the trust policy reads it as a downgrade. eslint-plugin-react-hooks
+# needs it through @babel/core. Only this exact version is excepted, with the owner's approval.
+trustPolicyExclude:
+  - semver@6.3.1
 
 # Install scripts of dependencies are blocked unless listed here. These are denied because none is
 # needed: esbuild's only checks its binary, ssh2 and cpu-features build optional native speed-ups

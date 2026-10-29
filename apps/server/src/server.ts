@@ -37,7 +37,12 @@ export async function startServer(
   try {
     const data = createDataAccess(createDatabase(pool));
     await data.checkConnection();
-    app = await buildApp({ data, tls: config.tls, logStream });
+    app = await buildApp({
+      data,
+      tls: config.tls,
+      webRoot: config.webRoot,
+      logStream,
+    });
     const url = await app.listen({ host: config.host, port: config.port });
     const running = app;
     let closing: Promise<void> | undefined;

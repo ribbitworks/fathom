@@ -1,0 +1,12 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "outDir": "../build/src",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "jsx": "react-jsx",
+    "types": ["vite/client"]
+  },
+  "include": ["."],
+  "references": [{ "path": "../../../packages/shared" }]
+}

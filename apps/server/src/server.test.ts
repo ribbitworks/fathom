@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for starting and stopping the server against a migrated PostgreSQL server: it serves over
-// HTTPS only, cleans up when it cannot start, closes once, closes when the process is told to end,
-// and the serve command reads its settings from the environment and reports failures.
+// Tests for starting and stopping the server against a migrated PostgreSQL server: it serves the API
+// and the built front end over HTTPS only, cleans up when it cannot start, closes once, closes when
+// the process is told to end, and the serve command reads its settings from the environment and
+// reports failures.
 
 import { createPool, runMigrations } from "@fathom/db";
 import {
@@ -13,7 +14,7 @@ import {
   type TestCertificate,
   type TestDatabase,
 } from "@fathom/test-utils";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -32,7 +33,13 @@ const silent = { write: () => undefined };
 
 function configFor(port = 0): ServerConfig {
   // Port 0 lets the system choose a free port.
-  return { host: "127.0.0.1", port, tls: certificate, database: database.app };
+  return {
+    host: "127.0.0.1",
+    port,
+    tls: certificate,
+    webRoot: undefined,
+    database: database.app,
+  };
 }
 
 // The application role's open sessions, which a server that failed to start must not leave behind.
@@ -87,6 +94,30 @@ describe("server", () => {
       expect(JSON.parse(response.body)).toEqual({ greeting: "Hello, Fathom" });
     } finally {
       await server.close();
+    }
+  });
+
+  it("serves the built front end from its folder", async () => {
+    const folder = mkdtempSync(join(tmpdir(), "fathom-server-web-"));
+    try {
+      mkdirSync(join(folder, "web"));
+      writeFileSync(
+        join(folder, "web", "index.html"),
+        "<!doctype html><title>Fathom</title>",
+      );
+      const server = await startServer(
+        { ...configFor(), webRoot: join(folder, "web") },
+        silent,
+      );
+      try {
+        const response = await httpsGet(`${server.url}/`, certificate.cert);
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toContain("<title>Fathom</title>");
+      } finally {
+        await server.close();
+      }
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
     }
   });
 

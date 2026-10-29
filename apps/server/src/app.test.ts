@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the application against a migrated PostgreSQL server, connected as the application's
-// database role: the greeting, security headers, the request time limit, rate limiting, error
-// responses that reveal no internal details, and logs without personal data other than the client's
-// address.
+// database role: the greeting, the built front end, security headers, the request time limit, rate
+// limiting, error responses that reveal no internal details, and logs without personal data other
+// than the client's address.
 
 import { appInfo, createDatabase, createPool, runMigrations } from "@fathom/db";
 import {
@@ -12,7 +12,9 @@ import {
   type TestCertificate,
   type TestDatabase,
 } from "@fathom/test-utils";
-import { hostname } from "node:os";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { hostname, tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type App, buildApp } from "./app.ts";
 import { readGreeting } from "./data/greeting.ts";
@@ -32,7 +34,11 @@ function poolFor(password = database.app.password): Pool {
 }
 
 async function appFor(
-  options: { password?: string; requestsPerMinute?: number } = {},
+  options: {
+    password?: string;
+    requestsPerMinute?: number;
+    webRoot?: string;
+  } = {},
   logLines: string[] = [],
 ): Promise<App> {
   const app = await buildApp({
@@ -42,6 +48,7 @@ async function appFor(
     ...(options.requestsPerMinute
       ? { requestsPerMinute: options.requestsPerMinute }
       : {}),
+    webRoot: options.webRoot,
   });
   apps.push(app);
   return app;
@@ -83,6 +90,92 @@ describe("greeting", () => {
         `INSERT INTO fathom.app_info (key, value) VALUES ('greeting', $stored$${stored}$stored$)`,
       );
     }
+  });
+});
+
+describe("front end", () => {
+  // The web root sits inside a folder named assets, so caching cannot depend on the folders above
+  // it, and that folder holds a file the server must never serve.
+  let folder: string;
+  let webRoot: string;
+
+  beforeAll(() => {
+    folder = mkdtempSync(join(tmpdir(), "fathom-web-"));
+    writeFileSync(join(folder, "outside.txt"), "fictional-outside-marker");
+    // A fictional build, laid out as Vite lays out its output.
+    webRoot = join(folder, "site");
+    mkdirSync(join(webRoot, "assets"), { recursive: true });
+    writeFileSync(
+      join(webRoot, "index.html"),
+      "<!doctype html><title>Fathom</title>",
+    );
+    writeFileSync(join(webRoot, "assets", "index-fictional.js"), "export {};");
+    writeFileSync(join(webRoot, ".hidden"), "fictional-hidden-marker");
+  });
+
+  afterAll(() => {
+    rmSync(folder, { recursive: true, force: true });
+  });
+
+  it("serves the page, which browsers check for a new release on every visit", async () => {
+    const response = await (await appFor({ webRoot })).inject("/");
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["content-type"]).toMatch(/^text\/html/);
+    expect(response.body).toContain("<title>Fathom</title>");
+    expect(response.headers["cache-control"]).toBe("no-cache");
+    expect(response.headers["content-security-policy"]).toContain(
+      "script-src 'self'",
+    );
+  });
+
+  it("serves built scripts, which browsers may keep for a year", async () => {
+    const response = await (
+      await appFor({ webRoot })
+    ).inject("/assets/index-fictional.js");
+    expect(response.statusCode).toBe(200);
+    expect(response.headers["cache-control"]).toBe(
+      "public, max-age=31536000, immutable",
+    );
+  });
+
+  it("decides caching from the folders inside the web root only", async () => {
+    const assetsParent = join(folder, "assets");
+    const nestedRoot = join(assetsParent, "site");
+    mkdirSync(nestedRoot, { recursive: true });
+    writeFileSync(join(nestedRoot, "index.html"), "<!doctype html>");
+    const response = await (await appFor({ webRoot: nestedRoot })).inject("/");
+    expect(response.headers["cache-control"]).toBe("no-cache");
+  });
+
+  it("answers unknown files with a plain not found", async () => {
+    const response = await (await appFor({ webRoot })).inject("/missing.js");
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "Not Found" });
+  });
+
+  it("serves nothing outside its folder", async () => {
+    const app = await appFor({ webRoot });
+    for (const url of [
+      "/../outside.txt",
+      "/%2e%2e/outside.txt",
+      "/%2e%2e%2foutside.txt",
+      "/assets/..%2f..%2foutside.txt",
+    ]) {
+      const response = await app.inject(url);
+      expect(response.statusCode).toBe(404);
+      expect(response.body).not.toContain("fictional-outside-marker");
+    }
+  });
+
+  it("does not serve hidden files", async () => {
+    const response = await (await appFor({ webRoot })).inject("/.hidden");
+    expect(response.statusCode).toBe(404);
+    expect(response.body).not.toContain("fictional-hidden-marker");
+  });
+
+  it("serves only the API when there is no built front end", async () => {
+    const response = await (await appFor()).inject("/");
+    expect(response.statusCode).toBe(404);
   });
 });
 

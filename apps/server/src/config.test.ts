@@ -1,9 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for loading the server's settings: valid settings with the certificate, key, and database
-// connection, and missing or invalid values, with errors that name settings without their values.
+// Tests for loading the server's settings: valid settings with the certificate, key, built front
+// end, and database connection, and missing or invalid values, with errors that name settings
+// without their values.
 
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -45,6 +52,7 @@ describe("server configuration", () => {
       host: "127.0.0.1",
       port: 8443,
       tls: { cert: "fictional certificate", key: "fictional key" },
+      webRoot: undefined,
       database: {
         host: "localhost",
         port: 5432,
@@ -53,6 +61,31 @@ describe("server configuration", () => {
         password: "fictional-password",
       },
     });
+  });
+
+  it("reads the folder holding the built front end", () => {
+    const webRoot = join(folder, "web");
+    mkdirSync(webRoot);
+    writeFileSync(join(webRoot, "index.html"), "<!doctype html>");
+    expect(
+      loadServerConfig(environment({ FATHOM_WEB_ROOT: webRoot })).webRoot,
+    ).toBe(webRoot);
+  });
+
+  it("fails when the built front end is missing from its folder", () => {
+    expect(() =>
+      loadServerConfig(environment({ FATHOM_WEB_ROOT: folder })),
+    ).toThrow(
+      /^The front end is missing; FATHOM_WEB_ROOT must be the folder holding the built front end$/,
+    );
+  });
+
+  it("rejects a relative or empty folder for the built front end", () => {
+    for (const webRoot of ["apps/web/dist", ""]) {
+      expect(() =>
+        loadServerConfig(environment({ FATHOM_WEB_ROOT: webRoot })),
+      ).toThrow(/^Invalid server configuration: FATHOM_WEB_ROOT$/);
+    }
   });
 
   it("names every missing or invalid setting, without revealing values", () => {

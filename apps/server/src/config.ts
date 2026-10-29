@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Loads and validates the server's settings from environment variables: the address it listens on,
-// its HTTPS certificate and private key, and the database connection.
+// its HTTPS certificate and private key, the built front end it serves, and the database connection.
 
 import { type DatabaseConfig, loadDatabaseConfig } from "@fathom/db";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { isAbsolute, join } from "node:path";
 import { z } from "zod";
 
 const environmentSchema = z.object({
@@ -12,6 +13,8 @@ const environmentSchema = z.object({
   FATHOM_PORT: z.coerce.number().int().min(1).max(65535),
   FATHOM_TLS_CERT_FILE: z.string().min(1),
   FATHOM_TLS_KEY_FILE: z.string().min(1),
+  // An absolute path, unset in development mode, where Vite's development server serves the front end.
+  FATHOM_WEB_ROOT: z.string().refine(isAbsolute).optional(),
 });
 
 export interface TlsConfig {
@@ -23,6 +26,8 @@ export interface ServerConfig {
   host: string;
   port: number;
   tls: TlsConfig;
+  // Unset in development mode.
+  webRoot: string | undefined;
   database: DatabaseConfig;
 }
 
@@ -39,6 +44,13 @@ export function loadServerConfig(
     throw new Error(`Invalid server configuration: ${fields}`);
   }
   const settings = result.data;
+  const webRoot = settings.FATHOM_WEB_ROOT;
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
+  if (webRoot !== undefined && !existsSync(join(webRoot, "index.html"))) {
+    throw new Error(
+      "The front end is missing; FATHOM_WEB_ROOT must be the folder holding the built front end",
+    );
+  }
   return {
     host: settings.FATHOM_HOST,
     port: settings.FATHOM_PORT,
@@ -49,6 +61,7 @@ export function loadServerConfig(
       // eslint-disable-next-line security/detect-non-literal-fs-filename
       key: readFileSync(settings.FATHOM_TLS_KEY_FILE, "utf8"),
     },
+    webRoot,
     database: loadDatabaseConfig(environment),
   };
 }

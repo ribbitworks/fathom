@@ -2,8 +2,8 @@
 
 // Builds Fathom's HTTPS application: security headers, rate limiting, a time limit for each request,
 // validation with the shared Zod schemas, error responses that reveal no internal details, logs
-// without personal data, and the API routes, which reach data only through the data access layer.
-// It never serves plain HTTP.
+// without personal data, the API routes, which reach data only through the data access layer, and
+// the built front end. It never serves plain HTTP.
 
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -17,6 +17,7 @@ import type { TlsConfig } from "./config.ts";
 import type { DataAccess } from "./data/index.ts";
 import { loggerOptions, type LogStream } from "./logging.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
+import { webRoutes } from "./routes/web.ts";
 
 const badRequest = 400;
 const notFound = 404;
@@ -38,6 +39,8 @@ export interface AppOptions {
   tls: TlsConfig;
   // Tests pass their own stream to read the logs.
   logStream: LogStream;
+  // The folder holding the built front end; without it, only the API is served.
+  webRoot?: string | undefined;
   requestsPerMinute?: number;
 }
 
@@ -100,6 +103,9 @@ export async function buildApp(options: AppOptions) {
   );
 
   await app.register(greetingRoutes(options.data));
+  if (options.webRoot !== undefined) {
+    await app.register(webRoutes(options.webRoot));
+  }
   return app;
 }
 
