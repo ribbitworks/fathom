@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Fathom's database tables, defined for Drizzle.
+
 import { pgSchema, text } from "drizzle-orm/pg-core";
 
 // Every Fathom table lives in this schema, which the migration role owns. The application role can

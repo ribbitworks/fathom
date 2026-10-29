@@ -1,7 +1,7 @@
 # Fathom — Development Setup
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-27
+**Last updated:** 2026-10-28
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
 
@@ -41,7 +41,7 @@ Developers may use any machine and container runtime listed for development in S
 - **mkcert:** For the local HTTPS certificate.
 - **Bootstrap script:** `bash scripts/dev-bootstrap.sh` on macOS and Linux, or `scripts/dev-bootstrap.ps1` on Windows, installs everything else: fnm, the Node.js version pinned in `.node-version`, the pnpm version pinned in `package.json`, and the project's dependencies. It is safe to run again at any time. Add `--configure-shell`, or `-ConfigureShell` on Windows, to also add fnm to your shell profile.
 - **Check tools:** The scanners the [Security Plan](../security/security-plan.md) requires run as containers, with images pinned by digest, so nothing extra is installed. Image scans read an exported image file rather than being given access to the container runtime.
-- **Ignored files:** Every tool reads `.gitignore`. ShellCheck, PSScriptAnalyzer, Gitleaks, Semgrep, and Trivy run in containers that see only a copy of the files git would track, made under the git-ignored `.tmp/` folder, so ignored folders such as `private/` are never read. Trivy also reads `node_modules`, read-only, to find package licences, and the scan of git history sees only git's own folder. ESLint, Prettier, markdownlint, and `pnpm audit` run directly on the machine.
+- **Ignored files:** Every tool reads `.gitignore`. ShellCheck, PSScriptAnalyzer, the REUSE tool, Gitleaks, Semgrep, and Trivy run in containers that see only a copy of the files git would track, made under the git-ignored `.tmp/` folder, so ignored folders such as `private/` are never read. Trivy also reads `node_modules`, read-only, to find package licences, and the scan of git history sees only git's own folder. ESLint, Prettier, markdownlint, and `pnpm audit` run directly on the machine.
 - **Windows:** If PowerShell blocks the bootstrap script, allow local scripts with `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. `pnpm check` runs bash scripts, so it needs Git Bash or WSL.
 - **Downloads during checks:** Most scanners run without network access. Semgrep downloads its rules, Trivy its vulnerability database, `pnpm audit` queries the package registry, and the PowerShell linter downloads PSScriptAnalyzer once and checks its hash.
 
@@ -65,7 +65,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm run dev:setup` | Create development secrets, such as random database passwords, in the private `.dev/` folder |
+| `pnpm dev:setup` | Create development secrets, such as random database passwords, in the private `.dev/` folder |
 | `pnpm db:up` and `pnpm db:down` | Start and stop the development database, whose port is published only on this machine |
 | `pnpm dev` | Start development mode |
 | `pnpm db:migrate` | Apply migration files using the migration role |
@@ -74,7 +74,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm check` | The single command from the [Testing Standards](../standards/testing.md#running-tests) |
 | `pnpm test` | All tests, including database tests that run against a throwaway PostgreSQL container |
 | `pnpm security` | The security report, written to a dated folder under the git-ignored `output/security/` folder |
-| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell` | Individual linters, also run by `pnpm check` |
+| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell`, `pnpm lint:licences` | Individual linters, also run by `pnpm check` |
 | `pnpm format` | Format source files |
 | `pnpm updates` | List available dependency updates with Renovate, written to the git-ignored `output/updates/` folder; changes nothing, and needs network access to the package and container registries |
 | `pnpm update:analyzer <version>` | Pin a new PSScriptAnalyzer version together with its SHA-256 |

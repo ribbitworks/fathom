@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Loads and validates the database connection settings from environment variables, reading the
+// password from a file.
+
 import { readFileSync } from "node:fs";
 import { z } from "zod";
 

@@ -1,7 +1,7 @@
 # Fathom — Security Plan
 
 **Status:** Proposal for review by the owner and IT
-**Last updated:** 2026-10-27
+**Last updated:** 2026-10-28
 
 How Fathom is protected: what it must protect, the threats against it, how each threat is mitigated and verified, how its technology is scanned for vulnerabilities, how confidence in its source code is established, and how the plan is enforced. It builds on [ADR 0001](../adr/0001-tech-stack.md), the [Decisions Log](../product/decisions.md), and [Roles](../product/roles.md). Everything here is proposed until reviewed.
 
@@ -51,6 +51,7 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | Secrets leak | Secrets are kept out of the repository and container images | Secret scanning |
 | A vulnerable or malicious dependency or container image | Pinned versions from trusted sources; dependency and image scanning | Scans on every build and on a schedule |
 | The build environment or a developer machine is compromised | Builds come from a known environment, each release is tagged and built repeatably, and releases are compared with their source | Release verification |
+| A compromised container is used to attack the host or other containers | Every container runs as a user other than root, with a read-only filesystem, every Linux capability dropped, no way to gain new privileges, and no access to the host's network; ports are published only on the addresses intended | Automated tests of every Compose file |
 | An unpatched host, virtualization layer, container runtime, or database | Regular patching of every layer | Host and container vulnerability scans |
 | Personal data leaks through logs or error messages | Personal data kept out of logs; generic error messages to users | Code review; log review |
 | Backups are stolen or read | Encrypted backups, with the key held by someone other than the backup operator | Restore tests; key custody check |

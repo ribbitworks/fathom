@@ -1,6 +1,9 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Summarizes a Renovate dry run into updates.md. Available updates are listed, not treated as
 // failures. The command fails when Renovate did not report its results, or reported problems such
 // as dependencies it could not look up.
+
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";

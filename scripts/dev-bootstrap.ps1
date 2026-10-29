@@ -1,4 +1,6 @@
 #Requires -Version 5.1
+# SPDX-License-Identifier: Apache-2.0
+
 <#
 .SYNOPSIS
 Prepares a Windows development machine for Fathom. Safe to run repeatedly.
@@ -13,6 +15,7 @@ Not yet run on Windows; checked only with PSScriptAnalyzer.
 If PowerShell blocks scripts, allow local scripts for your account first:
     Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 #>
+
 [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingInvokeExpression', '', Justification = 'fnm emits its environment setup as PowerShell code, which must be evaluated.')]
 param(
     [switch] $ConfigureShell

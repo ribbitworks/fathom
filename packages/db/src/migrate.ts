@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Applies the reviewed SQL migrations, refusing to run when an applied migration was edited, removed,
+// or skipped. Also runs as a command.
+
 import { createHash } from "node:crypto";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import type { Pool } from "pg";

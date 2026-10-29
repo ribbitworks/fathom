@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
 # Creates Fathom's database roles and schemas with least privilege. Runs once, as the PostgreSQL
 # superuser, when the database is first created. Role passwords are read from container secrets.
+
 set -euo pipefail
 
 psql --no-psqlrc --set ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" \

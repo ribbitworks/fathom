@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for combining container image scan reports, including missing or unreadable reports, which
+// must be recorded so the security report cannot pass without them.
+
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { combineImageReports } from "./combine-image-reports.mjs";

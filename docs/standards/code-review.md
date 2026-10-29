@@ -3,7 +3,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/markdown-style-guidelines.md", "docs/standards/testing.md"]
-last_updated: "2026-10-27"
+last_updated: "2026-10-28"
 ---
 
 # Code Review Standards
@@ -90,7 +90,8 @@ Every change is reviewed against the project's [Security Plan](../security/secur
 - **Names:** Descriptive names, with no unclear abbreviations.
 - **No magic values:** Numbers and strings with meaning are named constants, except obvious values such as 0, 1, and -1 in calculations.
 - **Reuse:** Existing helpers are used before writing new ones.
-- **Comments:** By default, no comment. Names explain what the code does; comments explain only why, when the code cannot. Comments do not narrate the code, repeat names, reference tickets, or record history.
+- **Comments:** By default, no comment. Names explain what the code does; comments explain only why, when the code cannot. Comments do not narrate the code, repeat names, reference tickets, or record history. File headers are the exception.
+- **File headers:** Every source code file, in any language, starts with a header, after any line that must come first, such as a shebang. The header is the `SPDX-License-Identifier` line for the project's licence, as [ADR 0002](../adr/0002-libraries.md) decides, then a blank line, then a comment describing the file, then a blank line before the code. Following the [Google Shell Style Guide](https://google.github.io/styleguide/shellguide.html#file-header), the description says what the file is for and, where it helps, how it is used and what a reader needs to know first; for tests, what they cover. Headers name no authors, dates, or history, which git records. Files that cannot hold comments, or that tools generate, are listed in `REUSE.toml` instead. Third-party files keep their own copyright and licence, stated in the file or in a `REUSE.toml` entry after the project-wide one, with the licence text added to `LICENSES/`. `pnpm check` checks every header.
 
 #### Language-Specific Criteria
 

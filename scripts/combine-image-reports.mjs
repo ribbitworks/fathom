@@ -1,5 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Combines Trivy reports for several container images into one JSON list on standard output.
 // Usage: node scripts/combine-image-reports.mjs <image>=<report file> ...
+
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 

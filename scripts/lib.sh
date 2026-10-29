@@ -1,5 +1,10 @@
 # shellcheck shell=bash
-# Shared helpers for Fathom's bash scripts. Source this file; do not run it.
+# SPDX-License-Identifier: Apache-2.0
+
+# Shared helpers for Fathom's bash scripts: messages, checks for git and a container runtime, the list
+# of project files, and the copy of them that containerized scanners read, so they never see ignored
+# folders. Sourcing it also exports FATHOM_SECURITY_FIXES_DATE, the date that decides which security
+# fixes container builds fetch. Source this file; do not run it.
 
 info() { printf '==> %s\n' "$*"; }
 fail() {

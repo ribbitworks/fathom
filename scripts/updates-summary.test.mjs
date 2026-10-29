@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for summarizing Renovate's dependency update reports: listing updates, and treating missing
+// results or lookup problems as failures.
+
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {

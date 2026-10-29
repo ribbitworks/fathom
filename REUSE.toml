@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Copyright and licence information under the REUSE specification (https://reuse.software), checked
+# by 'pnpm lint:licences'. Source code files carry a licence header instead of being listed here.
+# When several entries match a file, the last one applies, so each entry names the copyright too.
+version = 1
+
+# The copyright of every file, matching NOTICE.
+[[annotations]]
+path = "**"
+SPDX-FileCopyrightText = "2026 Jared La Rue"
+
+# Files that are not source code, that cannot hold comments, or that tools generate or rewrite.
+[[annotations]]
+path = [
+  "**.md",
+  "**.json",
+  "packages/db/migrations/**",
+  "LICENSES/**",
+  "NOTICE",
+  "pnpm-lock.yaml",
+  "pnpm-workspace.yaml",
+  ".editorconfig",
+  ".gitattributes",
+  ".gitignore",
+  ".node-version",
+  ".prettierignore",
+]
+SPDX-FileCopyrightText = "2026 Jared La Rue"
+SPDX-License-Identifier = "Apache-2.0"

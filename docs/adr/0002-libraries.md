@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information
 
 ## Context
 
@@ -44,6 +44,7 @@ What matters most in these choices:
 | Vulnerability, misconfiguration, and licence scanning | Trivy, with telemetry off | Grype | One tool for dependencies, container images, configuration, and licences |
 | Shell script linting | ShellCheck | | The standard linter for shell scripts |
 | PowerShell linting | PSScriptAnalyzer | | The standard linter for PowerShell, including checks for compatibility with Windows PowerShell 5.1 |
+| Copyright and licence information | The REUSE specification, checked with the REUSE tool | Per-file copyright headers only | A standard, machine-readable way to state each file's licence, checked automatically, while the copyright is stated once, matching NOTICE, rather than in every file |
 | Node.js version management | fnm | nvm, Volta | Fast, works on macOS, Linux, and Windows, and switches versions automatically from `.node-version` |
 
 UI components, styling, charts, and the Gantt, timeline, and org chart components are left to the component evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section.

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
 # Refuses superuser logins over the network, including replication connections. Maintenance uses the
 # local socket inside the container, which also requires the password. Takes effect when the server
 # restarts after first-time setup.
+
 set -euo pipefail
 
 hba="$PGDATA/pg_hba.conf"

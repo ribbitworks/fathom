@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
 # Removes Fathom's cached scanner data and any leftover scan copies. They are recreated on the next check.
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh

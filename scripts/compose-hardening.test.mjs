@@ -1,5 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Checks every service in every Compose file keeps the container hardening the security plan
 // requires. Trivy has no scanner for Compose files, so these tests are the automated check.
+
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readdirSync } from "node:fs";

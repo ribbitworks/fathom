@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Deletes dated report folders in output/ that are past their retention period.
 // Security reports are always kept for at least one calendar year, as the security plan requires.
 // The optional number of days sets how long other reports are kept, and can only lengthen how long
 // security reports are kept.
 // Usage: node scripts/prune-reports.mjs [days]
+
 import { existsSync, lstatSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Creates the PostgreSQL connection pool and the Drizzle client that queries through it.
+
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import type { DatabaseConfig } from "./config.ts";

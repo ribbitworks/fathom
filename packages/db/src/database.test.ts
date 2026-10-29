@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests against a real PostgreSQL server built from Fathom's own image: migrations, the client, the
+// permissions of each database role, and the server's security settings.
+
 import { eq } from "drizzle-orm";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";

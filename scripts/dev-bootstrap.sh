@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
 # Prepares a macOS or Linux development machine for Fathom. Safe to run repeatedly.
 # With --configure-shell, also adds fnm to your shell profile so Node.js switches automatically.
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh

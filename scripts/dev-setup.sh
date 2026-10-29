@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
 # Creates development-only secrets in the git-ignored .dev/ folder. Existing secrets are kept, so it
 # is safe to run repeatedly. Production secrets are never created or stored here.
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh

@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for deleting expired report folders: reading report times, the retention period, and keeping
+// security reports for at least one calendar year.
+
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {

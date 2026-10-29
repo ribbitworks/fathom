@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-# Checks every PowerShell script with PSScriptAnalyzer, run as a container.
+# SPDX-License-Identifier: Apache-2.0
+
+# Checks every PowerShell script in the project with PSScriptAnalyzer, run as a container on a copy of
+# the project's files. The pinned analyzer version is downloaded once and its hash checked. Run by
+# 'pnpm check'.
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh

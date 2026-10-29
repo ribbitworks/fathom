@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
-# Checks every shell script with ShellCheck, run as a container without network access.
+# SPDX-License-Identifier: Apache-2.0
+
+# Checks every shell script in the project with ShellCheck, run as a container without network
+# access on a copy of the project's files. Run by 'pnpm check'.
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh

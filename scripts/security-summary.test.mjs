@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for summarizing security reports: counting findings by severity for each tool, and failing
+// when a scan finds a critical or high issue or does not complete.
+
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import {

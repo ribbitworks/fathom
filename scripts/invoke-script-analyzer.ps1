@@ -1,6 +1,9 @@
 #Requires -Version 7.0
+# SPDX-License-Identifier: Apache-2.0
+
 # Runs PSScriptAnalyzer on the given scripts, including syntax errors and compatibility with
 # Windows PowerShell 5.1. Used by lint-powershell.sh inside a container.
+
 param(
     [Parameter(Mandatory)] [string] $AnalyzerVersion,
     [Parameter(Mandatory, ValueFromRemainingArguments)] [string[]] $Path

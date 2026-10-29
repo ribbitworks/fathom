@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
-# Manages the development database.
+# SPDX-License-Identifier: Apache-2.0
+
+# Manages the development database, a PostgreSQL container built from Fathom's own image and
+# reachable only from this machine. Run 'pnpm dev:setup' first to create its secrets.
 # Usage: scripts/dev-db.sh up | down | migrate | reset
+#   up       build and start the database, and wait until it is ready
+#   down     stop the database, keeping its data
+#   migrate  apply the reviewed migrations as the migration role
+#   reset    delete the database and its data, then start it and apply the migrations again
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh
@@ -10,7 +18,7 @@ compose=(docker compose --file deploy/compose.dev.yaml)
 
 start_database() {
   for name in postgres_superuser_password fathom_migrator_password fathom_app_password; do
-    [ -s ".dev/secrets/$name" ] || fail "Development secrets are missing; run 'pnpm run dev:setup' first"
+    [ -s ".dev/secrets/$name" ] || fail "Development secrets are missing; run 'pnpm dev:setup' first"
   done
   info "Building and starting the development database"
   "${compose[@]}" up --build --detach --wait

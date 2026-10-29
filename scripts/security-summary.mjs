@@ -1,5 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
 // Summarizes a security report folder into summary.md, and fails on critical or high findings
 // or on any scan that did not complete.
+
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";

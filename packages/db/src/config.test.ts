@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for loading the database connection settings: valid settings, missing or invalid values, and
+// an empty or missing password file, with errors that name settings without revealing their values.
+
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -46,7 +51,9 @@ describe("database configuration", () => {
       loadDatabaseConfig(
         environment({ FATHOM_DB_HOST: undefined, FATHOM_DB_PORT: "70000" }),
       ),
-    ).toThrow("Invalid database configuration: FATHOM_DB_HOST, FATHOM_DB_PORT");
+    ).toThrow(
+      /^Invalid database configuration: FATHOM_DB_HOST, FATHOM_DB_PORT$/,
+    );
   });
 
   it("rejects a port that is not a number", () => {

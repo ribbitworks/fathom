@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
-# Runs Fathom's security scans and writes a report to output/security/<time>/.
-# Fails if any scan finds a critical or high issue, or does not complete.
+# SPDX-License-Identifier: Apache-2.0
+
+# Runs Fathom's security scans, as the security plan requires, and writes each tool's results and a
+# summary to output/security/<time>/: dependency vulnerabilities and licences, secrets in files and
+# git history, code security flaws, configuration, and the container images in deploy's Compose
+# files, built for the production server's processor.
+# Fails if any scan finds a critical or high issue, or does not complete. Run by 'pnpm check'.
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh

@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Starts a throwaway PostgreSQL server from Fathom's own image for the database tests.
+
 import {
   PostgreSqlContainer,
   type StartedPostgreSqlContainer,

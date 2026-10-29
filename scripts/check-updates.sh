@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
 # Lists available dependency updates with Renovate, run locally as a container, and writes a report
 # to output/updates/<time>/. It changes nothing; updates are applied as separate, reviewed changes.
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh

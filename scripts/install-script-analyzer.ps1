@@ -1,7 +1,10 @@
 #Requires -Version 7.0
+# SPDX-License-Identifier: Apache-2.0
+
 # Installs a pinned PSScriptAnalyzer version into a module folder after checking the package's hash.
 # Used by lint-powershell.sh inside a container. The install is complete only when its marker file
 # records the expected hash, so an interrupted install is replaced on the next run.
+
 param(
     [Parameter(Mandatory)] [string] $Version,
     [Parameter(Mandatory)] [string] $Sha256,

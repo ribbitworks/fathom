@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
 # Updates the pinned PSScriptAnalyzer version and its SHA-256 in lint-powershell.sh.
 # Usage: scripts/update-script-analyzer.sh <version>
+
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh

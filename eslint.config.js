@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// ESLint settings for all JavaScript and TypeScript in the repository: strict type-aware rules for
+// TypeScript, and security rules for all of it, skipping the files git ignores.
+
 import { includeIgnoreFile } from "@eslint/compat";
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";

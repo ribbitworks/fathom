@@ -1,4 +1,9 @@
-# The development database. Its port is published only on this machine.
+# SPDX-License-Identifier: Apache-2.0
+
+# The development database, built from Fathom's own PostgreSQL image and run with the container
+# hardening the security plan requires of every container. Its port is published only on this
+# machine. Managed by scripts/dev-db.sh; the security report also builds it for linux/amd64 to scan.
+
 name: fathom-dev
 
 services:
