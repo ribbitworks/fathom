@@ -16,13 +16,22 @@ bash scripts/dev-bootstrap.sh
 
 On Windows, run `scripts/dev-bootstrap.ps1` in PowerShell instead.
 
+Create development secrets and the local HTTPS certificate, then start development mode:
+
+```bash
+pnpm dev:setup
+pnpm dev
+```
+
+Fathom is then at <https://localhost:8443>. Until the first page is added, open <https://localhost:8443/api/greeting> to see the server read its greeting from the database.
+
 Check everything, including the tests and the security report:
 
 ```bash
 pnpm check
 ```
 
-See [Development Setup](docs/design/development-setup.md) for all commands and details.
+See [Development Setup](docs/design/development-setup.md#common-commands) for what each command does, including how to stop development mode.
 
 ## Repository Layout
 

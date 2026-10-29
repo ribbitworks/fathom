@@ -19,10 +19,7 @@ import {
   verifyAppliedMigrations,
 } from "./migrate.ts";
 import { appInfo } from "./schema.ts";
-import {
-  startTestDatabase,
-  type TestDatabase,
-} from "./test-support/postgres.ts";
+import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 
 const insufficientPrivilege = "42501";
 const invalidPassword = "28P01";

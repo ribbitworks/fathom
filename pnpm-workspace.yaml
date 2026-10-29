@@ -18,6 +18,16 @@ allowBuilds:
   cpu-features: false
   protobufjs: false
 
+# fastify-type-provider-zod lists these as required, but needs them only to generate OpenAPI
+# documents, which Fathom does not do, so they are not installed.
+packageExtensions:
+  fastify-type-provider-zod:
+    peerDependenciesMeta:
+      "@fastify/swagger":
+        optional: true
+      openapi-types:
+        optional: true
+
 # Patched versions of indirect dependencies with known vulnerabilities.
 overrides:
   js-yaml: 5.4.1

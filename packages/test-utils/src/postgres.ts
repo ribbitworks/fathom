@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Starts a throwaway PostgreSQL server from Fathom's own image for the database tests.
+// Starts a throwaway PostgreSQL server from Fathom's own image for tests, with the same roles and
+// settings as development and random passwords for each run.
 
 import {
   PostgreSqlContainer,
@@ -10,9 +11,8 @@ import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import type { DatabaseConfig } from "../config.ts";
 
-const repositoryRoot = fileURLToPath(new URL("../../../../", import.meta.url));
+const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 const imageName = "fathom-postgres:dev";
 
 // Reads a setting from the development database's Compose file, so tests use the same server
@@ -39,11 +39,24 @@ function developmentBuildEnvironment(): NodeJS.ProcessEnv {
   return environment;
 }
 
+// The settings for one connection, in the shape the database package's configuration uses.
+export interface ConnectionSettings {
+  host: string;
+  port: number;
+  database: string;
+  user: string;
+  password: string;
+}
+
 export interface TestDatabase {
   container: StartedPostgreSqlContainer;
-  migrator: DatabaseConfig;
-  app: DatabaseConfig;
-  configFor(user: string, password: string, database?: string): DatabaseConfig;
+  migrator: ConnectionSettings;
+  app: ConnectionSettings;
+  configFor(
+    user: string,
+    password: string,
+    database?: string,
+  ): ConnectionSettings;
   // Runs SQL as the superuser over the container's local socket, the only way the superuser may log in.
   superuserQuery(sql: string): Promise<string>;
   // Runs a command inside the container with the superuser's password available to PostgreSQL tools.
@@ -103,7 +116,7 @@ export async function startTestDatabase(): Promise<TestDatabase> {
     user: string,
     password: string,
     database = "fathom",
-  ): DatabaseConfig => ({
+  ): ConnectionSettings => ({
     host: container.getHost(),
     port: container.getPort(),
     database,

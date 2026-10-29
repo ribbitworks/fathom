@@ -24,6 +24,7 @@
     "reset-caches": "bash scripts/reset-caches.sh",
     "prune-reports": "node scripts/prune-reports.mjs",
     "dev:setup": "bash scripts/dev-setup.sh",
+    "dev": "bash scripts/dev.sh",
     "db:up": "bash scripts/dev-db.sh up",
     "db:down": "bash scripts/dev-db.sh down",
     "db:migrate": "bash scripts/dev-db.sh migrate",

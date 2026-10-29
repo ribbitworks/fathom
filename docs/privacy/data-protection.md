@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-28
 
 ## Purpose of This Document
 
@@ -76,7 +76,7 @@ Under the proposed roles:
 - **Encrypted connections:** Users connect to Fathom over an encrypted connection (HTTPS).
 - **Individual accounts:** Each user signs in with their own account.
 - **Access history:** Fathom records who viewed or changed Restricted or Confidential information, without recording the information itself.
-- **Logs:** Personal information not needed for planning is kept out of Fathom's technical logs.
+- **Logs:** Personal information not needed for planning is kept out of Fathom's technical logs. The one exception is the network address of the computer each request comes from, which is kept to investigate security problems.
 - **Encrypted backups:** Backups are made automatically, encrypted, and kept only in approved locations, which are still to be decided. The key needed to read them is held by someone other than the person who runs the backups, and restoring from backup is tested regularly.
 - **Server and password management:** The server also hosts other applications. Fathom is planned to run in its own environment there, which only Fathom's named operators can use. Personal logins are never shared, and shared service passwords are limited to Fathom's named operators. Passwords are kept in a password manager or secret store, to be agreed with IT, and are changed when someone with access leaves. Anyone with full administrator access to the server could still reach Fathom's data; this risk is accepted and recorded, and who holds that access is reviewed with IT.
 - **No real data in development:** Fathom's source code and test data never contain real employee information.

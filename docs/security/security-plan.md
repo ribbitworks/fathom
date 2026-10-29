@@ -53,7 +53,7 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | The build environment or a developer machine is compromised | Builds come from a known environment, each release is tagged and built repeatably, and releases are compared with their source | Release verification |
 | A compromised container is used to attack the host or other containers | Every container runs as a user other than root, with a read-only filesystem, every Linux capability dropped, no way to gain new privileges, and no access to the host's network; ports are published only on the addresses intended | Automated tests of every Compose file |
 | An unpatched host, virtualization layer, container runtime, or database | Regular patching of every layer | Host and container vulnerability scans |
-| Personal data leaks through logs or error messages | Personal data kept out of logs; generic error messages to users | Code review; log review |
+| Personal data leaks through logs or error messages | Personal data kept out of logs, except each request's client address, which is kept to investigate security problems; generic error messages to users | Automated tests; code review; log review |
 | Backups are stolen or read | Encrypted backups, with the key held by someone other than the backup operator | Restore tests; key custody check |
 | A former user keeps access | Accounts are disabled when users leave | Account review |
 | Real data leaks into development | Fictional data only in development; real data never committed | Code review; repository scanning |

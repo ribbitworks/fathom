@@ -26,7 +26,7 @@ scripts/        Development and check scripts
 docs/           Documentation
 ```
 
-- **Data access layer:** Lives in `apps/server`, so every read of protected data goes through the server's tier checks. `packages/db` holds the schema, the migrations, and the database client. A lint rule allows only the server's data access layer, `seed`, and `test-utils` to import it.
+- **Data access layer:** Lives in `apps/server/src/data/`, so every read of protected data goes through the server's tier checks. `packages/db` holds the schema, the migrations, and the database client. A lint rule allows only the data access layer, the server's start-up code, `seed`, `test-utils`, and tests to import it; other code may use only its types.
 - **Shared code:** Only `packages/shared` is used by both the front end and the server, so server-only code never reaches the browser.
 - **Development-only packages:** `fixtures`, `seed`, and `test-utils` are never included in the runtime image.
 - **Root configuration:** The workspace definition, shared TypeScript, linting, and formatting settings, the pinned Node.js and pnpm versions, and the Renovate configuration.
@@ -58,16 +58,16 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 ### Secrets and Configuration
 
 - **Development secrets:** A setup script generates development-only values, such as database passwords, into the git-ignored `.dev/` folder, which is added to `.gitignore` with the first code. Production secrets are never placed on development machines.
-- **Example configuration:** A committed example file lists every setting with placeholder values.
+- **Example configuration:** `deploy/fathom.env.example` lists every setting with placeholder values, and a test keeps it in step with the settings the code reads.
 - **Database roles:** The development database is initialized with the same separate migration and application roles as production, and integration tests connect as the application role, so missing permissions show up in tests.
 
 ### Common Commands
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev:setup` | Create development secrets, such as random database passwords, in the private `.dev/` folder |
+| `pnpm dev:setup` | Create development secrets, such as random database passwords, and the locally trusted HTTPS certificate in the private `.dev/` folder |
 | `pnpm db:up` and `pnpm db:down` | Start and stop the development database, whose port is published only on this machine |
-| `pnpm dev` | Start development mode |
+| `pnpm dev` | Start development mode: the database, with migrations applied, and the server at `https://localhost:8443`, restarted when its code changes. Ctrl+C stops the server; the database keeps running until `pnpm db:down` |
 | `pnpm db:migrate` | Apply migration files using the migration role |
 | `pnpm db:reset` | Delete and recreate the development database, and apply migrations |
 | `pnpm typecheck` | Check types across the workspace |

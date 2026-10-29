@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations
 
 ## Context
 
@@ -61,7 +61,7 @@ Which component provides each security mitigation:
 - **Cross-site request forgery:** Better Auth checks the request origin on its own routes, and Fathom applies the same origin check to every other request that changes data.
 - **Rate limiting:** Better Auth limits sign-in attempts, with its limits stored in the database and enabled in every environment. @fastify/rate-limit limits all other requests.
 - **Security headers:** @fastify/helmet.
-- **Logs:** Pino redacts known sensitive fields. Personal data is never passed to the logger, and request logging is configured to leave out query strings.
+- **Logs:** Pino redacts known sensitive fields, and database errors are logged by type and code, without their details. Personal data is never passed to the logger, and request logging leaves out query strings. The one exception is each request's client address, which is logged to investigate security problems.
 
 Better Auth settings that the security plan relies on:
 
