@@ -1,7 +1,7 @@
 # Fathom — Domain Model
 
 **Status:** Draft
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-30
 
 A first sketch of Fathom's core entities and how they relate. It describes structure only: terms are defined in [Domain Concepts](../product/domain.md), and rules and allowed values are in the [Decisions Log](../product/decisions.md). It describes concepts, not database tables. Items marked **proposal** are suggested modeling choices that have not been agreed.
 
@@ -79,7 +79,8 @@ erDiagram
 
 ## Access Entities
 
-- **User:** A local account with one or more roles.
+- **User:** A local account with one or more roles, identified by its name and email address, which is also its user name, and signing in with a password.
+- **Session:** A signed-in user's visit, which records the network address and browser it started from, for investigating security problems, and ends as set in [ADR 0002](../adr/0002-libraries.md).
 - **Role:** Grants view or edit access to data tiers, and permissions such as approving plan changes.
 - **Access record:** Records an access to sensitive data, without the values.
 

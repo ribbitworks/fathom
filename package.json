@@ -33,6 +33,8 @@
     "stack:down": "bash scripts/stack.sh down",
     "stack:reset": "bash scripts/stack.sh reset",
     "stack:logs": "bash scripts/stack.sh logs",
+    "stack:create-account": "bash scripts/stack.sh create-account",
+    "account:create": "bash scripts/create-account.sh",
     "test:containers": "node --test --test-timeout=1800000 \"scripts/container-tests/*.test.mjs\"",
     "typecheck": "tsc --build",
     "build": "pnpm --filter @fathom/web build"

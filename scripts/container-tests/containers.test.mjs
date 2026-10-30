@@ -55,6 +55,7 @@ function compose(...args) {
         FATHOM_TLS_CERT: join(folder, "cert.pem"),
         FATHOM_TLS_KEY: join(folder, "key.pem"),
         FATHOM_HTTPS_PORT: String(port),
+        FATHOM_PUBLIC_URL: `https://localhost:${String(port)}`,
         FATHOM_SECURITY_FIXES_DATE:
           process.env.FATHOM_SECURITY_FIXES_DATE ??
           new Date().toISOString().slice(0, 10),
@@ -128,6 +129,7 @@ before(
       "postgres_superuser_password",
       "fathom_migrator_password",
       "fathom_app_password",
+      "fathom_auth_secret",
     ]) {
       writeFileSync(
         join(folder, "secrets", name),

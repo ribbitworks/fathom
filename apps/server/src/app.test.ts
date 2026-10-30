@@ -2,8 +2,8 @@
 
 // Tests for the application against a migrated PostgreSQL server, connected as the application's
 // database role: the greeting, the built front end, security headers, the request time limit, rate
-// limiting, error responses that reveal no internal details, and logs without personal data other
-// than the client's address.
+// limiting, the check that requests changing data come from Fathom's own pages, error responses that
+// reveal no internal details, and logs without personal data other than the client's address.
 
 import { appInfo, createDatabase, createPool, runMigrations } from "@fathom/db";
 import {
@@ -26,6 +26,9 @@ let database: TestDatabase;
 let certificate: TestCertificate;
 const pools: Pool[] = [];
 const apps: App[] = [];
+// A fictional address for Fathom, and a session secret used only by these tests.
+const publicUrl = "https://fathom.example.test";
+const secret = "fictional-session-secret-for-tests-only-0123456789";
 
 function poolFor(password = database.app.password): Pool {
   const pool = createPool({ ...database.app, password }, () => undefined);
@@ -41,8 +44,11 @@ async function appFor(
   } = {},
   logLines: string[] = [],
 ): Promise<App> {
+  const connection = createDatabase(poolFor(options.password));
   const app = await buildApp({
-    data: createDataAccess(createDatabase(poolFor(options.password))),
+    data: createDataAccess(connection),
+    database: connection,
+    auth: { publicUrl, secret },
     tls: certificate,
     logStream: { write: (line) => logLines.push(line) },
     ...(options.requestsPerMinute
@@ -251,6 +257,28 @@ describe("responses", () => {
   });
 });
 
+describe("requests that change data", () => {
+  const post = (app: App, origin?: string) =>
+    app.inject({
+      method: "POST",
+      url: "/api/unknown",
+      headers: origin === undefined ? {} : { origin },
+    });
+
+  it("are refused unless they come from Fathom's own pages", async () => {
+    const app = await appFor();
+    for (const origin of [undefined, "https://another.example.test", "null"]) {
+      const response = await post(app, origin);
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toEqual({ error: "Forbidden" });
+    }
+  });
+
+  it("are handled when they come from Fathom's own pages", async () => {
+    expect((await post(await appFor(), publicUrl)).statusCode).toBe(404);
+  });
+});
+
 describe("rate limiting", () => {
   it("limits how many requests a client can make each minute", async () => {
     const app = await appFor({ requestsPerMinute: 2 });
@@ -267,7 +295,7 @@ describe("rate limiting", () => {
       app.inject({
         method: "POST",
         url: "/api/unknown",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", origin: publicUrl },
         payload: "{not json",
       });
     await badRequest();

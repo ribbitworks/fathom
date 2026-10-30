@@ -173,6 +173,8 @@ describe("accepting connections from the proxy", () => {
         );
       },
     );
+    // Each test adds its own front listener to this one server, each watching its connections.
+    httpsServer.setMaxListeners(30);
     httpsServer.listen(0, "127.0.0.1");
     await once(httpsServer, "listening");
   });

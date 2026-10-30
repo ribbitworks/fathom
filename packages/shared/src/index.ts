@@ -4,3 +4,4 @@
 // Only code that is safe to reach the browser belongs here.
 
 export { type GreetingResponse, greetingResponseSchema } from "./greeting.ts";
+export { type SessionResponse, sessionResponseSchema } from "./session.ts";

@@ -69,7 +69,8 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev:setup` | Create development secrets, such as random database passwords, and the locally trusted HTTPS certificate in the private `.dev/` folder |
+| `pnpm dev:setup` | Create development secrets, such as random database passwords and the session secret, and the locally trusted HTTPS certificate in the private `.dev/` folder |
+| `pnpm account:create --name <name> --email <email>` | Create an account in the development database, asking for its password without showing it |
 | `pnpm db:up` and `pnpm db:down` | Start and stop the development database, whose port is published only on this machine |
 | `pnpm dev` | Start development mode: the database, with migrations applied, the server, and the front end, and open Fathom at `https://localhost:8443` in the browser. The server and the front end reload when their code changes. Ctrl+C stops them; the database keeps running until `pnpm db:down` |
 | `pnpm build` | Build the front end into `apps/web/dist`, which the server serves when `FATHOM_WEB_ROOT` points to it |
@@ -86,6 +87,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm reset-caches` | Remove cached scanner data, which is rebuilt on the next check |
 | `pnpm prune-reports [days]` | Delete local reports older than the given number of days, 365 by default. Security reports are always kept for at least one calendar year, and must also be kept in the location agreed with IT, as the [Security Plan](../security/security-plan.md) requires |
 | `pnpm stack:up`, `pnpm stack:down`, `pnpm stack:reset`, and `pnpm stack:logs` | Start, stop, delete the data of, and follow the logs of production-like mode |
+| `pnpm stack:create-account --name <name> --email <email>` | Create an account in production-like mode while it runs, asking for its password without showing it |
 | `pnpm test:containers` | Container tests, in a separate copy of production-like mode: users reach Fathom only through the proxy, and the application and database cannot reach the internet |
 | `pnpm test:ui` | UI tests |
 

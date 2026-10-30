@@ -8,4 +8,12 @@ export { createDatabase, createPool, type Database } from "./client.ts";
 export { type DatabaseConfig, loadDatabaseConfig } from "./config.ts";
 export { describeError } from "./errors.ts";
 export { runMigrations } from "./migrate.ts";
-export { appInfo, fathomSchema } from "./schema.ts";
+export {
+  accounts,
+  appInfo,
+  fathomSchema,
+  rateLimits,
+  sessions,
+  users,
+  verifications,
+} from "./schema.ts";

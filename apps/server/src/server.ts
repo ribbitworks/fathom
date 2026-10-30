@@ -68,10 +68,13 @@ export async function startServer(
   let app: App | undefined;
   let front: Server | undefined;
   try {
-    const data = createDataAccess(createDatabase(pool));
+    const database = createDatabase(pool);
+    const data = createDataAccess(database);
     await data.checkConnection();
     app = await buildApp({
       data,
+      database,
+      auth: config.auth,
       tls: config.tls,
       webRoot: config.webRoot,
       logStream,

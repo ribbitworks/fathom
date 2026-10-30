@@ -12,8 +12,8 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh
 source scripts/lib.sh
 
-for file in .dev/certs/localhost.pem .dev/certs/localhost-key.pem; do
-  [ -s "$file" ] || fail "The development certificate is missing; run 'pnpm dev:setup' first"
+for file in .dev/certs/localhost.pem .dev/certs/localhost-key.pem .dev/secrets/fathom_auth_secret; do
+  [ -s "$file" ] || fail "The development certificate or secrets are missing; run 'pnpm dev:setup' first"
 done
 command -v mkcert >/dev/null 2>&1 ||
   fail "mkcert is required to trust the development certificate (https://github.com/FiloSottile/mkcert)"
@@ -31,6 +31,8 @@ info "Starting Fathom at https://localhost:$port"
 FATHOM_DEV_PORT="$port" \
   FATHOM_HOST=127.0.0.1 \
   FATHOM_PORT="${FATHOM_DEV_API_PORT:-8444}" \
+  FATHOM_PUBLIC_URL="https://localhost:$port" \
+  FATHOM_AUTH_SECRET_FILE="$PWD/.dev/secrets/fathom_auth_secret" \
   FATHOM_TLS_CERT_FILE="$PWD/.dev/certs/localhost.pem" \
   FATHOM_TLS_KEY_FILE="$PWD/.dev/certs/localhost-key.pem" \
   FATHOM_DB_HOST=127.0.0.1 \

@@ -3,9 +3,10 @@
 // Tests against a real PostgreSQL server built from Fathom's own image: migrations, the client, the
 // permissions of each database role, and the server's security settings.
 
-import { eq } from "drizzle-orm";
+import { eq, getTableName, isTable } from "drizzle-orm";
+import { getTableConfig, type PgTable } from "drizzle-orm/pg-core";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,6 +19,7 @@ import {
   runMigrations,
   verifyAppliedMigrations,
 } from "./migrate.ts";
+import * as schema from "./schema.ts";
 import { appInfo } from "./schema.ts";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 
@@ -91,6 +93,59 @@ afterAll(async () => {
   await database.container.stop();
 });
 
+describe("schema", () => {
+  // Every table the schema module defines, alongside the schema object itself.
+  const tables = Object.values(schema as Record<string, unknown>).filter(
+    (value) => isTable(value),
+  ) as PgTable[];
+
+  it("matches the tables the migrations build: columns, foreign keys, and indexes", async () => {
+    expect(tables.length).toBeGreaterThan(1);
+    for (const table of tables) {
+      const config = getTableConfig(table);
+      const name = getTableName(table);
+      // One query at a time, since a connection runs only one at once.
+      const [columns, foreignKeys, indexes] = await withClient(
+        database.migrator,
+        async (client) =>
+          [
+            await client.query<{ column_name: string }>(
+              "SELECT column_name FROM information_schema.columns WHERE table_schema = 'fathom' AND table_name = $1",
+              [name],
+            ),
+            await client.query<{ name: string; on_delete: string }>(
+              "SELECT conname AS name, confdeltype AS on_delete FROM pg_constraint WHERE contype = 'f' AND conrelid = $1::regclass",
+              [`fathom.${name}`],
+            ),
+            await client.query<{ indexname: string }>(
+              "SELECT indexname FROM pg_indexes WHERE schemaname = 'fathom' AND tablename = $1",
+              [name],
+            ),
+          ] as const,
+      );
+      expect(columns.rows.map((row) => row.column_name).sort()).toEqual(
+        config.columns.map((column) => column.name).sort(),
+      );
+      expect(
+        foreignKeys.rows
+          .map(
+            (row) =>
+              `${row.name} ${row.on_delete === "c" ? "cascade" : row.on_delete}`,
+          )
+          .sort(),
+      ).toEqual(
+        config.foreignKeys
+          .map((key) => `${key.getName()} ${String(key.onDelete)}`)
+          .sort(),
+      );
+      const indexNames = indexes.rows.map((row) => row.indexname);
+      for (const index of config.indexes) {
+        expect(indexNames).toContain(index.config.name);
+      }
+    }
+  });
+});
+
 describe("migrations", () => {
   it("can be applied again without changing anything", async () => {
     await runMigrations(database.migrator);
@@ -99,7 +154,10 @@ describe("migrations", () => {
         "SELECT count(*)::int AS total FROM fathom_migrations.migrations",
       ),
     );
-    expect(result.rows[0]).toEqual({ total: 2 });
+    const migrationFiles = readdirSync(
+      new URL("../migrations/", import.meta.url),
+    ).filter((name) => name.endsWith(".sql"));
+    expect(result.rows[0]).toEqual({ total: migrationFiles.length });
   });
 
   it("refuse to continue when an applied migration file was edited", async () => {

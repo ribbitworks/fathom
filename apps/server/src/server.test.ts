@@ -40,6 +40,10 @@ function configFor(port = 0): ServerConfig {
   return {
     host: "127.0.0.1",
     port,
+    auth: {
+      publicUrl: "https://fathom.example.test",
+      secret: "fictional-session-secret-for-tests-only-0123456789",
+    },
     proxyHost: undefined,
     tls: certificate,
     webRoot: undefined,
@@ -315,6 +319,10 @@ describe("serve command", () => {
   beforeAll(() => {
     folder = mkdtempSync(join(tmpdir(), "fathom-serve-"));
     writeFileSync(join(folder, "password"), database.app.password);
+    writeFileSync(
+      join(folder, "secret"),
+      "fictional-session-secret-for-tests-only-0123456789",
+    );
   });
 
   afterAll(() => {
@@ -326,6 +334,8 @@ describe("serve command", () => {
       {
         FATHOM_HOST: "127.0.0.1",
         FATHOM_PORT: String(await freePort()),
+        FATHOM_PUBLIC_URL: "https://fathom.example.test",
+        FATHOM_AUTH_SECRET_FILE: join(folder, "secret"),
         FATHOM_TLS_CERT_FILE: certificate.certFile,
         FATHOM_TLS_KEY_FILE: certificate.keyFile,
         FATHOM_DB_HOST: database.app.host,

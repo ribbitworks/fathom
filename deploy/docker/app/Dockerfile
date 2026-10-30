@@ -40,6 +40,10 @@ RUN find . -path ./node_modules -prune -o -name '*.test.ts' -exec rm {} +
 RUN if find -L node_modules -name '*.node' | grep -q .; then \
     echo "error: a runtime package has native code, which this image cannot build" >&2; exit 1; \
   fi
+# Development tools, which carry native binaries, must never reach the runtime image.
+RUN if ls node_modules/.pnpm | grep -E '^(esbuild|@esbuild|drizzle-kit|vite|vitest|typescript)@'; then \
+    echo "error: development tools were installed as runtime packages" >&2; exit 1; \
+  fi
 
 FROM gcr.io/distroless/nodejs24-debian13:nonroot@sha256:cb606325b7ec4af55462cb0b424a53b452a5b4a894ffe841fcf1048d216fb9f8
 WORKDIR /app

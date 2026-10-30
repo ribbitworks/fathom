@@ -22,7 +22,7 @@ mkdir -p "$secrets_dir"
 # which cannot otherwise read them, while the folder keeps them private on this machine.
 chmod 700 .dev "$secrets_dir"
 
-for name in postgres_superuser_password fathom_migrator_password fathom_app_password; do
+for name in postgres_superuser_password fathom_migrator_password fathom_app_password fathom_auth_secret; do
   file="$secrets_dir/$name"
   if [ ! -s "$file" ]; then
     info "Creating $file"

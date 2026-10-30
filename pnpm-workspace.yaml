@@ -39,3 +39,13 @@ overrides:
   smol-toml: 1.9.0
   katex: 0.18.2
   "@esbuild-kit/core-utils>esbuild": 0.25.12
+  # Drizzle can use Kysely, which Better Auth brings in, but Fathom does not, so Drizzle is installed
+  # without it; otherwise the server and the database package would each get a separate copy.
+  "drizzle-orm>kysely": "-"
+  # Better Auth can work with these when they are present, and pnpm would link the workspace's own
+  # copies, bringing development tools such as drizzle-kit and its native esbuild binary into the
+  # production image. Fathom's server uses none of them.
+  "better-auth>drizzle-kit": "-"
+  "better-auth>vitest": "-"
+  "better-auth>react": "-"
+  "better-auth>react-dom": "-"

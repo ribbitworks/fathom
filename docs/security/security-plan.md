@@ -70,6 +70,7 @@ Every credential has an owner. Its master copy is kept in a password manager or 
 | Database application account | Fathom's operators | Limited to what the application needs |
 | Database migration account | Fathom's operators | Used only to apply migrations during upgrades |
 | HTTPS private key | Fathom's operators, with the certificate issued by IT | Renewed before expiry |
+| Session secret | Fathom's operators | Signs session cookies; changing it signs everyone out |
 | Backup encryption key | To be decided; someone outside the team that runs backups | Old keys are kept for as long as backups made with them are kept, so those backups can still be restored |
 | Fathom Administrator accounts | Each named Administrator | Personal accounts, not shared |
 | Host administrator accounts | IT, under IT's own process | Personal accounts, not shared |

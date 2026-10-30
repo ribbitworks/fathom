@@ -1,7 +1,7 @@
 # Fathom — Roadmap
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-27
+**Last updated:** 2026-10-30
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
 
@@ -69,5 +69,4 @@ These four stages make up v1. Broader configuration for other domains, and the f
 
 1. **First stage scope:** Is the first stage the right size, and are the cut-down versions acceptable?
 1. **Editing before approval:** Is it acceptable for edits to go straight to the live plan until plan approval arrives?
-1. **Roles timing:** Should roles be agreed before the first stage goes live, or before access control is developed?
 1. **Stage order:** Is the order after the first stage right? For example, should the org chart come before plan approval?

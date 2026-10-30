@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Shared helpers for Fathom's bash scripts: messages, checks for git and a container runtime, the list
-# of project files, and the copy of them that containerized scanners read, so they never see ignored
-# folders. Sourcing it also exports FATHOM_SECURITY_FIXES_DATE, the date that decides which security
-# fixes container builds fetch. Source this file; do not run it.
+# of project files, the copy of them that containerized scanners read, so they never see ignored
+# folders, and a prompt for new passwords. Sourcing it also exports FATHOM_SECURITY_FIXES_DATE, the
+# date that decides which security fixes container builds fetch. Source this file; do not run it.
 
 info() { printf '==> %s\n' "$*"; }
 fail() {
@@ -50,4 +50,20 @@ make_scan_copy() {
   }
   chmod -R a+rX "$copy" || return 1
   printf '%s\n' "$copy"
+}
+
+# Asks for a new password twice, without showing it, and prints it for the caller to pass on through
+# standard input, never as an argument, so it stays out of process listings. It is called inside
+# $(...), where older bash does not stop on errors, so each step checks its own result.
+read_new_password() {
+  local password confirmation
+  [ -r /dev/tty ] || fail "A password can only be entered at a terminal"
+  printf 'Password: ' >/dev/tty
+  IFS= read -rs password </dev/tty || fail "Could not read the password"
+  printf '\nPassword again: ' >/dev/tty
+  IFS= read -rs confirmation </dev/tty || fail "Could not read the password"
+  printf '\n' >/dev/tty
+  [ -n "$password" ] || fail "The password is empty"
+  [ "$password" = "$confirmation" ] || fail "The passwords do not match"
+  printf '%s\n' "$password"
 }

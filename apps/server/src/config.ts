@@ -1,13 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Loads and validates the server's settings from environment variables: the address it listens on,
-// whether connections come through Fathom's proxy, its HTTPS certificate and private key, the built
-// front end it serves, and the database connection.
+// the address users reach Fathom at, whether connections come through Fathom's proxy, its HTTPS
+// certificate and private key, the secret that signs sessions, the built front end it serves, and
+// the database connection.
 
 import { type DatabaseConfig, loadDatabaseConfig } from "@fathom/db";
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join } from "node:path";
 import { z } from "zod";
+
+const authEnvironmentSchema = z.object({
+  // The address users reach Fathom at, such as https://fathom.example.internal. Sign-in accepts
+  // requests only from pages at this address.
+  FATHOM_PUBLIC_URL: z.url({ protocol: /^https$/ }),
+  FATHOM_AUTH_SECRET_FILE: z.string().min(1),
+});
 
 const environmentSchema = z.object({
   FATHOM_HOST: z.string().min(1),
@@ -26,9 +34,19 @@ export interface TlsConfig {
   key: string;
 }
 
+export interface AuthConfig {
+  // The origin of the address users reach Fathom at, such as https://fathom.example.internal.
+  publicUrl: string;
+  secret: string;
+}
+
+// Long enough to resist guessing, as Better Auth recommends.
+const minimumSecretLength = 32;
+
 export interface ServerConfig {
   host: string;
   port: number;
+  auth: AuthConfig;
   // The proxy's host name, unset when clients connect directly, as in development mode.
   proxyHost: string | undefined;
   tls: TlsConfig;
@@ -37,19 +55,44 @@ export interface ServerConfig {
   database: DatabaseConfig;
 }
 
-// The certificate and private key come from files, such as container secrets, so the key never
-// appears in the environment or in process listings. Invalid settings are named without their values.
-export function loadServerConfig(
-  environment: NodeJS.ProcessEnv = process.env,
-): ServerConfig {
-  const result = environmentSchema.safeParse(environment);
+// Validates settings with the given schema, naming every invalid setting without its value.
+function parseSettings<Schema extends z.ZodType>(
+  schema: Schema,
+  environment: NodeJS.ProcessEnv,
+): z.infer<Schema> {
+  const result = schema.safeParse(environment);
   if (!result.success) {
     const fields = result.error.issues
       .map((issue) => issue.path.join("."))
       .join(", ");
     throw new Error(`Invalid server configuration: ${fields}`);
   }
-  const settings = result.data;
+  return result.data;
+}
+
+// The settings sign-in needs, which the account commands read too.
+export function loadAuthConfig(
+  environment: NodeJS.ProcessEnv = process.env,
+): AuthConfig {
+  const settings = parseSettings(authEnvironmentSchema, environment);
+  // The path comes from the operator's configuration, not from users of the application.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
+  const secret = readFileSync(settings.FATHOM_AUTH_SECRET_FILE, "utf8").trim();
+  if (secret.length < minimumSecretLength) {
+    throw new Error(
+      `Invalid server configuration: the file FATHOM_AUTH_SECRET_FILE names must hold at least ${String(minimumSecretLength)} characters`,
+    );
+  }
+  return { publicUrl: new URL(settings.FATHOM_PUBLIC_URL).origin, secret };
+}
+
+// The certificate, private key, and session secret come from files, such as container secrets, so
+// they never appear in the environment or in process listings. Invalid settings are named without
+// their values.
+export function loadServerConfig(
+  environment: NodeJS.ProcessEnv = process.env,
+): ServerConfig {
+  const settings = parseSettings(environmentSchema, environment);
   const webRoot = settings.FATHOM_WEB_ROOT;
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   if (webRoot !== undefined && !existsSync(join(webRoot, "index.html"))) {
@@ -60,6 +103,7 @@ export function loadServerConfig(
   return {
     host: settings.FATHOM_HOST,
     port: settings.FATHOM_PORT,
+    auth: loadAuthConfig(environment),
     proxyHost: settings.FATHOM_PROXY_HOST,
     tls: {
       // The paths come from the operator's configuration, not from users of the application.

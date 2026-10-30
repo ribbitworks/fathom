@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Builds Fathom's HTTPS application: security headers, rate limiting, a time limit for each request,
-// validation with the shared Zod schemas, error responses that reveal no internal details, logs
-// without personal data, the API routes, which reach data only through the data access layer, and
-// the built front end. It never serves plain HTTP.
+// a check that requests changing data come from Fathom's own pages, validation with the shared Zod
+// schemas, error responses that reveal no internal details, logs without personal data, sign-in,
+// the API routes, which reach data only through the data access layer, and the built front end. It
+// never serves plain HTTP.
 
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -13,13 +14,17 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from "fastify-type-provider-zod";
-import type { TlsConfig } from "./config.ts";
+import type { Database } from "@fathom/db";
+import type { AuthConfig, TlsConfig } from "./config.ts";
+import { createAuth } from "./data/auth.ts";
 import type { DataAccess } from "./data/index.ts";
 import { loggerOptions, type LogStream } from "./logging.ts";
+import { authRoutes } from "./routes/auth.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
 import { webRoutes } from "./routes/web.ts";
 
 const badRequest = 400;
+const forbidden = 403;
 const notFound = 404;
 const internalServerError = 500;
 const defaultRequestsPerMinute = 300;
@@ -35,8 +40,15 @@ const unroutableRequestHeaders = {
   "x-content-type-options": "nosniff",
 };
 
+// Requests with these methods only read, so they need no check of where they come from.
+const readOnlyMethods = new Set(["GET", "HEAD", "OPTIONS"]);
+
 export interface AppOptions {
   data: DataAccess;
+  // The database sign-in keeps its accounts and sessions in, and its settings, including the origin
+  // users reach Fathom at, the only one allowed to send requests that change data.
+  database: Database;
+  auth: AuthConfig;
   tls: TlsConfig;
   // Tests pass their own stream to read the logs.
   logStream: LogStream;
@@ -90,6 +102,18 @@ export async function buildApp(options: AppOptions) {
     timeWindow: "1 minute",
   });
   app.addHook("onRequest", app.rateLimit());
+  // Browsers name the page a request comes from, so a request that changes data from any other
+  // site's page is refused, which stops cross-site request forgery.
+  app.addHook("onRequest", (request, reply, done) => {
+    if (
+      readOnlyMethods.has(request.method) ||
+      request.headers.origin === options.auth.publicUrl
+    ) {
+      done();
+      return;
+    }
+    void reply.status(forbidden).send({ error: "Forbidden" });
+  });
 
   // Errors the client caused keep their message; any other error is logged, and the client is told
   // only that the request failed, so internal details never reach the browser.
@@ -107,6 +131,11 @@ export async function buildApp(options: AppOptions) {
     reply.status(notFound).send({ error: "Not Found" }),
   );
 
+  // Better Auth reports only warnings and errors, each logged with its own level alongside.
+  const auth = createAuth(options.database, options.auth, (level, message) => {
+    app.log.warn({ authLevel: level }, message);
+  });
+  await app.register(authRoutes(auth, options.auth.publicUrl));
   await app.register(greetingRoutes(options.data));
   if (options.webRoot !== undefined) {
     await app.register(webRoutes(options.webRoot));

@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-10-28
+**Last updated:** 2026-10-30
 
 ## Purpose of This Document
 
@@ -47,7 +47,7 @@ Fathom does not hold salary or compensation, performance ratings or reviews, hea
 
 ### Information About Fathom's Users
 
-Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, and a history of who viewed or changed Restricted or Confidential information. When a user leaves, their Fathom account must be disabled by hand.
+Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; and a history of who viewed or changed Restricted or Confidential information. When a user leaves, their Fathom account must be disabled by hand.
 
 ## Who Can See and Change What
 
@@ -99,7 +99,7 @@ Our understanding, which is not legal advice, is that British Columbia's Persona
 1. **Employee notice:** How should employees be told that Fathom holds this information, and for what purposes?
 1. **Access and correction:** How should employees ask to see or correct their information? Since the HR system is the official record, corrections would normally be made there and copied into Fathom.
 1. **Retention:** How long should details of employees who have left be kept before they are removed? Is Fathom's information ever used to make a decision that directly affects someone?
-1. **Access history:** Who should be able to view the history of who viewed or changed information, and how long should it be kept?
+1. **Access history:** Who should be able to view the history of who viewed or changed information, and how long should it be kept? How long should records of signed-in sessions, with their network addresses and browsers, be kept?
 1. **Other countries:** What does Indian law, or the law of any other country where we have employees, require for this information, including managers in India seeing details of employees in Canada?
 1. **Server location:** Are there any concerns about holding information about employees outside Canada on a server in Canada?
 1. **Contacts and incidents:** Who should employees contact with questions, and what should happen if information is exposed?
