@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, and to point to the UI components chosen in ADR 0004
 
 ## Context
 
@@ -47,7 +47,7 @@ What matters most in these choices:
 | Copyright and licence information | The REUSE specification, checked with the REUSE tool | Per-file copyright headers only | A standard, machine-readable way to state each file's licence, checked automatically, while the copyright is stated once, matching NOTICE, rather than in every file |
 | Node.js version management | fnm | nvm, Volta | Fast, works on macOS, Linux, and Windows, and switches versions automatically from `.node-version` |
 
-UI components, styling, charts, and the Gantt, timeline, and org chart components are left to the component evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section.
+UI components, styling, charts, and the Gantt, timeline, and org chart components are chosen in [ADR 0004](0004-ui-components.md), after the component evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section.
 
 ### Versions
 
