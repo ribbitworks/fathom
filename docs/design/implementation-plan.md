@@ -22,7 +22,14 @@ Beyond the workflow, each slice adds the [access control tests](../standards/tes
 
 ## Slices
 
-The slices are built in this order, which may change as work progresses.
+The slices are built in this order, which may change as work progresses. The table shows the slices that are done or next; the rest are still to come.
+
+| Slice | Progress |
+| --- | --- |
+| Hello Fathom | Done, on macOS; server platforms are tested as in [Deployment Testing](#deployment-testing) |
+| Component Evaluation | Done, in [ADR 0004](../adr/0004-ui-components.md) |
+| Accounts and Access Control | Done |
+| Visual Design | Next |
 
 ### Hello Fathom
 
@@ -34,8 +41,6 @@ The smallest version of Fathom: a single page that proves the foundation works e
 - Unit and integration tests, type checking, linting, and the build-time scans from the Security Plan all run with one command.
 - Tests prove that outbound internet access from the application and database containers fails.
 
-Hello Fathom has one page, so it does not use the front-end router yet. The first slice with more than one page adds the router, and the server then answers page requests outside `/api` and `/assets` with the front end's page, so links to any page work.
-
 ### Component Evaluation
 
 The evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section. It is not a vertical slice, so the definition of done for slices does not apply to it.
@@ -43,6 +48,10 @@ The evaluation in the roadmap's [After Hello Fathom](../product/roadmap.md#after
 ### Accounts and Access Control
 
 Local accounts, sign-in, sessions, and the proposed [Roles](../product/roles.md), enforced through the shared data access layer, with the access history. Every later slice builds on this. Roles are built so they are cheap to change, and are agreed before going live, as the roadmap requires.
+
+### Visual Design
+
+The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section, agreed with the owner and applied to the screens that exist: navigation and layout, type, colour, spacing, and how tables, forms, dialogs, and messages look, using the components chosen in ADR 0004. Every later slice is built in this design. It is not a vertical slice, so the definition of done for slices does not apply to it.
 
 ### People and Org Structure
 

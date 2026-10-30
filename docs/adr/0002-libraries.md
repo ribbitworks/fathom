@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, and to let users change their own password
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use
 
 ## Context
 
@@ -31,7 +31,7 @@ What matters most in these choices:
 | PostgreSQL driver | node-postgres (`pg`) | postgres.js | The most widely used PostgreSQL driver for Node.js, and fully supported by Drizzle |
 | Migrations | drizzle-kit, generating SQL migration files | Hand-written SQL | Migrations are plain SQL files reviewed like any other change |
 | Authentication and sessions | Better Auth, with sessions stored in the database | A small in-house implementation | A maintained library for local accounts, password hashing, sessions, and sign-in rate limiting, rather than writing security-critical code ourselves |
-| Password hashing | Better Auth's default, scrypt | Argon2id through Better Auth's custom hashing hooks | scrypt is an accepted password hashing algorithm and needs no native module; to be confirmed in Hello Fathom |
+| Password hashing | Better Auth's default, scrypt | Argon2id through Better Auth's custom hashing hooks | scrypt is an accepted password hashing algorithm and needs no native module; confirmed in use when accounts were built |
 | Logging | Pino, Fastify's built-in logger | Winston | Structured logs, with redaction of known fields |
 | Front-end routing and data fetching | TanStack Router and TanStack Query | React Router | Type-safe routes and consistent loading, caching, and error handling |
 | Tables | TanStack Table | A component library's table | The first stage is mostly tables; headless, so styling stays separate |
@@ -84,7 +84,7 @@ Better Auth settings that the security plan relies on:
 
 ## Consequences
 
-- **Authentication library maturity:** Better Auth is newer than the other choices. If it proves unsuitable, the alternative is a small in-house session layer following established guidance, with Argon2id password hashing. Hello Fathom and the Accounts and Access Control slice confirm it, including its password hashing.
+- **Authentication library maturity:** Better Auth is newer than the other choices. If it proves unsuitable, the alternative is a small in-house session layer following established guidance, with Argon2id password hashing. The Accounts and Access Control slice confirmed it, including its password hashing.
 - **Database access:** Drizzle keeps queries explicit, but tier checks are not automatic; the shared data access layer and its tests enforce them.
 - **Native modules:** If a native module is ever added, dependencies are installed inside the linux/amd64 build, never copied from a machine with a different processor, and the module is explicitly allowed to run its install script in pnpm.
 - **Testcontainers:** Must be verified on each development runtime in [Supported Platforms](../operations/supported-platforms.md). Runtimes other than Docker need extra configuration, and tests need access to the container images they use.

@@ -19,6 +19,7 @@ Development uses fictional data only.
 ## After Hello Fathom
 
 - **Component evaluation:** UI components, styling, and charts are chosen, and Gantt, timeline, and org chart components are evaluated, before any UI work beyond Hello Fathom. By the owner's choice, Hello Fathom's placeholder page counts as groundwork rather than UI work.
+- **Visual design:** A visual and user experience design is agreed before the rest of the first stage's screens are built.
 
 ## Before Going Live
 

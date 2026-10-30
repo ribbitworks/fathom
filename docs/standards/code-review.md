@@ -3,7 +3,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/markdown-style-guidelines.md", "docs/standards/testing.md"]
-last_updated: "2026-10-28"
+last_updated: "2026-10-30"
 ---
 
 # Code Review Standards
@@ -122,7 +122,7 @@ When the change affects the user interface:
 
 ### Documentation
 
-- Documentation is updated for new patterns, decisions, and behavior, following the checks below.
+- Documentation is updated for new patterns, decisions, and behavior, and every document the change affects is current, following the checks below.
 - Changed Markdown files follow the [Markdown Style Guidelines](markdown-style-guidelines.md).
 
 #### Markdown Checklist
@@ -138,6 +138,19 @@ When the change affects the user interface:
 #### Documentation Content
 
 - **No duplication:** Facts are not repeated across documents. Each fact lives in the document that owns it, as listed in `AGENTS.md`, and other documents link to it. Standalone summaries for outside readers, listed as exceptions in `AGENTS.md`, may repeat facts but must stay consistent with their owners.
+
+#### Documentation Kept Current
+
+Every document the change affects is up to date in the same change, not only the documents it edits. The reviewer goes through each document `AGENTS.md` lists, and every other Markdown file git tracks, and reports any statement the change has made untrue, incomplete, or out of date. In particular:
+
+- **README:** The getting-started steps still work as written, and the repository layout matches the top-level folders.
+- **Development Setup:** Every command, setting, and folder the change adds, renames, or removes is listed.
+- **Implementation Plan and Roadmap:** Slice progress is recorded, and notes about work that is now done no longer read as future work.
+- **Open questions and proposals:** Any the change answers or decides are resolved in the document that owns them, and any it raises are added there.
+- **Issues:** Deferred work and accepted findings are recorded in the [issues document](../issues.md), and items the change resolves are removed.
+- **Summaries for IT and HR:** Kept consistent with every fact they summarize that the change affects.
+- **Architecture, ADRs, and Domain Model:** Updated for new parts, decisions, and entities, with the revision noted where an ADR is revised. The Security Plan is covered under [Security](#security).
+- **Product and operations documents:** New terms, decisions, roles, use cases, platforms, and deployment needs are recorded in the documents that own them.
 
 #### Markdown Linting
 
