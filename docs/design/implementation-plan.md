@@ -78,7 +78,11 @@ The input Software Project Managers give on whether teams are in place. Its form
 
 ## Deployment Testing
 
-Testing on the server platforms in [Supported Platforms](../operations/supported-platforms.md) may be some time away. Until then, slices are proven on development platforms, and each server platform is tested as soon as a suitable machine is available. Deploying to company infrastructure, including for testing, first needs IT approval.
+Testing on the server platforms in [Supported Platforms](../operations/supported-platforms.md) may be some time away. Until then, slices are proven on development platforms. Each server platform is tested once its host setup below is written and a suitable machine is available. Deploying to company infrastructure, including for testing, first needs IT approval.
+
+## Host Setup
+
+The scripts that set up the production host are written once the first stage works on macOS, close to deployment. For the first deployment's Windows Server with WSL 2, they cover the [setup it needs](../operations/supported-platforms.md#windows-server-with-wsl-2), the host firewall, and, where possible, blocking the proxy's outbound traffic. They wait until then because they depend on IT's answers to the requests in the [IT Overview](../operations/it-overview.md) and [Deployment](../operations/deployment.md), and need a Windows machine to test on.
 
 ## Going Live
 
