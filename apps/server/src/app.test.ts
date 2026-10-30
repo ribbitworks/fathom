@@ -17,6 +17,8 @@ import { hostname, tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type App, buildApp } from "./app.ts";
+import { createAccount } from "./data/accounts.ts";
+import { createAuth } from "./data/auth.ts";
 import { readGreeting } from "./data/greeting.ts";
 import { createDataAccess } from "./data/index.ts";
 
@@ -44,10 +46,10 @@ async function appFor(
   } = {},
   logLines: string[] = [],
 ): Promise<App> {
-  const connection = createDatabase(poolFor(options.password));
+  // A wrong password breaks only the data access layer, so sign-in still works.
   const app = await buildApp({
-    data: createDataAccess(connection),
-    database: connection,
+    data: createDataAccess(createDatabase(poolFor(options.password))),
+    database: createDatabase(poolFor()),
     auth: { publicUrl, secret },
     tls: certificate,
     logStream: { write: (line) => logLines.push(line) },
@@ -73,11 +75,47 @@ afterAll(async () => {
   certificate.remove();
 });
 
+let accounts = 0;
+// Creates a fictional account, signs it in, and returns the session cookie.
+async function signedIn(app: App): Promise<string> {
+  accounts += 1;
+  const email = `person${String(accounts)}@example.test`;
+  await createAccount(
+    createAuth(createDatabase(poolFor()), { publicUrl, secret }),
+    {
+      name: `Fictional Person ${String(accounts)}`,
+      email,
+      password: "fictional password 1",
+    },
+  );
+  const response = await app.inject({
+    method: "POST",
+    url: "/api/auth/sign-in/email",
+    remoteAddress: `192.0.2.${String(100 + accounts)}`,
+    headers: { origin: publicUrl },
+    payload: { email, password: "fictional password 1" },
+  });
+  const cookie = [response.headers["set-cookie"]]
+    .flat()
+    .find((value) => value?.includes("session_token="));
+  return String(cookie).split(";")[0] ?? "";
+}
+
 describe("greeting", () => {
-  it("returns the greeting stored in the database", async () => {
-    const response = await (await appFor()).inject("/api/greeting");
+  it("returns the greeting stored in the database to a signed-in user", async () => {
+    const app = await appFor();
+    const response = await app.inject({
+      url: "/api/greeting",
+      headers: { cookie: await signedIn(app) },
+    });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ greeting: "Hello, Fathom" });
+  });
+
+  it("needs sign-in, like every API request", async () => {
+    const response = await (await appFor()).inject("/api/greeting");
+    expect(response.statusCode).toBe(401);
+    expect(response.json()).toEqual({ error: "Unauthorized" });
   });
 
   it("fails clearly when the migrations have not stored the greeting", async () => {
@@ -151,6 +189,49 @@ describe("front end", () => {
     writeFileSync(join(nestedRoot, "index.html"), "<!doctype html>");
     const response = await (await appFor({ webRoot: nestedRoot })).inject("/");
     expect(response.headers["cache-control"]).toBe("no-cache");
+  });
+
+  it.each(["/sign-in", "/people/fictional?tab=details"])(
+    "answers a browser asking for the front end's page %s with the front end's page",
+    async (url) => {
+      const response = await (
+        await appFor({ webRoot })
+      ).inject({ url, headers: { accept: "text/html,application/xhtml+xml" } });
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toContain("<title>Fathom</title>");
+      expect(response.headers["cache-control"]).toBe("no-cache");
+      expect(response.headers["content-security-policy"]).toContain(
+        "script-src 'self'",
+      );
+    },
+  );
+
+  it.each([
+    [
+      "an unknown API path",
+      { url: "/api/unknown", headers: { accept: "text/html" } },
+    ],
+    [
+      "a missing file",
+      { url: "/assets/missing.js", headers: { accept: "text/html" } },
+    ],
+    [
+      "a request for JSON",
+      { url: "/sign-in", headers: { accept: "application/json" } },
+    ],
+    ["a request that does not ask for a page", { url: "/sign-in" }],
+    [
+      "a request that changes data",
+      {
+        method: "DELETE" as const,
+        url: "/sign-in",
+        headers: { accept: "text/html", origin: publicUrl },
+      },
+    ],
+  ])("answers %s with a plain not found", async (_case, request) => {
+    const response = await (await appFor({ webRoot })).inject(request);
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({ error: "Not Found" });
   });
 
   it("answers unknown files with a plain not found", async () => {
@@ -250,7 +331,10 @@ describe("responses", () => {
   it("hide internal details when the server fails, and log the failure", async () => {
     const logLines: string[] = [];
     const app = await appFor({ password: "wrong-password" }, logLines);
-    const response = await app.inject("/api/greeting");
+    const response = await app.inject({
+      url: "/api/greeting",
+      headers: { cookie: await signedIn(app) },
+    });
     expect(response.statusCode).toBe(500);
     expect(response.json()).toEqual({ error: "Internal Server Error" });
     expect(logLines.join("")).toContain('"code":"28P01"');

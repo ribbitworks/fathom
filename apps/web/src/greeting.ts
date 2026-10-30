@@ -4,15 +4,8 @@
 // page never shows data in a shape it does not expect.
 
 import { type GreetingResponse, greetingResponseSchema } from "@fathom/shared";
+import { getJson } from "./api.ts";
 
-export async function fetchGreeting(): Promise<GreetingResponse> {
-  const response = await fetch("/api/greeting", {
-    headers: { accept: "application/json" },
-  });
-  if (!response.ok) {
-    throw new Error(
-      `The server answered with status ${String(response.status)}`,
-    );
-  }
-  return greetingResponseSchema.parse(await response.json());
+export function fetchGreeting(): Promise<GreetingResponse> {
+  return getJson("/api/greeting", greetingResponseSchema);
 }

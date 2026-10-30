@@ -6,7 +6,7 @@
 // client sends, so sign-in limits cannot be dodged by forging an address, and sign-in is passed only
 // an email address and password, so a client cannot ask for a longer session.
 
-import { sessionResponseSchema } from "@fathom/shared";
+import { sessionResponseSchema, signInRequestSchema } from "@fathom/shared";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
@@ -14,8 +14,6 @@ import { z } from "zod";
 import { type Auth, clientAddressHeader } from "../data/auth.ts";
 
 const unauthorized = 401;
-
-const signInSchema = z.object({ email: z.string(), password: z.string() });
 
 // The request's headers as Better Auth reads them, with the client's address the server knows.
 function headersFor(request: FastifyRequest): Headers {
@@ -28,6 +26,29 @@ function headersFor(request: FastifyRequest): Headers {
 function sendCookies(headers: Headers, reply: FastifyReply): void {
   const cookies = headers.getSetCookie();
   if (cookies.length > 0) void reply.header("set-cookie", cookies);
+}
+
+export interface SignedInUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// Returns the signed-in user, or null without a valid session. A session in use is extended, with a
+// new cookie for the browser.
+export async function readSession(
+  auth: Auth,
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<SignedInUser | null> {
+  const { headers, response: session } = await auth.api.getSession({
+    headers: headersFor(request),
+    returnHeaders: true,
+  });
+  sendCookies(headers, reply);
+  if (session === null) return null;
+  const { id, name, email } = session.user;
+  return { id, name, email };
 }
 
 async function passToBetterAuth(
@@ -64,7 +85,7 @@ export function authRoutes(
 
     app.post(
       "/api/auth/sign-in/email",
-      { schema: { body: signInSchema } },
+      { schema: { body: signInRequestSchema } },
       (request, reply) => pass(request, reply, request.body),
     );
     app.post("/api/auth/sign-out", (request, reply) =>
@@ -83,17 +104,11 @@ export function authRoutes(
         },
       },
       async (request, reply) => {
-        // A session in use is extended, with a new cookie for the browser.
-        const { headers, response: session } = await auth.api.getSession({
-          headers: headersFor(request),
-          returnHeaders: true,
-        });
-        sendCookies(headers, reply);
-        if (session === null) {
+        const user = await readSession(auth, request, reply);
+        if (user === null) {
           return reply.status(unauthorized).send({ error: "Unauthorized" });
         }
-        const { id, name, email } = session.user;
-        return { user: { id, name, email } };
+        return { user };
       },
     );
     done();

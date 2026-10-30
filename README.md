@@ -4,7 +4,7 @@ Fathom is a tool for high-level software project planning, resource assignment, 
 
 ## Status
 
-Early development. The tech stack is recorded in [ADR 0001](docs/adr/0001-tech-stack.md); the first code, Hello Fathom, is being built as described in the [Implementation Plan](docs/design/implementation-plan.md).
+Early development. The tech stack is recorded in [ADR 0001](docs/adr/0001-tech-stack.md), and Fathom is being built slice by slice, as described in the [Implementation Plan](docs/design/implementation-plan.md).
 
 ## Getting Started
 
@@ -16,14 +16,15 @@ bash scripts/dev-bootstrap.sh
 
 On Windows, run `scripts/dev-bootstrap.ps1` in PowerShell instead.
 
-Create development secrets and the local HTTPS certificate, then start development mode:
+Create development secrets and the local HTTPS certificate, create an account for yourself, then start development mode:
 
 ```bash
 pnpm dev:setup
+pnpm account:create --name "Your Name" --email you@example.test
 pnpm dev
 ```
 
-`pnpm dev` opens Fathom in your browser.
+`pnpm dev` opens Fathom in your browser, where you sign in with that account.
 
 Check everything, including the tests and the security report:
 

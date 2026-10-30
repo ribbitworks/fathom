@@ -59,12 +59,14 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    setupFiles: ["src/test-setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      // main.tsx only starts the page in the browser; the parts it puts together are tested.
-      exclude: ["src/**/*.test.{ts,tsx}", "src/main.tsx"],
+      // main.tsx only starts the page in the browser, and test-setup.ts only prepares the tests;
+      // the parts main.tsx puts together are tested.
+      exclude: ["src/**/*.test.{ts,tsx}", "src/main.tsx", "src/test-setup.ts"],
       thresholds: {
         branches: 100,
         functions: 100,

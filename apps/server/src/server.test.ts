@@ -95,12 +95,13 @@ describe("server", () => {
   it("serves the API over HTTPS with its certificate", async () => {
     const server = await startServer(configFor(), silent);
     try {
+      // Answered by the server itself: no one is signed in.
       const response = await httpsGet(
-        `${server.url}/api/greeting`,
+        `${server.url}/api/session`,
         certificate.cert,
       );
-      expect(response.statusCode).toBe(200);
-      expect(JSON.parse(response.body)).toEqual({ greeting: "Hello, Fathom" });
+      expect(response.statusCode).toBe(401);
+      expect(JSON.parse(response.body)).toEqual({ error: "Unauthorized" });
     } finally {
       await server.close();
     }
@@ -138,11 +139,11 @@ describe("server", () => {
     );
     try {
       const response = await httpsGetAfter(
-        `${server.url}/api/greeting`,
+        `${server.url}/api/session`,
         certificate.cert,
         proxyProtocolHeader("192.0.2.88"),
       );
-      expect(response.statusCode).toBe(200);
+      expect(response.statusCode).toBe(401);
       expect(logLines.join("")).toContain('"clientAddress":"192.0.2.88"');
       await expect(
         httpsGet(`${server.url}/api/greeting`, certificate.cert),

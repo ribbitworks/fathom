@@ -1,29 +1,44 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Fathom's page: shows the greeting the server reads from the database, while it loads, and when it
-// cannot be loaded.
+// Fathom's front end: its theme, the data it has loaded, and its pages. When the server refuses a
+// request because the session has ended, everything loaded is forgotten and the user is sent to
+// sign in, then brought back.
 
-import { useQuery } from "@tanstack/react-query";
-import { fetchGreeting } from "./greeting.ts";
+import { MantineProvider } from "@mantine/core";
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type RouterHistory, RouterProvider } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { isSignedOut } from "./api.ts";
+import { createAppRouter } from "./router.tsx";
 
-function Greeting() {
-  const greeting = useQuery({ queryKey: ["greeting"], queryFn: fetchGreeting });
-  if (greeting.isPending) return <p role="status">Loading…</p>;
-  if (greeting.isError) {
-    return (
-      <p role="alert">
-        Fathom could not reach its server. Try again in a moment.
-      </p>
-    );
-  }
-  return <p className="greeting">{greeting.data.greeting}</p>;
-}
-
-export function App() {
+export function App({
+  queryClient,
+  history,
+}: {
+  queryClient: QueryClient;
+  // The browser's address, or, in tests, a page of their choosing.
+  history: RouterHistory;
+}) {
+  const [router] = useState(() => createAppRouter(queryClient, history));
+  useEffect(
+    () =>
+      queryClient.getQueryCache().subscribe((event) => {
+        if (
+          event.type === "updated" &&
+          event.action.type === "error" &&
+          isSignedOut(event.action.error)
+        ) {
+          queryClient.clear();
+          void router.invalidate();
+        }
+      }),
+    [queryClient, router],
+  );
   return (
-    <main>
-      <h1>Fathom</h1>
-      <Greeting />
-    </main>
+    <MantineProvider defaultColorScheme="auto">
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </MantineProvider>
   );
 }

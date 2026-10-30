@@ -1,58 +1,278 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for Fathom's page, with the server's responses simulated: the greeting once it loads, a
-// loading message until then, and a plain message when the server cannot be reached.
+// Tests for Fathom's front end, with the server's responses simulated: signing in, being sent to
+// sign in and brought back, including when a session ends, signing out, the greeting on the home
+// page, and the pages and messages shown when something goes wrong.
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { QueryClient } from "@tanstack/react-query";
+import { createMemoryHistory } from "@tanstack/react-router";
+import { render, screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { App } from "./app.tsx";
 
-function renderApp() {
-  // Failed requests are not retried, so each test sees the server's first answer.
-  const client = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
+type Answer = Response | Promise<Response>;
+
+// Simulates the server: each request is answered by the first matching answer, and recorded.
+function serverAnswers(answers: Record<string, () => Answer>) {
+  const byRequest = new Map(Object.entries(answers));
+  const fetch = vi.fn((url: string, init?: RequestInit) => {
+    const key = `${init?.method ?? "GET"} ${url}`;
+    const answer = byRequest.get(key);
+    if (answer === undefined) throw new Error(`No answer for ${key}`);
+    return Promise.resolve(answer());
   });
-  render(
-    <QueryClientProvider client={client}>
-      <App />
-    </QueryClientProvider>,
-  );
+  vi.stubGlobal("fetch", fetch);
+  return fetch;
 }
 
-function serverAnswers(response: Response | Promise<Response>) {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(() => Promise.resolve(response)),
-  );
+const fictionalUser = {
+  user: {
+    id: "user-1",
+    name: "Fictional Person",
+    email: "person@example.test",
+  },
+};
+const signedIn = () => Response.json(fictionalUser);
+const signedOut = () =>
+  Response.json({ error: "Unauthorized" }, { status: 401 });
+const greeting = () => Response.json({ greeting: "Hello, Fathom" });
+
+function renderApp(path: string) {
+  // Failed requests are not retried, so each test sees the server's first answer.
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  const history = createMemoryHistory({ initialEntries: [path] });
+  render(<App queryClient={queryClient} history={history} />);
+  return history;
+}
+
+async function fillIn(email: string, password: string) {
+  const user = userEvent.setup();
+  await user.type(await screen.findByLabelText("Email address"), email);
+  if (password) await user.type(screen.getByLabelText("Password"), password);
+  await user.click(screen.getByRole("button", { name: "Sign in" }));
 }
 
 afterEach(() => {
-  cleanup();
   vi.unstubAllGlobals();
 });
 
-describe("page", () => {
-  it("shows the greeting from the server", async () => {
-    serverAnswers(Response.json({ greeting: "Hello, Fathom" }));
-    renderApp();
+describe("home page", () => {
+  it("shows the greeting and who is signed in", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
     expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(screen.getByText("Fictional Person")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Fathom" })).toBeDefined();
   });
 
-  it("shows a loading message until the server answers", () => {
-    serverAnswers(new Promise<Response>(() => undefined));
-    renderApp();
-    expect(screen.getByRole("status").textContent).toBe("Loading…");
+  it("shows a loading indicator until the greeting arrives", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": () => new Promise<Response>(() => undefined),
+    });
+    renderApp("/");
+    expect(await screen.findByLabelText("Loading")).toBeDefined();
   });
 
   it("shows a plain message when the server fails", async () => {
-    serverAnswers(
-      Response.json({ error: "Internal Server Error" }, { status: 500 }),
-    );
-    renderApp();
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": () =>
+        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+    });
+    renderApp("/");
     expect((await screen.findByRole("alert")).textContent).toMatch(
       /could not reach its server/,
     );
+  });
+});
+
+describe("signing in", () => {
+  it("sends someone who is not signed in to sign in, then back to the page they wanted", async () => {
+    let session = signedOut;
+    const fetch = serverAnswers({
+      "GET /api/session": () => session(),
+      "POST /api/auth/sign-in/email": () => {
+        session = signedIn;
+        return Response.json({});
+      },
+      "GET /api/greeting": greeting,
+    });
+    const history = renderApp("/?tab=fictional");
+    expect(
+      await screen.findByRole("heading", { name: "Sign in to Fathom" }),
+    ).toBeDefined();
+    await fillIn("person@example.test", "fictional password 1");
+    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(history.location.href).toBe("/?tab=fictional");
+    expect(fetch).toHaveBeenCalledWith("/api/auth/sign-in/email", {
+      method: "POST",
+      headers: expect.objectContaining({
+        "content-type": "application/json",
+      }) as unknown,
+      body: JSON.stringify({
+        email: "person@example.test",
+        password: "fictional password 1",
+      }),
+    });
+  });
+
+  it("goes to the home page after signing in, when no page was asked for", async () => {
+    let session = signedOut;
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "POST /api/auth/sign-in/email": () => {
+        session = signedIn;
+        return Response.json({});
+      },
+      "GET /api/greeting": greeting,
+    });
+    const history = renderApp("/sign-in");
+    await fillIn("person@example.test", "fictional password 1");
+    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(history.location.pathname).toBe("/");
+  });
+
+  it("asks for a valid email address and a password before sending anything", async () => {
+    const fetch = serverAnswers({ "GET /api/session": signedOut });
+    renderApp("/sign-in");
+    await fillIn("not an address", "");
+    expect(await screen.findByText("Enter your email address.")).toBeDefined();
+    expect(screen.getByText("Enter your password.")).toBeDefined();
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/auth/sign-in/email",
+      expect.anything(),
+    );
+  });
+
+  it.each([
+    [401, "That email address and password do not match an account."],
+    [429, "Too many attempts. Wait a minute, then try again."],
+    [500, "Fathom could not reach its server. Try again in a moment."],
+  ])("explains a refusal with status %i plainly", async (status, message) => {
+    serverAnswers({
+      "GET /api/session": signedOut,
+      "POST /api/auth/sign-in/email": () =>
+        Response.json({ error: "Fictional" }, { status }),
+    });
+    renderApp("/sign-in");
+    await fillIn("person@example.test", "not the password");
+    expect((await screen.findByRole("alert")).textContent).toBe(message);
+  });
+});
+
+describe("signing out", () => {
+  it("ends the session and returns to the sign-in page", async () => {
+    let session = signedIn;
+    const fetch = serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/greeting": greeting,
+      "POST /api/auth/sign-out": () => {
+        session = signedOut;
+        return Response.json({ success: true });
+      },
+    });
+    const history = renderApp("/");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Sign out" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Sign in to Fathom" }),
+    ).toBeDefined();
+    expect(history.location.pathname).toBe("/sign-in");
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/auth/sign-out",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("says so when signing out fails, and stays signed in", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "POST /api/auth/sign-out": () =>
+        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+    });
+    renderApp("/");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Sign out" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toMatch(
+      /could not sign you out/,
+    );
+    expect(screen.getByText("Fictional Person")).toBeDefined();
+  });
+});
+
+describe("when something goes wrong", () => {
+  it("says when the server cannot be reached, and tries again on request", async () => {
+    let session = () =>
+      Response.json({ error: "Internal Server Error" }, { status: 500 });
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Fathom could not reach its server.",
+    );
+    session = signedIn;
+    await userEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+  });
+
+  it("says when an address names no page, with a way home", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    const history = renderApp("/no-such-page");
+    expect(
+      await screen.findByText("There is no page at this address."),
+    ).toBeDefined();
+    await userEvent.click(
+      screen.getByRole("link", { name: "Go to the home page" }),
+    );
+    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(history.location.pathname).toBe("/");
+  });
+
+  it("ignores a page to return to that is not text", async () => {
+    let session = signedOut;
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "POST /api/auth/sign-in/email": () => {
+        session = signedIn;
+        return Response.json({});
+      },
+      "GET /api/greeting": greeting,
+    });
+    const history = renderApp("/sign-in?redirect=123");
+    await fillIn("person@example.test", "fictional password 1");
+    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(history.location.pathname).toBe("/");
+  });
+
+  it("sends someone whose session has ended to sign in, then back", async () => {
+    let session = signedIn;
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/greeting": () => {
+        session = signedOut;
+        return signedOut();
+      },
+    });
+    const history = renderApp("/?tab=fictional");
+    expect(
+      await screen.findByRole("heading", { name: "Sign in to Fathom" }),
+    ).toBeDefined();
+    expect(history.location.pathname).toBe("/sign-in");
+    expect(history.location.search).toContain("tab%3Dfictional");
   });
 });

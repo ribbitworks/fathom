@@ -3,8 +3,8 @@
 // Builds Fathom's HTTPS application: security headers, rate limiting, a time limit for each request,
 // a check that requests changing data come from Fathom's own pages, validation with the shared Zod
 // schemas, error responses that reveal no internal details, logs without personal data, sign-in,
-// the API routes, which reach data only through the data access layer, and the built front end. It
-// never serves plain HTTP.
+// which every other API route requires, the API routes, which reach data only through the data
+// access layer, and the built front end. It never serves plain HTTP.
 
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -19,11 +19,12 @@ import type { AuthConfig, TlsConfig } from "./config.ts";
 import { createAuth } from "./data/auth.ts";
 import type { DataAccess } from "./data/index.ts";
 import { loggerOptions, type LogStream } from "./logging.ts";
-import { authRoutes } from "./routes/auth.ts";
+import { authRoutes, readSession } from "./routes/auth.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
-import { webRoutes } from "./routes/web.ts";
+import { pageFallback, webRoutes } from "./routes/web.ts";
 
 const badRequest = 400;
+const unauthorized = 401;
 const forbidden = 403;
 const notFound = 404;
 const internalServerError = 500;
@@ -127,13 +128,30 @@ export async function buildApp(options: AppOptions) {
     }
     return reply.status(statusCode).send({ error: error.message });
   });
-  app.setNotFoundHandler((_request, reply) =>
-    reply.status(notFound).send({ error: "Not Found" }),
+  const page =
+    options.webRoot === undefined ? undefined : pageFallback(options.webRoot);
+  app.setNotFoundHandler(
+    (request, reply) =>
+      page?.(request, reply) ??
+      reply.status(notFound).send({ error: "Not Found" }),
   );
 
   // Better Auth reports only warnings and errors, each logged with its own level alongside.
   const auth = createAuth(options.database, options.auth, (level, message) => {
     app.log.warn({ authLevel: level }, message);
+  });
+  // Every API request needs a signed-in user, apart from signing in and asking who is signed in.
+  // Checked before the request is read, so a signed-out client learns nothing from validation.
+  app.addHook("onRequest", async (request, reply) => {
+    const route = request.routeOptions.url ?? "";
+    const open =
+      !route.startsWith("/api/") ||
+      route.startsWith("/api/auth/") ||
+      route === "/api/session";
+    if (!open && (await readSession(auth, request, reply)) === null) {
+      return reply.status(unauthorized).send({ error: "Unauthorized" });
+    }
+    return undefined;
   });
   await app.register(authRoutes(auth, options.auth.publicUrl));
   await app.register(greetingRoutes(options.data));

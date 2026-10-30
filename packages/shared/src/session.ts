@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The response of the session endpoint: the signed-in user, as the front end shows them.
+// Signing in: what the sign-in form sends, and the session endpoint's response, the signed-in user as
+// the front end shows them.
 
 import { z } from "zod";
+
+export const signInRequestSchema = z.object({
+  email: z.email(),
+  password: z.string().min(1),
+});
+
+export type SignInRequest = z.infer<typeof signInRequestSchema>;
 
 export const sessionResponseSchema = z.object({
   user: z.object({
