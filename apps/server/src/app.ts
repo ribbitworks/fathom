@@ -20,6 +20,8 @@ import { createAuth } from "./data/auth.ts";
 import type { DataAccess } from "./data/index.ts";
 import { loggerOptions, type LogStream } from "./logging.ts";
 import type { Actor } from "./access.ts";
+import { createAccountAdministration } from "./data/accounts.ts";
+import { accountRoutes } from "./routes/accounts.ts";
 import { authRoutes, readActor } from "./routes/auth.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
 import { pageFallback, webRoutes } from "./routes/web.ts";
@@ -160,6 +162,9 @@ export async function buildApp(options: AppOptions) {
     return undefined;
   });
   await app.register(authRoutes(auth, options.data, options.auth.publicUrl));
+  await app.register(
+    accountRoutes(createAccountAdministration(options.database, auth)),
+  );
   await app.register(greetingRoutes(options.data));
   if (options.webRoot !== undefined) {
     await app.register(webRoutes(options.webRoot));

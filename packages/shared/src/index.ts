@@ -4,6 +4,19 @@
 // Only code that is safe to reach the browser belongs here.
 
 export {
+  type Account,
+  accountActiveSchema,
+  accountListSchema,
+  accountRolesSchema,
+  accountSchema,
+  newAccountSchema,
+  type NewAccountRequest,
+  passwordChangeSchema,
+  type PasswordChangeRequest,
+  passwordLength,
+  passwordResetSchema,
+} from "./accounts.ts";
+export {
   type Permission,
   permissionSchema,
   type Role,

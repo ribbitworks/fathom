@@ -3,8 +3,8 @@
 // Sign-in and sessions, through Better Auth, which keeps its accounts, sessions, and sign-in rate
 // limits in Fathom's database. Accounts are created only by administrators, there is no email, and
 // sessions are checked against the database on every request, so deactivating an account takes
-// effect at once. Better Auth's warnings and errors go to Fathom's log as its fixed messages only,
-// without the details it attaches, which can name a user.
+// effect at once, and a deactivated account cannot sign in. Better Auth's warnings and errors go to
+// Fathom's log as its fixed messages only, without the details it attaches, which can name a user.
 
 import {
   accounts,
@@ -14,7 +14,9 @@ import {
   users,
   verifications,
 } from "@fathom/db";
+import { passwordLength } from "@fathom/shared";
 import { betterAuth } from "better-auth";
+import { eq } from "drizzle-orm";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { AuthConfig } from "../config.ts";
 
@@ -54,8 +56,8 @@ export function createAuth(
     emailAndPassword: {
       enabled: true,
       disableSignUp: true,
-      minPasswordLength: 12,
-      maxPasswordLength: 128,
+      minPasswordLength: passwordLength.minimum,
+      maxPasswordLength: passwordLength.maximum,
     },
     // A session ends after 12 hours without use, and is never cached in a cookie.
     session: {
@@ -80,6 +82,21 @@ export function createAuth(
       level: "warn",
       log: (level, message) => {
         log?.(level, message);
+      },
+    },
+    // A deactivated account cannot start a session, even with the right password.
+    databaseHooks: {
+      session: {
+        create: {
+          before: async (session) => {
+            const [user] = await database
+              .select({ deactivatedAt: users.deactivatedAt })
+              .from(users)
+              .where(eq(users.id, session.userId));
+            // Refused, too, if the account cannot be found.
+            return user !== undefined && user.deactivatedAt === null;
+          },
+        },
       },
     },
     telemetry: { enabled: false },

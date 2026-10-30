@@ -295,13 +295,20 @@ describe("accepting connections from the proxy", () => {
     // A byte at a time, each well within the time limit, never completing the header in time.
     const header = proxyProtocolHeader("192.0.2.77");
     let sent = 0;
+    // The server may reset the connection rather than close it, which is just as good.
+    connection.on("error", () => undefined);
+    const closed = new Promise<void>((resolve) => {
+      connection.on("close", () => {
+        resolve();
+      });
+    });
     const drip = setInterval(() => {
       if (sent < header.length && !connection.destroyed) {
         connection.write(header.subarray(sent, (sent += 1)));
       }
     }, 50);
     try {
-      await once(connection, "close");
+      await closed;
       expect(sent).toBeLessThan(header.length);
     } finally {
       clearInterval(drip);

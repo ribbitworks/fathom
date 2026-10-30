@@ -7,12 +7,8 @@
 
 import type { Permission, Role } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import {
-  actorFor,
-  ForbiddenError,
-  requirePermission,
-  rolesGranting,
-} from "./access.ts";
+import { actorFor, requirePermission, rolesGranting } from "./access.ts";
+import { ForbiddenError } from "./errors.ts";
 
 const user = {
   id: "user-1",

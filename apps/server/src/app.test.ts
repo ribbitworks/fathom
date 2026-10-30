@@ -21,7 +21,8 @@ import { createAccount } from "./data/accounts.ts";
 import { createAuth } from "./data/auth.ts";
 import { readGreeting } from "./data/greeting.ts";
 import { createDataAccess, type DataAccess } from "./data/index.ts";
-import { actorFor, ForbiddenError, rolesGranting } from "./access.ts";
+import { actorFor, rolesGranting } from "./access.ts";
+import { ForbiddenError } from "./errors.ts";
 import { roleSchema } from "@fathom/shared";
 
 type Pool = ReturnType<typeof createPool>;

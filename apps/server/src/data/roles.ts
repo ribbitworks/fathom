@@ -4,7 +4,7 @@
 // code that queries the database. A role name the server no longer knows, such as one renamed
 // before going live, is ignored rather than trusted.
 
-import { type Database, userRoles } from "@fathom/db";
+import { type Database, userRoles, users } from "@fathom/db";
 import { type Role, roleSchema } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 
@@ -22,8 +22,9 @@ export async function readRoles(
   });
 }
 
+// Takes the database or a transaction, which both insert the same way.
 export async function addRoles(
-  database: Database,
+  database: Pick<Database, "insert">,
   userId: string,
   roles: readonly Role[],
 ): Promise<void> {
@@ -32,4 +33,18 @@ export async function addRoles(
     .insert(userRoles)
     .values(roles.map((role) => ({ userId, role })))
     .onConflictDoNothing();
+}
+
+// The roles of a signed-in user making a request, or null if their account has been deactivated, so
+// a session that outlives a deactivation, however briefly, grants nothing.
+export async function readActorRoles(
+  database: Database,
+  userId: string,
+): Promise<Role[] | null> {
+  const [user] = await database
+    .select({ deactivatedAt: users.deactivatedAt })
+    .from(users)
+    .where(eq(users.id, userId));
+  if (user?.deactivatedAt !== null) return null;
+  return readRoles(database, userId);
 }

@@ -7,6 +7,7 @@
 
 import type { Permission, Role } from "@fathom/shared";
 import { roleSchema } from "@fathom/shared";
+import { ForbiddenError } from "./errors.ts";
 
 // Every role must be listed, which the compiler checks.
 const grants: Record<Role, readonly Permission[]> = {
@@ -70,14 +71,6 @@ export function rolesGranting(permission: Permission): Role[] {
       permission,
     ),
   );
-}
-
-export class ForbiddenError extends Error {
-  readonly statusCode = 403;
-
-  constructor() {
-    super("Forbidden");
-  }
 }
 
 export function requirePermission(actor: Actor, permission: Permission): void {

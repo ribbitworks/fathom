@@ -68,7 +68,7 @@ Under the proposed roles:
 - **Employee details, teams, reporting lines, and the hiring plan** are maintained by the role that maintains workforce information, held initially only by the Director.
 - **Work assignments** are maintained by Software Engineering Managers and the Director.
 - **Feature teams** are maintained by Software Engineering Managers in the first release.
-- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. The Director holds this role at first, alongside the role that maintains workforce information, so for now the safeguards on granting access rely on the access history. A second person is planned to take on this role later.
+- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. An administrator could still reach such information by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. The Director holds this role at first, alongside the role that maintains workforce information, so for now the safeguards on granting access rely on the access history. A second person is planned to take on this role later.
 
 ## How the Information Is Protected
 

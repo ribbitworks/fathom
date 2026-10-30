@@ -36,6 +36,8 @@ export const users = fathomSchema.table("users", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
+  // Set when an administrator deactivates the account, which then cannot sign in.
+  deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for local accounts, sign-in, and sessions against a migrated PostgreSQL server: creating
-// accounts with their roles, what the signed-in user's roles let them do, signing in and out, the signed-in user, secure session cookies that last 12 hours from
-// last use, no public sign-up or other Better Auth features, logs without users' details, and
-// sign-in limits that a client cannot dodge by naming another address.
+// accounts with their roles, what the signed-in user's roles let them do, signing in and out, the
+// signed-in user, secure session cookies that last 12 hours from last use, no public sign-up or
+// other Better Auth features, logs without users' details, and sign-in limits that a client cannot
+// dodge by naming another address.
 
 import {
   createDatabase,
@@ -184,11 +185,11 @@ describe("signing in", () => {
     expect(sessionCookie(response.headers["set-cookie"])).not.toBe("");
   });
 
-  it("offers none of Better Auth's other features, such as users changing their own name or password", async () => {
+  it("offers none of Better Auth's other features, such as users changing their own name", async () => {
     const cookie = sessionCookie(
       (await signIn(await newAccount())).headers["set-cookie"],
     );
-    for (const path of ["update-user", "change-password", "list-sessions"]) {
+    for (const path of ["update-user", "list-sessions", "revoke-sessions"]) {
       const response = await app.inject({
         method: "POST",
         url: `/api/auth/${path}`,

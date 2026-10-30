@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Sign-in, sign-out, and the signed-in user, with their roles and what those roles let them do. Only the Better Auth requests Fathom uses are passed on,
-// so its other features, such as users changing their own name, stay closed, including any a later
-// version adds. Each is passed with the client's address the server already knows, in place of any a
-// client sends, so sign-in limits cannot be dodged by forging an address, and sign-in is passed only
-// an email address and password, so a client cannot ask for a longer session.
+// Sign-in, sign-out, changing one's own password, and the signed-in user, with their roles and what
+// those roles let them do. Only the Better Auth requests Fathom uses are passed on, so its other
+// features, such as users changing their own name, stay closed, including any a later version adds.
+// Each is passed with the client's address the server already knows, in place of any a client
+// sends, so sign-in limits cannot be dodged by forging an address, and sign-in is passed only an
+// email address and password, so a client cannot ask for a longer session.
 
-import { sessionResponseSchema, signInRequestSchema } from "@fathom/shared";
+import {
+  passwordChangeSchema,
+  sessionResponseSchema,
+  signInRequestSchema,
+} from "@fathom/shared";
 import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
@@ -15,7 +20,12 @@ import { type Actor, actorFor, type SignedInUser } from "../access.ts";
 import { type Auth, clientAddressHeader } from "../data/auth.ts";
 import type { DataAccess } from "../data/index.ts";
 
+const ok = 200;
 const unauthorized = 401;
+const refusedSignIn = {
+  code: "INVALID_EMAIL_OR_PASSWORD",
+  message: "Invalid email or password",
+};
 
 // The request's headers as Better Auth reads them, with the client's address the server knows.
 function headersFor(request: FastifyRequest): Headers {
@@ -56,10 +66,14 @@ export async function readActor(
   reply: FastifyReply,
 ): Promise<Actor | null> {
   const user = await readSession(auth, request, reply);
-  return user === null
-    ? null
-    : actorFor(user, await data.readActorRoles(user.id));
+  if (user === null) return null;
+  // A deactivated account grants nothing, even while a session of its own lasts.
+  const roles = await data.readActorRoles(user.id);
+  return roles === null ? null : actorFor(user, roles);
 }
+
+// Replaces what Better Auth answers, for a status, when its answer would say too much.
+type Answers = Partial<Record<number, object>>;
 
 async function passToBetterAuth(
   auth: Auth,
@@ -67,6 +81,7 @@ async function passToBetterAuth(
   request: FastifyRequest,
   reply: FastifyReply,
   body?: object,
+  answers: Answers = {},
 ) {
   const response = await auth.handler(
     new Request(new URL(request.url, publicUrl), {
@@ -79,7 +94,12 @@ async function passToBetterAuth(
     if (name !== "set-cookie") void reply.header(name, value);
   }
   sendCookies(response.headers, reply);
-  return reply.status(response.status).send(await response.text());
+  const answer = answers[response.status];
+  return reply
+    .status(response.status)
+    .send(
+      answer === undefined ? await response.text() : JSON.stringify(answer),
+    );
 }
 
 export function authRoutes(
@@ -92,12 +112,29 @@ export function authRoutes(
       request: FastifyRequest,
       reply: FastifyReply,
       body?: object,
-    ) => passToBetterAuth(auth, publicUrl, request, reply, body);
+      answers?: Answers,
+    ) => passToBetterAuth(auth, publicUrl, request, reply, body, answers);
 
+    // Every refused sign-in gets the same answer, so it never reveals that a password was right
+    // for an account that has been deactivated.
     app.post(
       "/api/auth/sign-in/email",
       { schema: { body: signInRequestSchema } },
-      (request, reply) => pass(request, reply, request.body),
+      (request, reply) =>
+        pass(request, reply, request.body, { [unauthorized]: refusedSignIn }),
+    );
+    // Changing one's own password signs out every other session, so a stolen one ends. The answer
+    // leaves out the new session's token, which the browser receives as a cookie.
+    app.post(
+      "/api/auth/change-password",
+      { schema: { body: passwordChangeSchema } },
+      (request, reply) =>
+        pass(
+          request,
+          reply,
+          { ...request.body, revokeOtherSessions: true },
+          { [ok]: {} },
+        ),
     );
     app.post("/api/auth/sign-out", (request, reply) =>
       pass(request, reply, {}),

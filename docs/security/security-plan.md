@@ -36,7 +36,7 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | Someone on the internal network without an account reaches data | Every request requires sign-in; no anonymous access | Automated tests |
 | Another container poses as the proxy to forge users' addresses, evading rate limits or misleading the logs | The application accepts connections, and the user addresses they name, only from the proxy's address | Automated tests; container tests |
 | A user sees or changes data beyond their roles | Tier checks in one shared data access layer, used by screens, exports, snapshots, and search | Automated tests for every role and tier; code review |
-| A user grants themselves more access | Administrators cannot assign roles to themselves; role changes are recorded in the access history | Automated tests; access history review |
+| A user grants themselves more access | Administrators cannot change their own roles, reset their own password, or deactivate their own account. They can still create another account or reset another user's password and sign in as them, which local passwords cannot prevent, so account creation, role changes, password resets, and deactivations are recorded in the access history | Automated tests; access history review |
 | Passwords are guessed or stolen | Strong password hashing, sign-in rate limiting, and session expiry | Automated tests; configuration review |
 | Sessions are hijacked, or requests forged from another site | Secure, HttpOnly, SameSite session cookies and cross-site request forgery protection | Automated tests; web application scan |
 | Traffic is intercepted on the internal network | HTTPS with an internal certificate; no unencrypted access | TLS configuration scan |

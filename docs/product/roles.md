@@ -36,7 +36,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 
 ## Safeguards for Administrators
 
-**Proposal:** Administrators cannot assign roles to themselves, every role change is recorded in the access history, and granting the Workforce Administrator role needs the Director's confirmation. The first Administrator's roles are assigned when Fathom is set up. Separation of duties applies to the Administrator role itself; a person who also holds other roles sees what those roles allow. While the Director is the only Administrator and also confirms Workforce Administrator grants, these safeguards rely on the access history alone. A second person should take the Administrator role or the confirming duty later.
+**Proposal:** Administrators cannot change their own roles, reset their own password, or deactivate their own account, and every account created, role change, password reset, and deactivation is recorded in the access history, and granting the Workforce Administrator role needs the Director's confirmation. The first Administrator's roles are assigned when Fathom is set up. Separation of duties applies to the Administrator role itself; a person who also holds other roles sees what those roles allow. While the Director is the only Administrator and also confirms Workforce Administrator grants, these safeguards rely on the access history alone. A second person should take the Administrator role or the confirming duty later. With local passwords, an Administrator can still reach other roles' data by creating another account or resetting another user's password and signing in as them; the access history is what reveals it.
 
 ## Default Roles by Persona
 
