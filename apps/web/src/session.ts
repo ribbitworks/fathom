@@ -9,7 +9,7 @@ import {
   type SignInRequest,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
-import { ApiError, getJson, isSignedOut } from "./api.ts";
+import { ApiError, getJson, isSignedOut, sendJson } from "./api.ts";
 
 export type SignedInUser = SessionResponse["user"];
 
@@ -20,16 +20,16 @@ const json = {
   "content-type": "application/json",
 };
 
-async function fetchSession(): Promise<SignedInUser | null> {
+async function fetchSession(): Promise<SessionResponse | null> {
   try {
-    return (await getJson("/api/session", sessionResponseSchema)).user;
+    return await getJson("/api/session", sessionResponseSchema);
   } catch (error) {
     if (isSignedOut(error)) return null;
     throw error;
   }
 }
 
-// The signed-in user, or null when no one is signed in.
+// The signed-in user, with their roles and permissions, or null when no one is signed in.
 export const sessionQuery = queryOptions({
   queryKey: ["session"],
   queryFn: fetchSession,
@@ -50,12 +50,7 @@ export async function signIn(request: SignInRequest): Promise<SignInResult> {
 }
 
 export async function signOut(): Promise<void> {
-  const response = await fetch("/api/auth/sign-out", {
-    method: "POST",
-    headers: json,
-    body: "{}",
-  });
-  if (!response.ok) throw new ApiError(response.status);
+  await sendJson("POST", "/api/auth/sign-out", {});
 }
 
 // Where to go after signing in: a page within Fathom, or the home page. The address is resolved as

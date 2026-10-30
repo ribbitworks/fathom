@@ -1,22 +1,40 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Requests to Fathom's API, and how failed ones are handled: each failure carries the server's
-// status, refusals such as a missing sign-in are not retried, and a request refused because the
-// session has ended sends the user to sign in again.
+// status and message, refusals such as a missing sign-in are not retried, a request refused because
+// the session has ended sends the user to sign in again, and every failure can be put plainly.
 
-import type { z } from "zod";
+import { z } from "zod";
 
 const unauthorized = 401;
 const firstServerError = 500;
 const maximumRetries = 2;
 
+// A failed request, with the server's status, its message for users when it gave one, and Better
+// Auth's code for the problem when it gave one.
 export class ApiError extends Error {
   readonly status: number;
+  readonly code: string | undefined;
+  // The server's own message for users, when it gave one.
+  readonly serverMessage: string | undefined;
 
-  constructor(status: number) {
-    super(`The server answered with status ${String(status)}`);
+  constructor(status: number, message?: string, code?: string) {
+    super(message ?? `The server answered with status ${String(status)}`);
     this.status = status;
+    this.code = code;
+    this.serverMessage = message;
   }
+}
+
+const failureSchema = z.object({
+  error: z.string().optional(),
+  code: z.string().optional(),
+});
+
+async function failure(response: Response): Promise<ApiError> {
+  const body = failureSchema.safeParse(await response.json().catch(() => ({})));
+  const { error, code } = body.success ? body.data : {};
+  return new ApiError(response.status, error, code);
 }
 
 export function isSignedOut(error: unknown): boolean {
@@ -38,6 +56,62 @@ export async function getJson<Schema extends z.ZodType>(
   const response = await fetch(path, {
     headers: { accept: "application/json" },
   });
-  if (!response.ok) throw new ApiError(response.status);
+  if (!response.ok) throw await failure(response);
   return schema.parse(await response.json());
+}
+
+async function send(
+  method: "POST" | "PUT",
+  path: string,
+  body: object,
+): Promise<Response> {
+  const response = await fetch(path, {
+    method,
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw await failure(response);
+  return response;
+}
+
+// Sends JSON to the API with a method that changes data.
+export async function sendJson(
+  method: "POST" | "PUT",
+  path: string,
+  body: object,
+): Promise<void> {
+  await send(method, path, body);
+}
+
+// Sends JSON to the API with a method that changes data, and returns the answer, checked against
+// the given schema.
+export async function sendJsonFor<Schema extends z.ZodType>(
+  method: "POST" | "PUT",
+  path: string,
+  body: object,
+  schema: Schema,
+): Promise<z.infer<Schema>> {
+  return schema.parse(await (await send(method, path, body)).json());
+}
+
+const forbidden = 403;
+const tooManyRequests = 429;
+
+// Puts a failed request plainly for users: the server's own message when it refused the request for
+// a reason the user can act on, and otherwise a plain sentence, never a raw error.
+export function describeProblem(error: Error, fallback: string): string {
+  if (!(error instanceof ApiError)) return fallback;
+  if (error.status === forbidden) {
+    return "You do not have permission to do this. Your roles may have changed.";
+  }
+  if (error.status === tooManyRequests) {
+    return "Too many requests. Wait a minute, then try again.";
+  }
+  const isRefusal = error.status >= 400 && error.status < firstServerError;
+  return isRefusal && error.serverMessage !== undefined
+    ? error.serverMessage
+    : fallback;
 }

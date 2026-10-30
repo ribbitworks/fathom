@@ -64,9 +64,14 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      // main.tsx only starts the page in the browser, and test-setup.ts only prepares the tests;
-      // the parts main.tsx puts together are tested.
-      exclude: ["src/**/*.test.{ts,tsx}", "src/main.tsx", "src/test-setup.ts"],
+      // main.tsx only starts the page in the browser, and test-setup.ts and test-support.tsx only
+      // serve the tests; the parts main.tsx puts together are tested.
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/main.tsx",
+        "src/test-setup.ts",
+        "src/test-support.tsx",
+      ],
       thresholds: {
         branches: 100,
         functions: 100,

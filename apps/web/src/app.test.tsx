@@ -4,51 +4,16 @@
 // sign in and brought back, including when a session ends, signing out, the greeting on the home
 // page, and the pages and messages shown when something goes wrong.
 
-import { QueryClient } from "@tanstack/react-query";
-import { createMemoryHistory } from "@tanstack/react-router";
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { App } from "./app.tsx";
-
-type Answer = Response | Promise<Response>;
-
-// Simulates the server: each request is answered by the first matching answer, and recorded.
-function serverAnswers(answers: Record<string, () => Answer>) {
-  const byRequest = new Map(Object.entries(answers));
-  const fetch = vi.fn((url: string, init?: RequestInit) => {
-    const key = `${init?.method ?? "GET"} ${url}`;
-    const answer = byRequest.get(key);
-    if (answer === undefined) throw new Error(`No answer for ${key}`);
-    return Promise.resolve(answer());
-  });
-  vi.stubGlobal("fetch", fetch);
-  return fetch;
-}
-
-const fictionalUser = {
-  user: {
-    id: "user-1",
-    name: "Fictional Person",
-    email: "person@example.test",
-  },
-  roles: ["viewer"],
-  permissions: ["plan:view"],
-};
-const signedIn = () => Response.json(fictionalUser);
-const signedOut = () =>
-  Response.json({ error: "Unauthorized" }, { status: 401 });
-const greeting = () => Response.json({ greeting: "Hello, Fathom" });
-
-function renderApp(path: string) {
-  // Failed requests are not retried, so each test sees the server's first answer.
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-  const history = createMemoryHistory({ initialEntries: [path] });
-  render(<App queryClient={queryClient} history={history} />);
-  return history;
-}
+import {
+  greeting,
+  renderApp,
+  serverAnswers,
+  signedIn,
+  signedOut,
+} from "./test-support.tsx";
 
 async function fillIn(email: string, password: string) {
   const user = userEvent.setup();

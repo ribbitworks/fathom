@@ -27,12 +27,27 @@ describe("reading the greeting", () => {
     });
   });
 
-  it("fails with the status when the server does not succeed", async () => {
+  it("fails with the server's status and message when it does not succeed", async () => {
     serverAnswers(Response.json({ error: "Not Found" }, { status: 404 }));
-    await expect(fetchGreeting()).rejects.toThrow(
-      "The server answered with status 404",
-    );
+    await expect(fetchGreeting()).rejects.toMatchObject({
+      status: 404,
+      message: "Not Found",
+    });
   });
+
+  it.each([
+    ["is not JSON", new Response("Not JSON", { status: 502 })],
+    ["is JSON of another shape", Response.json("Bad Gateway", { status: 502 })],
+  ])(
+    "fails with the status alone when the server's answer %s",
+    async (_case, answer) => {
+      serverAnswers(answer);
+      await expect(fetchGreeting()).rejects.toMatchObject({
+        status: 502,
+        message: "The server answered with status 502",
+      });
+    },
+  );
 
   it("fails when the response is not in the expected shape", async () => {
     serverAnswers(Response.json({ greeting: 42 }));

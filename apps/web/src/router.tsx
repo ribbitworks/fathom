@@ -13,6 +13,8 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { z } from "zod";
+import { AccountsPage } from "./accounts-page.tsx";
+import { ChangePassword } from "./change-password.tsx";
 import { Home } from "./home.tsx";
 import { Layout } from "./layout.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
@@ -28,15 +30,16 @@ const signedInRoute = createRoute({
   id: "signed-in",
   beforeLoad: async ({ context, location }) => {
     // Checked afresh on every change of page, so an expired session is noticed.
-    const user = await context.queryClient.query(sessionQuery);
-    if (user === null) {
+    const session = await context.queryClient.query(sessionQuery);
+    if (session === null) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
       throw redirect({ to: "/sign-in", search: { redirect: location.href } });
     }
-    return { user };
+    return { user: session.user, permissions: session.permissions };
   },
   component: function SignedIn() {
-    return <Layout user={signedInRoute.useRouteContext().user} />;
+    const { user, permissions } = signedInRoute.useRouteContext();
+    return <Layout user={user} permissions={permissions} />;
   },
 });
 
@@ -44,6 +47,26 @@ const homeRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/",
   component: Home,
+});
+
+// Only for users who may manage accounts; anyone else is told the page is not theirs to see.
+const accountsRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/accounts",
+  component: function Accounts() {
+    const { user, permissions } = signedInRoute.useRouteContext();
+    return permissions.includes("accounts:manage") ? (
+      <AccountsPage user={user} />
+    ) : (
+      <PageNotFound />
+    );
+  },
+});
+
+const changePasswordRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/password",
+  component: ChangePassword,
 });
 
 const signInRoute = createRoute({
@@ -59,7 +82,7 @@ const signInRoute = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
-  signedInRoute.addChildren([homeRoute]),
+  signedInRoute.addChildren([homeRoute, accountsRoute, changePasswordRoute]),
   signInRoute,
 ]);
 

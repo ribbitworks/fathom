@@ -4,7 +4,7 @@
 // the errors for responses the page does not expect, and which failed requests are tried again.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, shouldRetry } from "./api.ts";
+import { ApiError, describeProblem, shouldRetry } from "./api.ts";
 import { safeRedirect, sessionQuery } from "./session.ts";
 
 afterEach(() => {
@@ -45,9 +45,9 @@ describe("reading the session", () => {
         Promise.resolve(Response.json({ error: "Fictional" }, { status: 500 })),
       ),
     );
-    await expect(sessionQuery.queryFn?.({} as never)).rejects.toThrow(
-      "The server answered with status 500",
-    );
+    await expect(sessionQuery.queryFn?.({} as never)).rejects.toMatchObject({
+      status: 500,
+    });
   });
 });
 
@@ -61,5 +61,36 @@ describe("retrying failed requests", () => {
   it("does not try again after the server refuses", () => {
     expect(shouldRetry(0, new ApiError(401))).toBe(false);
     expect(shouldRetry(0, new ApiError(404))).toBe(false);
+  });
+});
+
+describe("putting failures plainly", () => {
+  const fallback = "Fathom could not make this change. Try again in a moment.";
+
+  it.each([
+    [
+      "the server's own message for a refusal",
+      new ApiError(409, "Already exists"),
+      "Already exists",
+    ],
+    ["a refusal without a message", new ApiError(400), fallback],
+    [
+      "a server error, whatever it says",
+      new ApiError(500, "Internal Server Error"),
+      fallback,
+    ],
+    ["a lost connection", new TypeError("Failed to fetch"), fallback],
+    [
+      "a missing permission",
+      new ApiError(403, "Forbidden"),
+      "You do not have permission to do this. Your roles may have changed.",
+    ],
+    [
+      "too many requests",
+      new ApiError(429),
+      "Too many requests. Wait a minute, then try again.",
+    ],
+  ])("describes %s", (_case, error, message) => {
+    expect(describeProblem(error, fallback)).toBe(message);
   });
 });

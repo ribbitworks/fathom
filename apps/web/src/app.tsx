@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Fathom's front end: its theme, the data it has loaded, and its pages. When the server refuses a
-// request because the session has ended, everything loaded is forgotten and the user is sent to
-// sign in, then brought back.
+// request, whether to load or change data, because the session has ended, everything loaded is
+// forgotten and the user is sent to sign in, then brought back.
 
 import { MantineProvider } from "@mantine/core";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -20,20 +20,28 @@ export function App({
   history: RouterHistory;
 }) {
   const [router] = useState(() => createAppRouter(queryClient, history));
-  useEffect(
-    () =>
-      queryClient.getQueryCache().subscribe((event) => {
-        if (
-          event.type === "updated" &&
-          event.action.type === "error" &&
-          isSignedOut(event.action.error)
-        ) {
-          queryClient.clear();
-          void router.invalidate();
-        }
-      }),
-    [queryClient, router],
-  );
+  // Both loading data and changing it can find the session has ended.
+  useEffect(() => {
+    const onFailure = (event: {
+      type: string;
+      action?: { type: string; error?: unknown };
+    }) => {
+      if (
+        event.type === "updated" &&
+        event.action?.type === "error" &&
+        isSignedOut(event.action.error)
+      ) {
+        queryClient.clear();
+        void router.invalidate();
+      }
+    };
+    const stopQueries = queryClient.getQueryCache().subscribe(onFailure);
+    const stopMutations = queryClient.getMutationCache().subscribe(onFailure);
+    return () => {
+      stopQueries();
+      stopMutations();
+    };
+  }, [queryClient, router]);
   return (
     <MantineProvider defaultColorScheme="auto">
       <QueryClientProvider client={queryClient}>

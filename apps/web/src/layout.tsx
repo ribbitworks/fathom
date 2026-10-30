@@ -1,17 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The frame around every page for a signed-in user: Fathom's name, who is signed in, and signing
-// out.
+// The frame around every page for a signed-in user: Fathom's name, links to the pages they may use,
+// who is signed in, changing their password, and signing out.
 
-import { AppShell, Button, Group, Text, Title } from "@mantine/core";
+import type { Permission } from "@fathom/shared";
+import { Anchor, AppShell, Button, Group, Text, Title } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
-import { Outlet, useNavigate } from "@tanstack/react-router";
+import { Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { type SignedInUser, sessionQuery, signOut } from "./session.ts";
 
 const headerHeight = 56;
 
-export function Layout({ user }: { user: SignedInUser }) {
+export function Layout({
+  user,
+  permissions,
+}: {
+  user: SignedInUser;
+  permissions: Permission[];
+}) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
@@ -34,11 +41,28 @@ export function Layout({ user }: { user: SignedInUser }) {
     <AppShell header={{ height: headerHeight }} padding="md">
       <AppShell.Header>
         <Group h="100%" px="md" justify="space-between">
-          <Title order={1} size="h3">
-            Fathom
-          </Title>
+          <Group>
+            <Title order={1} size="h3">
+              Fathom
+            </Title>
+            <nav aria-label="Pages">
+              <Group gap="md">
+                <Anchor component={Link} to="/">
+                  Home
+                </Anchor>
+                {permissions.includes("accounts:manage") && (
+                  <Anchor component={Link} to="/accounts">
+                    Accounts
+                  </Anchor>
+                )}
+              </Group>
+            </nav>
+          </Group>
           <Group>
             <Text>{user.name}</Text>
+            <Anchor component={Link} to="/password">
+              Change password
+            </Anchor>
             <Button
               variant="default"
               loading={signingOut}
