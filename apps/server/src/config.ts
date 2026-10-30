@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Loads and validates the server's settings from environment variables: the address it listens on,
-// its HTTPS certificate and private key, the built front end it serves, and the database connection.
+// whether connections come through Fathom's proxy, its HTTPS certificate and private key, the built
+// front end it serves, and the database connection.
 
 import { type DatabaseConfig, loadDatabaseConfig } from "@fathom/db";
 import { existsSync, readFileSync } from "node:fs";
@@ -11,6 +12,9 @@ import { z } from "zod";
 const environmentSchema = z.object({
   FATHOM_HOST: z.string().min(1),
   FATHOM_PORT: z.coerce.number().int().min(1).max(65535),
+  // Set when every connection comes through Fathom's proxy, which names each client; connections
+  // from anywhere else are then refused.
+  FATHOM_PROXY_HOST: z.string().min(1).optional(),
   FATHOM_TLS_CERT_FILE: z.string().min(1),
   FATHOM_TLS_KEY_FILE: z.string().min(1),
   // An absolute path, unset in development mode, where Vite's development server serves the front end.
@@ -25,6 +29,8 @@ export interface TlsConfig {
 export interface ServerConfig {
   host: string;
   port: number;
+  // The proxy's host name, unset when clients connect directly, as in development mode.
+  proxyHost: string | undefined;
   tls: TlsConfig;
   // Unset in development mode.
   webRoot: string | undefined;
@@ -54,6 +60,7 @@ export function loadServerConfig(
   return {
     host: settings.FATHOM_HOST,
     port: settings.FATHOM_PORT,
+    proxyHost: settings.FATHOM_PROXY_HOST,
     tls: {
       // The paths come from the operator's configuration, not from users of the application.
       // eslint-disable-next-line security/detect-non-literal-fs-filename

@@ -1,0 +1,153 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Fathom as it runs in production: the proxy, the application, a one-off migration run, and the
+# database, each with the container hardening the security plan requires. Only the proxy is on a
+# network with a route out, so users can reach it; the application and the database are each on
+# internal networks with no route out, and the database is reachable only from the application and
+# the migration run. Images are built for the production server's processor. The settings on the
+# host are listed in compose.env.example; scripts/stack.sh runs this file on a development machine.
+
+name: fathom
+
+x-hardening: &hardening
+  read_only: true
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  restart: unless-stopped
+
+services:
+  proxy:
+    <<: *hardening
+    build:
+      context: ./docker/proxy
+      args:
+        SECURITY_FIXES_DATE: ${FATHOM_SECURITY_FIXES_DATE:-unset}
+    image: fathom-proxy:${FATHOM_IMAGE_TAG:-latest}
+    platform: linux/amd64
+    user: haproxy
+    networks:
+      - edge
+      - proxy-app
+    ports:
+      - "${FATHOM_BIND_ADDRESS:-127.0.0.1}:${FATHOM_HTTPS_PORT:-8443}:8443"
+    depends_on:
+      app:
+        condition: service_healthy
+    mem_limit: 256m
+    pids_limit: 128
+
+  app:
+    <<: *hardening
+    build:
+      context: ..
+      dockerfile: deploy/docker/app/Dockerfile
+    image: fathom-app:${FATHOM_IMAGE_TAG:-latest}
+    platform: linux/amd64
+    user: nonroot
+    environment:
+      FATHOM_HOST: 0.0.0.0
+      FATHOM_PORT: 8443
+      FATHOM_PROXY_HOST: proxy
+      FATHOM_TLS_CERT_FILE: /run/secrets/fathom_tls_cert
+      FATHOM_TLS_KEY_FILE: /run/secrets/fathom_tls_key
+      FATHOM_WEB_ROOT: /app/web
+      FATHOM_DB_HOST: postgres
+      FATHOM_DB_PORT: 5432
+      FATHOM_DB_NAME: fathom
+      FATHOM_DB_USER: fathom_app
+      FATHOM_DB_PASSWORD_FILE: /run/secrets/fathom_app_password
+    secrets:
+      - fathom_tls_cert
+      - fathom_tls_key
+      - fathom_app_password
+    networks:
+      - proxy-app
+      - app-db
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    mem_limit: 512m
+    pids_limit: 128
+
+  # Applies migrations as the migration role, then exits. The application never holds that role's
+  # password.
+  migrate:
+    <<: *hardening
+    build:
+      context: ..
+      dockerfile: deploy/docker/app/Dockerfile
+    image: fathom-app:${FATHOM_IMAGE_TAG:-latest}
+    platform: linux/amd64
+    user: nonroot
+    command: ["packages/db/src/migrate.ts"]
+    environment:
+      FATHOM_DB_HOST: postgres
+      FATHOM_DB_PORT: 5432
+      FATHOM_DB_NAME: fathom
+      FATHOM_DB_USER: fathom_migrator
+      FATHOM_DB_PASSWORD_FILE: /run/secrets/fathom_migrator_password
+    secrets:
+      - fathom_migrator_password
+    networks:
+      - app-db
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    mem_limit: 256m
+    pids_limit: 64
+
+  postgres:
+    <<: *hardening
+    build:
+      context: ./docker/postgres
+      args:
+        SECURITY_FIXES_DATE: ${FATHOM_SECURITY_FIXES_DATE:-unset}
+    image: fathom-postgres:${FATHOM_IMAGE_TAG:-latest}
+    platform: linux/amd64
+    user: postgres
+    environment:
+      POSTGRES_DB: fathom
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_superuser_password
+      # Every connection, including over the local socket, must give a password.
+      # Names are sorted with ICU's international rules, which cannot be changed once the database exists.
+      POSTGRES_INITDB_ARGS: --auth-local=scram-sha-256 --auth-host=scram-sha-256 --locale-provider=icu --icu-locale=und
+    secrets:
+      - postgres_superuser_password
+      - fathom_migrator_password
+      - fathom_app_password
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql:uid=70,gid=70
+    networks:
+      - app-db
+    mem_limit: 1g
+    pids_limit: 256
+
+networks:
+  # The only network with a route out, which users reach the proxy through.
+  edge: {}
+  proxy-app:
+    internal: true
+  app-db:
+    internal: true
+
+secrets:
+  postgres_superuser_password:
+    file: ${FATHOM_SECRETS_DIR:-../.dev/secrets}/postgres_superuser_password
+  fathom_migrator_password:
+    file: ${FATHOM_SECRETS_DIR:-../.dev/secrets}/fathom_migrator_password
+  fathom_app_password:
+    file: ${FATHOM_SECRETS_DIR:-../.dev/secrets}/fathom_app_password
+  fathom_tls_cert:
+    file: ${FATHOM_TLS_CERT:-../.dev/certs/localhost.pem}
+  fathom_tls_key:
+    file: ${FATHOM_TLS_KEY:-../.dev/certs/localhost-key.pem}
+
+volumes:
+  postgres-data:

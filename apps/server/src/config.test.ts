@@ -51,6 +51,7 @@ describe("server configuration", () => {
     expect(loadServerConfig(environment())).toEqual({
       host: "127.0.0.1",
       port: 8443,
+      proxyHost: undefined,
       tls: { cert: "fictional certificate", key: "fictional key" },
       webRoot: undefined,
       database: {
@@ -61,6 +62,15 @@ describe("server configuration", () => {
         password: "fictional-password",
       },
     });
+  });
+
+  it("reads the host name of Fathom's proxy, when connections come through it", () => {
+    expect(
+      loadServerConfig(environment({ FATHOM_PROXY_HOST: "proxy" })).proxyHost,
+    ).toBe("proxy");
+    expect(() =>
+      loadServerConfig(environment({ FATHOM_PROXY_HOST: "" })),
+    ).toThrow(/^Invalid server configuration: FATHOM_PROXY_HOST$/);
   });
 
   it("reads the folder holding the built front end", () => {

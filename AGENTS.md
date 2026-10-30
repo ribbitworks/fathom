@@ -74,6 +74,7 @@ chore: initialize repository
   - Roles (`docs/product/roles.md`): role definitions and what each role can do
   - Roadmap (`docs/product/roadmap.md`): the order in which Fathom's goals are delivered
   - Domain model (`docs/design/domain-model.md`): entities, relationships, and modeling proposals
+  - Architecture (`docs/design/architecture.md`): a high-level view of Fathom's parts and how they connect, kept at the level of containers and networks
   - Development setup (`docs/design/development-setup.md`): repository layout, local development, and seed data
   - Implementation plan (`docs/design/implementation-plan.md`): how the roadmap's stages are built, slice by slice
   - Architecture decision records (`docs/adr/`): technical decisions

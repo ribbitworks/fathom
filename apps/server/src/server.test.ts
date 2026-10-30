@@ -1,21 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for starting and stopping the server against a migrated PostgreSQL server: it serves the API
-// and the built front end over HTTPS only, cleans up when it cannot start, closes once, closes when
-// the process is told to end, and the serve command reads its settings from the environment and
-// reports failures.
+// and the built front end over HTTPS only, directly or behind Fathom's proxy, cleans up when it
+// cannot start, closes once, closes idle connections when it stops, closes when the process is told
+// to end, and the serve command reads its settings from the environment and reports failures.
 
 import { createPool, runMigrations } from "@fathom/db";
 import {
   createTestCertificate,
   httpGet,
   httpsGet,
+  httpsGetAfter,
+  proxyProtocolHeader,
   startTestDatabase,
   type TestCertificate,
   type TestDatabase,
 } from "@fathom/test-utils";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
-import { createServer } from "node:net";
+import { connect, createServer } from "node:net";
+import { once } from "node:events";
+import { connect as tlsConnect } from "node:tls";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -36,6 +40,7 @@ function configFor(port = 0): ServerConfig {
   return {
     host: "127.0.0.1",
     port,
+    proxyHost: undefined,
     tls: certificate,
     webRoot: undefined,
     database: database.app,
@@ -118,6 +123,76 @@ describe("server", () => {
       }
     } finally {
       rmSync(folder, { recursive: true, force: true });
+    }
+  });
+
+  it("behind the proxy, reads each client's address from the proxy's header", async () => {
+    const logLines: string[] = [];
+    const server = await startServer(
+      { ...configFor(), proxyHost: "localhost" },
+      { write: (line) => logLines.push(line) },
+    );
+    try {
+      const response = await httpsGetAfter(
+        `${server.url}/api/greeting`,
+        certificate.cert,
+        proxyProtocolHeader("192.0.2.88"),
+      );
+      expect(response.statusCode).toBe(200);
+      expect(logLines.join("")).toContain('"clientAddress":"192.0.2.88"');
+      await expect(
+        httpsGet(`${server.url}/api/greeting`, certificate.cert),
+      ).rejects.toThrow();
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("behind the proxy, gives its address in URL form for an IPv6 address", async () => {
+    const server = await startServer(
+      { ...configFor(), host: "::1", proxyHost: "localhost" },
+      silent,
+    );
+    try {
+      expect(server.url).toMatch(/^https:\/\/\[::1\]:\d+$/);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("behind the proxy, closes idle connections when it stops", async () => {
+    const server = await startServer(
+      { ...configFor(), proxyHost: "localhost" },
+      silent,
+    );
+    const connection = connect(Number(new URL(server.url).port), "127.0.0.1");
+    connection.write(proxyProtocolHeader("192.0.2.89"));
+    const tlsConnection = tlsConnect({
+      socket: connection,
+      servername: "localhost",
+      ca: certificate.cert,
+    });
+    await once(tlsConnection, "secureConnect");
+    // A browser keeps its connection open for further requests after the first.
+    tlsConnection.write(
+      "GET /api/greeting HTTP/1.1\r\nHost: localhost\r\n\r\n",
+    );
+    await once(tlsConnection, "data");
+    const closed = once(tlsConnection, "close");
+    await server.close();
+    await closed;
+  }, 10_000);
+
+  it("behind the proxy, does not start when its port is taken, and closes what it opened", async () => {
+    const first = await startServer(configFor(), silent);
+    try {
+      const port = Number(new URL(first.url).port);
+      await expect(
+        startServer({ ...configFor(port), proxyHost: "localhost" }, silent),
+      ).rejects.toMatchObject({ code: "EADDRINUSE" });
+      await expectApplicationSessions(1);
+    } finally {
+      await first.close();
     }
   });
 

@@ -76,6 +76,11 @@ describe("container hardening", () => {
           }
         });
 
+        it("has limits on its memory and number of processes", () => {
+          assert.ok(Number(service.mem_limit) > 0, "mem_limit must be set");
+          assert.ok(Number(service.pids_limit) > 0, "pids_limit must be set");
+        });
+
         it("is not privileged and does not share the host's network", () => {
           assert.notEqual(service.privileged, true);
           assert.notEqual(service.network_mode, "host");

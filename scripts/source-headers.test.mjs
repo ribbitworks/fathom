@@ -29,6 +29,8 @@ const sourceCode = [
   { pattern: /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/, comment: "//" },
   { pattern: /\.(sh|ps1|psm1|psd1|ya?ml)$/, comment: "#" },
   { pattern: /\.env\.example$/, comment: "#" },
+  { pattern: /dockerignore$/, comment: "#" },
+  { pattern: /\.cfg$/, comment: "#" },
   { pattern: /(^|\/)(Dockerfile|Containerfile)[^/]*$/, comment: "#" },
   { pattern: /\.css$/, comment: "/*", close: "*/" },
   { pattern: /\.html$/, comment: "<!--", close: "-->" },

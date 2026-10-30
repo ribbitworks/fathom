@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003
 
 ## Context
 
@@ -72,7 +72,7 @@ Better Auth settings that the security plan relies on:
 
 ### Configuration and Deployment
 
-- **HTTPS:** Fastify terminates HTTPS itself, with no separate proxy, as ADR 0001's two containers imply.
+- **HTTPS:** Fastify terminates HTTPS itself. The proxy chosen in [ADR 0003](0003-edge-proxy.md) passes encrypted connections through without decrypting them.
 - **Configuration:** Settings come from environment variables and secrets from mounted files, all validated with Zod at start-up.
 - **Migrations:** Run as a separate step before the application starts, using a migration database role that can change the schema. The application's own database role can only read and write data. Schema changes are never pushed directly with drizzle-kit; only reviewed migration files reach the database.
 - **Base images:** Builds use Debian slim images, so prebuilt binaries for glibc work. The application runs on a minimal distroless image, to reduce what can be attacked.

@@ -12,6 +12,8 @@ export {
   createTestCertificate,
   httpGet,
   httpsGet,
+  httpsGetAfter,
+  proxyProtocolHeader,
   type TestCertificate,
   type TestResponse,
 } from "./https.ts";

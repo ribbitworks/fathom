@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# The only files the application image reads from the repository. Everything else, including the
+# private .dev/ and private/ folders, is never sent to the image build.
+
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.base.json
+!apps/server/package.json
+!apps/server/src/
+!apps/web/package.json
+!apps/web/index.html
+!apps/web/vite.config.ts
+!apps/web/tsconfig.json
+!apps/web/src/
+!packages/db/package.json
+!packages/db/src/
+!packages/db/migrations/
+!packages/shared/package.json
+!packages/shared/src/
+!packages/shared/tsconfig.json
+!packages/test-utils/package.json

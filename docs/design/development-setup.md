@@ -1,7 +1,7 @@
 # Fathom — Development Setup
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-29
+**Last updated:** 2026-10-30
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
 
@@ -11,20 +11,23 @@ The repository is a pnpm workspace:
 
 ```text
 apps/
-  web/          React front end, built with Vite
-  server/       Fastify API server, which also serves the built front end
+  web/                    React front end, built with Vite
+  server/                 Fastify API server, which also serves the built front end
 packages/
-  shared/       Zod schemas, shared types, and constants used by both apps
-  db/           Drizzle schema, migration files, and the migration runner
-  fixtures/     Building blocks for fictional records, used by seed and test-utils
-  seed/         Fictional data generator
-  test-utils/   Test data factories and test helpers
+  shared/                 Zod schemas, shared types, and constants used by both apps
+  db/                     Drizzle schema, migration files, and the migration runner
+  fixtures/               Building blocks for fictional records, used by seed and test-utils
+  seed/                   Fictional data generator
+  test-utils/             Test data factories and test helpers
 deploy/
-  compose.yaml  Production-like container setup
-  docker/       Container image definitions and database initialization
-scripts/        Development and check scripts
-docs/           Documentation
-LICENSES/       Licence texts, as the REUSE specification requires
+  compose.yaml            Production container setup, also run on development machines
+  compose.dev.yaml        The development database
+  compose.env.example     The host settings compose.yaml reads
+  fathom.env.example      The application's settings
+  docker/                 Container image definitions and database initialization
+scripts/                  Development and check scripts
+docs/                     Documentation
+LICENSES/                 Licence texts, as the REUSE specification requires
 ```
 
 - **Data access layer:** Lives in `apps/server/src/data/`, so every read of protected data goes through the server's tier checks. `packages/db` holds the schema, the migrations, and the database client. A lint rule allows only the data access layer, the server's start-up code, `seed`, `test-utils`, and tests to import it; other code may use only its types.
@@ -49,7 +52,7 @@ Developers may use any machine and container runtime listed for development in S
 ### Ways to Run Fathom
 
 - **Development mode:** PostgreSQL runs in a container, and the server and front end run directly on the machine with automatic reloading. The front end's development server forwards API requests to the server, so the browser sees one HTTPS origin. It does not send the server's security headers, so the built front end is also tested to need no inline scripts or styles, which those headers block.
-- **Production-like mode:** Both containers run with Docker Compose, over HTTPS, with the same network isolation as production. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Tests of the running containers run in this mode.
+- **Production-like mode:** The containers in the [Architecture](architecture.md) run with Docker Compose, over HTTPS, with the same network isolation as production, at `https://localhost:9443` so development mode can run alongside. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Tests of the running containers run in this mode, with throwaway secrets.
 - **Tests and the database:** Development mode and the database tests build images for the machine's own processor, so they run at full speed. The security report scans separate linux/amd64 builds, so what is scanned is what production runs.
 
 ### HTTPS
@@ -82,7 +85,8 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm update:analyzer <version>` | Pin a new PSScriptAnalyzer version together with its SHA-256 |
 | `pnpm reset-caches` | Remove cached scanner data, which is rebuilt on the next check |
 | `pnpm prune-reports [days]` | Delete local reports older than the given number of days, 365 by default. Security reports are always kept for at least one calendar year, and must also be kept in the location agreed with IT, as the [Security Plan](../security/security-plan.md) requires |
-| `pnpm test:containers` | Container tests, in production-like mode |
+| `pnpm stack:up`, `pnpm stack:down`, `pnpm stack:reset`, and `pnpm stack:logs` | Start, stop, delete the data of, and follow the logs of production-like mode |
+| `pnpm test:containers` | Container tests, in a separate copy of production-like mode: users reach Fathom only through the proxy, and the application and database cannot reach the internet |
 | `pnpm test:ui` | UI tests |
 
 ## Fictional Seed Data

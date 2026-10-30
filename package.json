@@ -29,6 +29,11 @@
     "db:down": "bash scripts/dev-db.sh down",
     "db:migrate": "bash scripts/dev-db.sh migrate",
     "db:reset": "bash scripts/dev-db.sh reset",
+    "stack:up": "bash scripts/stack.sh up",
+    "stack:down": "bash scripts/stack.sh down",
+    "stack:reset": "bash scripts/stack.sh reset",
+    "stack:logs": "bash scripts/stack.sh logs",
+    "test:containers": "node --test --test-timeout=1800000 \"scripts/container-tests/*.test.mjs\"",
     "typecheck": "tsc --build",
     "build": "pnpm --filter @fathom/web build"
   },

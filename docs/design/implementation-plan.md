@@ -1,7 +1,7 @@
 # Fathom — Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-29
+**Last updated:** 2026-10-30
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Workflow](../../AGENTS.md#workflow), and the [Data](../../AGENTS.md#data) rules.
 
@@ -30,9 +30,9 @@ The smallest version of Fathom: a single page that proves the foundation works e
 
 - A React page served by the application server over HTTPS.
 - The page calls the server, which reads from PostgreSQL through the migrations and data access chosen in the groundwork, and shows the result.
-- Both containers run with Docker Compose. The database is reachable only from the application, and neither container can reach the internet.
+- The containers run with Docker Compose, as shown in the [Architecture](architecture.md). The database is reachable only from the application, and neither the application nor the database can reach the internet.
 - Unit and integration tests, type checking, linting, and the build-time scans from the Security Plan all run with one command.
-- Tests prove that outbound internet access from the containers fails.
+- Tests prove that outbound internet access from the application and database containers fails.
 
 Hello Fathom has one page, so it does not use the front-end router yet. The first slice with more than one page adds the router, and the server then answers page requests outside `/api` and `/assets` with the front end's page, so links to any page work.
 

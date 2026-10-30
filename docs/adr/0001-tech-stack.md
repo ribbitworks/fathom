@@ -3,7 +3,7 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md)
 
 ## Context
 
@@ -62,7 +62,7 @@ ASP.NET Core and Java are modern, run on Linux, and are common in Windows Server
 - **Database:** PostgreSQL, accessed through a type-safe ORM or query builder with versioned migrations.
 - **Access control:** Implemented once in the server's data access layer, so every screen, export, snapshot, and search goes through the same tier-based checks.
 - **Transport security:** HTTPS using an internal certificate, since passwords and personal data cross the intranet.
-- **Packaging:** Docker Compose with two containers, the application and PostgreSQL. The application server also serves the built front end.
+- **Packaging:** Docker Compose with the application and PostgreSQL, and a proxy in front of the application, as chosen in [ADR 0003](0003-edge-proxy.md). The application server also serves the built front end.
 - **Container runtime:** Docker Engine with Compose on servers; on Windows Server it runs inside WSL 2, since Docker Desktop is not supported there and requires a paid subscription for larger companies. Development machines may use any runtime that runs the same containers.
 - **Backups:** A scheduled job runs `pg_dump`, encrypts the output with a public key whose private key is held by someone other than the person running the job, and writes it to an approved location. Restores are tested regularly.
 
@@ -76,5 +76,5 @@ Specific libraries (API framework, ORM, Gantt and org chart components, test too
 - **Access control** depends on discipline: all data access must go through the shared layer, which the code review standards should check.
 - **Each supported platform** has its own setup needs, which the team operating Fathom will own, as recorded in [Supported Platforms](../operations/supported-platforms.md).
 - **Internet exposure:** The host may have internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Where builds run and how releases reach the server is an open question in the [Security Plan](../security/security-plan.md).
-- **Two containers** instead of one, a small operational cost in exchange for PostgreSQL.
+- **Several containers** instead of one, a small operational cost in exchange for PostgreSQL and network isolation.
 - **Python** remains a reasonable alternative if the department's maintainers are much more comfortable with it than with TypeScript.

@@ -23,7 +23,8 @@ const badRequest = 400;
 const notFound = 404;
 const internalServerError = 500;
 const defaultRequestsPerMinute = 300;
-// Fathom has no proxy in front of it, so the server itself must end requests that never finish.
+// Fathom's proxy passes connections through without reading requests, so the server itself must end
+// requests that never finish.
 const requestTimeoutMilliseconds = 30_000;
 // Requests that Fastify cannot route, such as malformed URLs, are answered before any hook runs, so
 // they get these headers instead of helmet's, and are not rate limited; answering them takes less

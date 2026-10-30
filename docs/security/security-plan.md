@@ -1,7 +1,7 @@
 # Fathom — Security Plan
 
 **Status:** Proposal for review by the owner and IT
-**Last updated:** 2026-10-29
+**Last updated:** 2026-10-30
 
 How Fathom is protected: what it must protect, the threats against it, how each threat is mitigated and verified, how its technology is scanned for vulnerabilities, how confidence in its source code is established, and how the plan is enforced. It builds on [ADR 0001](../adr/0001-tech-stack.md), the [Decisions Log](../product/decisions.md), and [Roles](../product/roles.md). Everything here is proposed until reviewed.
 
@@ -17,9 +17,9 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 
 ## Trust Boundaries
 
-- **Users to Fathom:** Browsers on the internal network connect to Fathom over HTTPS.
+- **Users to Fathom:** Browsers on the internal network connect to Fathom over HTTPS, through a proxy that passes the encrypted traffic to the application without decrypting it.
 - **Internet and Fathom:** Fathom must not be reachable from the internet. The host may have outbound internet access, which Fathom's containers must not use at runtime.
-- **Fathom to its database:** The application container talks to the database container on a private Docker network.
+- **Fathom to its database:** The application container talks to the database container on an internal Docker network that the proxy is not on.
 - **Server operators to Fathom's data:** People who can log in to the server or run Docker can reach the database directly, outside Fathom's role checks.
 - **Other applications on the host:** A shared host may run other applications, whose administrators and vulnerabilities are outside Fathom's control.
 - **Host to containers:** The host runs the container runtime, inside any virtualization layer, which runs the containers.
@@ -32,8 +32,9 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | --- | --- | --- |
 | Someone on the internet reaches Fathom | Fathom's port is open only to the internal network; the host firewall blocks inbound internet traffic | External port scan |
 | Other services on the server are reachable from the internal network | Only Fathom's HTTPS port is exposed; the database port is never published | Internal port scan |
-| A compromised component sends data to the internet | Outbound traffic from Fathom's containers is blocked at runtime; downloads happen only during controlled updates from approved sources | Test from inside each container that outbound connections fail |
+| A compromised component sends data to the internet | The application and database containers are on internal networks with no route out; only the proxy, which never sees decrypted data or secrets, is on a network with a route out, and its outbound traffic is blocked on the host where possible; downloads happen only during controlled updates from approved sources | Container tests from inside the application and database containers that outbound connections and internet name lookups fail |
 | Someone on the internal network without an account reaches data | Every request requires sign-in; no anonymous access | Automated tests |
+| Another container poses as the proxy to forge users' addresses, evading rate limits or misleading the logs | The application accepts connections, and the user addresses they name, only from the proxy's address | Automated tests; container tests |
 | A user sees or changes data beyond their roles | Tier checks in one shared data access layer, used by screens, exports, snapshots, and search | Automated tests for every role and tier; code review |
 | A user grants themselves more access | Administrators cannot assign roles to themselves; role changes are recorded in the access history | Automated tests; access history review |
 | Passwords are guessed or stolen | Strong password hashing, sign-in rate limiting, and session expiry | Automated tests; configuration review |
@@ -57,7 +58,7 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | Backups are stolen or read | Encrypted backups, with the key held by someone other than the backup operator | Restore tests; key custody check |
 | A former user keeps access | Accounts are disabled when users leave | Account review |
 | Real data leaks into development | Fictional data only in development; real data never committed | Code review; repository scanning |
-| Fathom is overwhelmed with requests | Resource limits on containers and request rate limiting | Configuration review |
+| Fathom is overwhelmed with requests | Memory and process limits on every container, a connection limit at the proxy, and request rate limiting | Configuration review; automated tests |
 
 ## Credentials and Secrets
 
@@ -95,6 +96,12 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 | Developer machines not managed by IT, which may run builds until the build process is decided | To be agreed | See the open questions |
 
 **Fix times by severity:** critical within 7 days, high within 30 days, medium within 90 days, and low at the next planned update. Any exception is recorded with a reason and an expiry date, and approved by Fathom's owner.
+
+**Exceptions:**
+
+| Finding | Reason | Approved | Expires |
+| --- | --- | --- | --- |
+| Medium and low findings in the system libraries of the application's distroless base image, such as glibc and zlib, with no fix released by Debian | No fix exists. The image has no shell or package manager, runs as a user other than root with a read-only filesystem, and has no route out. Fixes arrive through base image updates, and the exception ends sooner if one does | 2026-10-30, by Fathom's owner | 2027-01-28 |
 
 ## Source Code Assurance
 
