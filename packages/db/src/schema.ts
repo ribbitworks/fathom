@@ -9,6 +9,7 @@ import {
   index,
   integer,
   pgSchema,
+  primaryKey,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -105,3 +106,17 @@ export const rateLimits = fathomSchema.table("rate_limits", {
   count: integer("count").notNull(),
   lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
+
+// The roles each user holds. Role names are checked by the server,
+// not the database, so renaming a role needs no migration.
+export const userRoles = fathomSchema.table(
+  "user_roles",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    role: text("role").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.role] })],
+);

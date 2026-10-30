@@ -24,7 +24,7 @@ pnpm account:create --name "Your Name" --email you@example.test
 pnpm dev
 ```
 
-`pnpm dev` opens Fathom in your browser, where you sign in with that account.
+`pnpm dev` opens Fathom in your browser, where you sign in with that account. It can view Fathom's general information; to give it other roles, such as administrator, see [Development Setup](docs/design/development-setup.md#common-commands).
 
 Check everything, including the tests and the security report:
 

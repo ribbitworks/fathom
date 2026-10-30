@@ -12,7 +12,9 @@ export function greetingRoutes(data: DataAccess): FastifyPluginCallbackZod {
     app.get(
       "/api/greeting",
       { schema: { response: { 200: greetingResponseSchema } } },
-      async () => ({ greeting: await data.readGreeting() }),
+      async (request) => ({
+        greeting: await data.readGreeting(request.actor),
+      }),
     );
     done();
   };

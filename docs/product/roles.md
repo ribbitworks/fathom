@@ -1,13 +1,13 @@
 # Fathom — Roles
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-30
 
 Proposed roles for controlling what each user can see, edit, and approve, built on the access decisions in the [Decisions Log](decisions.md). The owner has confirmed the role list, that People Managers and the VP see Restricted data, that the Director plans, the split between Project Planner and Resource Planner, and that the Director is the first Administrator. Items marked **proposal** are not yet agreed.
 
 ## Proposed Roles
 
-- **Viewer:** Sees General-tier data. Everyone has this role.
+- **Viewer:** Sees General-tier data. Every account gets this role unless it is left off, as for a person who runs Fathom without seeing people data.
 - **Project Planner:** Edits initiatives, projects, features, milestones, release contents, and estimates across the whole plan.
 - **Resource Planner:** Edits allocations across the whole plan.
 - **People Manager:** Proposes feature teams, and sees Restricted details for everyone, because people move between managers over time and levels are commonly visible across the company.

@@ -14,6 +14,7 @@ export {
   fathomSchema,
   rateLimits,
   sessions,
+  userRoles,
   users,
   verifications,
 } from "./schema.ts";

@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for local accounts, sign-in, and sessions against a migrated PostgreSQL server: creating
-// accounts, signing in and out, the signed-in user, secure session cookies that last 12 hours from
+// accounts with their roles, what the signed-in user's roles let them do, signing in and out, the signed-in user, secure session cookies that last 12 hours from
 // last use, no public sign-up or other Better Auth features, logs without users' details, and
 // sign-in limits that a client cannot dodge by naming another address.
 
-import { createDatabase, createPool, runMigrations } from "@fathom/db";
+import {
+  createDatabase,
+  createPool,
+  type Database,
+  runMigrations,
+} from "@fathom/db";
 import {
   createTestCertificate,
   startTestDatabase,
@@ -25,6 +30,7 @@ import { createDataAccess } from "./data/index.ts";
 let database: TestDatabase;
 let certificate: TestCertificate;
 let pool: ReturnType<typeof createPool>;
+let connection: Database;
 let auth: Auth;
 let app: App;
 const logLines: string[] = [];
@@ -41,7 +47,7 @@ beforeAll(async () => {
   database = await startTestDatabase();
   await runMigrations(database.migrator);
   pool = createPool(database.app, () => undefined);
-  const connection = createDatabase(pool);
+  connection = createDatabase(pool);
   // A second Better Auth for creating accounts directly, as the account command does.
   auth = createAuth(connection, { publicUrl, secret });
   app = await buildApp({
@@ -65,7 +71,7 @@ let nextAccount = 0;
 async function newAccount(): Promise<string> {
   nextAccount += 1;
   const email = `person${String(nextAccount)}@example.test`;
-  await createAccount(auth, {
+  await createAccount(auth, connection, {
     name: `Fictional Person ${String(nextAccount)}`,
     email,
     password,
@@ -204,6 +210,53 @@ describe("signing in", () => {
     expect(response.json()).toMatchObject({ user: { email } });
   });
 
+  it("says what the signed-in user's roles let them do", async () => {
+    await createAccount(auth, connection, {
+      name: "Fictional Planner",
+      email: "planner@example.test",
+      password,
+      roles: ["project-planner"],
+    });
+    const cookie = sessionCookie(
+      (await signIn("planner@example.test")).headers["set-cookie"],
+    );
+    const session = await app.inject({
+      url: "/api/session",
+      headers: { cookie },
+    });
+    expect(session.json()).toMatchObject({
+      roles: ["project-planner"],
+      permissions: ["drafts:submit", "plan:edit"],
+    });
+  });
+
+  it("applies a change of roles on the next request, without signing in again", async () => {
+    const email = await newAccount();
+    const cookie = sessionCookie((await signIn(email)).headers["set-cookie"]);
+    const roles = async () =>
+      (await app.inject({ url: "/api/session", headers: { cookie } })).json<{
+        roles: string[];
+      }>().roles;
+    expect(await roles()).toEqual([]);
+    await database.superuserQuery(
+      `INSERT INTO fathom.user_roles (user_id, role) SELECT id, 'leadership' FROM fathom.users WHERE email = '${email}'`,
+    );
+    expect(await roles()).toEqual(["leadership"]);
+  });
+
+  it("ignores a stored role the server no longer knows", async () => {
+    const email = await newAccount();
+    await database.superuserQuery(
+      `INSERT INTO fathom.user_roles (user_id, role) SELECT id, 'retired-role' FROM fathom.users WHERE email = '${email}'`,
+    );
+    const cookie = sessionCookie((await signIn(email)).headers["set-cookie"]);
+    const session = await app.inject({
+      url: "/api/session",
+      headers: { cookie },
+    });
+    expect(session.json()).toMatchObject({ roles: [] });
+  });
+
   it("does not say who is signed in without a session", async () => {
     const response = await app.inject("/api/session");
     expect(response.statusCode).toBe(401);
@@ -279,7 +332,7 @@ describe("sign-in limits", () => {
 
 describe("creating accounts", () => {
   it("creates an account that can sign in, ignoring the case of its email address", async () => {
-    await createAccount(auth, {
+    await createAccount(auth, connection, {
       name: "Fictional Mixed Case",
       email: " Mixed.Case@Example.TEST ",
       password,
@@ -290,13 +343,17 @@ describe("creating accounts", () => {
   it("refuses a second account with the same email address", async () => {
     const email = await newAccount();
     await expect(
-      createAccount(auth, { name: "Someone Else", email, password }),
+      createAccount(auth, connection, {
+        name: "Someone Else",
+        email,
+        password,
+      }),
     ).rejects.toThrow("An account with this email address already exists");
   });
 
   it("refuses email addresses that are not valid", async () => {
     await expect(
-      createAccount(auth, {
+      createAccount(auth, connection, {
         name: "Fictional Person",
         email: "not an address",
         password,
@@ -310,7 +367,7 @@ describe("creating accounts", () => {
       ["x".repeat(129), "at most 128"],
     ] as const) {
       await expect(
-        createAccount(auth, {
+        createAccount(auth, connection, {
           name: "Fictional Person",
           email: "length@example.test",
           password: tried,
@@ -326,7 +383,7 @@ describe("creating accounts", () => {
       .mockRejectedValueOnce(new Error("A fictional storage failure"));
     try {
       await expect(
-        createAccount(auth, {
+        createAccount(auth, connection, {
           name: "Fictional Person",
           email: "unstored@example.test",
           password,
@@ -368,7 +425,16 @@ describe("account command", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     try {
       const status = await createAccountCommand(
-        ["--name", "Fictional Administrator", "--email", "admin@example.test"],
+        [
+          "--name",
+          "Fictional Administrator",
+          "--email",
+          "admin@example.test",
+          "--role",
+          "administrator",
+          "--role",
+          "workforce-administrator",
+        ],
         Promise.resolve(`${password}\n`),
         environment,
       );
@@ -379,7 +445,50 @@ describe("account command", () => {
     } finally {
       log.mockRestore();
     }
-    expect((await signIn("admin@example.test")).statusCode).toBe(200);
+    const cookie = sessionCookie(
+      (await signIn("admin@example.test")).headers["set-cookie"],
+    );
+    const session = await app.inject({
+      url: "/api/session",
+      headers: { cookie },
+    });
+    expect(session.json()).toMatchObject({
+      roles: ["viewer", "workforce-administrator", "administrator"],
+    });
+  });
+
+  it("leaves Viewer off when asked, as for a person who only runs Fathom", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    try {
+      expect(
+        await createAccountCommand(
+          [
+            "--name",
+            "Fictional Operator",
+            "--email",
+            "operator@example.test",
+            "--role",
+            "administrator",
+            "--no-viewer",
+          ],
+          Promise.resolve(password),
+          environment,
+        ),
+      ).toBe(0);
+    } finally {
+      log.mockRestore();
+    }
+    const cookie = sessionCookie(
+      (await signIn("operator@example.test")).headers["set-cookie"],
+    );
+    const session = await app.inject({
+      url: "/api/session",
+      headers: { cookie },
+    });
+    expect(session.json()).toMatchObject({
+      roles: ["administrator"],
+      permissions: ["accounts:manage"],
+    });
   });
 
   it("reports what is wrong, and fails", async () => {
@@ -406,6 +515,23 @@ describe("account command", () => {
       ).toBe(1);
       expect(errors).toHaveBeenLastCalledWith(
         "error: The password must have at least 12 characters",
+      );
+      expect(
+        await createAccountCommand(
+          [
+            "--name",
+            "Fictional Person",
+            "--email",
+            "role@example.test",
+            "--role",
+            "emperor",
+          ],
+          Promise.resolve(password),
+          environment,
+        ),
+      ).toBe(1);
+      expect(errors).toHaveBeenLastCalledWith(
+        expect.stringMatching(/^error: Unknown role emperor\nUsage/),
       );
     } finally {
       errors.mockRestore();

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Sign-in, sign-out, and the signed-in user. Only the Better Auth requests Fathom uses are passed on,
+// Sign-in, sign-out, and the signed-in user, with their roles and what those roles let them do. Only the Better Auth requests Fathom uses are passed on,
 // so its other features, such as users changing their own name, stay closed, including any a later
 // version adds. Each is passed with the client's address the server already knows, in place of any a
 // client sends, so sign-in limits cannot be dodged by forging an address, and sign-in is passed only
@@ -11,7 +11,9 @@ import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
+import { type Actor, actorFor, type SignedInUser } from "../access.ts";
 import { type Auth, clientAddressHeader } from "../data/auth.ts";
+import type { DataAccess } from "../data/index.ts";
 
 const unauthorized = 401;
 
@@ -26,12 +28,6 @@ function headersFor(request: FastifyRequest): Headers {
 function sendCookies(headers: Headers, reply: FastifyReply): void {
   const cookies = headers.getSetCookie();
   if (cookies.length > 0) void reply.header("set-cookie", cookies);
-}
-
-export interface SignedInUser {
-  id: string;
-  name: string;
-  email: string;
 }
 
 // Returns the signed-in user, or null without a valid session. A session in use is extended, with a
@@ -49,6 +45,20 @@ export async function readSession(
   if (session === null) return null;
   const { id, name, email } = session.user;
   return { id, name, email };
+}
+
+// Returns who is making the request, with what their roles let them do, or null when no one is
+// signed in.
+export async function readActor(
+  auth: Auth,
+  data: DataAccess,
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<Actor | null> {
+  const user = await readSession(auth, request, reply);
+  return user === null
+    ? null
+    : actorFor(user, await data.readActorRoles(user.id));
 }
 
 async function passToBetterAuth(
@@ -74,6 +84,7 @@ async function passToBetterAuth(
 
 export function authRoutes(
   auth: Auth,
+  data: DataAccess,
   publicUrl: string,
 ): FastifyPluginCallbackZod {
   return (app, _options, done) => {
@@ -104,11 +115,11 @@ export function authRoutes(
         },
       },
       async (request, reply) => {
-        const user = await readSession(auth, request, reply);
-        if (user === null) {
+        const actor = await readActor(auth, data, request, reply);
+        if (actor === null) {
           return reply.status(unauthorized).send({ error: "Unauthorized" });
         }
-        return { user };
+        return actor;
       },
     );
     done();

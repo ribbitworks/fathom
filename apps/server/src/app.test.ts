@@ -20,7 +20,9 @@ import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
 import { createAuth } from "./data/auth.ts";
 import { readGreeting } from "./data/greeting.ts";
-import { createDataAccess } from "./data/index.ts";
+import { createDataAccess, type DataAccess } from "./data/index.ts";
+import { actorFor, ForbiddenError, rolesGranting } from "./access.ts";
+import { roleSchema } from "@fathom/shared";
 
 type Pool = ReturnType<typeof createPool>;
 
@@ -41,6 +43,7 @@ function poolFor(password = database.app.password): Pool {
 async function appFor(
   options: {
     password?: string;
+    data?: DataAccess;
     requestsPerMinute?: number;
     webRoot?: string;
   } = {},
@@ -48,7 +51,9 @@ async function appFor(
 ): Promise<App> {
   // A wrong password breaks only the data access layer, so sign-in still works.
   const app = await buildApp({
-    data: createDataAccess(createDatabase(poolFor(options.password))),
+    data:
+      options.data ??
+      createDataAccess(createDatabase(poolFor(options.password))),
     database: createDatabase(poolFor()),
     auth: { publicUrl, secret },
     tls: certificate,
@@ -75,17 +80,26 @@ afterAll(async () => {
   certificate.remove();
 });
 
+const fictionalUser = {
+  id: "user-1",
+  name: "Fictional Person",
+  email: "person@example.test",
+};
+
 let accounts = 0;
 // Creates a fictional account, signs it in, and returns the session cookie.
 async function signedIn(app: App): Promise<string> {
   accounts += 1;
   const email = `person${String(accounts)}@example.test`;
+  const connection = createDatabase(poolFor());
   await createAccount(
-    createAuth(createDatabase(poolFor()), { publicUrl, secret }),
+    createAuth(connection, { publicUrl, secret }),
+    connection,
     {
       name: `Fictional Person ${String(accounts)}`,
       email,
       password: "fictional password 1",
+      roles: ["viewer"],
     },
   );
   const response = await app.inject({
@@ -110,6 +124,36 @@ describe("greeting", () => {
     });
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ greeting: "Hello, Fathom" });
+  });
+
+  // The access control pattern: every role on its own, allowed exactly when it grants the permission.
+  it.each(roleSchema.options)(
+    "is read by a %s only if the role lets them view the plan",
+    async (role) => {
+      const data = createDataAccess(createDatabase(poolFor()));
+      const reading = data.readGreeting(actorFor(fictionalUser, [role]));
+      if (rolesGranting("plan:view").includes(role)) {
+        await expect(reading).resolves.toBe("Hello, Fathom");
+      } else {
+        await expect(reading).rejects.toBeInstanceOf(ForbiddenError);
+      }
+    },
+  );
+
+  it("answers a request the actor's roles do not allow with a plain forbidden", async () => {
+    const realData = createDataAccess(createDatabase(poolFor()));
+    const app = await appFor({
+      data: {
+        ...realData,
+        readGreeting: () => Promise.reject(new ForbiddenError()),
+      },
+    });
+    const response = await app.inject({
+      url: "/api/greeting",
+      headers: { cookie: await signedIn(app) },
+    });
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: "Forbidden" });
   });
 
   it("needs sign-in, like every API request", async () => {

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Signing in: what the sign-in form sends, and the session endpoint's response, the signed-in user as
-// the front end shows them.
+// Signing in: what the sign-in form sends, and the session endpoint's response: the signed-in user as
+// the front end shows them, with their roles and what those roles let them do.
 
 import { z } from "zod";
+import { permissionSchema, roleSchema } from "./access.ts";
 
 export const signInRequestSchema = z.object({
   email: z.email(),
@@ -18,6 +19,8 @@ export const sessionResponseSchema = z.object({
     name: z.string(),
     email: z.string(),
   }),
+  roles: z.array(roleSchema),
+  permissions: z.array(permissionSchema),
 });
 
 export type SessionResponse = z.infer<typeof sessionResponseSchema>;

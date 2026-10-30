@@ -19,7 +19,8 @@ import type { AuthConfig, TlsConfig } from "./config.ts";
 import { createAuth } from "./data/auth.ts";
 import type { DataAccess } from "./data/index.ts";
 import { loggerOptions, type LogStream } from "./logging.ts";
-import { authRoutes, readSession } from "./routes/auth.ts";
+import type { Actor } from "./access.ts";
+import { authRoutes, readActor } from "./routes/auth.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
 import { pageFallback, webRoutes } from "./routes/web.ts";
 
@@ -136,6 +137,8 @@ export async function buildApp(options: AppOptions) {
       reply.status(notFound).send({ error: "Not Found" }),
   );
 
+  app.decorateRequest("actor", null as unknown as Actor);
+
   // Better Auth reports only warnings and errors, each logged with its own level alongside.
   const auth = createAuth(options.database, options.auth, (level, message) => {
     app.log.warn({ authLevel: level }, message);
@@ -148,12 +151,15 @@ export async function buildApp(options: AppOptions) {
       !route.startsWith("/api/") ||
       route.startsWith("/api/auth/") ||
       route === "/api/session";
-    if (!open && (await readSession(auth, request, reply)) === null) {
+    if (open) return undefined;
+    const actor = await readActor(auth, options.data, request, reply);
+    if (actor === null) {
       return reply.status(unauthorized).send({ error: "Unauthorized" });
     }
+    request.actor = actor;
     return undefined;
   });
-  await app.register(authRoutes(auth, options.auth.publicUrl));
+  await app.register(authRoutes(auth, options.data, options.auth.publicUrl));
   await app.register(greetingRoutes(options.data));
   if (options.webRoot !== undefined) {
     await app.register(webRoutes(options.webRoot));
@@ -162,3 +168,10 @@ export async function buildApp(options: AppOptions) {
 }
 
 export type App = Awaited<ReturnType<typeof buildApp>>;
+
+declare module "fastify" {
+  interface FastifyRequest {
+    // Who is making the request. Set for every route that requires sign-in, before its handler.
+    actor: Actor;
+  }
+}

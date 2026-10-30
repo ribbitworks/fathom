@@ -32,6 +32,8 @@ const fictionalUser = {
     name: "Fictional Person",
     email: "person@example.test",
   },
+  roles: ["viewer"],
+  permissions: ["plan:view"],
 };
 const signedIn = () => Response.json(fictionalUser);
 const signedOut = () =>

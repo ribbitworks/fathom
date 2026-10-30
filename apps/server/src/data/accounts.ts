@@ -1,20 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Creates local accounts that sign in with a password. Public sign-up is turned off, so accounts are
-// created here, through Better Auth's own storage, which hashes the password.
+// Creates local accounts that sign in with a password, with the roles they hold. Public
+// sign-up is turned off, so accounts are created here, through Better Auth's own storage, which
+// hashes the password.
 
+import type { Database } from "@fathom/db";
+import type { Role } from "@fathom/shared";
 import { z } from "zod";
 import type { Auth } from "./auth.ts";
+import { addRoles } from "./roles.ts";
 
 export interface NewAccount {
   name: string;
   email: string;
   password: string;
+  roles?: readonly Role[];
 }
 
 export async function createAccount(
   auth: Auth,
-  { name, email, password }: NewAccount,
+  database: Database,
+  { name, email, password, roles = [] }: NewAccount,
 ): Promise<void> {
   const context = await auth.$context;
   const { minPasswordLength, maxPasswordLength } = context.password.config;
@@ -47,8 +53,9 @@ export async function createAccount(
       accountId: user.id,
       password: await context.password.hash(password),
     });
+    await addRoles(database, user.id, roles);
   } catch (error) {
-    // An account without a password could never sign in, so it is not kept.
+    // An account without its password or roles is not what was asked for, so it is not kept.
     await context.internalAdapter.deleteUser(user.id);
     throw error;
   }
