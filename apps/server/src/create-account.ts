@@ -52,13 +52,19 @@ export async function createAccountCommand(
     pool = createPool(loadDatabaseConfig(environment));
     const database = createDatabase(pool);
     const auth = createAuth(database, loadAuthConfig(environment));
-    await createAccount(auth, database, {
-      roles,
-      name: values.name,
-      email: values.email,
-      // A single line, as typed or piped in.
-      password: (await password).replace(/\r?\n$/, ""),
-    });
+    // Recorded in the access history as created by the server's operators.
+    await createAccount(
+      auth,
+      database,
+      {
+        roles,
+        name: values.name,
+        email: values.email,
+        // A single line, as typed or piped in.
+        password: (await password).replace(/\r?\n$/, ""),
+      },
+      null,
+    );
     console.log(`Created the account for ${values.email.trim().toLowerCase()}`);
     return 0;
   } catch (error) {

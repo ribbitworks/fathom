@@ -9,6 +9,7 @@ export { type DatabaseConfig, loadDatabaseConfig } from "./config.ts";
 export { describeError } from "./errors.ts";
 export { runMigrations } from "./migrate.ts";
 export {
+  accessHistory,
   accounts,
   appInfo,
   fathomSchema,

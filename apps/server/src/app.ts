@@ -24,6 +24,7 @@ import { createAccountAdministration } from "./data/accounts.ts";
 import { accountRoutes } from "./routes/accounts.ts";
 import { authRoutes, readActor } from "./routes/auth.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
+import { historyRoutes } from "./routes/history.ts";
 import { pageFallback, webRoutes } from "./routes/web.ts";
 
 const badRequest = 400;
@@ -165,6 +166,7 @@ export async function buildApp(options: AppOptions) {
   await app.register(
     accountRoutes(createAccountAdministration(options.database, auth)),
   );
+  await app.register(historyRoutes(options.data));
   await app.register(greetingRoutes(options.data));
   if (options.webRoot !== undefined) {
     await app.register(webRoutes(options.webRoot));

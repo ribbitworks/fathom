@@ -29,6 +29,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | Planning configuration: cycles, releases, patch frequency, and composition targets | View | View | View | View | Edit | View | View | None |
 | Draft plan changes | None | Submit | Submit | None | None | None | Approve | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
+| Access history | None | None | None | None | None | None | None | View (**proposal**) |
 
 ## Planned Hires in the Plan
 

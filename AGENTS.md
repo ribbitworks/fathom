@@ -78,6 +78,7 @@ chore: initialize repository
   - Development setup (`docs/design/development-setup.md`): repository layout, local development, and seed data
   - Implementation plan (`docs/design/implementation-plan.md`): how the roadmap's stages are built, slice by slice
   - Architecture decision records (`docs/adr/`): technical decisions
+  - Issues (`docs/issues.md`): known problems and deferred work not yet scheduled in the implementation plan
   - Security plan (`docs/security/security-plan.md`): threat model, vulnerability scanning, source code assurance, and enforcement
   - Supported platforms (`docs/operations/supported-platforms.md`): the platforms Fathom is tested and supported on, and their setup needs
   - Deployment (`docs/operations/deployment.md`): the specifics of Fathom's first deployment and what it asks of IT

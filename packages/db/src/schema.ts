@@ -5,9 +5,11 @@
 
 import {
   bigint,
+  bigserial,
   boolean,
   index,
   integer,
+  jsonb,
   pgSchema,
   primaryKey,
   text,
@@ -121,4 +123,23 @@ export const userRoles = fathomSchema.table(
     createdAt: createdAt(),
   },
   (table) => [primaryKey({ columns: [table.userId, table.role] })],
+);
+
+// Who did what, and when, to accounts and to protected data, without the values. It can only be
+// added to: the application's role cannot change or delete entries, and a trigger refuses any
+// change or deletion by anyone. It names users without foreign keys, so it outlives any account.
+export const accessHistory = fathomSchema.table(
+  "access_history",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    // Null for the server's operators, such as when the account command creates an account.
+    actorId: text("actor_id"),
+    action: text("action").notNull(),
+    subjectId: text("subject_id"),
+    details: jsonb("details").notNull().default({}),
+  },
+  (table) => [index("access_history_occurred_at_index").on(table.occurredAt)],
 );

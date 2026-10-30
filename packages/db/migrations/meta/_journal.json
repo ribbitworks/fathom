@@ -36,6 +36,13 @@
       "when": 1793389323044,
       "tag": "0004_add_account_deactivation",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793393313266,
+      "tag": "0005_add_access_history",
+      "breakpoints": true
     }
   ]
 }

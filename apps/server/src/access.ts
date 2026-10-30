@@ -37,7 +37,7 @@ const grants: Record<Role, readonly Permission[]> = {
   ],
   leadership: ["restricted:view", "confidential:view"],
   approver: ["drafts:approve"],
-  administrator: ["accounts:manage"],
+  administrator: ["accounts:manage", "history:view"],
 };
 
 export interface SignedInUser {

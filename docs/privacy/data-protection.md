@@ -47,7 +47,7 @@ Fathom does not hold salary or compensation, performance ratings or reviews, hea
 
 ### Information About Fathom's Users
 
-Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; and a history of who viewed or changed Restricted or Confidential information. When a user leaves, their Fathom account must be disabled by hand.
+Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; and a history of who viewed or changed Restricted or Confidential information, and of every change to user accounts. When a user leaves, their Fathom account must be disabled by hand.
 
 ## Who Can See and Change What
 
@@ -75,7 +75,7 @@ Under the proposed roles:
 - **Kept inside the company:** Fathom runs on a company server in Canada, on the internal network. It is not reachable from the internet, and it does not send data to any outside service.
 - **Encrypted connections:** Users connect to Fathom over an encrypted connection (HTTPS).
 - **Individual accounts:** Each user signs in with their own account.
-- **Access history:** Fathom records who viewed or changed Restricted or Confidential information, without recording the information itself.
+- **Access history:** Fathom records who viewed or changed Restricted or Confidential information, and every change to user accounts, without recording the information itself. No one can change or remove entries through Fathom; they are removed only as the agreed retention period requires. Administrators are proposed to be the ones who can view it.
 - **Logs:** Personal information not needed for planning is kept out of Fathom's technical logs. The one exception is the network address of the computer each request comes from, which is kept to investigate security problems.
 - **Encrypted backups:** Backups are made automatically, encrypted, and kept only in approved locations, which are still to be decided. The key needed to read them is held by someone other than the person who runs the backups, and restoring from backup is tested regularly.
 - **Server and password management:** The server also hosts other applications. Fathom is planned to run in its own environment there, which only Fathom's named operators can use. Personal logins are never shared, and shared service passwords are limited to Fathom's named operators. Passwords are kept in a password manager or secret store, to be agreed with IT, and are changed when someone with access leaves. Anyone with full administrator access to the server could still reach Fathom's data; this risk is accepted and recorded, and who holds that access is reviewed with IT.

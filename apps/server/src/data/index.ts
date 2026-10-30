@@ -6,10 +6,11 @@
 // allow it.
 
 import type { Database } from "@fathom/db";
-import type { Role } from "@fathom/shared";
+import type { HistoryEntry, Role } from "@fathom/shared";
 import { sql } from "drizzle-orm";
 import { type Actor, requirePermission } from "../access.ts";
 import { readGreeting } from "./greeting.ts";
+import { readHistory } from "./history.ts";
 import { readActorRoles } from "./roles.ts";
 
 export interface DataAccess {
@@ -19,6 +20,8 @@ export interface DataAccess {
   // server needs them to know who is asking, so it is the one function that checks no permission.
   readActorRoles(userId: string): Promise<Role[] | null>;
   readGreeting(actor: Actor): Promise<string>;
+  // The most recent entries in the access history.
+  readHistory(actor: Actor): Promise<HistoryEntry[]>;
 }
 
 export function createDataAccess(database: Database): DataAccess {
@@ -34,6 +37,10 @@ export function createDataAccess(database: Database): DataAccess {
       }
     },
     readActorRoles: (userId) => readActorRoles(database, userId),
+    readHistory: async (actor) => {
+      requirePermission(actor, "history:view");
+      return readHistory(database);
+    },
     readGreeting: async (actor) => {
       requirePermission(actor, "plan:view");
       return readGreeting(database);

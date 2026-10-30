@@ -4,7 +4,7 @@
 // accounts; creating accounts and changing their roles, passwords, and whether they can sign in;
 // the refusals that stop anyone raising their own access or locking themselves out; signing users
 // out when their password is reset or their account deactivated; and users changing their own
-// password.
+// password, and the access history that records each change.
 
 import {
   createDatabase,
@@ -460,5 +460,96 @@ describe("changing one's own password", () => {
       },
     );
     expect(response.statusCode).toBe(400);
+  });
+});
+
+describe("the access history", () => {
+  it.each(roleSchema.options)(
+    "is shown to a %s only if the role lets them view it",
+    async (role) => {
+      const { cookie } = await signedIn([role]);
+      const response = await request(cookie, "GET", "/api/access-history");
+      expect(response.statusCode).toBe(
+        rolesGranting("history:view").includes(role) ? 200 : 403,
+      );
+    },
+  );
+
+  it("records each change to accounts, newest first, with who made it and the roles involved, but no passwords", async () => {
+    const admin = await signedIn(["administrator"]);
+    const created = await request(admin.cookie, "POST", "/api/accounts", {
+      name: "Fictional Recorded",
+      email: "recorded@example.test",
+      password,
+      roles: ["viewer"],
+    });
+    const { id } = created.json<{ account: { id: string } }>().account;
+    await request(admin.cookie, "PUT", `/api/accounts/${id}/roles`, {
+      roles: ["viewer", "leadership"],
+    });
+    await request(admin.cookie, "PUT", `/api/accounts/${id}/password`, {
+      password: newPassword,
+    });
+    await request(admin.cookie, "PUT", `/api/accounts/${id}/active`, {
+      active: false,
+    });
+    await request(admin.cookie, "PUT", `/api/accounts/${id}/active`, {
+      active: true,
+    });
+    const history = await request(admin.cookie, "GET", "/api/access-history");
+    const entries = history
+      .json<{ entries: { subject: { id: string } }[] }>()
+      .entries.filter((entry) => entry.subject.id === id);
+    const actor = { id: admin.id, name: expect.any(String) as unknown };
+    const subject = { id, name: "Fictional Recorded" };
+    expect(entries).toMatchObject([
+      { action: "account-reactivated", actor, subject, details: {} },
+      { action: "account-deactivated", actor, subject, details: {} },
+      { action: "password-reset", actor, subject, details: {} },
+      {
+        action: "roles-changed",
+        actor,
+        subject,
+        details: { previousRoles: ["viewer"], roles: ["viewer", "leadership"] },
+      },
+      {
+        action: "account-created",
+        actor,
+        subject,
+        details: { roles: ["viewer"] },
+      },
+    ]);
+    expect(history.body).not.toContain(newPassword);
+    expect(history.body).not.toContain(password);
+  });
+
+  it("stays readable with entries from another version of Fathom, or naming accounts that no longer exist", async () => {
+    const admin = await signedIn(["administrator"]);
+    await database.superuserQuery(
+      `INSERT INTO fathom.access_history (actor_id, action, subject_id, details) VALUES ('removed-actor', 'future-action', 'removed-subject', '{"roles": ["viewer", "retired-role"]}')`,
+    );
+    const history = await request(admin.cookie, "GET", "/api/access-history");
+    expect(history.statusCode).toBe(200);
+    expect(
+      history
+        .json<{ entries: { subject: { id: string } }[] }>()
+        .entries.find((entry) => entry.subject.id === "removed-subject"),
+    ).toMatchObject({
+      action: "future-action",
+      actor: { id: "removed-actor", name: null },
+      subject: { id: "removed-subject", name: null },
+      details: { roles: ["viewer"] },
+    });
+  });
+
+  it("names no one for accounts the server's operators created with the account command", async () => {
+    const admin = await signedIn(["administrator"]);
+    const { id } = await newAccount([]);
+    const history = await request(admin.cookie, "GET", "/api/access-history");
+    expect(
+      history
+        .json<{ entries: { subject: { id: string } }[] }>()
+        .entries.find((entry) => entry.subject.id === id),
+    ).toMatchObject({ action: "account-created", actor: null });
   });
 });

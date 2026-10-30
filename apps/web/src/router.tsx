@@ -5,16 +5,20 @@
 // that cannot be reached, gets a page that says so.
 
 import type { QueryClient } from "@tanstack/react-query";
+import type { Permission } from "@fathom/shared";
 import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
+  getRouteApi,
+  notFound,
   type RouterHistory,
   redirect,
 } from "@tanstack/react-router";
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
 import { ChangePassword } from "./change-password.tsx";
+import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { Layout } from "./layout.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
@@ -24,6 +28,19 @@ import { SignIn } from "./sign-in.tsx";
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   notFoundComponent: PageNotFound,
 });
+
+// The signed-in user and their permissions, as the signed-in routes check them below.
+const signedIn = getRouteApi("/signed-in");
+
+// Pages only for users with a permission; anyone else is told there is no such page.
+function requiring(permission: Permission) {
+  return ({ context }: { context: { permissions: Permission[] } }) => {
+    if (!context.permissions.includes(permission)) {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
+      throw notFound();
+    }
+  };
+}
 
 const signedInRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -38,7 +55,7 @@ const signedInRoute = createRoute({
     return { user: session.user, permissions: session.permissions };
   },
   component: function SignedIn() {
-    const { user, permissions } = signedInRoute.useRouteContext();
+    const { user, permissions } = signedIn.useRouteContext();
     return <Layout user={user} permissions={permissions} />;
   },
 });
@@ -49,18 +66,20 @@ const homeRoute = createRoute({
   component: Home,
 });
 
-// Only for users who may manage accounts; anyone else is told the page is not theirs to see.
 const accountsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/accounts",
+  beforeLoad: requiring("accounts:manage"),
   component: function Accounts() {
-    const { user, permissions } = signedInRoute.useRouteContext();
-    return permissions.includes("accounts:manage") ? (
-      <AccountsPage user={user} />
-    ) : (
-      <PageNotFound />
-    );
+    return <AccountsPage user={signedIn.useRouteContext().user} />;
   },
+});
+
+const historyRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/history",
+  beforeLoad: requiring("history:view"),
+  component: HistoryPage,
 });
 
 const changePasswordRoute = createRoute({
@@ -82,7 +101,12 @@ const signInRoute = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
-  signedInRoute.addChildren([homeRoute, accountsRoute, changePasswordRoute]),
+  signedInRoute.addChildren([
+    homeRoute,
+    accountsRoute,
+    historyRoute,
+    changePasswordRoute,
+  ]),
   signInRoute,
 ]);
 

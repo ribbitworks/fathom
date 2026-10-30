@@ -308,6 +308,46 @@ describe("database client", () => {
   });
 });
 
+describe("access history", () => {
+  const raisedException = "P0001";
+
+  it("lets the application role read and add entries, but not change, remove, or empty them", async () => {
+    await withClient(database.app, async (client) => {
+      await client.query(
+        "INSERT INTO access_history (action, subject_id) VALUES ('fictional-action', 'fictional-subject')",
+      );
+      const added = await client.query(
+        "SELECT action FROM access_history WHERE subject_id = 'fictional-subject'",
+      );
+      expect(added.rows).toEqual([{ action: "fictional-action" }]);
+      for (const change of [
+        "UPDATE access_history SET action = 'changed'",
+        "DELETE FROM access_history",
+        "TRUNCATE access_history",
+      ]) {
+        expect(await errorCodeOf(client.query(change))).toBe(
+          insufficientPrivilege,
+        );
+      }
+    });
+  });
+
+  it("refuses changes, removals, and emptying even by the role that owns it", async () => {
+    await withClient(database.migrator, async (client) => {
+      await client.query(
+        "INSERT INTO fathom.access_history (action) VALUES ('fictional-action')",
+      );
+      for (const change of [
+        "UPDATE fathom.access_history SET action = 'changed'",
+        "DELETE FROM fathom.access_history",
+        "TRUNCATE fathom.access_history",
+      ]) {
+        expect(await errorCodeOf(client.query(change))).toBe(raisedException);
+      }
+    });
+  });
+});
+
 describe("application role", () => {
   it("can read, add, change, and remove data in Fathom's tables", async () => {
     await withClient(database.app, async (client) => {

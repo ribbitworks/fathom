@@ -55,6 +55,11 @@ export function Layout({
                     Accounts
                   </Anchor>
                 )}
+                {permissions.includes("history:view") && (
+                  <Anchor component={Link} to="/history">
+                    History
+                  </Anchor>
+                )}
               </Group>
             </nav>
           </Group>

@@ -82,7 +82,7 @@ erDiagram
 - **User:** A local account with one or more roles, identified by its name and email address, which is also its user name, and signing in with a password.
 - **Session:** A signed-in user's visit, which records the network address and browser it started from, for investigating security problems, and ends as set in [ADR 0002](../adr/0002-libraries.md).
 - **Role:** Grants view or edit access to data tiers, and permissions such as approving plan changes.
-- **Access record:** Records an access to sensitive data, without the values.
+- **Access record:** Records who did what, when, and to whom, without the values: a change to a user account, or a view or change of sensitive data. Records can only be added, never changed or removed.
 
 Fields are assigned to tiers as set in the Decisions Log, and tier checks happen in the data access layer, as set in [ADR 0001](../adr/0001-tech-stack.md).
 

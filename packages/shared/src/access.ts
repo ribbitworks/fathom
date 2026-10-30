@@ -39,6 +39,7 @@ export const permissionSchema = z.enum([
   "drafts:submit",
   "drafts:approve",
   "accounts:manage",
+  "history:view",
 ]);
 
 export type Permission = z.infer<typeof permissionSchema>;

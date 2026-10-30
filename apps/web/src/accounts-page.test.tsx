@@ -71,16 +71,22 @@ describe("who sees the Accounts page", () => {
     ).toBeDefined();
   });
 
-  it("neither links to it nor shows it to anyone else", async () => {
+  it("is not linked for anyone else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/greeting": greeting,
     });
+    renderApp("/");
+    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
+  });
+
+  it("is not shown to anyone else", async () => {
+    serverAnswers({ "GET /api/session": signedIn });
     renderApp("/accounts");
     expect(
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
-    expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
   });
 });
 

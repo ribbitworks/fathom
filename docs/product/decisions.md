@@ -1,6 +1,6 @@
 # Fathom — Decisions Log
 
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-30
 
 Detailed product decisions made so far. The [Product Brief](brief.md) holds the high-level picture. Domain terms are defined in [Domain Concepts](domain.md). Open questions at this level of detail are raised when the related feature is worked on.
 
@@ -45,7 +45,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
   - *Restricted:* gender, level, start and end dates, and active status.
   - *Confidential:* the hiring plan and future-dated reorgs.
 - **Consistent enforcement:** Exports, snapshots, and search results follow the same access rules as screens.
-- **Access history:** Fathom records who viewed or changed Restricted or Confidential data, without recording the values.
+- **Access history:** Fathom records who viewed or changed Restricted or Confidential data, and every change to user accounts and their roles, without recording the values.
 - **Separation of duties:** Running the system, such as backups and updates, does not require access to people data in Fathom.
 - **Data outside the app:** Backups are encrypted, server login is restricted, and backup files are kept only in approved locations.
 

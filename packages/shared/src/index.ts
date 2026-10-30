@@ -22,6 +22,15 @@ export {
   type Role,
   roleSchema,
 } from "./access.ts";
+export {
+  type AccessAction,
+  accessActionSchema,
+  type HistoryDetails,
+  historyDetailsSchema,
+  type HistoryEntry,
+  historyEntrySchema,
+  historyListSchema,
+} from "./history.ts";
 export { type GreetingResponse, greetingResponseSchema } from "./greeting.ts";
 export {
   type SessionResponse,

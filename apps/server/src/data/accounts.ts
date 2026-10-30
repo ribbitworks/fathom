@@ -6,9 +6,9 @@
 // themselves, so no one can raise their own access or lock everyone out. Public sign-up is turned
 // off, so accounts are created here, through Better Auth's own storage, which hashes passwords.
 
-import { type Database, userRoles, users } from "@fathom/db";
+import { accounts, type Database, userRoles, users } from "@fathom/db";
 import type { Account, Role } from "@fathom/shared";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { type Actor, requirePermission } from "../access.ts";
 import {
@@ -18,6 +18,7 @@ import {
   NotFoundError,
 } from "../errors.ts";
 import type { Auth } from "./auth.ts";
+import { recordEvent } from "./history.ts";
 import { addRoles, readRoles } from "./roles.ts";
 
 export interface NewAccount {
@@ -42,11 +43,13 @@ async function checkPassword(auth: Auth, password: string): Promise<void> {
   }
 }
 
-// Creates an account and returns its identifier.
+// Creates an account, records who created it in the access history, and returns its identifier.
+// The creator is null for the server's operators, as when the account command creates one.
 export async function createAccount(
   auth: Auth,
   database: Database,
   { name, email, password, roles = [] }: NewAccount,
+  createdBy: string | null = null,
 ): Promise<string> {
   const context = await auth.$context;
   await checkPassword(auth, password);
@@ -71,9 +74,18 @@ export async function createAccount(
       accountId: user.id,
       password: await context.password.hash(password),
     });
-    await addRoles(database, user.id, roles);
+    await database.transaction(async (transaction) => {
+      await addRoles(transaction, user.id, roles);
+      await recordEvent(transaction, {
+        actorId: createdBy,
+        action: "account-created",
+        subjectId: user.id,
+        details: { roles: [...roles] },
+      });
+    });
   } catch (error) {
-    // An account without its password or roles is not what was asked for, so it is not kept.
+    // An account without its password, roles, or history entry is not what was asked for, so it is
+    // not kept.
     await context.internalAdapter.deleteUser(user.id);
     throw error;
   }
@@ -139,16 +151,24 @@ export function createAccountAdministration(
 
     async createAccount(actor, account) {
       requirePermission(actor, "accounts:manage");
-      return readAccount(await createAccount(auth, database, account));
+      return readAccount(
+        await createAccount(auth, database, account, actor.user.id),
+      );
     },
 
     async setRoles(actor, userId, roles) {
       requirePermission(actor, "accounts:manage");
       refuseOwnAccount(actor, userId, "change the roles of");
-      await readAccount(userId);
+      const previous = await readAccount(userId);
       await database.transaction(async (transaction) => {
         await transaction.delete(userRoles).where(eq(userRoles.userId, userId));
         await addRoles(transaction, userId, roles);
+        await recordEvent(transaction, {
+          actorId: actor.user.id,
+          action: "roles-changed",
+          subjectId: userId,
+          details: { previousRoles: previous.roles, roles: [...roles] },
+        });
       });
       return readAccount(userId);
     },
@@ -164,11 +184,24 @@ export function createAccountAdministration(
       }
       await readAccount(userId);
       await checkPassword(auth, password);
-      const context = await auth.$context;
-      await context.internalAdapter.updatePassword(
-        userId,
-        await context.password.hash(password),
-      );
+      const hash = await (await auth.$context).password.hash(password);
+      // The new password and its history entry are saved together, so no reset goes unrecorded.
+      await database.transaction(async (transaction) => {
+        await transaction
+          .update(accounts)
+          .set({ password: hash, updatedAt: new Date() })
+          .where(
+            and(
+              eq(accounts.userId, userId),
+              eq(accounts.providerId, "credential"),
+            ),
+          );
+        await recordEvent(transaction, {
+          actorId: actor.user.id,
+          action: "password-reset",
+          subjectId: userId,
+        });
+      });
       await signOutEverywhere(userId);
     },
 
@@ -176,10 +209,17 @@ export function createAccountAdministration(
       requirePermission(actor, "accounts:manage");
       refuseOwnAccount(actor, userId, "deactivate or reactivate");
       await readAccount(userId);
-      await database
-        .update(users)
-        .set({ deactivatedAt: active ? null : new Date() })
-        .where(eq(users.id, userId));
+      await database.transaction(async (transaction) => {
+        await transaction
+          .update(users)
+          .set({ deactivatedAt: active ? null : new Date() })
+          .where(eq(users.id, userId));
+        await recordEvent(transaction, {
+          actorId: actor.user.id,
+          action: active ? "account-reactivated" : "account-deactivated",
+          subjectId: userId,
+        });
+      });
       if (!active) await signOutEverywhere(userId);
       return readAccount(userId);
     },
