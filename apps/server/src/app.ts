@@ -72,10 +72,14 @@ export async function buildApp(options: AppOptions) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  // Styles and fonts come only from Fathom itself, which has no internet access.
+  // Scripts, styles, and fonts come only from Fathom itself, which has no internet access. Inline
+  // styles are allowed too, since many UI components set them; inline scripts never are.
   await app.register(helmet, {
     contentSecurityPolicy: {
-      directives: { "style-src": ["'self'"], "font-src": ["'self'"] },
+      directives: {
+        "style-src": ["'self'", "'unsafe-inline'"],
+        "font-src": ["'self'"],
+      },
     },
   });
   // Every routable request is counted before anything else is done with it, including unknown paths

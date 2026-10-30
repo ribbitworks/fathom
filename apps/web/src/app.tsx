@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Fathom's page: shows the greeting the server reads from the database, while it loads, and when it
-// cannot be loaded. Styles come from the stylesheet, since the security policy blocks inline styles.
+// cannot be loaded.
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchGreeting } from "./greeting.ts";

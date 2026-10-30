@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Builds the front end and checks the result works under the server's security policy, which
-// allows scripts and styles only from Fathom's own files: nothing inline, no code built from
-// strings, and nothing from other sites.
+// allows scripts only from Fathom's own files: no inline scripts, no code built from strings, and
+// nothing from other sites.
 
 // @vitest-environment node
 
@@ -39,9 +39,8 @@ describe("built front end", () => {
     );
   });
 
-  it("has no inline scripts or styles, which the security policy would block", () => {
+  it("has no inline scripts, which the security policy would block", () => {
     expect(page).not.toMatch(/<script(?![^>]*\bsrc=)[^>]*>/);
-    expect(page).not.toMatch(/<style|\sstyle=/);
   });
 
   it("does not build code from strings, which the security policy would block", () => {

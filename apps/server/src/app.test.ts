@@ -198,17 +198,20 @@ describe("database connection check", () => {
 });
 
 describe("responses", () => {
-  it("send security headers, allowing content only from Fathom itself", async () => {
+  it("send security headers, allowing content only from Fathom itself, and inline styles but never inline scripts", async () => {
     const response = await (await appFor()).inject("/api/greeting");
     expect(response.headers["strict-transport-security"]).toMatch(
       /max-age=\d+/,
     );
     const policy = String(response.headers["content-security-policy"]);
     expect(policy).toContain("default-src 'self'");
-    expect(policy).toContain("style-src 'self';");
+    expect(policy).toContain("script-src 'self';");
+    expect(policy).toContain("script-src-attr 'none';");
+    expect(policy).toContain("style-src 'self' 'unsafe-inline';");
     expect(policy).toContain("font-src 'self';");
     expect(policy).not.toContain("https:");
-    expect(policy).not.toContain("unsafe-inline");
+    expect(policy.match(/unsafe-inline/g)).toHaveLength(1);
+    expect(policy).not.toContain("unsafe-eval");
     expect(response.headers["x-content-type-options"]).toBe("nosniff");
     expect(response.headers["x-powered-by"]).toBeUndefined();
   });
