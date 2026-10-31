@@ -1,0 +1,71 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The app frame's own styles: the deep-water sidebar, which keeps its colours in both modes, its
+   section labels and links, and the canvas behind each page. Everything else comes from the
+   Mantine theme. */
+
+.sidebar {
+  background: var(--fathom-sidebar);
+  color: var(--fathom-sidebar-text);
+  border-right: none;
+}
+
+.section {
+  margin: 0 0 6px;
+  padding: 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--fathom-sidebar-muted);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--fathom-sidebar-text);
+  text-decoration: none;
+}
+
+.link:hover {
+  background: var(--fathom-sidebar-active);
+  color: var(--fathom-sidebar-strong);
+}
+
+.link[data-status="active"] {
+  background: var(--fathom-sidebar-active);
+  color: var(--fathom-sidebar-strong);
+  box-shadow: inset 3px 0 0 var(--fathom-sidebar-accent);
+}
+
+.later {
+  composes: link;
+  color: var(--fathom-sidebar-muted);
+  cursor: default;
+}
+
+.later:hover {
+  background: none;
+  color: var(--fathom-sidebar-muted);
+}
+
+.laterTag {
+  font-size: 11px;
+  border: 1px solid var(--fathom-sidebar-line);
+  border-radius: 4px;
+  padding: 0 5px;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--fathom-sidebar-accent);
+  outline-offset: 1px;
+}
+
+.main {
+  background: var(--fathom-canvas);
+}

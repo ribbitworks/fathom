@@ -196,8 +196,9 @@ describe("administering accounts", () => {
     });
   });
 
-  it("creates an account that can sign in", async () => {
+  it("creates an account that can sign in, recording when", async () => {
     const { cookie } = await signedIn(["administrator"]);
+    const before = Date.now();
     const response = await request(cookie, "POST", "/api/accounts", {
       name: "Fictional Newcomer",
       email: "newcomer@example.test",
@@ -212,6 +213,8 @@ describe("administering accounts", () => {
         active: true,
       },
     });
+    const { account } = response.json<{ account: { createdAt: string } }>();
+    expect(Date.parse(account.createdAt)).toBeGreaterThanOrEqual(before);
     expect(await signIn("newcomer@example.test")).not.toBe("");
   });
 

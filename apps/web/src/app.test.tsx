@@ -34,8 +34,10 @@ describe("home page", () => {
     });
     renderApp("/");
     expect(await screen.findByText("Hello, Fathom")).toBeDefined();
-    expect(screen.getByText("Fictional Person")).toBeDefined();
-    expect(screen.getByRole("heading", { name: "Fathom" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "Overview" })).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Your account, Fictional Person" }),
+    ).toBeDefined();
   });
 
   it("shows a loading indicator until the greeting arrives", async () => {
@@ -73,7 +75,7 @@ describe("signing in", () => {
     });
     const history = renderApp("/?tab=fictional");
     expect(
-      await screen.findByRole("heading", { name: "Sign in to Fathom" }),
+      await screen.findByRole("heading", { name: "Sign in" }),
     ).toBeDefined();
     await fillIn("person@example.test", "fictional password 1");
     expect(await screen.findByText("Hello, Fathom")).toBeDefined();
@@ -134,6 +136,17 @@ describe("signing in", () => {
   });
 });
 
+async function signOutFromMenu() {
+  await userEvent.click(
+    await screen.findByRole("button", {
+      name: "Your account, Fictional Person",
+    }),
+  );
+  await userEvent.click(
+    await screen.findByRole("menuitem", { name: "Sign out" }),
+  );
+}
+
 describe("signing out", () => {
   it("ends the session and returns to the sign-in page", async () => {
     let session = signedIn;
@@ -146,11 +159,9 @@ describe("signing out", () => {
       },
     });
     const history = renderApp("/");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Sign out" }),
-    );
+    await signOutFromMenu();
     expect(
-      await screen.findByRole("heading", { name: "Sign in to Fathom" }),
+      await screen.findByRole("heading", { name: "Sign in" }),
     ).toBeDefined();
     expect(history.location.pathname).toBe("/sign-in");
     expect(fetch).toHaveBeenCalledWith(
@@ -167,13 +178,13 @@ describe("signing out", () => {
         Response.json({ error: "Internal Server Error" }, { status: 500 }),
     });
     renderApp("/");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Sign out" }),
-    );
+    await signOutFromMenu();
     expect((await screen.findByRole("alert")).textContent).toMatch(
       /could not sign you out/,
     );
-    expect(screen.getByText("Fictional Person")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Your account, Fictional Person" }),
+    ).toBeDefined();
   });
 });
 
@@ -204,7 +215,7 @@ describe("when something goes wrong", () => {
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
     await userEvent.click(
-      screen.getByRole("link", { name: "Go to the home page" }),
+      screen.getByRole("link", { name: "Go to the overview" }),
     );
     expect(await screen.findByText("Hello, Fathom")).toBeDefined();
     expect(history.location.pathname).toBe("/");
@@ -237,7 +248,7 @@ describe("when something goes wrong", () => {
     });
     const history = renderApp("/?tab=fictional");
     expect(
-      await screen.findByRole("heading", { name: "Sign in to Fathom" }),
+      await screen.findByRole("heading", { name: "Sign in" }),
     ).toBeDefined();
     expect(history.location.pathname).toBe("/sign-in");
     expect(history.location.search).toContain("tab%3Dfictional");

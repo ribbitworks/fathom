@@ -13,3 +13,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Account Administration
 
 - **Two administrators changing the same account at once:** Two role changes at the same moment can leave a combination of both sets of roles, and two accounts created with the same email address at the same moment can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.
+
+## Dependencies
+
+- **Advisories in minimatch and glob:** Two medium advisories, published by 2026-10-30, affect minimatch before 11.0.1 (denial of service from crafted patterns) and glob 9 to 14.0.1 (a cancelled search can keep reading files). They reach the server through @fastify/static, and development tools such as ESLint, markdownlint, and Testcontainers. In Fathom, the patterns come from code, never from users. The fixed versions are new major versions that the packages depending on them do not accept yet, so they wait for those packages' updates. The Security Plan's 90 days for medium findings runs to 2027-01-28.

@@ -2,6 +2,12 @@
 
 // Starts Fathom's front end in the browser.
 
+// Each weight covers every script the typeface has; the browser fetches only the ones a page uses.
+// Mantine's bold text, such as table headings, uses 700.
+import "@fontsource/ibm-plex-sans/400.css";
+import "@fontsource/ibm-plex-sans/500.css";
+import "@fontsource/ibm-plex-sans/600.css";
+import "@fontsource/ibm-plex-sans/700.css";
 import "@mantine/core/styles.css";
 import { QueryClient } from "@tanstack/react-query";
 import { createBrowserHistory } from "@tanstack/react-router";

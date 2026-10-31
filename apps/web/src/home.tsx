@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The home page: shows the greeting the server reads from the database, while it loads, and when it
-// cannot be loaded.
+// The Overview page: for now, the greeting the server reads from the database, while it loads, and
+// when it cannot be loaded. The first stage's summary of the plan takes its place.
 
-import { Alert, Loader, Text } from "@mantine/core";
+import { Alert, Loader, Paper, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { fetchGreeting } from "./greeting.ts";
+import { PageHeader } from "./page-header.tsx";
 
-export function Home() {
+function Greeting() {
   const greeting = useQuery({ queryKey: ["greeting"], queryFn: fetchGreeting });
   if (greeting.isPending) return <Loader role="status" aria-label="Loading" />;
   if (greeting.isError) {
@@ -17,5 +18,18 @@ export function Home() {
       </Alert>
     );
   }
-  return <Text size="xl">{greeting.data.greeting}</Text>;
+  return (
+    <Paper withBorder p="lg">
+      <Text fz="lg">{greeting.data.greeting}</Text>
+    </Paper>
+  );
+}
+
+export function Home() {
+  return (
+    <Stack gap="md">
+      <PageHeader title="Overview" />
+      <Greeting />
+    </Stack>
+  );
 }

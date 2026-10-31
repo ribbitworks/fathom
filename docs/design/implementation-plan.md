@@ -29,7 +29,8 @@ The slices are built in this order, which may change as work progresses. The tab
 | Hello Fathom | Done, on macOS; server platforms are tested as in [Deployment Testing](#deployment-testing) |
 | Component Evaluation | Done, in [ADR 0004](../adr/0004-ui-components.md) |
 | Accounts and Access Control | Done |
-| Visual Design | Next |
+| Visual Design | Done |
+| People and Org Structure | Next |
 
 ### Hello Fathom
 
@@ -51,7 +52,7 @@ Local accounts, sign-in, sessions, and the proposed [Roles](../product/roles.md)
 
 ### Visual Design
 
-The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section, agreed with the owner and applied to the screens that exist: navigation and layout, type, colour, spacing, and how tables, forms, dialogs, and messages look, using the components chosen in ADR 0004. Every later slice is built in this design. It is not a vertical slice, so the definition of done for slices does not apply to it.
+The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section, agreed with the owner and applied to the screens that exist: navigation and layout, type, colour, spacing, and how tables, forms, dialogs, and messages look, using the components chosen in ADR 0004. Every later slice is built in this design, as [Visual Design](visual-design.md) sets out. It is not a vertical slice, so the definition of done for slices does not apply to it.
 
 ### People and Org Structure
 

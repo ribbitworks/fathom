@@ -56,9 +56,14 @@ export default defineConfig({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    // One bundle, fetched once over the company network and then cached, suits a small internal tool
+    // better than splitting it; Mantine and the router make it larger than Vite's default limit.
+    chunkSizeWarningLimit: 1000,
   },
   test: {
     environment: "jsdom",
+    // Dates and times are shown in the computer's time zone, so tests fix one.
+    env: { TZ: "UTC" },
     setupFiles: ["src/test-setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {

@@ -14,12 +14,14 @@ import {
   PasswordInput,
   Stack,
   TextInput,
-  Title,
+  VisuallyHidden,
 } from "@mantine/core";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { Brand } from "./brand.tsx";
+import classes from "./pages.module.css";
 import { safeRedirect, signIn } from "./session.ts";
 
 type Problem = "refused" | "too-many-attempts" | "failed";
@@ -59,40 +61,43 @@ export function SignIn({ redirect }: { redirect: string | undefined }) {
   }
 
   return (
-    <Center mih="100vh" p="md">
-      <Paper withBorder shadow="sm" p="xl" w="100%" maw={400}>
-        <form
-          noValidate
-          onSubmit={(event) => void form.handleSubmit(submit)(event)}
-        >
-          <Stack>
-            <Title order={1} size="h2">
-              Sign in to Fathom
-            </Title>
-            {problem && (
-              <Alert color="red" role="alert">
-                {messages.get(problem)}
-              </Alert>
-            )}
-            <TextInput
-              label="Email address"
-              type="email"
-              autoComplete="username"
-              error={errors.email && "Enter your email address."}
-              {...form.register("email")}
-            />
-            <PasswordInput
-              label="Password"
-              autoComplete="current-password"
-              error={errors.password && "Enter your password."}
-              {...form.register("password")}
-            />
-            <Button type="submit" loading={isSubmitting}>
-              Sign in
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
+    <Center mih="100vh" p="md" className={classes.canvas}>
+      <Stack w="100%" maw={360} gap="xl">
+        <Center>
+          <Brand size="large" />
+        </Center>
+        <Paper withBorder p="xl">
+          <form
+            noValidate
+            onSubmit={(event) => void form.handleSubmit(submit)(event)}
+          >
+            <Stack>
+              <VisuallyHidden component="h1">Sign in</VisuallyHidden>
+              {problem && (
+                <Alert color="red" role="alert">
+                  {messages.get(problem)}
+                </Alert>
+              )}
+              <TextInput
+                label="Email address"
+                type="email"
+                autoComplete="username"
+                error={errors.email && "Enter your email address."}
+                {...form.register("email")}
+              />
+              <PasswordInput
+                label="Password"
+                autoComplete="current-password"
+                error={errors.password && "Enter your password."}
+                {...form.register("password")}
+              />
+              <Button type="submit" loading={isSubmitting}>
+                Sign in
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
+      </Stack>
     </Center>
   );
 }

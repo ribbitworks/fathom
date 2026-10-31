@@ -8,6 +8,7 @@ import { MantineProvider } from "@mantine/core";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RouterHistory, RouterProvider } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { cssVariables, theme } from "./theme.ts";
 import { isSignedOut } from "./api.ts";
 import { createAppRouter } from "./router.tsx";
 
@@ -43,7 +44,11 @@ export function App({
     };
   }, [queryClient, router]);
   return (
-    <MantineProvider defaultColorScheme="auto">
+    <MantineProvider
+      theme={theme}
+      cssVariablesResolver={cssVariables}
+      defaultColorScheme="auto"
+    >
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

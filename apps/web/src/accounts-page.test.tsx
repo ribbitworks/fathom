@@ -28,6 +28,7 @@ const own = {
   email: "person@example.test",
   roles: ["viewer", "administrator"],
   active: true,
+  createdAt: "2026-10-12T09:00:00.000Z",
 };
 const planner = {
   id: "user-2",
@@ -35,6 +36,7 @@ const planner = {
   email: "planner@example.test",
   roles: ["viewer", "project-planner"],
   active: true,
+  createdAt: "2026-10-14T09:00:00.000Z",
 };
 const former = {
   id: "user-3",
@@ -42,6 +44,7 @@ const former = {
   email: "former@example.test",
   roles: ["viewer"],
   active: false,
+  createdAt: "2026-10-16T09:00:00.000Z",
 };
 const accountList = () => Response.json({ accounts: [own, planner, former] });
 
@@ -51,7 +54,7 @@ afterEach(() => {
 
 async function openMenuFor(name: string) {
   await userEvent.click(
-    await screen.findByRole("button", { name: `Change ${name}` }),
+    await screen.findByRole("button", { name: `Actions for ${name}` }),
   );
 }
 
@@ -105,8 +108,29 @@ describe("the list of accounts", () => {
     expect(screen.getByText("Deactivated")).toBeDefined();
     expect(screen.getByText("Your account")).toBeDefined();
     expect(
-      screen.queryByRole("button", { name: "Change Fictional Person" }),
+      screen.queryByRole("button", { name: "Actions for Fictional Person" }),
     ).toBeNull();
+  });
+
+  it("shows the day each account was created", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await screen.findByText("Fictional Planner");
+    const created = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+    expect(
+      screen.getAllByRole("row").flatMap((row) => {
+        const time = row.querySelector("time");
+        return time === null ? [] : [[time.dateTime, time.textContent]];
+      }),
+    ).toEqual(
+      [own, planner, former].map(({ createdAt }) => [
+        createdAt,
+        created.format(new Date(createdAt)),
+      ]),
+    );
   });
 
   it("shows a loading indicator until the accounts arrive", async () => {
@@ -128,6 +152,53 @@ describe("the list of accounts", () => {
     expect((await screen.findByRole("alert")).textContent).toMatch(
       /could not load the accounts/,
     );
+  });
+});
+
+describe("finding accounts", () => {
+  it("narrows the list by name or email address as you type", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    const search = await screen.findByLabelText("Search by name or email");
+    await userEvent.type(search, "PLANNER@");
+    expect(screen.getByText("Fictional Planner")).toBeDefined();
+    expect(screen.queryByText("Fictional Former")).toBeNull();
+    await userEvent.clear(search);
+    await userEvent.type(search, "former");
+    expect(screen.getByText("Fictional Former")).toBeDefined();
+    expect(screen.queryByText("Fictional Planner")).toBeNull();
+  });
+
+  it("shows only active or only deactivated accounts, with how many of each", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(await screen.findByText("Deactivated 1"));
+    expect(screen.getByText("Fictional Former")).toBeDefined();
+    expect(screen.queryByText("Fictional Planner")).toBeNull();
+    await userEvent.click(screen.getByText("Active 2"));
+    expect(screen.getByText("Fictional Planner")).toBeDefined();
+    expect(screen.queryByText("Fictional Former")).toBeNull();
+    await userEvent.click(screen.getByText("All 3"));
+    expect(screen.getByText("Fictional Former")).toBeDefined();
+  });
+
+  it("says when no account matches", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.type(
+      await screen.findByLabelText("Search by name or email"),
+      "nobody",
+    );
+    expect(screen.getByText("No accounts match.")).toBeDefined();
   });
 });
 
@@ -379,7 +450,12 @@ describe("changing one's own password", () => {
     });
     renderApp("/");
     await userEvent.click(
-      await screen.findByRole("link", { name: "Change password" }),
+      await screen.findByRole("button", {
+        name: "Your account, Fictional Person",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Change password" }),
     );
     await changePassword("fictional password 1", "fictional password 2");
     expect((await screen.findByRole("status")).textContent).toMatch(
@@ -533,7 +609,7 @@ describe("after a change", () => {
       within(dialog).getByRole("button", { name: "Reset password" }),
     );
     expect(
-      await screen.findByRole("heading", { name: "Sign in to Fathom" }),
+      await screen.findByRole("heading", { name: "Sign in" }),
     ).toBeDefined();
   });
 });

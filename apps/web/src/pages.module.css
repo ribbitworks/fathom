@@ -1,0 +1,37 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Styles shared by Fathom's pages beyond what the Mantine theme sets: the canvas behind panels,
+   figures that line up in columns, account status dots, and the access history's day bands and
+   entries. */
+
+.canvas {
+  background: var(--fathom-canvas);
+}
+
+.figures {
+  font-variant-numeric: tabular-nums;
+}
+
+.dayBand {
+  background: var(--fathom-canvas);
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entryTime {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}

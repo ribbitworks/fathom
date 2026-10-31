@@ -117,13 +117,15 @@ export function createAccountAdministration(
         name: users.name,
         email: users.email,
         deactivatedAt: users.deactivatedAt,
+        createdAt: users.createdAt,
       })
       .from(users)
       .where(eq(users.id, userId));
     if (user === undefined) throw new NotFoundError("There is no such account");
-    const { deactivatedAt, ...details } = user;
+    const { deactivatedAt, createdAt, ...details } = user;
     return {
       ...details,
+      createdAt: createdAt.toISOString(),
       roles: await readRoles(database, userId),
       active: deactivatedAt === null,
     };

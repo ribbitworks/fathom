@@ -1,0 +1,16 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The colours of Fathom's mark, which stay the same in light and dark modes, and of its name on the
+   dark sidebar. */
+
+.mark {
+  fill: var(--fathom-mark);
+}
+
+.waves {
+  stroke: var(--fathom-mark-waves);
+}
+
+.nameOnDark {
+  color: var(--fathom-sidebar-strong);
+}

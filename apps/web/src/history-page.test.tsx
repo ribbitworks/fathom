@@ -3,7 +3,7 @@
 // Tests for the History page, with the server's responses simulated: who sees it, how each entry is
 // put in words, and the messages while the history loads or when it cannot be loaded.
 
-import { screen, within } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -70,7 +70,9 @@ describe("who sees the History page", () => {
       "GET /api/access-history": () => Response.json({ entries: [] }),
     });
     renderApp("/");
-    await userEvent.click(await screen.findByRole("link", { name: "History" }));
+    await userEvent.click(
+      await screen.findByRole("link", { name: "Access history" }),
+    );
     expect(
       await screen.findByRole("heading", { name: "Access history" }),
     ).toBeDefined();
@@ -85,7 +87,7 @@ describe("who sees the History page", () => {
     expect(
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
-    expect(screen.queryByRole("link", { name: "History" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Access history" })).toBeNull();
   });
 });
 
@@ -96,29 +98,50 @@ describe("the entries", () => {
       "GET /api/access-history": () => Response.json({ entries }),
     });
     renderApp("/history");
-    const rows = (await screen.findAllByRole("row")).slice(1);
-    const cells = rows.map((row) =>
-      within(row)
-        .getAllByRole("cell")
-        .slice(1)
-        .map((cell) => cell.textContent),
+    // Each entry's sentence, without its time, whose format depends on the computer's settings.
+    const lines = (await screen.findAllByRole("listitem")).map((item) =>
+      item.textContent.slice(
+        String(item.querySelector("time")?.textContent).length,
+      ),
     );
-    expect(cells).toEqual([
-      [
-        "Fictional Person",
-        "Changed the roles",
-        "Fictional Planner",
-        "From Viewer to no roles",
-      ],
-      ["Fictional Person", "Reset the password", "A removed account", ""],
-      ["A removed account", "future-action", "Fictional Planner", ""],
-      [
-        "Fathom's operators",
-        "Created the account",
-        "Fictional Planner",
-        "With Viewer, Project Planner",
-      ],
+    expect(lines).toEqual([
+      "RolesFictional Person changed the roles of Fictional PlannerFrom Viewer to no roles",
+      "Password, worth checkingFictional Person reset the password for A removed account",
+      "future-actionA removed account future-action: Fictional Planner",
+      "CreatedFathom's operators created the account for Fictional PlannerWith Viewer, Project Planner",
     ]);
+    // Entries are grouped under the day they happened.
+    expect(screen.getAllByRole("region")).toHaveLength(1);
+  });
+
+  it("are grouped under the day they happened, in the time zone the tests fix", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () =>
+        Response.json({
+          entries: [
+            { ...entries[0], id: 6, occurredAt: "2026-10-30T00:30:00.000Z" },
+            { ...entries[0], id: 5, occurredAt: "2026-10-29T23:30:00.000Z" },
+          ],
+        }),
+    });
+    renderApp("/history");
+    const days = await screen.findAllByRole("region");
+    expect(days.map((region) => region.querySelectorAll("li").length)).toEqual([
+      1, 1,
+    ]);
+    expect(
+      days.map((region) => region.querySelector("time")?.dateTime),
+    ).toEqual(["2026-10-30T00:30:00.000Z", "2026-10-29T23:30:00.000Z"]);
+  });
+
+  it("mark changes worth checking for screen readers, not only by colour", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () => Response.json({ entries }),
+    });
+    renderApp("/history");
+    expect(await screen.findAllByText(", worth checking")).toHaveLength(1);
   });
 
   it("show a loading indicator until they arrive", async () => {

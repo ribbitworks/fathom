@@ -16,7 +16,9 @@ import {
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  ActionIcon,
   Alert,
+  Avatar,
   Badge,
   Button,
   Checkbox,
@@ -24,12 +26,14 @@ import {
   Loader,
   Menu,
   Modal,
+  Paper,
   PasswordInput,
+  SegmentedControl,
+  SimpleGrid,
   Stack,
   Table,
   Text,
   TextInput,
-  Title,
   VisuallyHidden,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +48,9 @@ import {
   setRoles,
 } from "./accounts.ts";
 import { describeProblem } from "./api.ts";
+import { initials } from "./names.ts";
+import { PageHeader } from "./page-header.tsx";
+import classes from "./pages.module.css";
 import type { SignedInUser } from "./session.ts";
 
 type Dialog =
@@ -84,11 +91,11 @@ function RoleChoices({
         onChange(roleSchema.options.filter((role) => roles.includes(role)));
       }}
     >
-      <Stack gap="xs" mt="xs">
+      <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="xs" mt="xs">
         {roleSchema.options.map((role) => (
           <Checkbox key={role} value={role} label={roleName(role)} />
         ))}
-      </Stack>
+      </SimpleGrid>
     </Checkbox.Group>
   );
 }
@@ -232,6 +239,10 @@ function ChangeRoles({
       }}
     >
       <Stack>
+        <Text fz="sm" c="dimmed">
+          Changes apply the next time {account.name} uses Fathom, and are
+          recorded in the access history.
+        </Text>
         <RoleChoices value={roles} onChange={setChosen} />
         <DialogActions
           error={saving.error}
@@ -344,6 +355,118 @@ function DialogContent({ dialog, ...props }: DialogProps & { dialog: Dialog }) {
   }
 }
 
+const createdDate = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+
+type Filter = "all" | "active" | "deactivated";
+
+function matches(account: Account, search: string, filter: Filter): boolean {
+  const term = search.trim().toLowerCase();
+  const found =
+    term === "" ||
+    account.name.toLowerCase().includes(term) ||
+    account.email.toLowerCase().includes(term);
+  const shown = filter === "all" || (filter === "active") === account.active;
+  return found && shown;
+}
+
+function AccountRow({
+  account,
+  own,
+  onOpen,
+}: {
+  account: Account;
+  own: boolean;
+  onOpen: (dialog: Dialog) => void;
+}) {
+  return (
+    <Table.Tr>
+      <Table.Td>
+        <Group gap="sm" wrap="nowrap">
+          <Avatar size={32} radius="xl" color="sea">
+            {initials(account.name)}
+          </Avatar>
+          <div>
+            <Text fz="sm" fw={500}>
+              {account.name}
+            </Text>
+            <Text fz="xs" c="dimmed">
+              {account.email}
+            </Text>
+          </div>
+        </Group>
+      </Table.Td>
+      <Table.Td>
+        <Group gap={6}>
+          {account.roles.map((role) => (
+            <Badge key={role} variant="default" radius="sm" tt="none" fw={400}>
+              {roleName(role)}
+            </Badge>
+          ))}
+        </Group>
+      </Table.Td>
+      <Table.Td>
+        <Badge
+          variant="light"
+          color={account.active ? "green" : "gray"}
+          radius="xl"
+          tt="none"
+          leftSection={<span className={classes.statusDot} />}
+        >
+          {account.active ? "Active" : "Deactivated"}
+        </Badge>
+      </Table.Td>
+      <Table.Td c="dimmed" className={classes.figures}>
+        <time dateTime={account.createdAt}>
+          {createdDate.format(new Date(account.createdAt))}
+        </time>
+      </Table.Td>
+      <Table.Td>
+        {own ? (
+          <Text fz="xs" c="dimmed">
+            Your account
+          </Text>
+        ) : (
+          <Menu position="bottom-end">
+            <Menu.Target>
+              <ActionIcon
+                variant="subtle"
+                color="gray"
+                aria-label={`Actions for ${account.name}`}
+              >
+                <span aria-hidden="true">⋯</span>
+              </ActionIcon>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <Menu.Item
+                onClick={() => {
+                  onOpen({ kind: "roles", account });
+                }}
+              >
+                Change roles
+              </Menu.Item>
+              <Menu.Item
+                onClick={() => {
+                  onOpen({ kind: "password", account });
+                }}
+              >
+                Reset password
+              </Menu.Item>
+              <Menu.Item
+                {...(account.active ? { color: "red" } : {})}
+                onClick={() => {
+                  onOpen({ kind: "active", account });
+                }}
+              >
+                {account.active ? "Deactivate" : "Reactivate"}
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        )}
+      </Table.Td>
+    </Table.Tr>
+  );
+}
+
 export function AccountsPage({ user }: { user: SignedInUser }) {
   const accounts = useQuery(accountsQuery);
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
@@ -351,6 +474,8 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
   const [opened, setOpened] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
 
   const open = (next: Dialog) => {
     setNotice(undefined);
@@ -361,19 +486,25 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
     setNotice(done);
     setOpened(false);
   };
+  const all = accounts.data ?? [];
+  const activeCount = all.filter((account) => account.active).length;
+  const shown = all.filter((account) => matches(account, search, filter));
 
   return (
-    <Stack>
-      <Group justify="space-between">
-        <Title order={2}>Accounts</Title>
-        <Button
-          onClick={() => {
-            open({ kind: "create" });
-          }}
-        >
-          New account
-        </Button>
-      </Group>
+    <Stack gap="md">
+      <PageHeader
+        title="Accounts"
+        description="Who can sign in to Fathom, and what their roles let them do."
+        action={
+          <Button
+            onClick={() => {
+              open({ kind: "create" });
+            }}
+          >
+            New account
+          </Button>
+        }
+      />
       {notice && (
         <Alert color="green" role="status">
           {notice}
@@ -386,76 +517,66 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
         </Alert>
       )}
       {accounts.isSuccess && (
-        <Table striped>
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Name</Table.Th>
-              <Table.Th>Email address</Table.Th>
-              <Table.Th>Roles</Table.Th>
-              <Table.Th>Status</Table.Th>
-              <Table.Th>
-                <VisuallyHidden>Actions</VisuallyHidden>
-              </Table.Th>
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {accounts.data.map((account) => (
-              <Table.Tr key={account.id}>
-                <Table.Td>{account.name}</Table.Td>
-                <Table.Td>{account.email}</Table.Td>
-                <Table.Td>
-                  <Group gap="xs">
-                    {account.roles.map((role) => (
-                      <Badge key={role} variant="light">
-                        {roleName(role)}
-                      </Badge>
-                    ))}
-                  </Group>
-                </Table.Td>
-                <Table.Td>{account.active ? "Active" : "Deactivated"}</Table.Td>
-                <Table.Td>
-                  {account.id === user.id ? (
-                    <Text size="sm" c="dimmed">
-                      Your account
-                    </Text>
-                  ) : (
-                    <Menu>
-                      <Menu.Target>
-                        <Button variant="subtle" size="xs">
-                          Change {account.name}
-                        </Button>
-                      </Menu.Target>
-                      <Menu.Dropdown>
-                        <Menu.Item
-                          onClick={() => {
-                            open({ kind: "roles", account });
-                          }}
-                        >
-                          Change roles
-                        </Menu.Item>
-                        <Menu.Item
-                          onClick={() => {
-                            open({ kind: "password", account });
-                          }}
-                        >
-                          Reset password
-                        </Menu.Item>
-                        <Menu.Item
-                          {...(account.active ? { color: "red" } : {})}
-                          onClick={() => {
-                            open({ kind: "active", account });
-                          }}
-                        >
-                          {account.active ? "Deactivate" : "Reactivate"}
-                        </Menu.Item>
-                      </Menu.Dropdown>
-                    </Menu>
-                  )}
-                </Table.Td>
-              </Table.Tr>
-            ))}
-          </Table.Tbody>
-        </Table>
+        <>
+          <Group gap="sm">
+            <TextInput
+              aria-label="Search by name or email"
+              placeholder="Search by name or email"
+              value={search}
+              onChange={(event) => {
+                setSearch(event.currentTarget.value);
+              }}
+              w={{ base: "100%", xs: 280 }}
+            />
+            <SegmentedControl
+              aria-label="Show"
+              value={filter}
+              onChange={(value) => {
+                setFilter(value);
+              }}
+              data={[
+                { value: "all", label: `All ${String(all.length)}` },
+                { value: "active", label: `Active ${String(activeCount)}` },
+                {
+                  value: "deactivated",
+                  label: `Deactivated ${String(all.length - activeCount)}`,
+                },
+              ]}
+            />
+          </Group>
+          <Paper withBorder>
+            <Table.ScrollContainer minWidth={720}>
+              <Table verticalSpacing="sm" horizontalSpacing="md">
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Person</Table.Th>
+                    <Table.Th>Roles</Table.Th>
+                    <Table.Th>Status</Table.Th>
+                    <Table.Th>Created</Table.Th>
+                    <Table.Th>
+                      <VisuallyHidden>Actions</VisuallyHidden>
+                    </Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {shown.map((account) => (
+                    <AccountRow
+                      key={account.id}
+                      account={account}
+                      own={account.id === user.id}
+                      onOpen={open}
+                    />
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>
+            {shown.length === 0 && (
+              <Text p="md" fz="sm" c="dimmed">
+                No accounts match.
+              </Text>
+            )}
+          </Paper>
+        </>
       )}
       <Modal
         opened={opened}

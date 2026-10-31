@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The access history, through the server's API, with how each kind of entry is put in words.
+// The access history, through the server's API, and how each entry is put in words: a sentence
+// naming who did what to whose account, a short label for its kind, whether it deserves attention,
+// and the roles involved.
 
 import {
   type AccessAction,
   accessActionSchema,
   type HistoryEntry,
   historyListSchema,
+  type Role,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { roleName } from "./accounts.ts";
@@ -18,20 +21,55 @@ export const historyQuery = queryOptions({
     (await getJson("/api/access-history", historyListSchema)).entries,
 });
 
+interface ActionWords {
+  kind: string;
+  // What the actor did, before the name of the account it was done to.
+  verb: string;
+  // Changes that reveal impersonation or lock someone out deserve a second look.
+  caution: boolean;
+}
+
 // Every action must be described, which the compiler checks.
-const actionNames: Record<AccessAction, string> = {
-  "account-created": "Created the account",
-  "roles-changed": "Changed the roles",
-  "password-reset": "Reset the password",
-  "account-deactivated": "Deactivated the account",
-  "account-reactivated": "Reactivated the account",
+const actionWords: Record<AccessAction, ActionWords> = {
+  "account-created": {
+    kind: "Created",
+    verb: "created the account for",
+    caution: false,
+  },
+  "roles-changed": {
+    kind: "Roles",
+    verb: "changed the roles of",
+    caution: false,
+  },
+  "password-reset": {
+    kind: "Password",
+    verb: "reset the password for",
+    caution: true,
+  },
+  "account-deactivated": {
+    kind: "Deactivated",
+    verb: "deactivated the account for",
+    caution: true,
+  },
+  "account-reactivated": {
+    kind: "Reactivated",
+    verb: "reactivated the account for",
+    caution: false,
+  },
 };
 
 // An action recorded by another version of Fathom, which this one does not know, is shown as it was
 // stored.
-export function describeAction(action: string): string {
+export function describeAction(action: string): ActionWords {
   const known = accessActionSchema.safeParse(action);
-  return known.success ? actionNames[known.data] : action;
+  return known.success
+    ? actionWords[known.data]
+    : { kind: action, verb: `${action}:`, caution: false };
+}
+
+// The person who made an entry's change, or Fathom's operators.
+export function actorName({ actor }: HistoryEntry): string {
+  return actor === null ? "Fathom's operators" : nameOf(actor);
 }
 
 // A person's name, or a plain description when their account no longer exists.
@@ -39,10 +77,12 @@ export function nameOf(person: { name: string | null }): string {
   return person.name ?? "A removed account";
 }
 
+function names(roles: readonly Role[]): string {
+  return roles.length === 0 ? "no roles" : roles.map(roleName).join(", ");
+}
+
 // The roles involved in an entry, in words, or an empty string when none were.
 export function describeDetails({ details }: HistoryEntry): string {
-  const names = (roles: readonly Parameters<typeof roleName>[0][]) =>
-    roles.length === 0 ? "no roles" : roles.map(roleName).join(", ");
   if (details.previousRoles !== undefined && details.roles !== undefined) {
     return `From ${names(details.previousRoles)} to ${names(details.roles)}`;
   }

@@ -3,6 +3,7 @@
 - **ADR:** 0004
 - **Status:** Accepted
 - **Date:** 2026-10-30
+- **Revised:** 2026-10-30, to add the typeface chosen with the visual design
 
 ## Context
 
@@ -22,6 +23,7 @@ Each candidate below was built into a test page. None loads anything from other 
 | --- | --- | --- | --- |
 | UI components | [Mantine](https://mantine.dev), with its date and notification packages | [shadcn/ui](https://ui.shadcn.com) with Tailwind, [React Aria Components](https://react-aria.adobe.com) | The most complete set, including date pickers and notifications, with its own styles, so the least to build. Active, with few open issues |
 | Styling | Mantine's theme, and [CSS Modules](https://github.com/css-modules/css-modules) for Fathom's own styles | [Tailwind](https://tailwindcss.com) | Mantine is styled with CSS files and variables, which CSS Modules extend without a second styling system |
+| Typeface | [IBM Plex Sans](https://github.com/IBM/plex), bundled through its [Fontsource](https://fontsource.org) package | The system's own fonts | A clear, professional face under the SIL Open Font License, which allows bundling, so nothing loads from the internet |
 | Forms | Mantine's inputs, with [React Hook Form](https://react-hook-form.com) as decided in ADR 0002 | [Mantine's form library](https://mantine.dev/form/use-form/) | Mantine supplies the inputs, such as text, select, and date fields. React Hook Form was already chosen and is more widely used |
 | Tables | [TanStack Table](https://tanstack.com/table) as decided in ADR 0002, with Mantine's table | | Unchanged |
 | Charts | [Recharts](https://recharts.github.io), through [Mantine's chart package](https://mantine.dev/charts/getting-started/) | [ECharts](https://echarts.apache.org), [Chart.js](https://www.chartjs.org), [Nivo](https://nivo.rocks) | SVG charts that screen readers and keyboard users can reach, styled to match Mantine. ECharts is larger and styled separately from Mantine, Chart.js draws only on a canvas, and Nivo's releases have slowed |

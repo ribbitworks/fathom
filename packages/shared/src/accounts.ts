@@ -19,6 +19,7 @@ export const accountSchema = z.object({
   email: z.string(),
   roles: z.array(roleSchema),
   active: z.boolean(),
+  createdAt: z.iso.datetime({ offset: true }),
 });
 
 export type Account = z.infer<typeof accountSchema>;
