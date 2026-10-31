@@ -1,7 +1,7 @@
 # Fathom — Development Setup
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
 
@@ -16,7 +16,7 @@ apps/
 packages/
   shared/                 Zod schemas, shared types, and constants used by both apps
   db/                     Drizzle schema, migration files, and the migration runner
-  fixtures/               Building blocks for fictional records, used by seed and test-utils
+  fixtures/               Building blocks for fictional records, used by seed and tests
   seed/                   Fictional data generator
   test-utils/             Test data factories and test helpers
 deploy/
@@ -30,7 +30,7 @@ docs/                     Documentation
 LICENSES/                 Licence texts, as the REUSE specification requires
 ```
 
-- **Data access layer:** Lives in `apps/server/src/data/`, so every read of protected data goes through the server's tier checks. `packages/db` holds the schema, the migrations, and the database client. A lint rule allows only the data access layer, the server's start-up code, `seed`, `test-utils`, and tests to import it; other code may use only its types.
+- **Data access layer:** Lives in `apps/server/src/data/`, so every read of protected data goes through the server's tier checks. `packages/db` holds the schema, the migrations, and the database client. A lint rule allows only the data access layer, the server's start-up code, the account command, `seed`, `test-utils`, the server's test helper, and tests to import it; other code may use only its types.
 - **Shared code:** Only `packages/shared` is used by both the front end and the server, so server-only code never reaches the browser.
 - **Development-only packages:** `fixtures`, `seed`, and `test-utils` are never included in the runtime image.
 - **Root configuration:** The workspace definition, shared TypeScript, linting, and formatting settings, the pinned Node.js and pnpm versions, and the Renovate configuration.
@@ -76,6 +76,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm build` | Build the front end into `apps/web/dist`, which the server serves when `FATHOM_WEB_ROOT` points to it |
 | `pnpm db:migrate` | Apply migration files using the migration role |
 | `pnpm db:reset` | Delete and recreate the development database, and apply migrations |
+| `pnpm db:seed` and `pnpm db:unseed` | Add the fictional data to the development database, unless it is there already, and remove it again. Removing keeps anything added by hand, and a seeded column or list that something added by hand still uses, and says so |
 | `pnpm dev:reset` | Delete and recreate the development database, create an account for "Your Name" (`you@example.test`) as Administrator and Workforce Administrator, print its password, and start development mode. The password is random and kept in `.dev/secrets/dev_account_password`, so it stays the same between resets |
 | `pnpm typecheck` | Check types across the workspace |
 | `pnpm check` | The single command from the [Testing Standards](../standards/testing.md#running-tests) |
@@ -94,9 +95,9 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 
 ## Fictional Seed Data
 
-- **Generator:** `packages/seed` uses Faker with a fixed seed and a fixed reference date, so it produces the same data on every run.
-- **Contents:** People with employee details, teams and managers, feature teams and leads, projects, features, cycles, releases, allocations, estimates, and planned hires, covering every role and every level of protected data.
+- **Generator:** `packages/fixtures` uses Faker with a fixed seed and a fixed reference date, so it produces the same data, with the same identifiers, on every run, and `packages/seed` writes it to the database, recorded in the change history as made by Fathom itself.
+- **Contents so far:** Lists of sites, positions, levels, and roles on the team, the People columns that draw on them, and people, current and former, with a few who start after the reference date. Each later slice adds its own data, until the seed holds teams and managers, feature teams and leads, projects, features, cycles, releases, allocations, estimates, and planned hires, covering every role and every level of protected data.
 - **Realistic but invented:** Names and details are generated, including names from the countries the organization works in, so the data looks realistic without describing anyone real. No real company, customer, or product names are used.
-- **Sizes:** A small data set for tests, and about 150 people for development and demonstrations.
-- **Shared building blocks:** `packages/fixtures` holds the building blocks for fictional records, used by both the generator and the test factories in `packages/test-utils`.
+- **Sizes:** About 150 people for development and demonstrations, and smaller sets for tests.
+- **Shared building blocks:** `packages/fixtures` holds the building blocks for fictional records, used by both the generator and tests.
 - **Never derived from real data:** As required by the [Data](../../AGENTS.md#data) rules.

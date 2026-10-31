@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 ## Purpose of This Document
 
@@ -10,7 +10,7 @@ Fathom is an internal planning tool for the software organization. It helps mana
 
 Fathom is being developed using fictional data only. No real employee information will be entered until HR approves this document.
 
-This document covers the first release only. Later releases are planned to add gender and planned reorganizations, to allow exports and saved snapshots of the plan, to let users add their own fields, such as a skill, and possibly to record each employee's work email address so managers can see the details of the people who report to them. Each of these will be brought back to HR before it is added, and any new field that holds personal information will need HR's approval before it is used.
+This document covers the first release only. Later releases are planned to add gender and planned reorganizations, to allow exports and saved snapshots of the plan, to let users add other kinds of fields of their own, such as a skill, and possibly to record each employee's work email address so managers can see the details of the people who report to them. Each of these will be brought back to HR before it is added, and any new field that holds personal information will need HR's approval before it is used.
 
 ## Who Fathom Is For
 
@@ -20,15 +20,19 @@ Fathom is used by about 20–30 people in the software organization: Software Pr
 
 Fathom holds a small set of work-related details about each employee in the software organization. They are copied by hand from the HR system, which remains the official record.
 
+Each employee's preferred name, Employee ID, and start and end dates are built in. Their site, position, level, and role on the team are columns the role that maintains workforce information adds, each choosing from a list that role keeps, such as a list of sites. Each list is marked with who may see what is chosen from it, so a column can be General, Restricted, or Confidential. That marking can later be lowered, which shows the details already chosen to more people; such a change is recorded and can be undone. Any further column that holds personal information is brought to HR for approval before it is used.
+
 | Information | Why it is needed | Sensitivity |
 | --- | --- | --- |
 | Preferred name | To identify people in plans | General |
+| Employee ID (the ID the company uses for each employee, such as their the HR system number) | To tell apart people with the same name, and to match records to the HR system | General |
 | Site | To plan work across locations | General |
 | Position (for example Software Engineer, Test Engineer) | To plan the mix of skills on each team | General |
 | Team and manager | To see who reports to whom | General |
 | Feature teams and feature leads (small groups formed to deliver related pieces of work, separate from reporting lines, and the person leading each) | To see who works together on what | General |
 | Work assignments (which projects and features, and what share of each month) | To plan workload and spot overloaded people | General |
 | Level (for example P1–P5, M1–M5, co-op) | To plan the experience mix on teams and the roles to hire | General |
+| Role on the team (for example Team Lead, Design Authority) | To see who leads and who holds design responsibility on each team | General |
 | Start date and end date | To avoid planning work for someone before they join or after they leave | Restricted |
 
 ### The Hiring Plan
@@ -47,7 +51,7 @@ Fathom does not hold salary or compensation, performance ratings or reviews, hea
 
 ### Information About Fathom's Users
 
-Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; a history of who viewed or changed Restricted or Confidential information, and of every change to user accounts; and a history of every change to the plan and to employees' details, with the old and new values, which user made it, and when, so changes can be checked and undone. Like the access history, it can only be added to. A user sees only changes to information they are allowed to see, and the history keeps earlier values, such as a past end date, for as long as the agreed retention period allows. When a user leaves, their Fathom account must be disabled by hand.
+Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; a history of who viewed or changed Restricted or Confidential information, recording each user's viewing at most once a day, and of every change to user accounts; and a history of every change to the plan and to employees' details, with the old and new values, which user made it, and when, so changes can be checked and undone. Like the access history, it can only be added to. A user sees only changes to information they are allowed to see, and the history keeps earlier values, such as a past end date, for as long as the agreed retention period allows. When a user leaves, their Fathom account must be disabled by hand.
 
 ## Who Can See and Change What
 

@@ -17,6 +17,7 @@ import {
 import type { Database } from "@fathom/db";
 import type { AuthConfig, TlsConfig } from "./config.ts";
 import { createAuth } from "./data/auth.ts";
+import { savedAtSameMoment } from "./data/changes.ts";
 import type { DataAccess } from "./data/index.ts";
 import { loggerOptions, type LogStream } from "./logging.ts";
 import type { Actor } from "./access.ts";
@@ -26,12 +27,15 @@ import { authRoutes, readActor } from "./routes/auth.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
 import { historyRoutes } from "./routes/history.ts";
 import { listRoutes } from "./routes/lists.ts";
+import { peopleRoutes } from "./routes/people.ts";
+import { undoRoutes } from "./routes/undo.ts";
 import { pageFallback, webRoutes } from "./routes/web.ts";
 
 const badRequest = 400;
 const unauthorized = 401;
 const forbidden = 403;
 const notFound = 404;
+const conflict = 409;
 const internalServerError = 500;
 const defaultRequestsPerMinute = 300;
 // Fathom's proxy passes connections through without reading requests, so the server itself must end
@@ -124,6 +128,11 @@ export async function buildApp(options: AppOptions) {
   // Errors the client caused keep their message; any other error is logged, and the client is told
   // only that the request failed, so internal details never reach the browser.
   app.setErrorHandler((error: FastifyError, request, reply) => {
+    if (savedAtSameMoment(error)) {
+      return reply.status(conflict).send({
+        error: "Someone else saved a change at the same moment. Try again.",
+      });
+    }
     const statusCode = error.statusCode ?? internalServerError;
     if (statusCode >= internalServerError) {
       request.log.error({ err: error }, "Request failed");
@@ -169,6 +178,8 @@ export async function buildApp(options: AppOptions) {
   );
   await app.register(historyRoutes(options.data));
   await app.register(listRoutes(options.data.lists));
+  await app.register(peopleRoutes(options.data.people));
+  await app.register(undoRoutes(options.data));
   await app.register(greetingRoutes(options.data));
   if (options.webRoot !== undefined) {
     await app.register(webRoutes(options.webRoot));

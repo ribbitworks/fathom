@@ -57,6 +57,13 @@
       "when": 1793456171546,
       "tag": "0007_user_defined_lists",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793461592486,
+      "tag": "0008_people_and_columns",
+      "breakpoints": true
     }
   ]
 }

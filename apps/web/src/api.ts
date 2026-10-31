@@ -60,8 +60,10 @@ export async function getJson<Schema extends z.ZodType>(
   return schema.parse(await response.json());
 }
 
+type Method = "POST" | "PUT" | "PATCH";
+
 async function send(
-  method: "POST" | "PUT",
+  method: Method,
   path: string,
   body: object,
 ): Promise<Response> {
@@ -79,7 +81,7 @@ async function send(
 
 // Sends JSON to the API with a method that changes data.
 export async function sendJson(
-  method: "POST" | "PUT",
+  method: Method,
   path: string,
   body: object,
 ): Promise<void> {
@@ -89,7 +91,7 @@ export async function sendJson(
 // Sends JSON to the API with a method that changes data, and returns the answer, checked against
 // the given schema.
 export async function sendJsonFor<Schema extends z.ZodType>(
-  method: "POST" | "PUT",
+  method: Method,
   path: string,
   body: object,
   schema: Schema,
@@ -97,13 +99,21 @@ export async function sendJsonFor<Schema extends z.ZodType>(
   return schema.parse(await (await send(method, path, body)).json());
 }
 
-// Asks the API to remove something.
-export async function sendDelete(path: string): Promise<void> {
+async function remove(path: string): Promise<Response> {
   const response = await fetch(path, {
     method: "DELETE",
     headers: { accept: "application/json" },
   });
   if (!response.ok) throw await failure(response);
+  return response;
+}
+
+// Asks the API to remove something, and returns its answer, checked against the given schema.
+export async function sendDeleteFor<Schema extends z.ZodType>(
+  path: string,
+  schema: Schema,
+): Promise<z.infer<Schema>> {
+  return schema.parse(await (await remove(path)).json());
 }
 
 const forbidden = 403;

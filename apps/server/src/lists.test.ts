@@ -231,12 +231,12 @@ describe("who may read and change lists", () => {
       const choiceUrl = `/api/lists/${created.id}/choices/${String(first?.id)}`;
       const steps: [Method, string, object | undefined, number][] = [
         ["PUT", `/api/lists/${created.id}`, { name: uniqueName() }, 200],
-        ["PUT", `/api/lists/${created.id}/retired`, { retired: true }, 204],
+        ["PUT", `/api/lists/${created.id}/retired`, { retired: true }, 200],
         ["PUT", choiceUrl, { label: "Fictional B" }, 200],
-        ["PUT", `${choiceUrl}/position`, { after: null }, 204],
-        ["PUT", `${choiceUrl}/retired`, { retired: true }, 204],
-        ["DELETE", choiceUrl, undefined, 204],
-        ["DELETE", `/api/lists/${created.id}`, undefined, 204],
+        ["PUT", `${choiceUrl}/position`, { after: null }, 200],
+        ["PUT", `${choiceUrl}/retired`, { retired: true }, 200],
+        ["DELETE", choiceUrl, undefined, 200],
+        ["DELETE", `/api/lists/${created.id}`, undefined, 200],
       ];
       for (const [method, url, payload, status] of steps) {
         const response = await request(cookie, method, url, payload);
@@ -411,7 +411,10 @@ describe("lists", () => {
       "DELETE",
       `/api/lists/${created.id}`,
     );
-    expect(response.statusCode).toBe(204);
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      changeSetId: expect.any(String) as unknown,
+    });
     expect(await readList(cookie, created.id)).toBeUndefined();
     expect(
       (await historyOf(created.id))
@@ -423,9 +426,11 @@ describe("lists", () => {
       ["deleted", "visibility", id],
       ["deleted", "retired", id],
     ]);
+    // Each choice records the place it was in, so undoing puts it back there.
     expect((await historyOf(String(choice?.id))).at(-1)).toMatchObject({
       action: "deleted",
-      field: "retired",
+      field: "order",
+      oldValue: null,
     });
   });
 
@@ -669,19 +674,23 @@ describe("changing choices", () => {
       "Northmere",
       "Ashgrove",
     ]);
-    const response = await request(cookie, "DELETE", url(choices[0]));
-    expect(response.statusCode).toBe(204);
-    expect(await labelsOf(cookie, list.id)).toEqual(["Ashgrove"]);
+    const response = await request(cookie, "DELETE", url(choices[1]));
+    expect(response.statusCode).toBe(200);
+    expect(await labelsOf(cookie, list.id)).toEqual(["Northmere"]);
     expect(
-      (await historyOf(String(choices[0]?.id)))
+      (await historyOf(String(choices[1]?.id)))
         .slice(4)
-        .map(({ action, madeBy }) => [action, madeBy]),
+        .map(({ action, field, madeBy }) => [action, field, madeBy]),
     ).toEqual([
-      ["deleted", id],
-      ["deleted", id],
-      ["deleted", id],
-      ["deleted", id],
+      ["deleted", "listId", id],
+      ["deleted", "label", id],
+      ["deleted", "description", id],
+      ["deleted", "retired", id],
+      ["deleted", "order", id],
     ]);
+    expect((await historyOf(String(choices[1]?.id))).at(-1)).toMatchObject({
+      oldValue: choices[0]?.id,
+    });
   });
 });
 
@@ -707,7 +716,7 @@ describe("ordering choices", () => {
 
   it("moves a choice after another, recording the choice it followed and now follows", async () => {
     const { editor, first, second, third, move, order } = await threeChoices();
-    expect((await move(third, String(first?.id))).statusCode).toBe(204);
+    expect((await move(third, String(first?.id))).statusCode).toBe(200);
     expect(await order()).toEqual(["A", "C", "B"]);
     expect((await historyOf(String(third?.id))).at(-1)).toMatchObject({
       field: "order",
@@ -727,7 +736,9 @@ describe("ordering choices", () => {
 
   it("records nothing when a choice is moved to where it already is", async () => {
     const { first, second, move } = await threeChoices();
-    expect((await move(second, String(first?.id))).statusCode).toBe(204);
+    const unmoved = await move(second, String(first?.id));
+    expect(unmoved.statusCode).toBe(200);
+    expect(unmoved.json()).toEqual({ changeSetId: null });
     expect(await historyOf(String(second?.id))).toHaveLength(4);
   });
 
@@ -760,7 +771,7 @@ describe("retiring and restoring choices", () => {
 
   it("retires a choice, keeping it in the list, and records it", async () => {
     const { editor, created, first, set } = await retiredSetUp();
-    expect((await set({ retired: true })).statusCode).toBe(204);
+    expect((await set({ retired: true })).statusCode).toBe(200);
     const list = await readList(editor.cookie, created.id);
     expect(list?.choices.map(({ label, retired }) => [label, retired])).toEqual(
       [
@@ -782,11 +793,8 @@ describe("retiring and restoring choices", () => {
     expect(await historyOf(String(first?.id))).toHaveLength(4);
   });
 
-  it("restores a choice to the end of the list, or in its place when undoing", async () => {
+  it("restores a choice to the end of the list", async () => {
     const { editor, created, first, set } = await retiredSetUp();
-    await set({ retired: true });
-    await set({ retired: false, keepPlace: true });
-    expect(await labelsOf(editor.cookie, created.id)).toEqual(["A", "B"]);
     await set({ retired: true });
     await set({ retired: false });
     expect(await labelsOf(editor.cookie, created.id)).toEqual(["B", "A"]);

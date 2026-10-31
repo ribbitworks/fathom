@@ -7,16 +7,30 @@
 // change is recorded in the change history, in the same transaction, field by field. A move is
 // recorded as the choice a choice now follows.
 
-import { type Database, listItems, lists } from "@fathom/db";
+import {
+  type Database,
+  databaseCodes,
+  fields,
+  hasDatabaseCode,
+  listItems,
+  lists,
+} from "@fathom/db";
 import type { Choice, ChoiceRequest, List, ListRequest } from "@fathom/shared";
 import { tierSchema } from "@fathom/shared";
 import { and, asc, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
-import { type Change, type RecordType, recordChanges } from "./changes.ts";
-import { hasDatabaseCode, uniqueViolation } from "./database-errors.ts";
+import {
+  type Change,
+  changesBetween,
+  orderChange,
+  recordChanges,
+  refusingDuplicates,
+  type Saved,
+  type Transaction,
+} from "./changes.ts";
+import { type Place, place, previousOf } from "./order.ts";
 
-type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 type ListRow = typeof lists.$inferSelect;
 type ChoiceRow = typeof listItems.$inferSelect;
 
@@ -25,57 +39,34 @@ const noChoice = "There is no such choice";
 const duplicateList = "There is already a list with that name";
 const duplicateChoice = "This list already has a choice with that name";
 
-const listFields = ["name", "description", "visibility", "retired"] as const;
+export const listFields = [
+  "name",
+  "description",
+  "visibility",
+  "retired",
+] as const;
 // A choice records its list too, so its history can be tied back to the list after either is deleted.
-const choiceFields = ["listId", "label", "description", "retired"] as const;
+export const choiceFields = [
+  "listId",
+  "label",
+  "description",
+  "retired",
+] as const;
 
-// The changes between two versions of a list or choice, one for each field that differs. A missing
-// version is the record before it was created or after it was deleted. The details of lists and
-// choices are General data, whatever the visibility of the values chosen from a list.
-function changesBetween<Fields extends Record<string, unknown>>(
-  recordType: RecordType,
+// The details of lists and choices are General data, whatever the visibility of the values chosen
+// from a list.
+const listChanges = (
   id: string,
   action: Change["action"],
-  before: Fields | undefined,
-  after: Fields | undefined,
-  fields: readonly (keyof Fields & string)[],
-): Change[] {
-  return fields.flatMap((field) => {
-    // The field is always one of the fixed fields its caller names.
-    /* eslint-disable security/detect-object-injection */
-    const oldValue = before?.[field] ?? null;
-    const newValue = after?.[field] ?? null;
-    /* eslint-enable security/detect-object-injection */
-    return oldValue === newValue
-      ? []
-      : [
-          {
-            recordType,
-            recordId: id,
-            action,
-            field,
-            tier: "general" as const,
-            oldValue,
-            newValue,
-          },
-        ];
-  });
-}
-
-// Runs a change, answering a name already taken plainly.
-async function refusingDuplicates<Result>(
-  message: string,
-  change: () => Promise<Result>,
-): Promise<Result> {
-  try {
-    return await change();
-  } catch (error) {
-    if (hasDatabaseCode(error, uniqueViolation)) {
-      throw new ConflictError(message);
-    }
-    throw error;
-  }
-}
+  before: ListRow | undefined,
+  after: ListRow | undefined,
+) => changesBetween("list", id, action, before, after, listFields);
+const choiceChanges = (
+  id: string,
+  action: Change["action"],
+  before: ChoiceRow | undefined,
+  after: ChoiceRow | undefined,
+) => changesBetween("list-item", id, action, before, after, choiceFields);
 
 function toChoice(row: ChoiceRow): Choice {
   return {
@@ -119,7 +110,7 @@ export async function readLists(database: Database): Promise<List[]> {
 }
 
 // Locks a list for a change, refusing one that does not exist.
-async function lockList(
+export async function lockList(
   transaction: Transaction,
   id: string,
 ): Promise<ListRow> {
@@ -133,7 +124,7 @@ async function lockList(
 }
 
 // Every choice in a list, locked, in order.
-async function lockChoices(
+export async function lockChoices(
   transaction: Transaction,
   listId: string,
 ): Promise<ChoiceRow[]> {
@@ -162,24 +153,58 @@ async function lockChoice(
   return row;
 }
 
+// Refuses a change to a list while a column draws on it, naming the columns.
+export async function refuseIfUsed(
+  transaction: Transaction,
+  id: string,
+  change: string,
+): Promise<void> {
+  const users = await transaction
+    .select({ name: fields.name })
+    .from(fields)
+    .where(eq(fields.listId, id))
+    .orderBy(asc(sql`lower(${fields.name})`));
+  if (users.length > 0) {
+    const names = users.map(({ name }) => name).join(", ");
+    throw new ConflictError(
+      `This list cannot be ${change} while ${users.length === 1 ? "a column draws" : "columns draw"} on it: ${names}`,
+    );
+  }
+}
+
+// Runs a deletion, answering one refused because something still uses the record plainly.
+export async function refusingInUse<Result>(
+  message: string,
+  change: () => Promise<Result>,
+): Promise<Result> {
+  try {
+    return await change();
+  } catch (error) {
+    if (hasDatabaseCode(error, databaseCodes.restrictViolation)) {
+      throw new ConflictError(message);
+    }
+    throw error;
+  }
+}
+
 export async function createList(
   database: Database,
   madeBy: string,
   request: ListRequest,
-): Promise<List> {
+): Promise<Saved<List>> {
   const id = randomUUID();
   const row = { id, ...request, retired: false };
-  await refusingDuplicates(duplicateList, () =>
+  const changeSetId = await refusingDuplicates(duplicateList, () =>
     database.transaction(async (transaction) => {
       await transaction.insert(lists).values(row);
-      await recordChanges(
+      return recordChanges(
         transaction,
         madeBy,
-        changesBetween("list", id, "created", undefined, row, listFields),
+        listChanges(id, "created", undefined, row),
       );
     }),
   );
-  return toList(row, []);
+  return { result: toList(row, []), changeSetId };
 }
 
 export async function updateList(
@@ -187,74 +212,77 @@ export async function updateList(
   madeBy: string,
   id: string,
   request: ListRequest,
-): Promise<List> {
+): Promise<Saved<List>> {
   return refusingDuplicates(duplicateList, () =>
     database.transaction(async (transaction) => {
       const before = await lockList(transaction, id);
       const after = { ...before, ...request };
-      const made = changesBetween(
-        "list",
-        id,
-        "changed",
-        before,
-        after,
-        listFields,
+      const changeSetId = await recordChanges(
+        transaction,
+        madeBy,
+        listChanges(id, "changed", before, after),
       );
-      await recordChanges(transaction, madeBy, made);
-      if (made.length > 0) {
+      if (changeSetId !== null) {
         await transaction.update(lists).set(request).where(eq(lists.id, id));
       }
-      return toList(after, await lockChoices(transaction, id));
+      return {
+        result: toList(after, await lockChoices(transaction, id)),
+        changeSetId,
+      };
     }),
   );
 }
 
+// Retires or restores a list. A list cannot be retired while a column draws on it.
 export async function setListRetired(
   database: Database,
   madeBy: string,
   id: string,
   retired: boolean,
-): Promise<void> {
-  await database.transaction(async (transaction) => {
+): Promise<string | null> {
+  return database.transaction(async (transaction) => {
     const before = await lockList(transaction, id);
-    const made = changesBetween(
-      "list",
-      id,
-      "changed",
-      before,
-      { ...before, retired },
-      listFields,
+    if (retired && !before.retired) {
+      await refuseIfUsed(transaction, id, "retired");
+    }
+    const changeSetId = await recordChanges(
+      transaction,
+      madeBy,
+      listChanges(id, "changed", before, { ...before, retired }),
     );
-    await recordChanges(transaction, madeBy, made);
-    if (made.length > 0) {
+    if (changeSetId !== null) {
       await transaction.update(lists).set({ retired }).where(eq(lists.id, id));
     }
+    return changeSetId;
   });
 }
 
-// Deletes a list and its choices, recording each in the change history.
+// Deletes a list and its choices, recording each, and each choice's place, in the change history. A
+// list cannot be deleted while a column draws on it.
 export async function deleteList(
   database: Database,
   madeBy: string,
   id: string,
-): Promise<void> {
-  await database.transaction(async (transaction) => {
+): Promise<string | null> {
+  return database.transaction(async (transaction) => {
     const before = await lockList(transaction, id);
+    await refuseIfUsed(transaction, id, "deleted");
     const choices = await lockChoices(transaction, id);
-    await recordChanges(transaction, madeBy, [
-      ...changesBetween("list", id, "deleted", before, undefined, listFields),
-      ...choices.flatMap((choice) =>
-        changesBetween(
+    const changeSetId = await recordChanges(transaction, madeBy, [
+      ...listChanges(id, "deleted", before, undefined),
+      ...choices.flatMap((choice) => [
+        ...choiceChanges(choice.id, "deleted", choice, undefined),
+        ...orderChange(
           "list-item",
           choice.id,
           "deleted",
-          choice,
-          undefined,
-          choiceFields,
+          previousOf(choices, choice.id),
+          null,
         ),
-      ),
+      ]),
     ]);
     await transaction.delete(lists).where(eq(lists.id, id));
+    return changeSetId;
   });
 }
 
@@ -264,8 +292,8 @@ export async function addChoices(
   madeBy: string,
   listId: string,
   requests: readonly ChoiceRequest[],
-): Promise<Choice[]> {
-  const rows = await refusingDuplicates(duplicateChoice, () =>
+): Promise<Saved<Choice[]>> {
+  return refusingDuplicates(duplicateChoice, () =>
     database.transaction(async (transaction) => {
       await lockList(transaction, listId);
       const existing = await lockChoices(transaction, listId);
@@ -279,24 +307,16 @@ export async function addChoices(
         retired: false,
       }));
       await transaction.insert(listItems).values(added);
-      await recordChanges(
+      const changeSetId = await recordChanges(
         transaction,
         madeBy,
         added.flatMap((choice) =>
-          changesBetween(
-            "list-item",
-            choice.id,
-            "created",
-            undefined,
-            choice,
-            choiceFields,
-          ),
+          choiceChanges(choice.id, "created", undefined, choice),
         ),
       );
-      return added;
+      return { result: added.map(toChoice), changeSetId };
     }),
   );
-  return rows.map(toChoice);
 }
 
 export async function updateChoice(
@@ -305,81 +325,47 @@ export async function updateChoice(
   listId: string,
   id: string,
   request: ChoiceRequest,
-): Promise<Choice> {
-  const row = await refusingDuplicates(duplicateChoice, () =>
+): Promise<Saved<Choice>> {
+  return refusingDuplicates(duplicateChoice, () =>
     database.transaction(async (transaction) => {
       const before = await lockChoice(transaction, listId, id);
       const after = { ...before, ...request };
-      const made = changesBetween(
-        "list-item",
-        id,
-        "changed",
-        before,
-        after,
-        choiceFields,
+      const changeSetId = await recordChanges(
+        transaction,
+        madeBy,
+        choiceChanges(id, "changed", before, after),
       );
-      await recordChanges(transaction, madeBy, made);
-      if (made.length > 0) {
+      if (changeSetId !== null) {
         await transaction
           .update(listItems)
           .set(request)
           .where(eq(listItems.id, id));
       }
-      return after;
+      return { result: toChoice(after), changeSetId };
     }),
   );
-  return toChoice(row);
 }
 
 // Puts a choice just after another in the list, or at the top or end, renumbering the list, and
 // returns the change to record: the choice it followed before and the one it follows now.
-async function place(
+export async function placeChoice(
   transaction: Transaction,
   listId: string,
   id: string,
-  where: { after: string | null } | "end",
+  where: Place,
 ): Promise<Change[]> {
   const rows = await lockChoices(transaction, listId);
-  const moved = rows.find((row) => row.id === id);
-  if (moved === undefined) throw new NotFoundError(noChoice);
-  const before = rows.slice(0, rows.indexOf(moved)).at(-1)?.id ?? null;
-  const others = rows.filter((row) => row !== moved);
-  let insertAt = others.length;
-  if (where !== "end") {
-    insertAt =
-      where.after === null
-        ? 0
-        : others.findIndex((row) => row.id === where.after) + 1;
-    if (insertAt === 0 && where.after !== null) {
-      throw new BadRequestError("Choose a choice in the same list to follow");
-    }
+  if (!rows.some((row) => row.id === id)) throw new NotFoundError(noChoice);
+  const moved = await place(rows, id, where, async (choiceId, position) => {
+    await transaction
+      .update(listItems)
+      .set({ position })
+      .where(eq(listItems.id, choiceId));
+  });
+  if (moved === null) {
+    throw new BadRequestError("Choose a choice in the same list to follow");
   }
-  const ordered = [
-    ...others.slice(0, insertAt),
-    moved,
-    ...others.slice(insertAt),
-  ];
-  const after = ordered.slice(0, insertAt).at(-1)?.id ?? null;
-  if (after === before) return [];
-  for (const [index, row] of ordered.entries()) {
-    if (row.position !== index + 1) {
-      await transaction
-        .update(listItems)
-        .set({ position: index + 1 })
-        .where(eq(listItems.id, row.id));
-    }
-  }
-  return [
-    {
-      recordType: "list-item",
-      recordId: id,
-      action: "changed",
-      field: "order",
-      tier: "general",
-      oldValue: before,
-      newValue: after,
-    },
-  ];
+  return orderChange("list-item", id, "changed", moved.before, moved.after);
 }
 
 export async function moveChoice(
@@ -388,72 +374,63 @@ export async function moveChoice(
   listId: string,
   id: string,
   after: string | null,
-): Promise<void> {
+): Promise<string | null> {
   if (after === id) {
     throw new BadRequestError("A choice cannot follow itself");
   }
-  await database.transaction(async (transaction) => {
+  return database.transaction(async (transaction) => {
     await lockList(transaction, listId);
-    await recordChanges(
+    return recordChanges(
       transaction,
       madeBy,
-      await place(transaction, listId, id, { after }),
+      await placeChoice(transaction, listId, id, { after }),
     );
   });
 }
 
-// Retires a choice, or restores it to the end of the list unless it keeps its place.
+// Retires a choice, or restores it to the end of the list.
 export async function setChoiceRetired(
   database: Database,
   madeBy: string,
   listId: string,
   id: string,
   retired: boolean,
-  keepPlace: boolean,
-): Promise<void> {
-  await database.transaction(async (transaction) => {
+): Promise<string | null> {
+  return database.transaction(async (transaction) => {
     const before = await lockChoice(transaction, listId, id);
-    if (before.retired === retired) return;
+    if (before.retired === retired) return null;
     await transaction
       .update(listItems)
       .set({ retired })
       .where(eq(listItems.id, id));
-    const moved =
-      retired || keepPlace ? [] : await place(transaction, listId, id, "end");
-    await recordChanges(transaction, madeBy, [
-      ...changesBetween(
-        "list-item",
-        id,
-        "changed",
-        before,
-        { ...before, retired },
-        choiceFields,
-      ),
+    const moved = retired
+      ? []
+      : await placeChoice(transaction, listId, id, "end");
+    return recordChanges(transaction, madeBy, [
+      ...choiceChanges(id, "changed", before, { ...before, retired }),
       ...moved,
     ]);
   });
 }
 
+// Removes a choice, recording its place. A choice cannot be removed while people have it.
 export async function deleteChoice(
   database: Database,
   madeBy: string,
   listId: string,
   id: string,
-): Promise<void> {
-  await database.transaction(async (transaction) => {
-    const before = await lockChoice(transaction, listId, id);
-    await transaction.delete(listItems).where(eq(listItems.id, id));
-    await recordChanges(
-      transaction,
-      madeBy,
-      changesBetween(
-        "list-item",
-        id,
-        "deleted",
-        before,
-        undefined,
-        choiceFields,
-      ),
-    );
-  });
+): Promise<string | null> {
+  return refusingInUse(
+    "This choice cannot be removed while it is in use; retire it instead",
+    () =>
+      database.transaction(async (transaction) => {
+        const before = await lockChoice(transaction, listId, id);
+        const previous = previousOf(await lockChoices(transaction, listId), id);
+        await transaction.delete(listItems).where(eq(listItems.id, id));
+        return recordChanges(transaction, madeBy, [
+          ...choiceChanges(id, "deleted", before, undefined),
+          ...orderChange("list-item", id, "deleted", previous, null),
+        ]);
+      }),
+  );
 }

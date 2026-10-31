@@ -157,6 +157,32 @@ describe("greeting", () => {
     expect(response.json()).toEqual({ error: "Forbidden" });
   });
 
+  it.each(["40P01", "40001"])(
+    "asks the user to try again when a change met another saved at the same moment (%s)",
+    async (code) => {
+      const realData = createDataAccess(createDatabase(poolFor()));
+      const app = await appFor({
+        data: {
+          ...realData,
+          readGreeting: () =>
+            Promise.reject(
+              new Error("query failed", {
+                cause: Object.assign(new Error("stopped"), { code }),
+              }),
+            ),
+        },
+      });
+      const response = await app.inject({
+        url: "/api/greeting",
+        headers: { cookie: await signedIn(app) },
+      });
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toEqual({
+        error: "Someone else saved a change at the same moment. Try again.",
+      });
+    },
+  );
+
   it("needs sign-in, like every API request", async () => {
     const response = await (await appFor()).inject("/api/greeting");
     expect(response.statusCode).toBe(401);

@@ -36,6 +36,10 @@ Custom fields and tables use a values table.
 | No two records can have the same value | The partial unique indexes |
 | Identifier | Not shown; every record gets one automatically, as its primary key |
 
+## Built So Far
+
+The people step of the [Implementation Plan](../design/implementation-plan.md) builds the "Choice from a list" type for columns on People, as the [Decisions Log](../product/decisions.md#configuration) records: field definitions, a values table with a person owner column and a link column for choices, one row for each chosen choice, and a check that exactly one owner column is set. A list or choice cannot be deleted while a column or value uses it. The order of a table's columns, built-in and added alike, is kept as one list of column keys for each table. The other field types, uniqueness, and custom tables come with the custom fields stage.
+
 ## Consequences
 
 - **No schema changes at runtime:** Custom fields and tables need only rows, so the application's database role stays read and write only.

@@ -56,6 +56,16 @@ const actionWords: Record<AccessAction, ActionWords> = {
     verb: "reactivated the account for",
     caution: false,
   },
+  "restricted-viewed": {
+    kind: "Viewed",
+    verb: "viewed people's Restricted or Confidential details",
+    caution: false,
+  },
+  "restricted-changed": {
+    kind: "Changed",
+    verb: "changed the Restricted or Confidential details of",
+    caution: false,
+  },
 };
 
 // An action recorded by another version of Fathom, which this one does not know, is shown as it was
@@ -75,6 +85,16 @@ export function actorName({ actor }: HistoryEntry): string {
 // A person's name, or a plain description when their account no longer exists.
 export function nameOf(person: { name: string | null }): string {
   return person.name ?? "A removed account";
+}
+
+// Whom an entry names, if anyone: an account, or a person whose details changed.
+export function subjectName({ action, subject }: HistoryEntry): string | null {
+  if (subject === null) return null;
+  if (action === "restricted-changed") {
+    // Unnamed for readers who may not see people, and for a person deleted since.
+    return subject.name ?? "a person";
+  }
+  return nameOf(subject);
 }
 
 function names(roles: readonly Role[]): string {

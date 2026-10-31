@@ -71,7 +71,8 @@ export function ListDialog({
   // The list being edited; absent when creating one.
   list?: List;
   lists: List[];
-  onSaved: (saved: List, before?: List) => void;
+  // Given the list as saved, and the change set it was saved in.
+  onSaved: (saved: List, changeSetId: string | null) => void;
   onRetire: (list: List) => void;
   onDelete: (list: List) => void;
   onCancel: () => void;
@@ -92,8 +93,8 @@ export function ListDialog({
     onSettled: () => {
       onBusy(false);
     },
-    onSuccess: (saved) => {
-      onSaved(saved, list);
+    onSuccess: ({ list: saved, changeSetId }) => {
+      onSaved(saved, changeSetId);
     },
   });
   const taken = lists.some(

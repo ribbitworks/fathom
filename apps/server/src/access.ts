@@ -5,7 +5,7 @@
 // changes this mapping and the test that spells it out; adding or renaming a role or permission also
 // changes the shared lists in packages/shared.
 
-import type { Permission, Role } from "@fathom/shared";
+import type { Permission, Role, Tier } from "@fathom/shared";
 import { roleSchema } from "@fathom/shared";
 import { ForbiddenError } from "./errors.ts";
 
@@ -75,4 +75,23 @@ export function rolesGranting(permission: Permission): Role[] {
 
 export function requirePermission(actor: Actor, permission: Permission): void {
   if (!actor.permissions.includes(permission)) throw new ForbiddenError();
+}
+
+// The permissions that let a user see and change data of each tier. General people data comes with
+// seeing and editing people.
+const tierPermissions: Record<Tier, { view: Permission; edit: Permission }> = {
+  general: { view: "people:view", edit: "people:edit" },
+  restricted: { view: "restricted:view", edit: "restricted:edit" },
+  confidential: { view: "confidential:view", edit: "confidential:edit" },
+};
+
+export function seesTier(actor: Actor, tier: Tier): boolean {
+  // The tier is always one of the fixed tiers listed above.
+  // eslint-disable-next-line security/detect-object-injection
+  return actor.permissions.includes(tierPermissions[tier].view);
+}
+
+export function requireTierEdit(actor: Actor, tier: Tier): void {
+  // eslint-disable-next-line security/detect-object-injection
+  requirePermission(actor, tierPermissions[tier].edit);
 }

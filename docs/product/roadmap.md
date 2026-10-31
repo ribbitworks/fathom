@@ -1,7 +1,7 @@
 # Fathom — Roadmap
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
 
@@ -68,6 +68,13 @@ Until plan approval arrives in the next stage, edits go straight to the live pla
 ## Stage: Planning Ahead
 
 - **What-if scenarios**, if confirmed
+
+## Not Yet Placed
+
+Goals the owner has added that are not yet placed in a stage:
+
+- **Saved filters and pinned views:** Once filters are chosen, the combination can be saved, as a list of saved filters, as a pinned view that stays visible as its own table until it is unpinned, or both.
+- **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed.
 
 These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
 

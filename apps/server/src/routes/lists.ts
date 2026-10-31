@@ -2,28 +2,34 @@
 
 // Lists of choices: reading every list; creating, editing, retiring, restoring, and deleting lists;
 // and adding choices, one or several at once, editing, moving, retiring, restoring, and removing
-// them. The data access layer checks the actor's permissions.
+// them. Every change answers with the change set it was saved in, which undoing it names. The data
+// access layer checks the actor's permissions.
 
 import {
   choiceMoveSchema,
   choiceRequestSchema,
   choiceSchema,
   choicesRequestSchema,
+  changeSetIdSchema,
   listRequestSchema,
   listSchema,
   listsSchema,
   retiredRequestSchema,
+  savedSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import type { ListAccess } from "../data/index.ts";
 
 const created = 201;
-const noContent = 204;
 
-const listResponse = z.object({ list: listSchema });
+const listResponse = z.object({
+  list: listSchema,
+  changeSetId: changeSetIdSchema,
+});
 const listParams = z.object({ listId: z.uuid() });
 const choiceParams = z.object({ listId: z.uuid(), choiceId: z.uuid() });
+const saved = { 200: savedSchema };
 
 export function listRoutes(lists: ListAccess): FastifyPluginCallbackZod {
   return (app, _options, done) => {
@@ -41,10 +47,13 @@ export function listRoutes(lists: ListAccess): FastifyPluginCallbackZod {
           response: { [created]: listResponse },
         },
       },
-      async (request, reply) =>
-        reply
-          .status(created)
-          .send({ list: await lists.create(request.actor, request.body) }),
+      async (request, reply) => {
+        const { result, changeSetId } = await lists.create(
+          request.actor,
+          request.body,
+        );
+        return reply.status(created).send({ list: result, changeSetId });
+      },
     );
 
     app.put(
@@ -56,8 +65,27 @@ export function listRoutes(lists: ListAccess): FastifyPluginCallbackZod {
           response: { 200: listResponse },
         },
       },
+      async (request) => {
+        const { result, changeSetId } = await lists.update(
+          request.actor,
+          request.params.listId,
+          request.body,
+        );
+        return { list: result, changeSetId };
+      },
+    );
+
+    app.put(
+      "/api/lists/:listId/retired",
+      {
+        schema: {
+          params: listParams,
+          body: retiredRequestSchema,
+          response: saved,
+        },
+      },
       async (request) => ({
-        list: await lists.update(
+        changeSetId: await lists.setRetired(
           request.actor,
           request.params.listId,
           request.body,
@@ -65,26 +93,12 @@ export function listRoutes(lists: ListAccess): FastifyPluginCallbackZod {
       }),
     );
 
-    app.put(
-      "/api/lists/:listId/retired",
-      { schema: { params: listParams, body: retiredRequestSchema } },
-      async (request, reply) => {
-        await lists.setRetired(
-          request.actor,
-          request.params.listId,
-          request.body,
-        );
-        return reply.status(noContent).send();
-      },
-    );
-
     app.delete(
       "/api/lists/:listId",
-      { schema: { params: listParams } },
-      async (request, reply) => {
-        await lists.delete(request.actor, request.params.listId);
-        return reply.status(noContent).send();
-      },
+      { schema: { params: listParams, response: saved } },
+      async (request) => ({
+        changeSetId: await lists.delete(request.actor, request.params.listId),
+      }),
     );
 
     app.post(
@@ -93,17 +107,22 @@ export function listRoutes(lists: ListAccess): FastifyPluginCallbackZod {
         schema: {
           params: listParams,
           body: choicesRequestSchema,
-          response: { [created]: z.object({ choices: z.array(choiceSchema) }) },
+          response: {
+            [created]: z.object({
+              choices: z.array(choiceSchema),
+              changeSetId: changeSetIdSchema,
+            }),
+          },
         },
       },
-      async (request, reply) =>
-        reply.status(created).send({
-          choices: await lists.addChoices(
-            request.actor,
-            request.params.listId,
-            request.body.choices,
-          ),
-        }),
+      async (request, reply) => {
+        const { result, changeSetId } = await lists.addChoices(
+          request.actor,
+          request.params.listId,
+          request.body.choices,
+        );
+        return reply.status(created).send({ choices: result, changeSetId });
+      },
     );
 
     app.put(
@@ -112,11 +131,55 @@ export function listRoutes(lists: ListAccess): FastifyPluginCallbackZod {
         schema: {
           params: choiceParams,
           body: choiceRequestSchema,
-          response: { 200: z.object({ choice: choiceSchema }) },
+          response: {
+            200: z.object({
+              choice: choiceSchema,
+              changeSetId: changeSetIdSchema,
+            }),
+          },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await lists.updateChoice(
+          request.actor,
+          request.params.listId,
+          request.params.choiceId,
+          request.body,
+        );
+        return { choice: result, changeSetId };
+      },
+    );
+
+    app.put(
+      "/api/lists/:listId/choices/:choiceId/position",
+      {
+        schema: {
+          params: choiceParams,
+          body: choiceMoveSchema,
+          response: saved,
         },
       },
       async (request) => ({
-        choice: await lists.updateChoice(
+        changeSetId: await lists.moveChoice(
+          request.actor,
+          request.params.listId,
+          request.params.choiceId,
+          request.body.after,
+        ),
+      }),
+    );
+
+    app.put(
+      "/api/lists/:listId/choices/:choiceId/retired",
+      {
+        schema: {
+          params: choiceParams,
+          body: retiredRequestSchema,
+          response: saved,
+        },
+      },
+      async (request) => ({
+        changeSetId: await lists.setChoiceRetired(
           request.actor,
           request.params.listId,
           request.params.choiceId,
@@ -125,45 +188,16 @@ export function listRoutes(lists: ListAccess): FastifyPluginCallbackZod {
       }),
     );
 
-    app.put(
-      "/api/lists/:listId/choices/:choiceId/position",
-      { schema: { params: choiceParams, body: choiceMoveSchema } },
-      async (request, reply) => {
-        await lists.moveChoice(
-          request.actor,
-          request.params.listId,
-          request.params.choiceId,
-          request.body.after,
-        );
-        return reply.status(noContent).send();
-      },
-    );
-
-    app.put(
-      "/api/lists/:listId/choices/:choiceId/retired",
-      { schema: { params: choiceParams, body: retiredRequestSchema } },
-      async (request, reply) => {
-        await lists.setChoiceRetired(
-          request.actor,
-          request.params.listId,
-          request.params.choiceId,
-          request.body,
-        );
-        return reply.status(noContent).send();
-      },
-    );
-
     app.delete(
       "/api/lists/:listId/choices/:choiceId",
-      { schema: { params: choiceParams } },
-      async (request, reply) => {
-        await lists.deleteChoice(
+      { schema: { params: choiceParams, response: saved } },
+      async (request) => ({
+        changeSetId: await lists.deleteChoice(
           request.actor,
           request.params.listId,
           request.params.choiceId,
-        );
-        return reply.status(noContent).send();
-      },
+        ),
+      }),
     );
     done();
   };

@@ -22,6 +22,7 @@ import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
+import { PeoplePage } from "./people-page.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
@@ -100,6 +101,22 @@ const listsRoute = createRoute({
   },
 });
 
+const peopleRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/people",
+  beforeLoad: requiring("people:view"),
+  component: function People() {
+    const { permissions } = signedIn.useRouteContext();
+    return (
+      <PeoplePage
+        canEdit={permissions.includes("people:edit")}
+        canEditColumns={permissions.includes("configuration:edit")}
+        showDates={permissions.includes("restricted:view")}
+      />
+    );
+  },
+});
+
 const changePasswordRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/password",
@@ -124,6 +141,7 @@ const routeTree = rootRoute.addChildren([
     accountsRoute,
     historyRoute,
     listsRoute,
+    peopleRoute,
     changePasswordRoute,
   ]),
   signInRoute,

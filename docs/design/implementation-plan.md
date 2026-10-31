@@ -1,7 +1,7 @@
 # Fathom — Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Workflow](../../AGENTS.md#workflow), and the [Data](../../AGENTS.md#data) rules.
 
@@ -30,7 +30,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Component Evaluation | Done, in [ADR 0004](../adr/0004-ui-components.md) |
 | Accounts and Access Control | Done |
 | Visual Design | Done |
-| People and Org Structure | In progress: user-defined lists are done |
+| People and Org Structure | In progress: user-defined lists and people are done |
 
 ### Hello Fathom
 
@@ -58,7 +58,7 @@ The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#af
 
 People with the employee details the roadmap's [first stage](../product/roadmap.md#stage-who-is-working-on-what) allows, teams, people managers, and their current direct reports.
 
-It is built in three steps: user-defined lists of choices, as set out in the [Decisions Log](../product/decisions.md#configuration); people, with fictional seed data and commands to load and remove it, whose details such as site or position are columns drawing on lists; and teams with their managers and direct reports. The lists step adds the change history the Decisions Log requires, which every later slice records its changes in. The rule that a list cannot be retired or deleted while a column uses it is enforced once columns exist. Custom field values are held in their own table, as [ADR 0005](../adr/0005-flexible-data-model.md) proposes, so nothing more is needed until the custom fields stage.
+It is built in three steps: user-defined lists of choices, as set out in the [Decisions Log](../product/decisions.md#configuration); people, with fictional seed data and commands to load and remove it, whose details such as site or position are columns drawing on lists; and teams with their managers and direct reports. The lists step adds the change history the Decisions Log requires, which every later slice records its changes in. The people step adds columns on People that draw on lists, held in the values table [ADR 0005](../adr/0005-flexible-data-model.md) proposes, and undo in one step for lists and people. The other field types and custom tables wait for the custom fields stage.
 
 ### Projects and Features
 

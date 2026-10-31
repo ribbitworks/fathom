@@ -41,7 +41,13 @@ const sidebarWidth = 228;
 const railWidth = 56;
 const sidebarId = "sections";
 
-type Page = "/" | "/accounts" | "/history" | "/lists/{-$listId}" | "/password";
+type Page =
+  | "/"
+  | "/accounts"
+  | "/history"
+  | "/lists/{-$listId}"
+  | "/people"
+  | "/password";
 
 interface Item {
   label: string;
@@ -66,7 +72,12 @@ const sections: { label: string; items: Item[] }[] = [
   {
     label: "People",
     items: [
-      { label: "People", icon: "people" },
+      {
+        label: "People",
+        icon: "people",
+        to: "/people",
+        permission: "people:view",
+      },
       { label: "Capacity", icon: "capacity" },
       {
         label: "Lists",

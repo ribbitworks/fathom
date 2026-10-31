@@ -1,7 +1,7 @@
 # Fathom — Issues
 
 **Status:** Working list
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 Known problems and deferred work that are not yet scheduled in the [Implementation Plan](design/implementation-plan.md). Each item says why it was deferred. When an item is scheduled or resolved, it moves to the document that owns it, or is removed.
 
@@ -23,9 +23,11 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 - **UX principles:** The Accounts and Change password pages were built before [Visual Design](design/visual-design.md#principles) ruled out page descriptions and hint text, and still have both. They are brought into line with this change.
 - **Session length:** Sessions should end after 30 minutes without use, not the 12 hours set in [ADR 0002](adr/0002-libraries.md), which changes with it. A short timeout means the session's expiry is updated in the database more often, which the revision weighs.
 
-## Lists
+## People
 
-- **Undo that takes several requests:** Undoing a choice's removal, a list's deletion, or a paste sends several requests, so a failure partway leaves the undo half done, which shows on screen and can be put right by hand. Making each undo a single server call was deferred by the owner, to be done with the people step, where undo matters more.
+- **Filtering, search, and sorting:** The People table cannot yet be filtered, searched, or sorted; people are listed by preferred name. The owner asked for filtering and sorting on every column, built-in and added, and for search, as the next change after people. All three follow each user's tiers, as [ADR 0005](adr/0005-flexible-data-model.md) sets out.
+- **Column widths:** Each column's width comes from its kind alone, so editing never moves the table, but columns often fit their contents poorly. The owner asked for widths that fit what columns hold, still without moving the table while editing: for a column drawing on a list, from its longest choice, and for the others, from their contents or their longest allowed value.
+- **Pasting several choices:** Pasting into a column that takes several choices reads each cell as one choice name. How several are pasted into one cell was left for later by the owner.
 
 ## Dependencies
 

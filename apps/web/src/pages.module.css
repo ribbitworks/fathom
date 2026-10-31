@@ -356,3 +356,116 @@
   padding: 16px 12px 6px;
   color: var(--mantine-color-dimmed);
 }
+
+/* The People table, edited like a spreadsheet: it scrolls sideways when its columns do not fit, each
+   cell on one line, with the selected cell outlined. */
+.peopleScroll {
+  overflow-x: auto;
+}
+
+.peopleTable {
+  width: max-content;
+  min-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: var(--mantine-font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.peopleHead {
+  height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--mantine-color-dimmed);
+}
+
+.peopleHeadButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.peopleRow,
+.peopleNewRow {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.peopleCell {
+  height: 36px;
+  padding: 4px 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: top;
+  outline: none;
+}
+
+.peopleCell:focus {
+  box-shadow: inset 0 0 0 2px var(--mantine-color-sea-filled);
+}
+
+.peopleProblem {
+  display: block;
+  color: var(--mantine-color-error);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: normal;
+}
+
+.peopleRowActions {
+  opacity: 0;
+}
+
+.peopleRow:hover .peopleRowActions,
+.peopleRow:focus-within .peopleRowActions {
+  opacity: 1;
+}
+
+/* Each column's width comes from its kind, never from what its cells hold, so editing a cell or
+   showing a problem never moves the table. */
+.peopleColName {
+  width: 14rem;
+}
+
+.peopleColId {
+  width: 9rem;
+}
+
+.peopleColChoice {
+  width: 11rem;
+}
+
+.peopleColDate {
+  width: 9rem;
+}
+
+.peopleColActions {
+  width: 2.75rem;
+}
+
+/* The editor fills its cell exactly, whatever is typed. */
+.peopleEditor {
+  display: block;
+  box-sizing: border-box;
+  width: calc(100% + 16px);
+  height: 28px;
+  margin: 0 -8px;
+  padding: 3px 7px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 5px;
+  background: var(--mantine-color-body);
+  color: inherit;
+  font: inherit;
+  line-height: 20px;
+}
+
+.peopleEditor:focus {
+  border-color: var(--mantine-color-sea-filled);
+  outline: none;
+}

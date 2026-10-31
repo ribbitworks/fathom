@@ -92,6 +92,52 @@ describe("who sees the History page", () => {
 });
 
 describe("the entries", () => {
+  it("say who viewed people's Restricted details, and whose they changed, by name", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () =>
+        Response.json({
+          entries: [
+            {
+              id: 7,
+              occurredAt: "2026-10-30T17:00:00.000Z",
+              actor: admin,
+              action: "restricted-changed",
+              subject: { id: "p1", name: "Avery Fictional" },
+              details: {},
+            },
+            {
+              id: 6,
+              occurredAt: "2026-10-30T16:30:00.000Z",
+              actor: admin,
+              action: "restricted-changed",
+              subject: { id: "p2", name: null },
+              details: {},
+            },
+            {
+              id: 5,
+              occurredAt: "2026-10-30T16:00:00.000Z",
+              actor: admin,
+              action: "restricted-viewed",
+              subject: null,
+              details: {},
+            },
+          ],
+        }),
+    });
+    renderApp("/history");
+    const lines = (await screen.findAllByRole("listitem")).map((item) =>
+      item.textContent.slice(
+        String(item.querySelector("time")?.textContent).length,
+      ),
+    );
+    expect(lines).toEqual([
+      "ChangedFictional Person changed the Restricted or Confidential details of Avery Fictional",
+      "ChangedFictional Person changed the Restricted or Confidential details of a person",
+      "ViewedFictional Person viewed people's Restricted or Confidential details",
+    ]);
+  });
+
   it("say who did what to whose account, and which roles were involved", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,

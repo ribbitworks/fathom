@@ -23,7 +23,7 @@ import {
   describeAction,
   describeDetails,
   historyQuery,
-  nameOf,
+  subjectName,
 } from "./history.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -43,6 +43,7 @@ function byDay(entries: HistoryEntry[]): [string, HistoryEntry[]][] {
 
 function Entry({ entry }: { entry: HistoryEntry }) {
   const words = describeAction(entry.action);
+  const subject = subjectName(entry);
   const details = describeDetails(entry);
   return (
     <Group
@@ -80,10 +81,15 @@ function Entry({ entry }: { entry: HistoryEntry }) {
           <Text span inherit fw={600}>
             {actorName(entry)}
           </Text>{" "}
-          {words.verb}{" "}
-          <Text span inherit fw={600}>
-            {nameOf(entry.subject)}
-          </Text>
+          {words.verb}
+          {subject !== null && (
+            <>
+              {" "}
+              <Text span inherit fw={600}>
+                {subject}
+              </Text>
+            </>
+          )}
         </Text>
         {details && (
           <Text fz="xs" c="dimmed" mt={2}>

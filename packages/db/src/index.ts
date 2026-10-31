@@ -6,7 +6,14 @@
 
 export { createDatabase, createPool, type Database } from "./client.ts";
 export { type DatabaseConfig, loadDatabaseConfig } from "./config.ts";
-export { describeError } from "./errors.ts";
+export { databaseCodes, describeError, hasDatabaseCode } from "./errors.ts";
+export {
+  type ChangeRecord,
+  fieldOfValue,
+  inChunks,
+  recordChanges,
+  valueField,
+} from "./history.ts";
 export { runMigrations } from "./migrate.ts";
 export {
   accessHistory,
@@ -14,9 +21,13 @@ export {
   appInfo,
   changes,
   changeSets,
+  columnOrders,
+  fields,
+  fieldValues,
   fathomSchema,
   listItems,
   lists,
+  people,
   rateLimits,
   sessions,
   userRoles,

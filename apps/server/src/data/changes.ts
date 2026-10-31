@@ -4,12 +4,17 @@
 // into the change sets saved together. Part of the data access layer, the only server code that
 // queries the database. Until plan approval arrives, each change set is applied as it is saved.
 
-import { changes, changeSets, type Database } from "@fathom/db";
+import { type Database, databaseCodes, hasDatabaseCode } from "@fathom/db";
 import type { Tier } from "@fathom/shared";
-import { randomUUID } from "node:crypto";
+import { ConflictError } from "../errors.ts";
 
-// The kinds of record whose changes are recorded.
-export type RecordType = "list" | "list-item";
+export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+
+// The kinds of record whose changes are recorded. A person's column values are recorded on the
+// person, one field for each column, so the person's history holds all of their details. A table's
+// column order is one record, named after its table.
+export type RecordType =
+  "list" | "list-item" | "field" | "column-order" | "person";
 
 export interface Change {
   recordType: RecordType;
@@ -22,18 +27,100 @@ export interface Change {
   newValue: unknown;
 }
 
-// Takes a transaction, so changes are recorded together with the data they change. The maker is
-// null for Fathom itself, such as for data made by setup or seed scripts. With no changes, nothing is
-// recorded, so there is never an empty change set.
-export async function recordChanges(
-  transaction: Pick<Database, "insert">,
-  madeBy: string | null,
-  made: readonly Change[],
-): Promise<void> {
-  if (made.length === 0) return;
-  const changeSetId = randomUUID();
-  await transaction.insert(changeSets).values({ id: changeSetId, madeBy });
-  await transaction
-    .insert(changes)
-    .values(made.map((change) => ({ ...change, changeSetId })));
+// What a change returns, and the change set it was saved in, which undoing it names; null when
+// nothing changed.
+export interface Saved<Result> {
+  result: Result;
+  changeSetId: string | null;
 }
+
+// Values as stored in the history, so lists of choices compare by what they hold.
+function sameValue(first: unknown, second: unknown): boolean {
+  return JSON.stringify(first) === JSON.stringify(second);
+}
+
+// The changes between two versions of a record, one for each field that differs. A missing version
+// is the record before it was created or after it was deleted. Each field is General unless the
+// record's tiers say otherwise.
+export function changesBetween<Fields extends Record<string, unknown>>(
+  recordType: RecordType,
+  id: string,
+  action: Change["action"],
+  before: Fields | undefined,
+  after: Fields | undefined,
+  fields: readonly (keyof Fields & string)[],
+  tierOf: (field: string) => Tier = () => "general",
+): Change[] {
+  return fields.flatMap((field) => {
+    // The field is always one of the fixed fields its caller names.
+    /* eslint-disable security/detect-object-injection */
+    const oldValue = before?.[field] ?? null;
+    const newValue = after?.[field] ?? null;
+    /* eslint-enable security/detect-object-injection */
+    return sameValue(oldValue, newValue)
+      ? []
+      : [
+          {
+            recordType,
+            recordId: id,
+            action,
+            field,
+            tier: tierOf(field),
+            oldValue,
+            newValue,
+          },
+        ];
+  });
+}
+
+// The change that records where an ordered record, such as a choice, now sits: the record it
+// followed before, and the one it follows now, either null for the top.
+export function orderChange(
+  recordType: RecordType,
+  id: string,
+  action: Change["action"],
+  before: string | null,
+  after: string | null,
+): Change[] {
+  return before === after && action === "changed"
+    ? []
+    : [
+        {
+          recordType,
+          recordId: id,
+          action,
+          field: "order",
+          tier: "general",
+          oldValue: before,
+          newValue: after,
+        },
+      ];
+}
+
+// Whether a change failed because another, saved at the same moment, was in its way, so it can
+// simply be tried again.
+export function savedAtSameMoment(error: unknown): boolean {
+  return [
+    databaseCodes.deadlockDetected,
+    databaseCodes.serializationFailure,
+  ].some((code) => hasDatabaseCode(error, code));
+}
+
+// Runs a change, answering a name already taken plainly.
+export async function refusingDuplicates<Result>(
+  message: string,
+  change: () => Promise<Result>,
+): Promise<Result> {
+  try {
+    return await change();
+  } catch (error) {
+    if (hasDatabaseCode(error, databaseCodes.uniqueViolation)) {
+      throw new ConflictError(message);
+    }
+    throw error;
+  }
+}
+
+// Records changes as one change set, in the transaction that makes them; shared with the seed data
+// command, so both record changes the same way.
+export { recordChanges } from "@fathom/db";

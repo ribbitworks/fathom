@@ -49,6 +49,26 @@ export {
   type RetiredRequest,
   retiredRequestSchema,
 } from "./lists.ts";
+export {
+  changeSetIdSchema,
+  columnKeySchema,
+  type Field,
+  type FieldRequest,
+  fieldMoveSchema,
+  fieldRequestSchema,
+  fieldSchema,
+  type Person,
+  type PersonChange,
+  type PersonRequest,
+  peopleRequestSchema,
+  peopleSchema,
+  personChangeSchema,
+  personLengths,
+  personRequestSchema,
+  personSchema,
+  type Saved,
+  savedSchema,
+} from "./people.ts";
 export { type GreetingResponse, greetingResponseSchema } from "./greeting.ts";
 export {
   type SessionResponse,

@@ -1,7 +1,7 @@
 # Fathom — Roles
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 Proposed roles for controlling what each user can see, edit, and approve, built on the access decisions in the [Decisions Log](decisions.md). The owner has confirmed the role list, that People Managers and the VP see Restricted data, that the Director plans, the split between Project Planner and Resource Planner, and that the Director is the first Administrator. Items marked **proposal** are not yet agreed.
 
@@ -26,7 +26,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | Feature teams (General) | View | View | View | Propose | Edit and approve | View | View | None |
 | Restricted employee details | None | None | None | View | Edit | View | None | None |
 | Confidential data | None | None | None | None | Edit | View | None | None |
-| Planning configuration: cycles, cycle names, patch frequency, composition targets, and lists of choices | View | View | View | View | Edit | View | View | None |
+| Planning configuration: cycles, cycle names, patch frequency, composition targets, lists of choices, and People's columns and their order | View | View | View | View | Edit | View | View | None |
 | Draft plan changes | None | Submit | Submit | None | None | None | Approve | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
 | Access history | None | None | None | None | None | None | None | View (**proposal**) |

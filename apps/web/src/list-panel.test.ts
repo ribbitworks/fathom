@@ -83,6 +83,8 @@ describe("shortcuts shown in menus", () => {
       edit: "↵",
       up: "⌥↑",
       down: "⌥↓",
+      left: "⌥←",
+      right: "⌥→",
       retire: "R",
       remove: "⌫",
     });
@@ -93,6 +95,8 @@ describe("shortcuts shown in menus", () => {
       edit: "Enter",
       up: "Alt+↑",
       down: "Alt+↓",
+      left: "Alt+←",
+      right: "Alt+→",
       retire: "R",
       remove: "Del",
     });

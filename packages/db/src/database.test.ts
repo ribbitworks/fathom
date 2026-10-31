@@ -20,6 +20,12 @@ import {
   verifyAppliedMigrations,
 } from "./migrate.ts";
 import * as schema from "./schema.ts";
+import {
+  fieldOfValue,
+  inChunks,
+  recordChanges,
+  valueField,
+} from "./history.ts";
 import { appInfo } from "./schema.ts";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 
@@ -98,6 +104,7 @@ describe("schema", () => {
   const onDeleteNames = new Map([
     ["a", "no action"],
     ["c", "cascade"],
+    ["r", "restrict"],
   ]);
   // Every table the schema module defines, alongside the schema object itself.
   const tables = Object.values(schema as Record<string, unknown>).filter(
@@ -453,6 +460,158 @@ describe("lists", () => {
         [id],
       );
       expect(left.rows).toHaveLength(0);
+    });
+  });
+});
+
+describe("recording changes", () => {
+  it("records changes as one change set, and nothing when there are none", async () => {
+    const pool = createPool(database.app, () => undefined);
+    const connection = createDatabase(pool);
+    try {
+      expect(await recordChanges(connection, null, [])).toBeNull();
+      const recordId = "00000000-0000-4000-8000-0000000000aa";
+      const changeSetId = await recordChanges(connection, null, [
+        {
+          recordType: "person",
+          recordId,
+          action: "created",
+          field: valueField("f1"),
+          tier: "general",
+          oldValue: null,
+          newValue: ["c1"],
+        },
+      ]);
+      const recorded = await connection
+        .select()
+        .from(schema.changes)
+        .where(eq(schema.changes.recordId, recordId));
+      expect(recorded).toMatchObject([
+        { changeSetId, field: "value:f1", newValue: ["c1"] },
+      ]);
+      expect(fieldOfValue("value:f1")).toBe("f1");
+      expect(inChunks([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+      expect(inChunks([])).toEqual([]);
+      expect(fieldOfValue("preferredName")).toBeNull();
+    } finally {
+      await pool.end();
+    }
+  });
+});
+
+describe("people and columns", () => {
+  const uniqueViolation = "23505";
+  const restrictViolation = "23001";
+  const checkViolation = "23514";
+
+  // A list with one choice, a column on people drawing on it, and a person with that choice.
+  async function personWithChoice(client: Client, name: string) {
+    const list = await client.query<{ id: string }>(
+      "INSERT INTO lists (name) VALUES ($1) RETURNING id",
+      [name],
+    );
+    const listId = list.rows[0]?.id;
+    const choice = await client.query<{ id: string }>(
+      "INSERT INTO list_items (list_id, label) VALUES ($1, 'Fictional Choice') RETURNING id",
+      [listId],
+    );
+    const field = await client.query<{ id: string }>(
+      "INSERT INTO fields (table_name, name, list_id) VALUES ('people', $1, $2) RETURNING id",
+      [name, listId],
+    );
+    const person = await client.query<{ id: string }>(
+      "INSERT INTO people (preferred_name, employee_id) VALUES ('Fictional Person', $1) RETURNING id",
+      [`id-${name}`],
+    );
+    const ids = {
+      listId: listId ?? "",
+      choiceId: choice.rows[0]?.id ?? "",
+      fieldId: field.rows[0]?.id ?? "",
+      personId: person.rows[0]?.id ?? "",
+    };
+    await client.query(
+      "INSERT INTO field_values (field_id, person_id, choice_id) VALUES ($1, $2, $3)",
+      [ids.fieldId, ids.personId, ids.choiceId],
+    );
+    return ids;
+  }
+
+  it("refuses an employee ID already used, ignoring letter case, and an end date before the start date", async () => {
+    await withClient(database.app, async (client) => {
+      await client.query(
+        "INSERT INTO people (preferred_name, employee_id) VALUES ('Fictional One', 'E-100')",
+      );
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO people (preferred_name, employee_id) VALUES ('Fictional Two', 'e-100')",
+          ),
+        ),
+      ).toBe(uniqueViolation);
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO people (preferred_name, employee_id, start_date, end_date) VALUES ('Fictional Three', 'E-101', '2026-05-01', '2026-04-30')",
+          ),
+        ),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("refuses deleting a choice a value uses, or a list a column uses", async () => {
+    await withClient(database.app, async (client) => {
+      const { listId, choiceId } = await personWithChoice(
+        client,
+        "Fictional Used",
+      );
+      expect(
+        await errorCodeOf(
+          client.query("DELETE FROM list_items WHERE id = $1", [choiceId]),
+        ),
+      ).toBe(restrictViolation);
+      expect(
+        await errorCodeOf(
+          client.query("DELETE FROM lists WHERE id = $1", [listId]),
+        ),
+      ).toBe(restrictViolation);
+    });
+  });
+
+  it("deletes values with their person or column, and refuses a value with no owner or the same choice twice", async () => {
+    await withClient(database.app, async (client) => {
+      const { fieldId, personId, choiceId } = await personWithChoice(
+        client,
+        "Fictional Owned",
+      );
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO field_values (field_id, person_id, choice_id) VALUES ($1, $2, $3)",
+            [fieldId, personId, choiceId],
+          ),
+        ),
+      ).toBe(uniqueViolation);
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO field_values (field_id, choice_id) VALUES ($1, $2)",
+            [fieldId, choiceId],
+          ),
+        ),
+      ).toBe(checkViolation);
+      await client.query("DELETE FROM people WHERE id = $1", [personId]);
+      const byPerson = await client.query(
+        "SELECT 1 FROM field_values WHERE field_id = $1",
+        [fieldId],
+      );
+      expect(byPerson.rows).toHaveLength(0);
+      const other = await personWithChoice(client, "Fictional Column");
+      await client.query("DELETE FROM fields WHERE id = $1", [other.fieldId]);
+      const byField = await client.query(
+        "SELECT 1 FROM field_values WHERE person_id = $1",
+        [other.personId],
+      );
+      expect(byField.rows).toHaveLength(0);
     });
   });
 });

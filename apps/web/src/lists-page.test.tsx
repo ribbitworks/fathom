@@ -78,7 +78,15 @@ const regions = {
 
 const listsAnswer = () =>
   Response.json({ lists: [locations, skills, empty, regions] });
-const noContent = () => new Response(null, { status: 204 });
+// Change sets: the one each change is saved in, and the one undoing it makes.
+const s1 = "00000000-0000-4000-8000-000000000001";
+const u1 = "00000000-0000-4000-8000-000000000002";
+
+// A change saved in the given change set, which undoing names.
+const savedAs =
+  (changeSetId: string | null = s1) =>
+  () =>
+    Response.json({ changeSetId });
 const refused = (status: number) => () =>
   Response.json({ error: "Refused" }, { status });
 
@@ -92,6 +100,7 @@ async function openPanel(answers: Answers = {}, path = "/lists/l1") {
   const fetch = serverAnswers({
     "GET /api/session": editor,
     "GET /api/lists": listsAnswer,
+    [`POST /api/undo/${s1}`]: savedAs(u1),
     ...answers,
   });
   const history = renderApp(path);
@@ -125,6 +134,15 @@ function bodyOf(
   return fetch.mock.calls
     .filter(([called, init]) => called === url && init?.method === method)
     .map(([, init]) => JSON.parse(init?.body as string) as unknown);
+}
+
+// The change sets the page asked the server to undo, in order.
+function undone(fetch: ReturnType<typeof serverAnswers>): string[] {
+  return fetch.mock.calls
+    .filter(
+      ([url, init]) => url.startsWith("/api/undo/") && init?.method === "POST",
+    )
+    .map(([url]) => url.slice("/api/undo/".length));
 }
 
 // Matches an accessible name that starts with the text, such as a menu item followed by its shortcut.
@@ -346,12 +364,14 @@ describe("the side panel", () => {
 
 describe("adding choices", () => {
   const added = (label: string) => () =>
-    Response.json({ choices: [choice("c9", label)] }, { status: 201 });
+    Response.json(
+      { choices: [choice("c9", label)], changeSetId: s1 },
+      { status: 201 },
+    );
 
   it("adds a choice from the empty row, keeps focus there, and undoes it", async () => {
     const { fetch } = await openPanel({
       "POST /api/lists/l1/choices": added("Fenwick Down"),
-      "DELETE /api/lists/l1/choices/c9": noContent,
     });
     await userEvent.type(entryName(), "Fenwick Down");
     await userEvent.tab();
@@ -371,12 +391,7 @@ describe("adding choices", () => {
     });
     await undoWithKeys();
     await vi.waitFor(() => {
-      expect(
-        fetch.mock.calls.some(
-          ([url, init]) =>
-            url === "/api/lists/l1/choices/c9" && init?.method === "DELETE",
-        ),
-      ).toBe(true);
+      expect(undone(fetch)).toEqual([s1]);
     });
   });
 
@@ -515,7 +530,11 @@ describe("moving through choices", () => {
 });
 
 describe("editing choices", () => {
-  const saved = () => Response.json({ choice: choice("c2", "Northmere Lab") });
+  const saved = () =>
+    Response.json({
+      choice: choice("c2", "Northmere Lab"),
+      changeSetId: s1,
+    });
 
   it("edits a choice in place with Enter, saves it with Enter, and undoes it", async () => {
     const { fetch } = await openPanel({
@@ -533,11 +552,10 @@ describe("editing choices", () => {
     });
     await undoWithKeys();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2")).toEqual([
-        { label: "Northmere Lab", description: "" },
-        { label: "Northmere", description: "" },
-      ]);
+      expect(undone(fetch)).toEqual([s1]);
     });
+    expect(row("c2").textContent).toContain("Northmere");
+    expect(row("c2").textContent).not.toContain("Lab");
   });
 
   it("starts editing with a click, but not from the choice's actions", async () => {
@@ -628,7 +646,7 @@ describe("editing choices", () => {
 describe("ordering choices", () => {
   it("moves a choice with Alt and the arrow keys, keeping focus on it, and undoes it", async () => {
     const { fetch } = await openPanel({
-      "PUT /api/lists/l1/choices/c2/position": noContent,
+      "PUT /api/lists/l1/choices/c2/position": savedAs(),
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");
@@ -642,15 +660,16 @@ describe("ordering choices", () => {
     });
     await undoWithKeys();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position")).toEqual(
-        [{ after: "c3" }, { after: "c1" }],
-      );
+      expect(undone(fetch)).toEqual([s1]);
     });
+    expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position")).toEqual([
+      { after: "c3" },
+    ]);
   });
 
   it("moves a choice up, and to the top", async () => {
     const { fetch } = await openPanel({
-      "PUT /api/lists/l1/choices/c2/position": noContent,
+      "PUT /api/lists/l1/choices/c2/position": savedAs(),
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowUp}{/Alt}");
@@ -679,7 +698,7 @@ describe("ordering choices", () => {
     ["Move to bottom", "c3"],
   ] as const)("offers %s in the choice's menu", async (item, after) => {
     const { fetch } = await openPanel({
-      "PUT /api/lists/l1/choices/c2/position": noContent,
+      "PUT /api/lists/l1/choices/c2/position": savedAs(),
     });
     focusRow("c2");
     await userEvent.keyboard("{Shift>}{F10}{/Shift}");
@@ -733,8 +752,7 @@ describe("ordering choices", () => {
 describe("retiring and restoring choices", () => {
   it("retires a choice with R, selects the next, and undoes it in place", async () => {
     const { fetch } = await openPanel({
-      "PUT /api/lists/l1/choices/c2/retired": noContent,
-      "PUT /api/lists/l1/choices/c2/position": noContent,
+      "PUT /api/lists/l1/choices/c2/retired": savedAs(),
     });
     focusRow("c2");
     await userEvent.keyboard("r");
@@ -744,14 +762,11 @@ describe("retiring and restoring choices", () => {
     });
     await undoLast();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/retired")).toEqual([
-        { retired: true, keepPlace: false },
-        { retired: false, keepPlace: true },
-      ]);
-      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position")).toEqual(
-        [{ after: "c1" }],
-      );
+      expect(undone(fetch)).toEqual([s1]);
     });
+    expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/retired")).toEqual([
+      { retired: true },
+    ]);
     await vi.waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
@@ -759,8 +774,7 @@ describe("retiring and restoring choices", () => {
 
   it("restores a retired choice to the end from its menu, and undoes it", async () => {
     const { fetch } = await openPanel({
-      "PUT /api/lists/l1/choices/c4/retired": noContent,
-      "PUT /api/lists/l1/choices/c4/position": noContent,
+      "PUT /api/lists/l1/choices/c4/retired": savedAs(),
     });
     await userEvent.click(
       within(panel()).getByRole("button", { name: "Show retired (1)" }),
@@ -774,14 +788,11 @@ describe("retiring and restoring choices", () => {
     expect(await screen.findByText("Restored Old Mill.")).toBeDefined();
     await undoLast();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c4/retired")).toEqual([
-        { retired: false, keepPlace: false },
-        { retired: true, keepPlace: true },
-      ]);
-      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c4/position")).toEqual(
-        [{ after: "c3" }],
-      );
+      expect(undone(fetch)).toEqual([s1]);
     });
+    expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c4/retired")).toEqual([
+      { retired: false },
+    ]);
   });
 
   it("says when a choice cannot be retired", async () => {
@@ -797,15 +808,9 @@ describe("retiring and restoring choices", () => {
 });
 
 describe("removing choices", () => {
-  it("removes a choice with Delete, and undoes it by adding it back in its place", async () => {
+  it("removes a choice with Delete, and undoes it, putting it back in its place at once", async () => {
     const { fetch } = await openPanel({
-      "DELETE /api/lists/l1/choices/c3": noContent,
-      "POST /api/lists/l1/choices": () =>
-        Response.json(
-          { choices: [choice("c9", "Corran Quay")] },
-          { status: 201 },
-        ),
-      "PUT /api/lists/l1/choices/c9/position": noContent,
+      "DELETE /api/lists/l1/choices/c3": savedAs(),
     });
     focusRow("c3");
     await userEvent.keyboard("{Delete}");
@@ -814,20 +819,15 @@ describe("removing choices", () => {
       expect(document.activeElement).toBe(row("c2"));
     });
     await undoLast();
+    expect(row("c3")).not.toBeNull();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c9/position")).toEqual(
-        [{ after: "c2" }],
-      );
+      expect(undone(fetch)).toEqual([s1]);
     });
   });
 
-  it("removes a retired choice from its menu, and undoes it as retired", async () => {
+  it("removes a retired choice from its menu, and undoes it", async () => {
     const { fetch } = await openPanel({
-      "DELETE /api/lists/l1/choices/c4": noContent,
-      "POST /api/lists/l1/choices": () =>
-        Response.json({ choices: [choice("c9", "Old Mill")] }, { status: 201 }),
-      "PUT /api/lists/l1/choices/c9/position": noContent,
-      "PUT /api/lists/l1/choices/c9/retired": noContent,
+      "DELETE /api/lists/l1/choices/c4": savedAs(),
     });
     await userEvent.click(
       within(panel()).getByRole("button", { name: "Show retired (1)" }),
@@ -839,9 +839,7 @@ describe("removing choices", () => {
     );
     await undoLast();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c9/retired")).toEqual([
-        { retired: true, keepPlace: false },
-      ]);
+      expect(undone(fetch)).toEqual([s1]);
     });
   });
 
@@ -849,7 +847,7 @@ describe("removing choices", () => {
     serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": listsAnswer,
-      "DELETE /api/lists/l2/choices/c5": noContent,
+      "DELETE /api/lists/l2/choices/c5": savedAs(),
     });
     renderApp("/lists/l2");
     await screen.findByRole("heading", { name: "Skills", level: 2 });
@@ -869,8 +867,8 @@ describe("removing choices", () => {
 
   it("says when the undo cannot be done", async () => {
     await openPanel({
-      "DELETE /api/lists/l1/choices/c3": noContent,
-      "POST /api/lists/l1/choices": refused(500),
+      "DELETE /api/lists/l1/choices/c3": savedAs(),
+      [`POST /api/undo/${s1}`]: refused(500),
     });
     focusRow("c3");
     await userEvent.keyboard("{Delete}");
@@ -898,9 +896,15 @@ describe("creating and editing lists", () => {
       "GET /api/lists": () => Response.json({ lists }),
       "POST /api/lists": () => {
         lists = [...lists, createdList];
-        return Response.json({ list: createdList }, { status: 201 });
+        return Response.json(
+          { list: createdList, changeSetId: s1 },
+          { status: 201 },
+        );
       },
-      "DELETE /api/lists/l9": noContent,
+      [`POST /api/undo/${s1}`]: () => {
+        lists = lists.filter(({ id }) => id !== "l9");
+        return savedAs(u1)();
+      },
     });
     const history = renderApp("/lists");
     await userEvent.click(
@@ -939,11 +943,14 @@ describe("creating and editing lists", () => {
     ).toBeDefined();
     await undoWithKeys();
     await vi.waitFor(() => {
+      expect(undone(fetch)).toEqual([s1]);
+    });
+    await vi.waitFor(() => {
       expect(
-        fetch.mock.calls.some(
-          ([url, init]) => url === "/api/lists/l9" && init?.method === "DELETE",
+        within(screen.getByRole("table", { name: "Lists" })).queryByText(
+          "Product areas",
         ),
-      ).toBe(true);
+      ).toBeNull();
     });
   });
 
@@ -1005,7 +1012,11 @@ describe("creating and editing lists", () => {
       "GET /api/session": editor,
       "GET /api/lists": listsAnswer,
       "PUT /api/lists/l2": () =>
-        Response.json({ list: { ...skills, name: "Strengths" } }),
+        Response.json({
+          list: { ...skills, name: "Strengths" },
+          changeSetId: s1,
+        }),
+      [`POST /api/undo/${s1}`]: savedAs(u1),
     });
     renderApp("/lists/l2");
     await userEvent.click(
@@ -1021,10 +1032,7 @@ describe("creating and editing lists", () => {
     });
     await undoWithKeys();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "PUT", "/api/lists/l2")).toEqual([
-        { name: "Strengths", description: "", visibility: "restricted" },
-        { name: "Skills", description: "", visibility: "restricted" },
-      ]);
+      expect(undone(fetch)).toEqual([s1]);
     });
   });
 
@@ -1032,7 +1040,8 @@ describe("creating and editing lists", () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": listsAnswer,
-      "PUT /api/lists/l2/retired": noContent,
+      "PUT /api/lists/l2/retired": savedAs(),
+      [`POST /api/undo/${s1}`]: savedAs(u1),
     });
     renderApp("/lists/l2");
     await userEvent.click(
@@ -1044,18 +1053,18 @@ describe("creating and editing lists", () => {
     expect(await screen.findByText("Retired Skills.")).toBeDefined();
     await undoLast();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "PUT", "/api/lists/l2/retired")).toEqual([
-        { retired: true },
-        { retired: false },
-      ]);
+      expect(undone(fetch)).toEqual([s1]);
     });
+    expect(bodyOf(fetch, "PUT", "/api/lists/l2/retired")).toEqual([
+      { retired: true },
+    ]);
   });
 
   it("restores a retired list", async () => {
     serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": listsAnswer,
-      "PUT /api/lists/l4/retired": noContent,
+      "PUT /api/lists/l4/retired": savedAs(),
     });
     renderApp("/lists/l4");
     await userEvent.click(
@@ -1085,29 +1094,19 @@ describe("creating and editing lists", () => {
     ).toBeDefined();
   });
 
-  it("deletes a list, closing its panel, and undoes it with its choices, retired ones too", async () => {
+  it("deletes a list, closing its panel, and undoes it, opening it again", async () => {
     let lists = [locations, skills, empty, regions];
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": () => Response.json({ lists }),
       "DELETE /api/lists/l4": () => {
         lists = [locations, skills, empty];
-        return noContent();
+        return savedAs()();
       },
-      "POST /api/lists": () => {
-        lists = [...lists, { ...regions, id: "l8" }];
-        return Response.json(
-          { list: { ...regions, id: "l8", choices: [] } },
-          { status: 201 },
-        );
+      [`POST /api/undo/${s1}`]: () => {
+        lists = [locations, skills, empty, regions];
+        return savedAs(u1)();
       },
-      "POST /api/lists/l8/choices": () =>
-        Response.json(
-          { choices: [choice("d1", "North"), choice("d2", "South")] },
-          { status: 201 },
-        ),
-      "PUT /api/lists/l8/choices/d2/retired": noContent,
-      "PUT /api/lists/l8/retired": noContent,
     });
     const history = renderApp("/lists/l4");
     await userEvent.click(
@@ -1122,41 +1121,33 @@ describe("creating and editing lists", () => {
     });
     await undoLast();
     await vi.waitFor(() => {
-      expect(history.location.pathname).toBe("/lists/l8");
+      expect(history.location.pathname).toBe("/lists/l4");
     });
-    expect(bodyOf(fetch, "POST", "/api/lists/l8/choices")).toEqual([
-      {
-        choices: [
-          { label: "North", description: "" },
-          { label: "South", description: "" },
-        ],
-      },
-    ]);
-    expect(bodyOf(fetch, "PUT", "/api/lists/l8/retired")).toEqual([
-      { retired: true },
-    ]);
+    expect(undone(fetch)).toEqual([s1]);
+    expect(
+      await screen.findByRole("heading", { name: "Regions", level: 2 }),
+    ).toBeDefined();
   });
 
-  it("undoes deleting a list that had no choices", async () => {
+  it("offers no undo when a change saved nothing", async () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": listsAnswer,
-      "DELETE /api/lists/l3": noContent,
-      "POST /api/lists": () =>
-        Response.json({ list: { ...empty, id: "l7" } }, { status: 201 }),
+      "PUT /api/lists/l2/retired": savedAs(null),
     });
-    renderApp("/lists/l3");
+    renderApp("/lists/l2");
     await userEvent.click(
       await screen.findByRole("button", { name: "Edit list" }),
     );
     await userEvent.click(
-      await screen.findByRole("button", { name: "Delete list" }),
+      await screen.findByRole("button", { name: "Retire list" }),
     );
-    await undoLast();
     await vi.waitFor(() => {
-      expect(bodyOf(fetch, "POST", "/api/lists")).toHaveLength(1);
+      expect(bodyOf(fetch, "PUT", "/api/lists/l2/retired")).toHaveLength(1);
     });
-    expect(bodyOf(fetch, "POST", "/api/lists/l7/choices")).toEqual([]);
+    await undoWithKeys();
+    expect(screen.queryByText("Retired Skills.")).toBeNull();
+    expect(undone(fetch)).toEqual([]);
   });
 
   it("closes with Escape", async () => {
@@ -1287,7 +1278,7 @@ describe("focus", () => {
     serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": listsAnswer,
-      "DELETE /api/lists/l2": noContent,
+      "DELETE /api/lists/l2": savedAs(),
     });
     renderApp("/lists/l2");
     await userEvent.click(
@@ -1353,7 +1344,7 @@ describe("saving and undoing", () => {
     let release = () => undefined as unknown;
     const first = new Promise<Response>((resolve) => {
       release = () => {
-        resolve(noContent());
+        resolve(savedAs()());
       };
     });
     await openPanel({
@@ -1363,7 +1354,7 @@ describe("saving and undoing", () => {
       },
       "PUT /api/lists/l1/choices/c3/position": () => {
         order.push("c3");
-        return noContent();
+        return savedAs()();
       },
     });
     focusRow("c1");
@@ -1384,9 +1375,9 @@ describe("saving and undoing", () => {
     ["Ctrl+Z", "{Control>}z{/Control}", true],
     ["Ctrl+Shift+Z", "{Control>}{Shift>}z{/Shift}{/Control}", false],
     ["Cmd+Y", "{Meta>}y{/Meta}", false],
-  ])("undoes the latest change with %s: %s", async (_name, keys, undone) => {
+  ])("undoes the latest change with %s: %s", async (_name, keys, undoes) => {
     const { fetch } = await openPanel({
-      "PUT /api/lists/l1/choices/c2/position": noContent,
+      "PUT /api/lists/l1/choices/c2/position": savedAs(),
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");
@@ -1402,14 +1393,12 @@ describe("saving and undoing", () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
-    expect(
-      bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position"),
-    ).toHaveLength(undone ? 2 : 1);
+    expect(undone(fetch)).toEqual(undoes ? [s1] : []);
   });
 
   it("leaves Cmd+Z to undo typing in a field that has text", async () => {
     const { fetch } = await openPanel({
-      "PUT /api/lists/l1/choices/c2/position": noContent,
+      "PUT /api/lists/l1/choices/c2/position": savedAs(),
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");
@@ -1432,8 +1421,8 @@ describe("saving and undoing", () => {
 describe("only the latest change", () => {
   it("can be undone: a newer change closes an older change's Undo", async () => {
     await openPanel({
-      "PUT /api/lists/l1/choices/c2/retired": noContent,
-      "PUT /api/lists/l1/choices/c3/retired": noContent,
+      "PUT /api/lists/l1/choices/c2/retired": savedAs(),
+      "PUT /api/lists/l1/choices/c3/retired": savedAs(),
     });
     focusRow("c2");
     await userEvent.keyboard("r");
@@ -1448,7 +1437,7 @@ describe("only the latest change", () => {
 
   it("is not undone behind an open dialog", async () => {
     const { fetch } = await openPanel({
-      "PUT /api/lists/l1/choices/c2/position": noContent,
+      "PUT /api/lists/l1/choices/c2/position": savedAs(),
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");

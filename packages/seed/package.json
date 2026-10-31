@@ -1,0 +1,25 @@
+{
+  "name": "@fathom/seed",
+  "version": "0.0.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/seed.ts"
+  },
+  "scripts": {
+    "seed": "node src/seed.ts",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@fathom/db": "workspace:*",
+    "@fathom/fixtures": "workspace:*",
+    "drizzle-orm": "0.45.4"
+  },
+  "devDependencies": {
+    "@fathom/test-utils": "workspace:*",
+    "@types/node": "24.19.2",
+    "@vitest/coverage-v8": "5.0.5",
+    "vitest": "5.0.5"
+  }
+}

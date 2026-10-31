@@ -1,7 +1,7 @@
 # Fathom — Visual Design
 
 **Status:** Agreed with the owner
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 How Fathom's screens look and behave, so every page is built the same way. It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-components.md). The theme in `apps/web/src/theme.ts` holds the values; this document holds the rules.
 
@@ -43,6 +43,7 @@ The rest follow from them:
 - **Tables:** Lists of records are tables in a panel, using the full width, each text cell on one line and cut short when it does not fit. Rows show no audit detail, such as who changed a record or when; any date shown includes its year.
 - **Records in a side panel:** Clicking a row opens its record in a panel sliding in from the right, at its own address, beside the table, which stays usable. Esc, the close button, or a click on the page outside closes it.
 - **Entering data:** Where items are added or changed in a list, they are edited in place, from the keyboard: an empty row at the end takes new items, Tab moves between fields, Enter saves and starts the next, Esc cancels, and arrow keys move between items. Pasting several lines adds one item for each. Problems show on the row being edited.
+- **Editing like a spreadsheet:** Tables where many records are entered, such as People, work like a spreadsheet. Arrow keys, Home, End, and Tab move between cells, Tab on to the next row at the end of one, and Ctrl+Home and Ctrl+End go to the first and last cells; Enter, F2, or typing edits a cell; Enter saves and moves down, Tab saves and moves across, Esc cancels, and Delete clears. Empty rows at the end take new records: Tab goes straight on to typing in the next cell, and Enter adds the record. Pasting rows copied from a spreadsheet adds one record for each. A column drawing on a list is edited by typing to narrow its choices, which drop down below the cell, and picking one. Each column's width comes from its kind, never from what its cells hold, so editing never moves the table. Every column can be dragged by its header, or moved with Alt and the arrow keys or from its menu.
 - **Ordering:** Where people set an order, rows have a grip for dragging on wide screens, shown on hover or focus, and Alt with the arrow keys moves the selected row. Each row's menu offers the same moves and shows each action's shortcut.
 - **Retiring:** Records that others use are [retired](../product/domain.md#terms) rather than deleted. Retired records are shown only when asked for.
 - **Monthly resource grid:** The grid in the [Decisions Log](../product/decisions.md#planning) keeps people's names fixed on the left while months scroll sideways. Cycle and release ends are thin vertical lines labelled with their names, and each cell lists that month's work.

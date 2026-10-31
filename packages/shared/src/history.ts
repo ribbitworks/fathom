@@ -12,6 +12,12 @@ export const accessActionSchema = z.enum([
   "password-reset",
   "account-deactivated",
   "account-reactivated",
+  // Someone saw people's Restricted or Confidential details, such as start and end dates. Recorded
+  // at most once a day for each user, without naming whose, since a page shows many people at once.
+  "restricted-viewed",
+  // Someone changed a person's Restricted or Confidential details, naming the person to readers
+  // who may see people.
+  "restricted-changed",
 ]);
 
 export type AccessAction = z.infer<typeof accessActionSchema>;
@@ -23,7 +29,7 @@ export const historyDetailsSchema = z.object({
 
 export type HistoryDetails = z.infer<typeof historyDetailsSchema>;
 
-// A person named in the history, whose name is null if their account no longer exists.
+// An account or person named in the history, whose name is null if it no longer exists.
 const personSchema = z.object({ id: z.string(), name: z.string().nullable() });
 
 // Entries can never be changed, so one recorded by another version of Fathom, with an action this
@@ -34,7 +40,8 @@ export const historyEntrySchema = z.object({
   // Null for the server's operators, such as when the account command created an account.
   actor: personSchema.nullable(),
   action: z.string(),
-  subject: personSchema,
+  // Null when the entry names no one, as when Restricted details were viewed.
+  subject: personSchema.nullable(),
   details: historyDetailsSchema,
 });
 

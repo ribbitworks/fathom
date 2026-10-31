@@ -1,7 +1,7 @@
 # Fathom — Domain Model
 
 **Status:** Draft
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 A first sketch of Fathom's core entities and how they relate. It describes structure only: terms are defined in [Domain Concepts](../product/domain.md), and rules and allowed values are in the [Decisions Log](../product/decisions.md). It describes concepts, not database tables. Items marked **proposal** are suggested modeling choices that have not been agreed.
 
@@ -67,7 +67,7 @@ erDiagram
 
 ## Workforce Entities
 
-- **Person:** An employee, current or former, with their employee details, and their work email address if the link to user accounts proposed below is adopted. Whether they are active follows from their start and end dates.
+- **Person:** An employee, current or former, with their preferred name, Employee ID, start and end dates, values for the columns added to People, and their work email address if the link to user accounts proposed below is adopted. Whether they are active follows from their start and end dates.
 - **Team:** Can be named. Links a manager to their direct reports.
 - **Feature team:** Can be named. Links a set of features to its members and its feature lead. Membership is separate from reporting lines.
 - **Feature team membership:** Links a person to a feature team from a given date. Future-dated memberships represent planned changes.
@@ -95,7 +95,8 @@ Fields are assigned to tiers as set in the Decisions Log, and tier checks happen
 
 Built-in tables and custom fields and tables are set out in the [Decisions Log](../product/decisions.md#configuration), and how they are stored is proposed in [ADR 0005](../adr/0005-flexible-data-model.md).
 
-- **Field definition:** A custom field on a built-in or custom table, with a name, field type, sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to.
+- **Field definition:** A custom field on a built-in or custom table, with a name, field type, sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. A "Choice from a list" field, the first built, names its list, takes its tier from the list's visibility, and says whether it takes one choice or several.
+- **Column order:** The order of a table's columns, built-in and custom alike, the same for every user.
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.

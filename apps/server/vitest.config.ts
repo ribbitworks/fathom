@@ -13,8 +13,9 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],
-      // main.ts only runs as the server process; the serve command it calls is tested.
-      exclude: ["src/**/*.test.ts", "src/main.ts"],
+      // main.ts only runs as the server process; the serve command it calls is tested. test-app.ts
+      // is a helper for tests.
+      exclude: ["src/**/*.test.ts", "src/test-app.ts", "src/main.ts"],
       thresholds: {
         branches: 100,
         functions: 100,

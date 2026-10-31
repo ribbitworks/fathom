@@ -26,6 +26,8 @@ pnpm dev
 
 `pnpm dev` opens Fathom in your browser, where you sign in with that account. It can view Fathom's general information; to give it other roles, such as administrator, see [Development Setup](docs/design/development-setup.md#common-commands).
 
+To fill Fathom with fictional people to work with, run `pnpm db:seed`; `pnpm db:unseed` removes them again.
+
 Check everything, including the tests and the security report:
 
 ```bash

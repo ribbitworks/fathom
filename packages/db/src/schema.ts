@@ -7,6 +7,8 @@ import {
   bigint,
   bigserial,
   boolean,
+  check,
+  date,
   index,
   integer,
   jsonb,
@@ -229,5 +231,89 @@ export const changes = fathomSchema.table(
   (table) => [
     index("changes_record_index").on(table.recordType, table.recordId),
     index("changes_change_set_index").on(table.changeSetId),
+  ],
+);
+
+// People: employees, current and former, with the details every person has. A person is current
+// from their start date until their end date passes; one with no start date counts as current.
+// Employee IDs are unique, ignoring letter case. People who leave are kept, not deleted; deleting is
+// only for a person entered by mistake whom nothing uses. Other details are columns drawing on lists.
+export const people = fathomSchema.table(
+  "people",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    preferredName: text("preferred_name").notNull(),
+    employeeId: text("employee_id").notNull(),
+    startDate: date("start_date"),
+    endDate: date("end_date"),
+  },
+  (table) => [
+    uniqueIndex("people_employee_id_index").on(sql`lower(${table.employeeId})`),
+    check(
+      "people_dates_in_order",
+      sql`${table.endDate} IS NULL OR ${table.startDate} IS NULL OR ${table.endDate} >= ${table.startDate}`,
+    ),
+  ],
+);
+
+// The columns people add to Fathom's tables, as ADR 0005 sets out; for now only columns on people
+// that draw on a list. A column decides what it is called, whether one choice or several can be
+// picked, and whether a value is required. Its names are unique within its table, ignoring letter
+// case. A list cannot be deleted while a column draws on it.
+export const fields = fathomSchema.table(
+  "fields",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // The table the column is on, such as "people", checked by the server.
+    tableName: text("table_name").notNull(),
+    name: text("name").notNull(),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "restrict" }),
+    multiple: boolean("multiple").notNull().default(false),
+    required: boolean("required").notNull().default(false),
+  },
+  (table) => [
+    uniqueIndex("fields_table_name_index").on(
+      table.tableName,
+      sql`lower(${table.name})`,
+    ),
+  ],
+);
+
+// The order of each table's columns, built-in and added alike, as the keys of its columns: a built-in
+// column's name, such as "employeeId", or an added column's identifier. Keys of deleted columns are
+// left in place, so undoing a deletion puts the column back where it was, and are skipped when read.
+export const columnOrders = fathomSchema.table("column_orders", {
+  tableName: text("table_name").primaryKey(),
+  keys: jsonb("keys").$type<string[]>().notNull().default([]),
+});
+
+// The values of columns, one row for each record, column, and choice, as ADR 0005 sets out. Each
+// table that can have columns has its own owner column, and exactly one is set. A value is deleted
+// with its record or column, and a choice cannot be deleted while a value uses it.
+export const fieldValues = fathomSchema.table(
+  "field_values",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    fieldId: uuid("field_id")
+      .notNull()
+      .references(() => fields.id, { onDelete: "cascade" }),
+    personId: uuid("person_id").references(() => people.id, {
+      onDelete: "cascade",
+    }),
+    choiceId: uuid("choice_id")
+      .notNull()
+      .references(() => listItems.id, { onDelete: "restrict" }),
+  },
+  (table) => [
+    uniqueIndex("field_values_person_choice_index").on(
+      table.fieldId,
+      table.personId,
+      table.choiceId,
+    ),
+    index("field_values_person_index").on(table.personId),
+    index("field_values_choice_index").on(table.choiceId),
+    check("field_values_one_owner", sql`num_nonnulls(${table.personId}) = 1`),
   ],
 );

@@ -63,12 +63,8 @@ export const choicesRequestSchema = z.object({
   choices: z.array(choiceRequestSchema).min(1).max(1000),
 });
 
-export const retiredRequestSchema = z.object({
-  retired: z.boolean(),
-  // Restoring a choice puts it at the end of the list, unless it keeps its place, as when undoing a
-  // retirement straight away.
-  keepPlace: z.boolean().default(false),
-});
+// Restoring a choice puts it at the end of the list.
+export const retiredRequestSchema = z.object({ retired: z.boolean() });
 
 export type RetiredRequest = z.infer<typeof retiredRequestSchema>;
 

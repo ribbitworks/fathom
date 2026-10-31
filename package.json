@@ -30,6 +30,8 @@
     "db:down": "bash scripts/dev-db.sh down",
     "db:migrate": "bash scripts/dev-db.sh migrate",
     "db:reset": "bash scripts/dev-db.sh reset",
+    "db:seed": "bash scripts/dev-db.sh seed",
+    "db:unseed": "bash scripts/dev-db.sh unseed",
     "stack:up": "bash scripts/stack.sh up",
     "stack:down": "bash scripts/stack.sh down",
     "stack:reset": "bash scripts/stack.sh reset",

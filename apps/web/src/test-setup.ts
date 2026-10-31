@@ -18,6 +18,8 @@ if (typeof window !== "undefined") {
       dispatchEvent: () => false,
     }) as unknown as MediaQueryList;
   window.scrollTo = () => undefined;
+  // Choice pickers scroll the highlighted choice into view.
+  Element.prototype.scrollIntoView = () => undefined;
   // Text areas that grow with their text wait for fonts to load.
   Object.defineProperty(document, "fonts", {
     value: {

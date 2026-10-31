@@ -19,10 +19,9 @@ import {
   Text,
 } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
-import { ApiError, describeProblem } from "./api.ts";
+import { type MouseEvent, type ReactNode, useState } from "react";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
 import {
@@ -33,7 +32,6 @@ import {
 } from "./list-panel.tsx";
 import {
   addChoices,
-  createList,
   deleteChoice,
   deleteList,
   listsQuery,
@@ -41,67 +39,16 @@ import {
   setChoiceRetired,
   setListRetired,
   updateChoice,
-  updateList,
 } from "./lists.ts";
-import { closeUndoNotice, notifyFailure, notifyUndoable } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
+import { useSaving } from "./saving.ts";
 
-const notFound = 404;
-const undoFailure = "Fathom could not undo the change. Try again in a moment.";
 const newListId = "list-new";
-const changeKey = ["lists", "change"];
 
 const linkId = (list: { id: string }) => `list-link-${list.id}`;
 
 type Dialog = { kind: "new" } | { kind: "edit"; list: List };
-
-// A change that shows at once and saves in the background: how the lists will look, how to save,
-// what to do once saved, and what to do if it fails.
-interface Change {
-  next: (lists: List[]) => List[];
-  save: () => Promise<unknown>;
-  failure: string;
-  onSaved?: () => void;
-  onFailed?: () => void;
-}
-
-// Changes are saved one at a time, in the order made. A failed change goes back to the lists as they
-// were just before it, which briefly hides any later changes still waiting to save until the lists
-// are reloaded. The lists are reloaded once no change is still saving, so rows do not flicker.
-function useChange() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationKey: changeKey,
-    scope: { id: "lists" },
-    mutationFn: ({ save }: Change) => save(),
-    onMutate: async ({ next }) => {
-      await queryClient.cancelQueries({ queryKey: listsQuery.queryKey });
-      const before = queryClient.getQueryData(listsQuery.queryKey) as List[];
-      queryClient.setQueryData(listsQuery.queryKey, next(before));
-      return { before };
-    },
-    onError: (error, { failure, onFailed }, context) => {
-      queryClient.setQueryData(
-        listsQuery.queryKey,
-        (context as { before: List[] }).before,
-      );
-      onFailed?.();
-      notifyFailure(
-        error instanceof ApiError && error.status === notFound
-          ? "Someone else has removed this. The lists have been refreshed."
-          : describeProblem(error, failure),
-      );
-    },
-    onSuccess: (_result, { onSaved }) => {
-      onSaved?.();
-    },
-    onSettled: async () => {
-      if (queryClient.isMutating({ mutationKey: changeKey }) > 1) return;
-      await queryClient.invalidateQueries({ queryKey: listsQuery.queryKey });
-    },
-  });
-}
 
 // The lists with one list changed.
 function withList(
@@ -121,23 +68,6 @@ function reordered(
   const others = choices.filter((other) => other.id !== choice.id);
   const at = others.findIndex((other) => other.id === after) + 1;
   return [...others.slice(0, at), choice, ...others.slice(at)];
-}
-
-// The choice before this one in the list, which undoing a move, a restore, or a removal puts it after.
-function previousOf(list: List, choice: Choice): string | null {
-  return list.choices.slice(0, list.choices.indexOf(choice)).at(-1)?.id ?? null;
-}
-
-// Whether a key press asks to undo the latest change. In a text field with something typed, it
-// undoes the typing instead.
-function isUndo(event: KeyboardEvent): boolean {
-  const target = event.target as HTMLInputElement;
-  return (
-    (event.metaKey || event.ctrlKey) &&
-    !event.shiftKey &&
-    event.key.toLowerCase() === "z" &&
-    !(target.matches("input, textarea") && target.value !== "")
-  );
 }
 
 function ListsTable({
@@ -240,88 +170,77 @@ export function ListsPage({
   const query = useQuery(listsQuery);
   const narrow = useMediaQuery("(max-width: 48em)");
   const navigate = useNavigate();
-  const change = useChange();
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
   const [dialog, setDialog] = useState<Dialog>();
   const [opened, setOpened] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [undo, setUndo] = useState<() => void>();
+  const { save, undoable, done } = useSaving<List[]>({
+    queryKey: listsQuery.queryKey,
+    removed: "Someone else has removed this. The lists have been refreshed.",
+    blocked: opened,
+  });
   const lists = query.data ?? [];
   const open = lists.find((list) => list.id === listId);
-
-  // Cmd+Z or Ctrl+Z undoes the latest change from anywhere on the page, but not behind a dialog.
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (undo === undefined || opened || !isUndo(event)) return;
-      event.preventDefault();
-      undo();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [undo, opened]);
 
   const openList = (list: List) => {
     void navigate({ to: "/lists/{-$listId}", params: { listId: list.id } });
   };
   // Closing the panel puts focus back on the list's row in the table.
-  const closePanel = () => {
-    if (open) focusSoon(linkId(open));
+  const closePanel = (list: List) => {
+    focusSoon(linkId(list));
     void navigate({ to: "/lists/{-$listId}", params: { listId: undefined } });
   };
 
-  // Makes a change undoable until the next change, putting focus on what the undo changes, and
-  // returns the undo. A newer change closes an older change's notification.
-  const undoable = (reverse: () => void, focus?: string) => {
-    closeUndoNotice();
-    const run = () => {
-      setUndo(undefined);
-      reverse();
-      if (focus !== undefined) focusSoon(focus);
-    };
-    setUndo(() => run);
-    return run;
-  };
-
-  // Says what was done when it took something out of view, offering Undo there too. Changes seen in
-  // place, such as an added or moved choice, need no notification.
-  const done = (message: string, reverse: () => void, focus?: string) => {
-    notifyUndoable(message, undoable(reverse, focus));
-  };
-
+  // A change to one list, shown at once, which can be undone once saved, with focus put back where
+  // given, or, when it took something out of view, from a notification saying what was done.
   const changeList = (
     list: List,
     next: (list: List) => List,
-    save: () => Promise<unknown>,
+    saveChange: () => Promise<string | null>,
     failure: string,
-    onSaved?: () => void,
+    undo: { focus?: string; message?: string } = {},
   ) => {
-    change.mutate({
+    save({
       next: (current) => withList(current, list.id, next),
-      save,
+      save: saveChange,
       failure,
-      ...(onSaved ? { onSaved } : {}),
+      onSaved: (changeSetId, before) => {
+        if (undo.message === undefined) {
+          undoable(changeSetId, before, undo.focus);
+        } else {
+          done(undo.message, changeSetId, before, undo.focus);
+        }
+      },
     });
   };
 
-  const choiceActions = (list: List): ChoiceActions => {
-    const removeAll = (choices: Choice[]) => {
-      const ids = choices.map(({ id }) => id);
+  const choiceActions = (list: List): ChoiceActions => ({
+    add: (requests: ChoiceRequest[], onFailed: () => void) => {
+      save({
+        next: (current) => current,
+        save: async () => (await addChoices(list.id, requests)).changeSetId,
+        failure: "Fathom could not add the choices. Try again in a moment.",
+        onFailed,
+        onSaved: (changeSetId, before) => {
+          undoable(changeSetId, before, entryNameId);
+        },
+      });
+    },
+    edit: (choice, request) => {
       changeList(
         list,
         (current) => ({
           ...current,
-          choices: current.choices.filter(({ id }) => !ids.includes(id)),
+          choices: current.choices.map((other) =>
+            other.id === choice.id ? { ...other, ...request } : other,
+          ),
         }),
-        async () => {
-          for (const id of ids) await deleteChoice(list.id, id);
-        },
-        undoFailure,
+        () => updateChoice(list.id, choice.id, request),
+        `Fathom could not save ${request.label}.`,
+        { focus: rowId(choice) },
       );
-    };
-    const move = (choice: Choice, after: string | null, quietly = false) => {
-      const previous = previousOf(list, choice);
+    },
+    move: (choice, after) => {
       changeList(
         list,
         (current) => ({
@@ -330,16 +249,10 @@ export function ListsPage({
         }),
         () => moveChoice(list.id, choice.id, after),
         `Fathom could not move ${choice.label}.`,
-        () => {
-          if (quietly) return;
-          undoable(() => {
-            move(choice, previous, true);
-          }, rowId(choice));
-        },
+        { focus: rowId(choice) },
       );
-    };
-    const setRetired = (choice: Choice, retired: boolean) => {
-      const previous = previousOf(list, choice);
+    },
+    setRetired: (choice: Choice, retired: boolean) => {
       const changed = { ...choice, retired };
       changeList(
         list,
@@ -356,116 +269,25 @@ export function ListsPage({
         }),
         () => setChoiceRetired(list.id, choice.id, retired),
         `Fathom could not ${retired ? "retire" : "restore"} ${choice.label}.`,
-        () => {
-          done(
-            `${retired ? "Retired" : "Restored"} ${choice.label}.`,
-            () => {
-              // Undoing puts the choice back where it was, offered or retired.
-              changeList(
-                list,
-                (current) => ({
-                  ...current,
-                  choices: reordered(current.choices, choice, previous),
-                }),
-                async () => {
-                  await setChoiceRetired(list.id, choice.id, !retired, true);
-                  await moveChoice(list.id, choice.id, previous);
-                },
-                undoFailure,
-              );
-            },
-            rowId(choice),
-          );
+        {
+          focus: rowId(choice),
+          message: `${retired ? "Retired" : "Restored"} ${choice.label}.`,
         },
       );
-    };
-    return {
-      add: (requests: ChoiceRequest[], onFailed: () => void) => {
-        change.mutate({
-          next: (current) => current,
-          save: async () => {
-            const added = await addChoices(list.id, requests);
-            undoable(() => {
-              removeAll(added);
-            }, entryNameId);
-          },
-          failure: "Fathom could not add the choices. Try again in a moment.",
-          onFailed,
-        });
-      },
-      edit: (choice, request) => {
-        changeList(
-          list,
-          (current) => ({
-            ...current,
-            choices: current.choices.map((other) =>
-              other.id === choice.id ? { ...other, ...request } : other,
-            ),
-          }),
-          () => updateChoice(list.id, choice.id, request),
-          `Fathom could not save ${request.label}.`,
-          () => {
-            undoable(() => {
-              changeList(
-                list,
-                (current) => ({
-                  ...current,
-                  choices: current.choices.map((other) =>
-                    other.id === choice.id ? choice : other,
-                  ),
-                }),
-                () =>
-                  updateChoice(list.id, choice.id, {
-                    label: choice.label,
-                    description: choice.description,
-                  }),
-                undoFailure,
-              );
-            }, rowId(choice));
-          },
-        );
-      },
-      move: (choice, after) => {
-        move(choice, after);
-      },
-      setRetired,
-      remove: (choice) => {
-        const previous = previousOf(list, choice);
-        changeList(
-          list,
-          (current) => ({
-            ...current,
-            choices: current.choices.filter((other) => other.id !== choice.id),
-          }),
-          () => deleteChoice(list.id, choice.id),
-          `Fathom could not remove ${choice.label}.`,
-          () => {
-            done(`Removed ${choice.label}.`, () => {
-              changeList(
-                list,
-                (current) => ({
-                  ...current,
-                  choices: reordered(current.choices, choice, previous),
-                }),
-                async () => {
-                  const added = await addChoices(list.id, [
-                    { label: choice.label, description: choice.description },
-                  ]);
-                  for (const { id } of added) {
-                    await moveChoice(list.id, id, previous);
-                    if (choice.retired) {
-                      await setChoiceRetired(list.id, id, true);
-                    }
-                  }
-                },
-                undoFailure,
-              );
-            });
-          },
-        );
-      },
-    };
-  };
+    },
+    remove: (choice) => {
+      changeList(
+        list,
+        (current) => ({
+          ...current,
+          choices: current.choices.filter((other) => other.id !== choice.id),
+        }),
+        () => deleteChoice(list.id, choice.id),
+        `Fathom could not remove ${choice.label}.`,
+        { message: `Removed ${choice.label}.` },
+      );
+    },
+  });
 
   const retireList = (list: List) => {
     setOpened(false);
@@ -475,103 +297,47 @@ export function ListsPage({
       (current) => ({ ...current, retired }),
       () => setListRetired(list.id, retired),
       `Fathom could not ${retired ? "retire" : "restore"} ${list.name}.`,
-      () => {
-        done(`${retired ? "Retired" : "Restored"} ${list.name}.`, () => {
-          changeList(
-            list,
-            (current) => ({ ...current, retired: list.retired }),
-            () => setListRetired(list.id, list.retired),
-            undoFailure,
-          );
-        });
-      },
+      { message: `${retired ? "Retired" : "Restored"} ${list.name}.` },
     );
-  };
-
-  // Making a deleted list again, with its choices in order, as undoing the deletion does.
-  const recreate = async (list: List) => {
-    const again = await createList({
-      name: list.name,
-      description: list.description,
-      visibility: list.visibility,
-    });
-    if (list.choices.length > 0) {
-      const added = await addChoices(
-        again.id,
-        list.choices.map(({ label, description }) => ({ label, description })),
-      );
-      const retired = list.choices.flatMap((choice, index) =>
-        choice.retired ? added.slice(index, index + 1) : [],
-      );
-      for (const { id } of retired) {
-        await setChoiceRetired(again.id, id, true);
-      }
-    }
-    if (list.retired) await setListRetired(again.id, true);
-    openList(again);
   };
 
   const removeList = (list: List) => {
     setOpened(false);
-    closePanel();
+    closePanel(list);
     focusSoon(newListId);
-    // Undoing makes the list as it was when deleted, including changes saved since the dialog opened.
-    let deleted = list;
-    change.mutate({
-      next: (current) => {
-        deleted = [
-          ...current.filter((other) => other.id === list.id),
-          list,
-        ][0] as List;
-        return current.filter((other) => other.id !== list.id);
-      },
+    save({
+      next: (current) => current.filter((other) => other.id !== list.id),
       save: () => deleteList(list.id),
       failure: `Fathom could not delete ${list.name}.`,
-      onSaved: () => {
-        done(`Deleted ${list.name}.`, () => {
-          change.mutate({
-            next: (current) => current,
-            save: () => recreate(deleted),
-            failure: undoFailure,
-          });
+      onSaved: (changeSetId, before) => {
+        // Undoing brings the list back as it was, and opens it again.
+        done(`Deleted ${list.name}.`, changeSetId, before, undefined, () => {
+          openList(list);
         });
       },
     });
   };
 
-  const saved = (list: List, before?: List) => {
+  // The dialog saved the list itself, so the page shows it at once, then reloads the lists once no
+  // other change is saving. Undoing a new list deletes it again.
+  const saved = (list: List, changeSetId: string | null) => {
     setOpened(false);
-    // The dialog saved the list itself, so the page shows it at once, then reloads the lists once no
-    // other change is saving.
-    change.mutate({
+    const created = !lists.some((other) => other.id === list.id);
+    save({
       next: (current) => [
         ...current.filter((other) => other.id !== list.id),
         list,
       ],
-      save: () => Promise.resolve(),
+      save: () => Promise.resolve(changeSetId),
       failure: "",
+      onSaved: (_saved, before) => {
+        undoable(changeSetId, before, created ? newListId : undefined);
+      },
     });
-    if (before === undefined) {
-      undoable(() => {
-        removeList(list);
-      });
+    if (created) {
       openList(list);
       focusSoon(entryNameId);
-      return;
     }
-    undoable(() => {
-      changeList(
-        list,
-        () => before,
-        () =>
-          updateList(list.id, {
-            name: before.name,
-            description: before.description,
-            visibility: before.visibility,
-          }),
-        undoFailure,
-      );
-    });
   };
 
   const openDialog = (next: Dialog) => {
@@ -588,7 +354,7 @@ export function ListsPage({
       event.currentTarget.contains(target) &&
       !target.closest("[data-list-row], [data-list-panel], button, a")
     ) {
-      closePanel();
+      closePanel(open);
     }
   };
 
@@ -649,7 +415,9 @@ export function ListsPage({
             canEdit={canEdit}
             narrow={narrow}
             actions={choiceActions(open)}
-            onClose={closePanel}
+            onClose={() => {
+              closePanel(open);
+            }}
             onEditList={() => {
               openDialog({ kind: "edit", list: open });
             }}
