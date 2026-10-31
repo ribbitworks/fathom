@@ -80,7 +80,7 @@ Better Auth settings that the security plan relies on:
 - **Base images:** Builds use Debian slim images, so prebuilt binaries for glibc work. The application runs on a minimal distroless image, to reduce what can be attacked.
 - **Database image:** Fathom's own image, based on the official PostgreSQL Alpine image. It applies the security fixes released up to the day it is built, removes gosu, which is only needed to start as root, and includes Fathom's first-time setup scripts. Alpine was chosen over Debian because its known vulnerabilities all have fixes available. Development, tests, the security report, and production all build the image from the same Dockerfile.
 - **Sorting:** The database sorts text with ICU's international rules, set when the database is created because it cannot be changed afterwards. When an image update changes the ICU version, affected indexes must be rebuilt (`REINDEX`) and the collation version refreshed (`ALTER DATABASE ... REFRESH COLLATION VERSION`).
-- **Dependency updates:** Renovate finds dependency updates, run locally until there is a shared repository. Its updates are reviewed like any other change.
+- **Dependency updates:** Renovate finds dependency updates, run locally until the repository has a remote. Its updates are reviewed like any other change.
 
 ## Consequences
 

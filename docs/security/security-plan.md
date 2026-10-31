@@ -119,7 +119,7 @@ How IT and the company can be confident in Fathom's source code:
 - **Development workflow:** Every change follows the [Workflow](../../AGENTS.md#workflow), which includes running the tests once code exists.
 - **Planned from the first code:** Security tests for every role and data tier, and static analysis on every change.
 - **Planned once the build process is decided:** Pinned dependency versions from trusted sources, a list of every component in each release (a software bill of materials), and tagged releases built in a repeatable way, so IT can match what is running to its source code.
-- **Proposed once there is a shared repository:** A protected main branch and signed commits, in addition to the pull requests already required.
+- **Proposed once there is a remote:** A protected main branch and signed commits, in addition to the pull requests already required. GitHub does not protect branches of private repositories on its free plan, so until the plan allows it, the [Workflow](../../AGENTS.md#workflow) alone keeps changes to main going through pull requests.
 
 ## Enforcing the Plan
 

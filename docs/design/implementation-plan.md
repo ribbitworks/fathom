@@ -14,7 +14,7 @@ These come before the first line of application code:
 - **Code review standard for source code:** Recorded in the [Code Review Standards](../standards/code-review.md).
 - **Build process:** Where builds and scans run, answering the open question in the [Security Plan](../security/security-plan.md). Until it is answered, builds and scans run locally.
 - **Development setup:** The repository layout, local development, and fictional seed data, as described in [Development Setup](development-setup.md).
-- **Shared repository:** When a shared remote is created, the branching rules in `AGENTS.md` and the repository proposals in the Security Plan apply.
+- **Remote repository:** Once the repository has a remote, the branching rules in `AGENTS.md` and the repository proposals in the Security Plan apply.
 
 ## Definition of Done for Each Slice
 
