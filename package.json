@@ -10,7 +10,7 @@
   "scripts": {
     "bootstrap": "bash scripts/dev-bootstrap.sh",
     "lint": "eslint --max-warnings 0 .",
-    "lint:md": "markdownlint --ignore-path .gitignore \"**/*.md\"",
+    "lint:md": "markdownlint --ignore-path .gitignore \"**/*.md\" \".claude/agents/*.md\"",
     "lint:shell": "bash scripts/lint-shell.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

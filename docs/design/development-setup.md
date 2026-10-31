@@ -26,6 +26,7 @@ deploy/
   fathom.env.example      The application's settings
   docker/                 Container image definitions and database initialization
 scripts/                  Development and check scripts
+.claude/agents/           Agent definitions for Claude Code, such as the UX designer
 docs/                     Documentation
 LICENSES/                 Licence texts, as the REUSE specification requires
 ```

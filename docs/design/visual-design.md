@@ -7,7 +7,10 @@ How Fathom's screens look and behave, so every page is built the same way. It ap
 
 ## Principles
 
-- **Quiet and dense:** Fathom is a work tool used every day, so pages favour clear structure and plenty of information over decoration.
+- **Quiet and dense:** Fathom is a work tool used every day, so pages favour clear structure and plenty of information over decoration. As few borders, lines, labels, and columns as the task allows; metadata, such as who changed something, stays out of the way.
+- **One main action per screen:** Every other action is secondary or in a menu.
+- **Controls when needed:** Controls that are not always needed, such as grip handles for dragging, appear on hover or keyboard focus.
+- **No wasted space:** Layout serves the content; nothing takes width or height it does not earn.
 - **Colour means something:** Neutrals carry the page. Sea blue marks actions and the current place. Other colours appear only for meaning, such as green for active, yellow for changes worth checking, and red for problems.
 - **Never colour alone:** Anything shown by colour is also shown in words, visible or read aloud by screen readers.
 - **Both modes:** Light and dark modes follow each person's system setting.
@@ -16,7 +19,7 @@ How Fathom's screens look and behave, so every page is built the same way. It ap
 
 - **Frame:** A deep-water sidebar on the left, the same in both modes, groups pages into sections. Pages still to come are shown, marked "Later", so people can see what Fathom will offer. A top bar names where the user is and holds their account menu.
 - **Narrow screens:** The sidebar opens from a menu button, and closes when the user moves to another page.
-- **Pages:** Each page starts with a heading, an optional one-line description only where the page is not obvious, and the page's main action on the right. Content sits in bordered panels on a canvas a shade darker than them.
+- **Pages:** Each page starts with a heading and the page's main action on the right. Content sits in bordered panels on a canvas a shade darker than them.
 - **Sign-in and problem pages:** Only Fathom's name and mark above the form or message, with no other words.
 
 ## Type and Colour

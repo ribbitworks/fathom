@@ -20,6 +20,7 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 - **Names and email addresses:** Administrators can change any account's name and email address. Today neither can be changed.
 - **Editing includes viewing:** As decided in [Roles](product/roles.md#what-each-role-can-do).
 - **Clearer actions:** Each account's actions are behind a small "⋯" button that is easy to miss; make them easier to find.
+- **UX principles:** The Accounts and Change password pages were built before the [UX Standards](standards/ux.md#principles) ruled out page descriptions and hint text, and still have both. They are brought into line with this change.
 - **Session length:** Sessions should end after 30 minutes without use, not the 12 hours set in [ADR 0002](adr/0002-libraries.md), which changes with it. A short timeout means the session's expiry is updated in the database more often, which the revision weighs.
 
 ## Dependencies
