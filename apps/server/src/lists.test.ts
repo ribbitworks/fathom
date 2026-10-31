@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the lists of choices for people's details against a migrated PostgreSQL server: which
-// roles may read and change them; adding, renaming, and removing choices; the refusals for
-// duplicates and invalid requests; their natural order; and the change history that records every
-// change and says who created and last changed each choice.
+// Tests for lists of choices against a migrated PostgreSQL server: which roles may read and change
+// them; creating, editing, retiring, restoring, and deleting lists; adding choices one at a time or
+// several at once, and editing, ordering, retiring, restoring, and removing them; the refusals for
+// duplicates, limits, and invalid requests; and the change history that records every change.
 
 import {
   changes,
@@ -11,29 +11,23 @@ import {
   createDatabase,
   createPool,
   type Database,
-  listItems,
+  lists as listTable,
   runMigrations,
 } from "@fathom/db";
-import {
-  type ListItem,
-  type Lists,
-  type Role,
-  roleSchema,
-} from "@fathom/shared";
+import { type Choice, type List, type Role, roleSchema } from "@fathom/shared";
 import {
   createTestCertificate,
   startTestDatabase,
   type TestCertificate,
   type TestDatabase,
 } from "@fathom/test-utils";
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
-import { recordChanges } from "./data/changes.ts";
 import { createDataAccess } from "./data/index.ts";
 
 let database: TestDatabase;
@@ -75,13 +69,12 @@ afterAll(async () => {
 let accountCount = 0;
 
 // Signs in a new account holding the given roles, from a fictional address of its own, so sign-in
-// limits never interfere, and returns its identifier, name, and session cookie.
+// limits never interfere, and returns its identifier and session cookie.
 async function signedIn(roles: Role[]) {
   accountCount += 1;
-  const name = `Fictional Editor ${String(accountCount)}`;
   const email = `editor${String(accountCount)}@example.test`;
   const id = await createAccount(auth, connection, {
-    name,
+    name: `Fictional Editor ${String(accountCount)}`,
     email,
     password,
     roles,
@@ -96,12 +89,14 @@ async function signedIn(roles: Role[]) {
   const cookie = [response.headers["set-cookie"]]
     .flat()
     .find((value) => value?.includes("session_token="));
-  return { id, name, cookie: cookie?.split(";")[0] ?? "" };
+  return { id, cookie: cookie?.split(";")[0] ?? "" };
 }
+
+type Method = "GET" | "POST" | "PUT" | "DELETE";
 
 function request(
   cookie: string,
-  method: "GET" | "POST" | "PUT" | "DELETE",
+  method: Method,
   url: string,
   payload?: object,
 ) {
@@ -113,44 +108,60 @@ function request(
   });
 }
 
-let labelCount = 0;
+let nameCount = 0;
 
-// A label no other test uses, so tests sharing the database do not collide.
-function uniqueLabel(prefix = "Fictional Choice"): string {
-  labelCount += 1;
-  return `${prefix} ${String(labelCount)}`;
+// A name no other test uses, so tests sharing the database do not collide.
+function uniqueName(prefix = "Fictional List"): string {
+  nameCount += 1;
+  return `${prefix} ${String(nameCount)}`;
 }
 
-async function readList(cookie: string, name: string): Promise<ListItem[]> {
+async function readLists(cookie: string): Promise<List[]> {
   const response = await request(cookie, "GET", "/api/lists");
   expect(response.statusCode).toBe(200);
-  return (
-    response.json<{ lists: Lists }>().lists.find((list) => list.name === name)
-      ?.items ?? []
+  return response.json<{ lists: List[] }>().lists;
+}
+
+async function readList(cookie: string, id: string): Promise<List | undefined> {
+  return (await readLists(cookie)).find((list) => list.id === id);
+}
+
+async function createList(cookie: string, payload: object = {}): Promise<List> {
+  const response = await request(cookie, "POST", "/api/lists", {
+    name: uniqueName(),
+    ...payload,
+  });
+  expect(response.statusCode).toBe(201);
+  return response.json<{ list: List }>().list;
+}
+
+async function addChoices(
+  cookie: string,
+  listId: string,
+  labels: string[],
+): Promise<Choice[]> {
+  const response = await request(
+    cookie,
+    "POST",
+    `/api/lists/${listId}/choices`,
+    { choices: labels.map((label) => ({ label })) },
+  );
+  expect(response.statusCode).toBe(201);
+  return response.json<{ choices: Choice[] }>().choices;
+}
+
+async function labelsOf(cookie: string, listId: string): Promise<string[]> {
+  return ((await readList(cookie, listId))?.choices ?? []).map(
+    ({ label }) => label,
   );
 }
 
-async function addItem(
-  cookie: string,
-  list: string,
-  label: string,
-  description?: string,
-) {
-  const response = await request(cookie, "POST", `/api/lists/${list}/items`, {
-    label,
-    ...(description === undefined ? {} : { description }),
-  });
-  expect(response.statusCode).toBe(201);
-  return response.json<{ item: ListItem }>().item;
-}
-
-// The changes recorded for a choice, oldest first, with who made them.
+// The changes recorded for a record, oldest first, with who made them.
 async function historyOf(id: string) {
   return connection
     .select({
       action: changes.action,
       field: changes.field,
-      tier: changes.tier,
       oldValue: changes.oldValue,
       newValue: changes.newValue,
       madeBy: changeSets.madeBy,
@@ -161,10 +172,12 @@ async function historyOf(id: string) {
     .orderBy(asc(changes.id));
 }
 
-describe("who may read and change the lists", () => {
+const editorRoles: Role[] = ["workforce-administrator", "viewer"];
+
+describe("who may read and change lists", () => {
   // The access control pattern: every role on its own, allowed exactly when it grants the permission.
   it.each(roleSchema.options)(
-    "a %s may read the lists only if the role lets them see planning configuration",
+    "a %s may read lists only if the role lets them see planning configuration",
     async (role) => {
       const { cookie } = await signedIn([role]);
       const response = await request(cookie, "GET", "/api/lists");
@@ -177,15 +190,23 @@ describe("who may read and change the lists", () => {
     },
   );
 
-  const changeRequests = [
-    ["POST", "/api/lists/sites/items", { label: "Fictional Site" }],
+  const list = randomUUID();
+  const choice = `/api/lists/${list}/choices/${randomUUID()}`;
+  const changeRequests: [Method, string, object | undefined][] = [
+    ["POST", "/api/lists", { name: "Fictional" }],
+    ["PUT", `/api/lists/${list}`, { name: "Fictional" }],
+    ["PUT", `/api/lists/${list}/retired`, { retired: true }],
+    ["DELETE", `/api/lists/${list}`, undefined],
     [
-      "PUT",
-      `/api/lists/sites/items/${randomUUID()}`,
-      { label: "Fictional Site" },
+      "POST",
+      `/api/lists/${list}/choices`,
+      { choices: [{ label: "Fictional" }] },
     ],
-    ["DELETE", `/api/lists/sites/items/${randomUUID()}`, undefined],
-  ] as const;
+    ["PUT", choice, { label: "Fictional" }],
+    ["PUT", `${choice}/position`, { after: null }],
+    ["PUT", `${choice}/retired`, { retired: true }],
+    ["DELETE", choice, undefined],
+  ];
   const refusedRoles = roleSchema.options.filter(
     (role) => !rolesGranting("configuration:edit").includes(role),
   );
@@ -202,29 +223,31 @@ describe("who may read and change the lists", () => {
   });
 
   it.each(rolesGranting("configuration:edit"))(
-    "lets a %s add, rename, and remove choices",
+    "lets a %s make every change",
     async (role) => {
       const { cookie } = await signedIn([role, "viewer"]);
-      const added = await addItem(cookie, "sites", uniqueLabel());
-      const renamed = await request(
-        cookie,
-        "PUT",
-        `/api/lists/sites/items/${added.id}`,
-        { label: uniqueLabel() },
-      );
-      expect(renamed.statusCode).toBe(200);
-      const removed = await request(
-        cookie,
-        "DELETE",
-        `/api/lists/sites/items/${added.id}`,
-      );
-      expect(removed.statusCode).toBe(204);
+      const created = await createList(cookie);
+      const [first] = await addChoices(cookie, created.id, ["Fictional A"]);
+      const choiceUrl = `/api/lists/${created.id}/choices/${String(first?.id)}`;
+      const steps: [Method, string, object | undefined, number][] = [
+        ["PUT", `/api/lists/${created.id}`, { name: uniqueName() }, 200],
+        ["PUT", `/api/lists/${created.id}/retired`, { retired: true }, 204],
+        ["PUT", choiceUrl, { label: "Fictional B" }, 200],
+        ["PUT", `${choiceUrl}/position`, { after: null }, 204],
+        ["PUT", `${choiceUrl}/retired`, { retired: true }, 204],
+        ["DELETE", choiceUrl, undefined, 204],
+        ["DELETE", `/api/lists/${created.id}`, undefined, 204],
+      ];
+      for (const [method, url, payload, status] of steps) {
+        const response = await request(cookie, method, url, payload);
+        expect(response.statusCode).toBe(status);
+      }
     },
   );
 
   it.each([
-    ["GET", "/api/lists"] as const,
-    ...changeRequests.map(([method, url]) => [method, url] as const),
+    ["GET", "/api/lists"] as [Method, string],
+    ...changeRequests.map(([method, url]) => [method, url] as [Method, string]),
   ])("refuses a signed-out %s %s", async (method, url) => {
     const response = await app.inject({
       method,
@@ -236,474 +259,539 @@ describe("who may read and change the lists", () => {
   });
 });
 
-describe("the lists", () => {
-  it("names every list, in a fixed order", async () => {
-    const { cookie } = await signedIn(["viewer"]);
-    const response = await request(cookie, "GET", "/api/lists");
+describe("lists", () => {
+  it("creates a list, trimmed, visible to everyone unless chosen otherwise, and records it", async () => {
+    const { cookie, id } = await signedIn(editorRoles);
+    const name = uniqueName();
+    const created = await createList(cookie, { name: `  ${name}  ` });
+    expect(created).toEqual({
+      id: created.id,
+      name,
+      description: "",
+      visibility: "general",
+      retired: false,
+      choices: [],
+    });
     expect(
-      response.json<{ lists: Lists }>().lists.map(({ name }) => name),
-    ).toEqual(["sites", "positions", "levels", "team-roles"]);
+      (await historyOf(created.id)).map(({ field, newValue, madeBy }) => [
+        field,
+        newValue,
+        madeBy,
+      ]),
+    ).toEqual([
+      ["name", name, id],
+      ["description", "", id],
+      ["visibility", "general", id],
+      ["retired", false, id],
+    ]);
   });
 
-  it("orders choices naturally, ignoring letter case, so 10 follows 9", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const prefix = uniqueLabel("Fictional Level");
-    for (const label of [`${prefix} P10`, `${prefix} p2`, `${prefix} P9`]) {
-      await addItem(cookie, "levels", label);
+  it("keeps a chosen visibility and description", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const created = await createList(cookie, {
+      description: " A fictional list ",
+      visibility: "confidential",
+    });
+    expect(created).toMatchObject({
+      description: "A fictional list",
+      visibility: "confidential",
+    });
+  });
+
+  it("lists every list by name, ignoring letter case", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const prefix = uniqueName("Fictional Order");
+    for (const name of [`${prefix} b`, `${prefix} A`, `${prefix} C`]) {
+      await createList(cookie, { name });
     }
     expect(
-      (await readList(cookie, "levels"))
-        .map(({ label }) => label)
-        .filter((label) => label.startsWith(prefix)),
-    ).toEqual([`${prefix} p2`, `${prefix} P9`, `${prefix} P10`]);
+      (await readLists(cookie))
+        .map(({ name }) => name)
+        .filter((name) => name.startsWith(prefix)),
+    ).toEqual([`${prefix} A`, `${prefix} b`, `${prefix} C`]);
+  });
+
+  it("refuses a name another list has, ignoring letter case", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const first = await createList(cookie);
+    const second = await createList(cookie);
+    for (const [method, url] of [
+      ["POST", "/api/lists"],
+      ["PUT", `/api/lists/${second.id}`],
+    ] as const) {
+      const response = await request(cookie, method, url, {
+        name: first.name.toUpperCase(),
+      });
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toEqual({
+        error: "There is already a list with that name",
+      });
+    }
+  });
+
+  it.each([
+    ["an empty name", { name: "  " }],
+    ["a name over 40 characters", { name: "x".repeat(41) }],
+    [
+      "a description over 500 characters",
+      { name: "Fictional", description: "x".repeat(501) },
+    ],
+    [
+      "a visibility Fathom does not have",
+      { name: "Fictional", visibility: "secret" },
+    ],
+  ])("refuses %s", async (_case, payload) => {
+    const { cookie } = await signedIn(editorRoles);
+    const response = await request(cookie, "POST", "/api/lists", payload);
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("accepts a name of 40 characters", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const name = `${uniqueName()} `.padEnd(40, "x");
+    expect((await createList(cookie, { name })).name).toBe(name);
+  });
+
+  it("edits a list, recording only what changed", async () => {
+    const { cookie, id } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    const response = await request(cookie, "PUT", `/api/lists/${created.id}`, {
+      name: created.name,
+      description: "A fictional description",
+      visibility: "restricted",
+    });
+    expect(response.json<{ list: List }>().list).toMatchObject({
+      description: "A fictional description",
+      visibility: "restricted",
+    });
+    expect(
+      (await historyOf(created.id))
+        .slice(4)
+        .map(({ field, oldValue, newValue, madeBy }) => [
+          field,
+          oldValue,
+          newValue,
+          madeBy,
+        ]),
+    ).toEqual([
+      ["description", "", "A fictional description", id],
+      ["visibility", "general", "restricted", id],
+    ]);
+  });
+
+  it("records nothing when a list is saved unchanged", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    await request(cookie, "PUT", `/api/lists/${created.id}`, {
+      name: created.name,
+    });
+    expect(await historyOf(created.id)).toHaveLength(4);
+  });
+
+  it("retires and restores a list, recording each", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    const url = `/api/lists/${created.id}/retired`;
+    await request(cookie, "PUT", url, { retired: true });
+    expect((await readList(cookie, created.id))?.retired).toBe(true);
+    await request(cookie, "PUT", url, { retired: true });
+    await request(cookie, "PUT", url, { retired: false });
+    expect((await readList(cookie, created.id))?.retired).toBe(false);
+    expect(
+      (await historyOf(created.id)).slice(4).map(({ newValue }) => newValue),
+    ).toEqual([true, false]);
+  });
+
+  it("deletes a list and its choices, recording both", async () => {
+    const { cookie, id } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    const [choice] = await addChoices(cookie, created.id, ["Fictional"]);
+    const response = await request(
+      cookie,
+      "DELETE",
+      `/api/lists/${created.id}`,
+    );
+    expect(response.statusCode).toBe(204);
+    expect(await readList(cookie, created.id)).toBeUndefined();
+    expect(
+      (await historyOf(created.id))
+        .slice(4)
+        .map(({ action, field, madeBy }) => [action, field, madeBy]),
+    ).toEqual([
+      ["deleted", "name", id],
+      ["deleted", "description", id],
+      ["deleted", "visibility", id],
+      ["deleted", "retired", id],
+    ]);
+    expect((await historyOf(String(choice?.id))).at(-1)).toMatchObject({
+      action: "deleted",
+      field: "retired",
+    });
+  });
+
+  it.each([
+    ["PUT", "", { name: "Fictional" }],
+    ["PUT", "/retired", { retired: true }],
+    ["DELETE", "", undefined],
+    ["POST", "/choices", { choices: [{ label: "Fictional" }] }],
+    ["PUT", `/choices/${randomUUID()}/position`, { after: null }],
+  ] as [Method, string, object | undefined][])(
+    "refuses %s%s for a list that does not exist",
+    async (method, path, payload) => {
+      const { cookie } = await signedIn(editorRoles);
+      const response = await request(
+        cookie,
+        method,
+        `/api/lists/${randomUUID()}${path}`,
+        payload,
+      );
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toEqual({ error: "There is no such list" });
+    },
+  );
+
+  it("refuses an identifier that is not one Fathom makes", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const response = await request(cookie, "PUT", "/api/lists/not-an-id", {
+      name: "Fictional",
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("treats a stored visibility Fathom no longer knows as General", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    await connection
+      .update(listTable)
+      .set({ visibility: "fictional-tier" })
+      .where(eq(listTable.id, created.id));
+    expect((await readList(cookie, created.id))?.visibility).toBe("general");
   });
 });
 
 describe("adding choices", () => {
-  it("adds a choice, trimmed, saying who created it and when", async () => {
-    const { cookie, id, name } = await signedIn([
-      "workforce-administrator",
-      "viewer",
-    ]);
-    const label = uniqueLabel();
-    const before = Date.now();
-    const added = await addItem(cookie, "positions", `  ${label}  `);
-    expect(added.label).toBe(label);
-    expect(added.created.by).toEqual({ id, name });
-    expect(Date.parse(added.created.at)).toBeGreaterThanOrEqual(before - 1000);
-    expect(added.changed).toEqual(added.created);
-    expect(await readList(cookie, "positions")).toContainEqual(added);
-  });
-
-  it("records the new choice in the change history", async () => {
-    const { cookie, id } = await signedIn([
-      "workforce-administrator",
-      "viewer",
-    ]);
-    const label = uniqueLabel();
-    const added = await addItem(cookie, "sites", label, "A fictional site");
-    expect(await historyOf(added.id)).toEqual([
-      {
-        action: "created",
-        field: "label",
-        tier: "general",
-        oldValue: null,
-        newValue: label,
-        madeBy: id,
-      },
-      {
-        action: "created",
-        field: "description",
-        tier: "general",
-        oldValue: null,
-        newValue: "A fictional site",
-        madeBy: id,
-      },
-    ]);
-  });
-
-  it("refuses a choice already in the list, ignoring letter case, but allows it in another list", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const label = uniqueLabel();
-    await addItem(cookie, "sites", label);
-    const duplicate = await request(cookie, "POST", "/api/lists/sites/items", {
-      label: label.toUpperCase(),
-    });
-    expect(duplicate.statusCode).toBe(409);
-    expect(duplicate.json()).toEqual({
-      error: "This list already has that choice",
-    });
-    await addItem(cookie, "positions", label);
-  });
-
-  it.each([
-    ["an empty label", ""],
-    ["a label of only spaces", "   "],
-    ["a label over 100 characters", "x".repeat(101)],
-  ])("refuses %s", async (_case, label) => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const response = await request(cookie, "POST", "/api/lists/sites/items", {
-      label,
-    });
-    expect(response.statusCode).toBe(400);
-  });
-
-  it("accepts a label of 100 characters", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const label = `${uniqueLabel()} `.padEnd(100, "x");
-    expect((await addItem(cookie, "sites", label)).label).toBe(label);
-  });
-
-  it("adds a choice without a description, as an empty one", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    expect((await addItem(cookie, "sites", uniqueLabel())).description).toBe(
-      "",
-    );
-  });
-
-  it("trims the description, and accepts one of 500 characters", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    expect(
-      (await addItem(cookie, "sites", uniqueLabel(), "  A fictional site  "))
-        .description,
-    ).toBe("A fictional site");
-    const longest = "x".repeat(500);
-    expect(
-      (await addItem(cookie, "sites", uniqueLabel(), longest)).description,
-    ).toBe(longest);
-  });
-
-  it("refuses a description over 500 characters", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const response = await request(cookie, "POST", "/api/lists/sites/items", {
-      label: uniqueLabel(),
-      description: "x".repeat(501),
-    });
-    expect(response.statusCode).toBe(400);
-  });
-
-  it("refuses a list Fathom does not have", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
+  it("adds a choice to the end, trimmed, and records it", async () => {
+    const { cookie, id } = await signedIn(editorRoles);
+    const created = await createList(cookie);
     const response = await request(
       cookie,
       "POST",
-      "/api/lists/fictional-list/items",
-      { label: uniqueLabel() },
+      `/api/lists/${created.id}/choices`,
+      {
+        choices: [{ label: "  Kestrel Bay  ", description: " Head office. " }],
+      },
+    );
+    const [choice] = response.json<{ choices: Choice[] }>().choices;
+    expect(choice).toEqual({
+      id: choice?.id,
+      label: "Kestrel Bay",
+      description: "Head office.",
+      retired: false,
+    });
+    expect(
+      (await historyOf(String(choice?.id))).map(
+        ({ field, newValue, madeBy }) => [field, newValue, madeBy],
+      ),
+    ).toEqual([
+      ["listId", created.id, id],
+      ["label", "Kestrel Bay", id],
+      ["description", "Head office.", id],
+      ["retired", false, id],
+    ]);
+  });
+
+  it("adds several choices at once, in order after those already there, as one change", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    await addChoices(cookie, created.id, ["Northmere"]);
+    const added = await addChoices(cookie, created.id, [
+      "Corran Quay",
+      "Ashgrove",
+      "Brindle Hill",
+    ]);
+    expect(await labelsOf(cookie, created.id)).toEqual([
+      "Northmere",
+      "Corran Quay",
+      "Ashgrove",
+      "Brindle Hill",
+    ]);
+    const sets = await connection
+      .selectDistinct({ id: changes.changeSetId })
+      .from(changes)
+      .where(
+        inArray(
+          changes.recordId,
+          added.map(({ id }) => id),
+        ),
+      );
+    expect(sets).toHaveLength(1);
+  });
+
+  it.each([
+    ["one the list already has, ignoring letter case", ["northmere"]],
+    ["two with the same name", ["Ashgrove", "ASHGROVE"]],
+  ])("refuses all of them when adding %s", async (_case, labels) => {
+    const { cookie } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    await addChoices(cookie, created.id, ["Northmere"]);
+    const response = await request(
+      cookie,
+      "POST",
+      `/api/lists/${created.id}/choices`,
+      {
+        choices: [
+          { label: "Corran Quay" },
+          ...labels.map((label) => ({ label })),
+        ],
+      },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: "This list already has a choice with that name",
+    });
+    expect(await labelsOf(cookie, created.id)).toEqual(["Northmere"]);
+  });
+
+  it("allows a name another list has", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const first = await createList(cookie);
+    const second = await createList(cookie);
+    await addChoices(cookie, first.id, ["Northmere"]);
+    expect(await addChoices(cookie, second.id, ["Northmere"])).toHaveLength(1);
+  });
+
+  it.each([
+    ["no choices", { choices: [] }],
+    ["an empty name", { choices: [{ label: " " }] }],
+    ["a name over 60 characters", { choices: [{ label: "x".repeat(61) }] }],
+    [
+      "a description over 500 characters",
+      { choices: [{ label: "Fictional", description: "x".repeat(501) }] },
+    ],
+  ])("refuses %s", async (_case, payload) => {
+    const { cookie } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    const response = await request(
+      cookie,
+      "POST",
+      `/api/lists/${created.id}/choices`,
+      payload,
     );
     expect(response.statusCode).toBe(400);
   });
 
-  it("treats a label that tries SQL injection as plain text", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const label = `${uniqueLabel()}'); DROP TABLE list_items; --`;
-    expect((await addItem(cookie, "sites", label)).label).toBe(label);
-    expect(await readList(cookie, "sites")).toContainEqual(
-      expect.objectContaining({ label }),
-    );
+  it("accepts a name of 60 characters, and treats SQL as plain text", async () => {
+    const { cookie } = await signedIn(editorRoles);
+    const created = await createList(cookie);
+    const labels = ["x".repeat(60), "'); DROP TABLE list_items; --"];
+    await addChoices(cookie, created.id, labels);
+    expect(await labelsOf(cookie, created.id)).toEqual(labels);
   });
 });
 
-describe("editing choices", () => {
-  it("renames a choice, saying who last changed it, and records the old and new labels", async () => {
-    const creator = await signedIn(["workforce-administrator", "viewer"]);
-    const editor = await signedIn(["workforce-administrator", "viewer"]);
-    const added = await addItem(creator.cookie, "team-roles", uniqueLabel());
-    const label = uniqueLabel();
-    const response = await request(
-      editor.cookie,
-      "PUT",
-      `/api/lists/team-roles/items/${added.id}`,
-      { label },
-    );
-    expect(response.statusCode).toBe(200);
-    const renamed = response.json<{ item: ListItem }>().item;
-    expect(renamed).toMatchObject({ id: added.id, label });
-    expect(renamed.created).toEqual(added.created);
-    expect(renamed.changed.by).toEqual({ id: editor.id, name: editor.name });
-    expect((await historyOf(added.id)).slice(2)).toEqual([
-      {
-        action: "changed",
-        field: "label",
-        tier: "general",
-        oldValue: added.label,
-        newValue: label,
-        madeBy: editor.id,
-      },
-    ]);
-  });
+describe("changing choices", () => {
+  async function listWith(labels: string[]) {
+    const editor = await signedIn(editorRoles);
+    const created = await createList(editor.cookie);
+    const choices = await addChoices(editor.cookie, created.id, labels);
+    const url = (choice: Choice | undefined) =>
+      `/api/lists/${created.id}/choices/${String(choice?.id)}`;
+    return { ...editor, list: created, choices, url };
+  }
 
-  it("changes only the description, recording just that", async () => {
-    const { cookie, id } = await signedIn([
-      "workforce-administrator",
-      "viewer",
-    ]);
-    const added = await addItem(cookie, "sites", uniqueLabel());
-    const response = await request(
-      cookie,
-      "PUT",
-      `/api/lists/sites/items/${added.id}`,
-      { label: added.label, description: "A fictional harbour office" },
-    );
-    expect(response.json<{ item: ListItem }>().item).toMatchObject({
-      label: added.label,
-      description: "A fictional harbour office",
+  it("edits a choice, recording only what changed", async () => {
+    const { cookie, id, choices, url } = await listWith(["Northmere"]);
+    const response = await request(cookie, "PUT", url(choices[0]), {
+      label: "Northmere",
+      description: "A fictional site",
     });
-    expect((await historyOf(added.id)).slice(2)).toEqual([
-      {
-        action: "changed",
-        field: "description",
-        tier: "general",
-        oldValue: "",
-        newValue: "A fictional harbour office",
-        madeBy: id,
-      },
-    ]);
+    expect(response.json<{ choice: Choice }>().choice).toMatchObject({
+      label: "Northmere",
+      description: "A fictional site",
+    });
+    expect(
+      (await historyOf(String(choices[0]?.id)))
+        .slice(4)
+        .map(({ field, oldValue, newValue, madeBy }) => [
+          field,
+          oldValue,
+          newValue,
+          madeBy,
+        ]),
+    ).toEqual([["description", "", "A fictional site", id]]);
   });
 
-  it("records nothing when nothing changes", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const added = await addItem(
-      cookie,
-      "sites",
-      uniqueLabel(),
-      "A fictional site",
-    );
-    const response = await request(
-      cookie,
-      "PUT",
-      `/api/lists/sites/items/${added.id}`,
-      { label: added.label, description: added.description },
-    );
-    expect(response.json<{ item: ListItem }>().item).toEqual(added);
-    expect(await historyOf(added.id)).toHaveLength(2);
+  it("records nothing when a choice is saved unchanged, and allows a change of letter case only", async () => {
+    const { cookie, choices, url } = await listWith(["Northmere"]);
+    await request(cookie, "PUT", url(choices[0]), { label: "Northmere" });
+    expect(await historyOf(String(choices[0]?.id))).toHaveLength(4);
+    const response = await request(cookie, "PUT", url(choices[0]), {
+      label: "NORTHMERE",
+    });
+    expect(response.json<{ choice: Choice }>().choice.label).toBe("NORTHMERE");
   });
 
-  it("replaces the whole choice, so an edit without a description clears it", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const added = await addItem(
-      cookie,
-      "sites",
-      uniqueLabel(),
-      "A fictional site",
-    );
-    const response = await request(
-      cookie,
-      "PUT",
-      `/api/lists/sites/items/${added.id}`,
-      { label: added.label },
-    );
-    expect(response.json<{ item: ListItem }>().item.description).toBe("");
-  });
-
-  it("allows a change of letter case only", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const added = await addItem(cookie, "sites", uniqueLabel());
-    const response = await request(
-      cookie,
-      "PUT",
-      `/api/lists/sites/items/${added.id}`,
-      { label: added.label.toUpperCase() },
-    );
-    expect(response.json<{ item: ListItem }>().item.label).toBe(
-      added.label.toUpperCase(),
-    );
-  });
-
-  it("refuses a label another choice in the list has", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const first = await addItem(cookie, "sites", uniqueLabel());
-    const second = await addItem(cookie, "sites", uniqueLabel());
-    const response = await request(
-      cookie,
-      "PUT",
-      `/api/lists/sites/items/${second.id}`,
-      { label: first.label },
-    );
+  it("refuses a name another choice in the list has", async () => {
+    const { cookie, choices, url } = await listWith(["Northmere", "Ashgrove"]);
+    const response = await request(cookie, "PUT", url(choices[1]), {
+      label: "northmere",
+    });
     expect(response.statusCode).toBe(409);
   });
 
-  it("refuses a choice that does not exist, or is in another list", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const added = await addItem(cookie, "sites", uniqueLabel());
-    for (const url of [
-      `/api/lists/sites/items/${randomUUID()}`,
-      `/api/lists/positions/items/${added.id}`,
-    ]) {
-      const response = await request(cookie, "PUT", url, {
-        label: uniqueLabel(),
-      });
-      expect(response.statusCode).toBe(404);
-      expect(response.json()).toEqual({ error: "There is no such choice" });
-    }
-  });
-
-  it("refuses an identifier that is not one Fathom makes", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const response = await request(
-      cookie,
-      "PUT",
-      "/api/lists/sites/items/not-an-identifier",
-      { label: uniqueLabel() },
-    );
-    expect(response.statusCode).toBe(400);
-  });
-});
-
-describe("removing choices", () => {
-  it("removes a choice, keeping its history", async () => {
-    const { cookie, id } = await signedIn([
-      "workforce-administrator",
-      "viewer",
-    ]);
-    const added = await addItem(cookie, "sites", uniqueLabel());
-    const response = await request(
-      cookie,
-      "DELETE",
-      `/api/lists/sites/items/${added.id}`,
-    );
-    expect(response.statusCode).toBe(204);
-    expect(await readList(cookie, "sites")).not.toContainEqual(added);
-    expect((await historyOf(added.id)).slice(2)).toEqual([
-      {
-        action: "deleted",
-        field: "label",
-        tier: "general",
-        oldValue: added.label,
-        newValue: null,
-        madeBy: id,
-      },
-      {
-        action: "deleted",
-        field: "description",
-        tier: "general",
-        oldValue: "",
-        newValue: null,
-        madeBy: id,
-      },
-    ]);
-  });
-
-  it("refuses a choice that does not exist, or is in another list", async () => {
-    const { cookie } = await signedIn(["workforce-administrator", "viewer"]);
-    const added = await addItem(cookie, "sites", uniqueLabel());
-    for (const url of [
-      `/api/lists/sites/items/${randomUUID()}`,
-      `/api/lists/levels/items/${added.id}`,
-    ]) {
-      const response = await request(cookie, "DELETE", url);
-      expect(response.statusCode).toBe(404);
-      expect(response.json()).toEqual({ error: "There is no such choice" });
-    }
-  });
-});
-
-describe("who created and changed choices", () => {
-  it("names Fathom itself for choices added by setup or seed scripts", async () => {
-    const { cookie } = await signedIn(["viewer"]);
-    const id = randomUUID();
-    const label = uniqueLabel();
-    await connection.transaction(async (transaction) => {
-      await transaction.insert(listItems).values({ id, list: "sites", label });
-      await recordChanges(transaction, null, [
-        {
-          recordType: "list-item",
-          recordId: id,
-          action: "created",
-          field: "label",
-          tier: "general",
-          oldValue: null,
-          newValue: label,
-        },
-      ]);
-    });
-    const item = (await readList(cookie, "sites")).find(
-      (found) => found.id === id,
-    );
-    expect(item?.created.by).toBeNull();
-  });
-
-  // Lists hold only General data, but the change history is shared by every kind of record, so later
-  // changes to fields in other tiers are recorded here to show which ones each role's stamps count.
   it.each([
-    [["viewer"], "general"],
-    [["viewer", "people-manager"], "restricted"],
-    [["viewer", "leadership"], "confidential"],
-  ] as const)(
-    "counts for a %j only changes to fields in tiers they may see, up to %s",
-    async (roles, latestSeen) => {
-      const creator = await signedIn(["workforce-administrator", "viewer"]);
-      const added = await addItem(creator.cookie, "sites", uniqueLabel());
-      const restrictedEditor = await signedIn(["viewer"]);
-      const confidentialEditor = await signedIn(["viewer"]);
-      for (const [editor, tier] of [
-        [restrictedEditor, "restricted"],
-        [confidentialEditor, "confidential"],
-      ] as const) {
-        await connection.transaction(async (transaction) => {
-          await recordChanges(transaction, editor.id, [
-            {
-              recordType: "list-item",
-              recordId: added.id,
-              action: "changed",
-              field: `fictional-${tier}-field`,
-              tier,
-              oldValue: null,
-              newValue: "Fictional",
-            },
-          ]);
-        });
+    ["PUT", "", { label: "Fictional" }],
+    ["PUT", "/position", { after: null }],
+    ["PUT", "/retired", { retired: true }],
+    ["DELETE", "", undefined],
+  ] as [Method, string, object | undefined][])(
+    "refuses %s%s for a choice that is not in the list",
+    async (method, path, payload) => {
+      const { cookie } = await signedIn(editorRoles);
+      const created = await createList(cookie);
+      const other = await createList(cookie);
+      const [elsewhere] = await addChoices(cookie, other.id, ["Fictional"]);
+      for (const choiceId of [randomUUID(), String(elsewhere?.id)]) {
+        const response = await request(
+          cookie,
+          method,
+          `/api/lists/${created.id}/choices/${choiceId}${path}`,
+          payload,
+        );
+        expect(response.statusCode).toBe(404);
+        expect(response.json()).toEqual({ error: "There is no such choice" });
       }
-      const editors = {
-        general: creator,
-        restricted: restrictedEditor,
-        confidential: confidentialEditor,
-      };
-      const { cookie } = await signedIn([...roles]);
-      const item = (await readList(cookie, "sites")).find(
-        (found) => found.id === added.id,
-      );
-      expect(item?.created.by?.id).toBe(creator.id);
-      // eslint-disable-next-line security/detect-object-injection -- one of the three tiers above
-      expect(item?.changed.by?.id).toBe(editors[latestSeen].id);
     },
   );
 
-  it("names whoever saved last, even when their save began first", async () => {
-    const creator = await signedIn(["workforce-administrator", "viewer"]);
-    const slowEditor = await signedIn(["viewer"]);
-    const quickEditor = await signedIn(["viewer"]);
-    const added = await addItem(creator.cookie, "sites", uniqueLabel());
-    const changeBy = (
-      transaction: Parameters<Parameters<Database["transaction"]>[0]>[0],
-      madeBy: string,
-    ) =>
-      recordChanges(transaction, madeBy, [
-        {
-          recordType: "list-item",
-          recordId: added.id,
-          action: "changed",
-          field: "label",
-          tier: "general",
-          oldValue: null,
-          newValue: "Fictional",
-        },
-      ]);
-    const released: (() => void)[] = [];
-    const waiting = new Promise<void>((resolve) => {
-      released.push(resolve);
+  it("removes a choice, recording it", async () => {
+    const { cookie, id, list, choices, url } = await listWith([
+      "Northmere",
+      "Ashgrove",
+    ]);
+    const response = await request(cookie, "DELETE", url(choices[0]));
+    expect(response.statusCode).toBe(204);
+    expect(await labelsOf(cookie, list.id)).toEqual(["Ashgrove"]);
+    expect(
+      (await historyOf(String(choices[0]?.id)))
+        .slice(4)
+        .map(({ action, madeBy }) => [action, madeBy]),
+    ).toEqual([
+      ["deleted", id],
+      ["deleted", id],
+      ["deleted", id],
+      ["deleted", id],
+    ]);
+  });
+});
+
+describe("ordering choices", () => {
+  async function threeChoices() {
+    const editor = await signedIn(editorRoles);
+    const created = await createList(editor.cookie);
+    const [first, second, third] = await addChoices(editor.cookie, created.id, [
+      "A",
+      "B",
+      "C",
+    ]);
+    const move = (choice: Choice | undefined, after: string | null) =>
+      request(
+        editor.cookie,
+        "PUT",
+        `/api/lists/${created.id}/choices/${String(choice?.id)}/position`,
+        { after },
+      );
+    const order = () => labelsOf(editor.cookie, created.id);
+    return { editor, first, second, third, move, order };
+  }
+
+  it("moves a choice after another, recording the choice it followed and now follows", async () => {
+    const { editor, first, second, third, move, order } = await threeChoices();
+    expect((await move(third, String(first?.id))).statusCode).toBe(204);
+    expect(await order()).toEqual(["A", "C", "B"]);
+    expect((await historyOf(String(third?.id))).at(-1)).toMatchObject({
+      field: "order",
+      oldValue: second?.id,
+      newValue: first?.id,
+      madeBy: editor.id,
     });
-    // The slow save's transaction begins, then waits while the quick one is saved.
-    const slow = connection.transaction(async (transaction) => {
-      await transaction.execute(sql`SELECT 1`);
-      await waiting;
-      await changeBy(transaction, slowEditor.id);
-    });
-    await connection.transaction((transaction) =>
-      changeBy(transaction, quickEditor.id),
-    );
-    for (const release of released) release();
-    await slow;
-    const item = (await readList(creator.cookie, "sites")).find(
-      (found) => found.id === added.id,
-    );
-    expect(item?.changed.by?.id).toBe(slowEditor.id);
-    expect(Date.parse(item?.changed.at ?? "")).toBeGreaterThanOrEqual(
-      Date.parse(item?.created.at ?? ""),
-    );
   });
 
-  it("fails rather than invent a history for a choice added without one", async () => {
-    const { cookie } = await signedIn(["viewer"]);
-    const id = randomUUID();
-    await connection
-      .insert(listItems)
-      .values({ id, list: "sites", label: uniqueLabel() });
-    try {
-      const response = await request(cookie, "GET", "/api/lists");
-      expect(response.statusCode).toBe(500);
-      expect(response.json()).toEqual({ error: "Internal Server Error" });
-    } finally {
-      await connection.delete(listItems).where(eq(listItems.id, id));
+  it("moves a choice to the top and back", async () => {
+    const { first, second, move, order } = await threeChoices();
+    await move(second, null);
+    expect(await order()).toEqual(["B", "A", "C"]);
+    await move(second, String(first?.id));
+    expect(await order()).toEqual(["A", "B", "C"]);
+  });
+
+  it("records nothing when a choice is moved to where it already is", async () => {
+    const { first, second, move } = await threeChoices();
+    expect((await move(second, String(first?.id))).statusCode).toBe(204);
+    expect(await historyOf(String(second?.id))).toHaveLength(4);
+  });
+
+  it("refuses to put a choice after itself, or after one in another list", async () => {
+    const { editor, first, move } = await threeChoices();
+    const other = await createList(editor.cookie);
+    const [elsewhere] = await addChoices(editor.cookie, other.id, [
+      "Elsewhere",
+    ]);
+    for (const after of [String(first?.id), String(elsewhere?.id)]) {
+      expect((await move(first, after)).statusCode).toBe(400);
     }
+  });
+});
+
+describe("retiring and restoring choices", () => {
+  async function retiredSetUp() {
+    const editor = await signedIn(editorRoles);
+    const created = await createList(editor.cookie);
+    const [first] = await addChoices(editor.cookie, created.id, ["A", "B"]);
+    const set = (payload: object) =>
+      request(
+        editor.cookie,
+        "PUT",
+        `/api/lists/${created.id}/choices/${String(first?.id)}/retired`,
+        payload,
+      );
+    return { editor, created, first, set };
+  }
+
+  it("retires a choice, keeping it in the list, and records it", async () => {
+    const { editor, created, first, set } = await retiredSetUp();
+    expect((await set({ retired: true })).statusCode).toBe(204);
+    const list = await readList(editor.cookie, created.id);
+    expect(list?.choices.map(({ label, retired }) => [label, retired])).toEqual(
+      [
+        ["A", true],
+        ["B", false],
+      ],
+    );
+    expect((await historyOf(String(first?.id))).at(-1)).toMatchObject({
+      field: "retired",
+      oldValue: false,
+      newValue: true,
+      madeBy: editor.id,
+    });
+  });
+
+  it("records nothing when a choice is already in the state asked for", async () => {
+    const { first, set } = await retiredSetUp();
+    await set({ retired: false });
+    expect(await historyOf(String(first?.id))).toHaveLength(4);
+  });
+
+  it("restores a choice to the end of the list, or in its place when undoing", async () => {
+    const { editor, created, first, set } = await retiredSetUp();
+    await set({ retired: true });
+    await set({ retired: false, keepPlace: true });
+    expect(await labelsOf(editor.cookie, created.id)).toEqual(["A", "B"]);
+    await set({ retired: true });
+    await set({ retired: false });
+    expect(await labelsOf(editor.cookie, created.id)).toEqual(["B", "A"]);
+    expect(
+      (await historyOf(String(first?.id))).slice(-2).map(({ field }) => field),
+    ).toEqual(["retired", "order"]);
   });
 });

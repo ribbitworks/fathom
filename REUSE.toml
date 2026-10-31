@@ -15,7 +15,14 @@ SPDX-FileCopyrightText = "2026 Jared La Rue"
 path = [
   "**.md",
   "**.json",
-  "packages/db/migrations/**",
+  # Migrations applied before headers were required, which must never change.
+  "packages/db/migrations/0000_create_app_info.sql",
+  "packages/db/migrations/0001_add_greeting.sql",
+  "packages/db/migrations/0002_add_auth.sql",
+  "packages/db/migrations/0003_add_user_roles.sql",
+  "packages/db/migrations/0004_add_account_deactivation.sql",
+  "packages/db/migrations/0005_add_access_history.sql",
+  "packages/db/migrations/0006_add_lists_and_change_history.sql",
   "LICENSES/**",
   "NOTICE",
   "pnpm-lock.yaml",

@@ -9,6 +9,7 @@ import "@fontsource/ibm-plex-sans/500.css";
 import "@fontsource/ibm-plex-sans/600.css";
 import "@fontsource/ibm-plex-sans/700.css";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import { QueryClient } from "@tanstack/react-query";
 import { createBrowserHistory } from "@tanstack/react-router";
 import { StrictMode } from "react";

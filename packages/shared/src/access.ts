@@ -43,3 +43,8 @@ export const permissionSchema = z.enum([
 ]);
 
 export type Permission = z.infer<typeof permissionSchema>;
+
+// The sensitivity tiers of Fathom's data. Roles grant access to tiers, not to screens.
+export const tierSchema = z.enum(["general", "restricted", "confidential"]);
+
+export type Tier = z.infer<typeof tierSchema>;

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the frame around every signed-in page: which sections the sidebar shows, how it marks
-// the current page and pages still to come, where the top bar says the user is, and how the sidebar
-// opens and closes on narrow screens.
+// the current page and pages still to come, how it collapses to a rail of icons, where the top bar
+// says the user is, and how the sidebar opens and closes on narrow screens.
 
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -59,12 +59,60 @@ describe("the sidebar", () => {
         .getByRole("link", { name: "Accounts" })
         .getAttribute("aria-current"),
     ).toBeNull();
-    expect(within(sidebar()).getByText("Projects").textContent).toBe(
-      "Projects, Later",
-    );
+    expect(
+      within(sidebar()).getByText("Projects").parentElement?.textContent,
+    ).toBe("Projects, Later");
     expect(
       within(sidebar()).queryByRole("link", { name: /Projects/ }),
     ).toBeNull();
+  });
+});
+
+describe("the collapsed sidebar", () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("collapses to a rail of icons that keeps every page's name, remembers it, and expands again", async () => {
+    serverAnswers({
+      "GET /api/session": administrator,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+    await userEvent.click(
+      within(sidebar()).getByRole("button", { name: "Collapse sidebar" }),
+    );
+    expect(localStorage.getItem("fathom-sidebar-collapsed")).toBe("true");
+    const expand = within(sidebar()).getByRole("button", {
+      name: "Expand sidebar",
+    });
+    expect(expand.getAttribute("aria-expanded")).toBe("false");
+    expect(
+      within(sidebar()).getByRole("link", { name: "Accounts" }),
+    ).toBeDefined();
+    expect(within(sidebar()).getByText("Projects, Later")).toBeDefined();
+    await userEvent.hover(
+      within(sidebar()).getByRole("link", { name: "Accounts" }),
+    );
+    expect(await screen.findByRole("tooltip")).toBeDefined();
+    await userEvent.click(expand);
+    expect(
+      within(sidebar()).getByRole("button", { name: "Collapse sidebar" }),
+    ).toBeDefined();
+  });
+
+  it("starts collapsed when it was left collapsed", async () => {
+    localStorage.setItem("fathom-sidebar-collapsed", "true");
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+    expect(
+      within(sidebar()).getByRole("button", { name: "Expand sidebar" }),
+    ).toBeDefined();
   });
 });
 

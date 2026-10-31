@@ -3,7 +3,7 @@
 - **ADR:** 0004
 - **Status:** Accepted
 - **Date:** 2026-10-30
-- **Revised:** 2026-10-30, to add the typeface chosen with the visual design, and to name the roadmap stage for the timeline views rather than number it
+- **Revised:** 2026-10-30, to add the typeface chosen with the visual design, and to name the roadmap stage for the timeline views rather than number it; 2026-10-31, to add drag and drop for ordering
 
 ## Context
 
@@ -27,6 +27,7 @@ Each candidate below was built into a test page. None loads anything from other 
 | Forms | Mantine's inputs, with [React Hook Form](https://react-hook-form.com) as decided in ADR 0002 | [Mantine's form library](https://mantine.dev/form/use-form/) | Mantine supplies the inputs, such as text, select, and date fields. React Hook Form was already chosen and is more widely used |
 | Tables | [TanStack Table](https://tanstack.com/table) as decided in ADR 0002, with Mantine's table | | Unchanged |
 | Charts | [Recharts](https://recharts.github.io), through [Mantine's chart package](https://mantine.dev/charts/getting-started/) | [ECharts](https://echarts.apache.org), [Chart.js](https://www.chartjs.org), [Nivo](https://nivo.rocks) | SVG charts that screen readers and keyboard users can reach, styled to match Mantine. ECharts is larger and styled separately from Mantine, Chart.js draws only on a canvas, and Nivo's releases have slowed |
+| Drag and drop | [@hello-pangea/dnd](https://github.com/hello-pangea/dnd), for ordering rows | [dnd-kit](https://github.com/clauderic/dnd-kit)'s `@dnd-kit/react`, [Pragmatic drag and drop](https://github.com/atlassian/pragmatic-drag-and-drop) | Apache-2.0, supports React 19, and the drag-and-drop library Mantine's own documentation uses. `@dnd-kit/react` is active but not yet at version 1.0, and Pragmatic drag and drop has no keyboard dragging |
 | Org chart | [React Flow](https://reactflow.dev) with [dagre](https://github.com/dagrejs/dagre), as the `@dagrejs/dagre` package, for layout | [d3-org-chart](https://github.com/bumbeishvili/org-chart) | Both widely used, active, and completely open source; React Flow's [paid subscription](https://reactflow.dev/pro) sells examples and support, not library features. d3-org-chart has one maintainer and no recent release. [elkjs](https://github.com/kieler/elkjs), a common layout engine, is licensed GPL or EPL, so it is ruled out |
 | Gantt and timeline | [vis-timeline](https://github.com/visjs/vis-timeline), to be confirmed when The Organization stage starts | A custom React and SVG view, [Frappe Gantt](https://github.com/frappe/gantt) | Active and completely open source, with rows of bars that can be dragged to new dates or rows, and zooming. [SVAR React Gantt](https://svar.dev/react/gantt/) and [DHTMLX Gantt](https://dhtmlx.com/docs/products/dhtmlxGantt/) are open-core, so they are ruled out, and Frappe Gantt's releases have slowed |
 
@@ -37,4 +38,5 @@ Each candidate below was built into a test page. None loads anything from other 
 - **vis-timeline needs moment,** a date library that is no longer actively developed. This is weighed again when the choice is confirmed.
 - **vis-timeline is not a React component and draws no dependency lines.** Fathom wraps it in a small React component. Fathom plans at the project and feature level, so dependency lines may not be needed; if they are, a custom view built on React and SVG is the fallback. It is not needed until The Organization stage, so it is checked again then.
 - **Fathom's own styles** use CSS Modules and Mantine's theme variables, so the look stays consistent and can be changed in one place.
+- **@hello-pangea/dnd's last release was in February 2025.** It is complete for ordering rows, and keyboard users reorder with Alt and the arrow keys or row menus, not its own keyboard dragging. If it stops working with React, `@dnd-kit/react` is the replacement once it reaches version 1.0.
 - **Bundle size** grows by a few hundred kilobytes, which suits an internal tool on the company network.

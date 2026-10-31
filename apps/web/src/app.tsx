@@ -5,6 +5,7 @@
 // forgotten and the user is sent to sign in, then brought back.
 
 import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RouterHistory, RouterProvider } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
@@ -49,6 +50,7 @@ export function App({
       cssVariablesResolver={cssVariables}
       defaultColorScheme="auto"
     >
+      <Notifications position="top-right" />
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

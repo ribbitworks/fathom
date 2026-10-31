@@ -1,32 +1,33 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The lists of choices for people's details, through the server's API, with the names users see for
-// each list, and how to say who made a change.
+// Lists of choices through the server's API: reading them, and every change to lists and choices,
+// with the names users see for each visibility.
 
 import {
-  type ChangeStamp,
-  type ListItem,
-  type ListItemRequest,
-  listItemSchema,
-  type ListName,
+  type Choice,
+  type ChoiceRequest,
+  choiceSchema,
+  type List,
+  type ListRequest,
+  listSchema,
   listsSchema,
+  type Tier,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
-import { getJson, sendDelete, sendJsonFor } from "./api.ts";
+import { getJson, sendDelete, sendJson, sendJsonFor } from "./api.ts";
 
-// Every list must be named, which the compiler checks.
-const listTitles: Record<ListName, string> = {
-  sites: "Sites",
-  positions: "Positions",
-  levels: "Levels",
-  "team-roles": "Roles on the team",
+// Every tier must be named, which the compiler checks.
+const visibilityNames: Record<Tier, string> = {
+  general: "Everyone",
+  restricted: "Restricted",
+  confidential: "Confidential",
 };
 
-export function listTitle(list: ListName): string {
-  // The list is always one of the fixed lists named above.
+export function visibilityName(tier: Tier): string {
+  // The tier is always one of the fixed tiers named above.
   // eslint-disable-next-line security/detect-object-injection
-  return listTitles[list];
+  return visibilityNames[tier];
 }
 
 export const listsQuery = queryOptions({
@@ -34,41 +35,90 @@ export const listsQuery = queryOptions({
   queryFn: async () => (await getJson("/api/lists", listsSchema)).lists,
 });
 
-const itemResponse = z.object({ item: listItemSchema });
+const listPath = (id: string) => `/api/lists/${encodeURIComponent(id)}`;
+const choicePath = (listId: string, id: string) =>
+  `${listPath(listId)}/choices/${encodeURIComponent(id)}`;
+const listResponse = z.object({ list: listSchema });
 
-const itemsPath = (list: ListName) =>
-  `/api/lists/${encodeURIComponent(list)}/items`;
-
-export async function addListItem(
-  list: ListName,
-  item: ListItemRequest,
-): Promise<ListItem> {
-  return (await sendJsonFor("POST", itemsPath(list), item, itemResponse)).item;
+export async function createList(request: ListRequest): Promise<List> {
+  return (await sendJsonFor("POST", "/api/lists", request, listResponse)).list;
 }
 
-export async function updateListItem(
-  list: ListName,
+export async function updateList(
   id: string,
-  item: ListItemRequest,
-): Promise<ListItem> {
+  request: ListRequest,
+): Promise<List> {
+  return (await sendJsonFor("PUT", listPath(id), request, listResponse)).list;
+}
+
+export async function setListRetired(
+  id: string,
+  retired: boolean,
+): Promise<void> {
+  await sendJson("PUT", `${listPath(id)}/retired`, { retired });
+}
+
+export async function deleteList(id: string): Promise<void> {
+  await sendDelete(listPath(id));
+}
+
+// Adds choices to the end of a list, all saved together.
+export async function addChoices(
+  listId: string,
+  choices: ChoiceRequest[],
+): Promise<Choice[]> {
+  return (
+    await sendJsonFor(
+      "POST",
+      `${listPath(listId)}/choices`,
+      { choices },
+      z.object({ choices: z.array(choiceSchema) }),
+    )
+  ).choices;
+}
+
+export async function updateChoice(
+  listId: string,
+  id: string,
+  request: ChoiceRequest,
+): Promise<Choice> {
   return (
     await sendJsonFor(
       "PUT",
-      `${itemsPath(list)}/${encodeURIComponent(id)}`,
-      item,
-      itemResponse,
+      choicePath(listId, id),
+      request,
+      z.object({ choice: choiceSchema }),
     )
-  ).item;
+  ).choice;
 }
 
-export async function removeListItem(
-  list: ListName,
+// Moves a choice to just after another, or to the top when there is none.
+export async function moveChoice(
+  listId: string,
   id: string,
+  after: string | null,
 ): Promise<void> {
-  await sendDelete(`${itemsPath(list)}/${encodeURIComponent(id)}`);
+  await sendJson("PUT", `${choicePath(listId, id)}/position`, { after });
 }
 
-// Who made a change: a user, or Fathom itself, as for data made by setup scripts.
-export function changedBy(stamp: ChangeStamp): string {
-  return stamp.by === null ? "Fathom" : stamp.by.name;
+// Retires a choice, or restores it, to the end of the list unless it keeps its place.
+export async function setChoiceRetired(
+  listId: string,
+  id: string,
+  retired: boolean,
+  keepPlace = false,
+): Promise<void> {
+  await sendJson("PUT", `${choicePath(listId, id)}/retired`, {
+    retired,
+    keepPlace,
+  });
+}
+
+export async function deleteChoice(listId: string, id: string): Promise<void> {
+  await sendDelete(choicePath(listId, id));
+}
+
+// Text for comparing names: trimmed and in lower case.
+export function sameName(first: string, second: string): boolean {
+  return first.trim().toLowerCase() === second.trim().toLowerCase();
 }

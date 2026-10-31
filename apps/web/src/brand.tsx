@@ -3,7 +3,7 @@
 // Fathom's mark and name: three layers of water, fading as they go deeper, in a rounded square. The
 // name is white on the dark sidebar, and the page's own text colour elsewhere.
 
-import { Group, Text } from "@mantine/core";
+import { Group, Text, VisuallyHidden } from "@mantine/core";
 import classes from "./brand.module.css";
 
 const layers = [
@@ -19,9 +19,12 @@ const largeSize = { mark: 44, name: 32, gap: 14 };
 export function Brand({
   onDark = false,
   size = "sidebar",
+  markOnly = false,
 }: {
   onDark?: boolean;
   size?: "sidebar" | "large";
+  // The mark alone, as in the collapsed sidebar, with the name only for screen readers.
+  markOnly?: boolean;
 }) {
   const { mark, name, gap } = size === "large" ? largeSize : sidebarSize;
   return (
@@ -40,13 +43,17 @@ export function Brand({
           />
         ))}
       </svg>
-      <Text
-        className={onDark ? classes.nameOnDark : undefined}
-        fw={600}
-        fz={name}
-      >
-        Fathom
-      </Text>
+      {markOnly ? (
+        <VisuallyHidden>Fathom</VisuallyHidden>
+      ) : (
+        <Text
+          className={onDark ? classes.nameOnDark : undefined}
+          fw={600}
+          fz={name}
+        >
+          Fathom
+        </Text>
+      )}
     </Group>
   );
 }

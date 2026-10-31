@@ -16,6 +16,7 @@ export {
   changeSets,
   fathomSchema,
   listItems,
+  lists,
   rateLimits,
   sessions,
   userRoles,

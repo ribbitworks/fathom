@@ -99,13 +99,13 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.
-- **List item:** One choice in a list for a person's details, such as a site or a position, with a name and an optional description.
+- **List:** A list of choices that people define, with a name, a description, a visibility, and whether it is retired. Columns elsewhere draw on lists.
+- **Choice:** One entry in a list, with a name, a description, its place in the list's order, and whether it is retired.
 
 ## Change and History Entities
 
 - **Change set:** Changes saved together, with who made them and when. Until plan approval arrives, each is applied as it is saved.
 - **Change:** One field of one record changed in a change set, with its sensitivity tier and its old and new values.
-- **Change stamp:** Who created a record and who last changed it, and when, read from the changes to fields in the reader's tiers.
 - **Snapshot:** A point-in-time copy of part of the plan. Its contents are set in the Decisions Log.
 
 **Proposal:** Extend change sets to drafts. Each plan change is one draft edit, such as a new allocation or moved dates. An editor submits a change set for approval, and approving it applies its changes to the live plan. A change set can be compared with the approved plan or with another change set, which also supports what-if scenarios if they turn out to be the same feature.

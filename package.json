@@ -10,7 +10,7 @@
   "scripts": {
     "bootstrap": "bash scripts/dev-bootstrap.sh",
     "lint": "eslint --max-warnings 0 .",
-    "lint:md": "markdownlint --ignore-path .gitignore \"**/*.md\" \".claude/agents/*.md\"",
+    "lint:md": "markdownlint --ignore-path .gitignore \"**/*.md\"",
     "lint:shell": "bash scripts/lint-shell.sh",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -24,6 +24,7 @@
     "reset-caches": "bash scripts/reset-caches.sh",
     "prune-reports": "node scripts/prune-reports.mjs",
     "dev:setup": "bash scripts/dev-setup.sh",
+    "dev:reset": "bash scripts/dev-reset.sh",
     "dev": "bash scripts/dev.sh",
     "db:up": "bash scripts/dev-db.sh up",
     "db:down": "bash scripts/dev-db.sh down",

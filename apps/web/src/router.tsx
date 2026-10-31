@@ -83,13 +83,20 @@ const historyRoute = createRoute({
   component: HistoryPage,
 });
 
+// The Lists page, with the list in the address, if any, open in its side panel. One route, so
+// opening and closing the panel keeps the rest of the page as it was.
 const listsRoute = createRoute({
   getParentRoute: () => signedInRoute,
-  path: "/lists",
+  path: "/lists/{-$listId}",
   beforeLoad: requiring("configuration:view"),
   component: function Lists() {
     const { permissions } = signedIn.useRouteContext();
-    return <ListsPage canEdit={permissions.includes("configuration:edit")} />;
+    return (
+      <ListsPage
+        listId={listsRoute.useParams().listId}
+        canEdit={permissions.includes("configuration:edit")}
+      />
+    );
   },
 });
 

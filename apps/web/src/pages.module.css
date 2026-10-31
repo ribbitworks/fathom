@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* Styles shared by Fathom's pages beyond what the Mantine theme sets: the canvas behind panels,
-   figures that line up in columns, account status dots, and the access history's day bands and
-   entries. */
+   figures that line up in columns, account status dots, the access history's day bands and
+   entries, and the Lists page's navigator and table of choices. */
 
 .canvas {
   background: var(--fathom-canvas);
@@ -34,4 +34,325 @@
   height: 7px;
   border-radius: 50%;
   background: currentColor;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* An optional field's label. */
+.optional {
+  color: var(--mantine-color-dimmed);
+  font-weight: 400;
+}
+
+/* A count of characters near its limit, red over it. */
+.count,
+.countOver {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--mantine-color-dimmed);
+}
+
+.countOver {
+  color: var(--mantine-color-error);
+}
+
+/* The Lists page's table of lists: one grid whose rows share its columns, using the full width. */
+.listTable {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) minmax(8rem, 1fr) minmax(
+      12rem,
+      1.7fr
+    );
+  column-gap: 24px;
+}
+
+.listHead,
+.listRow,
+.listGroup {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.listHead {
+  min-height: 36px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+}
+
+.listRow {
+  min-height: 40px;
+  border-top: 1px solid var(--mantine-color-default-border);
+  cursor: pointer;
+}
+
+.listRow:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.listRowSelected {
+  background: var(--mantine-primary-color-light);
+}
+
+.listRowRetired .listCell,
+.listRowRetired .listLink {
+  color: var(--mantine-color-dimmed);
+}
+
+.listCell,
+.listCellDim,
+.listCellName {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.listCellDim,
+.listCount {
+  color: var(--mantine-color-dimmed);
+}
+
+.listLink {
+  color: inherit;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.listGroup {
+  padding-top: 14px;
+  padding-bottom: 6px;
+  border-top: 1px solid var(--mantine-color-default-border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+}
+
+.listFoot {
+  grid-column: 1 / -1;
+  padding: 8px 12px;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+/* The side panel for one list: beside the table, below the top bar, or the whole screen when
+   narrow. */
+.panel,
+.panelNarrow {
+  position: fixed;
+  top: 56px;
+  right: 0;
+  bottom: 0;
+  z-index: 150;
+  display: flex;
+  flex-direction: column;
+  width: clamp(440px, 42%, 720px);
+  background: var(--mantine-color-body);
+  border-left: 1px solid var(--mantine-color-default-border);
+  box-shadow: var(--mantine-shadow-lg);
+}
+
+.panelNarrow {
+  width: 100%;
+  border-left: 0;
+}
+
+.panelHead {
+  padding: 16px 16px 12px 24px;
+}
+
+.panelTitle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.panelName {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.panelBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 12px 12px;
+}
+
+.panelFoot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 16px;
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+/* Choices: a row each, with the grip and actions showing on hover or when selected. */
+.choice {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(8rem, 13rem) 1fr 28px;
+  gap: 16px;
+  align-items: start;
+  padding: 6px 4px 6px 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+}
+
+.choice:hover {
+  background: var(--mantine-color-default-hover);
+}
+
+.choiceSelected,
+.choiceSelected:hover {
+  background: var(--mantine-primary-color-light);
+}
+
+.choice:focus-visible {
+  box-shadow: inset 2px 0 0 var(--mantine-primary-color-filled);
+}
+
+.choiceLifted {
+  background: var(--mantine-color-body);
+  box-shadow: var(--mantine-shadow-md);
+}
+
+.choiceName {
+  min-width: 0;
+  padding-top: 4px;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.choiceDescription {
+  min-width: 0;
+  padding-top: 4px;
+  color: var(--mantine-color-dimmed);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.choiceRetired .choiceName,
+.choiceRetired .choiceDescription {
+  color: var(--mantine-color-dimmed);
+}
+
+.grip {
+  position: absolute;
+  top: 9px;
+  left: 6px;
+  color: var(--mantine-color-dimmed);
+  cursor: grab;
+  opacity: 0;
+}
+
+.rowAction {
+  opacity: 0;
+}
+
+.choice:hover .grip,
+.choice:hover .rowAction,
+.choiceSelected .grip,
+.choiceSelected .rowAction,
+.rowAction[aria-expanded="true"] {
+  opacity: 1;
+}
+
+.panelNarrow .rowAction {
+  opacity: 1;
+}
+
+/* Fields edited in place line their text up with the text they replace. */
+.cellInput {
+  display: block;
+  width: calc(100% + 14px);
+  min-height: 28px;
+  margin: -4px -7px 0;
+  padding: 3px 6px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 5px;
+  background: var(--mantine-color-body);
+  color: inherit;
+  font: inherit;
+  line-height: 20px;
+  resize: none;
+  field-sizing: content;
+}
+
+.cellInput:focus {
+  outline: none;
+  border-color: var(--mantine-primary-color-filled);
+  box-shadow: 0 0 0 1px var(--mantine-primary-color-filled);
+}
+
+.cellInput[aria-invalid="true"] {
+  border-color: var(--mantine-color-error);
+  box-shadow: 0 0 0 1px var(--mantine-color-error);
+}
+
+.cellInput::placeholder {
+  color: var(--mantine-color-placeholder);
+  font-weight: 400;
+}
+
+.cellBelow {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.problem {
+  color: var(--mantine-color-error);
+  font-weight: 500;
+}
+
+/* The empty row that ends the list stays in view. */
+.entry {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--mantine-color-body);
+  border-radius: 0;
+  box-shadow: 0 -1px 0 var(--mantine-color-default-border);
+}
+
+.entry:hover {
+  background: var(--mantine-color-body);
+}
+
+.entry .cellInput {
+  border-color: transparent;
+  background: transparent;
+}
+
+.entry .cellInput:focus,
+.entry .cellInput[aria-invalid="true"] {
+  background: var(--mantine-color-body);
+}
+
+.plus {
+  position: absolute;
+  top: 10px;
+  left: 8px;
+  color: var(--mantine-color-dimmed);
+}
+
+.retiredLabel {
+  padding: 16px 12px 6px;
+  color: var(--mantine-color-dimmed);
 }

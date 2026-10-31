@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* The app frame's own styles: the deep-water sidebar, which keeps its colours in both modes, its
-   section labels and links, and the canvas behind each page. Everything else comes from the
-   Mantine theme. */
+   section labels and links, its collapsed rail of icons, and the canvas behind each page. Everything
+   else comes from the Mantine theme. */
 
 .sidebar {
   background: var(--fathom-sidebar);
@@ -23,8 +23,7 @@
 .link {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
   padding: 7px 10px;
   border-radius: 6px;
   font-size: 14px;
@@ -68,4 +67,46 @@
 
 .main {
   background: var(--fathom-canvas);
+}
+
+.grow {
+  flex: 1;
+}
+
+/* The collapsed rail: icons only, centred, with sections divided by a line. */
+.railSection {
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--fathom-sidebar-line);
+}
+
+.railSection .link,
+.railSection .later {
+  justify-content: center;
+  width: 40px;
+  padding: 8px 0;
+}
+
+.railBrand {
+  flex-direction: column;
+}
+
+.railToggle {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--fathom-sidebar-muted);
+}
+
+.railToggle:hover {
+  background: var(--fathom-sidebar-active);
+  color: var(--fathom-sidebar-strong);
+}
+
+.railToggle:focus-visible,
+.later:focus-visible {
+  outline: 2px solid var(--fathom-sidebar-accent);
+  outline-offset: 1px;
 }

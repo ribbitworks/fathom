@@ -2,8 +2,9 @@
 
 // The frame around every page for a signed-in user: a sidebar of Fathom's sections, showing only
 // the pages the user's roles allow and marking sections still to come, and a top bar saying where
-// they are, with their own account's menu for changing their password and signing out. On narrow
-// screens the sidebar opens from a menu button.
+// they are, with their own account's menu for changing their password and signing out. The sidebar
+// collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
+// On narrow screens the sidebar opens from a menu button instead.
 
 import type { Permission } from "@fathom/shared";
 import {
@@ -16,10 +17,11 @@ import {
   Menu,
   Stack,
   Text,
+  Tooltip,
   UnstyledButton,
   VisuallyHidden,
 } from "@mantine/core";
-import { useDisclosure, useMediaQuery } from "@mantine/hooks";
+import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Link,
@@ -29,45 +31,67 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
+import { Icon, type IconName } from "./icons.tsx";
 import classes from "./layout.module.css";
 import { initials } from "./names.ts";
 import { type SignedInUser, sessionQuery, signOut } from "./session.ts";
 
 const headerHeight = 56;
 const sidebarWidth = 228;
+const railWidth = 56;
 const sidebarId = "sections";
 
-type Page = "/" | "/accounts" | "/history" | "/lists" | "/password";
+type Page = "/" | "/accounts" | "/history" | "/lists/{-$listId}" | "/password";
 
 interface Item {
   label: string;
+  icon: IconName;
   // Absent for pages still to come.
   to?: Page;
   permission?: Permission;
+  // Pages with addresses below their own, such as each list's, are marked as the current page for
+  // all of them.
+  nested?: boolean;
 }
 
 const sections: { label: string; items: Item[] }[] = [
   {
     label: "Plan",
     items: [
-      { label: "Overview", to: "/" },
-      { label: "Projects" },
-      { label: "Releases" },
+      { label: "Overview", icon: "overview", to: "/" },
+      { label: "Projects", icon: "projects" },
+      { label: "Releases", icon: "releases" },
     ],
   },
   {
     label: "People",
     items: [
-      { label: "People" },
-      { label: "Capacity" },
-      { label: "Lists", to: "/lists", permission: "configuration:view" },
+      { label: "People", icon: "people" },
+      { label: "Capacity", icon: "capacity" },
+      {
+        label: "Lists",
+        icon: "lists",
+        to: "/lists/{-$listId}",
+        permission: "configuration:view",
+        nested: true,
+      },
     ],
   },
   {
     label: "Administration",
     items: [
-      { label: "Accounts", to: "/accounts", permission: "accounts:manage" },
-      { label: "Access history", to: "/history", permission: "history:view" },
+      {
+        label: "Accounts",
+        icon: "accounts",
+        to: "/accounts",
+        permission: "accounts:manage",
+      },
+      {
+        label: "Access history",
+        icon: "history",
+        to: "/history",
+        permission: "history:view",
+      },
     ],
   },
 ];
@@ -76,15 +100,46 @@ const sections: { label: string; items: Item[] }[] = [
 const places = new Map<string, [string, string]>([
   ...sections.flatMap((section) =>
     section.items.flatMap((item): [string, [string, string]][] =>
-      item.to === undefined ? [] : [[item.to, [section.label, item.label]]],
+      item.to === undefined
+        ? []
+        : [[item.to.replace("/{-$listId}", ""), [section.label, item.label]]],
     ),
   ),
   ["/password", ["Your account", "Change password"]],
 ]);
 
-function Sidebar({ permissions }: { permissions: Permission[] }) {
+// In the rail, each page's name shows beside its icon on hover or focus.
+function RailTip({
+  rail,
+  label,
+  children,
+}: {
+  rail: boolean;
+  label: string;
+  children: React.ReactElement;
+}) {
   return (
-    <Stack gap={22}>
+    <Tooltip
+      label={label}
+      position="right"
+      disabled={!rail}
+      events={{ hover: true, focus: true, touch: false }}
+      withinPortal
+    >
+      {children}
+    </Tooltip>
+  );
+}
+
+function Sidebar({
+  permissions,
+  rail,
+}: {
+  permissions: Permission[];
+  rail: boolean;
+}) {
+  return (
+    <Stack gap={rail ? 14 : 22}>
       {sections.map((section) => {
         const items = section.items.filter(
           (item) =>
@@ -93,24 +148,51 @@ function Sidebar({ permissions }: { permissions: Permission[] }) {
         );
         if (items.length === 0) return null;
         return (
-          <Stack key={section.label} gap={2}>
-            <Text className={classes.section}>{section.label}</Text>
+          <Stack
+            key={section.label}
+            gap={2}
+            className={rail ? classes.railSection : undefined}
+          >
+            {rail ? (
+              <VisuallyHidden>{section.label}</VisuallyHidden>
+            ) : (
+              <Text className={classes.section}>{section.label}</Text>
+            )}
             {items.map((item) =>
               item.to === undefined ? (
-                <span key={item.label} className={classes.later}>
-                  {item.label}
-                  <VisuallyHidden>, </VisuallyHidden>
-                  <span className={classes.laterTag}>Later</span>
-                </span>
-              ) : (
-                <Link
+                <RailTip
                   key={item.label}
-                  to={item.to}
-                  className={classes.link}
-                  activeOptions={{ exact: true }}
+                  rail={rail}
+                  label={`${item.label} (Later)`}
                 >
-                  {item.label}
-                </Link>
+                  <span className={classes.later}>
+                    <Icon name={item.icon} />
+                    {rail ? (
+                      <VisuallyHidden>{item.label}, Later</VisuallyHidden>
+                    ) : (
+                      <>
+                        <span className={classes.grow}>{item.label}</span>
+                        <VisuallyHidden>, </VisuallyHidden>
+                        <span className={classes.laterTag}>Later</span>
+                      </>
+                    )}
+                  </span>
+                </RailTip>
+              ) : (
+                <RailTip key={item.label} rail={rail} label={item.label}>
+                  <Link
+                    to={item.to}
+                    className={classes.link}
+                    activeOptions={{ exact: item.nested !== true }}
+                  >
+                    <Icon name={item.icon} />
+                    {rail ? (
+                      <VisuallyHidden>{item.label}</VisuallyHidden>
+                    ) : (
+                      <span>{item.label}</span>
+                    )}
+                  </Link>
+                </RailTip>
               ),
             )}
           </Stack>
@@ -133,9 +215,18 @@ export function Layout({
     select: (state) => state.location.pathname,
   });
   const [opened, { toggle, close }] = useDisclosure(false);
+  // Collapsed to a rail on wide screens, remembered for next time.
+  const [collapsed, setCollapsed] = useLocalStorage({
+    key: "fathom-sidebar-collapsed",
+    defaultValue: false,
+  });
   const [failed, setFailed] = useState(false);
   const narrow = useMediaQuery("(max-width: 48em)");
-  const place = places.get(pathname);
+  // A list's address, such as /lists/ followed by its identifier, is a place within the Lists page.
+  const place =
+    places.get(pathname) ?? places.get(pathname.replace(/\/[^/]*$/, ""));
+
+  const rail = collapsed && !narrow;
 
   // On narrow screens, the sidebar covers the page, so it closes once the user moves to another one.
   useEffect(close, [pathname, close]);
@@ -155,7 +246,7 @@ export function Layout({
     <AppShell
       header={{ height: headerHeight }}
       navbar={{
-        width: sidebarWidth,
+        width: rail ? railWidth : sidebarWidth,
         breakpoint: "sm",
         collapsed: { mobile: !opened },
       }}
@@ -212,15 +303,39 @@ export function Layout({
         id={sidebarId}
         aria-label="Sections"
         className={classes.sidebar}
-        p="md"
+        p={rail ? "xs" : "md"}
         // Hidden off screen on narrow screens until opened, so it must not be reachable either.
         inert={narrow && !opened}
       >
         <Stack gap={24}>
-          <Group px={8}>
-            <Brand onDark />
+          <Group
+            px={rail ? 0 : 8}
+            justify={rail ? "center" : "space-between"}
+            wrap="nowrap"
+            gap={rail ? 10 : 8}
+            className={rail ? classes.railBrand : undefined}
+          >
+            <Brand onDark markOnly={rail} />
+            <Tooltip
+              label={rail ? "Expand sidebar" : "Collapse sidebar"}
+              position="right"
+              events={{ hover: true, focus: true, touch: false }}
+            >
+              <UnstyledButton
+                visibleFrom="sm"
+                className={classes.railToggle}
+                aria-label={rail ? "Expand sidebar" : "Collapse sidebar"}
+                aria-expanded={!rail}
+                aria-controls={sidebarId}
+                onClick={() => {
+                  setCollapsed(!collapsed);
+                }}
+              >
+                <Icon name="rail" />
+              </UnstyledButton>
+            </Tooltip>
           </Group>
-          <Sidebar permissions={permissions} />
+          <Sidebar permissions={permissions} rail={rail} />
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main className={classes.main}>

@@ -168,7 +168,7 @@ export async function buildApp(options: AppOptions) {
     accountRoutes(createAccountAdministration(options.database, auth)),
   );
   await app.register(historyRoutes(options.data));
-  await app.register(listRoutes(options.data));
+  await app.register(listRoutes(options.data.lists));
   await app.register(greetingRoutes(options.data));
   if (options.webRoot !== undefined) {
     await app.register(webRoutes(options.webRoot));

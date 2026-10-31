@@ -38,7 +38,6 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 ## People and Privacy
 
 - **Employee details:** Preferred name, gender, site, position (for example Software Engineer, Test Engineer, SDET, Manager), level (for example P1–P5, M1–M5, co-op), role on the team (for example Team Lead, Design Authority), start date, and end date.
-- **Choices for employee details:** Site, position, level, and role on the team are chosen from lists the Workforce Administrator maintains, so values stay consistent. Each choice can have a description saying what it means.
 - **Gender:** Recorded because the company works across several countries, and colleagues cannot always tell someone's gender from their name.
 - **System of record:** Fathom holds a manually maintained copy of employee details from the HR system.
 - **Use limits:** Fathom's data is used only for planning, not for performance evaluation or discipline.
@@ -46,8 +45,8 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Who is listed:** Users who cannot see Restricted data see only current staff, so the list does not reveal someone's start or end date before it arrives.
 - **Access control:** Access is role-based, and a user can have one or more roles. Roles are proposed in [Roles](roles.md).
 - **Sensitivity tiers:** Roles grant access to tiers of data, not to individual screens. Adding a field means assigning it to a tier. The initial tiers, subject to the privacy review, are:
-  - *General:* preferred name, team, feature teams, feature leads, position, site, manager, and assignments.
-  - *Restricted:* gender, level, start and end dates, and active status.
+  - *General:* preferred name, team, feature teams, feature leads, position, site, level, manager, and assignments. Level is General at the owner's direction, as it is commonly known across the company.
+  - *Restricted:* gender, start and end dates, and active status.
   - *Confidential:* the hiring plan and future-dated reorgs.
 - **Consistent enforcement:** Exports, snapshots, and search results follow the same access rules as screens.
 - **Access history:** Fathom records who viewed or changed Restricted or Confidential data, and every change to user accounts and their roles, without recording the values.
@@ -68,7 +67,10 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 - **Plain language:** Fields and tables are set up in everyday terms, such as "Must be filled in" and "Link to another table", never database terms.
 - **Sensitivity of custom fields:** Every custom field and table is assigned a sensitivity tier when it is created. Custom fields that hold personal information need HR's approval before use.
 - **Change history:** Every change to plan, people, and configuration data is recorded with its old and new values, who made it, and when, in a history that can only be added to. Changes saved together are grouped into a change set. Undoing a change makes a new change that puts back the old values, so the history is never rewritten.
-- **Who changed what:** Records show who created them and who last changed them, and when, read from the change history. A user sees only changes to data their roles let them see, so a change to a Restricted detail, such as an end date, is not revealed to others by its timing.
+- **Who changed what:** Kept in the change history rather than shown on every record, since it is audit detail. Where it is shown, a user sees only changes to data their roles let them see, so a change to a Restricted detail, such as an end date, is not revealed to others by its timing.
+- **Lists:** People define their own lists of choices, such as locations or skills; none are built in, and a fresh Fathom starts with none. A list has a name of up to 40 characters, which must be unique, an optional description, and a visibility: the tier of the values chosen from it, General unless set otherwise. Its choices have names of up to 60 characters, unique within the list, an optional description, and an order the Workforce Administrator sets. Several choices can be added at once by pasting lines.
+- **Using lists:** A list is used by adding a column that draws on it, such as a Location column on resources. The column, not the list, decides whether one choice or several can be picked, whether a value is required, and what the column is called, so one list can feed several columns.
+- **Retiring and deleting:** Choices and lists can be [retired](domain.md#terms) and restored. Deleting is only for choices and lists nothing uses; a list cannot be retired or deleted while a column uses it. Every change to lists offers Undo.
 
 ## Platform and Operations
 

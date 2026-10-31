@@ -28,7 +28,7 @@ Fathom holds a small set of work-related details about each employee in the soft
 | Team and manager | To see who reports to whom | General |
 | Feature teams and feature leads (small groups formed to deliver related pieces of work, separate from reporting lines, and the person leading each) | To see who works together on what | General |
 | Work assignments (which projects and features, and what share of each month) | To plan workload and spot overloaded people | General |
-| Level (for example P1–P5, M1–M5, co-op) | To plan the experience mix on teams and the roles to hire | Restricted |
+| Level (for example P1–P5, M1–M5, co-op) | To plan the experience mix on teams and the roles to hire | General |
 | Start date and end date | To avoid planning work for someone before they join or after they leave | Restricted |
 
 ### The Hiring Plan
@@ -47,7 +47,7 @@ Fathom does not hold salary or compensation, performance ratings or reviews, hea
 
 ### Information About Fathom's Users
 
-Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; a history of who viewed or changed Restricted or Confidential information, and of every change to user accounts; and a history of every change to the plan and to employees' details, with the old and new values, which user made it, and when, so changes can be checked and undone. Like the access history, it can only be added to. A user sees only changes to information they are allowed to see, and the history keeps earlier values, such as a past level, for as long as the agreed retention period allows. When a user leaves, their Fathom account must be disabled by hand.
+Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; a history of who viewed or changed Restricted or Confidential information, and of every change to user accounts; and a history of every change to the plan and to employees' details, with the old and new values, which user made it, and when, so changes can be checked and undone. Like the access history, it can only be added to. A user sees only changes to information they are allowed to see, and the history keeps earlier values, such as a past end date, for as long as the agreed retention period allows. When a user leaves, their Fathom account must be disabled by hand.
 
 ## Who Can See and Change What
 
@@ -61,7 +61,7 @@ The table shows who can see each level under the proposed default roles for each
 | Restricted | Software Engineering Managers, the Director, and the VP |
 | Confidential | The Director and the VP |
 
-Software Engineering Managers can see Restricted details for everyone, not only their own direct reports, because people move between managers over time and levels are already commonly visible across the company.
+Software Engineering Managers can see Restricted details for everyone, not only their own direct reports, because people move between managers over time.
 
 Under the proposed roles:
 

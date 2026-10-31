@@ -11,14 +11,11 @@ export function DialogActions({
   pending,
   label,
   onCancel,
-  danger = false,
 }: {
   error: Error | null;
   pending: boolean;
   label: string;
   onCancel: () => void;
-  // Red, for changes that remove something.
-  danger?: boolean;
 }) {
   return (
     <>
@@ -40,11 +37,7 @@ export function DialogActions({
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          loading={pending}
-          {...(danger ? { color: "red" } : {})}
-        >
+        <Button type="submit" loading={pending}>
           {label}
         </Button>
       </Group>

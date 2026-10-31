@@ -17,7 +17,9 @@ const repositoryRoot = fileURLToPath(new URL("..", import.meta.url));
 // Files that carry no header, matching the files REUSE.toml lists.
 const notSourceCode = [
   /\.(md|json)$/,
-  /^packages\/db\/migrations\//,
+  // Migrations applied before headers were required. An applied migration must never change, as
+  // the migration runner refuses one whose contents differ from what was applied.
+  /^packages\/db\/migrations\/000[0-6]_[a-z_]+\.sql$/,
   /^LICENSES\//,
   /^(LICENSE|NOTICE|REUSE\.toml|pnpm-lock\.yaml|pnpm-workspace\.yaml)$/,
   /^\.(editorconfig|gitattributes|gitignore|node-version|prettierignore)$/,
@@ -33,6 +35,7 @@ const sourceCode = [
   { pattern: /\.cfg$/, comment: "#" },
   { pattern: /(^|\/)(Dockerfile|Containerfile)[^/]*$/, comment: "#" },
   { pattern: /\.css$/, comment: "/*", close: "*/" },
+  { pattern: /\.sql$/, comment: "--" },
   { pattern: /\.html$/, comment: "<!--", close: "-->" },
 ];
 const shebangScript = { comment: "#" };

@@ -7,23 +7,19 @@
 
 import type { Database } from "@fathom/db";
 import type {
+  Choice,
+  ChoiceRequest,
   HistoryEntry,
-  ListItem,
-  ListItemRequest,
-  ListName,
-  Lists,
+  List,
+  ListRequest,
+  RetiredRequest,
   Role,
 } from "@fathom/shared";
 import { sql } from "drizzle-orm";
-import { type Actor, requirePermission, visibleTiers } from "../access.ts";
+import { type Actor, requirePermission } from "../access.ts";
 import { readGreeting } from "./greeting.ts";
 import { readHistory } from "./history.ts";
-import {
-  addListItem,
-  deleteListItem,
-  readLists,
-  updateListItem,
-} from "./lists.ts";
+import * as lists from "./lists.ts";
 import { readActorRoles } from "./roles.ts";
 
 export interface DataAccess {
@@ -35,21 +31,81 @@ export interface DataAccess {
   readGreeting(actor: Actor): Promise<string>;
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
-  // The lists of choices for people's details, which everyone who sees planning configuration may
-  // read, and only those who may edit it may change.
-  readLists(actor: Actor): Promise<Lists>;
-  addListItem(
+  // Lists of choices, which everyone who sees planning configuration may read, and only those who may
+  // edit it may change.
+  lists: ListAccess;
+}
+
+export interface ListAccess {
+  read(actor: Actor): Promise<List[]>;
+  create(actor: Actor, request: ListRequest): Promise<List>;
+  update(actor: Actor, id: string, request: ListRequest): Promise<List>;
+  setRetired(actor: Actor, id: string, request: RetiredRequest): Promise<void>;
+  delete(actor: Actor, id: string): Promise<void>;
+  addChoices(
     actor: Actor,
-    list: ListName,
-    item: ListItemRequest,
-  ): Promise<ListItem>;
-  updateListItem(
+    listId: string,
+    requests: readonly ChoiceRequest[],
+  ): Promise<Choice[]>;
+  updateChoice(
     actor: Actor,
-    list: ListName,
+    listId: string,
     id: string,
-    item: ListItemRequest,
-  ): Promise<ListItem>;
-  deleteListItem(actor: Actor, list: ListName, id: string): Promise<void>;
+    request: ChoiceRequest,
+  ): Promise<Choice>;
+  // Moves a choice to just after another, or to the top when there is none.
+  moveChoice(
+    actor: Actor,
+    listId: string,
+    id: string,
+    after: string | null,
+  ): Promise<void>;
+  setChoiceRetired(
+    actor: Actor,
+    listId: string,
+    id: string,
+    request: RetiredRequest,
+  ): Promise<void>;
+  deleteChoice(actor: Actor, listId: string, id: string): Promise<void>;
+}
+
+// Checks the actor may change lists, and returns who to record as making the change.
+function editor(actor: Actor): string {
+  requirePermission(actor, "configuration:edit");
+  return actor.user.id;
+}
+
+function createListAccess(database: Database): ListAccess {
+  return {
+    read: async (actor) => {
+      requirePermission(actor, "configuration:view");
+      return lists.readLists(database);
+    },
+    create: async (actor, request) =>
+      lists.createList(database, editor(actor), request),
+    update: async (actor, id, request) =>
+      lists.updateList(database, editor(actor), id, request),
+    setRetired: async (actor, id, { retired }) =>
+      lists.setListRetired(database, editor(actor), id, retired),
+    delete: async (actor, id) => lists.deleteList(database, editor(actor), id),
+    addChoices: async (actor, listId, requests) =>
+      lists.addChoices(database, editor(actor), listId, requests),
+    updateChoice: async (actor, listId, id, request) =>
+      lists.updateChoice(database, editor(actor), listId, id, request),
+    moveChoice: async (actor, listId, id, after) =>
+      lists.moveChoice(database, editor(actor), listId, id, after),
+    setChoiceRetired: async (actor, listId, id, { retired, keepPlace }) =>
+      lists.setChoiceRetired(
+        database,
+        editor(actor),
+        listId,
+        id,
+        retired,
+        keepPlace,
+      ),
+    deleteChoice: async (actor, listId, id) =>
+      lists.deleteChoice(database, editor(actor), listId, id),
+  };
 }
 
 export function createDataAccess(database: Database): DataAccess {
@@ -69,35 +125,7 @@ export function createDataAccess(database: Database): DataAccess {
       requirePermission(actor, "history:view");
       return readHistory(database);
     },
-    readLists: async (actor) => {
-      requirePermission(actor, "configuration:view");
-      return readLists(database, visibleTiers(actor));
-    },
-    addListItem: async (actor, list, item) => {
-      requirePermission(actor, "configuration:edit");
-      return addListItem(
-        database,
-        actor.user.id,
-        list,
-        item,
-        visibleTiers(actor),
-      );
-    },
-    updateListItem: async (actor, list, id, item) => {
-      requirePermission(actor, "configuration:edit");
-      return updateListItem(
-        database,
-        actor.user.id,
-        list,
-        id,
-        item,
-        visibleTiers(actor),
-      );
-    },
-    deleteListItem: async (actor, list, id) => {
-      requirePermission(actor, "configuration:edit");
-      await deleteListItem(database, actor.user.id, list, id);
-    },
+    lists: createListAccess(database),
     readGreeting: async (actor) => {
       requirePermission(actor, "plan:view");
       return readGreeting(database);

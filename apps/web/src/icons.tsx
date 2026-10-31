@@ -1,0 +1,95 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Small line icons drawn in the current text colour: one for each page in the sidebar, and the
+// controls that need one. Each is hidden from screen readers, so its control must have a name.
+
+import type { ReactNode } from "react";
+
+const paths = {
+  overview: (
+    <>
+      <rect x="2" y="2" width="5" height="5" rx="1" />
+      <rect x="9" y="2" width="5" height="5" rx="1" />
+      <rect x="2" y="9" width="5" height="5" rx="1" />
+      <rect x="9" y="9" width="5" height="5" rx="1" />
+    </>
+  ),
+  projects: (
+    <path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z" />
+  ),
+  releases: <path d="M3.5 14V2.5M3.5 3h8l-1.5 2.5L11.5 8h-8" />,
+  people: (
+    <>
+      <circle cx="6" cy="5.5" r="2.5" />
+      <path d="M1.5 13.5c.5-2.5 2.3-3.5 4.5-3.5s4 1 4.5 3.5M10.5 3.2a2.5 2.5 0 0 1 0 4.6M12 10.3c1.3.4 2.2 1.5 2.5 3.2" />
+    </>
+  ),
+  capacity: <path d="M2.5 13.5V9M6.2 13.5V5.5M9.8 13.5V7.5M13.5 13.5V2.5" />,
+  lists: (
+    <>
+      <path d="M6 4h8M6 8h8M6 12h8" />
+      <circle cx="2.8" cy="4" r=".6" />
+      <circle cx="2.8" cy="8" r=".6" />
+      <circle cx="2.8" cy="12" r=".6" />
+    </>
+  ),
+  accounts: (
+    <>
+      <circle cx="5.5" cy="8" r="3" />
+      <path d="M8.5 8h6M12.5 8v2.5" />
+    </>
+  ),
+  history: (
+    <>
+      <circle cx="8" cy="8" r="6" />
+      <path d="M8 4.5V8l2.5 1.5" />
+    </>
+  ),
+  rail: (
+    <>
+      <rect x="2" y="2.5" width="12" height="11" rx="2" />
+      <path d="M6 2.5v11" />
+    </>
+  ),
+  close: <path d="M4 4l8 8M12 4l-8 8" />,
+  more: (
+    <>
+      <circle cx="3.5" cy="8" r="0.8" />
+      <circle cx="8" cy="8" r="0.8" />
+      <circle cx="12.5" cy="8" r="0.8" />
+    </>
+  ),
+  grip: (
+    <>
+      <circle cx="5.5" cy="3.5" r="0.6" />
+      <circle cx="10.5" cy="3.5" r="0.6" />
+      <circle cx="5.5" cy="8" r="0.6" />
+      <circle cx="10.5" cy="8" r="0.6" />
+      <circle cx="5.5" cy="12.5" r="0.6" />
+      <circle cx="10.5" cy="12.5" r="0.6" />
+    </>
+  ),
+  plus: <path d="M8 3v10M3 8h10" />,
+} satisfies Record<string, ReactNode>;
+
+export type IconName = keyof typeof paths;
+
+export function Icon({ name, size = 16 }: { name: IconName; size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {/* The name is always one of the fixed icons above. */}
+      {/* eslint-disable-next-line security/detect-object-injection */}
+      {paths[name]}
+    </svg>
+  );
+}

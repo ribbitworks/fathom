@@ -147,22 +147,41 @@ export const accessHistory = fathomSchema.table(
   (table) => [index("access_history_occurred_at_index").on(table.occurredAt)],
 );
 
-// The choices offered for some of a person's details, such as their site or position, one list
-// each, with an optional description. List names are checked by the server, not the database. Labels are unique within a list,
-// ignoring letter case, so two people saving at once cannot add the same choice twice. Who created
-// and changed each item is read from the change history.
+// Lists of choices that people define, such as locations or skills, for columns elsewhere to draw on.
+// A list's name is unique, ignoring letter case. Its visibility is the sensitivity tier of the values
+// chosen from it, checked by the server. A retired list is no longer offered for new values.
+export const lists = fathomSchema.table(
+  "lists",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    visibility: text("visibility").notNull().default("general"),
+    retired: boolean("retired").notNull().default(false),
+  },
+  (table) => [uniqueIndex("lists_name_index").on(sql`lower(${table.name})`)],
+);
+
+// The choices in each list, in the order set for it. Labels are unique within a list, ignoring
+// letter case, so two people saving at once cannot add the same choice twice. A retired choice stays
+// on records that have it, but is no longer offered. Deleting a list deletes its choices; the change
+// history keeps a record of both.
 export const listItems = fathomSchema.table(
   "list_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    list: text("list").notNull(),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
     label: text("label").notNull(),
-    // What the choice means, for anyone unsure which to pick; empty when there is none.
     description: text("description").notNull().default(""),
+    // Lower comes first.
+    position: integer("position").notNull().default(0),
+    retired: boolean("retired").notNull().default(false),
   },
   (table) => [
     uniqueIndex("list_items_list_label_index").on(
-      table.list,
+      table.listId,
       sql`lower(${table.label})`,
     ),
   ],

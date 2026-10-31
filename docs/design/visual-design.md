@@ -7,6 +7,15 @@ How Fathom's screens look and behave, so every page is built the same way. It ap
 
 ## Principles
 
+The owner's principles come first:
+
+- **No instructional text:** If a screen needs explaining, the design is wrong. No hints, help lines, or placeholder sentences telling people what to do. Labels are one or two words, and an optional field may add "(optional)" to its label. Familiar patterns, such as a grip handle for dragging, speak for themselves. Saying what an action will do, as a confirmation does, is not instruction.
+- **No assumptions:** Screens add no purposes, defaults, restrictions, or wording the owner has not asked for. Where something is unclear, it is left out and the owner is asked.
+- **Keyboard-first data entry:** Wherever people enter or change data, everything can be done from the keyboard, and adding many items in a row never needs the mouse: Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items. Where many records are entered, such as resources, editing works like a spreadsheet, including pasting rows.
+- **The bar:** Top-tier modern products, such as Linear or Notion: calm, dense, and obvious.
+
+The rest follow from them:
+
 - **Quiet and dense:** Fathom is a work tool used every day, so pages favour clear structure and plenty of information over decoration. As few borders, lines, labels, and columns as the task allows; metadata, such as who changed something, stays out of the way.
 - **One main action per screen:** Every other action is secondary or in a menu.
 - **Controls when needed:** Controls that are not always needed, such as grip handles for dragging, appear on hover or keyboard focus.
@@ -18,6 +27,7 @@ How Fathom's screens look and behave, so every page is built the same way. It ap
 ## Layout
 
 - **Frame:** A deep-water sidebar on the left, the same in both modes, groups pages into sections. Pages still to come are shown, marked "Later", so people can see what Fathom will offer. A top bar names where the user is and holds their account menu.
+- **Collapsed sidebar:** The sidebar collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
 - **Narrow screens:** The sidebar opens from a menu button, and closes when the user moves to another page.
 - **Pages:** Each page starts with a heading and the page's main action on the right. Content sits in bordered panels on a canvas a shade darker than them.
 - **Sign-in and problem pages:** Only Fathom's name and mark above the form or message, with no other words.
@@ -30,8 +40,14 @@ How Fathom's screens look and behave, so every page is built the same way. It ap
 
 ## Components
 
-- **Tables:** Lists of records are tables in a panel, with search and filters above them and each row's actions in a menu at its end.
+- **Tables:** Lists of records are tables in a panel, using the full width, each text cell on one line and cut short when it does not fit. Rows show no audit detail, such as who changed a record or when; any date shown includes its year.
+- **Records in a side panel:** Clicking a row opens its record in a panel sliding in from the right, at its own address, beside the table, which stays usable. Esc, the close button, or a click on the page outside closes it.
+- **Entering data:** Where items are added or changed in a list, they are edited in place, from the keyboard: an empty row at the end takes new items, Tab moves between fields, Enter saves and starts the next, Esc cancels, and arrow keys move between items. Pasting several lines adds one item for each. Problems show on the row being edited.
+- **Ordering:** Where people set an order, rows have a grip for dragging on wide screens, shown on hover or focus, and Alt with the arrow keys moves the selected row. Each row's menu offers the same moves and shows each action's shortcut.
+- **Retiring:** Records that others use are [retired](../product/domain.md#terms) rather than deleted. Retired records are shown only when asked for.
 - **Monthly resource grid:** The grid in the [Decisions Log](../product/decisions.md#planning) keeps people's names fixed on the left while months scroll sideways. Cycle and release ends are thin vertical lines labelled with their names, and each cell lists that month's work.
-- **Dialogs:** Creating and changing records happens in dialogs, which say what will change and where it is recorded.
+- **Dialogs:** Creating and changing settings, such as a list's name, happens in dialogs, which cannot be closed while a change is being saved.
+- **Undo, not confirmation:** Changes save at once, without asking for confirmation, and the latest can be undone with Cmd+Z or Ctrl+Z. Changes seen in place, such as an added or moved item, show no notification. Changes that take something out of view, such as retiring or removing it, show a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made. Failures stay until closed.
+- **Empty and failed states:** An empty table says so in a few words. A table that cannot be loaded says so and offers Try again.
 - **Messages:** Problems are shown in plain words saying what to do next, never as raw errors.
 - **Styles:** Mantine's components, theme, and style props, such as a one-off size or margin, come first. Anything more goes in a CSS Module, never in a `style` attribute.

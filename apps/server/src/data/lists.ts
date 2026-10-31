@@ -1,202 +1,459 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The lists of choices for some of a person's details, such as their site or position: reading
-// them, and adding, editing, and removing choices. Part of the data access layer, the only server
-// code that queries the database; the caller checks the actor's permissions. Every change is
-// recorded in the change history, in the same transaction, field by field. The lists are General
-// data.
+// Lists of choices that people define, and their choices: reading them, and creating, editing,
+// retiring, restoring, and deleting lists; adding choices one at a time or several at once, and
+// editing, ordering, retiring, restoring, and removing them. Part of the data access layer, the
+// only server code that queries the database; the caller checks the actor's permissions. Every
+// change is recorded in the change history, in the same transaction, field by field. A move is
+// recorded as the choice a choice now follows.
 
-import { type Database, listItems } from "@fathom/db";
-import {
-  type ListItem,
-  type ListItemRequest,
-  type ListName,
-  listNameSchema,
-  type Lists,
-  type Tier,
-} from "@fathom/shared";
-import { and, eq } from "drizzle-orm";
+import { type Database, listItems, lists } from "@fathom/db";
+import type { Choice, ChoiceRequest, List, ListRequest } from "@fathom/shared";
+import { tierSchema } from "@fathom/shared";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { ConflictError, NotFoundError } from "../errors.ts";
-import {
-  type Change,
-  recordChanges,
-  readStamps,
-  type Stamps,
-} from "./changes.ts";
+import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import { type Change, type RecordType, recordChanges } from "./changes.ts";
 import { hasDatabaseCode, uniqueViolation } from "./database-errors.ts";
 
-// Natural order, so "P10" follows "P9", the same on every server.
-const naturalOrder = new Intl.Collator("en", {
-  numeric: true,
-  sensitivity: "base",
-});
+type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
+type ListRow = typeof lists.$inferSelect;
+type ChoiceRow = typeof listItems.$inferSelect;
 
-const duplicate = "This list already has that choice";
-const missing = "There is no such choice";
+const noList = "There is no such list";
+const noChoice = "There is no such choice";
+const duplicateList = "There is already a list with that name";
+const duplicateChoice = "This list already has a choice with that name";
 
-// The fields of a choice, each recorded separately in the change history.
-const fields = ["label", "description"] as const;
+const listFields = ["name", "description", "visibility", "retired"] as const;
+// A choice records its list too, so its history can be tied back to the list after either is deleted.
+const choiceFields = ["listId", "label", "description", "retired"] as const;
 
-type Fields = Pick<ListItem, (typeof fields)[number]>;
-
-// The changes between two versions of a choice, one for each field that differs. A missing version
-// is the choice before it was added or after it was removed.
-function changesBetween(
+// The changes between two versions of a list or choice, one for each field that differs. A missing
+// version is the record before it was created or after it was deleted. The details of lists and
+// choices are General data, whatever the visibility of the values chosen from a list.
+function changesBetween<Fields extends Record<string, unknown>>(
+  recordType: RecordType,
   id: string,
   action: Change["action"],
   before: Fields | undefined,
   after: Fields | undefined,
+  fields: readonly (keyof Fields & string)[],
 ): Change[] {
   return fields.flatMap((field) => {
-    // The field is always one of the fixed fields above.
+    // The field is always one of the fixed fields its caller names.
     /* eslint-disable security/detect-object-injection */
     const oldValue = before?.[field] ?? null;
     const newValue = after?.[field] ?? null;
     /* eslint-enable security/detect-object-injection */
-    if (oldValue === newValue) return [];
-    return [
-      {
-        recordType: "list-item",
-        recordId: id,
-        action,
-        field,
-        tier: "general",
-        oldValue,
-        newValue,
-      } as const,
-    ];
+    return oldValue === newValue
+      ? []
+      : [
+          {
+            recordType,
+            recordId: id,
+            action,
+            field,
+            tier: "general" as const,
+            oldValue,
+            newValue,
+          },
+        ];
   });
 }
 
-// Every change to a list is recorded with it, so a choice without history was added another way.
-function requireStamps(stamps: Map<string, Stamps>, id: string): Stamps {
-  const found = stamps.get(id);
-  if (found === undefined) throw new Error("A list item has no change history");
-  return found;
-}
-
-export async function readLists(
-  database: Database,
-  tiers: readonly Tier[],
-): Promise<Lists> {
-  const rows = await database.select().from(listItems);
-  const stamps = await readStamps(
-    database,
-    "list-item",
-    rows.map(({ id }) => id),
-    tiers,
-  );
-  return listNameSchema.options.map((name) => ({
-    name,
-    items: rows
-      .filter(({ list }) => list === name)
-      .map(({ id, label, description }) => ({
-        id,
-        label,
-        description,
-        ...requireStamps(stamps, id),
-      }))
-      .sort((first, second) => naturalOrder.compare(first.label, second.label)),
-  }));
-}
-
-// A choice just saved, with who created and last changed it.
-async function savedItem(
-  database: Database,
-  id: string,
-  saved: Fields,
-  tiers: readonly Tier[],
-): Promise<ListItem> {
-  const stamps = await readStamps(database, "list-item", [id], tiers);
-  return { id, ...saved, ...requireStamps(stamps, id) };
-}
-
-// Runs a change, answering a duplicate choice plainly.
+// Runs a change, answering a name already taken plainly.
 async function refusingDuplicates<Result>(
+  message: string,
   change: () => Promise<Result>,
 ): Promise<Result> {
   try {
     return await change();
   } catch (error) {
     if (hasDatabaseCode(error, uniqueViolation)) {
-      throw new ConflictError(duplicate);
+      throw new ConflictError(message);
     }
     throw error;
   }
 }
 
-export async function addListItem(
+function toChoice(row: ChoiceRow): Choice {
+  return {
+    id: row.id,
+    label: row.label,
+    description: row.description,
+    retired: row.retired,
+  };
+}
+
+function toList(row: ListRow, choices: readonly ChoiceRow[]): List {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    // A tier the server no longer knows is treated as General rather than trusted.
+    visibility: tierSchema.catch("general").parse(row.visibility),
+    retired: row.retired,
+    choices: choices.map(toChoice),
+  };
+}
+
+const choiceOrder = [asc(listItems.position), asc(listItems.id)] as const;
+
+// Every list by name, ignoring letter case, each with its choices in order.
+export async function readLists(database: Database): Promise<List[]> {
+  const listRows = await database
+    .select()
+    .from(lists)
+    .orderBy(asc(sql`lower(${lists.name})`), asc(lists.id));
+  const choiceRows = await database
+    .select()
+    .from(listItems)
+    .orderBy(...choiceOrder);
+  return listRows.map((row) =>
+    toList(
+      row,
+      choiceRows.filter((choice) => choice.listId === row.id),
+    ),
+  );
+}
+
+// Locks a list for a change, refusing one that does not exist.
+async function lockList(
+  transaction: Transaction,
+  id: string,
+): Promise<ListRow> {
+  const [row] = await transaction
+    .select()
+    .from(lists)
+    .where(eq(lists.id, id))
+    .for("update");
+  if (row === undefined) throw new NotFoundError(noList);
+  return row;
+}
+
+// Every choice in a list, locked, in order.
+async function lockChoices(
+  transaction: Transaction,
+  listId: string,
+): Promise<ChoiceRow[]> {
+  return transaction
+    .select()
+    .from(listItems)
+    .where(eq(listItems.listId, listId))
+    .orderBy(...choiceOrder)
+    .for("update");
+}
+
+// Locks a choice for a change, refusing one that is not in the list. Its list is locked first, as
+// every change to a list's choices does, so two changes at once cannot deadlock.
+async function lockChoice(
+  transaction: Transaction,
+  listId: string,
+  id: string,
+): Promise<ChoiceRow> {
+  await lockList(transaction, listId);
+  const [row] = await transaction
+    .select()
+    .from(listItems)
+    .where(and(eq(listItems.listId, listId), eq(listItems.id, id)))
+    .for("update");
+  if (row === undefined) throw new NotFoundError(noChoice);
+  return row;
+}
+
+export async function createList(
   database: Database,
   madeBy: string,
-  list: ListName,
-  item: ListItemRequest,
-  tiers: readonly Tier[],
-): Promise<ListItem> {
+  request: ListRequest,
+): Promise<List> {
   const id = randomUUID();
-  const added = { label: item.label, description: item.description };
-  await refusingDuplicates(() =>
+  const row = { id, ...request, retired: false };
+  await refusingDuplicates(duplicateList, () =>
     database.transaction(async (transaction) => {
-      await transaction.insert(listItems).values({ id, list, ...added });
+      await transaction.insert(lists).values(row);
       await recordChanges(
         transaction,
         madeBy,
-        changesBetween(id, "created", undefined, added),
+        changesBetween("list", id, "created", undefined, row, listFields),
       );
     }),
   );
-  return savedItem(database, id, added, tiers);
+  return toList(row, []);
 }
 
-export async function updateListItem(
+export async function updateList(
   database: Database,
   madeBy: string,
-  list: ListName,
   id: string,
-  item: ListItemRequest,
-  tiers: readonly Tier[],
-): Promise<ListItem> {
-  const updated = { label: item.label, description: item.description };
-  await refusingDuplicates(() =>
+  request: ListRequest,
+): Promise<List> {
+  return refusingDuplicates(duplicateList, () =>
     database.transaction(async (transaction) => {
-      const [before] = await transaction
-        .select({ label: listItems.label, description: listItems.description })
-        .from(listItems)
-        .where(and(eq(listItems.list, list), eq(listItems.id, id)))
-        .for("update");
-      if (before === undefined) throw new NotFoundError(missing);
-      const made = changesBetween(id, "changed", before, updated);
-      if (made.length > 0) {
-        await transaction
-          .update(listItems)
-          .set(updated)
-          .where(eq(listItems.id, id));
-      }
+      const before = await lockList(transaction, id);
+      const after = { ...before, ...request };
+      const made = changesBetween(
+        "list",
+        id,
+        "changed",
+        before,
+        after,
+        listFields,
+      );
       await recordChanges(transaction, madeBy, made);
+      if (made.length > 0) {
+        await transaction.update(lists).set(request).where(eq(lists.id, id));
+      }
+      return toList(after, await lockChoices(transaction, id));
     }),
   );
-  return savedItem(database, id, updated, tiers);
 }
 
-export async function deleteListItem(
+export async function setListRetired(
   database: Database,
   madeBy: string,
-  list: ListName,
+  id: string,
+  retired: boolean,
+): Promise<void> {
+  await database.transaction(async (transaction) => {
+    const before = await lockList(transaction, id);
+    const made = changesBetween(
+      "list",
+      id,
+      "changed",
+      before,
+      { ...before, retired },
+      listFields,
+    );
+    await recordChanges(transaction, madeBy, made);
+    if (made.length > 0) {
+      await transaction.update(lists).set({ retired }).where(eq(lists.id, id));
+    }
+  });
+}
+
+// Deletes a list and its choices, recording each in the change history.
+export async function deleteList(
+  database: Database,
+  madeBy: string,
   id: string,
 ): Promise<void> {
   await database.transaction(async (transaction) => {
-    const [removed] = await transaction
-      .delete(listItems)
-      .where(and(eq(listItems.list, list), eq(listItems.id, id)))
-      .returning({
-        label: listItems.label,
-        description: listItems.description,
-      });
-    if (removed === undefined) throw new NotFoundError(missing);
+    const before = await lockList(transaction, id);
+    const choices = await lockChoices(transaction, id);
+    await recordChanges(transaction, madeBy, [
+      ...changesBetween("list", id, "deleted", before, undefined, listFields),
+      ...choices.flatMap((choice) =>
+        changesBetween(
+          "list-item",
+          choice.id,
+          "deleted",
+          choice,
+          undefined,
+          choiceFields,
+        ),
+      ),
+    ]);
+    await transaction.delete(lists).where(eq(lists.id, id));
+  });
+}
+
+// Adds choices to the end of a list, in the order given, all saved together.
+export async function addChoices(
+  database: Database,
+  madeBy: string,
+  listId: string,
+  requests: readonly ChoiceRequest[],
+): Promise<Choice[]> {
+  const rows = await refusingDuplicates(duplicateChoice, () =>
+    database.transaction(async (transaction) => {
+      await lockList(transaction, listId);
+      const existing = await lockChoices(transaction, listId);
+      const end = Math.max(0, ...existing.map(({ position }) => position));
+      const added = requests.map((request, index) => ({
+        id: randomUUID(),
+        listId,
+        label: request.label,
+        description: request.description,
+        position: end + index + 1,
+        retired: false,
+      }));
+      await transaction.insert(listItems).values(added);
+      await recordChanges(
+        transaction,
+        madeBy,
+        added.flatMap((choice) =>
+          changesBetween(
+            "list-item",
+            choice.id,
+            "created",
+            undefined,
+            choice,
+            choiceFields,
+          ),
+        ),
+      );
+      return added;
+    }),
+  );
+  return rows.map(toChoice);
+}
+
+export async function updateChoice(
+  database: Database,
+  madeBy: string,
+  listId: string,
+  id: string,
+  request: ChoiceRequest,
+): Promise<Choice> {
+  const row = await refusingDuplicates(duplicateChoice, () =>
+    database.transaction(async (transaction) => {
+      const before = await lockChoice(transaction, listId, id);
+      const after = { ...before, ...request };
+      const made = changesBetween(
+        "list-item",
+        id,
+        "changed",
+        before,
+        after,
+        choiceFields,
+      );
+      await recordChanges(transaction, madeBy, made);
+      if (made.length > 0) {
+        await transaction
+          .update(listItems)
+          .set(request)
+          .where(eq(listItems.id, id));
+      }
+      return after;
+    }),
+  );
+  return toChoice(row);
+}
+
+// Puts a choice just after another in the list, or at the top or end, renumbering the list, and
+// returns the change to record: the choice it followed before and the one it follows now.
+async function place(
+  transaction: Transaction,
+  listId: string,
+  id: string,
+  where: { after: string | null } | "end",
+): Promise<Change[]> {
+  const rows = await lockChoices(transaction, listId);
+  const moved = rows.find((row) => row.id === id);
+  if (moved === undefined) throw new NotFoundError(noChoice);
+  const before = rows.slice(0, rows.indexOf(moved)).at(-1)?.id ?? null;
+  const others = rows.filter((row) => row !== moved);
+  let insertAt = others.length;
+  if (where !== "end") {
+    insertAt =
+      where.after === null
+        ? 0
+        : others.findIndex((row) => row.id === where.after) + 1;
+    if (insertAt === 0 && where.after !== null) {
+      throw new BadRequestError("Choose a choice in the same list to follow");
+    }
+  }
+  const ordered = [
+    ...others.slice(0, insertAt),
+    moved,
+    ...others.slice(insertAt),
+  ];
+  const after = ordered.slice(0, insertAt).at(-1)?.id ?? null;
+  if (after === before) return [];
+  for (const [index, row] of ordered.entries()) {
+    if (row.position !== index + 1) {
+      await transaction
+        .update(listItems)
+        .set({ position: index + 1 })
+        .where(eq(listItems.id, row.id));
+    }
+  }
+  return [
+    {
+      recordType: "list-item",
+      recordId: id,
+      action: "changed",
+      field: "order",
+      tier: "general",
+      oldValue: before,
+      newValue: after,
+    },
+  ];
+}
+
+export async function moveChoice(
+  database: Database,
+  madeBy: string,
+  listId: string,
+  id: string,
+  after: string | null,
+): Promise<void> {
+  if (after === id) {
+    throw new BadRequestError("A choice cannot follow itself");
+  }
+  await database.transaction(async (transaction) => {
+    await lockList(transaction, listId);
     await recordChanges(
       transaction,
       madeBy,
-      changesBetween(id, "deleted", removed, undefined),
+      await place(transaction, listId, id, { after }),
+    );
+  });
+}
+
+// Retires a choice, or restores it to the end of the list unless it keeps its place.
+export async function setChoiceRetired(
+  database: Database,
+  madeBy: string,
+  listId: string,
+  id: string,
+  retired: boolean,
+  keepPlace: boolean,
+): Promise<void> {
+  await database.transaction(async (transaction) => {
+    const before = await lockChoice(transaction, listId, id);
+    if (before.retired === retired) return;
+    await transaction
+      .update(listItems)
+      .set({ retired })
+      .where(eq(listItems.id, id));
+    const moved =
+      retired || keepPlace ? [] : await place(transaction, listId, id, "end");
+    await recordChanges(transaction, madeBy, [
+      ...changesBetween(
+        "list-item",
+        id,
+        "changed",
+        before,
+        { ...before, retired },
+        choiceFields,
+      ),
+      ...moved,
+    ]);
+  });
+}
+
+export async function deleteChoice(
+  database: Database,
+  madeBy: string,
+  listId: string,
+  id: string,
+): Promise<void> {
+  await database.transaction(async (transaction) => {
+    const before = await lockChoice(transaction, listId, id);
+    await transaction.delete(listItems).where(eq(listItems.id, id));
+    await recordChanges(
+      transaction,
+      madeBy,
+      changesBetween(
+        "list-item",
+        id,
+        "deleted",
+        before,
+        undefined,
+        choiceFields,
+      ),
     );
   });
 }

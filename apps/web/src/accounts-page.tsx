@@ -49,6 +49,7 @@ import {
 } from "./accounts.ts";
 import { DialogActions } from "./dialog-actions.tsx";
 import { initials } from "./names.ts";
+import { notifySuccess } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import type { SignedInUser } from "./session.ts";
@@ -433,17 +434,15 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
   const [dialog, setDialog] = useState<Dialog>();
   const [opened, setOpened] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string>();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
 
   const open = (next: Dialog) => {
-    setNotice(undefined);
     setDialog(next);
     setOpened(true);
   };
   const close = (done?: string) => {
-    setNotice(done);
+    if (done !== undefined) notifySuccess(done);
     setOpened(false);
   };
   const all = accounts.data ?? [];
@@ -465,11 +464,6 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
           </Button>
         }
       />
-      {notice && (
-        <Alert color="green" role="status">
-          {notice}
-        </Alert>
-      )}
       {accounts.isPending && <Loader role="status" aria-label="Loading" />}
       {accounts.isError && (
         <Alert color="red" role="alert">

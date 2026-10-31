@@ -1,51 +1,76 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The lists of choices offered for some of a person's details, such as their site or position,
-// which the Workforce Administrator maintains.
+// Lists of choices that people define, such as locations or skills, for columns elsewhere to draw
+// on. Each list has a name, an optional description, and a visibility: the sensitivity tier of the
+// values chosen from it. Its choices are in the order set for them, and lists and choices can each
+// be retired.
 
 import { z } from "zod";
-import { changeStampSchema } from "./changes.ts";
+import { tierSchema } from "./access.ts";
 
-export const listNameSchema = z.enum([
-  "sites",
-  "positions",
-  "levels",
-  "team-roles",
-]);
+export const listLengths = {
+  name: 40,
+  choice: 60,
+  description: 500,
+} as const;
 
-export type ListName = z.infer<typeof listNameSchema>;
-
-export const listItemLabelLength = { maximum: 100 } as const;
-export const listItemDescriptionLength = { maximum: 500 } as const;
-
-export const listItemSchema = z.object({
+export const choiceSchema = z.object({
   id: z.string(),
   label: z.string(),
   // Empty when the choice has no description.
   description: z.string(),
-  created: changeStampSchema,
-  changed: changeStampSchema,
+  // A retired choice stays on records that have it, but is no longer offered.
+  retired: z.boolean(),
 });
 
-export type ListItem = z.infer<typeof listItemSchema>;
+export type Choice = z.infer<typeof choiceSchema>;
 
-// Every list, in the order above, each with its items in natural order, so "P10" follows "P9".
-export const listsSchema = z.object({
-  lists: z.array(
-    z.object({ name: listNameSchema, items: z.array(listItemSchema) }),
-  ),
+export const listSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  visibility: tierSchema,
+  // A retired list is no longer offered for new values.
+  retired: z.boolean(),
+  // In order, offered and retired alike.
+  choices: z.array(choiceSchema),
 });
 
-export type Lists = z.infer<typeof listsSchema>["lists"];
+export type List = z.infer<typeof listSchema>;
 
-export const listItemRequestSchema = z.object({
-  label: z.string().trim().min(1).max(listItemLabelLength.maximum),
-  // Optional, so a choice can be added by name alone.
-  description: z
-    .string()
-    .trim()
-    .max(listItemDescriptionLength.maximum)
-    .default(""),
+// Every list, by name.
+export const listsSchema = z.object({ lists: z.array(listSchema) });
+
+const description = z.string().trim().max(listLengths.description).default("");
+
+export const listRequestSchema = z.object({
+  name: z.string().trim().min(1).max(listLengths.name),
+  description,
+  visibility: tierSchema.default("general"),
 });
 
-export type ListItemRequest = z.infer<typeof listItemRequestSchema>;
+export type ListRequest = z.infer<typeof listRequestSchema>;
+
+export const choiceRequestSchema = z.object({
+  label: z.string().trim().min(1).max(listLengths.choice),
+  description,
+});
+
+export type ChoiceRequest = z.infer<typeof choiceRequestSchema>;
+
+// Adds one choice, or several pasted at once, to the end of a list, all saved together.
+export const choicesRequestSchema = z.object({
+  choices: z.array(choiceRequestSchema).min(1).max(1000),
+});
+
+export const retiredRequestSchema = z.object({
+  retired: z.boolean(),
+  // Restoring a choice puts it at the end of the list, unless it keeps its place, as when undoing a
+  // retirement straight away.
+  keepPlace: z.boolean().default(false),
+});
+
+export type RetiredRequest = z.infer<typeof retiredRequestSchema>;
+
+// Moves a choice to just after another in the same list, or to the top when there is none.
+export const choiceMoveSchema = z.object({ after: z.uuid().nullable() });

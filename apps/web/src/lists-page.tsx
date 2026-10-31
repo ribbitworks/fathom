@@ -1,411 +1,683 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Lists page: the choices offered for each person's site, position, level, and role on the team,
-// each with when it was last changed and by whom. Users who may edit planning configuration can add,
-// edit, and remove choices in dialogs, which cannot be closed while a change is being saved and
-// show plainly why a change was refused.
+// The Lists page: every list in one table, with its description and its choices in order, and the
+// selected list in a side panel at its own address, where its choices are kept. Users who may edit
+// planning configuration create, edit, retire, restore, and delete lists, and change choices from
+// the keyboard. Every change shows at once and saves in the background, one at a time in the order
+// made. The latest change can be undone with Cmd+Z or Ctrl+Z, or from its notification when it took
+// something out of view.
 
+import type { Choice, ChoiceRequest, List } from "@fathom/shared";
 import {
-  type ListItem,
-  listItemDescriptionLength,
-  listItemLabelLength,
-  listItemRequestSchema,
-  type ListItemRequest,
-  type ListName,
-  type Lists,
-} from "@fathom/shared";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ActionIcon,
   Alert,
   Button,
   Group,
   Loader,
-  Menu,
   Modal,
   Paper,
-  SimpleGrid,
   Stack,
-  Table,
   Text,
-  Textarea,
-  TextInput,
-  Title,
-  VisuallyHidden,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { DialogActions } from "./dialog-actions.tsx";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
+import { ApiError, describeProblem } from "./api.ts";
+import { focusSoon } from "./focus.ts";
+import { ListDialog } from "./list-dialog.tsx";
 import {
-  addListItem,
-  changedBy,
+  type ChoiceActions,
+  entryNameId,
+  ListPanel,
+  rowId,
+} from "./list-panel.tsx";
+import {
+  addChoices,
+  createList,
+  deleteChoice,
+  deleteList,
   listsQuery,
-  listTitle,
-  removeListItem,
-  updateListItem,
+  moveChoice,
+  setChoiceRetired,
+  setListRetired,
+  updateChoice,
+  updateList,
 } from "./lists.ts";
+import { closeUndoNotice, notifyFailure, notifyUndoable } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 
-type Dialog =
-  | { kind: "add"; list: ListName }
-  | { kind: "edit" | "remove"; list: ListName; item: ListItem };
+const notFound = 404;
+const undoFailure = "Fathom could not undo the change. Try again in a moment.";
+const newListId = "list-new";
+const changeKey = ["lists", "change"];
 
-interface DialogProps {
-  onDone: (notice?: string) => void;
-  onBusy: (busy: boolean) => void;
+const linkId = (list: { id: string }) => `list-link-${list.id}`;
+
+type Dialog = { kind: "new" } | { kind: "edit"; list: List };
+
+// A change that shows at once and saves in the background: how the lists will look, how to save,
+// what to do once saved, and what to do if it fails.
+interface Change {
+  next: (lists: List[]) => List[];
+  save: () => Promise<unknown>;
+  failure: string;
+  onSaved?: () => void;
+  onFailed?: () => void;
 }
 
-function dialogTitle(dialog: Dialog): string {
-  switch (dialog.kind) {
-    case "add":
-      return `Add to ${listTitle(dialog.list)}`;
-    case "edit":
-      return `Edit ${dialog.item.label}`;
-    case "remove":
-      return `Remove ${dialog.item.label}`;
-  }
-}
-
-// A change to the lists, which refreshes them once it has been tried.
-function useListChange<Input, Output>(
-  change: (input: Input) => Promise<Output>,
-  onBusy: (busy: boolean) => void,
-) {
+// Changes are saved one at a time, in the order made. A failed change goes back to the lists as they
+// were just before it, which briefly hides any later changes still waiting to save until the lists
+// are reloaded. The lists are reloaded once no change is still saving, so rows do not flicker.
+function useChange() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: change,
-    onMutate: () => {
-      onBusy(true);
+    mutationKey: changeKey,
+    scope: { id: "lists" },
+    mutationFn: ({ save }: Change) => save(),
+    onMutate: async ({ next }) => {
+      await queryClient.cancelQueries({ queryKey: listsQuery.queryKey });
+      const before = queryClient.getQueryData(listsQuery.queryKey) as List[];
+      queryClient.setQueryData(listsQuery.queryKey, next(before));
+      return { before };
+    },
+    onError: (error, { failure, onFailed }, context) => {
+      queryClient.setQueryData(
+        listsQuery.queryKey,
+        (context as { before: List[] }).before,
+      );
+      onFailed?.();
+      notifyFailure(
+        error instanceof ApiError && error.status === notFound
+          ? "Someone else has removed this. The lists have been refreshed."
+          : describeProblem(error, failure),
+      );
+    },
+    onSuccess: (_result, { onSaved }) => {
+      onSaved?.();
     },
     onSettled: async () => {
+      if (queryClient.isMutating({ mutationKey: changeKey }) > 1) return;
       await queryClient.invalidateQueries({ queryKey: listsQuery.queryKey });
-      onBusy(false);
     },
   });
 }
 
-// Adds a choice or edits one, with its name and description checked as the server checks them.
-function ItemForm({
-  initial,
-  submitLabel,
-  save,
-  notice,
-  onDone,
-  onBusy,
-}: DialogProps & {
-  initial: ListItemRequest;
-  submitLabel: string;
-  save: (item: ListItemRequest) => Promise<ListItem>;
-  notice: (item: ListItem) => string;
-}) {
-  const form = useForm<
-    z.input<typeof listItemRequestSchema>,
-    unknown,
-    ListItemRequest
-  >({
-    resolver: zodResolver(listItemRequestSchema),
-    defaultValues: initial,
-  });
-  const saving = useListChange(save, onBusy);
+// The lists with one list changed.
+function withList(
+  lists: List[],
+  id: string,
+  change: (list: List) => List,
+): List[] {
+  return lists.map((list) => (list.id === id ? change(list) : list));
+}
+
+// A list's choices with one taken out and put back just after another, or at the top.
+function reordered(
+  choices: readonly Choice[],
+  choice: Choice,
+  after: string | null,
+): Choice[] {
+  const others = choices.filter((other) => other.id !== choice.id);
+  const at = others.findIndex((other) => other.id === after) + 1;
+  return [...others.slice(0, at), choice, ...others.slice(at)];
+}
+
+// The choice before this one in the list, which undoing a move, a restore, or a removal puts it after.
+function previousOf(list: List, choice: Choice): string | null {
+  return list.choices.slice(0, list.choices.indexOf(choice)).at(-1)?.id ?? null;
+}
+
+// Whether a key press asks to undo the latest change. In a text field with something typed, it
+// undoes the typing instead.
+function isUndo(event: KeyboardEvent): boolean {
+  const target = event.target as HTMLInputElement;
   return (
-    <form
-      noValidate
-      onSubmit={(event) =>
-        void form.handleSubmit((item) => {
-          saving.mutate(item, {
-            onSuccess: (item) => {
-              onDone(notice(item));
-            },
-          });
-        })(event)
-      }
-    >
-      <Stack>
-        <TextInput
-          label="Name"
-          data-autofocus
-          error={
-            form.formState.errors.label &&
-            `Enter a name of up to ${String(listItemLabelLength.maximum)} characters.`
-          }
-          {...form.register("label")}
-        />
-        <Textarea
-          label="Description"
-          description="Optional. Say what the choice means, for anyone unsure which to pick."
-          rows={3}
-          error={
-            form.formState.errors.description &&
-            `Use up to ${String(listItemDescriptionLength.maximum)} characters.`
-          }
-          {...form.register("description")}
-        />
-        <DialogActions
-          error={saving.error}
-          pending={saving.isPending}
-          label={submitLabel}
-          onCancel={onDone}
-        />
-      </Stack>
-    </form>
+    (event.metaKey || event.ctrlKey) &&
+    !event.shiftKey &&
+    event.key.toLowerCase() === "z" &&
+    !(target.matches("input, textarea") && target.value !== "")
   );
 }
 
-function RemoveItem({
-  list,
-  item,
-  onDone,
-  onBusy,
-}: DialogProps & { list: ListName; item: ListItem }) {
-  const removing = useListChange(() => removeListItem(list, item.id), onBusy);
-  return (
-    <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        removing.mutate(undefined, {
-          onSuccess: () => {
-            onDone(`Removed ${item.label} from ${listTitle(list)}.`);
-          },
-        });
-      }}
-    >
-      <Stack>
-        <Text size="sm">
-          People will no longer be able to choose {item.label}. The change
-          history keeps a record of it.
-        </Text>
-        <DialogActions
-          error={removing.error}
-          pending={removing.isPending}
-          label="Remove"
-          danger
-          onCancel={onDone}
-        />
-      </Stack>
-    </form>
-  );
-}
-
-function DialogContent({ dialog, ...props }: DialogProps & { dialog: Dialog }) {
-  switch (dialog.kind) {
-    case "add":
-      return (
-        <ItemForm
-          initial={{ label: "", description: "" }}
-          submitLabel="Add"
-          save={(item) => addListItem(dialog.list, item)}
-          notice={(item) => `Added ${item.label} to ${listTitle(dialog.list)}.`}
-          {...props}
-        />
-      );
-    case "edit":
-      return (
-        <ItemForm
-          initial={{
-            label: dialog.item.label,
-            description: dialog.item.description,
-          }}
-          submitLabel="Save"
-          save={(item) => updateListItem(dialog.list, dialog.item.id, item)}
-          notice={(item) => `Saved ${item.label}.`}
-          {...props}
-        />
-      );
-    case "remove":
-      return <RemoveItem list={dialog.list} item={dialog.item} {...props} />;
-  }
-}
-
-const changedDate = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
-
-function ItemRow({
-  list,
-  item,
-  canEdit,
+function ListsTable({
+  lists,
+  selected,
   onOpen,
 }: {
-  list: ListName;
-  item: ListItem;
-  canEdit: boolean;
-  onOpen: (dialog: Dialog) => void;
+  lists: List[];
+  selected: string | undefined;
+  onOpen: (list: List) => void;
 }) {
+  const [showRetired, setShowRetired] = useState(false);
+  const current = lists.filter((list) => !list.retired);
+  const retired = lists.filter((list) => list.retired);
+  const row = (list: List) => {
+    const offered = list.choices.filter((choice) => !choice.retired);
+    return (
+      <div
+        key={list.id}
+        role="row"
+        data-list-row
+        aria-current={list.id === selected ? "true" : undefined}
+        className={[
+          classes.listRow,
+          list.id === selected ? classes.listRowSelected : "",
+          list.retired ? classes.listRowRetired : "",
+        ].join(" ")}
+        onClick={() => {
+          onOpen(list);
+        }}
+      >
+        <span role="cell" className={classes.listCellName}>
+          <Link
+            id={linkId(list)}
+            to="/lists/{-$listId}"
+            params={{ listId: list.id }}
+            className={classes.listLink}
+          >
+            {list.name}
+          </Link>
+        </span>
+        <span role="cell" className={classes.listCellDim}>
+          {list.description}
+        </span>
+        <span role="cell" className={classes.listCell}>
+          <span className={classes.listCount}>({offered.length})</span>{" "}
+          {offered.map((choice) => choice.label).join(", ")}
+        </span>
+      </div>
+    );
+  };
   return (
-    <Table.Tr>
-      <Table.Td>
-        <Text fz="sm">{item.label}</Text>
-        {item.description && (
-          <Text fz="xs" c="dimmed">
-            {item.description}
-          </Text>
+    <Paper withBorder>
+      <div role="table" aria-label="Lists" className={classes.listTable}>
+        <div role="row" className={classes.listHead}>
+          <span role="columnheader">Name</span>
+          <span role="columnheader">Description</span>
+          <span role="columnheader">Choices</span>
+        </div>
+        {current.map(row)}
+        {showRetired && (
+          <>
+            <div role="row" className={classes.listGroup}>
+              <span role="cell" aria-colspan={3}>
+                Retired
+              </span>
+            </div>
+            {retired.map(row)}
+          </>
         )}
-      </Table.Td>
-      <Table.Td c="dimmed" fz="xs">
-        <time dateTime={item.changed.at} className={classes.figures}>
-          {changedDate.format(new Date(item.changed.at))}
-        </time>
-        {`, ${changedBy(item.changed)}`}
-      </Table.Td>
-      {canEdit && (
-        <Table.Td w={48}>
-          <Menu position="bottom-end">
-            <Menu.Target>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                aria-label={`Actions for ${item.label}`}
-              >
-                <span aria-hidden="true">⋯</span>
-              </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
-              <Menu.Item
-                onClick={() => {
-                  onOpen({ kind: "edit", list, item });
-                }}
-              >
-                Edit
-              </Menu.Item>
-              <Menu.Item
-                color="red"
-                onClick={() => {
-                  onOpen({ kind: "remove", list, item });
-                }}
-              >
-                Remove
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Table.Td>
-      )}
-    </Table.Tr>
-  );
-}
-
-function ListPanel({
-  list,
-  canEdit,
-  onOpen,
-}: {
-  list: Lists[number];
-  canEdit: boolean;
-  onOpen: (dialog: Dialog) => void;
-}) {
-  const title = listTitle(list.name);
-  return (
-    <Paper withBorder component="section" aria-label={title}>
-      <Group justify="space-between" p="md" pb="xs">
-        <Title order={2} fz={16}>
-          {title}
-        </Title>
-        {canEdit && (
+      </div>
+      {retired.length > 0 && (
+        <div className={classes.listFoot}>
           <Button
-            size="xs"
-            variant="default"
-            aria-label={`Add to ${title}`}
+            variant="subtle"
+            color="gray"
+            size="compact-sm"
+            aria-pressed={showRetired}
             onClick={() => {
-              onOpen({ kind: "add", list: list.name });
+              setShowRetired(!showRetired);
             }}
           >
-            Add
+            {showRetired
+              ? "Hide retired"
+              : `Show retired (${String(retired.length)})`}
           </Button>
-        )}
-      </Group>
-      {list.items.length === 0 ? (
-        <Text px="md" pb="md" fz="sm" c="dimmed">
-          No choices yet.
-        </Text>
-      ) : (
-        <Table verticalSpacing="xs" horizontalSpacing="md">
-          <Table.Thead>
-            <Table.Tr>
-              <Table.Th>Choice</Table.Th>
-              <Table.Th>Last changed</Table.Th>
-              {canEdit && (
-                <Table.Th>
-                  <VisuallyHidden>Actions</VisuallyHidden>
-                </Table.Th>
-              )}
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {list.items.map((item) => (
-              <ItemRow
-                key={item.id}
-                list={list.name}
-                item={item}
-                canEdit={canEdit}
-                onOpen={onOpen}
-              />
-            ))}
-          </Table.Tbody>
-        </Table>
+        </div>
       )}
     </Paper>
   );
 }
 
-export function ListsPage({ canEdit }: { canEdit: boolean }) {
-  const lists = useQuery(listsQuery);
+export function ListsPage({
+  listId,
+  canEdit,
+}: {
+  listId: string | undefined;
+  canEdit: boolean;
+}) {
+  const query = useQuery(listsQuery);
+  const narrow = useMediaQuery("(max-width: 48em)");
+  const navigate = useNavigate();
+  const change = useChange();
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
   const [dialog, setDialog] = useState<Dialog>();
   const [opened, setOpened] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string>();
+  const [undo, setUndo] = useState<() => void>();
+  const lists = query.data ?? [];
+  const open = lists.find((list) => list.id === listId);
 
-  const open = (next: Dialog) => {
-    setNotice(undefined);
+  // Cmd+Z or Ctrl+Z undoes the latest change from anywhere on the page, but not behind a dialog.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (undo === undefined || opened || !isUndo(event)) return;
+      event.preventDefault();
+      undo();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [undo, opened]);
+
+  const openList = (list: List) => {
+    void navigate({ to: "/lists/{-$listId}", params: { listId: list.id } });
+  };
+  // Closing the panel puts focus back on the list's row in the table.
+  const closePanel = () => {
+    if (open) focusSoon(linkId(open));
+    void navigate({ to: "/lists/{-$listId}", params: { listId: undefined } });
+  };
+
+  // Makes a change undoable until the next change, putting focus on what the undo changes, and
+  // returns the undo. A newer change closes an older change's notification.
+  const undoable = (reverse: () => void, focus?: string) => {
+    closeUndoNotice();
+    const run = () => {
+      setUndo(undefined);
+      reverse();
+      if (focus !== undefined) focusSoon(focus);
+    };
+    setUndo(() => run);
+    return run;
+  };
+
+  // Says what was done when it took something out of view, offering Undo there too. Changes seen in
+  // place, such as an added or moved choice, need no notification.
+  const done = (message: string, reverse: () => void, focus?: string) => {
+    notifyUndoable(message, undoable(reverse, focus));
+  };
+
+  const changeList = (
+    list: List,
+    next: (list: List) => List,
+    save: () => Promise<unknown>,
+    failure: string,
+    onSaved?: () => void,
+  ) => {
+    change.mutate({
+      next: (current) => withList(current, list.id, next),
+      save,
+      failure,
+      ...(onSaved ? { onSaved } : {}),
+    });
+  };
+
+  const choiceActions = (list: List): ChoiceActions => {
+    const removeAll = (choices: Choice[]) => {
+      const ids = choices.map(({ id }) => id);
+      changeList(
+        list,
+        (current) => ({
+          ...current,
+          choices: current.choices.filter(({ id }) => !ids.includes(id)),
+        }),
+        async () => {
+          for (const id of ids) await deleteChoice(list.id, id);
+        },
+        undoFailure,
+      );
+    };
+    const move = (choice: Choice, after: string | null, quietly = false) => {
+      const previous = previousOf(list, choice);
+      changeList(
+        list,
+        (current) => ({
+          ...current,
+          choices: reordered(current.choices, choice, after),
+        }),
+        () => moveChoice(list.id, choice.id, after),
+        `Fathom could not move ${choice.label}.`,
+        () => {
+          if (quietly) return;
+          undoable(() => {
+            move(choice, previous, true);
+          }, rowId(choice));
+        },
+      );
+    };
+    const setRetired = (choice: Choice, retired: boolean) => {
+      const previous = previousOf(list, choice);
+      const changed = { ...choice, retired };
+      changeList(
+        list,
+        (current) => ({
+          ...current,
+          choices: retired
+            ? current.choices.map((other) =>
+                other.id === choice.id ? changed : other,
+              )
+            : [
+                ...current.choices.filter((other) => other.id !== choice.id),
+                changed,
+              ],
+        }),
+        () => setChoiceRetired(list.id, choice.id, retired),
+        `Fathom could not ${retired ? "retire" : "restore"} ${choice.label}.`,
+        () => {
+          done(
+            `${retired ? "Retired" : "Restored"} ${choice.label}.`,
+            () => {
+              // Undoing puts the choice back where it was, offered or retired.
+              changeList(
+                list,
+                (current) => ({
+                  ...current,
+                  choices: reordered(current.choices, choice, previous),
+                }),
+                async () => {
+                  await setChoiceRetired(list.id, choice.id, !retired, true);
+                  await moveChoice(list.id, choice.id, previous);
+                },
+                undoFailure,
+              );
+            },
+            rowId(choice),
+          );
+        },
+      );
+    };
+    return {
+      add: (requests: ChoiceRequest[], onFailed: () => void) => {
+        change.mutate({
+          next: (current) => current,
+          save: async () => {
+            const added = await addChoices(list.id, requests);
+            undoable(() => {
+              removeAll(added);
+            }, entryNameId);
+          },
+          failure: "Fathom could not add the choices. Try again in a moment.",
+          onFailed,
+        });
+      },
+      edit: (choice, request) => {
+        changeList(
+          list,
+          (current) => ({
+            ...current,
+            choices: current.choices.map((other) =>
+              other.id === choice.id ? { ...other, ...request } : other,
+            ),
+          }),
+          () => updateChoice(list.id, choice.id, request),
+          `Fathom could not save ${request.label}.`,
+          () => {
+            undoable(() => {
+              changeList(
+                list,
+                (current) => ({
+                  ...current,
+                  choices: current.choices.map((other) =>
+                    other.id === choice.id ? choice : other,
+                  ),
+                }),
+                () =>
+                  updateChoice(list.id, choice.id, {
+                    label: choice.label,
+                    description: choice.description,
+                  }),
+                undoFailure,
+              );
+            }, rowId(choice));
+          },
+        );
+      },
+      move: (choice, after) => {
+        move(choice, after);
+      },
+      setRetired,
+      remove: (choice) => {
+        const previous = previousOf(list, choice);
+        changeList(
+          list,
+          (current) => ({
+            ...current,
+            choices: current.choices.filter((other) => other.id !== choice.id),
+          }),
+          () => deleteChoice(list.id, choice.id),
+          `Fathom could not remove ${choice.label}.`,
+          () => {
+            done(`Removed ${choice.label}.`, () => {
+              changeList(
+                list,
+                (current) => ({
+                  ...current,
+                  choices: reordered(current.choices, choice, previous),
+                }),
+                async () => {
+                  const added = await addChoices(list.id, [
+                    { label: choice.label, description: choice.description },
+                  ]);
+                  for (const { id } of added) {
+                    await moveChoice(list.id, id, previous);
+                    if (choice.retired) {
+                      await setChoiceRetired(list.id, id, true);
+                    }
+                  }
+                },
+                undoFailure,
+              );
+            });
+          },
+        );
+      },
+    };
+  };
+
+  const retireList = (list: List) => {
+    setOpened(false);
+    const retired = !list.retired;
+    changeList(
+      list,
+      (current) => ({ ...current, retired }),
+      () => setListRetired(list.id, retired),
+      `Fathom could not ${retired ? "retire" : "restore"} ${list.name}.`,
+      () => {
+        done(`${retired ? "Retired" : "Restored"} ${list.name}.`, () => {
+          changeList(
+            list,
+            (current) => ({ ...current, retired: list.retired }),
+            () => setListRetired(list.id, list.retired),
+            undoFailure,
+          );
+        });
+      },
+    );
+  };
+
+  // Making a deleted list again, with its choices in order, as undoing the deletion does.
+  const recreate = async (list: List) => {
+    const again = await createList({
+      name: list.name,
+      description: list.description,
+      visibility: list.visibility,
+    });
+    if (list.choices.length > 0) {
+      const added = await addChoices(
+        again.id,
+        list.choices.map(({ label, description }) => ({ label, description })),
+      );
+      const retired = list.choices.flatMap((choice, index) =>
+        choice.retired ? added.slice(index, index + 1) : [],
+      );
+      for (const { id } of retired) {
+        await setChoiceRetired(again.id, id, true);
+      }
+    }
+    if (list.retired) await setListRetired(again.id, true);
+    openList(again);
+  };
+
+  const removeList = (list: List) => {
+    setOpened(false);
+    closePanel();
+    focusSoon(newListId);
+    // Undoing makes the list as it was when deleted, including changes saved since the dialog opened.
+    let deleted = list;
+    change.mutate({
+      next: (current) => {
+        deleted = [
+          ...current.filter((other) => other.id === list.id),
+          list,
+        ][0] as List;
+        return current.filter((other) => other.id !== list.id);
+      },
+      save: () => deleteList(list.id),
+      failure: `Fathom could not delete ${list.name}.`,
+      onSaved: () => {
+        done(`Deleted ${list.name}.`, () => {
+          change.mutate({
+            next: (current) => current,
+            save: () => recreate(deleted),
+            failure: undoFailure,
+          });
+        });
+      },
+    });
+  };
+
+  const saved = (list: List, before?: List) => {
+    setOpened(false);
+    // The dialog saved the list itself, so the page shows it at once, then reloads the lists once no
+    // other change is saving.
+    change.mutate({
+      next: (current) => [
+        ...current.filter((other) => other.id !== list.id),
+        list,
+      ],
+      save: () => Promise.resolve(),
+      failure: "",
+    });
+    if (before === undefined) {
+      undoable(() => {
+        removeList(list);
+      });
+      openList(list);
+      focusSoon(entryNameId);
+      return;
+    }
+    undoable(() => {
+      changeList(
+        list,
+        () => before,
+        () =>
+          updateList(list.id, {
+            name: before.name,
+            description: before.description,
+            visibility: before.visibility,
+          }),
+        undoFailure,
+      );
+    });
+  };
+
+  const openDialog = (next: Dialog) => {
     setDialog(next);
     setOpened(true);
   };
-  const close = (done?: string) => {
-    setNotice(done);
-    setOpened(false);
+
+  // Clicking the page outside the panel, the table's rows, and any control closes the panel. Menus and
+  // dialogs are drawn outside the page, so clicks in them do not count.
+  const onPageClick = (event: MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (
+      open &&
+      event.currentTarget.contains(target) &&
+      !target.closest("[data-list-row], [data-list-panel], button, a")
+    ) {
+      closePanel();
+    }
   };
 
+  let content: ReactNode;
+  if (query.isPending) {
+    content = <Loader role="status" aria-label="Loading" />;
+  } else if (query.isError) {
+    content = (
+      <Alert color="red" role="alert">
+        <Group justify="space-between">
+          <Text fz="sm">Fathom could not load the lists.</Text>
+          <Button
+            size="compact-sm"
+            variant="light"
+            color="red"
+            onClick={() => void query.refetch()}
+          >
+            Try again
+          </Button>
+        </Group>
+      </Alert>
+    );
+  } else if (lists.length === 0) {
+    content = (
+      <Paper withBorder p="xl">
+        <Text fz="sm" c="dimmed" ta="center">
+          No lists yet
+        </Text>
+      </Paper>
+    );
+  } else {
+    content = <ListsTable lists={lists} selected={listId} onOpen={openList} />;
+  }
+
   return (
-    <Stack gap="md">
+    <Stack gap="md" onClick={onPageClick}>
       <PageHeader
         title="Lists"
-        description="The choices offered for each person's site, position, level, and role on the team."
+        action={
+          canEdit && (
+            <Button
+              id={newListId}
+              onClick={() => {
+                openDialog({ kind: "new" });
+              }}
+            >
+              New list
+            </Button>
+          )
+        }
       />
-      {notice && (
-        <Alert color="green" role="status">
-          {notice}
-        </Alert>
-      )}
-      {lists.isPending && <Loader role="status" aria-label="Loading" />}
-      {lists.isError && (
-        <Alert color="red" role="alert">
-          Fathom could not load the lists. Try again in a moment.
-        </Alert>
-      )}
-      {lists.isSuccess && (
-        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
-          {lists.data.map((list) => (
-            <ListPanel
-              key={list.name}
-              list={list}
-              canEdit={canEdit}
-              onOpen={open}
-            />
-          ))}
-        </SimpleGrid>
+      {content}
+      {open && (
+        <div data-list-panel>
+          <ListPanel
+            key={open.id}
+            list={open}
+            canEdit={canEdit}
+            narrow={narrow}
+            actions={choiceActions(open)}
+            onClose={closePanel}
+            onEditList={() => {
+              openDialog({ kind: "edit", list: open });
+            }}
+          />
+        </div>
       )}
       <Modal
         opened={opened}
         onClose={() => {
-          close();
+          setOpened(false);
         }}
         closeOnEscape={!busy}
         closeOnClickOutside={!busy}
         withCloseButton={!busy}
-        title={dialog && dialogTitle(dialog)}
+        title={dialog?.kind === "edit" ? "Edit list" : "New list"}
       >
         {dialog && (
-          <DialogContent dialog={dialog} onDone={close} onBusy={setBusy} />
+          <ListDialog
+            {...(dialog.kind === "edit" ? { list: dialog.list } : {})}
+            lists={lists}
+            onSaved={saved}
+            onRetire={retireList}
+            onDelete={removeList}
+            onCancel={() => {
+              setOpened(false);
+            }}
+            onBusy={setBusy}
+          />
         )}
       </Modal>
     </Stack>

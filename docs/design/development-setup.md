@@ -26,7 +26,6 @@ deploy/
   fathom.env.example      The application's settings
   docker/                 Container image definitions and database initialization
 scripts/                  Development and check scripts
-.claude/agents/           Agent definitions for Claude Code, such as the UX designer
 docs/                     Documentation
 LICENSES/                 Licence texts, as the REUSE specification requires
 ```
@@ -77,6 +76,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm build` | Build the front end into `apps/web/dist`, which the server serves when `FATHOM_WEB_ROOT` points to it |
 | `pnpm db:migrate` | Apply migration files using the migration role |
 | `pnpm db:reset` | Delete and recreate the development database, and apply migrations |
+| `pnpm dev:reset` | Delete and recreate the development database, create an account for "Your Name" (`you@example.test`) as Administrator and Workforce Administrator, print its password, and start development mode. The password is random and kept in `.dev/secrets/dev_account_password`, so it stays the same between resets |
 | `pnpm typecheck` | Check types across the workspace |
 | `pnpm check` | The single command from the [Testing Standards](../standards/testing.md#running-tests) |
 | `pnpm test` | All tests, including database tests that run against a throwaway PostgreSQL container |

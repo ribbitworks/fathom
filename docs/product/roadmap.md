@@ -33,7 +33,7 @@ Development uses fictional data only.
 
 Covers the owner's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables and simple charts rather than an interactive Gantt view.
 
-- **People and teams:** Includes feature teams and feature leads. Employee details are limited to the General tier plus level and start and end dates.
+- **People and teams:** Includes feature teams and feature leads. Employee details are limited to the General tier plus start and end dates.
 - **Org structure:** People managers and their current direct reports, without planned changes or the org chart.
 - **Projects, features, and milestones**
 - **Release planning**
@@ -41,7 +41,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
 - **Demand forecasting:** One estimate per feature.
-- **Roles:** A fixed set of roles, with access tiers and access history for level, start and end dates, and the hiring plan. Software Project Managers can see that teams are in place and give input, in a form still to be confirmed in the [Product Brief](brief.md)'s open questions.
+- **Roles:** A fixed set of roles, with access tiers and access history for start and end dates, and the hiring plan. Software Project Managers can see that teams are in place and give input, in a form still to be confirmed in the [Product Brief](brief.md)'s open questions.
 
 Until plan approval arrives in the next stage, edits go straight to the live plan.
 

@@ -10,7 +10,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 - **Viewer:** Sees General-tier data. Every account gets this role unless it is left off, as for a person who runs Fathom without seeing people data.
 - **Project Planner:** Edits initiatives, projects, features, milestones, release contents, and estimates across the whole plan.
 - **Resource Planner:** Edits allocations across the whole plan.
-- **People Manager:** Proposes feature teams, and sees Restricted details for everyone, because people move between managers over time and levels are commonly visible across the company.
+- **People Manager:** Proposes feature teams, and sees Restricted details for everyone, because people move between managers over time.
 - **Workforce Administrator:** Maintains people, teams, reporting lines, the hiring plan, and planning configuration, approves feature teams, and sees all Restricted and Confidential data.
 - **Leadership:** Sees Restricted and Confidential data, without editing it.
 - **Approver:** Approves draft plan changes.
@@ -26,7 +26,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | Feature teams (General) | View | View | View | Propose | Edit and approve | View | View | None |
 | Restricted employee details | None | None | None | View | Edit | View | None | None |
 | Confidential data | None | None | None | None | Edit | View | None | None |
-| Planning configuration: cycles, cycle names, patch frequency, composition targets, and the lists of choices for people's details | View | View | View | View | Edit | View | View | None |
+| Planning configuration: cycles, cycle names, patch frequency, composition targets, and lists of choices | View | View | View | View | Edit | View | View | None |
 | Draft plan changes | None | Submit | Submit | None | None | None | Approve | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
 | Access history | None | None | None | None | None | None | None | View (**proposal**) |
