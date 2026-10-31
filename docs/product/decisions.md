@@ -38,10 +38,12 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 ## People and Privacy
 
 - **Employee details:** Preferred name, gender, site, position (for example Software Engineer, Test Engineer, SDET, Manager), level (for example P1–P5, M1–M5, co-op), role on the team (for example Team Lead, Design Authority), start date, and end date.
+- **Choices for employee details:** Site, position, level, and role on the team are chosen from lists the Workforce Administrator maintains, so values stay consistent. Each choice can have a description saying what it means.
 - **Gender:** Recorded because the company works across several countries, and colleagues cannot always tell someone's gender from their name.
 - **System of record:** Fathom holds a manually maintained copy of employee details from the HR system.
 - **Use limits:** Fathom's data is used only for planning, not for performance evaluation or discipline.
-- **Former employees:** People who leave are marked inactive rather than deleted.
+- **Former employees:** People who leave are kept rather than deleted. A person is active from their start date until their end date passes; there is no separate flag.
+- **Who is listed:** Users who cannot see Restricted data see only current staff, so the list does not reveal someone's start or end date before it arrives.
 - **Access control:** Access is role-based, and a user can have one or more roles. Roles are proposed in [Roles](roles.md).
 - **Sensitivity tiers:** Roles grant access to tiers of data, not to individual screens. Adding a field means assigning it to a tier. The initial tiers, subject to the privacy review, are:
   - *General:* preferred name, team, feature teams, feature leads, position, site, manager, and assignments.
@@ -65,7 +67,8 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 - **Flexible data model:** A fixed core of built-in tables, such as people, teams, projects, features, and allocations, with fixed key fields that Fathom's views and access rules rely on. Users extend it with custom fields on built-in tables and custom tables for reference lists, such as skills. How they are stored is proposed in [ADR 0005](../adr/0005-flexible-data-model.md).
 - **Plain language:** Fields and tables are set up in everyday terms, such as "Must be filled in" and "Link to another table", never database terms.
 - **Sensitivity of custom fields:** Every custom field and table is assigned a sensitivity tier when it is created. Custom fields that hold personal information need HR's approval before use.
-- **Who changed what:** Plan, people, and configuration records show who created them and who last changed them, and when. A user sees only changes to data their roles let them see, so a change to a Restricted detail, such as an end date, is not revealed to others by its timing.
+- **Change history:** Every change to plan, people, and configuration data is recorded with its old and new values, who made it, and when, in a history that can only be added to. Changes saved together are grouped into a change set. Undoing a change makes a new change that puts back the old values, so the history is never rewritten.
+- **Who changed what:** Records show who created them and who last changed them, and when, read from the change history. A user sees only changes to data their roles let them see, so a change to a Restricted detail, such as an end date, is not revealed to others by its timing.
 
 ## Platform and Operations
 

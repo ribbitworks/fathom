@@ -31,6 +31,24 @@ export {
   historyEntrySchema,
   historyListSchema,
 } from "./history.ts";
+export {
+  type ChangeStamp,
+  changeStampSchema,
+  type Tier,
+  tierSchema,
+} from "./changes.ts";
+export {
+  type ListItem,
+  type ListItemRequest,
+  listItemDescriptionLength,
+  listItemLabelLength,
+  listItemRequestSchema,
+  listItemSchema,
+  type ListName,
+  listNameSchema,
+  type Lists,
+  listsSchema,
+} from "./lists.ts";
 export { type GreetingResponse, greetingResponseSchema } from "./greeting.ts";
 export {
   type SessionResponse,

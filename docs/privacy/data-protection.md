@@ -47,7 +47,7 @@ Fathom does not hold salary or compensation, performance ratings or reviews, hea
 
 ### Information About Fathom's Users
 
-Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; a history of who viewed or changed Restricted or Confidential information, and of every change to user accounts; and, on each record in the plan and on each employee's details, which user created it and last changed it, and when. A user sees only changes to information they are allowed to see. When a user leaves, their Fathom account must be disabled by hand.
+Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; a history of who viewed or changed Restricted or Confidential information, and of every change to user accounts; and a history of every change to the plan and to employees' details, with the old and new values, which user made it, and when, so changes can be checked and undone. Like the access history, it can only be added to. A user sees only changes to information they are allowed to see, and the history keeps earlier values, such as a past level, for as long as the agreed retention period allows. When a user leaves, their Fathom account must be disabled by hand.
 
 ## Who Can See and Change What
 
@@ -98,7 +98,7 @@ Our understanding, which is not legal advice, is that British Columbia's Persona
 1. **Approval:** Is the information listed above acceptable to hold for planning purposes?
 1. **Employee notice:** How should employees be told that Fathom holds this information, and for what purposes?
 1. **Access and correction:** How should employees ask to see or correct their information? Since the HR system is the official record, corrections would normally be made there and copied into Fathom.
-1. **Retention:** How long should details of employees who have left be kept before they are removed? Is Fathom's information ever used to make a decision that directly affects someone?
+1. **Retention:** How long should details of employees who have left be kept before they are removed, and how long should the history of changes, with its earlier values, be kept? Is Fathom's information ever used to make a decision that directly affects someone?
 1. **Access history:** Who should be able to view the history of who viewed or changed information, and how long should it be kept? How long should records of signed-in sessions, with their network addresses and browsers, be kept?
 1. **Other countries:** What does Indian law, or the law of any other country where we have employees, require for this information, including managers in India seeing details of employees in Canada?
 1. **Server location:** Are there any concerns about holding information about employees outside Canada on a server in Canada?

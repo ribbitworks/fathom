@@ -21,6 +21,7 @@ import { ChangePassword } from "./change-password.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { Layout } from "./layout.tsx";
+import { ListsPage } from "./lists-page.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
@@ -82,6 +83,16 @@ const historyRoute = createRoute({
   component: HistoryPage,
 });
 
+const listsRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/lists",
+  beforeLoad: requiring("configuration:view"),
+  component: function Lists() {
+    const { permissions } = signedIn.useRouteContext();
+    return <ListsPage canEdit={permissions.includes("configuration:edit")} />;
+  },
+});
+
 const changePasswordRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/password",
@@ -105,6 +116,7 @@ const routeTree = rootRoute.addChildren([
     homeRoute,
     accountsRoute,
     historyRoute,
+    listsRoute,
     changePasswordRoute,
   ]),
   signInRoute,

@@ -94,6 +94,11 @@ afterAll(async () => {
 });
 
 describe("schema", () => {
+  // How PostgreSQL abbreviates what a foreign key does when the row it points to is deleted.
+  const onDeleteNames = new Map([
+    ["a", "no action"],
+    ["c", "cascade"],
+  ]);
   // Every table the schema module defines, alongside the schema object itself.
   const tables = Object.values(schema as Record<string, unknown>).filter(
     (value) => isTable(value),
@@ -130,7 +135,7 @@ describe("schema", () => {
         foreignKeys.rows
           .map(
             (row) =>
-              `${row.name} ${row.on_delete === "c" ? "cascade" : row.on_delete}`,
+              `${row.name} ${onDeleteNames.get(row.on_delete) ?? row.on_delete}`,
           )
           .sort(),
       ).toEqual(
@@ -344,6 +349,79 @@ describe("access history", () => {
       ]) {
         expect(await errorCodeOf(client.query(change))).toBe(raisedException);
       }
+    });
+  });
+});
+
+describe("change history", () => {
+  const raisedException = "P0001";
+  const addChange = (setId: string) =>
+    `INSERT INTO fathom.changes (change_set_id, record_type, record_id, action, field, tier, new_value) VALUES ('${setId}', 'fictional-record', 'fictional-id', 'created', 'label', 'general', '"Fictional"')`;
+
+  it("lets the application role read and add change sets and changes, but not change, remove, or empty them", async () => {
+    await withClient(database.app, async (client) => {
+      const added = await client.query<{ id: string }>(
+        "INSERT INTO change_sets DEFAULT VALUES RETURNING id",
+      );
+      const setId = added.rows[0]?.id ?? "";
+      await client.query(addChange(setId));
+      const read = await client.query(
+        `SELECT new_value FROM changes WHERE change_set_id = '${setId}'`,
+      );
+      expect(read.rows).toEqual([{ new_value: "Fictional" }]);
+      for (const change of [
+        "UPDATE change_sets SET made_at = now()",
+        "DELETE FROM change_sets",
+        "TRUNCATE change_sets",
+        "UPDATE changes SET field = 'changed'",
+        "DELETE FROM changes",
+        "TRUNCATE changes",
+      ]) {
+        expect(await errorCodeOf(client.query(change))).toBe(
+          insufficientPrivilege,
+        );
+      }
+    });
+  });
+
+  it("refuses changes, removals, and emptying even by the role that owns it", async () => {
+    await withClient(database.migrator, async (client) => {
+      const added = await client.query<{ id: string }>(
+        "INSERT INTO fathom.change_sets DEFAULT VALUES RETURNING id",
+      );
+      await client.query(addChange(added.rows[0]?.id ?? ""));
+      for (const change of [
+        "UPDATE fathom.change_sets SET made_at = now()",
+        "DELETE FROM fathom.change_sets",
+        "TRUNCATE fathom.change_sets CASCADE",
+        "UPDATE fathom.changes SET field = 'changed'",
+        "DELETE FROM fathom.changes",
+        "TRUNCATE fathom.changes",
+      ]) {
+        expect(await errorCodeOf(client.query(change))).toBe(raisedException);
+      }
+    });
+  });
+});
+
+describe("list items", () => {
+  const uniqueViolation = "23505";
+
+  it("refuses a label already in the same list, ignoring letter case", async () => {
+    await withClient(database.app, async (client) => {
+      await client.query(
+        "INSERT INTO list_items (list, label) VALUES ('fictional-list', 'Harbour Site')",
+      );
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO list_items (list, label) VALUES ('fictional-list', 'harbour site')",
+          ),
+        ),
+      ).toBe(uniqueViolation);
+      await client.query(
+        "INSERT INTO list_items (list, label) VALUES ('another-fictional-list', 'Harbour Site')",
+      );
     });
   });
 });

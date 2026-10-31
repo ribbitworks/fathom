@@ -97,6 +97,15 @@ export async function sendJsonFor<Schema extends z.ZodType>(
   return schema.parse(await (await send(method, path, body)).json());
 }
 
+// Asks the API to remove something.
+export async function sendDelete(path: string): Promise<void> {
+  const response = await fetch(path, {
+    method: "DELETE",
+    headers: { accept: "application/json" },
+  });
+  if (!response.ok) throw await failure(response);
+}
+
 const forbidden = 403;
 const tooManyRequests = 429;
 

@@ -43,6 +43,13 @@
       "when": 1793393313266,
       "tag": "0005_add_access_history",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793422679340,
+      "tag": "0006_add_lists_and_change_history",
+      "breakpoints": true
     }
   ]
 }

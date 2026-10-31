@@ -37,7 +37,7 @@ const headerHeight = 56;
 const sidebarWidth = 228;
 const sidebarId = "sections";
 
-type Page = "/" | "/accounts" | "/history" | "/password";
+type Page = "/" | "/accounts" | "/history" | "/lists" | "/password";
 
 interface Item {
   label: string;
@@ -57,7 +57,11 @@ const sections: { label: string; items: Item[] }[] = [
   },
   {
     label: "People",
-    items: [{ label: "People" }, { label: "Capacity" }],
+    items: [
+      { label: "People" },
+      { label: "Capacity" },
+      { label: "Lists", to: "/lists", permission: "configuration:view" },
+    ],
   },
   {
     label: "Administration",

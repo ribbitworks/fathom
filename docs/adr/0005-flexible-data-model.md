@@ -27,7 +27,7 @@ Custom fields and tables use a values table.
 - **Uniqueness:** A value row for a field marked unique carries a flag. Each typed value column has a fixed partial unique index on the field and that column, limited to flagged rows, so the database refuses duplicates, including when two people save at the same time. Text is compared ignoring letter case.
 - **Checked by the data access layer:** That a required value is present, since a missing value has no row for the database to check; that a value is in the column for its field's type; and that a link to a custom record points to the custom table its field names, since custom records share one column.
 - **Access:** The data access layer leaves out every value from a field the user's tiers do not cover, and refuses to filter or sort by such a field, since the order of results could reveal its values.
-- **Change stamps:** The tables that hold plan, people, and configuration data record who created each record and who last changed it, and when. The last change is kept for each sensitivity tier a record's fields belong to, so a user sees only the latest change to data their tiers cover. Records made by setup or seed scripts are stamped as made by Fathom itself, not by a user.
+- **Change stamps:** Who created and last changed a record, custom values included, is read from the change history, which records each change with the tier of the field it changed, so a user sees only the latest change to data their tiers cover. Changes made by setup or seed scripts are recorded as made by Fathom itself, not by a user.
 
 | Setting the user sees | How it is enforced |
 | --- | --- |

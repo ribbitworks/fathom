@@ -35,7 +35,8 @@ erDiagram
     PLANNED_HIRE |o--o| PERSON : "is filled by"
     USER }o--|{ ROLE : has
     USER |o..o| PERSON : "may be"
-    CHANGE_SET ||..o{ PLAN_CHANGE : groups
+    CHANGE_SET ||--|{ CHANGE : groups
+    USER |o--o{ CHANGE_SET : makes
     RELEASE_STREAM ||..o{ CYCLE : defines
     RELEASE_STREAM ||..o{ RELEASE : contains
     RELEASE |o..|{ CYCLE : includes
@@ -66,7 +67,7 @@ erDiagram
 
 ## Workforce Entities
 
-- **Person:** An employee, current or former, with their employee details and an active flag.
+- **Person:** An employee, current or former, with their employee details. Whether they are active follows from their start and end dates.
 - **Team:** Can be named. Links a manager to their direct reports.
 - **Feature team:** Can be named. Links a set of features to its members and its feature lead. Membership is separate from reporting lines.
 - **Feature team membership:** Links a person to a feature team from a given date. Future-dated memberships represent planned changes.
@@ -98,13 +99,16 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.
+- **List item:** One choice in a list for a person's details, such as a site or a position, with a name and an optional description.
 
 ## Change and History Entities
 
-- **Change stamp:** The user who created a record and who last changed it, and when, for the records listed in the Decisions Log, with the last change kept for each sensitivity tier.
+- **Change set:** Changes saved together, with who made them and when. Until plan approval arrives, each is applied as it is saved.
+- **Change:** One field of one record changed in a change set, with its sensitivity tier and its old and new values.
+- **Change stamp:** Who created a record and who last changed it, and when, read from the changes to fields in the reader's tiers.
 - **Snapshot:** A point-in-time copy of part of the plan. Its contents are set in the Decisions Log.
 
-**Proposal:** Group draft changes into a change set. Each plan change is one draft edit, such as a new allocation or moved dates. An editor submits a change set for approval, and approving it applies its changes to the live plan. A change set can be compared with the approved plan or with another change set, which also supports what-if scenarios if they turn out to be the same feature.
+**Proposal:** Extend change sets to drafts. Each plan change is one draft edit, such as a new allocation or moved dates. An editor submits a change set for approval, and approving it applies its changes to the live plan. A change set can be compared with the approved plan or with another change set, which also supports what-if scenarios if they turn out to be the same feature.
 
 ## Not Yet Modeled
 

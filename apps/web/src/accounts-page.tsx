@@ -47,7 +47,7 @@ import {
   setActive,
   setRoles,
 } from "./accounts.ts";
-import { describeProblem } from "./api.ts";
+import { DialogActions } from "./dialog-actions.tsx";
 import { initials } from "./names.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -97,46 +97,6 @@ function RoleChoices({
         ))}
       </SimpleGrid>
     </Checkbox.Group>
-  );
-}
-
-// A dialog's buttons, and why the change it asked for was refused.
-function DialogActions({
-  error,
-  pending,
-  label,
-  onCancel,
-}: {
-  error: Error | null;
-  pending: boolean;
-  label: string;
-  onCancel: () => void;
-}) {
-  return (
-    <>
-      {error && (
-        <Alert color="red" role="alert">
-          {describeProblem(
-            error,
-            "Fathom could not make this change. Try again in a moment.",
-          )}
-        </Alert>
-      )}
-      <Group justify="flex-end">
-        <Button
-          variant="default"
-          disabled={pending}
-          onClick={() => {
-            onCancel();
-          }}
-        >
-          Cancel
-        </Button>
-        <Button type="submit" loading={pending}>
-          {label}
-        </Button>
-      </Group>
-    </>
   );
 }
 

@@ -5,7 +5,7 @@
 // changes this mapping and the test that spells it out; adding or renaming a role or permission also
 // changes the shared lists in packages/shared.
 
-import type { Permission, Role } from "@fathom/shared";
+import type { Permission, Role, Tier } from "@fathom/shared";
 import { roleSchema } from "@fathom/shared";
 import { ForbiddenError } from "./errors.ts";
 
@@ -75,4 +75,17 @@ export function rolesGranting(permission: Permission): Role[] {
 
 export function requirePermission(actor: Actor, permission: Permission): void {
   if (!actor.permissions.includes(permission)) throw new ForbiddenError();
+}
+
+// The tiers of data the actor may see. General data is seen by everyone allowed to see a record.
+export function visibleTiers(actor: Actor): Tier[] {
+  return [
+    "general",
+    ...(actor.permissions.includes("restricted:view")
+      ? (["restricted"] as const)
+      : []),
+    ...(actor.permissions.includes("confidential:view")
+      ? (["confidential"] as const)
+      : []),
+  ];
 }

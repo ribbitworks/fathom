@@ -26,7 +26,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | Feature teams (General) | View | View | View | Propose | Edit and approve | View | View | None |
 | Restricted employee details | None | None | None | View | Edit | View | None | None |
 | Confidential data | None | None | None | None | Edit | View | None | None |
-| Planning configuration: cycles, cycle names, patch frequency, and composition targets | View | View | View | View | Edit | View | View | None |
+| Planning configuration: cycles, cycle names, patch frequency, composition targets, and the lists of choices for people's details | View | View | View | View | Edit | View | View | None |
 | Draft plan changes | None | Submit | Submit | None | None | None | Approve | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
 | Access history | None | None | None | None | None | None | None | View (**proposal**) |

@@ -3,11 +3,16 @@
 // The specification of what each role lets a user do, from the proposal in docs/product/roles.md,
 // checked one role at a time. A change to the roles changes this table and the mapping it checks,
 // together. Also tests the permission check the data
-// access layer makes.
+// access layer makes, and the tiers of data each role lets a user see.
 
-import type { Permission, Role } from "@fathom/shared";
+import type { Permission, Role, Tier } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { actorFor, requirePermission, rolesGranting } from "./access.ts";
+import {
+  actorFor,
+  requirePermission,
+  rolesGranting,
+  visibleTiers,
+} from "./access.ts";
 import { ForbiddenError } from "./errors.ts";
 
 const user = {
@@ -83,5 +88,29 @@ describe("permission checks", () => {
     }
     expect(refusal).toBeInstanceOf(ForbiddenError);
     expect(refusal).toMatchObject({ statusCode: 403, message: "Forbidden" });
+  });
+});
+
+describe("visible tiers", () => {
+  const tiersByRole: [Role, Tier[]][] = [
+    ["viewer", ["general"]],
+    ["project-planner", ["general"]],
+    ["resource-planner", ["general"]],
+    ["people-manager", ["general", "restricted"]],
+    ["workforce-administrator", ["general", "restricted", "confidential"]],
+    ["leadership", ["general", "restricted", "confidential"]],
+    ["approver", ["general"]],
+    ["administrator", ["general"]],
+  ];
+
+  it.each(tiersByRole)("a %s sees %j", (role, tiers) => {
+    expect(visibleTiers(actorFor(user, [role]))).toEqual(tiers);
+  });
+
+  it("combine across roles", () => {
+    expect(visibleTiers(actorFor(user, ["viewer", "people-manager"]))).toEqual([
+      "general",
+      "restricted",
+    ]);
   });
 });

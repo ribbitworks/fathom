@@ -14,7 +14,10 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
+  uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // Every Fathom table lives in this schema, which the migration role owns. The application role can
 // only read and write data in it.
@@ -142,4 +145,70 @@ export const accessHistory = fathomSchema.table(
     details: jsonb("details").notNull().default({}),
   },
   (table) => [index("access_history_occurred_at_index").on(table.occurredAt)],
+);
+
+// The choices offered for some of a person's details, such as their site or position, one list
+// each, with an optional description. List names are checked by the server, not the database. Labels are unique within a list,
+// ignoring letter case, so two people saving at once cannot add the same choice twice. Who created
+// and changed each item is read from the change history.
+export const listItems = fathomSchema.table(
+  "list_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    list: text("list").notNull(),
+    label: text("label").notNull(),
+    // What the choice means, for anyone unsure which to pick; empty when there is none.
+    description: text("description").notNull().default(""),
+  },
+  (table) => [
+    uniqueIndex("list_items_list_label_index").on(
+      table.list,
+      sql`lower(${table.label})`,
+    ),
+  ],
+);
+
+// The change history: every change made to Fathom's data, with its old and new values, grouped into
+// the change sets that were saved together. Who created and last changed a record is read from it.
+// Like the access history, it can only be added to. Until plan approval arrives, changes are applied
+// as they are saved, so no change set records an approver.
+export const changeSets = fathomSchema.table(
+  "change_sets",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    // Null for Fathom itself, such as for data made by setup or seed scripts. Accounts are deactivated,
+    // never deleted, so the user who made a change always exists.
+    madeBy: text("made_by").references(() => users.id),
+    // The time of saving itself, not when its transaction began, so a change that waited for another
+    // is not dated before it.
+    madeAt: timestamp("made_at", { withTimezone: true })
+      .notNull()
+      .default(sql`clock_timestamp()`),
+  },
+  (table) => [index("change_sets_made_at_index").on(table.madeAt)],
+);
+
+export const changes = fathomSchema.table(
+  "changes",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    changeSetId: uuid("change_set_id")
+      .notNull()
+      .references(() => changeSets.id),
+    // The kind of record changed, such as "list-item", checked by the server.
+    recordType: text("record_type").notNull(),
+    recordId: text("record_id").notNull(),
+    // "created", "changed", or "deleted", checked by the server.
+    action: text("action").notNull(),
+    field: text("field").notNull(),
+    // The sensitivity tier of the field, so each user sees only changes to data they may see.
+    tier: text("tier").notNull(),
+    // Null when the field had no value, as before a record is created or after it is deleted.
+    oldValue: jsonb("old_value"),
+    newValue: jsonb("new_value"),
+  },
+  (table) => [
+    index("changes_record_index").on(table.recordType, table.recordId),
+    index("changes_change_set_index").on(table.changeSetId),
+  ],
 );

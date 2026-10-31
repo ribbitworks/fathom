@@ -6,11 +6,24 @@
 // allow it.
 
 import type { Database } from "@fathom/db";
-import type { HistoryEntry, Role } from "@fathom/shared";
+import type {
+  HistoryEntry,
+  ListItem,
+  ListItemRequest,
+  ListName,
+  Lists,
+  Role,
+} from "@fathom/shared";
 import { sql } from "drizzle-orm";
-import { type Actor, requirePermission } from "../access.ts";
+import { type Actor, requirePermission, visibleTiers } from "../access.ts";
 import { readGreeting } from "./greeting.ts";
 import { readHistory } from "./history.ts";
+import {
+  addListItem,
+  deleteListItem,
+  readLists,
+  updateListItem,
+} from "./lists.ts";
 import { readActorRoles } from "./roles.ts";
 
 export interface DataAccess {
@@ -22,6 +35,21 @@ export interface DataAccess {
   readGreeting(actor: Actor): Promise<string>;
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
+  // The lists of choices for people's details, which everyone who sees planning configuration may
+  // read, and only those who may edit it may change.
+  readLists(actor: Actor): Promise<Lists>;
+  addListItem(
+    actor: Actor,
+    list: ListName,
+    item: ListItemRequest,
+  ): Promise<ListItem>;
+  updateListItem(
+    actor: Actor,
+    list: ListName,
+    id: string,
+    item: ListItemRequest,
+  ): Promise<ListItem>;
+  deleteListItem(actor: Actor, list: ListName, id: string): Promise<void>;
 }
 
 export function createDataAccess(database: Database): DataAccess {
@@ -40,6 +68,35 @@ export function createDataAccess(database: Database): DataAccess {
     readHistory: async (actor) => {
       requirePermission(actor, "history:view");
       return readHistory(database);
+    },
+    readLists: async (actor) => {
+      requirePermission(actor, "configuration:view");
+      return readLists(database, visibleTiers(actor));
+    },
+    addListItem: async (actor, list, item) => {
+      requirePermission(actor, "configuration:edit");
+      return addListItem(
+        database,
+        actor.user.id,
+        list,
+        item,
+        visibleTiers(actor),
+      );
+    },
+    updateListItem: async (actor, list, id, item) => {
+      requirePermission(actor, "configuration:edit");
+      return updateListItem(
+        database,
+        actor.user.id,
+        list,
+        id,
+        item,
+        visibleTiers(actor),
+      );
+    },
+    deleteListItem: async (actor, list, id) => {
+      requirePermission(actor, "configuration:edit");
+      await deleteListItem(database, actor.user.id, list, id);
     },
     readGreeting: async (actor) => {
       requirePermission(actor, "plan:view");
