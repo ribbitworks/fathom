@@ -6,16 +6,18 @@ Guidance for AI coding agents working in this repository.
 
 Complete these steps, in order, for every change before it is committed:
 
+1. **UX design:** Before building or changing a screen, have a separate agent, acting as a senior UX designer, design it following the [UX Standards](docs/standards/ux.md), and get the user's agreement on the design before writing code. If you cannot start a separate agent for this or for a review, tell the user and ask how to proceed.
 1. **Tests:** If the project has tests, run the full suite except UI tests, and fix all failures.
 1. **Build warnings:** If the project has a build, resolve all build warnings.
 1. **Code review:** Have a separate agent, acting as a senior staff engineer, review the changes against the [Code Review Standards](docs/standards/code-review.md). If you cannot start a separate agent, tell the user and ask how to proceed.
-1. **Review findings:** Address every finding. For any finding you do not fix, tell the user which one and why, and get their approval before committing.
-1. **UI verification:** Have the user verify any UI change before proceeding.
+1. **UX review:** For any change to a screen, have the UX designer review the built screen against the agreed design and the [UX Standards](docs/standards/ux.md), continuing the agent that made the design where possible, or starting a new one given the design file.
+1. **Review findings:** Address every finding from both reviews. For any finding you do not fix, tell the user which one and why, and get their approval before committing.
+1. **UI verification:** Have the user verify any change to a screen before proceeding.
 1. **User review:** Summarize the changes for the user and wait for their explicit approval before committing.
 1. **Commit:** Commit the changes, following the branching and commit message rules below.
 1. **Stop:** After committing, stop and wait for instructions.
 
-If addressing findings, UI feedback, or user review feedback changes the code, repeat the test and build steps. Repeat the code review as well if those changes go beyond fixing the reported review findings or UI feedback, or if user review feedback adds new content. Then return to the user review step and get explicit approval of the updated changes before committing.
+If UI or user review feedback changes the agreed design, update the design file and get the user's agreement on it again. If addressing findings, UI feedback, or user review feedback changes the code, repeat the test and build steps. Repeat the code review, and the UX review for screen changes, as well if those changes go beyond fixing the reported review findings or UI feedback, or if user review feedback adds new content. Then return to the user review step and get explicit approval of the updated changes before committing.
 
 ## Branching
 
@@ -88,4 +90,5 @@ chore: initialize repository
 - Keep each open question in the document that will own its answer
 - Markdown formatting rules: [Markdown Style Guidelines](docs/standards/markdown-style-guidelines.md)
 - Code review process: [Code Review Standards](docs/standards/code-review.md)
+- UX design and review process: [UX Standards](docs/standards/ux.md)
 - Testing rules: [Testing Standards](docs/standards/testing.md)

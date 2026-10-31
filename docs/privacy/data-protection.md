@@ -10,7 +10,7 @@ Fathom is an internal planning tool for the software organization. It helps mana
 
 Fathom is being developed using fictional data only. No real employee information will be entered until HR approves this document.
 
-This document covers the first release only. Later releases are planned to add gender and planned reorganizations, to allow exports and saved snapshots of the plan, and to let users add their own fields, such as a skill. Each will be brought back to HR before it is added, and any new field that holds personal information will need HR's approval before it is used.
+This document covers the first release only. Later releases are planned to add gender and planned reorganizations, to allow exports and saved snapshots of the plan, to let users add their own fields, such as a skill, and possibly to record each employee's work email address so managers can see the details of the people who report to them. Each of these will be brought back to HR before it is added, and any new field that holds personal information will need HR's approval before it is used.
 
 ## Who Fathom Is For
 

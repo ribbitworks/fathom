@@ -119,6 +119,7 @@ When the change affects the user interface:
 
 - Interactive controls are accessible by keyboard and to screen readers.
 - The change is verified by the user, as the workflow requires.
+- Design, layout, and the wider user experience are reviewed separately, under the [UX Standards](ux.md); this review checks that the built code is sound.
 
 ### Documentation
 

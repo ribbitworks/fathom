@@ -30,7 +30,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Component Evaluation | Done, in [ADR 0004](../adr/0004-ui-components.md) |
 | Accounts and Access Control | Done |
 | Visual Design | Done |
-| People and Org Structure | In progress: the lists of choices for people's details are done |
+| People and Org Structure | In progress: the lists of choices for people's details are done; their page redesign is next |
 
 ### Hello Fathom
 
@@ -58,7 +58,7 @@ The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#af
 
 People with the employee details the roadmap's [first stage](../product/roadmap.md#stage-who-is-working-on-what) allows, teams, people managers, and their current direct reports.
 
-It is built in three steps: the lists of choices for site, position, level, and role on the team; people, with fictional seed data and commands to load and remove it; and teams with their managers and direct reports. The lists step adds the change history the [Decisions Log](../product/decisions.md#configuration) requires, which every later slice records its changes in. Custom field values are held in their own table, as [ADR 0005](../adr/0005-flexible-data-model.md) proposes, so nothing more is needed until the custom fields stage.
+It is built in three steps: the lists of choices for site, position, level, and role on the team, whose page is then redesigned through the UX design step in the [Workflow](../../AGENTS.md#workflow) because the first version does not scale to long lists; people, with fictional seed data and commands to load and remove it; and teams with their managers and direct reports. The lists step adds the change history the [Decisions Log](../product/decisions.md#configuration) requires, which every later slice records its changes in. Custom field values are held in their own table, as [ADR 0005](../adr/0005-flexible-data-model.md) proposes, so nothing more is needed until the custom fields stage.
 
 ### Projects and Features
 

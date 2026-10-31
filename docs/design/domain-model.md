@@ -67,7 +67,7 @@ erDiagram
 
 ## Workforce Entities
 
-- **Person:** An employee, current or former, with their employee details. Whether they are active follows from their start and end dates.
+- **Person:** An employee, current or former, with their employee details, and their work email address if the link to user accounts proposed below is adopted. Whether they are active follows from their start and end dates.
 - **Team:** Can be named. Links a manager to their direct reports.
 - **Feature team:** Can be named. Links a set of features to its members and its feature lead. Membership is separate from reporting lines.
 - **Feature team membership:** Links a person to a feature team from a given date. Future-dated memberships represent planned changes.
@@ -89,7 +89,7 @@ erDiagram
 
 Fields are assigned to tiers as set in the Decisions Log, and tier checks happen in the data access layer, as set in [ADR 0001](../adr/0001-tech-stack.md).
 
-**Proposal:** Allow a user account to be linked to the person record for the same employee, so Fathom can tell who a user is in the org chart. Not every user needs one.
+**Proposal:** Allow a user account to be linked to the person record for the same employee, so Fathom can tell who a user is in the org chart and give them access to their own record and their reports, as proposed in [Roles](../product/roles.md), which also sets out how links are made. Not every user needs one.
 
 ## Configuration Entities
 

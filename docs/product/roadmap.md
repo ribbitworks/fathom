@@ -59,6 +59,7 @@ Until plan approval arrives in the next stage, edits go straight to the live pla
 ## Stage: The Organization
 
 - **Org structure:** Planned reporting changes and the org chart.
+- **Own record and reports:** Users see their own record and their reports' records through a link to their person record, as proposed in [Roles](roles.md).
 - **Unified people view**
 - **Team composition:** The remaining measures, such as test-to-development ratios.
 - **Timeline / Gantt view**
