@@ -1,7 +1,7 @@
 # Fathom — Use Cases
 
 **Status:** Draft
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-30
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md) and the [Decisions Log](decisions.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
@@ -118,4 +118,5 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 ## Not Yet Covered
 
 - **What-if scenarios:** Comparing drafts with the approved plan and with each other depends on an open question in the brief.
-- **Configuring cycles and releases:** Setting cycle length, release contents, and patch frequency is configurable, but has no use case yet.
+- **Configuring cycles and releases:** Setting cycle length, cycle names, release contents, and patch frequency, and confirming which candidate cycles become releases, have no use case yet.
+- **Custom fields and tables:** Defining custom fields and tables comes in a later stage of the [Roadmap](roadmap.md), and has no use case yet.

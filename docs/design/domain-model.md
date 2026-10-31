@@ -56,9 +56,11 @@ erDiagram
 
 ## Release Entities
 
-- **Cycle:** A period of development, with a start and end date.
+- **Cycle:** A period of development, with a name, a start date, and an end date.
 - **Release:** Links to the cycles it includes and the features that ship in it.
 - **Release stream (proposal):** Defines a cycle length and groups releases.
+
+**Proposal:** Record a candidate state on each cycle, so a candidate can be planned like a release before anyone decides. Confirming it creates the release, which includes the cycles set out in the Decisions Log.
 
 **Proposal:** Model patches and major releases the same way, as separate release streams, each with its own cycle length. Each release belongs to one stream.
 
@@ -88,15 +90,25 @@ Fields are assigned to tiers as set in the Decisions Log, and tier checks happen
 
 **Proposal:** Allow a user account to be linked to the person record for the same employee, so Fathom can tell who a user is in the org chart. Not every user needs one.
 
+## Configuration Entities
+
+Built-in tables and custom fields and tables are set out in the [Decisions Log](../product/decisions.md#configuration), and how they are stored is proposed in [ADR 0005](../adr/0005-flexible-data-model.md).
+
+- **Field definition:** A custom field on a built-in or custom table, with a name, field type, sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to.
+- **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
+- **Custom record:** One row of a custom table, holding values for its fields.
+- **Custom value:** The value of one custom field for one record, built-in or custom.
+
 ## Change and History Entities
 
+- **Change stamp:** The user who created a record and who last changed it, and when, for the records listed in the Decisions Log, with the last change kept for each sensitivity tier.
 - **Snapshot:** A point-in-time copy of part of the plan. Its contents are set in the Decisions Log.
 
 **Proposal:** Group draft changes into a change set. Each plan change is one draft edit, such as a new allocation or moved dates. An editor submits a change set for approval, and approving it applies its changes to the live plan. A change set can be compared with the approved plan or with another change set, which also supports what-if scenarios if they turn out to be the same feature.
 
 ## Not Yet Modeled
 
-Roadmap themes and priorities depend on the open question below. How projects relate to products depends on an open question in Domain Concepts. Dotted-line reporting relationships and licenses are out of scope for v1, as listed in the [Product Brief](../product/brief.md).
+Roadmap themes and priorities depend on the open question below. How projects relate to products depends on an open question in Domain Concepts. Physical resources are a future possibility in the [Product Brief](../product/brief.md#future-possibilities). Dotted-line reporting relationships and licenses are out of scope for v1, as listed in the [Product Brief](../product/brief.md).
 
 ## Open Questions
 

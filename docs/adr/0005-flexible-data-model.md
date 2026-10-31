@@ -1,0 +1,46 @@
+# Flexible Data Model
+
+- **ADR:** 0005
+- **Status:** Proposed
+- **Date:** 2026-10-30
+
+## Context
+
+The [Decisions Log](../product/decisions.md#configuration) records that Fathom has a fixed core of built-in tables, which users extend with their own fields and tables, and that every change records who made it. This ADR decides how that is stored and enforced.
+
+Two earlier decisions constrain it. Every read goes through one data access layer that applies tier checks, as [ADR 0001](0001-tech-stack.md) requires. The application's database role can only read and write data, and only reviewed migrations change the schema, as [ADR 0002](0002-libraries.md) requires, so a custom field can never become a new database column or index.
+
+## Options
+
+- **A JSON column on each table:** Each record holds its custom values in one PostgreSQL `jsonb` column. Simple to read and write, but PostgreSQL's foreign keys work only on columns, so links inside JSON cannot be enforced, and enforcing uniqueness needs an index for each field, which is a schema change.
+- **A values table:** One table holds every custom value, one row per record and field, with one typed column for each field type, such as text, number, and date, plus foreign key columns for the record a value belongs to and the record it links to. Fixed indexes and foreign keys, created by migrations, enforce links and uniqueness for every field.
+- **Database tables created by users:** Each custom table and field becomes a real table or column. Ruled out by ADR 0002, since the application cannot change the schema.
+
+## Decision
+
+Custom fields and tables use a values table.
+
+- **Field definitions:** Custom fields and tables are recorded as definitions in the database, as described in the [Domain Model](../design/domain-model.md#configuration-entities).
+- **Values:** Each custom value is a row naming its field and holding its value in the column for the field's type.
+- **Owner:** Each table that can have custom fields, such as people or features, has its own owner column with a foreign key, and custom records share one. A check makes sure exactly one owner column is set, and a record's values are deleted with it, so no value is left behind or attached to a missing record.
+- **Links:** Each table that can be linked to, such as people, teams, or custom records, has its own link column with a foreign key, so a link cannot point to a missing record. A linked record cannot be deleted while links to it remain; people are already made inactive rather than deleted.
+- **Uniqueness:** A value row for a field marked unique carries a flag. Each typed value column has a fixed partial unique index on the field and that column, limited to flagged rows, so the database refuses duplicates, including when two people save at the same time. Text is compared ignoring letter case.
+- **Checked by the data access layer:** That a required value is present, since a missing value has no row for the database to check; that a value is in the column for its field's type; and that a link to a custom record points to the custom table its field names, since custom records share one column.
+- **Access:** The data access layer leaves out every value from a field the user's tiers do not cover, and refuses to filter or sort by such a field, since the order of results could reveal its values.
+- **Change stamps:** The tables that hold plan, people, and configuration data record who created each record and who last changed it, and when. The last change is kept for each sensitivity tier a record's fields belong to, so a user sees only the latest change to data their tiers cover. Records made by setup or seed scripts are stamped as made by Fathom itself, not by a user.
+
+| Setting the user sees | How it is enforced |
+| --- | --- |
+| Field type: Text, Number, Date, Yes/No, Choice from a list, Person, or Link to another table | A typed value column; Person and Link fields use the foreign key for that table |
+| Must be filled in | The data access layer |
+| No two records can have the same value | The partial unique indexes |
+| Identifier | Not shown; every record gets one automatically, as its primary key |
+
+## Consequences
+
+- **No schema changes at runtime:** Custom fields and tables need only rows, so the application's database role stays read and write only.
+- **The database enforces links, owners, and uniqueness:** Required values, value types, and which custom table a link points to rely on the data access layer, with tests.
+- **New built-in tables need a migration:** Adding a built-in table that can have custom fields adds an owner column to the values table, and one that custom fields can link to adds a link column. Custom tables share one column of each.
+- **Reading a record takes a join:** Showing custom values means joining the values table, and filtering on several custom fields means one join each, which is acceptable at Fathom's scale.
+- **Changing a field definition affects existing values:** Renaming a field is safe, but changing its type, making it required or unique, or deleting it must check or convert existing values first.
+- **Snapshots keep values as they were:** A snapshot stores each custom value with the field's name and type at the time, so a later change to the field does not change the snapshot.

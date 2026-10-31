@@ -58,6 +58,8 @@ The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#af
 
 People with the employee details the roadmap's [first stage](../product/roadmap.md#stage-who-is-working-on-what) allows, teams, people managers, and their current direct reports.
 
+People and teams are the first tables to record who created and last changed each record, as the [Decisions Log](../product/decisions.md#configuration) requires, built as [ADR 0005](../adr/0005-flexible-data-model.md) proposes once it is accepted. Every later slice follows the same pattern. Custom field values are held in their own table, so nothing more is needed until the custom fields stage.
+
 ### Projects and Features
 
 Projects with their customers, features with their feature teams and feature leads, and milestones. Until plan approval arrives, edits go straight to the live plan and People Managers edit feature teams directly, as set out in the roadmap and [Roles](../product/roles.md).
@@ -68,7 +70,7 @@ Configurable cycles, releases, and patch frequency, and which features ship in w
 
 ### Allocations and Capacity
 
-Monthly allocations, capacity by person and team, and the warnings and rules in the [Decisions Log](../product/decisions.md).
+Monthly allocations, capacity by person and team, and the warnings and rules in the [Decisions Log](../product/decisions.md), shown in the monthly resource grid, with the cycle and release lines from the Cycles and Releases slice.
 
 ### Hiring Plan
 

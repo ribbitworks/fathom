@@ -28,6 +28,7 @@ How Fathom's screens look and behave, so every page is built the same way. It ap
 ## Components
 
 - **Tables:** Lists of records are tables in a panel, with search and filters above them and each row's actions in a menu at its end.
+- **Monthly resource grid:** The grid in the [Decisions Log](../product/decisions.md#planning) keeps people's names fixed on the left while months scroll sideways. Cycle and release ends are thin vertical lines labelled with their names, and each cell lists that month's work.
 - **Dialogs:** Creating and changing records happens in dialogs, which say what will change and where it is recorded.
 - **Messages:** Problems are shown in plain words saying what to do next, never as raw errors.
 - **Styles:** Mantine's components, theme, and style props, such as a one-off size or margin, come first. Anything more goes in a CSS Module, never in a `style` attribute.

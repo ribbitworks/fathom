@@ -52,6 +52,10 @@ Until plan approval arrives in the next stage, edits go straight to the live pla
 - **Exports**
 - **People and teams:** Gender.
 
+## Stage: Your Own Fields and Tables
+
+- **Custom fields and tables**, as set out in the [Decisions Log](decisions.md#configuration)
+
 ## Stage: The Organization
 
 - **Org structure:** Planned reporting changes and the org chart.
@@ -64,10 +68,10 @@ Until plan approval arrives in the next stage, edits go straight to the live pla
 
 - **What-if scenarios**, if confirmed
 
-These four stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
+These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
 
 ## Open Questions
 
 1. **First stage scope:** Is the first stage the right size, and are the cut-down versions acceptable?
 1. **Editing before approval:** Is it acceptable for edits to go straight to the live plan until plan approval arrives?
-1. **Stage order:** Is the order after the first stage right? For example, should the org chart come before plan approval?
+1. **Stage order:** Is the order after the first stage right? For example, should the org chart come before plan approval, and should custom fields and tables come right after it, as proposed, so that changes to them can be approved?

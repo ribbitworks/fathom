@@ -15,7 +15,10 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Plan approval:** Draft plan changes are approved by a user with an approver role before they reach the live plan.
 - **Editing model:** No live collaboration. Saving a change (subject to approval) and refreshing to see others' changes is acceptable.
 - **Cycles and releases:** Cycle length, which cycles a release includes, and patch frequency are all configurable in Fathom.
+- **Cycle names:** Cycles are named by a configurable pattern, for example the last two digits of the year the cycle ends in and its number within that year.
+- **Release candidates:** Every cycle is a candidate release until a user confirms it. Confirming one makes a release that includes every cycle since the previous release, and unconfirmed candidates are not releases.
 - **Release contents:** Fathom records which features ship in which release.
+- **Monthly resource grid:** Allocations are shown as a grid, with people and planned hires as rows and months as columns. Each cell shows what that person works on that month, and the ends of cycles and releases are marked as vertical lines.
 
 ## Workforce
 
@@ -57,10 +60,17 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 - Employees can ask to see or correct their information.
 - Personal information used to make a decision that directly affects someone must be kept for at least one year after the decision, then destroyed or anonymized once no longer needed for legal or business purposes.
 
+## Configuration
+
+- **Flexible data model:** A fixed core of built-in tables, such as people, teams, projects, features, and allocations, with fixed key fields that Fathom's views and access rules rely on. Users extend it with custom fields on built-in tables and custom tables for reference lists, such as skills. How they are stored is proposed in [ADR 0005](../adr/0005-flexible-data-model.md).
+- **Plain language:** Fields and tables are set up in everyday terms, such as "Must be filled in" and "Link to another table", never database terms.
+- **Sensitivity of custom fields:** Every custom field and table is assigned a sensitivity tier when it is created. Custom fields that hold personal information need HR's approval before use.
+- **Who changed what:** Plan, people, and configuration records show who created them and who last changed them, and when. A user sees only changes to data their roles let them see, so a change to a Restricted detail, such as an end date, is not revealed to others by its timing.
+
 ## Platform and Operations
 
 - **Tech stack:** Recorded in [ADR 0001](../adr/0001-tech-stack.md).
 - **Authentication:** Local accounts managed in Fathom for v1.
-- **Snapshots:** Taken both manually and on a schedule, and contain projects, features, and allocations only. The schedule is to be decided.
+- **Snapshots:** Taken both manually and on a schedule, and contain projects, features, and allocations only, with their custom field values. The schedule is to be decided.
 - **Exports:** PDF, and CSV or TSV for use in Excel.
 - **Backup operations:** Run and monitored by the owner's department, since IT is too busy to support custom applications.

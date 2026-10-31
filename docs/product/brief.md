@@ -1,7 +1,7 @@
 # Fathom — Product Brief
 
 **Status:** Draft
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-30
 
 ## Problem
 
@@ -38,6 +38,7 @@ About 20–30 users in one private company operating in British Columbia, with e
 - **Timeline / Gantt view:** Show work interactively, with drag-and-drop to change dates and assignments.
 - **Roadmap view:** Give leadership a clean, read-only roadmap, grouped by quarter and theme.
 - **Roles:** Control what each user can see, edit, and approve through roles.
+- **Custom fields and tables:** Let users add their own fields to Fathom's built-in tables, and their own tables, set up in plain language rather than database terms.
 - **Exports:** Export the plan and roadmap, limited to what each user's roles allow.
 - **Snapshots:** Save point-in-time snapshots of the plan and view them later.
 - **Backups:** Provide automated backup and restore of Fathom's data.
@@ -69,6 +70,7 @@ About 20–30 users in one private company operating in British Columbia, with e
 - **Planned hires:** Planned hires appear in the plan and can be allocated like current staff.
 - **Access:** Role-based. A user can have one or more roles, and roles grant access to tiers of data by sensitivity.
 - **Editing:** No live collaboration. Draft changes are approved before they reach the live plan.
+- **Configurability:** A fixed core of built-in tables, extended with custom fields and tables. See the [Decisions Log](decisions.md#configuration).
 - **Employee data:** A manually maintained copy of details held in the HR system.
 - **Authentication:** Local accounts managed in Fathom for v1.
 - **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
@@ -81,11 +83,12 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 - Reading project data from a Primavera P6 database
 - Integrations with Jira and the HR system
 - Other integrations as needs emerge
+- Physical resources, such as equipment, planned and allocated alongside people
 
 ## Open questions
 
 1. **What-if scenarios:** The owner wants to compare a draft with the approved plan, and drafts with each other. Is this the same feature as drafting changes for approval? The owner thinks it is. It could mature incrementally across versions of Fathom.
-1. **Roles and approval:** Which roles exist, what can each see, edit, and approve, and which changes need approval? See the proposal in [Roles](roles.md).
+1. **Roles and approval:** Which roles exist, what can each see, edit, and approve, and which changes need approval? The owner intends everything users create or edit to be pending until approved, including people, teams, and custom fields and tables, and will refine this. See the proposal in [Roles](roles.md).
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
 1. **Project Manager input:** What input do Software Project Managers have on whether teams are in place, for example comments, proposals, or approval?

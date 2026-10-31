@@ -1,7 +1,7 @@
 # Fathom — Domain Concepts
 
 **Status:** Draft
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-30
 
 How the organization's software work is structured. These definitions inform the data model and roadmap planning later. They are not necessarily input into the [Use Cases](use-cases.md). See also the [Product Brief](brief.md) and the [Decisions Log](decisions.md).
 
@@ -22,6 +22,7 @@ How the organization's software work is structured. These definitions inform the
 - **Team:** The people who report to a manager.
 - **Feature team:** The people working on a set of related features. Ideally a feature team is made up of the same people as a team, but not always. Feature teams deliver features included in a release, and are less concerned with projects.
 - **Feature lead:** The person who leads a feature team.
+- **Resource:** Anything that can be allocated to work, currently people and planned hires.
 - **Estimate:** A rough size of the effort a feature needs, not its cost, such as a rough order of magnitude (ROM) or a SWAG.
 - **Delivery:** Taking a feature, or an increment of it, from start to finish within a release, from requirements analysis to fully tested.
 
@@ -30,4 +31,5 @@ How the organization's software work is structured. These definitions inform the
 1. **Customer and product requirements:** Does the distinction between customer-driven and product-driven requirements matter? The owner is not sure.
 1. **Features across projects:** Can a feature belong to more than one project? The owner thinks it probably can.
 1. **Software Engineering Manager's dotted lines:** Are the Software Project Managers a Software Engineering Manager has a dotted line to those of their reporting team's projects, or of the projects their people work on through feature teams? The current reading is the projects their people work on.
+1. **Scope and features:** Does scope include features, or do features include scope? Is fixing a set of bugs a feature, or scope? The owner will decide later.
 1. **Estimate units:** What unit are estimates in, for example person-months?

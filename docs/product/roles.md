@@ -20,16 +20,24 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 
 | Area | Viewer | Project Planner | Resource Planner | People Manager | Workforce Administrator | Leadership | Approver | Administrator |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Plan: initiatives, projects, features, milestones, release contents, and estimates | View | Edit | View | View | View | View | View | None |
+| Plan: initiatives, projects, features, milestones, release contents, which cycles become releases (**proposal**), and estimates | View | Edit | View | View | View | View | View | None |
 | Allocations | View | View | Edit | View | View | View | View | None |
 | People, teams, and reporting lines (General) | View | View | View | View | Edit | View | View | None |
 | Feature teams (General) | View | View | View | Propose | Edit and approve | View | View | None |
 | Restricted employee details | None | None | None | View | Edit | View | None | None |
 | Confidential data | None | None | None | None | Edit | View | None | None |
-| Planning configuration: cycles, releases, patch frequency, and composition targets | View | View | View | View | Edit | View | View | None |
+| Planning configuration: cycles, cycle names, patch frequency, and composition targets | View | View | View | View | Edit | View | View | None |
 | Draft plan changes | None | Submit | Submit | None | None | None | Approve | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
 | Access history | None | None | None | None | None | None | None | View (**proposal**) |
+
+## Custom Fields and Tables
+
+**Proposal:** The Workforce Administrator defines custom fields on people, teams, and planned hires, and any custom field or table that links to people or holds personal information. Project Planners define other custom fields on the plan, such as on projects and features, and custom tables for reference lists. A user can assign a field or table only to a tier their own roles let them see. This waits for the [Roadmap](roadmap.md)'s stage for custom fields and tables.
+
+## Releases
+
+**Proposal:** Project Planners, such as Software Project Managers, confirm which candidate cycles become releases, along with release contents. The Workforce Administrator sets up cycles, their naming pattern, and patch frequency.
 
 ## Planned Hires in the Plan
 

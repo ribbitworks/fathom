@@ -10,7 +10,7 @@ Fathom is an internal planning tool for the software organization. It helps mana
 
 Fathom is being developed using fictional data only. No real employee information will be entered until HR approves this document.
 
-This document covers the first release only. Later releases are planned to add gender and planned reorganizations, and to allow exports and saved snapshots of the plan. Each will be brought back to HR before it is added.
+This document covers the first release only. Later releases are planned to add gender and planned reorganizations, to allow exports and saved snapshots of the plan, and to let users add their own fields, such as a skill. Each will be brought back to HR before it is added, and any new field that holds personal information will need HR's approval before it is used.
 
 ## Who Fathom Is For
 
@@ -47,7 +47,7 @@ Fathom does not hold salary or compensation, performance ratings or reviews, hea
 
 ### Information About Fathom's Users
 
-Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; and a history of who viewed or changed Restricted or Confidential information, and of every change to user accounts. When a user leaves, their Fathom account must be disabled by hand.
+Fathom also holds information about its own users: a user account for each person who uses Fathom, separate from company sign-in, holding their name and email address; a record of each signed-in session, with the network address and browser it started from, kept to investigate security problems; a history of who viewed or changed Restricted or Confidential information, and of every change to user accounts; and, on each record in the plan and on each employee's details, which user created it and last changed it, and when. A user sees only changes to information they are allowed to see. When a user leaves, their Fathom account must be disabled by hand.
 
 ## Who Can See and Change What
 
