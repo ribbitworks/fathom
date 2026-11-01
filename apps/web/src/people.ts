@@ -32,18 +32,16 @@ const fieldResponse = z.object({
   changeSetId: changeSetIdSchema,
 });
 
-// Adds people, all saved together.
+// Adds people, all saved together, and gives their identifiers and the change set they were saved in.
 export async function createPeople(
   people: PersonRequest[],
-): Promise<string | null> {
-  return (
-    await sendJsonFor(
-      "POST",
-      "/api/people",
-      { people },
-      z.object({ ids: z.array(z.string()), changeSetId: changeSetIdSchema }),
-    )
-  ).changeSetId;
+): Promise<{ ids: string[]; changeSetId: string | null }> {
+  return sendJsonFor(
+    "POST",
+    "/api/people",
+    { people },
+    z.object({ ids: z.array(z.string()), changeSetId: changeSetIdSchema }),
+  );
 }
 
 export async function updatePerson(

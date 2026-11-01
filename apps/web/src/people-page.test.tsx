@@ -228,7 +228,7 @@ describe("who sees the People page", () => {
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Enter}x");
     await userEvent.dblClick(cell("p1", "preferredName"));
-    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(within(screen.getByRole("grid")).queryByRole("textbox")).toBeNull();
     await userEvent.keyboard("{Shift>}{F10}{/Shift}");
     expect(screen.queryByRole("menu")).toBeNull();
   });
@@ -387,7 +387,9 @@ describe("editing people", () => {
       const fetch = await openPeople();
       focusCell("p1", key);
       await userEvent.keyboard("{Enter}");
-      const input = await screen.findByRole("textbox");
+      const input = await within(screen.getByRole("grid")).findByRole(
+        "textbox",
+      );
       await userEvent.click(input);
       await userEvent.keyboard(keys);
       await userEvent.keyboard("{Enter}");
@@ -395,7 +397,9 @@ describe("editing people", () => {
         "textContent",
         problem,
       );
-      expect(screen.getByRole("textbox")).toBeDefined();
+      expect(
+        within(screen.getByRole("grid")).getByRole("textbox"),
+      ).toBeDefined();
       expect(bodyOf(fetch, "PATCH", "/api/people/p1")).toEqual([]);
       await userEvent.keyboard("{Escape}");
       expect(screen.queryByRole("alert")).toBeNull();
@@ -414,11 +418,11 @@ describe("editing people", () => {
     expect(bodyOf(fetch, "PATCH", "/api/people/p1")).toEqual([
       { employeeId: "E10" },
     ]);
-    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(within(screen.getByRole("grid")).queryByRole("textbox")).toBeNull();
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Enter}{Control>}a{/Control}{Backspace}");
     await userEvent.click(document.body);
-    expect(screen.queryByRole("textbox")).toBeNull();
+    expect(within(screen.getByRole("grid")).queryByRole("textbox")).toBeNull();
     expect(screen.getByRole("alert").textContent).toBe("Name needed");
     expect(bodyOf(fetch, "PATCH", "/api/people/p1")).toHaveLength(1);
   });
@@ -1048,5 +1052,437 @@ describe("only the latest change", () => {
     await screen.findByRole("dialog");
     await userEvent.keyboard("{Meta>}z{/Meta}");
     expect(undone(fetch)).toEqual([]);
+  });
+});
+
+describe("searching, sorting, and filtering", () => {
+  const manySites = list(
+    "l1",
+    "Sites",
+    [
+      "Harbour",
+      "Northmere",
+      "Ashby",
+      "Bramble",
+      "Coldwater",
+      "Dunmore",
+      "Eastvale",
+      "Fernhill",
+      "Glenrock",
+    ].map((label, index) =>
+      choice(
+        index === 0 ? "c1" : index === 1 ? "c2" : `s${String(index)}`,
+        label,
+      ),
+    ),
+  );
+
+  async function openAt(path: string, answers: Answers = {}) {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/people": peopleAnswer,
+      "GET /api/lists": listsAnswer,
+      ...answers,
+    });
+    const history = renderApp(path);
+    await screen.findByRole("grid", { name: "People" });
+    return { fetch, history };
+  }
+
+  // The names of the people shown, in order.
+  const shownNames = () =>
+    screen
+      .getAllByRole("row")
+      .filter(
+        (row) =>
+          row.querySelector('[id$="-preferredName"]') &&
+          !row.getAttribute("aria-label"),
+      )
+      .map((row) => inRow(row, "Name").textContent);
+
+  // A column's header, whatever its sort and filter.
+  const header = (label: string) =>
+    screen.getByRole("button", {
+      name: (name) => name.startsWith(`${label} column`),
+    });
+
+  // Chooses an item from a column's menu, then waits for the menu to finish closing.
+  async function choose(label: string, item: string | RegExp) {
+    await userEvent.click(header(label));
+    await userEvent.click(await screen.findByRole("menuitem", { name: item }));
+    await vi.waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+  }
+
+  const address = (history: ReturnType<typeof renderApp>) =>
+    decodeURIComponent(history.location.search);
+
+  it("searches every column from the search field, which Cmd+F focuses and Esc clears", async () => {
+    const { history } = await openAt("/people");
+    focusCell("p1", "employeeId");
+    await userEvent.keyboard("{Control>}f{/Control}");
+    const search = screen.getByRole("textbox", { name: "Search people" });
+    expect(document.activeElement).toBe(search);
+    await userEvent.keyboard("northmere");
+    expect(shownNames()).toEqual([]);
+    expect(screen.getByText("No matching people")).toBeDefined();
+    await userEvent.clear(search);
+    await userEvent.type(search, "team lead");
+    expect(shownNames()).toEqual(["Avery Fictional"]);
+    expect(screen.getByText("1 of 2")).toBeDefined();
+    expect(history.location.search).toBe("?search=team+lead");
+    await userEvent.keyboard("{Escape}");
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    expect(history.location.search).toBe("");
+    await userEvent.keyboard("{Escape}");
+    expect(document.activeElement).toBe(cell("p1", "employeeId"));
+    await userEvent.keyboard("{Control>}{Alt>}f{/Alt}{/Control}");
+    await userEvent.keyboard("{Meta>}f{/Meta}");
+    expect(document.activeElement).toBe(cell("p1", "employeeId"));
+  });
+
+  it("takes Cmd+F on a Mac, and leaves it alone in a dialog", async () => {
+    const agent = vi
+      .spyOn(navigator, "userAgent", "get")
+      .mockReturnValue("Mozilla/5.0 (Macintosh)");
+    await openAt("/people");
+    const search = screen.getByRole("textbox", { name: "Search people" });
+    focusCell("p1", "employeeId");
+    await userEvent.keyboard("{Control>}f{/Control}");
+    expect(document.activeElement).toBe(cell("p1", "employeeId"));
+    await userEvent.click(screen.getByRole("button", { name: "New column" }));
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.keyboard("{Meta>}f{/Meta}");
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    await userEvent.keyboard("{Escape}");
+    await vi.waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    await userEvent.keyboard("{Meta>}f{/Meta}");
+    expect(document.activeElement).toBe(search);
+    agent.mockRestore();
+  });
+
+  it("keeps every character typed quickly, and Back undoes a whole search", async () => {
+    const { history } = await openAt('/people?sort=["f1"]');
+    const search = screen.getByRole("textbox", { name: "Search people" });
+    act(() => {
+      search.focus();
+    });
+    fireEvent.change(search, { target: { value: "a" } });
+    fireEvent.change(search, { target: { value: "av" } });
+    fireEvent.change(search, { target: { value: "ave" } });
+    await vi.waitFor(() => {
+      expect(history.location.search).toContain("search=ave");
+    });
+    expect(search).toHaveProperty("value", "ave");
+    await vi.waitFor(() => {
+      expect(shownNames()).toEqual(["Avery Fictional"]);
+    });
+    history.back();
+    await vi.waitFor(() => {
+      expect(search).toHaveProperty("value", "");
+    });
+    expect(history.location.search).toContain("sort=");
+    // Typing again after Back adds to history rather than replacing where Back went.
+    await userEvent.type(search, "b");
+    history.back();
+    await vi.waitFor(() => {
+      expect(search).toHaveProperty("value", "");
+    });
+    expect(history.location.search).toContain("sort=");
+  });
+
+  it("keeps people the user adds, even when they do not match", async () => {
+    let answer = peopleAnswer;
+    await openAt('/people?filters={"f1":{"any":["c1"]}}', {
+      "GET /api/people": () => answer(),
+      "POST /api/people": () => {
+        answer = () =>
+          Response.json({
+            people: [
+              avery,
+              blake,
+              {
+                ...blake,
+                id: "p9",
+                preferredName: "Casey Fictional",
+                employeeId: "E9",
+                values: { f1: ["c2"] },
+              },
+            ],
+            fields: [site, role],
+            order,
+          });
+        return Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 });
+      },
+    });
+    act(() => {
+      cell("new-0", "preferredName").focus();
+    });
+    await userEvent.keyboard("Casey{Tab}E9{Tab}north{Tab}");
+    await userEvent.keyboard("{Escape}{Enter}");
+    await vi.waitFor(() => {
+      expect(shownNames()).toEqual(["Avery Fictional", "Casey Fictional"]);
+    });
+  });
+
+  it("sorts by each column chosen in turn, naming each level above the table", async () => {
+    const { history } = await openAt("/people");
+    await choose("Site", "List order");
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    await choose("Name", "Sort Z to A");
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    expect(
+      screen.getByRole("button", {
+        name: "Name column, sorted descending, level 2",
+      }),
+    ).toBeDefined();
+    expect(header("Site").closest("th")?.getAttribute("aria-sort")).toBe(
+      "ascending",
+    );
+    expect(header("Name").closest("th")?.getAttribute("aria-sort")).toBeNull();
+
+    // Choosing a sort on a sorted column changes its direction in place.
+    await choose("Site", "Reverse list order");
+    expect(shownNames()).toEqual(["Blake Fictional", "Avery Fictional"]);
+    expect(address(history)).toContain('sort=["-f1","-preferredName"]');
+    expect(screen.getByText("Site ↓")).toBeDefined();
+    expect(screen.getByText("Name ↓")).toBeDefined();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove sort on Site" }),
+    );
+    expect(address(history)).toContain('sort=["-preferredName"]');
+    expect(
+      screen.getByRole("button", { name: "Name column, sorted descending" }),
+    ).toBeDefined();
+
+    await choose("Start", "Oldest first");
+    await choose("Start", "Clear sort");
+    expect(address(history)).not.toContain("startDate");
+    history.back();
+    await vi.waitFor(() => {
+      expect(address(history)).toContain("startDate");
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(history.location.search).toBe("");
+  });
+
+  it("filters a choice column, naming the filter above the table until it is removed", async () => {
+    const { history } = await openAt("/people");
+    await choose("Site", "Filter…");
+    const dialog = await screen.findByRole("dialog", { name: "Filter Site" });
+    expect(
+      within(dialog)
+        .getAllByRole("checkbox")
+        .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
+    ).toEqual(["Harbour", "Northmere", "Empty", "Old Mill"]);
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Northmere" }),
+    );
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Harbour" }),
+    );
+    expect(shownNames()).toEqual(["Avery Fictional"]);
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Northmere" }),
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByText("Site: Harbour")).toBeDefined();
+    await choose("Site", "Clear filter");
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    history.back();
+    await vi.waitFor(() => {
+      expect(screen.getByText("Site: Harbour")).toBeDefined();
+    });
+    expect(
+      screen.getByRole("button", { name: "Site column, filtered" }),
+    ).toBeDefined();
+    expect(address(history)).toContain('filters={"f1":{"any":["c1"]}}');
+    history.back();
+    await vi.waitFor(() => {
+      expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    });
+    history.forward();
+    await vi.waitFor(() => {
+      expect(shownNames()).toEqual(["Avery Fictional"]);
+    });
+    await choose("Site", "Filter…");
+    const again = await screen.findByRole("dialog", { name: "Filter Site" });
+    await userEvent.click(
+      within(again).getByRole("checkbox", { name: "Empty" }),
+    );
+    expect(screen.getByText("Site: Harbour, Empty")).toBeDefined();
+    await userEvent.click(
+      within(again).getByRole("checkbox", { name: "Empty" }),
+    );
+    await userEvent.click(
+      within(again).getByRole("checkbox", { name: "Harbour" }),
+    );
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    await userEvent.click(
+      within(again).getByRole("checkbox", { name: "Old Mill" }),
+    );
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove filter on Site" }),
+    );
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    expect(screen.queryByText("Clear all")).toBeNull();
+  });
+
+  it("narrows a long list of choices by typing", async () => {
+    await openAt("/people", {
+      "GET /api/lists": () => Response.json({ lists: [manySites, roles] }),
+    });
+    await choose("Site", "Filter…");
+    const dialog = await screen.findByRole("dialog", { name: "Filter Site" });
+    const narrow = within(dialog).getByRole("textbox", {
+      name: "Narrow Site choices",
+    });
+    await userEvent.type(narrow, "dun");
+    expect(within(dialog).getAllByRole("checkbox")).toHaveLength(2);
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Clear" }),
+    );
+    expect(within(dialog).getAllByRole("checkbox")).toHaveLength(10);
+  });
+
+  it("filters text", async () => {
+    const { history } = await openAt("/people");
+    await choose("Name", "Filter…");
+    const name = await screen.findByRole("dialog", { name: "Filter Name" });
+    await userEvent.type(
+      within(name).getByRole("textbox", { name: "Contains" }),
+      "blake",
+    );
+    await userEvent.click(
+      within(name).getByRole("checkbox", { name: "Empty" }),
+    );
+    expect(screen.getByText("Name contains “blake” or empty")).toBeDefined();
+    await userEvent.click(
+      within(name).getByRole("checkbox", { name: "Empty" }),
+    );
+    await userEvent.clear(
+      within(name).getByRole("textbox", { name: "Contains" }),
+    );
+    expect(history.location.search).toBe("");
+    await userEvent.type(
+      within(name).getByRole("textbox", { name: "Contains" }),
+      "blake",
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(shownNames()).toEqual(["Blake Fictional"]);
+  });
+
+  it("filters dates, and clears everything at once", async () => {
+    await openAt('/people?filters={"preferredName":{"contains":"blake"}}');
+    await choose("Start", "Filter…");
+    const start = await screen.findByRole("dialog", { name: "Filter Start" });
+    const from = within(start).getByRole("textbox", { name: "From" });
+    const to = within(start).getByRole("textbox", { name: "To" });
+    await userEvent.type(from, "2024-01");
+    expect(
+      within(start).getByText("Use a date such as 2026-10-31"),
+    ).toBeDefined();
+    await userEvent.type(from, "-01");
+    expect(screen.getByText(/^Start: from /)).toBeDefined();
+    await userEvent.type(to, "2024-12-31");
+    expect(screen.getByText(/^Start: .+ to .+2024$/)).toBeDefined();
+    await userEvent.clear(to);
+    await userEvent.type(to, "2023-12-31");
+    expect(within(start).getByText("Before From")).toBeDefined();
+    await userEvent.clear(from);
+    expect(screen.getByText(/^Start: until /)).toBeDefined();
+    await userEvent.clear(to);
+    await userEvent.click(
+      within(start).getByRole("checkbox", { name: "No date" }),
+    );
+    expect(screen.getByText("Start: no date")).toBeDefined();
+    expect(shownNames()).toEqual(["Blake Fictional"]);
+    await userEvent.keyboard("{Escape}");
+
+    await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+  });
+
+  it("keeps an edited row in place until the view changes", async () => {
+    let answer = peopleAnswer;
+    await openAt('/people?filters={"f1":{"any":["c1"]}}', {
+      "GET /api/people": () => answer(),
+      "PATCH /api/people/p1": () => {
+        answer = () =>
+          Response.json({
+            people: [{ ...avery, values: { f1: ["c2"] } }, blake],
+            fields: [site, role],
+            order,
+          });
+        return savedAs()();
+      },
+    });
+    expect(shownNames()).toEqual(["Avery Fictional"]);
+    focusCell("p1", "f1");
+    await userEvent.keyboard("{Enter}");
+    await pick("Northmere");
+    expect(shownNames()).toEqual(["Avery Fictional"]);
+    await choose("Name", "Sort A to Z");
+    expect(shownNames()).toEqual([]);
+    await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+  });
+
+  it("lets viewers sort and filter, ignoring columns they may not see", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              startDate: undefined,
+              endDate: undefined,
+              values: { f1: ["c1"] },
+            },
+            { ...blake, startDate: undefined, endDate: undefined },
+          ],
+          fields: [site],
+          order,
+        }),
+      "GET /api/lists": listsAnswer,
+    });
+    const history = renderApp(
+      '/people?filters={"f2":{"any":["r1"]},"startDate":{"empty":true}}&sort=["-startDate"]',
+    );
+    await screen.findByRole("grid", { name: "People" });
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    expect(screen.queryByText("Clear all")).toBeNull();
+    await userEvent.click(header("Name"));
+    const sort = await screen.findByRole("menuitem", { name: "Sort Z to A" });
+    expect(screen.queryByRole("menuitem", { name: "Edit column" })).toBeNull();
+    expect(screen.queryByRole("menuitem", { name: /^Move left/ })).toBeNull();
+    await userEvent.click(sort);
+    expect(shownNames()).toEqual(["Blake Fictional", "Avery Fictional"]);
+    // Changing the view leaves out what the viewer may not see.
+    expect(decodeURIComponent(history.location.search)).toBe(
+      '?sort=["-preferredName"]',
+    );
+    act(() => {
+      header("Name").focus();
+    });
+    await userEvent.keyboard("{Alt>}{ArrowRight}{/Alt}");
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search people" }),
+      "nobody",
+    );
+    expect(screen.getByText("No matching people").closest("td")?.colSpan).toBe(
+      3,
+    );
+    expect(
+      within(screen.getByRole("grid"))
+        .getAllByRole("columnheader")
+        .map((th) => th.textContent),
+    ).toEqual(["Name", "Employee ID", "Site"]);
   });
 });

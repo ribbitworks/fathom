@@ -383,12 +383,53 @@
 }
 
 .peopleHeadButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
   padding: 0;
   border: 0;
   background: none;
   color: inherit;
   font: inherit;
   cursor: pointer;
+}
+
+.headerLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Which way a column is sorted, and whether it is filtered, beside its name. */
+.headerMarks {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  color: var(--mantine-color-sea-filled);
+}
+
+.headerMarks sup {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.filterTarget {
+  display: block;
+}
+
+.peopleNone {
+  padding: 12px;
+  text-align: center;
+}
+
+/* The bar above a table: its search, the filters in use, and how many rows are shown. */
+.tableSearch {
+  width: 16rem;
+}
+
+.choiceFilter {
+  min-width: 12rem;
 }
 
 .peopleRow,

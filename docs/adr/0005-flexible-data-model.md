@@ -3,6 +3,7 @@
 - **ADR:** 0005
 - **Status:** Proposed
 - **Date:** 2026-10-30
+- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted
 
 ## Context
 
@@ -26,7 +27,7 @@ Custom fields and tables use a values table.
 - **Links:** Each table that can be linked to, such as people, teams, or custom records, has its own link column with a foreign key, so a link cannot point to a missing record. A linked record cannot be deleted while links to it remain; people are already made inactive rather than deleted.
 - **Uniqueness:** A value row for a field marked unique carries a flag. Each typed value column has a fixed partial unique index on the field and that column, limited to flagged rows, so the database refuses duplicates, including when two people save at the same time. Text is compared ignoring letter case.
 - **Checked by the data access layer:** That a required value is present, since a missing value has no row for the database to check; that a value is in the column for its field's type; and that a link to a custom record points to the custom table its field names, since custom records share one column.
-- **Access:** The data access layer leaves out every value from a field the user's tiers do not cover, and refuses to filter or sort by such a field, since the order of results could reveal its values.
+- **Access:** The data access layer leaves out every value from a field the user's tiers do not cover, and so no one can filter or sort by such a field, since the order of results could reveal its values. Tables are filtered and sorted in the browser, over what each user receives, as [ADR 0006](0006-table-views-in-the-browser.md) decides.
 - **Who changed what:** Read from the change history, custom values included, which records each change with the tier of the field it changed, so a user sees only changes to data their tiers cover. Changes made by setup or seed scripts are recorded as made by Fathom itself, not by a user.
 
 | Setting the user sees | How it is enforced |

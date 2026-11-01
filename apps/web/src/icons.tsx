@@ -70,6 +70,15 @@ const paths = {
     </>
   ),
   plus: <path d="M8 3v10M3 8h10" />,
+  search: (
+    <>
+      <circle cx="7" cy="7" r="4.5" />
+      <path d="M10.5 10.5l3 3" />
+    </>
+  ),
+  filter: <path d="M2.5 3.5h11L9.5 8.5v4l-3 1.5v-5.5z" />,
+  ascending: <path d="M8 13V3M4.5 6.5L8 3l3.5 3.5" />,
+  descending: <path d="M8 3v10M4.5 9.5L8 13l3.5-3.5" />,
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof paths;

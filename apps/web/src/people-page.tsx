@@ -4,7 +4,8 @@
 // people have added, each drawing on a list. Those who may change people add, edit, and delete them;
 // those who may change planning configuration add, change, and delete columns, and move any column.
 // Every change shows at once and saves in the background, and the latest can be undone with Cmd+Z
-// or Ctrl+Z, or from its notification when it took something out of view.
+// or Ctrl+Z, or from its notification when it took something out of view. What the table shows,
+// its search, filters, and sort, is kept in the page address.
 
 import type { Field, Person, PersonChange } from "@fathom/shared";
 import {
@@ -33,6 +34,8 @@ import {
   updatePerson,
 } from "./people.ts";
 import { useSaving } from "./saving.ts";
+import type { ChangeView } from "./table-controls.tsx";
+import type { View } from "./table-view.ts";
 
 const newColumnId = "column-new";
 
@@ -65,10 +68,14 @@ export function PeoplePage({
   canEdit,
   canEditColumns,
   showDates,
+  view,
+  onView,
 }: {
   canEdit: boolean;
   canEditColumns: boolean;
   showDates: boolean;
+  view: View;
+  onView: ChangeView;
 }) {
   const query = useQuery(peopleQuery);
   const lists = useQuery(listsQuery);
@@ -83,10 +90,14 @@ export function PeoplePage({
   });
 
   const actions: PeopleActions = {
-    add: (requests, onFailed) => {
+    add: (requests, onAdded, onFailed) => {
       save({
         next: (data) => data,
-        save: () => createPeople(requests),
+        save: async () => {
+          const { ids, changeSetId } = await createPeople(requests);
+          onAdded(ids);
+          return changeSetId;
+        },
         failure: "Fathom could not add the people. Try again in a moment.",
         onFailed,
         onSaved: (changeSetId, before) => {
@@ -209,18 +220,18 @@ export function PeoplePage({
     // The column dialog is part of the loaded page, since it needs the columns and lists.
     content = (
       <>
-        <Paper withBorder>
-          <PeopleGrid
-            people={query.data.people}
-            fields={query.data.fields}
-            order={query.data.order}
-            lists={lists.data}
-            canEdit={canEdit}
-            canEditColumns={canEditColumns}
-            showDates={showDates}
-            actions={actions}
-          />
-        </Paper>
+        <PeopleGrid
+          people={query.data.people}
+          fields={query.data.fields}
+          order={query.data.order}
+          lists={lists.data}
+          canEdit={canEdit}
+          canEditColumns={canEditColumns}
+          showDates={showDates}
+          actions={actions}
+          view={view}
+          onView={onView}
+        />
         <Modal
           opened={opened}
           onClose={() => {

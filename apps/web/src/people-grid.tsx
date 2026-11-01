@@ -10,7 +10,9 @@
 // adds a person for each, all saved together; rows that will not do stay as new rows with their
 // problems shown. Each person's menu, also opened with Shift+F10, deletes them. Every column can be
 // dragged by its header, moved with Alt and the arrow keys, or moved from its menu, and columns
-// drawing on lists are changed from there too. Viewers see the same table, read only.
+// drawing on lists are changed from there too. Everyone, viewers included, can search the table and
+// sort and filter it by any column they see, as table-controls.tsx sets out; rows keep their place
+// while they are edited, until the view next changes. Viewers see the same table, read only.
 
 import type {
   Choice,
@@ -21,7 +23,7 @@ import type {
   PersonRequest,
 } from "@fathom/shared";
 import { personLengths } from "@fathom/shared";
-import { ActionIcon, Menu, VisuallyHidden } from "@mantine/core";
+import { ActionIcon, Menu, Paper, Text, VisuallyHidden } from "@mantine/core";
 import {
   type ClipboardEvent,
   type DragEvent,
@@ -33,11 +35,35 @@ import { focusSoon } from "./focus.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
 import { sameName } from "./lists.ts";
+import {
+  type ChangeView,
+  ColumnViewItems,
+  FilterPopover,
+  HeaderMarks,
+  headerState,
+  ViewBar,
+} from "./table-controls.tsx";
+import {
+  applyView,
+  type CellValue,
+  formatDay,
+  isDay,
+  knownView,
+  narrows,
+  type TableColumn,
+  useSteadyOrder,
+  type View,
+} from "./table-view.ts";
 import classes from "./pages.module.css";
 
 export interface PeopleActions {
-  // Adds people, all saved together; if they cannot be saved, gives back what was entered.
-  add: (requests: PersonRequest[], onFailed: () => void) => void;
+  // Adds people, all saved together, then gives their identifiers; if they cannot be saved, gives
+  // back what was entered.
+  add: (
+    requests: PersonRequest[],
+    onAdded: (ids: string[]) => void,
+    onFailed: () => void,
+  ) => void;
   update: (person: Person, change: PersonChange) => void;
   remove: (person: Person) => void;
   // Moves a column, by its key, to just after another, or to the start when there is none.
@@ -45,26 +71,17 @@ export interface PeopleActions {
   editColumn: (field: Field) => void;
 }
 
-type Kind = "text" | "date" | "choice";
-
-export interface Column {
-  // A person's own detail, or a column drawing on a list, by its identifier.
-  key: string;
-  label: string;
-  kind: Kind;
+// A person's own detail, keyed by its name, or a column drawing on a list, keyed by its identifier.
+export interface Column extends TableColumn<Person> {
   required: boolean;
-  // For columns drawing on a list: the column, its list's choices, and whether it takes several.
+  // For columns drawing on a list: the column and its list's choices.
   field?: Field;
   choices: Choice[];
-  multiple: boolean;
 }
-
-// What a cell holds: text, a date as YYYY-MM-DD or empty, or the chosen choices.
-type Value = string | string[];
 
 interface Draft {
   key: number;
-  values: Record<string, Value>;
+  values: Record<string, CellValue>;
   problem?: string;
 }
 
@@ -88,18 +105,6 @@ const shortcuts = shortcutsFor(navigator.userAgent);
 // The most rows one paste adds, as the server allows at once.
 const pasteLimit = 1000;
 
-const day = new Intl.DateTimeFormat(undefined, {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
-// A date as people read it, with its year.
-export function formatDay(value: string): string {
-  return day.format(new Date(`${value}T00:00:00Z`));
-}
-
 // The People table's columns, in the order given by their keys: each person's name and Employee ID,
 // the columns drawing on lists, and, for those who may see them, start and end dates. A column the
 // order does not name yet comes at the end.
@@ -109,15 +114,20 @@ export function columnsFor(
   order: readonly string[],
   showDates: boolean,
 ): Column[] {
-  const builtIn = (key: string, label: string, kind: Kind, required = false) =>
-    ({
-      key,
-      label,
-      kind,
-      required,
-      choices: [],
-      multiple: false,
-    }) satisfies Column;
+  const builtIn = (
+    key: string,
+    label: string,
+    kind: Column["kind"],
+    required = false,
+  ): Column => ({
+    key,
+    label,
+    kind,
+    required,
+    choices: [],
+    multiple: false,
+    value: (person) => personValue(person, kind, key),
+  });
   const all: Column[] = [
     builtIn("preferredName", "Name", "text", true),
     builtIn("employeeId", "Employee ID", "text", true),
@@ -135,6 +145,7 @@ export function columnsFor(
       field,
       choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
       multiple: field.multiple,
+      value: (person) => personValue(person, "choice", field.id),
     })),
   ];
   const place = (column: Column) => {
@@ -147,23 +158,34 @@ export function columnsFor(
     .map(({ column }) => column);
 }
 
-function personValue(person: Person, column: Column): Value {
-  if (column.kind === "choice") return person.values[column.key] ?? [];
-  const detail = person[column.key as "preferredName" | "startDate"];
+function personValue(
+  person: Person,
+  kind: Column["kind"],
+  key: string,
+): CellValue {
+  // The key is a column's own.
+  // eslint-disable-next-line security/detect-object-injection
+  if (kind === "choice") return person.values[key] ?? [];
+  const detail = person[key as "preferredName" | "startDate"];
   return detail ?? "";
 }
 
-function draftValue(draft: Draft, column: Column): Value {
+function draftValue(draft: Draft, column: Column): CellValue {
   return draft.values[column.key] ?? (column.kind === "choice" ? [] : "");
 }
 
-function isEmpty(value: Value): boolean {
+function isEmpty(value: CellValue): boolean {
   return Array.isArray(value) ? value.length === 0 : value.trim() === "";
 }
 
-const isDay = (text: string) =>
-  /^\d{4}-\d{2}-\d{2}$/.test(text) &&
-  !Number.isNaN(Date.parse(`${text}T00:00:00Z`));
+// How a column is sorted, as assistive technology reads it.
+// Only the first level of a sort is marked, as a table has one sorted column for assistive technology;
+// the header's name gives every level.
+function ariaSort(view: View, key: string) {
+  const [first] = view.sort;
+  if (first?.key !== key) return undefined;
+  return first.descending ? "descending" : "ascending";
+}
 
 // The width of a column, which comes from its kind alone.
 function widthClass(column: Column): string | undefined {
@@ -175,7 +197,7 @@ function widthClass(column: Column): string | undefined {
 }
 
 // A cell's value in words.
-function shown(column: Column, value: Value): string {
+function shown(column: Column, value: CellValue): string {
   if (Array.isArray(value)) {
     return value
       .map((id) => column.choices.find((choice) => choice.id === id)?.label)
@@ -193,7 +215,10 @@ function choicesFor(column: Column, value: string[]) {
 }
 
 // What is wrong with a value for a column, if anything.
-export function valueProblem(column: Column, value: Value): string | undefined {
+export function valueProblem(
+  column: Column,
+  value: CellValue,
+): string | undefined {
   if (column.required && isEmpty(value)) return `${column.label} needed`;
   if (typeof value !== "string") return undefined;
   const limit =
@@ -212,7 +237,7 @@ export function valueProblem(column: Column, value: Value): string | undefined {
 // What is wrong with a person's details taken together, if anything: an Employee ID someone else has,
 // or an end date before the start date.
 function recordProblem(
-  values: Record<string, Value>,
+  values: Record<string, CellValue>,
   others: readonly string[],
 ): string | undefined {
   const employeeId = values.employeeId;
@@ -271,7 +296,7 @@ export function pastedDrafts(
     .split(/\r?\n/)
     .filter((line) => line.trim() !== "")
     .map((line, index) => {
-      const values: Record<string, Value> = {};
+      const values: Record<string, CellValue> = {};
       let problem: string | undefined;
       for (const [offset, cell] of line.split("\t").entries()) {
         const column = columns[from + offset];
@@ -322,7 +347,10 @@ export function PeopleGrid({
   canEditColumns,
   showDates,
   actions,
+  view: asked,
+  onView,
 }: {
+  // Everyone the user may see; the view decides which are shown, and in what order.
   people: Person[];
   fields: Field[];
   // The keys of the columns, in order.
@@ -332,8 +360,20 @@ export function PeopleGrid({
   canEditColumns: boolean;
   showDates: boolean;
   actions: PeopleActions;
+  view: View;
+  onView: ChangeView;
 }) {
   const columns = columnsFor(fields, lists, order, showDates);
+  const view = knownView(asked, columns);
+  // The people this user has added since the page opened, which stay shown whatever the view.
+  const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
+  const shownPeople = useSteadyOrder(
+    people,
+    view,
+    (rows) => applyView(rows, columns, view),
+    (person) => person.id,
+    added,
+  );
   const [drafts, setDrafts] = useState<Draft[]>([{ key: 0, values: {} }]);
   const [nextKey, setNextKey] = useState(1);
   // The selected cell and the cell being edited, by row and column key rather than position, so they
@@ -345,9 +385,11 @@ export function PeopleGrid({
   const [problem, setProblem] = useState<{ row: string; message: string }>();
   const [menuFor, setMenuFor] = useState<string>();
   const [dragging, setDragging] = useState<string>();
+  // The column whose filter is open, by key.
+  const [filtering, setFiltering] = useState<string>();
 
   const rows: Row[] = [
-    ...people.map((person) => ({ person })),
+    ...shownPeople.map((person) => ({ person })),
     ...(canEdit ? drafts.map((draft) => ({ draft })) : []),
   ];
   const rowKey = (row: Row) =>
@@ -383,9 +425,7 @@ export function PeopleGrid({
     setEditingAt(cell === undefined ? undefined : placeOf(cell));
   };
   const valueAt = (row: Row, column: Column) =>
-    row.person
-      ? personValue(row.person, column)
-      : draftValue(row.draft, column);
+    row.person ? column.value(row.person) : draftValue(row.draft, column);
 
   // Focuses a cell of a new row by its key, since the row may not be drawn yet.
   const focusNew = (draftKey: number) => {
@@ -432,7 +472,7 @@ export function PeopleGrid({
 
   // Saves a cell's new value: on a person, at once; on a new row, into the row. Returns whether it
   // would do, showing the problem on the row when it would not.
-  const save = (cell: Cell, value: Value): boolean => {
+  const save = (cell: Cell, value: CellValue): boolean => {
     const { row, column } = at(cell);
     const key = rowKey(row);
     if (row.draft) {
@@ -449,7 +489,7 @@ export function PeopleGrid({
       setProblem(undefined);
       return true;
     }
-    const before = personValue(row.person, column);
+    const before = column.value(row.person);
     if (JSON.stringify(before) === JSON.stringify(value)) return true;
     const message =
       valueProblem(column, value) ??
@@ -507,6 +547,9 @@ export function PeopleGrid({
     }
     actions.add(
       filled.map((draft) => requestFor(draft, columns)),
+      (ids) => {
+        setAdded((current) => new Set([...current, ...ids]));
+      },
       () => {
         setDrafts([...filled, { key: nextKey + 1, values: {} }]);
       },
@@ -521,7 +564,7 @@ export function PeopleGrid({
   // person or, on a person, moves down; Tab moves across, straight on to editing in a new row; and
   // leaving the cell stays put. A value that will not do keeps the cell open with its problem, or,
   // when the cell was left, is put back, with the problem still shown.
-  const finish = (cell: Cell, value: Value, how: Finish) => {
+  const finish = (cell: Cell, value: CellValue, how: Finish) => {
     if (!save(cell, value)) {
       if (how === "leave") setEditing(undefined);
       return;
@@ -679,82 +722,108 @@ export function PeopleGrid({
 
   const header = (column: Column) => {
     const { field } = column;
-    if (!canEditColumns) {
-      return (
-        <th key={column.key} scope="col" className={classes.peopleHead}>
-          {column.label}
-        </th>
-      );
-    }
+    const dragProps = canEditColumns
+      ? {
+          draggable: true,
+          onDragStart: () => {
+            setDragging(column.key);
+          },
+          onDragOver: (event: DragEvent) => {
+            event.preventDefault();
+          },
+          onDrop: (event: DragEvent) => {
+            onDrop(event, column);
+          },
+        }
+      : {};
     return (
       <th
         key={column.key}
         scope="col"
         className={classes.peopleHead}
-        draggable
-        onDragStart={() => {
-          setDragging(column.key);
-        }}
-        onDragOver={(event) => {
-          event.preventDefault();
-        }}
-        onDrop={(event) => {
-          onDrop(event, column);
-        }}
+        aria-sort={ariaSort(view, column.key)}
+        {...dragProps}
       >
-        <Menu position="bottom-start" withinPortal hideDetached={false}>
-          <Menu.Target>
-            <button
-              id={headerId(column)}
-              type="button"
-              className={classes.peopleHeadButton}
-              aria-label={`${column.label} column`}
-              onKeyDown={(event) => {
-                if (event.altKey && event.key === "ArrowLeft") {
-                  event.preventDefault();
-                  moveColumnBy(column, -1);
-                } else if (event.altKey && event.key === "ArrowRight") {
-                  event.preventDefault();
-                  moveColumnBy(column, 1);
-                }
-              }}
-            >
-              {column.label}
-            </button>
-          </Menu.Target>
-          <Menu.Dropdown>
-            {field && (
-              <Menu.Item
-                onClick={() => {
-                  actions.editColumn(field);
+        <FilterPopover
+          column={column}
+          view={view}
+          onView={onView}
+          opened={filtering === column.key}
+          onClose={() => {
+            // Focus goes back to the column's header, not to the menu the filter was opened from.
+            setFiltering(undefined);
+            focusSoon(headerId(column));
+          }}
+        >
+          <Menu position="bottom-start" withinPortal hideDetached={false}>
+            <Menu.Target>
+              <button
+                id={headerId(column)}
+                type="button"
+                className={classes.peopleHeadButton}
+                aria-label={`${column.label} column${headerState(column, view)}`}
+                onKeyDown={(event) => {
+                  if (!canEditColumns || !event.altKey) return;
+                  if (event.key === "ArrowLeft") {
+                    event.preventDefault();
+                    moveColumnBy(column, -1);
+                  } else if (event.key === "ArrowRight") {
+                    event.preventDefault();
+                    moveColumnBy(column, 1);
+                  }
                 }}
               >
-                Edit column
-              </Menu.Item>
-            )}
-            <Menu.Item
-              rightSection={<kbd>{shortcuts.left}</kbd>}
-              onClick={() => {
-                moveColumnBy(column, -1);
-              }}
-            >
-              Move left
-            </Menu.Item>
-            <Menu.Item
-              rightSection={<kbd>{shortcuts.right}</kbd>}
-              onClick={() => {
-                moveColumnBy(column, 1);
-              }}
-            >
-              Move right
-            </Menu.Item>
-          </Menu.Dropdown>
-        </Menu>
+                <span className={classes.headerLabel}>{column.label}</span>
+                <HeaderMarks column={column} view={view} />
+              </button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              <ColumnViewItems
+                column={column}
+                view={view}
+                onView={onView}
+                onFilter={() => {
+                  setFiltering(column.key);
+                }}
+              />
+              {canEditColumns && (
+                <>
+                  <Menu.Divider />
+                  {field && (
+                    <Menu.Item
+                      onClick={() => {
+                        actions.editColumn(field);
+                      }}
+                    >
+                      Edit column
+                    </Menu.Item>
+                  )}
+                  <Menu.Item
+                    rightSection={<kbd>{shortcuts.left}</kbd>}
+                    onClick={() => {
+                      moveColumnBy(column, -1);
+                    }}
+                  >
+                    Move left
+                  </Menu.Item>
+                  <Menu.Item
+                    rightSection={<kbd>{shortcuts.right}</kbd>}
+                    onClick={() => {
+                      moveColumnBy(column, 1);
+                    }}
+                  >
+                    Move right
+                  </Menu.Item>
+                </>
+              )}
+            </Menu.Dropdown>
+          </Menu>
+        </FilterPopover>
       </th>
     );
   };
 
-  const editor = (cell: Cell, column: Column, value: Value) => {
+  const editor = (cell: Cell, column: Column, value: CellValue) => {
     const id = `${cellId(cell.row, cell.column)}-editor`;
     if (Array.isArray(value)) {
       return (
@@ -834,89 +903,128 @@ export function PeopleGrid({
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
-    <div className={classes.peopleScroll}>
-      <table role="grid" aria-label="People" className={classes.peopleTable}>
-        <colgroup>
-          {columns.map((column) => (
-            <col key={column.key} className={widthClass(column)} />
-          ))}
-          {canEdit && <col className={classes.peopleColActions} />}
-        </colgroup>
-        <thead>
-          <tr>
-            {columns.map(header)}
-            {canEdit && (
-              <th scope="col" className={classes.peopleHead}>
-                <VisuallyHidden>Actions</VisuallyHidden>
-              </th>
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, rowIndex) => {
-            const key = rowKey(row);
-            const rowProblem =
-              problem?.row === key ? problem.message : row.draft?.problem;
-            return (
-              <tr
-                key={key}
-                className={row.draft ? classes.peopleNewRow : classes.peopleRow}
-                aria-label={row.draft ? "New person" : undefined}
-              >
-                {columns.map((column, columnIndex) => {
-                  const cell = { row: rowIndex, column: columnIndex };
-                  const editingHere =
-                    editing?.row === rowIndex && editing.column === columnIndex;
-                  const isActive =
-                    active.row === rowIndex && active.column === columnIndex;
-                  return (
-                    <td
-                      key={column.key}
-                      id={cellId(rowIndex, columnIndex)}
-                      role="gridcell"
-                      tabIndex={isActive ? 0 : -1}
-                      aria-invalid={
-                        columnIndex === 0 && rowProblem !== undefined
-                          ? true
-                          : undefined
-                      }
-                      className={classes.peopleCell}
-                      onKeyDown={(event) => {
-                        onCellKey(event, cell);
-                      }}
-                      onPaste={(event) => {
-                        onPaste(event, cell);
-                      }}
-                      onFocus={(event) => {
-                        if (event.target === event.currentTarget) {
-                          setActive(cell);
-                        }
-                      }}
-                      onDoubleClick={() => {
-                        startEdit(cell);
-                      }}
-                    >
-                      {editingHere
-                        ? editor(cell, column, valueAt(row, column))
-                        : shown(column, valueAt(row, column))}
-                      {columnIndex === 0 && rowProblem !== undefined && (
-                        <span className={classes.peopleProblem} role="alert">
-                          {rowProblem}
-                        </span>
-                      )}
-                    </td>
-                  );
-                })}
+    <>
+      <ViewBar
+        one="person"
+        noun="people"
+        columns={columns}
+        view={view}
+        onView={onView}
+        shown={shownPeople.length}
+        total={people.length}
+        onLeave={() => {
+          moveTo(active.row, active.column);
+        }}
+      />
+      <Paper withBorder>
+        <div className={classes.peopleScroll}>
+          <table
+            role="grid"
+            aria-label="People"
+            className={classes.peopleTable}
+          >
+            <colgroup>
+              {columns.map((column) => (
+                <col key={column.key} className={widthClass(column)} />
+              ))}
+              {canEdit && <col className={classes.peopleColActions} />}
+            </colgroup>
+            <thead>
+              <tr>
+                {columns.map(header)}
                 {canEdit && (
-                  <td className={classes.peopleCell}>
-                    {row.person && rowMenu(row.person)}
-                  </td>
+                  <th scope="col" className={classes.peopleHead}>
+                    <VisuallyHidden>Actions</VisuallyHidden>
+                  </th>
                 )}
               </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+            </thead>
+            <tbody>
+              {shownPeople.length === 0 && narrows(view) && (
+                <tr>
+                  <td
+                    colSpan={columns.length + (canEdit ? 1 : 0)}
+                    className={classes.peopleNone}
+                  >
+                    <Text component="span" fz="sm" c="dimmed">
+                      No matching people
+                    </Text>
+                  </td>
+                </tr>
+              )}
+              {rows.map((row, rowIndex) => {
+                const key = rowKey(row);
+                const rowProblem =
+                  problem?.row === key ? problem.message : row.draft?.problem;
+                return (
+                  <tr
+                    key={key}
+                    className={
+                      row.draft ? classes.peopleNewRow : classes.peopleRow
+                    }
+                    aria-label={row.draft ? "New person" : undefined}
+                  >
+                    {columns.map((column, columnIndex) => {
+                      const cell = { row: rowIndex, column: columnIndex };
+                      const editingHere =
+                        editing?.row === rowIndex &&
+                        editing.column === columnIndex;
+                      const isActive =
+                        active.row === rowIndex &&
+                        active.column === columnIndex;
+                      return (
+                        <td
+                          key={column.key}
+                          id={cellId(rowIndex, columnIndex)}
+                          role="gridcell"
+                          tabIndex={isActive ? 0 : -1}
+                          aria-invalid={
+                            columnIndex === 0 && rowProblem !== undefined
+                              ? true
+                              : undefined
+                          }
+                          className={classes.peopleCell}
+                          onKeyDown={(event) => {
+                            onCellKey(event, cell);
+                          }}
+                          onPaste={(event) => {
+                            onPaste(event, cell);
+                          }}
+                          onFocus={(event) => {
+                            if (event.target === event.currentTarget) {
+                              setActive(cell);
+                            }
+                          }}
+                          onDoubleClick={() => {
+                            startEdit(cell);
+                          }}
+                        >
+                          {editingHere
+                            ? editor(cell, column, valueAt(row, column))
+                            : shown(column, valueAt(row, column))}
+                          {columnIndex === 0 && rowProblem !== undefined && (
+                            <span
+                              className={classes.peopleProblem}
+                              role="alert"
+                            >
+                              {rowProblem}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
+                    {canEdit && (
+                      <td className={classes.peopleCell}>
+                        {row.person && rowMenu(row.person)}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </Paper>
+    </>
   );
 }

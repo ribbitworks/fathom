@@ -26,6 +26,7 @@ import { PeoplePage } from "./people-page.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
+import { viewProps, viewSearchSchema } from "./table-view.ts";
 
 const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   notFoundComponent: PageNotFound,
@@ -33,6 +34,7 @@ const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
 
 // The signed-in user and their permissions, as the signed-in routes check them below.
 const signedIn = getRouteApi("/signed-in");
+const people = getRouteApi("/signed-in/people");
 
 // Pages only for users with a permission; anyone else is told there is no such page.
 function requiring(permission: Permission) {
@@ -104,14 +106,19 @@ const listsRoute = createRoute({
 const peopleRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/people",
+  validateSearch: viewSearchSchema,
   beforeLoad: requiring("people:view"),
   component: function People() {
     const { permissions } = signedIn.useRouteContext();
+    const navigate = people.useNavigate();
     return (
       <PeoplePage
         canEdit={permissions.includes("people:edit")}
         canEditColumns={permissions.includes("configuration:edit")}
         showDates={permissions.includes("restricted:view")}
+        {...viewProps(people.useSearch(), (search, replace) => {
+          void navigate({ search, replace });
+        })}
       />
     );
   },

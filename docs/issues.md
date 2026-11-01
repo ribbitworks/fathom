@@ -25,7 +25,6 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 
 ## People
 
-- **Filtering, search, and sorting:** The People table cannot yet be filtered, searched, or sorted; people are listed by preferred name. The owner asked for filtering and sorting on every column, built-in and added, and for search, as the next change after people. All three follow each user's tiers, as [ADR 0005](adr/0005-flexible-data-model.md) sets out.
 - **Column widths:** Each column's width comes from its kind alone, so editing never moves the table, but columns often fit their contents poorly. The owner asked for widths that fit what columns hold, still without moving the table while editing: for a column drawing on a list, from its longest choice, and for the others, from their contents or their longest allowed value.
 - **Pasting several choices:** Pasting into a column that takes several choices reads each cell as one choice name. How several are pasted into one cell was left for later by the owner.
 

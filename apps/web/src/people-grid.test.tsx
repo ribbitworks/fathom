@@ -10,6 +10,7 @@ import { act, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { columnsFor, droppedAfter, PeopleGrid } from "./people-grid.tsx";
+import { emptyView } from "./table-view.ts";
 
 const site: Field = {
   id: "f1",
@@ -69,6 +70,8 @@ describe("adding people without dates", () => {
           canEdit
           canEditColumns={false}
           showDates={false}
+          view={emptyView}
+          onView={noop}
           actions={{
             add,
             update: noop,
@@ -102,6 +105,7 @@ describe("adding people without dates", () => {
           values: { f1: [] },
         },
       ],
+      expect.any(Function),
       expect.any(Function),
     );
   });

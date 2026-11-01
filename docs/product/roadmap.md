@@ -55,6 +55,7 @@ Until plan approval arrives in the next stage, edits go straight to the live pla
 ## Stage: Your Own Fields and Tables
 
 - **Custom fields and tables**, as set out in the [Decisions Log](decisions.md#configuration)
+- **More column types:** Columns that users add, on People and other tables, of every type [ADR 0005](../adr/0005-flexible-data-model.md) sets out, such as text, number, date, and yes or no, shown as a checkbox, alongside choices from a list. The owner also asked for currency, which ADR 0005 does not cover yet.
 
 ## Stage: The Organization
 
@@ -73,8 +74,10 @@ Until plan approval arrives in the next stage, edits go straight to the live pla
 
 Goals the owner has added that are not yet placed in a stage:
 
-- **Saved filters and pinned views:** Once filters are chosen, the combination can be saved, as a list of saved filters, as a pinned view that stays visible as its own table until it is unpinned, or both.
-- **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed.
+- **Saved views and pinned views:** A table's search, filters, and sort, once chosen, can be saved as a view and applied again, from a list of saved views, as a pinned view that stays visible as its own table until it is unpinned, or both. The owner asked for saved views as the next change after searching, filtering, and sorting.
+- **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed. Counts work on any column, but sums and other totals of amounts need the number and currency column types under Your Own Fields and Tables.
+- **Lists drawn from a table:** Once there are more tables, a list whose choices are the distinct values of a chosen column in a chosen table, so a column elsewhere can pick from them without the values being kept twice.
+- **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.
 
 These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
 
