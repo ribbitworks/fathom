@@ -76,6 +76,9 @@ describe("adding people without dates", () => {
             add,
             update: noop,
             remove: noop,
+            discard: noop,
+            resubmit: noop,
+            decide: noop,
             moveColumn: noop,
             editColumn: noop,
           }}

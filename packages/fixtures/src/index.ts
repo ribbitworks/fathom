@@ -75,7 +75,12 @@ export interface FictionalOrganization {
   lists: FictionalList[];
   columns: FictionalColumn[];
   people: FictionalPerson[];
+  // People made like the rest but not added, for drafts that add them.
+  newcomers: FictionalPerson[];
 }
+
+// How many newcomers an organization has.
+export const newcomerCount = 2;
 
 function list(key: string, name: string, labels: string[]): FictionalList {
   return {
@@ -176,7 +181,8 @@ function name(namer: Faker, order: NameSource["order"]): string {
 }
 
 // A fictional organization of the given size: its lists, the columns on people drawing on them, and
-// its people, current and former, and a few who start after the reference date.
+// its people, current and former, and a few who start after the reference date, with a few
+// newcomers made after them, so making newcomers changes nothing else.
 export function fictionalOrganization({
   size,
   seed = 2026,
@@ -199,67 +205,73 @@ export function fictionalOrganization({
     return name(namer, source.order);
   };
   const reference = new Date(`${referenceDate}T00:00:00Z`);
-  const people = Array.from({ length: size }, (_, index): FictionalPerson => {
-    const manager = faker.number.float() < 0.12;
-    const position = manager
-      ? "Manager"
-      : faker.helpers.arrayElement([
-          "Software Engineer",
-          "Software Engineer",
-          "Test Engineer",
-          "SDET",
-        ]);
-    const level = manager
-      ? faker.helpers.arrayElement(["M1", "M2", "M3", "M4", "M5"])
-      : faker.helpers.weightedArrayElement([
-          { weight: 1, value: "Co-op" },
-          { weight: 3, value: "P1" },
-          { weight: 5, value: "P2" },
-          { weight: 5, value: "P3" },
-          { weight: 3, value: "P4" },
-          { weight: 1, value: "P5" },
-        ]);
-    const roll = faker.number.float();
-    // Most are current; some have left, and a few start soon.
-    const starting = roll < 0.04;
-    const left = !starting && roll < 0.1;
-    const start = starting
-      ? faker.date.soon({ days: 120, refDate: reference })
-      : faker.date.past({ years: 12, refDate: reference });
-    const end = left
-      ? faker.date.between({ from: start, to: reference })
-      : null;
-    const roles: string[] = [];
-    if (faker.number.float() < 0.15) roles.push("Team Lead");
-    if (faker.number.float() < 0.06) roles.push("Design Authority");
-    return {
-      id: fictionalId(`person:${String(index)}`),
-      preferredName: pickName(),
-      employeeId: `E${String(10001 + index)}`,
-      startDate: day(start),
-      endDate: end === null ? null : day(end),
-      values: {
-        [siteColumn.id]: [
-          choice(
-            sites,
-            faker.helpers.arrayElement(sites.choices.map(({ label }) => label)),
-          ),
-        ],
-        [positionColumn.id]: [choice(positions, position)],
-        [levelColumn.id]: [choice(levels, level)],
-        ...(roles.length > 0
-          ? {
-              [teamRoleColumn.id]: roles.map((label) =>
-                choice(teamRoles, label),
+  const everyone = Array.from(
+    { length: size + newcomerCount },
+    (_, index): FictionalPerson => {
+      const manager = faker.number.float() < 0.12;
+      const position = manager
+        ? "Manager"
+        : faker.helpers.arrayElement([
+            "Software Engineer",
+            "Software Engineer",
+            "Test Engineer",
+            "SDET",
+          ]);
+      const level = manager
+        ? faker.helpers.arrayElement(["M1", "M2", "M3", "M4", "M5"])
+        : faker.helpers.weightedArrayElement([
+            { weight: 1, value: "Co-op" },
+            { weight: 3, value: "P1" },
+            { weight: 5, value: "P2" },
+            { weight: 5, value: "P3" },
+            { weight: 3, value: "P4" },
+            { weight: 1, value: "P5" },
+          ]);
+      const roll = faker.number.float();
+      // Most are current; some have left, and a few start soon.
+      const starting = roll < 0.04;
+      const left = !starting && roll < 0.1;
+      const start = starting
+        ? faker.date.soon({ days: 120, refDate: reference })
+        : faker.date.past({ years: 12, refDate: reference });
+      const end = left
+        ? faker.date.between({ from: start, to: reference })
+        : null;
+      const roles: string[] = [];
+      if (faker.number.float() < 0.15) roles.push("Team Lead");
+      if (faker.number.float() < 0.06) roles.push("Design Authority");
+      return {
+        id: fictionalId(`person:${String(index)}`),
+        preferredName: pickName(),
+        employeeId: `E${String(10001 + index)}`,
+        startDate: day(start),
+        endDate: end === null ? null : day(end),
+        values: {
+          [siteColumn.id]: [
+            choice(
+              sites,
+              faker.helpers.arrayElement(
+                sites.choices.map(({ label }) => label),
               ),
-            }
-          : {}),
-      },
-    };
-  });
+            ),
+          ],
+          [positionColumn.id]: [choice(positions, position)],
+          [levelColumn.id]: [choice(levels, level)],
+          ...(roles.length > 0
+            ? {
+                [teamRoleColumn.id]: roles.map((label) =>
+                  choice(teamRoles, label),
+                ),
+              }
+            : {}),
+        },
+      };
+    },
+  );
   return {
     lists: [sites, positions, levels, teamRoles],
     columns: [siteColumn, positionColumn, levelColumn, teamRoleColumn],
-    people,
+    people: everyone.slice(0, size),
+    newcomers: everyone.slice(size),
   };
 }

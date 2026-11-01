@@ -18,7 +18,14 @@ export interface ChangeRecord {
   // Null when the field had no value, as before a record is created or after it is deleted.
   oldValue: unknown;
   newValue: unknown;
+  // Whether the change is to the record's draft rather than to the live record.
+  draft?: boolean;
 }
+
+// What a change set did: saved changes, or approved, rejected, discarded, or resubmitted drafts: rejected
+// drafts sent for approval again unchanged.
+export type ChangeSetKind =
+  "edit" | "approval" | "rejection" | "discard" | "resubmission";
 
 // The history field holding a person's values for a column: one field of the person per column.
 export const valueField = (fieldId: string) => `value:${fieldId}`;
@@ -43,14 +50,21 @@ export async function recordChanges(
   transaction: Pick<Database, "insert">,
   madeBy: string | null,
   made: readonly ChangeRecord[],
+  kind: ChangeSetKind = "edit",
 ): Promise<string | null> {
   if (made.length === 0) return null;
   const changeSetId = randomUUID();
-  await transaction.insert(changeSets).values({ id: changeSetId, madeBy });
+  await transaction
+    .insert(changeSets)
+    .values({ id: changeSetId, madeBy, kind });
   for (const chunk of inChunks(made)) {
-    await transaction
-      .insert(changes)
-      .values(chunk.map((change) => ({ ...change, changeSetId })));
+    await transaction.insert(changes).values(
+      chunk.map((change) => ({
+        ...change,
+        draft: change.draft ?? false,
+        changeSetId,
+      })),
+    );
   }
   return changeSetId;
 }

@@ -5,7 +5,7 @@
 // drag-and-drop library.
 
 import type { DropResult } from "@hello-pangea/dnd";
-import { act, screen } from "@testing-library/react";
+import { act, screen, waitFor } from "@testing-library/react";
 import { createElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
@@ -81,7 +81,7 @@ describe("dropping a dragged choice", () => {
   it("moves it after the choice it lands below", async () => {
     const { drop, moves } = await openWithDrop();
     drop(1);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(moves()).toEqual([JSON.stringify({ after: "c2" })]);
     });
   });

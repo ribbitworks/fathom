@@ -50,12 +50,27 @@ export const changedRecordSchema = z.object({
   // For a choice, the name of its list.
   list: z.string().nullable(),
   fields: z.array(changedFieldSchema),
+  // Whether the changes were to the record's draft rather than to the live record.
+  draft: z.boolean(),
 });
 
 export type ChangedRecord = z.infer<typeof changedRecordSchema>;
 
+// What a change set did: saved changes, or approved, rejected, or discarded drafts, or rejected drafts
+// sent for approval again unchanged.
+export const changeKindSchema = z.enum([
+  "edit",
+  "approval",
+  "rejection",
+  "discard",
+  "resubmission",
+]);
+
+export type ChangeKind = z.infer<typeof changeKindSchema>;
+
 export const changeEntrySchema = z.object({
   id: z.string(),
+  kind: changeKindSchema,
   madeAt: z.iso.datetime({ offset: true }),
   // The name of who saved it, or null for Fathom itself, as for the seed data.
   madeBy: z.string().nullable(),

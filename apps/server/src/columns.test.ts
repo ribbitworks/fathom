@@ -2,8 +2,8 @@
 
 // Tests for required columns on the People table, against a PostgreSQL server of their own, since
 // whether a column can be required depends on everyone in Fathom: a column can be added as required
-// only while there is no one yet, made required once everyone has a value, and then every person
-// needs one, including a person brought back by undoing their deletion.
+// only while there is no one yet, made required once everyone has a value, live and in drafts, and
+// then every person needs one, including a person brought back by undoing a draft's discarding.
 
 import type { Choice, Field, List } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -18,6 +18,18 @@ beforeAll(async () => {
 afterAll(async () => {
   await test.close();
 });
+
+// Approves the drafts of the people given, as an Approver who sees every tier.
+async function approve(ids: readonly string[]) {
+  const { cookie } = await test.signedIn(["approver", "leadership"]);
+  const response = await test.request(
+    cookie,
+    "POST",
+    "/api/people/drafts/approval",
+    { people: ids },
+  );
+  expect(response.statusCode).toBe(200);
+}
 
 describe("required columns", () => {
   it("can be added while there is no one, made required once everyone has a value, and then must be filled in", async () => {
@@ -56,16 +68,22 @@ describe("required columns", () => {
         [optional.id]: [String(choice?.id)],
       },
     };
-    expect(
-      (await test.request(cookie, "POST", "/api/people", { people: [person] }))
-        .statusCode,
-    ).toBe(201);
+    const first = await test.request(cookie, "POST", "/api/people", {
+      people: [person],
+    });
+    expect(first.statusCode).toBe(201);
+    const [firstId = ""] = first.json<{ ids: string[] }>().ids;
     const missing = await test.request(cookie, "POST", "/api/people", {
       people: [{ ...person, employeeId: "E-2", values: {} }],
     });
     expect(missing.statusCode).toBe(400);
     expect(missing.json()).toEqual({ error: "Site must be filled in" });
 
+    // A draft that adds someone without a value keeps a column from becoming required.
+    expect((await addColumn("Desk", true)).json()).toEqual({
+      error: "Drafts leave Desk empty, so it cannot be required yet",
+    });
+    await approve([firstId]);
     const made = await test.request(
       cookie,
       "PUT",
@@ -78,9 +96,39 @@ describe("required columns", () => {
       error: "1 person has no Desk, so it cannot be required yet",
     });
 
-    // A person deleted before a column became required cannot come back without its value.
+    // So does a draft that clears someone's value.
     const desk = (await addColumn("Desk", false)).json<{ field: Field }>()
       .field;
+    const deskRequest = { name: "Desk", listId: list.id, required: true };
+    const given = await test.request(
+      cookie,
+      "PATCH",
+      `/api/people/${firstId}`,
+      {
+        values: { [desk.id]: [String(choice?.id)] },
+      },
+    );
+    expect(given.statusCode).toBe(200);
+    await approve([firstId]);
+    await test.request(cookie, "PATCH", `/api/people/${firstId}`, {
+      values: { [desk.id]: [] },
+    });
+    expect(
+      (
+        await test.request(
+          cookie,
+          "PUT",
+          `/api/people/columns/${desk.id}`,
+          deskRequest,
+        )
+      ).json(),
+    ).toEqual({
+      error: "Drafts leave Desk empty, so it cannot be required yet",
+    });
+    await test.request(cookie, "DELETE", `/api/people/${firstId}/draft`);
+
+    // A person whose draft was discarded before a column became required cannot come back without
+    // its value.
     const added = await test.request(cookie, "POST", "/api/people", {
       people: [{ ...person, employeeId: "E-3" }],
     });
@@ -90,17 +138,16 @@ describe("required columns", () => {
       "DELETE",
       `/api/people/${String(deskless)}`,
     );
-    const [first] = (await test.request(cookie, "GET", "/api/people")).json<{
-      people: { id: string }[];
-    }>().people;
-    await test.request(cookie, "PATCH", `/api/people/${String(first?.id)}`, {
-      values: { [desk.id]: [String(choice?.id)] },
-    });
-    await test.request(cookie, "PUT", `/api/people/columns/${desk.id}`, {
-      name: "Desk",
-      listId: list.id,
-      required: true,
-    });
+    expect(
+      (
+        await test.request(
+          cookie,
+          "PUT",
+          `/api/people/columns/${desk.id}`,
+          deskRequest,
+        )
+      ).statusCode,
+    ).toBe(200);
     const undone = await test.request(
       cookie,
       "POST",

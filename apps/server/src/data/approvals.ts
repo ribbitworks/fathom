@@ -1,0 +1,310 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Approving and rejecting drafts of people, one at a time or several at once, as the Decisions Log
+// sets out. Part of the data access layer. Approving applies the drafts to the live people, all in
+// one change set or none of them, and rejecting keeps them, marked Rejected with the Approver's
+// reason. An Approver may approve their own drafts, and needs roles that see every value in the
+// drafts they approve or reject. Neither can be undone.
+
+import {
+  type Database,
+  databaseCodes,
+  drafts,
+  fieldOfValue,
+  fieldValues,
+  hasDatabaseCode,
+  inChunks,
+  people,
+} from "@fathom/db";
+import { and, eq, inArray, or } from "drizzle-orm";
+import { type Actor, requirePermission, seesTier } from "../access.ts";
+import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
+import { type Change, recordChanges, type Transaction } from "./changes.ts";
+import {
+  type Draft,
+  drafted,
+  draftFields,
+  draftTier,
+  fitsColumns,
+  lockPersonDrafts,
+  readPersonDrafts,
+  type Recorded,
+  rejectedField,
+} from "./drafts.ts";
+import {
+  currentOn,
+  personChanges,
+  personTier,
+  readLive,
+  recordSensitiveChanges,
+} from "./people.ts";
+import { inListOrder, readColumns, valueField } from "./values.ts";
+
+const noDraft = "One of these people has no draft; refresh to see the latest";
+
+// Checks the actor may approve or reject drafts of people, and reads the drafts asked for, locked,
+// with the people as they are live. A draft the actor is not shown, since it changes only what they
+// may not see, is answered as one that does not exist, so asking reveals nothing; one they see only
+// part of is refused.
+async function lockDrafts(
+  transaction: Transaction,
+  actor: Actor,
+  ids: readonly string[],
+  today: string,
+) {
+  requirePermission(actor, "drafts:approve");
+  requirePermission(actor, "people:view");
+  await lockPersonDrafts(transaction);
+  const columns = await readColumns(transaction, true);
+  const found = await readPersonDrafts(transaction, ids);
+  if (found.size !== ids.length) throw new NotFoundError(noDraft);
+  const live = await readLive(transaction, columns, ids, true);
+  const tierOf = personTier(columns);
+  const shown = new Set(columns.map(({ id }) => valueField(id)));
+  const seen = (field: string) =>
+    (fieldOfValue(field) === null || shown.has(field)) &&
+    seesTier(actor, tierOf(field));
+  // Those without Restricted details see only current staff, as the live dates say.
+  const listed = (id: string, draft: Draft) =>
+    seesTier(actor, "restricted") ||
+    currentOn(live.get(id) ?? draft.fields, today);
+  for (const [id, draft] of found) {
+    const fields = draftFields(live.get(id), draft);
+    if (!fields.some(seen) || !listed(id, draft)) {
+      throw new NotFoundError(noDraft);
+    }
+    if (!fields.every(seen)) {
+      throw new ForbiddenError(
+        "One of these drafts holds details your roles do not let you see, so an Approver who sees them must decide it",
+      );
+    }
+  }
+  return { columns, found, live };
+}
+
+const detailColumns = (id: string, person: Recorded) => ({
+  id,
+  preferredName: String(person.preferredName),
+  employeeId: String(person.employeeId),
+  startDate: (person.startDate as string | null | undefined) ?? null,
+  endDate: (person.endDate as string | null | undefined) ?? null,
+});
+
+// The choices a person is to have in each column a draft sets, by column.
+function valuesSet(draft: Draft, person: Recorded): [string, string[]][] {
+  const fields =
+    draft.action === "created"
+      ? Object.keys(person)
+      : Object.keys(draft.fields);
+  return fields.flatMap((field): [string, string[]][] => {
+    const fieldId = fieldOfValue(field);
+    // The field is the person's own.
+    // eslint-disable-next-line security/detect-object-injection
+    const chosen = person[field];
+    return fieldId === null
+      ? []
+      : [[fieldId, Array.isArray(chosen) ? chosen.map(String) : []]];
+  });
+}
+
+const detailNames = new Set([
+  "preferredName",
+  "employeeId",
+  "startDate",
+  "endDate",
+]);
+
+// Makes the live people as their drafts make them, in as few statements as PostgreSQL allows:
+// people added together, removed together, and their columns' choices replaced together. Each
+// person whose details change is updated on their own.
+async function apply(
+  transaction: Transaction,
+  wanted: ReadonlyMap<string, { draft: Draft; person: Recorded | undefined }>,
+): Promise<void> {
+  const added: ReturnType<typeof detailColumns>[] = [];
+  const removed: string[] = [];
+  const replaced: { personId: string; fieldId: string }[] = [];
+  const chosen: { personId: string; fieldId: string; choiceId: string }[] = [];
+  for (const [id, { draft, person }] of wanted) {
+    if (person === undefined) {
+      removed.push(id);
+      continue;
+    }
+    if (draft.action === "created") {
+      added.push(detailColumns(id, person));
+    } else if (
+      Object.keys(draft.fields).some((field) => detailNames.has(field))
+    ) {
+      const { preferredName, employeeId, startDate, endDate } = detailColumns(
+        id,
+        person,
+      );
+      await transaction
+        .update(people)
+        .set({ preferredName, employeeId, startDate, endDate })
+        .where(eq(people.id, id));
+    }
+    for (const [fieldId, choiceIds] of valuesSet(draft, person)) {
+      replaced.push({ personId: id, fieldId });
+      chosen.push(
+        ...choiceIds.map((choiceId) => ({ personId: id, fieldId, choiceId })),
+      );
+    }
+  }
+  for (const chunk of inChunks(removed)) {
+    await transaction.delete(people).where(inArray(people.id, chunk));
+  }
+  for (const chunk of inChunks(added)) {
+    await transaction.insert(people).values(chunk);
+  }
+  for (const chunk of inChunks(replaced)) {
+    await transaction
+      .delete(fieldValues)
+      .where(
+        or(
+          ...chunk.map(({ personId, fieldId }) =>
+            and(
+              eq(fieldValues.personId, personId),
+              eq(fieldValues.fieldId, fieldId),
+            ),
+          ),
+        ),
+      );
+  }
+  for (const chunk of inChunks(chosen)) {
+    await transaction.insert(fieldValues).values(chunk);
+  }
+}
+
+async function approveIn(
+  transaction: Transaction,
+  actor: Actor,
+  ids: readonly string[],
+  today: string,
+): Promise<string | null> {
+  const { columns, found, live } = await lockDrafts(
+    transaction,
+    actor,
+    ids,
+    today,
+  );
+  const made: Change[] = [];
+  const wanted = new Map<
+    string,
+    { draft: Draft; person: Recorded | undefined }
+  >();
+  for (const id of ids) {
+    // A rejected draft may be approved too, when the Approver changes their mind.
+    const draft = found.get(id) as Draft;
+    const person = drafted(live.get(id), draft);
+    wanted.set(id, { draft, person });
+    made.push(
+      ...personChanges(columns, id, draft.action, live.get(id), person),
+    );
+  }
+  // The choices the people will have, so each can be checked against its column's list.
+  const chosen = [...wanted.values()].flatMap(({ person }) =>
+    Object.entries(person ?? {}).flatMap(([field, value]) =>
+      fieldOfValue(field) !== null && Array.isArray(value)
+        ? value.map(String)
+        : [],
+    ),
+  );
+  const listOf = new Map(
+    (await inListOrder(transaction, chosen)).map(({ id, listId }) => [
+      id,
+      listId,
+    ]),
+  );
+  for (const { person } of wanted.values()) {
+    if (person !== undefined && !fitsColumns(columns, listOf, person)) {
+      throw new ConflictError(
+        `The draft of ${String(person.preferredName)} no longer fits the columns; change it, then approve it`,
+      );
+    }
+  }
+  await apply(transaction, wanted);
+  for (const chunk of inChunks([...ids])) {
+    await transaction
+      .delete(drafts)
+      .where(
+        and(eq(drafts.recordType, "person"), inArray(drafts.recordId, chunk)),
+      );
+  }
+  await recordSensitiveChanges(transaction, actor.user.id, made);
+  return recordChanges(transaction, actor.user.id, made, "approval");
+}
+
+// Approves the drafts of the people given, applying them all to the live people, and returns the
+// change set that applied them.
+export async function approvePeopleDrafts(
+  database: Database,
+  actor: Actor,
+  ids: readonly string[],
+  today: string = new Date().toISOString().slice(0, 10),
+): Promise<string | null> {
+  try {
+    return await database.transaction((transaction) =>
+      approveIn(transaction, actor, ids, today),
+    );
+  } catch (error) {
+    // A choice deleted, or an Employee ID taken, since the draft was saved.
+    if (
+      [
+        databaseCodes.uniqueViolation,
+        databaseCodes.foreignKeyViolation,
+        databaseCodes.checkViolation,
+      ].some((code) => hasDatabaseCode(error, code))
+    ) {
+      throw new ConflictError(
+        "A draft no longer fits the people as they are; refresh, change it, then approve it",
+      );
+    }
+    throw error;
+  }
+}
+
+// Rejects the drafts of the people given, with a reason, and returns the change set that recorded
+// it. A rejected draft keeps its reason until it is changed again or discarded.
+export async function rejectPeopleDrafts(
+  database: Database,
+  actor: Actor,
+  ids: readonly string[],
+  reason: string,
+  today: string = new Date().toISOString().slice(0, 10),
+): Promise<string | null> {
+  return database.transaction(async (transaction) => {
+    const { columns, found, live } = await lockDrafts(
+      transaction,
+      actor,
+      ids,
+      today,
+    );
+    const tierOf = personTier(columns);
+    const made: Change[] = [];
+    for (const id of ids) {
+      const draft = found.get(id) as Draft;
+      const tier = draftTier(tierOf, live.get(id), draft);
+      if (draft.state === "rejected" && draft.reason === reason) continue;
+      made.push({
+        recordType: "person",
+        recordId: id,
+        action: "changed",
+        field: rejectedField,
+        tier,
+        oldValue: draft.state === "rejected" ? draft.reason : null,
+        newValue: reason,
+        draft: true,
+      });
+    }
+    for (const chunk of inChunks([...ids])) {
+      await transaction
+        .update(drafts)
+        .set({ state: "rejected", reason })
+        .where(
+          and(eq(drafts.recordType, "person"), inArray(drafts.recordId, chunk)),
+        );
+    }
+    return recordChanges(transaction, actor.user.id, made, "rejection");
+  });
+}

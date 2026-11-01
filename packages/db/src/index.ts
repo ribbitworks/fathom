@@ -9,6 +9,7 @@ export { type DatabaseConfig, loadDatabaseConfig } from "./config.ts";
 export { databaseCodes, describeError, hasDatabaseCode } from "./errors.ts";
 export {
   type ChangeRecord,
+  type ChangeSetKind,
   fieldOfValue,
   inChunks,
   recordChanges,
@@ -22,6 +23,7 @@ export {
   changes,
   changeSets,
   columnOrders,
+  drafts,
   fields,
   fieldValues,
   fathomSchema,

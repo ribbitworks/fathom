@@ -102,11 +102,12 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 
 ## Change and History Entities
 
-- **Change set:** Changes saved together, with who made them and when. Until the Draft and Approval slice of the [Implementation Plan](implementation-plan.md) is built, each is applied as it is saved.
-- **Change:** One field of one record changed in a change set, with its sensitivity tier and its old and new values.
+- **Change set:** Changes saved together, with who made them and when, and what they did: saved changes, or approved, rejected, or discarded drafts.
+- **Change:** One field of one record changed in a change set, with its sensitivity tier, its old and new values, and whether it changed the record's draft or the live record.
+- **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason. For now only people have drafts, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
 - **Snapshot:** A point-in-time copy of part of the plan. Its contents are set in the Decisions Log.
 
-**Proposal:** A draft row holds the values a row is to have once approved, or that the row is to be removed, and its state: waiting, or rejected with a reason. Each edit to a draft is recorded as a change set. Approving drafts, whether one, several at once, or a draft with the drafts it uses, applies them all to the live rows as one change set, or none of them.
+Approving drafts, whether one or several at once, applies them all to the live records as one change set, or none of them. **Proposal:** Approving a draft with the drafts it uses, such as a person given a choice that is itself a draft, applies them together, once configuration has drafts.
 
 ## Not Yet Modeled
 

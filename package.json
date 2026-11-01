@@ -18,7 +18,7 @@
     "lint:powershell": "bash scripts/lint-powershell.sh",
     "lint:licences": "bash scripts/lint-licences.sh",
     "security": "bash scripts/security-report.sh",
-    "test": "node --test \"scripts/*.test.mjs\" && pnpm --recursive --if-present test",
+    "test": "node --test \"scripts/*.test.mjs\" && pnpm --recursive --workspace-concurrency=1 --if-present test",
     "updates": "bash scripts/check-updates.sh",
     "update:analyzer": "bash scripts/update-script-analyzer.sh",
     "reset-caches": "bash scripts/reset-caches.sh",

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People, the columns on the People table, and its saved views, through the server's API. Each
-// change returns the change set it was saved in, which undoing it names, or null when nothing
-// changed.
+// People, the columns on the People table, and its saved views, through the server's API, with the
+// drafts of people and their approval. Each change returns the change set it was saved in, which
+// undoing it names, or null when nothing changed.
 
 import {
   changeSetIdSchema,
@@ -56,8 +56,49 @@ export async function updatePerson(
     .changeSetId;
 }
 
+// Drafts removing a person, or discards the draft of someone only drafted to be added.
 export async function deletePerson(id: string): Promise<string | null> {
   return (await sendDeleteFor(personPath(id), savedSchema)).changeSetId;
+}
+
+export async function discardDraft(id: string): Promise<string | null> {
+  return (await sendDeleteFor(`${personPath(id)}/draft`, savedSchema))
+    .changeSetId;
+}
+
+// Sends a rejected draft for approval again, unchanged.
+export async function resubmitDraft(id: string): Promise<string | null> {
+  return (await sendDeleteFor(`${personPath(id)}/draft/rejection`, savedSchema))
+    .changeSetId;
+}
+
+// Approves the drafts of the people given, all together, and gives the change set that applied them.
+// Approving cannot be undone.
+export async function approveDrafts(ids: string[]): Promise<string | null> {
+  return (
+    await sendJsonFor(
+      "POST",
+      "/api/people/drafts/approval",
+      { people: ids },
+      savedSchema,
+    )
+  ).changeSetId;
+}
+
+// Rejects the drafts of the people given, with a reason, and gives the change set that recorded it,
+// or null when every one was already rejected for that reason. Rejecting cannot be undone.
+export async function rejectDrafts(
+  ids: string[],
+  reason: string,
+): Promise<string | null> {
+  return (
+    await sendJsonFor(
+      "POST",
+      "/api/people/drafts/rejection",
+      { people: ids, reason },
+      savedSchema,
+    )
+  ).changeSetId;
 }
 
 export async function createField(

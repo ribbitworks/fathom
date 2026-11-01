@@ -6,7 +6,7 @@
 // retiring, and deleting lists; and Undo, focus, and the server's refusals throughout. Where dropped
 // choices end up is tested in list-panel.test.ts.
 
-import { act, screen, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -107,7 +107,7 @@ async function openPanel(answers: Answers = {}, path = "/lists/l1") {
   await screen.findByRole("heading", { name: "Locations", level: 2 });
   // Opening the panel moves focus into it a moment later; waiting for that keeps it from taking focus
   // away from a row the test focuses next.
-  await vi.waitFor(() => {
+  await waitFor(() => {
     expect(panel().contains(document.activeElement)).toBe(true);
   });
   return { fetch, history };
@@ -318,7 +318,7 @@ describe("the side panel", () => {
   ])("closes with %s", async (_case, close) => {
     const { history } = await openPanel();
     await close();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(history.location.pathname).toBe("/lists");
     });
   });
@@ -384,18 +384,18 @@ describe("adding choices", () => {
       screen.getByLabelText("New choice description"),
       "Test lab.{Enter}",
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "POST", "/api/lists/l1/choices")).toEqual([
         { choices: [{ label: "Fenwick Down", description: "Test lab." }] },
       ]);
     });
     expect(screen.queryByText(/^Added/)).toBeNull();
     expect(entryName().value).toBe("");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(entryName());
     });
     await undoWithKeys();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
   });
@@ -425,7 +425,7 @@ describe("adding choices", () => {
     await userEvent.type(entryName(), "Draft{Escape}");
     expect(entryName().value).toBe("");
     await userEvent.keyboard("{Escape}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(history.location.pathname).toBe("/lists");
     });
   });
@@ -440,7 +440,7 @@ describe("adding choices", () => {
     });
     await userEvent.click(entryName());
     await userEvent.paste("Ashgrove\tSatellite office\nBrindle");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "POST", "/api/lists/l1/choices")).toEqual([
         {
           choices: [
@@ -499,20 +499,20 @@ describe("moving through choices", () => {
     await openPanel();
     focusRow("c1");
     await userEvent.keyboard("{ArrowDown}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
     expect(row("c2").getAttribute("aria-selected")).toBe("true");
     await userEvent.keyboard("{End}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(entryName());
     });
     await userEvent.keyboard("{ArrowUp}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c3"));
     });
     await userEvent.keyboard("{Home}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c1"));
     });
     await userEvent.keyboard("{ArrowUp}");
@@ -528,7 +528,7 @@ describe("moving through choices", () => {
     );
     await userEvent.click(entryName());
     await userEvent.keyboard("{ArrowDown}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c4"));
     });
   });
@@ -548,15 +548,15 @@ describe("editing choices", () => {
     focusRow("c2");
     await userEvent.keyboard("{Enter}");
     const name = await screen.findByLabelText<HTMLInputElement>("name");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(name);
     });
     await userEvent.type(name, " Lab{Enter}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2")).toHaveLength(1);
     });
     await undoWithKeys();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
     expect(row("c2").textContent).toContain("Northmere");
@@ -586,7 +586,7 @@ describe("editing choices", () => {
     await userEvent.keyboard("{Enter}");
     await userEvent.type(await screen.findByLabelText("name"), " Lab");
     await userEvent.keyboard(keys);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2")).toHaveLength(1);
     });
   });
@@ -601,7 +601,7 @@ describe("editing choices", () => {
     await userEvent.click(
       screen.getByRole("heading", { name: "Locations", level: 2 }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByLabelText("name")).toBeNull();
     });
     expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2")).toEqual([]);
@@ -612,7 +612,7 @@ describe("editing choices", () => {
     focusRow("c2");
     await userEvent.keyboard("{Enter}");
     await userEvent.type(await screen.findByLabelText("name"), " Lab{Escape}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
     expect(screen.getByText("Northmere")).toBeDefined();
@@ -655,16 +655,16 @@ describe("ordering choices", () => {
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(
         bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position"),
       ).toHaveLength(1);
     });
     await undoWithKeys();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
     expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position")).toEqual([
@@ -678,7 +678,7 @@ describe("ordering choices", () => {
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowUp}{/Alt}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position")).toEqual(
         [{ after: null }],
       );
@@ -710,7 +710,7 @@ describe("ordering choices", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: startsWith(item) }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position")).toEqual(
         [{ after }],
       );
@@ -732,7 +732,7 @@ describe("ordering choices", () => {
       ).hasAttribute("data-disabled"),
     ).toBe(true);
     await userEvent.keyboard("{Escape}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("menuitem")).toBeNull();
     });
     expect(screen.getByRole("region")).toBeDefined();
@@ -762,17 +762,17 @@ describe("retiring and restoring choices", () => {
     focusRow("c2");
     await userEvent.keyboard("r");
     expect(await screen.findByText("Retired Northmere.")).toBeDefined();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c3"));
     });
     await undoLast();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
     expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/retired")).toEqual([
       { retired: true },
     ]);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
   });
@@ -792,7 +792,7 @@ describe("retiring and restoring choices", () => {
     );
     expect(await screen.findByText("Restored Old Mill.")).toBeDefined();
     await undoLast();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
     expect(bodyOf(fetch, "PUT", "/api/lists/l1/choices/c4/retired")).toEqual([
@@ -820,12 +820,12 @@ describe("removing choices", () => {
     focusRow("c3");
     await userEvent.keyboard("{Delete}");
     expect(await screen.findByText("Removed Corran Quay.")).toBeDefined();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
     await undoLast();
     expect(row("c3")).not.toBeNull();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
   });
@@ -843,7 +843,7 @@ describe("removing choices", () => {
       await screen.findByRole("menuitem", { name: /^Remove/ }),
     );
     await undoLast();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
   });
@@ -865,7 +865,7 @@ describe("removing choices", () => {
     await userEvent.keyboard("{Escape}");
     focusRow("c5");
     await userEvent.keyboard("{Backspace}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(entryName());
     });
   });
@@ -935,7 +935,7 @@ describe("creating and editing lists", () => {
         visibility: "restricted",
       },
     ]);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(history.location.pathname).toBe("/lists/l9");
     });
     expect(
@@ -947,10 +947,10 @@ describe("creating and editing lists", () => {
       ),
     ).toBeDefined();
     await undoWithKeys();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(
         within(screen.getByRole("table", { name: "Lists" })).queryByText(
           "Product areas",
@@ -1032,11 +1032,11 @@ describe("creating and editing lists", () => {
     await userEvent.clear(name);
     await userEvent.type(name, "Strengths");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l2")).toHaveLength(1);
     });
     await undoWithKeys();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
   });
@@ -1057,7 +1057,7 @@ describe("creating and editing lists", () => {
     );
     expect(await screen.findByText("Retired Skills.")).toBeDefined();
     await undoLast();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
     expect(bodyOf(fetch, "PUT", "/api/lists/l2/retired")).toEqual([
@@ -1121,11 +1121,11 @@ describe("creating and editing lists", () => {
       await screen.findByRole("button", { name: "Delete list" }),
     );
     expect(await screen.findByText("Deleted Regions.")).toBeDefined();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(history.location.pathname).toBe("/lists");
     });
     await undoLast();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(history.location.pathname).toBe("/lists/l4");
     });
     expect(undone(fetch)).toEqual([s1]);
@@ -1147,7 +1147,7 @@ describe("creating and editing lists", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Retire list" }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "PUT", "/api/lists/l2/retired")).toHaveLength(1);
     });
     await undoWithKeys();
@@ -1166,7 +1166,7 @@ describe("creating and editing lists", () => {
     );
     await screen.findByRole("dialog");
     await userEvent.keyboard("{Escape}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
   });
@@ -1203,7 +1203,7 @@ describe("creating and editing lists", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancel" }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     await userEvent.click(screen.getByRole("button", { name: "New list" }));
@@ -1220,7 +1220,7 @@ describe("creating and editing lists", () => {
 describe("focus", () => {
   it("goes into the panel when it opens: the first choice for editors", async () => {
     await openPanel();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(row("c1"));
     });
   });
@@ -1232,7 +1232,7 @@ describe("focus", () => {
     });
     renderApp("/lists/l3");
     await screen.findByRole("heading", { name: "Empty List", level: 2 });
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(entryName());
     });
   });
@@ -1247,7 +1247,7 @@ describe("focus", () => {
       name: "Locations",
       level: 2,
     });
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(title);
     });
   });
@@ -1258,10 +1258,10 @@ describe("focus", () => {
       screen.getByRole("button", { name: "Close" }).focus();
     });
     await userEvent.keyboard("{Escape}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(history.location.pathname).toBe("/lists");
     });
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement?.textContent).toBe("Locations");
     });
   });
@@ -1292,7 +1292,7 @@ describe("focus", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Delete list" }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement?.textContent).toBe("New list");
     });
   });
@@ -1300,7 +1300,7 @@ describe("focus", () => {
   it("edits the description when it is clicked", async () => {
     await openPanel();
     await userEvent.click(screen.getByText("Head office."));
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(screen.getByLabelText("description"));
     });
   });
@@ -1310,7 +1310,7 @@ describe("adding choices, more", () => {
   it("gives back what was typed when a choice cannot be added", async () => {
     await openPanel({ "POST /api/lists/l1/choices": refused(500) });
     await userEvent.type(entryName(), "Ashgrove{Enter}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(entryName().value).toBe("Ashgrove");
     });
   });
@@ -1324,7 +1324,7 @@ describe("adding choices, more", () => {
     await userEvent.paste("northmere\tA site");
     expect(screen.getByText("Already in this list")).toBeDefined();
     await userEvent.paste("Ashgrove\tA site");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(bodyOf(fetch, "POST", "/api/lists/l1/choices")).toEqual([
         { choices: [{ label: "Ashgrove", description: "A site" }] },
       ]);
@@ -1371,7 +1371,7 @@ describe("saving and undoing", () => {
     });
     expect(order).toEqual(["c1"]);
     release();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(order).toEqual(["c1", "c3"]);
     });
   });
@@ -1386,7 +1386,7 @@ describe("saving and undoing", () => {
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(
         bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position"),
       ).toHaveLength(1);
@@ -1407,7 +1407,7 @@ describe("saving and undoing", () => {
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(
         bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position"),
       ).toHaveLength(1);
@@ -1435,7 +1435,7 @@ describe("only the latest change", () => {
     focusRow("c3");
     await userEvent.keyboard("r");
     expect(await screen.findByText("Retired Corran Quay.")).toBeDefined();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.getAllByRole("button", { name: "Undo" })).toHaveLength(1);
     });
   });
@@ -1446,7 +1446,7 @@ describe("only the latest change", () => {
     });
     focusRow("c2");
     await userEvent.keyboard("{Alt>}{ArrowDown}{/Alt}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(
         bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position"),
       ).toHaveLength(1);

@@ -2,7 +2,7 @@
 
 // Records the change history: every change to Fathom's data, with its old and new values, grouped
 // into the change sets saved together. Part of the data access layer, the only server code that
-// queries the database. Until plan approval arrives, each change set is applied as it is saved.
+// queries the database. Changes to people are recorded as changes to their drafts until approved.
 
 import { type Database, databaseCodes, hasDatabaseCode } from "@fathom/db";
 import type { Tier } from "@fathom/shared";
@@ -25,6 +25,8 @@ export interface Change {
   // Null when the field had no value, as before a record is created or after it is deleted.
   oldValue: unknown;
   newValue: unknown;
+  // Whether the change is to the record's draft rather than to the live record.
+  draft?: boolean;
 }
 
 // What a change returns, and the change set it was saved in, which undoing it names; null when

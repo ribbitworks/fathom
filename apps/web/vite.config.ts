@@ -69,6 +69,9 @@ export default defineConfig({
     // Dates and times are shown in the computer's time zone, so tests fix one.
     env: { TZ: "UTC" },
     setupFiles: ["src/test-setup.ts"],
+    // Each test may take up to 20 seconds, twice the longest wait for the page in test-setup.ts, so a
+    // busy computer slows the tests without failing them.
+    testTimeout: 20_000,
     include: ["src/**/*.test.{ts,tsx}"],
     coverage: {
       provider: "v8",

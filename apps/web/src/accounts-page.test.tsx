@@ -5,7 +5,7 @@
 // passwords, deactivating and reactivating, the server's refusals, and changing one's own password.
 
 import { roleSchema } from "@fathom/shared";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -236,7 +236,7 @@ describe("creating an account", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create account" }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(fetch).toHaveBeenCalledWith(
@@ -319,7 +319,7 @@ describe("creating an account", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Cancel" }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
   });
@@ -343,7 +343,7 @@ describe("changing an account", () => {
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Save roles" }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(fetch).toHaveBeenCalledWith(
@@ -377,7 +377,7 @@ describe("changing an account", () => {
       "fictional password 2",
     );
     await userEvent.click(button);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(fetch).toHaveBeenCalledWith(
@@ -417,7 +417,7 @@ describe("changing an account", () => {
     );
     const dialog = await screen.findByRole("dialog");
     await userEvent.click(within(dialog).getByRole("button", { name: action }));
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     expect(fetch).toHaveBeenCalledWith(
@@ -542,7 +542,7 @@ describe("after a change", () => {
     expect((await screen.findByRole("status")).textContent).toBe(
       "Deactivated the account for Fictional Planner.",
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.getAllByText("Deactivated")).toHaveLength(2);
     });
   });
@@ -580,7 +580,7 @@ describe("after a change", () => {
     );
     await screen.findByRole("dialog", { name: "New account" });
     await userEvent.keyboard("{Escape}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
   });

@@ -5,7 +5,13 @@
 // rows and by pasting; deleting people; adding, changing, moving, and deleting columns; and Undo and
 // the server's refusals throughout. Helpers that need no page are tested in people-grid.test.ts.
 
-import { act, fireEvent, screen, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -323,19 +329,19 @@ describe("editing people", () => {
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Enter}");
     const input = await screen.findByRole("textbox", { name: "Name" });
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(input);
     });
     await userEvent.type(input, " Jr{Enter}");
     expect(bodyOf(fetch, "PATCH", "/api/people/p1")).toEqual([
       { preferredName: "Avery Fictional Jr" },
     ]);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(cell("p2", "preferredName"));
     });
     await settle();
     await userEvent.keyboard("{Meta>}z{/Meta}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
     expect(cell("p1", "preferredName").textContent).toBe("Avery Fictional");
@@ -350,7 +356,7 @@ describe("editing people", () => {
     expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([
       { employeeId: "Z9" },
     ]);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(cell("p2", "f1"));
     });
     focusCell("p2", "preferredName");
@@ -451,7 +457,7 @@ describe("editing people", () => {
     });
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Enter}{Control>}a{/Control}Zed Fictional{Tab}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(cell("p1", "preferredName").textContent).toBe("Zed Fictional");
     });
     expect(cell("p1", "employeeId").tabIndex).toBe(0);
@@ -501,7 +507,7 @@ describe("editing people", () => {
       { values: { f1: ["c2"] } },
     ]);
     // Enter picks and moves down, as it saves other cells.
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(cell("new-0", "f1"));
     });
     focusCell("p1", "f1");
@@ -600,12 +606,12 @@ describe("adding people", () => {
         ],
       },
     ]);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(newCell("Name").textContent).toBe("");
     });
     await settle();
     await userEvent.keyboard("{Meta>}z{/Meta}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
   });
@@ -713,7 +719,7 @@ describe("adding people", () => {
       "No Site called Atlantis",
     );
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(document.activeElement).toBe(rows[0]?.querySelector("td"));
     });
     // Pasting again keeps the rows that would not do.
@@ -745,7 +751,7 @@ describe("adding people", () => {
         "Fathom could not add the people. Try again in a moment.",
       ),
     ).toBeDefined();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(
         screen.getAllByRole("row", { name: "New person" })[0]?.textContent,
       ).toContain("Fay Fictional");
@@ -814,20 +820,382 @@ describe("new rows that will not do", () => {
   });
 });
 
-describe("deleting people", () => {
-  it("deletes a person from their menu, and undoes it from the notification", async () => {
-    const fetch = await openPeople({ "DELETE /api/people/p2": savedAs() });
+// A draft made by a fictional editor.
+const draftOf = (draft: object) => ({
+  changed: [],
+  live: { values: {} },
+  state: "waiting",
+  madeBy: "Fictional Editor",
+  madeAt: "2026-10-30T15:00:00.000Z",
+  ...draft,
+});
+
+describe("drafts", () => {
+  it("drafts removing a person from their menu, marking them, and undoes it", async () => {
+    // Once removed, the server holds the draft.
+    let removed = false;
+    const fetch = await openPeople({
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            avery,
+            removed
+              ? { ...blake, draft: draftOf({ action: "deleted" }) }
+              : blake,
+          ],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+      "DELETE /api/people/p2": () => {
+        removed = true;
+        return Response.json({ changeSetId: s1 });
+      },
+    });
     focusCell("p2", "employeeId");
     await userEvent.keyboard("{Shift>}{F10}{/Shift}");
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Delete person" }),
+      await screen.findByRole("menuitem", { name: "Remove person" }),
     );
-    expect(await screen.findByText("Deleted Blake Fictional.")).toBeDefined();
+    expect(await screen.findByText("Draft: removed")).toBeDefined();
     expect(
       fetch.mock.calls.map(([url, init]) => [url, init?.method]),
     ).toContainEqual(["/api/people/p2", "DELETE"]);
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls.filter(([url]) => url === "/api/people"),
+      ).toHaveLength(2);
+    });
+    await userEvent.keyboard("{Control>}z{/Control}");
+    await waitFor(() => {
+      expect(undone(fetch)).toEqual([s1]);
+    });
+  });
+
+  it("marks what drafts change, with live values, and rejected drafts with their reason", async () => {
+    const fetch = await openPeople({
+      "DELETE /api/people/p3/draft/rejection": savedAs(),
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              draft: draftOf({
+                action: "changed",
+                changed: ["f1", "f2", "startDate"],
+                live: { startDate: null, values: { f1: ["c2"] } },
+              }),
+            },
+            {
+              ...blake,
+              draft: draftOf({
+                action: "created",
+                changed: ["preferredName"],
+                state: "rejected",
+                reason: "Fictional reason",
+              }),
+            },
+            {
+              ...blake,
+              id: "p3",
+              preferredName: "Casey Fictional",
+              employeeId: "E3",
+              draft: draftOf({ action: "deleted", state: "rejected" }),
+            },
+          ],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    expect(cell("p1", "f1").textContent).toBe("Harbour, draft, live Northmere");
+    expect(cell("p1", "startDate").textContent).toBe(
+      "Mar 1, 2024, draft, live empty",
+    );
+    expect(cell("p1", "f2").textContent).toContain(", draft, live empty");
+    expect(cell("p1", "employeeId").textContent).toBe("E1");
+    // Under the draft row, the person as they are live, which only sighted users need.
+    const liveRow = cell("p1", "f1").closest("tr")?.nextElementSibling;
+    expect(liveRow?.getAttribute("aria-hidden")).toBe("true");
+    expect(
+      [...(liveRow?.querySelectorAll("td") ?? [])].map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Avery Fictional Live", "E1", "Northmere", "", "", "", ""]);
+    // Moving down from the draft row skips the live row.
+    focusCell("p1", "employeeId");
+    await userEvent.keyboard("{ArrowDown}");
+    expect(document.activeElement).toBe(cell("p2", "employeeId"));
+    expect(cell("p1", "preferredName").textContent).toContain("Draft");
+    expect(cell("p2", "f1").textContent).toBe("Old Mill, draft");
+    expect(cell("p2", "preferredName").textContent).toContain(
+      "Rejected: Fictional reason",
+    );
+    expect(cell("p3", "preferredName").textContent).toContain("Rejected");
+    // A rejected draft's changes are marked apart from those waiting, with its reason in the menu.
+    expect(cell("p2", "f1").className).not.toBe(cell("p1", "f1").className);
+    focusCell("p2", "employeeId");
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}");
+    expect(await screen.findByText("Rejected: Fictional reason")).toBeDefined();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    // A person drafted to be removed cannot be edited.
+    focusCell("p3", "employeeId");
+    await userEvent.keyboard("{Enter}");
+    expect(screen.queryByRole("textbox", { name: "Employee ID" })).toBeNull();
+    // Their menu sends the rejected draft for approval again, or discards it.
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}");
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Send for approval again", "Discard draft"]);
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Send for approval again" }),
+    );
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls.map(([url, init]) => [url, init?.method]),
+      ).toContainEqual(["/api/people/p3/draft/rejection", "DELETE"]);
+    });
+  });
+
+  it("lets Approvers approve or reject a draft from its person's menu, or all those shown at once", async () => {
+    const fetch = await openPeople({
+      "GET /api/session": session([
+        "drafts:approve",
+        "people:view",
+        "restricted:view",
+      ]),
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              draft: draftOf({ action: "changed", changed: ["f1"] }),
+            },
+            { ...blake, draft: draftOf({ action: "created" }) },
+            {
+              ...blake,
+              id: "p3",
+              preferredName: "Casey Fictional",
+              employeeId: "E3",
+              draft: draftOf({
+                action: "deleted",
+                state: "rejected",
+                reason: "Fictional reason",
+              }),
+            },
+          ],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+      "POST /api/people/drafts/approval": savedAs(),
+      "POST /api/people/drafts/rejection": savedAs(),
+    });
+    expect(
+      screen.getByText("2 drafts waiting among the people shown"),
+    ).toBeDefined();
+    // A rejected draft's menu gives its reason, and approves it after all or rejects it again.
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for Casey Fictional" }),
+    );
+    expect(await screen.findByText("Rejected: Fictional reason")).toBeDefined();
+    expect(
+      screen.getAllByRole("menuitem").map(({ textContent }) => textContent),
+    ).toEqual(["Approve draft", "Reject draft…"]);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for Avery Fictional" }),
+    );
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Approve draft", "Reject draft…"]);
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Approve draft" }),
+    );
+    const one = await screen.findByRole("dialog", { name: "Approve 1 draft?" });
+    await userEvent.click(within(one).getByRole("button", { name: "Approve" }));
+    expect(await screen.findByText("Approved 1 draft.")).toBeDefined();
+    // Rejecting one asks for a reason too, and can be cancelled.
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for Avery Fictional" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Reject draft…" }),
+    );
+    await userEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "Reject 1 draft?" }),
+      ).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Reject all…" }));
+    const all = await screen.findByRole("dialog", { name: "Reject 2 drafts?" });
+    await userEvent.type(
+      within(all).getByRole("textbox", { name: "Reason" }),
+      "Fictional reason",
+    );
+    await userEvent.click(within(all).getByRole("button", { name: "Reject" }));
+    expect(await screen.findByText("Rejected 2 drafts.")).toBeDefined();
+    await userEvent.click(screen.getByRole("button", { name: "Approve all" }));
+    await userEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "Approve 2 drafts?" }),
+      ).getByRole("button", { name: "Cancel" }),
+    );
+    expect(bodyOf(fetch, "POST", "/api/people/drafts/approval")).toEqual([
+      { people: ["p1"] },
+    ]);
+    expect(bodyOf(fetch, "POST", "/api/people/drafts/rejection")).toEqual([
+      { people: ["p1", "p2"], reason: "Fictional reason" },
+    ]);
+  });
+
+  it("waits for changes being saved before approving all shown", async () => {
+    let finish: (response: Response) => void = () => undefined;
+    await openPeople({
+      "GET /api/session": session([
+        "drafts:approve",
+        "people:edit",
+        "people:view",
+        "restricted:edit",
+        "restricted:view",
+      ]),
+      "GET /api/people": () =>
+        Response.json({
+          people: [avery, { ...blake, draft: draftOf({ action: "created" }) }],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+      "PATCH /api/people/p1": () =>
+        new Promise<Response>((resolve) => {
+          finish = resolve;
+        }),
+    });
+    const approveAll = screen.getByRole("button", { name: "Approve all" });
+    expect(approveAll).toHaveProperty("disabled", false);
+    focusCell("p1", "employeeId");
+    await userEvent.keyboard("E9{Enter}");
+    await waitFor(() => {
+      expect(approveAll).toHaveProperty("disabled", true);
+    });
+    finish(Response.json({ changeSetId: s1 }));
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "Approve all" }),
+      ).toHaveProperty("disabled", false);
+    });
+  });
+
+  it("keeps a person drafted to be removed from being cleared with Delete", async () => {
+    const fetch = await openPeople({
+      "GET /api/people": () =>
+        Response.json({
+          people: [avery, { ...blake, draft: draftOf({ action: "deleted" }) }],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    expect(cell("p2", "employeeId").getAttribute("aria-readonly")).toBe("true");
+    focusCell("p2", "employeeId");
+    await userEvent.keyboard("{Delete}");
+    expect(cell("p2", "employeeId").textContent).toBe("E2");
+    expect(
+      fetch.mock.calls.filter(([, init]) => init?.method === "PATCH"),
+    ).toEqual([]);
+  });
+
+  it("discards a draft from the person's menu, showing them as they are, and undoes it", async () => {
+    let discarded = false;
+    const fetch = await openPeople({
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            discarded
+              ? {
+                  ...avery,
+                  preferredName: "Avery Live",
+                  values: { f1: ["c2"], f2: ["r1", "r2"] },
+                }
+              : {
+                  ...avery,
+                  draft: draftOf({
+                    action: "changed",
+                    changed: ["preferredName", "f1"],
+                    live: {
+                      preferredName: "Avery Live",
+                      values: { f1: ["c2"] },
+                    },
+                  }),
+                },
+            blake,
+          ],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+      "DELETE /api/people/p1/draft": () => {
+        discarded = true;
+        return Response.json({ changeSetId: s1 });
+      },
+    });
+    focusCell("p1", "employeeId");
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}");
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Discard draft" }),
+    );
+    expect(await screen.findByText("Avery Live")).toBeDefined();
+    expect(cell("p1", "f1").textContent).toBe("Northmere");
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls.filter(([url]) => url === "/api/people"),
+      ).toHaveLength(2);
+    });
+    await userEvent.keyboard("{Control>}z{/Control}");
+    await waitFor(() => {
+      expect(undone(fetch)).toEqual([s1]);
+    });
+  });
+
+  it("discards the draft of someone only drafted to be added, offering Undo", async () => {
+    const fetch = await openPeople({
+      "GET /api/people": () =>
+        Response.json({
+          people: [avery, { ...blake, draft: draftOf({ action: "created" }) }],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+      "DELETE /api/people/p2/draft": savedAs(),
+    });
+    focusCell("p2", "employeeId");
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}");
+    expect(
+      (await screen.findAllByRole("menuitem")).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Discard draft"]);
+    await userEvent.click(
+      screen.getByRole("menuitem", { name: "Discard draft" }),
+    );
+    expect(
+      await screen.findByText("Discarded the draft adding Blake Fictional."),
+    ).toBeDefined();
     await userEvent.click(screen.getByRole("button", { name: "Undo" }));
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
   });
@@ -882,7 +1250,7 @@ describe("columns", () => {
     ]);
     await settle();
     await userEvent.keyboard("{Meta>}z{/Meta}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
   });
@@ -943,7 +1311,7 @@ describe("columns", () => {
     await userEvent.click(screen.getByRole("button", { name: "New column" }));
     await screen.findByRole("dialog", { name: "New column" });
     await userEvent.keyboard("{Escape}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
   });
@@ -983,7 +1351,7 @@ describe("columns", () => {
       await screen.findByText("Deleted the Role on team column."),
     ).toBeDefined();
     await userEvent.click(screen.getByRole("button", { name: "Undo" }));
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
   });
@@ -1005,7 +1373,7 @@ describe("columns", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /^Move left/ }),
     );
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(moves("f2")).toEqual([{ after: "employeeId" }]);
     });
 
@@ -1014,7 +1382,7 @@ describe("columns", () => {
       header("Employee ID").focus();
     });
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(moves("employeeId")).toEqual([{ after: null }]);
     });
     act(() => {
@@ -1022,7 +1390,7 @@ describe("columns", () => {
     });
     await userEvent.keyboard("{Alt>}{ArrowRight}{/Alt}");
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}{ArrowLeft}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(moves("preferredName")).toHaveLength(1);
     });
     await settle();
@@ -1043,7 +1411,7 @@ describe("columns", () => {
     fireEvent.drop(th("Role on team"));
     fireEvent.dragStart(th("Site"));
     fireEvent.drop(th("Site"));
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(moves("f1")).toHaveLength(1);
     });
   });
@@ -1118,7 +1486,7 @@ describe("searching, sorting, and filtering", () => {
   async function choose(label: string, item: string | RegExp) {
     await userEvent.click(header(label));
     await userEvent.click(await screen.findByRole("menuitem", { name: item }));
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
     });
   }
@@ -1164,7 +1532,7 @@ describe("searching, sorting, and filtering", () => {
     await userEvent.keyboard("{Meta>}f{/Meta}");
     expect(dialog.contains(document.activeElement)).toBe(true);
     await userEvent.keyboard("{Escape}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
     await userEvent.keyboard("{Meta>}f{/Meta}");
@@ -1181,22 +1549,22 @@ describe("searching, sorting, and filtering", () => {
     fireEvent.change(search, { target: { value: "a" } });
     fireEvent.change(search, { target: { value: "av" } });
     fireEvent.change(search, { target: { value: "ave" } });
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(history.location.search).toContain("search=ave");
     });
     expect(search).toHaveProperty("value", "ave");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(shownNames()).toEqual(["Avery Fictional"]);
     });
     history.back();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(search).toHaveProperty("value", "");
     });
     expect(history.location.search).toContain("sort=");
     // Typing again after Back adds to history rather than replacing where Back went.
     await userEvent.type(search, "b");
     history.back();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(search).toHaveProperty("value", "");
     });
     expect(history.location.search).toContain("sort=");
@@ -1232,7 +1600,7 @@ describe("searching, sorting, and filtering", () => {
     });
     await userEvent.keyboard("Casey{Tab}E9{Tab}north{Tab}");
     await userEvent.keyboard("{Escape}{Enter}");
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(shownNames()).toEqual(["Avery Fictional", "Casey Fictional"]);
     });
   });
@@ -1272,7 +1640,7 @@ describe("searching, sorting, and filtering", () => {
     await choose("Start", "Clear sort");
     expect(address(history)).not.toContain("startDate");
     history.back();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(address(history)).toContain("startDate");
     });
     await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
@@ -1303,7 +1671,7 @@ describe("searching, sorting, and filtering", () => {
     await choose("Site", "Clear filter");
     expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
     history.back();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(screen.getByText("Site: Harbour")).toBeDefined();
     });
     expect(
@@ -1311,11 +1679,11 @@ describe("searching, sorting, and filtering", () => {
     ).toBeDefined();
     expect(address(history)).toContain('filters={"f1":{"any":["c1"]}}');
     history.back();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
     });
     history.forward();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(shownNames()).toEqual(["Avery Fictional"]);
     });
     await choose("Site", "Filter…");
@@ -1528,7 +1896,7 @@ describe("searching, sorting, and filtering", () => {
       await userEvent.click(
         await screen.findByRole("menuitem", { name: item }),
       );
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(screen.queryByRole("menu")).toBeNull();
       });
     }
@@ -1563,7 +1931,7 @@ describe("searching, sorting, and filtering", () => {
       await userEvent.keyboard("{Enter}");
       expect(within(dialog).getByText("Name needed")).toBeDefined();
       await userEvent.keyboard("Harbour{Enter}");
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(address(history)).toContain(`view=${v1}`);
       });
       expect(bodyOf(fetch, "POST", "/api/people/views")).toEqual([
@@ -1580,7 +1948,7 @@ describe("searching, sorting, and filtering", () => {
       act(() => {
         history.back();
       });
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
       });
     });
@@ -1629,7 +1997,7 @@ describe("searching, sorting, and filtering", () => {
       expect(within(dialog).getByText("Already a view")).toBeDefined();
       await userEvent.clear(name);
       await userEvent.type(name, "Home{Enter}");
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(screen.queryByRole("dialog")).toBeNull();
       });
       expect(bodyOf(fetch, "PUT", `/api/people/views/${v1}`)).toContainEqual({
@@ -1643,7 +2011,7 @@ describe("searching, sorting, and filtering", () => {
       );
       await screen.findByText("Deleted the Home view.");
       await userEvent.click(screen.getByRole("button", { name: "Undo" }));
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(undone(fetch)).toEqual([s1]);
       });
     });
@@ -1671,7 +2039,7 @@ describe("searching, sorting, and filtering", () => {
       );
       await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("{Escape}");
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(screen.queryByRole("dialog")).toBeNull();
       });
       await chooseView("Clear view");
@@ -1708,13 +2076,13 @@ describe("searching, sorting, and filtering", () => {
       await userEvent.click(
         within(dialog).getByRole("button", { name: "Cancel" }),
       );
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(screen.queryByRole("dialog")).toBeNull();
       });
       await chooseView("Save view…");
       await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("{Escape}");
-      await vi.waitFor(() => {
+      await waitFor(() => {
         expect(screen.queryByRole("dialog")).toBeNull();
       });
     });

@@ -17,12 +17,15 @@ export function EntryList({ children }: { children: ReactNode }) {
   return <ul className={classes.entries}>{children}</ul>;
 }
 
-// One entry: when it happened, with its year, and its words.
+// One entry: when it happened, with its year, or that the time was not recorded, and its words,
+// after anything that leads it, such as a checkbox to select it.
 export function EntryRow({
   at,
+  lead,
   children,
 }: {
-  at: string;
+  at: string | null;
+  lead?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -34,16 +37,23 @@ export function EntryRow({
       px="md"
       py="sm"
     >
-      <Text
-        component="time"
-        dateTime={at}
-        fz="sm"
-        c="dimmed"
-        w={168}
-        className={classes.entryTime}
-      >
-        {when.format(new Date(at))}
-      </Text>
+      {lead}
+      {at === null ? (
+        <Text fz="sm" c="dimmed" w={168} className={classes.entryTime}>
+          Time not recorded
+        </Text>
+      ) : (
+        <Text
+          component="time"
+          dateTime={at}
+          fz="sm"
+          c="dimmed"
+          w={168}
+          className={classes.entryTime}
+        >
+          {when.format(new Date(at))}
+        </Text>
+      )}
       <div>{children}</div>
     </Group>
   );

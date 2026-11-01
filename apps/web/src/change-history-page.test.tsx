@@ -5,7 +5,7 @@
 // be loaded.
 
 import type { ChangedRecord, ChangeEntry } from "@fathom/shared";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -28,10 +28,12 @@ let entryCount = 0;
 function entry(
   records: ChangedRecord[],
   madeBy: string | null = "Fictional Person",
+  kind: ChangeEntry["kind"] = "edit",
 ): ChangeEntry {
   entryCount += 1;
   return {
     id: `00000000-0000-4000-8000-${String(entryCount).padStart(12, "0")}`,
+    kind,
     madeAt: "2026-10-30T15:00:00.000Z",
     madeBy,
     records,
@@ -44,7 +46,8 @@ const record = (
   fields: ChangedRecord["fields"] = [],
   name: string | null = "Fictional",
   list: string | null = null,
-): ChangedRecord => ({ kind, action, name, list, fields });
+  draft = false,
+): ChangedRecord => ({ kind, action, name, list, fields, draft });
 
 const page =
   (entries: ChangeEntry[], next: string | null = null) =>
@@ -105,6 +108,74 @@ describe("who sees the Change history page", () => {
 });
 
 describe("the entries", () => {
+  it("say what was drafted, approved, rejected, and discarded", async () => {
+    const name = { field: "preferredName", oldValue: "A", newValue: "B" };
+    const drafted = (action: string, fields: object[] = []) =>
+      record("person", action, fields as never, "Avery Fictional", null, true);
+    serverAnswers({
+      "GET /api/session": changesViewer,
+      "GET /api/changes": page([
+        entry([drafted("created")]),
+        entry([drafted("deleted")]),
+        entry([drafted("changed", [name])]),
+        entry([drafted("created"), drafted("created")]),
+        entry(
+          [
+            record("person", "created", [], "Avery Fictional"),
+            record("person", "deleted", [], "Blake Fictional"),
+            record("person", "changed", [name], "Casey Fictional"),
+          ],
+          "Fictional Approver",
+          "approval",
+        ),
+        entry(
+          [
+            drafted("changed", [
+              {
+                field: "rejected",
+                oldValue: null,
+                newValue: "Fictional reason",
+              },
+            ]),
+            drafted("changed", [
+              { field: "rejected", oldValue: null, newValue: null },
+            ]),
+          ],
+          "Fictional Approver",
+          "rejection",
+        ),
+        entry(
+          [drafted("changed", [name]), drafted("deleted")],
+          "Fictional Person",
+          "discard",
+        ),
+        entry([drafted("changed")], "Fictional Person", "resubmission"),
+        entry(
+          [drafted("changed"), drafted("changed")],
+          "Fictional Person",
+          "resubmission",
+        ),
+        entry([
+          record("list-item", "created", [], "North", "Sites"),
+          record("list-item", "created", [], "South", "Sites"),
+        ]),
+      ]),
+    });
+    renderApp("/changes");
+    expect(await lines()).toEqual([
+      "Fictional Person drafted adding Avery Fictional",
+      "Fictional Person drafted removing Avery Fictional",
+      "Fictional Person drafted changes to Avery Fictional: Name from A to B",
+      "Fictional Person drafted adding 2 people: Avery Fictional, Avery Fictional",
+      "Fictional Approver approved 3 draftsApproved adding Avery FictionalApproved removing Blake FictionalApproved changes to Casey Fictional: Name from A to B",
+      "Fictional Approver rejected 2 draftsRejected the draft of Avery Fictional: Reason: Fictional reasonRejected the draft of Avery Fictional",
+      "Fictional Person discarded 2 draftsDiscarded the draft of Avery FictionalDiscarded the draft of Avery Fictional",
+      "Fictional Person sent the draft of Avery Fictional for approval again",
+      "Fictional Person sent 2 drafts for approval againSent the draft of Avery Fictional for approval againSent the draft of Avery Fictional for approval again",
+      "Fictional Person added 2 choices to Sites: North, South",
+    ]);
+  });
+
   it("say who changed what, and what changed in it", async () => {
     serverAnswers({
       "GET /api/session": changesViewer,
@@ -384,7 +455,7 @@ describe("the entries", () => {
     await userEvent.type(field, "Sítes");
     // A spinner shows until typing pauses and the search is read.
     expect(screen.getByRole("status", { name: "Searching" })).toBeDefined();
-    await vi.waitFor(() => {
+    await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
         "/api/changes?search=S%C3%ADtes",
         expect.anything(),

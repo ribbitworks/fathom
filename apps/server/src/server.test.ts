@@ -31,6 +31,9 @@ import {
   startServer,
 } from "./server.ts";
 
+// How long a test waits for something to happen, so a busy computer does not fail it.
+const waitLimit = { timeout: 10_000 };
+
 let database: TestDatabase;
 let certificate: TestCertificate;
 const silent = { write: () => undefined };
@@ -63,7 +66,7 @@ async function applicationSessions(): Promise<number> {
 async function expectApplicationSessions(count: number): Promise<void> {
   await vi.waitFor(async () => {
     expect(await applicationSessions()).toBe(count);
-  });
+  }, waitLimit);
 }
 
 // Asks the system for a free port, for settings that must name one.
@@ -305,7 +308,7 @@ describe("closing on signals", () => {
       process.emit("SIGUSR2");
       await vi.waitFor(() => {
         expect(errors).toHaveBeenCalledWith("error: A fictional failure");
-      });
+      }, waitLimit);
       expect(process.exitCode).toBe(1);
     } finally {
       process.exitCode = undefined;

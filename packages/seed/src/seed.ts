@@ -5,7 +5,9 @@
 // change history as made by Fathom itself, and an account for each persona, from ./accounts.ts,
 // recorded in the access history. Seeding twice adds nothing more, and removing takes away only what
 // seeding added, keeping a seeded column or list that something added by hand still uses, and
-// deactivating the accounts. A development-only package, never included in the runtime image.
+// deactivating the accounts. Drafts made by the personas, from ./drafts.ts, are added once the
+// accounts are, and discarded before the rest is removed. A development-only package, never included
+// in the runtime image.
 // Usage: node src/seed.ts seed | unseed, with the FATHOM_DB_* settings for the application role,
 // and FATHOM_PUBLIC_URL and FATHOM_AUTH_SECRET_FILE, as the account command reads. Seeding also
 // needs FATHOM_SEED_PASSWORD_FILE, naming the file that holds the accounts' shared password.
@@ -18,6 +20,7 @@ import {
   type Database,
   databaseCodes,
   describeError,
+  drafts,
   fields,
   fieldValues,
   listItems,
@@ -34,10 +37,11 @@ import {
 } from "@fathom/fixtures";
 import { createAuth } from "@fathom/server/auth";
 import { loadAuthConfig } from "@fathom/server/config";
-import { count, eq, inArray } from "drizzle-orm";
+import { and, count, eq, inArray, sql } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { seedAccounts, unseedAccounts } from "./accounts.ts";
+import { seedDrafts, unseedDrafts } from "./drafts.ts";
 import { passwordLength } from "@fathom/shared";
 
 // The development data set's size.
@@ -232,9 +236,20 @@ export async function unseed(
           .from(fieldValues)
           .where(eq(fieldValues.fieldId, column.id)),
       );
-      if (used > 0) {
+      const drafted = await total(
+        transaction
+          .select({ total: count() })
+          .from(drafts)
+          .where(
+            and(
+              eq(drafts.recordType, "person"),
+              sql`${drafts.fields} ? ${`value:${column.id}`}::text`,
+            ),
+          ),
+      );
+      if (used + drafted > 0) {
         kept.push(
-          `The ${row.name} column, which people added by hand have values in`,
+          `The ${row.name} column, which people added by hand have values in, live or in drafts`,
         );
         continue;
       }
@@ -338,7 +353,16 @@ export async function seedCommand(
       );
       const accounts = await seedAccounts(auth, database, password);
       for (const email of accounts) console.log(`Account ready: ${email}`);
+      if (await seedDrafts(database, organization)) {
+        console.log("Added drafts made by the personas");
+      }
     } else {
+      const discarded = await unseedDrafts(database, organization);
+      if (discarded > 0) {
+        console.log(
+          `Discarded ${String(discarded)} drafts made by the personas`,
+        );
+      }
       const kept = await unseed(database, organization);
       console.log("Removed the fictional data");
       for (const item of kept) console.log(`Kept: ${item}`);

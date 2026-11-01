@@ -33,6 +33,11 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 - **Column widths:** Each column's width comes from its kind alone, so editing never moves the table, but columns often fit their contents poorly. The owner asked for widths that fit what columns hold, still without moving the table while editing: for a column drawing on a list, from its longest choice, and for the others, from their contents or their longest allowed value.
 - **Pasting several choices:** Pasting into a column that takes several choices reads each cell as one choice name. How several are pasted into one cell was left for later by the owner.
 
+## Drafts
+
+- **Unnamed in the access history:** The access history names each person by their live record, so a Restricted change to someone only drafted to be added shows them without a name until their draft is approved.
+- **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
+
 ## Dependencies
 
 - **Advisories in minimatch and glob:** Two medium advisories, published by 2026-10-30, affect minimatch before 11.0.1 (denial of service from crafted patterns) and glob 9 to 14.0.1 (a cancelled search can keep reading files). They reach the server through @fastify/static, and development tools such as ESLint, markdownlint, and Testcontainers. In Fathom, the patterns come from code, never from users. The fixed versions are new major versions that the packages depending on them do not accept yet, so they wait for those packages' updates. The Security Plan's 90 days for medium findings runs to 2027-01-28.

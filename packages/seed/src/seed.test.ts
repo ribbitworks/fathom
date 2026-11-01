@@ -9,6 +9,7 @@ import {
   changeSets,
   columnOrders,
   createDatabase,
+  drafts,
   createPool,
   type Database,
   fields,
@@ -16,7 +17,9 @@ import {
   listItems,
   lists,
   people,
+  recordChanges,
   runMigrations,
+  users,
 } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
@@ -26,6 +29,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { personaAccounts } from "./accounts.ts";
+import { actorFor } from "@fathom/server/access";
+import { createDataAccess } from "@fathom/server/data";
+import { rejection, seedDrafts, unseedDrafts } from "./drafts.ts";
 import { seed, seedCommand, unseed } from "./seed.ts";
 
 let database: TestDatabase;
@@ -105,7 +111,7 @@ describe("seeding", () => {
     });
     const kept = await unseed(connection, organization);
     expect(kept).toEqual([
-      "The Site column, which people added by hand have values in",
+      "The Site column, which people added by hand have values in, live or in drafts",
       "The Sites list, which a column uses",
       "The Positions list, which has choices added by hand",
     ]);
@@ -124,6 +130,15 @@ describe("seeding", () => {
     expect(order?.keys.at(-1)).toBe(organization.columns.at(-1)?.id);
     expect(await unseed(connection, organization)).toEqual([]);
     expect(await totalOf(people)).toBe(0);
+  });
+});
+
+describe("seed drafts", () => {
+  it("need the personas' accounts, and are discarded only when there are some", async () => {
+    await expect(seedDrafts(connection, organization)).rejects.toThrow(
+      /^The account engineering\.operations\.manager@fathom\.test is missing/,
+    );
+    expect(await unseedDrafts(connection, organization)).toBe(0);
   });
 });
 
@@ -147,23 +162,90 @@ describe("the seed command", () => {
   it("seeds, says when it already has, and unseeds", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], environment())).toBe(0);
+    const made = await connection.select().from(drafts);
+    expect(made.map(({ action }) => action).sort()).toEqual([
+      "changed",
+      "changed",
+      "changed",
+      "created",
+      "created",
+      "deleted",
+    ]);
+    expect(
+      made
+        .filter(({ state }) => state === "rejected")
+        .map(({ reason }) => reason),
+    ).toEqual([rejection, rejection]);
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
+    expect(await connection.select().from(drafts)).toHaveLength(6);
+    // Seeding again after the Approver approves the waiting drafts makes none again, and leaves
+    // alone a draft made by hand of another seeded person, which removing the seed data discards,
+    // since it removes that person.
+    const waiting = await connection
+      .select({ id: drafts.recordId })
+      .from(drafts)
+      .where(eq(drafts.state, "waiting"));
+    const [director] = await connection
+      .select({ id: users.id, name: users.name, email: users.email })
+      .from(users)
+      .where(eq(users.email, "engineering.director@fathom.test"));
+    await createDataAccess(connection).people.approveDrafts(
+      actorFor(director as { id: string; name: string; email: string }, [
+        "approver",
+        "leadership",
+      ]),
+      waiting.map(({ id }) => id),
+    );
+    const seeded = fictionalOrganization({ size: 150 });
+    await connection.insert(drafts).values({
+      recordType: "person",
+      recordId: String(seeded.people[10]?.id),
+      action: "changed",
+      fields: { preferredName: "Fictional Hand Draft" },
+    });
+    await recordChanges(connection, director?.id ?? null, [
+      {
+        recordType: "person",
+        recordId: String(seeded.people[10]?.id),
+        action: "changed",
+        field: "preferredName",
+        tier: "general",
+        oldValue: seeded.people[10]?.preferredName,
+        newValue: "Fictional Hand Draft",
+        draft: true,
+      },
+    ]);
+    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await connection.select().from(drafts)).toHaveLength(3);
     const positions = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
       listId: String(positions?.id),
       label: "Fictional Hand Choice",
     });
+    // The newcomer approved is no longer seed data, so is removed by hand first.
+    await connection
+      .delete(people)
+      .where(eq(people.employeeId, String(seeded.newcomers[0]?.employeeId)));
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     const addresses = personaAccounts.map(({ email }) => email);
     expect(log.mock.calls.map(([line]) => line as string)).toEqual([
       "Added 150 fictional people, with their lists and columns",
       ...addresses.map((email) => `Account ready: ${email}`),
+      "Added drafts made by the personas",
       "The fictional data is already in the database",
+      "The fictional data is already in the database",
+      "Discarded 3 drafts made by the personas",
       "Removed the fictional data",
       "Kept: The Positions list, which has choices added by hand",
       ...addresses.map((email) => `Deactivated the account ${email}`),
     ]);
+    // With nothing left to discard, unseeding again says nothing of drafts.
+    log.mockClear();
+    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    expect(log.mock.calls.map(([line]) => line as string)).not.toContainEqual(
+      expect.stringMatching(/^Discarded/),
+    );
     log.mockRestore();
   });
 

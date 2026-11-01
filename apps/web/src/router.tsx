@@ -20,6 +20,7 @@ import { AccountsPage } from "./accounts-page.tsx";
 import { ChangePassword } from "./change-password.tsx";
 import { RolesHelpPage } from "./help-page.tsx";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
+import { DraftsPage } from "./drafts-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
@@ -119,6 +120,28 @@ const changesRoute = createRoute({
   },
 });
 
+// Drafts, for those who see the data they change, with their search in the address; Approvers
+// approve and reject them here.
+const draftsRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/drafts",
+  validateSearch: historySearch,
+  beforeLoad: requiring("people:view"),
+  component: function Drafts() {
+    const { permissions } = signedIn.useRouteContext();
+    const navigate = draftsRoute.useNavigate();
+    return (
+      <DraftsPage
+        canApprove={permissions.includes("drafts:approve")}
+        search={draftsRoute.useSearch().search ?? ""}
+        onSearch={(search, replace) => {
+          void navigate({ search: { search: search || undefined }, replace });
+        }}
+      />
+    );
+  },
+});
+
 const historyRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/history",
@@ -165,6 +188,7 @@ const peopleRoute = createRoute({
     return (
       <PeoplePage
         canEdit={permissions.includes("people:edit")}
+        canApprove={permissions.includes("drafts:approve")}
         canEditColumns={permissions.includes("configuration:edit")}
         showDates={permissions.includes("restricted:view")}
         {...viewProps(people.useSearch(), (search, replace) => {
@@ -210,6 +234,7 @@ const routeTree = rootRoute.addChildren([
     changesRoute,
     listsRoute,
     peopleRoute,
+    draftsRoute,
     changePasswordRoute,
     helpRoute,
   ]),

@@ -111,6 +111,18 @@ function Line({
   );
 }
 
+// What an entry changing several records did, after who did it, such as "approved 3 drafts".
+function groupSentence({ kind, records }: ChangeEntry): string {
+  const total = count(records.length);
+  if (kind === "approval") return `approved ${total} drafts`;
+  if (kind === "rejection") return `rejected ${total} drafts`;
+  if (kind === "discard") return `discarded ${total} drafts`;
+  if (kind === "resubmission") {
+    return `sent ${total} drafts for approval again`;
+  }
+  return `saved changes to ${total} records`;
+}
+
 const capitalized = (words: RecordWords): RecordWords => ({
   ...words,
   sentence: words.sentence.charAt(0).toUpperCase() + words.sentence.slice(1),
@@ -139,7 +151,7 @@ function Entry({
       ) : (
         <div>
           <Text fz="sm">
-            {who} saved changes to {count(entry.records.length)} records
+            {who} {groupSentence(entry)}
           </Text>
           <ul className={classes.entries}>
             {shown.map(({ item, at }) => (

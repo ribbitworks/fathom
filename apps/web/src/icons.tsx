@@ -45,6 +45,12 @@ const paths = {
       <path d="M8 4.5V8l2.5 1.5" />
     </>
   ),
+  drafts: (
+    <>
+      <path d="M4 2.5h5l3 3v8H4z" />
+      <path d="M6 9.5l1.5 1.5 3-3" />
+    </>
+  ),
   changes: (
     <>
       <path d="M2.5 4h7M2.5 8h5M2.5 12h3.5" />

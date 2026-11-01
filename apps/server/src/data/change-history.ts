@@ -19,6 +19,7 @@ import {
   type ChangedField,
   type ChangedRecord,
   type ChangeEntry,
+  changeKindSchema,
   type ChangeValue,
   matchesWords,
   recordSearchText,
@@ -38,6 +39,7 @@ import {
 } from "drizzle-orm";
 import { type Actor, mostSensitive, seesTier } from "../access.ts";
 import type { RecordType } from "./changes.ts";
+import { rejectedField } from "./drafts.ts";
 import { personTier } from "./people.ts";
 import { readColumns } from "./values.ts";
 import { viewTiersNow } from "./views.ts";
@@ -264,11 +266,12 @@ function recordsOf(
   const name = (id: string) => names.get(id);
   const records = new Map<string, ChangedRecord>();
   for (const row of rows) {
-    const key = `${row.recordType} ${row.recordId}`;
+    const key = `${row.recordType} ${row.recordId} ${String(row.draft)}`;
     const listId = listOf.get(row.recordId);
     const record = records.get(key) ?? {
       kind: row.recordType,
       action: row.action,
+      draft: row.draft,
       name: name(row.recordId) ?? null,
       list:
         row.recordType === "list-item" && listId !== undefined
@@ -281,6 +284,7 @@ function recordsOf(
     if (
       row.action !== "changed" ||
       unshownFields.has(row.field) ||
+      (row.field === rejectedField && row.newValue === null) ||
       (row.recordType === "list-item" && row.field === "listId")
     ) {
       continue;
@@ -317,6 +321,7 @@ async function readBatch(
   const sets = await database
     .select({
       id: changeSets.id,
+      kind: changeSets.kind,
       madeAt: changeSets.madeAt,
       madeBy: users.name,
     })
@@ -379,6 +384,8 @@ async function readBatch(
             {
               entry: {
                 id: set.id,
+                // A kind the server no longer knows is shown as saved changes.
+                kind: changeKindSchema.catch("edit").parse(set.kind),
                 madeAt: set.madeAt.toISOString(),
                 madeBy: set.madeBy,
                 records: recordsOf(held.rows, facts.names, facts.lists),

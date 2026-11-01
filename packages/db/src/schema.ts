@@ -191,12 +191,16 @@ export const listItems = fathomSchema.table(
 
 // The change history: every change made to Fathom's data, with its old and new values, grouped into
 // the change sets that were saved together. Who created and last changed a record is read from it.
-// Like the access history, it can only be added to. Until plan approval arrives, changes are applied
-// as they are saved, so no change set records an approver.
+// Like the access history, it can only be added to. Changes to drafts are recorded as they are saved,
+// and an approval records the changes it makes to the live data as a change set of its own.
 export const changeSets = fathomSchema.table(
   "change_sets",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    // What the change set did, checked by the server: "edit" for changes saved, "approval" for drafts
+    // approved, "rejection" for drafts rejected, "discard" for drafts discarded, and "resubmission"
+    // for rejected drafts sent for approval again unchanged.
+    kind: text("kind").notNull().default("edit"),
     // Null for Fathom itself, such as for data made by setup or seed scripts. Accounts are deactivated,
     // never deleted, so the user who made a change always exists.
     madeBy: text("made_by").references(() => users.id),
@@ -227,6 +231,8 @@ export const changes = fathomSchema.table(
     // Null when the field had no value, as before a record is created or after it is deleted.
     oldValue: jsonb("old_value"),
     newValue: jsonb("new_value"),
+    // Whether the change is to a record's draft, rather than to the live record.
+    draft: boolean("draft").notNull().default(false),
   },
   (table) => [
     index("changes_record_index").on(table.recordType, table.recordId),
@@ -346,4 +352,29 @@ export const savedViews = fathomSchema.table(
       sql`lower(${table.name})`,
     ),
   ],
+);
+
+// Draft rows: the changes waiting for approval, at most one draft for each record, as the Decisions
+// Log sets out. A draft adds a record, changes some of its fields, or removes it. It holds the record
+// as the change history records it: all of an added record's fields, only the fields a change makes
+// differ from the live record, and none for a removal. A rejected draft keeps the Approver's reason
+// until it is changed again or discarded. Who made and changed each draft is read from the change
+// history. For now only people have drafts.
+export const drafts = fathomSchema.table(
+  "drafts",
+  {
+    // The kind of record, such as "person", checked by the server.
+    recordType: text("record_type").notNull(),
+    recordId: text("record_id").notNull(),
+    // "created", "changed", or "deleted", checked by the server.
+    action: text("action").notNull(),
+    fields: jsonb("fields")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    // "waiting" or "rejected", checked by the server.
+    state: text("state").notNull().default("waiting"),
+    reason: text("reason"),
+  },
+  (table) => [primaryKey({ columns: [table.recordType, table.recordId] })],
 );

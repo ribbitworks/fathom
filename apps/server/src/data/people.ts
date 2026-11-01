@@ -1,50 +1,80 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People and their details: reading everyone a user may see, adding one person or several pasted at
-// once, changing a person's details, and deleting a person entered by mistake. Part of the data
-// access layer, the only server code that queries the database. Every change is recorded in the
-// change history, field by field, with each field's tier: a person's name and Employee ID are
-// General, their start and end dates Restricted, and each column's values as sensitive as its list.
-// Users see and change only the tiers their roles allow, and changes to Restricted or Confidential
-// details are also recorded in the access history.
+// People and their details: reading everyone a user may see, with their drafts, and drafting people
+// added, one or several pasted at once, changed, and removed, and discarding drafts. Part of the data
+// access layer, the only server code that queries the database. Every change is a draft, as
+// drafts.ts sets out, which reaches the live people only once approved, as approvals.ts sets out.
+// Every change is recorded in the change history, field by field, with each field's tier: a person's
+// name and Employee ID are General, their start and end dates Restricted, and each column's values as
+// sensitive as its list. Users see and change only the tiers their roles allow, and changes to
+// Restricted or Confidential details are also recorded in the access history.
 
-import { type Database, fieldValues, inChunks, people } from "@fathom/db";
-import type { Person, PersonChange, PersonRequest, Tier } from "@fathom/shared";
-import { asc, eq, inArray, sql } from "drizzle-orm";
+import {
+  changes,
+  changeSets,
+  type Database,
+  drafts,
+  fieldOfValue,
+  inChunks,
+  people,
+  users,
+} from "@fathom/db";
+import {
+  type Person,
+  type PersonChange,
+  type PersonDraft,
+  type PersonRequest,
+  type Tier,
+  tierSchema,
+} from "@fathom/shared";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
+  mostSensitive,
   requirePermission,
   requireTierEdit,
   seesTier,
 } from "../access.ts";
-import { BadRequestError, NotFoundError } from "../errors.ts";
+import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import {
   type Change,
   changesBetween,
   recordChanges,
-  refusingDuplicates,
   type Transaction,
 } from "./changes.ts";
+import {
+  addPersonDrafts,
+  asDraft,
+  clearedRejection,
+  type Draft,
+  drafted,
+  draftFields,
+  draftTier,
+  lockPersonDrafts,
+  readPersonDrafts,
+  type Recorded,
+  takenEmployeeIds,
+  tidy,
+  writePersonDraft,
+} from "./drafts.ts";
 import { recordEvents } from "./history.ts";
 import {
   type ColumnInfo,
-  fieldOfValue,
   inListOrder,
   readColumns,
   readValues,
   valueField,
-  writeValues,
 } from "./values.ts";
 
 type PersonRow = typeof people.$inferSelect;
 
-// A person as the change history records them: their details, and each column's choices, left out
-// when none are chosen.
-type Recorded = Record<string, unknown>;
+export type { Recorded } from "./drafts.ts";
 
 const noPerson = "There is no such person";
 const duplicateEmployeeId = "Someone already has that Employee ID";
+const toBeRemoved =
+  "This person's draft removes them; discard the draft to change them";
 const detailFields = [
   "preferredName",
   "employeeId",
@@ -66,7 +96,7 @@ export function personTier(columns: readonly ColumnInfo[]) {
   return (field: string): Tier => tiers.get(field) ?? "general";
 }
 
-function recorded(
+export function recorded(
   row: PersonRow,
   values: ReadonlyMap<string, readonly string[]>,
 ): Recorded {
@@ -80,6 +110,18 @@ function recorded(
     if (choiceIds.length > 0) record[valueField(fieldId)] = [...choiceIds];
   }
   return record;
+}
+
+// A person's choices, by column, as recorded.
+function valuesOf(person: Recorded): Map<string, string[]> {
+  return new Map(
+    Object.entries(person).flatMap(([field, value]) => {
+      const fieldId = fieldOfValue(field);
+      return fieldId === null || !Array.isArray(value)
+        ? []
+        : [[fieldId, value.map(String)]];
+    }),
+  );
 }
 
 // The changes between two versions of a person, with each field's tier.
@@ -116,7 +158,8 @@ function requireEdits(actor: Actor, made: readonly Change[]): void {
   }
 }
 
-// Records, in the access history, each person whose Restricted or Confidential details changed.
+// Records, in the access history, each person whose Restricted or Confidential details changed,
+// live or in a draft.
 export async function recordSensitiveChanges(
   transaction: Pick<Database, "insert">,
   actorId: string | null,
@@ -141,7 +184,8 @@ export async function recordSensitiveChanges(
 
 type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
 
-// Every choice asked for in the requests, in list order, read at once.
+// Every choice asked for in the requests, in list order, read at once. The drafts lock keeps them
+// from being deleted until the drafts holding them are saved.
 async function choicesAskedFor(
   transaction: Transaction,
   requests: readonly {
@@ -195,9 +239,9 @@ function checkedValues(
   return checked;
 }
 
-// Whether the people given, as they are now, fit their columns: each value from the column's list,
-// one choice unless the column takes several, and a value in every required column. Used after an
-// undo puts people's values back, since the columns may have changed since.
+// Whether the live people given, as they are now, fit their columns: each value from the column's
+// list, one choice unless the column takes several, and a value in every required column. Used after
+// an undo or an approval puts people's values in place, since the columns may have changed since.
 export async function peopleFitColumns(
   transaction: Transaction,
   personIds: readonly string[],
@@ -250,6 +294,76 @@ function checkComplete(columns: readonly ColumnInfo[], person: Recorded): void {
   }
 }
 
+// The live people given, as recorded, by person, locked for a change when asked.
+export async function readLive(
+  reader: Pick<Database, "select">,
+  columns: readonly ColumnInfo[],
+  ids?: readonly string[],
+  lock = false,
+): Promise<Map<string, Recorded>> {
+  const rows: PersonRow[] = [];
+  const read = async (chunk?: readonly string[]) => {
+    const query = reader
+      .select()
+      .from(people)
+      .where(chunk === undefined ? undefined : inArray(people.id, [...chunk]))
+      .orderBy(people.id);
+    rows.push(...(await (lock ? query.for("update") : query)));
+  };
+  if (ids === undefined) await read();
+  else for (const chunk of inChunks([...ids])) await read(chunk);
+  const values = await readValues(
+    reader,
+    rows.map(({ id }) => id),
+    columns.map(({ id }) => id),
+  );
+  return new Map(
+    rows.map((row) => [row.id, recorded(row, values.get(row.id) ?? new Map())]),
+  );
+}
+
+// Who last changed each person's draft, and when, from the changes to it the reader may see, so a
+// hidden change reveals nothing. Rejecting a draft does not change it.
+async function draftMakers(
+  reader: Pick<Database, "selectDistinctOn">,
+  ids: readonly string[],
+  seen: (field: string, tier: Tier) => boolean,
+): Promise<Map<string, { madeBy: string | null; madeAt: Date }>> {
+  const makers = new Map<string, { madeBy: string | null; madeAt: Date }>();
+  for (const chunk of inChunks([...ids])) {
+    // The latest change to each field, so only as many are read as the drafts have fields.
+    const rows = await reader
+      .selectDistinctOn([changes.recordId, changes.field], {
+        recordId: changes.recordId,
+        field: changes.field,
+        tier: changes.tier,
+        madeBy: users.name,
+        madeAt: changeSets.madeAt,
+        id: changes.id,
+      })
+      .from(changes)
+      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+      .leftJoin(users, eq(users.id, changeSets.madeBy))
+      .where(
+        and(
+          eq(changes.recordType, "person"),
+          eq(changes.draft, true),
+          ne(changeSets.kind, "rejection"),
+          inArray(changes.recordId, chunk),
+        ),
+      )
+      .orderBy(changes.recordId, changes.field, desc(changes.id));
+    rows.sort((first, second) => second.id - first.id);
+    for (const { recordId, field, tier, madeBy, madeAt } of rows) {
+      const recorded = tierSchema.catch("confidential").parse(tier);
+      if (!makers.has(recordId) && seen(field, recorded)) {
+        makers.set(recordId, { madeBy, madeAt });
+      }
+    }
+  }
+  return makers;
+}
+
 export interface PeopleRead {
   people: Person[];
   columns: ColumnInfo[];
@@ -257,137 +371,242 @@ export interface PeopleRead {
   includedRestricted: boolean;
 }
 
-// Everyone the actor may see, by preferred name, with the columns whose values they may see. Users
-// who cannot see Restricted details see only current staff, so the list does not reveal anyone's
-// start or end date before it arrives, and receive no dates.
+const byName = new Intl.Collator("en", { sensitivity: "base" });
+
+// Whether a person is current on a day: from their start date until their end date passes, or with
+// no start date at all.
+export function currentOn(person: Recorded, today: string): boolean {
+  const { startDate, endDate } = person;
+  return (
+    (typeof startDate !== "string" || startDate <= today) &&
+    (typeof endDate !== "string" || endDate >= today)
+  );
+}
+
+// Everyone the actor may see, by preferred name, as their drafts make them, with the columns whose
+// values they may see, and each draft as they may see it. A person a draft removes is shown as they
+// are, with the draft. Users who cannot see Restricted details see only current staff, so the list
+// does not reveal anyone's start or end date before it arrives, and receive no dates.
 export async function readPeople(
   database: Database,
   actor: Actor,
+  today: string = new Date().toISOString().slice(0, 10),
+): Promise<PeopleRead> {
+  // People and their drafts are read as of one moment, so an approval saved meanwhile is seen
+  // whole or not at all.
+  return database.transaction(
+    (transaction) => readPeopleIn(transaction, actor, today),
+    { isolationLevel: "repeatable read", accessMode: "read only" },
+  );
+}
+
+async function readPeopleIn(
+  database: Transaction,
+  actor: Actor,
+  today: string,
 ): Promise<PeopleRead> {
   const restricted = seesTier(actor, "restricted");
-  const columns = (await readColumns(database)).filter((column) =>
-    seesTier(actor, column.tier),
-  );
-  const rows = await database
-    .select()
-    .from(people)
-    .where(
-      restricted
-        ? undefined
-        : sql`(${people.startDate} IS NULL OR ${people.startDate} <= current_date) AND (${people.endDate} IS NULL OR ${people.endDate} >= current_date)`,
-    )
-    .orderBy(asc(sql`lower(${people.preferredName})`), asc(people.id));
-  const values = await readValues(
+  const allColumns = await readColumns(database);
+  const columns = allColumns.filter((column) => seesTier(actor, column.tier));
+  const tierOf = personTier(allColumns);
+  const shownFields = new Set<string>([
+    "preferredName",
+    "employeeId",
+    ...(restricted ? ["startDate", "endDate"] : []),
+    ...columns.map(({ id }) => valueField(id)),
+  ]);
+  const live = await readLive(database, allColumns);
+  const draftsNow = await readPersonDrafts(database);
+  const makers = await draftMakers(
     database,
-    rows.map(({ id }) => id),
-    columns.map(({ id }) => id),
+    [...draftsNow.keys()],
+    (field, tier) =>
+      shownFields.has(field) &&
+      seesTier(actor, mostSensitive([tier, tierOf(field)])),
+  );
+  const ids = [
+    ...live.keys(),
+    ...[...draftsNow.keys()].filter((id) => !live.has(id)),
+  ];
+  const shown = ids.flatMap((id): Person[] => {
+    const before = live.get(id);
+    const draft = draftsNow.get(id);
+    // A draft that removes someone shows them as they are; one that adds nobody is never kept.
+    const person = drafted(before, draft) ?? before;
+    // Who is current comes from the live dates while a draft waits, so a draft changing only
+    // Restricted dates reveals nothing.
+    if (
+      person === undefined ||
+      (!restricted && !currentOn(before ?? person, today))
+    ) {
+      return [];
+    }
+    const seen = draft && seenDraft(id, before, draft);
+    return [
+      {
+        id,
+        preferredName: String(person.preferredName),
+        employeeId: String(person.employeeId),
+        ...(restricted
+          ? {
+              startDate: (person.startDate as string | null) ?? null,
+              endDate: (person.endDate as string | null) ?? null,
+            }
+          : {}),
+        values: Object.fromEntries(
+          [...valuesOf(person)].filter(([fieldId]) =>
+            shownFields.has(valueField(fieldId)),
+          ),
+        ),
+        ...(seen ? { draft: seen } : {}),
+      },
+    ];
+  });
+
+  // The draft as the actor may see it, or undefined when it changes nothing they see.
+  function seenDraft(
+    id: string,
+    before: Recorded | undefined,
+    draft: Draft,
+  ): PersonDraft | undefined {
+    // In a fixed order, since drafts are stored without one: the details, then the columns.
+    const rank = (field: string) => {
+      const at = detailFields.indexOf(field as (typeof detailFields)[number]);
+      return at === -1 ? detailFields.length : at;
+    };
+    const fields = draftFields(before, draft)
+      .filter((field) => shownFields.has(field))
+      .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    if (fields.length === 0) return undefined;
+    const liveValues: PersonDraft["live"] = { values: {} };
+    if (before !== undefined) {
+      for (const field of fields) {
+        const fieldId = fieldOfValue(field);
+        // The fields are the person's own, named just above.
+        /* eslint-disable security/detect-object-injection */
+        if (fieldId === null) {
+          Object.assign(liveValues, { [field]: before[field] ?? null });
+        } else {
+          const chosen = before[field];
+          liveValues.values[fieldId] = Array.isArray(chosen)
+            ? chosen.map(String)
+            : [];
+        }
+        /* eslint-enable security/detect-object-injection */
+      }
+    }
+    const maker = makers.get(id);
+    const reason =
+      draft.state === "rejected" &&
+      draft.reason !== null &&
+      seesTier(actor, draftTier(tierOf, before, draft))
+        ? { reason: draft.reason }
+        : {};
+    return {
+      action: draft.action,
+      changed: fields.map((field) => fieldOfValue(field) ?? field),
+      live: liveValues,
+      state: draft.state,
+      ...reason,
+      madeBy: maker?.madeBy ?? null,
+      madeAt: maker?.madeAt.toISOString() ?? null,
+    };
+  }
+
+  shown.sort(
+    (a, b) =>
+      byName.compare(a.preferredName, b.preferredName) ||
+      a.id.localeCompare(b.id),
   );
   return {
-    people: rows.map((row) => ({
-      id: row.id,
-      preferredName: row.preferredName,
-      employeeId: row.employeeId,
-      ...(restricted ? { startDate: row.startDate, endDate: row.endDate } : {}),
-      values: Object.fromEntries(values.get(row.id) ?? []),
-    })),
+    people: shown,
     columns,
     includedRestricted:
-      rows.length > 0 &&
+      shown.length > 0 &&
       (restricted || columns.some(({ tier }) => tier !== "general")),
   };
 }
 
-// Adds people, all saved together, and returns them with the change set they were saved in.
+// Refuses Employee IDs that someone else has, live or in a draft, or that two of the people asked
+// for share.
+async function refuseTakenIds(
+  transaction: Transaction,
+  employeeIds: readonly string[],
+  except: readonly string[],
+): Promise<void> {
+  const lowered = employeeIds.map((id) => id.toLowerCase());
+  if (
+    new Set(lowered).size !== lowered.length ||
+    (await takenEmployeeIds(transaction, employeeIds, except)).length > 0
+  ) {
+    throw new ConflictError(duplicateEmployeeId);
+  }
+}
+
+// Drafts adding people, all saved together, and returns them with the change set they were saved in.
 export async function createPeople(
   database: Database,
   actor: Actor,
   requests: readonly PersonRequest[],
 ): Promise<{ ids: string[]; changeSetId: string | null }> {
   requirePermission(actor, "people:edit");
-  return refusingDuplicates(duplicateEmployeeId, () =>
-    database.transaction(async (transaction) => {
-      const columns = await readColumns(transaction, true);
-      const known = await choicesAskedFor(transaction, requests);
-      const made: Change[] = [];
-      const rows: PersonRow[] = [];
-      const chosen: { personId: string; fieldId: string; choiceId: string }[] =
-        [];
-      for (const request of requests) {
-        const id = randomUUID();
-        const values = checkedValues(columns, known, request.values, undefined);
-        const row: PersonRow = {
-          id,
-          preferredName: request.preferredName,
-          employeeId: request.employeeId,
-          startDate: request.startDate ?? null,
-          endDate: request.endDate ?? null,
-        };
-        const after = recorded(row, values);
-        checkComplete(columns, after);
-        made.push(...personChanges(columns, id, "created", undefined, after));
-        rows.push(row);
-        for (const [fieldId, choiceIds] of values) {
-          chosen.push(
-            ...choiceIds.map((choiceId) => ({
-              personId: id,
-              fieldId,
-              choiceId,
-            })),
-          );
-        }
-      }
-      requireEdits(actor, made);
-      // Everyone in one statement, and their values in as few as PostgreSQL allows.
-      await transaction.insert(people).values(rows);
-      for (const chunk of inChunks(chosen)) {
-        await transaction.insert(fieldValues).values(chunk);
-      }
-      const ids = rows.map(({ id }) => id);
-      await recordSensitiveChanges(transaction, actor.user.id, made);
-      return {
-        ids,
-        changeSetId: await recordChanges(transaction, actor.user.id, made),
+  return database.transaction(async (transaction) => {
+    await lockPersonDrafts(transaction);
+    const columns = await readColumns(transaction, true);
+    const known = await choicesAskedFor(transaction, requests);
+    const made: Change[] = [];
+    const added: { id: string; fields: Recorded }[] = [];
+    for (const request of requests) {
+      const id = randomUUID();
+      const values = checkedValues(columns, known, request.values, undefined);
+      const row: PersonRow = {
+        id,
+        preferredName: request.preferredName,
+        employeeId: request.employeeId,
+        startDate: request.startDate ?? null,
+        endDate: request.endDate ?? null,
       };
-    }),
-  );
+      const after = recorded(row, values);
+      checkComplete(columns, after);
+      made.push(...personChanges(columns, id, "created", undefined, after));
+      added.push({ id, fields: after });
+    }
+    requireEdits(actor, made);
+    await refuseTakenIds(
+      transaction,
+      requests.map(({ employeeId }) => employeeId),
+      [],
+    );
+    await addPersonDrafts(transaction, added);
+    const drafts = asDraft(made);
+    await recordSensitiveChanges(transaction, actor.user.id, drafts);
+    return {
+      ids: added.map(({ id }) => id),
+      changeSetId: await recordChanges(transaction, actor.user.id, drafts),
+    };
+  });
 }
 
-async function lockPerson(
-  transaction: Transaction,
-  id: string,
-): Promise<PersonRow> {
-  const [row] = await transaction
-    .select()
-    .from(people)
-    .where(eq(people.id, id))
-    .for("update");
-  if (row === undefined) throw new NotFoundError(noPerson);
-  return row;
-}
-
-// A person's details and values as recorded, locked for a change.
-async function lockRecorded(
+// A person as they are and as their draft makes them, locked for a change, refusing someone who is
+// neither live nor in a draft.
+async function lockDrafted(
   transaction: Transaction,
   columns: readonly ColumnInfo[],
   id: string,
 ): Promise<{
-  row: PersonRow;
-  values: Map<string, string[]>;
-  before: Recorded;
+  before: Recorded | undefined;
+  draft: Draft | undefined;
+  person: Recorded | undefined;
 }> {
-  const row = await lockPerson(transaction, id);
-  const values =
-    (
-      await readValues(
-        transaction,
-        [id],
-        columns.map((column) => column.id),
-      )
-    ).get(id) ?? new Map<string, string[]>();
-  return { row, values, before: recorded(row, values) };
+  const before = (await readLive(transaction, columns, [id], true)).get(id);
+  const draft = (await readPersonDrafts(transaction, [id])).get(id);
+  if (before === undefined && draft === undefined) {
+    throw new NotFoundError(noPerson);
+  }
+  return { before, draft, person: drafted(before, draft) };
 }
 
-// Changes some of a person's details; each column named has its choices replaced.
+// Drafts a change to some of a person's details; each column named has its choices replaced.
 export async function updatePerson(
   database: Database,
   actor: Actor,
@@ -395,59 +614,63 @@ export async function updatePerson(
   change: PersonChange,
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
-  return refusingDuplicates(duplicateEmployeeId, () =>
-    database.transaction(async (transaction) => {
-      const columns = await readColumns(transaction, true);
-      const { row, values, before } = await lockRecorded(
-        transaction,
-        columns,
-        id,
-      );
-      const changedValues = checkedValues(
-        columns,
-        await choicesAskedFor(transaction, [change]),
-        change.values ?? {},
-        values,
-      );
-      const next: PersonRow = {
-        ...row,
-        ...(change.preferredName === undefined
-          ? {}
-          : { preferredName: change.preferredName }),
-        ...(change.employeeId === undefined
-          ? {}
-          : { employeeId: change.employeeId }),
-        ...(change.startDate === undefined
-          ? {}
-          : { startDate: change.startDate }),
-        ...(change.endDate === undefined ? {} : { endDate: change.endDate }),
-      };
-      const after = recorded(next, new Map([...values, ...changedValues]));
-      checkComplete(columns, after);
-      const made = personChanges(columns, id, "changed", before, after);
-      requireEdits(actor, made);
-      if (made.length === 0) return null;
-      await transaction
-        .update(people)
-        .set({
-          preferredName: next.preferredName,
-          employeeId: next.employeeId,
-          startDate: next.startDate,
-          endDate: next.endDate,
-        })
-        .where(eq(people.id, id));
-      for (const [fieldId, choiceIds] of changedValues) {
-        await writeValues(transaction, id, fieldId, choiceIds);
-      }
-      await recordSensitiveChanges(transaction, actor.user.id, made);
-      return recordChanges(transaction, actor.user.id, made);
-    }),
-  );
+  return database.transaction(async (transaction) => {
+    await lockPersonDrafts(transaction);
+    const columns = await readColumns(transaction, true);
+    const { before, draft, person } = await lockDrafted(
+      transaction,
+      columns,
+      id,
+    );
+    if (person === undefined) {
+      if (before === undefined) throw new NotFoundError(noPerson);
+      throw new ConflictError(toBeRemoved);
+    }
+    const current = valuesOf(person);
+    const changedValues = checkedValues(
+      columns,
+      await choicesAskedFor(transaction, [change]),
+      change.values ?? {},
+      current,
+    );
+    const details = Object.fromEntries(
+      detailFields.flatMap((field) =>
+        // The field is one of the fixed details named above.
+        // eslint-disable-next-line security/detect-object-injection
+        change[field] === undefined ? [] : [[field, change[field]]],
+      ),
+    );
+    // Columns left with nothing chosen are left out.
+    const after = tidy({
+      ...person,
+      ...details,
+      ...Object.fromEntries(
+        [...changedValues].map(([fieldId, choiceIds]) => [
+          valueField(fieldId),
+          choiceIds,
+        ]),
+      ),
+    });
+    checkComplete(columns, after);
+    const made = personChanges(columns, id, "changed", person, after);
+    requireEdits(actor, made);
+    if (made.length === 0) return null;
+    if (change.employeeId !== undefined) {
+      await refuseTakenIds(transaction, [change.employeeId], [id]);
+    }
+    const all = [
+      ...asDraft(made),
+      ...clearedRejection(id, personTier(columns), before, draft),
+    ];
+    await writePersonDraft(transaction, id, before, after);
+    await recordSensitiveChanges(transaction, actor.user.id, all);
+    return recordChanges(transaction, actor.user.id, all);
+  });
 }
 
-// Deletes a person entered by mistake, with their values, recording everything they held. People
-// who leave are given an end date instead. Nothing uses people yet; later slices refuse to delete a
-// person who is, for example, on a team.
+// Drafts removing a person entered by mistake, recording everything they held; removing someone
+// only drafted to be added discards that draft. People who leave are given an end date instead.
+// Nothing uses people yet; later slices refuse to remove a person who is, for example, on a team.
 export async function deletePerson(
   database: Database,
   actor: Actor,
@@ -455,12 +678,87 @@ export async function deletePerson(
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
+    await lockPersonDrafts(transaction);
     const columns = await readColumns(transaction, true);
-    const { before } = await lockRecorded(transaction, columns, id);
-    const made = personChanges(columns, id, "deleted", before, undefined);
+    const { before, draft, person } = await lockDrafted(
+      transaction,
+      columns,
+      id,
+    );
+    // Already drafted to be removed.
+    if (person === undefined) return null;
+    const made = [
+      ...asDraft(personChanges(columns, id, "deleted", person, undefined)),
+      ...clearedRejection(id, personTier(columns), before, draft),
+    ];
     requireEdits(actor, made);
-    await transaction.delete(people).where(eq(people.id, id));
+    await writePersonDraft(transaction, id, before, undefined);
     await recordSensitiveChanges(transaction, actor.user.id, made);
-    return recordChanges(transaction, actor.user.id, made);
+    return recordChanges(
+      transaction,
+      actor.user.id,
+      made,
+      before === undefined ? "discard" : "edit",
+    );
+  });
+}
+
+// Sends a rejected draft for approval again, unchanged, clearing its reason.
+export async function resubmitPersonDraft(
+  database: Database,
+  actor: Actor,
+  id: string,
+): Promise<string | null> {
+  requirePermission(actor, "people:edit");
+  return database.transaction(async (transaction) => {
+    await lockPersonDrafts(transaction);
+    const columns = await readColumns(transaction, true);
+    const { before, draft } = await lockDrafted(transaction, columns, id);
+    if (draft?.state !== "rejected") {
+      throw new ConflictError(
+        "Only a rejected draft is sent for approval again",
+      );
+    }
+    const made = clearedRejection(id, personTier(columns), before, draft);
+    requireEdits(actor, made);
+    await transaction
+      .update(drafts)
+      .set({ state: "waiting", reason: null })
+      .where(and(eq(drafts.recordType, "person"), eq(drafts.recordId, id)));
+    await recordSensitiveChanges(transaction, actor.user.id, made);
+    return recordChanges(transaction, actor.user.id, made, "resubmission");
+  });
+}
+
+// Discards a person's draft, so they are as they are live, or, for someone only drafted to be added,
+// gone.
+export async function discardPersonDraft(
+  database: Database,
+  actor: Actor,
+  id: string,
+): Promise<string | null> {
+  requirePermission(actor, "people:edit");
+  return database.transaction(async (transaction) => {
+    await lockPersonDrafts(transaction);
+    const columns = await readColumns(transaction, true);
+    const { before, draft, person } = await lockDrafted(
+      transaction,
+      columns,
+      id,
+    );
+    if (draft === undefined) {
+      throw new NotFoundError("This person has no draft");
+    }
+    let action: Change["action"] = "changed";
+    if (person === undefined) action = "created";
+    else if (before === undefined) action = "deleted";
+    const made = [
+      ...asDraft(personChanges(columns, id, action, person, before)),
+      ...clearedRejection(id, personTier(columns), before, draft),
+    ];
+    requireEdits(actor, made);
+    await writePersonDraft(transaction, id, before, before);
+    await recordSensitiveChanges(transaction, actor.user.id, made);
+    return recordChanges(transaction, actor.user.id, made, "discard");
   });
 }

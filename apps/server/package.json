@@ -5,9 +5,11 @@
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
+    "./access": "./src/access.ts",
     "./accounts": "./src/data/accounts.ts",
     "./auth": "./src/data/auth.ts",
-    "./config": "./src/config.ts"
+    "./config": "./src/config.ts",
+    "./data": "./src/data/index.ts"
   },
   "scripts": {
     "dev": "node --watch src/main.ts",

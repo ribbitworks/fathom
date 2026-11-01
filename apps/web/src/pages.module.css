@@ -127,7 +127,6 @@
 .listLink {
   color: inherit;
   font-weight: 500;
-  text-decoration: none;
 }
 
 .listGroup {
@@ -470,6 +469,101 @@
   font-size: 12px;
   font-weight: 500;
   white-space: normal;
+}
+
+/* A cell a draft changes, and the mark beside a person with a draft: yellow, or red once
+   rejected. A person a draft removes is struck through. */
+/* A row with a draft is tinted in the theme's blue, so it stands apart from the live row under it,
+   and each cell the draft changes is yellow. */
+.peopleDraftRow {
+  background: var(--mantine-color-sea-0);
+}
+
+.peopleDraftCell {
+  background: var(--mantine-color-yellow-1);
+}
+
+/* A cell a rejected draft changes is a soft red instead. */
+.peopleRejectedCell {
+  background: var(--mantine-color-red-1);
+}
+
+/* In the dark scheme, the same colours as dark tints, so light text stays readable on them. */
+:global([data-mantine-color-scheme="dark"]) .peopleDraftRow {
+  background: var(--mantine-color-sea-light);
+}
+
+:global([data-mantine-color-scheme="dark"]) .peopleDraftCell {
+  background: var(--mantine-color-yellow-light);
+}
+
+:global([data-mantine-color-scheme="dark"]) .peopleRejectedCell {
+  background: var(--mantine-color-red-light);
+}
+
+/* A rejection's reason, at the top of the person's menu, wraps rather than widening the menu. */
+.rejectedReason {
+  max-width: 20rem;
+  white-space: normal;
+  color: var(--mantine-color-text);
+}
+
+.draftMark,
+.draftRejected {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* The words are in the text colour, for contrast, after a dot in yellow, or red once rejected. */
+.draftMark .statusDot {
+  color: var(--mantine-color-yellow-6);
+}
+
+.draftRejected .statusDot {
+  color: var(--mantine-color-red-6);
+}
+
+.draftsBar {
+  padding: 0 4px;
+}
+
+/* A person's live row, under their draft row: light green, dimmed, marked Live like the Draft mark
+   above it, and joined to the draft row. */
+.peopleDraftRow + .peopleLiveRow {
+  border-top: 1px dashed var(--mantine-color-default-border);
+}
+
+.peopleLiveRow {
+  background: var(--mantine-color-green-0);
+}
+
+:global([data-mantine-color-scheme="dark"]) .peopleLiveRow {
+  background: var(--mantine-color-green-light);
+}
+
+.peopleLiveRow .peopleCell {
+  color: var(--mantine-color-dimmed);
+}
+
+.liveMark {
+  margin-left: 8px;
+  color: var(--mantine-color-text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.liveMark .statusDot {
+  color: var(--mantine-color-green-6);
+}
+
+.peopleRemovedRow .peopleCell {
+  color: var(--mantine-color-dimmed);
+  text-decoration: line-through;
+}
+
+.peopleRemovedRow .draftMark {
+  text-decoration: none;
 }
 
 .peopleRowActions {

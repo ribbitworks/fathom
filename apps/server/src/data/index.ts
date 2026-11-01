@@ -31,6 +31,7 @@ import {
   requirePermission,
   seesTier,
 } from "../access.ts";
+import { approvePeopleDrafts, rejectPeopleDrafts } from "./approvals.ts";
 import { readGreeting } from "./greeting.ts";
 import { moveColumn, readColumnOrder } from "./column-order.ts";
 import * as fieldData from "./fields.ts";
@@ -120,12 +121,23 @@ export interface PeopleAccess {
     order: string[];
     views: SavedView[];
   }>;
+  // Changes to people are drafts, which reach the live people once approved.
   create(
     actor: Actor,
     requests: readonly PersonRequest[],
   ): Promise<Saved<string[]>>;
   update(actor: Actor, id: string, change: PersonChange): Promise<ChangeSetId>;
   delete(actor: Actor, id: string): Promise<ChangeSetId>;
+  discardDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+  // Sends a rejected draft for approval again, unchanged.
+  resubmitDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+  // Approves or rejects the drafts of the people given, all together; neither can be undone.
+  approveDrafts(actor: Actor, ids: readonly string[]): Promise<ChangeSetId>;
+  rejectDrafts(
+    actor: Actor,
+    ids: readonly string[],
+    reason: string,
+  ): Promise<ChangeSetId>;
   createField(actor: Actor, request: FieldRequest): Promise<Saved<Field>>;
   updateField(
     actor: Actor,
@@ -221,6 +233,14 @@ function createPeopleAccess(database: Database): PeopleAccess {
     update: async (actor, id, change) =>
       peopleData.updatePerson(database, actor, id, change),
     delete: async (actor, id) => peopleData.deletePerson(database, actor, id),
+    discardDraft: async (actor, id) =>
+      peopleData.discardPersonDraft(database, actor, id),
+    resubmitDraft: async (actor, id) =>
+      peopleData.resubmitPersonDraft(database, actor, id),
+    approveDrafts: async (actor, ids) =>
+      approvePeopleDrafts(database, actor, ids),
+    rejectDrafts: async (actor, ids, reason) =>
+      rejectPeopleDrafts(database, actor, ids, reason),
     createField: async (actor, request) =>
       fieldData.createField(database, editor(actor), request),
     updateField: async (actor, id, request) =>

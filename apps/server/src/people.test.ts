@@ -21,6 +21,9 @@ import { rolesGranting } from "./access.ts";
 import { peopleHave } from "./data/fields.ts";
 import { type Method, startTestApp, type TestApp } from "./test-app.ts";
 
+// How long a test waits for something to happen, so a busy computer does not fail it.
+const waitLimit = { timeout: 10_000 };
+
 let test: TestApp;
 
 beforeAll(async () => {
@@ -127,6 +130,23 @@ async function addPerson(cookie: string, person: NewPerson = {}) {
   return { id: String(ids[0]), changeSetId };
 }
 
+// Approves the drafts of the people given, as an Approver who sees every tier.
+async function approve(ids: readonly string[]) {
+  const { cookie } = await test.signedIn(["approver", "leadership"]);
+  const response = await send(cookie, "POST", "/api/people/drafts/approval", {
+    people: ids,
+  });
+  expect(response.statusCode).toBe(200);
+  return response.json<{ changeSetId: string }>().changeSetId;
+}
+
+// A person drafted and then approved, so they are live.
+async function addLivePerson(cookie: string, person: NewPerson = {}) {
+  const added = await addPerson(cookie, person);
+  await approve([added.id]);
+  return added;
+}
+
 async function readPeople(cookie: string) {
   const response = await send(cookie, "GET", "/api/people");
   expect(response.statusCode).toBe(200);
@@ -178,6 +198,8 @@ describe("who may read and change people", () => {
     ["POST", "/api/people", { people: [personRequest()] }],
     ["PATCH", person, { preferredName: "Fictional" }],
     ["DELETE", person, undefined],
+    ["DELETE", `${person}/draft`, undefined],
+    ["DELETE", `${person}/draft/rejection`, undefined],
   ];
   const columnChanges: [Method, string, object | undefined][] = [
     [
@@ -202,6 +224,28 @@ describe("who may read and change people", () => {
       refused("configuration:edit").map((role) => [role, ...change] as const),
     ),
   ])("refuses a %s %s %s", async (role, method, url, payload) => {
+    const { cookie } = await test.signedIn([role, "viewer"]);
+    const response = await send(cookie, method, url, payload);
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: "Forbidden" });
+  });
+
+  // Approving and rejecting need the Approver role, which each other role is tried without.
+  const decisions: [Method, string, object][] = [
+    ["POST", "/api/people/drafts/approval", { people: [randomUUID()] }],
+    [
+      "POST",
+      "/api/people/drafts/rejection",
+      { people: [randomUUID()], reason: "Fictional" },
+    ],
+  ];
+  it.each(
+    decisions.flatMap((decision) =>
+      roleSchema.options
+        .filter((role) => !rolesGranting("drafts:approve").includes(role))
+        .map((role) => [role, ...decision] as const),
+    ),
+  )("refuses a %s %s %s", async (role, method, url, payload) => {
     const { cookie } = await test.signedIn([role, "viewer"]);
     const response = await send(cookie, method, url, payload);
     expect(response.statusCode).toBe(403);
@@ -235,6 +279,10 @@ describe("signed-out requests", () => {
     ["POST", "/api/people"],
     ["PATCH", `/api/people/${randomUUID()}`],
     ["DELETE", `/api/people/${randomUUID()}`],
+    ["DELETE", `/api/people/${randomUUID()}/draft`],
+    ["DELETE", `/api/people/${randomUUID()}/draft/rejection`],
+    ["POST", "/api/people/drafts/approval"],
+    ["POST", "/api/people/drafts/rejection"],
     ["POST", "/api/people/columns"],
     ["PUT", `/api/people/columns/${randomUUID()}`],
     ["DELETE", `/api/people/columns/${randomUUID()}`],
@@ -771,13 +819,12 @@ describe("columns", () => {
     const { field, choices, list } = await columnWith(cookie, ["A", "B"], {
       multiple: true,
     });
-    await addPerson(cookie, {
+    await addLivePerson(cookie, {
       values: { [field.id]: choices.map(({ id }) => id) },
     });
     const other = await listWith(cookie, ["Elsewhere"]);
     const settings = { name: field.name, listId: list.id, multiple: true };
     const attempts: [object, RegExp][] = [
-      [{ ...settings, required: true }, /no .* so it cannot be required yet$/],
       [{ ...settings, multiple: false }, /^1 person has several choices for/],
       [{ ...settings, listId: other.list.id }, /so its list cannot change$/],
     ];
@@ -791,6 +838,8 @@ describe("columns", () => {
       expect(response.statusCode).toBe(409);
       expect(response.json<{ error: string }>().error).toMatch(error);
     }
+    // Which people, live or drafted, keep a column from being required is tried in columns.test.ts,
+    // with a database of its own.
     const required = await send(cookie, "POST", "/api/people/columns", {
       name: unique("Required"),
       listId: list.id,
@@ -845,7 +894,7 @@ describe("columns", () => {
     const { field, choices } = await columnWith(cookie, ["A"], {
       visibility: "restricted",
     });
-    const { id } = await addPerson(cookie, {
+    const { id } = await addLivePerson(cookie, {
       values: { [field.id]: [String(choices[0]?.id)] },
     });
     const response = await send(
@@ -892,7 +941,7 @@ describe("access history", () => {
   it("records a view of Restricted details once a day, and names whose details changed only to readers who may see people", async () => {
     const { cookie, id: editorId } = await editor();
     const name = unique("Fictional Named");
-    const { id } = await addPerson(cookie, {
+    const { id } = await addLivePerson(cookie, {
       preferredName: name,
       startDate: "2023-01-01",
     });
@@ -1012,7 +1061,7 @@ describe("undo", () => {
     const { field, choices } = await columnWith(cookie, ["A"], {
       multiple: true,
     });
-    const { id } = await addPerson(cookie, {
+    const { id } = await addLivePerson(cookie, {
       endDate: "2031-01-01",
       values: { [field.id]: [String(choices[0]?.id)] },
     });
@@ -1323,6 +1372,9 @@ describe("undo", () => {
       locked = resolve as () => unknown;
     });
     const other = test.connection.transaction(async (transaction) => {
+      await transaction.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.person-drafts', 0))`,
+      );
       await transaction
         .select()
         .from(people)
@@ -1350,7 +1402,7 @@ describe("undo", () => {
         sql`SELECT count(*) AS total FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database()`,
       );
       expect(Number(waiting.rows[0]?.total)).toBeGreaterThan(0);
-    });
+    }, waitLimit);
     release();
     await other;
     expect((await undoing).statusCode).toBe(409);

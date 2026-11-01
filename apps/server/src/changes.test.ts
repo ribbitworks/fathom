@@ -94,6 +94,19 @@ async function makePersonWithColumn(name: string, visibility = "general") {
   return { list, north, south, field, personId: ids[0] as string };
 }
 
+// Approves a person's draft, as an Approver who sees every tier.
+async function approve(personId: string) {
+  const { cookie } = await test.signedIn(["approver", "leadership"]);
+  const response = await test.request(
+    cookie,
+    "POST",
+    "/api/people/drafts/approval",
+    { people: [personId] },
+  );
+  expect(response.statusCode).toBe(200);
+  return response.json<{ changeSetId: string }>().changeSetId;
+}
+
 describe("the change history", () => {
   it("names who changed what, and the records and values involved, newest first", async () => {
     const made = await makePersonWithColumn("Alpha");
@@ -129,6 +142,7 @@ describe("the change history", () => {
       entries.find((entry) => entry.id === changeSetId);
     expect(named(changed.changeSetId)).toEqual({
       id: changed.changeSetId,
+      kind: "edit",
       madeAt: expect.any(String) as string,
       madeBy: "Fictional User 1",
       records: [
@@ -137,6 +151,7 @@ describe("the change history", () => {
           action: "changed",
           name: "Alpha Renamed",
           list: null,
+          draft: true,
           fields: [
             {
               field: "preferredName",
@@ -159,6 +174,7 @@ describe("the change history", () => {
         action: "changed",
         name: "Alpha places",
         list: null,
+        draft: false,
         fields: [
           { field: "name", oldValue: "Alpha sites", newValue: "Alpha places" },
         ],
@@ -170,6 +186,7 @@ describe("the change history", () => {
         action: "changed",
         name: "Alpha South",
         list: "Alpha places",
+        draft: false,
         fields: [{ field: "order", oldValue: "Alpha North", newValue: null }],
       },
     ]);
@@ -209,6 +226,7 @@ describe("the change history", () => {
         action: "deleted",
         name: "Beta East",
         list: "Beta sites",
+        draft: false,
         fields: [],
       },
     ]);
@@ -231,6 +249,7 @@ describe("the change history", () => {
         action: "changed",
         name: "Beta other column",
         list: null,
+        draft: false,
         fields: [
           { field: "listId", oldValue: "Beta sites", newValue: "Beta other" },
         ],
@@ -283,6 +302,7 @@ describe("the change history", () => {
       name: "Kappa sites",
       visibility: "confidential",
     });
+    await approve(made.personId);
     await send("DELETE", `/api/people/columns/${made.field.id}`);
     const planner = await test.signedIn(["resource-planner"]);
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeUndefined();
@@ -481,6 +501,7 @@ describe("the change history", () => {
         action: "changed",
         name: null,
         list: null,
+        draft: false,
         fields: [{ field: "order", oldValue: null, newValue: null }],
       },
       {
@@ -488,6 +509,7 @@ describe("the change history", () => {
         action: "changed",
         name: null,
         list: null,
+        draft: false,
         fields: [{ field: "value", oldValue: [], newValue: null }],
       },
     ]);

@@ -22,6 +22,7 @@ import {
   type Transaction,
 } from "./changes.ts";
 import { appendColumn } from "./column-order.ts";
+import { draftedValues, draftsUse } from "./drafts.ts";
 import { personChanges, recordSensitiveChanges } from "./people.ts";
 import {
   type FieldRow,
@@ -114,13 +115,42 @@ async function totalOf(query: Promise<{ total: number }[]>): Promise<number> {
 export const peopleHave = (total: number) =>
   total === 1 ? "1 person has" : `${String(total)} people have`;
 
-// Refuses settings that the people already in Fathom do not meet: a required column that someone has
-// no value for, or one choice where someone has several.
+// Refuses settings that the people already in Fathom, live or in drafts, do not meet: a required
+// column that someone has no value for, or one choice where someone has several. A draft that
+// changes someone without changing the column keeps their live value.
 export async function checkValuesFit(
   transaction: Transaction,
   field: FieldRow,
   request: FieldRequest,
 ): Promise<void> {
+  const inDrafts = await draftedValues(transaction, field.id);
+  if (
+    request.required &&
+    inDrafts.some(({ adds, chosen }) =>
+      // A draft adding someone holds only the columns with choices.
+      adds ? chosen === undefined : chosen?.length === 0,
+    )
+  ) {
+    throw new ConflictError(
+      `Drafts leave ${field.name} empty, so it cannot be required yet`,
+    );
+  }
+  if (
+    !request.multiple &&
+    inDrafts.some(({ chosen }) => (chosen?.length ?? 0) > 1)
+  ) {
+    throw new ConflictError(
+      `Drafts have several choices for ${field.name}, so it cannot take only one yet`,
+    );
+  }
+  if (
+    request.listId !== field.listId &&
+    inDrafts.some(({ chosen }) => (chosen?.length ?? 0) > 0)
+  ) {
+    throw new ConflictError(
+      `Drafts have values from the list of ${field.name}, so its list cannot change`,
+    );
+  }
   if (request.required && !field.required) {
     const everyone = await totalOf(
       transaction.select({ total: count() }).from(people),
@@ -248,6 +278,11 @@ export async function deleteField(
     const rows = await lockFields(transaction);
     const before = rows.find((row) => row.id === id);
     if (before === undefined) throw new NotFoundError(noField);
+    if (await draftsUse(transaction, { column: id })) {
+      throw new ConflictError(
+        `Drafts change ${before.name}; approve or discard them before deleting the column`,
+      );
+    }
     const columns = await readColumns(transaction);
     const holders = await transaction
       .selectDistinct({ personId: fieldValues.personId })

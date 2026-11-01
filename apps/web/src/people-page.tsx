@@ -3,12 +3,19 @@
 // The People page: everyone the user may see, in a table edited like a spreadsheet, with the columns
 // people have added, each drawing on a list. Those who may change people add, edit, and delete them;
 // those who may change planning configuration add, change, and delete columns, and move any column.
-// Every change shows at once and saves in the background, and the latest can be undone with Cmd+Z
+// Every change to a person is a draft, shown in place until an Approver approves it on the Drafts
+// page. Every change shows at once and saves in the background, and the latest can be undone with Cmd+Z
 // or Ctrl+Z, or from its notification when it took something out of view. What the table shows,
 // its search, filters, and sort, is kept in the page address, and can be saved as a view shared with
 // everyone who sees people.
 
-import type { Field, Person, PersonChange, SavedView } from "@fathom/shared";
+import type {
+  Field,
+  Person,
+  PersonChange,
+  PersonDraft,
+  SavedView,
+} from "@fathom/shared";
 import {
   Alert,
   Button,
@@ -19,9 +26,10 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import { useQuery } from "@tanstack/react-query";
+import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
+import { type Decision, DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { PageHeader } from "./page-header.tsx";
 import { type PeopleActions, PeopleGrid } from "./people-grid.tsx";
@@ -31,6 +39,8 @@ import {
   deleteField,
   deletePerson,
   deleteView,
+  discardDraft,
+  resubmitDraft,
   moveColumn,
   type PeopleData,
   peopleQuery,
@@ -71,6 +81,33 @@ function changed(person: Person, change: PersonChange): Person {
   };
 }
 
+// A person as they are live, without their draft.
+function asLive(person: Person, draft: PersonDraft): Person {
+  const { values, ...details } = draft.live;
+  const live: Person = {
+    ...person,
+    ...(details as Partial<Person>),
+    values: { ...person.values, ...values },
+  };
+  delete live.draft;
+  return live;
+}
+
+// A person drafted to be removed, as the table shows it before it is saved.
+function drafted(person: Person): Person {
+  return {
+    ...person,
+    draft: {
+      action: "deleted",
+      changed: [],
+      live: { values: {} },
+      state: "waiting",
+      madeBy: null,
+      madeAt: new Date().toISOString(),
+    },
+  };
+}
+
 // The column order with one column taken out and put back just after another, or at the start.
 function reordered(
   order: readonly string[],
@@ -84,6 +121,7 @@ function reordered(
 
 export function PeoplePage({
   canEdit,
+  canApprove = false,
   canEditColumns,
   showDates,
   view,
@@ -92,6 +130,7 @@ export function PeoplePage({
   onApply,
 }: {
   canEdit: boolean;
+  canApprove?: boolean;
   canEditColumns: boolean;
   showDates: boolean;
   view: View;
@@ -102,6 +141,8 @@ export function PeoplePage({
   onApply: (view: View, id: string, replace?: boolean) => void;
 }) {
   const query = useQuery(peopleQuery);
+  const saving =
+    useIsMutating({ mutationKey: [...peopleQuery.queryKey, "change"] }) > 0;
   const lists = useQuery(listsQuery);
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
   const [dialog, setDialog] = useState<Dialog>();
@@ -110,13 +151,20 @@ export function PeoplePage({
   // Like the column dialog, the naming dialog stays set while it closes.
   const [naming, setNaming] = useState<Naming>();
   const [namingOpened, setNamingOpened] = useState(false);
+  // Approving or rejecting drafts, which asks first.
+  const [decision, setDecision] = useState<Decision>();
+  const [deciding, setDeciding] = useState(false);
   const { save, undoable, done } = useSaving<PeopleData>({
     queryKey: peopleQuery.queryKey,
     removed: "Someone else has removed this. The people have been refreshed.",
-    blocked: opened || namingOpened,
+    blocked: opened || namingOpened || deciding,
   });
 
   const actions: PeopleActions = {
+    decide: (asking, people) => {
+      setDecision({ asking, ids: people.map(({ id }) => id) });
+      setDeciding(true);
+    },
     add: (requests, onAdded, onFailed) => {
       save({
         next: (data) => data,
@@ -147,16 +195,66 @@ export function PeoplePage({
         },
       });
     },
+    // Removing someone live is a draft, shown in place; removing someone only drafted to be added
+    // discards them, which takes them out of view.
     remove: (person) => {
       save({
         next: (data) => ({
           ...data,
-          people: data.people.filter((other) => other.id !== person.id),
+          people: data.people.map((other) =>
+            other.id === person.id ? drafted(other) : other,
+          ),
         }),
         save: () => deletePerson(person.id),
-        failure: `Fathom could not delete ${person.preferredName}.`,
+        failure: `Fathom could not remove ${person.preferredName}.`,
         onSaved: (changeSetId, before) => {
-          done(`Deleted ${person.preferredName}.`, changeSetId, before);
+          undoable(changeSetId, before);
+        },
+      });
+    },
+    resubmit: (person) => {
+      save({
+        next: (data) => ({
+          ...data,
+          people: data.people.map((other) => {
+            if (other.id !== person.id || other.draft === undefined) {
+              return other;
+            }
+            const draft = { ...other.draft, state: "waiting" as const };
+            delete draft.reason;
+            return { ...other, draft };
+          }),
+        }),
+        save: () => resubmitDraft(person.id),
+        failure: `Fathom could not send the draft of ${person.preferredName} for approval again.`,
+        onSaved: (changeSetId, before) => {
+          undoable(changeSetId, before);
+        },
+      });
+    },
+    discard: (person, draft) => {
+      const gone = draft.action === "created";
+      save({
+        next: (data) => ({
+          ...data,
+          people: gone
+            ? data.people.filter((other) => other.id !== person.id)
+            : data.people.map((other) =>
+                other.id === person.id ? asLive(other, draft) : other,
+              ),
+        }),
+        save: () => discardDraft(person.id),
+        failure: `Fathom could not discard the draft of ${person.preferredName}.`,
+        onSaved: (changeSetId, before) => {
+          if (gone) {
+            done(
+              `Discarded the draft adding ${person.preferredName}.`,
+              changeSetId,
+              before,
+            );
+          } else {
+            undoable(changeSetId, before);
+          }
         },
       });
     },
@@ -310,12 +408,24 @@ export function PeoplePage({
           order={query.data.order}
           lists={lists.data}
           canEdit={canEdit}
+          canApprove={canApprove}
+          saving={saving}
           canEditColumns={canEditColumns}
           showDates={showDates}
           actions={actions}
           view={view}
           onView={onView}
           saved={savedViews(query.data.views)}
+        />
+        <DecisionModal
+          decision={decision}
+          opened={deciding}
+          onClose={() => {
+            setDeciding(false);
+          }}
+          onDone={() => {
+            setDeciding(false);
+          }}
         />
         <Modal
           opened={namingOpened}

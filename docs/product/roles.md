@@ -36,7 +36,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 
 **Proposal:** Seeing data comes only from roles, never from approving. A user can approve only drafts whose values their roles let them see, so a draft holding a Restricted detail, such as an end date, needs an Approver who also holds a role that sees Restricted data. Approvers approve every kind of draft, so Project Managers, who hold Approver by default, can approve feature teams too, which the owner accepted on 2026-10-31 until roles are reworked, as [Issues](../issues.md) records.
 
-**Proposal:** Seeing drafts is a permission of its own, like seeing the change history, so Leadership, held by the Executive, sees only approved data. Still open: whether the change history then leaves out edits to drafts for those who may not see drafts.
+**Proposal:** Seeing drafts is a permission of its own, like seeing the change history, so Leadership, held by the Executive, sees only approved data. Still open: whether the change history then leaves out edits to drafts for those who may not see drafts. Until it is agreed, Leadership sees drafts, as every role that sees the data does.
 
 The owner has decided that a role letting a user edit some data also lets them view it. Until the account change in [Issues](../issues.md) builds it, viewing the plan and allocations comes from the Viewer role, which every account has by default, and roles that edit people or planning configuration are given the matching view.
 

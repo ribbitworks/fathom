@@ -4,7 +4,8 @@
 // recorded as a new change set, so the history is never rewritten. Part of the data access layer.
 // Only the user who made a change can undo it, with the permissions it needs now, and only while
 // nothing it changed has been changed again since. Records it deleted come back with the same
-// identifiers, in the places they were in, and with the values they held.
+// identifiers, in the places they were in, and with the values they held. Changes to drafts are
+// undone in the drafts, and approving and rejecting drafts cannot be undone.
 
 import {
   changes,
@@ -37,14 +38,34 @@ import {
   type Transaction,
 } from "./changes.ts";
 import { writeColumnOrder } from "./column-order.ts";
+import {
+  type Draft,
+  drafted,
+  draftsUse,
+  fitsColumns,
+  lockPersonDrafts,
+  readPersonDrafts,
+  type Recorded,
+  rejectedField,
+  takenEmployeeIds,
+  tidy,
+  writePersonDraft,
+} from "./drafts.ts";
 import { checkValuesFit, lockFields } from "./fields.ts";
 import { lockChoices, placeChoice, refuseIfUsed } from "./lists.ts";
 import {
   peopleFitColumns,
   personTier,
+  readLive,
   recordSensitiveChanges,
 } from "./people.ts";
-import { fieldOfValue, readColumns, writeValues } from "./values.ts";
+import {
+  type ColumnInfo,
+  fieldOfValue,
+  inListOrder,
+  readColumns,
+  writeValues,
+} from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
 
 const changedSince =
@@ -128,6 +149,8 @@ interface Undone {
   recordType: RecordType;
   id: string;
   action: Change["action"];
+  // Whether the change was to the record's draft.
+  draft: boolean;
   // The values before the change, by field, which undoing puts back.
   old: Map<string, unknown>;
 }
@@ -136,11 +159,12 @@ interface Undone {
 function recordsOf(rows: readonly StoredChange[]): Undone[] {
   const records = new Map<string, Undone>();
   for (const row of rows) {
-    const key = `${row.recordType} ${row.recordId}`;
+    const key = `${row.recordType} ${row.recordId} ${String(row.draft)}`;
     const record = records.get(key) ?? {
       recordType: row.recordType as RecordType,
       id: row.recordId,
       action: row.action as Change["action"],
+      draft: row.draft,
       old: new Map<string, unknown>(),
     };
     record.old.set(row.field, row.oldValue);
@@ -263,6 +287,15 @@ async function refuseIfHeld(
   transaction: Transaction,
   record: Undone,
 ): Promise<void> {
+  // Drafts hold choices and values without the database knowing.
+  if (
+    (record.recordType === "field" &&
+      (await draftsUse(transaction, { column: record.id }))) ||
+    (record.recordType === "list-item" &&
+      (await draftsUse(transaction, { choice: record.id })))
+  ) {
+    throw new ConflictError(changedSince);
+  }
   const holders = {
     list: () =>
       transaction
@@ -302,7 +335,81 @@ function reversed(rows: readonly StoredChange[]): Change[] {
     tier: tierSchema.catch("confidential").parse(row.tier),
     oldValue: row.newValue,
     newValue: row.oldValue,
+    draft: row.draft,
   }));
+}
+
+// A person put back in a draft from the values a change set removed, with dates left empty when it
+// held none.
+function fromOld(old: ReadonlyMap<string, unknown>): Recorded {
+  return {
+    startDate: null,
+    endDate: null,
+    ...Object.fromEntries([...old].filter(([, value]) => value !== null)),
+  };
+}
+
+// Puts back the drafts of the people a change set changed in their drafts: the person it drafted
+// adding taken out, the one it drafted removing put back as they were, and the fields it changed
+// put back, with a rejection's reason. Each must still fit the columns, and keep an Employee ID no
+// one else has taken since.
+async function undoPersonDrafts(
+  transaction: Transaction,
+  columns: readonly ColumnInfo[],
+  records: readonly Undone[],
+): Promise<void> {
+  const ids = records.map(({ id }) => id);
+  const live = await readLive(transaction, columns, ids, true);
+  const draftsNow = await readPersonDrafts(transaction, ids);
+  const wanted = records.map((record) => {
+    const draft = draftsNow.get(record.id);
+    const old = new Map(record.old);
+    const reason = old.get(rejectedField);
+    // A change set that can be undone only ever clears a rejection, never makes one.
+    const rejection: Pick<Draft, "state" | "reason"> = old.has(rejectedField)
+      ? { state: "rejected", reason: String(reason) }
+      : {
+          state: draft?.state ?? "waiting",
+          reason: draft?.reason ?? null,
+        };
+    old.delete(rejectedField);
+    let person: Recorded | undefined;
+    if (record.action === "deleted") {
+      person = fromOld(old);
+    } else if (record.action === "changed") {
+      const now = drafted(live.get(record.id), draft);
+      if (now === undefined) throw new ConflictError(changedSince);
+      // Columns left with nothing chosen are left out.
+      person = tidy({ ...now, ...Object.fromEntries(old) });
+    }
+    return { id: record.id, person, rejection };
+  });
+  const chosen = wanted.flatMap(({ person }) =>
+    Object.entries(person ?? {}).flatMap(([field, value]) =>
+      fieldOfValue(field) !== null && Array.isArray(value)
+        ? value.map(String)
+        : [],
+    ),
+  );
+  const listOf = new Map(
+    (await inListOrder(transaction, chosen)).map(({ id, listId }) => [
+      id,
+      listId,
+    ]),
+  );
+  for (const { id, person, rejection } of wanted) {
+    if (person !== undefined) {
+      const taken = await takenEmployeeIds(
+        transaction,
+        [String(person.employeeId)],
+        [id],
+      );
+      if (taken.length > 0 || !fitsColumns(columns, listOf, person)) {
+        throw new ConflictError(changedSince);
+      }
+    }
+    await writePersonDraft(transaction, id, live.get(id), person, rejection);
+  }
 }
 
 const byKind = (record: Undone) => kindOrder.indexOf(record.recordType);
@@ -385,6 +492,11 @@ async function undoIn(
   if (changeSet.madeBy !== actor.user.id) {
     throw new ForbiddenError("Only the person who made a change can undo it");
   }
+  if (changeSet.kind === "approval" || changeSet.kind === "rejection") {
+    throw new ConflictError(
+      "Approving and rejecting drafts cannot be undone; change the draft or the data instead",
+    );
+  }
   // Undoing the same change twice at once: the second waits, then finds the first's changes since.
   await transaction.execute(
     sql`SELECT pg_advisory_xact_lock(hashtextextended(${changeSetId}, 0))`,
@@ -398,6 +510,11 @@ async function undoIn(
   for (const record of records) {
     requirePermission(actor, editPermission[record.recordType]);
   }
+  const draftRecords = records.filter(({ draft }) => draft);
+  const liveRecords = records.filter(({ draft }) => !draft);
+  // Drafts are locked before any row, as every change to them does, so an undo that changes a
+  // draft, or removes a choice or column one could be given, waits for them.
+  await lockPersonDrafts(transaction);
   await lockRecords(transaction, records);
   // A column's values are as sensitive as its list is now, or was when they changed, whichever is
   // more sensitive.
@@ -463,7 +580,7 @@ async function undoIn(
     .limit(1);
   if (later.length > 0) throw new ConflictError(changedSince);
 
-  const ascending = [...records].sort((a, b) => byKind(a) - byKind(b));
+  const ascending = [...liveRecords].sort((a, b) => byKind(a) - byKind(b));
   for (const record of ascending.filter(({ action }) => action === "deleted")) {
     await recreate(transaction, record);
   }
@@ -479,8 +596,15 @@ async function undoIn(
     .reverse()) {
     await remove(transaction, record);
   }
+  if (draftRecords.length > 0) {
+    await undoPersonDrafts(
+      transaction,
+      await readColumns(transaction),
+      draftRecords,
+    );
+  }
   // The people put back must still fit their columns as they are now.
-  const restored = records.filter(
+  const restored = liveRecords.filter(
     (record) => record.recordType === "person" && record.action !== "created",
   );
   if (

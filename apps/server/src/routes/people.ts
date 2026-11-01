@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People and the columns on the People table: reading everyone the user may see; adding people, one
-// or several at once, changing and deleting them; adding, changing, and deleting columns; and moving
+// People and the columns on the People table: reading everyone the user may see; drafting people
+// added, one or several at once, changed, and removed, discarding drafts, and approving and rejecting
+// them; adding, changing, and deleting columns; and moving
 // any column, built-in or added.
 // The data access layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
+  draftsRequestSchema,
   columnKeySchema,
   fieldMoveSchema,
   fieldRequestSchema,
@@ -14,6 +16,7 @@ import {
   peopleRequestSchema,
   peopleSchema,
   personChangeSchema,
+  rejectionRequestSchema,
   savedSchema,
   savedViewChangeSchema,
   savedViewRequestSchema,
@@ -93,6 +96,52 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
         changeSetId: await people.delete(
           request.actor,
           request.params.personId,
+        ),
+      }),
+    );
+
+    app.delete(
+      "/api/people/:personId/draft",
+      { schema: { params: personParams, response: saved } },
+      async (request) => ({
+        changeSetId: await people.discardDraft(
+          request.actor,
+          request.params.personId,
+        ),
+      }),
+    );
+
+    // Sends a rejected draft for approval again, unchanged.
+    app.delete(
+      "/api/people/:personId/draft/rejection",
+      { schema: { params: personParams, response: saved } },
+      async (request) => ({
+        changeSetId: await people.resubmitDraft(
+          request.actor,
+          request.params.personId,
+        ),
+      }),
+    );
+
+    app.post(
+      "/api/people/drafts/approval",
+      { schema: { body: draftsRequestSchema, response: saved } },
+      async (request) => ({
+        changeSetId: await people.approveDrafts(
+          request.actor,
+          request.body.people,
+        ),
+      }),
+    );
+
+    app.post(
+      "/api/people/drafts/rejection",
+      { schema: { body: rejectionRequestSchema, response: saved } },
+      async (request) => ({
+        changeSetId: await people.rejectDrafts(
+          request.actor,
+          request.body.people,
+          request.body.reason,
         ),
       }),
     );

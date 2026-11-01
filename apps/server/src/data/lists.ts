@@ -29,6 +29,7 @@ import {
   type Saved,
   type Transaction,
 } from "./changes.ts";
+import { draftsUse, lockPersonDrafts } from "./drafts.ts";
 import { type Place, place, previousOf } from "./order.ts";
 
 type ListRow = typeof lists.$inferSelect;
@@ -413,24 +414,31 @@ export async function setChoiceRetired(
   });
 }
 
-// Removes a choice, recording its place. A choice cannot be removed while people have it.
+const choiceInUse =
+  "This choice cannot be removed while it is in use; retire it instead";
+
+// Removes a choice, recording its place. A choice cannot be removed while people have it, live or in
+// a draft.
 export async function deleteChoice(
   database: Database,
   madeBy: string,
   listId: string,
   id: string,
 ): Promise<string | null> {
-  return refusingInUse(
-    "This choice cannot be removed while it is in use; retire it instead",
-    () =>
-      database.transaction(async (transaction) => {
-        const before = await lockChoice(transaction, listId, id);
-        const previous = previousOf(await lockChoices(transaction, listId), id);
-        await transaction.delete(listItems).where(eq(listItems.id, id));
-        return recordChanges(transaction, madeBy, [
-          ...choiceChanges(id, "deleted", before, undefined),
-          ...orderChange("list-item", id, "deleted", previous, null),
-        ]);
-      }),
+  return refusingInUse(choiceInUse, () =>
+    database.transaction(async (transaction) => {
+      // Drafts are locked before any row, as every change to them does.
+      await lockPersonDrafts(transaction);
+      const before = await lockChoice(transaction, listId, id);
+      if (await draftsUse(transaction, { choice: id })) {
+        throw new ConflictError(choiceInUse);
+      }
+      const previous = previousOf(await lockChoices(transaction, listId), id);
+      await transaction.delete(listItems).where(eq(listItems.id, id));
+      return recordChanges(transaction, madeBy, [
+        ...choiceChanges(id, "deleted", before, undefined),
+        ...orderChange("list-item", id, "deleted", previous, null),
+      ]);
+    }),
   );
 }

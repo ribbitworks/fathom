@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The change history, through the server's API, a page of change sets at a time, and how each is put
-// in words: a sentence for each record it changed, such as "changed the list Sites", and what
-// changed in it, such as "Name from Sites to Locations".
+// in words: a sentence for each record it changed, such as "changed the list Sites" or "drafted
+// changes to Fictional Person", and what changed in it, such as "Name from Sites to Locations".
 
 import {
   builtInColumnNames,
@@ -10,6 +10,7 @@ import {
   type ChangedRecord,
   type ChangeEntry,
   changeHistorySchema,
+  type ChangeKind,
   type ChangeValue,
   recordSearchText,
   tierSchema,
@@ -56,6 +57,7 @@ const fieldNames = new Map([
   ["required", "Required"],
   ["order", "Place"],
   ["definition", "Filters and sort"],
+  ["rejected", "Reason"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {
@@ -152,16 +154,30 @@ const plurals = new Map([
   ["saved-view", "views"],
 ]);
 
+// What was done to a record added or deleted, by what the change set did: "added" or "deleted" for
+// saved changes, and, for drafts, "drafted adding", "approved removing", and so on.
+function addedOrDeleted(record: ChangedRecord, kind: ChangeKind): string {
+  const added = record.action === "created";
+  if (kind === "approval")
+    return added ? "approved adding" : "approved removing";
+  if (kind === "discard") return "discarded the draft of";
+  if (record.draft) return added ? "drafted adding" : "drafted removing";
+  return added ? "added" : "deleted";
+}
+
 // Records of one kind added or deleted together, put in one sentence that names them all, such as
 // "added 3 choices to Sites: North, South, East".
-function describeGroup(records: readonly ChangedRecord[]): RecordWords {
+function describeGroup(
+  records: readonly ChangedRecord[],
+  kind: ChangeKind,
+): RecordWords {
   const [first] = records as [ChangedRecord];
-  const verb = first.action === "created" ? "added" : "deleted";
+  const verb = addedOrDeleted(first, kind);
   const lists = new Set(records.map(({ list }) => list));
   const [list] = lists;
   const where =
     first.kind === "list-item" && lists.size === 1 && list !== null
-      ? ` ${verb === "added" ? "to" : "from"} ${list as string}`
+      ? ` ${first.action === "created" ? "to" : "from"} ${list as string}`
       : "";
   return {
     sentence: `${verb} ${count(records.length)} ${plurals.get(first.kind) ?? "records"}${where}`,
@@ -178,10 +194,10 @@ export function describeEntry(entry: ChangeEntry): RecordWords[] {
   const words: (RecordWords | string)[] = [];
   for (const record of entry.records) {
     if (record.action !== "created" && record.action !== "deleted") {
-      words.push(describeRecord(record));
+      words.push(describeRecord(record, entry.kind));
       continue;
     }
-    const key = `${record.kind} ${record.action}`;
+    const key = `${record.kind} ${record.action} ${String(record.draft)}`;
     const group = groups.get(key);
     if (group === undefined) {
       groups.set(key, [record]);
@@ -195,23 +211,54 @@ export function describeEntry(entry: ChangeEntry): RecordWords[] {
     // Every key pushed names a group made with it.
     const group = groups.get(word) as ChangedRecord[];
     return group.length === 1
-      ? describeRecord(group[0] as ChangedRecord)
-      : describeGroup(group);
+      ? describeRecord(group[0] as ChangedRecord, entry.kind)
+      : describeGroup(group, entry.kind);
   });
 }
 
 // One record's changes in words, and what a search looks in for it.
-export function describeRecord(record: ChangedRecord): RecordWords {
-  return { ...recordWords(record), searched: recordSearchText(record) };
+export function describeRecord(
+  record: ChangedRecord,
+  kind: ChangeKind = "edit",
+): RecordWords {
+  return { ...recordWords(record, kind), searched: recordSearchText(record) };
 }
 
-function recordWords(record: ChangedRecord): Omit<RecordWords, "searched"> {
+function recordWords(
+  record: ChangedRecord,
+  kind: ChangeKind,
+): Omit<RecordWords, "searched"> {
   const named = thing(record);
-  if (record.action === "created") {
-    return { sentence: `added ${named}`, details: [] };
+  if (record.action === "created" || record.action === "deleted") {
+    return {
+      sentence: `${addedOrDeleted(record, kind)} ${named}`,
+      details: [],
+    };
   }
-  if (record.action === "deleted") {
-    return { sentence: `deleted ${named}`, details: [] };
+  if (kind === "rejection") {
+    const [reason] = record.fields;
+    return {
+      sentence: `rejected the draft of ${named}`,
+      details:
+        typeof reason?.newValue === "string"
+          ? [`Reason: ${reason.newValue}`]
+          : [],
+    };
+  }
+  if (kind === "discard") {
+    return { sentence: `discarded the draft of ${named}`, details: [] };
+  }
+  if (kind === "resubmission") {
+    return {
+      sentence: `sent the draft of ${named} for approval again`,
+      details: [],
+    };
+  }
+  if (kind === "approval" || record.draft) {
+    return {
+      sentence: `${kind === "approval" ? "approved" : "drafted"} changes to ${named}`,
+      details: record.fields.map(describeField),
+    };
   }
   const [only] = record.fields;
   if (record.fields.length === 1 && only !== undefined) {
