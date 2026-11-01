@@ -66,6 +66,7 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | Backups are stolen or read | Encrypted backups, with the key held by someone other than the backup operator | Restore tests; key custody check |
 | A former user keeps access | Accounts are disabled when users leave | Account review |
 | Real data leaks into development | Fictional data only in development; real data never committed | Code review; repository scanning |
+| Development accounts, which share one password, reach a production database | Only the seed package makes them, and the runtime image is sent none of its files and depends on none of them. The production database's port is never published, so the seed command, which runs on a developer's machine, cannot reach it. The accounts' addresses are on the reserved `fathom.test` domain, so they stand out | Automated test of what the image build is sent and what the server depends on; internal port scan; account review |
 | Fathom is overwhelmed with requests | Memory and process limits on every container, a connection limit at the proxy, and request rate limiting | Configuration review; automated tests |
 
 ## Credentials and Secrets

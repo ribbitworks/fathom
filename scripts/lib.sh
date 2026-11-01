@@ -3,8 +3,9 @@
 
 # Shared helpers for Fathom's bash scripts: messages, checks for git and a container runtime, the list
 # of project files, the copy of them that containerized scanners read, so they never see ignored
-# folders, and a prompt for new passwords. Sourcing it also exports FATHOM_SECURITY_FIXES_DATE, the
-# date that decides which security fixes container builds fetch. Source this file; do not run it.
+# folders, the password the development accounts share, and a prompt for new passwords. Sourcing it
+# also exports FATHOM_SECURITY_FIXES_DATE, the date that decides which security fixes container
+# builds fetch. Source this file; do not run it.
 
 info() { printf '==> %s\n' "$*"; }
 fail() {
@@ -50,6 +51,17 @@ make_scan_copy() {
   }
   chmod -R a+rX "$copy" || return 1
   printf '%s\n' "$copy"
+}
+
+# Makes the random password the development accounts share, unless it exists, and prints its
+# path. It is kept in the git-ignored .dev/secrets folder, so it stays the same between resets.
+dev_account_password_file() {
+  local file=".dev/secrets/dev_account_password"
+  if [ ! -s "$file" ]; then
+    command -v openssl >/dev/null 2>&1 || fail "openssl is required to generate the development accounts' password"
+    (umask 077 && openssl rand -hex 12 >"$file") || fail "Could not create $file"
+  fi
+  printf '%s\n' "$file"
 }
 
 # Asks for a new password twice, without showing it, and prints it for the caller to pass on through

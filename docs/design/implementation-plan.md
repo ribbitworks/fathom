@@ -36,7 +36,8 @@ The slices are built in this order, which may change as work progresses. The tab
 | Accounts and Access Control | Done |
 | Visual Design | Done |
 | People | Done: user-defined lists and people |
-| Seed Accounts | Next |
+| Seed Accounts | Done |
+| Change History | Next |
 
 ### Hello Fathom
 
@@ -68,10 +69,10 @@ It is built in two steps: user-defined lists of choices, as set out in the [Deci
 
 ### Seed Accounts
 
-Fictional accounts for development, one for each persona in the [Product Brief](../product/brief.md#users), with fictional names, `example.test` addresses, and that persona's default roles from [Roles](../product/roles.md#default-roles-by-persona), so each role can be tried by signing in as it.
+Fictional accounts for development, one for each persona in the [Product Brief](../product/brief.md#users), with addresses on the reserved `fathom.test` domain, named after their persona, and that persona's default roles from [Roles](../product/roles.md#default-roles-by-persona), so each role can be tried by signing in as it.
 
-- **Password:** They share the random password in the git-ignored `.dev/secrets/dev_account_password`, which `pnpm dev:reset` already makes for its own account, made if missing and printed when the accounts are seeded. The `pnpm dev:reset` account stays as it is.
-- **Adding and removing:** They are added and removed with the rest of the seed data. An account that has made changes cannot be deleted, since the change history refers to it and can only be added to, so removing the seed data deactivates it instead, and says so.
+- **Password:** They share a random password in the git-ignored `.dev/secrets/dev_account_password`, made if missing and printed when the accounts are seeded. `pnpm dev:reset` seeds them, replacing the single account it made before.
+- **Adding and removing:** They are added and removed with the rest of the seed data. Accounts are never deleted, since the change history refers to them and can only be added to, so removing the seed data deactivates them, and seeding again reactivates them.
 - **Development only:** They exist only in development databases, since the seed package is never part of the runtime image. The threat model gains a row for them, with the check that keeps them out of production.
 
 ### Change History

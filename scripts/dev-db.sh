@@ -8,8 +8,9 @@
 #   down     stop the database, keeping its data
 #   migrate  apply the reviewed migrations as the migration role
 #   reset    delete the database and its data, then start it and apply the migrations again
-#   seed     start the database, apply the migrations, and add the fictional data, unless it is there
-#   unseed   remove the fictional data, keeping anything added by hand
+#   seed     start the database, apply the migrations, and add the fictional data, unless it is there,
+#            with an account for each persona, sharing the password it prints
+#   unseed   remove the fictional data, keeping anything added by hand, and deactivate the accounts
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -38,14 +39,23 @@ apply_migrations() {
 
 # Adds or removes the fictional data as the application role, as Fathom itself would.
 run_seed() {
+  local password_file=""
+  [ -s .dev/secrets/fathom_auth_secret ] || fail "Development secrets are missing; run 'pnpm dev:setup' first"
+  if [ "$1" = seed ]; then password_file="$PWD/$(dev_account_password_file)"; fi
   start_database
   apply_migrations
-  FATHOM_DB_HOST=127.0.0.1 \
+  FATHOM_PUBLIC_URL="https://localhost:${FATHOM_DEV_PORT:-8443}" \
+    FATHOM_AUTH_SECRET_FILE="$PWD/.dev/secrets/fathom_auth_secret" \
+    FATHOM_SEED_PASSWORD_FILE="$password_file" \
+    FATHOM_DB_HOST=127.0.0.1 \
     FATHOM_DB_PORT="${FATHOM_DEV_DB_PORT:-5432}" \
     FATHOM_DB_NAME=fathom \
     FATHOM_DB_USER=fathom_app \
     FATHOM_DB_PASSWORD_FILE="$PWD/.dev/secrets/fathom_app_password" \
     node packages/seed/src/seed.ts "$1"
+  if [ "$1" = seed ]; then
+    info "Sign in as any development account, listed in docs/design/development-setup.md, with the password $(cat "$password_file")"
+  fi
 }
 
 require_container_runtime

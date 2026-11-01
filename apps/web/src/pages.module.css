@@ -12,6 +12,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The access history's panel keeps its day bands inside its rounded corners. */
+.historyPanel {
+  overflow: hidden;
+}
+
 .dayBand {
   background: var(--fathom-canvas);
   border-bottom: 1px solid var(--mantine-color-default-border);

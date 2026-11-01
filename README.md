@@ -16,17 +16,16 @@ bash scripts/dev-bootstrap.sh
 
 On Windows, run `scripts/dev-bootstrap.ps1` in PowerShell instead.
 
-Create development secrets and the local HTTPS certificate, create an account for yourself, then start development mode:
+Create development secrets and the local HTTPS certificate, then start development mode with a fresh database, filled with fictional people and an account for each kind of user:
 
 ```bash
 pnpm dev:setup
-pnpm account:create --name "Your Name" --email you@example.test
-pnpm dev
+pnpm dev:reset
 ```
 
-`pnpm dev` opens Fathom in your browser, where you sign in with that account. It can view Fathom's general information; to give it other roles, such as administrator, see [Development Setup](docs/design/development-setup.md#common-commands).
+`pnpm dev:reset` prints the accounts' password and opens Fathom in your browser, where you sign in with any of the [development accounts](docs/design/development-setup.md#development-accounts). After that, `pnpm dev` starts development mode again, keeping the data.
 
-To fill Fathom with fictional people to work with, run `pnpm db:seed`; `pnpm db:unseed` removes them again.
+`pnpm db:seed` and `pnpm db:unseed` add the fictional data to the development database and take it away again, deactivating the accounts; see [Development Setup](docs/design/development-setup.md#common-commands) for these and other commands.
 
 Check everything, including the tests and the security report:
 

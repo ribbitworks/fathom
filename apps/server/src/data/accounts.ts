@@ -92,6 +92,32 @@ export async function createAccount(
   return user.id;
 }
 
+// Deactivates or reactivates an account, recording who did it in the access history, and signs it
+// out everywhere when deactivated. The actor is null for the server's operators, as when the
+// development seed command does it. Callers check permissions first.
+export async function setAccountActive(
+  auth: Auth,
+  database: Database,
+  userId: string,
+  active: boolean,
+  actorId: string | null,
+): Promise<void> {
+  await database.transaction(async (transaction) => {
+    await transaction
+      .update(users)
+      .set({ deactivatedAt: active ? null : new Date() })
+      .where(eq(users.id, userId));
+    await recordEvent(transaction, {
+      actorId,
+      action: active ? "account-reactivated" : "account-deactivated",
+      subjectId: userId,
+    });
+  });
+  if (!active) {
+    await (await auth.$context).internalAdapter.deleteUserSessions(userId);
+  }
+}
+
 export interface AccountAdministration {
   listAccounts(actor: Actor): Promise<Account[]>;
   createAccount(actor: Actor, account: NewAccount): Promise<Account>;
@@ -211,18 +237,7 @@ export function createAccountAdministration(
       requirePermission(actor, "accounts:manage");
       refuseOwnAccount(actor, userId, "deactivate or reactivate");
       await readAccount(userId);
-      await database.transaction(async (transaction) => {
-        await transaction
-          .update(users)
-          .set({ deactivatedAt: active ? null : new Date() })
-          .where(eq(users.id, userId));
-        await recordEvent(transaction, {
-          actorId: actor.user.id,
-          action: active ? "account-reactivated" : "account-deactivated",
-          subjectId: userId,
-        });
-      });
-      if (!active) await signOutEverywhere(userId);
+      await setAccountActive(auth, database, userId, active, actor.user.id);
       return readAccount(userId);
     },
   };

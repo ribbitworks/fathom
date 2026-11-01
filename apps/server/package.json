@@ -4,6 +4,11 @@
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
+  "exports": {
+    "./accounts": "./src/data/accounts.ts",
+    "./auth": "./src/data/auth.ts",
+    "./config": "./src/config.ts"
+  },
   "scripts": {
     "dev": "node --watch src/main.ts",
     "start": "node src/main.ts",

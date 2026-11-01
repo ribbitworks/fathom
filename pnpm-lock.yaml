@@ -387,6 +387,12 @@ importers:
       '@fathom/fixtures':
         specifier: workspace:*
         version: link:../fixtures
+      '@fathom/server':
+        specifier: workspace:*
+        version: link:../../apps/server
+      '@fathom/shared':
+        specifier: workspace:*
+        version: link:../shared
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@types/pg@8.23.1)(pg@8.23.1)

@@ -25,6 +25,7 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { personaAccounts } from "./accounts.ts";
 import { seed, seedCommand, unseed } from "./seed.ts";
 
 let database: TestDatabase;
@@ -47,6 +48,10 @@ afterAll(async () => {
 });
 
 const organization = fictionalOrganization({ size: 20 });
+
+// A session secret and an account password used only by tests.
+const sessionSecret = "fictional-session-secret-for-tests-only-0123456789";
+const accountPassword = "fictional-seed-password";
 
 async function totalOf(table: typeof people | typeof lists | typeof fields) {
   const [row] = await connection.select({ total: count() }).from(table);
@@ -125,7 +130,12 @@ describe("seeding", () => {
 describe("the seed command", () => {
   const environment = () => {
     writeFileSync(join(folder, "password"), database.app.password);
+    writeFileSync(join(folder, "secret"), sessionSecret);
+    writeFileSync(join(folder, "accounts"), `${accountPassword}\n`);
     return {
+      FATHOM_PUBLIC_URL: "https://fathom.example.test",
+      FATHOM_AUTH_SECRET_FILE: join(folder, "secret"),
+      FATHOM_SEED_PASSWORD_FILE: join(folder, "accounts"),
       FATHOM_DB_HOST: database.app.host,
       FATHOM_DB_PORT: String(database.app.port),
       FATHOM_DB_NAME: database.app.database,
@@ -145,13 +155,37 @@ describe("the seed command", () => {
       label: "Fictional Hand Choice",
     });
     expect(await seedCommand(["unseed"], environment())).toBe(0);
+    const addresses = personaAccounts.map(({ email }) => email);
     expect(log.mock.calls.map(([line]) => line as string)).toEqual([
       "Added 150 fictional people, with their lists and columns",
+      ...addresses.map((email) => `Account ready: ${email}`),
       "The fictional data is already in the database",
       "Removed the fictional data",
       "Kept: The Positions list, which has choices added by hand",
+      ...addresses.map((email) => `Deactivated the account ${email}`),
     ]);
     log.mockRestore();
+  });
+
+  it("stops before adding anything when sign-in settings or the accounts' password are missing or unusable", async () => {
+    const problems = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    writeFileSync(join(folder, "short"), "too-short\n");
+    for (const changed of [
+      { FATHOM_PUBLIC_URL: undefined },
+      { FATHOM_SEED_PASSWORD_FILE: join(folder, "short") },
+    ]) {
+      expect(
+        await seedCommand(["seed"], { ...environment(), ...changed }),
+      ).toBe(1);
+    }
+    expect(await totalOf(people)).toBe(0);
+    expect(problems.mock.calls.map(([line]) => line as string)).toEqual([
+      expect.stringMatching(/^error: Invalid server configuration: /),
+      "error: The file FATHOM_SEED_PASSWORD_FILE names must hold a password of 12 to 128 characters",
+    ]);
+    vi.restoreAllMocks();
   });
 
   it("says what went wrong: a wrong command, missing settings, or data in the way", async () => {
@@ -161,11 +195,18 @@ describe("the seed command", () => {
     vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["grow"], environment())).toBe(1);
     expect(await seedCommand(["seed"], {})).toBe(1);
+    const withoutPassword = {
+      ...environment(),
+      FATHOM_SEED_PASSWORD_FILE: undefined,
+    };
+    expect(await seedCommand(["seed"], withoutPassword)).toBe(1);
+    expect(await totalOf(people)).toBe(0);
     await connection.insert(lists).values({ name: "Sites" });
     expect(await seedCommand(["seed"], environment())).toBe(1);
     expect(problems.mock.calls.map(([line]) => line as string)).toEqual([
       "error: Usage: seed.ts seed | unseed",
       expect.stringMatching(/^error: /),
+      "error: FATHOM_SEED_PASSWORD_FILE is not set",
       "error: A list, column, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
     ]);
     vi.restoreAllMocks();

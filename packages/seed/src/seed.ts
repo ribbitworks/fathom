@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Adds the fictional organization from @fathom/fixtures to a development database, and removes it
-// again: its lists, the columns on people drawing on them, and about 150 people. Every record is
-// recorded in the change history as made by Fathom itself. Seeding twice adds nothing more, and
-// removing takes away only what seeding added, keeping a seeded column or list that something added
-// by hand still uses. A development-only package, never included in the runtime image.
-// Usage: node src/seed.ts seed | unseed, with the FATHOM_DB_* settings for the application role.
+// again: its lists, the columns on people drawing on them, and about 150 people, each recorded in the
+// change history as made by Fathom itself, and an account for each persona, from ./accounts.ts,
+// recorded in the access history. Seeding twice adds nothing more, and removing takes away only what
+// seeding added, keeping a seeded column or list that something added by hand still uses, and
+// deactivating the accounts. A development-only package, never included in the runtime image.
+// Usage: node src/seed.ts seed | unseed, with the FATHOM_DB_* settings for the application role,
+// and FATHOM_PUBLIC_URL and FATHOM_AUTH_SECRET_FILE, as the account command reads. Seeding also
+// needs FATHOM_SEED_PASSWORD_FILE, naming the file that holds the accounts' shared password.
 
 import {
   type ChangeRecord,
@@ -29,8 +32,13 @@ import {
   type FictionalOrganization,
   fictionalOrganization,
 } from "@fathom/fixtures";
+import { createAuth } from "@fathom/server/auth";
+import { loadAuthConfig } from "@fathom/server/config";
 import { count, eq, inArray } from "drizzle-orm";
+import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { seedAccounts, unseedAccounts } from "./accounts.ts";
+import { passwordLength } from "@fathom/shared";
 
 // The development data set's size.
 export const developmentSize = 150;
@@ -283,6 +291,25 @@ export async function unseed(
   });
 }
 
+// The accounts' shared password, from the file FATHOM_SEED_PASSWORD_FILE names, checked against the
+// lengths accounts allow, so a bad file stops the command before anything is added.
+function readPassword(environment: NodeJS.ProcessEnv): string {
+  const file = environment.FATHOM_SEED_PASSWORD_FILE;
+  if (!file) throw new Error("FATHOM_SEED_PASSWORD_FILE is not set");
+  // The path comes from the development scripts, not from users of the application.
+  // eslint-disable-next-line security/detect-non-literal-fs-filename
+  const password = readFileSync(file, "utf8").trim();
+  if (
+    password.length < passwordLength.minimum ||
+    password.length > passwordLength.maximum
+  ) {
+    throw new Error(
+      `The file FATHOM_SEED_PASSWORD_FILE names must hold a password of ${String(passwordLength.minimum)} to ${String(passwordLength.maximum)} characters`,
+    );
+  }
+  return password;
+}
+
 // Seeds or unseeds the database the FATHOM_DB_* settings name. Returns a failing exit code after
 // reporting what went wrong.
 export async function seedCommand(
@@ -299,17 +326,25 @@ export async function seedCommand(
     pool = createPool(loadDatabaseConfig(environment));
     const database = createDatabase(pool);
     const organization = fictionalOrganization({ size: developmentSize });
+    // Read first, so missing settings stop the command before anything is changed.
+    const auth = createAuth(database, loadAuthConfig(environment));
     if (command === "seed") {
+      const password = readPassword(environment);
       const added = await seed(database, organization);
       console.log(
         added
           ? `Added ${String(organization.people.length)} fictional people, with their lists and columns`
           : "The fictional data is already in the database",
       );
+      const accounts = await seedAccounts(auth, database, password);
+      for (const email of accounts) console.log(`Account ready: ${email}`);
     } else {
       const kept = await unseed(database, organization);
       console.log("Removed the fictional data");
       for (const item of kept) console.log(`Kept: ${item}`);
+      for (const email of await unseedAccounts(auth, database)) {
+        console.log(`Deactivated the account ${email}`);
+      }
     }
     return 0;
   } catch (error) {

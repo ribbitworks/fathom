@@ -6,8 +6,20 @@
   },
   "include": ["src", "vitest.config.ts"],
   "references": [
-    { "path": "../db" },
-    { "path": "../fixtures" },
-    { "path": "../test-utils" }
+    {
+      "path": "../db"
+    },
+    {
+      "path": "../fixtures"
+    },
+    {
+      "path": "../shared"
+    },
+    {
+      "path": "../test-utils"
+    },
+    {
+      "path": "../../apps/server"
+    }
   ]
 }
