@@ -106,7 +106,7 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 - **Change:** One field of one record changed in a change set, with its sensitivity tier and its old and new values.
 - **Snapshot:** A point-in-time copy of part of the plan. Its contents are set in the Decisions Log.
 
-**Proposal:** Extend change sets to drafts. Each plan change is one draft edit, such as a new allocation or moved dates. An editor submits a change set for approval, and approving it applies its changes to the live plan. A change set can be compared with the approved plan or with another change set, which also supports what-if scenarios if they turn out to be the same feature.
+**Proposal:** A draft row holds the values a row is to have once approved, or that the row is to be removed, and its state: waiting, or rejected with a reason. Each edit to a draft is recorded as a change set. Approving drafts, whether one, several at once, or a draft with the drafts it uses, applies them all to the live rows as one change set, or none of them.
 
 ## Not Yet Modeled
 

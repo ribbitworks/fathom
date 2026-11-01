@@ -81,7 +81,7 @@ A view of the change history the lists step built: who changed what, and when, l
 
 ### Draft and Approval
 
-Plan approval, built on lists and people first, as the owner intends approval to cover them too, so the pattern every later table follows is set once: changes are saved as drafts, submitted, compared with the live data, and approved or rejected by an Approver. Its open questions, in the [Product Brief](../product/brief.md#open-questions), [Use Cases](../product/use-cases.md), and [Roles](../product/roles.md#open-questions), are answered before it is built.
+Plan approval, built on lists and people first, as the owner intends approval to cover them too, so the pattern every later table follows is set once: each changed row is a draft, seen with the live data, until an Approver approves or rejects it, as set out in the [Decisions Log](../product/decisions.md#planning). The seed data gains drafts made by the personas who edit, covering each case: a row added, changed, and removed, a rejected draft with its reason, and a draft that uses another, such as a person given a choice that is itself a draft.
 
 ### Teams and Reporting Lines
 

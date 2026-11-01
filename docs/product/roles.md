@@ -13,7 +13,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 - **People Manager:** Proposes feature teams, and sees people, with Restricted details for everyone, because people move between managers over time.
 - **Workforce Administrator:** Maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.
 - **Leadership:** Sees people, with their Restricted and Confidential data, without editing it.
-- **Approver:** Approves draft plan changes and feature teams.
+- **Approver:** Approves or rejects draft rows, including feature teams and their own drafts.
 - **Administrator:** Manages user accounts, role assignments, and system settings, without access to Restricted or Confidential data.
 
 ## What Each Role Can Do
@@ -28,7 +28,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | Confidential data | None | None | None | None | Edit | View | None | None |
 | Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | Edit | View | View | None |
 | Lists of choices, and People's columns and their order | None | None | None | None | Edit | None | None | None |
-| Draft changes (**proposal**) | None | Submit | Submit | None | Submit | None | Approve | None |
+| Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit feature teams | Edit | View | Approve | None |
 | Change history, for the data the role sees (**proposal**) | View | View | View | View | View | View | View | None |
 | Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
@@ -83,7 +83,3 @@ How Project Managers give input on whether teams are in place is an open questio
 ## First Stage
 
 The first stage of the [Roadmap](roadmap.md) uses every role: Viewer, Project Planner, Resource Planner, People Manager, Workforce Administrator, Leadership, Approver, and Administrator.
-
-## Open Questions
-
-1. **Self-approval:** May an Approver approve their own draft changes? Project Managers both plan and approve, so without a rule against it they would.

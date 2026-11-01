@@ -96,8 +96,8 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 
 ## Open questions
 
-1. **What-if scenarios:** The owner wants to compare a draft with the approved plan, and drafts with each other. Is this the same feature as drafting changes for approval? The owner thinks it is. It could mature incrementally across versions of Fathom.
-1. **Roles and approval:** Which roles exist, what can each see, edit, and approve, and which changes need approval? The owner intends everything users create or edit to be pending until approved, including people, teams, and custom fields and tables, and will refine this. See the proposal in [Roles](roles.md).
+1. **What-if scenarios:** The owner wants to compare a draft with the approved plan, and drafts with each other. Each row has only one draft, as the [Decisions Log](decisions.md#planning) sets out, so comparing alternative plans would be a separate feature, such as named scenarios. It could mature incrementally across versions of Fathom.
+1. **Roles and approval:** Which roles exist, and what can each see, edit, and approve? See the proposal in [Roles](roles.md). Which changes need approval is decided in the [Decisions Log](decisions.md#planning).
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
 1. **Project Manager input:** Project Managers approve feature teams through the Approver role, as [Roles](roles.md) sets out. Is other input needed on whether teams are in place, such as comments or proposals?

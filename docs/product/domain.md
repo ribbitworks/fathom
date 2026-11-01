@@ -29,4 +29,6 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 
 - **Retired:** A retired choice or list stays on records that already have it, but is no longer offered for new ones, and can be restored.
 - **View:** What a table shows: its search, filters, and sort.
+- **Draft row:** A row to be added, changed, or removed, waiting for an Approver to approve it, which makes it live, or reject it, which marks it Rejected, with a reason, until it is changed or discarded.
+- **Live:** Approved, and so part of the plan everyone works from.
 - **Saved view:** A view saved under a name, shared with everyone who sees the table, and applied again from the table's Views menu.

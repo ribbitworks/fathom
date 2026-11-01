@@ -71,6 +71,7 @@ Under the proposed roles:
 
 - **Employee details, teams, reporting lines, and the hiring plan** are maintained by the role that maintains workforce information, held by the Engineering Operations Manager.
 - **Work assignments** are maintained by Engineering Managers and the Engineering Director.
+- **Changes waiting for approval:** Changes to employee details, teams, reporting lines, and the hiring plan wait for approval, by someone whose roles let them see that information, such as the Engineering Director, before they take effect. Until then, they are seen by everyone who may see that information. A rejected change is kept, with the approver's reason, until it is changed or discarded.
 - **Feature teams** are proposed by Engineering Managers and approved by those who approve plan changes, such as the Engineering Director.
 - **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. An administrator could still reach such information by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. The Engineering Director holds this role at first, so for now the safeguards on granting access rely on the access history. A second person is planned to take on this role later.
 
@@ -102,7 +103,7 @@ Our understanding, which is not legal advice, is that British Columbia's Persona
 1. **Approval:** Is the information listed above acceptable to hold for planning purposes?
 1. **Employee notice:** How should employees be told that Fathom holds this information, and for what purposes?
 1. **Access and correction:** How should employees ask to see or correct their information? Since the HR system is the official record, corrections would normally be made there and copied into Fathom.
-1. **Retention:** How long should details of employees who have left be kept before they are removed, and how long should the history of changes, with its earlier values, be kept? Is Fathom's information ever used to make a decision that directly affects someone?
+1. **Retention:** How long should details of employees who have left be kept before they are removed, how long should the history of changes, with its earlier values, be kept, and how long may a rejected change wait to be changed or discarded? Is Fathom's information ever used to make a decision that directly affects someone?
 1. **Access history:** Who should be able to view the history of who viewed or changed information, and how long should it be kept? How long should records of signed-in sessions, with their network addresses and browsers, be kept?
 1. **Other countries:** What does Indian law, or the law of any other country where we have employees, require for this information, including managers in India seeing details of employees in Canada?
 1. **Server location:** Are there any concerns about holding information about employees outside Canada on a server in Canada?

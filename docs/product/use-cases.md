@@ -23,7 +23,7 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 - **Actor:** Engineering Manager
 - **Goal:** Staff a project or feature for the coming months, using current staff or planned hires and a monthly allocation percentage.
-- **Outcome:** The assignments are saved as draft changes. Fathom warns when someone has more than two assignments in a month, and does not allow allocations outside a person's employment dates.
+- **Outcome:** The assignments are saved as draft rows. Fathom warns when someone has more than two assignments in a month, and does not allow allocations outside a person's employment dates.
 
 ### Resolve Over-Allocation
 
@@ -35,13 +35,13 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 - **Actor:** Project Manager
 - **Goal:** Move a feature to another cycle, or a milestone to a new date.
-- **Outcome:** The new timing is saved as a draft change.
+- **Outcome:** The new timing is saved as a draft row.
 
 ### Approve Plan Changes
 
 - **Actors:** An editor, and a user with the approver role
-- **Goal:** Make sure draft changes are approved before they reach the live plan.
-- **Outcome:** Approved changes become part of the live plan. Which changes need approval, and what happens to rejected changes, are to be confirmed.
+- **Goal:** Make sure changes are approved before they reach the live plan.
+- **Outcome:** Approved draft rows become part of the live plan, and rejected ones stay as drafts with the reason, as the [Decisions Log](decisions.md#planning) sets out.
 
 ## Planning the Workforce
 
@@ -117,6 +117,6 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ## Not Yet Covered
 
-- **What-if scenarios:** Comparing drafts with the approved plan and with each other depends on an open question in the brief.
+- **What-if scenarios:** Comparing alternative plans with the approved plan and with each other depends on an open question in the brief.
 - **Configuring cycles and releases:** Setting up release streams, with their cycle lengths and cycle names, and choosing which cycles each release includes, have no use case yet.
 - **Custom fields and tables:** Defining custom fields and tables comes in a later stage of the [Roadmap](roadmap.md), and has no use case yet.
