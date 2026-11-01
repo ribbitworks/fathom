@@ -2,11 +2,28 @@
 
 // Building blocks for fictional records, used by the seed data generator and test data. Everything is
 // generated from a fixed seed and reference date, so the same records come out every time, with the
-// same identifiers. Names are made up from names common in the countries the organization works in,
-// so they look realistic without describing anyone real. No real company, site, or product names are
-// used. A development-only package, never included in the runtime image.
+// same identifiers. Names are made up from names common where the organization works, and some
+// from elsewhere, in other scripts too, so they look realistic without describing anyone real. No
+// real company, site, or product names are used. A development-only package, never included in the
+// runtime image.
 
-import { base, en, en_CA, en_IN, Faker } from "@faker-js/faker";
+import {
+  base,
+  da,
+  de,
+  en,
+  en_CA,
+  en_IN,
+  es,
+  Faker,
+  fr,
+  fr_CA,
+  ja,
+  ko,
+  ru,
+  sv,
+  zh_CN,
+} from "@faker-js/faker";
 import { createHash } from "node:crypto";
 
 // The fixed namespace every fictional identifier is made in.
@@ -127,6 +144,37 @@ function choice(from: FictionalList, label: string): string {
 
 const day = (date: Date) => date.toISOString().slice(0, 10);
 
+// Where people's names come from, and how many in each hundred: mostly Canada, in English and
+// French, then India, where the organization also works, then a few from elsewhere, some with
+// accented letters and some in other scripts, so every screen and search is tried with them.
+// Faker's Canadian locales have no names of their own, so English Canadian names come from its
+// English ones and French Canadian names from its French ones. Each source has a generator of its
+// own, so names never change anything else generated.
+const nameSources = [
+  { weight: 45, locale: [en_CA, en, base], order: "given first" },
+  { weight: 10, locale: [fr_CA, fr, en, base], order: "given first" },
+  { weight: 15, locale: [en_IN, en, base], order: "given first" },
+  { weight: 5, locale: [de, en, base], order: "given first" },
+  { weight: 5, locale: [es, en, base], order: "given first" },
+  { weight: 3, locale: [sv, en, base], order: "given first" },
+  { weight: 2, locale: [da, en, base], order: "given first" },
+  { weight: 4, locale: [ko, en, base], order: "as written" },
+  { weight: 4, locale: [ja, en, base], order: "as written" },
+  { weight: 4, locale: [zh_CN, en, base], order: "as written" },
+  { weight: 3, locale: [ru, en, base], order: "given first" },
+] as const;
+
+type NameSource = (typeof nameSources)[number];
+
+// A name as people from the country write it: Korean, Japanese, and Chinese names family name first,
+// as Faker writes them, and others given name first, with a family name that matches, as Russian
+// family names do, and never with a title such as Dr.
+function name(namer: Faker, order: NameSource["order"]): string {
+  if (order === "as written") return namer.person.fullName();
+  const sex = namer.person.sexType();
+  return `${namer.person.firstName(sex)} ${namer.person.lastName(sex)}`;
+}
+
 // A fictional organization of the given size: its lists, the columns on people drawing on them, and
 // its people, current and former, and a few who start after the reference date.
 export function fictionalOrganization({
@@ -138,7 +186,18 @@ export function fictionalOrganization({
   seed?: number;
   referenceDate?: string;
 }): FictionalOrganization {
-  const faker = new Faker({ locale: [en_CA, en_IN, en, base], seed });
+  const faker = new Faker({ locale: [en, base], seed });
+  const chooser = new Faker({ locale: [base], seed: seed + 1 });
+  const namers = nameSources.map((source, index) => ({
+    source,
+    namer: new Faker({ locale: [...source.locale], seed: seed + 2 + index }),
+  }));
+  const pickName = () => {
+    const { source, namer } = chooser.helpers.weightedArrayElement(
+      namers.map((value) => ({ weight: value.source.weight, value })),
+    );
+    return name(namer, source.order);
+  };
   const reference = new Date(`${referenceDate}T00:00:00Z`);
   const people = Array.from({ length: size }, (_, index): FictionalPerson => {
     const manager = faker.number.float() < 0.12;
@@ -175,7 +234,7 @@ export function fictionalOrganization({
     if (faker.number.float() < 0.06) roles.push("Design Authority");
     return {
       id: fictionalId(`person:${String(index)}`),
-      preferredName: `${faker.person.firstName()} ${faker.person.lastName()}`,
+      preferredName: pickName(),
       employeeId: `E${String(10001 + index)}`,
       startDate: day(start),
       endDate: end === null ? null : day(end),

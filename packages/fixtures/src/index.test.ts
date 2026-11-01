@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the fictional organization: the same records every time, identifiers that are valid and
-// unique, and people whose details are consistent and drawn from the lists their columns name.
+// unique, names from several countries and scripts, and people whose details are consistent and
+// drawn from the lists their columns name.
 
+import { en_IN } from "@faker-js/faker";
 import { describe, expect, it } from "vitest";
 import { fictionalId, fictionalOrganization } from "./index.ts";
 
@@ -25,6 +27,36 @@ describe("a fictional organization", () => {
     expect(fictionalOrganization({ size: 150, seed: 7 }).people).not.toEqual(
       organization.people,
     );
+  });
+
+  it("names people mostly as in Canada, then India, and some from elsewhere, accented and in other scripts", () => {
+    const names = organization.people.map(({ preferredName }) => preferredName);
+    const given = en_IN.person?.first_name;
+    const indian = new Set([...(given?.female ?? []), ...(given?.male ?? [])]);
+    const latin = names.filter((name) =>
+      /^[\p{Script=Latin}' .-]+$/u.test(name),
+    );
+    const fromIndia = latin.filter((name) =>
+      indian.has(name.split(" ")[0] ?? ""),
+    );
+    expect(latin.length).toBeGreaterThan(names.length * 0.7);
+    expect(names.some((name) => /[À-ÿ]/u.test(name))).toBe(true);
+    expect(fromIndia.length).toBeGreaterThan(0);
+    expect(fromIndia.length).toBeLessThan(latin.length / 2);
+    for (const script of [
+      /\p{Script=Hangul}/u,
+      /\p{Script=Han}/u,
+      /\p{Script=Cyrillic}/u,
+    ]) {
+      expect(
+        names.some((name) => script.test(name)),
+        String(script),
+      ).toBe(true);
+    }
+    // Never with a title, such as Dr. or PhD.
+    expect(
+      names.filter((name) => /\b(Dr|Mr|Mrs|Ms|Miss|PhD|MD|Sr|Jr)\b/.test(name)),
+    ).toEqual([]);
   });
 
   it("has unique identifiers and Employee IDs, and end dates after start dates", () => {
