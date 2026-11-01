@@ -8,6 +8,7 @@ import { screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  fictionalUser,
   greeting,
   renderApp,
   serverAnswers,
@@ -21,6 +22,14 @@ async function fillIn(email: string, password: string) {
   if (password) await user.type(screen.getByLabelText("Password"), password);
   await user.click(screen.getByRole("button", { name: "Sign in" }));
 }
+
+// An administrator with only the Administrator role, granted what the server grants it.
+const administratorOnly = () =>
+  Response.json({
+    ...fictionalUser,
+    roles: ["administrator"],
+    permissions: ["accounts:manage", "history:view"],
+  });
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -47,6 +56,77 @@ describe("home page", () => {
     });
     renderApp("/");
     expect(await screen.findByLabelText("Loading")).toBeDefined();
+  });
+
+  it("says so when the server refuses the greeting, rather than that it could not be reached", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": () =>
+        Response.json({ error: "Forbidden" }, { status: 403 }),
+    });
+    renderApp("/");
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "You do not have permission to do this. Your roles may have changed.",
+    );
+  });
+
+  it("sends an administrator who may not see the plan to the first page their roles open", async () => {
+    serverAnswers({
+      "GET /api/session": administratorOnly,
+      "GET /api/accounts": () => Response.json({ accounts: [] }),
+    });
+    const history = renderApp("/");
+    expect(
+      await screen.findByRole("heading", { name: "Accounts" }),
+    ).toBeDefined();
+    expect(history.location.pathname).toBe("/accounts");
+  });
+
+  it("sends someone who may only see the access history there", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          roles: [],
+          permissions: ["history:view"],
+        }),
+      "GET /api/access-history": () => Response.json({ entries: [] }),
+    });
+    const history = renderApp("/");
+    expect(
+      await screen.findByRole("heading", { name: "Access history" }),
+    ).toBeDefined();
+    expect(history.location.pathname).toBe("/history");
+  });
+
+  it("brings an administrator who may not see the plan to their first page after signing in", async () => {
+    let session = signedOut;
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "POST /api/auth/sign-in/email": () => {
+        session = administratorOnly;
+        return Response.json({});
+      },
+      "GET /api/accounts": () => Response.json({ accounts: [] }),
+    });
+    const history = renderApp("/sign-in?redirect=/");
+    await fillIn("person@example.test", "fictional password 1");
+    expect(
+      await screen.findByRole("heading", { name: "Accounts" }),
+    ).toBeDefined();
+    expect(history.location.pathname).toBe("/accounts");
+  });
+
+  it("sends someone whose roles open no page to their own account's page", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({ ...fictionalUser, roles: [], permissions: [] }),
+    });
+    const history = renderApp("/");
+    expect(
+      await screen.findByRole("heading", { name: "Change password" }),
+    ).toBeDefined();
+    expect(history.location.pathname).toBe("/password");
   });
 
   it("shows a plain message when the server fails", async () => {
@@ -215,7 +295,7 @@ describe("when something goes wrong", () => {
       await screen.findByText("There is no page at this address."),
     ).toBeDefined();
     await userEvent.click(
-      screen.getByRole("link", { name: "Go to the overview" }),
+      screen.getByRole("link", { name: "Go to Fathom's start page" }),
     );
     expect(await screen.findByText("Hello, Fathom")).toBeDefined();
     expect(history.location.pathname).toBe("/");

@@ -20,7 +20,7 @@ import { AccountsPage } from "./accounts-page.tsx";
 import { ChangePassword } from "./change-password.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
-import { Layout } from "./layout.tsx";
+import { firstPage, Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
@@ -64,9 +64,19 @@ const signedInRoute = createRoute({
   },
 });
 
+// The Overview, for those who may see the plan. Anyone else is sent to the first page their roles
+// let them open, or, with none, to their own account's page.
 const homeRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/",
+  beforeLoad: ({ context }) => {
+    if (context.permissions.includes("plan:view")) return;
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
+    throw redirect({
+      to: firstPage(context.permissions) ?? "/password",
+      replace: true,
+    });
+  },
   component: Home,
 });
 

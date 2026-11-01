@@ -78,6 +78,7 @@ Goals the owner has added that are not yet placed in a stage:
 
 - **Pinned views:** A saved view kept visible as its own table, alongside the table's own view, until it is unpinned. Until then, pinning a view means applying it, as the [Decisions Log](decisions.md) records.
 - **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed. Counts work on any column, but sums and other totals of amounts need the number and currency column types under Your Own Fields and Tables.
+- **Help:** A help page, tooltips, or both, explaining Fathom's pages and terms where they are used.
 - **Renaming terms:** An organization renames Fathom's terms to its own, such as Feature to Epic, or Cycle to Program Increment.
 - **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.
 

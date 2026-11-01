@@ -4,6 +4,7 @@
 // the current page and pages still to come, how it collapses to a rail of icons, where the top bar
 // says the user is, and how the sidebar opens and closes on narrow screens.
 
+import { permissionSchema } from "@fathom/shared";
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -14,12 +15,14 @@ import {
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
+import { firstPage } from "./layout.tsx";
 
+// An administrator who also sees the plan, as through the Viewer role.
 const administrator = () =>
   Response.json({
     ...fictionalUser,
-    roles: ["administrator"],
-    permissions: ["accounts:manage", "history:view"],
+    roles: ["viewer", "administrator"],
+    permissions: ["plan:view", "accounts:manage", "history:view"],
   });
 
 const sidebar = () => screen.getByRole("navigation", { name: "Sections" });
@@ -28,7 +31,66 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("the first page a user may open", () => {
+  it("is never the Overview, so someone sent there from it cannot be sent back", () => {
+    expect(firstPage(permissionSchema.options)).toBe("/people");
+    expect(firstPage(["plan:view"])).toBeUndefined();
+  });
+});
+
 describe("the sidebar", () => {
+  it("shows Capacity, still to come, only to those who may see allocations", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["plan:view", "allocations:view"],
+        }),
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+    expect(
+      within(sidebar()).getByText("Capacity").parentElement?.textContent,
+    ).toBe("Capacity, Later");
+  });
+
+  it("leaves Capacity out for those who may not see allocations", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+    expect(within(sidebar()).queryByText("Capacity")).toBeNull();
+  });
+
+  it("shows no plan or people pages, current or to come, to those who may not see them", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          roles: ["administrator"],
+          permissions: ["accounts:manage", "history:view"],
+        }),
+      "GET /api/accounts": () => Response.json({ accounts: [] }),
+    });
+    renderApp("/accounts");
+    await screen.findByRole("heading", { name: "Accounts" });
+    for (const name of [
+      "Plan",
+      "Overview",
+      "Projects",
+      "Releases",
+      "People",
+      "Capacity",
+      "Lists",
+    ]) {
+      expect(within(sidebar()).queryByText(name)).toBeNull();
+    }
+    expect(within(sidebar()).getByText("Administration")).toBeDefined();
+  });
+
   it("shows administration only to those who may use it", async () => {
     serverAnswers({
       "GET /api/session": signedIn,

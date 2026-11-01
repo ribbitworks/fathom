@@ -26,7 +26,7 @@ The rest follow from them:
 
 ## Layout
 
-- **Frame:** A deep-water sidebar on the left, the same in both modes, groups pages into sections. Pages still to come are shown, marked "Later", so people can see what Fathom will offer. A top bar names where the user is and holds their account menu.
+- **Frame:** A deep-water sidebar on the left, the same in both modes, groups pages into sections. The sidebar shows only the pages the user's roles allow, including pages still to come, marked "Later", so people can see what Fathom will offer them. Fathom opens on the Overview, or, for a user who may not see the plan, on the first page their roles allow, or their own account's page if there is none. A top bar names where the user is and holds their account menu.
 - **Collapsed sidebar:** The sidebar collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
 - **Narrow screens:** The sidebar opens from a menu button, and closes when the user moves to another page.
 - **Pages:** Each page starts with a heading and the page's main action on the right. Content sits in bordered panels on a canvas a shade darker than them.

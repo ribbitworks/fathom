@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The frame around every page for a signed-in user: a sidebar of Fathom's sections, showing only
-// the pages the user's roles allow and marking sections still to come, and a top bar saying where
-// they are, with their own account's menu for changing their password and signing out. The sidebar
-// collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
-// On narrow screens the sidebar opens from a menu button instead.
+// the pages, current and still to come, that the user's roles allow, marking those still to come,
+// and a top bar saying where they are, with their own account's menu for changing their password
+// and signing out. The sidebar collapses to a rail of icons, each naming its page on hover or focus,
+// and remembers the choice. On narrow screens the sidebar opens from a menu button instead.
 
 import type { Permission } from "@fathom/shared";
 import {
@@ -64,9 +64,14 @@ const sections: { label: string; items: Item[] }[] = [
   {
     label: "Plan",
     items: [
-      { label: "Overview", icon: "overview", to: "/" },
-      { label: "Projects", icon: "projects" },
-      { label: "Releases", icon: "releases" },
+      {
+        label: "Overview",
+        icon: "overview",
+        to: "/",
+        permission: "plan:view",
+      },
+      { label: "Projects", icon: "projects", permission: "plan:view" },
+      { label: "Releases", icon: "releases", permission: "plan:view" },
     ],
   },
   {
@@ -78,7 +83,11 @@ const sections: { label: string; items: Item[] }[] = [
         to: "/people",
         permission: "people:view",
       },
-      { label: "Capacity", icon: "capacity" },
+      {
+        label: "Capacity",
+        icon: "capacity",
+        permission: "allocations:view",
+      },
       {
         label: "Lists",
         icon: "lists",
@@ -106,6 +115,22 @@ const sections: { label: string; items: Item[] }[] = [
     ],
   },
 ];
+
+// The first page in the sidebar, other than the Overview, that the user's roles let them open, if
+// any: where someone who may not see the Overview starts. Never the Overview, so sending them there
+// cannot loop back.
+export function firstPage(
+  permissions: readonly Permission[],
+): Page | undefined {
+  return sections
+    .flatMap(({ items }) => items)
+    .find(
+      ({ to, permission }) =>
+        to !== undefined &&
+        to !== "/" &&
+        (permission === undefined || permissions.includes(permission)),
+    )?.to;
+}
 
 // Where the user is, as the top bar names it: the sidebar's section and page, or their own account.
 const places = new Map<string, [string, string]>([

@@ -10,6 +10,14 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Users changing their own password:** Not yet recorded in the access history. Only changes administrators make to accounts are. Deferred by the owner while the access history was first built.
 - **Sign-ins, sign-outs, and failed sign-ins:** Not recorded in the access history. The server's request log already records each sign-in attempt with its time and network address, and active sessions are kept in the database. Deferred by the owner; worth revisiting if HR or IT asks for them.
 
+## Roles
+
+The owner raised these while trying the development accounts, to be settled together in a review of the roles' defaults:
+
+- **Product Managers and the People table:** Through the Viewer role, Product Managers see every person's General details, such as site and level, which they may not need. One option is a separate permission for the People table, held by managers, leads, and the Engineering Director.
+- **Executives and the Lists page:** Leadership can view planning configuration, including every list, which an Executive does not need.
+- **A Workforce Administrator apart from the Engineering Director:** The Engineering Director holds the Workforce Administrator role, but would not maintain employee details day to day. A separate persona, with its own development account, may hold it instead.
+
 ## Account Administration
 
 - **Two administrators changing the same account at once:** Two role changes at the same moment can leave a combination of both sets of roles, and two accounts created with the same email address at the same moment can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.
@@ -27,6 +35,10 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 
 - **Column widths:** Each column's width comes from its kind alone, so editing never moves the table, but columns often fit their contents poorly. The owner asked for widths that fit what columns hold, still without moving the table while editing: for a column drawing on a list, from its longest choice, and for the others, from their contents or their longest allowed value.
 - **Pasting several choices:** Pasting into a column that takes several choices reads each cell as one choice name. How several are pasted into one cell was left for later by the owner.
+
+## Tests
+
+- **A test that depends on timing:** On the Lists page, "offers Move to top in the choice's menu" once failed to find the opened menu while the full check ran everything at once, and passed when run again. Tests that wait on menus should wait for them to open, rather than assume they have.
 
 ## Dependencies
 
