@@ -64,11 +64,12 @@ const paths = {
     </>
   ),
   close: <path d="M4 4l8 8M12 4l-8 8" />,
-  help: (
+  rolesHelp: <path d="M8 2l5 2v4c0 3-2.2 5-5 6-2.8-1-5-3-5-6V4z" />,
+  draftsHelp: (
     <>
-      <circle cx="8" cy="8" r="6" />
-      <path d="M6.3 6.2a1.8 1.8 0 0 1 3.5.6c0 1.2-1.8 1.5-1.8 2.6" />
-      <circle cx="8" cy="11.4" r=".5" />
+      <path d="M4 2.5h5l3 3v8H4z" />
+      <path d="M6.6 7.4a1.4 1.4 0 0 1 2.8.3c0 .9-1.4 1.1-1.4 1.9" />
+      <circle cx="8" cy="11.3" r=".4" />
     </>
   ),
   more: (

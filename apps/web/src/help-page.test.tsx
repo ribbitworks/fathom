@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for Help's Roles page, with the server's responses simulated: every signed-in user reaches it
-// from the sidebar, whatever their roles, and it says what each role lets a user do, marking the
-// roles the user holds, and what each sensitivity covers.
+// Tests for Help's pages, with the server's responses simulated: every signed-in user reaches them
+// from the sidebar, whatever their roles. The Roles page says what each role lets a user do, marking
+// the roles the user holds, and what each sensitivity covers; the Drafts page says what each mark
+// beside a person with a draft means, and what happens to a draft.
 
 import { roleSchema } from "@fathom/shared";
 import { screen, within } from "@testing-library/react";
@@ -20,9 +21,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-// The rows of the page's tables, each as the text of its cells: its roles, then its sensitivities.
-async function tables() {
-  await screen.findByRole("heading", { name: "Roles", level: 1 });
+// The rows of a Help page's tables, each as the text of its cells.
+async function tables(title = "Roles") {
+  await screen.findByRole("heading", { name: title, level: 1 });
   return screen.getAllByRole("table").map((table) =>
     within(table)
       .getAllByRole("row")
@@ -77,6 +78,55 @@ describe("Help's Roles page", () => {
       "General",
       "Restricted",
       "Confidential",
+    ]);
+  });
+});
+
+describe("Help's Drafts page", () => {
+  it("is reached from the sidebar's Help section, apart from the People section's Drafts page", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          roles: ["viewer"],
+          permissions: ["people:view"],
+        }),
+    });
+    renderApp("/help/roles");
+    const help = await screen.findByRole("group", { name: "Help" });
+    expect(
+      within(screen.getByRole("group", { name: "People" })).getByRole("link", {
+        name: "Drafts",
+      }),
+    ).toHaveProperty("pathname", "/drafts");
+    await userEvent.click(within(help).getByRole("link", { name: "Drafts" }));
+    expect(
+      await screen.findByRole("heading", { name: "Drafts", level: 1 }),
+    ).toBeDefined();
+  });
+
+  it("says what each mark means and what happens to a draft", async () => {
+    serverAnswers({
+      "GET /api/session": () => Response.json(fictionalUser),
+    });
+    renderApp("/help/drafts");
+    const [, lifecycle] = await tables("Drafts");
+    const names = [
+      "Draft",
+      "Draft: added",
+      "Draft: removed",
+      "Rejected",
+      "Live",
+    ];
+    // The marks come first; "Rejected" also names a row of the second table.
+    expect(screen.getAllByRole("rowheader").slice(0, names.length)).toEqual(
+      names.map((name) => screen.getAllByRole("rowheader", { name })[0]),
+    );
+    expect(lifecycle?.map(([state]) => state)).toEqual([
+      "Saved",
+      "Approved",
+      "Rejected",
+      "Discarded",
     ]);
   });
 });

@@ -41,6 +41,7 @@ import { PageHeader } from "./page-header.tsx";
 import { type DetailKey, draftWords } from "./people-grid.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import classes from "./pages.module.css";
+import { StatusMark } from "./status-mark.tsx";
 
 interface Drafted {
   person: Person;
@@ -168,9 +169,8 @@ function DraftEntry({
         )}
       </Text>
       {words.rejected !== "" && (
-        <Text fz="xs" fw={500} className={classes.draftRejected}>
-          <span className={classes.statusDot} aria-hidden="true" />{" "}
-          {words.rejected}
+        <Text className={classes.markGap}>
+          <StatusMark tone="rejected">{words.rejected}</StatusMark>
         </Text>
       )}
     </EntryRow>

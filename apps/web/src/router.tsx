@@ -18,7 +18,7 @@ import {
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
 import { ChangePassword } from "./change-password.tsx";
-import { RolesHelpPage } from "./help-page.tsx";
+import { DraftsHelpPage, RolesHelpPage } from "./help-page.tsx";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { DraftsPage } from "./drafts-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
@@ -214,6 +214,13 @@ const helpRoute = createRoute({
   },
 });
 
+// Open to every signed-in user, whatever their roles.
+const draftsHelpRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/help/drafts",
+  component: DraftsHelpPage,
+});
+
 const signInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sign-in",
@@ -237,6 +244,7 @@ const routeTree = rootRoute.addChildren([
     draftsRoute,
     changePasswordRoute,
     helpRoute,
+    draftsHelpRoute,
   ]),
   signInRoute,
 ]);

@@ -50,7 +50,8 @@ type Page =
   | "/lists/{-$listId}"
   | "/people"
   | "/password"
-  | "/help/roles";
+  | "/help/roles"
+  | "/help/drafts";
 
 interface Item {
   label: string;
@@ -136,7 +137,10 @@ const sections: { label: string; items: Item[] }[] = [
   },
   {
     label: "Help",
-    items: [{ label: "Roles", icon: "help", to: "/help/roles" }],
+    items: [
+      { label: "Roles", icon: "rolesHelp", to: "/help/roles" },
+      { label: "Drafts", icon: "draftsHelp", to: "/help/drafts" },
+    ],
   },
 ];
 
@@ -213,11 +217,20 @@ function Sidebar({
             key={section.label}
             gap={2}
             className={rail ? classes.railSection : undefined}
+            role="group"
+            aria-labelledby={`${sidebarId}-${section.label}`}
           >
             {rail ? (
-              <VisuallyHidden>{section.label}</VisuallyHidden>
+              <VisuallyHidden id={`${sidebarId}-${section.label}`}>
+                {section.label}
+              </VisuallyHidden>
             ) : (
-              <Text className={classes.section}>{section.label}</Text>
+              <Text
+                id={`${sidebarId}-${section.label}`}
+                className={classes.section}
+              >
+                {section.label}
+              </Text>
             )}
             {items.map((item) =>
               item.to === undefined ? (

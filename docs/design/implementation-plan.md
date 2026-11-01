@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-01
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -84,7 +84,7 @@ A page showing the change history the lists step built: who changed what, and wh
 
 Plan approval, built on lists and people first, as the owner intends approval to cover them too, so the pattern every later table follows is set once: each changed row is a draft, seen with the live data, until an Approver approves or rejects it, as set out in the [Decisions Log](../product/decisions.md#planning) and [ADR 0007](../adr/0007-draft-rows.md). The seed data gains drafts made by the personas who edit, covering each case: a row added, changed, and removed, a rejected draft with its reason, and a draft that uses another, such as a person given a choice that is itself a draft.
 
-It is built in two steps. The first gives people drafts: shown in place on the People table, approved and rejected there and on a Drafts page, undone like other changes, and recorded in the change history, with seed drafts of people added, changed, and removed, and rejected. The second gives drafts to lists, choices, columns, and their order, with drafts that use other drafts approved together, and adds the seed draft that uses another.
+It is built in two steps. The first gives people drafts: shown in place on the People table, approved and rejected there and on a Drafts page, explained on Help's Drafts page, undone like other changes, and recorded in the change history, with seed drafts of people added, changed, and removed, and rejected. The second gives drafts to lists, choices, columns, and their order, with drafts that use other drafts approved together, which Help's Drafts page then explains, and adds the seed draft that uses another.
 
 ### Teams and Reporting Lines
 

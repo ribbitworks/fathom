@@ -74,6 +74,7 @@ import {
   type View,
 } from "./table-view.ts";
 import classes from "./pages.module.css";
+import { StatusMark } from "./status-mark.tsx";
 
 export interface PeopleActions {
   // Adds people, all saved together, showing each at once under the identifier given until saved,
@@ -240,13 +241,12 @@ export function draftWords(draft: PersonDraft): string {
 function DraftMark({ draft }: { draft: PersonDraft }) {
   const rejected = draft.state === "rejected";
   return (
-    <span className={rejected ? classes.draftRejected : classes.draftMark}>
-      <span className={classes.statusDot} aria-hidden="true" />{" "}
+    <StatusMark tone={rejected ? "rejected" : "draft"} spaced>
       {rejected ? "Rejected" : draftWords(draft)}
       {rejected && draft.reason !== undefined && (
         <VisuallyHidden>: {draft.reason}</VisuallyHidden>
       )}
-    </span>
+    </StatusMark>
   );
 }
 
@@ -1341,13 +1341,9 @@ export function PeopleGrid({
                               : column.value(row.person),
                           )}
                           {columnIndex === 0 && (
-                            <span className={classes.liveMark}>
-                              <span
-                                className={classes.statusDot}
-                                aria-hidden="true"
-                              />{" "}
+                            <StatusMark tone="live" spaced>
                               Live
-                            </span>
+                            </StatusMark>
                           )}
                         </td>
                       ))}

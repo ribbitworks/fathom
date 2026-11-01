@@ -82,7 +82,7 @@ Goals the owner has added that are not yet placed in a stage:
 - **Frozen header row:** A table's header row stays in view while its rows scroll.
 - **Row timestamps:** Every database row records when it was created and last updated.
 - **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed. Counts work on any column, but sums and other totals of amounts need the number and currency column types under Your Own Fields and Tables.
-- **Help:** More help, such as for Fathom's pages and terms, beyond Help's Roles page.
+- **Help:** More help, such as for Fathom's pages and terms, beyond Help's Roles and Drafts pages.
 - **Renaming terms:** An organization renames Fathom's terms to its own, such as Feature to Epic, or Cycle to Program Increment.
 - **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.
 
