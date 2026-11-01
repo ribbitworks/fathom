@@ -227,9 +227,11 @@ const signInRoute = createRoute({
   // A redirect that is not text, as a hand-edited address might have, is ignored.
   validateSearch: z.object({
     redirect: z.string().optional().catch(undefined),
+    idle: z.boolean().optional().catch(undefined),
   }),
   component: function SignInPage() {
-    return <SignIn redirect={signInRoute.useSearch().redirect} />;
+    const { redirect, idle } = signInRoute.useSearch();
+    return <SignIn redirect={redirect} idle={idle === true} />;
   },
 });
 

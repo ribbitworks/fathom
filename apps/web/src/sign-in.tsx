@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The sign-in page: an email address and password, checked with the same schema as the server, and
-// plain messages when they are refused or there have been too many attempts. After signing in, the
-// user goes to the page they were trying to reach.
+// plain messages when they are refused, when there have been too many attempts, or when the user
+// was signed out after a time without use. After signing in, the user goes to the page they were
+// trying to reach.
 
-import { type SignInRequest, signInRequestSchema } from "@fathom/shared";
+import {
+  type SignInRequest,
+  sessionIdleMinutes,
+  signInRequestSchema,
+} from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Alert,
@@ -32,7 +37,15 @@ const messages = new Map<Problem, string>([
   ["failed", "Fathom could not reach its server. Try again in a moment."],
 ]);
 
-export function SignIn({ redirect }: { redirect: string | undefined }) {
+const idleMessageId = "signed-out-idle";
+
+export function SignIn({
+  redirect,
+  idle = false,
+}: {
+  redirect: string | undefined;
+  idle?: boolean;
+}) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [problem, setProblem] = useState<Problem>();
@@ -69,14 +82,22 @@ export function SignIn({ redirect }: { redirect: string | undefined }) {
         <Paper withBorder p="xl">
           <form
             noValidate
+            aria-describedby={idle && !problem ? idleMessageId : undefined}
             onSubmit={(event) => void form.handleSubmit(submit)(event)}
           >
             <Stack>
               <VisuallyHidden component="h1">Sign in</VisuallyHidden>
-              {problem && (
+              {problem ? (
                 <Alert color="red" role="alert">
                   {messages.get(problem)}
                 </Alert>
+              ) : (
+                idle && (
+                  <Alert id={idleMessageId} role="status">
+                    You were signed out after {sessionIdleMinutes} minutes
+                    without use.
+                  </Alert>
+                )
               )}
               <TextInput
                 label="Email address"

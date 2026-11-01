@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own
 
 ## Context
 
@@ -68,7 +68,7 @@ Better Auth settings that the security plan relies on:
 - **No public sign-up:** Accounts are created only by administrators.
 - **No session caching in cookies:** Role changes and account deactivation take effect immediately.
 - **Password resets by administrators:** No email is sent. Users change their own password by giving their current one, which signs out their other sessions.
-- **Sessions:** End after 30 minutes without use. A session's expiry is pushed back at most once a minute while it is in use, which writes to the database at most once a minute for each session in use, a small load at Fathom's [scale](../product/brief.md#constraints).
+- **Sessions:** End after 30 minutes without use. A session's expiry is pushed back at most once a minute while it is in use, which writes to the database at most once a minute for each session in use, a small load at Fathom's [scale](../product/brief.md#constraints). The browser signs out on its own once none of the user's Fathom tabs has had a key, click, touch, scroll, or mouse movement for 30 minutes, and while there is use it keeps the session alive on the server, telling it at most once a minute, so the server's session ends no more than about two minutes before the browser signs out; the sign-in page then says why, and brings the user back to the page they were on.
 - **Client addresses:** Sign-in limits use only the client address the server passes to Better Auth, never one a client sends, so they cannot be dodged.
 - **Telemetry off:** Set explicitly, although it is off by default.
 

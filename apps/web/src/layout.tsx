@@ -3,8 +3,9 @@
 // The frame around every page for a signed-in user: a sidebar of Fathom's sections, showing only
 // the pages, current and still to come, that the user's roles allow, marking those still to come,
 // and a top bar saying where they are, with their own account's menu for changing their password
-// and signing out. The sidebar collapses to a rail of icons, each naming its page on hover or focus,
-// and remembers the choice. On narrow screens the sidebar opens from a menu button instead.
+// and signing out, which also happens after a time without use. The sidebar collapses to a rail of
+// icons, each naming its page on hover or focus, and remembers the choice. On narrow screens the
+// sidebar opens from a menu button instead.
 
 import type { Permission } from "@fathom/shared";
 import {
@@ -27,11 +28,13 @@ import {
   Link,
   Outlet,
   useNavigate,
+  useRouter,
   useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
 import { Icon, type IconName } from "./icons.tsx";
+import { useSignOutWhenIdle } from "./idle.ts";
 import classes from "./layout.module.css";
 import { initials } from "./names.ts";
 import { type SignedInUser, sessionQuery, signOut } from "./session.ts";
@@ -285,6 +288,7 @@ export function Layout({
 }) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const router = useRouter();
   const pathname = useRouterState({
     select: (state) => state.location.pathname,
   });
@@ -305,16 +309,47 @@ export function Layout({
   // On narrow screens, the sidebar covers the page, so it closes once the user moves to another one.
   useEffect(close, [pathname, close]);
 
+  function leave() {
+    queryClient.clear();
+    queryClient.setQueryData(sessionQuery.queryKey, null);
+  }
+
   async function handleSignOut() {
     try {
       await signOut();
-      queryClient.clear();
-      queryClient.setQueryData(sessionQuery.queryKey, null);
+      leave();
       await navigate({ to: "/sign-in" });
     } catch {
       setFailed(true);
     }
   }
+
+  // Signed out after a time without use, the user comes back to this page after signing in again.
+  // If the server cannot be told, the session still ends there, since nothing keeps it alive.
+  useSignOutWhenIdle({
+    onIdle: () => {
+      const { href } = router.state.location;
+      void signOut()
+        .catch(() => undefined)
+        .then(async () => {
+          leave();
+          await navigate({
+            to: "/sign-in",
+            search: { redirect: href, idle: true },
+          });
+        });
+    },
+    // A session found to have ended sends the user to sign in too: by a password change, say, or by
+    // the server's own limit, which can come up to two minutes before this one.
+    keepAlive: () => {
+      void queryClient
+        .query(sessionQuery)
+        .then(async (session) => {
+          if (session === null) await router.invalidate();
+        })
+        .catch(() => undefined);
+    },
+  });
 
   return (
     <AppShell

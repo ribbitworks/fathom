@@ -14,7 +14,7 @@ import {
   users,
   verifications,
 } from "@fathom/db";
-import { passwordLength } from "@fathom/shared";
+import { passwordLength, sessionIdleMinutes } from "@fathom/shared";
 import { betterAuth } from "better-auth";
 import { eq } from "drizzle-orm";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -58,11 +58,11 @@ export function createAuth(
       minPasswordLength: passwordLength.minimum,
       maxPasswordLength: passwordLength.maximum,
     },
-    // A session ends after 30 minutes without use, and is never cached in a cookie. Its expiry is
+    // A session ends after a time without use, and is never cached in a cookie. Its expiry is
     // pushed back at most once a minute, so a session in use is not written to the database on
     // every request, and ends no more than a minute early.
     session: {
-      expiresIn: 30 * minute,
+      expiresIn: sessionIdleMinutes * minute,
       updateAge: minute,
       cookieCache: { enabled: false },
     },
