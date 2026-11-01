@@ -27,6 +27,12 @@ describe("filters in words", () => {
     expect(describeFilter(column("choice"), { empty: true })).toBe(
       "Level: Empty",
     );
+    expect(
+      describeFilter(
+        { ...column("choice"), emptyLabel: "No level" },
+        { any: ["a"], empty: true },
+      ),
+    ).toBe("Level: P1, No level");
   });
 
   it("give the dates between, from, or until, and no date", () => {

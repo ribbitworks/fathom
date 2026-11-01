@@ -5,7 +5,13 @@
 // not see from that reader; and undoing each change. Resource Planners stand for readers who see
 // people's General details and no more.
 
-import type { Choice, Field, List, SavedView } from "@fathom/shared";
+import {
+  type Choice,
+  type Field,
+  type List,
+  roleSchema,
+  type SavedView,
+} from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { startTestApp, type TestApp } from "./test-app.ts";
 
@@ -226,6 +232,40 @@ describe("saved views", () => {
     expect((await undo(manager.cookie, starting.changeSetId)).statusCode).toBe(
       403,
     );
+  });
+
+  it("may filter on drafts, which every reader may see, since each is sent only the drafts they may see", async () => {
+    const viewer = await test.signedIn(["resource-planner"]);
+    const { view } = (
+      await save(viewer.cookie, "Drafts waiting", {
+        filters: { draft: { any: ["waiting"], empty: true } },
+      })
+    ).json<Saved>();
+    expect(view.definition).toEqual({
+      filters: { draft: { any: ["waiting"], empty: true } },
+    });
+    expect(
+      (await test.historyOf(view.id)).every(({ tier }) => tier === "general"),
+    ).toBe(true);
+    // Every role that sees people sees the view, however little it sees of them.
+    let readers = 0;
+    for (const role of roleSchema.options) {
+      const { cookie } = await test.signedIn([role]);
+      const answer = await test.request(cookie, "GET", "/api/people");
+      if (answer.statusCode !== 200) continue;
+      readers += 1;
+      expect(
+        answer
+          .json<{ views: SavedView[] }>()
+          .views.find(({ id }) => id === view.id)?.definition,
+        role,
+      ).toEqual(view.definition);
+    }
+    expect(readers).toBeGreaterThan(1);
+    // Drafts are filtered on, but not sorted on.
+    expect(
+      (await save(viewer.cookie, "By draft", { sort: ["-draft"] })).json(),
+    ).toEqual({ error: "Choose only columns you can see" });
   });
 
   it("ignore columns deleted since they were saved", async () => {

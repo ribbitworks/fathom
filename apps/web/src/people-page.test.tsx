@@ -1710,6 +1710,80 @@ describe("searching, sorting, and filtering", () => {
     expect(screen.queryByText("Clear all")).toBeNull();
   });
 
+  it("filters by draft from the bar above the table, keeping the filter in the address", async () => {
+    const { history } = await openAt("/people", {
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              draft: draftOf({ action: "changed", changed: ["f1"] }),
+            },
+            blake,
+            {
+              ...blake,
+              id: "p3",
+              preferredName: "Casey Fictional",
+              employeeId: "E3",
+              draft: draftOf({ action: "deleted", state: "rejected" }),
+            },
+          ],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    const names = () =>
+      shownNames().map((name) => name.replace(/\s*(Draft|Rejected).*/, ""));
+    const button = screen.getByRole("button", { name: "Filter Draft" });
+    await userEvent.click(button);
+    const dialog = await screen.findByRole("dialog", { name: "Filter Draft" });
+    expect(
+      within(dialog)
+        .getAllByRole("checkbox")
+        .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
+    ).toEqual(["Waiting", "Rejected", "No draft"]);
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Waiting" }),
+    );
+    expect(names()).toEqual(["Avery Fictional"]);
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "No draft" }),
+    );
+    expect(names()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(button);
+    });
+    expect(screen.getByText("Draft: Waiting, No draft")).toBeDefined();
+    expect(address(history)).toContain(
+      'filters={"draft":{"any":["waiting"],"empty":true}}',
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Remove filter on Draft" }),
+    );
+    expect(names()).toEqual([
+      "Avery Fictional",
+      "Blake Fictional",
+      "Casey Fictional",
+    ]);
+    history.push('/people?filters={"draft":{"any":["rejected"]}}');
+    await waitFor(() => {
+      expect(names()).toEqual(["Casey Fictional"]);
+    });
+    expect(
+      screen.getByRole("button", { name: "Filter Draft, filtered" }),
+    ).toBeDefined();
+    // Drafts are filtered on, but neither searched, since their states are not shown in words, nor
+    // sorted on, even from a hand-made address.
+    history.push('/people?search=waiting&sort=["draft"]');
+    await waitFor(() => {
+      expect(screen.getByRole("status").textContent).toBe("0 of 3");
+    });
+    expect(screen.queryByText("Draft ↑")).toBeNull();
+    expect(screen.getByRole("button", { name: "Filter Draft" })).toBeDefined();
+  });
+
   it("narrows a long list of choices by typing", async () => {
     await openAt("/people", {
       "GET /api/lists": () => Response.json({ lists: [manySites, roles] }),

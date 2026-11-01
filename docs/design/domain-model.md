@@ -93,7 +93,7 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 
 - **Field definition:** A custom field on a built-in or custom table, with a name, field type, sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. A "Choice from a list" field, the first built, names its list, takes its tier from the list's visibility, and says whether it takes one choice or several.
 - **Column order:** The order of a table's columns, built-in and custom alike, the same for every user.
-- **Saved view:** A table's search, filters, and sort, saved under a name unique within the table, with the user who saved it. Its sensitivity is that of the most sensitive column it filters or sorts on.
+- **Saved view:** A table's search, filters, and sort, saved under a name unique within the table, with the user who saved it. Its sensitivity is that of the most sensitive column it filters or sorts on; a People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.

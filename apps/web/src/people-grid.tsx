@@ -25,7 +25,11 @@ import type {
   PersonDraft,
   PersonRequest,
 } from "@fathom/shared";
-import { builtInColumnNames, personLengths } from "@fathom/shared";
+import {
+  builtInColumnNames,
+  draftFilterKey,
+  personLengths,
+} from "@fathom/shared";
 import {
   ActionIcon,
   Button,
@@ -398,6 +402,21 @@ export function droppedAfter(
   return others[at - 1] ?? null;
 }
 
+// What the People table is filtered by besides its columns: whether each person has a draft,
+// waiting or rejected.
+export const draftColumn: TableColumn<Person> = {
+  key: draftFilterKey,
+  label: "Draft",
+  kind: "choice",
+  choices: [
+    { id: "waiting", label: "Waiting" },
+    { id: "rejected", label: "Rejected" },
+  ],
+  multiple: false,
+  emptyLabel: "No draft",
+  value: (person) => (person.draft === undefined ? [] : [person.draft.state]),
+};
+
 export function PeopleGrid({
   people,
   fields,
@@ -433,13 +452,13 @@ export function PeopleGrid({
   saved?: SavedViews;
 }) {
   const columns = columnsFor(fields, lists, order, showDates);
-  const view = knownView(asked, columns);
+  const view = knownView(asked, columns, [draftColumn]);
   // The people this user has added since the page opened, which stay shown whatever the view.
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
   const shownPeople = useSteadyOrder(
     people,
     view,
-    (rows) => applyView(rows, columns, view),
+    (rows) => applyView(rows, columns, view, [draftColumn]),
     (person) => person.id,
     added,
   );
@@ -1045,6 +1064,7 @@ export function PeopleGrid({
         one="person"
         noun="people"
         columns={columns}
+        filterOnly={[draftColumn]}
         view={view}
         onView={onView}
         shown={shownPeople.length}

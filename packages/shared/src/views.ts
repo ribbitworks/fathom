@@ -87,7 +87,11 @@ const strictDefinitionSchema = z.object({
   sort: z.array(sortLevel).max(levelsLimit).optional(),
 });
 
-// The keys of the columns a view filters or sorts on.
+// The key of the People table's filter on drafts, which filters people by whether they have a
+// draft, waiting or rejected, but is not a column, so is neither searched nor sorted on.
+export const draftFilterKey = "draft";
+
+// The keys of the columns a view filters or sorts on, and of any filter that is not a column.
 export function viewColumnKeys(definition: ViewDefinition): string[] {
   return [
     ...new Set([

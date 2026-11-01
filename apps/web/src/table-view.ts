@@ -36,6 +36,8 @@ export interface TableColumn<Row> {
   // For choice columns: the choices in their list's order, and whether a cell may hold several.
   choices: readonly ColumnChoice[];
   multiple: boolean;
+  // For choice columns: what a filter calls an empty value, when not "Empty".
+  emptyLabel?: string;
   value: (row: Row) => CellValue;
 }
 
@@ -173,17 +175,23 @@ export function narrows(view: View): boolean {
   );
 }
 
-// The view with only the filters and sorts on columns the table has, leaving out those on columns the
-// user may not see, such as in a link from someone who may.
+// The view with only the filters and sorts on columns the table has, and the filters it offers that
+// are not columns, leaving out those on columns the user may not see, such as in a link from someone
+// who may.
 export function knownView(
   view: View,
   columns: readonly { key: string }[],
+  filterOnly: readonly { key: string }[] = [],
 ): View {
   const known = new Set(columns.map((column) => column.key));
+  const filtered = new Set([
+    ...known,
+    ...filterOnly.map((column) => column.key),
+  ]);
   return {
     search: view.search,
     filters: Object.fromEntries(
-      Object.entries(view.filters).filter(([key]) => known.has(key)),
+      Object.entries(view.filters).filter(([key]) => filtered.has(key)),
     ),
     sort: view.sort.filter((level) => known.has(level.key)),
   };
@@ -292,17 +300,25 @@ function matchesFilter(
 
 // The rows the view shows, in its order: those matching every filter and every word searched for,
 // sorted by each level in turn and otherwise left in the order given. Filters and sorts on columns
-// the table does not have, such as ones the user may not see, are left out.
+// the table does not have, such as ones the user may not see, are left out. Filters that are not
+// columns filter the rows too, but are neither searched nor sorted on.
 export function applyView<Row>(
   rows: readonly Row[],
   columns: readonly TableColumn<Row>[],
   view: View,
+  filterOnly: readonly TableColumn<Row>[] = [],
 ): Row[] {
   const byKey = new Map(
     columns.map((column) => [column.key, column as TableColumn<never>]),
   );
+  const filterable = new Map([
+    ...byKey,
+    ...filterOnly.map(
+      (column) => [column.key, column as TableColumn<never>] as const,
+    ),
+  ]);
   const filters = Object.entries(view.filters).flatMap(([key, filter]) => {
-    const column = byKey.get(key);
+    const column = filterable.get(key);
     return column && isActive(filter) ? [{ column, filter }] : [];
   });
   const words = searchWords(view.search);

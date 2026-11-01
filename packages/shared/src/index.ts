@@ -105,6 +105,7 @@ export {
   savedViewRequestSchema,
   savedViewSchema,
   type ViewDefinition,
+  draftFilterKey,
   viewColumnKeys,
   viewDefinitionSchema,
   viewLengths,

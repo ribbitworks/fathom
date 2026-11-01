@@ -13,6 +13,7 @@ import {
   type SavedViewChange,
   type SavedViewRequest,
   type Tier,
+  draftFilterKey,
   type ViewDefinition,
   viewColumnKeys,
   viewDefinitionSchema,
@@ -97,8 +98,8 @@ function withoutDeleted(
   tiers: ReadonlyMap<string, Tier>,
   definition: ViewDefinition,
 ): ViewDefinition {
-  const filters = Object.entries(definition.filters ?? {}).filter(([key]) =>
-    tiers.has(key),
+  const filters = Object.entries(definition.filters ?? {}).filter(
+    ([key]) => tiers.has(key) || key === draftFilterKey,
   );
   const sort = (definition.sort ?? []).filter((level) =>
     tiers.has(level.replace(/^-/, "")),
@@ -140,14 +141,21 @@ export async function readViews(
 }
 
 // Refuses a view that filters or sorts on a column the actor may not see, or that the table does not
-// have, and returns the most sensitive tier of its columns.
+// have, and returns the most sensitive tier of its columns. A view may filter on drafts too, which
+// is General, since each user is sent only the drafts they may see, but not sort on them.
 function requireSeen(
   actor: Actor,
   tiers: ReadonlyMap<string, Tier>,
   definition: ViewDefinition,
 ): Tier {
-  const keys = viewColumnKeys(definition);
-  if (keys.some((key) => !tiers.has(key)) || !sees(actor, tiers, definition)) {
+  const unknown = (key: string) => !tiers.has(key);
+  const filters = Object.keys(definition.filters ?? {});
+  const sort = (definition.sort ?? []).map((level) => level.replace(/^-/, ""));
+  if (
+    filters.some((key) => unknown(key) && key !== draftFilterKey) ||
+    sort.some(unknown) ||
+    !sees(actor, tiers, definition)
+  ) {
     throw new BadRequestError(hiddenColumns);
   }
   return mostSensitive(usedTiers(tiers, definition));

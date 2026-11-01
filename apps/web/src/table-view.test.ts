@@ -476,3 +476,42 @@ describe("columns the user may not see", () => {
     );
   });
 });
+
+describe("filters that are not columns", () => {
+  // Whether a row's name is long, standing for what a table filters by but does not show.
+  const long: TableColumn<Row> = {
+    key: "long",
+    label: "Long",
+    kind: "choice",
+    choices: [{ id: "yes", label: "Yes" }],
+    multiple: false,
+    value: (row) => (row.name.length > 3 ? ["yes"] : []),
+  };
+
+  it("filter the rows, but are neither searched nor sorted on", () => {
+    const shown = (changes: Partial<View>) =>
+      ids(applyView(rows, columns, view(changes), [long]));
+    expect(shown({ filters: { long: { any: ["yes"] } } })).toEqual(["a", "b"]);
+    expect(shown({ filters: { long: { empty: true } } })).toEqual(["c", "d"]);
+    expect(shown({ search: "yes" })).toEqual([]);
+    expect(shown({ sort: [{ key: "long", descending: true }] })).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
+  });
+
+  it("are kept in the view, but not as a sort", () => {
+    expect(
+      knownView(
+        view({
+          filters: { long: { any: ["yes"] } },
+          sort: [{ key: "long", descending: false }],
+        }),
+        columns,
+        [long],
+      ),
+    ).toEqual(view({ filters: { long: { any: ["yes"] } } }));
+  });
+});

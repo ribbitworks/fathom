@@ -49,7 +49,7 @@ export type ChangeView = (view: View, replace?: boolean) => void;
 // A column as the controls need it, whatever its rows.
 type AnyColumn = Pick<
   TableColumn<never>,
-  "key" | "label" | "kind" | "choices" | "multiple"
+  "key" | "label" | "kind" | "choices" | "multiple" | "emptyLabel"
 >;
 
 // Each kind's sorts, ascending then descending.
@@ -116,7 +116,7 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
           .filter((choice) => (filter.any ?? []).includes(choice.id))
           .map((choice) => choice.label),
       );
-      if (filter.empty) parts.push("Empty");
+      if (filter.empty) parts.push(column.emptyLabel ?? "Empty");
       return `${column.label}: ${parts.join(", ")}`;
     case "date": {
       const { from, to } = filter;
@@ -273,18 +273,20 @@ const byName = (first: SavedView, second: SavedView) =>
 export function ViewsMenu({
   saved: { views, applied, onApply, onName, onUpdate, onDelete },
   columns,
+  filterOnly = [],
   view,
   onClear,
 }: {
   saved: SavedViews;
   columns: readonly AnyColumn[];
+  filterOnly?: readonly AnyColumn[];
   view: View;
   // Clears the view, leaving the saved view it started from.
   onClear: () => void;
 }) {
   // Each saved view as the table can show it, without columns deleted since.
   const shownAs = (saved: SavedView) =>
-    knownView(viewFrom(saved.definition), columns);
+    knownView(viewFrom(saved.definition), columns, filterOnly);
   const current = views.find((saved) => saved.id === applied);
   const changed = current !== undefined && !sameView(shownAs(current), view);
   const empty = sameView(view, emptyView);
@@ -368,12 +370,14 @@ export function ViewsMenu({
   );
 }
 
-// The bar above a table: its search, its saved views, a pill for each level of the sort and each filter, how many rows there are, or how many
-// are shown while some are hidden, and Clear all.
+// The bar above a table: its search, its saved views, a button for each filter the table's headers
+// do not offer, a pill for each level of the sort and each filter, how many rows there are, or how
+// many are shown while some are hidden, and Clear all.
 export function ViewBar({
   one,
   noun,
-  columns,
+  columns: shownColumns,
+  filterOnly = [],
   view,
   onView,
   shown,
@@ -385,6 +389,8 @@ export function ViewBar({
   one: string;
   noun: string;
   columns: readonly AnyColumn[];
+  // What the rows are filtered by that is not a column of the table, each opened from its button.
+  filterOnly?: readonly AnyColumn[];
   view: View;
   onView: ChangeView;
   shown: number;
@@ -393,9 +399,10 @@ export function ViewBar({
   onLeave: () => void;
   saved?: SavedViews | undefined;
 }) {
+  const columns = [...shownColumns, ...filterOnly];
   // Each level of the sort, in order, with its column; a column the table does not have is left out.
   const sorts = view.sort.flatMap(({ key, descending }) =>
-    columns
+    shownColumns
       .filter((column) => column.key === key)
       .map((column) => ({ column, descending })),
   );
@@ -417,13 +424,22 @@ export function ViewBar({
       {saved && (
         <ViewsMenu
           saved={saved}
-          columns={columns}
+          columns={shownColumns}
+          filterOnly={filterOnly}
           view={view}
           onClear={() => {
             onView(emptyView);
           }}
         />
       )}
+      {filterOnly.map((column) => (
+        <BarFilter
+          key={column.key}
+          column={column}
+          view={view}
+          onView={onView}
+        />
+      ))}
       {sorts.map(({ column, descending }) => (
         <Pill
           key={`sort-${column.key}`}
@@ -483,6 +499,53 @@ export function ViewBar({
         </Button>
       )}
     </Group>
+  );
+}
+
+// A filter the table's headers do not offer, opened from its button in the bar above the table,
+// which focus goes back to when it closes.
+function BarFilter({
+  column,
+  view,
+  onView,
+}: {
+  column: AnyColumn;
+  view: View;
+  onView: ChangeView;
+}) {
+  const [opened, setOpened] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
+  const filtered = isActive(view.filters[column.key]);
+  return (
+    <FilterPopover
+      column={column}
+      view={view}
+      onView={onView}
+      opened={opened}
+      onClose={() => {
+        setOpened(false);
+        button.current?.focus();
+      }}
+    >
+      <Button
+        ref={button}
+        variant="default"
+        leftSection={<Icon name="filter" />}
+        aria-haspopup="dialog"
+        aria-expanded={opened}
+        aria-label={`Filter ${column.label}${filtered ? ", filtered" : ""}`}
+        onClick={() => {
+          setOpened((open) => !open);
+        }}
+      >
+        {column.label}
+        {filtered && (
+          <span aria-hidden="true" className={classes.changedMark}>
+            •
+          </span>
+        )}
+      </Button>
+    </FilterPopover>
   );
 }
 
@@ -647,7 +710,7 @@ function FilterForm({
           column={column}
           filter={filter}
           onChange={onChange}
-          empty={empty("Empty")}
+          empty={empty(column.emptyLabel ?? "Empty")}
         />
       );
     case "date":
