@@ -1,16 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the People table on its own: how its columns are put in order, where a dragged column
-// goes, and adding people for a user who does not see start and end dates. The page around it is
-// tested in people-page.test.tsx.
+// goes, how wide each column is, and adding people for a user who does not see start and end
+// dates. The page around it is tested in people-page.test.tsx.
 
-import type { Field, List } from "@fathom/shared";
+import type { Field, List, Person } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { act, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { columnsFor, droppedAfter, PeopleGrid } from "./people-grid.tsx";
-import { emptyView } from "./table-view.ts";
+import {
+  columnsFor,
+  columnWidth,
+  droppedAfter,
+  PeopleGrid,
+} from "./people-grid.tsx";
+import { emptyView, formatDay } from "./table-view.ts";
 
 const site: Field = {
   id: "f1",
@@ -53,6 +58,112 @@ describe("where a dragged column goes", () => {
     ["x", "a", undefined],
   ])("%s dropped on %s follows %s", (moved, onto, after) => {
     expect(droppedAfter(keys, moved, onto)).toBe(after);
+  });
+});
+
+const noop = () => undefined;
+const actions = {
+  add: noop,
+  update: noop,
+  remove: noop,
+  discard: noop,
+  resubmit: noop,
+  decide: noop,
+  moveColumn: noop,
+  editColumn: noop,
+};
+
+describe("how wide each column is", () => {
+  const person = (id: string, preferredName: string): Person => ({
+    id,
+    preferredName,
+    employeeId: "E1",
+    startDate: null,
+    endDate: null,
+    values: {},
+  });
+  const grid = (people: Person[]) => (
+    <MantineProvider>
+      <PeopleGrid
+        people={people}
+        fields={[site]}
+        order={[]}
+        lists={[sites]}
+        canEdit={false}
+        canEditColumns={false}
+        showDates
+        view={emptyView}
+        onView={noop}
+        actions={actions}
+      />
+    </MantineProvider>
+  );
+  const nameChars = () =>
+    document.querySelector("col")?.style.getPropertyValue("--cell-chars");
+  const choice = (label: string, retired = false) => ({
+    id: label,
+    label,
+    description: "",
+    retired,
+  });
+  const widthOf = (field: Field, list: List) => {
+    const [, , column] = columnsFor([field], [list], [], false);
+    return column && columnWidth(column, new Map());
+  };
+
+  it("fits a text column to the longest value it held when the page opened, and keeps it while values change", () => {
+    const { rerender } = render(
+      grid([person("p1", "Hana Fictional"), person("p2", "Ian")]),
+    );
+    expect(nameChars()).toBe("14");
+    rerender(
+      grid([
+        person("p1", "Hana Fictional With A Much Longer Name"),
+        person("p2", "Ian"),
+      ]),
+    );
+    expect(nameChars()).toBe("14");
+  });
+
+  it("fits a column drawing on a list to its longest choice, retired ones included, however many a cell may hold", () => {
+    const list = {
+      ...sites,
+      choices: [choice("Harbour"), choice("Lighthouse Point", true)],
+    };
+    expect(widthOf(site, list)).toEqual({ cells: 16, header: 4 });
+    expect(widthOf({ ...site, multiple: true }, list)).toEqual({
+      cells: 16,
+      header: 4,
+    });
+  });
+
+  it("fits a date column to the longest date", () => {
+    const [, , start] = columnsFor([], [], [], true);
+    const width = start && columnWidth(start, new Map());
+    const longest = Math.max(
+      ...Array.from(
+        { length: 12 },
+        (_, month) =>
+          formatDay(`2026-${String(month + 1).padStart(2, "0")}-28`).length,
+      ),
+    );
+    expect(width?.cells).toBe(longest);
+    expect(width?.header).toBe(5);
+  });
+
+  it("fits a text column with no values to its header", () => {
+    const [name] = columnsFor([], [], [], false);
+    expect(name && columnWidth(name, new Map())).toEqual({
+      cells: 0,
+      header: 4,
+    });
+  });
+
+  it("stops at the widest a column may be", () => {
+    const long = "L".repeat(40);
+    expect(
+      widthOf({ ...site, name: long }, { ...sites, choices: [choice(long)] }),
+    ).toEqual({ cells: 30, header: 30 });
   });
 });
 

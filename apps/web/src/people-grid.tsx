@@ -41,6 +41,7 @@ import {
 } from "@mantine/core";
 import {
   type ClipboardEvent,
+  type CSSProperties,
   type DragEvent,
   type KeyboardEvent,
   type Ref,
@@ -267,13 +268,71 @@ function ariaSort(view: View, key: string) {
   return first.descending ? "descending" : "ascending";
 }
 
-// The width of a column, which comes from its kind alone.
-function widthClass(column: Column): string | undefined {
-  if (column.key === "preferredName") return classes.peopleColName;
-  if (column.key === "employeeId") return classes.peopleColId;
-  return column.kind === "date"
-    ? classes.peopleColDate
-    : classes.peopleColChoice;
+// The 28th is in every month, so this tries each month's name.
+const longestDay = Math.max(
+  ...Array.from(
+    { length: 12 },
+    (_, month) =>
+      formatDay(`2026-${String(month + 1).padStart(2, "0")}-28`).length,
+  ),
+);
+const widestChars = 30;
+
+// How many characters a column fits in its cells and in its header, which CSS turns into its width.
+export function columnWidth(
+  column: Column,
+  longestText: ReadonlyMap<string, number>,
+): { cells: number; header: number } {
+  let cells: number;
+  switch (column.kind) {
+    case "choice":
+      cells = column.choices.reduce(
+        (longest, { label }) => Math.max(longest, label.length),
+        0,
+      );
+      break;
+    case "date":
+      cells = longestDay;
+      break;
+    case "text":
+      cells = longestText.get(column.key) ?? 0;
+      break;
+  }
+  return {
+    cells: Math.min(cells, widestChars),
+    header: Math.min(column.label.length, widestChars),
+  };
+}
+
+function widthStyle({
+  cells,
+  header,
+}: {
+  cells: number;
+  header: number;
+}): CSSProperties {
+  return {
+    "--cell-chars": cells,
+    "--header-chars": header,
+  } as CSSProperties;
+}
+
+function longestTexts(
+  columns: readonly Column[],
+  people: readonly Person[],
+): Map<string, number> {
+  return new Map(
+    columns
+      .filter(({ kind }) => kind === "text")
+      .map((column) => [
+        column.key,
+        people.reduce(
+          (longest, person) =>
+            Math.max(longest, shown(column, column.value(person)).length),
+          0,
+        ),
+      ]),
+  );
 }
 
 // A cell's value in words.
@@ -486,6 +545,8 @@ export function PeopleGrid({
 }) {
   const columns = columnsFor(fields, lists, order, showDates);
   const view = knownView(asked, columns, [draftColumn]);
+  // No width follows what is typed, so editing never moves the table.
+  const [longestText] = useState(() => longestTexts(columns, people));
   // The people this user has added since the page opened, which stay shown whatever the view.
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
   // The identifier each person added since the page opened was shown under before it was saved, by
@@ -1161,7 +1222,7 @@ export function PeopleGrid({
           </Group>
         </Group>
       )}
-      <Paper withBorder>
+      <Paper withBorder className={classes.peoplePaper}>
         <div className={classes.peopleScroll}>
           <table
             role="grid"
@@ -1169,8 +1230,16 @@ export function PeopleGrid({
             className={classes.peopleTable}
           >
             <colgroup>
-              {columns.map((column) => (
-                <col key={column.key} className={widthClass(column)} />
+              {columns.map((column, columnIndex) => (
+                <col
+                  key={column.key}
+                  className={
+                    columnIndex === 0
+                      ? classes.peopleColFirst
+                      : classes.peopleCol
+                  }
+                  style={widthStyle(columnWidth(column, longestText))}
+                />
               ))}
               {withActions && <col className={classes.peopleColActions} />}
             </colgroup>

@@ -356,10 +356,33 @@
   color: var(--mantine-color-dimmed);
 }
 
-/* The People table, edited like a spreadsheet: it scrolls sideways when its columns do not fit, each
-   cell on one line, with the selected cell outlined. */
+/* The People page fills the window, and its table scrolls within it, both ways, with its header row
+   always in view. A window too short for that scrolls the page instead. */
+.peoplePage {
+  height: calc(
+    100dvh - var(--app-shell-header-offset, 0rem) - 2 * var(--app-shell-padding)
+  );
+  min-height: 24rem;
+}
+
+/* Never so short that the table hides its rows; the page scrolls first. */
+.peoplePaper {
+  display: flex;
+  flex-direction: column;
+  min-height: 7rem;
+}
+
+/* The People table, edited like a spreadsheet: each cell on one line, with the selected cell
+   outlined. A cell moved to is never left under the header row. */
 .peopleScroll {
-  overflow-x: auto;
+  --people-head-height: 36px;
+  --people-cell-padding: 12px;
+  /* Room beside the first column's value for the widest mark, "Draft: removed". */
+  --people-mark-room: 7rem;
+
+  min-height: 0;
+  overflow: auto;
+  scroll-padding-top: var(--people-head-height);
 }
 
 .peopleTable {
@@ -372,13 +395,23 @@
 }
 
 .peopleHead {
-  height: 36px;
-  padding: 0 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: var(--people-head-height);
+  padding: 0 var(--people-cell-padding);
   font-size: 12px;
   font-weight: 600;
   text-align: left;
   white-space: nowrap;
   color: var(--mantine-color-dimmed);
+  background: var(--mantine-color-body);
+  box-shadow: inset 0 -1px 0 var(--mantine-color-default-border);
+}
+
+/* The header row's own line takes the place of the first row's. */
+.peopleTable tbody > tr:first-child {
+  border-top-color: transparent;
 }
 
 .peopleHeadButton {
@@ -464,7 +497,7 @@
 
 .peopleCell {
   height: 36px;
-  padding: 4px 12px;
+  padding: 4px var(--people-cell-padding);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -592,22 +625,24 @@
   opacity: 1;
 }
 
-/* Each column's width comes from its kind, never from what its cells hold, so editing a cell or
-   showing a problem never moves the table. */
-.peopleColName {
-  width: 14rem;
+/* A column fits its cells' characters or its header's, whichever is wider. A header's label is
+   smaller than a cell's text, so each of its characters is 0.9 of one, and has room beside it for
+   its sort and filter marks. */
+.peopleCol,
+.peopleColFirst {
+  --people-col-width: max(
+    var(--cell-chars) * 1ch,
+    var(--header-chars) * 0.9ch + 1.5rem
+  );
+
+  width: calc(var(--people-col-width) + 2 * var(--people-cell-padding));
 }
 
-.peopleColId {
-  width: 9rem;
-}
-
-.peopleColChoice {
-  width: 11rem;
-}
-
-.peopleColDate {
-  width: 9rem;
+.peopleColFirst {
+  width: calc(
+    var(--people-col-width) + 2 * var(--people-cell-padding) +
+      var(--people-mark-room)
+  );
 }
 
 .peopleColActions {

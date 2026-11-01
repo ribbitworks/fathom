@@ -33,6 +33,7 @@ import { ColumnDialog } from "./column-dialog.tsx";
 import { type Decision, DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { PageHeader } from "./page-header.tsx";
+import classes from "./pages.module.css";
 import {
   type PeopleActions,
   PeopleGrid,
@@ -517,7 +518,7 @@ export function PeoplePage({
   }
 
   return (
-    <Stack gap="md">
+    <Stack gap="md" className={classes.peoplePage}>
       <PageHeader
         title="People"
         action={
