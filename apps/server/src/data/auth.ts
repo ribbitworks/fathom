@@ -30,7 +30,6 @@ export type AuthLog = (
 ) => void;
 
 const minute = 60;
-const hour = 60 * minute;
 
 export function createAuth(
   database: Database,
@@ -59,10 +58,12 @@ export function createAuth(
       minPasswordLength: passwordLength.minimum,
       maxPasswordLength: passwordLength.maximum,
     },
-    // A session ends after 12 hours without use, and is never cached in a cookie.
+    // A session ends after 30 minutes without use, and is never cached in a cookie. Its expiry is
+    // pushed back at most once a minute, so a session in use is not written to the database on
+    // every request, and ends no more than a minute early.
     session: {
-      expiresIn: 12 * hour,
-      updateAge: hour,
+      expiresIn: 30 * minute,
+      updateAge: minute,
       cookieCache: { enabled: false },
     },
     // Limits are kept in the database, so they hold across restarts, and apply in every

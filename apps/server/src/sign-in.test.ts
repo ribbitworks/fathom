@@ -2,7 +2,7 @@
 
 // Tests for local accounts, sign-in, and sessions against a migrated PostgreSQL server: creating
 // accounts with their roles, what the signed-in user's roles let them do, signing in and out, the
-// signed-in user, secure session cookies that last 12 hours from last use, no public sign-up or
+// signed-in user, secure session cookies that last 30 minutes from last use, no public sign-up or
 // other Better Auth features, logs without users' details, and sign-in limits that a client cannot
 // dodge by naming another address.
 
@@ -107,6 +107,13 @@ function signIn(
   });
 }
 
+// Sets a user's session as if its expiry was last pushed back the given interval ago.
+async function lastExtendedAgo(email: string, interval: string) {
+  await database.superuserQuery(
+    `UPDATE fathom.sessions SET expires_at = now() + interval '30 minutes' - interval '${interval}' WHERE user_id = (SELECT id FROM fathom.users WHERE email = '${email}')`,
+  );
+}
+
 // The session cookie, as a browser would send it back.
 function sessionCookie(setCookie: string | string[] | undefined): string {
   const cookies = Array.isArray(setCookie) ? setCookie : [setCookie ?? ""];
@@ -127,7 +134,7 @@ describe("signing in", () => {
     expect(session.json()).toMatchObject({ user: { email } });
   });
 
-  it("keeps the session in a cookie that scripts cannot read, sent only over HTTPS to Fathom's own pages, for 12 hours", async () => {
+  it("keeps the session in a cookie that scripts cannot read, sent only over HTTPS to Fathom's own pages, for 30 minutes", async () => {
     const response = await signIn(await newAccount());
     const cookie = [response.headers["set-cookie"]]
       .flat()
@@ -136,7 +143,7 @@ describe("signing in", () => {
     expect(cookie).toMatch(/; HttpOnly/i);
     expect(cookie).toMatch(/; Secure/i);
     expect(cookie).toMatch(/; SameSite=Lax/i);
-    expect(cookie).toMatch(/; Max-Age=43200/i);
+    expect(cookie).toMatch(/; Max-Age=1800/i);
   });
 
   it("does not let a client ask for a session of a different length", async () => {
@@ -146,7 +153,7 @@ describe("signing in", () => {
     const cookie = [response.headers["set-cookie"]]
       .flat()
       .find((value) => value?.includes("session_token="));
-    expect(cookie).toMatch(/; Max-Age=43200/i);
+    expect(cookie).toMatch(/; Max-Age=1800/i);
   });
 
   it("refuses sign-in requests that are not an email address and password", async () => {
@@ -170,19 +177,39 @@ describe("signing in", () => {
     expect(logs).not.toContain(email);
   });
 
-  it("extends a session in use, giving the browser a new cookie", async () => {
+  it("extends a session last extended over a minute ago, giving the browser a new cookie", async () => {
     const email = await newAccount();
     const cookie = sessionCookie((await signIn(email)).headers["set-cookie"]);
-    // As if the session had been signed in two hours ago.
-    await database.superuserQuery(
-      `UPDATE fathom.sessions SET expires_at = now() + interval '10 hours' WHERE user_id = (SELECT id FROM fathom.users WHERE email = '${email}')`,
-    );
+    await lastExtendedAgo(email, "2 minutes");
     const response = await app.inject({
       url: "/api/session",
       headers: { cookie },
     });
     expect(response.statusCode).toBe(200);
     expect(sessionCookie(response.headers["set-cookie"])).not.toBe("");
+  });
+
+  it("does not extend a session again within a minute", async () => {
+    const cookie = sessionCookie(
+      (await signIn(await newAccount())).headers["set-cookie"],
+    );
+    const response = await app.inject({
+      url: "/api/session",
+      headers: { cookie },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(sessionCookie(response.headers["set-cookie"])).toBe("");
+  });
+
+  it("ends a session after 30 minutes without use", async () => {
+    const email = await newAccount();
+    const cookie = sessionCookie((await signIn(email)).headers["set-cookie"]);
+    await lastExtendedAgo(email, "31 minutes");
+    const response = await app.inject({
+      url: "/api/session",
+      headers: { cookie },
+    });
+    expect(response.statusCode).toBe(401);
   });
 
   it("offers none of Better Auth's other features, such as users changing their own name", async () => {
