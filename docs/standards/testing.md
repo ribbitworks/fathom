@@ -1,22 +1,15 @@
 ---
+title: "Testing Standards (Fathom)"
 category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
-dependencies: ["docs/standards/markdown-style-guidelines.md"]
-last_updated: "2026-10-27"
+dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
+last_updated: "2026-11-01"
 ---
 
 # Testing Standards
 
-This document defines how changes are tested. Every change that adds or changes behavior includes its tests in the same change, and tests run as part of the [Workflow](../../AGENTS.md#workflow). Test tools are chosen in the project's architecture decision records.
-
-## Principles
-
-- **Behavior, not implementation:** Tests describe what the code does for its users and callers, so they survive refactoring.
-- **Deterministic:** A test gives the same result on every run and every machine. Time and randomness are injected or controlled by the test, and tests do not depend on test order or on network access outside the test environment.
-- **Isolated:** Each test sets up and cleans up its own data, and does not depend on another test.
-- **Fictional data:** Test data is invented, and never copied or derived from real data, including anonymized copies, as the [Data](../../AGENTS.md#data) rules require.
-- **Fast feedback:** Most tests are unit tests that run in seconds; slower tests are kept to what needs them.
+Fathom's additions to the shared [Testing Standards](shared/testing.md), which define the principles, what every change must test, coverage, test data and how tests are written. Test locations for TypeScript are in [TypeScript Standards](shared/typescript/typescript.md#tests). Test tools are chosen in the project's architecture decision records.
 
 ## Test Types
 
@@ -29,13 +22,7 @@ This document defines how changes are tested. Every change that adds or changes 
 | Container | Behavior that needs the built containers, such as network isolation | Every change that affects the containers, and before a stage is complete |
 | UI | Key user journeys in a real browser | Not required for each change and not run in the workflow's test step; run when the user asks, and passing before a stage is complete |
 
-## What Every Change Must Test
-
-- **New behavior:** Unit tests for its rules, and integration tests for each new or changed API operation.
-- **Bug fixes:** A test that fails without the fix, written before the fix.
-- **Edge cases and errors:** Boundaries, empty and missing values, invalid input, and each error response, not only the successful path.
-- **Validation:** Every input schema is tested with valid input and with each kind of invalid input it rejects.
-- **Configuration:** Invalid or missing configuration stops start-up with a clear error, and a test proves it.
+Every new or changed API operation has integration tests, as well as unit tests for its rules.
 
 ## Access Control Tests
 
@@ -58,34 +45,10 @@ Access control is tested as thoroughly as the features it protects:
 - **Logs:** Tests put known marker values in personal fields and check that they never appear in captured logs or audit records.
 - **Network isolation:** Where the project requires it, a container test confirms from inside each container that it cannot reach the internet.
 
-## Test Data
+## Coverage Enforcement
 
-- **Factories:** Tests build data with factories that produce realistic, fictional records with sensible defaults, overriding only what each test needs.
-- **Seed data:** Development and demonstration data comes from a generator that produces fictional data from a fixed seed, so it is the same every time.
-- **Schema from migrations:** Integration tests build the database schema by applying the project's migration files to an empty database, never by creating the schema another way.
-- **Clean state:** Each integration test starts from a known database state, for example by running inside a transaction that is rolled back, or by using a fresh schema.
-
-## Coverage
-
-- **Required:** Branch coverage of domain logic, validation, service workflows, and the data access layer is 100%. The coverage tool is configured so the test command fails below that threshold for that code.
-- **Everything else:** Coverage is measured and reported, and any significant untested code is explained in the code review.
-
-Coverage numbers support review; they do not replace judgment about whether the right behavior is tested.
-
-## Writing Tests
-
-- **Names describe behavior:** For example, "rejects an expired session" rather than "test session 3".
-- **One behavior per test:** Arrange the data, act once, and assert the outcome.
-- **No sleeping:** Tests wait for conditions, never for fixed amounts of time.
-- **Flaky tests:** A test that fails intermittently is fixed, or reported to the user. Tests are never removed, skipped, or weakened without the user's approval.
-
-## Test Location
-
-- **Unit and integration tests:** Next to the code they test, named after it with `.test` before the extension, such as `people-service.test.ts` beside `people-service.ts`.
-- **UI tests:** In their own folder within the application they test, such as `e2e/`, since they test whole user journeys rather than one file.
-- **Shared test helpers and factories:** In a shared package rather than copied between tests.
-- **Builds:** Test files are excluded from builds, so tests never reach the runtime image.
+The coverage tool is configured so the test command fails below the shared 100% threshold for the code it covers.
 
 ## Running Tests
 
-One command runs linting, type checking, and the unit, integration, access control, and security tests, along with the build-time security scans. Container tests and UI tests have their own commands. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
+`pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell, PowerShell and licence linting, the unit, integration, access control and security tests, and the build-time security scans. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.

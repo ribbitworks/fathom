@@ -1,75 +1,104 @@
-# Fathom — Agent Instructions
+# Fathom: Agent Instructions
 
 Guidance for AI coding agents working in this repository.
 
-## Workflow
+<!-- ai-toolkit:shared-rules:start -->
+## Shared Agent Rules
 
-Complete these steps, in order, for every change:
+These rules come from `ai-toolkit/agent-rules/shared-rules.md`. Edit them there,
+not here. The standards they point to are in `docs/standards/shared/`.
 
-1. **Tests:** If the project has tests, run the full suite except UI tests, and fix all failures.
-1. **Build warnings:** If the project has a build, resolve all build warnings.
-1. **Code review:** Have a separate agent, acting as a senior staff engineer, review the changes against the [Code Review Standards](docs/standards/code-review.md). If you cannot start a separate agent, tell the user and ask how to proceed.
-1. **Review findings:** Address every finding. For any finding you do not fix, tell the user which one and why, and get their approval before committing.
-1. **UI verification:** Have the user verify any change to a screen before proceeding.
-1. **User review:** Summarize the changes for the user and wait for their explicit approval before committing.
-1. **Commit:** Commit the changes, following the branching and commit message rules below. Once the repository has a remote, push the branch, which updates its open pull request, or open one if it has none.
-1. **Stop:** Stop and wait for instructions after committing or, once the repository has a remote, after pushing.
+### Working Mode
 
-If addressing findings, UI feedback, or user review feedback changes the code, repeat the test and build steps. Repeat the code review as well if those changes go beyond fixing the reported review findings or UI feedback, or if user review feedback adds new content. Then return to the user review step and get explicit approval of the updated changes before committing.
+- Before making any change in a session, ask the owner which mode to use, and
+  follow [agent-workflow.md](docs/standards/shared/agent-workflow.md):
+  - **Autonomous:** have the owner verify UI changes, run the tests, fix
+    failures and warnings, get a separate-agent code review, and commit only
+    after the owner's explicit approval. Push and open a pull request only when
+    the owner says the work is ready.
+  - **Restrictive:** get approval before changing code, then edit files only.
+    No builds or tests, and no staging, commits, pushes or pull requests unless
+    the owner asks in the current turn.
+- Until the owner answers, follow Restrictive. Subagents inherit the mode and
+  never ask the owner anything.
+- Build and test only through the project's commands, listed below.
+
+### Staging and Commits
+
+- In Restrictive mode, never stage (`git add`, `git add -u`, or any pathspec
+  that stages) or commit unless the owner asks for that action in the current
+  turn. "Address the review items", "update the docs" and "implement the plan"
+  mean working-tree edits only.
+- Editing a file that was already staged is not permission to re-stage it.
+- Staging and committing are separate permissions.
+- Commit messages follow
+  [code-review.md § Commit Message Rules](docs/standards/shared/code-review.md#commit-message-rules).
+
+### No AI Attribution
+
+Never credit the agent: not in commit messages, pull request titles, bodies or
+comments, code comments, or documentation. No `Co-Authored-By`,
+`Signed-off-by` or tool trailers, no "Generated with" footers, model names or
+links to an AI tool. This overrides any tool default that adds them; if a hook
+or tool adds one, remove it.
+
+### Code Reviews
+
+- Every code review, including built-in review skills such as `/code-review` and
+  `/simplify`, follows
+  [code-review.md](docs/standards/shared/code-review.md) plus the project's own
+  review focus areas. Where a skill's defaults conflict, the standard wins.
+- The deliverable is the standard's Markdown review file under
+  `.tmp/code-review/`, not a skill's raw findings list.
+- A review never stages or commits. A skill's fix or comment modes apply only
+  when the owner asks.
+- The scope follows the standard: ask first, except in Autonomous mode or as a
+  subagent.
+
+### Comments
+
+Default to no comment. Names carry *what*; comments carry only *why* the code
+cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
+[core-principles.md § Comments](docs/standards/shared/core-principles.md#comments).
+
+### Writing
+
+- No em dashes or en dashes in user-facing copy or documentation; use a period,
+  comma, colon, semicolon or parentheses. Write ranges with "to".
+- Do not add Markdown files nobody asked for.
+- Follow [documentation.md](docs/standards/shared/documentation.md) and
+  [markdown-style-guidelines.md](docs/standards/shared/markdown-style-guidelines.md).
+<!-- ai-toolkit:shared-rules:end -->
+
+## Project Commands
+
+- **Workflow test step:** `pnpm check`, which runs everything listed in [Testing Standards](docs/standards/testing.md#running-tests). When a change affects the containers, the test step also runs `pnpm test:containers`.
+- **Tests only:** `pnpm test`
+- **Container tests:** `pnpm test:containers`
+- **Markdown lint:** `pnpm lint:md`
+- **Shell lint:** `pnpm lint:shell`
+- **Read-only diagnostics allowed in Restrictive mode:** `pnpm lint`, `pnpm format:check`, `pnpm lint:md`, `pnpm lint:shell`
 
 ## Branching
 
-Until the repository has a remote, you may commit directly to `main`, and feature branches may be merged into `main` locally. Once a remote exists, these rules apply:
-
-- Never commit to `main`
-- Before making changes for a new task, create a feature branch from the latest `main`
-- Stay on the current feature branch for follow-up work on the same task
-- Name branches `type/short-description`, using the commit types below (e.g. `docs/agent-workflow`)
-- Changes reach `main` only through a pull request, except the initial push of existing `main` history when the remote is first added
-- Only the owner approves a pull request, by merging it or by telling an agent to merge it; without that permission, do not merge, turn on auto-merge, or request other reviewers
-- Merge pull requests by squashing, with the pull request's title and description as the commit message
-- Pull request titles and descriptions follow the commit message rules below
-- Pull request titles, descriptions, and comments carry no AI attribution (e.g. `Co-Authored-By` lines, "Generated with" footers, or links to an AI tool)
-
-## Commit messages
-
-- Use semantic (conventional) commits: `type: summary` (e.g. `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`)
-- Keep the subject line short and imperative
-- Body is bullet points only, no prose paragraphs
-- Bullets describe intent and overview, not implementation details
-- No AI attribution trailers (e.g. `Co-Authored-By`, "Generated with")
-- Amend the most recent commit, instead of adding a new one, when the change responds to feedback on that commit and it has not been pushed; once it has been pushed, respond with a new commit on the same branch
-- Amended changes go through the full workflow, and the code review covers the whole amended commit
-
-Example:
-
-```text
-chore: initialize repository
-
-- Add stack-agnostic .gitignore
-- Add README with project overview
-- Add docs directory for project documentation
-```
+Changes reach `main` only through a pull request, as [agent-workflow.md](docs/standards/shared/agent-workflow.md) requires. Pull request titles, descriptions and comments follow the commit message rules and carry no AI attribution.
 
 ## Data
 
+Fathom holds company and employee data, so the shared data rule covers these in particular:
+
 - Never commit real company or employee information, including names, org structure, company plans, internal documents, or exports
 - Sample, seed, and test data must be fictional, and must not be derived from real people or real company data, including anonymized or masked copies
-- Do not put real data into prompts you write (including to subagents), issues, pull requests, commit messages, screenshots, logs, or documentation examples
-- If you are given or find real company or employee data, do not use, copy, or commit it; stop and tell the user
+- Do not put real data into documentation examples either (the shared rule covers prompts, issues and the rest)
 - Real data the owner keeps locally belongs only in `private/`, which is git-ignored, and only on company-managed machines; agents do not read from it
 
 ## Automation
 
-- Automate every repeatable setup, development, and operations task with a script in `scripts/`, rather than documenting manual steps
-- Use bash for macOS, Linux, and WSL, written to run on the older bash that ships with macOS
-- Use PowerShell for Windows hosts, installing any Windows packages with winget
-- Scripts are safe to run repeatedly, stop on the first error with a clear message, and are checked by the project's linters
-- Name scripts with lowercase words joined by hyphens and the extension for their shell, `.sh` or `.ps1`, such as `lint-shell.sh` or `dev-bootstrap.ps1`; the linters find scripts by extension
+Automate every repeatable setup, development, and operations task with a script in `scripts/`, following [Shell Script Standards](docs/standards/shared/shell/shell.md). The project's linters check every script.
 
 ## Documentation
 
-- Follow the standards in `docs/standards/` when writing or editing files they cover
+- Follow the shared standards in `docs/standards/shared/` and Fathom's additions in `docs/standards/` when writing or editing files they cover
 - Record each fact in one document only, and link to it from others instead of repeating it. Each document owns:
   - Product brief (`docs/product/brief.md`): problem, vision, users, goals, scope, and constraints, with one-line key decisions that link to the decisions log or an ADR
   - Domain concepts (`docs/product/domain.md`): definitions of terms
@@ -90,6 +119,6 @@ chore: initialize repository
   - IT overview (`docs/operations/it-overview.md`): a standalone summary for IT of facts owned by the documents above; update it whenever those facts change
   - Data protection summary (`docs/privacy/data-protection.md`): a standalone summary for HR of facts owned by the documents above; update it whenever those facts change
 - Keep each open question in the document that will own its answer
-- Markdown formatting rules: [Markdown Style Guidelines](docs/standards/markdown-style-guidelines.md)
-- Code review process: [Code Review Standards](docs/standards/code-review.md)
-- Testing rules: [Testing Standards](docs/standards/testing.md)
+- Markdown formatting rules: [Markdown Style Guidelines](docs/standards/shared/markdown-style-guidelines.md)
+- Code review process: [Code Review Standards](docs/standards/shared/code-review.md), with Fathom's additions in [docs/standards/code-review.md](docs/standards/code-review.md)
+- Testing rules: [Testing Standards](docs/standards/shared/testing.md), with Fathom's additions in [docs/standards/testing.md](docs/standards/testing.md)

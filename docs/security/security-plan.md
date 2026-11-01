@@ -1,4 +1,4 @@
-# Fathom — Security Plan
+# Fathom: Security Plan
 
 **Status:** Proposal for review by the owner and IT
 **Last updated:** 2026-10-31
@@ -122,11 +122,11 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 How IT and the company can be confident in Fathom's source code:
 
 - **Open source:** Fathom is licensed under Apache 2.0, and IT will be given read access to its full source code.
-- **AI-assisted development:** Fathom is built with an AI coding assistant, and each change is also reviewed by a separate AI agent. Fathom's owner is the human reviewer and approves every change before it is committed.
-- **Development workflow:** Every change follows the [Workflow](../../AGENTS.md#workflow), which includes running the tests once code exists.
+- **AI-assisted development:** Fathom is built with an AI coding assistant, working in a mode Fathom's owner chooses for each session. In Autonomous mode the assistant runs the tests and has each change reviewed by a separate AI agent before asking for approval. In Restrictive mode the assistant only edits files; the owner runs the tests, decides whether to request a separate AI review, and commits. In both modes the owner is the human reviewer and approves every change before it is committed.
+- **Development workflow:** Every change follows the [Agent Workflow](../standards/shared/agent-workflow.md). Once code exists, the tests run on every change: by the assistant in Autonomous mode, and by the owner in Restrictive mode.
 - **Planned from the first code:** Security tests for every role and data tier, and static analysis on every change.
 - **Planned once the build process is decided:** Pinned dependency versions from trusted sources, a list of every component in each release (a software bill of materials), and tagged releases built in a repeatable way, so IT can match what is running to its source code.
-- **Proposed once there is a remote:** A protected main branch and signed commits, in addition to the pull requests already required. GitHub does not protect branches of private repositories on its free plan, so until the plan allows it, the [Workflow](../../AGENTS.md#workflow) alone keeps changes to main going through pull requests.
+- **Proposed:** A protected main branch and signed commits, in addition to the pull requests already required. GitHub does not protect branches of private repositories on its free plan, so until the plan allows it, the [Agent Workflow](../standards/shared/agent-workflow.md) alone keeps changes to main going through pull requests.
 
 ## Enforcing the Plan
 
