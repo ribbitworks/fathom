@@ -96,7 +96,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 ## Fictional Seed Data
 
 - **Generator:** `packages/fixtures` uses Faker with a fixed seed and a fixed reference date, so it produces the same data, with the same identifiers, on every run, and `packages/seed` writes it to the database, recorded in the change history as made by Fathom itself.
-- **Contents so far:** Lists of sites, positions, levels, and roles on the team, the People columns that draw on them, and people, current and former, with a few who start after the reference date. Each later slice adds its own data, until the seed holds teams and managers, feature teams and leads, projects, features, cycles, releases, allocations, estimates, and planned hires, covering every role and every level of protected data.
+- **Contents so far:** Lists of sites, positions, levels, and roles on the team, the People columns that draw on them, and people, current and former, with a few who start after the reference date. Each later slice adds its own data, until the seed holds an account for each persona, teams and managers, feature teams and leads, products, customers, projects, features, cycles, releases, allocations, estimates, and planned hires, covering every role and every level of protected data.
 - **Realistic but invented:** Names and details are generated, including names from the countries the organization works in, so the data looks realistic without describing anyone real. No real company, customer, or product names are used.
 - **Sizes:** About 150 people for development and demonstrations, and smaller sets for tests.
 - **Shared building blocks:** `packages/fixtures` holds the building blocks for fictional records, used by both the generator and tests.

@@ -35,19 +35,21 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 
 - **People and teams:** Includes feature teams and feature leads. Employee details are limited to the General tier plus start and end dates.
 - **Org structure:** People managers and their current direct reports, without planned changes or the org chart.
-- **Projects, features, and milestones**
-- **Release planning**
+- **Change history:** Who changed what, and when, for the data each user may see.
+- **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which People Managers' proposals are approved by the Workforce Administrator.
+- **Roadmap view:** First built as the Product Manager's working roadmap, an input to the rest of the plan: features in a table grouped by cycle. The visual roadmap comes in a later stage.
+- **Release planning:** Cycles, releases, and patches.
+- **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
+- **Projects, features, and milestones:** Projects and milestones, building on the roadmap's features.
 - **Resource assignment** and **Capacity visibility**
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
 - **Demand forecasting:** One estimate per feature.
-- **Roles:** A fixed set of roles, with access tiers and access history for start and end dates, and the hiring plan. Software Project Managers can see that teams are in place and give input, in a form still to be confirmed in the [Product Brief](brief.md)'s open questions.
+- **Roles:** A fixed set of roles, with access tiers and access history for start and end dates, and the hiring plan. Project Managers can see that teams are in place and give input, in a form still to be confirmed in the [Product Brief](brief.md)'s open questions.
 
-Until plan approval arrives in the next stage, edits go straight to the live plan.
+## Stage: Snapshots, Exports, and Hiring
 
-## Stage: Trust and History
-
-- **Plan approval**, including the hiring workflow and feature team approval
+- **Hiring workflow:** Moving planned hires between states, controlled by role.
 - **Snapshots**
 - **Exports**
 - **People and teams:** Gender.
@@ -64,7 +66,7 @@ Until plan approval arrives in the next stage, edits go straight to the live pla
 - **Unified people view**
 - **Team composition:** The remaining measures, such as test-to-development ratios.
 - **Timeline / Gantt view**
-- **Roadmap view**
+- **Roadmap view:** The visual roadmap, still to be designed. One idea is a board of cycles, with features as cards, showing each cycle's estimated demand against the capacity available.
 
 ## Stage: Planning Ahead
 
@@ -76,7 +78,7 @@ Goals the owner has added that are not yet placed in a stage:
 
 - **Pinned views:** A saved view kept visible as its own table, alongside the table's own view, until it is unpinned. Until then, pinning a view means applying it, as the [Decisions Log](decisions.md) records.
 - **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed. Counts work on any column, but sums and other totals of amounts need the number and currency column types under Your Own Fields and Tables.
-- **Lists drawn from a table:** Once there are more tables, a list whose choices are the distinct values of a chosen column in a chosen table, so a column elsewhere can pick from them without the values being kept twice.
+- **Renaming terms:** An organization renames Fathom's terms to its own, such as Feature to Epic, or Cycle to Program Increment.
 - **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.
 
 These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
@@ -84,5 +86,4 @@ These five stages make up v1. Broader configuration for other domains, and the f
 ## Open Questions
 
 1. **First stage scope:** Is the first stage the right size, and are the cut-down versions acceptable?
-1. **Editing before approval:** Is it acceptable for edits to go straight to the live plan until plan approval arrives?
-1. **Stage order:** Is the order after the first stage right? For example, should the org chart come before plan approval, and should custom fields and tables come right after it, as proposed, so that changes to them can be approved?
+1. **Stage order:** Is the order after the first stage right? For example, should the org chart come earlier, and should custom fields and tables come right after Snapshots, Exports, and Hiring, as proposed?

@@ -18,7 +18,12 @@ These come before the first line of application code:
 
 ## Definition of Done for Each Slice
 
-Beyond the workflow, each slice adds the [access control tests](../standards/testing.md#access-control-tests) for the data it introduces, records access history for any Restricted or Confidential data it introduces, and updates the threat model as the [Code Review Standards](../standards/code-review.md) require.
+Beyond the workflow, each slice:
+
+- Adds the [access control tests](../standards/testing.md#access-control-tests) for the data it introduces.
+- Records access history for any Restricted or Confidential data it introduces.
+- Makes changes to the data it introduces drafts that need approval, once Draft and Approval is built.
+- Updates the threat model as the [Code Review Standards](../standards/code-review.md) require.
 
 ## Slices
 
@@ -30,7 +35,8 @@ The slices are built in this order, which may change as work progresses. The tab
 | Component Evaluation | Done, in [ADR 0004](../adr/0004-ui-components.md) |
 | Accounts and Access Control | Done |
 | Visual Design | Done |
-| People and Org Structure | In progress: user-defined lists and people are done |
+| People | Done: user-defined lists and people |
+| Seed Accounts | Next |
 
 ### Hello Fathom
 
@@ -54,23 +60,47 @@ Local accounts, sign-in, sessions, and the proposed [Roles](../product/roles.md)
 
 The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#after-hello-fathom) section, agreed with the owner and applied to the screens that exist: navigation and layout, type, colour, spacing, and how tables, forms, dialogs, and messages look, using the components chosen in ADR 0004. Every later slice is built in this design, as [Visual Design](visual-design.md) sets out. It is not a vertical slice, so the definition of done for slices does not apply to it.
 
-### People and Org Structure
+### People
 
-People with the employee details the roadmap's [first stage](../product/roadmap.md#stage-who-is-working-on-what) allows, teams, people managers, and their current direct reports.
+People with the employee details the roadmap's [first stage](../product/roadmap.md#stage-who-is-working-on-what) allows.
 
-It is built in three steps: user-defined lists of choices, as set out in the [Decisions Log](../product/decisions.md#configuration); people, with fictional seed data and commands to load and remove it, whose details such as site or position are columns drawing on lists; and teams with their managers and direct reports. The lists step adds the change history the Decisions Log requires, which every later slice records its changes in. The people step adds columns on People that draw on lists, held in the values table [ADR 0005](../adr/0005-flexible-data-model.md) proposes, and undo in one step for lists and people. The other field types and custom tables wait for the custom fields stage.
+It is built in two steps: user-defined lists of choices, as set out in the [Decisions Log](../product/decisions.md#configuration), and people, with fictional seed data and commands to load and remove it, whose details such as site or position are columns drawing on lists. Teams with their managers and direct reports come in the Teams and Reporting Lines slice. The lists step adds the change history the Decisions Log requires, which every later slice records its changes in. The people step adds columns on People that draw on lists, held in the values table [ADR 0005](../adr/0005-flexible-data-model.md) proposes, and undo in one step for lists and people. The other field types and custom tables wait for the custom fields stage.
 
-### Projects and Features
+### Seed Accounts
 
-Projects with their customers, features with their feature teams and feature leads, and milestones. Until plan approval arrives, edits go straight to the live plan and People Managers edit feature teams directly, as set out in the roadmap and [Roles](../product/roles.md).
+Fictional accounts for development, one for each persona in the [Product Brief](../product/brief.md#users), with fictional names, `example.test` addresses, and that persona's default roles from [Roles](../product/roles.md#default-roles-by-persona), so each role can be tried by signing in as it.
+
+- **Password:** They share the random password in the git-ignored `.dev/secrets/dev_account_password`, which `pnpm dev:reset` already makes for its own account, made if missing and printed when the accounts are seeded. The `pnpm dev:reset` account stays as it is.
+- **Adding and removing:** They are added and removed with the rest of the seed data. An account that has made changes cannot be deleted, since the change history refers to it and can only be added to, so removing the seed data deactivates it instead, and says so.
+- **Development only:** They exist only in development databases, since the seed package is never part of the runtime image. The threat model gains a row for them, with the check that keeps them out of production.
+
+### Change History
+
+A view of the change history the lists step built: who changed what, and when, limited to the changes each user may see, as set out in the [Decisions Log](../product/decisions.md#configuration). Draft and approval builds on it to show what a draft changes.
+
+### Draft and Approval
+
+Plan approval, built on lists and people first, as the owner intends approval to cover them too, so the pattern every later table follows is set once: changes are saved as drafts, submitted, compared with the live data, and approved or rejected by an Approver. Its open questions, in the [Product Brief](../product/brief.md#open-questions), [Use Cases](../product/use-cases.md), and [Roles](../product/roles.md#open-questions), are answered before it is built.
+
+### Teams and Reporting Lines
+
+Teams with their managers and current direct reports. They set the patterns for records that link to other records and for changes dated ahead, which feature team membership and allocations reuse.
 
 ### Cycles and Releases
 
-Configurable cycles, releases, and patch frequency, and which features ship in which release.
+Release streams for major releases and patches, each with a configurable cycle length and cycle names, and releases that include cycles, as set out in the [Decisions Log](../product/decisions.md#planning).
+
+### Features and the Roadmap
+
+The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind, priority, and product, which the owner will judge once seen. Whether features have a built-in description before text columns arrive is decided when this slice starts.
+
+### Projects and Feature Teams
+
+Projects with their customers, from a built-in Customers table, the features they need, their milestones, and the release warnings in the Decisions Log. Feature teams with their members and feature leads, owning features. People Managers propose them as drafts, which the Workforce Administrator approves, rather than the Approver, as set out in [Roles](../product/roles.md).
 
 ### Allocations and Capacity
 
-Monthly allocations, capacity by person and team, and the warnings and rules in the [Decisions Log](../product/decisions.md), shown in the monthly resource grid, with the cycle and release lines from the Cycles and Releases slice.
+Monthly allocations, capacity by person, by manager, and by feature team, and the warnings and rules in the [Decisions Log](../product/decisions.md), shown in the monthly resource grid, with the cycle and release lines from the Cycles and Releases slice.
 
 ### Hiring Plan
 
@@ -82,11 +112,11 @@ Reports per manager, including planned hires, compared with a target.
 
 ### Demand Forecasting
 
-One estimate per feature, compared with capacity over the forecasting horizons in the [Product Brief](../product/brief.md).
+One estimate per feature, entered in a unit of effort, with configurable conversions between units, and compared with capacity over the forecasting horizons in the [Product Brief](../product/brief.md), worked out from features' target cycles.
 
-### Software Project Manager Input
+### Project Manager Input
 
-The input Software Project Managers give on whether teams are in place. Its form is an [open question in the Product Brief](../product/brief.md#open-questions), so this slice is scheduled once it is answered.
+The input Project Managers give on whether teams are in place. Its form is an [open question in the Product Brief](../product/brief.md#open-questions), so this slice is scheduled once it is answered.
 
 ## Deployment Testing
 

@@ -1,7 +1,7 @@
 # Fathom — Product Brief
 
 **Status:** Draft
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 ## Problem
 
@@ -13,31 +13,38 @@ Fathom is the single place where a software organization's managers plan project
 
 ## Users
 
-About 20–30 users in one private company operating in British Columbia, with employees in several countries. Not all of them can edit.
+About 20–30 users at first, mostly managers and leads, in one private company operating in British Columbia, with employees in several countries. Team members may be given accounts later. Not all users can edit.
 
-| Persona | Primary needs | Expected access |
-| --- | --- | --- |
-| Software Project Manager | Build and maintain project timelines and milestones, often own projects | Edit |
-| Software Engineering Manager | Assign engineers, balance load across the team | Edit |
-| Software Product Manager | Shape the roadmap, prioritize initiatives | Edit |
-| Director | See status and capacity across teams, decide on trade-offs, maintain the hiring plan and employee details | Edit, including workforce data |
-| VP | See the roadmap and risks at a glance | View, including sensitive data |
+Personas are named as they are widely known in the software industry. Each organization matches them to its own titles, such as those shown.
+
+| Persona | Typical titles | Primary needs | Expected access |
+| --- | --- | --- | --- |
+| Product Manager | Product Manager, Product Owner | Shape the roadmap, prioritize features | Edit |
+| Project Manager | Project Manager, Program Manager, Delivery Manager | Deliver projects' scope to customers by their dates, maintain milestones, often own projects | Edit |
+| Engineering Manager | Engineering Manager, Software Development Manager | Manage people, assign them to work, balance load across the team | Edit |
+| Feature Lead | Feature Lead, Tech Lead | Lead a feature team, and see its features, members, and their load | Edit |
+| Engineering Director | Director, Head of Engineering | See status and capacity across teams, decide on trade-offs, maintain the hiring plan and employee details | Edit, including workforce data |
+| Executive | VP, CTO | See the roadmap and risks at a glance | View, including sensitive data |
+| Team Member | Software Engineer, Test Engineer | See their own assignments and the plan they are part of | View |
+| Fathom Administrator | System administrator | Run Fathom, its accounts, and its settings, without seeing people data | Accounts and settings only |
 
 ## Goals for v1
 
-- **Projects, features, and milestones:** Plan projects and their features with owners, dates, milestones, and status.
+- **Projects, features, and milestones:** Plan projects with the features they need and their milestones.
 - **People and teams:** Keep a list of people with their teams, feature teams, capacity, and the employee details planning needs.
 - **Org structure:** Record who reports to whom, including planned changes, and show it as an org chart.
 - **Hiring plan:** Track the roles that need to be hired and when, and include planned hires in the plan before they are hired.
 - **Team composition:** Evaluate teams for balance, such as test-to-development ratios and the number of reports per manager compared with a target.
 - **Unified people view:** See current staff and planned hires together, with their reporting lines and high-level assignments.
-- **Release planning:** See which features will be delivered in which cycles, and which cycles will be releases.
+- **Release planning:** See which features are targeted at which cycles, and which cycles make up each release.
 - **Demand forecasting:** See rough estimates (ROMs and SWAGs) for features over the next 6 months, 12 months, 2 years, and beyond, to know what may come and what resources are needed.
 - **Resource assignment:** Assign people to projects or features by month.
-- **Capacity visibility:** Show over- and under-allocation by person and by team.
+- **Capacity visibility:** Show over- and under-allocation by person, by manager, and by feature team.
 - **Timeline / Gantt view:** Show work interactively, with drag-and-drop to change dates and assignments.
-- **Roadmap view:** Give leadership a clean, read-only roadmap, grouped by quarter and theme.
+- **Roadmap view:** Let Product Managers shape the roadmap of features by cycle and release, and give leadership a clean, read-only view of it.
 - **Roles:** Control what each user can see, edit, and approve through roles.
+- **Plan approval:** Save changes as drafts, which are approved before they reach the live plan.
+- **Change history:** See who changed what, and when, for the data each user may see.
 - **Custom fields and tables:** Let users add their own fields to Fathom's built-in tables, and their own tables, set up in plain language rather than database terms.
 - **Exports:** Export the plan and roadmap, limited to what each user's roles allow.
 - **Snapshots:** Save point-in-time snapshots of the plan and view them later.
@@ -67,6 +74,7 @@ About 20–30 users in one private company operating in British Columbia, with e
 ## Key decisions
 
 - **Planning model:** Monthly planning, with allocations as a percentage of a person's month.
+- **Planning level:** Fathom plans features, not their stories or tasks, and is never a clone of a full project management application. See the [Decisions Log](decisions.md#planning).
 - **Planned hires:** Planned hires appear in the plan and can be allocated like current staff.
 - **Access:** Role-based. A user can have one or more roles, and roles grant access to tiers of data by sensitivity.
 - **Editing:** No live collaboration. Draft changes are approved before they reach the live plan.
@@ -91,5 +99,4 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 1. **Roles and approval:** Which roles exist, what can each see, edit, and approve, and which changes need approval? The owner intends everything users create or edit to be pending until approved, including people, teams, and custom fields and tables, and will refine this. See the proposal in [Roles](roles.md).
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
-1. **Project Manager input:** What input do Software Project Managers have on whether teams are in place, for example comments, proposals, or approval?
-1. **Capacity in v1:** Does v1 need variable capacity per person, such as for part-time staff, or can it assume a full month for everyone? The owner thinks it may not be needed in v1.
+1. **Project Manager input:** What input do Project Managers have on whether teams are in place, for example comments, proposals, or approval?

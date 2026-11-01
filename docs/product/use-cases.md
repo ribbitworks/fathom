@@ -1,7 +1,7 @@
 # Fathom — Use Cases
 
 **Status:** Draft
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md) and the [Decisions Log](decisions.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
@@ -9,32 +9,32 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Plan a Project
 
-- **Actor:** Software Project Manager
-- **Goal:** Put a new project on the plan, with its owner, dates, features, and milestones.
+- **Actor:** Project Manager
+- **Goal:** Put a new project on the plan, with its owner, the features it needs, and its milestones, such as customer delivery dates.
 - **Outcome:** Once approved, the project appears on the timeline and the roadmap.
 
 ### Shape the Roadmap
 
-- **Actor:** Software Product Manager
-- **Goal:** Prioritize initiatives and organize the roadmap by quarter and theme.
-- **Outcome:** Once approved, the roadmap reflects the current priorities.
+- **Actor:** Product Manager
+- **Goal:** Add the features that may come, with rough estimates, prioritize them, and target them at cycles.
+- **Outcome:** Once approved, the roadmap shows what may come in each cycle, and whether it fits the capacity available.
 
 ### Assign People to Work
 
-- **Actor:** Software Engineering Manager
+- **Actor:** Engineering Manager
 - **Goal:** Staff a project or feature for the coming months, using current staff or planned hires and a monthly allocation percentage.
 - **Outcome:** The assignments are saved as draft changes. Fathom warns when someone has more than two assignments in a month, and does not allow allocations outside a person's employment dates.
 
 ### Resolve Over-Allocation
 
-- **Actor:** Software Engineering Manager
+- **Actor:** Engineering Manager
 - **Goal:** Find people who are over- or under-allocated, and adjust allocations or timing.
 - **Outcome:** The team's plan is realistic.
 
 ### Reschedule Work
 
-- **Actor:** Software Project Manager
-- **Goal:** Move a project, feature, or milestone to new dates on the timeline.
+- **Actor:** Project Manager
+- **Goal:** Move a feature to another cycle, or a milestone to a new date.
 - **Outcome:** The new timing is saved as a draft change.
 
 ### Approve Plan Changes
@@ -47,19 +47,19 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Maintain Employee Records
 
-- **Actor:** Director
+- **Actor:** Engineering Director
 - **Goal:** Keep Fathom's copy of employee details from the HR system current, including teams, managers, and end dates.
 - **Outcome:** People can be planned for. People who leave are kept, with their end date, rather than deleted.
 
 ### Plan a Hire
 
-- **Actor:** Director
+- **Actor:** Engineering Director
 - **Goal:** Plan a role that needs to be filled, with its target date, and track it through the hiring states.
 - **Outcome:** The planned hire appears in the plan and can be allocated to work. When the role is filled, the new hire takes over its allocations.
 
 ### Maintain Feature Teams
 
-- **Actors:** Software Engineering Managers, with the Director approving
+- **Actors:** Engineering Managers, with the Engineering Director approving
 - **Goal:** Keep feature teams, their members, and their feature leads current.
 - **Outcome:** Once approved, each feature has a feature team that owns and delivers it.
 
@@ -71,7 +71,7 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Plan a Reporting Change
 
-- **Actor:** Director
+- **Actor:** Engineering Director
 - **Goal:** Plan a future change in who reports to whom, such as a reorg.
 - **Outcome:** The change takes effect on its planned date.
 
@@ -85,9 +85,9 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Review the Roadmap
 
-- **Actor:** VP
+- **Actor:** Executive
 - **Goal:** See where the roadmap stands without asking for a status deck.
-- **Outcome:** The VP has a current view of the roadmap by quarter and theme.
+- **Outcome:** The Executive has a current view of the roadmap by cycle and release.
 
 ### Export the Plan
 
@@ -105,7 +105,7 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Manage Users and Roles
 
-- **Actor:** A Fathom administrator, as defined in [Roles](roles.md)
+- **Actor:** Fathom Administrator, a persona in the [Product Brief](brief.md#users), with the Administrator role in [Roles](roles.md)
 - **Goal:** Create local accounts and assign each user one or more roles.
 - **Outcome:** Each user sees and changes only what their roles allow.
 
@@ -118,5 +118,5 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 ## Not Yet Covered
 
 - **What-if scenarios:** Comparing drafts with the approved plan and with each other depends on an open question in the brief.
-- **Configuring cycles and releases:** Setting cycle length, cycle names, release contents, and patch frequency, and confirming which candidate cycles become releases, have no use case yet.
+- **Configuring cycles and releases:** Setting up release streams, with their cycle lengths and cycle names, and choosing which cycles each release includes, have no use case yet.
 - **Custom fields and tables:** Defining custom fields and tables comes in a later stage of the [Roadmap](roadmap.md), and has no use case yet.

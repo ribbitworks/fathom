@@ -14,7 +14,7 @@ This document covers the first release only. Later releases are planned to add g
 
 ## Who Fathom Is For
 
-Fathom is used by about 20–30 people in the software organization: Software Project Managers, Software Product Managers, Software Engineering Managers, the Director, and the VP. It is not available to other employees or to anyone outside the company.
+Fathom is used by about 20–30 people in the software organization at first: Project Managers, Product Managers, Engineering Managers, Feature Leads, who may be engineers, the Engineering Director, and the Executive. Team members, such as engineers, may be given accounts later, and would then see General information, including everyone's work assignments. It is not available to employees outside the software organization, or to anyone outside the company.
 
 ## What Personal Information Fathom Holds
 
@@ -62,17 +62,17 @@ The table shows who can see each level under the proposed default roles for each
 | Sensitivity | Who can see it by default |
 | --- | --- |
 | General | All Fathom users |
-| Restricted | Software Engineering Managers, the Director, and the VP |
-| Confidential | The Director and the VP |
+| Restricted | Engineering Managers, the Engineering Director, and the Executive |
+| Confidential | The Engineering Director and the Executive |
 
-Software Engineering Managers can see Restricted details for everyone, not only their own direct reports, because people move between managers over time.
+Engineering Managers can see Restricted details for everyone, not only their own direct reports, because people move between managers over time.
 
 Under the proposed roles:
 
-- **Employee details, teams, reporting lines, and the hiring plan** are maintained by the role that maintains workforce information, held initially only by the Director.
-- **Work assignments** are maintained by Software Engineering Managers and the Director.
-- **Feature teams** are maintained by Software Engineering Managers in the first release.
-- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. An administrator could still reach such information by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. The Director holds this role at first, alongside the role that maintains workforce information, so for now the safeguards on granting access rely on the access history. A second person is planned to take on this role later.
+- **Employee details, teams, reporting lines, and the hiring plan** are maintained by the role that maintains workforce information, held initially only by the Engineering Director.
+- **Work assignments** are maintained by Engineering Managers and the Engineering Director.
+- **Feature teams** are proposed by Engineering Managers and approved by the Engineering Director.
+- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. An administrator could still reach such information by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. The Engineering Director holds this role at first, alongside the role that maintains workforce information, so for now the safeguards on granting access rely on the access history. A second person is planned to take on this role later.
 
 ## How the Information Is Protected
 

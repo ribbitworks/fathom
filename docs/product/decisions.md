@@ -6,18 +6,28 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 
 ## Planning
 
+- **Planning level:** Fathom plans features, never their stories or tasks, which stay in tools such as Jira. Its model leaves room for finer levels, such as tasks or dependencies between features, to be added later without reworking features, allocations, or releases. Becoming a clone of a full project management application, such as MS Project, is never a goal.
+- **Dependencies between features:** Not recorded for now. If they are added later, Fathom warns when a feature is planned before one it depends on, rather than moving dates.
 - **Planning granularity:** Monthly, open to revisiting.
 - **Allocation unit:** A percentage of a person's month, chosen from 10%, 25%, 50%, 75%, 90%, or 100%. The default is 100%.
 - **Multiple assignments:** Fathom warns, but does not block, when a person has more than two assignments in a month.
-- **Project allocations:** People can be allocated to a project directly. See the [Domain Model](../design/domain-model.md) for how this may be modeled.
-- **Project ownership:** Projects have an owner, such as a Software Project Manager.
+- **Project allocations:** People can be allocated to a project directly, through a general feature that Fathom makes with each project and keeps off the roadmap, so every allocation is to a feature.
+- **Project ownership:** Projects have an owner, such as a Project Manager.
+- **Project scope:** A project's scope is the features it needs. A feature can probably be needed by several projects, as the owner thinks. Fathom warns when a feature a project needs is in no release yet, or in a release dated after one of the project's customer delivery dates.
+- **Feature scope:** Any planned work is a feature, including work such as a set of bug fixes, which a column users add can mark as a different kind. Work too large for one cycle is split into features of its own, one for each increment. A feature developed on a branch or behind a feature flag is still one feature, which ships in the release where it is turned on.
+- **Feature timing:** A feature targets a cycle. Its start and end are months, which follow from its allocations; a feature with no allocations has no months yet, and is placed only by its target cycle. Only milestones have dates to the day.
+- **Feature statuses:** A fixed set, because Fathom acts on them: Possible, Planned, In progress, Done, and Cancelled. A feature starts as Possible. Possible features count toward the forecast but not toward over-allocation, and done or cancelled features raise no warnings. To be reviewed once seen in practice.
+- **Features that may come:** The same records as planned features, with the status Possible. A feature starts on the roadmap and is planned, staffed, and released without being copied.
+- **Milestones:** A milestone has a name and a date, and says whether it is a customer delivery date, which the release warnings check. Other kinds of milestone are a column users add. Feature milestones are not linked to project milestones.
+- **Estimates:** One per feature, entered as a number with a unit of effort: hours, the default, person-days, person-weeks, or person-months. Fathom keeps one value and shows it in whichever unit the reader picks. The conversions between units, such as hours in a working day, are configurable for the whole of Fathom. Marking an estimate as a ROM or a SWAG is a column users add.
+- **Capacity:** v1 assumes a full month for everyone. Variable capacity, such as for part-time staff, can be added later, and is then clearly marked wherever the person appears, to discourage it. Capacity is shown both for a manager's reports and for a feature team's members, as separate views.
 - **Employment dates:** A person cannot be allocated before their start date or after their end date.
-- **Plan approval:** Draft plan changes are approved by a user with an approver role before they reach the live plan.
+- **Plan approval:** Draft plan changes are approved by a user with an approver role before they reach the live plan. The owner intends people, teams, lists, and configuration to need approval too, as the [Product Brief](brief.md#open-questions) records.
 - **Editing model:** No live collaboration. Saving a change (subject to approval) and refreshing to see others' changes is acceptable.
-- **Cycles and releases:** Cycle length, which cycles a release includes, and patch frequency are all configurable in Fathom.
+- **Cycles:** Each release stream's cycle length, in weeks or months, is configurable, so the patch stream's cycle length sets how often patches come. A change to cycle length applies from a chosen date forward, so cycles already made keep their names and dates. Cycles are made ahead from their pattern, at least two years ahead, so features expected far ahead can target a cycle, and a feature with no target cycle is shown as Later. To be reviewed once seen in practice.
 - **Cycle names:** Cycles are named by a configurable pattern, for example the last two digits of the year the cycle ends in and its number within that year.
-- **Release candidates:** Every cycle is a candidate release until a user confirms it. Confirming one makes a release that includes every cycle since the previous release, and unconfirmed candidates are not releases.
-- **Release contents:** Fathom records which features ship in which release.
+- **Releases:** A release includes one or more cycles, and its date is the end of its last cycle. Its contents are the features that target them, rather than being chosen separately. A cycle that is in no release is simply not released yet; Fathom has no separate candidate state.
+- **Patches:** Patches and major releases are separate release streams, each with its own cycle length. Features of any kind can ship in a patch.
 - **Monthly resource grid:** Allocations are shown as a grid, with people and planned hires as rows and months as columns. Each cell shows what that person works on that month, and the ends of cycles and releases are marked as vertical lines.
 
 ## Workforce
@@ -26,11 +36,11 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Hiring entries:** A planned hire records role, level, team, manager, target date, status, and approval state. Budget is not tracked.
 - **Hiring target date:** The date the new hire starts work. Onboarding time is handled with a reduced allocation percentage.
 - **Hiring workflow:** Moving a planned hire between states is controlled by role.
-- **Reporting lines:** Each person has exactly one manager. Dotted-line relationships, described in [Domain Concepts](domain.md), exist in some cases but are kept to a minimum. Future-dated manager reassignments, for example for a reorg, can be planned.
-- **People ownership:** Software Engineering Managers own their people, including when those people work on features led by someone else.
-- **Feature ownership:** Features are owned and delivered by a feature team. A feature's owner is the feature lead of its feature team.
+- **Reporting lines:** Each person has exactly one manager. Dotted-line relationships are out of scope for v1, as the [Product Brief](brief.md) records. Future-dated manager reassignments, for example for a reorg, can be planned.
+- **People ownership:** Engineering Managers own their people, including when those people work on features led by someone else.
+- **Feature ownership:** Features are owned and delivered by a feature team. A feature's owner is the feature lead of its feature team. A possible feature need not have a feature team yet, and Fathom warns about planned features that have none.
 - **Feature team membership:** A person can be on more than one feature team at a time. Membership changes can be planned ahead, like reporting changes.
-- **Feature team approval:** Software Engineering Managers propose and maintain feature teams, and the Director reviews and approves them.
+- **Feature team approval:** Engineering Managers propose and maintain feature teams, and the Engineering Director reviews and approves them.
 - **Team names:** Teams can be named.
 - **Team composition:** Balance is evaluated for both teams and feature teams. The measures, their targets, and how positions count toward them are configurable. Planned hires count toward a manager's reports, with a filter to exclude them in a later stage or release.
 - **Reporting view:** Reporting lines appear both as an org chart and within the unified people view.
@@ -66,6 +76,10 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 ## Configuration
 
 - **Flexible data model:** A fixed core of built-in tables, such as people, teams, projects, features, and allocations, with fixed key fields that Fathom's views and access rules rely on. Users extend it with custom fields on built-in tables and custom tables for reference lists, such as skills. How they are stored is proposed in [ADR 0005](../adr/0005-flexible-data-model.md).
+- **Built-in columns:** A built-in table has only the columns Fathom itself acts on, and the fewest of them required. Everything else is a column users add.
+- **Features' built-in columns:** A name and a status, both required. A target cycle, an estimate, a feature team, and the projects that need it are optional. Names need not be unique. Kind, product, initiative, priority, and theme are columns users add.
+- **Projects' built-in columns:** A number, required, and unique ignoring letter case, which identifies the project, and a name, required. An owner and customers are optional. A project's dates come from its milestones rather than being entered.
+- **Products and customers:** Built-in tables, each with a name, required and unique. Columns elsewhere pick from them through lists drawn from a table, as the [Roadmap](roadmap.md) sets out.
 - **Plain language:** Fields and tables are set up in everyday terms, such as "Must be filled in" and "Link to another table", never database terms.
 - **Sensitivity of custom fields:** Every custom field and table is assigned a sensitivity tier when it is created. Custom fields that hold personal information need HR's approval before use.
 - **Change history:** Every change to plan, people, and configuration data is recorded with its old and new values, who made it, and when, in a history that can only be added to. Changes saved together are grouped into a change set. Undoing a change makes a new change that puts back the old values, so the history is never rewritten.
@@ -75,7 +89,7 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 - **Lowering a list's visibility:** Allowed while columns draw on the list, which shows the values already chosen to more people. The change is recorded in the change history and can be undone, like any other.
 - **Columns on People:** The Workforce Administrator adds People's columns, each drawing on a list, ahead of the rest of custom fields. A column can be required only once everyone has a value, and can take only one choice only once no one has several. Its list cannot change while it has values.
 - **Column order:** Every column on People, built-in or added, can be moved, by dragging its header, with Alt and the arrow keys, or from its menu. The order is the same for everyone.
-- **Retiring and deleting:** Choices and lists can be [retired](domain.md#terms) and restored. Deleting is only for choices and lists nothing uses; a list cannot be retired or deleted while a column uses it. Every change to lists offers Undo.
+- **Retiring and deleting:** Choices and lists can be [retired](domain.md#table-terms) and restored. Deleting is only for choices and lists nothing uses; a list cannot be retired or deleted while a column uses it. Every change to lists offers Undo.
 - **Searching, filtering, and sorting:** Every table can be searched, and filtered and sorted by any column the user sees, with the same controls on every table. A table can be sorted by several columns in turn: each sort chosen is added after those already there, a column already sorted changes direction in place, and any level, the first included, can be removed on its own. People has them first, and other tables take them as they need them.
 - **Rows stay put while edited:** A row keeps its place while it is edited, even once it no longer matches the filter or would sort elsewhere, and moves or drops out when the search, filters, or sort next change. People a user adds stay at the end of the table until then, whether or not they match; people added by someone else appear, also at the end, only if they match.
 - **Views kept in the address:** A table's search, filters, and sort are kept in the page address, so they survive reloading, Back undoes them, and they can be shared as a link. How this is built is decided in [ADR 0006](../adr/0006-table-views-in-the-browser.md).

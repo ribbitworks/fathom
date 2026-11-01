@@ -7,21 +7,22 @@ A first sketch of Fathom's core entities and how they relate. It describes struc
 
 ## Overview
 
-The diagram shows the core relationships only. Dashed lines are proposals or relationships whose cardinality is not yet confirmed. Access records and snapshots are described below but not drawn. Patches appear as release streams under the release streams proposal.
+The diagram shows the core relationships only. Dashed lines are proposals or relationships whose cardinality is not yet confirmed. Access records and snapshots are described below but not drawn. Patches appear as release streams.
 
 ```mermaid
 erDiagram
-    PROJECT ||..o{ FEATURE : contains
+    PROJECT }o..o{ FEATURE : needs
+    PROJECT ||--|| FEATURE : "general feature"
     PROJECT |o--o{ MILESTONE : has
     FEATURE |o--o{ MILESTONE : has
-    PROJECT }o..|{ CUSTOMER : "driven by"
-    FEATURE }o..|{ PRODUCT : "part of"
+    PROJECT }o--o{ CUSTOMER : "driven by"
+    FEATURE }o..o{ PRODUCT : "part of"
     PROJECT }o..o{ PRODUCT : "delivers requirements for"
-    INITIATIVE }o..o| PROJECT : "allocated to"
-    PERSON ||--o{ PROJECT : owns
+    FEATURE }o--o| CYCLE : targets
+    PERSON |o--o{ PROJECT : owns
     PERSON ||..o{ TEAM : manages
     TEAM |o..o{ PERSON : includes
-    FEATURE_TEAM ||--o{ FEATURE : "owns and delivers"
+    FEATURE_TEAM |o--o{ FEATURE : "owns and delivers"
     FEATURE_TEAM ||..o{ MEMBERSHIP : has
     PERSON ||..o{ MEMBERSHIP : holds
     PERSON ||--o{ FEATURE_TEAM : leads
@@ -37,33 +38,28 @@ erDiagram
     USER |o..o| PERSON : "may be"
     CHANGE_SET ||--|{ CHANGE : groups
     USER |o--o{ CHANGE_SET : makes
-    RELEASE_STREAM ||..o{ CYCLE : defines
-    RELEASE_STREAM ||..o{ RELEASE : contains
-    RELEASE |o..|{ CYCLE : includes
-    FEATURE }o--o{ RELEASE : "ships in"
+    RELEASE_STREAM ||--o{ CYCLE : defines
+    RELEASE_STREAM ||--o{ RELEASE : contains
+    RELEASE |o--|{ CYCLE : includes
 ```
 
 ## Planning Entities
 
-- **Project:** Has a number, name, owner, dates, and status. Contains features and milestones, and links to its customers.
-- **Feature:** Has a name, dates, and status. Has no owner of its own; ownership comes from its feature team (see the Decisions Log). Belongs to a project (a working assumption, see the open questions in Domain Concepts), to one or more products, and to the feature team that owns and delivers it. Links to the releases it ships in.
-- **Milestone:** A dated point in a project or a feature.
+- **Project:** Has a number, a name, and optionally an owner and customers. Has milestones, which give it its dates, and links to the features it needs. Has one general feature, which takes allocations made to the project directly.
+- **Feature:** Has a name, a status, and optionally a target cycle, an estimate, and the feature team that owns and delivers it. Has no owner of its own; ownership comes from its feature team. Can be needed by several projects. Ships in the release that includes its target cycle, and its start and end months follow from its allocations.
+- **Milestone:** A dated point in a project or a feature, which says whether it is a customer delivery date.
 - **Allocation:** Links one person or planned hire to one feature for one month, with a percentage.
-- **Customer:** Has a name and a type (external or internal).
-- **Product:** Has a name.
-- **Initiative:** Has a name, and may link to a project.
+- **Estimate:** A feature's one estimate, kept in one unit of effort and shown in the unit the reader picks.
+- **Customer:** A built-in table with a name.
+- **Product:** A built-in table with a name. Features are part of products through a column users add.
 
-**Proposal:** Model direct allocation to a project as a general feature owned by the project, so allocations always target one kind of entity.
+The values of every built-in field are set out in the [Decisions Log](../product/decisions.md).
 
 ## Release Entities
 
-- **Cycle:** A period of development, with a name, a start date, and an end date.
-- **Release:** Links to the cycles it includes and the features that ship in it.
-- **Release stream (proposal):** Defines a cycle length and groups releases.
-
-**Proposal:** Record a candidate state on each cycle, so a candidate can be planned like a release before anyone decides. Confirming it creates the release, which includes the cycles set out in the Decisions Log.
-
-**Proposal:** Model patches and major releases the same way, as separate release streams, each with its own cycle length. Each release belongs to one stream.
+- **Cycle:** A planning period, with a name, a start date, and an end date, made ahead from its release stream's pattern.
+- **Release:** A named delivery in one release stream, which includes one or more of its cycles. Its date is the end of its last cycle, and its contents are the features that target those cycles.
+- **Release stream:** Defines a cycle length and naming pattern, from a given date, and groups releases. Patches and major releases are separate streams.
 
 ## Workforce Entities
 
@@ -76,7 +72,7 @@ erDiagram
 
 **Proposal:** Measure team composition from people's positions and their team or feature team membership, and compare it with configurable composition targets.
 
-**Proposal:** Give each person a monthly capacity, defaulting to a full month, so variable capacity such as part-time work can be supported later without changing the model. Whether v1 needs it is an open question in the Product Brief.
+**Proposal:** When variable capacity is added after v1, as the Decisions Log allows, give each person a monthly capacity, defaulting to a full month, so existing data needs no change.
 
 **Proposal:** Model allocations so they point to either a person or a planned hire, and transfer them to the new person when the hire is filled. The alternative is to treat a planned hire as a person record in a "planned" state, which is simpler for allocations but mixes real and hypothetical people.
 
@@ -106,7 +102,7 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 
 ## Change and History Entities
 
-- **Change set:** Changes saved together, with who made them and when. Until plan approval arrives, each is applied as it is saved.
+- **Change set:** Changes saved together, with who made them and when. Until the Draft and Approval slice of the [Implementation Plan](implementation-plan.md) is built, each is applied as it is saved.
 - **Change:** One field of one record changed in a change set, with its sensitivity tier and its old and new values.
 - **Snapshot:** A point-in-time copy of part of the plan. Its contents are set in the Decisions Log.
 
@@ -114,9 +110,8 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 
 ## Not Yet Modeled
 
-Roadmap themes and priorities depend on the open question below. How projects relate to products depends on an open question in Domain Concepts. Physical resources are a future possibility in the [Product Brief](../product/brief.md#future-possibilities). Dotted-line reporting relationships and licenses are out of scope for v1, as listed in the [Product Brief](../product/brief.md).
+Initiatives, themes, and priorities are not built in: an organization that uses them adds them as columns. How projects relate to products, if at all, is not yet decided. Physical resources are a future possibility in the [Product Brief](../product/brief.md#future-possibilities). Dotted-line reporting relationships and licenses are out of scope for v1, as listed in the [Product Brief](../product/brief.md).
 
 ## Open Questions
 
-1. **Estimated features:** Are estimated features that may come the same as planned features, perhaps with a status, or a separate pipeline?
-1. **Roadmap themes and priorities:** Do themes and priorities apply to initiatives or to features? What does an initiative contain?
+1. **Allocations with variable capacity:** Once a person can have less than a full month, does a 50% allocation mean half a month, or half of that person's capacity?
