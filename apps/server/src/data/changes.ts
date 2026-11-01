@@ -14,7 +14,7 @@ export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 // person, one field for each column, so the person's history holds all of their details. A table's
 // column order is one record, named after its table.
 export type RecordType =
-  "list" | "list-item" | "field" | "column-order" | "person";
+  "list" | "list-item" | "field" | "column-order" | "person" | "saved-view";
 
 export interface Change {
   recordType: RecordType;

@@ -41,6 +41,7 @@ import {
   FilterPopover,
   HeaderMarks,
   headerState,
+  type SavedViews,
   ViewBar,
 } from "./table-controls.tsx";
 import {
@@ -349,6 +350,7 @@ export function PeopleGrid({
   actions,
   view: asked,
   onView,
+  saved,
 }: {
   // Everyone the user may see; the view decides which are shown, and in what order.
   people: Person[];
@@ -362,6 +364,8 @@ export function PeopleGrid({
   actions: PeopleActions;
   view: View;
   onView: ChangeView;
+  // The table's saved views; absent where they are not offered.
+  saved?: SavedViews;
 }) {
   const columns = columnsFor(fields, lists, order, showDates);
   const view = knownView(asked, columns);
@@ -915,6 +919,7 @@ export function PeopleGrid({
         onLeave={() => {
           moveTo(active.row, active.column);
         }}
+        saved={saved}
       />
       <Paper withBorder>
         <div className={classes.peopleScroll}>

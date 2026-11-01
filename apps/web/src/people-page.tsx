@@ -5,9 +5,10 @@
 // those who may change planning configuration add, change, and delete columns, and move any column.
 // Every change shows at once and saves in the background, and the latest can be undone with Cmd+Z
 // or Ctrl+Z, or from its notification when it took something out of view. What the table shows,
-// its search, filters, and sort, is kept in the page address.
+// its search, filters, and sort, is kept in the page address, and can be saved as a view shared with
+// everyone who sees people.
 
-import type { Field, Person, PersonChange } from "@fathom/shared";
+import type { Field, Person, PersonChange, SavedView } from "@fathom/shared";
 import {
   Alert,
   Button,
@@ -26,20 +27,37 @@ import { PageHeader } from "./page-header.tsx";
 import { type PeopleActions, PeopleGrid } from "./people-grid.tsx";
 import {
   createPeople,
+  createView,
   deleteField,
   deletePerson,
+  deleteView,
   moveColumn,
   type PeopleData,
   peopleQuery,
   updatePerson,
+  updateView,
 } from "./people.ts";
 import { useSaving } from "./saving.ts";
-import type { ChangeView } from "./table-controls.tsx";
-import type { View } from "./table-view.ts";
+import type { ChangeView, SavedViews } from "./table-controls.tsx";
+import { searchFor, type View } from "./table-view.ts";
+import { type SavedViewResult, ViewDialog } from "./view-dialog.tsx";
 
 const newColumnId = "column-new";
 
 type Dialog = { kind: "new" } | { kind: "edit"; field: Field };
+
+// Naming a saved view: a new one for the view shown, or one to rename.
+interface Naming {
+  saved?: SavedView;
+  view: View;
+}
+
+// The saved views with one added or replaced.
+function withView(views: readonly SavedView[], saved: SavedView): SavedView[] {
+  return views.some((other) => other.id === saved.id)
+    ? views.map((other) => (other.id === saved.id ? saved : other))
+    : [...views, saved];
+}
 
 // A person with a change applied, as the table shows it before it is saved.
 function changed(person: Person, change: PersonChange): Person {
@@ -70,12 +88,18 @@ export function PeoplePage({
   showDates,
   view,
   onView,
+  applied,
+  onApply,
 }: {
   canEdit: boolean;
   canEditColumns: boolean;
   showDates: boolean;
   view: View;
   onView: ChangeView;
+  // The saved view the view started from, and how to apply one, replacing the current address
+  // rather than adding to its history when asked.
+  applied: string | undefined;
+  onApply: (view: View, id: string, replace?: boolean) => void;
 }) {
   const query = useQuery(peopleQuery);
   const lists = useQuery(listsQuery);
@@ -83,10 +107,13 @@ export function PeoplePage({
   const [dialog, setDialog] = useState<Dialog>();
   const [opened, setOpened] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Like the column dialog, the naming dialog stays set while it closes.
+  const [naming, setNaming] = useState<Naming>();
+  const [namingOpened, setNamingOpened] = useState(false);
   const { save, undoable, done } = useSaving<PeopleData>({
     queryKey: peopleQuery.queryKey,
     removed: "Someone else has removed this. The people have been refreshed.",
-    blocked: opened,
+    blocked: opened || namingOpened,
   });
 
   const actions: PeopleActions = {
@@ -186,6 +213,63 @@ export function PeoplePage({
     });
   };
 
+  const savedViews = (views: SavedView[]): SavedViews => ({
+    views,
+    applied,
+    onApply: (shown, id) => {
+      onApply(shown, id);
+    },
+    onName: (saved, shown) => {
+      setNaming(saved ? { saved, view: shown } : { view: shown });
+      setNamingOpened(true);
+    },
+    onUpdate: (saved, shown) => {
+      const definition = searchFor(shown);
+      save({
+        next: (data) => ({
+          ...data,
+          views: withView(data.views, { ...saved, definition }),
+        }),
+        save: async () =>
+          (await updateView(saved.id, { definition })).changeSetId,
+        failure: `Fathom could not update ${saved.name}.`,
+        onSaved: (changeSetId, before) => {
+          undoable(changeSetId, before);
+        },
+      });
+    },
+    onDelete: (saved) => {
+      save({
+        next: (data) => ({
+          ...data,
+          views: data.views.filter((other) => other.id !== saved.id),
+        }),
+        save: () => deleteView(saved.id),
+        failure: `Fathom could not delete ${saved.name}.`,
+        onSaved: (changeSetId, before) => {
+          done(`Deleted the ${saved.name} view.`, changeSetId, before);
+        },
+      });
+    },
+  });
+
+  // The dialog saved the view itself, so the page shows it at once. A new view is then the one
+  // applied.
+  const named = ({ view: saved, changeSetId }: SavedViewResult) => {
+    setNamingOpened(false);
+    save({
+      next: (data) => ({ ...data, views: withView(data.views, saved) }),
+      save: () => Promise.resolve(changeSetId),
+      failure: "",
+      onSaved: (_saved, before) => {
+        undoable(changeSetId, before);
+      },
+    });
+    if (naming?.saved === undefined && naming) {
+      onApply(naming.view, saved.id, true);
+    }
+  };
+
   let content: ReactNode;
   if (query.isPending || lists.isPending) {
     content = <Loader role="status" aria-label="Loading" />;
@@ -231,7 +315,35 @@ export function PeoplePage({
           actions={actions}
           view={view}
           onView={onView}
+          saved={savedViews(query.data.views)}
         />
+        <Modal
+          opened={namingOpened}
+          onClose={() => {
+            setNamingOpened(false);
+          }}
+          closeOnEscape={!busy}
+          closeOnClickOutside={!busy}
+          withCloseButton={!busy}
+          title={naming?.saved ? "Rename view" : "Save view"}
+        >
+          {naming && (
+            <ViewDialog
+              {...(naming.saved ? { view: naming.saved } : {})}
+              views={query.data.views}
+              save={(name) =>
+                naming.saved
+                  ? updateView(naming.saved.id, { name })
+                  : createView({ name, definition: searchFor(naming.view) })
+              }
+              onSaved={named}
+              onCancel={() => {
+                setNamingOpened(false);
+              }}
+              onBusy={setBusy}
+            />
+          )}
+        </Modal>
         <Modal
           opened={opened}
           onClose={() => {

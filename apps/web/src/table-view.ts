@@ -3,8 +3,14 @@
 // Filtering, searching, and sorting any table, in the browser, over the rows the user has been sent,
 // as ADR 0006 sets out. A table describes its columns, each of a kind, and how to read a row's value
 // in each; each kind says how its values are searched, sorted, and filtered, so a new kind is added
-// in one place. The view a table shows, its search, filters, and sort, is kept in the page address.
+// in one place. The view a table shows, its search, filters, and sort, is kept in the page address,
+// with the saved view it started from, if any.
 
+import {
+  type Filter,
+  type ViewDefinition,
+  viewDefinitionSchema,
+} from "@fathom/shared";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -44,12 +50,6 @@ export interface View {
 
 export const emptyView: View = { search: "", filters: {}, sort: [] };
 
-// Limits on what the address may hold, which only a hand-made address reaches.
-const textLimit = 200;
-const keyLimit = 64;
-const levelsLimit = 10;
-
-const key = z.string().min(1).max(keyLimit);
 const isoDay = z.iso.date();
 
 // Whether text is a whole date, such as 2026-10-31, that exists.
@@ -57,61 +57,20 @@ export function isDay(text: string): boolean {
   return isoDay.safeParse(text).success;
 }
 
-// A column's filter. A row matches when its value matches any part that is set: for text, when it
-// contains the text; for dates, when it falls between from and to, either of which may be left
-// open; for choices, when it holds any of them. With `empty`, an empty value matches too.
-const filterSchema = z.object({
-  contains: z.string().max(textLimit).optional(),
-  from: isoDay.optional(),
-  to: isoDay.optional(),
-  any: z.array(key).max(textLimit).optional(),
-  empty: z.boolean().optional(),
-});
+export type { Filter } from "@fathom/shared";
 
-export type Filter = z.infer<typeof filterSchema>;
-
-const sortLevel = z.string().regex(/^-?[\w-]{1,64}$/);
-
-// The view as the address holds it: the search, each column's filter by key, and the sort as keys,
-// each with a leading "-" when descending. Each filter and sort level that does not fit is dropped
-// on its own, keeping the others, as is anything else that does not fit.
-export const viewSearchSchema = z.object({
-  search: z.string().max(textLimit).optional().catch(undefined),
-  filters: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .catch(undefined)
-    .transform((raw) =>
-      raw === undefined
-        ? undefined
-        : Object.fromEntries(
-            Object.entries(raw).flatMap(([name, value]) => {
-              const filter = filterSchema.safeParse(value);
-              return key.safeParse(name).success && filter.success
-                ? [[name, filter.data]]
-                : [];
-            }),
-          ),
-    ),
-  sort: z
-    .array(z.unknown())
-    .optional()
-    .catch(undefined)
-    .transform((raw) =>
-      raw
-        ?.filter((level): level is string => sortLevel.safeParse(level).success)
-        .slice(0, levelsLimit),
-    ),
+// The view as the address holds it, as a saved view keeps it, and the saved view it started from,
+// if any. Anything that does not fit is dropped, keeping the rest.
+export const viewSearchSchema = viewDefinitionSchema.extend({
+  view: z.uuid().optional().catch(undefined),
 });
 
 // The view as read from the address, and as written to it.
-export interface ViewSearch {
-  search?: string | undefined;
-  filters?: Record<string, Filter> | undefined;
-  sort?: string[] | undefined;
+export interface ViewSearch extends ViewDefinition {
+  view?: string | undefined;
 }
 
-export function viewFrom(search: ViewSearch): View {
+export function viewFrom(search: ViewDefinition): View {
   return {
     search: search.search ?? "",
     filters: search.filters ?? {},
@@ -123,23 +82,39 @@ export function viewFrom(search: ViewSearch): View {
   };
 }
 
-// A table's view as its page's address holds it, and how to change it, for any page whose route
-// reads its address with viewSearchSchema. `go` sets the address, replacing the current entry in its
-// history when asked.
+// A table's view as its page's address holds it, the saved view it started from, and how to change
+// it, for any page whose route reads its address with viewSearchSchema. `go` sets the address,
+// replacing the current entry in its history when asked. A changed view still names the saved view
+// it started from, until it is cleared.
 export function viewProps(
   search: ViewSearch,
   go: (search: ViewSearch, replace: boolean) => void,
-): { view: View; onView: (view: View, replace?: boolean) => void } {
+): {
+  view: View;
+  applied: string | undefined;
+  onView: (view: View, replace?: boolean) => void;
+  onApply: (view: View, id: string, replace?: boolean) => void;
+} {
   return {
     view: viewFrom(search),
+    applied: search.view,
     onView: (view, replace = false) => {
-      go(searchFor(view), replace);
+      const written = searchFor(view);
+      go(
+        search.view === undefined || Object.keys(written).length === 0
+          ? written
+          : { ...written, view: search.view },
+        replace,
+      );
+    },
+    onApply: (view, id, replace = false) => {
+      go({ ...searchFor(view), view: id }, replace);
     },
   };
 }
 
 // The view as the address holds it, leaving out what is not set so the address stays short.
-export function searchFor(view: View): ViewSearch {
+export function searchFor(view: View): ViewDefinition {
   const filters = Object.entries(view.filters).filter(([, filter]) =>
     isActive(filter),
   );
@@ -154,6 +129,26 @@ export function searchFor(view: View): ViewSearch {
           ),
         }),
   };
+}
+
+// A value with its keys in order and nothing left undefined, so equal values are written alike.
+function canonical(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonical);
+  if (typeof value !== "object" || value === null) return value;
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([, part]) => part !== undefined)
+      .sort(([first], [second]) => first.localeCompare(second))
+      .map(([key, part]) => [key, canonical(part)]),
+  );
+}
+
+// Whether two views show the same rows in the same order.
+export function sameView(first: View, second: View): boolean {
+  return (
+    JSON.stringify(canonical(searchFor(first))) ===
+    JSON.stringify(canonical(searchFor(second)))
+  );
 }
 
 // Whether a filter limits anything.

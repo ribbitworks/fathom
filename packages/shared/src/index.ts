@@ -69,6 +69,20 @@ export {
   type Saved,
   savedSchema,
 } from "./people.ts";
+export {
+  type Filter,
+  filterSchema,
+  type SavedView,
+  type SavedViewChange,
+  savedViewChangeSchema,
+  type SavedViewRequest,
+  savedViewRequestSchema,
+  savedViewSchema,
+  type ViewDefinition,
+  viewColumnKeys,
+  viewDefinitionSchema,
+  viewLengths,
+} from "./views.ts";
 export { type GreetingResponse, greetingResponseSchema } from "./greeting.ts";
 export {
   type SessionResponse,

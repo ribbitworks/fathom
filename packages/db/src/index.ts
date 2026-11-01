@@ -29,6 +29,7 @@ export {
   lists,
   people,
   rateLimits,
+  savedViews,
   sessions,
   userRoles,
   users,

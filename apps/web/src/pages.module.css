@@ -423,9 +423,22 @@
   text-align: center;
 }
 
-/* The bar above a table: its search, the filters in use, and how many rows are shown. */
+/* The bar above a table: its saved views, its search, the filters in use, and how many rows are
+   shown. */
 .tableSearch {
   width: 16rem;
+}
+
+/* Beside a saved view's name, when the table's view has changed since it was applied. */
+.changedMark {
+  margin-left: 6px;
+  color: var(--mantine-primary-color-filled);
+}
+
+/* Marks the saved view applied, keeping every view's name aligned. */
+.appliedMark {
+  display: inline-block;
+  width: 1em;
 }
 
 .choiceFilter {

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People and the columns on the People table, through the server's API. Each change returns the
-// change set it was saved in, which undoing it names, or null when nothing changed.
+// People, the columns on the People table, and its saved views, through the server's API. Each
+// change returns the change set it was saved in, which undoing it names, or null when nothing
+// changed.
 
 import {
   changeSetIdSchema,
@@ -12,6 +13,9 @@ import {
   type PersonRequest,
   peopleSchema,
   savedSchema,
+  type SavedViewChange,
+  type SavedViewRequest,
+  savedViewSchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
@@ -87,4 +91,28 @@ export async function moveColumn(
 
 export async function deleteField(id: string): Promise<string | null> {
   return (await sendDeleteFor(columnPath(id), savedSchema)).changeSetId;
+}
+
+const viewPath = (id: string) => `/api/people/views/${encodeURIComponent(id)}`;
+const viewResponse = z.object({
+  view: savedViewSchema,
+  changeSetId: changeSetIdSchema,
+});
+
+export async function createView(
+  request: SavedViewRequest,
+): Promise<z.infer<typeof viewResponse>> {
+  return sendJsonFor("POST", "/api/people/views", request, viewResponse);
+}
+
+// Renames a saved view, saves a new view over it, or both.
+export async function updateView(
+  id: string,
+  change: SavedViewChange,
+): Promise<z.infer<typeof viewResponse>> {
+  return sendJsonFor("PUT", viewPath(id), change, viewResponse);
+}
+
+export async function deleteView(id: string): Promise<string | null> {
+  return (await sendDeleteFor(viewPath(id), savedSchema)).changeSetId;
 }

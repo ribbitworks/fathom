@@ -2,10 +2,11 @@
 
 // Tests for filtering, searching, and sorting any table: each kind of column's search, sort, and
 // filter; empty values last; sorting by several columns; columns the table does not have; reading
-// and writing the view in the page address; and rows keeping their place until the view changes.
+// and writing the view in the page address, with the saved view it started from; comparing views;
+// and rows keeping their place until the view changes.
 
 import { renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   applyView,
   emptyView,
@@ -14,11 +15,13 @@ import {
   isDay,
   knownView,
   narrows,
+  sameView,
   searchFor,
   type TableColumn,
   useSteadyOrder,
   type View,
   viewFrom,
+  viewProps,
   viewSearchSchema,
 } from "./table-view.ts";
 
@@ -275,6 +278,44 @@ describe("the view in the page address", () => {
         sort: Array.from({ length: 12 }, (_, at) => `k${String(at)}`),
       }).sort,
     ).toHaveLength(10);
+  });
+
+  it("names the saved view the view started from, until it is cleared", () => {
+    const id = "00000000-0000-4000-8000-0000000000a1";
+    expect(viewSearchSchema.parse({ view: id }).view).toBe(id);
+    expect(viewSearchSchema.parse({ view: "not a view" }).view).toBeUndefined();
+    const go = vi.fn();
+    const props = viewProps({ search: "a", view: id }, go);
+    expect(props.applied).toBe(id);
+    props.onView(view({ search: "b" }), true);
+    expect(go).toHaveBeenLastCalledWith({ search: "b", view: id }, true);
+    props.onView(emptyView);
+    expect(go).toHaveBeenLastCalledWith({}, false);
+    props.onApply(view({ search: "c" }), "other");
+    expect(go).toHaveBeenLastCalledWith({ search: "c", view: "other" }, false);
+    viewProps({}, go).onView(view({ search: "d" }));
+    expect(go).toHaveBeenLastCalledWith({ search: "d" }, false);
+  });
+
+  it("knows views that show the same rows in the same order, however they were written", () => {
+    expect(
+      sameView(
+        view({
+          filters: { name: { empty: true, contains: "a" }, start: {} },
+          sort: [{ key: "name", descending: false }],
+        }),
+        view({
+          filters: { name: { contains: "a", empty: true, to: undefined } },
+          sort: [{ key: "name", descending: false }],
+        }),
+      ),
+    ).toBe(true);
+    expect(
+      sameView(
+        view({ sort: [{ key: "name", descending: false }] }),
+        view({ sort: [{ key: "name", descending: true }] }),
+      ),
+    ).toBe(false);
   });
 
   it("knows a whole date that exists", () => {

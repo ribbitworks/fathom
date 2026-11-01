@@ -104,7 +104,12 @@ const order = [
   "endDate",
 ];
 const peopleAnswer = () =>
-  Response.json({ people: [avery, blake], fields: [site, role], order });
+  Response.json({
+    people: [avery, blake],
+    fields: [site, role],
+    order,
+    views: [],
+  });
 const savedAs =
   (changeSetId: string | null = s1) =>
   () =>
@@ -212,6 +217,7 @@ describe("who sees the People page", () => {
           people: [{ ...avery, startDate: undefined, endDate: undefined }],
           fields: [site],
           order: ["employeeId", "preferredName", "f1"],
+          views: [],
         }),
       "GET /api/lists": listsAnswer,
     });
@@ -258,7 +264,8 @@ describe("who sees the People page", () => {
     expect(
       await screen.findByText("Fathom could not load the people."),
     ).toBeDefined();
-    answer = () => Response.json({ people: [], fields: [], order: [] });
+    answer = () =>
+      Response.json({ people: [], fields: [], order: [], views: [] });
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(await screen.findByText("No people yet")).toBeDefined();
   });
@@ -437,6 +444,7 @@ describe("editing people", () => {
             people: [blake, { ...avery, preferredName: "Zed Fictional" }],
             fields: [site, role],
             order,
+            views: [],
           });
         return savedAs()();
       },
@@ -1214,6 +1222,7 @@ describe("searching, sorting, and filtering", () => {
             ],
             fields: [site, role],
             order,
+            views: [],
           });
         return Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 });
       },
@@ -1418,6 +1427,7 @@ describe("searching, sorting, and filtering", () => {
             people: [{ ...avery, values: { f1: ["c2"] } }, blake],
             fields: [site, role],
             order,
+            views: [],
           });
         return savedAs()();
       },
@@ -1449,6 +1459,7 @@ describe("searching, sorting, and filtering", () => {
           ],
           fields: [site],
           order,
+          views: [],
         }),
       "GET /api/lists": listsAnswer,
     });
@@ -1484,5 +1495,210 @@ describe("searching, sorting, and filtering", () => {
         .getAllByRole("columnheader")
         .map((th) => th.textContent),
     ).toEqual(["Name", "Employee ID", "Site"]);
+  });
+
+  describe("saved views", () => {
+    const v1 = "00000000-0000-4000-8000-0000000000a1";
+    const v2 = "00000000-0000-4000-8000-0000000000a2";
+    const harbour = {
+      id: v1,
+      name: "Harbour",
+      definition: { filters: { f1: { any: ["c1"] } } },
+      canChange: true,
+    };
+    const theirs = {
+      id: v2,
+      name: "Theirs",
+      definition: { sort: ["-preferredName"] },
+      canChange: false,
+    };
+    const withViews = (views: object[]) => () =>
+      Response.json({
+        people: [avery, blake],
+        fields: [site, role],
+        order,
+        views,
+      });
+    const viewsButton = () =>
+      screen.getByRole("button", {
+        name: (name) => name.startsWith("Views"),
+      });
+    async function chooseView(item: string | RegExp) {
+      await userEvent.click(viewsButton());
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: item }),
+      );
+      await vi.waitFor(() => {
+        expect(screen.queryByRole("menu")).toBeNull();
+      });
+    }
+
+    it("offers nothing to save or apply until there is a view or a saved one", async () => {
+      await openAt("/people");
+      expect(
+        screen.queryByRole("button", {
+          name: (name) => name.startsWith("Views"),
+        }),
+      ).toBeNull();
+    });
+
+    it("saves the view under a name, applies it, and goes back with Back", async () => {
+      let views: object[] = [];
+      const { fetch, history } = await openAt(
+        '/people?filters={"f1":{"any":["c1"]}}',
+        {
+          "GET /api/people": () => withViews(views)(),
+          "POST /api/people/views": () => {
+            views = [harbour];
+            return Response.json(
+              { view: harbour, changeSetId: s1 },
+              { status: 201 },
+            );
+          },
+        },
+      );
+      expect(viewsButton().getAttribute("aria-label")).toBe("Views");
+      await chooseView("Save view…");
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.keyboard("{Enter}");
+      expect(within(dialog).getByText("Name needed")).toBeDefined();
+      await userEvent.keyboard("Harbour{Enter}");
+      await vi.waitFor(() => {
+        expect(address(history)).toContain(`view=${v1}`);
+      });
+      expect(bodyOf(fetch, "POST", "/api/people/views")).toEqual([
+        { name: "Harbour", definition: { filters: { f1: { any: ["c1"] } } } },
+      ]);
+      expect(viewsButton().getAttribute("aria-label")).toBe("Views: Harbour");
+
+      await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
+      expect(address(history)).not.toContain("view=");
+      expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+      await chooseView("Harbour");
+      expect(shownNames()).toEqual(["Avery Fictional"]);
+      expect(address(history)).toContain(`view=${v1}`);
+      act(() => {
+        history.back();
+      });
+      await vi.waitFor(() => {
+        expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+      });
+    });
+
+    it("marks a changed view, updates, renames, and deletes the user's own, with Undo", async () => {
+      // The server keeps what each change sent.
+      let mine = harbour;
+      const { fetch, history } = await openAt(
+        `/people?filters={"f1":{"any":["c1"]}}&view=${v1}`,
+        {
+          "GET /api/people": () => withViews([mine, theirs])(),
+          [`PUT /api/people/views/${v1}`]: () => {
+            const [change] = bodyOf(
+              fetch,
+              "PUT",
+              `/api/people/views/${v1}`,
+            ).slice(-1) as object[];
+            mine = { ...mine, ...change };
+            return Response.json({ view: mine, changeSetId: s1 });
+          },
+          [`DELETE /api/people/views/${v1}`]: savedAs(),
+        },
+      );
+      expect(viewsButton().getAttribute("aria-label")).toBe("Views: Harbour");
+      await choose("Name", "Sort A to Z");
+      expect(viewsButton().getAttribute("aria-label")).toBe(
+        "Views: Harbour, changed",
+      );
+      expect(address(history)).toContain(`view=${v1}`);
+      await chooseView("Update Harbour");
+      expect(bodyOf(fetch, "PUT", `/api/people/views/${v1}`)).toEqual([
+        {
+          definition: {
+            filters: { f1: { any: ["c1"] } },
+            sort: ["preferredName"],
+          },
+        },
+      ]);
+      expect(viewsButton().getAttribute("aria-label")).toBe("Views: Harbour");
+
+      await chooseView("Rename…");
+      const dialog = await screen.findByRole("dialog", { name: "Rename view" });
+      const name = within(dialog).getByRole("textbox", { name: "Name" });
+      await userEvent.clear(name);
+      await userEvent.type(name, "theirs");
+      expect(within(dialog).getByText("Already a view")).toBeDefined();
+      await userEvent.clear(name);
+      await userEvent.type(name, "Home{Enter}");
+      await vi.waitFor(() => {
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+      expect(bodyOf(fetch, "PUT", `/api/people/views/${v1}`)).toContainEqual({
+        name: "Home",
+      });
+
+      await chooseView("Delete view");
+      expect(fetch).toHaveBeenCalledWith(
+        `/api/people/views/${v1}`,
+        expect.objectContaining({ method: "DELETE" }),
+      );
+      await screen.findByText("Deleted the Home view.");
+      await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+      await vi.waitFor(() => {
+        expect(undone(fetch)).toEqual([s1]);
+      });
+    });
+
+    it("lets others apply a view without changing it, save it as their own, and clear it", async () => {
+      await openAt(`/people?sort=["-preferredName"]&view=${v2}`, {
+        "GET /api/people": withViews([harbour, theirs]),
+      });
+      await userEvent.click(viewsButton());
+      expect(
+        (await screen.findAllByRole("menuitem")).map(
+          (item) => item.textContent,
+        ),
+      ).toEqual(["Harbour", "✓Theirs, applied", "Clear view", "Save view…"]);
+      await userEvent.click(
+        screen.getByRole("menuitem", { name: "Save view…" }),
+      );
+      await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.keyboard("{Escape}");
+      await vi.waitFor(() => {
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+      await chooseView("Clear view");
+      expect(viewsButton().getAttribute("aria-label")).toBe("Views");
+    });
+
+    it("refuses a name someone has just taken, and says when a view cannot be saved", async () => {
+      let status = 409;
+      await openAt("/people?search=avery", {
+        "GET /api/people": withViews([]),
+        "POST /api/people/views": () =>
+          Response.json(
+            { error: "There is already a view with that name" },
+            { status },
+          ),
+      });
+      await chooseView("Save view…");
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.keyboard("Taken{Enter}");
+      expect(await within(dialog).findByText("Already a view")).toBeDefined();
+      status = 500;
+      await userEvent.keyboard("!{Enter}");
+      expect(await within(dialog).findByRole("alert")).toBeDefined();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Cancel" }),
+      );
+      await vi.waitFor(() => {
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+      await chooseView("Save view…");
+      await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.keyboard("{Escape}");
+      await vi.waitFor(() => {
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+    });
   });
 });

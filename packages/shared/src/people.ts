@@ -7,6 +7,7 @@
 
 import { z } from "zod";
 import { listLengths } from "./lists.ts";
+import { savedViewSchema } from "./views.ts";
 
 export const personLengths = {
   preferredName: 100,
@@ -58,12 +59,13 @@ export const personSchema = z.object({
 export type Person = z.infer<typeof personSchema>;
 
 // Everyone the user may see, by preferred name, with the added columns whose values they may see,
-// and the order of the columns they see: built-in ones by name, such as "employeeId", and added ones
-// by identifier.
+// the order of the columns they see: built-in ones by name, such as "employeeId", and added ones
+// by identifier, and the saved views of the People table they may see, by name.
 export const peopleSchema = z.object({
   people: z.array(personSchema),
   fields: z.array(fieldSchema),
   order: z.array(z.string()),
+  views: z.array(savedViewSchema),
 });
 
 const preferredName = z.string().trim().min(1).max(personLengths.preferredName);

@@ -18,10 +18,16 @@ import {
   listItems,
   lists,
   people,
+  savedViews,
 } from "@fathom/db";
 import { type Tier, tierSchema } from "@fathom/shared";
 import { and, asc, count, eq, gt, inArray, or, sql } from "drizzle-orm";
-import { type Actor, requirePermission, requireTierEdit } from "../access.ts";
+import {
+  type Actor,
+  requirePermission,
+  requireTierEdit,
+  seesTier,
+} from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import {
   type Change,
@@ -38,6 +44,7 @@ import {
   recordSensitiveChanges,
 } from "./people.ts";
 import { fieldOfValue, readColumns, writeValues } from "./values.ts";
+import { requireViewUndo, viewTierNow } from "./views.ts";
 
 const changedSince =
   "This has been changed since, so it can no longer be undone";
@@ -49,6 +56,8 @@ const editPermission = {
   field: "configuration:edit",
   "column-order": "configuration:edit",
   person: "people:edit",
+  // Who may change each view is checked for the view itself.
+  "saved-view": "people:view",
 } as const;
 
 // The order kinds of record are put back in, so a record comes back before those that belong to it.
@@ -59,6 +68,7 @@ const kindOrder: readonly RecordType[] = [
   "field",
   "column-order",
   "person",
+  "saved-view",
 ];
 
 // The table each kind of record is kept in. A column order is only ever changed, never created or
@@ -68,6 +78,7 @@ const tables = {
   "list-item": listItems,
   field: fields,
   person: people,
+  "saved-view": savedViews,
 } as const;
 const tableOf = (record: Undone) =>
   tables[record.recordType as keyof typeof tables];
@@ -77,6 +88,8 @@ const text: Convert = (value) => String(value);
 const flag: Convert = (value) => value === true;
 const day: Convert = (value) => (typeof value === "string" ? value : null);
 const tier: Convert = (value) => tierSchema.catch("general").parse(value);
+// Read back through the view's own checks whenever it is read.
+const asStored: Convert = (value) => value;
 
 // The database columns each kind of record has, as the change history names its fields, and how to
 // read each column's value from the history. Other fields, such as a record's place in its order or
@@ -99,6 +112,12 @@ const columnsOf: Record<
     employeeId: text,
     startDate: day,
     endDate: day,
+  },
+  "saved-view": {
+    tableName: text,
+    name: text,
+    definition: asStored,
+    createdBy: text,
   },
 };
 
@@ -298,8 +317,9 @@ const idsOf = (records: readonly Undone[], kind: RecordType) =>
   records.filter((record) => record.recordType === kind).map(({ id }) => id);
 
 // Locks every record the undo changes that still exists, in the order other changes lock them:
-// lists, then their choices, then columns, then the column order, then people. A change saved at the
-// same moment either finishes first, and is then seen as a change since, or waits for the undo.
+// lists, then their choices, then columns, then the column order, then people, then saved views. A
+// change saved at the same moment either finishes first, and is then seen as a change since, or
+// waits for the undo.
 async function lockRecords(
   transaction: Transaction,
   records: readonly Undone[],
@@ -345,6 +365,12 @@ async function lockRecords(
     .where(inArray(people.id, idsOf(records, "person")))
     .orderBy(asc(people.id))
     .for("update");
+  await transaction
+    .select({ id: savedViews.id })
+    .from(savedViews)
+    .where(inArray(savedViews.id, idsOf(records, "saved-view")))
+    .orderBy(asc(savedViews.id))
+    .for("update");
 }
 
 async function undoIn(
@@ -377,13 +403,47 @@ async function undoIn(
   // A column's values are as sensitive as its list is now, or was when they changed, whichever is
   // more sensitive.
   const tierNow = personTier(await readColumns(transaction));
-  const undoing = reversed(rows).map((change) =>
-    change.recordType === "person" && fieldOfValue(change.field) !== null
-      ? { ...change, tier: higher(change.tier, tierNow(change.field)) }
-      : change,
-  );
-  for (const changed of new Set(undoing.map((change) => change.tier))) {
-    if (changed !== "general") requireTierEdit(actor, changed);
+  // So is a saved view's history, as sensitive as the columns it uses are now.
+  const viewTiers = new Map<string, Tier>();
+  for (const record of records) {
+    if (record.recordType === "saved-view") {
+      const held = rows
+        .filter(
+          (row) => row.recordId === record.id && row.field === "definition",
+        )
+        .flatMap((row) => [row.oldValue, row.newValue]);
+      viewTiers.set(record.id, await viewTierNow(transaction, record.id, held));
+    }
+  }
+  const undoing = reversed(rows).map((change) => {
+    if (change.recordType === "person" && fieldOfValue(change.field) !== null) {
+      return { ...change, tier: higher(change.tier, tierNow(change.field)) };
+    }
+    return change.recordType === "saved-view"
+      ? {
+          ...change,
+          // Every view the change set changed has its tier, found just above.
+          tier: higher(change.tier, viewTiers.get(change.recordId) as Tier),
+        }
+      : change;
+  });
+  // A view's tier is that of the columns it uses, which its maker needs only to see.
+  for (const change of undoing) {
+    if (change.recordType === "saved-view") {
+      if (!seesTier(actor, change.tier)) throw new ForbiddenError();
+    } else if (change.tier !== "general") {
+      requireTierEdit(actor, change.tier);
+    }
+  }
+  for (const record of records) {
+    if (record.recordType === "saved-view") {
+      await requireViewUndo(
+        transaction,
+        actor,
+        record.id,
+        record.old.get("createdBy"),
+      );
+    }
   }
   const later = await transaction
     .select({ id: changes.id })

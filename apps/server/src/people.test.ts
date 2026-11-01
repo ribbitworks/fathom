@@ -207,6 +207,26 @@ describe("who may read and change people", () => {
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({ error: "Forbidden" });
   });
+
+  // Saved views need only seeing people, so each role is tried on its own.
+  const view = `/api/people/views/${randomUUID()}`;
+  const viewChanges: [Method, string, object | undefined][] = [
+    ["POST", "/api/people/views", { name: "Fictional", definition: {} }],
+    ["PUT", view, { name: "Fictional" }],
+    ["DELETE", view, undefined],
+  ];
+  it.each(
+    viewChanges.flatMap((change) =>
+      roleSchema.options
+        .filter((role) => !rolesGranting("people:view").includes(role))
+        .map((role) => [role, ...change] as const),
+    ),
+  )("refuses a %s %s %s", async (role, method, url, payload) => {
+    const { cookie } = await test.signedIn([role]);
+    const response = await send(cookie, method, url, payload);
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toEqual({ error: "Forbidden" });
+  });
 });
 
 describe("signed-out requests", () => {
@@ -219,6 +239,9 @@ describe("signed-out requests", () => {
     ["PUT", `/api/people/columns/${randomUUID()}`],
     ["DELETE", `/api/people/columns/${randomUUID()}`],
     ["PUT", "/api/people/columns/employeeId/position"],
+    ["POST", "/api/people/views"],
+    ["PUT", `/api/people/views/${randomUUID()}`],
+    ["DELETE", `/api/people/views/${randomUUID()}`],
     ["POST", `/api/undo/${randomUUID()}`],
   ] as [Method, string][])(
     "refuses %s %s without a session",

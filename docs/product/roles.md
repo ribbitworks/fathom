@@ -28,6 +28,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | Confidential data | None | None | None | None | Edit | View | None | None |
 | Planning configuration: cycles, cycle names, patch frequency, composition targets, lists of choices, and People's columns and their order | View | View | View | View | Edit | View | View | None |
 | Draft plan changes | None | Submit | Submit | None | None | None | Approve | None |
+| Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
 | Access history | None | None | None | None | None | None | None | View (**proposal**) |
 

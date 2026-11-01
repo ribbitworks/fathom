@@ -74,7 +74,7 @@ Until plan approval arrives in the next stage, edits go straight to the live pla
 
 Goals the owner has added that are not yet placed in a stage:
 
-- **Saved views and pinned views:** A table's search, filters, and sort, once chosen, can be saved as a view and applied again, from a list of saved views, as a pinned view that stays visible as its own table until it is unpinned, or both. The owner asked for saved views as the next change after searching, filtering, and sorting.
+- **Pinned views:** A saved view kept visible as its own table, alongside the table's own view, until it is unpinned. Until then, pinning a view means applying it, as the [Decisions Log](decisions.md) records.
 - **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed. Counts work on any column, but sums and other totals of amounts need the number and currency column types under Your Own Fields and Tables.
 - **Lists drawn from a table:** Once there are more tables, a list whose choices are the distinct values of a chosen column in a chosen table, so a column elsewhere can pick from them without the values being kept twice.
 - **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.

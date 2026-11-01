@@ -1,7 +1,7 @@
 # Fathom — Domain Concepts
 
 **Status:** Draft
-**Last updated:** 2026-10-30
+**Last updated:** 2026-10-31
 
 How the organization's software work is structured. These definitions inform the data model and roadmap planning later. They are not necessarily input into the [Use Cases](use-cases.md). See also the [Product Brief](brief.md) and the [Decisions Log](decisions.md).
 
@@ -23,6 +23,8 @@ How the organization's software work is structured. These definitions inform the
 - **Feature team:** The people working on a set of related features. Ideally a feature team is made up of the same people as a team, but not always. Feature teams deliver features included in a release, and are less concerned with projects.
 - **Feature lead:** The person who leads a feature team.
 - **Retired:** A retired choice or list stays on records that already have it, but is no longer offered for new ones, and can be restored.
+- **View:** What a table shows: its search, filters, and sort.
+- **Saved view:** A view saved under a name, shared with everyone who sees the table, and applied again from the table's Views menu.
 - **Resource:** Anything that can be allocated to work, currently people and planned hires.
 - **Estimate:** A rough size of the effort a feature needs, not its cost, such as a rough order of magnitude (ROM) or a SWAG.
 - **Delivery:** Taking a feature, or an increment of it, from start to finish within a release, from requirements analysis to fully tested.

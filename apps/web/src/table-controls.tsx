@@ -3,8 +3,9 @@
 // The controls that change what a table shows, for any table and any kind of column: the search
 // field, which Cmd+F or Ctrl+F focuses and Esc clears; each column's sort and filter, chosen from
 // its menu, each sort added as the next level; each column's filter, edited in a popover beside its
-// header; and the bar naming each level of the sort and each filter, which removes them one at a
-// time or all at once. What they change is the table's view, as table-view.ts sets out.
+// header; the bar naming each level of the sort and each filter, which removes them one at a time
+// or all at once; and the menu of the table's saved views, which applies, saves, renames, updates,
+// and deletes them. What they change is the table's view, as table-view.ts sets out.
 
 import {
   Button,
@@ -20,6 +21,7 @@ import {
   TextInput,
   VisuallyHidden,
 } from "@mantine/core";
+import type { SavedView } from "@fathom/shared";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Icon } from "./icons.tsx";
 import {
@@ -31,9 +33,12 @@ import {
   isDay,
   type Kind,
   emptyView,
+  knownView,
   narrows,
+  sameView,
   type TableColumn,
   type View,
+  viewFrom,
 } from "./table-view.ts";
 import classes from "./pages.module.css";
 
@@ -247,7 +252,119 @@ export function TableSearch({
   );
 }
 
-// The bar above a table: its search, a pill for each level of the sort and each filter, how many rows there are, or how many
+// A table's saved views, the one its view started from, if any, and what can be done with them.
+export interface SavedViews {
+  views: readonly SavedView[];
+  applied: string | undefined;
+  onApply: (view: View, id: string) => void;
+  // Opens the dialog naming a saved view: a new one for the table's view, or one to rename.
+  onName: (saved: SavedView | undefined, view: View) => void;
+  onUpdate: (saved: SavedView, view: View) => void;
+  onDelete: (saved: SavedView) => void;
+}
+
+const byName = (first: SavedView, second: SavedView) =>
+  first.name.localeCompare(second.name, undefined, { sensitivity: "base" });
+
+// The menu of a table's saved views, named after the one the view started from, marked when the
+// view has changed since. Choosing a view applies it. The menu clears the view, saves it as a new
+// one, and updates, renames, or deletes the one applied when the user may change it.
+export function ViewsMenu({
+  saved: { views, applied, onApply, onName, onUpdate, onDelete },
+  columns,
+  view,
+  onClear,
+}: {
+  saved: SavedViews;
+  columns: readonly AnyColumn[];
+  view: View;
+  // Clears the view, leaving the saved view it started from.
+  onClear: () => void;
+}) {
+  // Each saved view as the table can show it, without columns deleted since.
+  const shownAs = (saved: SavedView) =>
+    knownView(viewFrom(saved.definition), columns);
+  const current = views.find((saved) => saved.id === applied);
+  const changed = current !== undefined && !sameView(shownAs(current), view);
+  const empty = sameView(view, emptyView);
+  if (views.length === 0 && empty) return null;
+  return (
+    <Menu position="bottom-start" hideDetached={false}>
+      <Menu.Target>
+        <Button
+          variant="default"
+          aria-label={`Views${current ? `: ${current.name}` : ""}${changed ? ", changed" : ""}`}
+        >
+          {current?.name ?? "Views"}
+          {changed && (
+            <span aria-hidden className={classes.changedMark}>
+              •
+            </span>
+          )}
+        </Button>
+      </Menu.Target>
+      <Menu.Dropdown>
+        {[...views].sort(byName).map((saved) => (
+          <Menu.Item
+            key={saved.id}
+            leftSection={
+              <span className={classes.appliedMark} aria-hidden>
+                {saved.id === applied ? "✓" : ""}
+              </span>
+            }
+            onClick={() => {
+              onApply(shownAs(saved), saved.id);
+            }}
+          >
+            {saved.name}
+            {saved.id === applied && <VisuallyHidden>, applied</VisuallyHidden>}
+          </Menu.Item>
+        ))}
+        {!empty && <Menu.Divider />}
+        {!empty && <Menu.Item onClick={onClear}>Clear view</Menu.Item>}
+        {!empty && (
+          <Menu.Item
+            onClick={() => {
+              onName(undefined, view);
+            }}
+          >
+            Save view…
+          </Menu.Item>
+        )}
+        {current?.canChange && (
+          <>
+            {changed && (
+              <Menu.Item
+                onClick={() => {
+                  onUpdate(current, view);
+                }}
+              >
+                Update {current.name}
+              </Menu.Item>
+            )}
+            <Menu.Item
+              onClick={() => {
+                onName(current, view);
+              }}
+            >
+              Rename…
+            </Menu.Item>
+            <Menu.Item
+              color="red"
+              onClick={() => {
+                onDelete(current);
+              }}
+            >
+              Delete view
+            </Menu.Item>
+          </>
+        )}
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
+
+// The bar above a table: its search, its saved views, a pill for each level of the sort and each filter, how many rows there are, or how many
 // are shown while some are hidden, and Clear all.
 export function ViewBar({
   one,
@@ -258,6 +375,7 @@ export function ViewBar({
   shown,
   total,
   onLeave,
+  saved,
 }: {
   // What the rows are, one and several, such as "person" and "people".
   one: string;
@@ -269,6 +387,7 @@ export function ViewBar({
   total: number;
   // Goes back to the table from the search field.
   onLeave: () => void;
+  saved?: SavedViews | undefined;
 }) {
   // Each level of the sort, in order, with its column; a column the table does not have is left out.
   const sorts = view.sort.flatMap(({ key, descending }) =>
@@ -290,6 +409,17 @@ export function ViewBar({
         }}
         onLeave={onLeave}
       />
+      {/* After the search, so it never moves the field being typed in when it appears. */}
+      {saved && (
+        <ViewsMenu
+          saved={saved}
+          columns={columns}
+          view={view}
+          onClear={() => {
+            onView(emptyView);
+          }}
+        />
+      )}
       {sorts.map(({ column, descending }) => (
         <Pill
           key={`sort-${column.key}`}

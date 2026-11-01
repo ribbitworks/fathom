@@ -19,6 +19,9 @@ import type {
   PersonRequest,
   RetiredRequest,
   Role,
+  SavedView,
+  SavedViewChange,
+  SavedViewRequest,
 } from "@fathom/shared";
 import { sql } from "drizzle-orm";
 import { type Actor, requirePermission, seesTier } from "../access.ts";
@@ -31,6 +34,7 @@ import * as peopleData from "./people.ts";
 import type { Saved } from "./changes.ts";
 import { undoChangeSet } from "./undo.ts";
 import { readActorRoles } from "./roles.ts";
+import * as views from "./views.ts";
 
 export interface DataAccess {
   // Fails, with a message naming the settings to check, unless the database can be queried.
@@ -93,11 +97,14 @@ export interface ListAccess {
 }
 
 export interface PeopleAccess {
-  // Everyone the actor may see, with the columns whose values they may see. Reading anyone's
-  // Restricted details is recorded in the access history.
-  read(
-    actor: Actor,
-  ): Promise<{ people: Person[]; fields: Field[]; order: string[] }>;
+  // Everyone the actor may see, with the columns whose values they may see, and the saved views they
+  // may see. Reading anyone's Restricted details is recorded in the access history.
+  read(actor: Actor): Promise<{
+    people: Person[];
+    fields: Field[];
+    order: string[];
+    views: SavedView[];
+  }>;
   create(
     actor: Actor,
     requests: readonly PersonRequest[],
@@ -117,6 +124,18 @@ export interface PeopleAccess {
     after: string | null,
   ): Promise<ChangeSetId>;
   deleteField(actor: Actor, id: string): Promise<ChangeSetId>;
+  // Saved views of the People table, which anyone who sees people may save, and only their maker, or
+  // someone who may change planning configuration, may change or delete.
+  createView(
+    actor: Actor,
+    request: SavedViewRequest,
+  ): Promise<Saved<SavedView>>;
+  updateView(
+    actor: Actor,
+    id: string,
+    change: SavedViewChange,
+  ): Promise<Saved<SavedView>>;
+  deleteView(actor: Actor, id: string): Promise<ChangeSetId>;
 }
 
 // Checks the actor may change lists, and returns who to record as making the change.
@@ -172,6 +191,7 @@ function createPeopleAccess(database: Database): PeopleAccess {
         order: (await readColumnOrder(database)).filter((key) =>
           visible.has(key),
         ),
+        views: await views.readViews(database, actor),
       };
     },
     create: async (actor, requests) => {
@@ -194,6 +214,18 @@ function createPeopleAccess(database: Database): PeopleAccess {
     deleteField: async (actor, id) => {
       editor(actor);
       return fieldData.deleteField(database, actor, id);
+    },
+    createView: async (actor, request) => {
+      requirePermission(actor, "people:view");
+      return views.createView(database, actor, request);
+    },
+    updateView: async (actor, id, change) => {
+      requirePermission(actor, "people:view");
+      return views.updateView(database, actor, id, change);
+    },
+    deleteView: async (actor, id) => {
+      requirePermission(actor, "people:view");
+      return views.deleteView(database, actor, id);
     },
   };
 }
