@@ -1653,11 +1653,19 @@ describe("searching, sorting, and filtering", () => {
         "GET /api/people": withViews([harbour, theirs]),
       });
       await userEvent.click(viewsButton());
+      const offered = await screen.findAllByRole("menuitem");
+      expect(offered.map((item) => item.textContent)).toEqual([
+        "Harbour",
+        "✓Theirs, applied",
+        "Clear view",
+        "Save view…",
+      ]);
+      // While a view is applied, every saved view keeps room for the check mark, so names line up.
       expect(
-        (await screen.findAllByRole("menuitem")).map(
-          (item) => item.textContent,
-        ),
-      ).toEqual(["Harbour", "✓Theirs, applied", "Clear view", "Save view…"]);
+        offered
+          .slice(0, 2)
+          .map((item) => item.querySelector("[data-position='left']") !== null),
+      ).toEqual([true, true]);
       await userEvent.click(
         screen.getByRole("menuitem", { name: "Save view…" }),
       );
@@ -1668,6 +1676,16 @@ describe("searching, sorting, and filtering", () => {
       });
       await chooseView("Clear view");
       expect(viewsButton().getAttribute("aria-label")).toBe("Views");
+      // With no view applied, no room is kept for a check mark, so names sit where other items do.
+      await userEvent.click(viewsButton());
+      const items = await screen.findAllByRole("menuitem");
+      expect(items.map((item) => item.textContent)).toEqual([
+        "Harbour",
+        "Theirs",
+      ]);
+      expect(
+        items.filter((item) => item.querySelector("[data-position='left']")),
+      ).toEqual([]);
     });
 
     it("refuses a name someone has just taken, and says when a view cannot be saved", async () => {

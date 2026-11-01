@@ -307,10 +307,13 @@ export function ViewsMenu({
         {[...views].sort(byName).map((saved) => (
           <Menu.Item
             key={saved.id}
+            // Room for the applied view's check mark only while one is applied, so the names line up.
             leftSection={
-              <span className={classes.appliedMark} aria-hidden>
-                {saved.id === applied ? "✓" : ""}
-              </span>
+              current && (
+                <span className={classes.appliedMark} aria-hidden>
+                  {saved.id === applied ? "✓" : ""}
+                </span>
+              )
             }
             onClick={() => {
               onApply(shownAs(saved), saved.id);
