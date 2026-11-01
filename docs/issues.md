@@ -13,6 +13,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Roles
 
 - **Simpler, more flexible roles:** Roles may need rethinking as planning arrives, for example so a Project Manager can edit their own projects' details without editing the whole plan. The owner expects the redesign to be both simpler and more flexible, so the defaults set on 2026-10-31 are not refined further until then.
+- **Marking your own roles:** Help's Roles page marks the roles a user holds with a "Yours" badge, which the owner finds poor: it is cut short to "YOU…" beside long role names, such as Workforce Administrator. Keep showing which roles are the user's, in a clearer way.
 
 ## Account Administration
 
