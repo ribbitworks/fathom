@@ -23,6 +23,25 @@ not here. The standards they point to are in `docs/standards/shared/`.
   never ask the owner anything.
 - Build and test only through the project's commands, listed below.
 
+### Worktrees
+
+- Start each new task in a new git worktree from the latest `origin/main`, in
+  a sibling folder named after the task, once the mode is chosen (and, in
+  Restrictive mode, the change approved), and tell the owner its path. Use
+  `git worktree add --no-track -b <type>/<task> ../<repo>-<task> origin/main`
+  and push with `git push -u origin <type>/<task>`. Follow-up work on the task
+  stays in that worktree.
+- Never switch branches, pull, stash or edit files in a checkout you did not
+  create for the task, unless the owner names it; the owner may be working
+  there.
+- Right after creating a worktree, in either mode, run
+  `git submodule update --init --recursive` and the project's setup command. Never copy
+  secret files between worktrees without the owner's say-so, and never commit
+  a submodule pointer change unless the task is to bump it.
+- Remove merged worktrees as
+  [agent-workflow.md § Rules for Both Modes](docs/standards/shared/agent-workflow.md#rules-for-both-modes)
+  describes.
+
 ### Staging and Commits
 
 - In Restrictive mode, never stage (`git add`, `git add -u`, or any pathspec
@@ -72,6 +91,7 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 ## Project Commands
 
+- **Setup in a new worktree:** `pnpm install`. To run the app, ask the owner whether to copy `.dev/` from the main checkout: a fresh `pnpm dev:setup` creates new passwords that will not match the shared `fathom-dev` database.
 - **Workflow test step:** `pnpm check`, which runs everything listed in [Testing Standards](docs/standards/testing.md#running-tests). When a change affects the containers, the test step also runs `pnpm test:containers`.
 - **Tests only:** `pnpm test`
 - **Container tests:** `pnpm test:containers`

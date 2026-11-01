@@ -36,6 +36,20 @@ that language. Rate those the same way.
 - The review states its scope at the top. For very large diffs, do several
   passes.
 
+## Existing Code
+
+Standards apply to new and edited code. Existing code that breaks a rule adopted
+after it was written is debt, not a finding against an unrelated change:
+
+- Lines a change adds or edits follow the current rules. A change may fix
+  nearby debt when that stays within its scope.
+- The review lists newly noticed debt under a "Debt to record" note, and the
+  implementing agent adds it once to the project's issues document.
+- Security flaws, real data, and documents the change makes untrue are always
+  findings, wherever they are.
+- The Autonomous warnings step in [agent-workflow.md](agent-workflow.md) still
+  resolves every warning the run reports.
+
 ## Rating System
 
 Each focus area is rated from 1 to 5, or marked not applicable:
