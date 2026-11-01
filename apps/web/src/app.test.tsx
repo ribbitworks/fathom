@@ -117,16 +117,16 @@ describe("home page", () => {
     expect(history.location.pathname).toBe("/accounts");
   });
 
-  it("sends someone whose roles open no page to their own account's page", async () => {
+  it("sends someone whose roles open no page to Help's Roles page", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({ ...fictionalUser, roles: [], permissions: [] }),
     });
     const history = renderApp("/");
     expect(
-      await screen.findByRole("heading", { name: "Change password" }),
+      await screen.findByRole("heading", { name: "Roles", level: 1 }),
     ).toBeDefined();
-    expect(history.location.pathname).toBe("/password");
+    expect(history.location.pathname).toBe("/help/roles");
   });
 
   it("shows a plain message when the server fails", async () => {

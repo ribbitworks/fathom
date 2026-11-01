@@ -138,7 +138,7 @@ export function HistoryPage() {
         </Alert>
       )}
       {history.isSuccess && (
-        <Paper withBorder className={classes.historyPanel}>
+        <Paper withBorder className={classes.tablePanel}>
           {history.data.length === 0 && (
             <Text p="md" fz="sm" c="dimmed">
               Nothing has been recorded yet.

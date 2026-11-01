@@ -18,6 +18,7 @@ import {
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
 import { ChangePassword } from "./change-password.tsx";
+import { RolesHelpPage } from "./help-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
@@ -56,7 +57,11 @@ const signedInRoute = createRoute({
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
       throw redirect({ to: "/sign-in", search: { redirect: location.href } });
     }
-    return { user: session.user, permissions: session.permissions };
+    return {
+      user: session.user,
+      roles: session.roles,
+      permissions: session.permissions,
+    };
   },
   component: function SignedIn() {
     const { user, permissions } = signedIn.useRouteContext();
@@ -65,7 +70,7 @@ const signedInRoute = createRoute({
 });
 
 // The Overview, for those who may see the plan. Anyone else is sent to the first page their roles
-// let them open, or, with none, to their own account's page.
+// let them open, or, with none, to Help's Roles page.
 const homeRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/",
@@ -73,7 +78,7 @@ const homeRoute = createRoute({
     if (context.permissions.includes("plan:view")) return;
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
     throw redirect({
-      to: firstPage(context.permissions) ?? "/password",
+      to: firstPage(context.permissions) ?? "/help/roles",
       replace: true,
     });
   },
@@ -140,6 +145,15 @@ const changePasswordRoute = createRoute({
   component: ChangePassword,
 });
 
+// What each role allows, open to every signed-in user, whatever their roles.
+const helpRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/help/roles",
+  component: function RolesHelp() {
+    return <RolesHelpPage roles={signedIn.useRouteContext().roles} />;
+  },
+});
+
 const signInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sign-in",
@@ -160,6 +174,7 @@ const routeTree = rootRoute.addChildren([
     listsRoute,
     peopleRoute,
     changePasswordRoute,
+    helpRoute,
   ]),
   signInRoute,
 ]);

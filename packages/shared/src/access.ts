@@ -26,7 +26,7 @@ export const permissionSchema = z.enum([
   "allocations:edit",
   "people:view",
   "people:edit",
-  // Feature teams are General data, so seeing them comes with people:view.
+  // Feature teams are General data. Roles proposes that seeing them comes with seeing the plan.
   "feature-teams:propose",
   "feature-teams:edit",
   "feature-teams:approve",
@@ -34,6 +34,7 @@ export const permissionSchema = z.enum([
   "restricted:edit",
   "confidential:view",
   "confidential:edit",
+  // Opens the configuration pages, such as Lists; configuration the plan uses is seen with the plan.
   "configuration:view",
   "configuration:edit",
   "drafts:submit",

@@ -40,7 +40,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **People ownership:** Engineering Managers own their people, including when those people work on features led by someone else.
 - **Feature ownership:** Features are owned and delivered by a feature team. A feature's owner is the feature lead of its feature team. A possible feature need not have a feature team yet, and Fathom warns about planned features that have none.
 - **Feature team membership:** A person can be on more than one feature team at a time. Membership changes can be planned ahead, like reporting changes.
-- **Feature team approval:** Engineering Managers propose and maintain feature teams, and the Engineering Director reviews and approves them.
+- **Feature team approval:** Engineering Managers propose and maintain feature teams, and an Approver, such as the Engineering Director, reviews and approves them.
 - **Team names:** Teams can be named.
 - **Team composition:** Balance is evaluated for both teams and feature teams. The measures, their targets, and how positions count toward them are configurable. Planned hires count toward a manager's reports, with a filter to exclude them in a later stage or release.
 - **Reporting view:** Reporting lines appear both as an org chart and within the unified people view.
@@ -56,7 +56,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Former employees:** People who leave are kept rather than deleted. A person is active from their start date until their end date passes; there is no separate flag.
 - **Who is listed:** Users who cannot see Restricted data see only current staff, so the list does not reveal someone's start or end date before it arrives.
 - **Access control:** Access is role-based, and a user can have one or more roles. Roles are proposed in [Roles](roles.md).
-- **Sensitivity tiers:** Roles grant access to tiers of data, not to individual screens. Adding a field means assigning it to a tier. The initial tiers, subject to the privacy review, are:
+- **Sensitivity tiers:** Roles grant access to tiers of data, not to individual screens. Adding a field means assigning it to a tier. Within General, seeing people's details is granted apart from seeing the plan, so a role can see work assignments without the People table. The initial tiers, subject to the privacy review, are:
   - *General:* preferred name, Employee ID, team, feature teams, feature leads, position, site, level, manager, and assignments. Level is General at the owner's direction, as it is commonly known across the company. Details held in columns that draw on lists take the visibility of their list.
   - *Restricted:* gender, start and end dates, and active status.
   - *Confidential:* the hiring plan and future-dated reorgs.

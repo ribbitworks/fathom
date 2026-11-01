@@ -20,10 +20,11 @@ Personas are named as they are widely known in the software industry. Each organ
 | Persona | Typical titles | Primary needs | Expected access |
 | --- | --- | --- | --- |
 | Product Manager | Product Manager, Product Owner | Shape the roadmap, prioritize features | Edit |
-| Project Manager | Project Manager, Program Manager, Delivery Manager | Deliver projects' scope to customers by their dates, maintain milestones, often own projects | Edit |
+| Project Manager | Project Manager, Program Manager, Delivery Manager | Deliver projects' scope to customers by their dates, maintain milestones, often own projects, approve plan changes | Edit |
 | Engineering Manager | Engineering Manager, Software Development Manager | Manage people, assign them to work, balance load across the team | Edit |
 | Feature Lead | Feature Lead, Tech Lead | Lead a feature team, and see its features, members, and their load | Edit |
-| Engineering Director | Director, Head of Engineering | See status and capacity across teams, decide on trade-offs, maintain the hiring plan and employee details | Edit, including workforce data |
+| Engineering Director | Director, Head of Engineering | See status and capacity across teams, decide on trade-offs, approve plan changes | Edit, and view sensitive data |
+| Engineering Operations Manager | Engineering Operations Manager, Chief of Staff, Resource Manager | Maintain employee details, teams, reporting lines, the hiring plan, and planning configuration | Edit workforce data |
 | Executive | VP, CTO | See the roadmap and risks at a glance | View, including sensitive data |
 | Team Member | Software Engineer, Test Engineer | See their own assignments and the plan they are part of | View |
 | Fathom Administrator | System administrator | Run Fathom, its accounts, and its settings, without seeing people data | Accounts and settings only |
@@ -99,4 +100,4 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 1. **Roles and approval:** Which roles exist, what can each see, edit, and approve, and which changes need approval? The owner intends everything users create or edit to be pending until approved, including people, teams, and custom fields and tables, and will refine this. See the proposal in [Roles](roles.md).
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
-1. **Project Manager input:** What input do Project Managers have on whether teams are in place, for example comments, proposals, or approval?
+1. **Project Manager input:** Project Managers approve feature teams through the Approver role, as [Roles](roles.md) sets out. Is other input needed on whether teams are in place, such as comments or proposals?

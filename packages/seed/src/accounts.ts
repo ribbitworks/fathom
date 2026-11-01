@@ -30,7 +30,7 @@ export const personaAccounts: readonly PersonaAccount[] = [
   {
     name: "Project Manager",
     email: `project.manager@${accountDomain}`,
-    roles: ["viewer", "project-planner"],
+    roles: ["viewer", "project-planner", "approver"],
   },
   {
     name: "Engineering Manager",
@@ -49,9 +49,14 @@ export const personaAccounts: readonly PersonaAccount[] = [
       "viewer",
       "project-planner",
       "resource-planner",
-      "workforce-administrator",
+      "leadership",
       "approver",
     ],
+  },
+  {
+    name: "Engineering Operations Manager",
+    email: `engineering.operations.manager@${accountDomain}`,
+    roles: ["viewer", "workforce-administrator"],
   },
   {
     name: "Executive",

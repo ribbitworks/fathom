@@ -47,7 +47,8 @@ type Page =
   | "/history"
   | "/lists/{-$listId}"
   | "/people"
-  | "/password";
+  | "/password"
+  | "/help/roles";
 
 interface Item {
   label: string;
@@ -114,11 +115,15 @@ const sections: { label: string; items: Item[] }[] = [
       },
     ],
   },
+  {
+    label: "Help",
+    items: [{ label: "Roles", icon: "help", to: "/help/roles" }],
+  },
 ];
 
 // The first page in the sidebar, other than the Overview, that the user's roles let them open, if
 // any: where someone who may not see the Overview starts. Never the Overview, so sending them there
-// cannot loop back.
+// cannot loop back, and never Help, which is open to everyone.
 export function firstPage(
   permissions: readonly Permission[],
 ): Page | undefined {
@@ -128,7 +133,8 @@ export function firstPage(
       ({ to, permission }) =>
         to !== undefined &&
         to !== "/" &&
-        (permission === undefined || permissions.includes(permission)),
+        permission !== undefined &&
+        permissions.includes(permission),
     )?.to;
 }
 
@@ -309,7 +315,7 @@ export function Layout({
               </Breadcrumbs>
             )}
           </Group>
-          <Menu position="bottom-end" width={200}>
+          <Menu position="bottom-end" width="max-content">
             <Menu.Target>
               <UnstyledButton aria-label={`Your account, ${user.name}`}>
                 <Group gap="xs" wrap="nowrap">
@@ -322,7 +328,7 @@ export function Layout({
                 </Group>
               </UnstyledButton>
             </Menu.Target>
-            <Menu.Dropdown>
+            <Menu.Dropdown miw={200} maw="calc(100vw - 2rem)">
               <Menu.Label>{user.email}</Menu.Label>
               <Menu.Item component={Link} to="/password">
                 Change password

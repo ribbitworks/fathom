@@ -106,6 +106,7 @@ describe("the persona accounts", () => {
       "Engineering Manager",
       "Feature Lead",
       "Engineering Director",
+      "Engineering Operations Manager",
       "Executive",
       "Team Member",
       "Fathom Administrator",

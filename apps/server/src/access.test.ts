@@ -7,7 +7,12 @@
 
 import type { Permission, Role } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { actorFor, requirePermission, rolesGranting } from "./access.ts";
+import {
+  actorFor,
+  requireAnyPermission,
+  requirePermission,
+  rolesGranting,
+} from "./access.ts";
 import { ForbiddenError } from "./errors.ts";
 
 const user = {
@@ -16,31 +21,34 @@ const user = {
   email: "person@example.test",
 };
 const expected: [Role, Permission[]][] = [
-  [
-    "viewer",
-    ["plan:view", "allocations:view", "people:view", "configuration:view"],
-  ],
+  ["viewer", ["plan:view", "allocations:view"]],
   ["project-planner", ["plan:edit", "drafts:submit"]],
-  ["resource-planner", ["allocations:edit", "drafts:submit"]],
+  ["resource-planner", ["people:view", "allocations:edit", "drafts:submit"]],
   [
     "people-manager",
-    ["feature-teams:propose", "feature-teams:edit", "restricted:view"],
+    [
+      "people:view",
+      "feature-teams:propose",
+      "feature-teams:edit",
+      "restricted:view",
+    ],
   ],
   [
     "workforce-administrator",
     [
+      "people:view",
       "people:edit",
       "feature-teams:edit",
-      "feature-teams:approve",
       "restricted:view",
       "restricted:edit",
       "confidential:view",
       "confidential:edit",
+      "configuration:view",
       "configuration:edit",
     ],
   ],
-  ["leadership", ["restricted:view", "confidential:view"]],
-  ["approver", ["drafts:approve"]],
+  ["leadership", ["people:view", "restricted:view", "confidential:view"]],
+  ["approver", ["drafts:approve", "feature-teams:approve"]],
   // Running Fathom needs no access to people data, so Administrators hold Viewer only if given it.
   ["administrator", ["accounts:manage", "history:view"]],
 ];
@@ -83,5 +91,23 @@ describe("permission checks", () => {
     }
     expect(refusal).toBeInstanceOf(ForbiddenError);
     expect(refusal).toMatchObject({ statusCode: 403, message: "Forbidden" });
+  });
+
+  it("allow an actor whose roles grant any one of several permissions", () => {
+    expect(() => {
+      requireAnyPermission(actorFor(user, ["leadership"]), [
+        "configuration:view",
+        "people:view",
+      ]);
+    }).not.toThrow();
+  });
+
+  it("refuse an actor whose roles grant none of several permissions", () => {
+    expect(() => {
+      requireAnyPermission(actorFor(user, ["viewer"]), [
+        "configuration:view",
+        "people:view",
+      ]);
+    }).toThrow(ForbiddenError);
   });
 });

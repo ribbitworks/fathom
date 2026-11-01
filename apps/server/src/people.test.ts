@@ -275,9 +275,9 @@ describe("who sees Confidential values", () => {
   });
 
   it.each(roleSchema.options)(
-    "a %s, with the Viewer role, sees a Confidential column's values only if the role lets them see Confidential data",
+    "a %s, with a role that sees people, sees a Confidential column's values only if the role lets them see Confidential data",
     async (role) => {
-      const { cookie } = await test.signedIn([role, "viewer"]);
+      const { cookie } = await test.signedIn([role, "resource-planner"]);
       const read = await readPeople(cookie);
       const sees = rolesGranting("confidential:view").includes(role);
       expect(read.fields.some(({ id }) => id === fieldId)).toBe(sees);
@@ -313,7 +313,7 @@ describe("who is listed and what each user sees", () => {
       { startDate: "2020-01-01", endDate: "2021-01-01" },
       { startDate: "2999-01-01" },
     ]);
-    const viewer = await test.signedIn(["viewer"]);
+    const viewer = await test.signedIn(["resource-planner"]);
     const seen = await readPeople(viewer.cookie);
     const listed = seen.people.filter((person) => ids.includes(person.id));
     expect(listed.map((person) => ids.indexOf(person.id)).sort()).toEqual([
@@ -348,14 +348,9 @@ describe("who is listed and what each user sees", () => {
       visibility: "confidential",
     });
     await addPerson(cookie);
-    // Leadership sees Restricted and Confidential details without seeing people; the server refuses.
-    expect(
-      (await send(leadership.cookie, "GET", "/api/people")).statusCode,
-    ).toBe(403);
-    const both = await test.signedIn(["leadership", "viewer"]);
-    const read = await readPeople(both.cookie);
+    const read = await readPeople(leadership.cookie);
     expect(read.people.length).toBeGreaterThan(0);
-    expect(await accessOf(both.id)).toHaveLength(1);
+    expect(await accessOf(leadership.id)).toHaveLength(1);
   });
 
   it("orders people by preferred name, ignoring letter case", async () => {
@@ -730,7 +725,7 @@ describe("columns", () => {
       );
       expect(refused.statusCode).toBe(status);
     }
-    const viewer = await test.signedIn(["viewer"]);
+    const viewer = await test.signedIn(["resource-planner"]);
     const seen = (await readPeople(viewer.cookie)).order;
     expect(seen).not.toContain("startDate");
     expect(seen).toContain("employeeId");
@@ -908,7 +903,10 @@ describe("access history", () => {
       ["restricted-viewed", null],
       ["restricted-changed", { id, name: null }],
     ]);
-    const seesPeople = await test.signedIn(["administrator", "viewer"]);
+    const seesPeople = await test.signedIn([
+      "administrator",
+      "resource-planner",
+    ]);
     expect(await entriesBy(seesPeople.cookie, editorId)).toEqual([
       ["restricted-viewed", null],
       ["restricted-changed", { id, name }],

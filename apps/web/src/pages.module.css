@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* Styles shared by Fathom's pages beyond what the Mantine theme sets: the canvas behind panels,
-   figures that line up in columns, account status dots, the access history's day bands and
-   entries, and the Lists page's navigator and table of choices. */
+   figures that line up in columns, panels holding tables, account status dots, the access history's
+   day bands and entries, and the Lists page's navigator and table of choices. */
 
 .canvas {
   background: var(--fathom-canvas);
@@ -12,8 +12,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* The access history's panel keeps its day bands inside its rounded corners. */
-.historyPanel {
+/* A panel holding a table or bands, kept inside its rounded corners. */
+.tablePanel {
   overflow: hidden;
 }
 

@@ -7,13 +7,13 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 
 ## Proposed Roles
 
-- **Viewer:** Sees General-tier data. Every account gets this role unless it is left off, as for a person who runs Fathom without seeing people data.
+- **Viewer:** Sees the plan, including everyone's work assignments. Every account gets this role unless it is left off, as for a person who runs Fathom without seeing people data.
 - **Project Planner:** Edits projects, features, milestones, releases, products, customers, and estimates across the whole plan.
-- **Resource Planner:** Edits allocations across the whole plan.
-- **People Manager:** Proposes feature teams, and sees Restricted details for everyone, because people move between managers over time.
-- **Workforce Administrator:** Maintains people, teams, reporting lines, the hiring plan, and planning configuration, approves feature teams, and sees all Restricted and Confidential data.
-- **Leadership:** Sees Restricted and Confidential data, without editing it.
-- **Approver:** Approves draft plan changes.
+- **Resource Planner:** Sees people's General details, and edits allocations across the whole plan.
+- **People Manager:** Proposes feature teams, and sees people, with Restricted details for everyone, because people move between managers over time.
+- **Workforce Administrator:** Maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.
+- **Leadership:** Sees people, with their Restricted and Confidential data, without editing it.
+- **Approver:** Approves draft plan changes and feature teams.
 - **Administrator:** Manages user accounts, role assignments, and system settings, without access to Restricted or Confidential data.
 
 ## What Each Role Can Do
@@ -22,20 +22,23 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Plan: projects, features, milestones, releases and the cycles they include (**proposal**), products and customers (**proposal**), and estimates | View | Edit | View | View | View | View | View | None |
 | Allocations | View | View | Edit | View | View | View | View | None |
-| People, teams, and reporting lines (General) | View | View | View | View | Edit | View | View | None |
-| Feature teams (General) | View | View | View | Propose | Edit and approve | View | View | None |
+| People, teams, and reporting lines (General) | None | None | View | View | Edit | View | None | None |
+| Feature teams (General), with seeing them coming with seeing the plan (**proposal**) | View | View | View | Propose | Edit | View | Approve | None |
 | Restricted employee details | None | None | None | View | Edit | View | None | None |
 | Confidential data | None | None | None | None | Edit | View | None | None |
-| Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), composition targets, lists of choices, and People's columns and their order | View | View | View | View | Edit | View | View | None |
+| Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | Edit | View | View | None |
+| Lists of choices, and People's columns and their order | None | None | None | None | Edit | None | None | None |
 | Draft changes (**proposal**) | None | Submit | Submit | None | Submit | None | Approve | None |
 | Change history, for the data the role sees (**proposal**) | View | View | View | View | View | View | View | None |
 | Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
 | Access history | None | None | None | None | None | None | None | View (**proposal**) |
 
-**Proposal:** Seeing data comes only from roles, never from approving. A user can approve only drafts whose values their roles let them see, so a draft holding a Restricted detail, such as an end date, needs an Approver who also holds a role that sees Restricted data.
+**Proposal:** Seeing data comes only from roles, never from approving. A user can approve only drafts whose values their roles let them see, so a draft holding a Restricted detail, such as an end date, needs an Approver who also holds a role that sees Restricted data. Approvers approve every kind of draft, so Project Managers, who hold Approver by default, can approve feature teams too, which the owner accepted on 2026-10-31 until roles are reworked, as [Issues](../issues.md) records.
 
-The owner has decided that a role letting a user edit some data also lets them view it. Until the account change in [Issues](../issues.md) builds it, viewing comes from the Viewer role, which every account has by default.
+The owner has decided that a role letting a user edit some data also lets them view it. Until the account change in [Issues](../issues.md) builds it, viewing the plan and allocations comes from the Viewer role, which every account has by default, and roles that edit people or planning configuration are given the matching view.
+
+Seeing people is kept to the roles that work with them, so Product Managers, Project Managers, Feature Leads, and Team Members do not see the People table by default. The choices of a list are seen by everyone who sees data drawn from it, such as People's columns, without seeing the Lists page.
 
 ## Custom Fields and Tables
 
@@ -64,10 +67,11 @@ The owner has decided that a role letting a user edit some data also lets them v
 | Persona | Roles |
 | --- | --- |
 | Product Manager | Viewer, Project Planner |
-| Project Manager | Viewer, Project Planner |
+| Project Manager | Viewer, Project Planner, Approver |
 | Engineering Manager | Viewer, Project Planner, Resource Planner, People Manager |
 | Feature Lead | Viewer, Project Planner |
-| Engineering Director | Viewer, Project Planner, Resource Planner, Workforce Administrator, Approver |
+| Engineering Director | Viewer, Project Planner, Resource Planner, Leadership, Approver |
+| Engineering Operations Manager | Viewer, Workforce Administrator |
 | Executive | Viewer, Leadership |
 | Team Member | Viewer |
 | Fathom Administrator, initially the Engineering Director | Administrator |
@@ -82,4 +86,4 @@ The first stage of the [Roadmap](roadmap.md) uses every role: Viewer, Project Pl
 
 ## Open Questions
 
-1. **Self-approval:** May an Approver approve their own draft changes? While the Engineering Director is the only Approver, they would.
+1. **Self-approval:** May an Approver approve their own draft changes? Project Managers both plan and approve, so without a rule against it they would.

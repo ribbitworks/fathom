@@ -97,7 +97,7 @@ The Product Manager's roadmap: features with the built-in columns in the Decisio
 
 ### Projects and Feature Teams
 
-Projects with their customers, from a built-in Customers table, the features they need, their milestones, and the release warnings in the Decisions Log. Feature teams with their members and feature leads, owning features. People Managers propose them as drafts, which the Workforce Administrator approves, rather than the Approver, as set out in [Roles](../product/roles.md).
+Projects with their customers, from a built-in Customers table, the features they need, their milestones, and the release warnings in the Decisions Log. Feature teams with their members and feature leads, owning features. People Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md).
 
 ### Allocations and Capacity
 

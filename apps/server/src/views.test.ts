@@ -2,7 +2,8 @@
 
 // Tests for saved views of the People table, against a PostgreSQL server of their own: saving,
 // renaming, updating, and deleting them; who may change them; keeping a view on columns a reader may
-// not see from that reader; and undoing each change.
+// not see from that reader; and undoing each change. Resource Planners stand for readers who see
+// people's General details and no more.
 
 import type { Choice, Field, List, SavedView } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -36,7 +37,7 @@ const undo = (cookie: string, changeSetId: string | null) =>
 
 describe("saved views", () => {
   it("are saved, renamed, updated, and deleted, with names unique regardless of case, and each change undone", async () => {
-    const { cookie } = await test.signedIn(["viewer"]);
+    const { cookie } = await test.signedIn(["resource-planner"]);
     const made = await save(cookie, "  By name  ", {
       search: "fictional",
       sort: ["-preferredName"],
@@ -106,10 +107,10 @@ describe("saved views", () => {
   });
 
   it("may be changed only by their maker or by someone who may change planning configuration", async () => {
-    const maker = await test.signedIn(["viewer"]);
-    const other = await test.signedIn(["viewer"]);
+    const maker = await test.signedIn(["resource-planner"]);
+    const other = await test.signedIn(["resource-planner"]);
     const administrator = await test.signedIn([
-      "viewer",
+      "resource-planner",
       "workforce-administrator",
     ]);
     const { view } = (
@@ -155,7 +156,7 @@ describe("saved views", () => {
           accounts.cookie,
           "PUT",
           `/api/accounts/${administrator.id}/roles`,
-          { roles: ["viewer"] },
+          { roles: ["resource-planner"] },
         )
       ).statusCode,
     ).toBe(200);
@@ -177,8 +178,8 @@ describe("saved views", () => {
   });
 
   it("are kept from readers who may not see a column they use, who cannot save such a view either", async () => {
-    const manager = await test.signedIn(["viewer", "people-manager"]);
-    const viewer = await test.signedIn(["viewer"]);
+    const manager = await test.signedIn(["resource-planner", "people-manager"]);
+    const viewer = await test.signedIn(["resource-planner"]);
     const { view, changeSetId } = (
       await save(manager.cookie, "Leaving soon", {
         filters: { endDate: { from: "2026-11-01" } },
@@ -220,7 +221,7 @@ describe("saved views", () => {
       accounts.cookie,
       "PUT",
       `/api/accounts/${manager.id}/roles`,
-      { roles: ["viewer"] },
+      { roles: ["resource-planner"] },
     );
     expect((await undo(manager.cookie, starting.changeSetId)).statusCode).toBe(
       403,
@@ -229,7 +230,7 @@ describe("saved views", () => {
 
   it("ignore columns deleted since they were saved", async () => {
     const { cookie } = await test.signedIn([
-      "viewer",
+      "resource-planner",
       "workforce-administrator",
     ]);
     const list = (
@@ -265,7 +266,7 @@ describe("saved views", () => {
         .statusCode,
     ).toBe(200);
     // Readers are sent the view without the deleted column, which is not shown to them.
-    const viewer = await test.signedIn(["viewer"]);
+    const viewer = await test.signedIn(["resource-planner"]);
     expect(
       (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
         ?.definition,
@@ -282,7 +283,7 @@ describe("saved views", () => {
 
   it("are undone only by those who still see the columns they use, as sensitive as they are now", async () => {
     const administrator = await test.signedIn([
-      "viewer",
+      "resource-planner",
       "workforce-administrator",
     ]);
     const list = (
@@ -296,7 +297,7 @@ describe("saved views", () => {
         listId: list.id,
       })
     ).json<{ field: Field }>().field;
-    const viewer = await test.signedIn(["viewer"]);
+    const viewer = await test.signedIn(["resource-planner"]);
     const { view, changeSetId } = (
       await save(viewer.cookie, "By team", { sort: [field.id] })
     ).json<Saved>();
@@ -320,7 +321,7 @@ describe("saved views", () => {
   });
 
   it("refuses names and views that do not fit", async () => {
-    const { cookie } = await test.signedIn(["viewer"]);
+    const { cookie } = await test.signedIn(["resource-planner"]);
     const refusals = [
       await save(cookie, "   ", {}),
       await save(cookie, "n".repeat(81), {}),

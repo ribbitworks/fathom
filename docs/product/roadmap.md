@@ -36,7 +36,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **People and teams:** Includes feature teams and feature leads. Employee details are limited to the General tier plus start and end dates.
 - **Org structure:** People managers and their current direct reports, without planned changes or the org chart.
 - **Change history:** Who changed what, and when, for the data each user may see.
-- **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which People Managers' proposals are approved by the Workforce Administrator.
+- **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which People Managers' proposals are approved by an Approver.
 - **Roadmap view:** First built as the Product Manager's working roadmap, an input to the rest of the plan: features in a table grouped by cycle. The visual roadmap comes in a later stage.
 - **Release planning:** Cycles, releases, and patches.
 - **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
@@ -45,7 +45,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
 - **Demand forecasting:** One estimate per feature.
-- **Roles:** A fixed set of roles, with access tiers and access history for start and end dates, and the hiring plan. Project Managers can see that teams are in place and give input, in a form still to be confirmed in the [Product Brief](brief.md)'s open questions.
+- **Roles:** A fixed set of roles, with access tiers and access history for start and end dates, and the hiring plan. Project Managers see feature teams with the plan, approve them, and may give other input, still to be confirmed in the [Product Brief](brief.md)'s open questions.
 
 ## Stage: Snapshots, Exports, and Hiring
 
@@ -78,7 +78,7 @@ Goals the owner has added that are not yet placed in a stage:
 
 - **Pinned views:** A saved view kept visible as its own table, alongside the table's own view, until it is unpinned. Until then, pinning a view means applying it, as the [Decisions Log](decisions.md) records.
 - **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed. Counts work on any column, but sums and other totals of amounts need the number and currency column types under Your Own Fields and Tables.
-- **Help:** A help page, tooltips, or both, explaining Fathom's pages and terms where they are used.
+- **Help:** More help, such as for Fathom's pages and terms, beyond Help's Roles page.
 - **Renaming terms:** An organization renames Fathom's terms to its own, such as Feature to Epic, or Cycle to Program Increment.
 - **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.
 

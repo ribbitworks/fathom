@@ -29,7 +29,6 @@ import {
   Paper,
   PasswordInput,
   SegmentedControl,
-  SimpleGrid,
   Stack,
   Table,
   Text,
@@ -43,6 +42,7 @@ import {
   accountsQuery,
   createAccount,
   resetPassword,
+  roleDescription,
   roleName,
   setActive,
   setRoles,
@@ -92,11 +92,16 @@ function RoleChoices({
         onChange(roleSchema.options.filter((role) => roles.includes(role)));
       }}
     >
-      <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="xs" mt="xs">
+      <Stack gap="sm" mt="xs">
         {roleSchema.options.map((role) => (
-          <Checkbox key={role} value={role} label={roleName(role)} />
+          <Checkbox
+            key={role}
+            value={role}
+            label={roleName(role)}
+            description={roleDescription(role)}
+          />
         ))}
-      </SimpleGrid>
+      </Stack>
     </Checkbox.Group>
   );
 }

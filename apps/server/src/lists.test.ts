@@ -177,11 +177,14 @@ const editorRoles: Role[] = ["workforce-administrator", "viewer"];
 describe("who may read and change lists", () => {
   // The access control pattern: every role on its own, allowed exactly when it grants the permission.
   it.each(roleSchema.options)(
-    "a %s may read lists only if the role lets them see planning configuration",
+    "a %s may read lists only if the role lets them see planning configuration or people",
     async (role) => {
       const { cookie } = await signedIn([role]);
       const response = await request(cookie, "GET", "/api/lists");
-      if (rolesGranting("configuration:view").includes(role)) {
+      if (
+        rolesGranting("configuration:view").includes(role) ||
+        rolesGranting("people:view").includes(role)
+      ) {
         expect(response.statusCode).toBe(200);
       } else {
         expect(response.statusCode).toBe(403);

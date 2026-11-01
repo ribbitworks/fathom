@@ -4,6 +4,7 @@
 // who sees the Accounts page, the list of accounts, creating accounts, changing roles, resetting
 // passwords, deactivating and reactivating, the server's refusals, and changing one's own password.
 
+import { roleSchema } from "@fathom/shared";
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -14,6 +15,7 @@ import {
   serverAnswers,
   signedIn,
 } from "./test-support.tsx";
+import { roleDescription, roleName } from "./accounts.ts";
 
 const manager = () =>
   Response.json({
@@ -543,6 +545,28 @@ describe("after a change", () => {
     await vi.waitFor(() => {
       expect(screen.getAllByText("Deactivated")).toHaveLength(2);
     });
+  });
+
+  it("says under each role what it allows", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New account" }),
+    );
+    const dialog = await screen.findByRole("dialog", { name: "New account" });
+    for (const role of roleSchema.options) {
+      const box = within(dialog).getByRole("checkbox", {
+        name: roleName(role),
+      });
+      expect(box.getAttribute("aria-describedby")).toBeTruthy();
+      expect(
+        document.getElementById(String(box.getAttribute("aria-describedby")))
+          ?.textContent,
+      ).toBe(roleDescription(role));
+    }
   });
 
   it("closes a dialog with Escape when nothing is being saved", async () => {

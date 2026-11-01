@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Account administration and changing one's own password, through the server's API, with the names
-// users see for each role.
+// users see for each role and what the Help page says each lets them do.
 
 import {
   type Account,
@@ -31,6 +31,30 @@ export function roleName(role: Role): string {
   // The role is always one of the fixed roles named above.
   // eslint-disable-next-line security/detect-object-injection
   return roleNames[role];
+}
+
+// What each role lets a user do, matching what the server grants, as docs/product/roles.md sets out.
+// Every role must be described, which the compiler checks.
+const roleDescriptions: Record<Role, string> = {
+  viewer: "See the plan and everyone's work assignments.",
+  "project-planner":
+    "Change the plan: projects, features, milestones, releases, products, customers, and estimates.",
+  "resource-planner": "See people, and assign them to work.",
+  "people-manager":
+    "See people, including Restricted details, and maintain feature teams.",
+  "workforce-administrator":
+    "Maintain people, their columns and the lists they choose from, and feature teams, and see and change Restricted and Confidential details.",
+  leadership:
+    "See people, including Restricted and Confidential details, without changing them.",
+  approver: "Approve draft changes to the plan, and feature teams.",
+  administrator:
+    "Manage accounts, their roles, and system settings, and see the access history, without seeing people.",
+};
+
+export function roleDescription(role: Role): string {
+  // The role is always one of the fixed roles described above.
+  // eslint-disable-next-line security/detect-object-injection
+  return roleDescriptions[role];
 }
 
 export const accountsQuery = queryOptions({

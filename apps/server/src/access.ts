@@ -11,32 +11,30 @@ import { ForbiddenError } from "./errors.ts";
 
 // Every role must be listed, which the compiler checks.
 const grants: Record<Role, readonly Permission[]> = {
-  viewer: [
-    "plan:view",
-    "allocations:view",
-    "people:view",
-    "configuration:view",
-  ],
+  viewer: ["plan:view", "allocations:view"],
   "project-planner": ["plan:edit", "drafts:submit"],
-  "resource-planner": ["allocations:edit", "drafts:submit"],
+  // Resource Planners see people, since they allocate them.
+  "resource-planner": ["people:view", "allocations:edit", "drafts:submit"],
   // People Managers edit feature teams directly until plan approval arrives, as Roles sets out.
   "people-manager": [
+    "people:view",
     "feature-teams:propose",
     "feature-teams:edit",
     "restricted:view",
   ],
   "workforce-administrator": [
+    "people:view",
     "people:edit",
     "feature-teams:edit",
-    "feature-teams:approve",
     "restricted:view",
     "restricted:edit",
     "confidential:view",
     "confidential:edit",
+    "configuration:view",
     "configuration:edit",
   ],
-  leadership: ["restricted:view", "confidential:view"],
-  approver: ["drafts:approve"],
+  leadership: ["people:view", "restricted:view", "confidential:view"],
+  approver: ["drafts:approve", "feature-teams:approve"],
   administrator: ["accounts:manage", "history:view"],
 };
 
@@ -74,7 +72,16 @@ export function rolesGranting(permission: Permission): Role[] {
 }
 
 export function requirePermission(actor: Actor, permission: Permission): void {
-  if (!actor.permissions.includes(permission)) throw new ForbiddenError();
+  requireAnyPermission(actor, [permission]);
+}
+
+// Allows an actor whose roles grant at least one of the permissions.
+export function requireAnyPermission(
+  actor: Actor,
+  permissions: readonly Permission[],
+): void {
+  if (!permissions.some((permission) => actor.permissions.includes(permission)))
+    throw new ForbiddenError();
 }
 
 // The permissions that let a user see and change data of each tier. General people data comes with

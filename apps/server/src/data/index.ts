@@ -24,7 +24,12 @@ import type {
   SavedViewRequest,
 } from "@fathom/shared";
 import { sql } from "drizzle-orm";
-import { type Actor, requirePermission, seesTier } from "../access.ts";
+import {
+  type Actor,
+  requireAnyPermission,
+  requirePermission,
+  seesTier,
+} from "../access.ts";
 import { readGreeting } from "./greeting.ts";
 import { moveColumn, readColumnOrder } from "./column-order.ts";
 import * as fieldData from "./fields.ts";
@@ -146,8 +151,9 @@ function editor(actor: Actor): string {
 
 function createListAccess(database: Database): ListAccess {
   return {
+    // Lists' choices are also read by those who see People, whose columns draw on them.
     read: async (actor) => {
-      requirePermission(actor, "configuration:view");
+      requireAnyPermission(actor, ["configuration:view", "people:view"]);
       return lists.readLists(database);
     },
     create: async (actor, request) =>

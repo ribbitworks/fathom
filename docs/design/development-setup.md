@@ -109,10 +109,11 @@ Seeding adds these accounts, one for each persona in the [Product Brief](../prod
 | Account | Name | Roles |
 | --- | --- | --- |
 | `product.manager@fathom.test` | Product Manager | Viewer, Project Planner |
-| `project.manager@fathom.test` | Project Manager | Viewer, Project Planner |
+| `project.manager@fathom.test` | Project Manager | Viewer, Project Planner, Approver |
 | `engineering.manager@fathom.test` | Engineering Manager | Viewer, Project Planner, Resource Planner, People Manager |
 | `feature.lead@fathom.test` | Feature Lead | Viewer, Project Planner |
-| `engineering.director@fathom.test` | Engineering Director | Viewer, Project Planner, Resource Planner, Workforce Administrator, Approver |
+| `engineering.director@fathom.test` | Engineering Director | Viewer, Project Planner, Resource Planner, Leadership, Approver |
+| `engineering.operations.manager@fathom.test` | Engineering Operations Manager | Viewer, Workforce Administrator |
 | `executive@fathom.test` | Executive | Viewer, Leadership |
 | `team.member@fathom.test` | Team Member | Viewer |
 | `fathom.administrator@fathom.test` | Fathom Administrator | Administrator |

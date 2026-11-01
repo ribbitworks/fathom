@@ -105,6 +105,11 @@ async function openPanel(answers: Answers = {}, path = "/lists/l1") {
   });
   const history = renderApp(path);
   await screen.findByRole("heading", { name: "Locations", level: 2 });
+  // Opening the panel moves focus into it a moment later; waiting for that keeps it from taking focus
+  // away from a row the test focuses next.
+  await vi.waitFor(() => {
+    expect(panel().contains(document.activeElement)).toBe(true);
+  });
   return { fetch, history };
 }
 

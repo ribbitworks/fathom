@@ -9,7 +9,7 @@ How Fathom's screens look and behave, so every page is built the same way. It ap
 
 The owner's principles come first:
 
-- **No instructional text:** If a screen needs explaining, the design is wrong. No hints, help lines, or placeholder sentences telling people what to do. Labels are one or two words, and an optional field may add "(optional)" to its label. Familiar patterns, such as a grip handle for dragging, speak for themselves. Saying what an action will do, as a confirmation does, is not instruction.
+- **No instructional text:** If a screen needs explaining, the design is wrong. No hints, help lines, or placeholder sentences telling people what to do. Labels are one or two words, and an optional field may add "(optional)" to its label. Familiar patterns, such as a grip handle for dragging, speak for themselves. Saying what an action will do, as a confirmation does, is not instruction, and neither is reference material, such as what each role lets a user do.
 - **No assumptions:** Screens add no purposes, defaults, restrictions, or wording the owner has not asked for. Where something is unclear, it is left out and the owner is asked.
 - **Keyboard-first data entry:** Wherever people enter or change data, everything can be done from the keyboard, and adding many items in a row never needs the mouse: Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items. Where many records are entered, such as resources, editing works like a spreadsheet, including pasting rows.
 - **The bar:** Top-tier modern products, such as Linear or Notion: calm, dense, and obvious.
@@ -26,10 +26,11 @@ The rest follow from them:
 
 ## Layout
 
-- **Frame:** A deep-water sidebar on the left, the same in both modes, groups pages into sections. The sidebar shows only the pages the user's roles allow, including pages still to come, marked "Later", so people can see what Fathom will offer them. Fathom opens on the Overview, or, for a user who may not see the plan, on the first page their roles allow, or their own account's page if there is none. A top bar names where the user is and holds their account menu.
+- **Frame:** A deep-water sidebar on the left, the same in both modes, groups pages into sections. The sidebar shows only the pages the user's roles allow, including pages still to come, marked "Later", so people can see what Fathom will offer them. Fathom opens on the Overview, or, for a user who may not see the plan, on the first page their roles allow, or Help's Roles page if there is none. Help is the last section, open to everyone. A top bar names where the user is and holds their account menu, wide enough for their email address, with Change password and Sign out.
 - **Collapsed sidebar:** The sidebar collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
 - **Narrow screens:** The sidebar opens from a menu button, and closes when the user moves to another page.
 - **Pages:** Each page starts with a heading and the page's main action on the right. Content sits in bordered panels on a canvas a shade darker than them.
+- **Roles help:** Help's Roles page names each role beside what it lets a user do, with the user's own roles marked "Yours", followed by what each sensitivity covers. Wherever roles are chosen, each role shows the same description under its name.
 - **Sign-in and problem pages:** Only Fathom's name and mark above the form or message, with no other words.
 
 ## Type and Colour

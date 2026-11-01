@@ -47,19 +47,19 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Maintain Employee Records
 
-- **Actor:** Engineering Director
+- **Actor:** Engineering Operations Manager
 - **Goal:** Keep Fathom's copy of employee details from the HR system current, including teams, managers, and end dates.
 - **Outcome:** People can be planned for. People who leave are kept, with their end date, rather than deleted.
 
 ### Plan a Hire
 
-- **Actor:** Engineering Director
+- **Actor:** Engineering Operations Manager
 - **Goal:** Plan a role that needs to be filled, with its target date, and track it through the hiring states.
 - **Outcome:** The planned hire appears in the plan and can be allocated to work. When the role is filled, the new hire takes over its allocations.
 
 ### Maintain Feature Teams
 
-- **Actors:** Engineering Managers, with the Engineering Director approving
+- **Actors:** Engineering Managers, with an Approver, such as the Engineering Director, approving
 - **Goal:** Keep feature teams, their members, and their feature leads current.
 - **Outcome:** Once approved, each feature has a feature team that owns and delivers it.
 
@@ -71,7 +71,7 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 
 ### Plan a Reporting Change
 
-- **Actor:** Engineering Director
+- **Actor:** Engineering Operations Manager
 - **Goal:** Plan a future change in who reports to whom, such as a reorg.
 - **Outcome:** The change takes effect on its planned date.
 
