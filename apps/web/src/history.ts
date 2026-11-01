@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The access history, through the server's API, and how each entry is put in words: a sentence
-// naming who did what to whose account, a short label for its kind, whether it deserves attention,
-// and the roles involved.
+// naming who did what to whose account, whether it deserves attention, and the roles involved.
 
 import {
   type AccessAction,
@@ -22,7 +21,6 @@ export const historyQuery = queryOptions({
 });
 
 interface ActionWords {
-  kind: string;
   // What the actor did, before the name of the account it was done to.
   verb: string;
   // Changes that reveal impersonation or lock someone out deserve a second look.
@@ -32,37 +30,30 @@ interface ActionWords {
 // Every action must be described, which the compiler checks.
 const actionWords: Record<AccessAction, ActionWords> = {
   "account-created": {
-    kind: "Created",
     verb: "created the account for",
     caution: false,
   },
   "roles-changed": {
-    kind: "Roles",
     verb: "changed the roles of",
     caution: false,
   },
   "password-reset": {
-    kind: "Password",
     verb: "reset the password for",
     caution: true,
   },
   "account-deactivated": {
-    kind: "Deactivated",
     verb: "deactivated the account for",
     caution: true,
   },
   "account-reactivated": {
-    kind: "Reactivated",
     verb: "reactivated the account for",
     caution: false,
   },
   "restricted-viewed": {
-    kind: "Viewed",
     verb: "viewed people's Restricted or Confidential details",
     caution: false,
   },
   "restricted-changed": {
-    kind: "Changed",
     verb: "changed the Restricted or Confidential details of",
     caution: false,
   },
@@ -74,7 +65,7 @@ export function describeAction(action: string): ActionWords {
   const known = accessActionSchema.safeParse(action);
   return known.success
     ? actionWords[known.data]
-    : { kind: action, verb: `${action}:`, caution: false };
+    : { verb: `${action}:`, caution: false };
 }
 
 // The person who made an entry's change, or Fathom's operators.
@@ -104,7 +95,17 @@ function names(roles: readonly Role[]): string {
 // The roles involved in an entry, in words, or an empty string when none were.
 export function describeDetails({ details }: HistoryEntry): string {
   if (details.previousRoles !== undefined && details.roles !== undefined) {
-    return `From ${names(details.previousRoles)} to ${names(details.roles)}`;
+    return `from ${names(details.previousRoles)} to ${names(details.roles)}`;
   }
-  return details.roles === undefined ? "" : `With ${names(details.roles)}`;
+  return details.roles === undefined ? "" : `with ${names(details.roles)}`;
+}
+
+// The words an entry shows, which a search on the page looks in.
+export function entryText(entry: HistoryEntry): string {
+  return [
+    actorName(entry),
+    describeAction(entry.action).verb,
+    subjectName(entry) ?? "",
+    describeDetails(entry),
+  ].join(" ");
 }

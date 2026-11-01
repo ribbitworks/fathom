@@ -25,6 +25,23 @@ export {
   tierSchema,
 } from "./access.ts";
 export {
+  builtInColumnNames,
+  type ChangedField,
+  changedFieldSchema,
+  type ChangedRecord,
+  changedRecordSchema,
+  type ChangeEntry,
+  changeEntrySchema,
+  type ChangeHistory,
+  changeHistoryQuerySchema,
+  changeHistorySchema,
+  type ChangeValue,
+  changeValueSchema,
+  historySearchLength,
+  recordSearchText,
+} from "./changes.ts";
+export { folded, matchesWords, searchWords } from "./search.ts";
+export {
   type AccessAction,
   accessActionSchema,
   type HistoryDetails,

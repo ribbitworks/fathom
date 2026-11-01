@@ -7,6 +7,7 @@
 
 import type { Database } from "@fathom/db";
 import type {
+  ChangeHistory,
   Choice,
   ChoiceRequest,
   Field,
@@ -33,6 +34,7 @@ import {
 import { readGreeting } from "./greeting.ts";
 import { moveColumn, readColumnOrder } from "./column-order.ts";
 import * as fieldData from "./fields.ts";
+import { readChangeHistory } from "./change-history.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
 import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
@@ -50,6 +52,14 @@ export interface DataAccess {
   readGreeting(actor: Actor): Promise<string>;
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
+  // The change sets saved before the one named, or the latest, holding only the changes the actor
+  // may see, and every word of a search, if any. Seeing Restricted or Confidential changes is
+  // recorded in the access history.
+  readChanges(
+    actor: Actor,
+    before?: string,
+    search?: string,
+  ): Promise<ChangeHistory>;
   // Lists of choices, which everyone who sees planning configuration may read, and only those who may
   // edit it may change.
   lists: ListAccess;
@@ -252,6 +262,14 @@ export function createDataAccess(database: Database): DataAccess {
     readHistory: async (actor) => {
       requirePermission(actor, "history:view");
       return readHistory(database, actor.permissions.includes("people:view"));
+    },
+    readChanges: async (actor, before, search) => {
+      requirePermission(actor, "changes:view");
+      const read = await readChangeHistory(database, actor, before, search);
+      if (read.includedSensitive) {
+        await recordRestrictedView(database, actor.user.id);
+      }
+      return { entries: read.entries, next: read.next };
     },
     lists: createListAccess(database),
     people: createPeopleAccess(database),

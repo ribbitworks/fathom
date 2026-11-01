@@ -28,7 +28,7 @@ function https() {
   };
 }
 
-// Dates and names are shown in the computer's language, so tests fix one. Each test process reads it
+// Dates, names, and counts are shown in the computer's language, so tests fix one. Each test process reads it
 // as it starts, so it is set here, before Vitest starts them.
 if (environment.VITEST !== undefined) environment.LC_ALL = "en_US.UTF-8";
 

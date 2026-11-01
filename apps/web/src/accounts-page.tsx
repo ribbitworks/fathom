@@ -53,6 +53,7 @@ import { notifySuccess } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import type { SignedInUser } from "./session.ts";
+import { count } from "./numbers.ts";
 
 type Dialog =
   | { kind: "create" }
@@ -494,11 +495,11 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
                 setFilter(value);
               }}
               data={[
-                { value: "all", label: `All ${String(all.length)}` },
+                { value: "all", label: `All ${count(all.length)}` },
                 { value: "active", label: `Active ${String(activeCount)}` },
                 {
                   value: "deactivated",
-                  label: `Deactivated ${String(all.length - activeCount)}`,
+                  label: `Deactivated ${count(all.length - activeCount)}`,
                 },
               ]}
             />

@@ -45,6 +45,12 @@ const paths = {
       <path d="M8 4.5V8l2.5 1.5" />
     </>
   ),
+  changes: (
+    <>
+      <path d="M2.5 4h7M2.5 8h5M2.5 12h3.5" />
+      <path d="M9 13.5l.6-2.1 3.3-3.3 1.5 1.5-3.3 3.3z" />
+    </>
+  ),
   rail: (
     <>
       <rect x="2" y="2.5" width="12" height="11" rx="2" />

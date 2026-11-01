@@ -5,7 +5,7 @@
 // that cannot be reached, gets a page that says so.
 
 import type { QueryClient } from "@tanstack/react-query";
-import type { Permission } from "@fathom/shared";
+import { historySearchLength, type Permission } from "@fathom/shared";
 import {
   createRootRouteWithContext,
   createRoute,
@@ -19,6 +19,7 @@ import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
 import { ChangePassword } from "./change-password.tsx";
 import { RolesHelpPage } from "./help-page.tsx";
+import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
@@ -94,11 +95,46 @@ const accountsRoute = createRoute({
   },
 });
 
+// A history page's search, kept in the address; one too long, as a hand-edited address might
+// have, is ignored.
+const historySearch = z.object({
+  search: z.string().max(historySearchLength).optional().catch(undefined),
+});
+
+const changesRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/changes",
+  validateSearch: historySearch,
+  beforeLoad: requiring("changes:view"),
+  component: function Changes() {
+    const navigate = changesRoute.useNavigate();
+    return (
+      <ChangeHistoryPage
+        search={changesRoute.useSearch().search ?? ""}
+        onSearch={(search, replace) => {
+          void navigate({ search: { search: search || undefined }, replace });
+        }}
+      />
+    );
+  },
+});
+
 const historyRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/history",
+  validateSearch: historySearch,
   beforeLoad: requiring("history:view"),
-  component: HistoryPage,
+  component: function AccessHistory() {
+    const navigate = historyRoute.useNavigate();
+    return (
+      <HistoryPage
+        search={historyRoute.useSearch().search ?? ""}
+        onSearch={(search, replace) => {
+          void navigate({ search: { search: search || undefined }, replace });
+        }}
+      />
+    );
+  },
 });
 
 // The Lists page, with the list in the address, if any, open in its side panel. One route, so
@@ -171,6 +207,7 @@ const routeTree = rootRoute.addChildren([
     homeRoute,
     accountsRoute,
     historyRoute,
+    changesRoute,
     listsRoute,
     peopleRoute,
     changePasswordRoute,

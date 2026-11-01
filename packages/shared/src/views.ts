@@ -9,8 +9,9 @@ import { z } from "zod";
 
 export const viewLengths = { name: 80 } as const;
 
-// Limits on what a view may hold, which only a hand-made address or request reaches.
-const textLimit = 200;
+// Limits on what a view may hold, which only a hand-made address or request reaches. The history
+// pages' searches share the limit on text.
+export const textLimit = 200;
 const keyLimit = 64;
 const filtersLimit = 100;
 const levelsLimit = 10;

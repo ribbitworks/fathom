@@ -21,9 +21,12 @@ const user = {
   email: "person@example.test",
 };
 const expected: [Role, Permission[]][] = [
-  ["viewer", ["plan:view", "allocations:view"]],
-  ["project-planner", ["plan:edit", "drafts:submit"]],
-  ["resource-planner", ["people:view", "allocations:edit", "drafts:submit"]],
+  ["viewer", ["plan:view", "allocations:view", "changes:view"]],
+  ["project-planner", ["plan:edit", "drafts:submit", "changes:view"]],
+  [
+    "resource-planner",
+    ["people:view", "allocations:edit", "drafts:submit", "changes:view"],
+  ],
   [
     "people-manager",
     [
@@ -31,6 +34,7 @@ const expected: [Role, Permission[]][] = [
       "feature-teams:propose",
       "feature-teams:edit",
       "restricted:view",
+      "changes:view",
     ],
   ],
   [
@@ -45,10 +49,14 @@ const expected: [Role, Permission[]][] = [
       "confidential:edit",
       "configuration:view",
       "configuration:edit",
+      "changes:view",
     ],
   ],
-  ["leadership", ["people:view", "restricted:view", "confidential:view"]],
-  ["approver", ["drafts:approve", "feature-teams:approve"]],
+  [
+    "leadership",
+    ["people:view", "restricted:view", "confidential:view", "changes:view"],
+  ],
+  ["approver", ["drafts:approve", "feature-teams:approve", "changes:view"]],
   // Running Fathom needs no access to people data, so Administrators hold Viewer only if given it.
   ["administrator", ["accounts:manage", "history:view"]],
 ];

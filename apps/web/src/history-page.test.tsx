@@ -132,9 +132,9 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "ChangedFictional Person changed the Restricted or Confidential details of Avery Fictional",
-      "ChangedFictional Person changed the Restricted or Confidential details of a person",
-      "ViewedFictional Person viewed people's Restricted or Confidential details",
+      "Fictional Person changed the Restricted or Confidential details of Avery Fictional",
+      "Fictional Person changed the Restricted or Confidential details of a person",
+      "Fictional Person viewed people's Restricted or Confidential details",
     ]);
   });
 
@@ -151,43 +151,64 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "RolesFictional Person changed the roles of Fictional PlannerFrom Viewer to no roles",
-      "Password, worth checkingFictional Person reset the password for A removed account",
-      "future-actionA removed account future-action: Fictional Planner",
-      "CreatedFathom's operators created the account for Fictional PlannerWith Viewer, Project Planner",
+      "Fictional Person changed the roles of Fictional Planner: from Viewer to no roles",
+      "Worth checking: Fictional Person reset the password for A removed account",
+      "A removed account future-action: Fictional Planner",
+      "Fathom's operators created the account for Fictional Planner: with Viewer, Project Planner",
     ]);
-    // Entries are grouped under the day they happened.
-    expect(screen.getAllByRole("region")).toHaveLength(1);
   });
 
-  it("are grouped under the day they happened, in the time zone the tests fix", async () => {
+  it("show each entry's date, with its year, and time, in the time zone the tests fix", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,
       "GET /api/access-history": () =>
         Response.json({
           entries: [
             { ...entries[0], id: 6, occurredAt: "2026-10-30T00:30:00.000Z" },
-            { ...entries[0], id: 5, occurredAt: "2026-10-29T23:30:00.000Z" },
           ],
         }),
     });
     renderApp("/history");
-    const days = await screen.findAllByRole("region");
-    expect(days.map((region) => region.querySelectorAll("li").length)).toEqual([
-      1, 1,
-    ]);
-    expect(
-      days.map((region) => region.querySelector("time")?.dateTime),
-    ).toEqual(["2026-10-30T00:30:00.000Z", "2026-10-29T23:30:00.000Z"]);
+    await screen.findAllByRole("listitem");
+    const [time] = [...document.querySelectorAll("time")];
+    expect(time?.dateTime).toBe("2026-10-30T00:30:00.000Z");
+    expect(time?.textContent).toMatch(/2026/);
   });
 
-  it("mark changes worth checking for screen readers, not only by colour", async () => {
+  it("are searched for every word typed, in the words each entry shows", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () => Response.json({ entries }),
+    });
+    const history = renderApp("/history?search=planner%20viewer");
+    expect(
+      (await screen.findAllByRole("listitem")).map((item) =>
+        item.textContent.slice(
+          String(item.querySelector("time")?.textContent).length,
+        ),
+      ),
+    ).toEqual([
+      "Fictional Person changed the roles of Fictional Planner: from Viewer to no roles",
+      "Fathom's operators created the account for Fictional Planner: with Viewer, Project Planner",
+    ]);
+    const field = screen.getByRole("textbox", {
+      name: "Search access history",
+    });
+    await userEvent.clear(field);
+    await userEvent.type(field, "nobody");
+    expect(
+      await screen.findByText("No entries match the search."),
+    ).toBeDefined();
+    expect(history.location.search).toBe("?search=nobody");
+  });
+
+  it("mark changes worth checking in words, not only by colour", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,
       "GET /api/access-history": () => Response.json({ entries }),
     });
     renderApp("/history");
-    expect(await screen.findAllByText(", worth checking")).toHaveLength(1);
+    expect(await screen.findAllByText("Worth checking:")).toHaveLength(1);
   });
 
   it("show a loading indicator until they arrive", async () => {

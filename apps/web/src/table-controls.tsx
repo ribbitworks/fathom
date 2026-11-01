@@ -41,6 +41,7 @@ import {
   viewFrom,
 } from "./table-view.ts";
 import classes from "./pages.module.css";
+import { count } from "./numbers.ts";
 
 // Changes the view, replacing the current address rather than adding to its history when asked.
 export type ChangeView = (view: View, replace?: boolean) => void;
@@ -467,8 +468,8 @@ export function ViewBar({
         className={classes.figures}
       >
         {narrows(view)
-          ? `${String(shown)} of ${String(total)}`
-          : `${String(total)} ${total === 1 ? one : noun}`}
+          ? `${count(shown)} of ${count(total)}`
+          : `${count(total)} ${total === 1 ? one : noun}`}
       </Text>
       {(narrows(view) || view.sort.length > 0) && (
         <Button

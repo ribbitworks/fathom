@@ -24,6 +24,7 @@ import { type Tier, tierSchema } from "@fathom/shared";
 import { and, asc, count, eq, gt, inArray, or, sql } from "drizzle-orm";
 import {
   type Actor,
+  mostSensitive,
   requirePermission,
   requireTierEdit,
   seesTier,
@@ -306,11 +307,9 @@ function reversed(rows: readonly StoredChange[]): Change[] {
 
 const byKind = (record: Undone) => kindOrder.indexOf(record.recordType);
 
-const tierRank: readonly Tier[] = ["general", "restricted", "confidential"];
-
 // The more sensitive of two tiers.
 const higher = (first: Tier, second: Tier): Tier =>
-  tierRank.indexOf(first) >= tierRank.indexOf(second) ? first : second;
+  mostSensitive([first, second]);
 
 // The identifiers of the records of one kind.
 const idsOf = (records: readonly Undone[], kind: RecordType) =>

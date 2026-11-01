@@ -22,7 +22,7 @@ import type {
   PersonChange,
   PersonRequest,
 } from "@fathom/shared";
-import { personLengths } from "@fathom/shared";
+import { builtInColumnNames, personLengths } from "@fathom/shared";
 import { ActionIcon, Menu, Paper, Text, VisuallyHidden } from "@mantine/core";
 import {
   type ClipboardEvent,
@@ -117,12 +117,12 @@ export function columnsFor(
 ): Column[] {
   const builtIn = (
     key: string,
-    label: string,
     kind: Column["kind"],
     required = false,
   ): Column => ({
     key,
-    label,
+    // Every built-in column is named.
+    label: builtInColumnNames.get(key) as string,
     kind,
     required,
     choices: [],
@@ -130,13 +130,10 @@ export function columnsFor(
     value: (person) => personValue(person, kind, key),
   });
   const all: Column[] = [
-    builtIn("preferredName", "Name", "text", true),
-    builtIn("employeeId", "Employee ID", "text", true),
+    builtIn("preferredName", "text", true),
+    builtIn("employeeId", "text", true),
     ...(showDates
-      ? [
-          builtIn("startDate", "Start", "date"),
-          builtIn("endDate", "End", "date"),
-        ]
+      ? [builtIn("startDate", "date"), builtIn("endDate", "date")]
       : []),
     ...fields.map((field): Column => ({
       key: field.id,

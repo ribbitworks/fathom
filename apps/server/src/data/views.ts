@@ -17,9 +17,9 @@ import {
   viewColumnKeys,
   viewDefinitionSchema,
 } from "@fathom/shared";
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { type Actor, seesTier } from "../access.ts";
+import { type Actor, mostSensitive, seesTier } from "../access.ts";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../errors.ts";
 import {
   type Change,
@@ -42,17 +42,6 @@ type Reader = Pick<Database, "select">;
 type ViewRow = typeof savedViews.$inferSelect;
 
 const viewFields = ["tableName", "name", "definition", "createdBy"] as const;
-
-const tierRank: readonly Tier[] = ["general", "restricted", "confidential"];
-
-// The most sensitive of some tiers, or General when there are none.
-function highest(tiers: readonly Tier[]): Tier {
-  return tiers.reduce<Tier>(
-    (most, tier) =>
-      tierRank.indexOf(tier) > tierRank.indexOf(most) ? tier : most,
-    "general",
-  );
-}
 
 // The tier of each of the People table's columns, by key: dates are Restricted, each added column is
 // as sensitive as its list, and the rest is General.
@@ -161,7 +150,7 @@ function requireSeen(
   if (keys.some((key) => !tiers.has(key)) || !sees(actor, tiers, definition)) {
     throw new BadRequestError(hiddenColumns);
   }
-  return highest(usedTiers(tiers, definition));
+  return mostSensitive(usedTiers(tiers, definition));
 }
 
 // A view as stored, leaving out what is not set.
@@ -250,8 +239,8 @@ export async function updateView(
           ? {}
           : { definition: stored(change.definition) }),
       };
-      const tier = highest([
-        highest(usedTiers(tiers, definitionOf(before))),
+      const tier = mostSensitive([
+        mostSensitive(usedTiers(tiers, definitionOf(before))),
         change.definition === undefined
           ? "general"
           : requireSeen(actor, tiers, change.definition),
@@ -288,7 +277,7 @@ export async function deleteView(
         "deleted",
         row,
         undefined,
-        highest(usedTiers(tiers, definitionOf(row))),
+        mostSensitive(usedTiers(tiers, definitionOf(row))),
       ),
     );
   });
@@ -301,16 +290,33 @@ export async function viewTierNow(
   id: string,
   held: readonly unknown[],
 ): Promise<Tier> {
-  const tiers = await columnTiers(transaction);
-  const [row] = await transaction
-    .select({ definition: savedViews.definition })
+  // The tier of the one view asked for is always found.
+  return (await viewTiersNow(transaction, new Map([[id, held]]))).get(
+    id,
+  ) as Tier;
+}
+
+// The same for several views at once, by identifier, as the change history needs.
+export async function viewTiersNow(
+  reader: Reader,
+  held: ReadonlyMap<string, readonly unknown[]>,
+): Promise<Map<string, Tier>> {
+  const tiers = await columnTiers(reader);
+  const rows = await reader
+    .select({ id: savedViews.id, definition: savedViews.definition })
     .from(savedViews)
-    .where(eq(savedViews.id, id));
-  return highest(
-    [row?.definition, ...held].flatMap((definition) => {
-      const read = viewDefinitionSchema.safeParse(definition);
-      return read.success ? usedTiers(tiers, read.data) : [];
-    }),
+    .where(inArray(savedViews.id, [...held.keys()]));
+  const current = new Map(rows.map((row) => [row.id, row.definition]));
+  return new Map(
+    [...held].map(([id, definitions]) => [
+      id,
+      mostSensitive(
+        [current.get(id), ...definitions].flatMap((definition) => {
+          const read = viewDefinitionSchema.safeParse(definition);
+          return read.success ? usedTiers(tiers, read.data) : [];
+        }),
+      ),
+    ]),
   );
 }
 

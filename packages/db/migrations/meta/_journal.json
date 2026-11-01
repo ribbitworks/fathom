@@ -71,6 +71,13 @@
       "when": 1793503824309,
       "tag": "0009_saved_views",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793517653079,
+      "tag": "0010_change_history_index",
+      "breakpoints": true
     }
   ]
 }

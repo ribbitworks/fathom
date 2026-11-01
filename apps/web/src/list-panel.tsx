@@ -33,6 +33,7 @@ import { Icon } from "./icons.tsx";
 import { Count, nameProblem } from "./list-dialog.tsx";
 import { sameName } from "./lists.ts";
 import classes from "./pages.module.css";
+import { count } from "./numbers.ts";
 
 export interface ChoiceActions {
   // Adds choices; if they cannot be saved, gives back what was typed.
@@ -820,7 +821,7 @@ export function ListPanel({
           >
             {showRetired
               ? "Hide retired"
-              : `Show retired (${String(retired.length)})`}
+              : `Show retired (${count(retired.length)})`}
           </Button>
         </div>
       )}

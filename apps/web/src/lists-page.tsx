@@ -43,6 +43,7 @@ import {
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
+import { count } from "./numbers.ts";
 
 const newListId = "list-new";
 
@@ -152,7 +153,7 @@ function ListsTable({
           >
             {showRetired
               ? "Hide retired"
-              : `Show retired (${String(retired.length)})`}
+              : `Show retired (${count(retired.length)})`}
           </Button>
         </div>
       )}

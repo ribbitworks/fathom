@@ -8,6 +8,8 @@
 
 import {
   type Filter,
+  folded,
+  searchWords,
   type ViewDefinition,
   viewDefinitionSchema,
 } from "@fathom/shared";
@@ -187,13 +189,8 @@ export function knownView(
   };
 }
 
-// Text folded for matching, so letter case and accents do not matter.
-export function folded(text: string): string {
-  return text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLocaleLowerCase();
-}
+// Text folded for matching, shared with the server so searches match alike everywhere.
+export { folded };
 
 const collator = new Intl.Collator(undefined, {
   numeric: true,
@@ -308,7 +305,7 @@ export function applyView<Row>(
     const column = byKey.get(key);
     return column && isActive(filter) ? [{ column, filter }] : [];
   });
-  const words = folded(view.search).split(/\s+/).filter(Boolean);
+  const words = searchWords(view.search);
   const levels = view.sort.flatMap((level) => {
     const column = byKey.get(level.key);
     return column ? [{ column, descending: level.descending }] : [];

@@ -11,16 +11,22 @@ import { ForbiddenError } from "./errors.ts";
 
 // Every role must be listed, which the compiler checks.
 const grants: Record<Role, readonly Permission[]> = {
-  viewer: ["plan:view", "allocations:view"],
-  "project-planner": ["plan:edit", "drafts:submit"],
+  viewer: ["plan:view", "allocations:view", "changes:view"],
+  "project-planner": ["plan:edit", "drafts:submit", "changes:view"],
   // Resource Planners see people, since they allocate them.
-  "resource-planner": ["people:view", "allocations:edit", "drafts:submit"],
+  "resource-planner": [
+    "people:view",
+    "allocations:edit",
+    "drafts:submit",
+    "changes:view",
+  ],
   // People Managers edit feature teams directly until plan approval arrives, as Roles sets out.
   "people-manager": [
     "people:view",
     "feature-teams:propose",
     "feature-teams:edit",
     "restricted:view",
+    "changes:view",
   ],
   "workforce-administrator": [
     "people:view",
@@ -32,9 +38,15 @@ const grants: Record<Role, readonly Permission[]> = {
     "confidential:edit",
     "configuration:view",
     "configuration:edit",
+    "changes:view",
   ],
-  leadership: ["people:view", "restricted:view", "confidential:view"],
-  approver: ["drafts:approve", "feature-teams:approve"],
+  leadership: [
+    "people:view",
+    "restricted:view",
+    "confidential:view",
+    "changes:view",
+  ],
+  approver: ["drafts:approve", "feature-teams:approve", "changes:view"],
   administrator: ["accounts:manage", "history:view"],
 };
 
@@ -91,6 +103,17 @@ const tierPermissions: Record<Tier, { view: Permission; edit: Permission }> = {
   restricted: { view: "restricted:view", edit: "restricted:edit" },
   confidential: { view: "confidential:view", edit: "confidential:edit" },
 };
+
+const tierRank: readonly Tier[] = ["general", "restricted", "confidential"];
+
+// The most sensitive of some tiers, or General when there are none.
+export function mostSensitive(tiers: readonly Tier[]): Tier {
+  return tiers.reduce<Tier>(
+    (most, tier) =>
+      tierRank.indexOf(tier) > tierRank.indexOf(most) ? tier : most,
+    "general",
+  );
+}
 
 export function seesTier(actor: Actor, tier: Tier): boolean {
   // The tier is always one of the fixed tiers listed above.

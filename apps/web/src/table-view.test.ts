@@ -89,6 +89,37 @@ describe("searching", () => {
 
   it("folds text for matching", () => {
     expect(folded("Zoë ÉCOLE")).toBe("zoe ecole");
+    expect(folded("ВЕРОНИКА Ёлкина")).toBe("вероника елкина");
+    // Marks that make another letter are kept, and Korean syllables stay whole.
+    expect(folded("が")).not.toBe(folded("か"));
+    expect(folded("김민준")).toBe("김민준");
+  });
+
+  it("finds names in every script, part of a name, and in any letter case", () => {
+    const international = [
+      { id: "ko", name: "편성현", start: "", levels: [] },
+      { id: "ja", name: "越智 太陽", start: "", levels: [] },
+      { id: "zh", name: "陈宇泽", start: "", levels: [] },
+      { id: "ru", name: "Вероника Елисеева", start: "", levels: [] },
+      { id: "kana", name: "さくら が", start: "", levels: [] },
+    ];
+    const found = (search: string) =>
+      ids(applyView(international, columns, view({ search })));
+    expect(found("성현")).toEqual(["ko"]);
+    expect(found("太陽")).toEqual(["ja"]);
+    expect(found("宇泽")).toEqual(["zh"]);
+    expect(found("вероника ЕЛИСЕЕВА")).toEqual(["ru"]);
+    expect(found("か")).toEqual([]);
+    expect(found("が")).toEqual(["kana"]);
+    expect(
+      ids(
+        applyView(
+          international,
+          columns,
+          view({ filters: { name: { contains: "елисеева" } } }),
+        ),
+      ),
+    ).toEqual(["ru"]);
   });
 });
 
@@ -162,6 +193,29 @@ describe("filtering", () => {
 });
 
 describe("sorting", () => {
+  it("sorts names in every script, Latin first, then Cyrillic, then the rest", () => {
+    const names = [
+      "陈宇泽",
+      "Вероника",
+      "Ann",
+      "편성현",
+      "Zoë",
+      "Анна",
+      "越智 太陽",
+    ];
+    const sorted = ids(
+      applyView(
+        names.map((name) => ({ id: name, name, start: "", levels: [] })),
+        columns,
+        view({ sort: [{ key: "name", descending: false }] }),
+      ),
+    );
+    expect(sorted.slice(0, 4)).toEqual(["Ann", "Zoë", "Анна", "Вероника"]);
+    expect(sorted.slice(4).toSorted()).toEqual(
+      ["편성현", "陈宇泽", "越智 太陽"].toSorted(),
+    );
+  });
+
   it("sorts text naturally, ignoring case, with empty values last either way", () => {
     const named = [...rows, { id: "e", name: "Zoe E2", start: "", levels: [] }];
     const by = (descending: boolean) =>

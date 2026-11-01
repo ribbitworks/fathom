@@ -45,6 +45,7 @@ type Page =
   | "/"
   | "/accounts"
   | "/history"
+  | "/changes"
   | "/lists/{-$listId}"
   | "/people"
   | "/password"
@@ -106,6 +107,17 @@ const sections: { label: string; items: Item[] }[] = [
         icon: "accounts",
         to: "/accounts",
         permission: "accounts:manage",
+      },
+    ],
+  },
+  {
+    label: "History",
+    items: [
+      {
+        label: "Change history",
+        icon: "changes",
+        to: "/changes",
+        permission: "changes:view",
       },
       {
         label: "Access history",

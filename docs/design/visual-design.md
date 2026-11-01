@@ -23,6 +23,7 @@ The rest follow from them:
 - **Colour means something:** Neutrals carry the page. Sea blue marks actions and the current place. Other colours appear only for meaning, such as green for active, yellow for changes worth checking, and red for problems.
 - **Never colour alone:** Anything shown by colour is also shown in words, visible or read aloud by screen readers.
 - **Both modes:** Light and dark modes follow each person's system setting.
+- **International:** Names and text in any language and script are shown, entered, searched, and sorted as well as English is: no screen assumes Latin letters, a given name first, or one name per person, and text is never cut so a character breaks. Search ignores letter case and accents, such as é or ё, but not marks that make another letter in other scripts, such as Japanese が, though Cyrillic letters such as й also match their plain letter. Sorting, dates, and counts follow each person's own language settings, and scripts the typeface lacks fall back to the system's fonts. The [seed data](development-setup.md#fictional-seed-data) includes names in other scripts, so every screen is tried with them.
 
 ## Layout
 
@@ -30,6 +31,7 @@ The rest follow from them:
 - **Collapsed sidebar:** The sidebar collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
 - **Narrow screens:** The sidebar opens from a menu button, and closes when the user moves to another page.
 - **Pages:** Each page starts with a heading and the page's main action on the right. Content sits in bordered panels on a canvas a shade darker than them.
+- **History pages:** Change history and Access history, in the sidebar's History section, look alike: a search field, like a table's, then one row for each entry, newest first, with its date, year, and time, naming who did what in a sentence, with details dimmed after a colon, and a yellow dot, read aloud as "Worth checking", before entries that deserve a second look. The change history has a sentence for each record a save changed, such as "changed the list Sites: Name from Sites to Locations"; records of a kind added or deleted together share one, such as "added 150 people", naming ten, with Show all for the rest. A save that changed several records lists five, with Show more for the rest. Show more at the end of the page reads older entries. The change history's search looks on the server in who made each change and the names and values involved, reading back through up to 2,000 saves at a time, with Show more to read on, and shows what matches first in each entry; the access history's searches the latest entries it shows.
 - **Roles help:** Help's Roles page names each role beside what it lets a user do, with the user's own roles marked "Yours", followed by what each sensitivity covers. Wherever roles are chosen, each role shows the same description under its name.
 - **Sign-in and problem pages:** Only Fathom's name and mark above the form or message, with no other words.
 

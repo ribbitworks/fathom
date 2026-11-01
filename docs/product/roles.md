@@ -28,13 +28,15 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | Confidential data | None | None | None | None | Edit | View | None | None |
 | Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | Edit | View | View | None |
 | Lists of choices, and People's columns and their order | None | None | None | None | Edit | None | None | None |
-| Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit feature teams | Edit | View | Approve | None |
+| Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit feature teams | Edit | None (**proposal**) | Approve | None |
 | Change history, for the data the role sees (**proposal**) | View | View | View | View | View | View | View | None |
 | Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |
 | User accounts, role assignments, and system settings | None | None | None | None | None | None | None | Edit |
 | Access history | None | None | None | None | None | None | None | View (**proposal**) |
 
 **Proposal:** Seeing data comes only from roles, never from approving. A user can approve only drafts whose values their roles let them see, so a draft holding a Restricted detail, such as an end date, needs an Approver who also holds a role that sees Restricted data. Approvers approve every kind of draft, so Project Managers, who hold Approver by default, can approve feature teams too, which the owner accepted on 2026-10-31 until roles are reworked, as [Issues](../issues.md) records.
+
+**Proposal:** Seeing drafts is a permission of its own, like seeing the change history, so Leadership, held by the Executive, sees only approved data. Still open: whether the change history then leaves out edits to drafts for those who may not see drafts.
 
 The owner has decided that a role letting a user edit some data also lets them view it. Until the account change in [Issues](../issues.md) builds it, viewing the plan and allocations comes from the Viewer role, which every account has by default, and roles that edit people or planning configuration are given the matching view.
 

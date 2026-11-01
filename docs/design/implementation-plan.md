@@ -37,7 +37,8 @@ The slices are built in this order, which may change as work progresses. The tab
 | Visual Design | Done |
 | People | Done: user-defined lists and people |
 | Seed Accounts | Done |
-| Change History | Next |
+| Change History | Done |
+| Draft and Approval | Next |
 
 ### Hello Fathom
 
@@ -77,7 +78,7 @@ Fictional accounts for development, one for each persona in the [Product Brief](
 
 ### Change History
 
-A view of the change history the lists step built: who changed what, and when, limited to the changes each user may see, as set out in the [Decisions Log](../product/decisions.md#configuration). Draft and approval builds on it to show what a draft changes.
+A page showing the change history the lists step built: who changed what, and when, limited to the changes each user may see, as set out in the [Decisions Log](../product/decisions.md#configuration). Draft and approval builds on it to show what a draft changes.
 
 ### Draft and Approval
 

@@ -41,6 +41,8 @@ export const permissionSchema = z.enum([
   "drafts:approve",
   "accounts:manage",
   "history:view",
+  // The change history, holding only changes to data the reader may see.
+  "changes:view",
 ]);
 
 export type Permission = z.infer<typeof permissionSchema>;
