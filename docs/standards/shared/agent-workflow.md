@@ -56,8 +56,9 @@ test command", use the one they name.
   - Only the owner approves a pull request, by merging it or telling an agent to
     merge it. Without that, **Must Not** merge, turn on auto-merge or request
     other reviewers.
-  - Merge pull requests by squashing, with the pull request's title and
-    description as the commit message.
+  - Merge pull requests by rebasing onto `main`, never by squashing or with a
+    merge commit, so each commit lands as written. Each commit therefore
+    follows the commit message rules on its own.
 - **Data:** **Must Not** commit real personal, health, financial or company
   data, such as exports, account numbers, measurements or names. Sample files,
   fixtures and test data **Must** be fictional and not derived from real data,
