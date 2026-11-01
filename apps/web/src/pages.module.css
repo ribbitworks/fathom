@@ -449,6 +449,19 @@
   border-top: 1px solid var(--mantine-color-default-border);
 }
 
+.newMark {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mantine-color-dimmed);
+}
+
+/* An open dot: nothing is saved yet. */
+.newMark .statusDot {
+  background: transparent;
+  border: 1.5px solid currentColor;
+}
+
 .peopleCell {
   height: 36px;
   padding: 4px 12px;
@@ -475,7 +488,9 @@
    rejected. A person a draft removes is struck through. */
 /* A row with a draft is tinted in the theme's blue, so it stands apart from the live row under it,
    and each cell the draft changes is yellow. */
-.peopleDraftRow {
+/* A new row being filled in is tinted as the draft it will be. */
+.peopleDraftRow,
+.peopleFillingRow {
   background: var(--mantine-color-sea-0);
 }
 
@@ -489,7 +504,8 @@
 }
 
 /* In the dark scheme, the same colours as dark tints, so light text stays readable on them. */
-:global([data-mantine-color-scheme="dark"]) .peopleDraftRow {
+:global([data-mantine-color-scheme="dark"]) .peopleDraftRow,
+:global([data-mantine-color-scheme="dark"]) .peopleFillingRow {
   background: var(--mantine-color-sea-light);
 }
 

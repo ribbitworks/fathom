@@ -236,6 +236,7 @@ describe("who sees the People page", () => {
         .map((header) => header.textContent),
     ).toEqual(["Employee ID", "Name", "Site"]);
     expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
     expect(screen.queryByRole("row", { name: "New person" })).toBeNull();
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Enter}x");
@@ -243,6 +244,26 @@ describe("who sees the People page", () => {
     expect(within(screen.getByRole("grid")).queryByRole("textbox")).toBeNull();
     await userEvent.keyboard("{Shift>}{F10}{/Shift}");
     expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("makes adding a person the main action for those who may, and otherwise adding a column", async () => {
+    serverAnswers({
+      "GET /api/session": session([
+        "people:view",
+        "configuration:view",
+        "configuration:edit",
+      ]),
+      "GET /api/people": peopleAnswer,
+      "GET /api/lists": listsAnswer,
+    });
+    renderApp("/people");
+    await screen.findByRole("grid", { name: "People" });
+    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "New column" })
+        .getAttribute("data-variant"),
+    ).toBe("filled");
   });
 
   it("is not linked or shown for anyone else", async () => {
@@ -614,6 +635,135 @@ describe("adding people", () => {
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
+  });
+
+  it("goes to the new row from New person, marks it until saved, and shows who was added at once", async () => {
+    // The server answers adding only when the test lets it, so what shows before is seen.
+    let answer: (response: Response) => void = () => undefined;
+    let saved = false;
+    const casey = {
+      ...avery,
+      id: "p9",
+      preferredName: "Casey",
+      employeeId: "E9",
+      values: { f1: ["c1"] },
+      draft: draftOf({ action: "created" }),
+    };
+    const fetch = await openPeople({
+      "POST /api/people": () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+      "GET /api/people": () =>
+        Response.json({
+          people: saved ? [avery, blake, casey] : [avery, blake],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    // Adding a person is the page's main action, beside adding a column.
+    const button = screen.getByRole("button", { name: "New person" });
+    expect(button.getAttribute("data-variant")).toBe("filled");
+    expect(
+      screen
+        .getByRole("button", { name: "New column" })
+        .getAttribute("data-variant"),
+    ).toBe("default");
+    await userEvent.click(button);
+    await waitFor(() => {
+      expect(document.activeElement).toBe(newCell("Name"));
+    });
+    expect(newRow().textContent).not.toContain("not saved yet");
+    await userEvent.keyboard("Casey{Tab}E9{Tab}");
+    await waitFor(() => {
+      expect(newCell("Name").textContent).toBe(
+        "Casey New, not saved yet: Site needed",
+      );
+    });
+    await userEvent.keyboard("har{Tab}");
+    await waitFor(() => {
+      expect(newCell("Name").textContent).toBe("Casey New, not saved yet");
+    });
+    await userEvent.keyboard("{Escape}{Enter}");
+    // Shown at once, as a draft adding them, which cannot be changed until saved.
+    const added = await screen.findByText("Draft: added");
+    const row = added.closest("tr") as HTMLElement;
+    expect(inRow(row, "Name").textContent).toContain("Casey");
+    expect(inRow(row, "Employee ID").getAttribute("aria-readonly")).toBe(
+      "true",
+    );
+    expect(newCell("Name").textContent).toBe("");
+    // Their Employee ID is taken already.
+    await userEvent.keyboard("Dee{Tab}E9{Tab}har{Tab}");
+    await userEvent.keyboard("{Escape}{Enter}");
+    expect(await screen.findByRole("alert")).toHaveProperty(
+      "textContent",
+      "Someone already has that Employee ID",
+    );
+    // Nothing changes them, from typing, Delete, or a menu.
+    act(() => {
+      inRow(row, "Name").focus();
+    });
+    await userEvent.keyboard("x{Delete}{Shift>}{F10}{/Shift}");
+    expect(within(row).queryByRole("textbox")).toBeNull();
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(inRow(row, "Name").textContent).toContain("Casey");
+    // Once saved, they keep their place and focus, under their own identifier, and can be changed.
+    saved = true;
+    answer(Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 }));
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls.filter(([url]) => url === "/api/people"),
+      ).toHaveLength(2);
+    });
+    await waitFor(() => {
+      expect(
+        inRow(row, "Employee ID").getAttribute("aria-readonly"),
+      ).toBeNull();
+    });
+    expect(document.activeElement).toBe(inRow(row, "Name"));
+    expect(row.isConnected).toBe(true);
+  });
+
+  it("gives back who could not be added, keeping what was typed since", async () => {
+    let answer: (response: Response) => void = () => undefined;
+    await openPeople({
+      "POST /api/people": () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    });
+    act(() => {
+      newCell("Name").focus();
+    });
+    await userEvent.keyboard("Casey{Tab}E9{Tab}har{Tab}");
+    await userEvent.keyboard("{Escape}{Enter}");
+    expect(await screen.findByText("Draft: added")).toBeDefined();
+    await userEvent.keyboard("Dee{Tab}{Escape}");
+    answer(Response.json({ error: "Fictional failure" }, { status: 500 }));
+    expect(
+      await screen.findByText(
+        "Fathom could not add the people. Try again in a moment.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByText("Draft: added")).toBeNull();
+    const rows = screen.getAllByRole("row", { name: "New person" });
+    expect(rows.map((row) => inRow(row, "Name").textContent)).toEqual([
+      "Casey New, not saved yet",
+      "Dee New, not saved yet: Employee ID, Site needed",
+    ]);
+  });
+
+  it("offers New person only once the people and lists have loaded", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/people": peopleAnswer,
+      "GET /api/lists": () => new Promise<Response>(() => undefined),
+    });
+    renderApp("/people");
+    const button = await screen.findByRole("button", { name: "New person" });
+    expect(button).toHaveProperty("disabled", true);
   });
 
   it("shows what a new row is missing, and adds it with Enter once complete", async () => {

@@ -98,14 +98,20 @@ describe("adding people without dates", () => {
     expect(add).toHaveBeenCalledWith(
       [
         {
-          preferredName: "Hana Fictional",
-          employeeId: "E1",
-          values: { f1: ["c1"] },
+          id: expect.stringMatching(/^pending-/) as string,
+          request: {
+            preferredName: "Hana Fictional",
+            employeeId: "E1",
+            values: { f1: ["c1"] },
+          },
         },
         {
-          preferredName: "Ian Fictional",
-          employeeId: "E2",
-          values: { f1: [] },
+          id: expect.stringMatching(/^pending-/) as string,
+          request: {
+            preferredName: "Ian Fictional",
+            employeeId: "E2",
+            values: { f1: [] },
+          },
         },
       ],
       expect.any(Function),

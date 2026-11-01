@@ -14,6 +14,7 @@ import type {
   Person,
   PersonChange,
   PersonDraft,
+  PersonRequest,
   SavedView,
 } from "@fathom/shared";
 import {
@@ -27,12 +28,16 @@ import {
   Text,
 } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
 import { type Decision, DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { PageHeader } from "./page-header.tsx";
-import { type PeopleActions, PeopleGrid } from "./people-grid.tsx";
+import {
+  type PeopleActions,
+  PeopleGrid,
+  type PeopleGridHandle,
+} from "./people-grid.tsx";
 import {
   createPeople,
   createView,
@@ -78,6 +83,25 @@ function changed(person: Person, change: PersonChange): Person {
     preferredName: preferredName ?? person.preferredName,
     employeeId: employeeId ?? person.employeeId,
     values: { ...person.values, ...values },
+  };
+}
+
+// Someone being added, as the table shows them before they are saved: a draft adding them.
+function adding(id: string, request: PersonRequest): Person {
+  const { values, ...details } = request;
+  return {
+    id,
+    ...details,
+    values,
+    draft: {
+      action: "created",
+      // A draft adding someone changes everything, so names nothing in particular.
+      changed: [],
+      live: { values: {} },
+      state: "waiting",
+      madeBy: null,
+      madeAt: new Date().toISOString(),
+    },
   };
 }
 
@@ -154,6 +178,7 @@ export function PeoplePage({
   // Approving or rejecting drafts, which asks first.
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
+  const grid = useRef<PeopleGridHandle>(null);
   const { save, undoable, done } = useSaving<PeopleData>({
     queryKey: peopleQuery.queryKey,
     removed: "Someone else has removed this. The people have been refreshed.",
@@ -165,11 +190,19 @@ export function PeoplePage({
       setDecision({ asking, ids: people.map(({ id }) => id) });
       setDeciding(true);
     },
-    add: (requests, onAdded, onFailed) => {
+    add: (added, onAdded, onFailed) => {
       save({
-        next: (data) => data,
+        next: (data) => ({
+          ...data,
+          people: [
+            ...data.people,
+            ...added.map(({ id, request }) => adding(id, request)),
+          ],
+        }),
         save: async () => {
-          const { ids, changeSetId } = await createPeople(requests);
+          const { ids, changeSetId } = await createPeople(
+            added.map(({ request }) => request),
+          );
           onAdded(ids);
           return changeSetId;
         },
@@ -416,6 +449,7 @@ export function PeoplePage({
           view={view}
           onView={onView}
           saved={savedViews(query.data.views)}
+          ref={grid}
         />
         <DecisionModal
           decision={decision}
@@ -487,16 +521,32 @@ export function PeoplePage({
       <PageHeader
         title="People"
         action={
-          canEditColumns && (
-            <Button
-              id={newColumnId}
-              onClick={() => {
-                setDialog({ kind: "new" });
-                setOpened(true);
-              }}
-            >
-              New column
-            </Button>
+          (canEdit || canEditColumns) && (
+            <Group gap="xs">
+              {canEditColumns && (
+                <Button
+                  id={newColumnId}
+                  variant={canEdit ? "default" : "filled"}
+                  onClick={() => {
+                    setDialog({ kind: "new" });
+                    setOpened(true);
+                  }}
+                >
+                  New column
+                </Button>
+              )}
+              {canEdit && (
+                <Button
+                  variant="filled"
+                  disabled={!query.isSuccess || !lists.isSuccess}
+                  onClick={() => {
+                    grid.current?.addPerson();
+                  }}
+                >
+                  New person
+                </Button>
+              )}
+            </Group>
           )
         }
       />

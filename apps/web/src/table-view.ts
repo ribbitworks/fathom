@@ -368,9 +368,9 @@ interface Snapshot {
 }
 
 // The rows to show, kept where they were when the view last changed, so editing a row never moves it
-// or hides it. Rows since deleted drop out. Rows added since come at the end, in the order given:
-// those the user added, which stay whether or not they match, and others only if the view shows
-// them. The view's rows are taken afresh whenever the view changes; between changes, `apply` runs
+// or hides it. Rows since deleted drop out. Rows added since come at the end: those the user added,
+// in the order they added them, which stay whether or not they match, then others, in the order
+// given, only if the view shows them. The view's rows are taken afresh whenever the view changes; between changes, `apply` runs
 // only on rows added since.
 export function useSteadyOrder<Row>(
   all: readonly Row[],
@@ -393,11 +393,17 @@ export function useSteadyOrder<Row>(
   const byId = new Map(all.map((row) => [idOf(row), row]));
   const since = all.filter((row) => !current.known.has(idOf(row)));
   const matching = new Set(since.length === 0 ? [] : apply(since).map(idOf));
+  const addedOrder = [...added];
   return [
     ...current.shown.flatMap((id) => {
       const row = byId.get(id);
       return row === undefined ? [] : [row];
     }),
-    ...since.filter((row) => added.has(idOf(row)) || matching.has(idOf(row))),
+    ...since
+      .filter((row) => added.has(idOf(row)))
+      .sort(
+        (a, b) => addedOrder.indexOf(idOf(a)) - addedOrder.indexOf(idOf(b)),
+      ),
+    ...since.filter((row) => !added.has(idOf(row)) && matching.has(idOf(row))),
   ];
 }

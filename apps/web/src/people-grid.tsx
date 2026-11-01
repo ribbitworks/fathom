@@ -43,6 +43,8 @@ import {
   type ClipboardEvent,
   type DragEvent,
   type KeyboardEvent,
+  type Ref,
+  useImperativeHandle,
   useState,
 } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
@@ -74,10 +76,10 @@ import {
 import classes from "./pages.module.css";
 
 export interface PeopleActions {
-  // Adds people, all saved together, then gives their identifiers; if they cannot be saved, gives
-  // back what was entered.
+  // Adds people, all saved together, showing each at once under the identifier given until saved,
+  // then gives their own identifiers; if they cannot be saved, gives back what was entered.
   add: (
-    requests: PersonRequest[],
+    people: { id: string; request: PersonRequest }[],
     onAdded: (ids: string[]) => void,
     onFailed: () => void,
   ) => void;
@@ -193,6 +195,20 @@ function personValue(
 // The keys of a person's built-in details.
 export type DetailKey =
   "preferredName" | "employeeId" | "startDate" | "endDate";
+
+// Someone added but not saved yet is shown at once under an identifier of the table's own, until the
+// server gives theirs; until then they cannot be changed. The table goes on naming their row by it,
+// so the row keeps its place, and focus, when the server's identifier replaces it.
+const pendingPrefix = "pending-";
+
+const pendingId = () => `${pendingPrefix}${crypto.randomUUID()}`;
+
+const isPending = (person: Person) => person.id.startsWith(pendingPrefix);
+
+// What the table can do for whoever opens it: put focus on the row for adding someone.
+export interface PeopleGridHandle {
+  addPerson: () => void;
+}
 
 // A column's live value, for a person whose draft changes it.
 function liveValue(draft: PersonDraft, column: Column): CellValue {
@@ -417,6 +433,21 @@ export const draftColumn: TableColumn<Person> = {
   value: (person) => (person.draft === undefined ? [] : [person.draft.state]),
 };
 
+// The mark beside a new row being filled in, until its person is added, naming the required
+// columns still empty.
+// The whole mark shows on hover too, since a narrow first column can cut it short.
+function NewMark({ missing }: { missing: readonly string[] }) {
+  const words = [
+    "New, not saved yet",
+    ...(missing.length > 0 ? [`: ${missing.join(", ")} needed`] : []),
+  ].join("");
+  return (
+    <span className={classes.newMark} title={words}>
+      <span className={classes.statusDot} aria-hidden="true" /> {words}
+    </span>
+  );
+}
+
 export function PeopleGrid({
   people,
   fields,
@@ -431,6 +462,7 @@ export function PeopleGrid({
   view: asked,
   onView,
   saved,
+  ref,
 }: {
   // Everyone the user may see; the view decides which are shown, and in what order.
   people: Person[];
@@ -450,16 +482,23 @@ export function PeopleGrid({
   onView: ChangeView;
   // The table's saved views; absent where they are not offered.
   saved?: SavedViews;
+  ref?: Ref<PeopleGridHandle>;
 }) {
   const columns = columnsFor(fields, lists, order, showDates);
   const view = knownView(asked, columns, [draftColumn]);
   // The people this user has added since the page opened, which stay shown whatever the view.
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
+  // The identifier each person added since the page opened was shown under before it was saved, by
+  // their own, which names their row from then on.
+  const [shownAs, setShownAs] = useState<ReadonlyMap<string, string>>(
+    new Map(),
+  );
+  const stableId = (person: Person) => shownAs.get(person.id) ?? person.id;
   const shownPeople = useSteadyOrder(
     people,
     view,
     (rows) => applyView(rows, columns, view, [draftColumn]),
-    (person) => person.id,
+    stableId,
     added,
   );
   const [newRows, setNewRows] = useState<NewRow[]>([{ key: 0, values: {} }]);
@@ -481,13 +520,18 @@ export function PeopleGrid({
   // A person's menu: approving or rejecting their draft, for Approvers, and discarding it or
   // removing them, for those who may edit people.
   const hasMenu = (person: Person) =>
-    canEdit || (canApprove && person.draft !== undefined);
+    !isPending(person) &&
+    (canEdit || (canApprove && person.draft !== undefined));
+  // Whether a person's cells cannot be changed: by those who may only view, while they are drafted
+  // to be removed, until the draft is discarded, or while they are being added.
+  const locked = (person: Person) =>
+    !canEdit || person.draft?.action === "deleted" || isPending(person);
   const rows: Row[] = [
     ...shownPeople.map((person) => ({ person })),
     ...(canEdit ? newRows.map((newRow) => ({ newRow })) : []),
   ];
   const rowKey = (row: Row) =>
-    row.person ? row.person.id : `new-${String(row.newRow.key)}`;
+    row.person ? stableId(row.person) : `new-${String(row.newRow.key)}`;
   const rowKeys = rows.map(rowKey);
   const keys = columns.map((column) => column.key);
   const cellId = (row: number, column: number) =>
@@ -528,6 +572,13 @@ export function PeopleGrid({
     focusSoon(`cell-${place.row}-${place.column}`);
   };
 
+  // Adding someone goes to the last new row, of which there is always at least one.
+  useImperativeHandle(ref, () => ({
+    addPerson: () => {
+      focusNew((newRows.at(-1) as NewRow).key);
+    },
+  }));
+
   const moveTo = (row: number, column: number) => {
     const target = {
       row: Math.max(0, Math.min(row, rows.length - 1)),
@@ -539,9 +590,7 @@ export function PeopleGrid({
 
   const startEdit = (cell: Cell, typed?: string) => {
     const { row, column } = at(cell);
-    if (row.person && (!canEdit || row.person.draft?.action === "deleted")) {
-      return;
-    }
+    if (row.person && locked(row.person)) return;
     const value = valueAt(row, column);
     setActive(cell);
     setEditing(cell);
@@ -644,13 +693,29 @@ export function PeopleGrid({
       focusNew(withProblem.key);
       return;
     }
+    const pending = filled.map((newRow) => ({
+      id: pendingId(),
+      request: requestFor(newRow, columns),
+    }));
+    setAdded(
+      (current) => new Set([...current, ...pending.map(({ id }) => id)]),
+    );
     actions.add(
-      filled.map((newRow) => requestFor(newRow, columns)),
+      pending,
       (ids) => {
-        setAdded((current) => new Set([...current, ...ids]));
+        setShownAs(
+          (current) =>
+            new Map([
+              ...current,
+              ...pending.map(
+                ({ id }, index) => [String(ids.at(index)), id] as const,
+              ),
+            ]),
+        );
       },
+      // What was entered comes back above any new rows typed in since.
       () => {
-        setNewRows([...filled, { key: free + 1, values: {} }]);
+        setNewRows((current) => [...filled, ...current]);
       },
     );
     setNewRows([{ key: free, values: {} }]);
@@ -760,13 +825,7 @@ export function PeopleGrid({
       if (row.person && hasMenu(row.person)) setMenuFor(row.person.id);
       return;
     }
-    // A person drafted to be removed cannot be edited until the draft is discarded.
-    if (
-      !plain ||
-      (row.person && (!canEdit || row.person.draft?.action === "deleted"))
-    ) {
-      return;
-    }
+    if (!plain || (row.person && locked(row.person))) return;
     if (event.key === "Enter" && row.newRow && !emptyNewRow(row.newRow)) {
       event.preventDefault();
       submitNewRows();
@@ -1145,8 +1204,12 @@ export function PeopleGrid({
                 const draft = row.person?.draft;
                 // A row with a draft is tinted, and one a draft removes is struck through too.
                 let rowClass = classes.peopleRow;
-                if (row.newRow) rowClass = classes.peopleNewRow;
-                else if (draft) {
+                const filling = row.newRow && !emptyNewRow(row.newRow);
+                if (row.newRow) {
+                  rowClass = filling
+                    ? [classes.peopleNewRow, classes.peopleFillingRow].join(" ")
+                    : classes.peopleNewRow;
+                } else if (draft) {
                   rowClass = [
                     classes.peopleRow,
                     classes.peopleDraftRow,
@@ -1194,7 +1257,10 @@ export function PeopleGrid({
                               : classes.peopleCell
                           }
                           aria-readonly={
-                            draft?.action === "deleted" ? true : undefined
+                            draft?.action === "deleted" ||
+                            (row.person && isPending(row.person))
+                              ? true
+                              : undefined
                           }
                           onKeyDown={(event) => {
                             onCellKey(event, cell);
@@ -1224,6 +1290,21 @@ export function PeopleGrid({
                           {columnIndex === 0 && draft && !editingHere && (
                             <DraftMark draft={draft} />
                           )}
+                          {columnIndex === 0 &&
+                            row.newRow &&
+                            filling &&
+                            rowProblem === undefined &&
+                            !editingHere && (
+                              <NewMark
+                                missing={columns
+                                  .filter(
+                                    (other) =>
+                                      other.required &&
+                                      isEmpty(newRowValue(row.newRow, other)),
+                                  )
+                                  .map(({ label }) => label)}
+                              />
+                            )}
                           {columnIndex === 0 && rowProblem !== undefined && (
                             <span
                               className={classes.peopleProblem}

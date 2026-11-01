@@ -451,6 +451,24 @@ describe("rows keeping their place", () => {
     rerender({ all: more, mine: new Set(["e"]) });
     expect(result.current).toEqual(["d", "e", "g"]);
   });
+
+  it("shows rows the user added in the order they added them, whatever order they come in", () => {
+    const named = view({ search: "y" });
+    const { result, rerender } = renderHook(
+      ({ all, mine }: { all: Row[]; mine: Set<string> }) =>
+        useSteady(all, named, mine),
+      { initialProps: { all: rows, mine: new Set<string>() } },
+    );
+    rerender({
+      all: [
+        ...rows,
+        { id: "e", name: "Ab", start: "", levels: [] },
+        { id: "f", name: "Zz", start: "", levels: [] },
+      ],
+      mine: new Set(["f", "e"]),
+    });
+    expect(result.current).toEqual(["d", "f", "e"]);
+  });
 });
 
 describe("columns the user may not see", () => {
