@@ -30,8 +30,8 @@ that language. Rate those the same way.
 - Ask first: staged files, the last commit, the working tree, or a pull request
   (`gh pr diff`)?
 - In Autonomous mode the scope is set by [agent-workflow.md](agent-workflow.md):
-  the uncommitted changes (the whole commit when amending), or the whole branch
-  against `main` before a pull request.
+  the uncommitted changes (the whole commit when amending), or, in the cases
+  that workflow names, the whole branch against `main` before a pull request.
 - A review subagent gets its scope in its prompt and never asks.
 - The review states its scope at the top. For very large diffs, do several
   passes.

@@ -140,8 +140,11 @@ When changes come out of findings, UI feedback or owner feedback:
 
 - A branch can collect several commits before it is pushed. Push only when the
   owner says the work is ready for a pull request.
-- Before opening the pull request, have a separate agent review the whole branch
-  against `main`, and handle its findings as in the workflow.
+- Before opening the pull request, have a separate agent review the whole
+  branch against `main` when it has two or more commits, or when a commit on it
+  skipped review, since separate commit reviews cannot see how commits
+  interact. A branch with a single reviewed commit needs no second review.
+  Handle any findings as in the workflow.
 - Push with `git push -u origin <type>/<task>`.
 - Open the pull request with `gh pr create`, following the commit message rules
   for its title and description.
