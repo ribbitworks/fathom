@@ -181,8 +181,10 @@ describe("reaching Fathom", () => {
     const page = await httpsGet("/");
     assert.equal(page.statusCode, 200);
     assert.match(page.body, /<title>Fathom<\/title>/);
+    // The API answers through the proxy; it needs a signed-in user for anything more.
     const greeting = await httpsGet("/api/greeting");
-    assert.deepEqual(JSON.parse(greeting.body), { greeting: "Hello, Fathom" });
+    assert.equal(greeting.statusCode, 401);
+    assert.deepEqual(JSON.parse(greeting.body), { error: "Unauthorized" });
   });
 
   it("logs the user's address, not the proxy's", () => {
