@@ -35,42 +35,52 @@ test command", use the one they name.
 
 ## Rules for Both Modes
 
-- **Worktrees:** start each new task in a new git worktree created from the
-  latest `origin/main`, in a sibling folder named after the task. Create it
-  once the owner has chosen a mode and, in Restrictive mode, approved the
-  change, then tell the owner its path and branch:
+- **Checkouts:** work only in a checkout the owner names for the task, such as
+  one of several clones of the repository. If the owner has not named one, ask.
+  Never switch branches, pull, stash or edit files in any other checkout, even
+  one that looks clean: the owner may be working in it. Read-only commands
+  there (`git log`, `git status`, searching) are fine.
+- **Starting a task:** once the owner has chosen a mode and, in Restrictive
+  mode, approved the change, check that `git status` in the named checkout and
+  its submodules shows no uncommitted or untracked work. If it does, stop and
+  tell the owner. Otherwise create the task's branch from the latest
+  `origin/main` and tell the owner its name:
 
   ```bash
-  git -C <checkout> fetch origin
-  git -C <checkout> worktree add --no-track -b <type>/<task> ../<repo>-<task> origin/main
+  git fetch origin
+  git switch --no-track -c <type>/<task> origin/main
+  git submodule update --init --recursive
   ```
 
-  Follow-up work on the same task stays in that worktree. To resume a branch,
-  find its worktree with `git worktree list`; if it has none, run
-  `git worktree add ../<repo>-<task> <type>/<task>`.
-- **Other checkouts:** never switch branches, pull, stash or edit files in a
-  checkout you did not create for the task, even one that looks clean: the
-  owner may be working in it. Read-only commands there (`git log`,
-  `git status`, searching) are fine. Work in an existing checkout only when the
-  owner names it.
-- **Worktree setup:** a new worktree has no submodules, dependencies or ignored
-  files. Right after creating it, in either mode, run
-  `git submodule update --init --recursive` and the project's setup command
-  (neither counts as a build), so the agent or the owner can build there. Never
-  copy secret files such as `.env` between worktrees without the owner's
-  say-so, and never commit a change to a submodule pointer unless the task is
-  to bump it.
-- **Worktree cleanup:** when the owner asks, or at the start of the next task,
-  remove the worktrees of merged pull requests. Confirm the merge
-  (`gh pr view <number> --json state`) and that `git status` is clean in the
-  worktree and its submodules, then run `git -C <checkout> worktree remove ../<repo>-<task>`
-  (with `--force` only when initialized submodules are the sole blocker) and
-  `git -C <checkout> branch -D <type>/<task>`; rebase merges rewrite the commits, so
-  `git branch -d` refuses.
+  Then run the project's setup command. The submodule update and the setup
+  do not count as a build. Follow-up work on the same task stays on that
+  branch; to resume it, make the same check, run `git switch <type>/<task>`,
+  and update the submodules again. Push with
+  `git push -u origin <type>/<task>`. Never commit a change to a submodule
+  pointer unless the task is to bump it.
+- **Branch cleanup:** when the owner asks, or at the start of the next task
+  once its branch is created, delete the local branches of merged pull
+  requests. Confirm the merge and that the local branch holds nothing the pull
+  request lacks: `git rev-parse <type>/<task>` must match `headRefOid` from
+  `gh pr view <number> --json state,headRefOid`. If it does not, stop and tell
+  the owner. Then run `git branch -D <type>/<task>`; rebase merges rewrite the
+  commits, so `git branch -d` refuses.
 - **Tests and builds:** run only through the project's own commands, never the
   underlying tools directly.
 - **Git hooks:** **Must Not** be bypassed (`--no-verify`, `SKIP_PRE_PUSH=1` or
-  similar). Hooks that run builds or tests are allowed in either mode.
+  similar), with one exception: a push whose commits change only documentation
+  may skip a pre-push hook that only builds and tests, through the skip switch
+  the hook documents (for example `SKIP_PRE_PUSH=1`), unless the project's
+  standards say its documents are built into the product. Commit hooks always
+  run.
+  Hooks that run builds or tests are allowed in either mode.
+- **Versions and tags:** release tags follow semantic versioning,
+  `vMAJOR.MINOR.PATCH`. A change that breaks something that uses the release
+  bumps MAJOR; a new feature or option, even a small one, bumps MINOR and
+  resets PATCH; a release with no new feature or breaking change (fixes,
+  documentation, refactors, tests, chores) bumps PATCH. Decide the bump from
+  the commits since the last tag, not from the size of the change. Only the
+  owner tags a release, or an agent the owner asks to.
 - **Code reviews:** follow [code-review.md](code-review.md). A review only
   writes its review file; it **Must Not** stage or commit.
 - **Commit messages and pull requests:** follow
@@ -153,9 +163,9 @@ When changes come out of findings, UI feedback or owner feedback:
 
 ### Branches and Commits
 
-- For a new task, create a new worktree and branch from the latest
-  `origin/main`, as [Rules for Both Modes](#rules-for-both-modes) describes.
-- Stay on the task's branch and worktree for follow-up work on the same task.
+- For a new task, create a new branch from the latest `origin/main` in the
+  named checkout, as [Rules for Both Modes](#rules-for-both-modes) describes.
+- Stay on the task's branch for follow-up work on the same task.
 - Amend the most recent commit, instead of adding one, when the change responds
   to feedback on that commit and it has not been pushed. Feedback on an earlier
   unpushed commit gets a new commit; do not rewrite history without the owner's
@@ -167,7 +177,7 @@ When changes come out of findings, UI feedback or owner feedback:
 ## Restrictive Mode
 
 - **Approval first:** get the owner's approval before making code changes,
-  then create the task's worktree and tell the owner its path and branch.
+  then create the task's branch and tell the owner its name.
 - **No builds or tests:** **Must Not** run the project's build, test or run
   commands, or any other build tool. The owner builds and runs tests. Read-only
   diagnostics that the project's standards allow, such as listing devices or

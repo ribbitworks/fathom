@@ -23,24 +23,32 @@ not here. The standards they point to are in `docs/standards/shared/`.
   never ask the owner anything.
 - Build and test only through the project's commands, listed below.
 
-### Worktrees
+### Checkouts and Branches
 
-- Start each new task in a new git worktree from the latest `origin/main`, in
-  a sibling folder named after the task, once the mode is chosen (and, in
-  Restrictive mode, the change approved), and tell the owner its path. Use
-  `git worktree add --no-track -b <type>/<task> ../<repo>-<task> origin/main`
-  and push with `git push -u origin <type>/<task>`. Follow-up work on the task
-  stays in that worktree.
-- Never switch branches, pull, stash or edit files in a checkout you did not
-  create for the task, unless the owner names it; the owner may be working
-  there.
-- Right after creating a worktree, in either mode, run
-  `git submodule update --init --recursive` and the project's setup command. Never copy
-  secret files between worktrees without the owner's say-so, and never commit
-  a submodule pointer change unless the task is to bump it.
-- Remove merged worktrees as
+- Work only in the checkout the owner names for the task; if none is named,
+  ask. Never switch branches, pull, stash or edit files in any other checkout;
+  the owner may be working there.
+- Start each task, once the mode is chosen (and, in Restrictive mode, the
+  change approved), by checking that the checkout and its submodules have no
+  uncommitted or untracked work; if they do, stop and tell the owner. Then run
+  `git fetch origin`, `git switch --no-track -c <type>/<task> origin/main`,
+  `git submodule update --init --recursive` and the project's setup command,
+  and tell the owner the branch. Push with `git push -u origin <type>/<task>`.
+- Never commit a submodule pointer change unless the task is to bump it.
+- Delete the local branches of merged pull requests, only when they hold
+  nothing the pull request lacks, as
   [agent-workflow.md § Rules for Both Modes](docs/standards/shared/agent-workflow.md#rules-for-both-modes)
   describes.
+
+### Hooks and Tags
+
+- Never bypass git hooks, with one exception: a push whose commits change only
+  documentation may skip a pre-push hook that only builds and tests, through
+  the skip switch it documents (such as `SKIP_PRE_PUSH=1`), unless the
+  project's documents are built into the product. Commit hooks always run.
+- Tag releases with semantic versioning: MAJOR for breaking changes, MINOR for
+  any new feature or option, and PATCH for anything else (fixes,
+  documentation, refactors, tests, chores). Tag only when the owner asks.
 
 ### Staging and Commits
 
@@ -91,7 +99,7 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 ## Project Commands
 
-- **Setup in a new worktree:** `pnpm install`. To run the app, ask the owner whether to copy `.dev/` from the main checkout: a fresh `pnpm dev:setup` creates new passwords that will not match the shared `fathom-dev` database.
+- **Setup on a new branch:** `pnpm install`. A clone that already has `.dev/` needs nothing more to run the app. In a clone without it, ask the owner whether to copy `.dev/` from another clone: a fresh `pnpm dev:setup` creates new passwords that will not match the shared `fathom-dev` database.
 - **Workflow test step:** `pnpm check`, which runs everything listed in [Testing Standards](docs/standards/testing.md#running-tests). When a change affects the containers, the test step also runs `pnpm test:containers`.
 - **Tests only:** `pnpm test`
 - **Container tests:** `pnpm test:containers`
