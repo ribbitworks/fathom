@@ -86,17 +86,17 @@ Plan approval, built on lists and people first, as the owner intends approval to
 
 It is built in two steps. The first gives people drafts: shown in place on the People table, approved and rejected there and on a Drafts page, explained on Help's Drafts page, undone like other changes, and recorded in the change history, with seed drafts of people added, changed, and removed, and rejected. The second gives drafts to lists, choices, columns, and their order, with drafts that use other drafts approved together, which Help's Drafts page then explains, and adds the seed draft that uses another.
 
-### Teams and Reporting Lines
-
-Teams with their managers and current direct reports. They set the patterns for records that link to other records and for changes dated ahead, which feature team membership and allocations reuse.
-
 ### Cycles and Releases
 
-Release streams for major releases and patches, each with a configurable cycle length and cycle names, and releases that include cycles, as set out in the [Decisions Log](../product/decisions.md#planning).
+Release streams for major releases and patches, each with a configurable cycle length and cycle names, and releases that include cycles, as set out in the [Decisions Log](../product/decisions.md#planning). Releases set the pattern for records that link to other records, which features, teams, and feature teams reuse.
 
 ### Features and the Roadmap
 
 The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind, priority, and product, which the owner will judge once seen. Whether features have a built-in description before text columns arrive is decided when this slice starts.
+
+### Teams and Reporting Lines
+
+Teams with their managers and current direct reports. They set the pattern for changes dated ahead, which feature team membership and allocations reuse.
 
 ### Projects and Feature Teams
 
