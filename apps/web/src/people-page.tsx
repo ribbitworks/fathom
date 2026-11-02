@@ -11,6 +11,7 @@
 
 import type {
   Field,
+  List,
   Person,
   PersonChange,
   PersonDraft,
@@ -31,7 +32,13 @@ import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useRef, useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
 import { type Decision, DecisionModal } from "./decision-dialog.tsx";
-import { noDrafts } from "./drafts.ts";
+import {
+  draftNames,
+  draftTotal,
+  joined,
+  usedDrafts,
+  usingDrafts,
+} from "./drafts.ts";
 import { listsQuery } from "./lists.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -46,7 +53,9 @@ import {
   deleteField,
   deletePerson,
   deleteView,
+  discardColumnDraft,
   discardDraft,
+  resubmitColumnDraft,
   resubmitDraft,
   moveColumn,
   type PeopleData,
@@ -188,12 +197,44 @@ export function PeoplePage({
   });
 
   const actions: PeopleActions = {
-    decide: (asking, people) => {
+    decide: (asking, chosen) => {
+      // Approving names the drafts the choice uses, and rejecting those that use it.
+      // Drafts are only decided once the people and lists are loaded.
+      const listsNow = lists.data as List[];
+      const { fields, orderDraft } = query.data as PeopleData;
+      const columns = { fields, orderDraft };
+      const others =
+        asking === "approve"
+          ? usedDrafts(chosen, listsNow, columns)
+          : usingDrafts(chosen, listsNow, columns);
       setDecision({
         asking,
-        selection: { ...noDrafts(), people: people.map(({ id }) => id) },
+        selection: joined(chosen, others),
+        ...(draftTotal(others) > 0
+          ? { included: draftNames(others, listsNow, columns.fields) }
+          : {}),
       });
       setDeciding(true);
+    },
+    discardColumn: (target, name) => {
+      save({
+        next: (data) => data,
+        save: () => discardColumnDraft(target),
+        failure: `Fathom could not discard the draft of ${name}.`,
+        onSaved: (changeSetId, before) => {
+          done(`Discarded the draft of ${name}.`, changeSetId, before);
+        },
+      });
+    },
+    resubmitColumn: (target) => {
+      save({
+        next: (data) => data,
+        save: () => resubmitColumnDraft(target),
+        failure: "Fathom could not send the draft for approval again.",
+        onSaved: (changeSetId, before) => {
+          undoable(changeSetId, before);
+        },
+      });
     },
     add: (added, onAdded, onFailed) => {
       save({
@@ -444,6 +485,7 @@ export function PeoplePage({
           people={query.data.people}
           fields={query.data.fields}
           order={query.data.order}
+          orderDraft={query.data.orderDraft}
           lists={lists.data}
           canEdit={canEdit}
           canApprove={canApprove}

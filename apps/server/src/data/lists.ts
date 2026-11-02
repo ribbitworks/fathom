@@ -27,7 +27,7 @@ import type {
   OrderDraft,
 } from "@fathom/shared";
 import { tierSchema } from "@fathom/shared";
-import { asc, count, eq, sql } from "drizzle-orm";
+import { and, asc, count, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import {
@@ -329,19 +329,31 @@ export const choicesHaveDrafts = (state: ListsState, listId: string) =>
     (id) => listOfChoice(state, id) === listId,
   );
 
-// Refuses a change to a list while a column draws on it, naming the columns.
+// Refuses a change to a list while a column draws on it, live or in a draft, naming the columns.
 export async function refuseIfUsed(
   transaction: Reader,
   id: string,
   change: string,
 ): Promise<void> {
-  const users = await transaction
+  const live = await transaction
     .select({ name: fields.name })
     .from(fields)
-    .where(eq(fields.listId, id))
-    .orderBy(asc(sql`lower(${fields.name})`));
+    .where(eq(fields.listId, id));
+  // Columns drafted to draw on the list use it too, so it cannot go from under them.
+  const drafted = await transaction
+    .select({ name: sql<string>`${drafts.fields}->>'name'` })
+    .from(drafts)
+    .where(
+      and(
+        eq(drafts.recordType, "field"),
+        sql`${drafts.fields}->>'listId' = ${id}`,
+      ),
+    );
+  const users = [
+    ...new Set([...live, ...drafted].map(({ name }) => name)),
+  ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   if (users.length > 0) {
-    const names = users.map(({ name }) => name).join(", ");
+    const names = users.join(", ");
     throw new ConflictError(
       `This list cannot be ${change} while ${users.length === 1 ? "a column draws" : "columns draw"} on it: ${names}`,
     );

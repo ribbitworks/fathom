@@ -104,10 +104,10 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 
 - **Change set:** Changes saved together, with who made them and when, and what they did: saved changes, or approved, rejected, or discarded drafts.
 - **Change:** One field of one record changed in a change set, with its sensitivity tier, its old and new values, and whether it changed the record's draft or the live record.
-- **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason. People, lists, and choices have drafts, and so does the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
+- **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason. People, lists, choices, and People's columns have drafts, and so do the order of each list's choices and the order of People's columns, each held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
 - **Snapshot:** A point-in-time copy of part of the plan. Its contents are set in the Decisions Log.
 
-Approving drafts, whether one or several at once, applies them all to the live records as one change set, or none of them. Approving a draft applies the drafts it uses with it, such as a choice added to a list that is itself drafted to be added, and, **proposal**, a person given a choice that is itself a draft, once columns and people can use drafts.
+Approving drafts, whether one or several at once, applies them all to the live records as one change set, or none of them. Approving a draft applies the drafts it uses with it, such as a choice added to a list that is itself drafted to be added, or a column drafted to be added that a draft of the column order places, and, **proposal**, a person given a choice that is itself a draft, once columns and people can use drafts.
 
 ## Not Yet Modeled
 

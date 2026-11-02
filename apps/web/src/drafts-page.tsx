@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Drafts page: every draft the user may see, of people, lists, choices, and the order of lists'
-// choices, newest first, each a sentence saying who drafted what, with what it changes from its live
+// The Drafts page: every draft the user may see, of people, People's columns, lists, choices, and the
+// order of lists' choices and of People's columns, newest first, each a sentence saying who drafted what, with what it changes from its live
 // value, and rejected drafts marked with their reason. A search narrows them. Approvers select
 // drafts, one or several at once, and approve or reject them, as they can on the People table and
 // the Lists page too. Approving or rejecting names any other drafts it includes.
 
 import {
+  builtInColumnNames,
   type ChangeValue,
   type Choice,
   type DraftState,
+  type Field,
   type List,
   matchesWords,
   type Person,
@@ -224,6 +226,56 @@ function listEntries(lists: readonly List[]): Entry[] {
   ]);
 }
 
+// Every draft of a People column, or of the column order, as entries.
+function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
+  // A column's list is always among the lists, and every key in an order names a column shown.
+  const listName = (id: unknown) =>
+    (lists.find((list) => list.id === id) as List).name;
+  const columnName = (key: string) =>
+    builtInColumnNames.get(key) ??
+    (data.fields.find(({ id }) => id === key) as Field).name;
+  return [
+    ...data.fields.flatMap((field) =>
+      field.draft
+        ? [
+            entry(
+              `column ${field.id}`,
+              field.draft,
+              `the column ${field.name}`,
+              // Lists are named, not identified, on both sides of a change.
+              configFields(
+                {
+                  ...field.draft,
+                  live: {
+                    ...field.draft.live,
+                    ...(field.draft.live.listId === undefined
+                      ? {}
+                      : { listId: listName(field.draft.live.listId) }),
+                  },
+                },
+                { ...field, listId: listName(field.listId) },
+              ),
+              { columns: [field.id] },
+            ),
+          ]
+        : [],
+    ),
+    ...(data.orderDraft
+      ? [
+          entry(
+            "column order",
+            data.orderDraft,
+            "People's columns",
+            [
+              `Order from ${data.orderDraft.live.map(columnName).join(", ")} to ${data.order.map(columnName).join(", ")}`,
+            ],
+            { columnOrder: true },
+          ),
+        ]
+      : []),
+  ];
+}
+
 function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
   return draftedPeople(data).map((drafted) =>
     entry(
@@ -337,6 +389,7 @@ export function DraftsPage({
     const words = searchWords(search);
     const all = [
       ...personEntries(peopleData as PeopleData, lists.data),
+      ...columnEntries(peopleData as PeopleData, lists.data),
       ...listEntries(lists.data),
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
@@ -350,15 +403,18 @@ export function DraftsPage({
         (all, { selects }) => joined(all, selects),
         noDrafts(),
       );
+      // Loaded, or empty for those who see only lists.
+      const { fields, orderDraft } = peopleData as PeopleData;
+      const columns = { fields, orderDraft };
       const others =
         asking === "approve"
-          ? usedDrafts(selection, lists.data)
-          : usingDrafts(selection, lists.data);
+          ? usedDrafts(selection, lists.data, columns)
+          : usingDrafts(selection, lists.data, columns);
       setDecision({
         asking,
         selection: joined(selection, others),
         ...(draftTotal(others) > 0
-          ? { included: draftNames(others, lists.data) }
+          ? { included: draftNames(others, lists.data, columns.fields) }
           : {}),
       });
       setOpened(true);

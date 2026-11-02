@@ -291,6 +291,7 @@ describe("saved views", () => {
         listId: list.id,
       })
     ).json<{ field: Field }>().field;
+    await test.approveLists();
     const { view } = (
       await save(cookie, "Levels", {
         filters: { [field.id]: { any: [String(choice?.id)] } },
@@ -306,6 +307,7 @@ describe("saved views", () => {
       (await test.request(cookie, "DELETE", `/api/people/columns/${field.id}`))
         .statusCode,
     ).toBe(200);
+    await test.approveLists();
     // Readers are sent the view without the deleted column, which is not shown to them.
     const viewer = await test.signedIn(["resource-planner"]);
     expect(
@@ -339,6 +341,7 @@ describe("saved views", () => {
         listId: list.id,
       })
     ).json<{ field: Field }>().field;
+    await test.approveLists();
     const viewer = await test.signedIn(["resource-planner"]);
     const { view, changeSetId } = (
       await save(viewer.cookie, "By team", { sort: [field.id] })

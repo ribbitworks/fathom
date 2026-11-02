@@ -14,11 +14,15 @@
 // dragged by its header, moved with Alt and the arrow keys, or moved from its menu, and columns
 // drawing on lists are changed from there too. Everyone, viewers included, can search the table and
 // sort and filter it by any column they see, as table-controls.tsx sets out; rows keep their place
-// while they are edited, until the view next changes. Viewers see the same table, read only.
+// while they are edited, until the view next changes. Viewers see the same table, read only. Changes
+// to columns and their order are drafts too, marked in the headers, with each column's draft in its
+// menu and the order's in a bar above the table; the Draft menu shows the live table alone.
 
 import type {
   Choice,
+  ColumnOrderDraft,
   Field,
+  FieldDraft,
   List,
   Person,
   PersonChange,
@@ -51,11 +55,15 @@ import {
 } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
 import {
+  configDraftFields,
   draftLines,
   MenuDraftLines,
   personDraftFields,
 } from "./draft-details.tsx";
 import { type Asking, drafts as draftCount } from "./decision-dialog.tsx";
+import { type DraftSelection, draftTotal, noDrafts } from "./drafts.ts";
+import { movedKeys } from "./list-drafts.tsx";
+import type { ColumnDraftTarget } from "./people.ts";
 import { focusSoon } from "./focus.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
@@ -92,8 +100,8 @@ export interface PeopleActions {
     onFailed: () => void,
   ) => void;
   update: (person: Person, change: PersonChange) => void;
-  // Asks to approve or reject the drafts of the people given.
-  decide: (asking: Asking, people: Person[]) => void;
+  // Asks to approve or reject the drafts chosen, of people, columns, or the column order.
+  decide: (asking: Asking, selection: DraftSelection) => void;
   remove: (person: Person) => void;
   discard: (person: Person, draft: PersonDraft) => void;
   // Sends a rejected draft for approval again, unchanged.
@@ -101,6 +109,9 @@ export interface PeopleActions {
   // Moves a column, by its key, to just after another, or to the start when there is none.
   moveColumn: (key: string, label: string, after: string | null) => void;
   editColumn: (field: Field) => void;
+  // Discards a draft of a column or of the column order, or sends a rejected one again.
+  discardColumn: (target: ColumnDraftTarget, name: string) => void;
+  resubmitColumn: (target: ColumnDraftTarget) => void;
 }
 
 // A person's own detail, keyed by its name, or a column drawing on a list, keyed by its identifier.
@@ -520,10 +531,135 @@ function NewMark({ missing }: { missing: readonly string[] }) {
   );
 }
 
+// The columns as they are live, without drafts: those only drafted to be added are left out, and
+// each setting a draft changes has its live value back.
+export function liveFields(fields: readonly Field[]): Field[] {
+  return fields.flatMap((field): Field[] => {
+    const { draft, ...rest } = field;
+    if (draft?.action === "created") return [];
+    if (draft?.action !== "changed") return [rest];
+    return [
+      {
+        ...rest,
+        name: draft.live.name ?? rest.name,
+        listId: draft.live.listId ?? rest.listId,
+        multiple: draft.live.multiple ?? rest.multiple,
+        required: draft.live.required ?? rest.required,
+      },
+    ];
+  });
+}
+
+// What a column's draft changes, field by field, with lists named rather than identified.
+function fieldDraftLines(field: Field, lists: readonly List[]): string[] {
+  const draft = field.draft as FieldDraft;
+  // A column's list, live or drafted, is always among the lists.
+  const named = (value: unknown) =>
+    (lists.find(({ id }) => id === value) as List).name;
+  return draftLines(
+    draft,
+    configDraftFields(draft, field).map((one) =>
+      one.key === "listId"
+        ? {
+            ...one,
+            field: {
+              ...one.field,
+              oldValue: named(one.field.oldValue),
+              newValue: named(one.field.newValue),
+            },
+          }
+        : one,
+    ),
+  );
+}
+
+// The bar marking a draft of the order of the People table's columns, with what it does and what
+// the user may do with it, laid out as the bar of waiting drafts.
+function ColumnOrderBar({
+  draft,
+  moved,
+  canEdit,
+  canApprove,
+  actions,
+}: {
+  draft: ColumnOrderDraft;
+  moved: number;
+  canEdit: boolean;
+  canApprove: boolean;
+  actions: PeopleActions;
+}) {
+  const rejected = draft.state === "rejected";
+  const order = { ...noDrafts(), columnOrder: true };
+  return (
+    <Group
+      justify="space-between"
+      className={classes.draftsBar}
+      role="group"
+      aria-label="Draft of the column order"
+    >
+      <Text fz="sm">
+        <DraftMark draft={draft} />{" "}
+        {/* A move of columns the reader does not see changes the order of none they see. */}
+        {moved === 0
+          ? "Order changed"
+          : `${moved === 1 ? "1 column" : `${String(moved)} columns`} moved`}
+        , by {draft.madeBy ?? "Fathom"}
+        {rejected && draft.reason !== undefined ? `. ${draft.reason}` : ""}
+      </Text>
+      <Group gap="xs">
+        {canEdit && rejected && (
+          <Button
+            size="compact-sm"
+            variant="default"
+            onClick={() => {
+              actions.resubmitColumn({ kind: "order" });
+            }}
+          >
+            Send again
+          </Button>
+        )}
+        {canEdit && (
+          <Button
+            size="compact-sm"
+            variant="default"
+            onClick={() => {
+              actions.discardColumn({ kind: "order" }, "the column order");
+            }}
+          >
+            Discard draft
+          </Button>
+        )}
+        {canApprove && (
+          <>
+            <Button
+              size="compact-sm"
+              variant="default"
+              onClick={() => {
+                actions.decide("reject", order);
+              }}
+            >
+              Reject…
+            </Button>
+            <Button
+              size="compact-sm"
+              onClick={() => {
+                actions.decide("approve", order);
+              }}
+            >
+              Approve
+            </Button>
+          </>
+        )}
+      </Group>
+    </Group>
+  );
+}
+
 export function PeopleGrid({
   people: everyone,
-  fields,
-  order,
+  fields: draftedFields,
+  order: draftedOrder,
+  orderDraft,
   lists,
   canEdit: mayEdit,
   canApprove: mayApprove = false,
@@ -539,8 +675,9 @@ export function PeopleGrid({
   // Everyone the user may see; the view decides which are shown, and in what order.
   people: Person[];
   fields: Field[];
-  // The keys of the columns, in order.
+  // The keys of the columns, in order, as a draft of the order makes it, and that draft.
   order: string[];
+  orderDraft?: ColumnOrderDraft | undefined;
   lists: List[];
   canEdit: boolean;
   canApprove?: boolean;
@@ -556,6 +693,11 @@ export function PeopleGrid({
   saved?: SavedViews;
   ref?: Ref<PeopleGridHandle>;
 }) {
+  // The live columns alone, in their live order, show the live people.
+  const fields =
+    asked.show === "live" ? liveFields(draftedFields) : draftedFields;
+  const order =
+    asked.show === "live" ? (orderDraft?.live ?? draftedOrder) : draftedOrder;
   // The columns with their lists as they are live, for the live people and each live row, so a
   // choice's drafted name is not shown as live.
   const liveColumns = columnsFor(fields, liveLists(lists), order, showDates);
@@ -583,6 +725,11 @@ export function PeopleGrid({
   const people = liveOnly ? livePeople(everyone) : everyone;
   const canEdit = mayEdit && !liveOnly;
   const canApprove = mayApprove && !liveOnly;
+  // The columns a draft of the order moves, marked in their headers.
+  const movedColumns =
+    orderDraft === undefined || liveOnly
+      ? new Map<string, number>()
+      : movedKeys(orderDraft.live, draftedOrder);
   // No width follows what is typed, so editing never moves the table.
   const [longestText] = useState(() => longestTexts(columns, people));
   // The people this user has added since the page opened, which stay shown whatever the view.
@@ -1035,11 +1182,92 @@ export function PeopleGrid({
                   }
                 }}
               >
-                <span className={classes.headerLabel}>{column.label}</span>
+                <span
+                  className={[
+                    classes.headerLabel,
+                    field?.draft?.action === "deleted" ? classes.struck : "",
+                  ].join(" ")}
+                >
+                  {column.label}
+                </span>
+                {field?.draft && !liveOnly && <DraftMark draft={field.draft} />}
+                {movedColumns.has(column.key) && (
+                  <StatusMark
+                    tone={
+                      orderDraft?.state === "rejected" ? "rejected" : "draft"
+                    }
+                    spaced
+                  >
+                    Draft: moved
+                  </StatusMark>
+                )}
                 <HeaderMarks column={column} view={view} />
               </button>
             </Menu.Target>
             <Menu.Dropdown>
+              <Menu.Label className={classes.menuTitle}>
+                {column.label}
+              </Menu.Label>
+              {field?.draft && !liveOnly && (
+                <>
+                  {field.draft.state === "rejected" &&
+                    field.draft.reason !== undefined && (
+                      <Menu.Label className={classes.rejectedReason}>
+                        Rejected: {field.draft.reason}
+                      </Menu.Label>
+                    )}
+                  <MenuDraftLines lines={fieldDraftLines(field, lists)} />
+                  {canApprove && (
+                    <>
+                      <Menu.Item
+                        onClick={() => {
+                          actions.decide("approve", {
+                            ...noDrafts(),
+                            columns: [field.id],
+                          });
+                        }}
+                      >
+                        Approve…
+                      </Menu.Item>
+                      <Menu.Item
+                        onClick={() => {
+                          actions.decide("reject", {
+                            ...noDrafts(),
+                            columns: [field.id],
+                          });
+                        }}
+                      >
+                        Reject…
+                      </Menu.Item>
+                    </>
+                  )}
+                  {canEditColumns && field.draft.state === "rejected" && (
+                    <Menu.Item
+                      onClick={() => {
+                        actions.resubmitColumn({
+                          kind: "column",
+                          id: field.id,
+                        });
+                      }}
+                    >
+                      Send for approval again
+                    </Menu.Item>
+                  )}
+                  {canEditColumns && (
+                    <Menu.Item
+                      onClick={() => {
+                        actions.discardColumn(
+                          { kind: "column", id: field.id },
+                          field.name,
+                        );
+                      }}
+                    >
+                      Discard draft
+                    </Menu.Item>
+                  )}
+                  <Menu.Divider />
+                </>
+              )}
               <ColumnViewItems
                 column={column}
                 view={view}
@@ -1051,7 +1279,7 @@ export function PeopleGrid({
               {canEditColumns && (
                 <>
                   <Menu.Divider />
-                  {field && (
+                  {field && field.draft?.action !== "deleted" && (
                     <Menu.Item
                       onClick={() => {
                         actions.editColumn(field);
@@ -1176,14 +1404,20 @@ export function PeopleGrid({
           <>
             <Menu.Item
               onClick={() => {
-                actions.decide("approve", [person]);
+                actions.decide("approve", {
+                  ...noDrafts(),
+                  people: [person.id],
+                });
               }}
             >
               Approve draft
             </Menu.Item>
             <Menu.Item
               onClick={() => {
-                actions.decide("reject", [person]);
+                actions.decide("reject", {
+                  ...noDrafts(),
+                  people: [person.id],
+                });
               }}
             >
               Reject draft…
@@ -1226,10 +1460,25 @@ export function PeopleGrid({
     </Menu>
   );
 
-  // The drafts waiting among the people shown, which Approvers approve or reject all at once.
-  const waitingShown = canApprove
-    ? shownPeople.filter((person) => person.draft?.state === "waiting")
-    : [];
+  // The drafts waiting among the people and columns shown, which Approvers approve or reject all at
+  // once.
+  const waitingShown: DraftSelection = canApprove
+    ? {
+        ...noDrafts(),
+        people: shownPeople
+          .filter((person) => person.draft?.state === "waiting")
+          .map(({ id }) => id),
+        columns: fields
+          .filter(
+            (field) =>
+              field.draft?.state === "waiting" &&
+              columns.some(({ key }) => key === field.id),
+          )
+          .map(({ id }) => id),
+        columnOrder: orderDraft?.state === "waiting",
+      }
+    : noDrafts();
+  const waitingTotal = draftTotal(waitingShown);
 
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
@@ -1249,10 +1498,20 @@ export function PeopleGrid({
         }}
         saved={saved}
       />
-      {waitingShown.length > 0 && (
+      {orderDraft && !liveOnly && (
+        <ColumnOrderBar
+          draft={orderDraft}
+          moved={movedKeys(orderDraft.live, draftedOrder).size}
+          canEdit={canEditColumns}
+          canApprove={canApprove}
+          actions={actions}
+        />
+      )}
+      {waitingTotal > 0 && (
         <Group justify="space-between" className={classes.draftsBar}>
           <Text fz="sm">
-            {draftCount(waitingShown.length)} waiting among the people shown
+            {draftCount(waitingTotal)} waiting among the people and columns
+            shown
           </Text>
           <Group gap="xs">
             <Button

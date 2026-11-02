@@ -358,13 +358,13 @@ export async function seedCommand(
         console.log("Added drafts made by the personas");
       }
       if (await seedListDrafts(database, organization)) {
-        console.log("Added drafts of lists made by the personas");
+        console.log("Added drafts of lists and columns made by the personas");
       }
     } else {
       const discardedLists = await unseedListDrafts(database, organization);
       if (discardedLists > 0) {
         console.log(
-          `Discarded ${String(discardedLists)} drafts of lists made by the personas`,
+          `Discarded ${String(discardedLists)} drafts of lists and columns made by the personas`,
         );
       }
       const discarded = await unseedDrafts(database, organization);

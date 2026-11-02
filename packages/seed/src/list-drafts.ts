@@ -7,14 +7,16 @@
 // no column draws on, moving the Co-op level and the Manager position, and a new description for
 // Positions; the Engineering Director rejects Harbourside, the Positions order, and its
 // description; a second Engineering Operations Manager gives the renamed site a description, so one
-// draft holds two people's changes, and drafts renaming Roles on the team. Each case a draft of a
-// list, a choice, or an order can be in is there to try. Removing the seed data discards the drafts
-// of its lists first. A development-only package, never included in the runtime image.
+// draft holds two people's changes, and drafts renaming Roles on the team. Drafts of People's columns
+// follow, as seedColumnDrafts sets out. Each case a draft of a list, a choice, a column, or an order
+// can be in is there to try. Removing the seed data discards these drafts first. A development-only
+// package, never included in the runtime image.
 
 import { changes, type Database, drafts } from "@fathom/db";
 import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, max, sql } from "drizzle-orm";
+import type { Actor } from "@fathom/server/access";
 import { accountDomain } from "./accounts.ts";
 import { actorOf } from "./drafts.ts";
 
@@ -24,6 +26,9 @@ const approverEmail = `engineering.director@${accountDomain}`;
 
 // The list the seed drafts adding, which no fictional list is called.
 export const draftedListName = "Skills";
+
+export const columnRejection =
+  "Fictional reason: a previous site is not needed yet.";
 
 export const listRejection =
   "Fictional reason: keep the description until the positions are reviewed.";
@@ -163,11 +168,61 @@ export async function seedListDrafts(
     },
     listRejection,
   );
+  await seedColumnDrafts(database, organization, editor, approver);
   return true;
 }
 
-// Discards the drafts of the seed data's lists, and of the list it drafted adding, those made by
-// hand included, since removing the seed data removes the lists they change, and returns how many.
+const columnCalled = (organization: FictionalOrganization, name: string) =>
+  String(organization.columns.find((column) => column.name === name)?.id);
+
+// Drafts of the People table's columns: the first Engineering Operations Manager drafts adding a
+// Previous site column, which the Engineering Director rejects, renaming Level to Grade, which the
+// second makes required, so one draft holds two people's changes, removing Role on team, and moving
+// Level before Site.
+async function seedColumnDrafts(
+  database: Database,
+  organization: FictionalOrganization,
+  editor: Actor,
+  approver: Actor,
+): Promise<void> {
+  const data = createDataAccess(database);
+  const sites = listCalled(organization, "Sites");
+  const levels = listCalled(organization, "Levels");
+  const level = columnCalled(organization, "Level");
+  const { result: previousSite } = await data.people.createField(editor, {
+    name: "Previous site",
+    listId: sites.id,
+    multiple: false,
+    required: false,
+  });
+  await data.people.updateField(editor, level, {
+    name: "Grade",
+    listId: levels.id,
+    multiple: false,
+    required: false,
+  });
+  const second = await actorOf(database, secondEditorEmail);
+  await data.people.updateField(second, level, {
+    name: "Grade",
+    listId: levels.id,
+    multiple: false,
+    required: true,
+  });
+  await data.people.deleteField(
+    editor,
+    columnCalled(organization, "Role on team"),
+  );
+  await data.people.moveColumn(editor, level, "employeeId");
+  await data.drafts.reject(
+    approver,
+    { columns: [previousSite.id] },
+    columnRejection,
+  );
+}
+
+// Discards the drafts of the seed data's lists and columns, the column order's, and those of the list
+// and column it drafted adding, those made by hand included, since removing the seed data removes
+// the lists and columns they change, and returns how many.
 export async function unseedListDrafts(
   database: Database,
   organization: FictionalOrganization,
@@ -187,7 +242,7 @@ export async function unseedListDrafts(
     })
     .from(drafts)
     .where(inArray(drafts.recordType, ["list", "list-item", "choice-order"]));
-  let discarded = 0;
+  let discarded = await unseedColumnDrafts(database, organization, editor);
   for (const draft of found) {
     if (draft.recordType === "choice-order" && listIds.has(draft.recordId)) {
       await data.lists.discardDraft(editor, {
@@ -232,6 +287,47 @@ export async function unseedListDrafts(
       });
       discarded += 1;
     }
+  }
+  return discarded;
+}
+
+// Discards the drafts of the seed data's columns, of the column it drafted adding, and of the column
+// order, and returns how many.
+async function unseedColumnDrafts(
+  database: Database,
+  organization: FictionalOrganization,
+  editor: Actor,
+): Promise<number> {
+  const data = createDataAccess(database);
+  const columnIds = new Set(organization.columns.map(({ id }) => id));
+  const found = await database
+    .select({
+      recordType: drafts.recordType,
+      recordId: drafts.recordId,
+      action: drafts.action,
+      fields: drafts.fields,
+    })
+    .from(drafts)
+    .where(inArray(drafts.recordType, ["field", "column-order"]));
+  let discarded = 0;
+  // The order first, since discarding a column can leave it changing nothing, which removes it.
+  const ordered = [
+    ...found.filter(({ recordType }) => recordType === "column-order"),
+    ...found.filter(({ recordType }) => recordType === "field"),
+  ];
+  for (const draft of ordered) {
+    const seeded =
+      draft.recordType === "column-order" ||
+      columnIds.has(draft.recordId) ||
+      (draft.action === "created" && draft.fields.name === "Previous site");
+    if (!seeded) continue;
+    await data.people.discardColumnDraft(
+      editor,
+      draft.recordType === "column-order"
+        ? { kind: "order" }
+        : { kind: "column", id: draft.recordId },
+    );
+    discarded += 1;
   }
   return discarded;
 }

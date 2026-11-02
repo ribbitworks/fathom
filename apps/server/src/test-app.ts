@@ -56,8 +56,8 @@ export interface TestApp {
       madeBy: string | null;
     }[]
   >;
-  // Approves every draft of a list, a choice, or a list's order, so lists set up for a test are
-  // live, as a fictional Approver.
+  // Approves every draft of a list, a choice, a column, or an order, so the configuration set up for
+  // a test is live, as a fictional Approver.
   approveLists(): Promise<void>;
   close(): Promise<void>;
 }
@@ -135,13 +135,19 @@ export async function startTestApp(): Promise<TestApp> {
         name: "Fictional Approver of Lists",
         email: "list.approver@example.test",
         password,
-        roles: ["approver", "workforce-administrator"],
+        roles: ["approver", "workforce-administrator", "leadership"],
       });
       const waiting = await connection
         .select({ recordType: drafts.recordType, recordId: drafts.recordId })
         .from(drafts)
         .where(
-          inArray(drafts.recordType, ["list", "list-item", "choice-order"]),
+          inArray(drafts.recordType, [
+            "list",
+            "list-item",
+            "choice-order",
+            "field",
+            "column-order",
+          ]),
         );
       if (waiting.length === 0) return;
       const of = (recordType: string) =>
@@ -151,13 +157,15 @@ export async function startTestApp(): Promise<TestApp> {
       await data.drafts.approve(
         actorFor(
           { id: approverId, name: "Fictional Approver of Lists", email: "" },
-          ["approver", "workforce-administrator"],
+          ["approver", "workforce-administrator", "leadership"],
         ),
         {
           people: [],
           lists: of("list"),
           choices: of("list-item"),
           orders: of("choice-order"),
+          columns: of("field"),
+          columnOrder: of("column-order").length > 0,
         },
       );
     },

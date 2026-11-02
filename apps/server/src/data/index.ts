@@ -10,7 +10,8 @@ import type {
   ChangeHistory,
   Choice,
   ChoiceRequest,
-  DraftsRequest,
+  ColumnOrderDraft,
+  DraftsAsked,
   Field,
   FieldRequest,
   HistoryEntry,
@@ -25,17 +26,17 @@ import type {
   SavedViewChange,
   SavedViewRequest,
 } from "@fathom/shared";
+import { draftsRequestSchema } from "@fathom/shared";
 import { sql } from "drizzle-orm";
 import {
   type Actor,
   requireAnyPermission,
   requirePermission,
-  seesTier,
 } from "../access.ts";
 import { approveDrafts, rejectDrafts } from "./approvals.ts";
 import { readGreeting } from "./greeting.ts";
-import { moveColumn, readColumnOrder } from "./column-order.ts";
-import * as fieldData from "./fields.ts";
+import * as columnDrafts from "./column-drafts.ts";
+import { type ColumnDraftTarget, readColumnsOut } from "./column-drafts.ts";
 import { readChangeHistory } from "./change-history.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
 import * as lists from "./lists.ts";
@@ -77,12 +78,13 @@ export interface DataAccess {
 export type ChangeSetId = string | null;
 
 export type { Saved } from "./changes.ts";
+export type { ColumnDraftTarget } from "./column-drafts.ts";
 
 export interface DraftAccess {
-  approve(actor: Actor, asked: DraftsRequest): Promise<ChangeSetId>;
+  approve(actor: Actor, asked: DraftsAsked): Promise<ChangeSetId>;
   reject(
     actor: Actor,
-    asked: DraftsRequest,
+    asked: DraftsAsked,
     reason: string,
   ): Promise<ChangeSetId>;
 }
@@ -141,6 +143,7 @@ export interface PeopleAccess {
     people: Person[];
     fields: Field[];
     order: string[];
+    orderDraft?: ColumnOrderDraft;
     views: SavedView[];
   }>;
   // Changes to people are drafts, which reach the live people once approved.
@@ -166,6 +169,15 @@ export interface PeopleAccess {
     after: string | null,
   ): Promise<ChangeSetId>;
   deleteField(actor: Actor, id: string): Promise<ChangeSetId>;
+  // Discards a draft of a column or of the column order, or sends a rejected one for approval again.
+  discardColumnDraft(
+    actor: Actor,
+    target: ColumnDraftTarget,
+  ): Promise<ChangeSetId>;
+  resubmitColumnDraft(
+    actor: Actor,
+    target: ColumnDraftTarget,
+  ): Promise<ChangeSetId>;
   // Saved views of the People table, which anyone who sees people may save, and only their maker, or
   // someone who may change planning configuration, may change or delete.
   createView(
@@ -237,19 +249,15 @@ function createPeopleAccess(database: Database): PeopleAccess {
       if (read.includedRestricted) {
         await recordRestrictedView(database, actor.user.id);
       }
-      // The order of only the columns the actor sees: dates only with Restricted details.
-      const visible = new Set([
-        "preferredName",
-        "employeeId",
-        ...(seesTier(actor, "restricted") ? ["startDate", "endDate"] : []),
-        ...read.columns.map(({ id }) => id),
-      ]);
+      // The columns as their drafts make them, and their order, as the actor may see them.
+      // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
+      const columns = await database.transaction(
+        (transaction) => readColumnsOut(transaction, actor),
+        { isolationLevel: "repeatable read", accessMode: "read only" },
+      );
       return {
         people: read.people,
-        fields: read.columns.map(fieldData.toField),
-        order: (await readColumnOrder(database)).filter((key) =>
-          visible.has(key),
-        ),
+        ...columns,
         views: await views.readViews(database, actor),
       };
     },
@@ -269,15 +277,19 @@ function createPeopleAccess(database: Database): PeopleAccess {
     resubmitDraft: async (actor, id) =>
       peopleData.resubmitPersonDraft(database, actor, id),
     createField: async (actor, request) =>
-      fieldData.createField(database, editor(actor), request),
+      columnDrafts.createField(database, editor(actor), request),
     updateField: async (actor, id, request) =>
-      fieldData.updateField(database, editor(actor), id, request),
+      columnDrafts.updateField(database, editor(actor), id, request),
     moveColumn: async (actor, key, after) =>
-      moveColumn(database, editor(actor), key, after),
+      columnDrafts.moveColumn(database, editor(actor), key, after),
     deleteField: async (actor, id) => {
       editor(actor);
-      return fieldData.deleteField(database, actor, id);
+      return columnDrafts.deleteField(database, actor, id);
     },
+    discardColumnDraft: async (actor, target) =>
+      columnDrafts.discardColumnDraft(database, editor(actor), target),
+    resubmitColumnDraft: async (actor, target) =>
+      columnDrafts.resubmitColumnDraft(database, editor(actor), target),
     createView: async (actor, request) => {
       requirePermission(actor, "people:view");
       return views.createView(database, actor, request);
@@ -320,9 +332,10 @@ export function createDataAccess(database: Database): DataAccess {
     },
     lists: createListAccess(database),
     drafts: {
-      approve: async (actor, asked) => approveDrafts(database, actor, asked),
+      approve: async (actor, asked) =>
+        approveDrafts(database, actor, draftsRequestSchema.parse(asked)),
       reject: async (actor, asked, reason) =>
-        rejectDrafts(database, actor, asked, reason),
+        rejectDrafts(database, actor, draftsRequestSchema.parse(asked), reason),
     },
     people: createPeopleAccess(database),
     undo: async (actor, changeSetId) =>

@@ -84,6 +84,8 @@ describe("drafts an approval includes", () => {
       ...noDrafts(),
       choices: ["b", "c"],
       orders: ["l1"],
+      columns: [],
+      columnOrder: false,
     });
     expect(
       usingDrafts({ ...noDrafts(), choices: ["f"], orders: ["l2"] }, lists),
@@ -100,6 +102,8 @@ describe("drafts an approval includes", () => {
       lists: ["l1"],
       choices: ["b"],
       orders: ["l2"],
+      columns: [],
+      columnOrder: false,
     });
     expect(draftTotal(both)).toBe(4);
     expect(draftNames(both, lists)).toEqual([
@@ -107,5 +111,44 @@ describe("drafts an approval includes", () => {
       "the choice B in Teams",
       "the order of Sites",
     ]);
+  });
+});
+
+describe("drafts of columns an approval or rejection includes", () => {
+  const columns = {
+    fields: [
+      {
+        id: "f1",
+        name: "Previous site",
+        listId: "l1",
+        multiple: false,
+        required: false,
+      },
+    ],
+    orderDraft: {
+      live: [],
+      uses: ["f1"],
+      state: "waiting" as const,
+      madeBy: null,
+      madeAt: null,
+    },
+  };
+  it("approves the columns the order places, and rejects the order with them", () => {
+    expect(
+      usedDrafts({ ...noDrafts(), columnOrder: true }, [], columns),
+    ).toEqual({ ...noDrafts(), columns: ["f1"] });
+    expect(usedDrafts({ ...noDrafts(), columnOrder: true }, [])).toEqual(
+      noDrafts(),
+    );
+    expect(
+      usingDrafts({ ...noDrafts(), columns: ["f1"] }, [], columns),
+    ).toEqual({ ...noDrafts(), columnOrder: true });
+    expect(
+      draftNames(
+        { ...noDrafts(), columns: ["f1"], columnOrder: true },
+        [],
+        columns.fields,
+      ),
+    ).toEqual(["the column Previous site", "the order of People's columns"]);
   });
 });

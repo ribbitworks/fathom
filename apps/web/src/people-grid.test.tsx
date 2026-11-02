@@ -13,6 +13,7 @@ import {
   columnsFor,
   columnWidth,
   droppedAfter,
+  liveFields,
   livePeople,
   PeopleGrid,
 } from "./people-grid.tsx";
@@ -72,6 +73,8 @@ const actions = {
   decide: noop,
   moveColumn: noop,
   editColumn: noop,
+  discardColumn: noop,
+  resubmitColumn: noop,
 };
 
 describe("how wide each column is", () => {
@@ -193,6 +196,8 @@ describe("adding people without dates", () => {
             decide: noop,
             moveColumn: noop,
             editColumn: noop,
+            discardColumn: noop,
+            resubmitColumn: noop,
           }}
         />
       </MantineProvider>,
@@ -275,6 +280,63 @@ describe("the live people", () => {
       person("p1"),
       person("p3"),
       person("p4", { endDate: null, values: { f3: ["c5"], f1: ["c1"] } }),
+    ]);
+  });
+});
+
+describe("the live columns", () => {
+  const column = {
+    id: "f1",
+    name: "Grade",
+    listId: "l1",
+    multiple: false,
+    required: true,
+  };
+  const draft = {
+    state: "waiting" as const,
+    madeBy: null,
+    madeAt: null,
+  };
+  it("leave out columns only drafted to be added, and put back each setting a draft changes", () => {
+    expect(
+      liveFields([
+        { ...column, id: "f0" },
+        {
+          ...column,
+          draft: {
+            ...draft,
+            action: "changed",
+            changed: ["name", "required"],
+            live: { name: "Level", required: false },
+          },
+        },
+        {
+          ...column,
+          id: "f2",
+          draft: { ...draft, action: "created", changed: [], live: {} },
+        },
+        {
+          ...column,
+          id: "f4",
+          listId: "l2",
+          draft: {
+            ...draft,
+            action: "changed",
+            changed: ["listId"],
+            live: { listId: "l1" },
+          },
+        },
+        {
+          ...column,
+          id: "f3",
+          draft: { ...draft, action: "deleted", changed: [], live: {} },
+        },
+      ]),
+    ).toEqual([
+      { ...column, id: "f0" },
+      { ...column, name: "Level", required: false },
+      { ...column, id: "f4" },
+      { ...column, id: "f3" },
     ]);
   });
 });

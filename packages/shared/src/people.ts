@@ -19,14 +19,34 @@ export const personLengths = {
 // A date without a time, such as 2026-10-31.
 const day = z.iso.date();
 
+// A column's draft: whether it adds, changes, or removes the column, the settings it changes, and
+// their live values, which a draft that adds the column has none of.
+export const fieldDraftSchema = z.object({
+  action: draftActionSchema,
+  changed: z.array(z.string()),
+  live: z
+    .object({
+      name: z.string(),
+      listId: z.string(),
+      multiple: z.boolean(),
+      required: z.boolean(),
+    })
+    .partial(),
+  ...draftShape,
+});
+
+export type FieldDraft = z.infer<typeof fieldDraftSchema>;
+
 // A column on the People table, drawing on a list. The column decides what it is called, whether
-// one choice or several can be picked, and whether a value is required.
+// one choice or several can be picked, and whether a value is required. It is as its draft, if any,
+// makes it, with the draft beside, or, for a draft that removes it, as it is.
 export const fieldSchema = z.object({
   id: z.string(),
   name: z.string(),
   listId: z.string(),
   multiple: z.boolean(),
   required: z.boolean(),
+  draft: fieldDraftSchema.optional(),
 });
 
 export type Field = z.infer<typeof fieldSchema>;
@@ -82,13 +102,26 @@ export const personSchema = z.object({
 
 export type Person = z.infer<typeof personSchema>;
 
+// A draft of the order of the People table's columns, holding the whole order, with the live order
+// beside.
+export const columnOrderDraftSchema = z.object({
+  live: z.array(z.string()),
+  // The columns only drafted to be added that the draft places, whose drafts approving it approves.
+  uses: z.array(z.string()).optional(),
+  ...draftShape,
+});
+
+export type ColumnOrderDraft = z.infer<typeof columnOrderDraftSchema>;
+
 // Everyone the user may see, by preferred name, with the added columns whose values they may see,
 // the order of the columns they see: built-in ones by name, such as "employeeId", and added ones
 // by identifier, and the saved views of the People table they may see, by name.
 export const peopleSchema = z.object({
   people: z.array(personSchema),
   fields: z.array(fieldSchema),
+  // In order, as a draft of the order makes it.
   order: z.array(z.string()),
+  orderDraft: columnOrderDraftSchema.optional(),
   views: z.array(savedViewSchema),
 });
 

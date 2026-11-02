@@ -39,6 +39,7 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 
 ## Drafts
 
+- **A column's tier and its creator:** The Security Plan says a column can only be given a tier its creator can see, but adding a column has never checked it: a Workforce Administrator sees every tier, so no role reaches the gap today. Found in review on 2026-11-01.
 - **Unnamed in the access history:** The access history names each person by their live record, so a Restricted change to someone only drafted to be added shows them without a name until their draft is approved.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
 

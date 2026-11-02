@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The order of the People table's columns, built-in and added alike, which is the same for everyone.
-// Part of the data access layer. Moving a column records the whole order before and after, as one
-// change to General configuration, so undoing it puts the order back.
+// Part of the data access layer. Moving a column is a draft of the whole order, as column-drafts.ts
+// sets out, which approving writes here.
 
 import { columnOrders, type Database, fields } from "@fathom/db";
 import { asc, eq } from "drizzle-orm";
-import { BadRequestError, NotFoundError } from "../errors.ts";
-import { recordChanges, type Transaction } from "./changes.ts";
+import type { Transaction } from "./changes.ts";
 
 const table = "people";
 
@@ -80,42 +79,4 @@ export async function appendColumn(
     ...order.filter((other) => other !== key),
     key,
   ]);
-}
-
-// Moves a column to just after another, or to the start when there is none, and returns the change
-// set it was recorded in, or null when it was already there.
-export async function moveColumn(
-  database: Database,
-  madeBy: string,
-  key: string,
-  after: string | null,
-): Promise<string | null> {
-  if (after === key) {
-    throw new BadRequestError("A column cannot follow itself");
-  }
-  return database.transaction(async (transaction) => {
-    const stored = await storedOrder(transaction, true);
-    const before = await currentOrder(transaction, stored);
-    if (!before.includes(key))
-      throw new NotFoundError("There is no such column");
-    if (after !== null && !before.includes(after)) {
-      throw new BadRequestError("Choose a column on the same table to follow");
-    }
-    const others = before.filter((other) => other !== key);
-    const at = after === null ? 0 : others.indexOf(after) + 1;
-    const moved = [...others.slice(0, at), key, ...others.slice(at)];
-    if (moved.join() === before.join()) return null;
-    await writeColumnOrder(transaction, moved);
-    return recordChanges(transaction, madeBy, [
-      {
-        recordType: "column-order",
-        recordId: table,
-        action: "changed",
-        field: "order",
-        tier: "general",
-        oldValue: before,
-        newValue: moved,
-      },
-    ]);
-  });
 }

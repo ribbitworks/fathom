@@ -101,6 +101,32 @@ export async function moveColumn(
   ).changeSetId;
 }
 
+// Which draft of the People table's columns: a column's, or that of the column order.
+export type ColumnDraftTarget =
+  { kind: "column"; id: string } | { kind: "order" };
+
+const columnDraftPath = (target: ColumnDraftTarget) =>
+  target.kind === "order"
+    ? "/api/people/columns/order/draft"
+    : `${columnPath(target.id)}/draft`;
+
+// Discards a draft of a column or of the column order.
+export async function discardColumnDraft(
+  target: ColumnDraftTarget,
+): Promise<string | null> {
+  return (await sendDeleteFor(columnDraftPath(target), savedSchema))
+    .changeSetId;
+}
+
+// Sends a rejected draft of a column or of the column order for approval again, unchanged.
+export async function resubmitColumnDraft(
+  target: ColumnDraftTarget,
+): Promise<string | null> {
+  return (
+    await sendDeleteFor(`${columnDraftPath(target)}/rejection`, savedSchema)
+  ).changeSetId;
+}
+
 export async function deleteField(id: string): Promise<string | null> {
   return (await sendDeleteFor(columnPath(id), savedSchema)).changeSetId;
 }

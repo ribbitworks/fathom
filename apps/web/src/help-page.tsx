@@ -24,17 +24,17 @@ const marks: [string, ReactNode, string][] = [
   [
     "draft",
     <StatusMark tone="draft">Draft</StatusMark>,
-    "A change to a person, a list, or a choice, waiting for approval, on a light blue row. On People, each cell it changes is in yellow.",
+    "A change to a person, a list, a choice, or a column, waiting for approval, on a light blue row, or after a column's name. On People, each cell it changes is in yellow.",
   ],
   [
     "added",
     <StatusMark tone="draft">Draft: added</StatusMark>,
-    "A person, a list, or a choice to be added once approved.",
+    "A person, a list, a choice, or a column to be added once approved.",
   ],
   [
     "removed",
     <StatusMark tone="draft">Draft: removed</StatusMark>,
-    "A person, a list, or a choice to be removed once approved, struck through.",
+    "A person, a list, a choice, or a column to be removed once approved, struck through.",
   ],
   [
     "rejected",
@@ -44,7 +44,7 @@ const marks: [string, ReactNode, string][] = [
   [
     "moved",
     <StatusMark tone="draft">Draft: moved</StatusMark>,
-    "A choice in the place a draft of its list's order moves it to.",
+    "A choice or column in the place a draft of the order moves it to.",
   ],
   [
     "order",

@@ -31,7 +31,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { personaAccounts } from "./accounts.ts";
 import { actorFor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
-import { listRejection } from "./list-drafts.ts";
+import { columnRejection, listRejection } from "./list-drafts.ts";
 import { rejection, seedDrafts, unseedDrafts } from "./drafts.ts";
 import { seed, seedCommand, unseed } from "./seed.ts";
 
@@ -169,9 +169,9 @@ describe("the seed command", () => {
     // description; the Skills list, its two choices, and Harbourside added; and a person, an unused
     // position, and the Certifications list removed.
     expect(made.map(({ action }) => action).sort()).toEqual([
-      ...Array<string>(10).fill("changed"),
-      ...Array<string>(6).fill("created"),
-      ...Array<string>(3).fill("deleted"),
+      ...Array<string>(12).fill("changed"),
+      ...Array<string>(7).fill("created"),
+      ...Array<string>(4).fill("deleted"),
     ]);
     expect(
       made
@@ -180,6 +180,7 @@ describe("the seed command", () => {
         .sort(),
     ).toEqual(
       [
+        columnRejection,
         listRejection,
         listRejection,
         listRejection,
@@ -189,7 +190,7 @@ describe("the seed command", () => {
     );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
-    expect(await connection.select().from(drafts)).toHaveLength(19);
+    expect(await connection.select().from(drafts)).toHaveLength(23);
     // Seeding again after the Approver approves the waiting drafts makes none again, and leaves
     // alone a draft made by hand of another seeded person, which removing the seed data discards,
     // since it removes that person.
@@ -233,13 +234,28 @@ describe("the seed command", () => {
       },
     ]);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    // The two rejected drafts of people, the one made by hand, and the thirteen of lists.
-    expect(await connection.select().from(drafts)).toHaveLength(16);
+    // The two rejected drafts of people, the one made by hand, the thirteen of lists, and the four
+    // of columns.
+    expect(await connection.select().from(drafts)).toHaveLength(20);
     const positions = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
       listId: String(positions?.id),
       label: "Fictional Hand Choice",
     });
+    // A column drafted by hand on the list kept is not the seed's, so is left alone.
+    const handColumn = {
+      recordType: "field",
+      recordId: "00000000-0000-4000-8000-0000000000c1",
+      action: "created",
+      fields: {
+        tableName: "people",
+        name: "Fictional Hand Column",
+        listId: String(positions?.id),
+        multiple: false,
+        required: false,
+      },
+    };
+    await connection.insert(drafts).values(handColumn);
     // The newcomer approved is no longer seed data, so is removed by hand first.
     await connection
       .delete(people)
@@ -250,15 +266,24 @@ describe("the seed command", () => {
       "Added 150 fictional people, with their lists and columns",
       ...addresses.map((email) => `Account ready: ${email}`),
       "Added drafts made by the personas",
-      "Added drafts of lists made by the personas",
+      "Added drafts of lists and columns made by the personas",
       "The fictional data is already in the database",
       "The fictional data is already in the database",
-      "Discarded 11 drafts of lists made by the personas",
+      "Discarded 15 drafts of lists and columns made by the personas",
       "Discarded 3 drafts made by the personas",
       "Removed the fictional data",
       "Kept: The Positions list, which has choices added by hand",
       ...addresses.map((email) => `Deactivated the account ${email}`),
     ]);
+    expect(
+      await connection
+        .select({ recordId: drafts.recordId })
+        .from(drafts)
+        .where(eq(drafts.recordType, "field")),
+    ).toEqual([{ recordId: handColumn.recordId }]);
+    await connection
+      .delete(drafts)
+      .where(eq(drafts.recordId, handColumn.recordId));
     // With nothing left to discard, unseeding again says nothing of drafts.
     log.mockClear();
     expect(await seedCommand(["unseed"], environment())).toBe(0);
@@ -275,7 +300,13 @@ describe("the seed command", () => {
         .select()
         .from(drafts)
         .where(
-          inArray(drafts.recordType, ["list", "list-item", "choice-order"]),
+          inArray(drafts.recordType, [
+            "list",
+            "list-item",
+            "choice-order",
+            "field",
+            "column-order",
+          ]),
         );
     // The Positions list kept by the test before, for the choice added to it by hand.
     await connection
@@ -283,11 +314,11 @@ describe("the seed command", () => {
       .where(eq(listItems.label, "Fictional Hand Choice"));
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(13);
+    expect(await ofLists()).toHaveLength(17);
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     expect(await ofLists()).toHaveLength(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(13);
+    expect(await ofLists()).toHaveLength(17);
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     log.mockRestore();
   });

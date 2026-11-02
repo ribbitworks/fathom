@@ -1706,7 +1706,14 @@ describe("drafts on the Lists page", () => {
     );
     await waitFor(() => {
       expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
-        { people: [], lists: ["l5"], choices: ["c8"], orders: [] },
+        {
+          people: [],
+          lists: ["l5"],
+          choices: ["c8"],
+          orders: [],
+          columns: [],
+          columnOrder: false,
+        },
       ]);
     });
   });

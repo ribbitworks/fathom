@@ -33,7 +33,8 @@ export type Recorded = Record<string, unknown>;
 export type DraftRow = typeof drafts.$inferSelect;
 
 // The kinds of record that have drafts. A list's choice order is one record, named by its list.
-export type DraftType = "person" | "list" | "list-item" | "choice-order";
+export type DraftType =
+  "person" | "list" | "list-item" | "choice-order" | "field" | "column-order";
 
 export interface Draft {
   action: Change["action"];

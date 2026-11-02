@@ -22,7 +22,7 @@ import {
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type { PeopleAccess } from "../data/index.ts";
+import type { ColumnDraftTarget, PeopleAccess } from "../data/index.ts";
 
 const created = 201;
 
@@ -184,6 +184,46 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
           request.actor,
           request.params.fieldId,
         ),
+      }),
+    );
+
+    // Discarding a draft of a column or of the column order, and sending a rejected one for approval
+    // again unchanged.
+    const columnDraftRoutes = <Params extends z.ZodType>(
+      path: string,
+      params: Params,
+      target: (params: z.infer<Params>) => ColumnDraftTarget,
+    ) => {
+      app.delete(
+        `${path}/draft`,
+        { schema: { params, response: saved } },
+        async (request) => ({
+          changeSetId: await people.discardColumnDraft(
+            request.actor,
+            target(request.params as z.infer<Params>),
+          ),
+        }),
+      );
+      app.delete(
+        `${path}/draft/rejection`,
+        { schema: { params, response: saved } },
+        async (request) => ({
+          changeSetId: await people.resubmitColumnDraft(
+            request.actor,
+            target(request.params as z.infer<Params>),
+          ),
+        }),
+      );
+    };
+    columnDraftRoutes("/api/people/columns/order", z.object({}), () => ({
+      kind: "order",
+    }));
+    columnDraftRoutes(
+      "/api/people/columns/:fieldId",
+      fieldParams,
+      ({ fieldId }) => ({
+        kind: "column",
+        id: fieldId,
       }),
     );
 

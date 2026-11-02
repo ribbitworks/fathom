@@ -7,7 +7,7 @@
 
 import type { Choice, List } from "@fathom/shared";
 import { Button, Group } from "@mantine/core";
-import type { DraftSelection } from "./drafts.ts";
+import { type DraftSelection, noDrafts } from "./drafts.ts";
 import classes from "./pages.module.css";
 import { count } from "./numbers.ts";
 import { type DraftLike, DraftMark } from "./status-mark.tsx";
@@ -29,7 +29,7 @@ export type DraftOn =
 // The drafts a draft on the Lists page names, to approve or reject.
 export function selectionOf(what: DraftOn): DraftSelection {
   return {
-    people: [],
+    ...noDrafts(),
     lists: what.kind === "list" ? [what.list.id] : [],
     choices: what.kind === "choice" ? [what.choice.id] : [],
     orders: what.kind === "order" ? [what.list.id] : [],
@@ -81,13 +81,24 @@ export function drafting<Record extends Choice | List>(
 // one: those outside the longest run of choices still in their live order, so moving one choice
 // marks only that choice.
 export function movedChoices(list: List): Map<string, number> {
-  const live = list.orderDraft?.live ?? [];
+  if (list.orderDraft === undefined) return new Map();
+  return movedKeys(
+    list.orderDraft.live,
+    list.choices.map(({ id }) => id),
+  );
+}
+
+// The records an order moves, by key, each with its place in the live order, counted from one:
+// those outside the longest run still in their live order, so moving one marks only that one.
+export function movedKeys(
+  live: readonly string[],
+  now: readonly string[],
+): Map<string, number> {
   const moved = new Map<string, number>();
-  if (list.orderDraft === undefined) return moved;
-  const shown = list.choices.filter(({ id }) => live.includes(id));
-  const places = shown.map(({ id }) => live.indexOf(id));
-  // For each choice, the longest run of choices in their live order that ends with it, and the one
-  // before it in that run; lists are short, so each is compared with every one before it.
+  const shown = now.filter((key) => live.includes(key));
+  const places = shown.map((key) => live.indexOf(key));
+  // For each, the longest run in live order that ends with it, and the one before it in that run;
+  // orders are short, so each is compared with every one before it.
   const runs: { length: number; before: number }[] = [];
   places.forEach((place, at) => {
     let best = { length: 1, before: -1 };
@@ -112,8 +123,8 @@ export function movedChoices(list: List): Map<string, number> {
     kept.add(at);
     at = (runs.at(at) as { before: number }).before;
   }
-  shown.forEach(({ id }, index) => {
-    if (!kept.has(index)) moved.set(id, live.indexOf(id) + 1);
+  shown.forEach((key, index) => {
+    if (!kept.has(index)) moved.set(key, live.indexOf(key) + 1);
   });
   return moved;
 }

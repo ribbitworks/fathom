@@ -83,6 +83,7 @@ async function makePersonWithColumn(name: string, visibility = "general") {
     name: `${name} site`,
     listId: list.id,
   })) as unknown as { field: Field };
+  await test.approveLists();
   const { ids } = (await send("POST", "/api/people", {
     people: [
       {
@@ -254,7 +255,7 @@ describe("the change history", () => {
         action: "changed",
         name: "Beta other column",
         list: null,
-        draft: false,
+        draft: true,
         fields: [
           { field: "listId", oldValue: "Beta sites", newValue: "Beta other" },
         ],

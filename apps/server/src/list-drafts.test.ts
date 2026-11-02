@@ -380,7 +380,12 @@ async function columnOn(listId: string) {
     listId,
   });
   expect(response.statusCode).toBe(201);
-  return response.json<{ field: { id: string } }>().field;
+  const field = response.json<{ field: { id: string } }>().field;
+  // Only the column, so the drafts of lists these tests make stay waiting.
+  expect((await decide("approval", { columns: [field.id] })).statusCode).toBe(
+    200,
+  );
+  return field;
 }
 
 async function personWith(fieldId: string, choiceId: string) {

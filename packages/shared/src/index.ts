@@ -53,6 +53,7 @@ export {
   historyListSchema,
 } from "./history.ts";
 export {
+  type DraftsAsked,
   type DraftsRequest,
   type DraftState,
   draftShape,
@@ -87,7 +88,11 @@ export {
 export {
   changeSetIdSchema,
   columnKeySchema,
+  type ColumnOrderDraft,
+  columnOrderDraftSchema,
   type Field,
+  type FieldDraft,
+  fieldDraftSchema,
   type FieldRequest,
   fieldMoveSchema,
   fieldRequestSchema,

@@ -77,6 +77,7 @@ async function columnWith(labels: string[], visibility = "general") {
       multiple: true,
     })
   ).json<{ field: Field }>().field;
+  await test.approveLists();
   return { list, choices, field };
 }
 
@@ -100,6 +101,14 @@ async function draftPerson(person: object = {}) {
 
 async function approve(ids: string[], cookie = approver.cookie) {
   return send(cookie, "POST", "/api/drafts/approval", { people: ids });
+}
+
+// Approves the drafts of the columns given alone, so other drafts a test makes stay waiting.
+async function approveColumns(...ids: string[]) {
+  const response = await send(approver.cookie, "POST", "/api/drafts/approval", {
+    columns: ids,
+  });
+  expect(response.statusCode, response.body).toBe(200);
 }
 
 async function reject(ids: string[], reason: string, cookie = approver.cookie) {
@@ -774,6 +783,7 @@ describe("undoing changes to drafts", () => {
     });
     const thrown = await saved("DELETE", `/api/people/${valued.id}`);
     await saved("DELETE", `/api/people/columns/${field.id}`);
+    await approveColumns(field.id);
     expect((await undo(thrown)).statusCode).toBe(409);
 
     // A change to a draft whose person has since been drafted to be removed.
@@ -877,6 +887,7 @@ describe("columns and choices that drafts use", () => {
       field: Field;
       changeSetId: string;
     }>();
+    await approveColumns(field.id);
     const person = await draftPerson({
       values: { [field.id]: [String(choices[0]?.id)] },
     });
@@ -980,6 +991,7 @@ describe("live people", () => {
       listId: field.listId,
       multiple: false,
     });
+    await approveColumns(field.id);
     const person = await livePerson();
     const changeSetId = await test.connection.transaction((transaction) =>
       recordChanges(transaction, editor.id, [

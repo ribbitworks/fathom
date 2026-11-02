@@ -208,7 +208,87 @@ describe("the Drafts page", () => {
     );
     await waitFor(() => {
       expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
-        { people: [], lists: ["l2"], choices: ["c3"], orders: [] },
+        {
+          people: [],
+          lists: ["l2"],
+          choices: ["c3"],
+          orders: [],
+          columns: [],
+          columnOrder: false,
+        },
+      ]);
+    });
+  });
+
+  it("puts drafts of columns and of the column order in words, and approves the order with the columns it places", async () => {
+    const levels = {
+      ...sites,
+      id: "l2",
+      name: "Levels",
+      choices: [],
+    };
+    const fetch = serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/lists": () => Response.json({ lists: [sites, levels] }),
+      "GET /api/people": () =>
+        Response.json({
+          people: [],
+          fields: [
+            {
+              ...site,
+              listId: "l2",
+              draft: draft({
+                action: "changed",
+                changed: ["listId"],
+                live: { listId: "l1" },
+              }),
+            },
+            {
+              ...site,
+              id: "f2",
+              name: "Previous site",
+              draft: draft({ action: "created", changed: ["name"], live: {} }),
+            },
+          ],
+          order: ["preferredName", "f2", "employeeId", "f1"],
+          orderDraft: draft({
+            live: ["preferredName", "employeeId", "f1"],
+            uses: ["f2"],
+          }),
+          views: [],
+        }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    renderApp("/drafts");
+    expect(await screen.findByText("the column Site")).toBeDefined();
+    expect(screen.getByText(/List from Sites to Levels/)).toBeDefined();
+    expect(screen.getByText("the column Previous site")).toBeDefined();
+    expect(
+      screen.getByText(
+        /Order from Name, Employee ID, Site to Name, Previous site, Employee ID, Site/,
+      ),
+    ).toBeDefined();
+    await userEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Select the draft of People's columns",
+      }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /^Approve/ }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("the column Previous site")).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+        {
+          people: [],
+          lists: [],
+          choices: [],
+          orders: [],
+          columns: ["f2"],
+          columnOrder: true,
+        },
       ]);
     });
   });
@@ -331,7 +411,14 @@ describe("the Drafts page", () => {
     );
     expect(await screen.findByText("Approved 3 drafts.")).toBeDefined();
     expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
-      { people: ["p1", "p2", "p4"], lists: [], choices: [], orders: [] },
+      {
+        people: ["p1", "p2", "p4"],
+        lists: [],
+        choices: [],
+        orders: [],
+        columns: [],
+        columnOrder: false,
+      },
     ]);
   });
 
@@ -402,6 +489,8 @@ describe("the Drafts page", () => {
         lists: [],
         choices: [],
         orders: [],
+        columns: [],
+        columnOrder: false,
         reason: "Fictional reason",
       },
     ]);

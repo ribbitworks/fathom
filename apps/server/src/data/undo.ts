@@ -52,6 +52,15 @@ import {
   writeDraft,
   writePersonDraft,
 } from "./drafts.ts";
+import {
+  columnRow,
+  columnTier,
+  draftedColumnOrder,
+  nameTaken,
+  readColumnsState,
+  removeEmptyColumnOrder,
+  writeColumnOrderDraft,
+} from "./column-drafts.ts";
 import { checkValuesFit, lockFields } from "./fields.ts";
 import {
   choiceLabelTaken,
@@ -538,6 +547,77 @@ async function undoListDrafts(
   }
 }
 
+// Puts back the drafts of the columns and the column order a change set changed in their drafts, as
+// for lists: the column it drafted adding taken out, the one it drafted removing put back as it was,
+// the settings it changed put back, and an order as it was. Each must still have a name no one else
+// has taken since, and draw on a list that is there.
+async function undoColumnDrafts(
+  transaction: Transaction,
+  actor: Actor,
+  records: readonly Undone[],
+): Promise<void> {
+  // Columns before the order, which may place them.
+  const ordered = [
+    ...records.filter(({ recordType }) => recordType === "field"),
+    ...records.filter(({ recordType }) => recordType === "column-order"),
+  ];
+  for (const record of ordered) {
+    const state = await readColumnsState(transaction);
+    const old = new Map(record.old);
+    if (record.recordType === "column-order") {
+      const rejection = rejectionAfter(old, state.orderDraft);
+      const wanted = old.has("order")
+        ? ids(old.get("order"))
+        : draftedColumnOrder(state);
+      await writeColumnOrderDraft(transaction, state, wanted, rejection);
+      continue;
+    }
+    const live = state.fields.get(record.id);
+    const draft = state.fieldDrafts.get(record.id);
+    const rejection = rejectionAfter(old, draft);
+    let wanted: Recorded | undefined;
+    if (record.action === "deleted") {
+      wanted = Object.fromEntries(
+        [...old].filter(([, value]) => value !== null),
+      );
+    } else if (record.action === "changed") {
+      wanted = {
+        ...(drafted(live, draft) as Recorded),
+        ...Object.fromEntries(old),
+      };
+    }
+    // What drafting checks, checked again, since the data may have changed since.
+    if (wanted !== undefined) {
+      const list = state.lists.lists.get(String(wanted.listId));
+      const listChanges = wanted.listId !== live?.listId;
+      if (
+        nameTaken(state, String(wanted.name), record.id) ||
+        list === undefined ||
+        (listChanges && list.retired === true)
+      ) {
+        throw new ConflictError(changedSince);
+      }
+      await checkValuesFit(
+        transaction,
+        columnRow(record.id, live ?? { ...wanted, required: false }),
+        columnRow(record.id, wanted),
+      );
+    } else if (live !== undefined) {
+      // Putting back a removal: the column's values go once approved, so as when drafting it, no
+      // draft of a person may change it, and the actor must be able to change its values.
+      const tier = columnTier(state, live);
+      if (
+        (await draftsUse(transaction, { column: record.id })) ||
+        !actor.permissions.includes("people:edit") ||
+        !seesTier(actor, tier)
+      ) {
+        throw new ConflictError(changedSince);
+      }
+    }
+    await writeDraft(transaction, "field", record.id, live, wanted, rejection);
+  }
+}
+
 const byKind = (record: Undone) => kindOrder.indexOf(record.recordType);
 
 // The more sensitive of two tiers.
@@ -725,12 +805,21 @@ async function undoIn(
   const personDrafts = draftRecords.filter(
     ({ recordType }) => recordType === "person",
   );
+  const columnKinds: readonly RecordType[] = ["field", "column-order"];
+  const columnDrafts = draftRecords.filter(({ recordType }) =>
+    columnKinds.includes(recordType),
+  );
   const listDrafts = draftRecords.filter(
-    ({ recordType }) => recordType !== "person",
+    ({ recordType }) =>
+      recordType !== "person" && !columnKinds.includes(recordType),
   );
   if (listDrafts.length > 0) {
     await undoListDrafts(transaction, listDrafts);
     await removeEmptyOrders(transaction);
+  }
+  if (columnDrafts.length > 0) {
+    await undoColumnDrafts(transaction, actor, columnDrafts);
+    await removeEmptyColumnOrder(transaction);
   }
   if (personDrafts.length > 0) {
     await undoPersonDrafts(

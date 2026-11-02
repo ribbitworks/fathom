@@ -76,6 +76,15 @@ async function listWith(
   return { list, choices: added.json<{ choices: Choice[] }>().choices };
 }
 
+// Approves the drafts of the columns given alone, so other drafts a test makes stay waiting.
+async function approveColumns(...ids: string[]) {
+  const approver = await test.signedIn(["approver", "leadership"]);
+  const response = await send(approver.cookie, "POST", "/api/drafts/approval", {
+    columns: ids,
+  });
+  expect(response.statusCode, response.body).toBe(200);
+}
+
 async function addColumn(
   cookie: string,
   listId: string,
@@ -88,6 +97,7 @@ async function addColumn(
     required: settings.required ?? false,
   });
   expect(response.statusCode).toBe(201);
+  await test.approveLists();
   return response.json();
 }
 
@@ -893,8 +903,8 @@ describe("columns", () => {
     expect(itself.json()).toEqual({ error: "A column cannot follow itself" });
   });
 
-  it("deletes a column with its values, recording them on each person", async () => {
-    const { cookie, id: editorId } = await editor();
+  it("deletes a column with its values once approved, recording them on each person", async () => {
+    const { cookie } = await editor();
     const { field, choices } = await columnWith(cookie, ["A"], {
       visibility: "restricted",
     });
@@ -907,6 +917,16 @@ describe("columns", () => {
       `/api/people/columns/${field.id}`,
     );
     expect(response.statusCode).toBe(200);
+    // A draft until approved, by an Approver who sees the values it deletes.
+    expect((await readPerson(cookie, id))?.values).not.toEqual({});
+    const approver = await test.signedIn(["approver", "leadership"]);
+    expect(
+      (
+        await send(approver.cookie, "POST", "/api/drafts/approval", {
+          columns: [field.id],
+        })
+      ).statusCode,
+    ).toBe(200);
     expect((await readPerson(cookie, id))?.values).toEqual({});
     expect((await test.historyOf(id)).at(-1)).toMatchObject({
       action: "changed",
@@ -916,7 +936,7 @@ describe("columns", () => {
       newValue: null,
     });
     expect(
-      (await accessOf(editorId)).find(
+      (await accessOf(approver.id)).find(
         ({ action }) => action === "restricted-changed",
       ),
     ).toEqual({
@@ -1075,7 +1095,7 @@ describe("undo", () => {
     expect(await readPerson(cookie, id)).toEqual(before);
   });
 
-  it("undoes adding, changing, moving, and deleting a column, putting back its values and place", async () => {
+  it("undoes drafting changing, moving, and deleting a column, putting back its values and place", async () => {
     const { cookie } = await editor();
     const { list, choices } = await listWith(cookie, ["A"]);
     const first = await addColumn(cookie, list.id);
@@ -1122,9 +1142,8 @@ describe("undo", () => {
       [first.field.id]: [choices[0]?.id],
     });
 
-    // Moving a column changes the table's order, not the column, so adding it can still be undone.
-    expect((await undo(cookie, second.changeSetId)).statusCode).toBe(200);
-    expect(await order()).toEqual([first.field.id]);
+    // Drafting a column's addition cannot be undone once it is approved.
+    expect((await undo(cookie, second.changeSetId)).statusCode).toBe(409);
   });
 
   it("undoes list changes in one call: deleting a list brings back its choices in order", async () => {
@@ -1318,17 +1337,16 @@ describe("undo", () => {
       `/api/people/columns/${one.field.id}`,
       { name: one.field.name, listId: one.list.id, multiple: true },
     );
+    await test.approveLists();
     await addPerson(cookie, {
       values: { [one.field.id]: one.choices.map(({ id }) => id) },
     });
+    // Approved since, so it is no longer undone.
     const refused = await undo(
       cookie,
       several.json<{ changeSetId: string }>().changeSetId,
     );
     expect(refused.statusCode).toBe(409);
-    expect(refused.json<{ error: string }>().error).toMatch(
-      /several choices for .*, so it cannot take only one yet$/,
-    );
   });
 
   it("refuses to put back values that no longer fit their column", async () => {
@@ -1344,6 +1362,7 @@ describe("undo", () => {
       listId: several.list.id,
       multiple: false,
     });
+    await approveColumns(several.field.id);
     expect(
       (await undo(cookie, deleted.json<{ changeSetId: string }>().changeSetId))
         .statusCode,
@@ -1359,6 +1378,7 @@ describe("undo", () => {
       name: moved.field.name,
       listId: other.list.id,
     });
+    await approveColumns(moved.field.id);
     expect(
       (await undo(cookie, removed.json<{ changeSetId: string }>().changeSetId))
         .statusCode,

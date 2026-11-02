@@ -45,12 +45,20 @@ describe("required columns", () => {
       })
     ).json<{ choices: Choice[] }>().choices;
     await test.approveLists();
-    const addColumn = async (name: string, required: boolean) =>
-      test.request(cookie, "POST", "/api/people/columns", {
-        name,
-        listId: list.id,
-        required,
-      });
+    const addColumn = async (name: string, required: boolean) => {
+      const response = await test.request(
+        cookie,
+        "POST",
+        "/api/people/columns",
+        {
+          name,
+          listId: list.id,
+          required,
+        },
+      );
+      await test.approveLists();
+      return response;
+    };
 
     const site = await addColumn("Site", true);
     expect(site.statusCode).toBe(201);
@@ -90,6 +98,7 @@ describe("required columns", () => {
     );
     expect(made.statusCode).toBe(200);
     expect(made.json<{ field: Field }>().field.required).toBe(true);
+    await test.approveLists();
     expect((await addColumn("Desk", true)).json()).toEqual({
       error: "1 person has no Desk, so it cannot be required yet",
     });
@@ -146,6 +155,7 @@ describe("required columns", () => {
         )
       ).statusCode,
     ).toBe(200);
+    await test.approveLists();
     const undone = await test.request(
       cookie,
       "POST",

@@ -47,6 +47,11 @@ import {
   recordSensitiveChanges,
 } from "./people.ts";
 import {
+  approveColumnDrafts,
+  asksForColumns,
+  rejectColumnDrafts,
+} from "./column-approvals.ts";
+import {
   approveListDrafts,
   asksForLists,
   rejectListDrafts,
@@ -257,12 +262,14 @@ async function deciding(
   if (asksForLists(asked)) {
     requireAnyPermission(actor, ["configuration:view", "people:view"]);
   }
+  // Columns are seen on the People table, with the people's values in them.
+  if (asksForColumns(asked)) requirePermission(actor, "people:view");
   await lockDrafts(transaction);
 }
 
 // Approves the drafts asked for, with the drafts they use, applying them all to the live records,
-// and returns the change set that applied them. Lists and choices come first, so people can be
-// given them.
+// and returns the change set that applied them. Lists and choices come first, then columns, which
+// may draw on them, then people, who may be given both.
 export async function approveDrafts(
   database: Database,
   actor: Actor,
@@ -275,6 +282,9 @@ export async function approveDrafts(
       const made = asksForLists(asked)
         ? await approveListDrafts(transaction, asked)
         : [];
+      if (asksForColumns(asked)) {
+        made.push(...(await approveColumnDrafts(transaction, actor, asked)));
+      }
       if (asked.people.length > 0) {
         made.push(
           ...(await approvePeopleIn(transaction, actor, asked.people, today)),
@@ -316,6 +326,11 @@ export async function rejectDrafts(
     const made = asksForLists(asked)
       ? await rejectListDrafts(transaction, asked, reason)
       : [];
+    if (asksForColumns(asked)) {
+      made.push(
+        ...(await rejectColumnDrafts(transaction, actor, asked, reason)),
+      );
+    }
     if (asked.people.length > 0) {
       made.push(
         ...(await rejectPeopleIn(

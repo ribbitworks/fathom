@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Drafts: changes waiting for approval, at most one for each record, as the Decisions Log sets out.
-// People, lists, choices, and the order of each list's choices have drafts, which an Approver
-// approves or rejects, several kinds at once.
+// People, lists, choices, the People table's columns, and the order of each list's choices and of
+// the People table's columns have drafts, which an Approver approves or rejects, several kinds at
+// once.
 
 import { z } from "zod";
 
@@ -46,13 +47,16 @@ const ids = (what: string) =>
     )
     .default([]);
 
-// The drafts an Approver approves or rejects at once: of people, lists, and choices, and of the
-// order of lists' choices, named by their list.
+// The drafts an Approver approves or rejects at once: of people, lists, choices, and the People
+// table's columns, of the order of lists' choices, named by their list, and of the order of the
+// People table's columns.
 const draftsAsked = z.object({
   people: ids("person"),
   lists: ids("list"),
   choices: ids("choice"),
   orders: ids("list"),
+  columns: ids("column"),
+  columnOrder: z.boolean().default(false),
 });
 
 type Asked = z.infer<typeof draftsAsked>;
@@ -63,7 +67,9 @@ const fewEnough = (asked: Asked) => {
     asked.people.length +
     asked.lists.length +
     asked.choices.length +
-    asked.orders.length;
+    asked.orders.length +
+    asked.columns.length +
+    (asked.columnOrder ? 1 : 0);
   return total > 0 && total <= draftsAtOnce;
 };
 const fewEnoughMessage = `Choose from 1 to ${String(draftsAtOnce)} drafts`;
@@ -74,6 +80,9 @@ export const draftsRequestSchema = draftsAsked.refine(
 );
 
 export type DraftsRequest = z.infer<typeof draftsRequestSchema>;
+
+// Drafts asked for in code, naming only the kinds there are any of.
+export type DraftsAsked = z.input<typeof draftsRequestSchema>;
 
 export const rejectionRequestSchema = draftsAsked
   .extend({ reason: z.string().trim().min(1).max(reasonLength) })
