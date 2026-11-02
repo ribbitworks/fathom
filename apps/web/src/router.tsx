@@ -170,21 +170,32 @@ const historyRoute = createRoute({
 const listsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/lists/{-$listId}",
-  validateSearch: z.object({ show: showSchema.optional().catch(undefined) }),
+  validateSearch: z.object({
+    show: showSchema.optional().catch(undefined),
+    search: z.string().max(historySearchLength).optional().catch(undefined),
+  }),
   beforeLoad: requiring("configuration:view"),
   component: function Lists() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = listsRoute.useNavigate();
+    const { show, search } = listsRoute.useSearch();
     return (
       <ListsPage
         listId={listsRoute.useParams().listId}
         canEdit={permissions.includes("configuration:edit")}
         canApprove={permissions.includes("drafts:approve")}
-        show={listsRoute.useSearch().show ?? "both"}
-        onShow={(show) => {
+        show={show ?? "both"}
+        search={search ?? ""}
+        onShow={(next) => {
           void navigate({
-            search: { show: show === "both" ? undefined : show },
+            search: { show: next === "both" ? undefined : next, search },
             replace: true,
+          });
+        }}
+        onSearch={(next, replace) => {
+          void navigate({
+            search: { show, search: next === "" ? undefined : next },
+            replace,
           });
         }}
       />

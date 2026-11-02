@@ -29,7 +29,6 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 
 ## Lists
 
-- **Searching lists:** The Lists page has no search field, unlike the People table. Deferred by the owner on 2026-11-01 to a pull request soon after drafts of lists.
 - **Splitting the lists module:** `apps/server/src/data/lists.ts` holds both reading lists with their drafts and drafting changes to them, and is large enough to split. Deferred by the owner on 2026-11-01 as low risk at Fathom's size.
 - **Reading drafts' history:** Reading lists or people reads each draft's whole history of changes, to name who changed it, and undoing changes to drafts of lists reads every list again for each record undone. Both are fast at Fathom's size; deferred by the owner on 2026-11-01 until tables grow.
 

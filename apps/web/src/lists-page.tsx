@@ -8,7 +8,14 @@
 // a time in the order made. The latest change can be undone with Cmd+Z or Ctrl+Z, or from its
 // notification when it took something out of view.
 
-import type { Choice, ChoiceRequest, List, Show } from "@fathom/shared";
+import {
+  type Choice,
+  type ChoiceRequest,
+  type List,
+  matchesWords,
+  searchWords,
+  type Show,
+} from "@fathom/shared";
 import {
   Alert,
   Button,
@@ -74,7 +81,7 @@ import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
 import { DraftMark, StatusMark } from "./status-mark.tsx";
-import { DraftMenu } from "./table-controls.tsx";
+import { DraftMenu, TableSearch } from "./table-controls.tsx";
 
 const newListId = "list-new";
 
@@ -138,13 +145,13 @@ function ListsTable({
   lists,
   selected,
   showLive,
-  search,
+  search: address,
   onOpen,
 }: {
   lists: List[];
   selected: string | undefined;
   // The page address's search, kept as lists are opened.
-  search: { show?: Show };
+  search: { show?: Show; search?: string };
   // Whether a list a draft changes shows its live row under it.
   showLive: boolean;
   onOpen: (list: List) => void;
@@ -211,7 +218,7 @@ function ListsTable({
               id={linkId(list)}
               to="/lists/{-$listId}"
               params={{ listId: list.id }}
-              search={search}
+              search={address}
               className={classes.listLink}
             >
               {list.name}
@@ -238,6 +245,13 @@ function ListsTable({
           <span role="columnheader">Description</span>
           <span role="columnheader">Choices</span>
         </div>
+        {lists.length === 0 && (
+          <div role="row" className={classes.listGroup}>
+            <span role="cell" aria-colspan={3}>
+              No matching lists
+            </span>
+          </div>
+        )}
         {current.map(row)}
         {showRetired && (
           <>
@@ -277,6 +291,8 @@ export function ListsPage({
   canApprove: mayApprove,
   show = "both",
   onShow,
+  search = "",
+  onSearch,
 }: {
   listId: string | undefined;
   canEdit: boolean;
@@ -285,10 +301,17 @@ export function ListsPage({
   // the live one alone, which is read only.
   show?: Show;
   onShow?: (show: Show) => void;
+  // Words a list's name, description, or choices must all hold to be shown, ignoring case and
+  // accents, as on the People table.
+  search?: string;
+  onSearch?: (search: string, replace: boolean) => void;
 }) {
   const canEdit = mayEdit && show !== "live";
-  // What to show stays in the address as lists are opened and closed.
-  const showSearch = show === "both" ? {} : { show };
+  // What to show, and the search, stay in the address as lists are opened and closed.
+  const showSearch = {
+    ...(show === "both" ? {} : { show }),
+    ...(search === "" ? {} : { search }),
+  };
   const canApprove = mayApprove && show !== "live";
   const query = useQuery(listsQuery);
   const narrow = useMediaQuery("(max-width: 48em)");
@@ -599,10 +622,25 @@ export function ListsPage({
     }
   };
 
-  // Every draft waiting among the lists, which Approvers approve or reject all at once, with the
-  // drafts that approving them uses, or that use them.
+  // The lists whose name, description, or choices hold every word searched for.
+  const words = searchWords(search);
+  const shownLists = lists.filter((list) =>
+    matchesWords(
+      [
+        list.name,
+        list.description,
+        ...list.choices.map(
+          ({ label, description }) => `${label} ${description}`,
+        ),
+      ].join(" "),
+      words,
+    ),
+  );
+
+  // Every draft waiting among the lists shown, which Approvers approve or reject all at once, with
+  // the drafts that approving them uses, or that use them.
   const waiting = canApprove
-    ? waitingIn(lists)
+    ? waitingIn(shownLists)
     : { selection: noDrafts(), total: 0 };
   const decideAll = (asking: "approve" | "reject") => {
     const others =
@@ -649,17 +687,31 @@ export function ListsPage({
   } else {
     content = (
       <>
-        {/* Laid out as the People table's bar: the Draft button, then how many rows there are. */}
+        {/* Laid out as the People table's bar: the search, the Draft button, then how many rows
+            there are. */}
         <Group gap="sm">
+          {onSearch && (
+            <TableSearch
+              label="Search lists"
+              value={search}
+              onChange={onSearch}
+              // Leaving needs an empty search, which shows every list, and there is at least one.
+              onLeave={() => {
+                focusSoon(linkId(shownLists[0] as List));
+              }}
+            />
+          )}
           {onShow && <DraftMenu show={show} onShow={onShow} />}
           <Text fz="sm" c="dimmed" role="status">
-            {count(lists.length)} {lists.length === 1 ? "list" : "lists"}
+            {searchWords(search).length > 0
+              ? `${count(shownLists.length)} of ${count(lists.length)}`
+              : `${count(lists.length)} ${lists.length === 1 ? "list" : "lists"}`}
           </Text>
         </Group>
         {waiting.total > 0 && (
           <Group justify="space-between" className={classes.draftsBar}>
             <Text fz="sm">
-              {draftCount(waiting.total)} waiting among the lists
+              {draftCount(waiting.total)} waiting among the lists shown
             </Text>
             <Group gap="xs">
               <Button
@@ -683,7 +735,7 @@ export function ListsPage({
           </Group>
         )}
         <ListsTable
-          lists={lists}
+          lists={shownLists}
           selected={listId}
           showLive={show === "both"}
           search={showSearch}

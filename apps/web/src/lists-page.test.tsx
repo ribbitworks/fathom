@@ -846,6 +846,45 @@ describe("what the Lists page shows", () => {
   });
 });
 
+describe("searching lists", () => {
+  it("finds lists by every word in their names, descriptions, or choices, kept in the address", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": listsAnswer,
+    });
+    const history = renderApp("/lists");
+    const table = await screen.findByRole("table", { name: "Lists" });
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search lists" }),
+      "head kestrel",
+    );
+    await waitFor(() => {
+      expect(
+        within(table)
+          .getAllByRole("link")
+          .map((link) => link.textContent),
+      ).toEqual(["Locations"]);
+    });
+    expect(screen.getByRole("status").textContent).toBe("1 of 4");
+    expect(history.location.search).toContain("search=");
+    await userEvent.clear(
+      screen.getByRole("textbox", { name: "Search lists" }),
+    );
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search lists" }),
+      "nothing here",
+    );
+    expect(await within(table).findByText("No matching lists")).toBeDefined();
+    // Esc clears the search, then goes back to the table, at its first list.
+    await userEvent.keyboard("{Escape}{Escape}");
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe(
+        within(table).getAllByRole("link")[0]?.textContent,
+      );
+    });
+  });
+});
+
 describe("choice menus", () => {
   it("are named after their choice, and close when anything but an item is clicked", async () => {
     await openPanel();
@@ -1886,7 +1925,7 @@ describe("drafts on the Lists page", () => {
     });
     renderApp("/lists");
     expect(
-      await screen.findByText("3 drafts waiting among the lists"),
+      await screen.findByText("3 drafts waiting among the lists shown"),
     ).toBeDefined();
     await userEvent.click(screen.getByRole("button", { name: "Reject all…" }));
     await userEvent.click(
