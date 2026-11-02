@@ -50,6 +50,7 @@ import {
 import { DialogActions } from "./dialog-actions.tsx";
 import { initials } from "./names.ts";
 import { notifySuccess } from "./notices.tsx";
+import { Icon } from "./icons.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import type { SignedInUser } from "./session.ts";
@@ -398,9 +399,10 @@ function AccountRow({
               <ActionIcon
                 variant="subtle"
                 color="gray"
+                size="sm"
                 aria-label={`Actions for ${account.name}`}
               >
-                <span aria-hidden="true">⋯</span>
+                <Icon name="more" />
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
@@ -456,7 +458,7 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
   const shown = all.filter((account) => matches(account, search, filter));
 
   return (
-    <Stack gap="md">
+    <Stack gap="md" className={classes.tablePage}>
       <PageHeader
         title="Accounts"
         description="Who can sign in to Fathom, and what their roles let them do."
@@ -504,9 +506,9 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
               ]}
             />
           </Group>
-          <Paper withBorder>
-            <Table.ScrollContainer minWidth={720}>
-              <Table verticalSpacing="sm" horizontalSpacing="md">
+          <Paper withBorder className={classes.tableScrollPanel}>
+            <div className={classes.tableScroll}>
+              <Table miw={720}>
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>Person</Table.Th>
@@ -529,7 +531,7 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
                   ))}
                 </Table.Tbody>
               </Table>
-            </Table.ScrollContainer>
+            </div>
             {shown.length === 0 && (
               <Text p="md" fz="sm" c="dimmed">
                 No accounts match.

@@ -504,7 +504,6 @@ export function ListPanel({
             id={actionsId(choice)}
             variant="subtle"
             color="gray"
-            className={classes.rowAction}
             tabIndex={choice.id === tabStop ? 0 : -1}
             aria-label={`Actions for ${choice.label}`}
           >

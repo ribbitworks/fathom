@@ -518,7 +518,7 @@ export function PeoplePage({
   }
 
   return (
-    <Stack gap="md" className={classes.peoplePage}>
+    <Stack gap="md" className={classes.tablePage}>
       <PageHeader
         title="People"
         action={

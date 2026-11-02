@@ -36,6 +36,7 @@ import {
   Group,
   Menu,
   Paper,
+  Table,
   Text,
   VisuallyHidden,
 } from "@mantine/core";
@@ -962,10 +963,9 @@ export function PeopleGrid({
         }
       : {};
     return (
-      <th
+      <Table.Th
         key={column.key}
         scope="col"
-        className={classes.peopleHead}
         aria-sort={ariaSort(view, column.key)}
         {...dragProps}
       >
@@ -1044,7 +1044,7 @@ export function PeopleGrid({
             </Menu.Dropdown>
           </Menu>
         </FilterPopover>
-      </th>
+      </Table.Th>
     );
   };
 
@@ -1103,7 +1103,6 @@ export function PeopleGrid({
           variant="subtle"
           color="gray"
           size="sm"
-          className={classes.peopleRowActions}
           // Tab moves between cells; the menu also opens with Shift+F10 on any of the row's cells.
           tabIndex={-1}
           aria-label={`Actions for ${person.preferredName}`}
@@ -1222,12 +1221,14 @@ export function PeopleGrid({
           </Group>
         </Group>
       )}
-      <Paper withBorder className={classes.peoplePaper}>
-        <div className={classes.peopleScroll}>
-          <table
+      <Paper withBorder className={classes.tableScrollPanel}>
+        <div className={classes.tableScroll}>
+          <Table
             role="grid"
             aria-label="People"
             className={classes.peopleTable}
+            layout="fixed"
+            tabularNums
           >
             <colgroup>
               {columns.map((column, columnIndex) => (
@@ -1243,28 +1244,28 @@ export function PeopleGrid({
               ))}
               {withActions && <col className={classes.peopleColActions} />}
             </colgroup>
-            <thead>
-              <tr>
+            <Table.Thead>
+              <Table.Tr>
                 {columns.map(header)}
                 {withActions && (
-                  <th scope="col" className={classes.peopleHead}>
+                  <Table.Th scope="col">
                     <VisuallyHidden>Actions</VisuallyHidden>
-                  </th>
+                  </Table.Th>
                 )}
-              </tr>
-            </thead>
-            <tbody>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
               {shownPeople.length === 0 && narrows(view) && (
-                <tr>
-                  <td
+                <Table.Tr>
+                  <Table.Td
                     colSpan={columns.length + (withActions ? 1 : 0)}
                     className={classes.peopleNone}
                   >
                     <Text component="span" fz="sm" c="dimmed">
                       No matching people
                     </Text>
-                  </td>
-                </tr>
+                  </Table.Td>
+                </Table.Tr>
               )}
               {rows.map((row, rowIndex) => {
                 const key = rowKey(row);
@@ -1272,21 +1273,18 @@ export function PeopleGrid({
                   problem?.row === key ? problem.message : row.newRow?.problem;
                 const draft = row.person?.draft;
                 // A row with a draft is tinted, and one a draft removes is struck through too.
-                let rowClass = classes.peopleRow;
+                let rowClass: string | undefined;
                 const filling = row.newRow && !emptyNewRow(row.newRow);
                 if (row.newRow) {
-                  rowClass = filling
-                    ? [classes.peopleNewRow, classes.peopleFillingRow].join(" ")
-                    : classes.peopleNewRow;
+                  rowClass = filling ? classes.peopleFillingRow : undefined;
                 } else if (draft) {
                   rowClass = [
-                    classes.peopleRow,
                     classes.peopleDraftRow,
                     draft.action === "deleted" ? classes.peopleRemovedRow : "",
                   ].join(" ");
                 }
                 return [
-                  <tr
+                  <Table.Tr
                     key={key}
                     className={rowClass}
                     aria-label={row.newRow ? "New person" : undefined}
@@ -1305,7 +1303,7 @@ export function PeopleGrid({
                           ? shown(column, liveValue(draft, column)) || "empty"
                           : undefined;
                       return (
-                        <td
+                        <Table.Td
                           key={column.key}
                           id={cellId(rowIndex, columnIndex)}
                           role="gridcell"
@@ -1382,27 +1380,30 @@ export function PeopleGrid({
                               {rowProblem}
                             </span>
                           )}
-                        </td>
+                        </Table.Td>
                       );
                     })}
                     {withActions && (
-                      <td className={classes.peopleCell}>
+                      <Table.Td className={classes.peopleCell}>
                         {row.person &&
                           hasMenu(row.person) &&
                           rowMenu(row.person)}
-                      </td>
+                      </Table.Td>
                     )}
-                  </tr>,
+                  </Table.Tr>,
                   // Under a person whose draft changes them, the person as they are live, to compare.
                   // Assistive technology hears each changed cell's live value instead.
                   row.person && draft?.action === "changed" && (
-                    <tr
+                    <Table.Tr
                       key={`${key}-live`}
                       className={classes.peopleLiveRow}
                       aria-hidden="true"
                     >
                       {columns.map((column, columnIndex) => (
-                        <td key={column.key} className={classes.peopleCell}>
+                        <Table.Td
+                          key={column.key}
+                          className={classes.peopleCell}
+                        >
                           {shown(
                             column,
                             draft.changed.includes(column.key)
@@ -1414,15 +1415,17 @@ export function PeopleGrid({
                               Live
                             </StatusMark>
                           )}
-                        </td>
+                        </Table.Td>
                       ))}
-                      {withActions && <td className={classes.peopleCell} />}
-                    </tr>
+                      {withActions && (
+                        <Table.Td className={classes.peopleCell} />
+                      )}
+                    </Table.Tr>
                   ),
                 ];
               })}
-            </tbody>
-          </table>
+            </Table.Tbody>
+          </Table>
         </div>
       </Paper>
     </>

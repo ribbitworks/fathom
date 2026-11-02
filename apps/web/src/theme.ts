@@ -2,13 +2,16 @@
 
 // Fathom's visual design as a Mantine theme: IBM Plex Sans, bundled with the front end; quiet
 // neutrals with one sea-blue accent for actions and the current place; colour otherwise only for
-// meaning; and light and dark modes that follow each person's setting.
+// meaning; light and dark modes that follow each person's setting; and tables that look alike,
+// each header row staying in view.
 
 import {
   type CSSVariablesResolver,
   createTheme,
   type MantineColorsTuple,
+  Table,
 } from "@mantine/core";
+import tableClasses from "./table.module.css";
 
 const sea: MantineColorsTuple = [
   "#e5f3f8",
@@ -47,6 +50,16 @@ export const theme = createTheme({
   colors: { sea, dark: deepWater },
   defaultRadius: "md",
   cursorType: "pointer",
+  components: {
+    Table: Table.extend({
+      classNames: { table: tableClasses.table },
+      defaultProps: {
+        horizontalSpacing: "sm",
+        verticalSpacing: "sm",
+        stickyHeader: true,
+      },
+    }),
+  },
 });
 
 // Panels use Mantine's body colour; the canvas behind them is Fathom's own. The sidebar stays deep
@@ -63,6 +76,7 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-sidebar-strong": "#ffffff",
     "--fathom-mark": "#2b8fb5",
     "--fathom-mark-waves": "#ffffff",
+    "--fathom-table-head-height": "2.25rem",
   },
   light: {
     "--mantine-color-body": "#ffffff",

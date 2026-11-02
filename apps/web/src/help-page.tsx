@@ -69,7 +69,7 @@ const lifecycle: [string, string][] = [
 function Rows({ rows }: { rows: [string, ReactNode, string][] }) {
   return (
     <Paper withBorder className={classes.tablePanel}>
-      <Table verticalSpacing="sm" horizontalSpacing="md">
+      <Table>
         <Table.Tbody>
           {rows.map(([key, name, description]) => (
             <Table.Tr key={key}>
