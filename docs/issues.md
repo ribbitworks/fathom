@@ -27,6 +27,12 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 - **Clearer actions:** Each account's actions are behind a small "⋯" button that is easy to miss; make them easier to find.
 - **UX principles:** The Accounts and Change password pages were built before [Visual Design](design/visual-design.md#principles) ruled out page descriptions and hint text, and still have both. They are brought into line with this change.
 
+## Lists
+
+- **Searching lists:** The Lists page has no search field, unlike the People table. Deferred by the owner on 2026-11-01 to a pull request soon after drafts of lists.
+- **Splitting the lists module:** `apps/server/src/data/lists.ts` holds both reading lists with their drafts and drafting changes to them, and is large enough to split. Deferred by the owner on 2026-11-01 as low risk at Fathom's size.
+- **Reading drafts' history:** Reading lists or people reads each draft's whole history of changes, to name who changed it, and undoing changes to drafts of lists reads every list again for each record undone. Both are fast at Fathom's size; deferred by the owner on 2026-11-01 until tables grow.
+
 ## People
 
 - **Undo while adding people:** Undoing a change while people being added are still saving, or later undoing a change made while they were, briefly shows the table without them, or with them as they were before they were saved, until it reloads.

@@ -3,10 +3,12 @@
 // Lists of choices that people define, such as locations or skills, for columns elsewhere to draw
 // on. Each list has a name, an optional description, and a visibility: the sensitivity tier of the
 // values chosen from it. Its choices are in the order set for them, and lists and choices can each
-// be retired.
+// be retired. Lists, choices, and the order of each list's choices have drafts, shown in place of
+// the live values, with the draft beside.
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
+import { draftActionSchema, draftShape } from "./drafts.ts";
 
 export const listLengths = {
   name: 40,
@@ -14,6 +16,26 @@ export const listLengths = {
   description: 500,
 } as const;
 
+// A choice's or list's draft: whether it adds, changes, or removes the record, the fields it
+// changes, and their live values, which a draft that adds the record has none of.
+const configDraft = <Live extends z.ZodRawShape>(live: Live) =>
+  z.object({
+    action: draftActionSchema,
+    changed: z.array(z.string()),
+    live: z.object(live).partial(),
+    ...draftShape,
+  });
+
+export const choiceDraftSchema = configDraft({
+  label: z.string(),
+  description: z.string(),
+  retired: z.boolean(),
+});
+
+export type ChoiceDraft = z.infer<typeof choiceDraftSchema>;
+
+// A choice as its draft, if any, makes it, with the draft beside, or, for a draft that removes it,
+// as it is.
 export const choiceSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -21,10 +43,33 @@ export const choiceSchema = z.object({
   description: z.string(),
   // A retired choice stays on records that have it, but is no longer offered.
   retired: z.boolean(),
+  draft: choiceDraftSchema.optional(),
 });
 
 export type Choice = z.infer<typeof choiceSchema>;
 
+export const listDraftSchema = configDraft({
+  name: z.string(),
+  description: z.string(),
+  visibility: tierSchema,
+  retired: z.boolean(),
+});
+
+export type ListDraft = z.infer<typeof listDraftSchema>;
+
+// A draft of the order of a list's choices, holding the whole order, with the live order beside.
+export const orderDraftSchema = z.object({
+  live: z.array(z.string()),
+  // The choices only drafted to be added that the draft places, whose drafts approving it approves,
+  // and which are rejected only together with it.
+  uses: z.array(z.string()).optional(),
+  ...draftShape,
+});
+
+export type OrderDraft = z.infer<typeof orderDraftSchema>;
+
+// A list as its draft, if any, makes it, with the draft beside, or, for a draft that removes it, as
+// it is.
 export const listSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -32,8 +77,11 @@ export const listSchema = z.object({
   visibility: tierSchema,
   // A retired list is no longer offered for new values.
   retired: z.boolean(),
-  // In order, offered and retired alike.
+  // In order, as a draft of the order makes it, offered and retired alike, with choices drafted to
+  // be added after the rest, in the order they were drafted.
   choices: z.array(choiceSchema),
+  draft: listDraftSchema.optional(),
+  orderDraft: orderDraftSchema.optional(),
 });
 
 export type List = z.infer<typeof listSchema>;
@@ -63,7 +111,6 @@ export const choicesRequestSchema = z.object({
   choices: z.array(choiceRequestSchema).min(1).max(1000),
 });
 
-// Restoring a choice puts it at the end of the list.
 export const retiredRequestSchema = z.object({ retired: z.boolean() });
 
 export type RetiredRequest = z.infer<typeof retiredRequestSchema>;

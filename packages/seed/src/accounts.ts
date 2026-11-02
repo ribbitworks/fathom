@@ -58,6 +58,13 @@ export const personaAccounts: readonly PersonaAccount[] = [
     email: `engineering.operations.manager@${accountDomain}`,
     roles: ["viewer", "workforce-administrator"],
   },
+  // A second account for the same persona, so the seed data can show a draft that two people
+  // changed.
+  {
+    name: "Second Engineering Operations Manager",
+    email: `engineering.operations.manager.2@${accountDomain}`,
+    roles: ["viewer", "workforce-administrator"],
+  },
   {
     name: "Executive",
     email: `executive@${accountDomain}`,

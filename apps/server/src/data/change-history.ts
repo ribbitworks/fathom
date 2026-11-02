@@ -55,6 +55,7 @@ const searchedChangeSets = 2000;
 const configurationKinds: readonly RecordType[] = [
   "list",
   "list-item",
+  "choice-order",
   "field",
   "column-order",
 ];
@@ -84,7 +85,9 @@ function referencedIds(row: StoredChange): string[] {
   if (fieldOfValue(row.field) !== null) {
     return [fieldOfValue(row.field) as string, ...values.flatMap(strings)];
   }
-  if (row.recordType === "column-order") return values.flatMap(strings);
+  if (row.recordType === "column-order" || row.recordType === "choice-order") {
+    return values.flatMap(strings);
+  }
   if (row.field === "listId" || row.field === "order") {
     return values.filter((value) => typeof value === "string");
   }
@@ -173,7 +176,11 @@ function shown(
       const found = builtInColumnNames.get(id) ?? name(id);
       return found === undefined ? [] : [found];
     });
-  if (fieldOfValue(row.field) !== null || row.recordType === "column-order") {
+  if (
+    fieldOfValue(row.field) !== null ||
+    row.recordType === "column-order" ||
+    row.recordType === "choice-order"
+  ) {
     return value === null ? null : named(strings(value));
   }
   if (row.field === "definition") return null;

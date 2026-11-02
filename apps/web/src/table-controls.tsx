@@ -21,7 +21,7 @@ import {
   TextInput,
   VisuallyHidden,
 } from "@mantine/core";
-import type { SavedView } from "@fathom/shared";
+import type { SavedView, Show } from "@fathom/shared";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { Icon } from "./icons.tsx";
 import {
@@ -373,11 +373,146 @@ export function ViewsMenu({
 // The bar above a table: its search, its saved views, a button for each filter the table's headers
 // do not offer, a pill for each level of the sort and each filter, how many rows there are, or how
 // many are shown while some are hidden, and Clear all.
+const showOptions: { value: Show; label: string }[] = [
+  { value: "both", label: "Drafts beside live" },
+  { value: "drafts", label: "Drafts applied" },
+  { value: "live", label: "Live only" },
+];
+
+const check = (on: boolean) => (
+  <span className={classes.appliedMark} aria-hidden>
+    {on ? "✓" : ""}
+  </span>
+);
+
+// The Draft button of a table with drafts: a menu choosing which version of each record shows, the
+// draft beside the live record, the draft applied, as everything will be once approved, or the
+// live record alone, as everything is now, which is read only; and, where the table filters by
+// draft, which rows show, which the live records alone have no drafts for. Marked while either is
+// not the default.
+export function DraftMenu({
+  show,
+  onShow,
+  filter,
+}: {
+  show: Show;
+  onShow: (show: Show) => void;
+  filter?: DraftFilter;
+}) {
+  const marked =
+    show !== "both" ||
+    (filter !== undefined && isActive(filter.view.filters[filter.column.key]));
+  return (
+    <Menu position="bottom-start" hideDetached={false} closeOnItemClick={false}>
+      <Menu.Target>
+        <Button
+          variant="default"
+          leftSection={<Icon name="filter" />}
+          aria-label={`Draft${marked ? ", changed" : ""}`}
+        >
+          Draft
+          {marked && (
+            <span aria-hidden="true" className={classes.changedMark}>
+              •
+            </span>
+          )}
+        </Button>
+      </Menu.Target>
+      <Menu.Dropdown>
+        <Menu.Label>Show</Menu.Label>
+        {showOptions.map((option) => (
+          <Menu.Item
+            key={option.value}
+            leftSection={check(option.value === show)}
+            onClick={() => {
+              onShow(option.value);
+            }}
+          >
+            {option.label}
+            {option.value === show && <VisuallyHidden>, on</VisuallyHidden>}
+          </Menu.Item>
+        ))}
+        {filter && <DraftFilterItems {...filter} disabled={show === "live"} />}
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
+
+interface DraftFilter {
+  column: AnyColumn;
+  view: View;
+  onView: ChangeView;
+  // Shown but unavailable while the live records alone show, since they have no drafts.
+  disabled?: boolean;
+}
+
+// The Draft menu's filter: which rows show, by whether they have a draft, waiting or rejected.
+function DraftFilterItems({
+  column,
+  view,
+  onView,
+  disabled = false,
+}: DraftFilter) {
+  const current = view.filters[column.key] ?? {};
+  const any = current.any ?? [];
+  const toggle = (next: Filter) => {
+    onView(withFilter(view, column.key, next));
+  };
+  return (
+    <>
+      <Menu.Divider />
+      <Menu.Label>
+        {disabled ? "Filter (needs drafts shown)" : "Filter"}
+      </Menu.Label>
+      {column.choices.map((choice) => {
+        const on = any.includes(choice.id);
+        return (
+          <Menu.Item
+            key={choice.id}
+            disabled={disabled}
+            leftSection={check(on)}
+            onClick={() => {
+              toggle(
+                withPart(
+                  current,
+                  "any",
+                  on
+                    ? any.filter((id) => id !== choice.id)
+                    : [...any, choice.id],
+                ),
+              );
+            }}
+          >
+            {choice.label}
+            {on && <VisuallyHidden>, on</VisuallyHidden>}
+          </Menu.Item>
+        );
+      })}
+      <Menu.Item
+        disabled={disabled}
+        leftSection={check(current.empty === true)}
+        onClick={() => {
+          toggle(
+            withPart(
+              current,
+              "empty",
+              current.empty === true ? undefined : true,
+            ),
+          );
+        }}
+      >
+        {column.emptyLabel}
+        {current.empty === true && <VisuallyHidden>, on</VisuallyHidden>}
+      </Menu.Item>
+    </>
+  );
+}
+
 export function ViewBar({
   one,
   noun,
   columns: shownColumns,
-  filterOnly = [],
+  draftFilter,
   view,
   onView,
   shown,
@@ -389,8 +524,9 @@ export function ViewBar({
   one: string;
   noun: string;
   columns: readonly AnyColumn[];
-  // What the rows are filtered by that is not a column of the table, each opened from its button.
-  filterOnly?: readonly AnyColumn[];
+  // The filter on drafts, which is not a column of the table, offered with the choice of what to
+  // show in the Draft menu.
+  draftFilter: AnyColumn;
   view: View;
   onView: ChangeView;
   shown: number;
@@ -399,6 +535,7 @@ export function ViewBar({
   onLeave: () => void;
   saved?: SavedViews | undefined;
 }) {
+  const filterOnly = [draftFilter];
   const columns = [...shownColumns, ...filterOnly];
   // Each level of the sort, in order, with its column; a column the table does not have is left out.
   const sorts = view.sort.flatMap(({ key, descending }) =>
@@ -432,14 +569,13 @@ export function ViewBar({
           }}
         />
       )}
-      {filterOnly.map((column) => (
-        <BarFilter
-          key={column.key}
-          column={column}
-          view={view}
-          onView={onView}
-        />
-      ))}
+      <DraftMenu
+        show={view.show}
+        onShow={(show) => {
+          onView({ ...view, show });
+        }}
+        filter={{ column: draftFilter, view, onView }}
+      />
       {sorts.map(({ column, descending }) => (
         <Pill
           key={`sort-${column.key}`}
@@ -504,51 +640,6 @@ export function ViewBar({
 
 // A filter the table's headers do not offer, opened from its button in the bar above the table,
 // which focus goes back to when it closes.
-function BarFilter({
-  column,
-  view,
-  onView,
-}: {
-  column: AnyColumn;
-  view: View;
-  onView: ChangeView;
-}) {
-  const [opened, setOpened] = useState(false);
-  const button = useRef<HTMLButtonElement>(null);
-  const filtered = isActive(view.filters[column.key]);
-  return (
-    <FilterPopover
-      column={column}
-      view={view}
-      onView={onView}
-      opened={opened}
-      onClose={() => {
-        setOpened(false);
-        button.current?.focus();
-      }}
-    >
-      <Button
-        ref={button}
-        variant="default"
-        leftSection={<Icon name="filter" />}
-        aria-haspopup="dialog"
-        aria-expanded={opened}
-        aria-label={`Filter ${column.label}${filtered ? ", filtered" : ""}`}
-        onClick={() => {
-          setOpened((open) => !open);
-        }}
-      >
-        {column.label}
-        {filtered && (
-          <span aria-hidden="true" className={classes.changedMark}>
-            •
-          </span>
-        )}
-      </Button>
-    </FilterPopover>
-  );
-}
-
 // The marks beside a column's name: which way it is sorted, its level when sorted by several, and
 // whether it is filtered. Screen readers hear these from the header's name, as headerState gives it.
 export function HeaderMarks({

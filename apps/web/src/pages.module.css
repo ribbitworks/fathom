@@ -484,32 +484,118 @@
 /* A row with a draft is tinted in the theme's blue, so it stands apart from the live row under it,
    and each cell the draft changes is yellow. */
 /* A new row being filled in is tinted as the draft it will be. */
-.peopleDraftRow,
+.draftRow,
 .peopleFillingRow {
   background: var(--mantine-color-sea-0);
 }
 
-.peopleDraftCell {
+.draftCell {
   background: var(--mantine-color-yellow-1);
 }
 
 /* A cell a rejected draft changes is a soft red instead. */
-.peopleRejectedCell {
+.rejectedCell {
   background: var(--mantine-color-red-1);
 }
 
-/* In the dark scheme, the same colours as dark tints, so light text stays readable on them. */
-:global([data-mantine-color-scheme="dark"]) .peopleDraftRow,
+/* In the dark scheme, the same colours as faint tints over the dark background, so they mark a
+   change without shouting, and light text stays readable on them. */
+:global([data-mantine-color-scheme="dark"]) .draftRow,
 :global([data-mantine-color-scheme="dark"]) .peopleFillingRow {
   background: var(--mantine-color-sea-light);
 }
 
-:global([data-mantine-color-scheme="dark"]) .peopleDraftCell {
-  background: var(--mantine-color-yellow-light);
+:global([data-mantine-color-scheme="dark"]) .draftCell {
+  background: color-mix(
+    in srgb,
+    var(--mantine-color-yellow-5) 12%,
+    transparent
+  );
 }
 
-:global([data-mantine-color-scheme="dark"]) .peopleRejectedCell {
-  background: var(--mantine-color-red-light);
+:global([data-mantine-color-scheme="dark"]) .rejectedCell {
+  background: color-mix(in srgb, var(--mantine-color-red-5) 14%, transparent);
+}
+
+/* A list or choice a draft removes is struck through, as a removed person is. */
+.removedRow [role="cell"],
+.removedRow [role="gridcell"] {
+  color: var(--mantine-color-dimmed);
+  text-decoration: line-through;
+}
+
+.removedRow .draftMark {
+  display: inline-block;
+}
+
+/* A moved choice's live place, like a person's live row under their draft: light green, dimmed,
+   and drawn with a dashed edge, since it is not a choice of its own. */
+.choiceLive {
+  background: var(--mantine-color-green-0);
+  color: var(--mantine-color-dimmed);
+  border: 1px dashed var(--mantine-color-default-border);
+}
+
+:global([data-mantine-color-scheme="dark"]) .choiceLive {
+  background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
+}
+
+/* A list's live row, under its draft row in the Lists table, as a person's is on the People table. */
+.listLiveRow {
+  background: var(--mantine-color-green-0);
+  color: var(--mantine-color-dimmed);
+  cursor: default;
+}
+
+:global([data-mantine-color-scheme="dark"]) .listLiveRow {
+  background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
+}
+
+.struck {
+  text-decoration: line-through;
+}
+
+/* The bar marking a list's draft, or the draft of its choices' order, laid out as the People table's
+   bar of drafts. */
+.listDraftBar {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.listDraftSummary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.listDraftSummary .markGap {
+  margin-left: 0;
+}
+
+/* Each field a draft changes, on its own line under the mark. */
+.listDraftLine {
+  flex-basis: 100%;
+  font-size: var(--mantine-font-size-xs);
+  color: var(--mantine-color-dimmed);
+}
+
+.listDraftWords {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dimmed);
+}
+
+/* The name at the top of a record's menu, in the text colour, since it says whose menu it is. */
+.menuTitle {
+  color: var(--mantine-color-text);
+  font-weight: 600;
+  cursor: default;
+}
+
+/* What a draft changes, at the top of a record's menu, wraps rather than widening the menu. */
+.draftLine {
+  max-width: 22rem;
+  white-space: normal;
 }
 
 /* A rejection's reason, at the top of the person's menu, wraps rather than widening the menu. */
@@ -543,7 +629,7 @@
 
 /* A person's live row, under their draft row: light green, dimmed, marked Live like the Draft mark
    above it, and joined to the draft row. */
-.peopleDraftRow:has(+ .peopleLiveRow) {
+.draftRow:has(+ .peopleLiveRow) {
   border-bottom-style: dashed;
 }
 
@@ -552,7 +638,7 @@
 }
 
 :global([data-mantine-color-scheme="dark"]) .peopleLiveRow {
-  background: var(--mantine-color-green-light);
+  background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
 }
 
 .peopleLiveRow .peopleCell {

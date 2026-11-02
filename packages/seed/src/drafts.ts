@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Drafts in the fictional organization, made through the server's data access layer as the personas
-// who make and judge them would, so they are drafted and recorded exactly as in use: the Engineering
-// Operations Manager drafts adding two newcomers, changing three people, and removing one, and the
-// Engineering Director rejects two of those drafts with a reason. Each case a draft can be in is
-// there to try: waiting to add, change, or remove someone, and rejected. Removing the seed data
-// discards the drafts first. A development-only package, never included in the runtime image.
+// who make and judge them would, so they are drafted and recorded exactly as in use: the
+// Engineering Operations Manager drafts adding two newcomers, changing three people, and removing
+// one, a second Engineering Operations Manager changes another detail in one of those drafts, so
+// one draft holds two people's changes, and the Engineering Director rejects two of the drafts with
+// a reason. Each case a draft can be in is there to try: waiting to add, change, or remove someone,
+// and rejected. Removing the seed data discards the drafts first. A development-only package, never
+// included in the runtime image.
 
 import { changes, changeSets, type Database, drafts, users } from "@fathom/db";
 import type { FictionalOrganization, FictionalPerson } from "@fathom/fixtures";
@@ -15,13 +17,17 @@ import { and, eq, gt, inArray, isNull, max, ne, or, sql } from "drizzle-orm";
 import { accountDomain, personaAccounts } from "./accounts.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
+const secondEditorEmail = `engineering.operations.manager.2@${accountDomain}`;
 const approverEmail = `engineering.director@${accountDomain}`;
 
 export const rejection =
   "Fictional reason: this waits for the next planning review.";
 
 // The persona account with the given address, acting with its persona's roles.
-async function actorOf(database: Database, email: string): Promise<Actor> {
+export async function actorOf(
+  database: Database,
+  email: string,
+): Promise<Actor> {
   const [user] = await database
     .select({ id: users.id, name: users.name, email: users.email })
     .from(users)
@@ -234,6 +240,14 @@ export async function seedDrafts(
       made = true;
     }
   }
+  // The second editor changes the first's draft once, unless someone else has changed it since.
+  if (!done.others.has(changed.id)) {
+    const second = await actorOf(database, secondEditorEmail);
+    await data.people.update(second, changed.id, {
+      values: otherChoice(organization, changed, 2),
+    });
+    made = true;
+  }
   const waiting = await database
     .select({
       id: drafts.recordId,
@@ -251,7 +265,11 @@ export async function seedDrafts(
     )
     .map(({ id }) => id);
   if (toReject.length > 0) {
-    await data.people.rejectDrafts(approver, toReject, rejection);
+    await data.drafts.reject(
+      approver,
+      { people: toReject, lists: [], choices: [], orders: [] },
+      rejection,
+    );
   }
   return made || toReject.length > 0;
 }

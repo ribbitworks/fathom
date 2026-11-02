@@ -10,6 +10,7 @@ import {
   type Filter,
   folded,
   searchWords,
+  type Show,
   type ViewDefinition,
   viewDefinitionSchema,
 } from "@fathom/shared";
@@ -48,11 +49,19 @@ export interface SortLevel {
 
 export interface View {
   search: string;
+  // Which version of each record shows: both the draft and the live record, the draft alone, or
+  // the live record alone.
+  show: Show;
   filters: Record<string, Filter>;
   sort: SortLevel[];
 }
 
-export const emptyView: View = { search: "", filters: {}, sort: [] };
+export const emptyView: View = {
+  search: "",
+  show: "both",
+  filters: {},
+  sort: [],
+};
 
 const isoDay = z.iso.date();
 
@@ -77,6 +86,7 @@ export interface ViewSearch extends ViewDefinition {
 export function viewFrom(search: ViewDefinition): View {
   return {
     search: search.search ?? "",
+    show: search.show ?? "both",
     filters: search.filters ?? {},
     sort: (search.sort ?? []).map((level) =>
       level.startsWith("-")
@@ -124,6 +134,7 @@ export function searchFor(view: View): ViewDefinition {
   );
   return {
     ...(view.search.trim() === "" ? {} : { search: view.search }),
+    ...(view.show === "both" ? {} : { show: view.show }),
     ...(filters.length === 0 ? {} : { filters: Object.fromEntries(filters) }),
     ...(view.sort.length === 0
       ? {}
@@ -190,6 +201,7 @@ export function knownView(
   ]);
   return {
     search: view.search,
+    show: view.show,
     filters: Object.fromEntries(
       Object.entries(view.filters).filter(([key]) => filtered.has(key)),
     ),

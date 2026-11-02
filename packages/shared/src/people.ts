@@ -6,6 +6,7 @@
 // visibility. What a user receives leaves out what their roles do not let them see.
 
 import { z } from "zod";
+import { draftActionSchema, draftShape } from "./drafts.ts";
 import { listLengths } from "./lists.ts";
 import { savedViewSchema } from "./views.ts";
 
@@ -46,22 +47,13 @@ const requestedValuesSchema = z.record(
     .refine((ids) => new Set(ids).size === ids.length, "Each choice once"),
 );
 
-// A draft waits for approval until an Approver approves or rejects it; a rejected draft keeps its
-// reason until it is changed again or discarded.
-export const draftStateSchema = z.enum(["waiting", "rejected"]);
-
-export type DraftState = z.infer<typeof draftStateSchema>;
-
-// The most a rejection's reason holds.
-export const reasonLength = 500;
-
 // A person's draft, as the user may see it: whether it adds, changes, or removes them, the columns
 // it changes, by key, and their live values, which a draft that adds someone has none of. Columns
 // the user may not see are left out, and so is a draft that changes only those. A rejected draft's
 // reason is as sensitive as the most sensitive value in the draft, and is left out for users who may
 // not see it.
 export const personDraftSchema = z.object({
-  action: z.enum(["created", "changed", "deleted"]),
+  action: draftActionSchema,
   changed: z.array(z.string()),
   live: z.object({
     preferredName: z.string().optional(),
@@ -70,12 +62,7 @@ export const personDraftSchema = z.object({
     endDate: day.nullable().optional(),
     values: valuesSchema,
   }),
-  state: draftStateSchema,
-  reason: z.string().optional(),
-  // Who last changed the draft, of the changes the user may see, or null for Fathom itself, and
-  // when; both null when the history holds no such change, as for drafts written another way.
-  madeBy: z.string().nullable(),
-  madeAt: z.iso.datetime({ offset: true }).nullable(),
+  ...draftShape,
 });
 
 export type PersonDraft = z.infer<typeof personDraftSchema>;
@@ -148,22 +135,6 @@ export const columnKeySchema = z.string().min(1).max(64);
 
 // Moves a column to just after another, or to the start when there is none.
 export const fieldMoveSchema = z.object({ after: columnKeySchema.nullable() });
-
-// The most drafts approved or rejected at once, as many people as can be added at once.
-export const draftsAtOnce = 1000;
-
-// Drafts of people an Approver approves or rejects at once.
-export const draftsRequestSchema = z.object({
-  people: z
-    .array(z.uuid())
-    .min(1)
-    .max(draftsAtOnce)
-    .refine((ids) => new Set(ids).size === ids.length, "Each person once"),
-});
-
-export const rejectionRequestSchema = draftsRequestSchema.extend({
-  reason: z.string().trim().min(1).max(reasonLength),
-});
 
 // The change set a change was saved in, which undoing it names; null when nothing changed.
 export const changeSetIdSchema = z.uuid().nullable();

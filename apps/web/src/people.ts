@@ -72,35 +72,6 @@ export async function resubmitDraft(id: string): Promise<string | null> {
     .changeSetId;
 }
 
-// Approves the drafts of the people given, all together, and gives the change set that applied them.
-// Approving cannot be undone.
-export async function approveDrafts(ids: string[]): Promise<string | null> {
-  return (
-    await sendJsonFor(
-      "POST",
-      "/api/people/drafts/approval",
-      { people: ids },
-      savedSchema,
-    )
-  ).changeSetId;
-}
-
-// Rejects the drafts of the people given, with a reason, and gives the change set that recorded it,
-// or null when every one was already rejected for that reason. Rejecting cannot be undone.
-export async function rejectDrafts(
-  ids: string[],
-  reason: string,
-): Promise<string | null> {
-  return (
-    await sendJsonFor(
-      "POST",
-      "/api/people/drafts/rejection",
-      { people: ids, reason },
-      savedSchema,
-    )
-  ).changeSetId;
-}
-
 export async function createField(
   request: FieldRequest,
 ): Promise<{ field: Field; changeSetId: string | null }> {

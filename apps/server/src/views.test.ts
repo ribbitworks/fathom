@@ -284,6 +284,7 @@ describe("saved views", () => {
         choices: [{ label: "Fictional Level" }],
       })
     ).json<{ choices: Choice[] }>().choices;
+    await test.approveLists();
     const field = (
       await test.request(cookie, "POST", "/api/people/columns", {
         name: "Level",
@@ -331,6 +332,7 @@ describe("saved views", () => {
         name: "Fictional Teams",
       })
     ).json<{ list: List }>().list;
+    await test.approveLists();
     const field = (
       await test.request(administrator.cookie, "POST", "/api/people/columns", {
         name: "Team",
@@ -354,6 +356,7 @@ describe("saved views", () => {
         )
       ).statusCode,
     ).toBe(200);
+    await test.approveLists();
     expect(
       (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
     ).toBe(false);

@@ -43,16 +43,30 @@ import {
   drafted,
   draftsUse,
   fitsColumns,
-  lockPersonDrafts,
+  lockDrafts,
   readPersonDrafts,
   type Recorded,
   rejectedField,
   takenEmployeeIds,
   tidy,
+  writeDraft,
   writePersonDraft,
 } from "./drafts.ts";
 import { checkValuesFit, lockFields } from "./fields.ts";
-import { lockChoices, placeChoice, refuseIfUsed } from "./lists.ts";
+import {
+  choiceLabelTaken,
+  choicesHaveDrafts,
+  draftedList,
+  listExists,
+  listNameTaken,
+  lockChoices,
+  placeChoice,
+  readState,
+  refuseIfChosen,
+  refuseIfUsed,
+  removeEmptyOrders,
+  writeOrderDraft,
+} from "./lists.ts";
 import {
   peopleFitColumns,
   personTier,
@@ -75,6 +89,7 @@ const changedSince =
 const editPermission = {
   list: "configuration:edit",
   "list-item": "configuration:edit",
+  "choice-order": "configuration:edit",
   field: "configuration:edit",
   "column-order": "configuration:edit",
   person: "people:edit",
@@ -87,6 +102,7 @@ const editPermission = {
 const kindOrder: readonly RecordType[] = [
   "list",
   "list-item",
+  "choice-order",
   "field",
   "column-order",
   "person",
@@ -94,7 +110,8 @@ const kindOrder: readonly RecordType[] = [
 ];
 
 // The table each kind of record is kept in. A column order is only ever changed, never created or
-// deleted, and is put back as a whole, so it has no columns to set here.
+// deleted, and is put back as a whole, so it has no columns to set here. A list's choice order is
+// only ever changed live by approving, which cannot be undone.
 const tables = {
   list: lists,
   "list-item": listItems,
@@ -117,7 +134,7 @@ const asStored: Convert = (value) => value;
 // read each column's value from the history. Other fields, such as a record's place in its order or
 // a person's values for a column, are put back separately.
 const columnsOf: Record<
-  Exclude<RecordType, "column-order">,
+  Exclude<RecordType, "column-order" | "choice-order">,
   Readonly<Record<string, Convert>>
 > = {
   list: { name: text, description: text, visibility: tier, retired: flag },
@@ -175,7 +192,12 @@ function recordsOf(rows: readonly StoredChange[]): Undone[] {
 
 // The record's database columns as they were before the change.
 function columnValues(record: Undone): Record<string, unknown> {
-  if (record.recordType === "column-order") return {};
+  if (
+    record.recordType === "column-order" ||
+    record.recordType === "choice-order"
+  ) {
+    return {};
+  }
   const columns = columnsOf[record.recordType];
   return Object.fromEntries(
     [...record.old].flatMap(([field, value]) =>
@@ -364,15 +386,7 @@ async function undoPersonDrafts(
   const wanted = records.map((record) => {
     const draft = draftsNow.get(record.id);
     const old = new Map(record.old);
-    const reason = old.get(rejectedField);
-    // A change set that can be undone only ever clears a rejection, never makes one.
-    const rejection: Pick<Draft, "state" | "reason"> = old.has(rejectedField)
-      ? { state: "rejected", reason: String(reason) }
-      : {
-          state: draft?.state ?? "waiting",
-          reason: draft?.reason ?? null,
-        };
-    old.delete(rejectedField);
+    const rejection = rejectionAfter(old, draft);
     let person: Recorded | undefined;
     if (record.action === "deleted") {
       person = fromOld(old);
@@ -409,6 +423,118 @@ async function undoPersonDrafts(
       }
     }
     await writePersonDraft(transaction, id, live.get(id), person, rejection);
+  }
+}
+
+// The rejection a draft has once a change to it is undone: the reason the change cleared, or the
+// draft's own.
+function rejectionAfter(
+  old: Map<string, unknown>,
+  draft: Draft | undefined,
+): Pick<Draft, "state" | "reason"> {
+  const reason = old.get(rejectedField);
+  // A change set that can be undone only ever clears a rejection, never makes one.
+  const rejection: Pick<Draft, "state" | "reason"> = old.has(rejectedField)
+    ? { state: "rejected", reason: String(reason) }
+    : { state: draft?.state ?? "waiting", reason: draft?.reason ?? null };
+  old.delete(rejectedField);
+  return rejection;
+}
+
+// Puts back the drafts of the lists, choices, and choice orders a change set changed in their
+// drafts, one at a time, in the order lists come before their choices: the record it drafted adding
+// taken out, the one it drafted removing put back as it was, the fields it changed put back, with a
+// rejection's reason, and an order as it was. Each must still have a name no one else has taken
+// since, and belong to a list that is there to change.
+async function undoListDrafts(
+  transaction: Transaction,
+  records: readonly Undone[],
+): Promise<void> {
+  for (const record of [...records].sort((a, b) => byKind(a) - byKind(b))) {
+    const state = await readState(transaction);
+    const old = new Map(record.old);
+    if (record.recordType === "choice-order") {
+      const draft = state.orderDrafts.get(record.id);
+      const rejection = rejectionAfter(old, draft);
+      const wanted = old.has("order")
+        ? ids(old.get("order"))
+        : ids(draft?.fields.order);
+      if (draftedList(state, record.id) === undefined) {
+        throw new ConflictError(changedSince);
+      }
+      await writeOrderDraft(transaction, state, record.id, wanted, rejection);
+      continue;
+    }
+    const isList = record.recordType === "list";
+    const recordType = isList ? "list" : "list-item";
+    const live = isList
+      ? state.lists.get(record.id)
+      : state.choices.get(record.id)?.record;
+    const draft = (isList ? state.listDrafts : state.choiceDrafts).get(
+      record.id,
+    );
+    const rejection = rejectionAfter(old, draft);
+    const now = drafted(live, draft);
+    let wanted: Recorded | undefined;
+    if (record.action === "deleted") {
+      wanted = Object.fromEntries(
+        [...old].filter(([, value]) => value !== null),
+      );
+    } else if (record.action === "changed") {
+      // Undoing is refused once anything changes the record since, so its draft is still there.
+      wanted = { ...(now as Recorded), ...Object.fromEntries(old) };
+    }
+    if (isList) {
+      // A list drafted to be added keeps its draft while choices are drafted into it.
+      if (
+        wanted === undefined &&
+        live === undefined &&
+        [...state.choiceDrafts.values()].some(
+          ({ fields }) => fields.listId === record.id,
+        )
+      ) {
+        throw new ConflictError(changedSince);
+      }
+      if (
+        wanted !== undefined &&
+        listNameTaken(state, String(wanted.name), record.id)
+      ) {
+        throw new ConflictError(changedSince);
+      }
+    } else if (wanted !== undefined) {
+      // A choice always records its list.
+      const listId = String(wanted.listId);
+      if (
+        !listExists(state, listId) ||
+        draftedList(state, listId) === undefined ||
+        choiceLabelTaken(state, listId, String(wanted.label), record.id)
+      ) {
+        throw new ConflictError(changedSince);
+      }
+    }
+    // What drafting itself refuses: retiring or removing a list a column draws on, removing a list
+    // whose choices have drafts, and removing a choice that people have.
+    if (isList && live !== undefined) {
+      if (wanted === undefined) {
+        await refuseIfUsed(transaction, record.id, "deleted");
+        if (choicesHaveDrafts(state, record.id)) {
+          throw new ConflictError(changedSince);
+        }
+      } else if (wanted.retired === true && now?.retired !== true) {
+        await refuseIfUsed(transaction, record.id, "retired");
+      }
+    }
+    if (!isList && live !== undefined && wanted === undefined) {
+      await refuseIfChosen(transaction, record.id);
+    }
+    await writeDraft(
+      transaction,
+      recordType,
+      record.id,
+      live,
+      wanted,
+      rejection,
+    );
   }
 }
 
@@ -514,7 +640,7 @@ async function undoIn(
   const liveRecords = records.filter(({ draft }) => !draft);
   // Drafts are locked before any row, as every change to them does, so an undo that changes a
   // draft, or removes a choice or column one could be given, waits for them.
-  await lockPersonDrafts(transaction);
+  await lockDrafts(transaction);
   await lockRecords(transaction, records);
   // A column's values are as sensitive as its list is now, or was when they changed, whichever is
   // more sensitive.
@@ -596,11 +722,21 @@ async function undoIn(
     .reverse()) {
     await remove(transaction, record);
   }
-  if (draftRecords.length > 0) {
+  const personDrafts = draftRecords.filter(
+    ({ recordType }) => recordType === "person",
+  );
+  const listDrafts = draftRecords.filter(
+    ({ recordType }) => recordType !== "person",
+  );
+  if (listDrafts.length > 0) {
+    await undoListDrafts(transaction, listDrafts);
+    await removeEmptyOrders(transaction);
+  }
+  if (personDrafts.length > 0) {
     await undoPersonDrafts(
       transaction,
       await readColumns(transaction),
-      draftRecords,
+      personDrafts,
     );
   }
   // The people put back must still fit their columns as they are now.

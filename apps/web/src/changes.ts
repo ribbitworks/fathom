@@ -67,7 +67,11 @@ function fieldName({ field, column }: ChangedField): string {
 
 // A value in words, or null when there is none.
 function valueText(field: string, value: ChangeValue): string | null {
-  if (value === null || (Array.isArray(value) && value.length === 0)) {
+  if (
+    value === null ||
+    value === "" ||
+    (Array.isArray(value) && value.length === 0)
+  ) {
     return null;
   }
   if (Array.isArray(value)) return value.join(", ");
@@ -108,6 +112,8 @@ function thing({ kind, name, list }: ChangedRecord): string {
       return `the column ${called}`;
     case "column-order":
       return "People's columns";
+    case "choice-order":
+      return `the order of ${called}`;
     case "saved-view":
       return `the view ${called}`;
     default:
@@ -253,6 +259,23 @@ function recordWords(
       sentence: `sent the draft of ${named} for approval again`,
       details: [],
     };
+  }
+  // A list's choice order changes only as a draft, or when one is approved.
+  if (record.kind === "choice-order") {
+    const [order] = record.fields as [ChangedField];
+    const done = kind === "approval" ? "approved" : "drafted";
+    const list = record.name ?? "a list";
+    const moved = movedColumn(order.oldValue, order.newValue);
+    if (moved !== null && kind !== "approval") {
+      return {
+        sentence:
+          moved.follows === null
+            ? `drafted moving ${moved.column} in ${list} to the top`
+            : `drafted moving ${moved.column} in ${list} after ${moved.follows}`,
+        details: [],
+      };
+    }
+    return { sentence: `${done} a new order of ${list}`, details: [] };
   }
   if (kind === "approval" || record.draft) {
     return {

@@ -3,11 +3,12 @@
 // The Lists page: every list in one table, with its description and its choices in order, and the
 // selected list in a side panel at its own address, where its choices are kept. Users who may edit
 // planning configuration create, edit, retire, restore, and delete lists, and change choices from
-// the keyboard. Every change shows at once and saves in the background, one at a time in the order
-// made. The latest change can be undone with Cmd+Z or Ctrl+Z, or from its notification when it took
-// something out of view.
+// the keyboard. Every change is a draft, shown in place with its mark, which Approvers approve or
+// reject here or on the Drafts page. Every change shows at once and saves in the background, one at
+// a time in the order made. The latest change can be undone with Cmd+Z or Ctrl+Z, or from its
+// notification when it took something out of view.
 
-import type { Choice, ChoiceRequest, List } from "@fathom/shared";
+import type { Choice, ChoiceRequest, List, Show } from "@fathom/shared";
 import {
   Alert,
   Button,
@@ -21,21 +22,49 @@ import {
 import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { type MouseEvent, type ReactNode, useState } from "react";
+import { Fragment, type MouseEvent, type ReactNode, useState } from "react";
+import {
+  type Decision,
+  DecisionModal,
+  drafts as draftCount,
+} from "./decision-dialog.tsx";
+import {
+  type DraftSelection,
+  draftNames,
+  draftTotal,
+  joined,
+  noDrafts,
+  usedDrafts,
+  usingDrafts,
+} from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
+import {
+  drafting,
+  draftName,
+  type DraftOn,
+  draftRowClass,
+  listMark,
+  type ListDraftActions,
+  selectionOf,
+} from "./list-drafts.tsx";
 import {
   type ChoiceActions,
   entryNameId,
   ListPanel,
   rowId,
+  titleId,
 } from "./list-panel.tsx";
 import {
   addChoices,
   deleteChoice,
   deleteList,
+  discardListDraft,
+  type ListDraftTarget,
   listsQuery,
+  liveLists,
   moveChoice,
+  resubmitListDraft,
   setChoiceRetired,
   setListRetired,
   updateChoice,
@@ -44,12 +73,46 @@ import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
+import { DraftMark, StatusMark } from "./status-mark.tsx";
+import { DraftMenu } from "./table-controls.tsx";
 
 const newListId = "list-new";
 
 const linkId = (list: { id: string }) => `list-link-${list.id}`;
 
 type Dialog = { kind: "new" } | { kind: "edit"; list: List };
+
+// The drafts waiting for approval among the lists given: of lists, choices, and orders.
+function waitingIn(lists: readonly List[]): {
+  selection: DraftSelection;
+  total: number;
+} {
+  const selection: DraftSelection = {
+    ...noDrafts(),
+    lists: lists
+      .filter((list) => list.draft?.state === "waiting")
+      .map(({ id }) => id),
+    choices: lists.flatMap((list) =>
+      list.choices
+        .filter((choice) => choice.draft?.state === "waiting")
+        .map(({ id }) => id),
+    ),
+    orders: lists
+      .filter((list) => list.orderDraft?.state === "waiting")
+      .map(({ id }) => id),
+  };
+  return { selection, total: draftTotal(selection) };
+}
+
+// A record without one of its optional fields, such as its draft.
+function without<Record extends object>(
+  record: Record,
+  field: keyof Record,
+): Record {
+  return Object.fromEntries(
+    Object.entries(record).filter(([key]) => key !== field),
+  ) as Record;
+}
 
 // The lists with one list changed.
 function withList(
@@ -74,10 +137,16 @@ function reordered(
 function ListsTable({
   lists,
   selected,
+  showLive,
+  search,
   onOpen,
 }: {
   lists: List[];
   selected: string | undefined;
+  // The page address's search, kept as lists are opened.
+  search: { show?: Show };
+  // Whether a list a draft changes shows its live row under it.
+  showLive: boolean;
   onOpen: (list: List) => void;
 }) {
   const [showRetired, setShowRetired] = useState(false);
@@ -85,39 +154,80 @@ function ListsTable({
   const retired = lists.filter((list) => list.retired);
   const row = (list: List) => {
     const offered = list.choices.filter((choice) => !choice.retired);
+    const mark = listMark(list);
+    // The list as it is live, under a list whose draft, or whose choices' drafts, change it, as a
+    // person's live row is under their draft row: every cell, so like is compared with like.
+    const [live] = liveLists([list]);
+    const liveOffered = (live?.choices ?? []).filter(
+      (choice) => !choice.retired,
+    );
+    const liveRow =
+      showLive &&
+      live !== undefined &&
+      mark !== undefined &&
+      list.draft?.action !== "deleted" ? (
+        <div
+          key={`live-${list.id}`}
+          role="row"
+          aria-hidden="true"
+          className={[classes.listRow, classes.listLiveRow].join(" ")}
+        >
+          <span role="cell" className={classes.listCellName}>
+            {live.name}
+            <StatusMark tone="live" spaced>
+              Live
+            </StatusMark>
+          </span>
+          <span role="cell" className={classes.listCellDim}>
+            {live.description}
+          </span>
+          <span role="cell" className={classes.listCell}>
+            <span className={classes.listCount}>({liveOffered.length})</span>{" "}
+            {liveOffered.map((choice) => choice.label).join(", ")}
+          </span>
+        </div>
+      ) : null;
     return (
-      <div
-        key={list.id}
-        role="row"
-        data-list-row
-        aria-current={list.id === selected ? "true" : undefined}
-        className={[
-          classes.listRow,
-          list.id === selected ? classes.listRowSelected : "",
-          list.retired ? classes.listRowRetired : "",
-        ].join(" ")}
-        onClick={() => {
-          onOpen(list);
-        }}
-      >
-        <span role="cell" className={classes.listCellName}>
-          <Link
-            id={linkId(list)}
-            to="/lists/{-$listId}"
-            params={{ listId: list.id }}
-            className={classes.listLink}
-          >
-            {list.name}
-          </Link>
-        </span>
-        <span role="cell" className={classes.listCellDim}>
-          {list.description}
-        </span>
-        <span role="cell" className={classes.listCell}>
-          <span className={classes.listCount}>({offered.length})</span>{" "}
-          {offered.map((choice) => choice.label).join(", ")}
-        </span>
-      </div>
+      <Fragment key={list.id}>
+        <div
+          key={list.id}
+          role="row"
+          data-list-row
+          aria-current={list.id === selected ? "true" : undefined}
+          className={[
+            classes.listRow,
+            list.id === selected ? classes.listRowSelected : "",
+            list.retired ? classes.listRowRetired : "",
+            mark === undefined
+              ? ""
+              : draftRowClass(list.draft ?? { action: "changed" }),
+          ].join(" ")}
+          onClick={() => {
+            onOpen(list);
+          }}
+        >
+          <span role="cell" className={classes.listCellName}>
+            <Link
+              id={linkId(list)}
+              to="/lists/{-$listId}"
+              params={{ listId: list.id }}
+              search={search}
+              className={classes.listLink}
+            >
+              {list.name}
+            </Link>
+            {mark && <DraftMark draft={mark} />}
+          </span>
+          <span role="cell" className={classes.listCellDim}>
+            {list.description}
+          </span>
+          <span role="cell" className={classes.listCell}>
+            <span className={classes.listCount}>({offered.length})</span>{" "}
+            {offered.map((choice) => choice.label).join(", ")}
+          </span>
+        </div>
+        {liveRow}
+      </Fragment>
     );
   };
   return (
@@ -163,11 +273,23 @@ function ListsTable({
 
 export function ListsPage({
   listId,
-  canEdit,
+  canEdit: mayEdit,
+  canApprove: mayApprove,
+  show = "both",
+  onShow,
 }: {
   listId: string | undefined;
   canEdit: boolean;
+  canApprove: boolean;
+  // Which version of each list and choice shows: the draft beside the live one, the draft alone, or
+  // the live one alone, which is read only.
+  show?: Show;
+  onShow?: (show: Show) => void;
 }) {
+  const canEdit = mayEdit && show !== "live";
+  // What to show stays in the address as lists are opened and closed.
+  const showSearch = show === "both" ? {} : { show };
+  const canApprove = mayApprove && show !== "live";
   const query = useQuery(listsQuery);
   const narrow = useMediaQuery("(max-width: 48em)");
   const navigate = useNavigate();
@@ -175,21 +297,33 @@ export function ListsPage({
   const [dialog, setDialog] = useState<Dialog>();
   const [opened, setOpened] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Approving or rejecting drafts, which asks first.
+  const [decision, setDecision] = useState<Decision>();
+  const [deciding, setDeciding] = useState(false);
   const { save, undoable, done } = useSaving<List[]>({
     queryKey: listsQuery.queryKey,
     removed: "Someone else has removed this. The lists have been refreshed.",
-    blocked: opened,
+    blocked: opened || deciding,
   });
-  const lists = query.data ?? [];
+  const lists =
+    show === "live" ? liveLists(query.data ?? []) : (query.data ?? []);
   const open = lists.find((list) => list.id === listId);
 
   const openList = (list: List) => {
-    void navigate({ to: "/lists/{-$listId}", params: { listId: list.id } });
+    void navigate({
+      to: "/lists/{-$listId}",
+      params: { listId: list.id },
+      search: showSearch,
+    });
   };
   // Closing the panel puts focus back on the list's row in the table.
   const closePanel = (list: List) => {
     focusSoon(linkId(list));
-    void navigate({ to: "/lists/{-$listId}", params: { listId: undefined } });
+    void navigate({
+      to: "/lists/{-$listId}",
+      params: { listId: undefined },
+      search: showSearch,
+    });
   };
 
   // A change to one list, shown at once, which can be undone once saved, with focus put back where
@@ -233,7 +367,9 @@ export function ListsPage({
         (current) => ({
           ...current,
           choices: current.choices.map((other) =>
-            other.id === choice.id ? { ...other, ...request } : other,
+            other.id === choice.id
+              ? drafting({ ...other, ...request }, ["label", "description"])
+              : other,
           ),
         }),
         () => updateChoice(list.id, choice.id, request),
@@ -247,6 +383,12 @@ export function ListsPage({
         (current) => ({
           ...current,
           choices: reordered(current.choices, choice, after),
+          orderDraft: {
+            live: current.orderDraft?.live ?? [],
+            state: "waiting",
+            madeBy: current.orderDraft?.madeBy ?? null,
+            madeAt: current.orderDraft?.madeAt ?? null,
+          },
         }),
         () => moveChoice(list.id, choice.id, after),
         `Fathom could not move ${choice.label}.`,
@@ -254,38 +396,41 @@ export function ListsPage({
       );
     },
     setRetired: (choice: Choice, retired: boolean) => {
-      const changed = { ...choice, retired };
+      const changed = drafting({ ...choice, retired }, ["retired"]);
       changeList(
         list,
         (current) => ({
           ...current,
-          choices: retired
-            ? current.choices.map((other) =>
-                other.id === choice.id ? changed : other,
-              )
-            : [
-                ...current.choices.filter((other) => other.id !== choice.id),
-                changed,
-              ],
+          choices: current.choices.map((other) =>
+            other.id === choice.id ? changed : other,
+          ),
         }),
         () => setChoiceRetired(list.id, choice.id, retired),
         `Fathom could not ${retired ? "retire" : "restore"} ${choice.label}.`,
         {
           focus: rowId(choice),
-          message: `${retired ? "Retired" : "Restored"} ${choice.label}.`,
+          message: `Drafted ${retired ? "retiring" : "restoring"} ${choice.label}.`,
         },
       );
     },
     remove: (choice) => {
+      // A choice only drafted to be added goes; a live one stays, struck through, until approved.
+      const added = choice.draft?.action === "created";
       changeList(
         list,
         (current) => ({
           ...current,
-          choices: current.choices.filter((other) => other.id !== choice.id),
+          choices: added
+            ? current.choices.filter((other) => other.id !== choice.id)
+            : current.choices.map((other) =>
+                other.id === choice.id ? drafting(other, [], "deleted") : other,
+              ),
         }),
         () => deleteChoice(list.id, choice.id),
         `Fathom could not remove ${choice.label}.`,
-        { message: `Removed ${choice.label}.` },
+        added
+          ? { message: `Discarded ${choice.label}.` }
+          : { focus: rowId(choice) },
       );
     },
   });
@@ -295,15 +440,30 @@ export function ListsPage({
     const retired = !list.retired;
     changeList(
       list,
-      (current) => ({ ...current, retired }),
+      (current) => drafting({ ...current, retired }, ["retired"]),
       () => setListRetired(list.id, retired),
       `Fathom could not ${retired ? "retire" : "restore"} ${list.name}.`,
-      { message: `${retired ? "Retired" : "Restored"} ${list.name}.` },
+      {
+        message: `Drafted ${retired ? "retiring" : "restoring"} ${list.name}.`,
+      },
     );
   };
 
+  // A list only drafted to be added goes, with its choices; a live one stays, struck through, until
+  // its draft is approved.
   const removeList = (list: List) => {
     setOpened(false);
+    if (list.draft?.action !== "created") {
+      changeList(
+        list,
+        (current) => drafting(current, [], "deleted"),
+        () => deleteList(list.id),
+        `Fathom could not delete ${list.name}.`,
+        { focus: titleId },
+      );
+      focusSoon(titleId);
+      return;
+    }
     closePanel(list);
     focusSoon(newListId);
     save({
@@ -312,11 +472,91 @@ export function ListsPage({
       failure: `Fathom could not delete ${list.name}.`,
       onSaved: (changeSetId, before) => {
         // Undoing brings the list back as it was, and opens it again.
-        done(`Deleted ${list.name}.`, changeSetId, before, undefined, () => {
+        done(`Discarded ${list.name}.`, changeSetId, before, undefined, () => {
           openList(list);
         });
       },
     });
+  };
+
+  const targetOf = (what: DraftOn): ListDraftTarget => {
+    if (what.kind === "choice") {
+      return { kind: "choice", listId: what.list.id, choiceId: what.choice.id };
+    }
+    return { kind: what.kind, listId: what.list.id };
+  };
+
+  // The lists as they will be once a draft is discarded, before the server says so: a record only
+  // drafted to be added goes, and the rest lose their drafts until the lists are reloaded.
+  const withoutDraft = (current: List[], what: DraftOn): List[] => {
+    if (what.kind === "list") {
+      return what.list.draft?.action === "created"
+        ? current.filter((other) => other.id !== what.list.id)
+        : withList(current, what.list.id, (list) => without(list, "draft"));
+    }
+    return withList(current, what.list.id, (list) => {
+      if (what.kind === "order") return without(list, "orderDraft");
+      return {
+        ...list,
+        choices:
+          what.choice.draft?.action === "created"
+            ? list.choices.filter((other) => other.id !== what.choice.id)
+            : list.choices.map((other) =>
+                other.id === what.choice.id ? without(other, "draft") : other,
+              ),
+      };
+    });
+  };
+
+  const draftActions: ListDraftActions = {
+    discard: (what) => {
+      const gone =
+        what.kind === "list" && what.list.draft?.action === "created";
+      if (gone) closePanel(what.list);
+      save({
+        next: (current) => withoutDraft(current, what),
+        save: () => discardListDraft(targetOf(what)),
+        failure: `Fathom could not discard the draft of ${draftName(what)}.`,
+        onSaved: (changeSetId, before) => {
+          done(
+            `Discarded the draft of ${draftName(what)}.`,
+            changeSetId,
+            before,
+            undefined,
+            gone
+              ? () => {
+                  openList(what.list);
+                }
+              : undefined,
+          );
+        },
+      });
+    },
+    resubmit: (what) => {
+      save({
+        next: (current) => current,
+        save: () => resubmitListDraft(targetOf(what)),
+        failure: `Fathom could not send the draft of ${draftName(what)} for approval again.`,
+        onSaved: (changeSetId, before) => {
+          undoable(changeSetId, before);
+        },
+      });
+    },
+    decide: (asking, what) => {
+      const chosen = selectionOf(what);
+      const others =
+        asking === "approve"
+          ? usedDrafts(chosen, lists)
+          : usingDrafts(chosen, lists);
+      setDecision({
+        asking,
+        selection: joined(chosen, others),
+        ...(draftTotal(others) > 0
+          ? { included: draftNames(others, lists) }
+          : {}),
+      });
+      setDeciding(true);
+    },
   };
 
   // The dialog saved the list itself, so the page shows it at once, then reloads the lists once no
@@ -359,6 +599,26 @@ export function ListsPage({
     }
   };
 
+  // Every draft waiting among the lists, which Approvers approve or reject all at once, with the
+  // drafts that approving them uses, or that use them.
+  const waiting = canApprove
+    ? waitingIn(lists)
+    : { selection: noDrafts(), total: 0 };
+  const decideAll = (asking: "approve" | "reject") => {
+    const others =
+      asking === "approve"
+        ? usedDrafts(waiting.selection, lists)
+        : usingDrafts(waiting.selection, lists);
+    setDecision({
+      asking,
+      selection: joined(waiting.selection, others),
+      ...(draftTotal(others) > 0
+        ? { included: draftNames(others, lists) }
+        : {}),
+    });
+    setDeciding(true);
+  };
+
   let content: ReactNode;
   if (query.isPending) {
     content = <Loader role="status" aria-label="Loading" />;
@@ -387,7 +647,50 @@ export function ListsPage({
       </Paper>
     );
   } else {
-    content = <ListsTable lists={lists} selected={listId} onOpen={openList} />;
+    content = (
+      <>
+        {/* Laid out as the People table's bar: the Draft button, then how many rows there are. */}
+        <Group gap="sm">
+          {onShow && <DraftMenu show={show} onShow={onShow} />}
+          <Text fz="sm" c="dimmed" role="status">
+            {count(lists.length)} {lists.length === 1 ? "list" : "lists"}
+          </Text>
+        </Group>
+        {waiting.total > 0 && (
+          <Group justify="space-between" className={classes.draftsBar}>
+            <Text fz="sm">
+              {draftCount(waiting.total)} waiting among the lists
+            </Text>
+            <Group gap="xs">
+              <Button
+                size="compact-sm"
+                variant="default"
+                onClick={() => {
+                  decideAll("reject");
+                }}
+              >
+                Reject all…
+              </Button>
+              <Button
+                size="compact-sm"
+                onClick={() => {
+                  decideAll("approve");
+                }}
+              >
+                Approve all
+              </Button>
+            </Group>
+          </Group>
+        )}
+        <ListsTable
+          lists={lists}
+          selected={listId}
+          showLive={show === "both"}
+          search={showSearch}
+          onOpen={openList}
+        />
+      </>
+    );
   }
 
   return (
@@ -395,16 +698,18 @@ export function ListsPage({
       <PageHeader
         title="Lists"
         action={
-          canEdit && (
-            <Button
-              id={newListId}
-              onClick={() => {
-                openDialog({ kind: "new" });
-              }}
-            >
-              New list
-            </Button>
-          )
+          <Group gap="xs">
+            {canEdit && (
+              <Button
+                id={newListId}
+                onClick={() => {
+                  openDialog({ kind: "new" });
+                }}
+              >
+                New list
+              </Button>
+            )}
+          </Group>
         }
       />
       {content}
@@ -414,6 +719,9 @@ export function ListsPage({
             key={open.id}
             list={open}
             canEdit={canEdit}
+            canApprove={canApprove}
+            showLive={show === "both"}
+            draftActions={draftActions}
             narrow={narrow}
             actions={choiceActions(open)}
             onClose={() => {
@@ -425,6 +733,16 @@ export function ListsPage({
           />
         </div>
       )}
+      <DecisionModal
+        decision={decision}
+        opened={deciding}
+        onClose={() => {
+          setDeciding(false);
+        }}
+        onDone={() => {
+          setDeciding(false);
+        }}
+      />
       <Modal
         opened={opened}
         onClose={() => {

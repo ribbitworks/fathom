@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Lists of choices: reading every list; creating, editing, retiring, restoring, and deleting lists;
-// and adding choices, one or several at once, editing, moving, retiring, restoring, and removing
-// them. Every change answers with the change set it was saved in, which undoing it names. The data
-// access layer checks the actor's permissions.
+// Lists of choices: reading every list; drafting lists created, edited, retired, restored, and
+// deleted, and choices added, one or several at once, edited, moved, retired, restored, and removed;
+// and discarding the drafts of lists, choices, and their order, or sending rejected ones for
+// approval again. Every change answers with the change set it was saved in, which undoing it names.
+// The data access layer checks the actor's permissions.
 
 import {
   choiceMoveSchema,
@@ -19,7 +20,7 @@ import {
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type { ListAccess } from "../data/index.ts";
+import type { ListAccess, ListDraftTarget } from "../data/index.ts";
 
 const created = 201;
 
@@ -199,6 +200,46 @@ export function listRoutes(lists: ListAccess): FastifyPluginCallbackZod {
         ),
       }),
     );
+    // Discarding a draft, and sending a rejected one for approval again unchanged.
+    const draftRoutes = <Params extends z.ZodType>(
+      path: string,
+      params: Params,
+      target: (params: z.infer<Params>) => ListDraftTarget,
+    ) => {
+      app.delete(
+        `${path}/draft`,
+        { schema: { params, response: saved } },
+        async (request) => ({
+          changeSetId: await lists.discardDraft(
+            request.actor,
+            target(request.params as z.infer<Params>),
+          ),
+        }),
+      );
+      app.delete(
+        `${path}/draft/rejection`,
+        { schema: { params, response: saved } },
+        async (request) => ({
+          changeSetId: await lists.resubmitDraft(
+            request.actor,
+            target(request.params as z.infer<Params>),
+          ),
+        }),
+      );
+    };
+    draftRoutes("/api/lists/:listId", listParams, ({ listId }) => ({
+      kind: "list",
+      listId,
+    }));
+    draftRoutes(
+      "/api/lists/:listId/choices/:choiceId",
+      choiceParams,
+      ({ listId, choiceId }) => ({ kind: "choice", listId, choiceId }),
+    );
+    draftRoutes("/api/lists/:listId/order", listParams, ({ listId }) => ({
+      kind: "order",
+      listId,
+    }));
     done();
   };
 }

@@ -24,6 +24,7 @@ import type { Actor } from "./access.ts";
 import { createAccountAdministration } from "./data/accounts.ts";
 import { accountRoutes } from "./routes/accounts.ts";
 import { authRoutes, readActor } from "./routes/auth.ts";
+import { draftRoutes } from "./routes/drafts.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
 import { historyRoutes } from "./routes/history.ts";
 import { listRoutes } from "./routes/lists.ts";
@@ -178,6 +179,7 @@ export async function buildApp(options: AppOptions) {
   );
   await app.register(historyRoutes(options.data));
   await app.register(listRoutes(options.data.lists));
+  await app.register(draftRoutes(options.data.drafts));
   await app.register(peopleRoutes(options.data.people));
   await app.register(undoRoutes(options.data));
   await app.register(greetingRoutes(options.data));

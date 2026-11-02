@@ -27,7 +27,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 | Restricted employee details | None | None | None | View | Edit | View | None | None |
 | Confidential data | None | None | None | None | Edit | View | None | None |
 | Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | Edit | View | View | None |
-| Lists of choices, and People's columns and their order | None | None | None | None | Edit | None | None | None |
+| Lists of choices, and People's columns and their order | None | None | None | None | Edit | None | View lists, and approve drafts of them, decided by the owner on 2026-11-01 | None |
 | Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit feature teams | Edit | None (**proposal**) | Approve | None |
 | Change history, for the data the role sees (**proposal**) | View | View | View | View | View | View | View | None |
 | Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |

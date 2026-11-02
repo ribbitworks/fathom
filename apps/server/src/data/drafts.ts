@@ -1,38 +1,47 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Draft rows: the changes to people waiting for approval, as the Decisions Log sets out. Part of the
-// data access layer. Each person has at most one draft, which adds them, changes some of their
-// fields, or removes them; everyone who sees people sees the drafts in place of the live values. A
-// draft is kept as the change history records a person, holding all of an added person's fields,
-// only the fields that differ from the live person, or none for a removal, and the live person
-// changes only when an Approver approves it.
+// Draft rows: the changes waiting for approval, as the Decisions Log sets out. Part of the data
+// access layer. Each person, list, and choice has at most one draft, which adds it, changes some of
+// its fields, or removes it, and each list's choices have at most one draft of their order; everyone
+// who sees the records sees the drafts in place of the live values. A draft is kept as the change
+// history records the record, holding all of an added record's fields, only the fields that differ
+// from the live record, or none for a removal, and the live record changes only when an Approver
+// approves it.
 
 import {
+  changes,
+  changeSets,
   type Database,
   drafts,
   fieldOfValue,
   inChunks,
   people,
+  users,
 } from "@fathom/db";
-import type { Tier } from "@fathom/shared";
-import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
+import { type Tier, tierSchema } from "@fathom/shared";
+import { and, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import { mostSensitive } from "../access.ts";
 import type { Change, Transaction } from "./changes.ts";
 import type { ColumnInfo } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 
-// A person as the change history records them: their details, and each column's choices, left out
-// when none are chosen.
+// A record as the change history records it, such as a person's details and each column's choices,
+// left out when none are chosen.
 export type Recorded = Record<string, unknown>;
 
 export type DraftRow = typeof drafts.$inferSelect;
+
+// The kinds of record that have drafts. A list's choice order is one record, named by its list.
+export type DraftType = "person" | "list" | "list-item" | "choice-order";
 
 export interface Draft {
   action: Change["action"];
   fields: Recorded;
   state: "waiting" | "rejected";
   reason: string | null;
+  // Rises with each draft made, so records drafted to be added keep the order they were drafted in.
+  sequence: number;
 }
 
 // The history field that holds a rejected draft's reason, which waiting drafts do not have.
@@ -63,6 +72,7 @@ function toDraft(row: DraftRow): Draft {
     fields: row.fields,
     state: row.state === "rejected" ? "rejected" : "waiting",
     reason: row.reason,
+    sequence: row.sequence,
   };
 }
 
@@ -124,66 +134,187 @@ export function draftTier(
   return mostSensitive(draftFields(live, draft).map(tierOf));
 }
 
-// Changes to people's drafts wait for one another, as do approvals, rejections, undoing, and
-// deleting a choice, so two cannot update the same draft, take the same Employee ID, or remove a
-// choice a draft is being given, at once. It is taken before any row is locked.
-export async function lockPersonDrafts(transaction: Transaction) {
+// Changes to drafts of every kind wait for one another, as do approvals, rejections, undoing, and
+// deleting a choice, so two cannot update the same draft, take the same Employee ID or name, or
+// remove a choice a draft is being given, at once. It is taken before any row is locked.
+export async function lockDrafts(transaction: Transaction) {
   await transaction.execute(
-    sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.person-drafts', 0))`,
+    sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.drafts', 0))`,
   );
 }
 
-// The drafts of the people given, or of everyone, by person.
-export async function readPersonDrafts(
+// The drafts of the records of one kind given, or of every record of that kind, by record, in the
+// order they were made.
+export async function readDrafts(
   reader: Reader,
+  recordType: DraftType,
   ids?: readonly string[],
 ): Promise<Map<string, Draft>> {
-  const found = new Map<string, Draft>();
+  const rows: DraftRow[] = [];
   const read = async (chunk?: readonly string[]) => {
-    const rows = await reader
-      .select()
-      .from(drafts)
-      .where(
-        and(
-          eq(drafts.recordType, "person"),
-          chunk === undefined
-            ? undefined
-            : inArray(drafts.recordId, [...chunk]),
-        ),
-      );
-    for (const row of rows) found.set(row.recordId, toDraft(row));
+    rows.push(
+      ...(await reader
+        .select()
+        .from(drafts)
+        .where(
+          and(
+            eq(drafts.recordType, recordType),
+            chunk === undefined
+              ? undefined
+              : inArray(drafts.recordId, [...chunk]),
+          ),
+        )),
+    );
   };
   if (ids === undefined) await read();
   else for (const chunk of inChunks([...ids])) await read(chunk);
-  return found;
+  rows.sort((first, second) => first.sequence - second.sequence);
+  return new Map(rows.map((row) => [row.recordId, toDraft(row)]));
 }
 
-// Keeps a person's draft as wanted, or removes it when the person wanted is the live one.
-export async function writePersonDraft(
+// The drafts of the people given, or of everyone, by person.
+export const readPersonDrafts = (reader: Reader, ids?: readonly string[]) =>
+  readDrafts(reader, "person", ids);
+
+export type Rejection = Pick<Draft, "state" | "reason">;
+
+const waiting: Rejection = { state: "waiting", reason: null };
+
+// Keeps a record's draft as wanted, or removes it when the record wanted is the live one.
+export async function writeDraft(
   transaction: Transaction,
+  recordType: DraftType,
   id: string,
   live: Recorded | undefined,
   wanted: Recorded | undefined,
-  rejection: { state: Draft["state"]; reason: string | null } = {
-    state: "waiting",
-    reason: null,
-  },
+  rejection: Rejection = waiting,
 ): Promise<void> {
   const draft = draftBetween(live, wanted);
   if (draft === undefined) {
-    await transaction
-      .delete(drafts)
-      .where(and(eq(drafts.recordType, "person"), eq(drafts.recordId, id)));
+    await deleteDrafts(transaction, recordType, [id]);
     return;
   }
   const row = { ...draft, ...rejection };
   await transaction
     .insert(drafts)
-    .values({ recordType: "person", recordId: id, ...row })
+    .values({ recordType, recordId: id, ...row })
     .onConflictDoUpdate({
       target: [drafts.recordType, drafts.recordId],
       set: row,
     });
+}
+
+export const writePersonDraft = (
+  transaction: Transaction,
+  id: string,
+  live: Recorded | undefined,
+  wanted: Recorded | undefined,
+  rejection: Rejection = waiting,
+) => writeDraft(transaction, "person", id, live, wanted, rejection);
+
+// Removes the drafts of the records of one kind given.
+export async function deleteDrafts(
+  transaction: Transaction,
+  recordType: DraftType,
+  ids: readonly string[],
+): Promise<void> {
+  for (const chunk of inChunks([...ids])) {
+    await transaction
+      .delete(drafts)
+      .where(
+        and(eq(drafts.recordType, recordType), inArray(drafts.recordId, chunk)),
+      );
+  }
+}
+
+// Marks the drafts of the records of one kind given as waiting again, or as rejected for a reason.
+export async function setRejection(
+  transaction: Transaction,
+  recordType: DraftType,
+  ids: readonly string[],
+  rejection: Rejection,
+): Promise<void> {
+  for (const chunk of inChunks([...ids])) {
+    await transaction
+      .update(drafts)
+      .set(rejection)
+      .where(
+        and(eq(drafts.recordType, recordType), inArray(drafts.recordId, chunk)),
+      );
+  }
+}
+
+export interface Maker {
+  madeBy: string | null;
+  madeAt: Date;
+  // Everyone who changed the draft, by name, first to last, null for Fathom itself.
+  editors: (string | null)[];
+  // Who last changed each field of the draft, by field as the change history names it.
+  fieldEditors: Map<string, string | null>;
+}
+
+// Who changed each record's draft, and when, from the changes to it the reader may see, so a hidden
+// change reveals nothing: the latest, and everyone since the record's last draft was approved or
+// discarded. Rejecting a draft, or sending it for approval again unchanged, does not change it.
+export async function draftMakers(
+  reader: Pick<Database, "select">,
+  recordType: DraftType,
+  ids: readonly string[],
+  seen: (field: string, tier: Tier) => boolean = () => true,
+): Promise<Map<string, Maker>> {
+  const makers = new Map<string, Maker>();
+  for (const chunk of inChunks([...ids])) {
+    const rows = await reader
+      .select({
+        recordId: changes.recordId,
+        field: changes.field,
+        tier: changes.tier,
+        draft: changes.draft,
+        kind: changeSets.kind,
+        madeBy: users.name,
+        madeAt: changeSets.madeAt,
+      })
+      .from(changes)
+      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+      .leftJoin(users, eq(users.id, changeSets.madeBy))
+      .where(
+        and(
+          eq(changes.recordType, recordType),
+          inArray(changes.recordId, chunk),
+          or(
+            eq(changes.draft, true),
+            inArray(changeSets.kind, ["approval", "discard"]),
+          ),
+        ),
+      )
+      .orderBy(changes.id);
+    for (const row of rows) {
+      if (row.kind === "approval" || row.kind === "discard") {
+        makers.delete(row.recordId);
+        continue;
+      }
+      const recorded = tierSchema.catch("confidential").parse(row.tier);
+      if (
+        row.kind === "rejection" ||
+        row.kind === "resubmission" ||
+        !seen(row.field, recorded)
+      ) {
+        continue;
+      }
+      const maker = makers.get(row.recordId);
+      const editors = maker?.editors ?? [];
+      makers.set(row.recordId, {
+        madeBy: row.madeBy,
+        madeAt: row.madeAt,
+        editors: [
+          ...editors.filter((editor) => editor !== row.madeBy),
+          row.madeBy,
+        ],
+        fieldEditors: new Map(maker?.fieldEditors).set(row.field, row.madeBy),
+      });
+    }
+  }
+  return makers;
 }
 
 // Adds drafts for people added together, such as pasted rows, in as few statements as PostgreSQL
@@ -270,11 +401,12 @@ export function clearedRejection(
   tierOf: (field: string) => Tier,
   live: Recorded | undefined,
   draft: Draft | undefined,
+  recordType: DraftType = "person",
 ): Change[] {
   return draft?.state === "rejected"
     ? [
         {
-          recordType: "person",
+          recordType,
           recordId: id,
           action: "changed",
           field: rejectedField,

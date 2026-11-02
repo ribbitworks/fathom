@@ -359,7 +359,7 @@ export const savedViews = fathomSchema.table(
 // as the change history records it: all of an added record's fields, only the fields a change makes
 // differ from the live record, and none for a removal. A rejected draft keeps the Approver's reason
 // until it is changed again or discarded. Who made and changed each draft is read from the change
-// history. For now only people have drafts.
+// history. People, lists, choices, and the order of each list's choices have drafts.
 export const drafts = fathomSchema.table(
   "drafts",
   {
@@ -375,6 +375,11 @@ export const drafts = fathomSchema.table(
     // "waiting" or "rejected", checked by the server.
     state: text("state").notNull().default("waiting"),
     reason: text("reason"),
+    // Rises with each draft made, and is kept as the draft changes, so records drafted to be added,
+    // such as choices pasted at once, keep the order they were drafted in.
+    sequence: bigint("sequence", { mode: "number" })
+      .notNull()
+      .generatedAlwaysAsIdentity(),
   },
   (table) => [primaryKey({ columns: [table.recordType, table.recordId] })],
 );

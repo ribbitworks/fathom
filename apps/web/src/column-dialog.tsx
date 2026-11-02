@@ -85,9 +85,12 @@ export function ColumnDialog({
     nameProblem(name, personLengths.column, taken, duplicate) ??
     (nameRefused ? duplicate : undefined);
   const shownProblem = tried || name !== "" ? problem : undefined;
-  // Retired lists are not offered, except the one the column already draws on.
+  // Retired lists, and lists only drafted to be added, are not offered, except the one the column
+  // already draws on.
   const offered = lists.filter(
-    (list) => !list.retired || list.id === field?.listId,
+    (list) =>
+      (!list.retired && list.draft?.action !== "created") ||
+      list.id === field?.listId,
   );
   const listProblem = tried && listId === null ? "List needed" : undefined;
 

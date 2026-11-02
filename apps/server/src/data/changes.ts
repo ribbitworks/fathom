@@ -14,7 +14,13 @@ export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 // person, one field for each column, so the person's history holds all of their details. A table's
 // column order is one record, named after its table.
 export type RecordType =
-  "list" | "list-item" | "field" | "column-order" | "person" | "saved-view";
+  | "list"
+  | "list-item"
+  | "choice-order"
+  | "field"
+  | "column-order"
+  | "person"
+  | "saved-view";
 
 export interface Change {
   recordType: RecordType;
@@ -73,30 +79,6 @@ export function changesBetween<Fields extends Record<string, unknown>>(
           },
         ];
   });
-}
-
-// The change that records where an ordered record, such as a choice, now sits: the record it
-// followed before, and the one it follows now, either null for the top.
-export function orderChange(
-  recordType: RecordType,
-  id: string,
-  action: Change["action"],
-  before: string | null,
-  after: string | null,
-): Change[] {
-  return before === after && action === "changed"
-    ? []
-    : [
-        {
-          recordType,
-          recordId: id,
-          action,
-          field: "order",
-          tier: "general",
-          oldValue: before,
-          newValue: after,
-        },
-      ];
 }
 
 // Whether a change failed because another, saved at the same moment, was in its way, so it can

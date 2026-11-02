@@ -6,7 +6,9 @@
 // adds one choice for each. Arrow keys select a choice, Enter edits it in place, Alt+arrows move it,
 // R retires or restores it, and Delete removes it, each also in the choice's menu. Choices can also
 // be dragged by their grip. Esc closes an open menu, then the panel. Viewers see the same choices,
-// read only.
+// read only. Drafts are marked in place: the list's and its order's in bars at the top, each
+// choice's on its row, with what can be done with them in the bars and in each choice's menu. A list
+// or choice a draft removes is struck through and read only.
 
 import {
   DragDropContext,
@@ -20,17 +22,32 @@ import {
   type List,
   listLengths,
 } from "@fathom/shared";
-import { ActionIcon, Button, Menu, Text } from "@mantine/core";
+import { ActionIcon, Button, Menu, Text, VisuallyHidden } from "@mantine/core";
 import {
   type ClipboardEvent,
   type FocusEvent,
   type KeyboardEvent,
+  Fragment,
   useEffect,
   useState,
 } from "react";
 import { focusSoon } from "./focus.ts";
 import { Icon } from "./icons.tsx";
 import { Count, nameProblem } from "./list-dialog.tsx";
+import {
+  DraftBar,
+  draftRowClass,
+  type ListDraftActions,
+  movedChoices,
+  movedWords,
+  ordinal,
+} from "./list-drafts.tsx";
+import {
+  configDraftFields,
+  draftLines,
+  MenuDraftLines,
+} from "./draft-details.tsx";
+import { DraftMark, StatusMark } from "./status-mark.tsx";
 import { sameName } from "./lists.ts";
 import classes from "./pages.module.css";
 import { count } from "./numbers.ts";
@@ -64,7 +81,7 @@ const shortcuts = shortcutsFor(navigator.userAgent);
 
 export const entryNameId = "choice-entry-name";
 const editNameId = "choice-edit-name";
-const titleId = "list-panel-title";
+export const titleId = "list-panel-title";
 export const rowId = (choice: { id: string }) => `choice-${choice.id}`;
 const actionsId = (choice: { id: string }) => `choice-actions-${choice.id}`;
 const duplicate = "Already in this list";
@@ -204,19 +221,33 @@ function Fields({
 
 export function ListPanel({
   list,
-  canEdit,
+  canEdit: mayEdit,
+  canApprove,
+  showLive = true,
   narrow,
   actions,
+  draftActions,
   onClose,
   onEditList,
 }: {
   list: List;
   canEdit: boolean;
+  canApprove: boolean;
+  // Whether a choice a draft changes or moves shows its live row too.
+  showLive?: boolean;
   narrow: boolean;
   actions: ChoiceActions;
+  draftActions: ListDraftActions;
   onClose: () => void;
   onEditList: () => void;
 }) {
+  // A list a draft removes cannot be changed until the draft is discarded.
+  const listRemoved = list.draft?.action === "deleted";
+  const canEdit = mayEdit && !listRemoved;
+  // The choices a draft of the order moves, with their live places.
+  const moved = movedChoices(list);
+  // A choice a draft removes cannot be changed either.
+  const removed = (choice: Choice) => choice.draft?.action === "deleted";
   const offered = list.choices.filter((choice) => !choice.retired);
   const retired = list.choices.filter((choice) => choice.retired);
   const [showRetired, setShowRetired] = useState(false);
@@ -272,6 +303,7 @@ export function ListPanel({
     );
 
   const startEdit = (choice: Choice, field: Field = "label") => {
+    if (removed(choice)) return;
     setSelected(choice.id);
     setEditing(choice.id);
     setDraft({ label: choice.label, description: choice.description });
@@ -365,11 +397,13 @@ export function ListPanel({
   };
 
   const retireOrRestore = (choice: Choice) => {
+    if (removed(choice)) return;
     select(neighbourIn(choice.retired ? retired : offered, choice));
     actions.setRetired(choice, !choice.retired);
   };
 
   const remove = (choice: Choice) => {
+    if (removed(choice)) return;
     select(neighbourIn(choice.retired ? retired : offered, choice));
     actions.remove(choice);
   };
@@ -380,6 +414,7 @@ export function ListPanel({
   };
 
   const moveBy = (choice: Choice, step: -1 | 1) => {
+    if (removed(choice)) return;
     const index = offered.indexOf(choice);
     const to = index + step;
     if (choice.retired || to < 0 || to >= offered.length) return;
@@ -482,6 +517,10 @@ export function ListPanel({
   const cellRole = canEdit ? "gridcell" : "cell";
 
   const menu = (choice: Choice, index: number) => {
+    const choiceDraft = choice.draft;
+    const on = { kind: "choice" as const, list, choice };
+    // A choice a draft removes offers only what can be done with the draft.
+    const editable = canEdit && !removed(choice);
     // Each item closes the menu and moves focus itself, so focus never stays on the menu's button.
     const act = (run: () => void) => () => {
       setMenuFor(undefined);
@@ -510,75 +549,144 @@ export function ListPanel({
             <Icon name="more" />
           </ActionIcon>
         </Menu.Target>
-        <Menu.Dropdown>
-          <Menu.Item
-            rightSection={<kbd>{shortcuts.edit}</kbd>}
-            onClick={act(() => {
-              startEdit(choice);
-            })}
-          >
-            Edit
-          </Menu.Item>
-          {!choice.retired && (
+        <Menu.Dropdown
+          // A click anywhere in the menu but its items closes it, such as on a draft's details.
+          onClick={(event) => {
+            if (!(event.target as HTMLElement).closest("button")) {
+              setMenuFor(undefined);
+              focusSoon(rowId(choice));
+            }
+          }}
+        >
+          {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
+          <Menu.Label className={classes.menuTitle}>{choice.label}</Menu.Label>
+          {choiceDraft?.state === "rejected" &&
+            choiceDraft.reason !== undefined && (
+              <Menu.Label className={classes.rejectedReason}>
+                Rejected: {choiceDraft.reason}
+              </Menu.Label>
+            )}
+          {choiceDraft && (
+            <MenuDraftLines
+              lines={draftLines(
+                choiceDraft,
+                configDraftFields(choiceDraft, choice),
+              )}
+            />
+          )}
+          {editable && (
             <>
+              <Menu.Item
+                rightSection={<kbd>{shortcuts.edit}</kbd>}
+                onClick={act(() => {
+                  startEdit(choice);
+                })}
+              >
+                Edit
+              </Menu.Item>
+              {!choice.retired && (
+                <>
+                  <Menu.Divider />
+                  <Menu.Item
+                    disabled={index === 0}
+                    onClick={act(() => {
+                      moveTo(choice, null);
+                    })}
+                  >
+                    Move to top
+                  </Menu.Item>
+                  <Menu.Item
+                    disabled={index === 0}
+                    rightSection={<kbd>{shortcuts.up}</kbd>}
+                    onClick={act(() => {
+                      moveBy(choice, -1);
+                    })}
+                  >
+                    Move up
+                  </Menu.Item>
+                  <Menu.Item
+                    disabled={index === offered.length - 1}
+                    rightSection={<kbd>{shortcuts.down}</kbd>}
+                    onClick={act(() => {
+                      moveBy(choice, 1);
+                    })}
+                  >
+                    Move down
+                  </Menu.Item>
+                  <Menu.Item
+                    disabled={index === offered.length - 1}
+                    onClick={act(() => {
+                      moveTo(
+                        choice,
+                        followingAfterMove(offered, index, offered.length - 1),
+                      );
+                    })}
+                  >
+                    Move to bottom
+                  </Menu.Item>
+                </>
+              )}
               <Menu.Divider />
               <Menu.Item
-                disabled={index === 0}
+                rightSection={<kbd>{shortcuts.retire}</kbd>}
                 onClick={act(() => {
-                  moveTo(choice, null);
+                  retireOrRestore(choice);
                 })}
               >
-                Move to top
+                {choice.retired ? "Restore" : "Retire"}
               </Menu.Item>
               <Menu.Item
-                disabled={index === 0}
-                rightSection={<kbd>{shortcuts.up}</kbd>}
+                color="red"
+                rightSection={<kbd>{shortcuts.remove}</kbd>}
                 onClick={act(() => {
-                  moveBy(choice, -1);
+                  remove(choice);
                 })}
               >
-                Move up
-              </Menu.Item>
-              <Menu.Item
-                disabled={index === offered.length - 1}
-                rightSection={<kbd>{shortcuts.down}</kbd>}
-                onClick={act(() => {
-                  moveBy(choice, 1);
-                })}
-              >
-                Move down
-              </Menu.Item>
-              <Menu.Item
-                disabled={index === offered.length - 1}
-                onClick={act(() => {
-                  moveTo(
-                    choice,
-                    followingAfterMove(offered, index, offered.length - 1),
-                  );
-                })}
-              >
-                Move to bottom
+                Remove
               </Menu.Item>
             </>
           )}
-          <Menu.Divider />
-          <Menu.Item
-            rightSection={<kbd>{shortcuts.retire}</kbd>}
-            onClick={act(() => {
-              retireOrRestore(choice);
-            })}
-          >
-            {choice.retired ? "Restore" : "Retire"}
-          </Menu.Item>
-          <Menu.Item
-            color="red"
-            rightSection={<kbd>{shortcuts.remove}</kbd>}
-            onClick={act(() => {
-              remove(choice);
-            })}
-          >
-            Remove
-          </Menu.Item>
+          {choiceDraft && (
+            <>
+              {editable && <Menu.Divider />}
+              {canEdit && choiceDraft.state === "rejected" && (
+                <Menu.Item
+                  onClick={act(() => {
+                    draftActions.resubmit(on);
+                  })}
+                >
+                  Send for approval again
+                </Menu.Item>
+              )}
+              {mayEdit && (
+                <Menu.Item
+                  onClick={act(() => {
+                    draftActions.discard(on);
+                  })}
+                >
+                  Discard draft
+                </Menu.Item>
+              )}
+              {canApprove && (
+                <>
+                  <Menu.Item
+                    onClick={act(() => {
+                      draftActions.decide("approve", on);
+                    })}
+                  >
+                    Approve…
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={act(() => {
+                      draftActions.decide("reject", on);
+                    })}
+                  >
+                    Reject…
+                  </Menu.Item>
+                </>
+              )}
+            </>
+          )}
         </Menu.Dropdown>
       </Menu>
     );
@@ -587,7 +695,8 @@ export function ListPanel({
   const row = (choice: Choice, index: number) => {
     const isEditing = editing === choice.id;
     const isSelected = selected === choice.id;
-    const draggable = canEdit && !narrow && !choice.retired && !isEditing;
+    const draggable =
+      canEdit && !narrow && !choice.retired && !isEditing && !removed(choice);
     const content = (handle?: object | null) => (
       <>
         {draggable && (
@@ -617,6 +726,22 @@ export function ListPanel({
               data-field="label"
             >
               {choice.label}
+              {choice.draft && <DraftMark draft={choice.draft} />}
+              {moved.has(choice.id) && (
+                <StatusMark
+                  tone={
+                    list.orderDraft?.state === "rejected" ? "rejected" : "draft"
+                  }
+                  spaced
+                >
+                  {list.orderDraft?.state === "rejected"
+                    ? "Rejected: moved"
+                    : "Draft: moved"}
+                  <VisuallyHidden>
+                    , live place {ordinal(moved.get(choice.id) as number)}
+                  </VisuallyHidden>
+                </StatusMark>
+              )}
             </span>
             <span
               className={classes.choiceDescription}
@@ -627,7 +752,10 @@ export function ListPanel({
             </span>
           </>
         )}
-        {canEdit && <span role="gridcell">{menu(choice, index)}</span>}
+        {(canEdit ||
+          (choice.draft !== undefined && (canApprove || mayEdit))) && (
+          <span role={cellRole}>{menu(choice, index)}</span>
+        )}
       </>
     );
     const rowProps = {
@@ -638,6 +766,10 @@ export function ListPanel({
         classes.choice,
         choice.retired ? classes.choiceRetired : "",
         isSelected || isEditing ? classes.choiceSelected : "",
+        draftRowClass(
+          choice.draft ??
+            (moved.has(choice.id) ? { action: "changed" } : undefined),
+        ),
       ].join(" "),
       ...(canEdit
         ? {
@@ -696,6 +828,43 @@ export function ListPanel({
     );
   };
 
+  // A moved choice's live place, shown as the People table shows a person's live row: dimmed, marked
+  // Live, read only, and skipped by the keyboard, just after the choice it followed in the live order,
+  // or at the top. Assistive technology hears the live place with the moved choice instead.
+  const liveOffered = (list.orderDraft?.live ?? []).filter((id) =>
+    offered.some((choice) => choice.id === id),
+  );
+  const liveRow = (choice: Choice, key: string) => (
+    <div
+      key={key}
+      className={[classes.choice, classes.choiceLive].join(" ")}
+      aria-hidden="true"
+    >
+      <span className={classes.choiceName}>
+        {choice.draft?.live.label ?? choice.label}
+        <StatusMark tone="live" spaced>
+          Live
+        </StatusMark>
+      </span>
+      <span className={classes.choiceDescription}>
+        {choice.draft?.live.description ?? choice.description}
+      </span>
+    </div>
+  );
+  const liveRowsAfter = (previous: string | null) =>
+    (showLive ? offered : [])
+      .filter(
+        ({ id }) =>
+          moved.has(id) &&
+          (liveOffered[liveOffered.indexOf(id) - 1] ?? null) === previous,
+      )
+      .map((choice) => liveRow(choice, `live-place-${choice.id}`));
+  // A choice whose draft changes it shows its live row just under it, as a person's does.
+  const liveUnder = (choice: Choice) =>
+    showLive && choice.draft?.action === "changed" && !moved.has(choice.id)
+      ? liveRow(choice, `live-${choice.id}`)
+      : null;
+
   const gridRole = canEdit ? "grid" : "table";
 
   return (
@@ -716,7 +885,14 @@ export function ListPanel({
     >
       <div className={classes.panelHead}>
         <div className={classes.panelTitle}>
-          <h2 id={titleId} className={classes.panelName} tabIndex={-1}>
+          <h2
+            id={titleId}
+            className={[
+              classes.panelName,
+              listRemoved ? classes.struck : "",
+            ].join(" ")}
+            tabIndex={-1}
+          >
             {list.name}
           </h2>
           {canEdit && (
@@ -744,6 +920,27 @@ export function ListPanel({
           </Text>
         )}
       </div>
+      {list.draft && (
+        <DraftBar
+          what={{ kind: "list", list }}
+          draft={list.draft}
+          lines={draftLines(list.draft, configDraftFields(list.draft, list))}
+          canEdit={mayEdit}
+          canApprove={canApprove}
+          actions={draftActions}
+        />
+      )}
+      {list.orderDraft && (
+        <DraftBar
+          what={{ kind: "order", list }}
+          draft={list.orderDraft}
+          summary={movedWords(moved.size)}
+          lines={[`Moved by ${list.orderDraft.madeBy ?? "Fathom"}`]}
+          canEdit={mayEdit}
+          canApprove={canApprove}
+          actions={draftActions}
+        />
+      )}
       <div className={classes.panelBody}>
         {offered.length === 0 && !canEdit && (
           <Text fz="sm" c="dimmed" p="md">
@@ -759,7 +956,14 @@ export function ListPanel({
                   {...provided.droppableProps}
                   role="rowgroup"
                 >
-                  {offered.map(row)}
+                  {offered.map((choice, index) => (
+                    <Fragment key={choice.id}>
+                      {index === 0 && liveRowsAfter(null)}
+                      {row(choice, index)}
+                      {liveUnder(choice)}
+                      {liveRowsAfter(choice.id)}
+                    </Fragment>
+                  ))}
                   {provided.placeholder}
                 </div>
               )}
@@ -802,7 +1006,12 @@ export function ListPanel({
               Retired
             </Text>
             <div role={gridRole} aria-labelledby="list-panel-retired">
-              {shownRetired.map(row)}
+              {shownRetired.map((choice, index) => (
+                <Fragment key={choice.id}>
+                  {row(choice, index)}
+                  {liveUnder(choice)}
+                </Fragment>
+              ))}
             </div>
           </>
         )}

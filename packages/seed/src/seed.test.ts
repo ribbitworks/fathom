@@ -23,7 +23,7 @@ import {
 } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
-import { count, eq, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNull } from "drizzle-orm";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -31,6 +31,7 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { personaAccounts } from "./accounts.ts";
 import { actorFor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
+import { listRejection } from "./list-drafts.ts";
 import { rejection, seedDrafts, unseedDrafts } from "./drafts.ts";
 import { seed, seedCommand, unseed } from "./seed.ts";
 
@@ -68,7 +69,7 @@ describe("seeding", () => {
   it("adds the lists, columns, and people, recorded as made by Fathom itself, and adds nothing the second time", async () => {
     expect(await seed(connection, organization)).toBe(true);
     expect(await totalOf(people)).toBe(20);
-    expect(await totalOf(lists)).toBe(4);
+    expect(await totalOf(lists)).toBe(6);
     expect(await totalOf(fields)).toBe(4);
     const [order] = await connection.select().from(columnOrders);
     expect(order?.keys.slice(0, 3)).toEqual([
@@ -163,39 +164,54 @@ describe("the seed command", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], environment())).toBe(0);
     const made = await connection.select().from(drafts);
+    // Of people, then of lists: a site renamed and described by two people, a role retired, Roles on
+    // the team renamed, Languages retired, the Levels and Positions orders, and a Positions
+    // description; the Skills list, its two choices, and Harbourside added; and a person, an unused
+    // position, and the Certifications list removed.
     expect(made.map(({ action }) => action).sort()).toEqual([
-      "changed",
-      "changed",
-      "changed",
-      "created",
-      "created",
-      "deleted",
+      ...Array<string>(10).fill("changed"),
+      ...Array<string>(6).fill("created"),
+      ...Array<string>(3).fill("deleted"),
     ]);
     expect(
       made
         .filter(({ state }) => state === "rejected")
-        .map(({ reason }) => reason),
-    ).toEqual([rejection, rejection]);
+        .map(({ reason }) => reason)
+        .sort(),
+    ).toEqual(
+      [
+        listRejection,
+        listRejection,
+        listRejection,
+        rejection,
+        rejection,
+      ].sort(),
+    );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
-    expect(await connection.select().from(drafts)).toHaveLength(6);
+    expect(await connection.select().from(drafts)).toHaveLength(19);
     // Seeding again after the Approver approves the waiting drafts makes none again, and leaves
     // alone a draft made by hand of another seeded person, which removing the seed data discards,
     // since it removes that person.
     const waiting = await connection
       .select({ id: drafts.recordId })
       .from(drafts)
-      .where(eq(drafts.state, "waiting"));
+      .where(and(eq(drafts.state, "waiting"), eq(drafts.recordType, "person")));
     const [director] = await connection
       .select({ id: users.id, name: users.name, email: users.email })
       .from(users)
       .where(eq(users.email, "engineering.director@fathom.test"));
-    await createDataAccess(connection).people.approveDrafts(
+    await createDataAccess(connection).drafts.approve(
       actorFor(director as { id: string; name: string; email: string }, [
         "approver",
         "leadership",
       ]),
-      waiting.map(({ id }) => id),
+      {
+        people: waiting.map(({ id }) => id),
+        lists: [],
+        choices: [],
+        orders: [],
+      },
     );
     const seeded = fictionalOrganization({ size: 150 });
     await connection.insert(drafts).values({
@@ -217,7 +233,8 @@ describe("the seed command", () => {
       },
     ]);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await connection.select().from(drafts)).toHaveLength(3);
+    // The two rejected drafts of people, the one made by hand, and the thirteen of lists.
+    expect(await connection.select().from(drafts)).toHaveLength(16);
     const positions = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
       listId: String(positions?.id),
@@ -233,8 +250,10 @@ describe("the seed command", () => {
       "Added 150 fictional people, with their lists and columns",
       ...addresses.map((email) => `Account ready: ${email}`),
       "Added drafts made by the personas",
+      "Added drafts of lists made by the personas",
       "The fictional data is already in the database",
       "The fictional data is already in the database",
+      "Discarded 11 drafts of lists made by the personas",
       "Discarded 3 drafts made by the personas",
       "Removed the fictional data",
       "Kept: The Positions list, which has choices added by hand",
@@ -246,6 +265,30 @@ describe("the seed command", () => {
     expect(log.mock.calls.map(([line]) => line as string)).not.toContainEqual(
       expect.stringMatching(/^Discarded/),
     );
+    log.mockRestore();
+  });
+
+  it("makes every draft anew when the seed data is removed and added again", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const ofLists = () =>
+      connection
+        .select()
+        .from(drafts)
+        .where(
+          inArray(drafts.recordType, ["list", "list-item", "choice-order"]),
+        );
+    // The Positions list kept by the test before, for the choice added to it by hand.
+    await connection
+      .delete(listItems)
+      .where(eq(listItems.label, "Fictional Hand Choice"));
+    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await ofLists()).toHaveLength(13);
+    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    expect(await ofLists()).toHaveLength(0);
+    expect(await seedCommand(["seed"], environment())).toBe(0);
+    expect(await ofLists()).toHaveLength(13);
+    expect(await seedCommand(["unseed"], environment())).toBe(0);
     log.mockRestore();
   });
 

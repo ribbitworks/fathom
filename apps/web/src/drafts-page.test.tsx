@@ -131,10 +131,176 @@ describe("the Drafts page", () => {
     ]);
   });
 
+  it("puts drafts of lists, choices, and orders in words, and approves one with the drafts it uses", async () => {
+    const listDraft = (action: string, more: object = {}) =>
+      draft({ action, changed: [], live: {}, ...more });
+    const drafted = {
+      ...sites,
+      description: "Our offices",
+      choices: [
+        {
+          ...(sites.choices[1] as object),
+          label: "Northmere Labs",
+          draft: listDraft("changed", {
+            changed: ["label", "gone"],
+            live: { label: "Northmere" },
+          }),
+        },
+        sites.choices[0],
+      ],
+      draft: listDraft("changed", {
+        changed: ["description"],
+        live: { description: "" },
+      }),
+      orderDraft: draft({
+        live: ["c1", "c2", "gone"],
+        state: "rejected",
+        reason: "Keep the order",
+      }),
+    };
+    const teams = {
+      id: "l2",
+      name: "Teams",
+      description: "",
+      visibility: "general",
+      retired: false,
+      choices: [
+        {
+          id: "c3",
+          label: "Platform",
+          description: "",
+          retired: false,
+          draft: listDraft("created"),
+        },
+      ],
+      draft: listDraft("created"),
+    };
+    const fetch = await openDrafts({
+      "GET /api/people": peopleWith([]),
+      "GET /api/lists": () => Response.json({ lists: [drafted, teams] }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    const shown = await entries();
+    expect(shown).toContain(
+      "Fictional Editor drafted changes to the list Sites: Description set to Our offices",
+    );
+    expect(shown).toContain(
+      "Fictional Editor drafted changes to the choice Northmere Labs in Sites: Name from Northmere to Northmere Labs; gone changed",
+    );
+    expect(shown).toContain(
+      "Fictional Editor drafted a new order of Sites: Order from Harbour, Northmere Labs, a removed choice to Northmere Labs, Harbour Rejected: Keep the order",
+    );
+    expect(shown).toContain("Fictional Editor drafted adding the list Teams");
+    await userEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Select the draft of the choice Platform in Teams",
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 2 drafts?",
+    });
+    expect(within(dialog).getByText("the list Teams")).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+        { people: [], lists: ["l2"], choices: ["c3"], orders: [] },
+      ]);
+    });
+  });
+
+  it("opens for Approvers who see lists but not people, with only the drafts of lists", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": session(["drafts:approve", "configuration:view"]),
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...sites,
+              draft: draft({
+                action: "changed",
+                changed: ["name"],
+                live: { name: "Old Sites" },
+              }),
+            },
+          ],
+        }),
+    });
+    renderApp("/drafts");
+    expect(await screen.findByText("the list Sites")).toBeDefined();
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
+      false,
+    );
+  });
+
+  it("names everyone who changed a draft", async () => {
+    await openDrafts({
+      "GET /api/people": peopleWith([
+        person("p6", "Finley Fictional", {
+          draft: draft({
+            action: "deleted",
+            editors: ["Ann Fictional", null, "Ben Fictional"],
+          }),
+        }),
+        person("p7", "Gray Fictional", {
+          draft: draft({ action: "deleted", editors: ["Ann Fictional"] }),
+        }),
+      ]),
+    });
+    expect(await entries()).toEqual([
+      "Ann Fictional, Fathom and Ben Fictional drafted removing Finley Fictional",
+      "Ann Fictional drafted removing Gray Fictional",
+    ]);
+  });
+
+  it("credits each change to who made it when several people changed a draft", async () => {
+    await openDrafts({
+      "GET /api/people": peopleWith([
+        person("p8", "Hollis Fictional", {
+          startDate: "2026-11-02",
+          values: { f1: ["c1"] },
+          draft: draft({
+            action: "changed",
+            changed: ["preferredName", "startDate", "f1"],
+            live: {
+              preferredName: "Hollis Before",
+              startDate: null,
+              values: { f1: ["c2"] },
+            },
+            editors: ["Ann Fictional", "Ben Fictional"],
+            changedBy: { preferredName: "Ann Fictional", f1: null },
+          }),
+        }),
+      ]),
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...sites,
+              description: "Offices",
+              draft: draft({
+                action: "changed",
+                changed: ["description"],
+                live: { description: "" },
+                editors: ["Ann Fictional", "Ben Fictional"],
+              }),
+            },
+          ],
+        }),
+    });
+    expect(await entries()).toEqual([
+      "Ann Fictional and Ben Fictional drafted changes to Hollis Fictional: Name from Hollis Before to Hollis Fictional (Ann Fictional); Start set to Nov 2, 2026; Site from Northmere to Harbour (Fathom)",
+      "Ann Fictional and Ben Fictional drafted changes to the list Sites: Description set to Offices",
+    ]);
+  });
+
   it("approves the drafts selected, after asking", async () => {
     const fetch = await openDrafts({
-      "POST /api/people/drafts/approval": () =>
-        Response.json({ changeSetId: s1 }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
     const approve = await screen.findByRole("button", { name: "Approve" });
     expect(approve).toHaveProperty("disabled", true);
@@ -164,8 +330,8 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     expect(await screen.findByText("Approved 3 drafts.")).toBeDefined();
-    expect(bodiesOf(fetch, "/api/people/drafts/approval")).toEqual([
-      { people: ["p1", "p2", "p4"] },
+    expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+      { people: ["p1", "p2", "p4"], lists: [], choices: [], orders: [] },
     ]);
   });
 
@@ -207,8 +373,7 @@ describe("the Drafts page", () => {
 
   it("rejects the drafts selected, asking for a reason", async () => {
     const fetch = await openDrafts({
-      "POST /api/people/drafts/rejection": () =>
-        Response.json({ changeSetId: s1 }),
+      "POST /api/drafts/rejection": () => Response.json({ changeSetId: s1 }),
     });
     await userEvent.click(
       await screen.findByRole("checkbox", {
@@ -231,15 +396,20 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Reject" }),
     );
     expect(await screen.findByText("Rejected 1 draft.")).toBeDefined();
-    expect(bodiesOf(fetch, "/api/people/drafts/rejection")).toEqual([
-      { people: ["p3"], reason: "Fictional reason" },
+    expect(bodiesOf(fetch, "/api/drafts/rejection")).toEqual([
+      {
+        people: ["p3"],
+        lists: [],
+        choices: [],
+        orders: [],
+        reason: "Fictional reason",
+      },
     ]);
   });
 
   it("says when rejecting changed nothing, as for a draft already rejected for that reason", async () => {
     await openDrafts({
-      "POST /api/people/drafts/rejection": () =>
-        Response.json({ changeSetId: null }),
+      "POST /api/drafts/rejection": () => Response.json({ changeSetId: null }),
     });
     await userEvent.click(
       await screen.findByRole("checkbox", {
@@ -266,8 +436,7 @@ describe("the Drafts page", () => {
 
   it("says when approving changed nothing", async () => {
     await openDrafts({
-      "POST /api/people/drafts/approval": () =>
-        Response.json({ changeSetId: null }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: null }),
     });
     await userEvent.click(
       await screen.findByRole("checkbox", {
@@ -284,14 +453,14 @@ describe("the Drafts page", () => {
     );
     expect(
       await screen.findByText(
-        "Nothing changed: those drafts no longer change anyone.",
+        "Nothing changed: those drafts no longer change anything.",
       ),
     ).toBeDefined();
   });
 
   it("says why approving was refused, and can be cancelled", async () => {
     await openDrafts({
-      "POST /api/people/drafts/approval": () =>
+      "POST /api/drafts/approval": () =>
         Response.json({ error: "A draft no longer fits" }, { status: 409 }),
     });
     await userEvent.click(

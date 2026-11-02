@@ -56,7 +56,15 @@ const expected: [Role, Permission[]][] = [
     "leadership",
     ["people:view", "restricted:view", "confidential:view", "changes:view"],
   ],
-  ["approver", ["drafts:approve", "feature-teams:approve", "changes:view"]],
+  [
+    "approver",
+    [
+      "drafts:approve",
+      "feature-teams:approve",
+      "configuration:view",
+      "changes:view",
+    ],
+  ],
   // Running Fathom needs no access to people data, so Administrators hold Viewer only if given it.
   ["administrator", ["accounts:manage", "history:view"]],
 ];

@@ -5,7 +5,11 @@
 // that cannot be reached, gets a page that says so.
 
 import type { QueryClient } from "@tanstack/react-query";
-import { historySearchLength, type Permission } from "@fathom/shared";
+import {
+  historySearchLength,
+  type Permission,
+  showSchema,
+} from "@fathom/shared";
 import {
   createRootRouteWithContext,
   createRoute,
@@ -40,9 +44,9 @@ const signedIn = getRouteApi("/signed-in");
 const people = getRouteApi("/signed-in/people");
 
 // Pages only for users with a permission; anyone else is told there is no such page.
-function requiring(permission: Permission) {
+function requiring(...permissions: Permission[]) {
   return ({ context }: { context: { permissions: Permission[] } }) => {
-    if (!context.permissions.includes(permission)) {
+    if (!permissions.some((one) => context.permissions.includes(one))) {
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to say so
       throw notFound();
     }
@@ -126,13 +130,14 @@ const draftsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/drafts",
   validateSearch: historySearch,
-  beforeLoad: requiring("people:view"),
+  beforeLoad: requiring("people:view", "configuration:view"),
   component: function Drafts() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = draftsRoute.useNavigate();
     return (
       <DraftsPage
         canApprove={permissions.includes("drafts:approve")}
+        seesPeople={permissions.includes("people:view")}
         search={draftsRoute.useSearch().search ?? ""}
         onSearch={(search, replace) => {
           void navigate({ search: { search: search || undefined }, replace });
@@ -165,13 +170,23 @@ const historyRoute = createRoute({
 const listsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/lists/{-$listId}",
+  validateSearch: z.object({ show: showSchema.optional().catch(undefined) }),
   beforeLoad: requiring("configuration:view"),
   component: function Lists() {
     const { permissions } = signedIn.useRouteContext();
+    const navigate = listsRoute.useNavigate();
     return (
       <ListsPage
         listId={listsRoute.useParams().listId}
         canEdit={permissions.includes("configuration:edit")}
+        canApprove={permissions.includes("drafts:approve")}
+        show={listsRoute.useSearch().show ?? "both"}
+        onShow={(show) => {
+          void navigate({
+            search: { show: show === "both" ? undefined : show },
+            replace: true,
+          });
+        }}
       />
     );
   },

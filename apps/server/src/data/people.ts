@@ -10,14 +10,11 @@
 // Restricted or Confidential details are also recorded in the access history.
 
 import {
-  changes,
-  changeSets,
   type Database,
   drafts,
   fieldOfValue,
   inChunks,
   people,
-  users,
 } from "@fathom/db";
 import {
   type Person,
@@ -25,9 +22,8 @@ import {
   type PersonDraft,
   type PersonRequest,
   type Tier,
-  tierSchema,
 } from "@fathom/shared";
-import { and, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
@@ -50,8 +46,9 @@ import {
   type Draft,
   drafted,
   draftFields,
+  draftMakers,
   draftTier,
-  lockPersonDrafts,
+  lockDrafts,
   readPersonDrafts,
   type Recorded,
   takenEmployeeIds,
@@ -322,48 +319,6 @@ export async function readLive(
   );
 }
 
-// Who last changed each person's draft, and when, from the changes to it the reader may see, so a
-// hidden change reveals nothing. Rejecting a draft does not change it.
-async function draftMakers(
-  reader: Pick<Database, "selectDistinctOn">,
-  ids: readonly string[],
-  seen: (field: string, tier: Tier) => boolean,
-): Promise<Map<string, { madeBy: string | null; madeAt: Date }>> {
-  const makers = new Map<string, { madeBy: string | null; madeAt: Date }>();
-  for (const chunk of inChunks([...ids])) {
-    // The latest change to each field, so only as many are read as the drafts have fields.
-    const rows = await reader
-      .selectDistinctOn([changes.recordId, changes.field], {
-        recordId: changes.recordId,
-        field: changes.field,
-        tier: changes.tier,
-        madeBy: users.name,
-        madeAt: changeSets.madeAt,
-        id: changes.id,
-      })
-      .from(changes)
-      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
-      .leftJoin(users, eq(users.id, changeSets.madeBy))
-      .where(
-        and(
-          eq(changes.recordType, "person"),
-          eq(changes.draft, true),
-          ne(changeSets.kind, "rejection"),
-          inArray(changes.recordId, chunk),
-        ),
-      )
-      .orderBy(changes.recordId, changes.field, desc(changes.id));
-    rows.sort((first, second) => second.id - first.id);
-    for (const { recordId, field, tier, madeBy, madeAt } of rows) {
-      const recorded = tierSchema.catch("confidential").parse(tier);
-      if (!makers.has(recordId) && seen(field, recorded)) {
-        makers.set(recordId, { madeBy, madeAt });
-      }
-    }
-  }
-  return makers;
-}
-
 export interface PeopleRead {
   people: Person[];
   columns: ColumnInfo[];
@@ -419,6 +374,7 @@ async function readPeopleIn(
   const draftsNow = await readPersonDrafts(database);
   const makers = await draftMakers(
     database,
+    "person",
     [...draftsNow.keys()],
     (field, tier) =>
       shownFields.has(field) &&
@@ -510,6 +466,13 @@ async function readPeopleIn(
       ...reason,
       madeBy: maker?.madeBy ?? null,
       madeAt: maker?.madeAt.toISOString() ?? null,
+      editors: maker?.editors ?? [],
+      changedBy: Object.fromEntries(
+        fields.map((field) => [
+          fieldOfValue(field) ?? field,
+          maker?.fieldEditors.get(field) ?? null,
+        ]),
+      ),
     };
   }
 
@@ -551,7 +514,7 @@ export async function createPeople(
 ): Promise<{ ids: string[]; changeSetId: string | null }> {
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
-    await lockPersonDrafts(transaction);
+    await lockDrafts(transaction);
     const columns = await readColumns(transaction, true);
     const known = await choicesAskedFor(transaction, requests);
     const made: Change[] = [];
@@ -615,7 +578,7 @@ export async function updatePerson(
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
-    await lockPersonDrafts(transaction);
+    await lockDrafts(transaction);
     const columns = await readColumns(transaction, true);
     const { before, draft, person } = await lockDrafted(
       transaction,
@@ -678,7 +641,7 @@ export async function deletePerson(
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
-    await lockPersonDrafts(transaction);
+    await lockDrafts(transaction);
     const columns = await readColumns(transaction, true);
     const { before, draft, person } = await lockDrafted(
       transaction,
@@ -711,7 +674,7 @@ export async function resubmitPersonDraft(
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
-    await lockPersonDrafts(transaction);
+    await lockDrafts(transaction);
     const columns = await readColumns(transaction, true);
     const { before, draft } = await lockDrafted(transaction, columns, id);
     if (draft?.state !== "rejected") {
@@ -739,7 +702,7 @@ export async function discardPersonDraft(
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
-    await lockPersonDrafts(transaction);
+    await lockDrafts(transaction);
     const columns = await readColumns(transaction, true);
     const { before, draft, person } = await lockDrafted(
       transaction,

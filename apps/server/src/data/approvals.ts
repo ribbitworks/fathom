@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Approving and rejecting drafts of people, one at a time or several at once, as the Decisions Log
-// sets out. Part of the data access layer. Approving applies the drafts to the live people, all in
-// one change set or none of them, and rejecting keeps them, marked Rejected with the Approver's
-// reason. An Approver may approve their own drafts, and needs roles that see every value in the
-// drafts they approve or reject. Neither can be undone.
+// Approving and rejecting drafts, one at a time or several at once, as the Decisions Log sets out:
+// of people here, and of lists, choices, and the order of lists' choices in list-approvals.ts.
+// Part of the data access layer. Approving applies the drafts to the live records, all in one
+// change set or none of them, and rejecting keeps them, marked Rejected with the Approver's reason.
+// An Approver may approve their own drafts, and needs roles that see every value in the drafts they
+// approve or reject. Neither can be undone.
 
 import {
   type Database,
@@ -16,8 +17,14 @@ import {
   inChunks,
   people,
 } from "@fathom/db";
+import type { DraftsRequest } from "@fathom/shared";
 import { and, eq, inArray, or } from "drizzle-orm";
-import { type Actor, requirePermission, seesTier } from "../access.ts";
+import {
+  type Actor,
+  requireAnyPermission,
+  requirePermission,
+  seesTier,
+} from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
@@ -26,10 +33,11 @@ import {
   draftFields,
   draftTier,
   fitsColumns,
-  lockPersonDrafts,
+  lockDrafts,
   readPersonDrafts,
   type Recorded,
   rejectedField,
+  setRejection,
 } from "./drafts.ts";
 import {
   currentOn,
@@ -38,23 +46,26 @@ import {
   readLive,
   recordSensitiveChanges,
 } from "./people.ts";
+import {
+  approveListDrafts,
+  asksForLists,
+  rejectListDrafts,
+} from "./list-approvals.ts";
 import { inListOrder, readColumns, valueField } from "./values.ts";
 
 const noDraft = "One of these people has no draft; refresh to see the latest";
 
-// Checks the actor may approve or reject drafts of people, and reads the drafts asked for, locked,
-// with the people as they are live. A draft the actor is not shown, since it changes only what they
-// may not see, is answered as one that does not exist, so asking reveals nothing; one they see only
-// part of is refused.
-async function lockDrafts(
+// Checks the actor may approve or reject drafts of people, and reads the drafts asked for, with the
+// people as they are live. A draft the actor is not shown, since it changes only what they may not
+// see, is answered as one that does not exist, so asking reveals nothing; one they see only part of
+// is refused.
+async function readAsked(
   transaction: Transaction,
   actor: Actor,
   ids: readonly string[],
   today: string,
 ) {
-  requirePermission(actor, "drafts:approve");
   requirePermission(actor, "people:view");
-  await lockPersonDrafts(transaction);
   const columns = await readColumns(transaction, true);
   const found = await readPersonDrafts(transaction, ids);
   if (found.size !== ids.length) throw new NotFoundError(noDraft);
@@ -176,13 +187,13 @@ async function apply(
   }
 }
 
-async function approveIn(
+async function approvePeopleIn(
   transaction: Transaction,
   actor: Actor,
   ids: readonly string[],
   today: string,
-): Promise<string | null> {
-  const { columns, found, live } = await lockDrafts(
+): Promise<Change[]> {
+  const { columns, found, live } = await readAsked(
     transaction,
     actor,
     ids,
@@ -231,80 +242,125 @@ async function approveIn(
         and(eq(drafts.recordType, "person"), inArray(drafts.recordId, chunk)),
       );
   }
-  await recordSensitiveChanges(transaction, actor.user.id, made);
-  return recordChanges(transaction, actor.user.id, made, "approval");
+  return made;
 }
 
-// Approves the drafts of the people given, applying them all to the live people, and returns the
-// change set that applied them.
-export async function approvePeopleDrafts(
+// Checks the actor may approve or reject the drafts asked for, after every other change to drafts.
+async function deciding(
+  transaction: Transaction,
+  actor: Actor,
+  asked: DraftsRequest,
+): Promise<void> {
+  requirePermission(actor, "drafts:approve");
+  // Lists are seen by those who see configuration, and by those who see people, whose columns
+  // draw on them.
+  if (asksForLists(asked)) {
+    requireAnyPermission(actor, ["configuration:view", "people:view"]);
+  }
+  await lockDrafts(transaction);
+}
+
+// Approves the drafts asked for, with the drafts they use, applying them all to the live records,
+// and returns the change set that applied them. Lists and choices come first, so people can be
+// given them.
+export async function approveDrafts(
   database: Database,
   actor: Actor,
-  ids: readonly string[],
+  asked: DraftsRequest,
   today: string = new Date().toISOString().slice(0, 10),
 ): Promise<string | null> {
   try {
-    return await database.transaction((transaction) =>
-      approveIn(transaction, actor, ids, today),
-    );
+    return await database.transaction(async (transaction) => {
+      await deciding(transaction, actor, asked);
+      const made = asksForLists(asked)
+        ? await approveListDrafts(transaction, asked)
+        : [];
+      if (asked.people.length > 0) {
+        made.push(
+          ...(await approvePeopleIn(transaction, actor, asked.people, today)),
+        );
+      }
+      await recordSensitiveChanges(transaction, actor.user.id, made);
+      return recordChanges(transaction, actor.user.id, made, "approval");
+    });
   } catch (error) {
-    // A choice deleted, or an Employee ID taken, since the draft was saved.
+    // A choice deleted, or an Employee ID or name taken, since the draft was saved, or a choice
+    // still in use.
     if (
       [
         databaseCodes.uniqueViolation,
         databaseCodes.foreignKeyViolation,
+        databaseCodes.restrictViolation,
         databaseCodes.checkViolation,
       ].some((code) => hasDatabaseCode(error, code))
     ) {
       throw new ConflictError(
-        "A draft no longer fits the people as they are; refresh, change it, then approve it",
+        "A draft no longer fits the data as it is; refresh, change it, then approve it",
       );
     }
     throw error;
   }
 }
 
-// Rejects the drafts of the people given, with a reason, and returns the change set that recorded
-// it. A rejected draft keeps its reason until it is changed again or discarded.
-export async function rejectPeopleDrafts(
+// Rejects the drafts asked for, with a reason, and returns the change set that recorded it. A
+// rejected draft keeps its reason until it is changed again or discarded.
+export async function rejectDrafts(
   database: Database,
   actor: Actor,
-  ids: readonly string[],
+  asked: DraftsRequest,
   reason: string,
   today: string = new Date().toISOString().slice(0, 10),
 ): Promise<string | null> {
   return database.transaction(async (transaction) => {
-    const { columns, found, live } = await lockDrafts(
-      transaction,
-      actor,
-      ids,
-      today,
-    );
-    const tierOf = personTier(columns);
-    const made: Change[] = [];
-    for (const id of ids) {
-      const draft = found.get(id) as Draft;
-      const tier = draftTier(tierOf, live.get(id), draft);
-      if (draft.state === "rejected" && draft.reason === reason) continue;
-      made.push({
-        recordType: "person",
-        recordId: id,
-        action: "changed",
-        field: rejectedField,
-        tier,
-        oldValue: draft.state === "rejected" ? draft.reason : null,
-        newValue: reason,
-        draft: true,
-      });
-    }
-    for (const chunk of inChunks([...ids])) {
-      await transaction
-        .update(drafts)
-        .set({ state: "rejected", reason })
-        .where(
-          and(eq(drafts.recordType, "person"), inArray(drafts.recordId, chunk)),
-        );
+    await deciding(transaction, actor, asked);
+    const made = asksForLists(asked)
+      ? await rejectListDrafts(transaction, asked, reason)
+      : [];
+    if (asked.people.length > 0) {
+      made.push(
+        ...(await rejectPeopleIn(
+          transaction,
+          actor,
+          asked.people,
+          reason,
+          today,
+        )),
+      );
     }
     return recordChanges(transaction, actor.user.id, made, "rejection");
   });
+}
+
+async function rejectPeopleIn(
+  transaction: Transaction,
+  actor: Actor,
+  ids: readonly string[],
+  reason: string,
+  today: string,
+): Promise<Change[]> {
+  const { columns, found, live } = await readAsked(
+    transaction,
+    actor,
+    ids,
+    today,
+  );
+  const tierOf = personTier(columns);
+  const made: Change[] = [];
+  for (const id of ids) {
+    const draft = found.get(id) as Draft;
+    const tier = draftTier(tierOf, live.get(id), draft);
+    if (draft.state === "rejected" && draft.reason === reason) continue;
+    made.push({
+      recordType: "person",
+      recordId: id,
+      action: "changed",
+      field: rejectedField,
+      tier,
+      oldValue: draft.state === "rejected" ? draft.reason : null,
+      newValue: reason,
+      draft: true,
+    });
+  }
+  await setRejection(transaction, "person", ids, { state: "rejected", reason });
+  return made;
 }

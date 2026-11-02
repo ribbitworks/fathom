@@ -1143,8 +1143,8 @@ describe("drafts", () => {
           order,
           views: [],
         }),
-      "POST /api/people/drafts/approval": savedAs(),
-      "POST /api/people/drafts/rejection": savedAs(),
+      "POST /api/drafts/approval": savedAs(),
+      "POST /api/drafts/rejection": savedAs(),
     });
     expect(
       screen.getByText("2 drafts waiting among the people shown"),
@@ -1204,11 +1204,17 @@ describe("drafts", () => {
         await screen.findByRole("dialog", { name: "Approve 2 drafts?" }),
       ).getByRole("button", { name: "Cancel" }),
     );
-    expect(bodyOf(fetch, "POST", "/api/people/drafts/approval")).toEqual([
-      { people: ["p1"] },
+    expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+      { people: ["p1"], lists: [], choices: [], orders: [] },
     ]);
-    expect(bodyOf(fetch, "POST", "/api/people/drafts/rejection")).toEqual([
-      { people: ["p1", "p2"], reason: "Fictional reason" },
+    expect(bodyOf(fetch, "POST", "/api/drafts/rejection")).toEqual([
+      {
+        people: ["p1", "p2"],
+        lists: [],
+        choices: [],
+        orders: [],
+        reason: "Fictional reason",
+      },
     ]);
   });
 
@@ -1885,21 +1891,27 @@ describe("searching, sorting, and filtering", () => {
     });
     const names = () =>
       shownNames().map((name) => name.replace(/\s*(Draft|Rejected).*/, ""));
-    const button = screen.getByRole("button", { name: "Filter Draft" });
+    const button = screen.getByRole("button", { name: "Draft" });
     await userEvent.click(button);
-    const dialog = await screen.findByRole("dialog", { name: "Filter Draft" });
+    const item = async (name: string) =>
+      screen.findByRole("menuitem", {
+        name: (shown) => shown.startsWith(name),
+      });
     expect(
-      within(dialog)
-        .getAllByRole("checkbox")
-        .map((box) => (box as HTMLInputElement).labels?.[0]?.textContent),
-    ).toEqual(["Waiting", "Rejected", "No draft"]);
-    await userEvent.click(
-      within(dialog).getByRole("checkbox", { name: "Waiting" }),
-    );
+      (await screen.findAllByRole("menuitem")).map((one) =>
+        one.textContent.replace("✓", ""),
+      ),
+    ).toEqual([
+      "Drafts beside live, on",
+      "Drafts applied",
+      "Live only",
+      "Waiting",
+      "Rejected",
+      "No draft",
+    ]);
+    await userEvent.click(await item("Waiting"));
     expect(names()).toEqual(["Avery Fictional"]);
-    await userEvent.click(
-      within(dialog).getByRole("checkbox", { name: "No draft" }),
-    );
+    await userEvent.click(await item("No draft"));
     expect(names()).toEqual(["Avery Fictional", "Blake Fictional"]);
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
@@ -1922,7 +1934,7 @@ describe("searching, sorting, and filtering", () => {
       expect(names()).toEqual(["Casey Fictional"]);
     });
     expect(
-      screen.getByRole("button", { name: "Filter Draft, filtered" }),
+      screen.getByRole("button", { name: "Draft, changed" }),
     ).toBeDefined();
     // Drafts are filtered on, but neither searched, since their states are not shown in words, nor
     // sorted on, even from a hand-made address.
@@ -1931,7 +1943,154 @@ describe("searching, sorting, and filtering", () => {
       expect(screen.getByRole("status").textContent).toBe("0 of 3");
     });
     expect(screen.queryByText("Draft ↑")).toBeNull();
-    expect(screen.getByRole("button", { name: "Filter Draft" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "Draft" })).toBeDefined();
+  });
+
+  it("shows choices by their live names in live rows and the live people alone", async () => {
+    const renamed = {
+      ...sites,
+      choices: sites.choices.map((one) =>
+        (one as { id: string }).id === "c1"
+          ? {
+              ...one,
+              label: "Harbour Drafted",
+              draft: {
+                action: "changed",
+                changed: ["label"],
+                live: { label: "Harbour" },
+                state: "waiting",
+                madeBy: "Fictional Editor",
+                madeAt: "2026-10-30T15:00:00.000Z",
+              },
+            }
+          : one,
+      ),
+    };
+    const { history } = await openAt("/people", {
+      "GET /api/lists": () => Response.json({ lists: [renamed, roles, old] }),
+    });
+    expect(screen.getAllByText("Harbour Drafted").length).toBeGreaterThan(0);
+    history.push("/people?show=live");
+    await waitFor(() => {
+      expect(screen.queryByText("Harbour Drafted")).toBeNull();
+    });
+    expect(screen.getAllByText("Harbour").length).toBeGreaterThan(0);
+  });
+
+  it("shows drafts beside live rows, drafts applied, or the live people alone, read only", async () => {
+    const { history } = await openAt("/people", {
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              preferredName: "Avery Drafted",
+              draft: draftOf({
+                action: "changed",
+                changed: ["preferredName"],
+                live: { preferredName: "Avery Fictional", values: {} },
+              }),
+            },
+            {
+              ...blake,
+              id: "p3",
+              preferredName: "Casey Fictional",
+              employeeId: "E3",
+              draft: draftOf({ action: "created" }),
+            },
+          ],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    const liveRows = () => screen.queryAllByText("Live").length;
+    await screen.findByText("Avery Drafted");
+    expect(liveRows()).toBe(1);
+    const choose = async (name: string) => {
+      await userEvent.click(screen.getByRole("button", { name: /^Draft/ }));
+      await userEvent.click(
+        await screen.findByRole("menuitem", {
+          name: (shown) => shown.startsWith(name),
+        }),
+      );
+      await userEvent.keyboard("{Escape}");
+    };
+    await choose("Drafts applied");
+    await waitFor(() => {
+      expect(liveRows()).toBe(0);
+    });
+    expect(screen.getByText("Avery Drafted")).toBeDefined();
+    expect(address(history)).toContain("show=drafts");
+    await choose("Live only");
+    await waitFor(() => {
+      expect(screen.queryByText("Avery Drafted")).toBeNull();
+    });
+    expect(screen.getByText("Avery Fictional")).toBeDefined();
+    expect(screen.queryByText("Casey Fictional")).toBeNull();
+    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
+    // The live people have no drafts, so a filter on drafts in the address is set aside.
+    history.push('/people?show=live&filters={"draft":{"any":["waiting"]}}');
+    await waitFor(() => {
+      expect(screen.getByText("Avery Fictional")).toBeDefined();
+    });
+  });
+
+  it("says in a draft's menu what it changes and who changed each field, and closes when its details are clicked", async () => {
+    await openAt("/people", {
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              preferredName: "Avery Drafted",
+              employeeId: "E9",
+              draft: draftOf({
+                action: "changed",
+                changed: ["preferredName", "employeeId", "f1"],
+                live: {
+                  preferredName: "Avery Fictional",
+                  employeeId: "E1",
+                  values: {},
+                },
+                changedBy: { preferredName: "Ann Fictional", employeeId: null },
+              }),
+            },
+          ],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Actions for Avery Drafted" }),
+    );
+    const line = await screen.findByText(
+      "Name from Avery Fictional to Avery Drafted, by Ann Fictional",
+    );
+    expect(
+      screen.getByText("Employee ID from E1 to E9, by Fathom"),
+    ).toBeDefined();
+    await userEvent.click(line);
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+  });
+
+  it("turns draft filters off again from the Draft menu", async () => {
+    const { history } = await openAt("/people");
+    await userEvent.click(screen.getByRole("button", { name: "Draft" }));
+    const item = async (name: string) =>
+      screen.findByRole("menuitem", {
+        name: (shown) => shown.startsWith(name),
+      });
+    await userEvent.click(await item("No draft"));
+    await userEvent.click(await item("Waiting"));
+    await userEvent.click(await item("Waiting"));
+    await userEvent.click(await item("No draft"));
+    await waitFor(() => {
+      expect(address(history)).not.toContain("filters");
+    });
   });
 
   it("narrows a long list of choices by typing", async () => {

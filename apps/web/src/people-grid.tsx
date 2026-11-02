@@ -50,11 +50,16 @@ import {
   useState,
 } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
+import {
+  draftLines,
+  MenuDraftLines,
+  personDraftFields,
+} from "./draft-details.tsx";
 import { type Asking, drafts as draftCount } from "./decision-dialog.tsx";
 import { focusSoon } from "./focus.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
-import { sameName } from "./lists.ts";
+import { liveLists, offered, sameName } from "./lists.ts";
 import {
   type ChangeView,
   ColumnViewItems,
@@ -76,7 +81,7 @@ import {
   type View,
 } from "./table-view.ts";
 import classes from "./pages.module.css";
-import { StatusMark } from "./status-mark.tsx";
+import { DraftMark, StatusMark } from "./status-mark.tsx";
 
 export interface PeopleActions {
   // Adds people, all saved together, showing each at once under the identifier given until saved,
@@ -226,31 +231,37 @@ function draftChanges(draft: PersonDraft | undefined, column: Column): boolean {
   return draft.action === "created" || draft.changed.includes(column.key);
 }
 
-// What a person's draft is, in words.
-export function draftWords(draft: PersonDraft): string {
-  if (draft.state === "rejected") {
-    return draft.reason === undefined
-      ? "Rejected"
-      : `Rejected: ${draft.reason}`;
-  }
-  if (draft.action === "created") return "Draft: added";
-  if (draft.action === "deleted") return "Draft: removed";
-  return "Draft";
+// Everyone as they are live, without drafts: those only drafted to be added are left out, and each
+// detail and column a draft changes has its live value back.
+export function livePeople(people: readonly Person[]): Person[] {
+  return people.flatMap((person): Person[] => {
+    const { draft, ...rest } = person;
+    if (draft === undefined) return [person];
+    if (draft.action === "created") return [];
+    if (draft.action === "deleted") return [rest];
+    const columns = draft.changed.filter((key) => !builtInDetail(key));
+    const liveValues = new Map(Object.entries(draft.live.values));
+    const values: Record<string, string[]> = Object.fromEntries([
+      ...Object.entries(rest.values).filter(([key]) => !columns.includes(key)),
+      ...columns.flatMap((key): [string, string[]][] => {
+        const live = liveValues.get(key) ?? [];
+        return live.length === 0 ? [] : [[key, live]];
+      }),
+    ]);
+    const details: Partial<Person> = Object.fromEntries(
+      draft.changed
+        .filter(builtInDetail)
+        .map((key): [string, string | null] => [
+          key,
+          draft.live[key as DetailKey] ?? null,
+        ]),
+    );
+    return [{ ...rest, ...details, values }];
+  });
 }
 
-// The mark beside a person with a draft, in words after a dot, yellow, or red once rejected. A
-// rejection's reason is in the person's menu, not in the table, and is read aloud with the mark.
-function DraftMark({ draft }: { draft: PersonDraft }) {
-  const rejected = draft.state === "rejected";
-  return (
-    <StatusMark tone={rejected ? "rejected" : "draft"} spaced>
-      {rejected ? "Rejected" : draftWords(draft)}
-      {rejected && draft.reason !== undefined && (
-        <VisuallyHidden>: {draft.reason}</VisuallyHidden>
-      )}
-    </StatusMark>
-  );
-}
+const builtInDetail = (key: string) =>
+  ["preferredName", "employeeId", "startDate", "endDate"].includes(key);
 
 function newRowValue(newRow: NewRow, column: Column): CellValue {
   return newRow.values[column.key] ?? (column.kind === "choice" ? [] : "");
@@ -348,9 +359,10 @@ function shown(column: Column, value: CellValue): string {
 }
 
 // The choices a cell offers: those offered in its list, and any retired ones it already has.
+// Choices only drafted to be added are not offered until approved.
 function choicesFor(column: Column, value: string[]) {
   return column.choices
-    .filter((choice) => !choice.retired || value.includes(choice.id))
+    .filter((choice) => offered(choice) || value.includes(choice.id))
     .map((choice) => ({ value: choice.id, label: choice.label }));
 }
 
@@ -447,7 +459,7 @@ export function pastedRows(
           continue;
         }
         const choice = column.choices.find(
-          (option) => !option.retired && sameName(option.label, content),
+          (option) => offered(option) && sameName(option.label, content),
         );
         if (choice === undefined) {
           problem ??= `No ${column.label} called ${content}`;
@@ -509,12 +521,12 @@ function NewMark({ missing }: { missing: readonly string[] }) {
 }
 
 export function PeopleGrid({
-  people,
+  people: everyone,
   fields,
   order,
   lists,
-  canEdit,
-  canApprove = false,
+  canEdit: mayEdit,
+  canApprove: mayApprove = false,
   saving = false,
   canEditColumns,
   showDates,
@@ -544,8 +556,33 @@ export function PeopleGrid({
   saved?: SavedViews;
   ref?: Ref<PeopleGridHandle>;
 }) {
-  const columns = columnsFor(fields, lists, order, showDates);
-  const view = knownView(asked, columns, [draftColumn]);
+  // The columns with their lists as they are live, for the live people and each live row, so a
+  // choice's drafted name is not shown as live.
+  const liveColumns = columnsFor(fields, liveLists(lists), order, showDates);
+  // Both are made from the same fields, so every column has its live one.
+  const liveColumn = (column: Column) =>
+    liveColumns.find(({ key }) => key === column.key) as Column;
+  const columns =
+    asked.show === "live"
+      ? liveColumns
+      : columnsFor(fields, lists, order, showDates);
+  const known = knownView(asked, columns, [draftColumn]);
+  // The live people alone are read only, since every change makes a draft they do not show, and
+  // have no drafts to filter by.
+  const liveOnly = known.show === "live";
+  const view = liveOnly
+    ? {
+        ...known,
+        filters: Object.fromEntries(
+          Object.entries(known.filters).filter(
+            ([key]) => key !== draftFilterKey,
+          ),
+        ),
+      }
+    : known;
+  const people = liveOnly ? livePeople(everyone) : everyone;
+  const canEdit = mayEdit && !liveOnly;
+  const canApprove = mayApprove && !liveOnly;
   // No width follows what is typed, so editing never moves the table.
   const [longestText] = useState(() => longestTexts(columns, people));
   // The people this user has added since the page opened, which stay shown whatever the view.
@@ -1110,11 +1147,30 @@ export function PeopleGrid({
           <Icon name="more" />
         </ActionIcon>
       </Menu.Target>
-      <Menu.Dropdown>
+      <Menu.Dropdown
+        // A click anywhere in the menu but its items closes it, such as on a draft's details.
+        onClick={(event) => {
+          if (!(event.target as HTMLElement).closest("button")) {
+            setMenuFor(undefined);
+          }
+        }}
+      >
+        {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
+        <Menu.Label className={classes.menuTitle}>
+          {person.preferredName}
+        </Menu.Label>
         {draft?.state === "rejected" && draft.reason !== undefined && (
           <Menu.Label className={classes.rejectedReason}>
             Rejected: {draft.reason}
           </Menu.Label>
+        )}
+        {draft && (
+          <MenuDraftLines
+            lines={draftLines(
+              draft,
+              personDraftFields(person, draft, fields, lists),
+            )}
+          />
         )}
         {canApprove && draft && (
           <>
@@ -1183,7 +1239,7 @@ export function PeopleGrid({
         one="person"
         noun="people"
         columns={columns}
-        filterOnly={[draftColumn]}
+        draftFilter={draftColumn}
         view={view}
         onView={onView}
         shown={shownPeople.length}
@@ -1279,7 +1335,7 @@ export function PeopleGrid({
                   rowClass = filling ? classes.peopleFillingRow : undefined;
                 } else if (draft) {
                   rowClass = [
-                    classes.peopleDraftRow,
+                    classes.draftRow,
                     draft.action === "deleted" ? classes.peopleRemovedRow : "",
                   ].join(" ");
                 }
@@ -1300,7 +1356,10 @@ export function PeopleGrid({
                       const changes = draftChanges(draft, column);
                       const live =
                         changes && draft?.action === "changed"
-                          ? shown(column, liveValue(draft, column)) || "empty"
+                          ? shown(
+                              liveColumn(column),
+                              liveValue(draft, column),
+                            ) || "empty"
                           : undefined;
                       return (
                         <Table.Td
@@ -1318,8 +1377,8 @@ export function PeopleGrid({
                               ? [
                                   classes.peopleCell,
                                   draft?.state === "rejected"
-                                    ? classes.peopleRejectedCell
-                                    : classes.peopleDraftCell,
+                                    ? classes.rejectedCell
+                                    : classes.draftCell,
                                 ].join(" ")
                               : classes.peopleCell
                           }
@@ -1393,35 +1452,37 @@ export function PeopleGrid({
                   </Table.Tr>,
                   // Under a person whose draft changes them, the person as they are live, to compare.
                   // Assistive technology hears each changed cell's live value instead.
-                  row.person && draft?.action === "changed" && (
-                    <Table.Tr
-                      key={`${key}-live`}
-                      className={classes.peopleLiveRow}
-                      aria-hidden="true"
-                    >
-                      {columns.map((column, columnIndex) => (
-                        <Table.Td
-                          key={column.key}
-                          className={classes.peopleCell}
-                        >
-                          {shown(
-                            column,
-                            draft.changed.includes(column.key)
-                              ? liveValue(draft, column)
-                              : column.value(row.person),
-                          )}
-                          {columnIndex === 0 && (
-                            <StatusMark tone="live" spaced>
-                              Live
-                            </StatusMark>
-                          )}
-                        </Table.Td>
-                      ))}
-                      {withActions && (
-                        <Table.Td className={classes.peopleCell} />
-                      )}
-                    </Table.Tr>
-                  ),
+                  row.person &&
+                    draft?.action === "changed" &&
+                    view.show === "both" && (
+                      <Table.Tr
+                        key={`${key}-live`}
+                        className={classes.peopleLiveRow}
+                        aria-hidden="true"
+                      >
+                        {columns.map((column, columnIndex) => (
+                          <Table.Td
+                            key={column.key}
+                            className={classes.peopleCell}
+                          >
+                            {shown(
+                              liveColumn(column),
+                              draft.changed.includes(column.key)
+                                ? liveValue(draft, column)
+                                : column.value(row.person),
+                            )}
+                            {columnIndex === 0 && (
+                              <StatusMark tone="live" spaced>
+                                Live
+                              </StatusMark>
+                            )}
+                          </Table.Td>
+                        ))}
+                        {withActions && (
+                          <Table.Td className={classes.peopleCell} />
+                        )}
+                      </Table.Tr>
+                    ),
                 ];
               })}
             </Table.Tbody>

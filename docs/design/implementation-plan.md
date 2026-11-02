@@ -38,7 +38,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | People | Done: user-defined lists and people |
 | Seed Accounts | Done |
 | Change History | Done |
-| Draft and Approval | In progress: drafts of people done; drafts of configuration next |
+| Draft and Approval | In progress: drafts of people, lists, and choices done; drafts of columns, and drafts that use other drafts, next |
 
 ### Hello Fathom
 

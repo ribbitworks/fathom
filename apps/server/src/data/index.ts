@@ -10,6 +10,7 @@ import type {
   ChangeHistory,
   Choice,
   ChoiceRequest,
+  DraftsRequest,
   Field,
   FieldRequest,
   HistoryEntry,
@@ -31,7 +32,7 @@ import {
   requirePermission,
   seesTier,
 } from "../access.ts";
-import { approvePeopleDrafts, rejectPeopleDrafts } from "./approvals.ts";
+import { approveDrafts, rejectDrafts } from "./approvals.ts";
 import { readGreeting } from "./greeting.ts";
 import { moveColumn, readColumnOrder } from "./column-order.ts";
 import * as fieldData from "./fields.ts";
@@ -64,6 +65,8 @@ export interface DataAccess {
   // Lists of choices, which everyone who sees planning configuration may read, and only those who may
   // edit it may change.
   lists: ListAccess;
+  // Approving and rejecting drafts of every kind, several kinds at once; neither can be undone.
+  drafts: DraftAccess;
   // People, and the columns on the People table.
   people: PeopleAccess;
   // Undoes a change set the actor made, returning the change set that undid it.
@@ -75,6 +78,22 @@ export type ChangeSetId = string | null;
 
 export type { Saved } from "./changes.ts";
 
+export interface DraftAccess {
+  approve(actor: Actor, asked: DraftsRequest): Promise<ChangeSetId>;
+  reject(
+    actor: Actor,
+    asked: DraftsRequest,
+    reason: string,
+  ): Promise<ChangeSetId>;
+}
+
+// Which draft of a list: the list's own, one of its choices', or that of its choices' order.
+export type ListDraftTarget =
+  | { kind: "list"; listId: string }
+  | { kind: "choice"; listId: string; choiceId: string }
+  | { kind: "order"; listId: string };
+
+// Every change to lists and choices is a draft, which reaches the live lists once approved.
 export interface ListAccess {
   read(actor: Actor): Promise<List[]>;
   create(actor: Actor, request: ListRequest): Promise<Saved<List>>;
@@ -110,6 +129,9 @@ export interface ListAccess {
     request: RetiredRequest,
   ): Promise<ChangeSetId>;
   deleteChoice(actor: Actor, listId: string, id: string): Promise<ChangeSetId>;
+  discardDraft(actor: Actor, target: ListDraftTarget): Promise<ChangeSetId>;
+  // Sends a rejected draft for approval again, unchanged.
+  resubmitDraft(actor: Actor, target: ListDraftTarget): Promise<ChangeSetId>;
 }
 
 export interface PeopleAccess {
@@ -131,13 +153,6 @@ export interface PeopleAccess {
   discardDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   // Sends a rejected draft for approval again, unchanged.
   resubmitDraft(actor: Actor, id: string): Promise<ChangeSetId>;
-  // Approves or rejects the drafts of the people given, all together; neither can be undone.
-  approveDrafts(actor: Actor, ids: readonly string[]): Promise<ChangeSetId>;
-  rejectDrafts(
-    actor: Actor,
-    ids: readonly string[],
-    reason: string,
-  ): Promise<ChangeSetId>;
   createField(actor: Actor, request: FieldRequest): Promise<Saved<Field>>;
   updateField(
     actor: Actor,
@@ -195,6 +210,22 @@ function createListAccess(database: Database): ListAccess {
       lists.setChoiceRetired(database, editor(actor), listId, id, retired),
     deleteChoice: async (actor, listId, id) =>
       lists.deleteChoice(database, editor(actor), listId, id),
+    discardDraft: async (actor, target) =>
+      lists.discardListDraft(
+        database,
+        editor(actor),
+        target.kind,
+        target.listId,
+        target.kind === "choice" ? target.choiceId : undefined,
+      ),
+    resubmitDraft: async (actor, target) =>
+      lists.resubmitListDraft(
+        database,
+        editor(actor),
+        target.kind,
+        target.listId,
+        target.kind === "choice" ? target.choiceId : undefined,
+      ),
   };
 }
 
@@ -237,10 +268,6 @@ function createPeopleAccess(database: Database): PeopleAccess {
       peopleData.discardPersonDraft(database, actor, id),
     resubmitDraft: async (actor, id) =>
       peopleData.resubmitPersonDraft(database, actor, id),
-    approveDrafts: async (actor, ids) =>
-      approvePeopleDrafts(database, actor, ids),
-    rejectDrafts: async (actor, ids, reason) =>
-      rejectPeopleDrafts(database, actor, ids, reason),
     createField: async (actor, request) =>
       fieldData.createField(database, editor(actor), request),
     updateField: async (actor, id, request) =>
@@ -292,6 +319,11 @@ export function createDataAccess(database: Database): DataAccess {
       return { entries: read.entries, next: read.next };
     },
     lists: createListAccess(database),
+    drafts: {
+      approve: async (actor, asked) => approveDrafts(database, actor, asked),
+      reject: async (actor, asked, reason) =>
+        rejectDrafts(database, actor, asked, reason),
+    },
     people: createPeopleAccess(database),
     undo: async (actor, changeSetId) =>
       undoChangeSet(database, actor, changeSetId),

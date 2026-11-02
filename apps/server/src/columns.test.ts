@@ -22,12 +22,9 @@ afterAll(async () => {
 // Approves the drafts of the people given, as an Approver who sees every tier.
 async function approve(ids: readonly string[]) {
   const { cookie } = await test.signedIn(["approver", "leadership"]);
-  const response = await test.request(
-    cookie,
-    "POST",
-    "/api/people/drafts/approval",
-    { people: ids },
-  );
+  const response = await test.request(cookie, "POST", "/api/drafts/approval", {
+    people: ids,
+  });
   expect(response.statusCode).toBe(200);
 }
 
@@ -47,6 +44,7 @@ describe("required columns", () => {
         choices: [{ label: "Fictional Harbour" }],
       })
     ).json<{ choices: Choice[] }>().choices;
+    await test.approveLists();
     const addColumn = async (name: string, required: boolean) =>
       test.request(cookie, "POST", "/api/people/columns", {
         name,

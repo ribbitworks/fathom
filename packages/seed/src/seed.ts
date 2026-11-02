@@ -42,6 +42,7 @@ import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { seedAccounts, unseedAccounts } from "./accounts.ts";
 import { seedDrafts, unseedDrafts } from "./drafts.ts";
+import { seedListDrafts, unseedListDrafts } from "./list-drafts.ts";
 import { passwordLength } from "@fathom/shared";
 
 // The development data set's size.
@@ -356,7 +357,16 @@ export async function seedCommand(
       if (await seedDrafts(database, organization)) {
         console.log("Added drafts made by the personas");
       }
+      if (await seedListDrafts(database, organization)) {
+        console.log("Added drafts of lists made by the personas");
+      }
     } else {
+      const discardedLists = await unseedListDrafts(database, organization);
+      if (discardedLists > 0) {
+        console.log(
+          `Discarded ${String(discardedLists)} drafts of lists made by the personas`,
+        );
+      }
       const discarded = await unseedDrafts(database, organization);
       if (discarded > 0) {
         console.log(

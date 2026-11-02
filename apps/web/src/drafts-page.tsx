@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Drafts page: every draft the user may see, newest first, each a sentence saying who drafted
-// what, with what it changes from its live value, and rejected drafts marked with their reason. A
-// search narrows them. Approvers select drafts, one or several at once, and approve or reject them,
-// as they can on the People table too.
+// The Drafts page: every draft the user may see, of people, lists, choices, and the order of lists'
+// choices, newest first, each a sentence saying who drafted what, with what it changes from its live
+// value, and rejected drafts marked with their reason. A search narrows them. Approvers select
+// drafts, one or several at once, and approve or reject them, as they can on the People table and
+// the Lists page too. Approving or rejecting names any other drafts it includes.
 
 import {
-  builtInColumnNames,
-  type ChangedField,
   type ChangeValue,
+  type Choice,
+  type DraftState,
   type List,
   matchesWords,
   type Person,
@@ -34,14 +35,23 @@ import {
   DecisionModal,
   drafts,
 } from "./decision-dialog.tsx";
+import {
+  type DraftSelection,
+  draftNames,
+  draftTotal,
+  joined,
+  noDrafts,
+  usedDrafts,
+  usingDrafts,
+} from "./drafts.ts";
+import { personDraftFields } from "./draft-details.tsx";
 import { EntryDetails, EntryList, EntryRow } from "./history-entries.tsx";
 import { HistorySearch } from "./history-search.tsx";
 import { listsQuery } from "./lists.ts";
 import { PageHeader } from "./page-header.tsx";
-import { type DetailKey, draftWords } from "./people-grid.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import classes from "./pages.module.css";
-import { StatusMark } from "./status-mark.tsx";
+import { draftWords, StatusMark } from "./status-mark.tsx";
 
 interface Drafted {
   person: Person;
@@ -57,97 +67,200 @@ function draftedPeople(data: PeopleData): Drafted[] {
     .sort((a, b) => (b.draft.madeAt ?? "").localeCompare(a.draft.madeAt ?? ""));
 }
 
-// What a draft changes, field by field, as the change history words it: each built-in detail and
-// column, from its live value to the draft's. A draft adding someone does not repeat their name.
-export function draftFields(
-  { person, draft }: Drafted,
-  data: PeopleData,
-  lists: readonly List[],
-): ChangedField[] {
-  const labels = (ids: readonly string[] | undefined): ChangeValue =>
-    (ids ?? []).flatMap((id) => {
-      const label = lists
-        .flatMap(({ choices }) => choices)
-        .find((choice) => choice.id === id)?.label;
-      return label === undefined ? [] : [label];
-    });
-  return draft.changed.flatMap((key): ChangedField[] => {
-    if (builtInColumnNames.has(key)) {
-      if (draft.action === "created" && key === "preferredName") return [];
-      const detail = key as DetailKey;
-      return [
-        {
-          field: key,
-          // The detail is one of the fixed built-in ones.
-          /* eslint-disable security/detect-object-injection */
-          oldValue:
-            draft.action === "created" ? null : (draft.live[detail] ?? null),
-          newValue: person[detail] ?? null,
-          /* eslint-enable security/detect-object-injection */
-        },
-      ];
-    }
-    const column = data.fields.find(({ id }) => id === key);
-    return [
-      {
-        field: "value",
-        ...(column === undefined ? {} : { column: column.name }),
-        // The key is a column's own.
-        // eslint-disable-next-line security/detect-object-injection
-        oldValue: labels(draft.live.values[key]),
-        // eslint-disable-next-line security/detect-object-injection
-        newValue: labels(person.values[key]),
-      },
-    ];
-  });
+// Names in a sentence: "A", "A and B", or "A, B and C".
+export function joinedNames(names: readonly string[]): string {
+  if (names.length <= 1) return names.join("");
+  return `${names.slice(0, -1).join(", ")} and ${String(names.at(-1))}`;
 }
 
 // What a draft did, after who made it.
-function verb({ draft }: Drafted): string {
-  if (draft.action === "created") return "drafted adding";
-  if (draft.action === "deleted") return "drafted removing";
+function verb(action: PersonDraft["action"] | undefined): string {
+  if (action === "created") return "drafted adding";
+  if (action === "deleted") return "drafted removing";
+  if (action === undefined) return "drafted a new order of";
   return "drafted changes to";
 }
 
-// A draft in words: who made it, what they drafted, what it changes, and why it was rejected, as
-// shown and as searched.
-function wordsOf(drafted: Drafted, data: PeopleData, lists: readonly List[]) {
-  const { person, draft } = drafted;
-  const details =
-    draft.action === "deleted"
-      ? []
-      : draftFields(drafted, data, lists).map(describeField);
-  const who = draft.madeBy ?? "Fathom";
+// A draft on the page, of any kind, in words: who made it, what they drafted, what it changes, and
+// why it was rejected, as shown and as searched, with the draft it selects.
+interface Entry {
+  key: string;
+  madeAt: string | null;
+  state: DraftState;
+  who: string;
+  verb: string;
+  subject: string;
+  details: string[];
+  rejected: string;
+  text: string;
+  selects: DraftSelection;
+}
+
+function entry(
+  key: string,
+  draft: {
+    action?: PersonDraft["action"];
+    state: DraftState;
+    reason?: string | undefined;
+    madeBy: string | null;
+    madeAt: string | null;
+    editors?: (string | null)[] | undefined;
+  },
+  subject: string,
+  details: string[],
+  selects: Partial<DraftSelection>,
+): Entry {
+  // Everyone who changed the draft, since several people's changes to one record make one draft.
+  const who = joinedNames(
+    (draft.editors?.length ? draft.editors : [draft.madeBy]).map(
+      (name) => name ?? "Fathom",
+    ),
+  );
   const rejected = draft.state === "rejected" ? draftWords(draft) : "";
+  const did = verb(draft.action);
   return {
+    key,
+    madeAt: draft.madeAt,
+    state: draft.state,
     who,
+    verb: did,
+    subject,
     details,
     rejected,
-    text: [who, verb(drafted), person.preferredName, ...details, rejected].join(
-      " ",
-    ),
+    text: [who, did, subject, ...details, rejected].join(" "),
+    selects: { ...noDrafts(), ...selects },
   };
 }
 
+const listFieldNames = ["name", "description", "visibility", "retired"];
+
+interface Credited {
+  editors?: (string | null)[] | undefined;
+  changedBy?: Record<string, string | null> | undefined;
+}
+
+// What changed in a field, naming who changed it when several people changed the draft, since
+// their changes make one draft.
+function credited(text: string, key: string, draft: Credited): string {
+  if ((draft.editors?.length ?? 0) < 2) return text;
+  const by = new Map(Object.entries(draft.changedBy ?? {}));
+  return by.has(key) ? `${text} (${by.get(key) ?? "Fathom"})` : text;
+}
+
+// What a list's or choice's draft changes, field by field, from its live value.
+function configFields(
+  draft: { action: string; changed: string[]; live: object } & Credited,
+  now: Record<string, unknown>,
+): string[] {
+  if (draft.action !== "changed") return [];
+  return draft.changed.map((field) =>
+    credited(
+      describeField({
+        field,
+        // The fields are the record's own, as its draft names them.
+        /* eslint-disable security/detect-object-injection */
+        oldValue: ((draft.live as Record<string, unknown>)[field] ??
+          null) as ChangeValue,
+        newValue: (now[field] ?? null) as ChangeValue,
+        /* eslint-enable security/detect-object-injection */
+      }),
+      field,
+      draft,
+    ),
+  );
+}
+
+// Every draft of a list, a choice, or a list's order, as entries.
+function listEntries(lists: readonly List[]): Entry[] {
+  const labelOf = (list: List, id: string) =>
+    list.choices.find((choice) => choice.id === id)?.label ??
+    "a removed choice";
+  return lists.flatMap((list) => [
+    ...(list.draft
+      ? [
+          entry(
+            `list ${list.id}`,
+            list.draft,
+            `the list ${list.name}`,
+            configFields(
+              {
+                ...list.draft,
+                changed: list.draft.changed.filter((field) =>
+                  listFieldNames.includes(field),
+                ),
+              },
+              list,
+            ),
+            { lists: [list.id] },
+          ),
+        ]
+      : []),
+    ...list.choices.flatMap((choice: Choice) =>
+      choice.draft
+        ? [
+            entry(
+              `choice ${choice.id}`,
+              choice.draft,
+              `the choice ${choice.label} in ${list.name}`,
+              configFields(choice.draft, choice),
+              { choices: [choice.id] },
+            ),
+          ]
+        : [],
+    ),
+    ...(list.orderDraft
+      ? [
+          entry(
+            `order ${list.id}`,
+            list.orderDraft,
+            list.name,
+            [
+              `Order from ${list.orderDraft.live.map((id) => labelOf(list, id)).join(", ")} to ${list.choices.map(({ label }) => label).join(", ")}`,
+            ],
+            { orders: [list.id] },
+          ),
+        ]
+      : []),
+  ]);
+}
+
+function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
+  return draftedPeople(data).map((drafted) =>
+    entry(
+      `person ${drafted.person.id}`,
+      drafted.draft,
+      drafted.person.preferredName,
+      drafted.draft.action === "deleted"
+        ? []
+        : personDraftFields(
+            drafted.person,
+            drafted.draft,
+            data.fields,
+            lists,
+          ).map(({ key, field }) =>
+            credited(describeField(field), key, drafted.draft),
+          ),
+      { people: [drafted.person.id] },
+    ),
+  );
+}
+
 function DraftEntry({
-  drafted,
-  words,
+  shown,
   selection,
 }: {
-  drafted: Drafted;
-  words: ReturnType<typeof wordsOf>;
+  shown: Entry;
   // Absent for users who may not approve.
   selection?: { selected: boolean; onSelect: (selected: boolean) => void };
 }) {
-  const { person, draft } = drafted;
   return (
     <EntryRow
-      at={draft.madeAt}
+      at={shown.madeAt}
       lead={
         selection && (
           <Checkbox
             mt={2}
-            aria-label={`Select the draft of ${person.preferredName}`}
+            aria-label={`Select the draft of ${shown.subject}`}
             checked={selection.selected}
             onChange={(event) => {
               selection.onSelect(event.currentTarget.checked);
@@ -158,19 +271,19 @@ function DraftEntry({
     >
       <Text fz="sm">
         <Text span inherit fw={600}>
-          {words.who}
+          {shown.who}
         </Text>{" "}
-        {verb(drafted)}{" "}
+        {shown.verb}{" "}
         <Text span inherit fw={600}>
-          {person.preferredName}
+          {shown.subject}
         </Text>
-        {words.details.length > 0 && (
-          <EntryDetails>{words.details.join("; ")}</EntryDetails>
+        {shown.details.length > 0 && (
+          <EntryDetails>{shown.details.join("; ")}</EntryDetails>
         )}
       </Text>
-      {words.rejected !== "" && (
+      {shown.rejected !== "" && (
         <Text className={classes.markGap}>
-          <StatusMark tone="rejected">{words.rejected}</StatusMark>
+          <StatusMark tone="rejected">{shown.rejected}</StatusMark>
         </Text>
       )}
     </EntryRow>
@@ -179,21 +292,27 @@ function DraftEntry({
 
 export function DraftsPage({
   canApprove,
+  seesPeople = true,
   search,
   onSearch,
 }: {
   canApprove: boolean;
+  // Whether the user sees people, so their drafts; those who see only lists see only theirs.
+  seesPeople?: boolean;
   search: string;
   onSearch: (search: string, replace: boolean) => void;
 }) {
-  const people = useQuery(peopleQuery);
+  const people = useQuery({ ...peopleQuery, enabled: seesPeople });
   const lists = useQuery(listsQuery);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [decision, setDecision] = useState<Decision>();
   const [opened, setOpened] = useState(false);
 
   let content: ReactNode;
-  if (people.isPending || lists.isPending) {
+  const peopleData: PeopleData | undefined = seesPeople
+    ? people.data
+    : { people: [], fields: [], order: [], views: [] };
+  if ((seesPeople && people.isPending) || lists.isPending) {
     content = <Loader role="status" aria-label="Loading" />;
   } else if (people.isError || lists.isError) {
     content = (
@@ -216,26 +335,32 @@ export function DraftsPage({
     );
   } else {
     const words = searchWords(search);
-    const all = draftedPeople(people.data);
-    const shown = all
-      .map((drafted) => ({
-        drafted,
-        words: wordsOf(drafted, people.data, lists.data),
-      }))
-      .filter(({ words: { text } }) => matchesWords(text, words));
-    const waiting = shown.filter(
-      ({ drafted }) => drafted.draft.state === "waiting",
-    );
+    const all = [
+      ...personEntries(peopleData as PeopleData, lists.data),
+      ...listEntries(lists.data),
+    ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
+    const shown = all.filter(({ text }) => matchesWords(text, words));
+    const waiting = shown.filter(({ state }) => state === "waiting");
     // Only drafts still shown stay selected. Rejected drafts may be selected too, to approve them
     // after all or reject them for another reason.
-    const chosen = shown
-      .map(({ drafted }) => drafted.person.id)
-      .filter((id) => selected.has(id));
-    const chosenWaiting = waiting.filter(({ drafted }) =>
-      selected.has(drafted.person.id),
-    );
+    const chosen = shown.filter(({ key }) => selected.has(key));
+    const chosenWaiting = waiting.filter(({ key }) => selected.has(key));
     const ask = (asking: Asking) => {
-      setDecision({ asking, ids: chosen });
+      const selection = chosen.reduce(
+        (all, { selects }) => joined(all, selects),
+        noDrafts(),
+      );
+      const others =
+        asking === "approve"
+          ? usedDrafts(selection, lists.data)
+          : usingDrafts(selection, lists.data);
+      setDecision({
+        asking,
+        selection: joined(selection, others),
+        ...(draftTotal(others) > 0
+          ? { included: draftNames(others, lists.data) }
+          : {}),
+      });
       setOpened(true);
     };
     content = (
@@ -256,7 +381,7 @@ export function DraftsPage({
                 setSelected(
                   new Set(
                     event.currentTarget.checked
-                      ? waiting.map(({ drafted }) => drafted.person.id)
+                      ? waiting.map(({ key }) => key)
                       : [],
                   ),
                 );
@@ -294,20 +419,19 @@ export function DraftsPage({
             </Text>
           )}
           <EntryList>
-            {shown.map(({ drafted, words: entryWords }) => (
+            {shown.map((one) => (
               <DraftEntry
-                key={drafted.person.id}
-                drafted={drafted}
-                words={entryWords}
+                key={one.key}
+                shown={one}
                 {...(canApprove
                   ? {
                       selection: {
-                        selected: selected.has(drafted.person.id),
+                        selected: selected.has(one.key),
                         onSelect: (on: boolean) => {
                           setSelected((current) => {
                             const next = new Set(current);
-                            if (on) next.add(drafted.person.id);
-                            else next.delete(drafted.person.id);
+                            if (on) next.add(one.key);
+                            else next.delete(one.key);
                             return next;
                           });
                         },

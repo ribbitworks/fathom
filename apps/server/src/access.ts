@@ -46,7 +46,13 @@ const grants: Record<Role, readonly Permission[]> = {
     "confidential:view",
     "changes:view",
   ],
-  approver: ["drafts:approve", "feature-teams:approve", "changes:view"],
+  // Approvers see lists, so every Approver can judge drafts of them.
+  approver: [
+    "drafts:approve",
+    "feature-teams:approve",
+    "configuration:view",
+    "changes:view",
+  ],
   administrator: ["accounts:manage", "history:view"],
 };
 

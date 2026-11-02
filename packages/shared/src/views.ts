@@ -33,11 +33,18 @@ export type Filter = z.infer<typeof filterSchema>;
 
 const sortLevel = z.string().regex(/^-?[\w-]{1,64}$/);
 
+// Which version of each record a table shows: its draft beside its live row, the draft alone, as
+// everything will be once approved, or the live record alone, as everything is now.
+export const showSchema = z.enum(["both", "drafts", "live"]);
+
+export type Show = z.infer<typeof showSchema>;
+
 // The view: the search, each column's filter by key, and the sort as keys, each with a leading "-"
 // when descending. Each filter and sort level that does not fit is dropped on its own, keeping the
 // others, as is anything else that does not fit.
 export const viewDefinitionSchema = z.object({
   search: z.string().max(textLimit).optional().catch(undefined),
+  show: showSchema.optional().catch(undefined),
   filters: z
     .record(z.string(), z.unknown())
     .optional()
@@ -70,6 +77,7 @@ export const viewDefinitionSchema = z.object({
 // The view as read from the address or a saved view, and as written to them.
 export interface ViewDefinition {
   search?: string | undefined;
+  show?: Show | undefined;
   filters?: Record<string, Filter> | undefined;
   sort?: string[] | undefined;
 }
@@ -77,6 +85,7 @@ export interface ViewDefinition {
 // A view as a request sends it, which must fit as a whole, since a page sends only views it made.
 const strictDefinitionSchema = z.object({
   search: z.string().max(textLimit).optional(),
+  show: showSchema.optional(),
   filters: z
     .record(key, filterSchema)
     .refine(

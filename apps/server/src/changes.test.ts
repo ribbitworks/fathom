@@ -78,6 +78,7 @@ async function makePersonWithColumn(name: string, visibility = "general") {
     choices: [{ label: `${name} North` }, { label: `${name} South` }],
   })) as unknown as { choices: { id: string }[] };
   const [north, south] = choices as [{ id: string }, { id: string }];
+  await test.approveLists();
   const { field } = (await send("POST", "/api/people/columns", {
     name: `${name} site`,
     listId: list.id,
@@ -97,12 +98,9 @@ async function makePersonWithColumn(name: string, visibility = "general") {
 // Approves a person's draft, as an Approver who sees every tier.
 async function approve(personId: string) {
   const { cookie } = await test.signedIn(["approver", "leadership"]);
-  const response = await test.request(
-    cookie,
-    "POST",
-    "/api/people/drafts/approval",
-    { people: [personId] },
-  );
+  const response = await test.request(cookie, "POST", "/api/drafts/approval", {
+    people: [personId],
+  });
   expect(response.statusCode).toBe(200);
   return response.json<{ changeSetId: string }>().changeSetId;
 }
@@ -174,7 +172,7 @@ describe("the change history", () => {
         action: "changed",
         name: "Alpha places",
         list: null,
-        draft: false,
+        draft: true,
         fields: [
           { field: "name", oldValue: "Alpha sites", newValue: "Alpha places" },
         ],
@@ -182,12 +180,18 @@ describe("the change history", () => {
     ]);
     expect(named(moved.changeSetId)?.records).toEqual([
       {
-        kind: "list-item",
+        kind: "choice-order",
         action: "changed",
-        name: "Alpha South",
-        list: "Alpha places",
-        draft: false,
-        fields: [{ field: "order", oldValue: "Alpha North", newValue: null }],
+        name: "Alpha places",
+        list: null,
+        draft: true,
+        fields: [
+          {
+            field: "order",
+            oldValue: ["Alpha North", "Alpha South"],
+            newValue: ["Alpha South", "Alpha North"],
+          },
+        ],
       },
     ]);
     expect(named(retired.changeSetId)?.records[0]?.fields).toEqual([
@@ -226,13 +230,14 @@ describe("the change history", () => {
         action: "deleted",
         name: "Beta East",
         list: "Beta sites",
-        draft: false,
+        draft: true,
         fields: [],
       },
     ]);
     const { list } = (await send("POST", "/api/lists", {
       name: "Beta other",
     })) as unknown as { list: List };
+    await test.approveLists();
     const { field } = (await send("POST", "/api/people/columns", {
       name: "Beta other column",
       listId: made.list.id,
@@ -302,6 +307,7 @@ describe("the change history", () => {
       name: "Kappa sites",
       visibility: "confidential",
     });
+    await test.approveLists();
     await approve(made.personId);
     await send("DELETE", `/api/people/columns/${made.field.id}`);
     const planner = await test.signedIn(["resource-planner"]);
@@ -376,6 +382,7 @@ describe("the change history", () => {
       name: "Delta sites",
       visibility: "confidential",
     });
+    await test.approveLists();
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeUndefined();
     const leader = await test.signedIn(["leadership"]);
     expect(await entryFor(leader.cookie, chosen.changeSetId)).toBeDefined();
@@ -448,6 +455,7 @@ describe("the change history", () => {
       name: "Eta sites",
       visibility: "confidential",
     });
+    await test.approveLists();
     expect(await entryFor(planner.cookie, renamed.changeSetId)).toBeUndefined();
     expect(await entryFor(manager.cookie, renamed.changeSetId)).toBeDefined();
   });
@@ -630,6 +638,7 @@ describe("the change history", () => {
       name: "Omicron sites",
       visibility: "restricted",
     });
+    await test.approveLists();
     const viewed = (actorId: string) =>
       test.connection
         .select({ id: accessHistory.id })
@@ -682,6 +691,7 @@ describe("the change history", () => {
       name: "Pi places",
       visibility: "confidential",
     });
+    await test.approveLists();
     const planner = await test.signedIn(["resource-planner"]);
     const { entries } = await history(planner.cookie);
     expect(entries.length).toBeGreaterThan(0);

@@ -100,11 +100,13 @@ const sites = list("sites", "Sites", [
   "Ashgrove",
   "Corran Quay",
 ]);
+// Architect is never given to anyone, so the seed data can draft removing a choice no one has.
 const positions = list("positions", "Positions", [
   "Software Engineer",
   "Test Engineer",
   "SDET",
   "Manager",
+  "Architect",
 ]);
 const levels = list("levels", "Levels", [
   "P1",
@@ -123,6 +125,12 @@ const teamRoles = list("team-roles", "Roles on the team", [
   "Team Lead",
   "Design Authority",
 ]);
+// Lists no column draws on, so the seed data can draft removing one and retiring the other.
+const certifications = list("certifications", "Certifications", [
+  "Fictional Cloud Practitioner",
+  "Fictional Test Analyst",
+]);
+const languages = list("languages", "Languages", ["English", "French"]);
 
 function column(
   key: string,
@@ -269,7 +277,7 @@ export function fictionalOrganization({
     },
   );
   return {
-    lists: [sites, positions, levels, teamRoles],
+    lists: [sites, positions, levels, teamRoles, certifications, languages],
     columns: [siteColumn, positionColumn, levelColumn, teamRoleColumn],
     people: everyone.slice(0, size),
     newcomers: everyone.slice(size),

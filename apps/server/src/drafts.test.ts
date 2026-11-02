@@ -69,6 +69,7 @@ async function columnWith(labels: string[], visibility = "general") {
       choices: labels.map((label) => ({ label })),
     })
   ).json<{ choices: Choice[] }>().choices;
+  await test.approveLists();
   const field = (
     await send(editor.cookie, "POST", "/api/people/columns", {
       name: unique("Fictional Column"),
@@ -98,11 +99,11 @@ async function draftPerson(person: object = {}) {
 }
 
 async function approve(ids: string[], cookie = approver.cookie) {
-  return send(cookie, "POST", "/api/people/drafts/approval", { people: ids });
+  return send(cookie, "POST", "/api/drafts/approval", { people: ids });
 }
 
 async function reject(ids: string[], reason: string, cookie = approver.cookie) {
-  return send(cookie, "POST", "/api/people/drafts/rejection", {
+  return send(cookie, "POST", "/api/drafts/rejection", {
     people: ids,
     reason,
   });
@@ -595,7 +596,7 @@ describe("approving and rejecting", () => {
     expect(clashed.statusCode).toBe(409);
     expect(clashed.json()).toEqual({
       error:
-        "A draft no longer fits the people as they are; refresh, change it, then approve it",
+        "A draft no longer fits the data as it is; refresh, change it, then approve it",
     });
     const strayed = await approve([stray]);
     expect(strayed.json()).toEqual({
@@ -816,6 +817,7 @@ describe("columns and choices that drafts use", () => {
         name: unique("Fictional List"),
       })
     ).json<{ list: List }>().list;
+    await test.approveLists();
     for (const [settings, error] of [
       [{ multiple: false }, /^Drafts have several choices for /],
       [
@@ -861,6 +863,7 @@ describe("columns and choices that drafts use", () => {
       choices: Choice[];
       changeSetId: string;
     }>();
+    await test.approveLists();
     const addedColumn = await send(
       editor.cookie,
       "POST",

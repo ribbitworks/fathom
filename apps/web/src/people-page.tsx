@@ -31,6 +31,7 @@ import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useRef, useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
 import { type Decision, DecisionModal } from "./decision-dialog.tsx";
+import { noDrafts } from "./drafts.ts";
 import { listsQuery } from "./lists.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -188,7 +189,10 @@ export function PeoplePage({
 
   const actions: PeopleActions = {
     decide: (asking, people) => {
-      setDecision({ asking, ids: people.map(({ id }) => id) });
+      setDecision({
+        asking,
+        selection: { ...noDrafts(), people: people.map(({ id }) => id) },
+      });
       setDeciding(true);
     },
     add: (added, onAdded, onFailed) => {
@@ -536,7 +540,8 @@ export function PeoplePage({
                   New column
                 </Button>
               )}
-              {canEdit && (
+              {/* The live people alone are read only. */}
+              {canEdit && view.show !== "live" && (
                 <Button
                   variant="filled"
                   disabled={!query.isSuccess || !lists.isSuccess}

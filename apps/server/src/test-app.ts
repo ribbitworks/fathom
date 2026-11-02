@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A Fathom server for tests, against a migrated PostgreSQL server of its own, with helpers to sign in
-// fictional accounts holding given roles and to send requests as them. Used only by tests.
+// fictional accounts holding given roles, to send requests as them, and to approve the drafts of
+// lists that tests set up. Used only by tests.
 
 import {
   changes,
   changeSets,
+  drafts,
   createDatabase,
   createPool,
   type Database,
@@ -18,7 +20,8 @@ import {
   type TestCertificate,
   type TestDatabase,
 } from "@fathom/test-utils";
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
+import { actorFor } from "./access.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
@@ -53,6 +56,9 @@ export interface TestApp {
       madeBy: string | null;
     }[]
   >;
+  // Approves every draft of a list, a choice, or a list's order, so lists set up for a test are
+  // live, as a fictional Approver.
+  approveLists(): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -63,8 +69,9 @@ export async function startTestApp(): Promise<TestApp> {
   const pool = createPool(database.app, () => undefined);
   const connection = createDatabase(pool);
   const auth: Auth = createAuth(connection, { publicUrl, secret });
+  const data = createDataAccess(connection);
   const app = await buildApp({
-    data: createDataAccess(connection),
+    data,
     database: connection,
     auth: { publicUrl, secret },
     tls: certificate,
@@ -73,6 +80,7 @@ export async function startTestApp(): Promise<TestApp> {
     requestsPerMinute: 10_000,
   });
   let accountCount = 0;
+  let approverId: string | undefined;
 
   return {
     app,
@@ -121,6 +129,37 @@ export async function startTestApp(): Promise<TestApp> {
         .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
         .where(eq(changes.recordId, id))
         .orderBy(asc(changes.id));
+    },
+    async approveLists() {
+      approverId ??= await createAccount(auth, connection, {
+        name: "Fictional Approver of Lists",
+        email: "list.approver@example.test",
+        password,
+        roles: ["approver", "workforce-administrator"],
+      });
+      const waiting = await connection
+        .select({ recordType: drafts.recordType, recordId: drafts.recordId })
+        .from(drafts)
+        .where(
+          inArray(drafts.recordType, ["list", "list-item", "choice-order"]),
+        );
+      if (waiting.length === 0) return;
+      const of = (recordType: string) =>
+        waiting
+          .filter((draft) => draft.recordType === recordType)
+          .map(({ recordId }) => recordId);
+      await data.drafts.approve(
+        actorFor(
+          { id: approverId, name: "Fictional Approver of Lists", email: "" },
+          ["approver", "workforce-administrator"],
+        ),
+        {
+          people: [],
+          lists: of("list"),
+          choices: of("list-item"),
+          orders: of("choice-order"),
+        },
+      );
     },
     async close() {
       await app.close();

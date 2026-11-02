@@ -76,6 +76,16 @@ const regions = {
   choices: [choice("c6", "North"), choice("c7", "South", { retired: true })],
 };
 
+// A draft removing a list or choice, as the server sends it.
+const removal = {
+  action: "deleted",
+  changed: [],
+  live: {},
+  state: "waiting",
+  madeBy: "Fictional Editor",
+  madeAt: "2026-11-01T10:00:00.000Z",
+};
+
 const listsAnswer = () =>
   Response.json({ lists: [locations, skills, empty, regions] });
 // Change sets: the one each change is saved in, and the one undoing it makes.
@@ -761,7 +771,9 @@ describe("retiring and restoring choices", () => {
     });
     focusRow("c2");
     await userEvent.keyboard("r");
-    expect(await screen.findByText("Retired Northmere.")).toBeDefined();
+    expect(
+      await screen.findByText("Drafted retiring Northmere."),
+    ).toBeDefined();
     await waitFor(() => {
       expect(document.activeElement).toBe(row("c3"));
     });
@@ -777,7 +789,7 @@ describe("retiring and restoring choices", () => {
     });
   });
 
-  it("restores a retired choice to the end from its menu, and undoes it", async () => {
+  it("restores a retired choice from its menu, and undoes it", async () => {
     const { fetch } = await openPanel({
       "PUT /api/lists/l1/choices/c4/retired": savedAs(),
     });
@@ -790,7 +802,9 @@ describe("retiring and restoring choices", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /^Restore/ }),
     );
-    expect(await screen.findByText("Restored Old Mill.")).toBeDefined();
+    expect(
+      await screen.findByText("Drafted restoring Old Mill."),
+    ).toBeDefined();
     await undoLast();
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
@@ -812,19 +826,66 @@ describe("retiring and restoring choices", () => {
   });
 });
 
+describe("what the Lists page shows", () => {
+  it("keeps the choice of what to show while lists are opened and closed", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": listsAnswer,
+    });
+    const history = renderApp("/lists?show=drafts");
+    await userEvent.click(await screen.findByRole("link", { name: "Skills" }));
+    await screen.findByRole("heading", { name: "Skills", level: 2 });
+    expect(history.location.search).toContain("show=drafts");
+    await userEvent.click(
+      within(panel()).getByRole("button", { name: "Close" }),
+    );
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/lists");
+    });
+    expect(history.location.search).toContain("show=drafts");
+  });
+});
+
+describe("choice menus", () => {
+  it("are named after their choice, and close when anything but an item is clicked", async () => {
+    await openPanel();
+    focusRow("c2");
+    await userEvent.keyboard("{ContextMenu}");
+    const menu = await screen.findByRole("menu");
+    await userEvent.click(within(menu).getByText("Northmere"));
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+  });
+});
+
 describe("removing choices", () => {
-  it("removes a choice with Delete, and undoes it, putting it back in its place at once", async () => {
+  it("drafts removing a choice with Delete, keeping it in place, struck through, and undoes it", async () => {
+    let shown = [locations, skills, empty, regions];
     const { fetch } = await openPanel({
-      "DELETE /api/lists/l1/choices/c3": savedAs(),
+      "GET /api/lists": () => Response.json({ lists: shown }),
+      "DELETE /api/lists/l1/choices/c3": () => {
+        shown = [
+          {
+            ...locations,
+            choices: locations.choices.map((one) =>
+              one.id === "c3" ? { ...one, draft: removal } : one,
+            ),
+          },
+          skills,
+          empty,
+          regions,
+        ];
+        return savedAs()();
+      },
     });
     focusRow("c3");
     await userEvent.keyboard("{Delete}");
-    expect(await screen.findByText("Removed Corran Quay.")).toBeDefined();
+    expect(await within(row("c3")).findByText("Draft: removed")).toBeDefined();
     await waitFor(() => {
       expect(document.activeElement).toBe(row("c2"));
     });
-    await undoLast();
-    expect(row("c3")).not.toBeNull();
+    await undoWithKeys();
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -842,7 +903,7 @@ describe("removing choices", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /^Remove/ }),
     );
-    await undoLast();
+    await undoWithKeys();
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
@@ -877,7 +938,7 @@ describe("removing choices", () => {
     });
     focusRow("c3");
     await userEvent.keyboard("{Delete}");
-    await undoLast();
+    await undoWithKeys();
     expect(
       await screen.findByText(
         "Fathom could not undo the change. Try again in a moment.",
@@ -1055,7 +1116,7 @@ describe("creating and editing lists", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Retire list" }),
     );
-    expect(await screen.findByText("Retired Skills.")).toBeDefined();
+    expect(await screen.findByText("Drafted retiring Skills.")).toBeDefined();
     await undoLast();
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
@@ -1078,7 +1139,7 @@ describe("creating and editing lists", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Restore list" }),
     );
-    expect(await screen.findByText("Restored Regions.")).toBeDefined();
+    expect(await screen.findByText("Drafted restoring Regions.")).toBeDefined();
   });
 
   it("says when a list cannot be retired", async () => {
@@ -1099,8 +1160,52 @@ describe("creating and editing lists", () => {
     ).toBeDefined();
   });
 
-  it("deletes a list, closing its panel, and undoes it, opening it again", async () => {
-    let lists = [locations, skills, empty, regions];
+  it("drafts deleting a list, keeping it struck through in its panel, and undoes it", async () => {
+    let shown: object[] = [locations, skills, empty, regions];
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () => Response.json({ lists: shown }),
+      "DELETE /api/lists/l4": () => {
+        shown = [locations, skills, empty, { ...regions, draft: removal }];
+        return savedAs()();
+      },
+      [`POST /api/undo/${s1}`]: savedAs(u1),
+    });
+    renderApp("/lists/l4");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Edit list" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Delete list" }),
+    );
+    expect(await within(panel()).findByText("Draft: removed")).toBeDefined();
+    expect(
+      within(panel()).queryByRole("button", { name: "Edit list" }),
+    ).toBeNull();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("heading", { name: "Regions", level: 2 }),
+      );
+    });
+    await undoWithKeys();
+    await waitFor(() => {
+      expect(undone(fetch)).toEqual([s1]);
+    });
+  });
+
+  it("discards a list only drafted to be added, closing its panel, and undoes it, opening it again", async () => {
+    const drafted = {
+      ...regions,
+      draft: {
+        action: "created",
+        changed: ["name", "description", "visibility", "retired"],
+        live: {},
+        state: "waiting",
+        madeBy: "Fictional Editor",
+        madeAt: "2026-11-01T10:00:00.000Z",
+      },
+    };
+    let lists = [locations, skills, empty, drafted];
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": () => Response.json({ lists }),
@@ -1109,7 +1214,7 @@ describe("creating and editing lists", () => {
         return savedAs()();
       },
       [`POST /api/undo/${s1}`]: () => {
-        lists = [locations, skills, empty, regions];
+        lists = [locations, skills, empty, drafted];
         return savedAs(u1)();
       },
     });
@@ -1120,18 +1225,18 @@ describe("creating and editing lists", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Delete list" }),
     );
-    expect(await screen.findByText("Deleted Regions.")).toBeDefined();
+    expect(await screen.findByText("Discarded Regions.")).toBeDefined();
     await waitFor(() => {
       expect(history.location.pathname).toBe("/lists");
+    });
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe("New list");
     });
     await undoLast();
     await waitFor(() => {
       expect(history.location.pathname).toBe("/lists/l4");
     });
     expect(undone(fetch)).toEqual([s1]);
-    expect(
-      await screen.findByRole("heading", { name: "Regions", level: 2 }),
-    ).toBeDefined();
   });
 
   it("offers no undo when a change saved nothing", async () => {
@@ -1279,24 +1384,6 @@ describe("focus", () => {
     expect(history.location.pathname).toBe("/lists/l1");
   });
 
-  it("moves to New list once a list is deleted", async () => {
-    serverAnswers({
-      "GET /api/session": editor,
-      "GET /api/lists": listsAnswer,
-      "DELETE /api/lists/l2": savedAs(),
-    });
-    renderApp("/lists/l2");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Edit list" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Delete list" }),
-    );
-    await waitFor(() => {
-      expect(document.activeElement?.textContent).toBe("New list");
-    });
-  });
-
   it("edits the description when it is clicked", async () => {
     await openPanel();
     await userEvent.click(screen.getByText("Head office."));
@@ -1431,10 +1518,14 @@ describe("only the latest change", () => {
     });
     focusRow("c2");
     await userEvent.keyboard("r");
-    expect(await screen.findByText("Retired Northmere.")).toBeDefined();
+    expect(
+      await screen.findByText("Drafted retiring Northmere."),
+    ).toBeDefined();
     focusRow("c3");
     await userEvent.keyboard("r");
-    expect(await screen.findByText("Retired Corran Quay.")).toBeDefined();
+    expect(
+      await screen.findByText("Drafted retiring Corran Quay."),
+    ).toBeDefined();
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: "Undo" })).toHaveLength(1);
     });
@@ -1460,5 +1551,488 @@ describe("only the latest change", () => {
     expect(
       bodyOf(fetch, "PUT", "/api/lists/l1/choices/c2/position"),
     ).toHaveLength(1);
+  });
+});
+
+describe("drafts on the Lists page", () => {
+  const approver = () =>
+    Response.json({
+      ...fictionalUser,
+      roles: ["approver", "workforce-administrator"],
+      permissions: [
+        "configuration:edit",
+        "configuration:view",
+        "drafts:approve",
+        "plan:view",
+      ],
+    });
+  const waiting = {
+    state: "waiting",
+    madeBy: "Fictional Editor",
+    madeAt: "2026-11-01T10:00:00.000Z",
+  };
+  // A list drafted to be added, with a choice drafted into it; a live list with a renamed, rejected
+  // choice and a draft of its order.
+  const added = {
+    id: "l5",
+    name: "Teams",
+    description: "",
+    visibility: "general",
+    retired: false,
+    choices: [
+      {
+        ...choice("c8", "Platform"),
+        draft: {
+          ...waiting,
+          action: "created",
+          changed: ["label", "description", "retired"],
+          live: {},
+        },
+      },
+    ],
+    draft: {
+      ...waiting,
+      action: "created",
+      changed: ["name", "description", "visibility", "retired"],
+      live: {},
+    },
+  };
+  const changed = {
+    ...locations,
+    choices: [
+      locations.choices[1],
+      {
+        ...locations.choices[0],
+        label: "Kestrel Harbour",
+        draft: {
+          ...waiting,
+          state: "rejected",
+          reason: "Keep the old name",
+          action: "changed",
+          changed: ["label"],
+          live: { label: "Kestrel Bay" },
+        },
+      },
+      ...locations.choices.slice(2),
+    ],
+    orderDraft: { ...waiting, live: ["c1", "c2", "c3", "c4"] },
+  };
+  const draftedAnswer = () =>
+    Response.json({ lists: [changed, skills, empty, regions, added] });
+
+  it("marks lists and choices with drafts in the table and the panel", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": draftedAnswer,
+    });
+    renderApp("/lists/l5");
+    const table = await screen.findByRole("table", { name: "Lists" });
+    expect(within(table).getByText("Draft: added")).toBeDefined();
+    const opened = await screen.findByRole("heading", {
+      name: "Teams",
+      level: 2,
+    });
+    expect(opened).toBeDefined();
+    expect(within(row("c8")).getByText("Draft: added")).toBeDefined();
+    // Viewers see the drafts, but nothing to do with them.
+    expect(screen.queryByRole("button", { name: "Discard draft" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
+  });
+
+  it("approves a choice with the list it was added to, naming the list first", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/lists": draftedAnswer,
+      "POST /api/drafts/approval": savedAs(),
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    await waitFor(() => {
+      expect(panel().contains(document.activeElement)).toBe(true);
+    });
+    await userEvent.click(
+      within(row("c8")).getByRole("button", {
+        name: "Actions for Platform",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Approve…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 2 drafts?",
+    });
+    expect(within(dialog).getByText("the list Teams")).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+        { people: [], lists: ["l5"], choices: ["c8"], orders: [] },
+      ]);
+    });
+  });
+
+  it("shows a rejected choice's reason in its menu, and sends it for approval again", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": draftedAnswer,
+      "DELETE /api/lists/l1/choices/c1/draft/rejection": savedAs(),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    focusRow("c1");
+    await userEvent.keyboard("{ContextMenu}");
+    const item = await screen.findByRole("menuitem", {
+      name: "Send for approval again",
+    });
+    expect(screen.getByText("Rejected: Keep the old name")).toBeDefined();
+    await userEvent.click(item);
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls.some(
+          ([url, init]) =>
+            url.endsWith("/api/lists/l1/choices/c1/draft/rejection") &&
+            init?.method === "DELETE",
+        ),
+      ).toBe(true);
+    });
+  });
+
+  it("discards a draft of the order from the bar above the choices", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": draftedAnswer,
+      "DELETE /api/lists/l1/order/draft": savedAs(),
+    });
+    renderApp("/lists/l1");
+    const bar = await screen.findByRole("group", {
+      name: "Draft of the order",
+    });
+    expect(within(bar).getByText("Draft: order")).toBeDefined();
+    await userEvent.click(
+      within(bar).getByRole("button", { name: "Discard draft" }),
+    );
+    expect(
+      await screen.findByText("Discarded the draft of the order of Locations."),
+    ).toBeDefined();
+    expect(
+      fetch.mock.calls.some(([url]) =>
+        url.endsWith("/api/lists/l1/order/draft"),
+      ),
+    ).toBe(true);
+  });
+
+  // A request sent, by method and the end of its address.
+  const sent = (
+    fetch: ReturnType<typeof serverAnswers>,
+    method: string,
+    path: string,
+  ) =>
+    fetch.mock.calls.some(
+      ([url, init]) => url.endsWith(path) && init?.method === method,
+    );
+
+  // A live list renamed in a rejected draft, and a live list whose rejected order moves a choice
+  // with no draft of its own, with a choice drafted to be removed.
+  const renamed = {
+    ...skills,
+    name: "Talents",
+    draft: {
+      ...waiting,
+      state: "rejected",
+      reason: "Keep Skills",
+      action: "changed",
+      changed: ["name"],
+      live: { name: "Skills" },
+    },
+  };
+  const reordered = {
+    ...locations,
+    choices: [
+      locations.choices[0],
+      locations.choices[2],
+      locations.choices[1],
+      {
+        ...locations.choices[3],
+        draft: { ...waiting, action: "deleted", changed: [], live: {} },
+      },
+    ],
+    orderDraft: {
+      ...waiting,
+      state: "rejected",
+      reason: "Keep the old order",
+      live: ["c1", "c2", "c3", "c4"],
+    },
+  };
+  const otherAnswer = () =>
+    Response.json({ lists: [reordered, renamed, empty, regions, added] });
+
+  it("marks a moved choice in a rejected order, and leaves a choice drafted to be removed alone", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": otherAnswer,
+      "DELETE /api/lists/l1/order/draft/rejection": savedAs(),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    await userEvent.click(
+      within(panel()).getByRole("button", { name: "Show retired (1)" }),
+    );
+    expect(within(row("c2")).getByText("Rejected: moved")).toBeDefined();
+    focusRow("c4");
+    await userEvent.keyboard("{Enter}r{Delete}{Alt>}{ArrowUp}{/Alt}");
+    expect(screen.queryByLabelText("name")).toBeNull();
+    const bar = screen.getByRole("group", { name: "Draft of the order" });
+    expect(within(bar).getByText("Keep the old order")).toBeDefined();
+    await userEvent.click(
+      within(bar).getByRole("button", { name: "Send again" }),
+    );
+    await waitFor(() => {
+      expect(sent(fetch, "DELETE", "/api/lists/l1/order/draft/rejection")).toBe(
+        true,
+      );
+    });
+    expect(sent(fetch, "DELETE", "/api/lists/l1/choices/c4")).toBe(false);
+    expect(sent(fetch, "PUT", "/api/lists/l1/choices/c4/retired")).toBe(false);
+  });
+
+  it("shows a renamed list's live row, sends its rejected draft again, and discards it", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": otherAnswer,
+      "DELETE /api/lists/l2/draft/rejection": savedAs(),
+      "DELETE /api/lists/l2/draft": savedAs(),
+    });
+    renderApp("/lists/l2");
+    const table = await screen.findByRole("table", { name: "Lists" });
+    // Under the renamed list, and under the list whose choices have drafts.
+    expect(within(table).getAllByText("Live")).toHaveLength(2);
+    const bar = await screen.findByRole("group", { name: "Draft" });
+    await userEvent.click(
+      within(bar).getByRole("button", { name: "Send again" }),
+    );
+    await waitFor(() => {
+      expect(sent(fetch, "DELETE", "/api/lists/l2/draft/rejection")).toBe(true);
+    });
+    await userEvent.click(
+      within(bar).getByRole("button", { name: "Discard draft" }),
+    );
+    expect(
+      await screen.findByText("Discarded the draft of Talents."),
+    ).toBeDefined();
+  });
+
+  it("names the drafts a rejection or approval includes, from the bars and a choice's menu", async () => {
+    serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/lists": draftedAnswer,
+    });
+    const history = renderApp("/lists/l5");
+    const bar = await screen.findByRole("group", { name: "Draft" });
+    await userEvent.click(within(bar).getByRole("button", { name: "Reject…" }));
+    const rejecting = await screen.findByRole("dialog", {
+      name: "Reject 2 drafts?",
+    });
+    expect(
+      within(rejecting).getByText(
+        "Other drafts use these, so they are rejected too:",
+      ),
+    ).toBeDefined();
+    expect(
+      within(rejecting).getByText("the choice Platform in Teams"),
+    ).toBeDefined();
+    await userEvent.click(
+      within(rejecting).getByRole("button", { name: "Cancel" }),
+    );
+    await userEvent.click(within(bar).getByRole("button", { name: "Approve" }));
+    await userEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "Approve 1 draft?" }),
+      ).getByRole("button", { name: "Cancel" }),
+    );
+    // Closing the dialog puts focus back on its button, which would close a menu opened first.
+    await waitFor(() => {
+      expect(document.activeElement?.textContent).toBe("Approve");
+    });
+    focusRow("c8");
+    await userEvent.keyboard("{ContextMenu}");
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Reject…" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Reject 1 draft?" }),
+    ).toBeDefined();
+    await userEvent.click(
+      within(
+        await screen.findByRole("dialog", { name: "Reject 1 draft?" }),
+      ).getByRole("button", { name: "Cancel" }),
+    );
+    history.push("/lists/l1");
+    const order = await screen.findByRole("group", {
+      name: "Draft of the order",
+    });
+    await userEvent.click(
+      within(order).getByRole("button", { name: "Approve" }),
+    );
+    expect(
+      await screen.findByRole("dialog", { name: "Approve 1 draft?" }),
+    ).toBeDefined();
+  });
+
+  it("approves or rejects every draft waiting among the lists from the bar above them", async () => {
+    serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/lists": draftedAnswer,
+    });
+    renderApp("/lists");
+    expect(
+      await screen.findByText("3 drafts waiting among the lists"),
+    ).toBeDefined();
+    await userEvent.click(screen.getByRole("button", { name: "Reject all…" }));
+    await userEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Cancel",
+      }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Approve all" }));
+    expect(
+      await screen.findByRole("dialog", { name: "Approve 3 drafts?" }),
+    ).toBeDefined();
+  });
+
+  it("rejects every draft waiting with those that use them, naming them first", async () => {
+    const [platform] = added.choices;
+    serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...added,
+              choices: [
+                {
+                  ...platform,
+                  draft: {
+                    ...platform?.draft,
+                    state: "rejected",
+                    reason: "Not yet",
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+    });
+    renderApp("/lists");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Reject all…" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Reject 2 drafts?",
+    });
+    expect(
+      within(dialog).getByText("the choice Platform in Teams"),
+    ).toBeDefined();
+  });
+
+  it("leaves out live rows and places when showing the drafts applied", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": draftedAnswer,
+    });
+    renderApp("/lists/l1?show=drafts");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    expect(within(panel()).queryByText("Live")).toBeNull();
+    expect(within(row("c1")).getByText("Draft: moved")).toBeDefined();
+  });
+
+  it("discards drafts of choices from their menus, and of a list only drafted to be added from its bar", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": draftedAnswer,
+      "DELETE /api/lists/l1/choices/c1/draft": savedAs(),
+      "DELETE /api/lists/l5/choices/c8/draft": savedAs(),
+      "DELETE /api/lists/l5/draft": savedAs(),
+      [`POST /api/undo/${s1}`]: savedAs(u1),
+    });
+    const history = renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    focusRow("c1");
+    await userEvent.keyboard("{ContextMenu}");
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Discard draft" }),
+    );
+    expect(
+      await screen.findByText("Discarded the draft of Kestrel Harbour."),
+    ).toBeDefined();
+    history.push("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    focusRow("c8");
+    await userEvent.keyboard("{ContextMenu}");
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Discard draft" }),
+    );
+    expect(
+      await screen.findByText("Discarded the draft of Platform."),
+    ).toBeDefined();
+    await userEvent.click(
+      within(await screen.findByRole("group", { name: "Draft" })).getByRole(
+        "button",
+        { name: "Discard draft" },
+      ),
+    );
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/lists");
+    });
+    await undoLast();
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/lists/l5");
+    });
+    expect(sent(fetch, "DELETE", "/api/lists/l5/draft")).toBe(true);
+  });
+
+  it("discards a choice only drafted to be added when it is removed", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": draftedAnswer,
+      "DELETE /api/lists/l5/choices/c8": savedAs(),
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    focusRow("c8");
+    await userEvent.keyboard("{Delete}");
+    expect(await screen.findByText("Discarded Platform.")).toBeDefined();
+  });
+
+  it("shows the live lists alone, read only, from the Draft menu, keeping the choice in the address", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": draftedAnswer,
+    });
+    const history = renderApp("/lists?show=live");
+    const table = await screen.findByRole("table", { name: "Lists" });
+    expect(within(table).queryByText("Teams")).toBeNull();
+    expect(screen.queryByRole("button", { name: "New list" })).toBeNull();
+    const choose = async (name: string) => {
+      await userEvent.click(screen.getByRole("button", { name: /^Draft/ }));
+      await userEvent.click(
+        await screen.findByRole("menuitem", {
+          name: (shown) => shown.startsWith(name),
+        }),
+      );
+      await userEvent.keyboard("{Escape}");
+    };
+    await choose("Drafts beside live");
+    await waitFor(() => {
+      expect(history.location.search).not.toContain("show");
+    });
+    expect(await within(table).findByText("Teams")).toBeDefined();
+    await choose("Drafts applied");
+    await waitFor(() => {
+      expect(history.location.search).toContain("show=drafts");
+    });
   });
 });

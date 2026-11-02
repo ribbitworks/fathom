@@ -13,6 +13,7 @@ import {
   columnsFor,
   columnWidth,
   droppedAfter,
+  livePeople,
   PeopleGrid,
 } from "./people-grid.tsx";
 import { emptyView, formatDay } from "./table-view.ts";
@@ -228,5 +229,52 @@ describe("adding people without dates", () => {
       expect.any(Function),
       expect.any(Function),
     );
+  });
+});
+
+describe("the live people", () => {
+  const draft = {
+    state: "waiting" as const,
+    madeBy: null,
+    madeAt: null,
+    changed: [],
+    live: { values: {} },
+  };
+  const person = (id: string, more: Partial<Person> = {}): Person => ({
+    id,
+    preferredName: `Fictional ${id}`,
+    employeeId: id,
+    startDate: "2024-01-01",
+    endDate: null,
+    values: {},
+    ...more,
+  });
+
+  it("leaves out those only drafted to be added, and puts back what drafts change", () => {
+    expect(
+      livePeople([
+        person("p1"),
+        person("p2", { draft: { ...draft, action: "created" } }),
+        person("p3", { draft: { ...draft, action: "deleted" } }),
+        person("p4", {
+          preferredName: "Fictional Renamed",
+          endDate: "2027-01-01",
+          values: { f1: ["c2"], f2: ["c9"], f3: ["c5"] },
+          draft: {
+            ...draft,
+            action: "changed",
+            changed: ["preferredName", "endDate", "f1", "f2", "f4"],
+            live: {
+              preferredName: "Fictional p4",
+              values: { f1: ["c1"], f2: [] },
+            },
+          },
+        }),
+      ]),
+    ).toEqual([
+      person("p1"),
+      person("p3"),
+      person("p4", { endDate: null, values: { f3: ["c5"], f1: ["c1"] } }),
+    ]);
   });
 });

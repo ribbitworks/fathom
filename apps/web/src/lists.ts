@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Lists of choices through the server's API: reading them, and every change to lists and choices,
-// with the names users see for each visibility. Each change returns the change set it was saved in,
-// which undoing it names, or null when nothing changed.
+// Lists of choices through the server's API: reading them, with their drafts, every change to lists
+// and choices, each a draft, and discarding drafts or sending rejected ones for approval again, with
+// the names users see for each visibility. Each change returns the change set it was saved in, which
+// undoing it names, or null when nothing changed.
 
 import {
   changeSetIdSchema,
@@ -142,7 +143,84 @@ export async function deleteChoice(
   return (await sendDeleteFor(choicePath(listId, id), savedSchema)).changeSetId;
 }
 
+// Which draft of a list: its own, one of its choices', or that of its choices' order.
+export type ListDraftTarget =
+  | { kind: "list"; listId: string }
+  | { kind: "choice"; listId: string; choiceId: string }
+  | { kind: "order"; listId: string };
+
+function draftPath(target: ListDraftTarget): string {
+  if (target.kind === "choice") {
+    return `${choicePath(target.listId, target.choiceId)}/draft`;
+  }
+  return target.kind === "order"
+    ? `${listPath(target.listId)}/order/draft`
+    : `${listPath(target.listId)}/draft`;
+}
+
+// Discards a draft, so the record is as it is live, or, if the draft added it, gone.
+export async function discardListDraft(
+  target: ListDraftTarget,
+): Promise<string | null> {
+  return (await sendDeleteFor(draftPath(target), savedSchema)).changeSetId;
+}
+
+// Sends a rejected draft for approval again, unchanged.
+export async function resubmitListDraft(
+  target: ListDraftTarget,
+): Promise<string | null> {
+  return (await sendDeleteFor(`${draftPath(target)}/rejection`, savedSchema))
+    .changeSetId;
+}
+
+// Whether a choice can be given to people: it is live, so not only drafted to be added, and not
+// retired, as its draft makes it.
+export const offered = (choice: Choice) =>
+  !choice.retired && choice.draft?.action !== "created";
+
 // Text for comparing names: trimmed and in lower case.
 export function sameName(first: string, second: string): boolean {
   return first.trim().toLowerCase() === second.trim().toLowerCase();
+}
+
+// Every list as it is live, without drafts: those only drafted to be added are left out, with the
+// choices only drafted to be added, and each list and choice has its live values back, with its
+// choices in their live order.
+export function liveLists(lists: readonly List[]): List[] {
+  return lists.flatMap((list): List[] => {
+    if (list.draft?.action === "created") return [];
+    const { draft, orderDraft, ...rest } = list;
+    const choices = list.choices.flatMap((choice) => {
+      if (choice.draft?.action === "created") return [];
+      const { draft: choiceDraft, ...live } = choice;
+      const was = choiceDraft?.action === "changed" ? choiceDraft.live : {};
+      return [
+        {
+          ...live,
+          label: was.label ?? live.label,
+          description: was.description ?? live.description,
+          retired: was.retired ?? live.retired,
+        },
+      ];
+    });
+    const order = orderDraft?.live ?? [];
+    const place = (id: string) => {
+      const at = order.indexOf(id);
+      return at === -1 ? order.length : at;
+    };
+    return [
+      {
+        ...rest,
+        ...(draft?.action === "changed"
+          ? {
+              name: draft.live.name ?? rest.name,
+              description: draft.live.description ?? rest.description,
+              visibility: draft.live.visibility ?? rest.visibility,
+              retired: draft.live.retired ?? rest.retired,
+            }
+          : {}),
+        choices: [...choices].sort((a, b) => place(a.id) - place(b.id)),
+      },
+    ];
+  });
 }

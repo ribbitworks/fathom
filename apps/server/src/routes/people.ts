@@ -1,14 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // People and the columns on the People table: reading everyone the user may see; drafting people
-// added, one or several at once, changed, and removed, discarding drafts, and approving and rejecting
-// them; adding, changing, and deleting columns; and moving
-// any column, built-in or added.
+// added, one or several at once, changed, and removed, discarding drafts, and sending rejected ones
+// for approval again; adding, changing, and deleting columns; and moving any column, built-in or
+// added. Approving and rejecting drafts is in drafts.ts.
 // The data access layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
-  draftsRequestSchema,
   columnKeySchema,
   fieldMoveSchema,
   fieldRequestSchema,
@@ -16,7 +15,6 @@ import {
   peopleRequestSchema,
   peopleSchema,
   personChangeSchema,
-  rejectionRequestSchema,
   savedSchema,
   savedViewChangeSchema,
   savedViewRequestSchema,
@@ -119,29 +117,6 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
         changeSetId: await people.resubmitDraft(
           request.actor,
           request.params.personId,
-        ),
-      }),
-    );
-
-    app.post(
-      "/api/people/drafts/approval",
-      { schema: { body: draftsRequestSchema, response: saved } },
-      async (request) => ({
-        changeSetId: await people.approveDrafts(
-          request.actor,
-          request.body.people,
-        ),
-      }),
-    );
-
-    app.post(
-      "/api/people/drafts/rejection",
-      { schema: { body: rejectionRequestSchema, response: saved } },
-      async (request) => ({
-        changeSetId: await people.rejectDrafts(
-          request.actor,
-          request.body.people,
-          request.body.reason,
         ),
       }),
     );

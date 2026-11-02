@@ -99,7 +99,7 @@ async function actionsFor(id: string) {
 }
 
 describe("the persona accounts", () => {
-  it("are one for each persona, named after it", () => {
+  it("are one for each persona, named after it, with a second Engineering Operations Manager", () => {
     expect(personaAccounts.map(({ name }) => name)).toEqual([
       "Product Manager",
       "Project Manager",
@@ -107,6 +107,7 @@ describe("the persona accounts", () => {
       "Feature Lead",
       "Engineering Director",
       "Engineering Operations Manager",
+      "Second Engineering Operations Manager",
       "Executive",
       "Team Member",
       "Fathom Administrator",

@@ -72,6 +72,7 @@ async function listWith(
     choices: labels.map((label) => ({ label })),
   });
   expect(added.statusCode).toBe(201);
+  await test.approveLists();
   return { list, choices: added.json<{ choices: Choice[] }>().choices };
 }
 
@@ -133,7 +134,7 @@ async function addPerson(cookie: string, person: NewPerson = {}) {
 // Approves the drafts of the people given, as an Approver who sees every tier.
 async function approve(ids: readonly string[]) {
   const { cookie } = await test.signedIn(["approver", "leadership"]);
-  const response = await send(cookie, "POST", "/api/people/drafts/approval", {
+  const response = await send(cookie, "POST", "/api/drafts/approval", {
     people: ids,
   });
   expect(response.statusCode).toBe(200);
@@ -232,10 +233,10 @@ describe("who may read and change people", () => {
 
   // Approving and rejecting need the Approver role, which each other role is tried without.
   const decisions: [Method, string, object][] = [
-    ["POST", "/api/people/drafts/approval", { people: [randomUUID()] }],
+    ["POST", "/api/drafts/approval", { people: [randomUUID()] }],
     [
       "POST",
-      "/api/people/drafts/rejection",
+      "/api/drafts/rejection",
       { people: [randomUUID()], reason: "Fictional" },
     ],
   ];
@@ -281,8 +282,8 @@ describe("signed-out requests", () => {
     ["DELETE", `/api/people/${randomUUID()}`],
     ["DELETE", `/api/people/${randomUUID()}/draft`],
     ["DELETE", `/api/people/${randomUUID()}/draft/rejection`],
-    ["POST", "/api/people/drafts/approval"],
-    ["POST", "/api/people/drafts/rejection"],
+    ["POST", "/api/drafts/approval"],
+    ["POST", "/api/drafts/rejection"],
     ["POST", "/api/people/columns"],
     ["PUT", `/api/people/columns/${randomUUID()}`],
     ["DELETE", `/api/people/columns/${randomUUID()}`],
@@ -509,6 +510,7 @@ describe("adding people", () => {
       `/api/lists/${list.id}/choices/${String(retired?.id)}/retired`,
       { retired: true },
     );
+    await test.approveLists();
     const attempts: [Record<string, string[]>, string][] = [
       [{ [randomUUID()]: [] }, "There is no such column"],
       [
@@ -593,6 +595,7 @@ describe("changing and deleting people", () => {
       `/api/lists/${list.id}/choices/${String(a)}/retired`,
       { retired: true },
     );
+    await test.approveLists();
     const response = await send(cookie, "PATCH", `/api/people/${id}`, {
       preferredName: "Fictional Renamed",
       employeeId: unique("Changed"),
@@ -804,6 +807,7 @@ describe("columns", () => {
     await send(cookie, "PUT", `/api/lists/${retired.list.id}/retired`, {
       retired: true,
     });
+    await test.approveLists();
     const onRetired = await send(cookie, "POST", "/api/people/columns", {
       name: unique("Column"),
       listId: retired.list.id,
@@ -1184,7 +1188,7 @@ describe("undo", () => {
     ]);
   });
 
-  it("puts a choice back at the end when the one it followed is gone, and undoes adding choices and lists", async () => {
+  it("undoes drafting a choice's removal, adding choices, and adding lists", async () => {
     const { cookie } = await editor();
     const { list, choices } = await listWith(cookie, ["A", "B", "C"]);
     const removed = await send(
@@ -1202,14 +1206,16 @@ describe("undo", () => {
       (await send(cookie, "GET", "/api/lists"))
         .json<{ lists: List[] }>()
         .lists.find(({ id }) => id === list.id)
-        ?.choices.map(({ label }) => label);
-    expect(await labels()).toEqual(["C", "B"]);
+        ?.choices.flatMap(({ label, draft }) =>
+          draft?.action === "deleted" ? [] : [label],
+        );
+    expect(await labels()).toEqual(["B", "C"]);
 
     const added = await send(cookie, "POST", `/api/lists/${list.id}/choices`, {
       choices: [{ label: "D" }],
     });
     await undo(cookie, added.json<{ changeSetId: string }>().changeSetId);
-    expect(await labels()).toEqual(["C", "B"]);
+    expect(await labels()).toEqual(["B", "C"]);
 
     const created = await send(cookie, "POST", "/api/lists", {
       name: unique("Undone List"),
@@ -1373,7 +1379,7 @@ describe("undo", () => {
     });
     const other = test.connection.transaction(async (transaction) => {
       await transaction.execute(
-        sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.person-drafts', 0))`,
+        sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.drafts', 0))`,
       );
       await transaction
         .select()
@@ -1428,6 +1434,7 @@ describe("undo", () => {
       name: list.name,
       visibility: "restricted",
     });
+    await test.approveLists();
     const undone = await undo(
       cookie,
       changed.json<{ changeSetId: string }>().changeSetId,

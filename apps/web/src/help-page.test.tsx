@@ -105,17 +105,19 @@ describe("Help's Drafts page", () => {
     ).toBeDefined();
   });
 
-  it("says what each mark means and what happens to a draft", async () => {
+  it("says what each mark means, what happens to a draft, and what the Draft menu shows", async () => {
     serverAnswers({
       "GET /api/session": () => Response.json(fictionalUser),
     });
     renderApp("/help/drafts");
-    const [, lifecycle] = await tables("Drafts");
+    const [, lifecycle, views] = await tables("Drafts");
     const names = [
       "Draft",
       "Draft: added",
       "Draft: removed",
       "Rejected",
+      "Draft: moved",
+      "Draft: order",
       "Live",
     ];
     // The marks come first; "Rejected" also names a row of the second table.
@@ -127,6 +129,11 @@ describe("Help's Drafts page", () => {
       "Approved",
       "Rejected",
       "Discarded",
+    ]);
+    expect(views?.map(([view]) => view)).toEqual([
+      "Drafts beside live",
+      "Drafts applied",
+      "Live only",
     ]);
   });
 });

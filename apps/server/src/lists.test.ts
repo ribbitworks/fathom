@@ -274,7 +274,22 @@ describe("lists", () => {
       visibility: "general",
       retired: false,
       choices: [],
+      draft: expect.objectContaining({
+        action: "created",
+        changed: ["name", "description", "visibility", "retired"],
+        live: {},
+        state: "waiting",
+        madeBy: expect.any(String) as unknown,
+        madeAt: expect.any(String) as unknown,
+      }) as unknown,
     });
+    // A draft, which reaches the live lists only once approved.
+    expect(
+      await connection
+        .select()
+        .from(listTable)
+        .where(eq(listTable.id, created.id)),
+    ).toEqual([]);
     expect(
       (await historyOf(created.id)).map(({ field, newValue, madeBy }) => [
         field,
@@ -405,7 +420,7 @@ describe("lists", () => {
     ).toEqual([true, false]);
   });
 
-  it("deletes a list and its choices, recording both", async () => {
+  it("discards a list only drafted to be added, with its choices, recording both", async () => {
     const { cookie, id } = await signedIn(editorRoles);
     const created = await createList(cookie);
     const [choice] = await addChoices(cookie, created.id, ["Fictional"]);
@@ -429,12 +444,16 @@ describe("lists", () => {
       ["deleted", "visibility", id],
       ["deleted", "retired", id],
     ]);
-    // Each choice records the place it was in, so undoing puts it back there.
-    expect((await historyOf(String(choice?.id))).at(-1)).toMatchObject({
-      action: "deleted",
-      field: "order",
-      oldValue: null,
-    });
+    expect(
+      (await historyOf(String(choice?.id)))
+        .slice(4)
+        .map(({ action, field }) => [action, field]),
+    ).toEqual([
+      ["deleted", "listId"],
+      ["deleted", "label"],
+      ["deleted", "description"],
+      ["deleted", "retired"],
+    ]);
   });
 
   it.each([
@@ -490,11 +509,12 @@ describe("adding choices", () => {
       },
     );
     const [choice] = response.json<{ choices: Choice[] }>().choices;
-    expect(choice).toEqual({
+    expect(choice).toMatchObject({
       id: choice?.id,
       label: "Kestrel Bay",
       description: "Head office.",
       retired: false,
+      draft: { action: "created", state: "waiting" },
     });
     expect(
       (await historyOf(String(choice?.id))).map(
@@ -672,7 +692,7 @@ describe("changing choices", () => {
     },
   );
 
-  it("removes a choice, recording it", async () => {
+  it("removes a choice only drafted to be added, recording it", async () => {
     const { cookie, id, list, choices, url } = await listWith([
       "Northmere",
       "Ashgrove",
@@ -689,11 +709,7 @@ describe("changing choices", () => {
       ["deleted", "label", id],
       ["deleted", "description", id],
       ["deleted", "retired", id],
-      ["deleted", "order", id],
     ]);
-    expect((await historyOf(String(choices[1]?.id))).at(-1)).toMatchObject({
-      oldValue: choices[0]?.id,
-    });
   });
 });
 
@@ -714,17 +730,18 @@ describe("ordering choices", () => {
         { after },
       );
     const order = () => labelsOf(editor.cookie, created.id);
-    return { editor, first, second, third, move, order };
+    return { editor, created, first, second, third, move, order };
   }
 
-  it("moves a choice after another, recording the choice it followed and now follows", async () => {
-    const { editor, first, second, third, move, order } = await threeChoices();
+  it("moves a choice after another, recording the list's whole order before and after", async () => {
+    const { editor, created, first, second, third, move, order } =
+      await threeChoices();
     expect((await move(third, String(first?.id))).statusCode).toBe(200);
     expect(await order()).toEqual(["A", "C", "B"]);
-    expect((await historyOf(String(third?.id))).at(-1)).toMatchObject({
+    expect((await historyOf(created.id)).at(-1)).toMatchObject({
       field: "order",
-      oldValue: second?.id,
-      newValue: first?.id,
+      oldValue: [first?.id, second?.id, third?.id],
+      newValue: [first?.id, third?.id, second?.id],
       madeBy: editor.id,
     });
   });
@@ -796,13 +813,13 @@ describe("retiring and restoring choices", () => {
     expect(await historyOf(String(first?.id))).toHaveLength(4);
   });
 
-  it("restores a choice to the end of the list", async () => {
+  it("restores a choice to its place in the list", async () => {
     const { editor, created, first, set } = await retiredSetUp();
     await set({ retired: true });
     await set({ retired: false });
-    expect(await labelsOf(editor.cookie, created.id)).toEqual(["B", "A"]);
+    expect(await labelsOf(editor.cookie, created.id)).toEqual(["A", "B"]);
     expect(
       (await historyOf(String(first?.id))).slice(-2).map(({ field }) => field),
-    ).toEqual(["retired", "order"]);
+    ).toEqual(["retired", "retired"]);
   });
 });

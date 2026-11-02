@@ -61,10 +61,19 @@ interface Item {
   icon: IconName;
   // Absent for pages still to come.
   to?: Page;
-  permission?: Permission;
+  // The permission the page needs, or several, any one of which opens it.
+  permission?: Permission | readonly Permission[];
   // Pages with addresses below their own, such as each list's, are marked as the current page for
   // all of them.
   nested?: boolean;
+}
+
+// Whether the user's permissions open an item's page.
+function opens(item: Item, permissions: readonly Permission[]): boolean {
+  if (item.permission === undefined) return true;
+  const needed: readonly Permission[] =
+    typeof item.permission === "string" ? [item.permission] : item.permission;
+  return needed.some((permission) => permissions.includes(permission));
 }
 
 const sections: { label: string; items: Item[] }[] = [
@@ -94,7 +103,8 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Drafts",
         icon: "drafts",
         to: "/drafts",
-        permission: "people:view",
+        // Drafts of people, and of lists, which Approvers see.
+        permission: ["people:view", "configuration:view"],
       },
       {
         label: "Capacity",
@@ -156,11 +166,11 @@ export function firstPage(
   return sections
     .flatMap(({ items }) => items)
     .find(
-      ({ to, permission }) =>
-        to !== undefined &&
-        to !== "/" &&
-        permission !== undefined &&
-        permissions.includes(permission),
+      (item) =>
+        item.to !== undefined &&
+        item.to !== "/" &&
+        item.permission !== undefined &&
+        opens(item, permissions),
     )?.to;
 }
 
@@ -209,11 +219,7 @@ function Sidebar({
   return (
     <Stack gap={rail ? 14 : 22}>
       {sections.map((section) => {
-        const items = section.items.filter(
-          (item) =>
-            item.permission === undefined ||
-            permissions.includes(item.permission),
-        );
+        const items = section.items.filter((item) => opens(item, permissions));
         if (items.length === 0) return null;
         return (
           <Stack
