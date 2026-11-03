@@ -20,6 +20,7 @@ import {
   greeting,
   renderApp,
   serverAnswers,
+  testTheme,
 } from "./test-support.tsx";
 
 const sidebar = () => screen.findByRole("navigation", { name: "Sections" });
@@ -35,7 +36,7 @@ const rowsOf = (box: HTMLElement) =>
 
 function renderBox(shown: Build) {
   render(
-    <MantineProvider>
+    <MantineProvider theme={testTheme}>
       <AboutBox opened onClose={() => undefined} build={shown} />
     </MantineProvider>,
   );

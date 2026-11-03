@@ -8,12 +8,13 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { AppMenu } from "./app-menu.tsx";
+import { testTheme } from "./test-support.tsx";
 
 describe("a menu", () => {
   it("closes on a click on its title, but not on a field in it", async () => {
     render(
-      <MantineProvider>
-        <AppMenu hideDetached={false}>
+      <MantineProvider theme={testTheme}>
+        <AppMenu>
           <AppMenu.Target>
             <button type="button">Open</button>
           </AppMenu.Target>
@@ -36,8 +37,8 @@ describe("a menu", () => {
 
   it("leaves a menu that keeps its own open state to close itself", async () => {
     render(
-      <MantineProvider>
-        <Menu opened hideDetached={false}>
+      <MantineProvider theme={testTheme}>
+        <Menu opened>
           <Menu.Target>
             <button type="button">Open</button>
           </Menu.Target>

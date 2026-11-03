@@ -6,6 +6,7 @@ import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { DevBadge, devLabel, devTitle } from "./dev-label.tsx";
+import { testTheme } from "./test-support.tsx";
 
 const label = { clone: "3", branch: "feat/fictional-branch" };
 
@@ -21,7 +22,7 @@ describe("the development mode label", () => {
 
   it("names the clone and the branch only in development mode", () => {
     const { container, rerender } = render(
-      <MantineProvider>
+      <MantineProvider theme={testTheme}>
         <DevBadge label={label} />
       </MantineProvider>,
     );

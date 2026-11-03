@@ -4,22 +4,25 @@
 // request, whether to load or change data, because the session has ended, everything loaded is
 // forgotten and the user is sent to sign in, then brought back.
 
-import { MantineProvider } from "@mantine/core";
+import { type MantineThemeOverride, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type RouterHistory, RouterProvider } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { cssVariables, theme } from "./theme.ts";
+import { cssVariables, theme as fathomTheme } from "./theme.ts";
 import { isSignedOut } from "./api.ts";
 import { createAppRouter } from "./router.tsx";
 
 export function App({
   queryClient,
   history,
+  theme = fathomTheme,
 }: {
   queryClient: QueryClient;
   // The browser's address, or, in tests, a page of their choosing.
   history: RouterHistory;
+  // Fathom's theme, or, in tests, one adjusted for the simulated browser.
+  theme?: MantineThemeOverride;
 }) {
   const [router] = useState(() => createAppRouter(queryClient, history));
   // Both loading data and changing it can find the session has ended.

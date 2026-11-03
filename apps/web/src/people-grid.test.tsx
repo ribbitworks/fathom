@@ -19,6 +19,7 @@ import {
   PeopleGrid,
 } from "./people-grid.tsx";
 import { emptyView, formatDay } from "./table-view.ts";
+import { testTheme } from "./test-support.tsx";
 
 const site: Field = {
   id: "f1",
@@ -88,7 +89,7 @@ describe("how wide each column is", () => {
     values: {},
   });
   const grid = (people: Person[]) => (
-    <MantineProvider>
+    <MantineProvider theme={testTheme}>
       <PeopleGrid
         people={people}
         fields={[site]}
@@ -177,7 +178,7 @@ describe("adding people without dates", () => {
     const add = vi.fn();
     const noop = () => undefined;
     render(
-      <MantineProvider>
+      <MantineProvider theme={testTheme}>
         <PeopleGrid
           people={[]}
           fields={[site]}

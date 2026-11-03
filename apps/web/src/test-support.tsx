@@ -3,11 +3,13 @@
 // Helpers for the front-end tests: a simulated server that answers each request the test expects,
 // a fictional signed-in user, and Fathom's front end started on a page of the test's choosing.
 
+import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
 import { render } from "@testing-library/react";
 import { vi } from "vitest";
 import { App } from "./app.tsx";
+import { theme } from "./theme.ts";
 
 type Answer = Response | Promise<Response>;
 
@@ -44,9 +46,18 @@ export function renderApp(path: string) {
     defaultOptions: { queries: { retry: false } },
   });
   const history = createMemoryHistory({ initialEntries: [path] });
-  render(<App queryClient={queryClient} history={history} />);
+  render(<App queryClient={queryClient} history={history} theme={testTheme} />);
   return history;
 }
+
+// The simulated browser has no layout, so everything seems off screen, and a tooltip or menu would
+// hide itself once placed, sometimes before the test looked.
+export const testTheme = mergeThemeOverrides(theme, {
+  components: {
+    Tooltip: { defaultProps: { hideDetached: false } },
+    Popover: { defaultProps: { hideDetached: false } },
+  },
+});
 
 // Finds the element whose whole text matches, though parts of it, such as the values a change
 // names, are marked in elements of their own.

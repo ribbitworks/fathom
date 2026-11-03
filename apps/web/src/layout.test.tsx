@@ -157,7 +157,9 @@ describe("the collapsed sidebar", () => {
     await userEvent.hover(
       within(sidebar()).getByRole("link", { name: "Accounts" }),
     );
-    expect(await screen.findByRole("tooltip")).toBeDefined();
+    expect(
+      await screen.findByRole("tooltip", { name: "Accounts" }),
+    ).toBeDefined();
     await userEvent.click(expand);
     expect(
       within(sidebar()).getByRole("button", { name: "Collapse sidebar" }),
