@@ -1,7 +1,7 @@
 # Fathom — Visual Design
 
 **Status:** Agreed with the owner
-**Last updated:** 2026-11-02
+**Last updated:** 2026-11-03
 
 How Fathom's screens look and behave, so every page is built the same way. It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-components.md). The theme in `apps/web/src/theme.ts` holds the values; this document holds the rules.
 
@@ -55,6 +55,11 @@ The rest follow from them:
 - **Ordering:** Where people set an order, rows have a grip for dragging on wide screens, shown on hover or focus, and Alt with the arrow keys moves the selected row. Each row's menu offers the same moves and shows each action's shortcut.
 - **Retiring:** Records that others use are [retired](../product/domain.md#table-terms) rather than deleted. Retired records are shown only when asked for.
 - **Monthly resource grid:** The grid in the [Decisions Log](../product/decisions.md#planning) keeps people's names fixed on the left while months scroll sideways. Cycle and release ends are thin vertical lines labelled with their names, and each cell lists that month's work.
+- **Roadmap and timeline:** **Proposal:** the board below, from [ADR 0009](../adr/0009-roadmap-and-timeline-views.md), is not yet agreed and will be revised with the owner.
+  - **Layout:** The roadmap is a board with a column for each cycle, under its release's name, and Later at the end, and features as cards showing their name, status, and feature team. The timeline is the same board with a row for each feature team, and a last row for features with none. Within a row, each feature has its own lane: its card sits in its target cycle, where the feature ships, at the end of a bar spanning the months its allocations cover, which may reach back across earlier cycles. Each cycle's column can show its estimated demand against the capacity available.
+  - **Moving:** A card is dragged to another cycle, or on the timeline to another row, or moved with Alt and the arrow keys, left and right to the next cycle and up and down to the next row, or from Move to cycle… and Move to feature team… in its menu. Moving it changes its target cycle or feature team in its draft; moving it back to its live place takes that change out of the draft, and the draft away once nothing else in it differs.
+  - **Drafts:** A moved card is tinted and marked Draft, Unpublished, Rejected, or Being changed, as drafts are on tables, and its live place keeps a dimmed copy marked Live, as a moved choice does. A card someone else is changing cannot be moved. The Draft menu works as on tables: Live only shows the board read only, without dragging, as it is for those who only view. A cycle's demand that a draft changes has its live figure under it, dimmed and marked Live, as in Metrics.
+  - **Approving:** Approvers approve or reject a move from the card's menu, the Draft menu, or the Drafts page, which describes it as a change to the feature's target cycle or feature team.
 - **Dialogs:** Creating and changing settings, such as a list's name, happens in dialogs, which cannot be closed while a change is being saved.
 - **Drafts:** How drafts look, and what can be done with them, on every table that has them.
   - **Marks:** A record with a draft is tinted light blue and marked after a dot: Draft, Draft: added, Draft: removed, Draft: moved, Draft: reordered, Draft: retired, or Draft: restored, with a yellow dot, or Rejected, with a red one. The user's own unpublished draft is also marked Unpublished, after a hollow yellow dot, and a record someone else has unpublished changes to is marked Being changed, after a grey dot, read aloud with who. A record a draft removes is struck through and cannot be changed. Each tint has a darker version in the dark scheme, so text on it stays readable.

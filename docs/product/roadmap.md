@@ -1,7 +1,7 @@
 # Fathom — Roadmap
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-03
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
 
@@ -65,8 +65,8 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Own record and reports:** Users see their own record and their reports' records through a link to their person record, as proposed in [Roles](roles.md).
 - **Unified people view**
 - **Team composition:** The remaining measures, such as test-to-development ratios.
-- **Timeline / Gantt view**
-- **Roadmap view:** The visual roadmap, still to be designed. One idea is a board of cycles, with features as cards, showing each cycle's estimated demand against the capacity available.
+- **Timeline / Gantt view:** Proposed with the roadmap view in [ADR 0009](../adr/0009-roadmap-and-timeline-views.md).
+- **Roadmap view:** The visual roadmap, proposed in [ADR 0009](../adr/0009-roadmap-and-timeline-views.md).
 
 ## Stage: Planning Ahead
 

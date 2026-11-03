@@ -1,7 +1,7 @@
 # Fathom — Product Brief
 
 **Status:** Draft
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-03
 
 ## Problem
 
@@ -101,3 +101,4 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
 1. **Project Manager input:** Project Managers approve feature teams through the Approver role, as [Roles](roles.md) sets out. Is other input needed on whether teams are in place, such as comments or proposals?
+1. **Timeline changes:** The timeline goal asks for drag and drop to change dates and assignments. [ADR 0009](../adr/0009-roadmap-and-timeline-views.md) proposes moving features between cycles and feature teams first. Is dragging to shift a feature's allocations by months also needed?
