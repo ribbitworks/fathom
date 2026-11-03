@@ -5,7 +5,7 @@
 // the roles the user holds, and what each sensitivity covers; the Drafts page says what each mark
 // beside a person with a draft means, and what happens to a draft.
 
-import { roleSchema } from "@fathom/shared";
+import { type Role, roleSchema } from "@fathom/shared";
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -54,15 +54,18 @@ describe("Help's Roles page", () => {
     renderApp("/help/roles");
     const [roles] = await tables();
     expect(roles).toHaveLength(roleSchema.options.length);
-    expect(screen.queryByText("Yours")).toBeNull();
+    expect(screen.queryByText(/Your role/)).toBeNull();
   });
 
   it("says what each role lets a user do, marking the user's own, and what each sensitivity covers", async () => {
+    const held: Role[] = ["viewer", "leadership"];
+    const headerName = (role: Role) =>
+      `${held.includes(role) ? "Your role: " : ""}${roleName(role)}`;
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          roles: ["viewer", "leadership"],
+          roles: held,
           permissions: ["plan:view", "people:view"],
         }),
     });
@@ -70,10 +73,14 @@ describe("Help's Roles page", () => {
     const [roles, sensitivities] = await tables();
     expect(roles).toEqual(
       roleSchema.options.map((role) => [
-        `${roleName(role)}${["viewer", "leadership"].includes(role) ? "Yours" : ""}`,
+        headerName(role),
         roleDescription(role),
       ]),
     );
+    for (const role of roleSchema.options) {
+      const header = screen.getByRole("rowheader", { name: headerName(role) });
+      expect(header.querySelector("svg") !== null).toBe(held.includes(role));
+    }
     expect(sensitivities?.map(([name]) => name)).toEqual([
       "General",
       "Restricted",

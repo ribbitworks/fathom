@@ -13,7 +13,6 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Roles
 
 - **Simpler, more flexible roles:** Roles may need rethinking as planning arrives, for example so a Project Manager can edit their own projects' details without editing the whole plan. The owner expects the redesign to be both simpler and more flexible, so the defaults set on 2026-10-31 are not refined further until then.
-- **Marking your own roles:** Help's Roles page marks the roles a user holds with a "Yours" badge, which the owner finds poor: it is cut short to "YOU…" beside long role names, such as Workforce Administrator. Keep showing which roles are the user's, in a clearer way.
 
 ## Account Administration
 
@@ -44,6 +43,10 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 - **A column's tier and its creator:** The Security Plan says a column can only be given a tier its creator can see, but adding a column has never checked it: a Workforce Administrator sees every tier, so no role reaches the gap today. Found in review on 2026-11-01.
 - **Unnamed in the access history:** The access history names each person by their live record, so a Restricted change to someone only drafted to be added shows them without a name until their draft is approved.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
+
+## Tables
+
+- **Faint marks in dark mode:** The marks beside a column's name for its sort and filter, and the mark beside a saved view's name when the table has changed since it was applied, use the filled sea blue in both modes. On the dark panel that has a contrast of 2.66 to 1, below the 3 to 1 a meaningful graphic needs. The roles marked on Help's Roles page use a lighter sea blue in dark mode for this reason; these marks could do the same. Found in review on 2026-11-02.
 
 ## Dependencies
 

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Small line icons drawn in the current text colour: one for each page in the sidebar, and the
-// controls that need one. Each is hidden from screen readers, so its control must have a name.
+// controls and marks that need one. Each is hidden from screen readers, so its control must have a
+// name, and a mark must be read aloud in words.
 
 import type { ReactNode } from "react";
 
@@ -97,6 +98,7 @@ const paths = {
     </>
   ),
   plus: <path d="M8 3v10M3 8h10" />,
+  check: <path d="M3 8.5l3.2 3L13 4.5" />,
   search: (
     <>
       <circle cx="7" cy="7" r="4.5" />

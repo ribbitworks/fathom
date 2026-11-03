@@ -17,6 +17,22 @@
   overflow: hidden;
 }
 
+/* A slot one line tall before every role's name, so the names line up whether or not they are
+   marked, and a long name wraps beside its mark instead of pushing it out. */
+.roleMark {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  width: 16px;
+  height: 1lh;
+  color: var(--mantine-color-sea-filled);
+}
+
+/* The filled shade is too dark to see on the dark panel. */
+:global([data-mantine-color-scheme="dark"]) .roleMark {
+  color: var(--mantine-color-sea-4);
+}
+
 .entries {
   margin: 0;
   padding: 0;

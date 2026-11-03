@@ -7,9 +7,17 @@
 // happens to a draft, and what the Draft menu shows.
 
 import { type Role, roleSchema } from "@fathom/shared";
-import { Badge, Group, Paper, Stack, Table, Title } from "@mantine/core";
+import {
+  Group,
+  Paper,
+  Stack,
+  Table,
+  Title,
+  VisuallyHidden,
+} from "@mantine/core";
 import type { ReactNode } from "react";
 import { roleDescription, roleName } from "./accounts.ts";
+import { Icon } from "./icons.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { StatusMark } from "./status-mark.tsx";
@@ -113,13 +121,18 @@ export function RolesHelpPage({ roles }: { roles: readonly Role[] }) {
         <Rows
           rows={roleSchema.options.map((role) => [
             role,
-            <Group gap="xs" wrap="nowrap">
-              <span>{roleName(role)}</span>
-              {roles.includes(role) && (
-                <Badge size="sm" variant="light" color="sea">
-                  Yours
-                </Badge>
-              )}
+            <Group gap="xs" wrap="nowrap" align="flex-start">
+              <span className={classes.roleMark}>
+                {roles.includes(role) && <Icon name="check" />}
+              </span>
+              <span>
+                {roles.includes(role) && (
+                  <>
+                    <VisuallyHidden>Your role:</VisuallyHidden>{" "}
+                  </>
+                )}
+                {roleName(role)}
+              </span>
             </Group>,
             roleDescription(role),
           ])}
