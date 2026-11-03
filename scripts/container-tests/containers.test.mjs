@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests of Fathom's running containers, as deploy/compose.yaml runs them, with throwaway secrets and
-// a throwaway certificate: users reach Fathom only through the proxy, the server sees each user's
-// address, no other container can pose as the proxy, the application and the database cannot reach
-// the internet, and the proxy cannot reach the database. The Compose file's settings are checked by
+// a throwaway certificate: users reach Fathom only through the proxy, the front end shows the
+// release, commit and commit date the image was built from, the server sees each user's address, no
+// other container can pose as the proxy, the application and the database cannot reach the
+// internet, and the proxy cannot reach the database. The Compose file's settings are checked by
 // scripts/compose-settings.test.mjs. Each check that something is unreachable is paired with a
 // check that the same probe reaches something it should, so a broken probe cannot pass. Run with
 // 'pnpm test:containers'; it builds the images, which takes a few minutes the first time.
@@ -28,6 +29,17 @@ import { proxyProtocolHeader } from "../../packages/test-utils/src/https.ts";
 import { cloneName } from "../clone.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
+
+// The release, commit and commit date, read through scripts/lib.sh as the scripts read them, so these
+// images are the same as those 'pnpm stack:up' builds and share their tag.
+const [version, commit, commitDate] = execFileSync(
+  "bash",
+  [
+    "-c",
+    'source scripts/lib.sh && printf "%s\\n" "$FATHOM_VERSION" "$FATHOM_COMMIT" "$FATHOM_COMMIT_DATE"',
+  ],
+  { cwd: repositoryRoot, encoding: "utf8" },
+).split("\n");
 // An address on the internet, which no isolated container may reach.
 const internetAddress = "1.1.1.1";
 const internetName = "example.com";
@@ -65,6 +77,9 @@ function compose(...args) {
         FATHOM_SECURITY_FIXES_DATE:
           process.env.FATHOM_SECURITY_FIXES_DATE ??
           new Date().toISOString().slice(0, 10),
+        FATHOM_VERSION: version,
+        FATHOM_COMMIT: commit,
+        FATHOM_COMMIT_DATE: commitDate,
       },
     },
   );
@@ -191,6 +206,22 @@ describe("reaching Fathom", () => {
     const greeting = await httpsGet("/api/greeting");
     assert.equal(greeting.statusCode, 401);
     assert.deepEqual(JSON.parse(greeting.body), { error: "Unauthorized" });
+  });
+
+  it("shows the release, commit and commit date the image was built from", async () => {
+    const page = await httpsGet("/");
+    const script = page.body.match(/src="(\/assets\/[^"]+\.js)"/)?.[1];
+    assert.ok(script !== undefined);
+    const { body } = await httpsGet(script);
+    assert.ok(commit !== "");
+    // The minifier may quote them in any of JavaScript's ways.
+    const has = (name, value) =>
+      ['"', "'", "`"].some((quote) =>
+        body.includes(`${name}:${quote}${value}${quote}`),
+      );
+    assert.ok(has("version", version), "The release is missing");
+    assert.ok(has("commit", commit), "The commit is missing");
+    assert.ok(has("date", commitDate), "The commit date is missing");
   });
 
   it("logs the user's address, not the proxy's", () => {

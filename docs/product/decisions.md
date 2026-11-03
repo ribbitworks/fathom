@@ -1,6 +1,6 @@
 # Fathom — Decisions Log
 
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-02
 
 Detailed product decisions made so far. The [Product Brief](brief.md) holds the high-level picture. Domain terms are defined in [Domain Concepts](domain.md). Open questions at this level of detail are raised when the related feature is worked on.
 
@@ -116,3 +116,4 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 - **Snapshots:** Taken both manually and on a schedule, and contain projects, features, and allocations only, with their custom field values. The schedule is to be decided.
 - **Exports:** PDF, and CSV or TSV for use in Excel.
 - **Backup operations:** Run and monitored by the owner's department, since IT is too busy to support custom applications.
+- **Version:** Fathom's version is the nearest release tag, such as `v0.3.0`, in the history of the commit it is built from, with semantic versioning, decided by the owner on 2026-11-02, so a release is made by tagging it and no file keeps a copy that could fall out of step. A build after a release names how many commits it is past it, and a build before the first release is Unreleased. Every package keeps the version 0.0.0. Help's [About box](../design/visual-design.md#layout) shows it with the commit, marked as modified for a build from files that differ from it, and the commit's date as its committer's clock gave it, rather than the day of the build, so building one commit always gives the same image, decided by the owner on 2026-11-02.

@@ -72,6 +72,13 @@ const paths = {
       <circle cx="8" cy="11.3" r=".4" />
     </>
   ),
+  aboutHelp: (
+    <>
+      <circle cx="8" cy="8" r="6" />
+      <path d="M8 7.2V11" />
+      <circle cx="8" cy="5" r=".4" />
+    </>
+  ),
   more: (
     <>
       <circle cx="3.5" cy="8" r="0.8" />

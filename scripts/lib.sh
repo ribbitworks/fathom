@@ -5,8 +5,8 @@
 # of project files, the copy of them that containerized scanners read, so they never see ignored
 # folders, the password the development accounts share, and a prompt for new passwords. Sourcing it
 # also exports FATHOM_SECURITY_FIXES_DATE, the date that decides which security fixes container
-# builds fetch, and this copy's development and production-like ports. Source this file; do not
-# run it.
+# builds fetch, Fathom's release, commit and commit date, and this copy's development and
+# production-like ports. Source this file; do not run it.
 
 info() { printf '==> %s\n' "$*"; }
 fail() {
@@ -22,6 +22,42 @@ require_git_repository() {
 # Setting another value, such as the current time, fetches fixes again within the same day.
 FATHOM_SECURITY_FIXES_DATE="${FATHOM_SECURITY_FIXES_DATE:-$(date -u +%Y-%m-%d)}"
 export FATHOM_SECURITY_FIXES_DATE
+
+fathom_git() { git -C "$(dirname "${BASH_SOURCE[0]}")" "$@"; }
+
+# Prints the release this commit belongs to, from the nearest vX.Y.Z tag in its history, such as
+# 0.3.0, followed by +4 when it is 4 commits after that tag. Tags with build metadata, such as
+# v1.0.0+7, are not releases. Prints nothing before the first release.
+fathom_release() {
+  local described commits
+  described="$(fathom_git describe --tags --long --match 'v[0-9]*.[0-9]*.[0-9]*' \
+    --exclude '*+*' 2>/dev/null)" || return 0
+  # Such as v0.3.0-4-gabc1234: the tag, the commits since it, and this commit.
+  described="${described%-g*}"
+  commits="${described##*-}"
+  described="${described%-*}"
+  if [ "$commits" = 0 ]; then printf '%s\n' "${described#v}"; else printf '%s+%s\n' "${described#v}" "$commits"; fi
+}
+
+# Prints the short commit, followed by -modified when the files differ from it, since then the
+# commit alone would not say what is running.
+fathom_commit() {
+  local commit
+  commit="$(fathom_git rev-parse --short HEAD 2>/dev/null)" || return 0
+  if [ -n "$(fathom_git status --porcelain 2>/dev/null)" ]; then commit="$commit-modified"; fi
+  printf '%s\n' "$commit"
+}
+
+# The release, commit and commit date Help's About box shows. The container build cannot see .git,
+# so the scripts read them here and pass them to the build. The commit's date, as its committer's
+# clock gave it, is used rather than the day of the build, so building one commit always gives the
+# same image, as the security plan's repeatable releases need, and the cache keeps it. Each can be
+# set to override it, even to nothing, since an empty release means one before the first. Scripts
+# that do not need git still run without it, which leaves them empty.
+FATHOM_VERSION="${FATHOM_VERSION-$(fathom_release)}"
+FATHOM_COMMIT="${FATHOM_COMMIT-$(fathom_commit)}"
+FATHOM_COMMIT_DATE="${FATHOM_COMMIT_DATE-$(fathom_git log -1 --format=%cs 2>/dev/null || true)}"
+export FATHOM_VERSION FATHOM_COMMIT FATHOM_COMMIT_DATE
 
 # Several copies of the repository can run on one machine at once, each with its own clone number,
 # from 1 to 9, in the git-ignored .dev/clone. The number picks the ports and the names of the

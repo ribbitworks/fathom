@@ -17,6 +17,16 @@ x-hardening: &hardening
     - ALL
   restart: unless-stopped
 
+# The application's image, which the migration run shares. The front end shows the release, commit
+# and commit date, which scripts/lib.sh reads from git, since the build cannot see .git.
+x-app-build: &app-build
+  context: ..
+  dockerfile: deploy/docker/app/Dockerfile
+  args:
+    FATHOM_VERSION: ${FATHOM_VERSION:-}
+    FATHOM_COMMIT: ${FATHOM_COMMIT:-}
+    FATHOM_COMMIT_DATE: ${FATHOM_COMMIT_DATE:-}
+
 services:
   proxy:
     <<: *hardening
@@ -40,9 +50,7 @@ services:
 
   app:
     <<: *hardening
-    build:
-      context: ..
-      dockerfile: deploy/docker/app/Dockerfile
+    build: *app-build
     image: fathom-app:${FATHOM_IMAGE_TAG:-latest}
     platform: linux/amd64
     user: nonroot
@@ -78,9 +86,7 @@ services:
   # password.
   migrate:
     <<: *hardening
-    build:
-      context: ..
-      dockerfile: deploy/docker/app/Dockerfile
+    build: *app-build
     image: fathom-app:${FATHOM_IMAGE_TAG:-latest}
     platform: linux/amd64
     user: nonroot

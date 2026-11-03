@@ -36,13 +36,28 @@ function devLabel() {
   return clone === undefined || branch === undefined ? null : { clone, branch };
 }
 
+// The release, commit and commit date that scripts/lib.sh reads from git, for Help's About box.
+// Builds without the scripts have none, and tests never do, whatever the shell running them holds.
+function build() {
+  if (environment.VITEST !== undefined)
+    return { version: "", commit: "", date: "" };
+  return {
+    version: environment.FATHOM_VERSION ?? "",
+    commit: environment.FATHOM_COMMIT ?? "",
+    date: environment.FATHOM_COMMIT_DATE ?? "",
+  };
+}
+
 // Dates, names, and counts are shown in the computer's language, so tests fix one. Each test process reads it
 // as it starts, so it is set here, before Vitest starts them.
 if (environment.VITEST !== undefined) environment.LC_ALL = "en_US.UTF-8";
 
 export default defineConfig({
   plugins: [react()],
-  define: { FATHOM_DEV_LABEL: JSON.stringify(devLabel()) },
+  define: {
+    FATHOM_DEV_LABEL: JSON.stringify(devLabel()),
+    FATHOM_BUILD: JSON.stringify(build()),
+  },
   server: {
     ...https(),
     port: Number(environment.FATHOM_DEV_PORT ?? "8443"),

@@ -25,6 +25,11 @@ RUN pnpm install --frozen-lockfile --filter @fathom/web...
 COPY packages/shared/src packages/shared/src
 COPY packages/shared/tsconfig.json packages/shared/
 COPY apps/web apps/web
+# The release, commit and commit date the front end shows, which the build reads from these. Declared
+# here, after the packages are installed, so a new commit does not install them again.
+ARG FATHOM_VERSION=""
+ARG FATHOM_COMMIT=""
+ARG FATHOM_COMMIT_DATE=""
 RUN pnpm --filter @fathom/web build
 
 # Production packages only. Node.js runs TypeScript only outside node_modules, so the workspace

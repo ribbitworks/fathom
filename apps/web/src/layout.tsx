@@ -7,6 +7,7 @@
 // icons, each naming its page on hover or focus, and remembers the choice. On narrow screens the
 // sidebar opens from a menu button instead.
 
+import { AboutBox, build } from "./about.tsx";
 import { AppMenu } from "./app-menu.tsx";
 import type { Permission } from "@fathom/shared";
 import {
@@ -61,8 +62,10 @@ type Page =
 interface Item {
   label: string;
   icon: IconName;
-  // Absent for pages still to come.
+  // Absent for pages still to come, and for boxes.
   to?: Page;
+  // Opens a box over the current page instead of going to another.
+  box?: "about";
   // The permission the page needs, or several, any one of which opens it.
   permission?: Permission | readonly Permission[];
   // Pages with addresses below their own, such as each list's, are marked as the current page for
@@ -155,6 +158,7 @@ const sections: { label: string; items: Item[] }[] = [
     items: [
       { label: "Roles", icon: "rolesHelp", to: "/help/roles" },
       { label: "Drafts", icon: "draftsHelp", to: "/help/drafts" },
+      { label: "About Fathom", icon: "aboutHelp", box: "about" },
     ],
   },
 ];
@@ -211,6 +215,26 @@ function RailTip({
   );
 }
 
+// A button, not a link, since it opens a box over the page rather than going to another.
+function AboutItem({ item, rail }: { item: Item; rail: boolean }) {
+  const [opened, { open, close }] = useDisclosure(false);
+  return (
+    <>
+      <RailTip rail={rail} label={item.label}>
+        <UnstyledButton className={classes.link} onClick={open}>
+          <Icon name={item.icon} />
+          {rail ? (
+            <VisuallyHidden>{item.label}</VisuallyHidden>
+          ) : (
+            <span>{item.label}</span>
+          )}
+        </UnstyledButton>
+      </RailTip>
+      <AboutBox opened={opened} onClose={close} build={build} />
+    </>
+  );
+}
+
 function Sidebar({
   permissions,
   rail,
@@ -244,7 +268,9 @@ function Sidebar({
               </Text>
             )}
             {items.map((item) =>
-              item.to === undefined ? (
+              item.box === "about" ? (
+                <AboutItem key={item.label} item={item} rail={rail} />
+              ) : item.to === undefined ? (
                 <RailTip
                   key={item.label}
                   rail={rail}

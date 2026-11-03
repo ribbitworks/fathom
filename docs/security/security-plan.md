@@ -1,7 +1,7 @@
 # Fathom: Security Plan
 
 **Status:** Proposal for review by the owner and IT
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-02
 
 How Fathom is protected: what it must protect, the threats against it, how each threat is mitigated and verified, how its technology is scanned for vulnerabilities, how confidence in its source code is established, and how the plan is enforced. It builds on [ADR 0001](../adr/0001-tech-stack.md), the [Decisions Log](../product/decisions.md), and [Roles](../product/roles.md). Everything here is proposed until reviewed.
 
@@ -37,6 +37,7 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | Another container poses as the proxy to forge users' addresses, evading rate limits or misleading the logs | The application accepts connections, and the user addresses they name, only from the proxy's address | Automated tests; container tests |
 | A user sees or changes data beyond their roles | Tier checks in one shared data access layer, used by screens, exports, snapshots, and search | Automated tests for every role and tier; code review |
 | A user grants themselves more access | Administrators cannot change their own roles, reset their own password, or deactivate their own account. They can still create another account or reset another user's password and sign in as them, which local passwords cannot prevent, so account creation, role changes, password resets, and deactivations are recorded in the access history | Automated tests; access history review |
+| Someone without an account learns which release runs, to look up its known weaknesses | Accepted: Help's About box needs the release and commit in the page's script, which is served before sign-in, and only the internal network reaches it; known weaknesses are fixed by updating, not hidden | Vulnerability scanning |
 | Passwords are guessed or stolen | Strong password hashing, sign-in rate limiting, and session expiry | Automated tests; configuration review |
 | Sessions are hijacked, or requests forged from another site | Secure, HttpOnly, SameSite session cookies and cross-site request forgery protection | Automated tests; web application scan |
 | Traffic is intercepted on the internal network | HTTPS with an internal certificate; no unencrypted access | TLS configuration scan |

@@ -1,7 +1,7 @@
 # Fathom — Visual Design
 
 **Status:** Agreed with the owner
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-02
 
 How Fathom's screens look and behave, so every page is built the same way. It applies the components and typeface chosen in [ADR 0004](../adr/0004-ui-components.md). The theme in `apps/web/src/theme.ts` holds the values; this document holds the rules.
 
@@ -33,6 +33,7 @@ The rest follow from them:
 - **Pages:** Each page starts with a heading and the page's main action on the right. Content sits in bordered panels on a canvas a shade darker than them.
 - **History pages:** Change history and Access history, in the sidebar's History section, look alike: a search field, like a table's, then one row for each entry, newest first, with its date, year, and time, naming who did what in a sentence, with details dimmed after a colon, and a yellow dot, read aloud as "Worth checking", before entries that deserve a second look. The change history has a sentence for each record a save changed, such as "changed the list Sites: Name from Sites to Locations", where the field is in semibold and each value is set apart on a light ground, as a value is in code, as wherever a change is described, in a record's menu or on the Drafts page; records of a kind added or deleted together share one, such as "added 150 people", naming ten, with Show all for the rest. A save that changed several records lists five, with Show more for the rest. Show more at the end of the page reads older entries. The change history's search looks on the server in who made each change and the names and values involved, reading back through up to 2,000 saves at a time, with Show more to read on, and shows what matches first in each entry; the access history's searches the latest entries it shows.
 - **Roles help:** Help's Roles page names each role beside what it lets a user do, with the user's own roles marked "Yours", followed by what each sensitivity covers. Wherever roles are chosen, each role shows the same description under its name.
+- **About Fathom:** The last item in Help, open to everyone, opens a box in the middle of the screen, over the current page, rather than going to another, unlike dialogs, which open near the top, since it asks nothing of the user, with Fathom's mark and name above three rows: Version, such as 0.3.0, or 0.3.0, plus 4 commits, or Unreleased, as [Decisions Log](../product/decisions.md#platform-and-operations) sets out; Commit, the short commit, followed by "modified" for a build from files that differ from it; and Committed, the commit's date, such as November 2, 2026. A build given nothing from git, as [Development Setup](development-setup.md#ways-to-run-fathom) describes, shows each as Unknown.
 - **Drafts help:** Help's Drafts page names each mark a person, list, or choice with a draft can show, drawn as on the People table and the Lists page, beside what it means, followed by what happens to a draft once saved, approved, rejected, or discarded, and what each choice in the Draft menu shows.
 - **Sign-in and problem pages:** Only Fathom's name and mark above the form or message, with no other words.
 
