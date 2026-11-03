@@ -11,9 +11,13 @@ import { execFileSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { cloneName } from "./clone.ts";
 
 const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
-const imageName = "fathom-postgres:dev";
+// Each copy of the repository builds its own image, so copies changing it at once never test each
+// other's build.
+const imageTag = cloneName("dev", repositoryRoot);
+const imageName = `fathom-postgres:${imageTag}`;
 
 // Reads a setting from the development database's Compose file, so tests use the same server
 // settings as development, with one place to change them.
@@ -33,7 +37,7 @@ function composeSetting(pattern: RegExp, description: string): string {
 function developmentBuildEnvironment(): NodeJS.ProcessEnv {
   const environment: NodeJS.ProcessEnv = {
     ...process.env,
-    FATHOM_IMAGE_TAG: "dev",
+    FATHOM_IMAGE_TAG: imageTag,
   };
   delete environment.DOCKER_DEFAULT_PLATFORM;
   return environment;

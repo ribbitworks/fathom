@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of clone numbers, which let several copies of the repository run at once: scripts/lib.sh and
-// scripts/clone.mjs read them, and 'pnpm dev:setup <number>' sets them. Each test runs the scripts
-// from a copy in a throwaway folder, with its own .dev/clone.
+// Tests of clone numbers, which let several copies of the repository run at once:
+// scripts/lib.sh and packages/test-utils/src/clone.ts read them, and 'pnpm dev:setup <number>'
+// sets them. Each test runs the scripts from a copy in a throwaway folder, with its own .dev/clone.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -20,7 +20,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { cloneName } from "./clone.mjs";
+import { cloneName } from "../packages/test-utils/src/clone.ts";
 
 const scripts = fileURLToPath(new URL(".", import.meta.url));
 const which = (tool) =>
@@ -147,7 +147,7 @@ describe("scripts/dev-setup.sh", () => {
   });
 });
 
-describe("scripts/clone.mjs", () => {
+describe("packages/test-utils/src/clone.ts", () => {
   it("names things as scripts/lib.sh does", () => {
     assert.equal(cloneName("latest", copy(undefined)), "latest");
     assert.equal(cloneName("latest", copy("1\n")), "latest");

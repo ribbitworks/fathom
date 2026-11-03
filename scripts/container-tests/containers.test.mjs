@@ -26,7 +26,7 @@ import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { proxyProtocolHeader } from "../../packages/test-utils/src/https.ts";
-import { cloneName } from "../clone.mjs";
+import { cloneName } from "../../packages/test-utils/src/clone.ts";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 

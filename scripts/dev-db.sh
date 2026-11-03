@@ -17,6 +17,9 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh
 source scripts/lib.sh
 
+# Each copy of the repository builds its own database image, as the database tests do.
+FATHOM_IMAGE_TAG="${FATHOM_IMAGE_TAG:-$(clone_name dev)}"
+export FATHOM_IMAGE_TAG
 compose=(docker compose --project-name "$(clone_name fathom-dev)" --file deploy/compose.dev.yaml)
 
 start_database() {

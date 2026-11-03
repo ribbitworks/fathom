@@ -51,5 +51,4 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 
 ## Development
 
-- **Copies of the repository share a database image:** Development mode and the database tests in every copy build and use the same `fathom-postgres:dev` image, so two copies changing the database image at once can test each other's build. Deferred as rare: the image changes far less often than the code.
 - **Sidebar items repeat their content:** The About Fathom item, a button, repeats the icon and name that each page's link in the sidebar shows, in `apps/web/src/layout.tsx`. Deferred until the branch changing the sidebar's menus merges, so the two do not conflict; then both share one piece.
