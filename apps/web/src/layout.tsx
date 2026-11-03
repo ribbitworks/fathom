@@ -216,6 +216,20 @@ function RailTip({
   );
 }
 
+// An item's icon and name, the name read aloud but not shown in the rail.
+function ItemContent({ item, rail }: { item: Item; rail: boolean }) {
+  return (
+    <>
+      <Icon name={item.icon} />
+      {rail ? (
+        <VisuallyHidden>{item.label}</VisuallyHidden>
+      ) : (
+        <span>{item.label}</span>
+      )}
+    </>
+  );
+}
+
 // A button, not a link, since it opens a box over the page rather than going to another.
 function AboutItem({ item, rail }: { item: Item; rail: boolean }) {
   const [opened, { open, close }] = useDisclosure(false);
@@ -223,12 +237,7 @@ function AboutItem({ item, rail }: { item: Item; rail: boolean }) {
     <>
       <RailTip rail={rail} label={item.label}>
         <UnstyledButton className={classes.link} onClick={open}>
-          <Icon name={item.icon} />
-          {rail ? (
-            <VisuallyHidden>{item.label}</VisuallyHidden>
-          ) : (
-            <span>{item.label}</span>
-          )}
+          <ItemContent item={item} rail={rail} />
         </UnstyledButton>
       </RailTip>
       <AboutBox opened={opened} onClose={close} build={build} />
@@ -297,12 +306,7 @@ function Sidebar({
                     className={classes.link}
                     activeOptions={{ exact: item.nested !== true }}
                   >
-                    <Icon name={item.icon} />
-                    {rail ? (
-                      <VisuallyHidden>{item.label}</VisuallyHidden>
-                    ) : (
-                      <span>{item.label}</span>
-                    )}
+                    <ItemContent item={item} rail={rail} />
                   </Link>
                 </RailTip>
               ),
