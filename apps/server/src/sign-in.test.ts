@@ -146,6 +146,39 @@ describe("signing in", () => {
     expect(cookie).toMatch(/; Max-Age=1800/i);
   });
 
+  it("names the session cookie after Fathom's port, so copies on one machine keep their own sessions", async () => {
+    const email = await newAccount();
+    const sessionCookieFor = async (url: string) => {
+      const { headers } = await createAuth(connection, {
+        publicUrl: new URL(url).origin,
+        secret,
+      }).api.signInEmail({ body: { email, password }, returnHeaders: true });
+      return (
+        headers
+          .getSetCookie()
+          .find((value) => value.includes("session_token="))
+          ?.split(";")[0] ?? ""
+      );
+    };
+    const name = (cookie: string) => cookie.split("=")[0];
+    expect(name(await sessionCookieFor(publicUrl))).toBe(
+      "__Secure-better-auth.session_token",
+    );
+    expect(name(await sessionCookieFor(`${publicUrl}:443`))).toBe(
+      "__Secure-better-auth.session_token",
+    );
+    const copy = createAuth(connection, {
+      publicUrl: "https://localhost:8453",
+      secret,
+    });
+    const portCookie = await sessionCookieFor("https://localhost:8453");
+    expect(name(portCookie)).toBe("__Secure-fathom-8453.session_token");
+    const sessionOf = (cookie: string) =>
+      copy.api.getSession({ headers: new Headers({ cookie }) });
+    expect(await sessionOf(portCookie)).toMatchObject({ user: { email } });
+    expect(await sessionOf(await sessionCookieFor(publicUrl))).toBeNull();
+  });
+
   it("does not let a client ask for a session of a different length", async () => {
     const response = await signIn(await newAccount(), {
       extra: { rememberMe: false },

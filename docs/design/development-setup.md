@@ -63,6 +63,8 @@ Developers may use any machine and container runtime listed for development in S
   | Development database | 5432 | 5432 + (n - 1) |
   | Production-like mode | 9443 | 9443 + 10 × (n - 1) |
 
+  Browsers keep cookies apart by host but not by port, so Fathom names its sign-in cookie after the port when its address has one. Each copy and mode then keeps its own sign-in, and one browser can stay signed in to all of them at once.
+
   Copying `.dev/` from another copy keeps the same development accounts' password in every copy, but also copies its clone number, so run `pnpm dev:setup <number>` straight after with the new copy's own number. Until then, the new copy uses the other's database, and `pnpm dev:reset` there would delete it. What copies still share is listed in [Issues](../issues.md#development).
 
 ### HTTPS

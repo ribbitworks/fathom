@@ -31,6 +31,12 @@ export type AuthLog = (
 
 const minute = 60;
 
+// Browsers do not keep cookies apart by port; the default port keeps Better Auth's default names.
+function cookiePrefix(publicUrl: string): string | undefined {
+  const { port } = new URL(publicUrl);
+  return port === "" ? undefined : `fathom-${port}`;
+}
+
 export function createAuth(
   database: Database,
   config: AuthConfig,
@@ -77,6 +83,7 @@ export function createAuth(
     },
     advanced: {
       useSecureCookies: true,
+      cookiePrefix: cookiePrefix(config.publicUrl),
       ipAddress: { ipAddressHeaders: [clientAddressHeader] },
     },
     logger: {

@@ -52,4 +52,3 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 ## Development
 
 - **Copies of the repository share a database image:** Development mode and the database tests in every copy build and use the same `fathom-postgres:dev` image, so two copies changing the database image at once can test each other's build. Deferred as rare: the image changes far less often than the code.
-- **Copies of the repository share sign-in:** Every copy's sign-in cookie has the same name, and browsers do not keep cookies apart by port, so signing in to one copy signs the same browser out of the others. Use a separate browser profile for each copy until each has its own cookie name.
