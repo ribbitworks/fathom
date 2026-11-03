@@ -98,7 +98,7 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 | --- | --- | --- |
 | Application dependencies (npm packages) | Every build, and daily | pnpm audit and Trivy |
 | Container images, both as built and as running | Every build, and daily | Trivy, scanning each image saved to a file for vulnerable operating system packages and built-in secrets. Trivy cannot see PostgreSQL itself, which is built from source; its releases are tracked through PostgreSQL's release notes and Renovate |
-| Application source code | Every build | Semgrep |
+| Application source code | Every build | Semgrep. The scan fails if Semgrep reports any file it could not scan in full, such as one it could not parse or timed out on, unless it skipped only a few characters of one line, as with newer syntax it does not know yet |
 | Secrets in the repository, including its history | Every build | Gitleaks |
 | Docker and Compose configuration | Every build, and after any change | Trivy configuration scan for Dockerfiles; automated tests for Compose settings, which Trivy cannot scan |
 | The running web application | Before each stage goes live, and monthly | A web application scanner such as OWASP ZAP |

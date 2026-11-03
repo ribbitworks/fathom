@@ -52,3 +52,4 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 ## Development
 
 - **Sidebar items repeat their content:** The About Fathom item, a button, repeats the icon and name that each page's link in the sidebar shows, in `apps/web/src/layout.tsx`. Deferred until the branch changing the sidebar's menus merges, so the two do not conflict; then both share one piece.
+- **Files the code scan skips without reporting them:** Semgrep skips files larger than 1 MB and files it judges to be minified, and its results list them only in verbose mode, so the security report cannot tell they were skipped. Fathom's repository has no such files today. Deferred until it has.

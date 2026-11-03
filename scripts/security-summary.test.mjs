@@ -201,6 +201,115 @@ describe("security summary", () => {
     assert.match(rowFor(markdown, "Code security flaws"), /Did not complete/);
   });
 
+  const span = (first, firstCol, last, lastCol) => ({
+    start: { line: first, col: firstCol },
+    end: { line: last, col: lastCol },
+  });
+  const partial = (path, ...spans) => ({
+    level: "warn",
+    type: ["PartialParsing", spans],
+    path,
+  });
+  const scanWith = (errors) => {
+    writeResults({
+      "code.json": {
+        results: [],
+        errors,
+        paths: { scanned: ["scripts/example.sh"] },
+      },
+    });
+    return summarize(reportDir);
+  };
+
+  it("does not complete when Semgrep left any part of a file unscanned, and says what", () => {
+    for (const [error, gap] of [
+      [
+        { level: "warn", type: "Syntax error", path: "scripts/example.sh" },
+        /Semgrep could not parse scripts\/example\.sh, so it was not scanned\./,
+      ],
+      [
+        { level: "warn", type: "Lexical error", path: "a.sh" },
+        /could not parse a\.sh/,
+      ],
+      [
+        { level: "warn", type: "Timeout", path: "big.test.ts" },
+        /Semgrep did not finish big\.test\.ts \(Timeout\), so it was not fully scanned\./,
+      ],
+      [
+        { level: "warn", type: "AST builder error", path: "b.ts" },
+        /did not finish b\.ts \(AST builder error\)/,
+      ],
+      [
+        { level: "warn", type: "A kind not seen before", path: "c.ts" },
+        /did not finish c\.ts \(A kind not seen before\)/,
+      ],
+      [
+        { level: "error" },
+        /did not finish an unnamed file \(an unknown error\)/,
+      ],
+      [
+        partial("scripts/example.sh", span(20, 1, 56, 6)),
+        /Semgrep skipped lines 20 to 56 of scripts\/example\.sh, so they were not scanned\./,
+      ],
+      [
+        partial("min.js", span(1, 1, 1, 50000)),
+        /Semgrep skipped part of line 1 of min\.js, so it was not scanned\./,
+      ],
+      [partial("d.ts", null), /Semgrep skipped part of d\.ts/],
+      [
+        partial("e.ts", { start: {}, end: {} }),
+        /Semgrep skipped part of e\.ts/,
+      ],
+      [
+        { level: "warn", type: ["PartialParsing", "not a list"], path: "f.ts" },
+        /did not finish f\.ts \(PartialParsing\)/,
+      ],
+    ]) {
+      const { failed, markdown } = scanWith([error]);
+      assert.equal(failed, true, String(gap));
+      assert.match(rowFor(markdown, "Code security flaws"), /Did not complete/);
+      assert.match(markdown, gap);
+    }
+  });
+
+  it("does not complete when Semgrep's results cannot be read, and says why", () => {
+    for (const [results, gap] of [
+      [{ errors: [], paths: { scanned: ["a.ts"] } }, /no list of results/],
+      [
+        { results: [], errors: {}, paths: { scanned: ["a.ts"] } },
+        /list of errors could not be read/,
+      ],
+      [
+        { results: [], errors: [], paths: { scanned: [] } },
+        /Semgrep scanned no files\./,
+      ],
+    ]) {
+      writeResults({ "code.json": results });
+      const { failed, markdown } = summarize(reportDir);
+      assert.equal(failed, true, String(gap));
+      assert.match(markdown, gap);
+    }
+  });
+
+  it("completes when Semgrep skipped only short fragments within lines, naming each gap once", () => {
+    const { failed, markdown } = scanWith([
+      partial(
+        "src/example.ts",
+        span(301, 33, 301, 38),
+        span(303, 22, 303, 27),
+        span(303, 22, 303, 27),
+      ),
+    ]);
+    assert.equal(failed, false);
+    assert.doesNotMatch(markdown, /not scanned/);
+    assert.match(markdown, /Semgrep reported 1 errors/);
+
+    const repeated = scanWith([
+      partial("g.sh", span(2, 1, 9, 1), span(2, 1, 9, 1)),
+    ]).markdown;
+    assert.equal(repeated.match(/skipped lines 2 to 9 of g\.sh/g)?.length, 1);
+  });
+
   it("maps Semgrep severities and notes lesser Semgrep errors", () => {
     writeResults({
       "code.json": {
@@ -208,7 +317,7 @@ describe("security summary", () => {
           { extra: { severity: "WARNING" } },
           { extra: { severity: "INFO" } },
         ],
-        errors: [{ level: "warn" }],
+        errors: [partial("src/example.ts", span(4, 1, 4, 6))],
         paths: { scanned: ["package.json"] },
       },
     });

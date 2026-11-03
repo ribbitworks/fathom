@@ -9,6 +9,66 @@ import { pathToFileURL } from "node:url";
 
 export const severities = ["critical", "high", "medium", "low"];
 
+// Semgrep may skip this many characters of a single line, when it does not know newer syntax such
+// as a variable named after a new keyword, while the rest of the file is still scanned.
+const longestSkippedFragment = 20;
+
+function isSmallFragment(span) {
+  const start = span?.start;
+  const end = span?.end;
+  return (
+    Number.isInteger(start?.line) &&
+    start.line === end?.line &&
+    Number.isInteger(start?.col) &&
+    Number.isInteger(end?.col) &&
+    end.col >= start.col &&
+    end.col - start.col <= longestSkippedFragment
+  );
+}
+
+function describeSkipped(span, path) {
+  const start = span?.start;
+  const end = span?.end;
+  if (!Number.isInteger(start?.line) || !Number.isInteger(end?.line))
+    return `Semgrep skipped part of ${path}, so it was not scanned.`;
+  if (start.line === end.line)
+    return `Semgrep skipped part of line ${String(start.line)} of ${path}, so it was not scanned.`;
+  return `Semgrep skipped lines ${String(start.line)} to ${String(end.line)} of ${path}, so they were not scanned.`;
+}
+
+// Everything Semgrep left unscanned. Any error counts, such as a file it could not parse or timed
+// out on, unless it only skipped short fragments of single lines, so a kind of error not seen
+// before fails the scan rather than passing it.
+function scanGaps(results) {
+  const gaps = new Set();
+  if (!Array.isArray(results.results))
+    gaps.add("Semgrep returned no list of results.");
+  if (!((results.paths?.scanned?.length ?? 0) > 0))
+    gaps.add("Semgrep scanned no files.");
+  if (results.errors !== undefined && !Array.isArray(results.errors))
+    gaps.add("Semgrep's list of errors could not be read.");
+  for (const error of Array.isArray(results.errors) ? results.errors : []) {
+    const path =
+      typeof error?.path === "string" ? error.path : "an unnamed file";
+    const type = Array.isArray(error?.type) ? error.type[0] : error?.type;
+    const spans = Array.isArray(error?.type) ? error.type[1] : undefined;
+    if (type === "PartialParsing" && Array.isArray(spans) && spans.length > 0) {
+      for (const span of spans)
+        if (!isSmallFragment(span)) gaps.add(describeSkipped(span, path));
+    } else if (
+      typeof type === "string" &&
+      /\b(syntax|lexical) error\b/i.test(type)
+    ) {
+      gaps.add(`Semgrep could not parse ${path}, so it was not scanned.`);
+    } else {
+      gaps.add(
+        `Semgrep did not finish ${path} (${typeof type === "string" ? type : "an unknown error"}), so it was not fully scanned.`,
+      );
+    }
+  }
+  return [...gaps];
+}
+
 const severityAliases = new Map([
   ["critical", "critical"],
   ["high", "high"],
@@ -67,16 +127,14 @@ export const scans = [
     name: "Code security flaws",
     tool: "Semgrep",
     file: "code.json",
-    completed: (results) =>
-      Array.isArray(results.results) &&
-      (results.paths?.scanned?.length ?? 0) > 0 &&
-      !(results.errors ?? []).some((error) => error.level === "error"),
+    completed: (results) => scanGaps(results).length === 0,
     count(results) {
       const counts = emptyCounts();
       for (const finding of results.results)
         addSeverity(counts, finding.extra?.severity);
       return counts;
     },
+    whyIncomplete: scanGaps,
     notes: (results) =>
       results.errors?.length
         ? [
@@ -180,6 +238,7 @@ export function summarize(reportDir) {
     const results = readResults(reportDir, scan.file);
     if (results === undefined || results === null || !scan.completed(results)) {
       failed = true;
+      if (results) notes.push(...(scan.whyIncomplete?.(results) ?? []));
       return `| ${scan.name} | ${scan.tool} | Did not complete | | | | |`;
     }
     const counts = scan.count(results);
