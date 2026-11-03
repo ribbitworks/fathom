@@ -15,6 +15,8 @@ Fathom's additions to the shared [Code Review Standards](shared/code-review.md),
 
 Identify every changed file in the diff, including new and deleted files, before reviewing.
 
+A separate agent running a faster model, such as Sonnet, may review a change that touches only documentation, scripts, wording on screens, or tests other than access control and security tests. Anything the [Security](#security) section or the shared Security and Data focus area covers, such as sign-in, sessions, access control, the data access layer, migrations, secrets, the containers, and checks on user input, including web addresses, is reviewed with the full model, and so is any change where the choice is in doubt.
+
 ## Security
 
 Every change is reviewed against the project's [Security Plan](../security/security-plan.md), in addition to the shared Security and Data focus area:
@@ -23,6 +25,10 @@ Every change is reviewed against the project's [Security Plan](../security/secur
 - **Mitigations verified:** Each mitigation the change touches still has its check, such as a test or scan.
 - **Access-controlled data layer:** All access to protected data goes through the project's access-controlled data layer, never around it.
 - **Secrets:** Container images count as build artifacts under the shared Secrets rule.
+
+## Test Coverage
+
+Each `/* v8 ignore */` comment a change adds is checked against [Testing Standards § Coverage Enforcement](testing.md#coverage-enforcement): it must say why, and be one of the cases listed there. Anything else is a finding.
 
 ## Architecture and Design
 

@@ -50,9 +50,18 @@ Access control is tested as thoroughly as the features it protects:
 
 The coverage tool is configured so the test command fails below the shared 100% threshold for the code it covers.
 
+Whole files that only start a program or serve the tests, such as the server's `main.ts`, are left out in the coverage settings, with a comment saying why. Other code may be left untested only with a `/* v8 ignore */` comment that says why, and only in two cases:
+
+- **Command-line entry points:** In any package, the lines that start a command when it runs as its own process, where the tests call the command's function instead.
+- **Screen layout:** In the web app, a branch that only arranges the screen or animates it, with no logic, as the shared standard's "Does not count" allows.
+
+Logic, validation, access checks and data handling are never excluded. The code review judges each exclusion.
+
 ## Running Tests
 
 `pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell, PowerShell and licence linting, the unit, integration, access control and security tests, and the build-time security scans. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
+
+While working, and for each fix that follows a review, UI feedback or owner feedback, run `pnpm test`, `pnpm lint`, `pnpm format:check`, and `pnpm lint:md` or `pnpm lint:shell` for the files changed. The workflow's test step runs the full `pnpm check` once before the code review, and once more after each round of feedback is fixed, not after each fix within it. A change that affects the containers runs `pnpm test:containers` with that step, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](shared/agent-workflow.md#autonomous-mode) allows.
 
 ## Manual Tests
 
