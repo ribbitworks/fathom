@@ -5,6 +5,7 @@
 
 import {
   type Account,
+  type AccountChangeRequest,
   accountListSchema,
   accountSchema,
   type NewAccountRequest,
@@ -68,7 +69,7 @@ const accountResponse = z.object({ account: accountSchema });
 async function sendForAccount(
   path: string,
   body: object,
-  method: "POST" | "PUT" = "PUT",
+  method: "POST" | "PUT" | "PATCH" = "PUT",
 ): Promise<Account> {
   return (await sendJsonFor(method, path, body, accountResponse)).account;
 }
@@ -76,8 +77,8 @@ async function sendForAccount(
 export const createAccount = (account: NewAccountRequest) =>
   sendForAccount("/api/accounts", account, "POST");
 
-export const setRoles = (id: string, roles: Role[]) =>
-  sendForAccount(`/api/accounts/${encodeURIComponent(id)}/roles`, { roles });
+export const updateAccount = (id: string, change: AccountChangeRequest) =>
+  sendForAccount(`/api/accounts/${encodeURIComponent(id)}`, change, "PATCH");
 
 export const setActive = (id: string, active: boolean) =>
   sendForAccount(`/api/accounts/${encodeURIComponent(id)}/active`, { active });

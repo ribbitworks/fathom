@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Account administration: listing accounts, creating them, and changing their roles, passwords,
-// and whether they can sign in. The data access layer checks the actor may manage accounts.
+// Account administration: listing accounts, creating them, and changing their names, email
+// addresses, roles, passwords, and whether they can sign in. The data access layer checks the actor
+// may manage accounts.
 
 import {
   accountActiveSchema,
+  accountChangeSchema,
   accountListSchema,
-  accountRolesSchema,
   accountSchema,
   newAccountSchema,
   passwordResetSchema,
@@ -47,20 +48,20 @@ export function accountRoutes(
         }),
     );
 
-    app.put(
-      "/api/accounts/:id/roles",
+    app.patch(
+      "/api/accounts/:id",
       {
         schema: {
           params,
-          body: accountRolesSchema,
+          body: accountChangeSchema,
           response: { 200: accountResponse },
         },
       },
       async (request) => ({
-        account: await accounts.setRoles(
+        account: await accounts.updateAccount(
           request.actor,
           request.params.id,
-          request.body.roles,
+          request.body,
         ),
       }),
     );

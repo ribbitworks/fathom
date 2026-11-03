@@ -16,15 +16,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Account Administration
 
-- **Two administrators changing the same account at once:** Two role changes at the same moment can leave a combination of both sets of roles, and two accounts created with the same email address at the same moment can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.
-
-The owner decided the following on 2026-10-30, to be built together as one change to account administration:
-
-- **Changing your own account:** As decided in [Roles](product/roles.md#safeguards-for-administrators), with its two guards. The Security Plan changes with it.
-- **Names and email addresses:** Administrators can change any account's name and email address. Today neither can be changed.
-- **Editing includes viewing:** As decided in [Roles](product/roles.md#what-each-role-can-do).
-- **Clearer actions:** Each account's actions are behind a small "⋯" button that is easy to miss; make them easier to find.
-- **UX principles:** The Accounts and Change password pages were built before [Visual Design](design/visual-design.md#principles) ruled out page descriptions and hint text, and still have both. They are brought into line with this change.
+- **Two administrators choosing the same email address at once:** Two accounts given the same email address at the same moment, by creating or changing them, can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.
 
 ## Lists
 

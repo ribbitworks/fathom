@@ -287,7 +287,7 @@ describe("signing in", () => {
     });
     expect(session.json()).toMatchObject({
       roles: ["project-planner"],
-      permissions: ["changes:view", "drafts:submit", "plan:edit"],
+      permissions: ["changes:view", "drafts:submit", "plan:edit", "plan:view"],
     });
   });
 

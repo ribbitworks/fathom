@@ -5,7 +5,7 @@
 // together. Also tests the permission check the data
 // access layer makes.
 
-import type { Permission, Role } from "@fathom/shared";
+import { type Permission, permissionSchema, type Role } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   actorFor,
@@ -22,10 +22,19 @@ const user = {
 };
 const expected: [Role, Permission[]][] = [
   ["viewer", ["plan:view", "allocations:view", "changes:view"]],
-  ["project-planner", ["plan:edit", "drafts:submit", "changes:view"]],
+  [
+    "project-planner",
+    ["plan:view", "plan:edit", "drafts:submit", "changes:view"],
+  ],
   [
     "resource-planner",
-    ["people:view", "allocations:edit", "drafts:submit", "changes:view"],
+    [
+      "people:view",
+      "allocations:view",
+      "allocations:edit",
+      "drafts:submit",
+      "changes:view",
+    ],
   ],
   [
     "people-manager",
@@ -74,6 +83,19 @@ describe("what each role lets a user do on its own", () => {
     expect(actorFor(user, [role]).permissions).toEqual([...permissions].sort());
   });
 
+  it.each(expected)("%s views everything it edits", (role) => {
+    const { permissions } = actorFor(user, [role]);
+    const edited = permissions.filter((permission) =>
+      permission.endsWith(":edit"),
+    );
+    for (const permission of edited) {
+      const view = permission.replace(/:edit$/, ":view");
+      if (permissionSchema.safeParse(view).success) {
+        expect(permissions).toContain(view);
+      }
+    }
+  });
+
   it("combines the permissions of every role a user holds", () => {
     const actor = actorFor(user, ["people-manager", "viewer"]);
     expect(actor.roles).toEqual(["viewer", "people-manager"]);
@@ -87,7 +109,7 @@ describe("what each role lets a user do on its own", () => {
       "workforce-administrator",
       "leadership",
     ]);
-    expect(rolesGranting("plan:view")).toEqual(["viewer"]);
+    expect(rolesGranting("plan:view")).toEqual(["viewer", "project-planner"]);
   });
 });
 

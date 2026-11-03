@@ -1,16 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for account administration against a migrated PostgreSQL server: which roles may manage
-// accounts; creating accounts and changing their roles, passwords, and whether they can sign in;
-// the refusals that stop anyone raising their own access or locking themselves out; signing users
-// out when their password is reset or their account deactivated; and users changing their own
-// password, and the access history that records each change.
+// accounts; creating accounts and changing their names, email addresses, roles, passwords, and
+// whether they can sign in; administrators changing their own account, except that the last active
+// Administrator keeps the role and stays active; signing users out when their password is reset or
+// their account deactivated; and users changing their own password, and the access history that
+// records each change.
 
 import {
   createDatabase,
   createPool,
   type Database,
   runMigrations,
+  userRoles,
+  users,
 } from "@fathom/db";
 import { type Role, roleSchema } from "@fathom/shared";
 import {
@@ -19,7 +22,8 @@ import {
   type TestCertificate,
   type TestDatabase,
 } from "@fathom/test-utils";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { and, eq, inArray, isNull, ne, sql } from "drizzle-orm";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
@@ -108,7 +112,7 @@ async function signedIn(roles: Role[]) {
 
 function request(
   cookie: string,
-  method: "GET" | "POST" | "PUT",
+  method: "GET" | "POST" | "PUT" | "PATCH",
   url: string,
   payload?: object,
 ) {
@@ -147,7 +151,7 @@ describe("who may manage accounts", () => {
         roles: [],
       },
     ],
-    ["PUT", "/api/accounts/any/roles", { roles: [] }],
+    ["PATCH", "/api/accounts/any", { roles: [] }],
     ["PUT", "/api/accounts/any/password", { password }],
     ["PUT", "/api/accounts/any/active", { active: false }],
   ] as const;
@@ -249,8 +253,8 @@ describe("administering accounts", () => {
     const other = await signedIn(["viewer"]);
     const response = await request(
       cookie,
-      "PUT",
-      `/api/accounts/${other.id}/roles`,
+      "PATCH",
+      `/api/accounts/${other.id}`,
       {
         roles: ["viewer", "resource-planner"],
       },
@@ -264,24 +268,98 @@ describe("administering accounts", () => {
     });
   });
 
-  it("refuses to change one's own roles, so no one can raise their own access", async () => {
+  it("lets administrators change their own roles, which apply on their next request", async () => {
+    await signedIn(["administrator"]);
     const admin = await signedIn(["administrator"]);
     const response = await request(
       admin.cookie,
-      "PUT",
-      `/api/accounts/${admin.id}/roles`,
-      {
-        roles: ["administrator", "workforce-administrator"],
-      },
+      "PATCH",
+      `/api/accounts/${admin.id}`,
+      { roles: ["viewer"] },
     );
-    expect(response.statusCode).toBe(403);
-    expect(response.json()).toEqual({
-      error: "You cannot change the roles of your own account",
+    expect(response.json()).toMatchObject({ account: { roles: ["viewer"] } });
+    expect(
+      (await request(admin.cookie, "GET", "/api/accounts")).statusCode,
+    ).toBe(403);
+  });
+
+  it("lets administrators change their own name and email address", async () => {
+    const admin = await signedIn(["administrator"]);
+    const response = await request(
+      admin.cookie,
+      "PATCH",
+      `/api/accounts/${admin.id}`,
+      { name: "Fictional Self", email: "self@example.test" },
+    );
+    expect(response.json()).toMatchObject({
+      account: { name: "Fictional Self", email: "self@example.test" },
+    });
+    expect(
+      (await request(admin.cookie, "GET", "/api/session")).json(),
+    ).toMatchObject({
+      user: { name: "Fictional Self", email: "self@example.test" },
+    });
+  });
+
+  it("changes an account's name and email address, which it then signs in with", async () => {
+    const { cookie } = await signedIn(["administrator"]);
+    const other = await newAccount(["viewer"]);
+    const response = await request(
+      cookie,
+      "PATCH",
+      `/api/accounts/${other.id}`,
+      { name: " Fictional Renamed ", email: "Renamed@Example.TEST" },
+    );
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      account: {
+        name: "Fictional Renamed",
+        email: "renamed@example.test",
+        roles: ["viewer"],
+      },
+    });
+    expect(await signIn(other.email)).toBe("");
+    expect(await signIn("renamed@example.test")).not.toBe("");
+  });
+
+  it("refuses an email address another account uses, but keeps the account's own", async () => {
+    const { cookie } = await signedIn(["administrator"]);
+    const other = await newAccount([]);
+    const existing = await newAccount([]);
+    const taken = await request(cookie, "PATCH", `/api/accounts/${other.id}`, {
+      name: "Fictional Person",
+      email: existing.email.toUpperCase(),
+    });
+    expect(taken.statusCode).toBe(409);
+    expect(taken.json()).toEqual({
+      error: "An account with this email address already exists",
+    });
+    const kept = await request(cookie, "PATCH", `/api/accounts/${other.id}`, {
+      name: "Fictional Kept",
+      email: other.email,
+    });
+    expect(kept.json()).toMatchObject({
+      account: { name: "Fictional Kept", email: other.email },
     });
   });
 
   it.each([
-    ["PUT", "/api/accounts/no-such-account/roles", { roles: [] }],
+    ["an empty name", { name: "  ", email: "valid@example.test" }],
+    ["an email address that is not valid", { name: "Fictional", email: "x" }],
+  ])("refuses %s", async (_case, payload) => {
+    const { cookie } = await signedIn(["administrator"]);
+    const other = await newAccount([]);
+    const response = await request(
+      cookie,
+      "PATCH",
+      `/api/accounts/${other.id}`,
+      payload,
+    );
+    expect(response.statusCode).toBe(400);
+  });
+
+  it.each([
+    ["PATCH", "/api/accounts/no-such-account", { roles: [] }],
     ["PUT", "/api/accounts/no-such-account/password", { password }],
     ["PUT", "/api/accounts/no-such-account/active", { active: false }],
   ] as const)(
@@ -396,20 +474,177 @@ describe("administering accounts", () => {
     ).toBe(401);
   });
 
-  it("refuses to deactivate one's own account, so administrators cannot lock themselves out", async () => {
+  it("lets administrators deactivate their own account, signing them out and recording it", async () => {
+    const reader = await signedIn(["administrator"]);
     const admin = await signedIn(["administrator"]);
     const response = await request(
       admin.cookie,
       "PUT",
       `/api/accounts/${admin.id}/active`,
-      {
-        active: false,
-      },
+      { active: false },
     );
-    expect(response.statusCode).toBe(403);
-    expect(response.json()).toEqual({
-      error: "You cannot deactivate or reactivate your own account",
+    expect(response.statusCode).toBe(200);
+    expect(
+      (await request(admin.cookie, "GET", "/api/session")).statusCode,
+    ).toBe(401);
+    const history = await request(reader.cookie, "GET", "/api/access-history");
+    const self = { id: admin.id, name: expect.any(String) as unknown };
+    expect(
+      history
+        .json<{ entries: { subject: { id: string } }[] }>()
+        .entries.find((entry) => entry.subject.id === admin.id),
+    ).toMatchObject({
+      action: "account-deactivated",
+      actor: self,
+      subject: self,
     });
+  });
+});
+
+describe("the last active Administrator", () => {
+  // Leaves one active Administrator, counting deactivated ones as gone, and a second account with
+  // the role that has been deactivated.
+  async function lastAdministrator() {
+    const admin = await signedIn(["administrator", "viewer"]);
+    const deactivated = await newAccount(["administrator"]);
+    await connection
+      .update(users)
+      .set({ deactivatedAt: new Date() })
+      .where(
+        and(
+          isNull(users.deactivatedAt),
+          ne(users.id, admin.id),
+          inArray(
+            users.id,
+            connection
+              .select({ id: userRoles.userId })
+              .from(userRoles)
+              .where(eq(userRoles.role, "administrator")),
+          ),
+        ),
+      );
+    return { ...admin, deactivated };
+  }
+
+  it("keeps the Administrator role, even when it is their own account", async () => {
+    const admin = await lastAdministrator();
+    const response = await request(
+      admin.cookie,
+      "PATCH",
+      `/api/accounts/${admin.id}`,
+      { roles: ["viewer"] },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: "The last active Administrator keeps the Administrator role",
+    });
+    expect(
+      (await request(admin.cookie, "GET", "/api/accounts")).statusCode,
+    ).toBe(200);
+  });
+
+  it("saves nothing of a change that would take the role away", async () => {
+    const admin = await lastAdministrator();
+    const response = await request(
+      admin.cookie,
+      "PATCH",
+      `/api/accounts/${admin.id}`,
+      { name: "Fictional Unsaved", email: "unsaved@example.test", roles: [] },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(
+      (await request(admin.cookie, "GET", "/api/session")).json(),
+    ).toMatchObject({ user: { email: admin.email } });
+  });
+
+  it("cannot be deactivated", async () => {
+    const admin = await lastAdministrator();
+    const response = await request(
+      admin.cookie,
+      "PUT",
+      `/api/accounts/${admin.id}/active`,
+      { active: false },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toEqual({
+      error: "The last active Administrator cannot be deactivated",
+    });
+    expect(
+      (await request(admin.cookie, "GET", "/api/session")).statusCode,
+    ).toBe(200);
+  });
+
+  it("can change their other roles, and can give up the role once another account is reactivated with it", async () => {
+    const admin = await lastAdministrator();
+    const kept = await request(
+      admin.cookie,
+      "PATCH",
+      `/api/accounts/${admin.id}`,
+      { roles: ["administrator"] },
+    );
+    expect(kept.json()).toMatchObject({
+      account: { roles: ["administrator"] },
+    });
+    await request(
+      admin.cookie,
+      "PUT",
+      `/api/accounts/${admin.deactivated.id}/active`,
+      { active: true },
+    );
+    const given = await request(
+      admin.cookie,
+      "PATCH",
+      `/api/accounts/${admin.id}`,
+      { roles: [] },
+    );
+    expect(given.statusCode).toBe(200);
+  });
+
+  it("is kept when two administrators each remove the other's role at once", async () => {
+    const first = await lastAdministrator();
+    const second = await signedIn(["administrator"]);
+    // The first administrator's change to the second, holding the lock until the second's change
+    // to the first, already allowed to manage accounts, is waiting for it.
+    let release = () => undefined as unknown;
+    const held = new Promise((resolve) => {
+      release = resolve as () => unknown;
+    });
+    let locked = () => undefined as unknown;
+    const isLocked = new Promise((resolve) => {
+      locked = resolve as () => unknown;
+    });
+    const other = connection.transaction(async (transaction) => {
+      await transaction.execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.administrators', 0))`,
+      );
+      await transaction
+        .delete(userRoles)
+        .where(eq(userRoles.userId, second.id));
+      locked();
+      await held;
+    });
+    await isLocked;
+    const removing = request(
+      second.cookie,
+      "PATCH",
+      `/api/accounts/${first.id}`,
+      { roles: [] },
+    );
+    await vi.waitFor(
+      async () => {
+        const waiting = await connection.execute<{ total: string }>(
+          sql`SELECT count(*) AS total FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND wait_event = 'advisory' AND datname = current_database()`,
+        );
+        expect(Number(waiting.rows[0]?.total)).toBeGreaterThan(0);
+      },
+      { timeout: 10_000 },
+    );
+    release();
+    await other;
+    expect((await removing).statusCode).toBe(409);
+    expect(
+      (await request(first.cookie, "GET", "/api/accounts")).statusCode,
+    ).toBe(200);
   });
 });
 
@@ -487,7 +722,7 @@ describe("the access history", () => {
       roles: ["viewer"],
     });
     const { id } = created.json<{ account: { id: string } }>().account;
-    await request(admin.cookie, "PUT", `/api/accounts/${id}/roles`, {
+    await request(admin.cookie, "PATCH", `/api/accounts/${id}`, {
       roles: ["viewer", "leadership"],
     });
     await request(admin.cookie, "PUT", `/api/accounts/${id}/password`, {
@@ -524,6 +759,68 @@ describe("the access history", () => {
     ]);
     expect(history.body).not.toContain(newPassword);
     expect(history.body).not.toContain(password);
+  });
+
+  it("records each change to an account's name and email address, without the values, and nothing when neither changes", async () => {
+    const admin = await signedIn(["administrator"]);
+    const other = await newAccount([]);
+    const url = `/api/accounts/${other.id}`;
+    await request(admin.cookie, "PATCH", url, {
+      name: "Fictional Before",
+      email: other.email,
+    });
+    await request(admin.cookie, "PATCH", url, {
+      name: "Fictional After",
+      email: "after@example.test",
+    });
+    await request(admin.cookie, "PATCH", url, {
+      name: "Fictional After",
+      email: "after@example.test",
+    });
+    const history = await request(admin.cookie, "GET", "/api/access-history");
+    const entries = history
+      .json<{ entries: { subject: { id: string } }[] }>()
+      .entries.filter((entry) => entry.subject.id === other.id);
+    const actor = { id: admin.id, name: expect.any(String) as unknown };
+    expect(entries).toMatchObject([
+      { action: "email-changed", actor, details: {} },
+      { action: "name-changed", actor, details: {} },
+      { action: "name-changed", actor, details: {} },
+      { action: "account-created" },
+    ]);
+    expect(history.body).not.toContain("Fictional Before");
+    expect(history.body).not.toContain(other.email);
+  });
+
+  it("records every change administrators make to their own account, naming them as both who and whom", async () => {
+    await signedIn(["administrator"]);
+    const admin = await signedIn(["administrator"]);
+    const url = `/api/accounts/${admin.id}`;
+    await request(admin.cookie, "PATCH", url, {
+      name: "Fictional Myself",
+      email: "myself@example.test",
+      roles: ["administrator", "workforce-administrator"],
+    });
+    const history = await request(admin.cookie, "GET", "/api/access-history");
+    const self = { id: admin.id, name: "Fictional Myself" };
+    expect(
+      history
+        .json<{ entries: { subject: { id: string } }[] }>()
+        .entries.filter((entry) => entry.subject.id === admin.id),
+    ).toMatchObject([
+      {
+        action: "roles-changed",
+        actor: self,
+        subject: self,
+        details: {
+          previousRoles: ["administrator"],
+          roles: ["workforce-administrator", "administrator"],
+        },
+      },
+      { action: "email-changed", actor: self, subject: self },
+      { action: "name-changed", actor: self, subject: self },
+      { action: "account-created" },
+    ]);
   });
 
   it("stays readable with entries from another version of Fathom, or naming accounts that no longer exist", async () => {

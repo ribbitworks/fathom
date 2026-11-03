@@ -9,6 +9,8 @@ import { roleSchema } from "./access.ts";
 export const accessActionSchema = z.enum([
   "account-created",
   "roles-changed",
+  "name-changed",
+  "email-changed",
   "password-reset",
   "account-deactivated",
   "account-reactivated",

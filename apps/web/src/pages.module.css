@@ -33,6 +33,11 @@
   color: var(--mantine-color-sea-4);
 }
 
+/* The light badge's sea blue is too dark to read on the dark panel. */
+:global([data-mantine-color-scheme="dark"]) .ownBadge {
+  color: var(--mantine-color-sea-4);
+}
+
 .entries {
   margin: 0;
   padding: 0;

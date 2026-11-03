@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Accounts page, for users who may manage accounts: every account with its roles and whether it
-// can sign in, and dialogs to create accounts, change their roles, reset their passwords, and
-// deactivate or reactivate them. A user's own account offers none of these, as the server refuses
-// them. A dialog cannot be closed while its change is being saved, shows plainly why a change was
-// refused, and keeps no password once it closes.
+// can sign in, and dialogs to create accounts and to edit them, where their names, email addresses,
+// and roles are changed, and from which their passwords are reset and they are deactivated or
+// reactivated. A user's own account offers all but the password reset, as changing one's own
+// password needs the current one. A dialog cannot be closed while its change is being saved, shows
+// plainly why a change was refused, and keeps no password once it closes. The last active
+// Administrator can neither give up the role nor be deactivated, so those controls are turned off
+// for them, as the server refuses both.
 
 import {
   type Account,
+  type AccountChangeRequest,
   newAccountSchema,
   type NewAccountRequest,
   passwordResetSchema,
@@ -16,7 +20,6 @@ import {
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ActionIcon,
   Alert,
   Avatar,
   Badge,
@@ -24,7 +27,6 @@ import {
   Checkbox,
   Group,
   Loader,
-  Menu,
   Modal,
   Paper,
   PasswordInput,
@@ -36,6 +38,7 @@ import {
   VisuallyHidden,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -45,34 +48,37 @@ import {
   roleDescription,
   roleName,
   setActive,
-  setRoles,
+  updateAccount,
 } from "./accounts.ts";
 import { DialogActions } from "./dialog-actions.tsx";
 import { initials } from "./names.ts";
 import { notifySuccess } from "./notices.tsx";
 import { Icon } from "./icons.tsx";
 import { PageHeader } from "./page-header.tsx";
-import { AppMenu } from "./app-menu.tsx";
 import classes from "./pages.module.css";
-import type { SignedInUser } from "./session.ts";
+import { type SignedInUser, sessionQuery } from "./session.ts";
 import { count } from "./numbers.ts";
 
 type Dialog =
   | { kind: "create" }
-  | { kind: "roles" | "password" | "active"; account: Account };
+  | { kind: "edit"; account: Account; own: boolean; lastAdministrator: boolean }
+  | { kind: "password"; account: Account }
+  | { kind: "active"; account: Account; own: boolean };
 
-// What a dialog reports: when it is done, with a notice for the page, and when it is busy saving.
+// What a dialog reports: when it is done, with a notice for the page, when it is busy saving, and
+// when it opens another dialog in its place.
 interface DialogProps {
   onDone: (notice?: string) => void;
   onBusy: (busy: boolean) => void;
+  onOpen: (dialog: Dialog) => void;
 }
 
 function dialogTitle(dialog: Dialog): string {
   switch (dialog.kind) {
     case "create":
       return "New account";
-    case "roles":
-      return `Roles for ${dialog.account.name}`;
+    case "edit":
+      return `Edit ${dialog.account.name}`;
     case "password":
       return `Reset the password for ${dialog.account.name}`;
     case "active":
@@ -83,9 +89,12 @@ function dialogTitle(dialog: Dialog): string {
 function RoleChoices({
   value,
   onChange,
+  kept,
 }: {
   value: Role[];
   onChange: (roles: Role[]) => void;
+  // A role that cannot be taken away.
+  kept?: Role | undefined;
 }) {
   return (
     <Checkbox.Group
@@ -102,6 +111,7 @@ function RoleChoices({
             value={role}
             label={roleName(role)}
             description={roleDescription(role)}
+            disabled={role === kept}
           />
         ))}
       </Stack>
@@ -114,6 +124,8 @@ function RoleChoices({
 function useAccountChange<Input, Output>(
   change: (input: Input) => Promise<Output>,
   onBusy: (busy: boolean) => void,
+  // Finishes before the list refreshes, as when a user's own access changes.
+  onSaved: (output: Output) => Promise<void> = async () => {},
 ) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -122,6 +134,7 @@ function useAccountChange<Input, Output>(
     onMutate: () => {
       onBusy(true);
     },
+    onSuccess: onSaved,
     onSettled: async () => {
       await queryClient.invalidateQueries({ queryKey: accountsQuery.queryKey });
       onBusy(false);
@@ -163,7 +176,6 @@ function CreateAccount({ onDone, onBusy }: DialogProps) {
         />
         <PasswordInput
           label="Temporary password"
-          description="At least 12 characters. Give it to the person, who can then change it."
           autoComplete="new-password"
           error={errors.password && "Use 12 to 128 characters."}
           {...form.register("password")}
@@ -186,38 +198,119 @@ function CreateAccount({ onDone, onBusy }: DialogProps) {
   );
 }
 
-function ChangeRoles({
+const accountEditSchema = newAccountSchema.pick({
+  name: true,
+  email: true,
+  roles: true,
+});
+
+// After users change their own account, the rest of Fathom shows them as they now are: their name
+// and email address, and, once they give up the Administrator role, the first page they may open.
+function useOwnAccountRefresh() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const navigate = useNavigate();
+  return async (saved: Account) => {
+    await queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey });
+    if (saved.roles.includes("administrator")) await router.invalidate();
+    else await navigate({ to: "/" });
+  };
+}
+
+function EditAccount({
   account,
+  own,
+  lastAdministrator,
   onDone,
   onBusy,
-}: DialogProps & { account: Account }) {
-  const [roles, setChosen] = useState(account.roles);
+  onOpen,
+}: DialogProps & {
+  account: Account;
+  own: boolean;
+  lastAdministrator: boolean;
+}) {
+  const form = useForm<Omit<NewAccountRequest, "password">>({
+    resolver: zodResolver(accountEditSchema),
+    defaultValues: {
+      name: account.name,
+      email: account.email,
+      roles: account.roles,
+    },
+  });
+  const { errors } = form.formState;
+  const refreshOwn = useOwnAccountRefresh();
   const saving = useAccountChange(
-    (chosen: Role[]) => setRoles(account.id, chosen),
+    (change: AccountChangeRequest) => updateAccount(account.id, change),
     onBusy,
+    own ? refreshOwn : undefined,
   );
   return (
     <form
-      onSubmit={(event) => {
-        event.preventDefault();
-        saving.mutate(roles, {
-          onSuccess: () => {
-            onDone(`Changed the roles of ${account.name}.`);
-          },
-        });
-      }}
+      noValidate
+      onSubmit={(event) =>
+        void form.handleSubmit((values) => {
+          saving.mutate(values, {
+            onSuccess: (saved) => {
+              onDone(`Saved the account for ${saved.name}.`);
+            },
+          });
+        })(event)
+      }
     >
       <Stack>
-        <Text fz="sm" c="dimmed">
-          Changes apply the next time {account.name} uses Fathom, and are
-          recorded in the access history.
-        </Text>
-        <RoleChoices value={roles} onChange={setChosen} />
+        <TextInput
+          label="Name"
+          error={errors.name && "Enter the person's name."}
+          {...form.register("name")}
+        />
+        <TextInput
+          label="Email address"
+          type="email"
+          error={errors.email && "Enter a valid email address."}
+          {...form.register("email")}
+        />
+        <Controller
+          control={form.control}
+          name="roles"
+          render={({ field }) => (
+            <RoleChoices
+              value={field.value}
+              onChange={field.onChange}
+              kept={lastAdministrator ? "administrator" : undefined}
+            />
+          )}
+        />
         <DialogActions
           error={saving.error}
           pending={saving.isPending}
-          label="Save roles"
+          label="Save"
           onCancel={onDone}
+          others={
+            <>
+              {!own && (
+                <Button
+                  variant="subtle"
+                  color="gray"
+                  disabled={saving.isPending}
+                  onClick={() => {
+                    onOpen({ kind: "password", account });
+                  }}
+                >
+                  Reset password
+                </Button>
+              )}
+              <Button
+                variant="subtle"
+                color={account.active ? "red" : "gray"}
+                disabled={saving.isPending || lastAdministrator}
+                onClick={() => {
+                  onOpen({ kind: "active", account, own });
+                }}
+              >
+                {account.active ? "Deactivate" : "Reactivate"}
+              </Button>
+            </>
+          }
         />
       </Stack>
     </form>
@@ -274,9 +367,10 @@ function ResetPassword({
 
 function ChangeActive({
   account,
+  own,
   onDone,
   onBusy,
-}: DialogProps & { account: Account }) {
+}: DialogProps & { account: Account; own: boolean }) {
   const changing = useAccountChange(
     (active: boolean) => setActive(account.id, active),
     onBusy,
@@ -296,9 +390,11 @@ function ChangeActive({
     >
       <Stack>
         <Text size="sm">
-          {account.active
-            ? `${account.name} will be signed out everywhere, and will not be able to sign in until the account is reactivated.`
-            : `${account.name} will be able to sign in again.`}
+          {own
+            ? "You will be signed out everywhere, and will not be able to sign in until another Administrator reactivates your account."
+            : account.active
+              ? `${account.name} will be signed out everywhere, and will not be able to sign in until the account is reactivated.`
+              : `${account.name} will be able to sign in again.`}
         </Text>
         <DialogActions
           error={changing.error}
@@ -315,12 +411,21 @@ function DialogContent({ dialog, ...props }: DialogProps & { dialog: Dialog }) {
   switch (dialog.kind) {
     case "create":
       return <CreateAccount {...props} />;
-    case "roles":
-      return <ChangeRoles account={dialog.account} {...props} />;
+    case "edit":
+      return (
+        <EditAccount
+          account={dialog.account}
+          own={dialog.own}
+          lastAdministrator={dialog.lastAdministrator}
+          {...props}
+        />
+      );
     case "password":
       return <ResetPassword account={dialog.account} {...props} />;
     case "active":
-      return <ChangeActive account={dialog.account} {...props} />;
+      return (
+        <ChangeActive account={dialog.account} own={dialog.own} {...props} />
+      );
   }
 }
 
@@ -338,14 +443,24 @@ function matches(account: Account, search: string, filter: Filter): boolean {
   return found && shown;
 }
 
+const activeAdministrator = (account: Account) =>
+  account.active && account.roles.includes("administrator");
+
+function isLastAdministrator(account: Account, all: Account[]): boolean {
+  return (
+    activeAdministrator(account) &&
+    !all.some((other) => other.id !== account.id && activeAdministrator(other))
+  );
+}
+
 function AccountRow({
   account,
   own,
-  onOpen,
+  onEdit,
 }: {
   account: Account;
   own: boolean;
-  onOpen: (dialog: Dialog) => void;
+  onEdit: () => void;
 }) {
   return (
     <Table.Tr>
@@ -355,9 +470,22 @@ function AccountRow({
             {initials(account.name)}
           </Avatar>
           <div>
-            <Text fz="sm" fw={500}>
-              {account.name}
-            </Text>
+            <Group gap={6} wrap="nowrap">
+              <Text fz="sm" fw={500}>
+                {account.name}
+              </Text>
+              {own && (
+                <Badge
+                  variant="light"
+                  color="sea"
+                  radius="sm"
+                  tt="none"
+                  className={classes.ownBadge}
+                >
+                  You
+                </Badge>
+              )}
+            </Group>
             <Text fz="xs" c="dimmed">
               {account.email}
             </Text>
@@ -389,49 +517,15 @@ function AccountRow({
           {createdDate.format(new Date(account.createdAt))}
         </time>
       </Table.Td>
-      <Table.Td>
-        {own ? (
-          <Text fz="xs" c="dimmed">
-            Your account
-          </Text>
-        ) : (
-          <AppMenu position="bottom-end">
-            <AppMenu.Target>
-              <ActionIcon
-                variant="subtle"
-                color="gray"
-                size="sm"
-                aria-label={`Actions for ${account.name}`}
-              >
-                <Icon name="more" />
-              </ActionIcon>
-            </AppMenu.Target>
-            <AppMenu.Dropdown>
-              <Menu.Item
-                onClick={() => {
-                  onOpen({ kind: "roles", account });
-                }}
-              >
-                Change roles
-              </Menu.Item>
-              <Menu.Item
-                onClick={() => {
-                  onOpen({ kind: "password", account });
-                }}
-              >
-                Reset password
-              </Menu.Item>
-              <Menu.Item
-                {...(account.active ? { color: "red" } : {})}
-                onClick={() => {
-                  onOpen({ kind: "active", account });
-                }}
-              >
-                {account.active ? "Deactivate" : "Reactivate"}
-              </Menu.Item>
-            </AppMenu.Dropdown>
-          </AppMenu>
-        )}
+      <Table.Td ta="right">
+        <Button
+          variant="default"
+          size="xs"
+          aria-label={`Edit ${account.name}`}
+          onClick={onEdit}
+        >
+          Edit
+        </Button>
       </Table.Td>
     </Table.Tr>
   );
@@ -462,7 +556,6 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
     <Stack gap="md" className={classes.tablePage}>
       <PageHeader
         title="Accounts"
-        description="Who can sign in to Fathom, and what their roles let them do."
         action={
           <Button
             onClick={() => {
@@ -484,7 +577,8 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
           <Group gap="sm">
             <TextInput
               aria-label="Search by name or email"
-              placeholder="Search by name or email"
+              placeholder="Search"
+              leftSection={<Icon name="search" />}
               value={search}
               onChange={(event) => {
                 setSearch(event.currentTarget.value);
@@ -527,7 +621,14 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
                       key={account.id}
                       account={account}
                       own={account.id === user.id}
-                      onOpen={open}
+                      onEdit={() => {
+                        open({
+                          kind: "edit",
+                          account,
+                          own: account.id === user.id,
+                          lastAdministrator: isLastAdministrator(account, all),
+                        });
+                      }}
                     />
                   ))}
                 </Table.Tbody>
@@ -543,6 +644,10 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
       )}
       <Modal
         opened={opened}
+        // The dialogs that list every role, with what each allows, have room for them.
+        size={
+          dialog?.kind === "create" || dialog?.kind === "edit" ? "lg" : "md"
+        }
         onClose={() => {
           close();
         }}
@@ -552,7 +657,12 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
         title={dialog && dialogTitle(dialog)}
       >
         {dialog && (
-          <DialogContent dialog={dialog} onDone={close} onBusy={setBusy} />
+          <DialogContent
+            dialog={dialog}
+            onDone={close}
+            onBusy={setBusy}
+            onOpen={open}
+          />
         )}
       </Modal>
     </Stack>

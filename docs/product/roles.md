@@ -1,7 +1,7 @@
 # Fathom — Roles
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-03
 
 Proposed roles for controlling what each user can see, edit, and approve, built on the access decisions in the [Decisions Log](decisions.md). The owner has confirmed the role list, that People Managers and the Executive see Restricted data, that the Engineering Director plans, the split between Project Planner and Resource Planner, and that the Engineering Director is the first Administrator. Items marked **proposal** are not yet agreed.
 
@@ -38,7 +38,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 
 **Proposal:** Seeing drafts is a permission of its own, like seeing the change history, so Leadership, held by the Executive, sees only approved data. Still open: whether the change history then leaves out edits to drafts for those who may not see drafts. Until it is agreed, Leadership sees drafts, as every role that sees the data does.
 
-The owner has decided that a role letting a user edit some data also lets them view it. Until the account change in [Issues](../issues.md) builds it, viewing the plan and allocations comes from the Viewer role, which every account has by default, and roles that edit people or planning configuration are given the matching view.
+The owner has decided that a role letting a user edit some data also lets them view it, so a Project Planner sees the plan and a Resource Planner sees allocations without also holding Viewer. Feature teams are seen with the plan, so editing them grants no view of their own. The other roles' views of the plan and allocations come from the Viewer role, which every account has by default.
 
 Seeing people is kept to the roles that work with them, so Product Managers, Project Managers, Feature Leads, and Team Members do not see the People table by default. The choices of a list are seen by everyone who sees data drawn from it, such as People's columns, without seeing the Lists page.
 
@@ -60,9 +60,9 @@ Seeing people is kept to the roles that work with them, so Product Managers, Pro
 
 ## Safeguards for Administrators
 
-**Decided, built by the account change in [Issues](../issues.md):** Administrators manage their own account like any other: they can change its roles, name, and email address, and deactivate it. Two guards remain: the last active Administrator cannot lose the Administrator role or be deactivated, so no one can lock everyone out, and nobody resets their own password from the Accounts page, since changing one's own password needs the current one. Until it is built, the [Security Plan](../security/security-plan.md)'s rule applies: Administrators cannot change their own roles, reset their own password, or deactivate their own account.
+**Decided:** Administrators manage their own account like any other: they can change its roles, name, and email address, and deactivate it. Two guards remain: the last active Administrator cannot lose the Administrator role or be deactivated, so no one can lock everyone out, and nobody resets their own password from the Accounts page, since changing one's own password needs the current one.
 
-**Proposal:** Every account created, role change, password reset, and deactivation is recorded in the access history, and granting the Workforce Administrator role needs the Engineering Director's confirmation. The first Administrator's roles are assigned when Fathom is set up. Separation of duties applies to the Administrator role itself; a person who also holds other roles sees what those roles allow. While the Engineering Director is the only Administrator and also confirms Workforce Administrator grants, these safeguards rely on the access history alone. A second person should take the Administrator role or the confirming duty later. With local passwords, an Administrator can still reach other roles' data by creating another account or resetting another user's password and signing in as them; the access history is what reveals it.
+**Proposal:** Every account created, change to an account's name, email address, or roles, password reset, and deactivation is recorded in the access history, and granting the Workforce Administrator role needs the Engineering Director's confirmation. The first Administrator's roles are assigned when Fathom is set up. Separation of duties applies to the Administrator role itself; a person who also holds other roles sees what those roles allow. While the Engineering Director is the only Administrator and also confirms Workforce Administrator grants, these safeguards rely on the access history alone. A second person should take the Administrator role or the confirming duty later. An Administrator can reach other roles' data by giving their own account those roles, or, with local passwords, by creating another account or resetting another user's password and signing in as them; the access history is what reveals it.
 
 ## Default Roles by Persona
 

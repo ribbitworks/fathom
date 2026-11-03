@@ -29,14 +29,10 @@ const grants: Record<Role, readonly Permission[]> = {
     "changes:view",
   ],
   "workforce-administrator": [
-    "people:view",
     "people:edit",
     "feature-teams:edit",
-    "restricted:view",
     "restricted:edit",
-    "confidential:view",
     "confidential:edit",
-    "configuration:view",
     "configuration:edit",
     "changes:view",
   ],
@@ -54,6 +50,16 @@ const grants: Record<Role, readonly Permission[]> = {
     "changes:view",
   ],
   administrator: ["accounts:manage", "history:view"],
+};
+
+// Editing data lets a user view it too, as Roles decides.
+const viewedWhenEdited: Partial<Record<Permission, Permission>> = {
+  "plan:edit": "plan:view",
+  "allocations:edit": "allocations:view",
+  "people:edit": "people:view",
+  "restricted:edit": "restricted:view",
+  "confidential:edit": "confidential:view",
+  "configuration:edit": "configuration:view",
 };
 
 export interface SignedInUser {
@@ -76,7 +82,13 @@ export function actorFor(
   const roles = roleSchema.options.filter((role) => heldRoles.includes(role));
   // The role is always one of the fixed roles listed above.
   // eslint-disable-next-line security/detect-object-injection
-  const permissions = new Set(roles.flatMap((role) => grants[role]));
+  const granted = roles.flatMap((role) => grants[role]);
+  const permissions = new Set([
+    ...granted,
+    // The permission is always one of the fixed permissions listed above.
+    // eslint-disable-next-line security/detect-object-injection
+    ...granted.flatMap((permission) => viewedWhenEdited[permission] ?? []),
+  ]);
   return { user, roles, permissions: [...permissions].sort() };
 }
 

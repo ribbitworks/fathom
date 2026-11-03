@@ -8,8 +8,9 @@ import { type Database, userRoles, users } from "@fathom/db";
 import { type Role, roleSchema } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 
+// Takes the database or a transaction, which both read the same way.
 export async function readRoles(
-  database: Database,
+  database: Pick<Database, "select">,
   userId: string,
 ): Promise<Role[]> {
   const rows = await database

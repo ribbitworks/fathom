@@ -37,6 +37,14 @@ const actionWords: Record<AccessAction, ActionWords> = {
     verb: "changed the roles of",
     caution: false,
   },
+  "name-changed": {
+    verb: "changed the name of",
+    caution: false,
+  },
+  "email-changed": {
+    verb: "changed the email address of",
+    caution: false,
+  },
   "password-reset": {
     verb: "reset the password for",
     caution: true,

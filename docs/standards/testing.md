@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-02"
+last_updated: "2026-11-03"
 ---
 
 # Testing Standards
@@ -34,7 +34,7 @@ Access control is tested as thoroughly as the features it protects:
 - **Data, not just screens:** Responses are checked to contain no fields above the caller's access, rather than relying on the user interface to hide them.
 - **Every path to the data:** Lists, single records, search, exports, and every other way the project reads data are each tested.
 - **Changes to access:** Role changes and account deactivation take effect on the next request.
-- **No self-escalation:** No user can grant themselves more access, including administrators changing their own roles.
+- **No self-escalation:** No user can grant themselves more access, except Administrators managing their own account as [Roles](../product/roles.md#safeguards-for-administrators) decides. Tests cover both guards (the last active Administrator keeps the role and stays active, and nobody resets their own password from Accounts) and that every change Administrators make to their own account is recorded in the access history.
 
 ## Security Tests
 

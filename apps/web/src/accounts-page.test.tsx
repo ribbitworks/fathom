@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the Accounts page and the Change password page, with the server's responses simulated:
-// who sees the Accounts page, the list of accounts, creating accounts, changing roles, resetting
-// passwords, deactivating and reactivating, the server's refusals, and changing one's own password.
+// who sees the Accounts page, the list of accounts, creating accounts, editing their names, email
+// addresses, and roles, resetting passwords, deactivating and reactivating, the server's refusals,
+// and changing one's own password.
 
 import { roleSchema } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
@@ -54,9 +55,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function openMenuFor(name: string) {
+async function openEditFor(name: string): Promise<HTMLElement> {
   await userEvent.click(
-    await screen.findByRole("button", { name: `Actions for ${name}` }),
+    await screen.findByRole("button", { name: `Edit ${name}` }),
+  );
+  return screen.findByRole("dialog", { name: `Edit ${name}` });
+}
+
+// Opens one of the actions an account's Edit dialog offers besides saving.
+async function openAction(name: string, action: string) {
+  await userEvent.click(
+    within(await openEditFor(name)).getByRole("button", { name: action }),
   );
 }
 
@@ -96,7 +105,7 @@ describe("who sees the Accounts page", () => {
 });
 
 describe("the list of accounts", () => {
-  it("shows each account's roles and status, and offers no changes to one's own", async () => {
+  it("shows each account's roles and status, and marks one's own", async () => {
     serverAnswers({
       "GET /api/session": manager,
       "GET /api/accounts": accountList,
@@ -108,9 +117,25 @@ describe("the list of accounts", () => {
     ).toBeDefined();
     expect(within(row as HTMLElement).getByText("Active")).toBeDefined();
     expect(screen.getByText("Deactivated")).toBeDefined();
-    expect(screen.getByText("Your account")).toBeDefined();
+    const ownRow = within(screen.getByRole("table"))
+      .getByText("Fictional Person")
+      .closest("tr");
+    expect(within(ownRow as HTMLElement).getByText("You")).toBeDefined();
+    expect(within(row as HTMLElement).queryByText("You")).toBeNull();
+  });
+
+  it("offers every change to one's own account but resetting its password, which needs the current one", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    const dialog = await openEditFor("Fictional Person");
     expect(
-      screen.queryByRole("button", { name: "Actions for Fictional Person" }),
+      within(dialog).getByRole("button", { name: "Deactivate" }),
+    ).toBeDefined();
+    expect(
+      within(dialog).queryByRole("button", { name: "Reset password" }),
     ).toBeNull();
   });
 
@@ -154,6 +179,133 @@ describe("the list of accounts", () => {
     expect((await screen.findByRole("alert")).textContent).toMatch(
       /could not load the accounts/,
     );
+  });
+});
+
+describe("changing one's own account", () => {
+  it("shows the new name in the top bar once saved", async () => {
+    let session = manager;
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/accounts": accountList,
+      "PATCH /api/accounts/user-1": () => {
+        session = () =>
+          Response.json({
+            ...fictionalUser,
+            user: { ...fictionalUser.user, name: "Fictional Self" },
+            roles: own.roles,
+            permissions: ["accounts:manage", "plan:view"],
+          });
+        return Response.json({ account: { ...own, name: "Fictional Self" } });
+      },
+    });
+    renderApp("/accounts");
+    const dialog = await openEditFor("Fictional Person");
+    const name = within(dialog).getByLabelText("Name");
+    await userEvent.clear(name);
+    await userEvent.type(name, "Fictional Self");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByRole("button", {
+        name: "Your account, Fictional Self",
+      }),
+    ).toBeDefined();
+  });
+
+  it("leaves Accounts for the first page the user may still open once they give up the Administrator role", async () => {
+    let session = manager;
+    let refusedLists = 0;
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/greeting": greeting,
+      "GET /api/accounts": () => {
+        if (session === signedIn) {
+          refusedLists += 1;
+          return Response.json({ error: "Forbidden" }, { status: 403 });
+        }
+        return Response.json({
+          accounts: [own, { ...planner, roles: ["administrator"] }],
+        });
+      },
+      "PATCH /api/accounts/user-1": () => {
+        session = signedIn;
+        return Response.json({ account: { ...own, roles: ["viewer"] } });
+      },
+    });
+    const history = renderApp("/accounts");
+    const dialog = await openEditFor("Fictional Person");
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Administrator" }),
+    );
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/");
+    });
+    expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
+    // The list is not asked for again, so the page never says it could not load it.
+    expect(refusedLists).toBe(0);
+  });
+
+  it("says what deactivating their own account does to them", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": () =>
+        Response.json({
+          accounts: [own, { ...planner, roles: ["administrator"] }],
+        }),
+    });
+    renderApp("/accounts");
+    await openAction("Fictional Person", "Deactivate");
+    const dialog = await screen.findByRole("dialog", {
+      name: "Deactivate Fictional Person",
+    });
+    expect(
+      within(dialog).getByText(
+        "You will be signed out everywhere, and will not be able to sign in until another Administrator reactivates your account.",
+      ),
+    ).toBeDefined();
+  });
+});
+
+describe("the last active Administrator", () => {
+  async function controlsFor(accounts: object[]) {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": () => Response.json({ accounts }),
+    });
+    renderApp("/accounts");
+    const dialog = await openEditFor("Fictional Person");
+    const deactivate = within(dialog).getByRole("button", {
+      name: "Deactivate",
+    });
+    const role = within(dialog).getByRole("checkbox", {
+      name: "Administrator",
+    });
+    return { deactivate, role };
+  }
+
+  it("can neither give up the role nor be deactivated", async () => {
+    const { deactivate, role } = await controlsFor([own, planner, former]);
+    expect((deactivate as HTMLButtonElement).disabled).toBe(true);
+    expect((role as HTMLInputElement).disabled).toBe(true);
+    expect((role as HTMLInputElement).checked).toBe(true);
+  });
+
+  it("can do both once another active account holds the role", async () => {
+    const { deactivate, role } = await controlsFor([
+      own,
+      { ...planner, roles: ["administrator"] },
+    ]);
+    expect((deactivate as HTMLButtonElement).disabled).toBe(false);
+    expect((role as HTMLInputElement).disabled).toBe(false);
+  });
+
+  it("counts a deactivated Administrator as gone", async () => {
+    const { role } = await controlsFor([
+      own,
+      { ...former, roles: ["administrator"] },
+    ]);
+    expect((role as HTMLInputElement).disabled).toBe(true);
   });
 });
 
@@ -326,29 +478,74 @@ describe("creating an account", () => {
 });
 
 describe("changing an account", () => {
-  it("changes its roles", async () => {
+  it("changes its name, email address, and roles together", async () => {
     const fetch = serverAnswers({
       "GET /api/session": manager,
       "GET /api/accounts": accountList,
-      "PUT /api/accounts/user-2/roles": () =>
-        Response.json({ account: { ...planner, roles: ["viewer"] } }),
+      "PATCH /api/accounts/user-2": () =>
+        Response.json({
+          account: {
+            ...planner,
+            name: "Fictional Planning",
+            roles: ["viewer"],
+          },
+        }),
     });
     renderApp("/accounts");
-    await openMenuFor("Fictional Planner");
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Change roles" }),
+      await screen.findByRole("button", { name: "Edit Fictional Planner" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Edit Fictional Planner",
+    });
+    const name = within(dialog).getByLabelText("Name");
+    await userEvent.clear(name);
+    await userEvent.type(name, "Fictional Planning");
+    const email = within(dialog).getByLabelText("Email address");
+    await userEvent.clear(email);
+    await userEvent.type(email, "planning@example.test");
+    await userEvent.click(within(dialog).getByLabelText("Project Planner"));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Saved the account for Fictional Planning.",
+    );
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/accounts/user-2",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({
+          name: "Fictional Planning",
+          email: "planning@example.test",
+          roles: ["viewer"],
+        }),
+      }),
+    );
+  });
+
+  it("asks for a name and a valid email address when editing", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Edit Fictional Planner" }),
     );
     const dialog = await screen.findByRole("dialog");
-    await userEvent.click(within(dialog).getByLabelText("Project Planner"));
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Save roles" }),
-    );
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog")).toBeNull();
-    });
-    expect(fetch).toHaveBeenCalledWith(
-      "/api/accounts/user-2/roles",
-      expect.objectContaining({ body: JSON.stringify({ roles: ["viewer"] }) }),
+    await userEvent.clear(within(dialog).getByLabelText("Name"));
+    const email = within(dialog).getByLabelText("Email address");
+    await userEvent.clear(email);
+    await userEvent.type(email, "not an address");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await within(dialog).findByText("Enter the person's name."),
+    ).toBeDefined();
+    expect(
+      within(dialog).getByText("Enter a valid email address."),
+    ).toBeDefined();
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/accounts/user-2",
+      expect.anything(),
     );
   });
 
@@ -360,10 +557,7 @@ describe("changing an account", () => {
         new Response(null, { status: 204 }),
     });
     renderApp("/accounts");
-    await openMenuFor("Fictional Planner");
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Reset password" }),
-    );
+    await openAction("Fictional Planner", "Reset password");
     const dialog = await screen.findByRole("dialog");
     const button = within(dialog).getByRole("button", {
       name: "Reset password",
@@ -411,10 +605,7 @@ describe("changing an account", () => {
         Response.json({ account: { ...planner, id, active } }),
     });
     renderApp("/accounts");
-    await openMenuFor(name);
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: action }),
-    );
+    await openAction(name, action);
     const dialog = await screen.findByRole("dialog");
     await userEvent.click(within(dialog).getByRole("button", { name: action }));
     await waitFor(() => {
@@ -529,10 +720,7 @@ describe("after a change", () => {
       },
     });
     renderApp("/accounts");
-    await openMenuFor("Fictional Planner");
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Deactivate" }),
-    );
+    await openAction("Fictional Planner", "Deactivate");
     const dialog = await screen.findByRole("dialog", {
       name: "Deactivate Fictional Planner",
     });
@@ -589,20 +777,17 @@ describe("after a change", () => {
     serverAnswers({
       "GET /api/session": manager,
       "GET /api/accounts": accountList,
-      "PUT /api/accounts/user-2/roles": () =>
+      "PATCH /api/accounts/user-2": () =>
         Response.json({ error: "Forbidden" }, { status: 403 }),
     });
     renderApp("/accounts");
-    await openMenuFor("Fictional Planner");
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Change roles" }),
+      await screen.findByRole("button", { name: "Edit Fictional Planner" }),
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Roles for Fictional Planner",
+      name: "Edit Fictional Planner",
     });
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Save roles" }),
-    );
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
       "You do not have permission to do this. Your roles may have changed.",
     );
@@ -620,10 +805,7 @@ describe("after a change", () => {
       },
     });
     renderApp("/accounts");
-    await openMenuFor("Fictional Planner");
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Reset password" }),
-    );
+    await openAction("Fictional Planner", "Reset password");
     const dialog = await screen.findByRole("dialog");
     await userEvent.type(
       within(dialog).getByLabelText("New temporary password"),

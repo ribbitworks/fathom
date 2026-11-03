@@ -2,13 +2,15 @@
 
 // Local accounts that sign in with a password: creating them, with the roles they hold, and the
 // administration that needs the accounts:manage permission, which lists accounts, changes their
-// roles, resets their passwords, and deactivates them. Nobody changes their own roles or deactivates
-// themselves, so no one can raise their own access or lock everyone out. Public sign-up is turned
-// off, so accounts are created here, through Better Auth's own storage, which hashes passwords.
+// names, email addresses, and roles, resets their passwords, and deactivates them. Administrators
+// manage their own account like any other, except that the last active Administrator keeps the role
+// and stays active, so no one can lock everyone out, and nobody resets their own password here.
+// Public sign-up is turned off, so accounts are created here, through Better Auth's own storage,
+// which hashes passwords.
 
 import { accounts, type Database, userRoles, users } from "@fathom/db";
-import type { Account, Role } from "@fathom/shared";
-import { and, asc, eq } from "drizzle-orm";
+import { type Account, type Role, roleSchema } from "@fathom/shared";
+import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { type Actor, requirePermission } from "../access.ts";
 import {
@@ -18,7 +20,8 @@ import {
   NotFoundError,
 } from "../errors.ts";
 import type { Auth } from "./auth.ts";
-import { recordEvent } from "./history.ts";
+import type { Transaction } from "./changes.ts";
+import { type HistoryEvent, recordEvent, recordEvents } from "./history.ts";
 import { addRoles, readRoles } from "./roles.ts";
 
 export interface NewAccount {
@@ -43,6 +46,28 @@ async function checkPassword(auth: Auth, password: string): Promise<void> {
   }
 }
 
+// The email address as accounts store it, refused if it is not valid or another account uses it.
+async function checkEmail(
+  auth: Auth,
+  email: string,
+  ownerId?: string,
+): Promise<string> {
+  const normalized = email.trim().toLowerCase();
+  // An account with a mistyped email address could never sign in.
+  if (!z.email().safeParse(normalized).success) {
+    throw new BadRequestError("The email address is not valid");
+  }
+  const existing = await (
+    await auth.$context
+  ).internalAdapter.findUserByEmail(normalized);
+  if (existing && existing.user.id !== ownerId) {
+    throw new ConflictError(
+      "An account with this email address already exists",
+    );
+  }
+  return normalized;
+}
+
 // Creates an account, records who created it in the access history, and returns its identifier.
 // The creator is null for the server's operators, as when the account command creates one.
 export async function createAccount(
@@ -53,16 +78,7 @@ export async function createAccount(
 ): Promise<string> {
   const context = await auth.$context;
   await checkPassword(auth, password);
-  const normalizedEmail = email.trim().toLowerCase();
-  // An account with a mistyped email address could never sign in.
-  if (!z.email().safeParse(normalizedEmail).success) {
-    throw new BadRequestError("The email address is not valid");
-  }
-  if (await context.internalAdapter.findUserByEmail(normalizedEmail)) {
-    throw new ConflictError(
-      "An account with this email address already exists",
-    );
-  }
+  const normalizedEmail = await checkEmail(auth, email);
   const user = await context.internalAdapter.createUser(
     { name: name.trim(), email: normalizedEmail, emailVerified: true },
     { method: "admin" },
@@ -101,8 +117,11 @@ export async function setAccountActive(
   userId: string,
   active: boolean,
   actorId: string | null,
+  // Runs first in the change's transaction, and refuses it by throwing.
+  check: (transaction: Transaction) => Promise<void> = async () => {},
 ): Promise<void> {
   await database.transaction(async (transaction) => {
+    await check(transaction);
     await transaction
       .update(users)
       .set({ deactivatedAt: active ? null : new Date() })
@@ -118,13 +137,21 @@ export async function setAccountActive(
   }
 }
 
+export interface AccountChange {
+  name?: string | undefined;
+  email?: string | undefined;
+  roles?: readonly Role[] | undefined;
+}
+
 export interface AccountAdministration {
   listAccounts(actor: Actor): Promise<Account[]>;
   createAccount(actor: Actor, account: NewAccount): Promise<Account>;
-  setRoles(
+  // Changes any of an account's name, email address, and roles together, recording each that
+  // changes in the access history.
+  updateAccount(
     actor: Actor,
     userId: string,
-    roles: readonly Role[],
+    change: AccountChange,
   ): Promise<Account>;
   // Signs the user out everywhere, so only the new password works.
   resetPassword(actor: Actor, userId: string, password: string): Promise<void>;
@@ -136,8 +163,12 @@ export function createAccountAdministration(
   database: Database,
   auth: Auth,
 ): AccountAdministration {
-  async function readAccount(userId: string): Promise<Account> {
-    const [user] = await database
+  // Reads through a transaction, holding the account's row until it ends, when given one.
+  async function readAccount(
+    userId: string,
+    transaction?: Transaction,
+  ): Promise<Account> {
+    const query = (transaction ?? database)
       .select({
         id: users.id,
         name: users.name,
@@ -147,20 +178,48 @@ export function createAccountAdministration(
       })
       .from(users)
       .where(eq(users.id, userId));
+    const [user] = await (transaction ? query.for("update") : query);
     if (user === undefined) throw new NotFoundError("There is no such account");
     const { deactivatedAt, createdAt, ...details } = user;
     return {
       ...details,
       createdAt: createdAt.toISOString(),
-      roles: await readRoles(database, userId),
+      roles: await readRoles(transaction ?? database, userId),
       active: deactivatedAt === null,
     };
   }
 
-  function refuseOwnAccount(actor: Actor, userId: string, change: string) {
-    if (actor.user.id === userId) {
-      throw new ForbiddenError(`You cannot ${change} your own account`);
-    }
+  // Changes to accounts that could remove an Administrator wait for each other until their
+  // transaction ends, so two at once cannot each leave the other as the last Administrator and then
+  // remove it. Each takes this lock before any account's row, so none waits on another in the
+  // opposite order. Relies on PostgreSQL's default isolation, under which each statement sees what
+  // the change before it saved.
+  async function lockAdministrators(transaction: Transaction): Promise<void> {
+    await transaction.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.administrators', 0))`,
+    );
+  }
+
+  // Refuses a change that leaves an account without the Administrator role, or deactivated, when no
+  // other active account holds the role. Callers take lockAdministrators first.
+  async function keepAnAdministrator(
+    transaction: Transaction,
+    userId: string,
+    refusal: string,
+  ): Promise<void> {
+    const [other] = await transaction
+      .select({ id: users.id })
+      .from(userRoles)
+      .innerJoin(users, eq(users.id, userRoles.userId))
+      .where(
+        and(
+          eq(userRoles.role, "administrator"),
+          isNull(users.deactivatedAt),
+          ne(users.id, userId),
+        ),
+      )
+      .limit(1);
+    if (other === undefined) throw new ConflictError(refusal);
   }
 
   async function signOutEverywhere(userId: string): Promise<void> {
@@ -184,19 +243,59 @@ export function createAccountAdministration(
       );
     },
 
-    async setRoles(actor, userId, roles) {
+    async updateAccount(actor, userId, change) {
       requirePermission(actor, "accounts:manage");
-      refuseOwnAccount(actor, userId, "change the roles of");
-      const previous = await readAccount(userId);
+      await readAccount(userId);
+      const changedEmail =
+        change.email === undefined
+          ? undefined
+          : await checkEmail(auth, change.email, userId);
       await database.transaction(async (transaction) => {
-        await transaction.delete(userRoles).where(eq(userRoles.userId, userId));
-        await addRoles(transaction, userId, roles);
-        await recordEvent(transaction, {
+        await lockAdministrators(transaction);
+        const previous = await readAccount(userId, transaction);
+        const name = change.name?.trim() ?? previous.name;
+        const email = changedEmail ?? previous.email;
+        const roles = roleSchema.options.filter((role) =>
+          (change.roles ?? previous.roles).includes(role),
+        );
+        const rolesChanged =
+          roles.length !== previous.roles.length ||
+          roles.some((role) => !previous.roles.includes(role));
+        const events: HistoryEvent[] = [
+          ...(name === previous.name ? [] : ["name-changed" as const]),
+          ...(email === previous.email ? [] : ["email-changed" as const]),
+        ].map((action) => ({
           actorId: actor.user.id,
-          action: "roles-changed",
+          action,
           subjectId: userId,
-          details: { previousRoles: previous.roles, roles: [...roles] },
-        });
+        }));
+        if (rolesChanged) {
+          events.push({
+            actorId: actor.user.id,
+            action: "roles-changed",
+            subjectId: userId,
+            details: { previousRoles: previous.roles, roles },
+          });
+        }
+        if (events.length === 0) return;
+        if (rolesChanged && !roles.includes("administrator")) {
+          await keepAnAdministrator(
+            transaction,
+            userId,
+            "The last active Administrator keeps the Administrator role",
+          );
+        }
+        await transaction
+          .update(users)
+          .set({ name, email, updatedAt: new Date() })
+          .where(eq(users.id, userId));
+        if (rolesChanged) {
+          await transaction
+            .delete(userRoles)
+            .where(eq(userRoles.userId, userId));
+          await addRoles(transaction, userId, roles);
+        }
+        await recordEvents(transaction, events);
       });
       return readAccount(userId);
     },
@@ -235,9 +334,24 @@ export function createAccountAdministration(
 
     async setActive(actor, userId, active) {
       requirePermission(actor, "accounts:manage");
-      refuseOwnAccount(actor, userId, "deactivate or reactivate");
       await readAccount(userId);
-      await setAccountActive(auth, database, userId, active, actor.user.id);
+      await setAccountActive(
+        auth,
+        database,
+        userId,
+        active,
+        actor.user.id,
+        active
+          ? undefined
+          : async (transaction) => {
+              await lockAdministrators(transaction);
+              await keepAnAdministrator(
+                transaction,
+                userId,
+                "The last active Administrator cannot be deactivated",
+              );
+            },
+      );
       return readAccount(userId);
     },
   };

@@ -158,6 +158,43 @@ describe("the entries", () => {
     ]);
   });
 
+  it("say whose name or email address changed, without the values", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () =>
+        Response.json({
+          entries: [
+            {
+              id: 9,
+              occurredAt: "2026-10-30T19:00:00.000Z",
+              actor: admin,
+              action: "email-changed",
+              subject,
+              details: {},
+            },
+            {
+              id: 8,
+              occurredAt: "2026-10-30T18:00:00.000Z",
+              actor: admin,
+              action: "name-changed",
+              subject,
+              details: {},
+            },
+          ],
+        }),
+    });
+    renderApp("/history");
+    const lines = (await screen.findAllByRole("listitem")).map((item) =>
+      item.textContent.slice(
+        String(item.querySelector("time")?.textContent).length,
+      ),
+    );
+    expect(lines).toEqual([
+      "Fictional Person changed the email address of Fictional Planner",
+      "Fictional Person changed the name of Fictional Planner",
+    ]);
+  });
+
   it("show each entry's date, with its year, and time, in the time zone the tests fix", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,

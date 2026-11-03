@@ -160,8 +160,8 @@ describe("saved views", () => {
       (
         await test.request(
           accounts.cookie,
-          "PUT",
-          `/api/accounts/${administrator.id}/roles`,
+          "PATCH",
+          `/api/accounts/${administrator.id}`,
           { roles: ["resource-planner"] },
         )
       ).statusCode,
@@ -225,8 +225,8 @@ describe("saved views", () => {
     const accounts = await test.signedIn(["administrator"]);
     await test.request(
       accounts.cookie,
-      "PUT",
-      `/api/accounts/${manager.id}/roles`,
+      "PATCH",
+      `/api/accounts/${manager.id}`,
       { roles: ["resource-planner"] },
     );
     expect((await undo(manager.cookie, starting.changeSetId)).statusCode).toBe(

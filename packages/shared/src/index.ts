@@ -6,8 +6,9 @@
 export {
   type Account,
   accountActiveSchema,
+  type AccountChangeRequest,
+  accountChangeSchema,
   accountListSchema,
-  accountRolesSchema,
   accountSchema,
   newAccountSchema,
   type NewAccountRequest,

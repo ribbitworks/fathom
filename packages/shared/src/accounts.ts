@@ -35,7 +35,12 @@ export const newAccountSchema = z.object({
 
 export type NewAccountRequest = z.infer<typeof newAccountSchema>;
 
-export const accountRolesSchema = z.object({ roles: z.array(roleSchema) });
+// Any of an account's name, email address, and roles, changed together.
+export const accountChangeSchema = newAccountSchema
+  .pick({ name: true, email: true, roles: true })
+  .partial();
+
+export type AccountChangeRequest = z.infer<typeof accountChangeSchema>;
 
 export const accountActiveSchema = z.object({ active: z.boolean() });
 

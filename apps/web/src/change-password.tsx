@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The page where users change their own password, giving their current one. Changing it signs out
-// their other sessions, such as on another computer, which the page says.
+// their other sessions, such as on another computer, which the page says once it is done.
 
 import { passwordChangeSchema } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,10 +48,7 @@ export function ChangePassword() {
 
   return (
     <Stack gap="md">
-      <PageHeader
-        title="Change password"
-        description="Changing it signs you out everywhere else, such as on another computer."
-      />
+      <PageHeader title="Change password" />
       <Paper withBorder p="xl" maw={480}>
         <form
           noValidate
