@@ -31,21 +31,32 @@ import {
   asDraft,
   clearedRejection,
   deleteDrafts,
+  discardDrafts,
   type Draft,
   drafted,
   draftFields,
   draftMakers,
   draftsUse,
+  everything,
+  type Held,
+  heldMessage,
   lockDrafts,
   type Maker,
   readDrafts,
+  readHeld,
   type Recorded,
-  type Rejection,
   setRejection,
+  type Viewer,
   writeDraft,
 } from "./drafts.ts";
 import { checkValuesFit, fieldChanges, fieldFields } from "./fields.ts";
-import { draftedList, type ListsState, readState } from "./lists.ts";
+import {
+  draftedList,
+  heldByOf,
+  type ListsState,
+  readState,
+  unpublishedMark,
+} from "./lists.ts";
 import type { FieldRow } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
@@ -67,16 +78,21 @@ export const fieldRecord = (row: FieldRow): Recorded => ({
 });
 
 // The People table's columns, live and in drafts, the live order of every column, and the draft of
-// the order, read together, with the lists they draw on.
+// the order, read together, with the lists they draw on, as the viewer sees them, with the records
+// others hold.
 export interface ColumnsState {
   fields: Map<string, Recorded>;
   fieldDrafts: Map<string, Draft>;
   liveOrder: string[];
   orderDraft: Draft | undefined;
   lists: ListsState;
+  held: { fields: Map<string, Held>; order: Held | undefined };
 }
 
-export async function readColumnsState(reader: Reader): Promise<ColumnsState> {
+export async function readColumnsState(
+  reader: Reader,
+  viewer?: Viewer,
+): Promise<ColumnsState> {
   const rows = await reader
     .select()
     .from(fields)
@@ -84,10 +100,18 @@ export async function readColumnsState(reader: Reader): Promise<ColumnsState> {
     .orderBy(asc(fields.id));
   return {
     fields: new Map(rows.map((row) => [row.id, fieldRecord(row)])),
-    fieldDrafts: await readDrafts(reader, "field"),
+    fieldDrafts: await readDrafts(reader, "field", undefined, viewer),
     liveOrder: await readColumnOrder(reader),
-    orderDraft: (await readDrafts(reader, "column-order", [table])).get(table),
-    lists: await readState(reader),
+    orderDraft: (await readDrafts(reader, "column-order", [table], viewer)).get(
+      table,
+    ),
+    lists: await readState(reader, viewer),
+    held: {
+      fields: await readHeld(reader, "field", viewer),
+      order: (await readHeld(reader, "column-order", viewer, [table])).get(
+        table,
+      ),
+    },
   };
 }
 
@@ -156,18 +180,18 @@ export const fieldsOrderUses = (state: ColumnsState): string[] =>
 
 export async function writeColumnOrderDraft(
   transaction: Transaction,
+  editor: string,
   state: ColumnsState,
   wanted: readonly string[],
-  rejection?: Rejection,
 ): Promise<void> {
   const held = columnOrderToHold(state, wanted);
   await writeDraft(
     transaction,
+    editor,
     "column-order",
     table,
     { order: state.liveOrder },
     { order: held ?? state.liveOrder },
-    rejection,
   );
 }
 
@@ -191,23 +215,28 @@ export function columnOrderChanges(
       ];
 }
 
-// Removes a draft of the order that no longer changes anything. It holds nothing to approve, so
-// nothing is recorded.
+// Removes a draft of the order that no longer changes anything: the published draft, or the
+// editor's own unpublished one, as for lists' orders. It holds nothing to approve, so nothing is
+// recorded.
 export async function removeEmptyColumnOrder(
   transaction: Transaction,
+  editor?: string,
 ): Promise<void> {
-  const state = await readColumnsState(transaction);
+  const state = await readColumnsState(transaction, editor);
   if (
     state.orderDraft !== undefined &&
+    (editor === undefined || state.orderDraft.unpublished === true) &&
     columnOrderToHold(state, draftedColumnOrder(state)) === undefined
   ) {
-    await deleteDrafts(transaction, "column-order", [table]);
+    if (editor === undefined) {
+      await deleteDrafts(transaction, "column-order", [table]);
+    } else await discardDrafts(transaction, editor, "column-order", [table]);
   }
 }
 
 const lower = (value: unknown) => String(value).trim().toLowerCase();
 
-// Whether another column has the name, live or in a draft, as for lists' names.
+// Whether another column has the name, live or in a draft, published or not, as for lists' names.
 export function nameTaken(
   state: ColumnsState,
   name: string,
@@ -218,13 +247,21 @@ export function nameTaken(
     [...state.fields].some(
       ([id, field]) => id !== except && lower(field.name) === wanted,
     ) ||
-    [...state.fieldDrafts].some(
+    [
+      ...state.fieldDrafts,
+      ...[...state.held.fields].map(([id, { draft }]) => [id, draft] as const),
+    ].some(
       ([id, draft]) =>
         id !== except &&
         draft.fields.name !== undefined &&
         lower(draft.fields.name) === wanted,
     )
   );
+}
+
+// Refuses a change to a record someone else holds.
+function refuseHeldIn(held: Held | undefined): void {
+  if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
 }
 
 // The tier of a column's values: its list's visibility, live or as drafted, whichever is more
@@ -262,11 +299,12 @@ async function checkList(
 
 async function drafting<Result>(
   database: Database,
+  editor: string,
   change: (transaction: Transaction, state: ColumnsState) => Promise<Result>,
 ): Promise<Result> {
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
-    return change(transaction, await readColumnsState(transaction));
+    return change(transaction, await readColumnsState(transaction, editor));
   });
 }
 
@@ -310,7 +348,7 @@ async function saveFieldDraft(
     ),
   );
   if (made.length === 0) return null;
-  await writeDraft(transaction, "field", id, live, after);
+  await writeDraft(transaction, madeBy, "field", id, live, after);
   return recordChanges(transaction, madeBy, [
     ...made,
     ...clearedRejection(
@@ -330,7 +368,7 @@ export async function createField(
   madeBy: string,
   request: FieldRequest,
 ): Promise<Saved<Field>> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     if (nameTaken(state, request.name)) throw new ConflictError(duplicateField);
     await checkList(transaction, state, request.listId);
     const id = randomUUID();
@@ -356,6 +394,7 @@ export async function createField(
 // A column as its draft makes it, refusing one that does not exist or is drafted to be removed.
 function changeableField(state: ColumnsState, id: string): Recorded {
   if (!fieldExists(state, id)) throw new NotFoundError(noField);
+  refuseHeldIn(state.held.fields.get(id));
   const field = draftedField(state, id);
   if (field === undefined) throw new ConflictError(toBeRemoved);
   return field;
@@ -368,7 +407,7 @@ export async function updateField(
   id: string,
   request: FieldRequest,
 ): Promise<Saved<Field>> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     const field = changeableField(state, id);
     if (nameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateField);
@@ -442,13 +481,13 @@ export async function deleteField(
   actor: Actor,
   id: string,
 ): Promise<string | null> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, actor.user.id, async (transaction, state) => {
     const field = changeableField(state, id);
     const live = state.fields.get(id);
     if (live === undefined) {
       const made = discardingField(state, id);
-      await deleteDrafts(transaction, "field", [id]);
-      await removeEmptyColumnOrder(transaction);
+      await discardDrafts(transaction, actor.user.id, "field", [id]);
+      await removeEmptyColumnOrder(transaction, actor.user.id);
       return recordChanges(transaction, actor.user.id, made, "discard");
     }
     if (await draftsUse(transaction, { column: id })) {
@@ -487,7 +526,8 @@ export async function moveColumn(
   if (after === key) {
     throw new BadRequestError("A column cannot follow itself");
   }
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
+    refuseHeldIn(state.held.order);
     const before = draftedColumnOrder(state);
     if (!before.includes(key)) throw new NotFoundError(noField);
     if (after !== null && !before.includes(after)) {
@@ -498,7 +538,7 @@ export async function moveColumn(
     const wanted = [...others.slice(0, at), key, ...others.slice(at)];
     const made = asDraft(columnOrderChanges(before, wanted));
     if (made.length === 0) return null;
-    await writeColumnOrderDraft(transaction, state, wanted);
+    await writeColumnOrderDraft(transaction, madeBy, state, wanted);
     return recordChanges(transaction, madeBy, [
       ...made,
       ...clearedRejection(
@@ -516,6 +556,11 @@ export type ColumnDraftTarget =
   { kind: "column"; id: string } | { kind: "order" };
 
 function draftOf(state: ColumnsState, target: ColumnDraftTarget): Draft {
+  refuseHeldIn(
+    target.kind === "order"
+      ? state.held.order
+      : state.held.fields.get(target.id),
+  );
   const draft =
     target.kind === "order"
       ? state.orderDraft
@@ -530,17 +575,17 @@ export async function discardColumnDraft(
   madeBy: string,
   target: ColumnDraftTarget,
 ): Promise<string | null> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     draftOf(state, target);
     const made =
       target.kind === "order"
         ? discardingOrder(state)
         : discardingField(state, target.id);
     if (target.kind === "order") {
-      await deleteDrafts(transaction, "column-order", [table]);
+      await discardDrafts(transaction, madeBy, "column-order", [table]);
     } else {
-      await deleteDrafts(transaction, "field", [target.id]);
-      await removeEmptyColumnOrder(transaction);
+      await discardDrafts(transaction, madeBy, "field", [target.id]);
+      await removeEmptyColumnOrder(transaction, madeBy);
     }
     return recordChanges(transaction, madeBy, made, "discard");
   });
@@ -552,7 +597,7 @@ export async function resubmitColumnDraft(
   madeBy: string,
   target: ColumnDraftTarget,
 ): Promise<string | null> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     const draft = draftOf(state, target);
     if (draft.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
@@ -595,6 +640,7 @@ function draftOut(
     ...(draft.state === "rejected" && draft.reason !== null
       ? { reason: draft.reason }
       : {}),
+    ...unpublishedMark(draft),
     madeBy: maker?.madeBy ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
@@ -615,12 +661,18 @@ export async function readColumnsOut(
   fields: Field[];
   order: string[];
   orderDraft?: ColumnOrderDraft;
+  orderHeldBy?: string;
 }> {
-  const state = await readColumnsState(reader);
+  const viewer = actor.user.id;
+  const state = await readColumnsState(reader, viewer);
   const ids = [...state.fields.keys(), ...addedFields(state)];
-  const makers = await draftMakers(reader, "field", [
-    ...state.fieldDrafts.keys(),
-  ]);
+  const makers = await draftMakers(
+    reader,
+    "field",
+    [...state.fieldDrafts.keys()],
+    everything,
+    viewer,
+  );
   const shown = ids.flatMap((id): Field[] => {
     const live = state.fields.get(id);
     const draft = state.fieldDrafts.get(id);
@@ -637,6 +689,7 @@ export async function readColumnsOut(
         ...(draft === undefined
           ? {}
           : { draft: draftOut(live, draft, makers.get(id)) }),
+        ...heldByOf(state.held.fields, id),
       },
     ];
   });
@@ -646,9 +699,9 @@ export async function readColumnsOut(
     ...(seesTier(actor, "restricted") ? ["startDate", "endDate"] : []),
     ...shown.map(({ id }) => id),
   ]);
-  const orderMaker = (await draftMakers(reader, "column-order", [table])).get(
-    table,
-  );
+  const orderMaker = (
+    await draftMakers(reader, "column-order", [table], everything, viewer)
+  ).get(table);
   const showsOrder =
     state.orderDraft !== undefined &&
     columnOrderToHold(state, draftedColumnOrder(state)) !== undefined;
@@ -665,11 +718,15 @@ export async function readColumnsOut(
             state.orderDraft.reason !== null
               ? { reason: state.orderDraft.reason }
               : {}),
+            ...unpublishedMark(state.orderDraft),
             madeBy: orderMaker?.madeBy ?? null,
             madeAt: orderMaker?.madeAt.toISOString() ?? null,
             editors: orderMaker?.editors ?? [],
           },
         }
       : {}),
+    ...(state.held.order === undefined
+      ? {}
+      : { orderHeldBy: state.held.order.holder }),
   };
 }

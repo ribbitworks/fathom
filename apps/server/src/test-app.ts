@@ -2,7 +2,8 @@
 
 // A Fathom server for tests, against a migrated PostgreSQL server of its own, with helpers to sign in
 // fictional accounts holding given roles, to send requests as them, and to approve the drafts of
-// lists that tests set up. Used only by tests.
+// lists that tests set up. Unless asked not to, each change sent is published straight after, as
+// its maker would, so tests of drafts see them as everyone does. Used only by tests.
 
 import {
   changes,
@@ -39,11 +40,13 @@ export interface TestApp {
   connection: Database;
   // Signs in a new account holding the given roles, and returns its identifier and session cookie.
   signedIn(roles: Role[]): Promise<{ id: string; cookie: string }>;
+  // Publishes the change straight after unless asked not to, or the app was started not to.
   request(
     cookie: string,
     method: Method,
     url: string,
     payload?: object,
+    options?: { publish?: boolean },
   ): Promise<Awaited<ReturnType<App["inject"]>>>;
   // The changes recorded for a record, oldest first, with who made them.
   historyOf(id: string): Promise<
@@ -62,7 +65,25 @@ export interface TestApp {
   close(): Promise<void>;
 }
 
-export async function startTestApp(): Promise<TestApp> {
+// Publishes the user's unpublished changes after a change they send, as they would, so tests of
+// published drafts need not; users who make no drafts are refused, which changes nothing.
+export async function publishingAfter(
+  app: App,
+  headers: { cookie: string; origin: string },
+  method: Method,
+  url: string,
+): Promise<void> {
+  if (method === "GET" || url.startsWith("/api/unpublished")) return;
+  await app.inject({
+    method: "POST",
+    url: "/api/unpublished/publish",
+    headers,
+  });
+}
+
+export async function startTestApp({
+  publishEachChange = true,
+} = {}): Promise<TestApp> {
   const certificate: TestCertificate = createTestCertificate();
   const database: TestDatabase = await startTestDatabase();
   await runMigrations(database.migrator);
@@ -107,13 +128,18 @@ export async function startTestApp(): Promise<TestApp> {
         .find((value) => value?.includes("session_token="));
       return { id, cookie: cookie?.split(";")[0] ?? "" };
     },
-    async request(cookie, method, url, payload) {
-      return app.inject({
+    async request(cookie, method, url, payload, options) {
+      const headers = { cookie, origin: publicUrl };
+      const response = await app.inject({
         method,
         url,
-        headers: { cookie, origin: publicUrl },
+        headers,
         ...(payload === undefined ? {} : { payload }),
       });
+      if (options?.publish ?? publishEachChange) {
+        await publishingAfter(app, headers, method, url);
+      }
+      return response;
     },
     historyOf(id) {
       return connection

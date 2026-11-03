@@ -41,7 +41,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 ### R1: Restore the Seed Data
 
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand.
+Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. It cannot restore the seed data once its drafts have been approved, as in DRAFT-26 and DRAFT-27; use R2 then.
 
 1. In the second terminal, run:
 
@@ -218,11 +218,11 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** As DRAFT-05.
 
 - [ ] **Step 1.** Open the Draft menu.
-  - **Expected:** Under **Waiting drafts** it offers **Approve 7 drafts…** and **Reject 7 drafts…**.
+  - **Expected:** Under **Waiting drafts** it offers **Approve 6 drafts…** and **Reject 6 drafts…**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve 7 drafts…**.
-  - **Expected:** A dialog titled **Approve 7 drafts?** opens, with only **Approving cannot be undone.** above its buttons.
+- [ ] **Step 2.** Select **Approve 6 drafts…**.
+  - **Expected:** A dialog titled **Approve 6 drafts?** opens, with only **Approving cannot be undone.** above its buttons.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Cancel**.
@@ -409,7 +409,9 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Expected:** The page says **No drafts match the search.**
   - **Notes:**
 
-**Afterwards:** R1.
+- [ ] **Step 3.** Look at the top bar, beside your name.
+  - **Expected:** It shows **Publish 4 changes**: the three changes the seed data holds, and this one.
+  - **Notes:**
 
 ### DRAFT-20: A Workforce Administrator Can Discard a List's New Order
 
@@ -427,22 +429,130 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Expected:** The **Levels** row has no mark, and no light green **Live** row under it.
   - **Notes:**
 
+### DRAFT-21: Unpublished Changes Are Seen Only by the Person Who Made Them
+
+**Preconditions:** R1. Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+
+- [ ] **Step 1.** Look at the top bar, beside your name.
+  - **Expected:** It shows **Publish 3 changes**, with a **⋯** button beside it.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **⋯** button beside **Publish 3 changes**.
+  - **Expected:** The menu shows **Your unpublished changes**, a divider, **Only you see these until you publish them.**, then **Added** the choice Laptop in Equipment, **Added** the list Equipment and **Changed** Mariana Metz, then **Discard all…**.
+  - **Notes:**
+
+- [ ] **Step 3.** Press Esc. Type **Mariana Metz** in the search box above the table.
+  - **Expected:** Her row has a yellow dot and **Draft**, and a hollow yellow dot and **Unpublished**. Her **Site** cell is yellow.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the **⋯** button at the end of her row.
+  - **Expected:** The menu says **Only you see these changes until you publish them.**
+  - **Notes:**
+
+- [ ] **Step 5.** Press Esc. Sign in (P1) as `engineering.director@fathom.test`, open **People**, and type **Mariana Metz** in the search box.
+  - **Expected:** Her row has a grey dot and **Being changed**, and no **Draft** mark, and her **Site** cell is not yellow. The top bar shows no **Publish** button.
+  - **Notes:**
+
+- [ ] **Step 6.** Open **Lists**.
+  - **Expected:** There is no **Equipment** list.
+  - **Notes:**
+
+### DRAFT-22: A Record Someone Else Is Changing Is Held
+
+**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+
+- [ ] **Step 1.** Type **Viktoria Holmberg** in the search box above the table.
+  - **Expected:** Her row has a yellow dot and **Draft**, and a grey dot and **Being changed**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **⋯** button at the end of her row.
+  - **Expected:** The menu says **Being changed by Second Engineering Operations Manager. It can be changed once they publish or discard their changes.** It has no **Discard draft** or **Remove person**.
+  - **Notes:**
+
+- [ ] **Step 3.** Press Esc. Double-click her **Site** cell.
+  - **Expected:** Nothing can be typed into it.
+  - **Notes:**
+
+- [ ] **Step 4.** Sign in (P1) as `engineering.director@fathom.test`, open **People**, type **Viktoria Holmberg** in the search box, and select the **⋯** button at the end of her row.
+  - **Expected:** The menu shows the same **Being changed by Second Engineering Operations Manager…** note, and has no **Approve draft** or **Reject draft…**.
+  - **Notes:**
+
+### DRAFT-23: Changing a Published Draft Keeps Others Seeing It as Published
+
+**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+
+- [ ] **Step 1.** Type **E10002** in the search box. Select that person's **Employee ID** cell, type **E20002**, and press Enter.
+  - **Expected:** The cell reads **E20002** and is yellow. The row has a yellow dot and **Draft**, and a hollow yellow dot and **Unpublished**. The top bar shows **Publish 4 changes**.
+  - **Notes:**
+
+- [ ] **Step 2.** Sign in (P1) as `engineering.director@fathom.test`, open **People**, and type **E10002** in the search box.
+  - **Expected:** The row still reads **E10002**, with a yellow dot and **Draft**, and a grey dot and **Being changed**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the **⋯** button at the end of the row.
+  - **Expected:** The menu says **Being changed by Engineering Operations Manager. It can be changed once they publish or discard their changes.** It has no **Approve draft** or **Reject draft…**.
+  - **Notes:**
+
+### DRAFT-24: Publishing Shows the Changes to Everyone
+
+**Preconditions:** DRAFT-23 done. Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+
+- [ ] **Step 1.** Select **Publish 4 changes** in the top bar: the three changes the seed data holds, and the one from DRAFT-23.
+  - **Expected:** A notice reads **Published 4 changes.** The **Publish** button is gone from the top bar.
+  - **Notes:**
+
+- [ ] **Step 2.** Type **Mariana Metz** in the search box.
+  - **Expected:** Her row has a yellow dot and **Draft**, with no **Unpublished** mark.
+  - **Notes:**
+
+- [ ] **Step 3.** Sign in (P1) as `engineering.director@fathom.test`, open **People**, and type **Mariana Metz** in the search box.
+  - **Expected:** Her row has a yellow dot and **Draft**, and her **Site** cell is yellow.
+  - **Notes:**
+
+- [ ] **Step 4.** Open **Lists**.
+  - **Expected:** **Equipment** is in the table, with a yellow dot and **Draft: added**.
+  - **Notes:**
+
 **Afterwards:** R1.
 
-### DRAFT-21: All Waiting Drafts Can Be Approved From the Drafts Page
+### DRAFT-25: Discard All Removes Every Unpublished Change
+
+**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+
+- [ ] **Step 1.** Select the **⋯** button beside **Publish 3 changes**, then **Discard all…**.
+  - **Expected:** A dialog titled **Discard 3 changes?** says **Your unpublished changes are deleted. This cannot be undone.**
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Cancel**.
+  - **Expected:** The dialog closes. The top bar still shows **Publish 3 changes**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the **⋯** button beside **Publish 3 changes**, then **Discard all…**, then **Discard**.
+  - **Expected:** A notice reads **Discarded 3 changes.** The **Publish** button is gone from the top bar.
+  - **Notes:**
+
+- [ ] **Step 4.** Type **Mariana Metz** in the search box.
+  - **Expected:** Her row has no mark.
+  - **Notes:**
+
+- [ ] **Step 5.** Open **Lists**.
+  - **Expected:** There is no **Equipment** list.
+  - **Notes:**
+
+### DRAFT-26: All Waiting Drafts Can Be Approved From the Drafts Page
 
 **Preconditions:** R2. Signed in (P1) as `engineering.director@fathom.test`. **Drafts** page open.
 
 - [ ] **Step 1.** Select **Select all waiting**.
-  - **Expected:** The button at the top right reads **Approve 17 drafts**. The **Sites** new order entry is not selected.
+  - **Expected:** The button at the top right reads **Approve 16 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve 17 drafts**.
-  - **Expected:** A dialog titled **Approve 17 drafts?** opens.
+- [ ] **Step 2.** Select **Approve 16 drafts**.
+  - **Expected:** A dialog titled **Approve 16 drafts?** opens.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Approve**.
-  - **Expected:** The dialog closes, and a notice reads **Approved 17 drafts.**
+  - **Expected:** The dialog closes, and a notice reads **Approved 16 drafts.**
   - **Notes:**
 
 - [ ] **Step 4.** Open the **People** page.
@@ -453,7 +563,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Expected:** **Sites** has a yellow dot and **Draft: reordered**. **Positions** has a red dot and **Rejected**. No other list has a mark.
   - **Notes:**
 
-### DRAFT-22: A Resubmitted Choice Is Approved With the New Order That Depends on It
+### DRAFT-27: A Resubmitted Choice Is Approved With the New Order That Depends on It
 
 **Preconditions:** R2. Signed out (P2).
 

@@ -126,6 +126,8 @@ describe("Help's Drafts page", () => {
       "Draft: reordered",
       "Draft: retired",
       "Rejected",
+      "Unpublished",
+      "Being changed",
       "Live",
     ];
     // The marks come first; "Rejected" also names a row of the second table.
@@ -134,6 +136,7 @@ describe("Help's Drafts page", () => {
     );
     expect(lifecycle?.map(([state]) => state)).toEqual([
       "Saved",
+      "Published",
       "Approved",
       "Rejected",
       "Discarded",

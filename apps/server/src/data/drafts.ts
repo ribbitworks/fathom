@@ -3,10 +3,12 @@
 // Draft rows: the changes waiting for approval, as the Decisions Log sets out. Part of the data
 // access layer. Each person, list, and choice has at most one draft, which adds it, changes some of
 // its fields, or removes it, and each list's choices have at most one draft of their order; everyone
-// who sees the records sees the drafts in place of the live values. A draft is kept as the change
-// history records the record, holding all of an added record's fields, only the fields that differ
-// from the live record, or none for a removal, and the live record changes only when an Approver
-// approves it.
+// who sees the records sees the published drafts in place of the live values. A draft is kept as the
+// change history records the record, holding all of an added record's fields, only the fields that
+// differ from the live record, or none for a removal, and the live record changes only when an
+// Approver approves it. A user's changes to drafts are kept as their unpublished drafts, as ADR 0008
+// sets out, which they see in place of the published ones and which hold the records for them until
+// they publish or discard them, as unpublished.ts sets out.
 
 import {
   changes,
@@ -16,10 +18,20 @@ import {
   fieldOfValue,
   inChunks,
   people,
+  unpublishedDrafts,
   users,
 } from "@fathom/db";
 import { type Tier, tierSchema } from "@fathom/shared";
-import { and, eq, inArray, notInArray, or, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  inArray,
+  ne,
+  notInArray,
+  or,
+  type SQL,
+  sql,
+} from "drizzle-orm";
 import { mostSensitive } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
@@ -32,6 +44,11 @@ type Reader = Pick<Database, "select">;
 export type Recorded = Record<string, unknown>;
 
 export type DraftRow = typeof drafts.$inferSelect;
+type UnpublishedRow = typeof unpublishedDrafts.$inferSelect;
+
+// The user whose own unpublished drafts are read in place of the published ones, or undefined to read
+// the published drafts alone, as Approvers decide them.
+export type Viewer = string | undefined;
 
 // The kinds of record that have drafts. A list's choice order is one record, named by its list.
 export type DraftType =
@@ -44,6 +61,8 @@ export interface Draft {
   reason: string | null;
   // Rises with each draft made, so records drafted to be added keep the order they were drafted in.
   sequence: number;
+  // Whether the draft holds the viewer's own changes, not yet published.
+  unpublished?: boolean;
 }
 
 // A rejected draft is back with its makers until they send it again, so it is approved neither
@@ -89,6 +108,25 @@ function toDraft(row: DraftRow): Draft {
     sequence: row.sequence,
   };
 }
+
+// An unpublished draft waits for approval once published, whatever the draft it replaces.
+function toUnpublished(row: UnpublishedRow): Draft {
+  return {
+    action: row.action as Change["action"],
+    fields: row.fields,
+    state: "waiting",
+    reason: null,
+    sequence: row.sequence,
+    unpublished: true,
+  };
+}
+
+// The unpublished draft of a record whose user wants no draft of it, so publishing removes the
+// published one.
+const noDraft = { action: "changed", fields: {} } as const;
+
+export const wantsNoDraft = (row: { action: string; fields: Recorded }) =>
+  row.action === "changed" && Object.keys(row.fields).length === 0;
 
 // The person as their draft makes them: undefined once removed, or before they are added.
 export function drafted(
@@ -148,85 +186,256 @@ export function draftTier(
   return mostSensitive(draftFields(live, draft).map(tierOf));
 }
 
-// Changes to drafts of every kind wait for one another, as do approvals, rejections, undoing, and
-// deleting a choice, so two cannot update the same draft, take the same Employee ID or name, or
-// remove a choice a draft is being given, at once. It is taken before any row is locked.
+// Changes to drafts of every kind wait for one another, as do approvals, rejections, undoing,
+// publishing and discarding unpublished changes, and deleting a choice, so two cannot update the
+// same draft, take the same Employee ID or name, or remove a choice a draft is being given, at
+// once. It is taken before any row is locked.
 export async function lockDrafts(transaction: Transaction) {
   await transaction.execute(
     sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.drafts', 0))`,
   );
 }
 
+// Rows of one table for the records of one kind given, or of every record of that kind, read in
+// chunks small enough for one statement each.
+async function readRows<Row>(
+  ids: readonly string[] | undefined,
+  read: (chunk: readonly string[] | undefined) => Promise<Row[]>,
+): Promise<Row[]> {
+  if (ids === undefined) return read(undefined);
+  const rows: Row[] = [];
+  for (const chunk of inChunks([...ids])) rows.push(...(await read(chunk)));
+  return rows;
+}
+
+const bySequence = (
+  first: { sequence: number },
+  second: { sequence: number },
+) => first.sequence - second.sequence;
+
 // The drafts of the records of one kind given, or of every record of that kind, by record, in the
-// order they were made.
+// order they were made: the published drafts, with the viewer's own unpublished drafts in their
+// place, and the records only the viewer drafts adding after them. A record the viewer wants no
+// draft of has none.
 export async function readDrafts(
   reader: Reader,
   recordType: DraftType,
   ids?: readonly string[],
+  viewer?: Viewer,
 ): Promise<Map<string, Draft>> {
-  const rows: DraftRow[] = [];
-  const read = async (chunk?: readonly string[]) => {
-    rows.push(
-      ...(await reader
-        .select()
-        .from(drafts)
-        .where(
-          and(
-            eq(drafts.recordType, recordType),
-            chunk === undefined
-              ? undefined
-              : inArray(drafts.recordId, [...chunk]),
-          ),
-        )),
-    );
-  };
-  if (ids === undefined) await read();
-  else for (const chunk of inChunks([...ids])) await read(chunk);
-  rows.sort((first, second) => first.sequence - second.sequence);
-  return new Map(rows.map((row) => [row.recordId, toDraft(row)]));
+  const published = await readRows(ids, (chunk) =>
+    reader
+      .select()
+      .from(drafts)
+      .where(
+        and(
+          eq(drafts.recordType, recordType),
+          chunk === undefined
+            ? undefined
+            : inArray(drafts.recordId, [...chunk]),
+        ),
+      ),
+  );
+  const found = new Map(
+    published.sort(bySequence).map((row) => [row.recordId, toDraft(row)]),
+  );
+  if (viewer === undefined) return found;
+  const own = await readRows(ids, (chunk) =>
+    reader
+      .select()
+      .from(unpublishedDrafts)
+      .where(
+        and(
+          eq(unpublishedDrafts.recordType, recordType),
+          eq(unpublishedDrafts.userId, viewer),
+          chunk === undefined
+            ? undefined
+            : inArray(unpublishedDrafts.recordId, [...chunk]),
+        ),
+      ),
+  );
+  for (const row of own.sort(bySequence)) {
+    if (wantsNoDraft(row)) found.delete(row.recordId);
+    else found.set(row.recordId, toUnpublished(row));
+  }
+  return found;
 }
 
 // The drafts of the people given, or of everyone, by person.
-export const readPersonDrafts = (reader: Reader, ids?: readonly string[]) =>
-  readDrafts(reader, "person", ids);
+export const readPersonDrafts = (
+  reader: Reader,
+  ids?: readonly string[],
+  viewer?: Viewer,
+) => readDrafts(reader, "person", ids, viewer);
+
+// A record someone holds by having unpublished changes to it: who, and the draft they intend, which
+// wants no draft at all when it changes nothing.
+export interface Held {
+  holderId: string;
+  holder: string;
+  draft: Draft;
+}
+
+// The records of one kind given, or of every record of that kind, that users other than the viewer
+// hold, or that anyone holds when there is no viewer, by record.
+export async function readHeld(
+  reader: Reader,
+  recordType: DraftType,
+  viewer: Viewer,
+  ids?: readonly string[],
+): Promise<Map<string, Held>> {
+  const rows = await readRows(ids, (chunk) =>
+    reader
+      .select({ row: unpublishedDrafts, holder: users.name })
+      .from(unpublishedDrafts)
+      .innerJoin(users, eq(users.id, unpublishedDrafts.userId))
+      .where(
+        and(
+          eq(unpublishedDrafts.recordType, recordType),
+          viewer === undefined
+            ? undefined
+            : ne(unpublishedDrafts.userId, viewer),
+          chunk === undefined
+            ? undefined
+            : inArray(unpublishedDrafts.recordId, [...chunk]),
+        ),
+      ),
+  );
+  return new Map(
+    rows
+      .sort((first, second) => bySequence(first.row, second.row))
+      .map(({ row, holder }) => [
+        row.recordId,
+        { holderId: row.userId, holder, draft: toUnpublished(row) },
+      ]),
+  );
+}
+
+export const heldMessage = (holder: string) =>
+  `${holder} is changing this; it can be changed once they publish or discard their changes`;
+
+// Refuses a change to records someone other than the editor holds.
+export async function refuseHeld(
+  reader: Reader,
+  editor: string,
+  recordType: DraftType,
+  ids: readonly string[],
+): Promise<void> {
+  const [held] = (await readHeld(reader, recordType, editor, ids)).values();
+  if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
+}
+
+// Refuses approving or rejecting drafts of records anyone holds, the Approver included, since
+// Approvers decide only published drafts that nobody is changing.
+export async function refuseHeldDecision(
+  reader: Reader,
+  recordType: DraftType,
+  ids: readonly string[],
+): Promise<void> {
+  const [held] = (await readHeld(reader, recordType, undefined, ids)).values();
+  if (held !== undefined) {
+    throw new ConflictError(
+      `${held.holder} is changing one of these drafts; it can be decided once they publish or discard their changes`,
+    );
+  }
+}
+
+// Whether two drafts make the same change, field for field.
+function sameDraft(
+  first: Pick<Draft, "action" | "fields"> | undefined,
+  second: Pick<Draft, "action" | "fields"> | undefined,
+): boolean {
+  if (first === undefined || second === undefined) return first === second;
+  const keys = Object.keys(first.fields);
+  return (
+    first.action === second.action &&
+    keys.length === Object.keys(second.fields).length &&
+    keys.every(
+      (key) =>
+        Object.hasOwn(second.fields, key) &&
+        // The keys are the drafts' own, read just above.
+        // eslint-disable-next-line security/detect-object-injection
+        same(first.fields[key], second.fields[key]),
+    )
+  );
+}
+
+// Keeps the draft the editor intends for a record as their unpublished draft: none at all when it is
+// the published draft, so the record is no longer held, and one that wants no draft when the editor
+// wants none but there is a published one.
+async function keepUnpublished(
+  transaction: Transaction,
+  editor: string,
+  recordType: DraftType,
+  id: string,
+  draft: Pick<Draft, "action" | "fields"> | undefined,
+): Promise<void> {
+  await refuseHeld(transaction, editor, recordType, [id]);
+  const published = (await readDrafts(transaction, recordType, [id])).get(id);
+  if (sameDraft(draft, published)) {
+    await transaction
+      .delete(unpublishedDrafts)
+      .where(
+        and(
+          eq(unpublishedDrafts.recordType, recordType),
+          eq(unpublishedDrafts.recordId, id),
+        ),
+      );
+    return;
+  }
+  const row = draft ?? noDraft;
+  await transaction
+    .insert(unpublishedDrafts)
+    .values({ recordType, recordId: id, userId: editor, ...row })
+    .onConflictDoUpdate({
+      target: [unpublishedDrafts.recordType, unpublishedDrafts.recordId],
+      set: { action: row.action, fields: row.fields },
+    });
+}
 
 export type Rejection = Pick<Draft, "state" | "reason">;
 
-const waiting: Rejection = { state: "waiting", reason: null };
-
-// Keeps a record's draft as wanted, or removes it when the record wanted is the live one.
+// Keeps the editor's draft of a record as wanted, as their unpublished draft, refusing a record
+// someone else holds.
 export async function writeDraft(
   transaction: Transaction,
+  editor: string,
   recordType: DraftType,
   id: string,
   live: Recorded | undefined,
   wanted: Recorded | undefined,
-  rejection: Rejection = waiting,
 ): Promise<void> {
-  const draft = draftBetween(live, wanted);
-  if (draft === undefined) {
-    await deleteDrafts(transaction, recordType, [id]);
-    return;
-  }
-  const row = { ...draft, ...rejection };
-  await transaction
-    .insert(drafts)
-    .values({ recordType, recordId: id, ...row })
-    .onConflictDoUpdate({
-      target: [drafts.recordType, drafts.recordId],
-      set: row,
-    });
+  await keepUnpublished(
+    transaction,
+    editor,
+    recordType,
+    id,
+    draftBetween(live, wanted),
+  );
 }
 
 export const writePersonDraft = (
   transaction: Transaction,
+  editor: string,
   id: string,
   live: Recorded | undefined,
   wanted: Recorded | undefined,
-  rejection: Rejection = waiting,
-) => writeDraft(transaction, "person", id, live, wanted, rejection);
+) => writeDraft(transaction, editor, "person", id, live, wanted);
 
-// Removes the drafts of the records of one kind given.
+// Discards the editor's drafts of the records of one kind given, so that, once they publish, the
+// records are as they are live.
+export async function discardDrafts(
+  transaction: Transaction,
+  editor: string,
+  recordType: DraftType,
+  ids: readonly string[],
+): Promise<void> {
+  for (const id of ids) {
+    await keepUnpublished(transaction, editor, recordType, id, undefined);
+  }
+}
+
+// Removes the published drafts of the records of one kind given, as approving them does.
 export async function deleteDrafts(
   transaction: Transaction,
   recordType: DraftType,
@@ -241,7 +450,8 @@ export async function deleteDrafts(
   }
 }
 
-// Marks the drafts of the records of one kind given as waiting again, or as rejected for a reason.
+// Marks the published drafts of the records of one kind given as waiting again, or as rejected for a
+// reason.
 export async function setRejection(
   transaction: Transaction,
   recordType: DraftType,
@@ -267,17 +477,43 @@ export interface Maker {
   fieldEditors: Map<string, string | null>;
 }
 
+// For readers who see every field of a draft, such as those of lists and columns, which are General.
+export const everything = () => true;
+
+// The change sets holding a user's unpublished changes since they last discarded them all, which
+// publishing publishes; those before are discarded, so are never published.
+export function openChangeSets(userId: string): SQL {
+  return and(
+    eq(changeSets.unpublished, true),
+    eq(changeSets.madeBy, userId),
+    sql`${changeSets.madeAt} > coalesce((SELECT max(withdrawn.made_at) FROM fathom.change_sets AS withdrawn WHERE withdrawn.made_by = ${userId} AND withdrawn.kind = 'withdrawal'), '-infinity')`,
+  ) as SQL;
+}
+
 // Who changed each record's draft, and when, from the changes to it the reader may see, so a hidden
 // change reveals nothing: the latest, and everyone since the record's last draft was approved or
 // discarded. Rejecting a draft, or sending it for approval again unchanged, does not change it.
+// Unpublished changes count only for the viewer's own unpublished drafts, which hold them.
 export async function draftMakers(
   reader: Pick<Database, "select">,
   recordType: DraftType,
   ids: readonly string[],
-  seen: (field: string, tier: Tier) => boolean = () => true,
+  seen: (field: string, tier: Tier) => boolean,
+  viewer: string,
 ): Promise<Map<string, Maker>> {
   const makers = new Map<string, Maker>();
   for (const chunk of inChunks([...ids])) {
+    const ownRows = await reader
+      .select({ id: unpublishedDrafts.recordId })
+      .from(unpublishedDrafts)
+      .where(
+        and(
+          eq(unpublishedDrafts.recordType, recordType),
+          eq(unpublishedDrafts.userId, viewer),
+          inArray(unpublishedDrafts.recordId, chunk),
+        ),
+      );
+    const own = new Set(ownRows.map(({ id }) => id));
     const rows = await reader
       .select({
         recordId: changes.recordId,
@@ -285,6 +521,7 @@ export async function draftMakers(
         tier: changes.tier,
         draft: changes.draft,
         kind: changeSets.kind,
+        unpublished: changeSets.unpublished,
         madeBy: users.name,
         madeAt: changeSets.madeAt,
       })
@@ -299,10 +536,12 @@ export async function draftMakers(
             eq(changes.draft, true),
             inArray(changeSets.kind, ["approval", "discard"]),
           ),
+          or(eq(changeSets.unpublished, false), openChangeSets(viewer)),
         ),
       )
       .orderBy(changes.id);
     for (const row of rows) {
+      if (row.unpublished && !own.has(row.recordId)) continue;
       if (row.kind === "approval" || row.kind === "discard") {
         makers.delete(row.recordId);
         continue;
@@ -331,27 +570,44 @@ export async function draftMakers(
   return makers;
 }
 
-// Adds drafts for people added together, such as pasted rows, in as few statements as PostgreSQL
-// allows.
-export async function addPersonDrafts(
+// Adds the editor's unpublished drafts of records of one kind drafted to be added together, such
+// as pasted rows, in as few statements as PostgreSQL allows, keeping the order given.
+export async function addDrafts(
   transaction: Transaction,
+  editor: string,
+  recordType: DraftType,
   added: readonly { id: string; fields: Recorded }[],
 ): Promise<void> {
   for (const chunk of inChunks([...added])) {
-    await transaction.insert(drafts).values(
+    await transaction.insert(unpublishedDrafts).values(
       chunk.map(({ id, fields }) => ({
-        recordType: "person",
+        recordType,
         recordId: id,
+        userId: editor,
         action: "created",
-        fields: tidy(fields),
+        fields,
       })),
     );
   }
 }
 
+export const addPersonDrafts = (
+  transaction: Transaction,
+  editor: string,
+  added: readonly { id: string; fields: Recorded }[],
+) =>
+  addDrafts(
+    transaction,
+    editor,
+    "person",
+    added.map(({ id, fields }) => ({ id, fields: tidy(fields) })),
+  );
+
 // The Employee IDs asked for that someone else already has, ignoring letter case: a live person, or
-// a person as their draft makes them. A live person's Employee ID stays taken until a draft that
-// changes it is approved, so approving drafts one at a time never finds two people with the same one.
+// a person as their draft makes them, published or not. A live person's Employee ID stays taken
+// until a draft that changes it is approved, so approving drafts one at a time never finds two
+// people with the same one, and an unpublished draft's until it is discarded, so publishing never
+// finds it taken.
 export async function takenEmployeeIds(
   reader: Reader,
   employeeIds: readonly string[],
@@ -369,43 +625,52 @@ export async function takenEmployeeIds(
           except.length === 0 ? undefined : notInArray(people.id, [...except]),
         ),
       );
-    const draftedIds = await reader
-      .select({ employeeId: sql<string>`${drafts.fields}->>'employeeId'` })
-      .from(drafts)
-      .where(
-        and(
-          eq(drafts.recordType, "person"),
-          inArray(sql`lower(${drafts.fields}->>'employeeId')`, chunk),
-          except.length === 0
-            ? undefined
-            : notInArray(drafts.recordId, [...except]),
-        ),
+    const drafted = [];
+    for (const table of [drafts, unpublishedDrafts]) {
+      drafted.push(
+        ...(await reader
+          .select({ employeeId: sql<string>`${table.fields}->>'employeeId'` })
+          .from(table)
+          .where(
+            and(
+              eq(table.recordType, "person"),
+              inArray(sql`lower(${table.fields}->>'employeeId')`, chunk),
+              except.length === 0
+                ? undefined
+                : notInArray(table.recordId, [...except]),
+            ),
+          )),
       );
-    for (const { employeeId } of [...live, ...draftedIds]) {
+    }
+    for (const { employeeId } of [...live, ...drafted]) {
       taken.add(employeeId.toLowerCase());
     }
   }
   return employeeIds.filter((id) => taken.has(id.toLowerCase()));
 }
 
-// Whether any person's draft changes the column, even to clear it, or has the choice, given.
+// Whether any person's draft, published or not, changes the column, even to clear it, or has the
+// choice, given.
 export async function draftsUse(
   reader: Reader,
   use: { column: string } | { choice: string },
 ): Promise<boolean> {
-  const found = await reader
-    .select({ one: sql`1` })
-    .from(drafts)
-    .where(
-      and(
-        eq(drafts.recordType, "person"),
-        "column" in use
-          ? sql`${drafts.fields} ? ${`value:${use.column}`}::text`
-          : sql`EXISTS (SELECT 1 FROM jsonb_each(${drafts.fields}) AS held(field, value) WHERE jsonb_typeof(held.value) = 'array' AND held.value @> ${JSON.stringify([use.choice])}::jsonb)`,
-      ),
-    )
-    .limit(1);
-  return found.length > 0;
+  for (const table of [drafts, unpublishedDrafts]) {
+    const found = await reader
+      .select({ one: sql`1` })
+      .from(table)
+      .where(
+        and(
+          eq(table.recordType, "person"),
+          "column" in use
+            ? sql`${table.fields} ? ${`value:${use.column}`}::text`
+            : sql`EXISTS (SELECT 1 FROM jsonb_each(${table.fields}) AS held(field, value) WHERE jsonb_typeof(held.value) = 'array' AND held.value @> ${JSON.stringify([use.choice])}::jsonb)`,
+        ),
+      )
+      .limit(1);
+    if (found.length > 0) return true;
+  }
+  return false;
 }
 
 // The changes recorded for a rejected draft whose reason is cleared, as when it is changed again or
@@ -438,24 +703,29 @@ export const asDraft = (made: readonly Change[]): Change[] =>
   made.map((change) => ({ ...change, draft: true }));
 
 // The columns' values as a draft holds them, for checking that a column's settings fit the drafts
-// too: each draft that adds or changes a person, with its choices by column, as the person will
-// have them.
+// too: each draft, published or not, that adds or changes a person, with its choices by column, as
+// the person will have them.
 export async function draftedValues(
   reader: Reader,
   columnId: string,
 ): Promise<{ adds: boolean; chosen: string[] | undefined }[]> {
-  const rows = await reader
-    .select({
-      action: drafts.action,
-      chosen: sql<unknown>`${drafts.fields} -> ${`value:${columnId}`}::text`,
-    })
-    .from(drafts)
-    .where(
-      and(
-        eq(drafts.recordType, "person"),
-        inArray(drafts.action, ["created", "changed"]),
-      ),
+  const rows = [];
+  for (const table of [drafts, unpublishedDrafts]) {
+    rows.push(
+      ...(await reader
+        .select({
+          action: table.action,
+          chosen: sql<unknown>`${table.fields} -> ${`value:${columnId}`}::text`,
+        })
+        .from(table)
+        .where(
+          and(
+            eq(table.recordType, "person"),
+            inArray(table.action, ["created", "changed"]),
+          ),
+        )),
     );
+  }
   return rows.map(({ action, chosen }) => ({
     adds: action === "created",
     chosen: Array.isArray(chosen) ? chosen.map(String) : undefined,

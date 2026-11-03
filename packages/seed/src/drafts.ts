@@ -3,13 +3,24 @@
 // Drafts in the fictional organization, made through the server's data access layer as the personas
 // who make and judge them would, so they are drafted and recorded exactly as in use: the
 // Engineering Operations Manager drafts adding two newcomers, changing three people, and removing
-// one, a second Engineering Operations Manager changes another detail in one of those drafts, so
-// one draft holds two people's changes, and the Engineering Director rejects two of the drafts with
-// a reason. Each case a draft can be in is there to try: waiting to add, change, or remove someone,
-// and rejected. Removing the seed data discards the drafts first. A development-only package, never
-// included in the runtime image.
+// one, and publishes them, a second Engineering Operations Manager changes another detail in one of
+// those drafts, so one draft holds two people's changes, and publishes it, and the Engineering
+// Director rejects two of the drafts with a reason. Each case a draft can be in is there to try:
+// waiting to add, change, or remove someone, and rejected. Then come changes left unpublished, which
+// hold their records: the Engineering Operations Manager's change to another person's site, and the
+// second Engineering Operations Manager's change to a published draft. Removing the seed data
+// discards the drafts first, unpublished ones included. A development-only package, never included
+// in the runtime image.
 
-import { changes, changeSets, type Database, drafts, users } from "@fathom/db";
+import {
+  changes,
+  changeSets,
+  type Database,
+  drafts,
+  unpublishedDrafts,
+  users,
+  valueField,
+} from "@fathom/db";
 import type { FictionalOrganization, FictionalPerson } from "@fathom/fixtures";
 import { type Actor, actorFor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
@@ -82,22 +93,21 @@ async function draftedIds(
   return rows.map(({ id }) => id);
 }
 
-// Discards drafts, as the persona who edits people.
+// Discards drafts, as the persona who edits people, and publishes that.
 async function discard(database: Database, ids: readonly string[]) {
   if (ids.length === 0) return;
   const data = createDataAccess(database);
   const editor = await actorOf(database, editorEmail);
   for (const id of ids) await data.people.discardDraft(editor, id);
+  await data.unpublished.publish(editor);
 }
 
-// What the seed's drafts already did since the fictional people were last added: the seeded people
-// whose drafts were changed, and the newcomers drafted, by Employee ID, read from the change history,
-// so drafts approved, rejected, or discarded since are not made again.
-async function draftedSinceSeeding(
+// The last change that added the fictional people, so drafts made before it, since removed, are not
+// taken for the seed's.
+async function seededAt(
   database: Database,
   organization: FictionalOrganization,
-  editorId: string,
-) {
+): Promise<number> {
   const [first] = organization.people as [FictionalPerson];
   const [seeded] = await database
     .select({ id: max(changes.id) })
@@ -109,11 +119,22 @@ async function draftedSinceSeeding(
         eq(changes.draft, false),
       ),
     );
+  // No people seeded yet reads as from the start.
+  return Number(seeded?.id);
+}
+
+// What the seed's drafts already did since the fictional people were last added: the seeded people
+// whose drafts were changed, and the newcomers drafted, by Employee ID, read from the change history,
+// so drafts approved, rejected, or discarded since are not made again.
+async function draftedSinceSeeding(
+  database: Database,
+  organization: FictionalOrganization,
+  editorId: string,
+) {
   const since = and(
     eq(changes.recordType, "person"),
     eq(changes.draft, true),
-    // No people seeded yet reads as from the start.
-    gt(changes.id, Number(seeded?.id)),
+    gt(changes.id, await seededAt(database, organization)),
   );
   const people = await database
     .selectDistinct({ id: changes.recordId })
@@ -240,12 +261,14 @@ export async function seedDrafts(
       made = true;
     }
   }
+  if (made) await data.unpublished.publish(editor);
   // The second editor changes the first's draft once, unless someone else has changed it since.
   if (!done.others.has(changed.id)) {
     const second = await actorOf(database, secondEditorEmail);
     await data.people.update(second, changed.id, {
       values: otherChoice(organization, changed, 2),
     });
+    await data.unpublished.publish(second);
     made = true;
   }
   const waiting = await database
@@ -272,6 +295,104 @@ export async function seedDrafts(
     );
   }
   return made || toReject.length > 0;
+}
+
+// The live person the Engineering Operations Manager changes without publishing, whom no other seed
+// draft changes.
+const unpublishedFor = (organization: FictionalOrganization) =>
+  organization.people[5] as FictionalPerson;
+
+// Whether a draft change to a person's field, by anyone, published or not, has been made since the
+// fictional people were last added.
+async function changedSince(
+  database: Database,
+  organization: FictionalOrganization,
+  personId: string,
+  field: string,
+): Promise<boolean> {
+  const found = await database
+    .select({ one: sql`1` })
+    .from(changes)
+    .where(
+      and(
+        eq(changes.recordId, personId),
+        eq(changes.field, field),
+        eq(changes.draft, true),
+        gt(changes.id, await seededAt(database, organization)),
+      ),
+    )
+    .limit(1);
+  return found.length > 0;
+}
+
+// Makes the changes to people the seed leaves unpublished, after every seed draft is published: the
+// Engineering Operations Manager's change to a live person's site, and the second Engineering
+// Operations Manager's change to the position in the published draft both editors made. Each is
+// made once since the fictional people were last added. Returns whether it made any.
+export async function seedUnpublishedPeople(
+  database: Database,
+  organization: FictionalOrganization,
+): Promise<boolean> {
+  const data = createDataAccess(database);
+  const [changed] = drafting(organization);
+  const person = unpublishedFor(organization);
+  const site = valueField(String(organization.columns[0]?.id));
+  const position = valueField(String(organization.columns[1]?.id));
+  let made = false;
+  if (!(await changedSince(database, organization, person.id, site))) {
+    await data.people.update(await actorOf(database, editorEmail), person.id, {
+      values: otherChoice(organization, person, 0),
+    });
+    made = true;
+  }
+  if (!(await changedSince(database, organization, changed.id, position))) {
+    const second = await actorOf(database, secondEditorEmail);
+    await data.people.update(second, changed.id, {
+      values: otherChoice(organization, changed, 1),
+    });
+    made = true;
+  }
+  return made;
+}
+
+// Discards every persona's unpublished changes, since removing the seed data removes what they
+// change, and returns how many records' changes that took. Unpublished drafts of the seed's people
+// made by hand by others are removed with them.
+export async function unseedUnpublished(
+  database: Database,
+  organization: FictionalOrganization,
+): Promise<number> {
+  const data = createDataAccess(database);
+  const accounts = await database
+    .select({ id: users.id, name: users.name, email: users.email })
+    .from(users)
+    .where(
+      inArray(
+        users.email,
+        personaAccounts.map(({ email }) => email),
+      ),
+    );
+  let discarded = 0;
+  for (const account of accounts) {
+    // Every persona account read has its persona.
+    const { roles } = personaAccounts.find(
+      ({ email }) => email === account.email,
+    ) as (typeof personaAccounts)[number];
+    const persona = actorFor(account, roles);
+    if (
+      persona.permissions.includes("people:edit") ||
+      persona.permissions.includes("configuration:edit")
+    ) {
+      discarded += await data.unpublished.discard(persona);
+    }
+  }
+  await database.delete(unpublishedDrafts).where(
+    inArray(
+      unpublishedDrafts.recordId,
+      organization.people.map(({ id }) => id),
+    ),
+  );
+  return discarded;
 }
 
 // Discards the drafts of the seed data's people, those made by hand included, since removing the

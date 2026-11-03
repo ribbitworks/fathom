@@ -16,6 +16,7 @@ import {
   fieldValues,
   listItems,
   lists,
+  unpublishedDrafts,
 } from "@fathom/db";
 import type {
   Choice,
@@ -38,21 +39,27 @@ import {
   type Transaction,
 } from "./changes.ts";
 import {
+  addDrafts,
   asDraft,
   clearedRejection,
   deleteDrafts,
+  discardDrafts,
   type Draft,
   drafted,
   draftFields,
   draftMakers,
   draftsUse,
   type DraftType,
+  everything,
+  type Held,
+  heldMessage,
   lockDrafts,
   type Maker,
   readDrafts,
+  readHeld,
   type Recorded,
-  type Rejection,
   setRejection,
+  type Viewer,
   writeDraft,
 } from "./drafts.ts";
 
@@ -134,16 +141,25 @@ export const choiceRecord = (row: ChoiceRow): Recorded => ({
   retired: row.retired,
 });
 
-// Every list and choice, live and in drafts, and each list's draft of its order, read together.
+// Every list and choice, live and in drafts, and each list's draft of its order, read together, as
+// the viewer sees them, with the records others hold.
 export interface ListsState {
   lists: Map<string, Recorded>;
   choices: Map<string, { record: Recorded; position: number }>;
   listDrafts: Map<string, Draft>;
   choiceDrafts: Map<string, Draft>;
   orderDrafts: Map<string, Draft>;
+  held: {
+    lists: Map<string, Held>;
+    choices: Map<string, Held>;
+    orders: Map<string, Held>;
+  };
 }
 
-export async function readState(reader: Reader): Promise<ListsState> {
+export async function readState(
+  reader: Reader,
+  viewer?: Viewer,
+): Promise<ListsState> {
   const listRows = await reader.select().from(lists).orderBy(asc(lists.id));
   const choiceRows = await reader
     .select()
@@ -157,9 +173,14 @@ export async function readState(reader: Reader): Promise<ListsState> {
         { record: choiceRecord(row), position: row.position },
       ]),
     ),
-    listDrafts: await readDrafts(reader, "list"),
-    choiceDrafts: await readDrafts(reader, "list-item"),
-    orderDrafts: await readDrafts(reader, "choice-order"),
+    listDrafts: await readDrafts(reader, "list", undefined, viewer),
+    choiceDrafts: await readDrafts(reader, "list-item", undefined, viewer),
+    orderDrafts: await readDrafts(reader, "choice-order", undefined, viewer),
+    held: {
+      lists: await readHeld(reader, "list", viewer),
+      choices: await readHeld(reader, "list-item", viewer),
+      orders: await readHeld(reader, "choice-order", viewer),
+    },
   };
 }
 
@@ -248,22 +269,22 @@ export function orderToHold(
   return held.join() === liveOrder(state, listId).join() ? undefined : held;
 }
 
-// Keeps a list's draft of its order as needed for the order wanted, or removes it.
+// Keeps the editor's draft of a list's order as needed for the order wanted, or discards it.
 export async function writeOrderDraft(
   transaction: Transaction,
+  editor: string,
   state: ListsState,
   listId: string,
   wanted: readonly string[],
-  rejection?: Rejection,
 ): Promise<void> {
   const held = orderToHold(state, listId, wanted);
   await writeDraft(
     transaction,
+    editor,
     "choice-order",
     listId,
     { order: liveOrder(state, listId) },
     { order: held ?? liveOrder(state, listId) },
-    rejection,
   );
 }
 
@@ -276,8 +297,31 @@ export function choicesOrderUses(state: ListsState, listId: string): string[] {
 
 const lower = (value: unknown) => String(value).trim().toLowerCase();
 
-// Whether another list has the name, live or in a draft: a live list's name stays taken until a
-// draft that changes it is approved.
+// Whether drafts give another record a name, ignoring letter case.
+const draftsName = (
+  found: ReadonlyMap<string, Draft>,
+  field: string,
+  wanted: string,
+  except: string | undefined,
+  mayHave: (id: string) => boolean = () => true,
+) =>
+  [...found].some(
+    ([id, draft]) =>
+      id !== except &&
+      mayHave(id) &&
+      // The field is one of the record's own, named by the caller.
+      // eslint-disable-next-line security/detect-object-injection
+      draft.fields[field] !== undefined &&
+      // eslint-disable-next-line security/detect-object-injection
+      lower(draft.fields[field]) === wanted,
+  );
+
+const heldDrafts = (held: ReadonlyMap<string, Held>) =>
+  new Map([...held].map(([id, { draft }]) => [id, draft]));
+
+// Whether another list has the name, live or in a draft, published or not: a live list's name stays
+// taken until a draft that changes it is approved, and an unpublished draft's until it is
+// discarded.
 export function listNameTaken(
   state: ListsState,
   name: string,
@@ -288,12 +332,8 @@ export function listNameTaken(
     [...state.lists].some(
       ([id, record]) => id !== except && lower(record.name) === wanted,
     ) ||
-    [...state.listDrafts].some(
-      ([id, draft]) =>
-        id !== except &&
-        draft.fields.name !== undefined &&
-        lower(draft.fields.name) === wanted,
-    )
+    draftsName(state.listDrafts, "name", wanted, except) ||
+    draftsName(heldDrafts(state.held.lists), "name", wanted, except)
   );
 }
 
@@ -312,52 +352,79 @@ export function choiceLabelTaken(
         record.listId === listId &&
         lower(record.label) === wanted,
     ) ||
-    [...state.choiceDrafts].some(
-      ([id, draft]) =>
-        id !== except &&
-        listOfChoice(state, id) === listId &&
-        draft.fields.label !== undefined &&
-        lower(draft.fields.label) === wanted,
+    draftsName(
+      state.choiceDrafts,
+      "label",
+      wanted,
+      except,
+      (id) => listOfChoice(state, id) === listId,
+    ) ||
+    draftsName(
+      heldDrafts(state.held.choices),
+      "label",
+      wanted,
+      except,
+      (id) => heldListOf(state, id) === listId,
     )
   );
 }
 
-// Whether any of a list's choices, or their order, has a draft.
+// The list of a choice someone else holds: as they draft it, or as the viewer sees it.
+const heldListOf = (state: ListsState, id: string) =>
+  (state.held.choices.get(id)?.draft.fields.listId as string | undefined) ??
+  listOfChoice(state, id);
+
+// Whether any of a list's choices, or their order, has a draft, published or not.
 export const choicesHaveDrafts = (state: ListsState, listId: string) =>
   state.orderDrafts.has(listId) ||
+  state.held.orders.has(listId) ||
   [...state.choiceDrafts.keys()].some(
     (id) => listOfChoice(state, id) === listId,
-  );
+  ) ||
+  [...state.held.choices.keys()].some((id) => heldListOf(state, id) === listId);
 
-// Refuses a change to a list while a column draws on it, live or in a draft, naming the columns.
+// Refuses a change to a list while a column draws on it, live or in a draft, naming the columns
+// others may see: live ones and published drafts. A column only in someone's unpublished draft
+// counts too, so the list cannot go from under it, but is not named, since only its maker sees it.
 export async function refuseIfUsed(
   transaction: Reader,
   id: string,
   change: string,
 ): Promise<void> {
   const live = await transaction
-    .select({ name: fields.name })
+    .select({ id: fields.id, name: fields.name })
     .from(fields)
     .where(eq(fields.listId, id));
-  // Columns drafted to draw on the list use it too, so it cannot go from under them.
-  const drafted = await transaction
-    .select({ name: sql<string>`${drafts.fields}->>'name'` })
-    .from(drafts)
-    .where(
-      and(
-        eq(drafts.recordType, "field"),
-        sql`${drafts.fields}->>'listId' = ${id}`,
-      ),
-    );
+  const drafted = async (table: typeof drafts | typeof unpublishedDrafts) =>
+    transaction
+      .select({
+        id: table.recordId,
+        name: sql<string>`${table.fields}->>'name'`,
+      })
+      .from(table)
+      .where(
+        and(
+          eq(table.recordType, "field"),
+          sql`${table.fields}->>'listId' = ${id}`,
+        ),
+      );
+  const shown = [...live, ...(await drafted(drafts))];
+  const named = [...new Set(shown.map(({ name }) => name))].sort((a, b) =>
+    a.toLowerCase().localeCompare(b.toLowerCase()),
+  );
+  const unnamed = (await drafted(unpublishedDrafts)).filter(
+    (column) => !shown.some((other) => other.id === column.id),
+  ).length;
+  if (named.length === 0 && unnamed === 0) return;
   const users = [
-    ...new Set([...live, ...drafted].map(({ name }) => name)),
-  ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-  if (users.length > 0) {
-    const names = users.join(", ");
-    throw new ConflictError(
-      `This list cannot be ${change} while ${users.length === 1 ? "a column draws" : "columns draw"} on it: ${names}`,
-    );
-  }
+    ...named,
+    ...(unnamed === 0
+      ? []
+      : [unnamed === 1 ? "a column being drafted" : "columns being drafted"]),
+  ];
+  throw new ConflictError(
+    `This list cannot be ${change} while ${named.length + unnamed === 1 ? "a column draws" : "columns draw"} on it: ${users.join(", ")}`,
+  );
 }
 
 export const choiceInUse =
@@ -461,6 +528,7 @@ function draftOut<Live extends Record<string, unknown>>(
     ...(draft.state === "rejected" && draft.reason !== null
       ? { reason: draft.reason }
       : {}),
+    ...unpublishedMark(draft),
     madeBy: maker?.madeBy ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
@@ -469,6 +537,16 @@ function draftOut<Live extends Record<string, unknown>>(
     ),
   };
 }
+
+// Marks a draft holding the viewer's own changes, not yet published.
+export const unpublishedMark = (draft: Draft) =>
+  draft.unpublished === true ? { unpublished: true } : {};
+
+// Who holds a record, when someone other than the viewer does.
+export const heldByOf = (held: ReadonlyMap<string, Held>, id: string) => {
+  const holder = held.get(id)?.holder;
+  return holder === undefined ? {} : { heldBy: holder };
+};
 
 const shownChoiceFields = ["label", "description", "retired"] as const;
 
@@ -499,6 +577,7 @@ function choiceOut(state: ListsState, makers: Makers, id: string): Choice {
             makers.choice.get(id),
           ),
         }),
+    ...heldByOf(state.held.choices, id),
   };
 }
 
@@ -529,6 +608,7 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
             ...(orderDraft.state === "rejected" && orderDraft.reason !== null
               ? { reason: orderDraft.reason }
               : {}),
+            ...unpublishedMark(orderDraft),
             madeBy: makers.order.get(id)?.madeBy ?? null,
             madeAt: makers.order.get(id)?.madeAt.toISOString() ?? null,
             editors: makers.order.get(id)?.editors ?? [],
@@ -554,7 +634,11 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
                 makers.list.get(id),
               ),
             }),
+        ...heldByOf(state.held.lists, id),
         ...(order === undefined ? {} : { orderDraft: order }),
+        ...(state.held.orders.has(id)
+          ? { orderHeldBy: state.held.orders.get(id)?.holder }
+          : {}),
       },
     ];
   });
@@ -566,70 +650,109 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
 async function readMakers(
   reader: Pick<Database, "select">,
   state: ListsState,
+  viewer: string,
 ): Promise<Makers> {
   return {
-    list: await draftMakers(reader, "list", [...state.listDrafts.keys()]),
-    choice: await draftMakers(reader, "list-item", [
-      ...state.choiceDrafts.keys(),
-    ]),
-    order: await draftMakers(reader, "choice-order", [
-      ...state.orderDrafts.keys(),
-    ]),
+    list: await draftMakers(
+      reader,
+      "list",
+      [...state.listDrafts.keys()],
+      everything,
+      viewer,
+    ),
+    choice: await draftMakers(
+      reader,
+      "list-item",
+      [...state.choiceDrafts.keys()],
+      everything,
+      viewer,
+    ),
+    order: await draftMakers(
+      reader,
+      "choice-order",
+      [...state.orderDrafts.keys()],
+      everything,
+      viewer,
+    ),
   };
 }
 
-// Every list by name, ignoring letter case, as its draft makes it, each with its choices in order.
-export async function readLists(database: Database): Promise<List[]> {
+// Every list by name, ignoring letter case, as its draft makes it for the viewer, each with its
+// choices in order.
+export async function readLists(
+  database: Database,
+  viewer: string,
+): Promise<List[]> {
   // Lists and their drafts are read as of one moment, so an approval saved meanwhile is seen whole
   // or not at all.
   return database.transaction(
     async (transaction) => {
-      const state = await readState(transaction);
-      return listsOut(state, await readMakers(transaction, state));
+      const state = await readState(transaction, viewer);
+      return listsOut(state, await readMakers(transaction, state, viewer));
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
 }
 
-// The list as it is now read, with its drafts.
-async function listNow(transaction: Transaction, id: string): Promise<List> {
-  const state = await readState(transaction);
+// The list as the editor now sees it, with its drafts.
+async function listNow(
+  transaction: Transaction,
+  editor: string,
+  id: string,
+): Promise<List> {
+  const state = await readState(transaction, editor);
   // The list was just saved, so is there.
-  return listsOut(state, await readMakers(transaction, state)).find(
+  return listsOut(state, await readMakers(transaction, state, editor)).find(
     (other) => other.id === id,
   ) as List;
 }
 
-// Runs a change to drafts of lists, after every other change to drafts, with the lists as they are.
+// Runs a change to the editor's drafts of lists, after every other change to drafts, with the lists
+// as they see them.
 async function drafting<Result>(
   database: Database,
+  editor: string,
   change: (transaction: Transaction, state: ListsState) => Promise<Result>,
 ): Promise<Result> {
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
-    return change(transaction, await readState(transaction));
+    return change(transaction, await readState(transaction, editor));
   });
 }
 
+// Refuses a change to a record someone else holds.
+function refuseHeldIn(held: ReadonlyMap<string, Held>, id: string): void {
+  const holder = held.get(id)?.holder;
+  if (holder !== undefined) throw new ConflictError(heldMessage(holder));
+}
+
 // A list as its draft makes it, refusing one that does not exist or is drafted to be removed.
-function changeableList(state: ListsState, id: string): Recorded {
+function usableList(state: ListsState, id: string): Recorded {
   if (!listExists(state, id)) throw new NotFoundError(noList);
   const list = draftedList(state, id);
   if (list === undefined) throw new ConflictError(listToBeRemoved);
   return list;
 }
 
-// A choice in the list as its draft makes it, refusing one that does not exist or that it, or its
-// list, is drafted to remove.
+// A list to change, refusing one that cannot be used, or that someone else holds.
+function changeableList(state: ListsState, id: string): Recorded {
+  if (!listExists(state, id)) throw new NotFoundError(noList);
+  refuseHeldIn(state.held.lists, id);
+  return usableList(state, id);
+}
+
+// A choice in the list as its draft makes it, refusing one that does not exist, that it, or its
+// list, is drafted to remove, or that someone else holds.
 function changeableChoice(
   state: ListsState,
   listId: string,
   id: string,
 ): Recorded {
-  changeableList(state, listId);
+  usableList(state, listId);
   if (!choiceExists(state, id) || listOfChoice(state, id) !== listId) {
     throw new NotFoundError(noChoice);
   }
+  refuseHeldIn(state.held.choices, id);
   const choice = draftedChoice(state, id);
   if (choice === undefined) throw new ConflictError(choiceToBeRemoved);
   return choice;
@@ -652,7 +775,7 @@ async function saveDraft(
   else if (after === undefined) action = "deleted";
   const made = asDraft(toRecord(id, action, before, after));
   if (made.length === 0) return null;
-  await writeDraft(transaction, recordType, id, live, after);
+  await writeDraft(transaction, madeBy, recordType, id, live, after);
   return recordChanges(transaction, madeBy, [
     ...made,
     ...clearedRejection(id, () => "general", live, draft, recordType),
@@ -664,7 +787,7 @@ export async function createList(
   madeBy: string,
   request: ListRequest,
 ): Promise<Saved<List>> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     if (listNameTaken(state, request.name)) {
       throw new ConflictError(duplicateList);
     }
@@ -679,7 +802,7 @@ export async function createList(
       { ...request, retired: false },
       undefined,
     );
-    return { result: await listNow(transaction, id), changeSetId };
+    return { result: await listNow(transaction, madeBy, id), changeSetId };
   });
 }
 
@@ -694,7 +817,7 @@ async function changeList(
     list: Recorded,
   ) => Promise<Recorded>,
 ): Promise<Saved<List>> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     const list = changeableList(state, id);
     const after = await change(transaction, state, list);
     const changeSetId = await saveDraft(
@@ -707,7 +830,7 @@ async function changeList(
       after,
       state.listDrafts.get(id),
     );
-    return { result: await listNow(transaction, id), changeSetId };
+    return { result: await listNow(transaction, madeBy, id), changeSetId };
   });
 }
 
@@ -799,9 +922,10 @@ function discardingOrder(state: ListsState, listId: string): Change[] {
   ];
 }
 
-// Removes the drafts the changes discard: each record's whose changes are recorded.
+// Discards the editor's drafts the changes discard: each record's whose changes are recorded.
 async function removeDiscarded(
   transaction: Transaction,
+  editor: string,
   made: readonly Change[],
 ): Promise<void> {
   const seen = new Set<string>();
@@ -809,22 +933,31 @@ async function removeDiscarded(
     const key = `${recordType} ${recordId}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    await deleteDrafts(transaction, recordType as DraftType, [recordId]);
+    await discardDrafts(transaction, editor, recordType as DraftType, [
+      recordId,
+    ]);
   }
-  await removeEmptyOrders(transaction);
+  await removeEmptyOrders(transaction, editor);
 }
 
 // Removes drafts of lists' orders that no longer change anything, as when the choice drafted to be
-// added that one placed is discarded. They hold nothing to approve, so nothing is recorded.
+// added that one placed is discarded: the published drafts, or the editor's own unpublished ones,
+// leaving published ones the editor sees for publishing to remove. They hold nothing to approve, so
+// nothing is recorded.
 export async function removeEmptyOrders(
   transaction: Transaction,
+  editor?: string,
 ): Promise<void> {
-  const state = await readState(transaction);
-  const empty = [...state.orderDrafts.keys()].filter(
-    (listId) =>
+  const state = await readState(transaction, editor);
+  const empty = [...state.orderDrafts].filter(
+    ([listId, draft]) =>
+      (editor === undefined || draft.unpublished === true) &&
       orderToHold(state, listId, draftedOrder(state, listId)) === undefined,
   );
-  await deleteDrafts(transaction, "choice-order", empty);
+  const ids = empty.map(([listId]) => listId);
+  if (editor === undefined)
+    await deleteDrafts(transaction, "choice-order", ids);
+  else await discardDrafts(transaction, editor, "choice-order", ids);
 }
 
 // Drafts deleting a list and its choices; deleting a list only drafted to be added discards its
@@ -835,12 +968,12 @@ export async function deleteList(
   madeBy: string,
   id: string,
 ): Promise<string | null> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     const list = changeableList(state, id);
     const live = state.lists.get(id);
     if (live === undefined) {
       const made = discardingList(state, id);
-      await removeDiscarded(transaction, made);
+      await removeDiscarded(transaction, madeBy, made);
       return recordChanges(transaction, madeBy, made, "discard");
     }
     await refuseIfUsed(transaction, id, "deleted");
@@ -869,7 +1002,7 @@ export async function addChoices(
   listId: string,
   requests: readonly ChoiceRequest[],
 ): Promise<Saved<Choice[]>> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     changeableList(state, listId);
     const labels = requests.map(({ label }) => lower(label));
     if (
@@ -887,14 +1020,11 @@ export async function addChoices(
         retired: false,
       },
     }));
-    // Drafts made together, in one statement, keep the order given.
-    await transaction.insert(drafts).values(
-      added.map(({ id, record }) => ({
-        recordType: "list-item",
-        recordId: id,
-        action: "created",
-        fields: record,
-      })),
+    await addDrafts(
+      transaction,
+      madeBy,
+      "list-item",
+      added.map(({ id, record }) => ({ id, fields: record })),
     );
     const changeSetId = await recordChanges(
       transaction,
@@ -905,7 +1035,7 @@ export async function addChoices(
         ),
       ),
     );
-    const list = await listNow(transaction, listId);
+    const list = await listNow(transaction, madeBy, listId);
     return {
       result: added.map(
         ({ id }) => list.choices.find((choice) => choice.id === id) as Choice,
@@ -924,7 +1054,7 @@ async function changeChoice(
   id: string,
   change: (state: ListsState, choice: Recorded) => Recorded,
 ): Promise<Saved<Choice>> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     const choice = changeableChoice(state, listId, id);
     const changeSetId = await saveDraft(
       transaction,
@@ -936,7 +1066,7 @@ async function changeChoice(
       change(state, choice),
       state.choiceDrafts.get(id),
     );
-    const list = await listNow(transaction, listId);
+    const list = await listNow(transaction, madeBy, listId);
     // The choice was just saved, so is there.
     const result = list.choices.find((other) => other.id === id) as Choice;
     return { result, changeSetId };
@@ -985,8 +1115,9 @@ export async function moveChoice(
   if (after === id) {
     throw new BadRequestError("A choice cannot follow itself");
   }
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     changeableChoice(state, listId, id);
+    refuseHeldIn(state.held.orders, listId);
     const before = draftedOrder(state, listId);
     const others = before.filter((other) => other !== id);
     const at = after === null ? 0 : others.indexOf(after) + 1;
@@ -996,7 +1127,7 @@ export async function moveChoice(
     const wanted = [...others.slice(0, at), id, ...others.slice(at)];
     const made = asDraft(orderChanges(listId, before, wanted));
     if (made.length === 0) return null;
-    await writeOrderDraft(transaction, state, listId, wanted);
+    await writeOrderDraft(transaction, madeBy, state, listId, wanted);
     const draft = state.orderDrafts.get(listId);
     return recordChanges(transaction, madeBy, [
       ...made,
@@ -1019,12 +1150,12 @@ export async function deleteChoice(
   listId: string,
   id: string,
 ): Promise<string | null> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     const choice = changeableChoice(state, listId, id);
     const live = state.choices.get(id)?.record;
     if (live === undefined) {
       const made = discardingChoice(state, id);
-      await removeDiscarded(transaction, made);
+      await removeDiscarded(transaction, madeBy, made);
       return recordChanges(transaction, madeBy, made, "discard");
     }
     await refuseIfChosen(transaction, id);
@@ -1058,9 +1189,16 @@ function draftOf(
     }
   }
   let draft: Draft | undefined;
-  if (kind === "list") draft = state.listDrafts.get(listId);
-  else if (kind === "order") draft = state.orderDrafts.get(listId);
-  else draft = state.choiceDrafts.get(choiceId as string);
+  if (kind === "list") {
+    refuseHeldIn(state.held.lists, listId);
+    draft = state.listDrafts.get(listId);
+  } else if (kind === "order") {
+    refuseHeldIn(state.held.orders, listId);
+    draft = state.orderDrafts.get(listId);
+  } else {
+    refuseHeldIn(state.held.choices, choiceId as string);
+    draft = state.choiceDrafts.get(choiceId as string);
+  }
   if (draft === undefined) throw new NotFoundError(noDraft);
   return draft;
 }
@@ -1074,13 +1212,13 @@ export async function discardListDraft(
   listId: string,
   choiceId?: string,
 ): Promise<string | null> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     draftOf(state, kind, listId, choiceId);
     let made: Change[];
     if (kind === "list") made = discardingList(state, listId);
     else if (kind === "order") made = discardingOrder(state, listId);
     else made = discardingChoice(state, choiceId as string);
-    await removeDiscarded(transaction, made);
+    await removeDiscarded(transaction, madeBy, made);
     return recordChanges(transaction, madeBy, made, "discard");
   });
 }
@@ -1093,7 +1231,7 @@ export async function resubmitListDraft(
   listId: string,
   choiceId?: string,
 ): Promise<string | null> {
-  return drafting(database, async (transaction, state) => {
+  return drafting(database, madeBy, async (transaction, state) => {
     const draft = draftOf(state, kind, listId, choiceId);
     if (draft.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");

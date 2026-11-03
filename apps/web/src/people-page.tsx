@@ -479,6 +479,7 @@ export function PeoplePage({
           fields={query.data.fields}
           order={query.data.order}
           orderDraft={query.data.orderDraft}
+          orderHeldBy={query.data.orderHeldBy}
           lists={lists.data}
           canEdit={canEdit}
           canApprove={canApprove}

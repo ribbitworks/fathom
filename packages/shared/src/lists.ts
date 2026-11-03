@@ -8,7 +8,7 @@
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
-import { draftActionSchema, draftShape } from "./drafts.ts";
+import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 
 export const listLengths = {
   name: 40,
@@ -44,6 +44,7 @@ export const choiceSchema = z.object({
   // A retired choice stays on records that have it, but is no longer offered.
   retired: z.boolean(),
   draft: choiceDraftSchema.optional(),
+  heldBy: heldBySchema,
 });
 
 export type Choice = z.infer<typeof choiceSchema>;
@@ -81,7 +82,10 @@ export const listSchema = z.object({
   // be added after the rest, in the order they were drafted.
   choices: z.array(choiceSchema),
   draft: listDraftSchema.optional(),
+  heldBy: heldBySchema,
   orderDraft: orderDraftSchema.optional(),
+  // Who holds the order of the list's choices, as heldBy does the list.
+  orderHeldBy: heldBySchema,
 });
 
 export type List = z.infer<typeof listSchema>;

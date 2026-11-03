@@ -41,6 +41,7 @@ import { useSignOutWhenIdle } from "./idle.ts";
 import classes from "./layout.module.css";
 import { initials } from "./names.ts";
 import { type SignedInUser, sessionQuery, signOut } from "./session.ts";
+import { UnpublishedControl } from "./unpublished.tsx";
 
 const headerHeight = 56;
 const sidebarWidth = 228;
@@ -321,6 +322,10 @@ export function Layout({
   permissions: Permission[];
 }) {
   const queryClient = useQueryClient();
+  // Those who may make drafts have unpublished changes to publish.
+  const makesDrafts =
+    permissions.includes("people:edit") ||
+    permissions.includes("configuration:edit");
   const navigate = useNavigate();
   const router = useRouter();
   const pathname = useRouterState({
@@ -417,30 +422,33 @@ export function Layout({
             )}
             <DevBadge label={devLabel} />
           </Group>
-          <AppMenu position="bottom-end" width="max-content">
-            <AppMenu.Target>
-              <UnstyledButton aria-label={`Your account, ${user.name}`}>
-                <Group gap="xs" wrap="nowrap">
-                  <Text fz="sm" visibleFrom="xs">
-                    {user.name}
-                  </Text>
-                  <Avatar size={30} color="sea" radius="xl">
-                    {initials(user.name)}
-                  </Avatar>
-                </Group>
-              </UnstyledButton>
-            </AppMenu.Target>
-            <AppMenu.Dropdown miw={200} maw="calc(100vw - 2rem)">
-              <Menu.Label>{user.email}</Menu.Label>
-              <Menu.Item component={Link} to="/password">
-                Change password
-              </Menu.Item>
-              <Menu.Divider />
-              <Menu.Item onClick={() => void handleSignOut()}>
-                Sign out
-              </Menu.Item>
-            </AppMenu.Dropdown>
-          </AppMenu>
+          <Group gap="md" wrap="nowrap">
+            {makesDrafts && <UnpublishedControl />}
+            <AppMenu position="bottom-end" width="max-content">
+              <AppMenu.Target>
+                <UnstyledButton aria-label={`Your account, ${user.name}`}>
+                  <Group gap="xs" wrap="nowrap">
+                    <Text fz="sm" visibleFrom="xs">
+                      {user.name}
+                    </Text>
+                    <Avatar size={30} color="sea" radius="xl">
+                      {initials(user.name)}
+                    </Avatar>
+                  </Group>
+                </UnstyledButton>
+              </AppMenu.Target>
+              <AppMenu.Dropdown miw={200} maw="calc(100vw - 2rem)">
+                <Menu.Label>{user.email}</Menu.Label>
+                <Menu.Item component={Link} to="/password">
+                  Change password
+                </Menu.Item>
+                <Menu.Divider />
+                <Menu.Item onClick={() => void handleSignOut()}>
+                  Sign out
+                </Menu.Item>
+              </AppMenu.Dropdown>
+            </AppMenu>
+          </Group>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar

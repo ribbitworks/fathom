@@ -3339,3 +3339,210 @@ describe("drafts of columns", () => {
     expect(within(await draftMenu()).queryByText(/Reordered by/)).toBeNull();
   });
 });
+
+describe("unpublished and held changes", () => {
+  const approverEditor = session([
+    "configuration:edit",
+    "configuration:view",
+    "drafts:approve",
+    "people:edit",
+    "people:view",
+    "plan:view",
+    "restricted:view",
+  ]);
+  const holder = "Second Fictional Editor";
+  const held = `Being changed by ${holder}. It can be changed once they publish or discard their changes.`;
+  const mine = "Only you see these changes until you publish them.";
+  const columnDraft = (more: object = {}) => ({
+    action: "changed",
+    changed: ["required"],
+    live: { required: false },
+    state: "waiting",
+    madeBy: "Fictional Editor",
+    madeAt: "2026-10-30T15:00:00.000Z",
+    ...more,
+  });
+  const header = (name: string) =>
+    screen.getByRole("button", {
+      name: (shown) => shown.startsWith(`${name} column`),
+    });
+  const menuOf = async (target: HTMLElement) => {
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(target);
+    return screen.findByRole("menu");
+  };
+
+  it("holds a person someone else is changing, and keeps one's own unpublished draft from Approvers", async () => {
+    await openPeople({
+      "GET /api/session": approverEditor,
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              heldBy: holder,
+              draft: draftOf({
+                action: "changed",
+                changed: ["preferredName"],
+                live: { preferredName: "Avery Before", values: {} },
+              }),
+            },
+            {
+              ...blake,
+              draft: draftOf({
+                action: "changed",
+                changed: ["preferredName"],
+                live: { preferredName: "Blake Before", values: {} },
+                unpublished: true,
+              }),
+            },
+          ],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    expect(
+      within(cell("p1", "preferredName")).getByText(
+        wholeText(new RegExp(`Being changed by ${holder}$`)),
+      ),
+    ).toBeDefined();
+    expect(cell("p1", "preferredName").getAttribute("aria-readonly")).toBe(
+      "true",
+    );
+    expect(
+      within(cell("p2", "preferredName")).getByText("Unpublished"),
+    ).toBeDefined();
+    let menu = await menuOf(
+      screen.getByRole("button", { name: "Actions for Avery Fictional" }),
+    );
+    expect(within(menu).getByText(held)).toBeDefined();
+    for (const item of ["Approve draft", "Discard draft", "Remove person"]) {
+      expect(within(menu).queryByRole("menuitem", { name: item })).toBeNull();
+    }
+    // Nothing follows the draft's lines, so no divider ends the menu.
+    expect(menu.lastElementChild?.className).not.toMatch(/divider/);
+    await userEvent.keyboard("{Escape}");
+    menu = await menuOf(
+      screen.getByRole("button", { name: "Actions for Blake Fictional" }),
+    );
+    expect(within(menu).getByText(mine)).toBeDefined();
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Approve draft" }),
+    ).toBeNull();
+    expect(
+      within(menu).getByRole("menuitem", { name: "Discard draft" }),
+    ).toBeDefined();
+    await userEvent.keyboard("{Escape}");
+    // Neither is among the drafts to decide all at once.
+    expect(within(await openDraftMenu()).queryByText(/drafts/)).toBeNull();
+  });
+
+  it("holds columns and the column order someone else is changing, and keeps one's own from Approvers", async () => {
+    await openPeople({
+      "GET /api/session": approverEditor,
+      "GET /api/people": () =>
+        Response.json({
+          people: [avery, blake],
+          fields: [
+            { ...site, heldBy: holder, draft: columnDraft() },
+            { ...role, draft: columnDraft({ unpublished: true }) },
+          ],
+          order: [
+            "preferredName",
+            "employeeId",
+            "f2",
+            "f1",
+            "startDate",
+            "endDate",
+          ],
+          orderDraft: {
+            live: order,
+            uses: [],
+            state: "waiting",
+            madeBy: "Fictional Editor",
+            madeAt: "2026-10-30T15:00:00.000Z",
+          },
+          orderHeldBy: holder,
+          views: [],
+        }),
+    });
+    expect(within(header("Site")).getByText("Being changed")).toBeDefined();
+    expect(
+      within(header("Role on team")).getByText("Unpublished"),
+    ).toBeDefined();
+    let menu = await menuOf(header("Site"));
+    // Both the column and the order that moves it are held.
+    expect(within(menu).getAllByText(held)).toHaveLength(2);
+    for (const item of [
+      "Approve…",
+      "Edit column",
+      "Discard draft",
+      "Move left",
+      "Discard new order",
+      "Approve new order…",
+    ]) {
+      expect(within(menu).queryByRole("menuitem", { name: item })).toBeNull();
+    }
+    await userEvent.keyboard("{Escape}");
+    menu = await menuOf(header("Role on team"));
+    expect(within(menu).getByText(mine)).toBeDefined();
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Approve…" }),
+    ).toBeNull();
+    expect(
+      within(menu).getByRole("menuitem", { name: "Edit column" }),
+    ).toBeDefined();
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Move left" }),
+    ).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    menu = await openDraftMenu();
+    expect(within(menu).getByText(held)).toBeDefined();
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Approve new order…" }),
+    ).toBeNull();
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Discard new order" }),
+    ).toBeNull();
+    expect(header("Site").getAttribute("draggable")).toBeNull();
+  });
+
+  it("keeps one's own unpublished column order from Approvers", async () => {
+    await openPeople({
+      "GET /api/session": approverEditor,
+      "GET /api/people": () =>
+        Response.json({
+          people: [avery, blake],
+          fields: [site, role],
+          order: [
+            "preferredName",
+            "employeeId",
+            "f2",
+            "f1",
+            "startDate",
+            "endDate",
+          ],
+          orderDraft: {
+            live: order,
+            uses: [],
+            state: "waiting",
+            madeBy: "Fictional Editor",
+            madeAt: "2026-10-30T15:00:00.000Z",
+            unpublished: true,
+          },
+          views: [],
+        }),
+    });
+    const menu = await openDraftMenu();
+    expect(within(menu).getByText(mine)).toBeDefined();
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Approve new order…" }),
+    ).toBeNull();
+    expect(
+      within(menu).getByRole("menuitem", { name: "Discard new order" }),
+    ).toBeDefined();
+  });
+});

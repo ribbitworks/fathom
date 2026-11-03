@@ -57,18 +57,21 @@ import { ChoicePicker, type Finish } from "./choice-picker.tsx";
 import {
   configDraftFields,
   draftLines,
+  HeldNote,
   MenuDraftLines,
   MenuTitle,
+  UnpublishedNote,
   WaitingNote,
   personDraftFields,
 } from "./draft-details.tsx";
 
 import {
   type Asking,
+  decidable,
   type DraftSelection,
   draftTotal,
-  waitsForRejected,
   noDrafts,
+  waitsForRejected,
 } from "./drafts.ts";
 import type { ColumnDraftTarget } from "./people.ts";
 import { focusSoon } from "./focus.ts";
@@ -106,7 +109,7 @@ import {
 } from "./metrics-panel.tsx";
 import classes from "./pages.module.css";
 import type { Phrase } from "./phrase.tsx";
-import { DraftMark, StatusMark } from "./status-mark.tsx";
+import { DraftMark, HoldMarks, StatusMark } from "./status-mark.tsx";
 
 export interface PeopleActions {
   // Adds people, all saved together, showing each at once under the identifier given until saved,
@@ -635,9 +638,12 @@ function OrderItems({
   canApprove,
   actions,
   waits,
+  heldBy,
   withColumnDraft = false,
 }: {
   draft: ColumnOrderDraft;
+  // Who else has unpublished changes to the order, which hold it.
+  heldBy?: string | undefined;
   canEdit: boolean;
   canApprove: boolean;
   actions: PeopleActions;
@@ -658,9 +664,11 @@ function OrderItems({
             lines={[[`Reordered by ${orderMaker(draft)}`]]}
             divider={false}
           />
+          {heldBy !== undefined && <HeldNote by={heldBy} />}
+          {draft.unpublished === true && <UnpublishedNote />}
         </>
       )}
-      {canApprove && draft.state === "waiting" && !withColumnDraft && (
+      {canApprove && decidable({ draft, heldBy }) && !withColumnDraft && (
         <>
           <Menu.Item
             closeMenuOnClick
@@ -682,7 +690,7 @@ function OrderItems({
           </Menu.Item>
         </>
       )}
-      {canEdit && draft.state === "rejected" && (
+      {canEdit && heldBy === undefined && draft.state === "rejected" && (
         <Menu.Item
           closeMenuOnClick
           onClick={() => {
@@ -692,7 +700,7 @@ function OrderItems({
           Resubmit
         </Menu.Item>
       )}
-      {canEdit && (
+      {canEdit && heldBy === undefined && (
         <Menu.Item
           closeMenuOnClick
           onClick={() => {
@@ -711,6 +719,7 @@ export function PeopleGrid({
   fields: draftedFields,
   order: draftedOrder,
   orderDraft,
+  orderHeldBy,
   lists,
   canEdit: mayEdit,
   canApprove: mayApprove = false,
@@ -729,6 +738,8 @@ export function PeopleGrid({
   // The keys of the columns, in order, as a draft of the order makes it, and that draft.
   order: string[];
   orderDraft?: ColumnOrderDraft | undefined;
+  // Who else has unpublished changes to the column order, which hold it.
+  orderHeldBy?: string | undefined;
   lists: List[];
   canEdit: boolean;
   canApprove?: boolean;
@@ -873,7 +884,10 @@ export function PeopleGrid({
     0,
     ...columns.map(
       (column) =>
-        (column.field?.draft === undefined ? 0 : 1) + (isMoved(column) ? 1 : 0),
+        (column.field?.draft === undefined ? 0 : 1) +
+        (isMoved(column) ? 1 : 0) +
+        (column.field?.draft?.unpublished === true ? 1 : 0) +
+        (column.field?.heldBy === undefined ? 0 : 1),
     ),
   );
   // A person's value in a column as it is live, for the column's live copy: none for someone only
@@ -948,7 +962,10 @@ export function PeopleGrid({
   // Whether a person's cells cannot be changed: by those who may only view, while they are drafted
   // to be removed, until the draft is discarded, or while they are being added.
   const locked = (person: Person) =>
-    !canEdit || person.draft?.action === "deleted" || isPending(person);
+    !canEdit ||
+    person.draft?.action === "deleted" ||
+    person.heldBy !== undefined ||
+    isPending(person);
   const rows: Row[] = [
     ...shownPeople.map((person) => ({ person })),
     ...(canEdit ? newRows.map((newRow) => ({ newRow })) : []),
@@ -1312,15 +1329,21 @@ export function PeopleGrid({
     const moved = orderShown && isMoved(column);
     // A moved column's own waiting draft is decided together with the waiting order that moves it;
     // once either is rejected, the order keeps a section of its own.
-    const ownWaiting = field?.draft?.state === "waiting";
+    const ownWaiting = field !== undefined && decidable(field);
     const joinedOrder =
-      moved && ownWaiting && orderDraft.state === "waiting" && !orderWaits;
+      moved &&
+      ownWaiting &&
+      decidable({ draft: orderDraft, heldBy: orderHeldBy }) &&
+      !orderWaits;
+    // Someone else's unpublished changes to the column, or to the order, hold it.
+    const changesColumn = canEditColumns && field?.heldBy === undefined;
+    const movesColumns = canEditColumns && orderHeldBy === undefined;
     const deciding: DraftSelection = {
       ...noDrafts(),
       columns: ownWaiting ? [field.id] : [],
       columnOrder: joinedOrder,
     };
-    const dragProps = canEditColumns
+    const dragProps = movesColumns
       ? {
           draggable: true,
           onDragStart: () => {
@@ -1361,7 +1384,7 @@ export function PeopleGrid({
                 className={classes.peopleHeadButton}
                 aria-label={`${column.label} column${headerState(column, view)}`}
                 onKeyDown={(event) => {
-                  if (!canEditColumns || !event.altKey) return;
+                  if (!movesColumns || !event.altKey) return;
                   if (event.key === "ArrowLeft") {
                     event.preventDefault();
                     moveColumnBy(column, -1);
@@ -1375,6 +1398,12 @@ export function PeopleGrid({
                   <span className={classes.headerLabel}>{column.label}</span>
                   {field?.draft && !liveOnly && (
                     <DraftMark draft={field.draft} />
+                  )}
+                  {field && !liveOnly && (
+                    <HoldMarks
+                      unpublished={field.draft?.unpublished}
+                      heldBy={field.heldBy}
+                    />
                   )}
                   {moved && (
                     <StatusMark
@@ -1394,6 +1423,12 @@ export function PeopleGrid({
             </AppMenu.Target>
             <AppMenu.Dropdown>
               <MenuTitle>{column.label}</MenuTitle>
+              {field?.heldBy !== undefined && !liveOnly && (
+                <HeldNote by={field.heldBy} />
+              )}
+              {field?.draft?.unpublished === true && !liveOnly && (
+                <UnpublishedNote />
+              )}
               {field?.draft && !liveOnly && (
                 <>
                   <MenuDraftLines
@@ -1402,7 +1437,7 @@ export function PeopleGrid({
                       ...fieldDraftLines(field, lists),
                       ...(joinedOrder ? [movedLine(orderDraft)] : []),
                     ]}
-                    divider={(canApprove && ownWaiting) || canEditColumns}
+                    divider={(canApprove && ownWaiting) || changesColumn}
                   />
                   {/* One decision for the column's draft and the order that moves it, among those
                       waiting: a rejected draft is back with its makers until they send it again. */}
@@ -1424,7 +1459,7 @@ export function PeopleGrid({
                       </Menu.Item>
                     </>
                   )}
-                  {canEditColumns && field.draft.state === "rejected" && (
+                  {changesColumn && field.draft.state === "rejected" && (
                     <Menu.Item
                       onClick={() => {
                         actions.resubmitColumn({
@@ -1436,7 +1471,7 @@ export function PeopleGrid({
                       Resubmit
                     </Menu.Item>
                   )}
-                  {canEditColumns && (
+                  {changesColumn && (
                     <Menu.Item
                       onClick={() => {
                         actions.discardColumn(
@@ -1451,7 +1486,7 @@ export function PeopleGrid({
                   {joinedOrder && (
                     <OrderItems
                       draft={orderDraft}
-                      canEdit={canEditColumns}
+                      canEdit={movesColumns}
                       canApprove={canApprove}
                       actions={actions}
                       waits={false}
@@ -1470,34 +1505,40 @@ export function PeopleGrid({
                 }}
                 breaksDown={breaksDown(column)}
               />
-              {canEditColumns && (
+              {canEditColumns && (changesColumn || movesColumns) && (
                 <>
                   <Menu.Divider />
-                  {field && field.draft?.action !== "deleted" && (
-                    <Menu.Item
-                      onClick={() => {
-                        actions.editColumn(field);
-                      }}
-                    >
-                      Edit column
-                    </Menu.Item>
+                  {changesColumn &&
+                    field &&
+                    field.draft?.action !== "deleted" && (
+                      <Menu.Item
+                        onClick={() => {
+                          actions.editColumn(field);
+                        }}
+                      >
+                        Edit column
+                      </Menu.Item>
+                    )}
+                  {movesColumns && (
+                    <>
+                      <Menu.Item
+                        rightSection={<kbd>{shortcuts.left}</kbd>}
+                        onClick={() => {
+                          moveColumnBy(column, -1);
+                        }}
+                      >
+                        Move left
+                      </Menu.Item>
+                      <Menu.Item
+                        rightSection={<kbd>{shortcuts.right}</kbd>}
+                        onClick={() => {
+                          moveColumnBy(column, 1);
+                        }}
+                      >
+                        Move right
+                      </Menu.Item>
+                    </>
                   )}
-                  <Menu.Item
-                    rightSection={<kbd>{shortcuts.left}</kbd>}
-                    onClick={() => {
-                      moveColumnBy(column, -1);
-                    }}
-                  >
-                    Move left
-                  </Menu.Item>
-                  <Menu.Item
-                    rightSection={<kbd>{shortcuts.right}</kbd>}
-                    onClick={() => {
-                      moveColumnBy(column, 1);
-                    }}
-                  >
-                    Move right
-                  </Menu.Item>
                 </>
               )}
               {/* A moved column's menu decides the order that moves it, as a drafted record's does. */}
@@ -1508,6 +1549,7 @@ export function PeopleGrid({
                   canApprove={canApprove}
                   actions={actions}
                   waits={orderWaits}
+                  heldBy={orderHeldBy}
                 />
               )}
             </AppMenu.Dropdown>
@@ -1586,6 +1628,8 @@ export function PeopleGrid({
       >
         {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
         <MenuTitle>{person.preferredName}</MenuTitle>
+        {person.heldBy !== undefined && <HeldNote by={person.heldBy} />}
+        {draft?.unpublished === true && <UnpublishedNote />}
         {draft && (
           <MenuDraftLines
             draft={draft}
@@ -1593,11 +1637,15 @@ export function PeopleGrid({
               draft,
               personDraftFields(person, draft, fields, lists),
             )}
-            divider={canEdit || (canApprove && draft.state === "waiting")}
+            // Set apart from the items after it, when any are offered.
+            divider={
+              (canEdit && person.heldBy === undefined) ||
+              (canApprove && decidable(person))
+            }
           />
         )}
         {/* A rejected draft is back with its makers, until they send it again. */}
-        {canApprove && draft?.state === "waiting" && (
+        {canApprove && decidable(person) && (
           <>
             <Menu.Item
               onClick={() => {
@@ -1621,38 +1669,40 @@ export function PeopleGrid({
             </Menu.Item>
           </>
         )}
-        {canEdit && draft?.state === "rejected" && (
-          <Menu.Item
-            onClick={() => {
-              actions.resubmit(person);
-            }}
-          >
-            Resubmit
-          </Menu.Item>
+        {canEdit && person.heldBy === undefined && (
+          <>
+            {draft?.state === "rejected" && (
+              <Menu.Item
+                onClick={() => {
+                  actions.resubmit(person);
+                }}
+              >
+                Resubmit
+              </Menu.Item>
+            )}
+            {draft && (
+              <Menu.Item
+                onClick={() => {
+                  actions.discard(person, draft);
+                  moveTo(active.row, active.column);
+                }}
+              >
+                Discard draft
+              </Menu.Item>
+            )}
+            {draft?.action !== "created" && draft?.action !== "deleted" && (
+              <Menu.Item
+                color="red"
+                onClick={() => {
+                  actions.remove(person);
+                  moveTo(active.row, active.column);
+                }}
+              >
+                Remove person
+              </Menu.Item>
+            )}
+          </>
         )}
-        {canEdit && draft && (
-          <Menu.Item
-            onClick={() => {
-              actions.discard(person, draft);
-              moveTo(active.row, active.column);
-            }}
-          >
-            Discard draft
-          </Menu.Item>
-        )}
-        {canEdit &&
-          draft?.action !== "created" &&
-          draft?.action !== "deleted" && (
-            <Menu.Item
-              color="red"
-              onClick={() => {
-                actions.remove(person);
-                moveTo(active.row, active.column);
-              }}
-            >
-              Remove person
-            </Menu.Item>
-          )}
       </Menu.Dropdown>
     </Menu>
   );
@@ -1662,17 +1712,16 @@ export function PeopleGrid({
   const waitingShown: DraftSelection = canApprove
     ? {
         ...noDrafts(),
-        people: shownPeople
-          .filter((person) => person.draft?.state === "waiting")
-          .map(({ id }) => id),
+        people: shownPeople.filter(decidable).map(({ id }) => id),
         columns: fields
           .filter(
             (field) =>
-              field.draft?.state === "waiting" &&
-              columns.some(({ key }) => key === field.id),
+              decidable(field) && columns.some(({ key }) => key === field.id),
           )
           .map(({ id }) => id),
-        columnOrder: orderDraft?.state === "waiting",
+        columnOrder:
+          orderDraft !== undefined &&
+          decidable({ draft: orderDraft, heldBy: orderHeldBy }),
       }
     : noDrafts();
   const waitingTotal = draftTotal(waitingShown);
@@ -1746,6 +1795,7 @@ export function PeopleGrid({
                 canApprove={canApprove}
                 actions={actions}
                 waits={orderWaits}
+                heldBy={orderHeldBy}
               />
             )}
           </>
@@ -1902,6 +1952,7 @@ export function PeopleGrid({
                           ].join(" ")}
                           aria-readonly={
                             draft?.action === "deleted" ||
+                            row.person?.heldBy !== undefined ||
                             (row.person && isPending(row.person))
                               ? true
                               : undefined
@@ -1933,6 +1984,12 @@ export function PeopleGrid({
                           )}
                           {columnIndex === 0 && draft && !editingHere && (
                             <DraftMark draft={draft} />
+                          )}
+                          {columnIndex === 0 && row.person && !editingHere && (
+                            <HoldMarks
+                              unpublished={draft?.unpublished}
+                              heldBy={row.person.heldBy}
+                            />
                           )}
                           {columnIndex === 0 &&
                             row.newRow &&

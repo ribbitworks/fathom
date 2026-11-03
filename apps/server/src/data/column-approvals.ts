@@ -33,6 +33,7 @@ import {
   deleteDrafts,
   type Draft,
   draftsUse,
+  refuseHeldDecision,
   refuseRejected,
   rejectedField,
   setRejection,
@@ -78,6 +79,10 @@ async function stateWithDrafts(
         "One of these drafts is of a column holding details your roles do not let you see, so an Approver who sees them must decide it",
       );
     }
+  }
+  await refuseHeldDecision(transaction, "field", deciding);
+  if (asked.columnOrder) {
+    await refuseHeldDecision(transaction, "column-order", [columnOrderId]);
   }
   return state;
 }

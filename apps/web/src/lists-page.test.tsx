@@ -6,7 +6,13 @@
 // retiring, and deleting lists; and Undo, focus, and the server's refusals throughout. Where dropped
 // choices end up is tested in list-panel.test.ts.
 
-import { act, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -2845,5 +2851,149 @@ describe("drafts on the Lists page", () => {
     await waitFor(() => {
       expect(history.location.search).toContain("show=drafts");
     });
+  });
+});
+
+describe("unpublished and held changes on the Lists page", () => {
+  const approver = () =>
+    Response.json({
+      ...fictionalUser,
+      roles: ["approver", "workforce-administrator"],
+      permissions: [
+        "configuration:edit",
+        "configuration:view",
+        "drafts:approve",
+        "plan:view",
+      ],
+    });
+  const holder = "Second Fictional Editor";
+  const held = `Being changed by ${holder}. It can be changed once they publish or discard their changes.`;
+  const mine = "Only you see these changes until you publish them.";
+  const draftOf = (more: object = {}) => ({
+    action: "changed",
+    changed: ["description"],
+    live: { description: "" },
+    state: "waiting",
+    madeBy: "Fictional Editor",
+    madeAt: "2026-11-01T10:00:00.000Z",
+    ...more,
+  });
+  const orderOf = (more: object = {}) => ({
+    live: ["c2", "c1", "c3", "c4"],
+    state: "waiting",
+    madeBy: "Fictional Editor",
+    madeAt: "2026-11-01T10:00:00.000Z",
+    ...more,
+  });
+  const menuOf = async (name: string) => {
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(await screen.findByRole("button", { name }));
+    return screen.findByRole("menu");
+  };
+  const open = async (lists: object[]) => {
+    serverAnswers({
+      "GET /api/session": approver,
+      "GET /api/lists": () => Response.json({ lists }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+  };
+
+  it("holds a list someone else is changing, with its choices and order", async () => {
+    await open([
+      {
+        ...locations,
+        heldBy: holder,
+        draft: draftOf(),
+        orderDraft: orderOf(),
+        orderHeldBy: holder,
+        choices: locations.choices.map((one) =>
+          one.id === "c2" ? { ...one, heldBy: holder, draft: draftOf() } : one,
+        ),
+      },
+    ]);
+    const table = screen.getByRole("table", { name: "Lists" });
+    expect(within(table).getByText("Being changed")).toBeDefined();
+    expect(
+      within(panel()).getAllByText("Being changed").length,
+    ).toBeGreaterThan(1);
+    expect(screen.queryByRole("button", { name: "Edit list" })).toBeNull();
+    let menu = await menuOf("Drafts of Locations");
+    expect(within(menu).getAllByText(held)).toHaveLength(2);
+    for (const item of [
+      "Approve…",
+      "Reject…",
+      "Discard draft",
+      "Discard new order",
+    ]) {
+      expect(within(menu).queryByRole("menuitem", { name: item })).toBeNull();
+    }
+    await userEvent.keyboard("{Escape}");
+    menu = await menuOf("Actions for Northmere");
+    expect(within(menu).getByText(held)).toBeDefined();
+    for (const item of [/^Edit/, /^Move up/, /^Discard draft/, /^Approve…/]) {
+      expect(within(menu).queryByRole("menuitem", { name: item })).toBeNull();
+    }
+  });
+
+  it("stops choices moving while someone else is changing the order", async () => {
+    await open([{ ...locations, orderDraft: orderOf(), orderHeldBy: holder }]);
+    const menu = await menuOf("Actions for Northmere");
+    expect(within(menu).getByRole("menuitem", { name: /^Edit/ })).toBeDefined();
+    expect(
+      within(menu).queryByRole("menuitem", { name: /^Move up/ }),
+    ).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    act(() => {
+      row("c2").focus();
+    });
+    fireEvent.keyDown(row("c2"), { key: "ArrowUp", altKey: true });
+    expect(
+      within(await menuOf("Drafts of Locations")).getByText(held),
+    ).toBeDefined();
+  });
+
+  it("keeps one's own unpublished drafts of a list, a choice, and an order from Approvers", async () => {
+    await open([
+      {
+        ...locations,
+        draft: draftOf({ unpublished: true }),
+        orderDraft: orderOf({ unpublished: true }),
+        choices: locations.choices.map((one) =>
+          one.id === "c2"
+            ? { ...one, draft: draftOf({ unpublished: true }) }
+            : one,
+        ),
+      },
+    ]);
+    expect(within(panel()).getAllByText("Unpublished").length).toBeGreaterThan(
+      1,
+    );
+    let menu = await menuOf("Drafts of Locations");
+    expect(within(menu).getAllByText(mine)).toHaveLength(2);
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Approve…" }),
+    ).toBeNull();
+    expect(
+      within(menu).getByRole("menuitem", { name: "Discard new order" }),
+    ).toBeDefined();
+    await userEvent.keyboard("{Escape}");
+    menu = await menuOf("Actions for Northmere");
+    expect(within(menu).getByText(mine)).toBeDefined();
+    expect(
+      within(menu).queryByRole("menuitem", { name: "Approve…" }),
+    ).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Draft(?!s of)/ }),
+    );
+    expect(
+      within(await screen.findByRole("menu")).queryByText("Waiting drafts"),
+    ).toBeNull();
   });
 });

@@ -6,7 +6,7 @@
 // recorded in the access history. Seeding twice adds nothing more, and removing takes away only what
 // seeding added, keeping a seeded column or list that something added by hand still uses, and
 // deactivating the accounts. Drafts made by the personas, from ./drafts.ts, are added once the
-// accounts are, and discarded before the rest is removed. A development-only package, never included
+// accounts are, and discarded before the rest is removed, unpublished changes first. A development-only package, never included
 // in the runtime image.
 // Usage: node src/seed.ts seed | unseed, with the FATHOM_DB_* settings for the application role,
 // and FATHOM_PUBLIC_URL and FATHOM_AUTH_SECRET_FILE, as the account command reads. Seeding also
@@ -41,8 +41,17 @@ import { and, count, eq, inArray, sql } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { seedAccounts, unseedAccounts } from "./accounts.ts";
-import { seedDrafts, unseedDrafts } from "./drafts.ts";
-import { seedListDrafts, unseedListDrafts } from "./list-drafts.ts";
+import {
+  seedDrafts,
+  seedUnpublishedPeople,
+  unseedDrafts,
+  unseedUnpublished,
+} from "./drafts.ts";
+import {
+  seedListDrafts,
+  seedUnpublishedList,
+  unseedListDrafts,
+} from "./list-drafts.ts";
 import { passwordLength } from "@fathom/shared";
 
 // The development data set's size.
@@ -364,7 +373,18 @@ export async function seedCommand(
       if (await seedListDrafts(database, organization)) {
         console.log("Added drafts of lists and columns made by the personas");
       }
+      // After every published draft, so publishing them leaves these unpublished.
+      const people = await seedUnpublishedPeople(database, organization);
+      if ((await seedUnpublishedList(database, organization)) || people) {
+        console.log("Added unpublished changes made by the personas");
+      }
     } else {
+      const unpublished = await unseedUnpublished(database, organization);
+      if (unpublished > 0) {
+        console.log(
+          `Discarded ${String(unpublished)} unpublished changes made by the personas`,
+        );
+      }
       const discardedLists = await unseedListDrafts(database, organization);
       if (discardedLists > 0) {
         console.log(

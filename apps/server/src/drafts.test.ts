@@ -665,24 +665,39 @@ describe("approving and rejecting", () => {
       }>().changeSetId,
     ).toBeNull();
     await reject([first.id], "Another fictional reason");
-    // Changing a rejected draft makes it wait again, and undoing that puts the rejection back.
-    const changed = await saved("PATCH", `/api/people/${first.id}`, {
-      preferredName: unique("Fictional Again"),
-    });
-    expect(await draftRow(first.id)).toMatchObject({
-      state: "waiting",
-      reason: null,
-    });
-    expect((await undo(changed)).statusCode).toBe(200);
+    // Changing a rejected draft makes it wait again once published; undoing the change before
+    // then leaves it rejected, as it was.
+    const unpublished = { publish: false };
+    const changed = await test.request(
+      editor.cookie,
+      "PATCH",
+      `/api/people/${first.id}`,
+      { preferredName: unique("Fictional Again") },
+      unpublished,
+    );
     expect(await draftRow(first.id)).toMatchObject({
       state: "rejected",
       reason: "Another fictional reason",
     });
-    // So does removing one, and discarding one.
-    const removed = await saved("DELETE", `/api/people/${first.id}`);
+    expect(
+      (
+        await test.request(
+          editor.cookie,
+          "POST",
+          `/api/undo/${changed.json<{ changeSetId: string }>().changeSetId}`,
+          undefined,
+          unpublished,
+        )
+      ).statusCode,
+    ).toBe(200);
+    expect(
+      (await send(editor.cookie, "GET", "/api/unpublished")).json<{
+        changes: unknown[];
+      }>().changes,
+    ).toEqual([]);
+    // Removing one waits again once published.
+    await saved("DELETE", `/api/people/${first.id}`);
     expect((await draftRow(first.id))?.state).toBe("waiting");
-    await undo(removed);
-    expect((await draftRow(first.id))?.state).toBe("rejected");
     await saved("DELETE", `/api/people/${second.id}/draft`);
     expect(await draftRow(second.id)).toBeUndefined();
   });

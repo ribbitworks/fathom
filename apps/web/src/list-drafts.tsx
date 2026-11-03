@@ -8,8 +8,14 @@
 import type { Choice, List } from "@fathom/shared";
 import { ActionIcon, Menu } from "@mantine/core";
 import { useState } from "react";
-import { MenuDraftLines, MenuTitle, WaitingNote } from "./draft-details.tsx";
-import { type DraftSelection, noDrafts } from "./drafts.ts";
+import {
+  HeldNote,
+  MenuDraftLines,
+  MenuTitle,
+  UnpublishedNote,
+  WaitingNote,
+} from "./draft-details.tsx";
+import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import { Icon } from "./icons.tsx";
 import { withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
@@ -238,9 +244,11 @@ export function ListDraftMenu({
               lines={[[`${madeVerb(draft.action)} by ${makers(draft)}`]]}
               divider={false}
             />
+            {list.heldBy !== undefined && <HeldNote by={list.heldBy} />}
+            {draft.unpublished === true && <UnpublishedNote />}
             <DraftItems
-              canEdit={canEdit}
-              canApprove={canApprove}
+              canEdit={canEdit && list.heldBy === undefined}
+              canApprove={canApprove && decidable(list)}
               rejected={draft.state === "rejected"}
               onApprove={act(() => {
                 actions.decide("approve", on);
@@ -265,9 +273,16 @@ export function ListDraftMenu({
               lines={[[`Reordered by ${makers(orderDraft)}`]]}
               divider={false}
             />
+            {list.orderHeldBy !== undefined && (
+              <HeldNote by={list.orderHeldBy} />
+            )}
+            {orderDraft.unpublished === true && <UnpublishedNote />}
             <DraftItems
-              canEdit={canEdit}
-              canApprove={canApprove}
+              canEdit={canEdit && list.orderHeldBy === undefined}
+              canApprove={
+                canApprove &&
+                decidable({ draft: orderDraft, heldBy: list.orderHeldBy })
+              }
               rejected={orderDraft.state === "rejected"}
               waits={orderWaits}
               discard="Discard new order"

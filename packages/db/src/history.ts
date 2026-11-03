@@ -23,9 +23,9 @@ export interface ChangeRecord {
 }
 
 // What a change set did: saved changes, or approved, rejected, discarded, or resubmitted drafts: rejected
-// drafts sent for approval again unchanged.
+// drafts sent for approval again unchanged; or a user's unpublished changes all discarded at once.
 export type ChangeSetKind =
-  "edit" | "approval" | "rejection" | "discard" | "resubmission";
+  "edit" | "approval" | "rejection" | "discard" | "resubmission" | "withdrawal";
 
 // The history field holding a person's values for a column: one field of the person per column.
 export const valueField = (fieldId: string) => `value:${fieldId}`;
@@ -45,18 +45,20 @@ export function inChunks<Row>(rows: readonly Row[], size = 1000): Row[][] {
 
 // Records changes as one change set, in the transaction that makes them. The maker is null for
 // Fathom itself, such as for seed data. With no changes, nothing is recorded, so there is never an
-// empty change set, and the result is null; otherwise it is the change set's identifier.
+// empty change set, and the result is null; otherwise it is the change set's identifier. Changes
+// to drafts not yet published are seen only by their maker until published.
 export async function recordChanges(
   transaction: Pick<Database, "insert">,
   madeBy: string | null,
   made: readonly ChangeRecord[],
   kind: ChangeSetKind = "edit",
+  unpublished = false,
 ): Promise<string | null> {
   if (made.length === 0) return null;
   const changeSetId = randomUUID();
   await transaction
     .insert(changeSets)
-    .values({ id: changeSetId, madeBy, kind });
+    .values({ id: changeSetId, madeBy, kind, unpublished });
   for (const chunk of inChunks(made)) {
     await transaction.insert(changes).values(
       chunk.map((change) => ({

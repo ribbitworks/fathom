@@ -32,6 +32,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Fragment, type MouseEvent, type ReactNode, useState } from "react";
 import { DecisionModal } from "./decision-dialog.tsx";
 import {
+  decidable,
   type Decision,
   decisionFor,
   type DraftSelection,
@@ -77,7 +78,12 @@ import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
-import { type DraftLike, DraftMark, StatusMark } from "./status-mark.tsx";
+import {
+  type DraftLike,
+  DraftMark,
+  HoldMarks,
+  StatusMark,
+} from "./status-mark.tsx";
 import { DecideAllItems, DraftMenu, TableSearch } from "./table-controls.tsx";
 
 const newListId = "list-new";
@@ -93,16 +99,14 @@ function waitingIn(lists: readonly List[]): {
 } {
   const selection: DraftSelection = {
     ...noDrafts(),
-    lists: lists
-      .filter((list) => list.draft?.state === "waiting")
-      .map(({ id }) => id),
+    lists: lists.filter(decidable).map(({ id }) => id),
     choices: lists.flatMap((list) =>
-      list.choices
-        .filter((choice) => choice.draft?.state === "waiting")
-        .map(({ id }) => id),
+      list.choices.filter(decidable).map(({ id }) => id),
     ),
     orders: lists
-      .filter((list) => list.orderDraft?.state === "waiting")
+      .filter((list) =>
+        decidable({ draft: list.orderDraft, heldBy: list.orderHeldBy }),
+      )
       .map(({ id }) => id),
   };
   return { selection, total: draftTotal(selection) };
@@ -231,6 +235,10 @@ function ListsTable({
               {list.name}
             </Link>
             {mark && <DraftMark draft={mark} />}
+            <HoldMarks
+              unpublished={list.draft?.unpublished}
+              heldBy={list.heldBy}
+            />
           </span>
           <span role="cell" className={classes.listCellDim}>
             {list.description}

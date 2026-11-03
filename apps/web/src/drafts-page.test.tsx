@@ -791,3 +791,39 @@ describe("the Drafts page", () => {
     ]);
   });
 });
+
+describe("unpublished and held drafts on the Drafts page", () => {
+  it("keeps drafts someone is changing, and one's own unpublished drafts, from being selected", async () => {
+    await openDrafts({
+      "GET /api/people": peopleWith([
+        { ...changed, heldBy: "Second Fictional Editor" },
+        {
+          ...added,
+          draft: draft({
+            action: "created",
+            changed: ["preferredName", "employeeId", "f1"],
+            unpublished: true,
+          }),
+        },
+        removed,
+      ]),
+    });
+    const box = (name: string) =>
+      screen.getByRole("checkbox", { name: `Select the draft of ${name}` });
+    await screen.findByRole("checkbox", { name: "Select all waiting" });
+    expect(
+      screen.getByText(wholeText(/Being changed by Second Fictional Editor$/)),
+    ).toBeDefined();
+    expect(screen.getByText("Unpublished")).toBeDefined();
+    expect(box("Avery Fictional")).toHaveProperty("disabled", true);
+    expect(box("Blake Fictional")).toHaveProperty("disabled", true);
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select all waiting" }),
+    );
+    expect(box("Casey Fictional")).toHaveProperty("checked", true);
+    expect(box("Avery Fictional")).toHaveProperty("checked", false);
+    expect(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    ).toBeDefined();
+  });
+});

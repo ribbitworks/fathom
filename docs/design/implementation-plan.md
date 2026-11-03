@@ -38,7 +38,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | People | Done: user-defined lists and people |
 | Seed Accounts | Done |
 | Change History | Done |
-| Draft and Approval | In progress: drafts of people, lists, choices, and columns done; drafts that use other drafts next |
+| Draft and Approval | In progress: drafts of people, lists, choices, and columns done; drafts private until published in progress; drafts that use other drafts next |
 
 ### Hello Fathom
 
@@ -84,7 +84,7 @@ A page showing the change history the lists step built: who changed what, and wh
 
 Plan approval, built on lists and people first, as the owner intends approval to cover them too, so the pattern every later table follows is set once: each changed row is a draft, seen with the live data, until an Approver approves or rejects it, as set out in the [Decisions Log](../product/decisions.md#planning) and [ADR 0007](../adr/0007-draft-rows.md). The seed data gains drafts made by the personas who edit, covering each case: a row added, changed, and removed, a rejected draft with its reason, and a draft that uses another, such as a person given a choice that is itself a draft.
 
-It is built in two steps. The first gives people drafts: shown in place on the People table, approved and rejected there and on a Drafts page, explained on Help's Drafts page, undone like other changes, and recorded in the change history, with seed drafts of people added, changed, and removed, and rejected. The second gives drafts to lists, choices, columns, and their order, with drafts that use other drafts approved together, which Help's Drafts page then explains, and adds the seed draft that uses another.
+It is built in two steps. The first gives people drafts: shown in place on the People table, approved and rejected there and on a Drafts page, explained on Help's Drafts page, undone like other changes, and recorded in the change history, with seed drafts of people added, changed, and removed, and rejected. The second gives drafts to lists, choices, columns, and their order, with drafts that use other drafts approved together, which Help's Drafts page then explains, and adds the seed draft that uses another. A third makes drafts private until published, as [ADR 0008](../adr/0008-unpublished-drafts.md) sets out, with seed data holding unpublished changes and a record someone else holds.
 
 ### Cycles and Releases
 

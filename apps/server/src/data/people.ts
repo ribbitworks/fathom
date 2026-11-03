@@ -49,8 +49,10 @@ import {
   draftMakers,
   draftTier,
   lockDrafts,
+  readHeld,
   readPersonDrafts,
   type Recorded,
+  refuseHeld,
   takenEmployeeIds,
   tidy,
   writePersonDraft,
@@ -371,7 +373,8 @@ async function readPeopleIn(
     ...columns.map(({ id }) => valueField(id)),
   ]);
   const live = await readLive(database, allColumns);
-  const draftsNow = await readPersonDrafts(database);
+  const draftsNow = await readPersonDrafts(database, undefined, actor.user.id);
+  const held = await readHeld(database, "person", actor.user.id);
   const makers = await draftMakers(
     database,
     "person",
@@ -379,6 +382,7 @@ async function readPeopleIn(
     (field, tier) =>
       shownFields.has(field) &&
       seesTier(actor, mostSensitive([tier, tierOf(field)])),
+    actor.user.id,
   );
   const ids = [
     ...live.keys(),
@@ -415,6 +419,7 @@ async function readPeopleIn(
           ),
         ),
         ...(seen ? { draft: seen } : {}),
+        ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
       },
     ];
   });
@@ -464,6 +469,7 @@ async function readPeopleIn(
       live: liveValues,
       state: draft.state,
       ...reason,
+      ...(draft.unpublished === true ? { unpublished: true } : {}),
       madeBy: maker?.madeBy ?? null,
       madeAt: maker?.madeAt.toISOString() ?? null,
       editors: maker?.editors ?? [],
@@ -540,7 +546,7 @@ export async function createPeople(
       requests.map(({ employeeId }) => employeeId),
       [],
     );
-    await addPersonDrafts(transaction, added);
+    await addPersonDrafts(transaction, actor.user.id, added);
     const drafts = asDraft(made);
     await recordSensitiveChanges(transaction, actor.user.id, drafts);
     return {
@@ -550,10 +556,11 @@ export async function createPeople(
   });
 }
 
-// A person as they are and as their draft makes them, locked for a change, refusing someone who is
-// neither live nor in a draft.
+// A person as they are and as the actor's draft makes them, locked for a change, refusing someone
+// who is neither live nor in a draft the actor sees, or whom someone else is changing.
 async function lockDrafted(
   transaction: Transaction,
+  actor: Actor,
   columns: readonly ColumnInfo[],
   id: string,
 ): Promise<{
@@ -562,10 +569,13 @@ async function lockDrafted(
   person: Recorded | undefined;
 }> {
   const before = (await readLive(transaction, columns, [id], true)).get(id);
-  const draft = (await readPersonDrafts(transaction, [id])).get(id);
+  const draft = (await readPersonDrafts(transaction, [id], actor.user.id)).get(
+    id,
+  );
   if (before === undefined && draft === undefined) {
     throw new NotFoundError(noPerson);
   }
+  await refuseHeld(transaction, actor.user.id, "person", [id]);
   return { before, draft, person: drafted(before, draft) };
 }
 
@@ -582,6 +592,7 @@ export async function updatePerson(
     const columns = await readColumns(transaction, true);
     const { before, draft, person } = await lockDrafted(
       transaction,
+      actor,
       columns,
       id,
     );
@@ -625,7 +636,7 @@ export async function updatePerson(
       ...asDraft(made),
       ...clearedRejection(id, personTier(columns), before, draft),
     ];
-    await writePersonDraft(transaction, id, before, after);
+    await writePersonDraft(transaction, actor.user.id, id, before, after);
     await recordSensitiveChanges(transaction, actor.user.id, all);
     return recordChanges(transaction, actor.user.id, all);
   });
@@ -645,6 +656,7 @@ export async function deletePerson(
     const columns = await readColumns(transaction, true);
     const { before, draft, person } = await lockDrafted(
       transaction,
+      actor,
       columns,
       id,
     );
@@ -655,7 +667,7 @@ export async function deletePerson(
       ...clearedRejection(id, personTier(columns), before, draft),
     ];
     requireEdits(actor, made);
-    await writePersonDraft(transaction, id, before, undefined);
+    await writePersonDraft(transaction, actor.user.id, id, before, undefined);
     await recordSensitiveChanges(transaction, actor.user.id, made);
     return recordChanges(
       transaction,
@@ -676,7 +688,12 @@ export async function resubmitPersonDraft(
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const columns = await readColumns(transaction, true);
-    const { before, draft } = await lockDrafted(transaction, columns, id);
+    const { before, draft } = await lockDrafted(
+      transaction,
+      actor,
+      columns,
+      id,
+    );
     if (draft?.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
     }
@@ -704,6 +721,7 @@ export async function discardPersonDraft(
     const columns = await readColumns(transaction, true);
     const { before, draft, person } = await lockDrafted(
       transaction,
+      actor,
       columns,
       id,
     );
@@ -718,7 +736,7 @@ export async function discardPersonDraft(
       ...clearedRejection(id, personTier(columns), before, draft),
     ];
     requireEdits(actor, made);
-    await writePersonDraft(transaction, id, before, before);
+    await writePersonDraft(transaction, actor.user.id, id, before, before);
     await recordSensitiveChanges(transaction, actor.user.id, made);
     return recordChanges(transaction, actor.user.id, made, "discard");
   });

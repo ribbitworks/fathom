@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { ApiError, describeProblem, sendJsonFor } from "./api.ts";
 import { focusSoon } from "./focus.ts";
 import { closeUndoNotice, notifyFailure, notifyUndoable } from "./notices.tsx";
+import { unpublishedQuery } from "./unpublished.tsx";
 import { savedSchema } from "@fathom/shared";
 
 const notFound = 404;
@@ -95,7 +96,11 @@ export function useSaving<Data>({
     },
     onSettled: async () => {
       if (queryClient.isMutating({ mutationKey: changeKey }) > 1) return;
-      await queryClient.invalidateQueries({ queryKey });
+      // Every change is the user's own until they publish it, so their count of changes moves too.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey }),
+        queryClient.invalidateQueries({ queryKey: unpublishedQuery.queryKey }),
+      ]);
     },
   });
 

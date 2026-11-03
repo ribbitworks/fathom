@@ -6,7 +6,7 @@
 // visibility. What a user receives leaves out what their roles do not let them see.
 
 import { z } from "zod";
-import { draftActionSchema, draftShape } from "./drafts.ts";
+import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { listLengths } from "./lists.ts";
 import { savedViewSchema } from "./views.ts";
 
@@ -47,6 +47,7 @@ export const fieldSchema = z.object({
   multiple: z.boolean(),
   required: z.boolean(),
   draft: fieldDraftSchema.optional(),
+  heldBy: heldBySchema,
 });
 
 export type Field = z.infer<typeof fieldSchema>;
@@ -98,6 +99,7 @@ export const personSchema = z.object({
   endDate: day.nullable().optional(),
   values: valuesSchema,
   draft: personDraftSchema.optional(),
+  heldBy: heldBySchema,
 });
 
 export type Person = z.infer<typeof personSchema>;
@@ -122,6 +124,8 @@ export const peopleSchema = z.object({
   // In order, as a draft of the order makes it.
   order: z.array(z.string()),
   orderDraft: columnOrderDraftSchema.optional(),
+  // Who holds the order of the columns, as heldBy does a person.
+  orderHeldBy: heldBySchema,
   views: z.array(savedViewSchema),
 });
 

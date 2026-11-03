@@ -142,6 +142,27 @@ export function WaitingNote() {
   );
 }
 
+// In the menu of a record someone else has unpublished changes to, which nobody else may change,
+// approve, or reject until they publish or discard them.
+export function HeldNote({ by }: { by: string }) {
+  return (
+    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+      Being changed by {by}. It can be changed once they publish or discard
+      their changes.
+    </Text>
+  );
+}
+
+// In the menu of a record whose draft holds the user's own unpublished changes, which nobody can
+// approve until they publish them.
+export function UnpublishedNote() {
+  return (
+    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+      Only you see these changes until you publish them.
+    </Text>
+  );
+}
+
 // The name at the top of a record's menu, set apart from what follows it.
 export function MenuTitle({ children }: { children: ReactNode }) {
   return (

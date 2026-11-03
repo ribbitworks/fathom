@@ -39,14 +39,15 @@ import {
 } from "./changes.ts";
 import { writeColumnOrder } from "./column-order.ts";
 import {
-  type Draft,
   drafted,
   draftsUse,
   fitsColumns,
   lockDrafts,
   readPersonDrafts,
+  type DraftType,
   type Recorded,
   rejectedField,
+  setRejection,
   takenEmployeeIds,
   tidy,
   writeDraft,
@@ -55,7 +56,6 @@ import {
 import {
   columnRow,
   columnTier,
-  draftedColumnOrder,
   nameTaken,
   readColumnsState,
   removeEmptyColumnOrder,
@@ -386,16 +386,16 @@ function fromOld(old: ReadonlyMap<string, unknown>): Recorded {
 // one else has taken since.
 async function undoPersonDrafts(
   transaction: Transaction,
+  editor: string,
   columns: readonly ColumnInfo[],
   records: readonly Undone[],
 ): Promise<void> {
   const ids = records.map(({ id }) => id);
   const live = await readLive(transaction, columns, ids, true);
-  const draftsNow = await readPersonDrafts(transaction, ids);
+  const draftsNow = await readPersonDrafts(transaction, ids, editor);
   const wanted = records.map((record) => {
     const draft = draftsNow.get(record.id);
-    const old = new Map(record.old);
-    const rejection = rejectionAfter(old, draft);
+    const old = withoutRejection(record.old);
     let person: Recorded | undefined;
     if (record.action === "deleted") {
       person = fromOld(old);
@@ -405,7 +405,7 @@ async function undoPersonDrafts(
       // Columns left with nothing chosen are left out.
       person = tidy({ ...now, ...Object.fromEntries(old) });
     }
-    return { id: record.id, person, rejection };
+    return { id: record.id, person };
   });
   const chosen = wanted.flatMap(({ person }) =>
     Object.entries(person ?? {}).flatMap(([field, value]) =>
@@ -420,7 +420,7 @@ async function undoPersonDrafts(
       listId,
     ]),
   );
-  for (const { id, person, rejection } of wanted) {
+  for (const { id, person } of wanted) {
     if (person !== undefined) {
       const taken = await takenEmployeeIds(
         transaction,
@@ -431,23 +431,19 @@ async function undoPersonDrafts(
         throw new ConflictError(changedSince);
       }
     }
-    await writePersonDraft(transaction, id, live.get(id), person, rejection);
+    await writePersonDraft(transaction, editor, id, live.get(id), person);
   }
 }
 
-// The rejection a draft has once a change to it is undone: the reason the change cleared, or the
-// draft's own.
-function rejectionAfter(
-  old: Map<string, unknown>,
-  draft: Draft | undefined,
-): Pick<Draft, "state" | "reason"> {
-  const reason = old.get(rejectedField);
-  // A change set that can be undone only ever clears a rejection, never makes one.
-  const rejection: Pick<Draft, "state" | "reason"> = old.has(rejectedField)
-    ? { state: "rejected", reason: String(reason) }
-    : { state: draft?.state ?? "waiting", reason: draft?.reason ?? null };
-  old.delete(rejectedField);
-  return rejection;
+// A record's old values without the rejection a change cleared: undoing a change to a draft puts
+// back the editor's unpublished draft, which is waiting once published, and the published draft keeps
+// its rejection until then.
+function withoutRejection(
+  old: ReadonlyMap<string, unknown>,
+): Map<string, unknown> {
+  const kept = new Map(old);
+  kept.delete(rejectedField);
+  return kept;
 }
 
 // Puts back the drafts of the lists, choices, and choice orders a change set changed in their
@@ -457,21 +453,19 @@ function rejectionAfter(
 // since, and belong to a list that is there to change.
 async function undoListDrafts(
   transaction: Transaction,
+  editor: string,
   records: readonly Undone[],
 ): Promise<void> {
   for (const record of [...records].sort((a, b) => byKind(a) - byKind(b))) {
-    const state = await readState(transaction);
-    const old = new Map(record.old);
+    const state = await readState(transaction, editor);
+    const old = withoutRejection(record.old);
     if (record.recordType === "choice-order") {
-      const draft = state.orderDrafts.get(record.id);
-      const rejection = rejectionAfter(old, draft);
-      const wanted = old.has("order")
-        ? ids(old.get("order"))
-        : ids(draft?.fields.order);
+      // Every change to a draft of an order records the whole order.
+      const wanted = ids(old.get("order"));
       if (draftedList(state, record.id) === undefined) {
         throw new ConflictError(changedSince);
       }
-      await writeOrderDraft(transaction, state, record.id, wanted, rejection);
+      await writeOrderDraft(transaction, editor, state, record.id, wanted);
       continue;
     }
     const isList = record.recordType === "list";
@@ -482,7 +476,6 @@ async function undoListDrafts(
     const draft = (isList ? state.listDrafts : state.choiceDrafts).get(
       record.id,
     );
-    const rejection = rejectionAfter(old, draft);
     const now = drafted(live, draft);
     let wanted: Recorded | undefined;
     if (record.action === "deleted") {
@@ -536,14 +529,7 @@ async function undoListDrafts(
     if (!isList && live !== undefined && wanted === undefined) {
       await refuseIfChosen(transaction, record.id);
     }
-    await writeDraft(
-      transaction,
-      recordType,
-      record.id,
-      live,
-      wanted,
-      rejection,
-    );
+    await writeDraft(transaction, editor, recordType, record.id, live, wanted);
   }
 }
 
@@ -561,20 +547,18 @@ async function undoColumnDrafts(
     ...records.filter(({ recordType }) => recordType === "field"),
     ...records.filter(({ recordType }) => recordType === "column-order"),
   ];
+  const editor = actor.user.id;
   for (const record of ordered) {
-    const state = await readColumnsState(transaction);
-    const old = new Map(record.old);
+    const state = await readColumnsState(transaction, editor);
+    const old = withoutRejection(record.old);
     if (record.recordType === "column-order") {
-      const rejection = rejectionAfter(old, state.orderDraft);
-      const wanted = old.has("order")
-        ? ids(old.get("order"))
-        : draftedColumnOrder(state);
-      await writeColumnOrderDraft(transaction, state, wanted, rejection);
+      // Every change to the draft of the order records the whole order.
+      const wanted = ids(old.get("order"));
+      await writeColumnOrderDraft(transaction, editor, state, wanted);
       continue;
     }
     const live = state.fields.get(record.id);
     const draft = state.fieldDrafts.get(record.id);
-    const rejection = rejectionAfter(old, draft);
     let wanted: Recorded | undefined;
     if (record.action === "deleted") {
       wanted = Object.fromEntries(
@@ -614,7 +598,7 @@ async function undoColumnDrafts(
         throw new ConflictError(changedSince);
       }
     }
-    await writeDraft(transaction, "field", record.id, live, wanted, rejection);
+    await writeDraft(transaction, editor, "field", record.id, live, wanted);
   }
 }
 
@@ -694,7 +678,13 @@ async function undoIn(
     .select()
     .from(changeSets)
     .where(eq(changeSets.id, changeSetId));
-  if (changeSet === undefined) throw new NotFoundError();
+  // Unpublished changes are seen only by their maker, so for anyone else they are not there.
+  if (
+    changeSet === undefined ||
+    (changeSet.unpublished && changeSet.madeBy !== actor.user.id)
+  ) {
+    throw new NotFoundError();
+  }
   if (changeSet.madeBy !== actor.user.id) {
     throw new ForbiddenError("Only the person who made a change can undo it");
   }
@@ -767,12 +757,19 @@ async function undoIn(
       );
     }
   }
+  // Only changes the user may see count: another user's unpublished changes stay theirs, and a
+  // record they hold refuses the undo for that reason instead.
   const later = await transaction
     .select({ id: changes.id })
     .from(changes)
+    .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
     .where(
       and(
         gt(changes.id, Math.max(...rows.map(({ id }) => id))),
+        or(
+          eq(changeSets.unpublished, false),
+          eq(changeSets.madeBy, actor.user.id),
+        ),
         or(
           ...records.map((record) =>
             and(
@@ -785,6 +782,22 @@ async function undoIn(
     )
     .limit(1);
   if (later.length > 0) throw new ConflictError(changedSince);
+  // Sending rejected drafts again changed the published drafts, so undoing it rejects them again.
+  if (changeSet.kind === "resubmission") {
+    for (const record of draftRecords) {
+      await setRejection(
+        transaction,
+        record.recordType as DraftType,
+        [record.id],
+        {
+          state: "rejected",
+          reason: String(record.old.get(rejectedField)),
+        },
+      );
+    }
+    await recordSensitiveChanges(transaction, actor.user.id, undoing);
+    return recordChanges(transaction, actor.user.id, undoing, "edit", false);
+  }
 
   const ascending = [...liveRecords].sort((a, b) => byKind(a) - byKind(b));
   for (const record of ascending.filter(({ action }) => action === "deleted")) {
@@ -814,16 +827,17 @@ async function undoIn(
       recordType !== "person" && !columnKinds.includes(recordType),
   );
   if (listDrafts.length > 0) {
-    await undoListDrafts(transaction, listDrafts);
-    await removeEmptyOrders(transaction);
+    await undoListDrafts(transaction, actor.user.id, listDrafts);
+    await removeEmptyOrders(transaction, actor.user.id);
   }
   if (columnDrafts.length > 0) {
     await undoColumnDrafts(transaction, actor, columnDrafts);
-    await removeEmptyColumnOrder(transaction);
+    await removeEmptyColumnOrder(transaction, actor.user.id);
   }
   if (personDrafts.length > 0) {
     await undoPersonDrafts(
       transaction,
+      actor.user.id,
       await readColumns(transaction),
       personDrafts,
     );

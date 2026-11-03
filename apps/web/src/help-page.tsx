@@ -65,6 +65,16 @@ const marks: [string, ReactNode, string][] = [
     "The draft was rejected. The reason is in the record's menu.",
   ],
   [
+    "unpublished",
+    <StatusMark tone="unpublished">Unpublished</StatusMark>,
+    "Your own change, which only you see until you publish it.",
+  ],
+  [
+    "held",
+    <StatusMark tone="held">Being changed</StatusMark>,
+    "Someone else has unpublished changes to this. You can't change it until they publish or discard them.",
+  ],
+  [
     "live",
     <StatusMark tone="live">Live</StatusMark>,
     "The current record, without the draft's changes.",
@@ -74,7 +84,11 @@ const marks: [string, ReactNode, string][] = [
 const lifecycle: [string, string][] = [
   [
     "Saved",
-    "It waits for an Approver. If someone else edits the same record, their changes join the same draft.",
+    "Only you see it, until you publish your changes with Publish at the top of the page.",
+  ],
+  [
+    "Published",
+    "It waits for an Approver. If someone changes it, only they see their changes until they publish them.",
   ],
   ["Approved", "The change goes live. This can't be undone."],
   [

@@ -33,6 +33,7 @@ export {
   rateLimits,
   savedViews,
   sessions,
+  unpublishedDrafts,
   userRoles,
   users,
   verifications,

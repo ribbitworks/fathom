@@ -4,7 +4,13 @@
 // into the change sets saved together. Part of the data access layer, the only server code that
 // queries the database. Changes to people are recorded as changes to their drafts until approved.
 
-import { type Database, databaseCodes, hasDatabaseCode } from "@fathom/db";
+import {
+  type ChangeSetKind,
+  type Database,
+  databaseCodes,
+  hasDatabaseCode,
+  recordChanges as recordChangeSet,
+} from "@fathom/db";
 import type { Tier } from "@fathom/shared";
 import { ConflictError } from "../errors.ts";
 
@@ -105,6 +111,20 @@ export async function refusingDuplicates<Result>(
   }
 }
 
-// Records changes as one change set, in the transaction that makes them; shared with the seed data
-// command, so both record changes the same way.
-export { recordChanges } from "@fathom/db";
+// The kinds of change set that change drafts as their maker intends them, so are unpublished until
+// published; approving, rejecting, and resubmitting decide or send published drafts.
+const editing: readonly ChangeSetKind[] = ["edit", "discard", "withdrawal"];
+
+// Records changes as one change set, in the transaction that makes them, the way the seed data
+// command does too. Changes to drafts are the maker's own, unpublished, until they publish them,
+// unless they are to published drafts themselves.
+export async function recordChanges(
+  transaction: Pick<Database, "insert">,
+  madeBy: string | null,
+  made: readonly Change[],
+  kind: ChangeSetKind = "edit",
+  unpublished = editing.includes(kind) &&
+    made.some(({ draft }) => draft === true),
+): Promise<string | null> {
+  return recordChangeSet(transaction, madeBy, made, kind, unpublished);
+}

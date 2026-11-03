@@ -10,9 +10,11 @@
 // Manager gives the renamed site a description, so one draft holds two people's changes, drafts
 // renaming Roles on the team, and sends the Sites order for approval again, which then waits on
 // Harbourside, still rejected. Drafts of People's columns follow, as seedColumnDrafts sets out. Each
-// case a draft of a list, a choice, a column, or an order can be in is there to try. Removing the
-// seed data discards these drafts first. A development-only package, never included in the runtime
-// image.
+// persona publishes their changes before the next persona changes the same drafts and before the
+// Engineering Director decides them. Each case a draft of a list, a choice, a column, or an order can
+// be in is there to try. After them, the Engineering Operations Manager drafts adding an Equipment
+// list with one choice and leaves it unpublished, so only they see it. Removing the seed data
+// discards these drafts first. A development-only package, never included in the runtime image.
 
 import { changes, type Database, drafts } from "@fathom/db";
 import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
@@ -26,8 +28,9 @@ const editorEmail = `engineering.operations.manager@${accountDomain}`;
 const secondEditorEmail = `engineering.operations.manager.2@${accountDomain}`;
 const approverEmail = `engineering.director@${accountDomain}`;
 
-// The list the seed drafts adding, which no fictional list is called.
+// The lists the seed drafts adding, published and not, which no fictional list is called.
 export const draftedListName = "Skills";
+export const unpublishedListName = "Equipment";
 
 export const columnRejection =
   "Fictional reason: a previous site is not needed yet.";
@@ -46,12 +49,13 @@ function listCalled(
 const choiceCalled = (list: FictionalList, label: string) =>
   String(list.choices.find((choice) => choice.label === label)?.id);
 
-// Whether the seed has drafted its lists since they were last added, as the change history says,
-// so drafts approved, rejected, or discarded since are not made again, while removing and adding the
-// seed data again makes them anew.
+// Whether the seed has drafted adding a list of the name since its lists were last added, as the
+// change history says, so drafts approved, rejected, or discarded since are not made again, while
+// removing and adding the seed data again makes them anew.
 async function draftedBefore(
   database: Database,
   organization: FictionalOrganization,
+  name = draftedListName,
 ): Promise<boolean> {
   const [first] = organization.lists as [FictionalList];
   const [seeded] = await database
@@ -72,7 +76,7 @@ async function draftedBefore(
         eq(changes.recordType, "list"),
         eq(changes.field, "name"),
         eq(changes.draft, true),
-        sql`${changes.newValue} #>> '{}' = ${draftedListName}`,
+        sql`${changes.newValue} #>> '{}' = ${name}`,
         // The lists are always added before their drafts.
         gt(changes.id, (seeded as { id: number }).id),
       ),
@@ -128,6 +132,7 @@ export async function seedListDrafts(
     choiceCalled(teamRoles, "Design Authority"),
     { retired: true },
   );
+  await data.unpublished.publish(editor);
   const second = await actorOf(database, secondEditorEmail);
   await data.lists.updateChoice(
     second,
@@ -140,6 +145,7 @@ export async function seedListDrafts(
     description: "",
     visibility: "general",
   });
+  await data.unpublished.publish(second);
   const certifications = listCalled(organization, "Certifications");
   const languages = listCalled(organization, "Languages");
   await data.lists.delete(editor, certifications.id);
@@ -162,6 +168,7 @@ export async function seedListDrafts(
     description: "The jobs people hold.",
     visibility: "general",
   });
+  await data.unpublished.publish(editor);
   await data.drafts.reject(
     approver,
     {
@@ -207,6 +214,7 @@ async function seedColumnDrafts(
     multiple: false,
     required: false,
   });
+  await data.unpublished.publish(editor);
   const second = await actorOf(database, secondEditorEmail);
   await data.people.updateField(second, level, {
     name: "Grade",
@@ -214,16 +222,41 @@ async function seedColumnDrafts(
     multiple: false,
     required: true,
   });
+  await data.unpublished.publish(second);
   await data.people.deleteField(
     editor,
     columnCalled(organization, "Role on team"),
   );
   await data.people.moveColumn(editor, level, "employeeId");
+  await data.unpublished.publish(editor);
   await data.drafts.reject(
     approver,
     { columns: [previousSite.id] },
     columnRejection,
   );
+}
+
+// Drafts adding the Equipment list with one choice, as the Engineering Operations Manager, left
+// unpublished, unless the seed has drafted it since its lists were last added. Returns whether it
+// did.
+export async function seedUnpublishedList(
+  database: Database,
+  organization: FictionalOrganization,
+): Promise<boolean> {
+  if (await draftedBefore(database, organization, unpublishedListName)) {
+    return false;
+  }
+  const data = createDataAccess(database);
+  const editor = await actorOf(database, editorEmail);
+  const { result: equipment } = await data.lists.create(editor, {
+    name: unpublishedListName,
+    description: "What people are given to work with.",
+    visibility: "general",
+  });
+  await data.lists.addChoices(editor, equipment.id, [
+    { label: "Laptop", description: "" },
+  ]);
+  return true;
 }
 
 // Discards the drafts of the seed data's lists and columns, the column order's, and those of the list
@@ -281,8 +314,12 @@ export async function unseedListDrafts(
     }
   }
   for (const draft of found) {
+    // The lists the seed drafts adding, Equipment published or not, since a test can publish it.
     const seededAdding =
-      draft.action === "created" && draft.fields.name === draftedListName;
+      draft.action === "created" &&
+      [draftedListName, unpublishedListName].includes(
+        String(draft.fields.name),
+      );
     if (
       draft.recordType === "list" &&
       (listIds.has(draft.recordId) || seededAdding)
@@ -294,6 +331,7 @@ export async function unseedListDrafts(
       discarded += 1;
     }
   }
+  await data.unpublished.publish(editor);
   return discarded;
 }
 

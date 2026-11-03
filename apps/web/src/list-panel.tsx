@@ -44,12 +44,14 @@ import {
 import {
   configDraftFields,
   draftLines,
+  HeldNote,
   MenuDraftLines,
   MenuTitle,
+  UnpublishedNote,
   WaitingNote,
 } from "./draft-details.tsx";
-import { type DraftSelection, noDrafts } from "./drafts.ts";
-import { DraftMark, StatusMark } from "./status-mark.tsx";
+import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
+import { DraftMark, HoldMarks, StatusMark } from "./status-mark.tsx";
 import { retiredLive, sameName, withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
@@ -250,7 +252,10 @@ export function ListPanel({
 }) {
   // A list a draft removes cannot be changed until the draft is discarded.
   const listRemoved = list.draft?.action === "deleted";
-  const canEdit = mayEdit && !listRemoved;
+  // Nor can a list, a choice, or the order of the choices while someone else has unpublished
+  // changes to it.
+  const canEdit = mayEdit && !listRemoved && list.heldBy === undefined;
+  const canMove = canEdit && list.orderHeldBy === undefined;
   // The choices a draft of the order moves, with their live places.
   const moved = movedChoices(list);
   // A choice a draft removes cannot be changed either.
@@ -424,7 +429,7 @@ export function ListPanel({
   };
 
   const moveBy = (choice: Choice, step: -1 | 1) => {
-    if (removed(choice)) return;
+    if (!canMove || removed(choice) || choice.heldBy !== undefined) return;
     const index = offered.indexOf(choice);
     const to = index + step;
     if (choice.retired || to < 0 || to >= offered.length) return;
@@ -532,7 +537,7 @@ export function ListPanel({
     const choiceWaits = waits({ ...noDrafts(), choices: [choice.id] });
     const on = { kind: "choice" as const, list, choice };
     // A choice a draft removes offers only what can be done with the draft.
-    const editable = canEdit && !removed(choice);
+    const editable = canEdit && !removed(choice) && choice.heldBy === undefined;
     // Each item closes the menu and moves focus itself, so focus never stays on the menu's button.
     const act = (run: () => void) => () => {
       setMenuFor(undefined);
@@ -570,6 +575,8 @@ export function ListPanel({
         >
           {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
           <MenuTitle>{choice.label}</MenuTitle>
+          {choice.heldBy !== undefined && <HeldNote by={choice.heldBy} />}
+          {choiceDraft?.unpublished === true && <UnpublishedNote />}
           {choiceDraft && (
             <MenuDraftLines
               draft={withRetiring({ ...choice, draft: choiceDraft })}
@@ -577,8 +584,11 @@ export function ListPanel({
                 choiceDraft,
                 configDraftFields(choiceDraft, choice),
               )}
-              // Those who may not edit have the menu only as Approvers, deciding drafts waiting.
-              divider={mayEdit || choiceDraft.state === "waiting"}
+              // Set apart from the items after it, when any are offered.
+              divider={
+                (mayEdit && choice.heldBy === undefined) ||
+                (canApprove && decidable(choice))
+              }
             />
           )}
           {editable && (
@@ -591,7 +601,7 @@ export function ListPanel({
               >
                 Edit
               </Menu.Item>
-              {!choice.retired && (
+              {!choice.retired && canMove && (
                 <>
                   <Menu.Divider />
                   <Menu.Item
@@ -656,7 +666,7 @@ export function ListPanel({
           {choiceDraft && (
             <>
               {editable && <Menu.Divider />}
-              {canEdit && choiceDraft.state === "rejected" && (
+              {editable && choiceDraft.state === "rejected" && (
                 <Menu.Item
                   onClick={act(() => {
                     draftActions.resubmit(on);
@@ -665,7 +675,7 @@ export function ListPanel({
                   Resubmit
                 </Menu.Item>
               )}
-              {mayEdit && (
+              {mayEdit && choice.heldBy === undefined && (
                 <Menu.Item
                   onClick={act(() => {
                     draftActions.discard(on);
@@ -674,7 +684,7 @@ export function ListPanel({
                   Discard draft
                 </Menu.Item>
               )}
-              {canApprove && choiceDraft.state === "waiting" && (
+              {canApprove && decidable(choice) && (
                 <>
                   <Menu.Item
                     disabled={choiceWaits}
@@ -705,7 +715,12 @@ export function ListPanel({
     const isEditing = editing === choice.id;
     const isSelected = selected === choice.id;
     const draggable =
-      canEdit && !narrow && !choice.retired && !isEditing && !removed(choice);
+      canMove &&
+      choice.heldBy === undefined &&
+      !narrow &&
+      !choice.retired &&
+      !isEditing &&
+      !removed(choice);
     const content = (handle?: object | null) => (
       <>
         {draggable && (
@@ -740,6 +755,10 @@ export function ListPanel({
                   draft={withRetiring({ ...choice, draft: choice.draft })}
                 />
               )}
+              <HoldMarks
+                unpublished={choice.draft?.unpublished}
+                heldBy={choice.heldBy}
+              />
               {moved.has(choice.id) && (
                 <StatusMark
                   tone={
@@ -913,6 +932,13 @@ export function ListPanel({
               <DraftMark draft={withRetiring({ ...list, draft: list.draft })} />
             )}
             {list.orderDraft && <DraftMark draft={list.orderDraft} />}
+            <HoldMarks
+              unpublished={
+                list.draft?.unpublished === true ||
+                list.orderDraft?.unpublished === true
+              }
+              heldBy={list.heldBy ?? list.orderHeldBy}
+            />
           </div>
           {canEdit && (
             <Button

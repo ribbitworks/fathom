@@ -18,6 +18,7 @@ import {
   lists,
   people,
   recordChanges,
+  unpublishedDrafts,
   runMigrations,
   users,
 } from "@fathom/db";
@@ -32,7 +33,7 @@ import { personaAccounts } from "./accounts.ts";
 import { actorFor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
 import { columnRejection, listRejection } from "./list-drafts.ts";
-import { rejection, seedDrafts, unseedDrafts } from "./drafts.ts";
+import { actorOf, rejection, seedDrafts, unseedDrafts } from "./drafts.ts";
 import { seed, seedCommand, unseed } from "./seed.ts";
 
 let database: TestDatabase;
@@ -202,16 +203,50 @@ describe("the seed command", () => {
         rejection,
       ].sort(),
     );
+    // Left unpublished: the first editor's change to a person and the Equipment list with its
+    // choice, and the second editor's change to a published draft of a person.
+    const holders = async () =>
+      (
+        await connection
+          .select({
+            recordType: unpublishedDrafts.recordType,
+            recordId: unpublishedDrafts.recordId,
+            email: users.email,
+          })
+          .from(unpublishedDrafts)
+          .innerJoin(users, eq(users.id, unpublishedDrafts.userId))
+      )
+        .map(({ recordType, email }) => `${recordType} ${email}`)
+        .sort();
+    const seededPeople = fictionalOrganization({ size: 150 }).people;
+    expect(await holders()).toEqual([
+      "list engineering.operations.manager@fathom.test",
+      "list-item engineering.operations.manager@fathom.test",
+      "person engineering.operations.manager.2@fathom.test",
+      "person engineering.operations.manager@fathom.test",
+    ]);
+    const heldPeople = await connection
+      .select({ id: unpublishedDrafts.recordId })
+      .from(unpublishedDrafts)
+      .where(eq(unpublishedDrafts.recordType, "person"));
+    expect(heldPeople.map(({ id }) => id).sort()).toEqual(
+      [String(seededPeople[0]?.id), String(seededPeople[5]?.id)].sort(),
+    );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
     expect(await connection.select().from(drafts)).toHaveLength(24);
-    // Seeding again after the Approver approves the waiting drafts makes none again, and leaves
-    // alone a draft made by hand of another seeded person, which removing the seed data discards,
-    // since it removes that person.
-    const waiting = await connection
-      .select({ id: drafts.recordId })
-      .from(drafts)
-      .where(and(eq(drafts.state, "waiting"), eq(drafts.recordType, "person")));
+    expect(await holders()).toHaveLength(4);
+    // Seeding again after the Approver approves the waiting drafts nobody is changing makes none
+    // again, and leaves alone a draft made by hand of another seeded person, which removing the
+    // seed data discards, since it removes that person.
+    const waiting = (
+      await connection
+        .select({ id: drafts.recordId })
+        .from(drafts)
+        .where(
+          and(eq(drafts.state, "waiting"), eq(drafts.recordType, "person")),
+        )
+    ).filter(({ id }) => !heldPeople.some((one) => one.id === id));
     const [director] = await connection
       .select({ id: users.id, name: users.name, email: users.email })
       .from(users)
@@ -248,9 +283,10 @@ describe("the seed command", () => {
       },
     ]);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    // The two rejected drafts of people, the one made by hand, the fourteen of lists, and the four
-    // of columns.
-    expect(await connection.select().from(drafts)).toHaveLength(21);
+    // The two rejected drafts of people, the one being changed, the one made by hand, the fourteen
+    // of lists, and the four of columns.
+    expect(await connection.select().from(drafts)).toHaveLength(22);
+    expect(await holders()).toHaveLength(4);
     const positions = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
       listId: String(positions?.id),
@@ -270,6 +306,14 @@ describe("the seed command", () => {
       },
     };
     await connection.insert(drafts).values(handColumn);
+    // An unpublished change made by hand to a seeded person goes with the person.
+    await connection.insert(unpublishedDrafts).values({
+      recordType: "person",
+      recordId: String(seeded.people[11]?.id),
+      userId: String(director?.id),
+      action: "changed",
+      fields: { preferredName: "Fictional Hand Change" },
+    });
     // The newcomer approved is no longer seed data, so is removed by hand first.
     await connection
       .delete(people)
@@ -281,10 +325,12 @@ describe("the seed command", () => {
       ...addresses.map((email) => `Account ready: ${email}`),
       "Added drafts made by the personas",
       "Added drafts of lists and columns made by the personas",
+      "Added unpublished changes made by the personas",
       "The fictional data is already in the database",
       "The fictional data is already in the database",
+      "Discarded 4 unpublished changes made by the personas",
       "Discarded 16 drafts of lists and columns made by the personas",
-      "Discarded 3 drafts made by the personas",
+      "Discarded 4 drafts made by the personas",
       "Removed the fictional data",
       "Kept: The Positions list, which has choices added by hand",
       ...addresses.map((email) => `Deactivated the account ${email}`),
@@ -295,6 +341,7 @@ describe("the seed command", () => {
         .from(drafts)
         .where(eq(drafts.recordType, "field")),
     ).toEqual([{ recordId: handColumn.recordId }]);
+    expect(await holders()).toEqual([]);
     await connection
       .delete(drafts)
       .where(eq(drafts.recordId, handColumn.recordId));
@@ -333,6 +380,14 @@ describe("the seed command", () => {
     expect(await ofLists()).toHaveLength(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await ofLists()).toHaveLength(18);
+    // Publishing the changes the seed leaves unpublished, as a manual test does, publishes the list
+    // it drafts adding, which removing the seed data takes back too.
+    await createDataAccess(connection).unpublished.publish(
+      await actorOf(connection, "engineering.operations.manager@fathom.test"),
+    );
+    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    expect(await ofLists()).toHaveLength(0);
+    expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     log.mockRestore();
   });

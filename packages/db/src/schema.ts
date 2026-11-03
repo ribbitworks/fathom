@@ -198,8 +198,9 @@ export const changeSets = fathomSchema.table(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     // What the change set did, checked by the server: "edit" for changes saved, "approval" for drafts
-    // approved, "rejection" for drafts rejected, "discard" for drafts discarded, and "resubmission"
-    // for rejected drafts sent for approval again unchanged.
+    // approved, "rejection" for drafts rejected, "discard" for drafts discarded, "resubmission" for
+    // rejected drafts sent for approval again unchanged, and "withdrawal" for a user's unpublished
+    // changes discarded all at once.
     kind: text("kind").notNull().default("edit"),
     // Null for Fathom itself, such as for data made by setup or seed scripts. Accounts are deactivated,
     // never deleted, so the user who made a change always exists.
@@ -209,6 +210,9 @@ export const changeSets = fathomSchema.table(
     madeAt: timestamp("made_at", { withTimezone: true })
       .notNull()
       .default(sql`clock_timestamp()`),
+    // Whether the change set holds changes to drafts that its maker has not published, which only
+    // they see. Publishing clears it, the one change the change history allows.
+    unpublished: boolean("unpublished").notNull().default(false),
   },
   (table) => [index("change_sets_made_at_index").on(table.madeAt)],
 );
@@ -358,8 +362,9 @@ export const savedViews = fathomSchema.table(
 // Log sets out. A draft adds a record, changes some of its fields, or removes it. It holds the record
 // as the change history records it: all of an added record's fields, only the fields a change makes
 // differ from the live record, and none for a removal. A rejected draft keeps the Approver's reason
-// until it is changed again or discarded. Who made and changed each draft is read from the change
-// history. People, lists, choices, and the order of each list's choices have drafts.
+// until a change to it is published, or it is discarded. Who made and changed each draft is read
+// from the change history. People, lists, choices, and the order of each list's choices have drafts.
+// These are the published drafts; each user's unpublished ones are kept apart, as below.
 export const drafts = fathomSchema.table(
   "drafts",
   {
@@ -382,4 +387,37 @@ export const drafts = fathomSchema.table(
       .generatedAlwaysAsIdentity(),
   },
   (table) => [primaryKey({ columns: [table.recordType, table.recordId] })],
+);
+
+// Unpublished drafts: the changes a user has made to drafts and not yet published, which only they
+// see, as ADR 0008 sets out. Each holds the whole draft the user intends, shaped and keyed as a draft
+// row, so a record has at most one, and holds the record: no one else may change, approve, or reject
+// it until the user publishes or discards their changes. A draft that changes nothing, which
+// publishing makes into no draft at all, is a change with no fields.
+export const unpublishedDrafts = fathomSchema.table(
+  "unpublished_drafts",
+  {
+    // The kind of record, such as "person", checked by the server.
+    recordType: text("record_type").notNull(),
+    recordId: text("record_id").notNull(),
+    // The user whose changes these are.
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    // "created", "changed", or "deleted", checked by the server.
+    action: text("action").notNull(),
+    fields: jsonb("fields")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    // Rises with each unpublished draft made, so records the user drafts to be added keep the order
+    // they were drafted in when published.
+    sequence: bigint("sequence", { mode: "number" })
+      .notNull()
+      .generatedAlwaysAsIdentity(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.recordType, table.recordId] }),
+    index("unpublished_drafts_user_index").on(table.userId),
+  ],
 );

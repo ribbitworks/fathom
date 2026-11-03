@@ -29,6 +29,7 @@ import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
 import { createDataAccess } from "./data/index.ts";
+import { publishingAfter } from "./test-app.ts";
 
 let database: TestDatabase;
 let certificate: TestCertificate;
@@ -94,18 +95,22 @@ async function signedIn(roles: Role[]) {
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
 
-function request(
+// Sends a request, publishing any change it makes straight after, as its maker would.
+async function request(
   cookie: string,
   method: Method,
   url: string,
   payload?: object,
 ) {
-  return app.inject({
+  const headers = { cookie, origin: publicUrl };
+  const response = await app.inject({
     method,
     url,
-    headers: { cookie, origin: publicUrl },
+    headers,
     ...(payload === undefined ? {} : { payload }),
   });
+  await publishingAfter(app, headers, method, url);
+  return response;
 }
 
 let nameCount = 0;

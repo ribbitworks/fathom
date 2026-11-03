@@ -30,6 +30,7 @@ import { historyRoutes } from "./routes/history.ts";
 import { listRoutes } from "./routes/lists.ts";
 import { peopleRoutes } from "./routes/people.ts";
 import { undoRoutes } from "./routes/undo.ts";
+import { unpublishedRoutes } from "./routes/unpublished.ts";
 import { pageFallback, webRoutes } from "./routes/web.ts";
 
 const badRequest = 400;
@@ -182,6 +183,7 @@ export async function buildApp(options: AppOptions) {
   await app.register(draftRoutes(options.data.drafts));
   await app.register(peopleRoutes(options.data.people));
   await app.register(undoRoutes(options.data));
+  await app.register(unpublishedRoutes(options.data.unpublished));
   await app.register(greetingRoutes(options.data));
   if (options.webRoot !== undefined) {
     await app.register(webRoutes(options.webRoot));

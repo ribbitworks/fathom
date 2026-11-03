@@ -60,8 +60,12 @@ export {
   draftStateSchema,
   draftsAtOnce,
   draftsRequestSchema,
+  heldBySchema,
   reasonLength,
   rejectionRequestSchema,
+  type Unpublished,
+  unpublishedDoneSchema,
+  unpublishedSchema,
 } from "./drafts.ts";
 export {
   type Choice,

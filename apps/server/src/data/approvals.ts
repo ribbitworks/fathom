@@ -36,6 +36,7 @@ import {
   lockDrafts,
   readPersonDrafts,
   type Recorded,
+  refuseHeldDecision,
   refuseRejected,
   rejectedField,
   setRejection,
@@ -96,6 +97,7 @@ async function readAsked(
       );
     }
   }
+  await refuseHeldDecision(transaction, "person", ids);
   return { columns, found, live };
 }
 

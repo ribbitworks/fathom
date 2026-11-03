@@ -666,6 +666,17 @@
   color: var(--mantine-color-red-6);
 }
 
+/* The user's own unpublished changes: the draft's yellow, hollow, since only they see it. */
+.unpublishedMark .statusDot {
+  background: transparent;
+  border: 1.5px solid var(--mantine-color-yellow-6);
+}
+
+/* Someone else's unpublished changes hold the record, in grey, since nothing waits on the user. */
+.heldMark .statusDot {
+  color: var(--mantine-color-gray-6);
+}
+
 /* A person's live row, under their draft row: light green, dimmed, marked Live like the Draft mark
    above it, and joined to the draft row. */
 .draftRow:has(+ .peopleLiveRow) {

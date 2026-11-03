@@ -48,12 +48,45 @@ export function DraftMark({ draft }: { draft: DraftLike }) {
   );
 }
 
+const toneClass = new Map([
+  ["draft", classes.draftMark],
+  ["rejected", classes.draftRejected],
+  ["live", classes.liveMark],
+  ["unpublished", classes.unpublishedMark],
+  ["held", classes.heldMark],
+]);
+
+// Beside a record's draft mark: Unpublished when the draft holds the user's own changes, which only
+// they see, or Being changed when someone else has unpublished changes to it, read aloud with who.
+export function HoldMarks({
+  unpublished,
+  heldBy,
+}: {
+  unpublished: boolean | undefined;
+  heldBy: string | undefined;
+}) {
+  return (
+    <>
+      {unpublished === true && (
+        <StatusMark tone="unpublished" spaced>
+          Unpublished
+        </StatusMark>
+      )}
+      {heldBy !== undefined && (
+        <StatusMark tone="held" spaced>
+          Being changed<VisuallyHidden> by {heldBy}</VisuallyHidden>
+        </StatusMark>
+      )}
+    </>
+  );
+}
+
 export function StatusMark({
   tone,
   spaced = false,
   children,
 }: {
-  tone: "draft" | "rejected" | "live";
+  tone: "draft" | "rejected" | "live" | "unpublished" | "held";
   // Set apart from what it follows, such as a person's name.
   spaced?: boolean;
   children: ReactNode;
@@ -62,11 +95,7 @@ export function StatusMark({
     <span
       className={[
         classes.mark,
-        tone === "draft"
-          ? classes.draftMark
-          : tone === "rejected"
-            ? classes.draftRejected
-            : classes.liveMark,
+        toneClass.get(tone),
         spaced ? classes.markGap : "",
       ].join(" ")}
     >

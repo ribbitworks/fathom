@@ -49,7 +49,7 @@ import { PageHeader } from "./page-header.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseList, phraseText } from "./phrase.tsx";
-import { draftWords, StatusMark } from "./status-mark.tsx";
+import { draftWords, HoldMarks, StatusMark } from "./status-mark.tsx";
 
 interface Drafted {
   person: Person;
@@ -90,6 +90,10 @@ interface Entry {
   subject: string;
   details: Phrase[];
   rejected: string;
+  // The user's own changes, which nobody may decide until they publish them.
+  unpublished: boolean;
+  // Who else has unpublished changes to the record, which hold it.
+  heldBy: string | undefined;
   text: string;
   selects: DraftSelection;
 }
@@ -103,10 +107,12 @@ function entry(
     madeBy: string | null;
     madeAt: string | null;
     editors?: (string | null)[] | undefined;
+    unpublished?: boolean | undefined;
   },
   subject: string,
   details: Phrase[],
   selects: Partial<DraftSelection>,
+  heldBy?: string,
 ): Entry {
   // Everyone who changed the draft, since several people's changes to one record make one draft.
   const who = joinedNames(
@@ -125,6 +131,8 @@ function entry(
     subject,
     details,
     rejected,
+    unpublished: draft.unpublished === true,
+    heldBy,
     text: [who, did, subject, ...details.map(phraseText), rejected].join(" "),
     selects: { ...noDrafts(), ...selects },
   };
@@ -200,6 +208,7 @@ function listEntries(lists: readonly List[]): Entry[] {
               list,
             ),
             { lists: [list.id] },
+            list.heldBy,
           ),
         ]
       : []),
@@ -212,6 +221,7 @@ function listEntries(lists: readonly List[]): Entry[] {
               `the choice ${choice.label} in ${list.name}`,
               configFields(choice.draft, choice),
               { choices: [choice.id] },
+              choice.heldBy,
             ),
           ]
         : [],
@@ -231,6 +241,7 @@ function listEntries(lists: readonly List[]): Entry[] {
               ),
             ],
             { orders: [list.id] },
+            list.orderHeldBy,
           ),
         ]
       : []),
@@ -275,6 +286,7 @@ function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
                 { ...field, listId: listName(field.listId) },
               ),
               { columns: [field.id] },
+              field.heldBy,
             ),
           ]
         : [],
@@ -292,6 +304,7 @@ function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
               ),
             ],
             { columnOrder: true },
+            data.orderHeldBy,
           ),
         ]
       : []),
@@ -315,6 +328,7 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
             credited(describeField(field), key, drafted.draft),
           ),
       { people: [drafted.person.id] },
+      drafted.person.heldBy,
     ),
   );
 }
@@ -339,7 +353,12 @@ function DraftEntry({
             aria-label={`Select the draft of ${shown.subject}`}
             // A rejected draft is back with its makers until they resubmit it, and a draft that
             // depends on it waits too.
-            disabled={shown.state === "rejected" || waits}
+            disabled={
+              shown.state === "rejected" ||
+              waits ||
+              shown.unpublished ||
+              shown.heldBy !== undefined
+            }
             checked={selection.selected}
             onChange={(event) => {
               selection.onSelect(event.currentTarget.checked);
@@ -370,6 +389,11 @@ function DraftEntry({
       {waits && (
         <Text fz="xs" c="dimmed">
           Waiting for a rejected draft to be resubmitted
+        </Text>
+      )}
+      {(shown.unpublished || shown.heldBy !== undefined) && (
+        <Text className={classes.markGap}>
+          <HoldMarks unpublished={shown.unpublished} heldBy={shown.heldBy} />
         </Text>
       )}
     </EntryRow>
@@ -433,8 +457,13 @@ export function DraftsPage({
     const waits = ({ state, selects }: Entry) =>
       state === "waiting" &&
       waitsForRejected(selects, lists.data, { fields, orderDraft });
+    // A draft only its maker sees, or one someone is changing, is not decided until published.
     const waiting = shown.filter(
-      (one) => one.state === "waiting" && !waits(one),
+      (one) =>
+        one.state === "waiting" &&
+        !waits(one) &&
+        !one.unpublished &&
+        one.heldBy === undefined,
     );
     // Only drafts still shown, and still waiting, stay selected.
     const chosen = waiting.filter(({ key }) => selected.has(key));

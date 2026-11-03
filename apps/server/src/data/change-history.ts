@@ -2,7 +2,8 @@
 
 // Reads the change history: the change sets saved, newest first, each holding only the changes the
 // reader's roles let them see. Part of the data access layer. A change set holding none is left out
-// altogether, so its timing reveals nothing. Records are named by the latest name the history holds
+// altogether, so its timing reveals nothing, as is one holding another user's unpublished changes,
+// until they publish them. Records are named by the latest name the history the reader sees holds
 // for them, so a deleted record keeps its name, and identifiers in values are replaced by names.
 
 import {
@@ -34,6 +35,7 @@ import {
   eq,
   exists,
   inArray,
+  or,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -103,9 +105,15 @@ interface Facts {
   visibilities: Map<string, unknown>;
 }
 
-// What the history last recorded about each record: its name, its list, and a list's visibility.
+// The change sets the actor may see: all but those holding other users' unpublished changes.
+const seenSets = (actor: Actor) =>
+  or(eq(changeSets.unpublished, false), eq(changeSets.madeBy, actor.user.id));
+
+// What the history the actor may see last recorded about each record: its name, its list, and a
+// list's visibility.
 async function readFacts(
   database: Database,
+  actor: Actor,
   ids: readonly string[],
   facts: Facts = {
     names: new Map(),
@@ -121,11 +129,13 @@ async function readFacts(
         value: changes.newValue,
       })
       .from(changes)
+      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
       .where(
         and(
           inArray(changes.recordId, chunk),
           inArray(changes.field, [...nameFields, "listId", "visibility"]),
           sql`${changes.newValue} IS NOT NULL`,
+          seenSets(actor),
         ),
       )
       .orderBy(changes.recordId, changes.field, desc(changes.id));
@@ -336,6 +346,7 @@ async function readBatch(
     .leftJoin(users, eq(users.id, changeSets.madeBy))
     .where(
       and(
+        seenSets(actor),
         exists(
           database
             .select({ one: sql`1` })
@@ -364,13 +375,14 @@ async function readBatch(
         .orderBy(asc(changes.id))),
     );
   }
-  const facts = await readFacts(database, [
+  const facts = await readFacts(database, actor, [
     ...rows.map((row) => row.recordId),
     ...rows.flatMap((row) => referencedIds(row)),
   ]);
   // Lists named only through their choices and columns.
   await readFacts(
     database,
+    actor,
     [...facts.lists.values()].filter((id) => !facts.names.has(id)),
     facts,
   );
@@ -391,8 +403,11 @@ async function readBatch(
             {
               entry: {
                 id: set.id,
-                // A kind the server no longer knows is shown as saved changes.
-                kind: changeKindSchema.catch("edit").parse(set.kind),
+                // Unpublished changes all discarded at once are shown as drafts discarded, and a kind
+                // the server no longer knows as saved changes.
+                kind: changeKindSchema
+                  .catch("edit")
+                  .parse(set.kind === "withdrawal" ? "discard" : set.kind),
                 madeAt: set.madeAt.toISOString(),
                 madeBy: set.madeBy,
                 records: recordsOf(held.rows, facts.names, facts.lists),

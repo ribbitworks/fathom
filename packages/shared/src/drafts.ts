@@ -30,7 +30,14 @@ export const draftShape = {
   editors: z.array(z.string().nullable()).optional(),
   // Who last changed each field the draft changes, by the field's key, as the draft names it.
   changedBy: z.record(z.string(), z.string().nullable()).optional(),
+  // True when the draft holds the user's own changes, not yet published, which only they see.
+  unpublished: z.boolean().optional(),
 };
+
+// Who holds a record by having unpublished changes to it, by name, when it is someone other than the
+// user: until they publish or discard them, the user sees the record as published and cannot change,
+// approve, or reject it.
+export const heldBySchema = z.string().optional();
 
 export const draftActionSchema = z.enum(["created", "changed", "deleted"]);
 
@@ -87,3 +94,22 @@ export type DraftsAsked = z.input<typeof draftsRequestSchema>;
 export const rejectionRequestSchema = draftsAsked
   .extend({ reason: z.string().trim().min(1).max(reasonLength) })
   .refine(fewEnough, fewEnoughMessage);
+
+// The user's own unpublished changes, one for each record they change, named as the Drafts page
+// names drafts, such as "the list Sites" or "the new order for Sites", newest first.
+export const unpublishedSchema = z.object({
+  changes: z.array(
+    z.object({
+      subject: z.string(),
+      // What the change does to the record, absent for a new order.
+      action: draftActionSchema.optional(),
+      // True when the change takes back the record's published draft, which publishing removes.
+      discarded: z.boolean().optional(),
+    }),
+  ),
+});
+
+export type Unpublished = z.infer<typeof unpublishedSchema>;
+
+// How many records' changes publishing or discarding them took.
+export const unpublishedDoneSchema = z.object({ total: z.number().int() });

@@ -25,6 +25,7 @@ import type {
   SavedView,
   SavedViewChange,
   SavedViewRequest,
+  Unpublished,
 } from "@fathom/shared";
 import { draftsRequestSchema } from "@fathom/shared";
 import { sql } from "drizzle-orm";
@@ -43,6 +44,11 @@ import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
 import type { Saved } from "./changes.ts";
 import { undoChangeSet } from "./undo.ts";
+import {
+  discardUnpublished,
+  publishUnpublished,
+  readUnpublished,
+} from "./unpublished.ts";
 import { readActorRoles } from "./roles.ts";
 import * as views from "./views.ts";
 
@@ -70,6 +76,8 @@ export interface DataAccess {
   drafts: DraftAccess;
   // People, and the columns on the People table.
   people: PeopleAccess;
+  // The actor's own unpublished changes to drafts, which only they see until they publish them.
+  unpublished: UnpublishedAccess;
   // Undoes a change set the actor made, returning the change set that undid it.
   undo(actor: Actor, changeSetId: string): Promise<ChangeSetId>;
 }
@@ -87,6 +95,14 @@ export interface DraftAccess {
     asked: DraftsAsked,
     reason: string,
   ): Promise<ChangeSetId>;
+}
+
+// Each user's changes to drafts are theirs alone until they publish them, all at once, or discard
+// them, all at once; both answer how many records' changes they took.
+export interface UnpublishedAccess {
+  read(actor: Actor): Promise<Unpublished>;
+  publish(actor: Actor): Promise<number>;
+  discard(actor: Actor): Promise<number>;
 }
 
 // Which draft of a list: the list's own, one of its choices', or that of its choices' order.
@@ -144,6 +160,7 @@ export interface PeopleAccess {
     fields: Field[];
     order: string[];
     orderDraft?: ColumnOrderDraft;
+    orderHeldBy?: string;
     views: SavedView[];
   }>;
   // Changes to people are drafts, which reach the live people once approved.
@@ -203,7 +220,7 @@ function createListAccess(database: Database): ListAccess {
     // Lists' choices are also read by those who see People, whose columns draw on them.
     read: async (actor) => {
       requireAnyPermission(actor, ["configuration:view", "people:view"]);
-      return lists.readLists(database);
+      return lists.readLists(database, actor.user.id);
     },
     create: async (actor, request) =>
       lists.createList(database, editor(actor), request),
@@ -338,6 +355,11 @@ export function createDataAccess(database: Database): DataAccess {
         rejectDrafts(database, actor, draftsRequestSchema.parse(asked), reason),
     },
     people: createPeopleAccess(database),
+    unpublished: {
+      read: async (actor) => readUnpublished(database, actor),
+      publish: async (actor) => publishUnpublished(database, actor),
+      discard: async (actor) => discardUnpublished(database, actor),
+    },
     undo: async (actor, changeSetId) =>
       undoChangeSet(database, actor, changeSetId),
     readGreeting: async (actor) => {

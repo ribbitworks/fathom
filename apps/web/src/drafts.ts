@@ -316,3 +316,13 @@ export function decisionFor(
     ...(draftTotal(held) > 0 ? { leftOut: draftTotal(held) } : {}),
   };
 }
+
+// Whether an Approver may decide a record's draft now: it waits, is published, and nobody has
+// unpublished changes to it, so nobody approves a version that is about to change.
+export const decidable = (record: {
+  draft?: { state: string; unpublished?: boolean | undefined } | undefined;
+  heldBy?: string | undefined;
+}): boolean =>
+  record.draft?.state === "waiting" &&
+  record.draft.unpublished !== true &&
+  record.heldBy === undefined;
