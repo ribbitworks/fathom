@@ -25,18 +25,89 @@ export FATHOM_SECURITY_FIXES_DATE
 
 fathom_git() { git -C "$(dirname "${BASH_SOURCE[0]}")" "$@"; }
 
-# Prints the release this commit belongs to, from the nearest vX.Y.Z tag in its history, such as
-# 0.3.0, followed by +4 when it is 4 commits after that tag. Tags with build metadata, such as
-# v1.0.0+7, are not releases. Prints nothing before the first release.
+# Succeeds when the tag is a release under semantic versioning: vMAJOR.MINOR.PATCH, with no leading
+# zeros in its numbers, perhaps followed by a pre-release such as -rc.1, but without build metadata
+# such as +7.
+fathom_is_release_tag() {
+  local number='(0|[1-9][0-9]*)' part='(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)'
+  local release="^v$number\\.$number\\.$number(-$part(\\.$part)*)?\$"
+  [[ $1 =~ $release ]]
+}
+
+# Succeeds when the whole number $1 is greater than $2, compared as text so no size overflows.
+fathom_number_after() {
+  local LC_ALL=C
+  [ "${#1}" -gt "${#2}" ] || { [ "${#1}" -eq "${#2}" ] && [[ $1 > $2 ]]; }
+}
+
+# Succeeds when release tag $1 comes after release tag $2 in semantic versioning's order: by major,
+# minor and patch, then a release after its pre-releases, then pre-releases part by part, where
+# numbers come before words and a longer pre-release after one it begins with.
+fathom_release_after() {
+  local LC_ALL=C a="${1#v}" b="${2#v}" a_pre="" b_pre="" a_part b_part i
+  local -a a_parts b_parts
+  case "$a" in
+    *-*)
+      a_pre="${a#*-}"
+      a="${a%%-*}"
+      ;;
+  esac
+  case "$b" in
+    *-*)
+      b_pre="${b#*-}"
+      b="${b%%-*}"
+      ;;
+  esac
+  IFS=. read -r -a a_parts <<<"$a"
+  IFS=. read -r -a b_parts <<<"$b"
+  for i in 0 1 2; do
+    if fathom_number_after "${a_parts[i]}" "${b_parts[i]}"; then return 0; fi
+    if fathom_number_after "${b_parts[i]}" "${a_parts[i]}"; then return 1; fi
+  done
+  if [ -z "$a_pre" ] || [ -z "$b_pre" ]; then
+    [ -z "$a_pre" ] && [ -n "$b_pre" ]
+    return
+  fi
+  IFS=. read -r -a a_parts <<<"$a_pre"
+  IFS=. read -r -a b_parts <<<"$b_pre"
+  for ((i = 0; i < ${#a_parts[@]} && i < ${#b_parts[@]}; i++)); do
+    a_part="${a_parts[i]}"
+    b_part="${b_parts[i]}"
+    [ "$a_part" = "$b_part" ] && continue
+    case "$a_part$b_part" in
+      *[!0-9]*)
+        if [[ $a_part == *[!0-9]* && $b_part == *[!0-9]* ]]; then
+          [[ $a_part > $b_part ]]
+        else
+          [[ $a_part == *[!0-9]* ]]
+        fi
+        ;;
+      *) fathom_number_after "$a_part" "$b_part" ;;
+    esac
+    return
+  done
+  [ "${#a_parts[@]}" -gt "${#b_parts[@]}" ]
+}
+
+# Prints the release this commit belongs to, from the nearest release tag in its history, such as
+# 0.3.0, followed by +4 when it is 4 commits after that tag. When several release tags mark that
+# commit, the latest release is used. Prints nothing before the first release.
 fathom_release() {
-  local described commits
-  described="$(fathom_git describe --tags --long --match 'v[0-9]*.[0-9]*.[0-9]*' \
-    --exclude '*+*' 2>/dev/null)" || return 0
+  local tag described commits release
+  local -a skipped=()
+  while IFS= read -r tag; do
+    if ! fathom_is_release_tag "$tag"; then skipped+=(--exclude "$tag"); fi
+  done < <(fathom_git tag --list 'v*' 2>/dev/null)
+  described="$(fathom_git describe --tags --long --match 'v*' ${skipped[@]+"${skipped[@]}"} 2>/dev/null)" ||
+    return 0
   # Such as v0.3.0-4-gabc1234: the tag, the commits since it, and this commit.
   described="${described%-g*}"
   commits="${described##*-}"
-  described="${described%-*}"
-  if [ "$commits" = 0 ]; then printf '%s\n' "${described#v}"; else printf '%s+%s\n' "${described#v}" "$commits"; fi
+  release="${described%-*}"
+  while IFS= read -r tag; do
+    if fathom_is_release_tag "$tag" && fathom_release_after "$tag" "$release"; then release="$tag"; fi
+  done < <(fathom_git tag --points-at "$release^{commit}" 2>/dev/null)
+  if [ "$commits" = 0 ]; then printf '%s\n' "${release#v}"; else printf '%s+%s\n' "${release#v}" "$commits"; fi
 }
 
 # Prints the short commit, followed by -modified when the files differ from it, since then the

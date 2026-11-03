@@ -112,6 +112,39 @@ describe("the release, commit and commit date", () => {
     assert.equal(built(root).version, "1.0.0-rc.1+2");
   });
 
+  it("ignores tags that only look like releases", () => {
+    const root = folder();
+    git(root, "tag", "v1.0.0");
+    commit(root);
+    for (const tag of ["v1.2.3.4", "v01.2.0", "v1.2", "v1.3.0-", "v1.4.0-01"])
+      git(root, "tag", tag);
+    assert.equal(built(root).version, "1.0.0+1");
+  });
+
+  it("uses the latest of the release tags on one commit", () => {
+    for (const [tags, version] of [
+      [["v1.0.0-rc.2", "v1.0.0", "v0.9.0"], "1.0.0"],
+      [["v1.9.0", "v1.10.0"], "1.10.0"],
+      [["v1.0.0-rc.10", "v1.0.0-rc.9"], "1.0.0-rc.10"],
+      [["v1.0.0-1", "v1.0.0-alpha"], "1.0.0-alpha"],
+      [["v1.0.0-rc", "v1.0.0-rc.1"], "1.0.0-rc.1"],
+      [["v1.0.0-alpha", "v1.0.0-beta"], "1.0.0-beta"],
+    ]) {
+      const root = folder();
+      for (const tag of tags) git(root, "tag", tag);
+      commit(root);
+      assert.equal(built(root).version, `${version}+1`, tags.join(" "));
+    }
+  });
+
+  it("looks past an annotated tag to a later release on the same commit", () => {
+    const root = folder();
+    git(root, "tag", "--annotate", "v1.9.0", "--message", "release");
+    git(root, "tag", "v1.10.0");
+    commit(root);
+    assert.equal(built(root).version, "1.10.0+1");
+  });
+
   it("marks the commit as modified when the files differ from it", () => {
     const root = folder();
     const clean = built(root).commit;
