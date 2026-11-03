@@ -3413,8 +3413,11 @@ describe("unpublished and held changes", () => {
       "true",
     );
     expect(
-      within(cell("p2", "preferredName")).getByText("Unpublished"),
+      within(cell("p2", "preferredName")).getByText(", unpublished"),
     ).toBeDefined();
+    expect(
+      within(cell("p2", "preferredName")).queryByText("Unpublished"),
+    ).toBeNull();
     let menu = await menuOf(
       screen.getByRole("button", { name: "Actions for Avery Fictional" }),
     );
@@ -3471,7 +3474,7 @@ describe("unpublished and held changes", () => {
     });
     expect(within(header("Site")).getByText("Being changed")).toBeDefined();
     expect(
-      within(header("Role on team")).getByText("Unpublished"),
+      within(header("Role on team")).getByText(", unpublished"),
     ).toBeDefined();
     let menu = await menuOf(header("Site"));
     // Both the column and the order that moves it are held.

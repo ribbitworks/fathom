@@ -67,7 +67,7 @@ const marks: [string, ReactNode, string][] = [
   [
     "unpublished",
     <StatusMark tone="unpublished">Unpublished</StatusMark>,
-    "Your own change, which only you see until you publish it.",
+    "Your own change, which only you see until you publish it. Other marks show it with a hollow dot, such as Draft: added.",
   ],
   [
     "held",

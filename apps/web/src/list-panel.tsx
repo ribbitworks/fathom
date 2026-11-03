@@ -755,10 +755,7 @@ export function ListPanel({
                   draft={withRetiring({ ...choice, draft: choice.draft })}
                 />
               )}
-              <HoldMarks
-                unpublished={choice.draft?.unpublished}
-                heldBy={choice.heldBy}
-              />
+              <HoldMarks heldBy={choice.heldBy} />
               {moved.has(choice.id) && (
                 <StatusMark
                   tone={
@@ -932,13 +929,7 @@ export function ListPanel({
               <DraftMark draft={withRetiring({ ...list, draft: list.draft })} />
             )}
             {list.orderDraft && <DraftMark draft={list.orderDraft} />}
-            <HoldMarks
-              unpublished={
-                list.draft?.unpublished === true ||
-                list.orderDraft?.unpublished === true
-              }
-              heldBy={list.heldBy ?? list.orderHeldBy}
-            />
+            <HoldMarks heldBy={list.heldBy ?? list.orderHeldBy} />
           </div>
           {canEdit && (
             <Button

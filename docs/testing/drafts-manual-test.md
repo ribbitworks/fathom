@@ -442,7 +442,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 3.** Press Esc. Type **Mariana Metz** in the search box above the table.
-  - **Expected:** Her row has a yellow dot and **Draft**, and a hollow yellow dot and **Unpublished**. Her **Site** cell is yellow.
+  - **Expected:** Her row has a hollow yellow dot and **Draft**, with no **Unpublished** mark. Her **Site** cell is yellow.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **⋯** button at the end of her row.
@@ -482,7 +482,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
 
 - [ ] **Step 1.** Type **E10002** in the search box. Select that person's **Employee ID** cell, type **E20002**, and press Enter.
-  - **Expected:** The cell reads **E20002** and is yellow. The row has a yellow dot and **Draft**, and a hollow yellow dot and **Unpublished**. The top bar shows **Publish 4 changes**.
+  - **Expected:** The cell reads **E20002** and is yellow. The row has a hollow yellow dot and **Draft**, with no **Unpublished** mark. The top bar shows **Publish 4 changes**.
   - **Notes:**
 
 - [ ] **Step 2.** Sign in (P1) as `engineering.director@fathom.test`, open **People**, and type **E10002** in the search box.
@@ -502,7 +502,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 2.** Type **Mariana Metz** in the search box.
-  - **Expected:** Her row has a yellow dot and **Draft**, with no **Unpublished** mark.
+  - **Expected:** Her row has a solid yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 3.** Sign in (P1) as `engineering.director@fathom.test`, open **People**, and type **Mariana Metz** in the search box.

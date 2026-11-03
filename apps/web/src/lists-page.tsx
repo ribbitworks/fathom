@@ -234,9 +234,16 @@ function ListsTable({
             >
               {list.name}
             </Link>
-            {mark && <DraftMark draft={mark} />}
+            {/* The row's mark sums up the list and its choices, so it carries the list's own
+                unpublished changes; without one, as when Drafts only leaves out a rejected
+                draft, they are marked on their own. */}
+            {mark && (
+              <DraftMark
+                draft={{ ...mark, unpublished: list.draft?.unpublished }}
+              />
+            )}
             <HoldMarks
-              unpublished={list.draft?.unpublished}
+              unpublished={mark === undefined && list.draft?.unpublished}
               heldBy={list.heldBy}
             />
           </span>

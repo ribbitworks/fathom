@@ -16,6 +16,8 @@ export interface DraftLike {
   reason?: string | undefined;
   // Whether a change retires the record, or restores it, when it does either.
   retiring?: boolean;
+  // Whether it holds the user's own changes, which only they see until they publish them.
+  unpublished?: boolean | undefined;
 }
 
 // What a draft is, in words.
@@ -34,17 +36,30 @@ export function draftWords(draft: DraftLike): string {
   return "Draft";
 }
 
-// The mark beside a record with a draft, in words after a dot, yellow, or red once rejected. A
-// rejection's reason is in the record's menu, not in the table, and is read aloud with the mark.
+// The mark beside a record with a draft, in words after a dot: yellow, hollow while the draft is
+// the user's own and unpublished, or red once rejected. A rejection's reason is in the record's
+// menu, not in the table, and is read aloud with the mark.
 export function DraftMark({ draft }: { draft: DraftLike }) {
   const rejected = draft.state === "rejected";
+  const unpublished = draft.unpublished === true;
+  if (!rejected) {
+    return (
+      <StatusMark tone={unpublished ? "unpublished" : "draft"} spaced>
+        {draftWords(draft)}
+        {unpublished && <VisuallyHidden>, unpublished</VisuallyHidden>}
+      </StatusMark>
+    );
+  }
   return (
-    <StatusMark tone={rejected ? "rejected" : "draft"} spaced>
-      {rejected ? "Rejected" : draftWords(draft)}
-      {rejected && draft.reason !== undefined && (
-        <VisuallyHidden>: {draft.reason}</VisuallyHidden>
-      )}
-    </StatusMark>
+    <>
+      <StatusMark tone="rejected" spaced>
+        Rejected
+        {draft.reason !== undefined && (
+          <VisuallyHidden>: {draft.reason}</VisuallyHidden>
+        )}
+      </StatusMark>
+      {unpublished && <UnpublishedMark />}
+    </>
   );
 }
 
@@ -56,22 +71,27 @@ const toneClass = new Map([
   ["held", classes.heldMark],
 ]);
 
-// Beside a record's draft mark: Unpublished when the draft holds the user's own changes, which only
-// they see, or Being changed when someone else has unpublished changes to it, read aloud with who.
+// A rejected draft's dot cannot also be hollow, so its unpublished changes have a mark of their own.
+function UnpublishedMark() {
+  return (
+    <StatusMark tone="unpublished" spaced>
+      Unpublished
+    </StatusMark>
+  );
+}
+
+// Beside a record's draft mark: Being changed when someone else has unpublished changes to it, read
+// aloud with who, or Unpublished where no draft mark already says the changes are the user's own.
 export function HoldMarks({
   unpublished,
   heldBy,
 }: {
-  unpublished: boolean | undefined;
+  unpublished?: boolean | undefined;
   heldBy: string | undefined;
 }) {
   return (
     <>
-      {unpublished === true && (
-        <StatusMark tone="unpublished" spaced>
-          Unpublished
-        </StatusMark>
-      )}
+      {unpublished === true && <UnpublishedMark />}
       {heldBy !== undefined && (
         <StatusMark tone="held" spaced>
           Being changed<VisuallyHidden> by {heldBy}</VisuallyHidden>

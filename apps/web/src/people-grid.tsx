@@ -1399,12 +1399,7 @@ export function PeopleGrid({
                   {field?.draft && !liveOnly && (
                     <DraftMark draft={field.draft} />
                   )}
-                  {field && !liveOnly && (
-                    <HoldMarks
-                      unpublished={field.draft?.unpublished}
-                      heldBy={field.heldBy}
-                    />
-                  )}
+                  {field && !liveOnly && <HoldMarks heldBy={field.heldBy} />}
                   {moved && (
                     <StatusMark
                       tone={
@@ -1986,10 +1981,7 @@ export function PeopleGrid({
                             <DraftMark draft={draft} />
                           )}
                           {columnIndex === 0 && row.person && !editingHere && (
-                            <HoldMarks
-                              unpublished={draft?.unpublished}
-                              heldBy={row.person.heldBy}
-                            />
+                            <HoldMarks heldBy={row.person.heldBy} />
                           )}
                           {columnIndex === 0 &&
                             row.newRow &&

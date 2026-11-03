@@ -1834,6 +1834,21 @@ describe("drafts on the Lists page", () => {
   const draftedAnswer = () =>
     Response.json({ lists: [changed, skills, empty, regions, added] });
 
+  it("marks a list one's own unpublished draft adds with one mark in the table", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [{ ...added, draft: { ...added.draft, unpublished: true } }],
+        }),
+    });
+    renderApp("/lists");
+    const table = await screen.findByRole("table", { name: "Lists" });
+    expect(within(table).getByText("Draft: added")).toBeDefined();
+    expect(within(table).getByText(", unpublished")).toBeDefined();
+    expect(within(table).queryByText("Unpublished")).toBeNull();
+  });
+
   it("marks lists and choices with drafts in the table and the panel", async () => {
     serverAnswers({
       "GET /api/session": viewer,
@@ -2968,11 +2983,15 @@ describe("unpublished and held changes on the Lists page", () => {
         ),
       },
     ]);
-    expect(within(panel()).getAllByText("Unpublished").length).toBeGreaterThan(
-      1,
-    );
+    // Each draft's own mark says it is unpublished, with no second mark beside it.
+    expect(
+      within(panel()).getAllByText(", unpublished").length,
+    ).toBeGreaterThan(1);
+    expect(within(panel()).queryByText("Unpublished")).toBeNull();
     let menu = await menuOf("Drafts of Locations");
     expect(within(menu).getAllByText(mine)).toHaveLength(2);
+    // The menu's headings mark the drafts as the table does.
+    expect(within(menu).getAllByText(", unpublished")).toHaveLength(2);
     expect(
       within(menu).queryByRole("menuitem", { name: "Approve…" }),
     ).toBeNull();
