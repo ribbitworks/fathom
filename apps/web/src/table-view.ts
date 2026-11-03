@@ -3,8 +3,8 @@
 // Filtering, searching, and sorting any table, in the browser, over the rows the user has been sent,
 // as ADR 0006 sets out. A table describes its columns, each of a kind, and how to read a row's value
 // in each; each kind says how its values are searched, sorted, and filtered, so a new kind is added
-// in one place. The view a table shows, its search, filters, and sort, is kept in the page address,
-// with the saved view it started from, if any.
+// in one place. The view a table shows, its search, filters, sort, and metrics, is kept in the page
+// address, with the saved view it started from, if any.
 
 import {
   type Filter,
@@ -54,6 +54,8 @@ export interface View {
   show: Show;
   filters: Record<string, Filter>;
   sort: SortLevel[];
+  // The keys of the columns the metrics break the rows down by, set while the metrics show.
+  breakdown?: string[] | undefined;
 }
 
 export const emptyView: View = {
@@ -93,6 +95,7 @@ export function viewFrom(search: ViewDefinition): View {
         ? { key: level.slice(1), descending: true }
         : { key: level, descending: false },
     ),
+    ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
   };
 }
 
@@ -143,6 +146,7 @@ export function searchFor(view: View): ViewDefinition {
             (level) => `${level.descending ? "-" : ""}${level.key}`,
           ),
         }),
+    ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
   };
 }
 
@@ -158,11 +162,21 @@ function canonical(value: unknown): unknown {
   );
 }
 
-// Whether two views show the same rows in the same order.
+// The view as a saved view keeps it: as the address holds it, without the metrics while they break
+// down by nothing, since an empty Metrics panel is nothing to save.
+export function savedFor(view: View): ViewDefinition {
+  const { breakdown, ...rest } = searchFor(view);
+  return breakdown === undefined || breakdown.length === 0
+    ? rest
+    : { ...rest, breakdown };
+}
+
+// Whether two views show the same rows in the same order, with the same metrics, which is whether
+// saving either would keep the same.
 export function sameView(first: View, second: View): boolean {
   return (
-    JSON.stringify(canonical(searchFor(first))) ===
-    JSON.stringify(canonical(searchFor(second)))
+    JSON.stringify(canonical(savedFor(first))) ===
+    JSON.stringify(canonical(savedFor(second)))
   );
 }
 
@@ -186,15 +200,17 @@ export function narrows(view: View): boolean {
   );
 }
 
-// The view with only the filters and sorts on columns the table has, and the filters it offers that
-// are not columns, leaving out those on columns the user may not see, such as in a link from someone
-// who may.
+// The view with only the filters, sorts, and breakdown on columns the table has, and the filters it
+// offers that are not columns, leaving out those on columns the user may not see, such as in a link
+// from someone who may. The breakdown keeps only the columns the metrics offer, when given.
 export function knownView(
   view: View,
   columns: readonly { key: string }[],
   filterOnly: readonly { key: string }[] = [],
+  countable: readonly { key: string }[] = columns,
 ): View {
   const known = new Set(columns.map((column) => column.key));
+  const counted = new Set(countable.map((column) => column.key));
   const filtered = new Set([
     ...known,
     ...filterOnly.map((column) => column.key),
@@ -206,6 +222,13 @@ export function knownView(
       Object.entries(view.filters).filter(([key]) => filtered.has(key)),
     ),
     sort: view.sort.filter((level) => known.has(level.key)),
+    ...(view.breakdown === undefined
+      ? {}
+      : {
+          breakdown: view.breakdown.filter(
+            (key) => known.has(key) && counted.has(key),
+          ),
+        }),
   };
 }
 
@@ -298,6 +321,10 @@ const rules: Record<Kind, Rules> = {
 };
 
 const rulesFor = (column: TableColumn<never>) => rules[column.kind];
+
+// Whether a value counts as empty in its column.
+export const isEmptyIn = (column: TableColumn<never>, value: CellValue) =>
+  rulesFor(column).isEmpty(value);
 
 // Whether a value matches a column's filter.
 function matchesFilter(

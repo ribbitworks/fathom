@@ -108,6 +108,12 @@ const paths = {
   filter: <path d="M2.5 3.5h11L9.5 8.5v4l-3 1.5v-5.5z" />,
   ascending: <path d="M8 13V3M4.5 6.5L8 3l3.5 3.5" />,
   descending: <path d="M8 3v10M4.5 9.5L8 13l3.5-3.5" />,
+  metrics: (
+    <>
+      <path d="M7 2.5a5.5 5.5 0 1 0 5.5 5.5H7z" />
+      <path d="M9.5 1v4.5H14A4.5 4.5 0 0 0 9.5 1z" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof paths;

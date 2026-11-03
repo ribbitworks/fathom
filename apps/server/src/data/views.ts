@@ -2,10 +2,11 @@
 
 // Saved views of the People table: reading those a user may see, and saving, changing, and deleting
 // them. Part of the data access layer, the only server code that queries the database. Everyone who
-// sees people sees the table's saved views, except a view that filters or sorts on a column they may
-// not see, since its filters could reveal values they may not see. Anyone who sees people may save a
-// view; only its maker, or someone who may change planning configuration, may change or delete it.
-// Each change is recorded in the change history with the most sensitive tier of the view's columns.
+// sees people sees the table's saved views, except a view that filters, sorts, or breaks down by a
+// column they may not see, since its filters and metrics could reveal values they may not see.
+// Anyone who sees people may save a view; only its maker, or someone who may change planning
+// configuration, may change or delete it. Each change is recorded in the change history with the
+// most sensitive tier of the view's columns.
 
 import { type Database, savedViews } from "@fathom/db";
 import {
@@ -92,8 +93,8 @@ export function mayChange(actor: Actor, createdBy: string): boolean {
   );
 }
 
-// The view without filters and sorts on columns deleted since it was saved, which readers need not
-// be sent.
+// The view without filters, sorts, and breakdowns on columns deleted since it was saved, which
+// readers need not be sent.
 function withoutDeleted(
   tiers: ReadonlyMap<string, Tier>,
   definition: ViewDefinition,
@@ -106,8 +107,10 @@ function withoutDeleted(
   );
   return stored({
     search: definition.search,
+    show: definition.show,
     filters: filters.length === 0 ? undefined : Object.fromEntries(filters),
     sort: sort.length === 0 ? undefined : sort,
+    breakdown: definition.breakdown?.filter((key) => tiers.has(key)),
   });
 }
 
@@ -140,9 +143,10 @@ export async function readViews(
     .map((row) => toSavedView(row, actor, tiers));
 }
 
-// Refuses a view that filters or sorts on a column the actor may not see, or that the table does not
-// have, and returns the most sensitive tier of its columns. A view may filter on drafts too, which
-// is General, since each user is sent only the drafts they may see, but not sort on them.
+// Refuses a view that filters, sorts, or breaks down by a column the actor may not see, or that the
+// table does not have, and returns the most sensitive tier of its columns. A view may filter on
+// drafts too, which is General, since each user is sent only the drafts they may see, but not sort
+// or break down by them.
 function requireSeen(
   actor: Actor,
   tiers: ReadonlyMap<string, Tier>,
@@ -154,6 +158,7 @@ function requireSeen(
   if (
     filters.some((key) => unknown(key) && key !== draftFilterKey) ||
     sort.some(unknown) ||
+    (definition.breakdown ?? []).some(unknown) ||
     !sees(actor, tiers, definition)
   ) {
     throw new BadRequestError(hiddenColumns);

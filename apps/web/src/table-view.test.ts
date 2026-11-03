@@ -16,6 +16,7 @@ import {
   knownView,
   narrows,
   sameView,
+  savedFor,
   searchFor,
   type TableColumn,
   useSteadyOrder,
@@ -334,6 +335,34 @@ describe("the view in the page address", () => {
     ).toHaveLength(10);
   });
 
+  it("reads and writes the columns the metrics break down by, kept while the metrics show with none", () => {
+    expect(viewFrom({ breakdown: [] })).toEqual(view({ breakdown: [] }));
+    expect(searchFor(view({ breakdown: ["level", "start"] }))).toEqual({
+      breakdown: ["level", "start"],
+    });
+    expect(searchFor(view({ breakdown: [] }))).toEqual({ breakdown: [] });
+    expect(searchFor(emptyView)).toEqual({});
+    expect(
+      viewSearchSchema.parse({
+        breakdown: ["level", "a b", 3, "level", "x", "y"],
+      }).breakdown,
+    ).toEqual(["level", "x"]);
+    expect(viewSearchSchema.parse({ breakdown: "level" }).breakdown).toBe(
+      undefined,
+    );
+    // An empty Metrics panel is nothing to save, and saving leaves it out.
+    expect(sameView(view({ breakdown: [] }), emptyView)).toBe(true);
+    expect(savedFor(view({ breakdown: [], search: "a" }))).toEqual({
+      search: "a",
+    });
+    expect(savedFor(view({ breakdown: ["level"] }))).toEqual({
+      breakdown: ["level"],
+    });
+    expect(
+      sameView(view({ breakdown: ["level"] }), view({ breakdown: ["start"] })),
+    ).toBe(false);
+  });
+
   it("names the saved view the view started from, until it is cleared", () => {
     const id = "00000000-0000-4000-8000-0000000000a1";
     expect(viewSearchSchema.parse({ view: id }).view).toBe(id);
@@ -482,6 +511,7 @@ describe("columns the user may not see", () => {
             { key: "hidden", descending: false },
             { key: "start", descending: true },
           ],
+          breakdown: ["hidden", "level"],
         }),
         columns,
       ),
@@ -490,8 +520,21 @@ describe("columns the user may not see", () => {
         search: "a",
         filters: { name: { empty: true } },
         sort: [{ key: "start", descending: true }],
+        breakdown: ["level"],
       }),
     );
+    expect(knownView(view({ breakdown: ["hidden"] }), columns)).toEqual(
+      view({ breakdown: [] }),
+    );
+    // Nor are columns the metrics do not offer kept in the breakdown.
+    expect(
+      knownView(
+        view({ breakdown: ["name", "level"] }),
+        columns,
+        [],
+        [{ key: "level" }],
+      ),
+    ).toEqual(view({ breakdown: ["level"] }));
   });
 });
 

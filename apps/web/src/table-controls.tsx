@@ -4,8 +4,9 @@
 // field, which Cmd+F or Ctrl+F focuses and Esc clears; each column's sort and filter, chosen from
 // its menu, each sort added as the next level; each column's filter, edited in a popover beside its
 // header; the bar naming each level of the sort and each filter, which removes them one at a time
-// or all at once; and the menu of the table's saved views, which applies, saves, renames, updates,
-// and deletes them. What they change is the table's view, as table-view.ts sets out.
+// or all at once; the menu of the table's saved views, which applies, saves, renames, updates, and
+// deletes them; and the Metrics button, and each column's Break down by, which open the Metrics
+// panel. What they change is the table's view, as table-view.ts sets out.
 
 import {
   Button,
@@ -25,6 +26,8 @@ import type { SavedView, Show } from "@fathom/shared";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { drafts as draftCount } from "./decision-dialog.tsx";
 import { Icon } from "./icons.tsx";
+import { metricsButtonId, metricsPanelId, metricsTitleId } from "./metrics.ts";
+import { focusSoon } from "./focus.ts";
 import {
   type ColumnChoice,
   type Filter,
@@ -106,6 +109,46 @@ function withFilter(view: View, key: string, filter: Filter | undefined): View {
     filters:
       filter && isActive(filter) ? { ...filters, [key]: filter } : filters,
   };
+}
+
+// A part of a view in words, as the Save view dialog lists it, such as Metrics: Position by Site.
+export interface ViewPart {
+  name: string;
+  value: string;
+}
+
+// What saving a view keeps, part by part, so it is clear that what the Draft menu shows and the
+// metrics are kept too. Parts on columns the table does not have are left out, as the view leaves
+// them out.
+export function viewParts(
+  view: View,
+  columns: readonly AnyColumn[],
+  filterOnly: readonly AnyColumn[] = [],
+): ViewPart[] {
+  const labelOf = (key: string) =>
+    columns.filter((column) => column.key === key).map(({ label }) => label);
+  const filters = [...columns, ...filterOnly].flatMap((column) => {
+    const filter = view.filters[column.key];
+    return filter && isActive(filter) ? [describeFilter(column, filter)] : [];
+  });
+  const sort = view.sort.flatMap(({ key, descending }) =>
+    labelOf(key).map((label) => `${label} ${descending ? "↓" : "↑"}`),
+  );
+  const show = showOptions.filter(
+    (option) => option.value === view.show && option.value !== "both",
+  );
+  const breakdown = (view.breakdown ?? []).flatMap(labelOf);
+  return [
+    ...(view.search.trim() === ""
+      ? []
+      : [{ name: "Search", value: `“${view.search.trim()}”` }]),
+    ...filters.map((value) => ({ name: "Filter", value })),
+    ...(sort.length === 0 ? [] : [{ name: "Sort", value: sort.join(", ") }]),
+    ...show.map(({ label }) => ({ name: "Draft", value: label })),
+    ...(breakdown.length === 0
+      ? []
+      : [{ name: "Metrics", value: breakdown.join(" by ") }]),
+  ];
 }
 
 // A filter in words, such as "Site: Harbour, Northmere".
@@ -270,7 +313,7 @@ const byName = (first: SavedView, second: SavedView) =>
   first.name.localeCompare(second.name, undefined, { sensitivity: "base" });
 
 // The menu of a table's saved views, named after the one the view started from, marked when the
-// view has changed since. Choosing a view applies it. The menu clears the view, saves it as a new
+// view has changed since, or, with none applied, from the table's default view. Choosing a view applies it. The menu clears the view, saves it as a new
 // one, and updates, renames, or deletes the one applied when the user may change it.
 export function ViewsMenu({
   saved: { views, applied, onApply, onName, onUpdate, onDelete },
@@ -290,8 +333,8 @@ export function ViewsMenu({
   const shownAs = (saved: SavedView) =>
     knownView(viewFrom(saved.definition), columns, filterOnly);
   const current = views.find((saved) => saved.id === applied);
-  const changed = current !== undefined && !sameView(shownAs(current), view);
   const empty = sameView(view, emptyView);
+  const changed = current ? !sameView(shownAs(current), view) : !empty;
   if (views.length === 0 && empty) return null;
   return (
     <AppMenu position="bottom-start" hideDetached={false}>
@@ -647,6 +690,23 @@ export function ViewBar({
       >
         {draftItems}
       </DraftMenu>
+      <Button
+        id={metricsButtonId}
+        variant={view.breakdown === undefined ? "default" : "light"}
+        leftSection={<Icon name="metrics" />}
+        aria-expanded={view.breakdown !== undefined}
+        aria-controls={
+          view.breakdown === undefined ? undefined : metricsPanelId
+        }
+        onClick={() => {
+          if (view.breakdown === undefined) {
+            onView({ ...view, breakdown: [] });
+            focusSoon(metricsTitleId);
+          } else onView({ ...view, breakdown: undefined });
+        }}
+      >
+        Metrics
+      </Button>
       {sorts.map(({ column, descending }) => (
         <Pill
           key={`sort-${column.key}`}
@@ -699,7 +759,8 @@ export function ViewBar({
           size="compact-sm"
           variant="subtle"
           onClick={() => {
-            onView(emptyView);
+            // The metrics stay, counting every row.
+            onView({ ...emptyView, breakdown: view.breakdown });
           }}
         >
           Clear all
@@ -741,12 +802,15 @@ export function ColumnViewItems({
   view,
   onView,
   onFilter,
+  breaksDown = false,
 }: {
   column: AnyColumn;
   view: View;
   onView: ChangeView;
   // Opens the column's filter.
   onFilter: () => void;
+  // Whether the metrics may break the rows down by the column.
+  breaksDown?: boolean;
 }) {
   const sorted = view.sort.some((level) => level.key === column.key);
 
@@ -786,6 +850,17 @@ export function ColumnViewItems({
           }}
         >
           Clear filter
+        </Menu.Item>
+      )}
+      {breaksDown && (
+        <Menu.Item
+          leftSection={<Icon name="metrics" />}
+          onClick={() => {
+            onView({ ...view, breakdown: [column.key] });
+            focusSoon(metricsTitleId);
+          }}
+        >
+          Break down by
         </Menu.Item>
       )}
     </>

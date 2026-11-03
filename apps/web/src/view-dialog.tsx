@@ -6,14 +6,17 @@
 
 import { type SavedView, viewLengths } from "@fathom/shared";
 import { Group, Button, Stack, Text, TextInput } from "@mantine/core";
+import type { ViewPart } from "./table-controls.tsx";
+import classes from "./pages.module.css";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { Count, nameProblem } from "./list-dialog.tsx";
 import { sameName } from "./lists.ts";
 
 const conflict = 409;
 const duplicate = "Already a view";
+const includesId = "view-dialog-includes";
 
 export interface SavedViewResult {
   view: SavedView;
@@ -27,9 +30,12 @@ export function ViewDialog({
   onSaved,
   onCancel,
   onBusy,
+  saves,
 }: {
   // The saved view being renamed; absent when saving a new one.
   view?: SavedView;
+  // What saving keeps, listed under the name; absent when renaming.
+  saves?: readonly ViewPart[];
   views: readonly SavedView[];
   save: (name: string) => Promise<SavedViewResult>;
   onSaved: (saved: SavedViewResult) => void;
@@ -86,6 +92,21 @@ export function ViewDialog({
             setName(event.currentTarget.value);
           }}
         />
+        {saves !== undefined && saves.length > 0 && (
+          <div>
+            <Text id={includesId} fz="sm" fw={500} mb={4}>
+              Includes
+            </Text>
+            <dl className={classes.viewParts} aria-labelledby={includesId}>
+              {saves.map((part, at) => (
+                <Fragment key={at}>
+                  <dt>{part.name}</dt>
+                  <dd>{part.value}</dd>
+                </Fragment>
+              ))}
+            </dl>
+          </div>
+        )}
         {saving.error &&
           !(
             saving.error instanceof ApiError && saving.error.status === conflict

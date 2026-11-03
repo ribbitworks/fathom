@@ -234,6 +234,60 @@ describe("saved views", () => {
     );
   });
 
+  it("keep what they show and the columns they break down by, and are kept from readers who may not see those columns", async () => {
+    const manager = await test.signedIn(["resource-planner", "people-manager"]);
+    const viewer = await test.signedIn(["resource-planner"]);
+    const general = (
+      await save(viewer.cookie, "Metrics open", {
+        show: "drafts",
+        breakdown: [],
+      })
+    ).json<Saved>().view;
+    expect(general.definition).toEqual({ show: "drafts", breakdown: [] });
+    expect(
+      (await viewsOf(viewer.cookie)).find(({ id }) => id === general.id)
+        ?.definition,
+    ).toEqual({ show: "drafts", breakdown: [] });
+
+    const { view } = (
+      await save(manager.cookie, "By start", {
+        breakdown: ["startDate", "employeeId"],
+      })
+    ).json<Saved>();
+    expect(
+      (await test.historyOf(view.id)).every(
+        ({ tier }) => tier === "restricted",
+      ),
+    ).toBe(true);
+    expect(
+      (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
+    ).toBe(false);
+    expect(
+      (await save(viewer.cookie, "Mine", { breakdown: ["endDate"] })).json(),
+    ).toEqual({ error: "Choose only columns you can see" });
+    expect(
+      (await save(viewer.cookie, "Unknown", { breakdown: ["nothing"] }))
+        .statusCode,
+    ).toBe(400);
+    expect(
+      (
+        await save(viewer.cookie, "Repeated", {
+          breakdown: ["employeeId", "employeeId"],
+        })
+      ).statusCode,
+    ).toBe(400);
+    expect(
+      (await save(viewer.cookie, "By draft", { breakdown: ["draft"] })).json(),
+    ).toEqual({ error: "Choose only columns you can see" });
+    expect(
+      (
+        await save(viewer.cookie, "Three", {
+          breakdown: ["employeeId", "preferredName", "draft"],
+        })
+      ).statusCode,
+    ).toBe(400);
+  });
+
   it("may filter on drafts, which every reader may see, since each is sent only the drafts they may see", async () => {
     const viewer = await test.signedIn(["resource-planner"]);
     const { view } = (
@@ -296,6 +350,7 @@ describe("saved views", () => {
       await save(cookie, "Levels", {
         filters: { [field.id]: { any: [String(choice?.id)] } },
         sort: [field.id],
+        breakdown: [field.id],
       })
     ).json<Saved>();
     expect(
@@ -308,12 +363,13 @@ describe("saved views", () => {
         .statusCode,
     ).toBe(200);
     await test.approveLists();
-    // Readers are sent the view without the deleted column, which is not shown to them.
+    // Readers are sent the view without the deleted column, which is not shown to them, though its
+    // metrics still show.
     const viewer = await test.signedIn(["resource-planner"]);
     expect(
       (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
         ?.definition,
-    ).toEqual({});
+    ).toEqual({ breakdown: [] });
     // Its deleted column cannot be saved into it again.
     expect(
       (

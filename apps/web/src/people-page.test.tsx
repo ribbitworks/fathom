@@ -2332,11 +2332,13 @@ describe("searching, sorting, and filtering", () => {
           },
         },
       );
-      expect(viewsButton().getAttribute("aria-label")).toBe("Views");
+      // Changed from the table's default view, with nothing saved yet.
+      expect(viewsButton().getAttribute("aria-label")).toBe("Views, changed");
       await chooseView("Save view…");
       const dialog = await screen.findByRole("dialog", { name: "Save view" });
       await userEvent.keyboard("{Enter}");
       expect(within(dialog).getByText("Name needed")).toBeDefined();
+      expect(within(dialog).getByText("Includes")).toBeDefined();
       await userEvent.keyboard("Harbour{Enter}");
       await waitFor(() => {
         expect(address(history)).toContain(`view=${v1}`);

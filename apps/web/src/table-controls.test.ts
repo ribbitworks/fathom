@@ -5,7 +5,7 @@
 // People page.
 
 import { describe, expect, it } from "vitest";
-import { describeFilter, sortedBy } from "./table-controls.tsx";
+import { describeFilter, sortedBy, viewParts } from "./table-controls.tsx";
 import { emptyView } from "./table-view.ts";
 
 const column = (kind: "text" | "date" | "choice") => ({
@@ -17,6 +17,43 @@ const column = (kind: "text" | "date" | "choice") => ({
     { id: "b", label: "P2" },
   ],
   multiple: false,
+});
+
+describe("what saving a view keeps", () => {
+  const level = { ...column("choice"), key: "level" };
+  const site = { ...column("choice"), key: "site", label: "Site" };
+
+  it("names each part that is set, what the Draft menu shows and the metrics included", () => {
+    expect(
+      viewParts(
+        {
+          search: " fictional ",
+          show: "live",
+          filters: { level: { any: ["a"] }, site: {}, gone: { empty: true } },
+          sort: [
+            { key: "level", descending: true },
+            { key: "gone", descending: false },
+            { key: "site", descending: false },
+          ],
+          breakdown: ["level", "site"],
+        },
+        [level, site],
+      ),
+    ).toEqual([
+      { name: "Search", value: "“fictional”" },
+      { name: "Filter", value: "Level: P1" },
+      { name: "Sort", value: "Level ↓, Site ↑" },
+      { name: "Draft", value: "Live only" },
+      { name: "Metrics", value: "Level by Site" },
+    ]);
+  });
+
+  it("leaves out what is not set, and metrics that break down by nothing yet", () => {
+    expect(viewParts(emptyView, [level])).toEqual([]);
+    expect(
+      viewParts({ ...emptyView, show: "drafts", breakdown: [] }, [level]),
+    ).toEqual([{ name: "Draft", value: "Drafts applied" }]);
+  });
 });
 
 describe("filters in words", () => {

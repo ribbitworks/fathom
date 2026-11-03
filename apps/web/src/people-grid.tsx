@@ -29,6 +29,7 @@ import type {
   PersonChange,
   PersonDraft,
   PersonRequest,
+  Show,
 } from "@fathom/shared";
 import {
   builtInColumnNames,
@@ -97,6 +98,12 @@ import {
   type View,
 } from "./table-view.ts";
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
+import { metricsButtonId } from "./metrics.ts";
+import {
+  type CountedRows,
+  MetricsPanel,
+  WithMetrics,
+} from "./metrics-panel.tsx";
 import classes from "./pages.module.css";
 import type { Phrase } from "./phrase.tsx";
 import { DraftMark, StatusMark } from "./status-mark.tsx";
@@ -286,6 +293,29 @@ export function livePeople(people: readonly Person[]): Person[] {
     return [{ ...rest, ...details, values }];
   });
 }
+
+// The people the metrics count, as the Draft menu shows them. With drafts beside live, they count
+// as drafted, leaving out those drafted to be removed, and as they are live, by each column's live
+// copy, which `liveOf` gives; otherwise they count as shown.
+export function countedPeople(
+  show: Show,
+  shown: readonly Person[],
+  columns: readonly Column[],
+  liveOf: (column: Column) => Column | undefined,
+): { rows: Person[]; live?: CountedRows<Person> } {
+  if (show !== "both") return { rows: [...shown] };
+  return {
+    rows: shown.filter(({ draft }) => draft?.action !== "deleted"),
+    live: {
+      rows: livePeople(shown),
+      columns: columns.flatMap((column) => liveOf(column) ?? []),
+    },
+  };
+}
+
+// Required text, such as names, is always filled in, so is not worth breaking down by.
+const breaksDown = (column: Column) =>
+  column.kind === "choice" || !column.required;
 
 const builtInDetail = (key: string) =>
   ["preferredName", "employeeId", "startDate", "endDate"].includes(key);
@@ -756,7 +786,12 @@ export function PeopleGrid({
           order,
           showDates,
         );
-  const known = knownView(asked, columns, [draftColumn]);
+  const known = knownView(
+    asked,
+    columns,
+    [draftColumn],
+    columns.filter(breaksDown),
+  );
   // The live people alone are read only, since every change makes a draft they do not show, and
   // have no drafts to filter by.
   const liveOnly = known.show === "live";
@@ -1433,6 +1468,7 @@ export function PeopleGrid({
                 onFilter={() => {
                   setFiltering(column.key);
                 }}
+                breaksDown={breaksDown(column)}
               />
               {canEditColumns && (
                 <>
@@ -1641,10 +1677,36 @@ export function PeopleGrid({
     : noDrafts();
   const waitingTotal = draftTotal(waitingShown);
 
+  // A column only drafted to be added, or to draw on another list, has no live figures to compare.
+  const liveForMetrics = (column: Column) => {
+    const draft = column.field?.draft;
+    if (draft?.action === "created") return undefined;
+    if (fieldsLive.get(column.key)?.listId !== column.field?.listId) {
+      return undefined;
+    }
+    return liveBeside(column) ?? liveColumn(column);
+  };
+  const metrics = view.breakdown !== undefined && (
+    <MetricsPanel
+      one="person"
+      noun="people"
+      {...countedPeople(view.show, shownPeople, columns, liveForMetrics)}
+      offered={columns.filter(breaksDown)}
+      breakdown={view.breakdown}
+      onBreakdown={(breakdown) => {
+        onView({ ...view, breakdown });
+      }}
+      onClose={() => {
+        onView({ ...view, breakdown: undefined });
+        focusSoon(metricsButtonId);
+      }}
+    />
+  );
+
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
-    <>
+    <WithMetrics panel={metrics}>
       <ViewBar
         one="person"
         noun="people"
@@ -1947,6 +2009,6 @@ export function PeopleGrid({
           </Table>
         </div>
       </Paper>
-    </>
+    </WithMetrics>
   );
 }

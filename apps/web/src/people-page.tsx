@@ -37,6 +37,8 @@ import { PageHeader } from "./page-header.tsx";
 import { type Decision, decisionFor } from "./drafts.ts";
 import classes from "./pages.module.css";
 import {
+  columnsFor,
+  draftColumn,
   type PeopleActions,
   PeopleGrid,
   type PeopleGridHandle,
@@ -59,7 +61,8 @@ import {
 } from "./people.ts";
 import { useSaving } from "./saving.ts";
 import type { ChangeView, SavedViews } from "./table-controls.tsx";
-import { searchFor, type View } from "./table-view.ts";
+import { viewParts } from "./table-controls.tsx";
+import { type View, savedFor } from "./table-view.ts";
 import { type SavedViewResult, ViewDialog } from "./view-dialog.tsx";
 
 const newColumnId = "column-new";
@@ -391,7 +394,7 @@ export function PeoplePage({
       setNamingOpened(true);
     },
     onUpdate: (saved, shown) => {
-      const definition = searchFor(shown);
+      const definition = savedFor(shown);
       save({
         next: (data) => ({
           ...data,
@@ -510,12 +513,25 @@ export function PeoplePage({
         >
           {naming && (
             <ViewDialog
-              {...(naming.saved ? { view: naming.saved } : {})}
+              {...(naming.saved
+                ? { view: naming.saved }
+                : {
+                    saves: viewParts(
+                      naming.view,
+                      columnsFor(
+                        query.data.fields,
+                        lists.data,
+                        query.data.order,
+                        showDates,
+                      ),
+                      [draftColumn],
+                    ),
+                  })}
               views={query.data.views}
               save={(name) =>
                 naming.saved
                   ? updateView(naming.saved.id, { name })
-                  : createView({ name, definition: searchFor(naming.view) })
+                  : createView({ name, definition: savedFor(naming.view) })
               }
               onSaved={named}
               onCancel={() => {

@@ -12,6 +12,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   columnsFor,
   columnWidth,
+  countedPeople,
   droppedAfter,
   liveFields,
   livePeople,
@@ -281,6 +282,50 @@ describe("the live people", () => {
       person("p3"),
       person("p4", { endDate: null, values: { f3: ["c5"], f1: ["c1"] } }),
     ]);
+  });
+});
+
+describe("the people the metrics count", () => {
+  const draft = {
+    state: "waiting" as const,
+    madeBy: null,
+    madeAt: null,
+    changed: [],
+    live: { values: {} },
+  };
+  const person = (id: string, more: Partial<Person> = {}): Person => ({
+    id,
+    preferredName: `Fictional ${id}`,
+    employeeId: id,
+    values: {},
+    ...more,
+  });
+  const people = [
+    person("p1"),
+    person("p2", { draft: { ...draft, action: "created" } }),
+    person("p3", { draft: { ...draft, action: "deleted" } }),
+  ];
+  const [column, other] = columnsFor([site], [sites], [], false);
+
+  it("are those shown, unless drafts show beside live", () => {
+    expect(countedPeople("live", people, [], () => undefined)).toEqual({
+      rows: people,
+    });
+    expect(countedPeople("drafts", people, [], () => undefined)).toEqual({
+      rows: people,
+    });
+  });
+
+  it("are, with drafts beside live, those not drafted to be removed, and as they are live by each column's live copy", () => {
+    const counted = countedPeople(
+      "both",
+      people,
+      [column, other].flatMap((each) => (each ? [each] : [])),
+      (each) => (each === column ? each : undefined),
+    );
+    expect(counted.rows.map(({ id }) => id)).toEqual(["p1", "p2"]);
+    expect(counted.live?.rows.map(({ id }) => id)).toEqual(["p1", "p3"]);
+    expect(counted.live?.columns).toEqual([column]);
   });
 });
 

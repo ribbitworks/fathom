@@ -80,7 +80,7 @@ Goals the owner has added that are not yet placed in a stage:
 - **Private views:** A saved view is either private, seen only by the user who saved it, or shared, seen by everyone who may see the data it shows. Until then, every saved view is shared, as the [Decisions Log](decisions.md) records.
 - **Hiding columns:** Any column, built-in ones included, can be hidden from a table's view, and shown again, with hidden columns kept in saved views. Deleting an added column is offered in its column menu too, not only in its dialog.
 - **Row timestamps:** Every database row records when it was created and last updated.
-- **Totals:** Totals over the rows shown, such as a count of rows or a sum, which follow the filters as they are added and removed. Counts work on any column, but sums and other totals of amounts need the number and currency column types under Your Own Fields and Tables.
+- **Totals:** Sums and other totals of amounts over the rows shown, which follow the filters as they are added and removed, once the number and currency column types under Your Own Fields and Tables exist. Counts and shares of a column's values are already given by People's [metrics](decisions.md#configuration).
 - **Help:** More help, such as for Fathom's pages and terms, beyond Help's Roles and Drafts pages.
 - **Renaming terms:** An organization renames Fathom's terms to its own, such as Feature to Epic, or Cycle to Program Increment.
 - **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.

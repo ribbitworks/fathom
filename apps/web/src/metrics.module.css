@@ -1,0 +1,162 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Styles for the Metrics panel and the table it sits beside. */
+
+/* A table with its bar above it, and the Metrics panel beside both while it is open, so the table
+   narrows rather than being covered. The table keeps its own height, up to the room there is, and
+   scrolls within it. */
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--mantine-spacing-md);
+}
+
+.layout > * {
+  min-width: 0;
+  max-height: 100%;
+}
+
+/* The panel as wide as it was dragged, leaving the table at least 20rem. */
+.layoutOpen {
+  grid-template-columns:
+    minmax(0, 1fr)
+    clamp(
+      20rem,
+      var(--metrics-width),
+      calc(100% - 20rem - var(--mantine-spacing-md))
+    );
+}
+
+/* Where the panel goes, beside the table and the bar above it, with its edge for resizing. */
+.panelPlace {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  min-height: 0;
+}
+
+/* The edge between the table and the panel, dragged to resize the panel, marked on hover and when
+   focused. */
+.resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--mantine-spacing-md));
+  width: var(--mantine-spacing-md);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 1px);
+  width: 2px;
+  border-radius: 1px;
+}
+
+.resizer:hover::after,
+.resizer:focus-visible::after {
+  background: var(--mantine-primary-color-filled);
+}
+
+.resizer:focus-visible {
+  outline: none;
+}
+
+.panel,
+.panelNarrow {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--mantine-color-body);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-default);
+}
+
+.panel {
+  flex: 1;
+  min-width: 0;
+}
+
+/* On a narrow screen the panel covers the screen below the top bar. */
+.panelNarrow {
+  position: fixed;
+  top: var(--app-shell-header-offset, 56px);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* The same layer as the Lists page's side panel, above the table's header row. */
+  z-index: 150;
+  border: 0;
+  border-radius: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 4px 16px;
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 16px 16px;
+}
+
+.pickers {
+  display: grid;
+  /* One picker alone takes the whole width, so its choices are not cut short. */
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--mantine-spacing-sm);
+  margin-bottom: var(--mantine-spacing-md);
+}
+
+/* Two columns crossed may be wider than the panel, and scroll sideways. */
+.crossed {
+  overflow-x: auto;
+}
+
+.figures th,
+.figures td {
+  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.figures thead th {
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+  color: var(--mantine-color-dimmed);
+}
+
+.groupName {
+  font-weight: 400;
+  text-align: left;
+}
+
+.number {
+  text-align: right;
+}
+
+.live {
+  display: block;
+  line-height: 1.2;
+}

@@ -791,3 +791,25 @@ th.liveColumn {
   color: var(--mantine-color-text);
   font-weight: 600;
 }
+
+/* What saving a view keeps, in the Save view dialog: each part's name beside its value, in a box
+   set apart from the name field. */
+.viewParts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-default);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.viewParts dt {
+  color: var(--mantine-color-dimmed);
+}
+
+.viewParts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

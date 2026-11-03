@@ -112,7 +112,7 @@ Planned hires and their ramp-up through allocations, shown in the plan as propos
 
 ### Team Composition
 
-Reports per manager, including planned hires, compared with a target.
+Reports per manager, including planned hires, compared with a target. It builds on the People table's [metrics](../product/decisions.md#configuration), which count people by a column's values: reports per manager groups the same counts by manager, with a target beside each, and later ratios, such as test to development, compare two of a column's counts.
 
 ### Demand Forecasting
 
