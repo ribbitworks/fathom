@@ -21,8 +21,11 @@ export FATHOM_HTTPS_PORT="$FATHOM_STACK_PORT"
 case "$FATHOM_HTTPS_PORT" in
   '' | *[!0-9]*) fail "FATHOM_STACK_PORT must be a port number from 1 to 65535" ;;
 esac
-FATHOM_HTTPS_PORT="$((10#$FATHOM_HTTPS_PORT))"
-if [ "$FATHOM_HTTPS_PORT" -lt 1 ] || [ "$FATHOM_HTTPS_PORT" -gt 65535 ]; then
+# Leading zeros are dropped with string operations, which the code scanner can parse, unlike a
+# base-10 arithmetic expansion; more than five digits could overflow the comparison below.
+FATHOM_HTTPS_PORT="${FATHOM_HTTPS_PORT#"${FATHOM_HTTPS_PORT%%[!0]*}"}"
+if [ "${#FATHOM_HTTPS_PORT}" -gt 5 ] || [ "${FATHOM_HTTPS_PORT:-0}" -lt 1 ] ||
+  [ "$FATHOM_HTTPS_PORT" -gt 65535 ]; then
   fail "FATHOM_STACK_PORT must be a port number from 1 to 65535"
 fi
 export FATHOM_PUBLIC_URL="https://localhost:$FATHOM_HTTPS_PORT"
