@@ -21,6 +21,7 @@ import {
 import { type Tier, tierSchema } from "@fathom/shared";
 import { and, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import { mostSensitive } from "../access.ts";
+import { ConflictError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import type { ColumnInfo } from "./values.ts";
 
@@ -43,6 +44,18 @@ export interface Draft {
   reason: string | null;
   // Rises with each draft made, so records drafted to be added keep the order they were drafted in.
   sequence: number;
+}
+
+// A rejected draft is back with its makers until they send it again, so it is approved neither
+// itself nor with a draft that uses it.
+export function refuseRejected(found: Iterable<Draft | undefined>): void {
+  for (const draft of found) {
+    if (draft?.state === "rejected") {
+      throw new ConflictError(
+        "One of these drafts, or one it depends on, was rejected; it can be approved once that draft is resubmitted",
+      );
+    }
+  }
 }
 
 // The history field that holds a rejected draft's reason, which waiting drafts do not have.

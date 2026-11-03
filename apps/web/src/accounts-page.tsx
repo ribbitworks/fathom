@@ -52,6 +52,7 @@ import { initials } from "./names.ts";
 import { notifySuccess } from "./notices.tsx";
 import { Icon } from "./icons.tsx";
 import { PageHeader } from "./page-header.tsx";
+import { AppMenu } from "./app-menu.tsx";
 import classes from "./pages.module.css";
 import type { SignedInUser } from "./session.ts";
 import { count } from "./numbers.ts";
@@ -394,8 +395,8 @@ function AccountRow({
             Your account
           </Text>
         ) : (
-          <Menu position="bottom-end">
-            <Menu.Target>
+          <AppMenu position="bottom-end">
+            <AppMenu.Target>
               <ActionIcon
                 variant="subtle"
                 color="gray"
@@ -404,8 +405,8 @@ function AccountRow({
               >
                 <Icon name="more" />
               </ActionIcon>
-            </Menu.Target>
-            <Menu.Dropdown>
+            </AppMenu.Target>
+            <AppMenu.Dropdown>
               <Menu.Item
                 onClick={() => {
                   onOpen({ kind: "roles", account });
@@ -428,8 +429,8 @@ function AccountRow({
               >
                 {account.active ? "Deactivate" : "Reactivate"}
               </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+            </AppMenu.Dropdown>
+          </AppMenu>
         )}
       </Table.Td>
     </Table.Tr>

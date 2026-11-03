@@ -142,6 +142,7 @@ Automate every repeatable setup, development, and operations task with a script 
   - Architecture decision records (`docs/adr/`): technical decisions
   - Issues (`docs/issues.md`): known problems and deferred work not yet scheduled in the implementation plan
   - Security plan (`docs/security/security-plan.md`): threat model, vulnerability scanning, source code assurance, and enforcement
+  - Manual tests (`docs/testing/`): lasting step-by-step tests of a feature by hand in a real browser, following [Testing Standards § Manual Tests](docs/standards/testing.md#manual-tests)
   - Supported platforms (`docs/operations/supported-platforms.md`): the platforms Fathom is tested and supported on, and their setup needs
   - Deployment (`docs/operations/deployment.md`): the specifics of Fathom's first deployment and what it asks of IT
   - IT overview (`docs/operations/it-overview.md`): a standalone summary for IT of facts owned by the documents above; update it whenever those facts change

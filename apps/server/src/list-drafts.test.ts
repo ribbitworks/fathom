@@ -217,6 +217,35 @@ describe("rejecting drafts of lists", () => {
     expect(read?.choices[0]?.draft).toMatchObject({ state: "rejected" });
   });
 
+  it("approves a choice only once the rejected list it is added to is sent again", async () => {
+    const list = await draftList();
+    const [choice] = await draftChoices(list.id, ["North"]);
+    await decide("rejection", {
+      lists: [list.id],
+      choices: [String(choice?.id)],
+      reason: "Not yet",
+    });
+    await test.request(
+      editor.cookie,
+      "DELETE",
+      `/api/lists/${list.id}/choices/${String(choice?.id)}/draft/rejection`,
+    );
+    const waiting = await decide("approval", { choices: [String(choice?.id)] });
+    expect(waiting.statusCode).toBe(409);
+    expect(waiting.json()).toEqual({
+      error:
+        "One of these drafts, or one it depends on, was rejected; it can be approved once that draft is resubmitted",
+    });
+    await test.request(
+      editor.cookie,
+      "DELETE",
+      `/api/lists/${list.id}/draft/rejection`,
+    );
+    expect(
+      (await decide("approval", { choices: [String(choice?.id)] })).statusCode,
+    ).toBe(200);
+  });
+
   it("sends a rejected draft for approval again, and discarding a list drafted to be added discards its choices", async () => {
     const list = await draftList();
     const [choice] = await draftChoices(list.id, ["North"]);

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // What a draft changes, field by field, and who changed each field, in words: shown at the top of
-// the menu of each record with a draft, on the People table and the Lists page, and in the bars of
-// a list's draft and its choices' order, so whoever approves or discards a draft sees what it
-// holds, since several people's changes to one record make one draft.
+// the menu of each record with a draft, on the People table and the Lists page, so whoever approves
+// or discards a draft sees what it holds, since several people's changes to one record make one
+// draft.
 
 import {
   builtInColumnNames,
@@ -15,9 +15,12 @@ import {
   type PersonDraft,
 } from "@fathom/shared";
 import { Menu, Text } from "@mantine/core";
+import type { ReactNode } from "react";
 import { describeField } from "./changes.ts";
 import type { DetailKey } from "./people-grid.tsx";
 import classes from "./pages.module.css";
+import { type Phrase, PhraseText, phraseText } from "./phrase.tsx";
+import { type DraftLike, DraftMark } from "./status-mark.tsx";
 
 export interface DraftField {
   // The field's key, as the draft names it: a detail's name or a column's identifier.
@@ -114,30 +117,75 @@ export function changerOf(draft: Credited, key: string): string {
 export function draftLines(
   draft: Credited,
   changed: readonly DraftField[],
-): string[] {
+): Phrase[] {
   if (draft.action === "created") {
-    return [`Added by ${nameOf(draft.madeBy)}`];
+    return [[{ strong: "Added" }, ` by ${nameOf(draft.madeBy)}`]];
   }
   if (draft.action === "deleted") {
-    return [`Removed by ${nameOf(draft.madeBy)}`];
+    return [[{ strong: "Removed" }, ` by ${nameOf(draft.madeBy)}`]];
   }
-  if (changed.length === 0) return [`Changed by ${nameOf(draft.madeBy)}`];
-  return changed.map(
-    ({ key, field }) => `${describeField(field)}, by ${changerOf(draft, key)}`,
+  if (changed.length === 0) {
+    return [[{ strong: "Changed" }, ` by ${nameOf(draft.madeBy)}`]];
+  }
+  return changed.map(({ key, field }) => [
+    ...describeField(field),
+    `, by ${changerOf(draft, key)}`,
+  ]);
+}
+
+// Under an Approve item that is disabled because the draft depends on a rejected one.
+export function WaitingNote() {
+  return (
+    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+      Waiting for a rejected draft to be resubmitted
+    </Text>
   );
 }
 
-// The lines at the top of a record's menu.
-export function MenuDraftLines({ lines }: { lines: readonly string[] }) {
+// The name at the top of a record's menu, set apart from what follows it.
+export function MenuTitle({ children }: { children: ReactNode }) {
   return (
     <>
-      <Menu.Label>Draft</Menu.Label>
+      <Menu.Label className={classes.menuTitle}>{children}</Menu.Label>
+      <Menu.Divider />
+    </>
+  );
+}
+
+// A draft's section at the top of a record's menu: its mark, red once rejected, then why it was
+// rejected, then its lines, such as what it changes and who changed it.
+export function MenuDraftLines({
+  draft,
+  lines,
+  divider = true,
+}: {
+  draft: DraftLike;
+  lines: readonly Phrase[];
+  // Set apart from the items after them, when there are any.
+  divider?: boolean;
+}) {
+  return (
+    <>
+      <Menu.Label className={classes.draftHeading}>
+        <DraftMark draft={{ ...draft, reason: undefined }} />
+      </Menu.Label>
+      {draft.state === "rejected" && draft.reason !== undefined && (
+        <Text fz="xs" px="sm" pb={4} className={classes.rejectedReason}>
+          Reason: {draft.reason}
+        </Text>
+      )}
       {lines.map((line) => (
-        <Text key={line} fz="xs" px="sm" pb={4} className={classes.draftLine}>
-          {line}
+        <Text
+          key={phraseText(line)}
+          fz="xs"
+          px="sm"
+          pb={4}
+          className={classes.draftLine}
+        >
+          <PhraseText phrase={line} />
         </Text>
       ))}
-      <Menu.Divider />
+      {divider && <Menu.Divider />}
     </>
   );
 }

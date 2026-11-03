@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* What every table shares through the theme: column headers that are small, semibold, dimmed, and
-   one line of a set height, so tables look alike whatever their rows hold. */
+   at least a set height, so tables look alike whatever their rows hold. The People table's grow
+   with the draft marks under the columns' names. */
 
 .table > thead th {
   height: var(--fathom-table-head-height);

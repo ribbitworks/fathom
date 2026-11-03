@@ -47,3 +47,19 @@ export function renderApp(path: string) {
   render(<App queryClient={queryClient} history={history} />);
   return history;
 }
+
+// Finds the element whose whole text matches, though parts of it, such as the values a change
+// names, are marked in elements of their own.
+export const wholeText =
+  (expected: string | RegExp) =>
+  (_content: string, element: Element | null): boolean => {
+    const matches = (found: Element) =>
+      typeof expected === "string"
+        ? found.textContent === expected
+        : expected.test(found.textContent);
+    return (
+      element !== null &&
+      matches(element) &&
+      ![...element.children].some((child) => matches(child))
+    );
+  };

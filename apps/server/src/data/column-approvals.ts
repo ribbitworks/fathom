@@ -33,6 +33,7 @@ import {
   deleteDrafts,
   type Draft,
   draftsUse,
+  refuseRejected,
   rejectedField,
   setRejection,
 } from "./drafts.ts";
@@ -93,6 +94,10 @@ export async function approveColumnDrafts(
   const approved = [...state.fieldDrafts.keys()].filter(
     (id) => asked.columns.includes(id) || used.includes(id),
   );
+  refuseRejected([
+    ...approved.map((id) => state.fieldDrafts.get(id)),
+    ...(asked.columnOrder ? [state.orderDraft] : []),
+  ]);
   const made: Change[] = [];
   for (const id of approved) {
     const live = state.fields.get(id);

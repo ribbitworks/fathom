@@ -104,6 +104,51 @@ describe("the mark beside a list", () => {
       ),
     ).toEqual({ state: "rejected" });
   });
+
+  it("is waiting while anything in the list waits, and leaves out rejected drafts when asked", () => {
+    const described = {
+      ...waiting,
+      state: "rejected" as const,
+      action: "changed" as const,
+      changed: ["description"],
+      live: { description: "" },
+    };
+    const list = plain("l1", {
+      draft: described,
+      choices: [
+        {
+          ...choice("a"),
+          draft: { ...waiting, action: "deleted", changed: [], live: {} },
+        },
+      ],
+      orderDraft: { ...waiting, state: "rejected", live: [] },
+    });
+    expect(listMark(list)).toEqual({ action: "changed", state: "waiting" });
+    expect(listMark(list, true)).toEqual({
+      action: "changed",
+      state: "waiting",
+    });
+    expect(listMark(plain("l1", { draft: described }))).toEqual({
+      state: "rejected",
+    });
+    expect(listMark(plain("l1", { draft: described }), true)).toBeUndefined();
+    const added = { ...described, action: "created" as const };
+    expect(listMark(plain("l1", { draft: added }))).toBe(added);
+    const renamed = { ...described, state: "waiting" as const };
+    expect(listMark(plain("l1", { draft: renamed }))).toEqual({
+      action: "changed",
+      state: "waiting",
+    });
+    const retiring = {
+      ...renamed,
+      changed: ["retired"],
+      live: { retired: false },
+    };
+    expect(listMark(plain("l1", { retired: true, draft: retiring }))).toEqual({
+      ...retiring,
+      retiring: true,
+    });
+  });
 });
 
 describe("the live lists", () => {

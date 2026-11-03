@@ -14,6 +14,8 @@ export interface DraftLike {
   action?: "created" | "changed" | "deleted";
   state: DraftState;
   reason?: string | undefined;
+  // Whether a change retires the record, or restores it, when it does either.
+  retiring?: boolean;
 }
 
 // What a draft is, in words.
@@ -25,7 +27,10 @@ export function draftWords(draft: DraftLike): string {
   }
   if (draft.action === "created") return "Draft: added";
   if (draft.action === "deleted") return "Draft: removed";
-  if (draft.action === undefined) return "Draft: order";
+  if (draft.action === undefined) return "Draft: reordered";
+  if (draft.retiring !== undefined) {
+    return draft.retiring ? "Draft: retired" : "Draft: restored";
+  }
   return "Draft";
 }
 

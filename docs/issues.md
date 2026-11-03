@@ -35,10 +35,12 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 ## People
 
 - **Undo while adding people:** Undoing a change while people being added are still saving, or later undoing a change made while they were, briefly shows the table without them, or with them as they were before they were saved, until it reloads.
+- **Splitting the People table:** `apps/web/src/people-grid.tsx` holds the table's editing, its menus, and how drafts of columns and their order are shown, and is large enough to split, such as the live copies of columns and the marks under their names into a module of their own. Found in review on 2026-11-02.
 - **Pasting several choices:** Pasting into a column that takes several choices reads each cell as one choice name. How several are pasted into one cell was left for later by the owner.
 
 ## Drafts
 
+- **A draft's lineage:** No one place shows how a draft came to be where it is: who made and changed it, who rejected it and why, when it was sent again, and which drafts it uses or that use it. The record's menu, the Drafts page and the change history each hold part of it, which makes a draft waiting on a rejected one hard to follow. A view of a draft's lineage was suggested by the owner while testing drafts by hand on 2026-11-02.
 - **A column's tier and its creator:** The Security Plan says a column can only be given a tier its creator can see, but adding a column has never checked it: a Workforce Administrator sees every tier, so no role reaches the gap today. Found in review on 2026-11-01.
 - **Unnamed in the access history:** The access history names each person by their live record, so a Restricted change to someone only drafted to be added shows them without a name until their draft is approved.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.

@@ -122,13 +122,27 @@ describe("seeding", () => {
     expect(await unseed(connection, organization)).toEqual(kept);
   });
 
-  it("puts seeded columns after a stored order when seeding again", async () => {
+  it("puts seeded columns right after Employee ID in a stored order, once each, when seeding again", async () => {
     await connection.delete(people);
     await connection.delete(fields);
     await connection.delete(lists);
+    await connection.delete(columnOrders);
+    await connection.insert(columnOrders).values({
+      tableName: "people",
+      keys: ["employeeId", "preferredName", "startDate", "endDate"],
+    });
+    const seeded = [
+      "employeeId",
+      ...organization.columns.map(({ id }) => id),
+      "preferredName",
+      "startDate",
+      "endDate",
+    ];
+    await seed(connection, organization);
+    expect(await unseed(connection, organization)).toEqual([]);
     await seed(connection, organization);
     const [order] = await connection.select().from(columnOrders);
-    expect(order?.keys.at(-1)).toBe(organization.columns.at(-1)?.id);
+    expect(order?.keys).toEqual(seeded);
     expect(await unseed(connection, organization)).toEqual([]);
     expect(await totalOf(people)).toBe(0);
   });
@@ -165,11 +179,11 @@ describe("the seed command", () => {
     expect(await seedCommand(["seed"], environment())).toBe(0);
     const made = await connection.select().from(drafts);
     // Of people, then of lists: a site renamed and described by two people, a role retired, Roles on
-    // the team renamed, Languages retired, the Levels and Positions orders, and a Positions
+    // the team renamed, Languages retired, the Sites, Levels, and Positions orders, and a Positions
     // description; the Skills list, its two choices, and Harbourside added; and a person, an unused
     // position, and the Certifications list removed.
     expect(made.map(({ action }) => action).sort()).toEqual([
-      ...Array<string>(12).fill("changed"),
+      ...Array<string>(13).fill("changed"),
       ...Array<string>(7).fill("created"),
       ...Array<string>(4).fill("deleted"),
     ]);
@@ -190,7 +204,7 @@ describe("the seed command", () => {
     );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
-    expect(await connection.select().from(drafts)).toHaveLength(23);
+    expect(await connection.select().from(drafts)).toHaveLength(24);
     // Seeding again after the Approver approves the waiting drafts makes none again, and leaves
     // alone a draft made by hand of another seeded person, which removing the seed data discards,
     // since it removes that person.
@@ -234,9 +248,9 @@ describe("the seed command", () => {
       },
     ]);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    // The two rejected drafts of people, the one made by hand, the thirteen of lists, and the four
+    // The two rejected drafts of people, the one made by hand, the fourteen of lists, and the four
     // of columns.
-    expect(await connection.select().from(drafts)).toHaveLength(20);
+    expect(await connection.select().from(drafts)).toHaveLength(21);
     const positions = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
       listId: String(positions?.id),
@@ -269,7 +283,7 @@ describe("the seed command", () => {
       "Added drafts of lists and columns made by the personas",
       "The fictional data is already in the database",
       "The fictional data is already in the database",
-      "Discarded 15 drafts of lists and columns made by the personas",
+      "Discarded 16 drafts of lists and columns made by the personas",
       "Discarded 3 drafts made by the personas",
       "Removed the fictional data",
       "Kept: The Positions list, which has choices added by hand",
@@ -314,11 +328,11 @@ describe("the seed command", () => {
       .where(eq(listItems.label, "Fictional Hand Choice"));
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(17);
+    expect(await ofLists()).toHaveLength(18);
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     expect(await ofLists()).toHaveLength(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(17);
+    expect(await ofLists()).toHaveLength(18);
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     log.mockRestore();
   });

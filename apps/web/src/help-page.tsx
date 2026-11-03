@@ -24,70 +24,66 @@ const marks: [string, ReactNode, string][] = [
   [
     "draft",
     <StatusMark tone="draft">Draft</StatusMark>,
-    "A change to a person, a list, a choice, or a column, waiting for approval, on a light blue row, or after a column's name. On People, each cell it changes is in yellow.",
+    "A change waiting for approval.",
   ],
   [
     "added",
     <StatusMark tone="draft">Draft: added</StatusMark>,
-    "A person, a list, a choice, or a column to be added once approved.",
+    "Added once approved.",
   ],
   [
     "removed",
     <StatusMark tone="draft">Draft: removed</StatusMark>,
-    "A person, a list, a choice, or a column to be removed once approved, struck through.",
-  ],
-  [
-    "rejected",
-    <StatusMark tone="rejected">Rejected</StatusMark>,
-    "A draft an Approver rejected, in red. Any reason is at the top of the record's menu, or in its bar on the Lists page, and on the Drafts page.",
+    "Removed once approved.",
   ],
   [
     "moved",
     <StatusMark tone="draft">Draft: moved</StatusMark>,
-    "A choice or column in the place a draft of the order moves it to.",
+    "A moved column or choice, waiting for approval.",
   ],
   [
-    "order",
-    <StatusMark tone="draft">Draft: order</StatusMark>,
-    "A list whose draft changes only the order of its choices.",
+    "reordered",
+    <StatusMark tone="draft">Draft: reordered</StatusMark>,
+    "A list whose choices are in a new order, waiting for approval.",
+  ],
+  [
+    "retired",
+    <StatusMark tone="draft">Draft: retired</StatusMark>,
+    "Retired once approved. Draft: restored means brought back once approved.",
+  ],
+  [
+    "rejected",
+    <StatusMark tone="rejected">Rejected</StatusMark>,
+    "The draft was rejected. The reason is in the record's menu.",
   ],
   [
     "live",
     <StatusMark tone="live">Live</StatusMark>,
-    "The record as it is now, in green under a draft that changes it, or a moved choice in its place now. Read only.",
+    "The current record, without the draft's changes.",
   ],
 ];
 
 const lifecycle: [string, string][] = [
   [
     "Saved",
-    "Waits for approval at once. Later edits, by anyone, change the same draft, so a record has at most one; its menu says who changed each field.",
+    "It waits for an Approver. If someone else edits the same record, their changes join the same draft.",
   ],
-  [
-    "Approved",
-    "Becomes live, with any draft it uses, such as a choice added to a list that is itself drafted to be added, which the Approver is told of first. Approving cannot be undone; a new draft changes it.",
-  ],
+  ["Approved", "The change goes live. This can't be undone."],
   [
     "Rejected",
-    "Stays until it is changed, which sends it for approval again, or until it is sent again unchanged or discarded. An Approver may still approve it, or reject it again for another reason. A draft that others use is rejected only together with them.",
+    "It goes back to the person who made it, who can change it, resubmit it, or discard it. Drafts that depend on it wait.",
   ],
-  [
-    "Discarded",
-    "Gone. The record stays as it is, or, if the draft added it, is not added.",
-  ],
+  ["Discarded", "The draft is deleted, and the record stays as it is."],
 ];
 
 // What the Draft menu above each table with drafts shows.
 const views: [string, string][] = [
-  ["Drafts beside live", "Each draft marked, with the live record beside it."],
+  ["Drafts beside live", "Each draft next to how the record is now."],
   [
     "Drafts applied",
-    "Everything as it will be once the drafts are approved, without live rows.",
+    "Everything as it will be once the waiting drafts are approved.",
   ],
-  [
-    "Live only",
-    "Everything as it is now, without drafts. Read only, and not filtered by draft.",
-  ],
+  ["Live only", "Everything as it is now."],
 ];
 
 function Rows({ rows }: { rows: [string, ReactNode, string][] }) {

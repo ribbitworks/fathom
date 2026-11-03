@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-02"
 ---
 
 # Testing Standards
@@ -21,6 +21,7 @@ Fathom's additions to the shared [Testing Standards](shared/testing.md), which d
 | Security | Input handling, sessions, request forgery protection, rate limiting, audit records, and log contents | Every change |
 | Container | Behavior that needs the built containers, such as network isolation | Every change that affects the containers, and before a stage is complete |
 | UI | Key user journeys in a real browser | Not required for each change and not run in the workflow's test step; run when the user asks, and passing before a stage is complete |
+| Manual | What a person sees and does in a feature, by hand in a real browser, as [Manual Tests](#manual-tests) describes | Before a stage that changes the feature is complete, and when the owner asks |
 
 Every new or changed API operation has integration tests, as well as unit tests for its rules.
 
@@ -52,3 +53,25 @@ The coverage tool is configured so the test command fails below the shared 100% 
 ## Running Tests
 
 `pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell, PowerShell and licence linting, the unit, integration, access control and security tests, and the build-time security scans. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
+
+## Manual Tests
+
+A manual test is a test specification a test engineer, including one new to Fathom, runs by hand in a browser. Each is kept in `docs/testing/`, named `<feature>-manual-test.md`, such as [Drafts](../testing/drafts-manual-test.md), and has these sections:
+
+- **Scope:** one or two sentences on what the test verifies.
+- **Test Environment:** what must be running and set up, with links to the documents that say how.
+- **Test Accounts:** each account the test uses, named by its role in Fathom, with its email address, its name as Fathom shows it, what it can do, which procedure creates it, and where its password comes from.
+- **Common Procedures:** numbered procedures the test cases refer to: starting Fathom, each way of restoring or resetting the data, with the exact commands, which terminal runs them, how to confirm they worked, and what each deletes, and signing in and out.
+- **Terms:** where on screen any menu or control the steps name is found, when its label alone does not say.
+- **Test Cases:** each with an ID, such as `DRAFT-01`, a title saying what it verifies, its preconditions (the account's email address, the page and view, and any procedure to run first), its steps, and any procedure to run afterwards. Each step is an unticked checkbox with the step's number and one action, followed by an **Expected:** line and an empty **Notes:** line for the tester. Steps are never laid out as tables.
+
+Rules:
+
+- **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, in bold. Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
+- **Must** keep each test case to one behavior, and make its preconditions enough to start it.
+- **Must** say exactly where to act and what to look for: which row when a record shows a draft row and a live row, which heading a button sits beside, what to type in a search box to find an entry on a long page, and each column of a table to check, in order.
+- **Must** describe what is on screen as the tester sees it, such as "a yellow dot and **Draft**", not by the names the code or design documents use.
+- **Must** say only what to do and what to see: no explanations of why, design rationale, or history of fixes.
+- **Must Not** repeat facts other documents own, such as the contents of the seed data; link to them.
+- **Must** be updated in the same change as the behavior or the seed data it tests, together with [Visual Design](../design/visual-design.md) where that changes too. When a step fails because the behavior is wrong, the behavior is fixed, not the step.
+- **Must Not** depend on data a tester adds by hand, other than through the steps themselves, or on real data.

@@ -36,6 +36,7 @@ import {
   lockDrafts,
   readPersonDrafts,
   type Recorded,
+  refuseRejected,
   rejectedField,
   setRejection,
 } from "./drafts.ts";
@@ -209,8 +210,8 @@ async function approvePeopleIn(
     string,
     { draft: Draft; person: Recorded | undefined }
   >();
+  refuseRejected(found.values());
   for (const id of ids) {
-    // A rejected draft may be approved too, when the Approver changes their mind.
     const draft = found.get(id) as Draft;
     const person = drafted(live.get(id), draft);
     wanted.set(id, { draft, person });

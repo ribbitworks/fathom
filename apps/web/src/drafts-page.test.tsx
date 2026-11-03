@@ -9,7 +9,12 @@ import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { drafts } from "./decision-dialog.tsx";
-import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  fictionalUser,
+  renderApp,
+  serverAnswers,
+  wholeText,
+} from "./test-support.tsx";
 
 const s1 = "00000000-0000-4000-8000-000000000001";
 
@@ -188,7 +193,7 @@ describe("the Drafts page", () => {
       "Fictional Editor drafted changes to the choice Northmere Labs in Sites: Name from Northmere to Northmere Labs; gone changed",
     );
     expect(shown).toContain(
-      "Fictional Editor drafted a new order of Sites: Order from Harbour, Northmere Labs, a removed choice to Northmere Labs, Harbour Rejected: Keep the order",
+      "Fictional Editor drafted a new order for Sites: From Harbour, Northmere, a removed choice to Northmere Labs, Harbour Rejected: Keep the order",
     );
     expect(shown).toContain("Fictional Editor drafted adding the list Teams");
     await userEvent.click(
@@ -202,7 +207,7 @@ describe("the Drafts page", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
     });
-    expect(within(dialog).getByText("the list Teams")).toBeDefined();
+    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );
@@ -249,10 +254,21 @@ describe("the Drafts page", () => {
               name: "Previous site",
               draft: draft({ action: "created", changed: ["name"], live: {} }),
             },
+            {
+              ...site,
+              id: "f3",
+              name: "Grade",
+              draft: draft({
+                action: "changed",
+                changed: ["name"],
+                live: { name: "Level" },
+              }),
+            },
+            { ...site, id: "f4", name: "Team" },
           ],
-          order: ["preferredName", "f2", "employeeId", "f1"],
+          order: ["preferredName", "f2", "employeeId", "f1", "f3", "f4"],
           orderDraft: draft({
-            live: ["preferredName", "employeeId", "f1"],
+            live: ["preferredName", "employeeId", "f1", "f3", "f4"],
             uses: ["f2"],
           }),
           views: [],
@@ -261,11 +277,15 @@ describe("the Drafts page", () => {
     });
     renderApp("/drafts");
     expect(await screen.findByText("the column Site")).toBeDefined();
-    expect(screen.getByText(/List from Sites to Levels/)).toBeDefined();
+    expect(
+      screen.getByText(wholeText(/List from Sites to Levels/)),
+    ).toBeDefined();
     expect(screen.getByText("the column Previous site")).toBeDefined();
     expect(
       screen.getByText(
-        /Order from Name, Employee ID, Site to Name, Previous site, Employee ID, Site/,
+        wholeText(
+          /From Name, Employee ID, Site, Level, Team to Name, Previous site, Employee ID, Site, Grade, Team/,
+        ),
       ),
     ).toBeDefined();
     await userEvent.click(
@@ -275,7 +295,7 @@ describe("the Drafts page", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: /^Approve/ }));
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText("the column Previous site")).toBeDefined();
+    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );
@@ -394,25 +414,25 @@ describe("the Drafts page", () => {
         name: "Select the draft of Blake Fictional",
       }),
     );
-    // A rejected draft may be approved after all.
-    await userEvent.click(
+    // A rejected draft is back with its makers until they send it again.
+    expect(
       screen.getByRole("checkbox", {
         name: "Select the draft of Drew Fictional",
       }),
-    );
+    ).toHaveProperty("disabled", true);
     await userEvent.click(
-      screen.getByRole("button", { name: "Approve 3 drafts" }),
+      screen.getByRole("button", { name: "Approve 2 drafts" }),
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Approve 3 drafts?",
+      name: "Approve 2 drafts?",
     });
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );
-    expect(await screen.findByText("Approved 3 drafts.")).toBeDefined();
+    expect(await screen.findByText("Approved 2 drafts.")).toBeDefined();
     expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
       {
-        people: ["p1", "p2", "p4"],
+        people: ["p1", "p2"],
         lists: [],
         choices: [],
         orders: [],
@@ -458,6 +478,70 @@ describe("the Drafts page", () => {
     );
   });
 
+  it("keeps a new order that waits on a rejected choice from being selected, and approves the rest", async () => {
+    const fetch = await openDrafts({
+      "GET /api/people": peopleWith([changed]),
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...sites,
+              choices: [
+                {
+                  id: "c9",
+                  label: "Fenwick",
+                  description: "",
+                  retired: false,
+                  draft: draft({
+                    action: "created",
+                    live: {},
+                    state: "rejected",
+                    reason: "Not yet",
+                  }),
+                },
+                ...sites.choices,
+              ],
+              orderDraft: draft({ live: ["c1", "c2"], uses: ["c9"] }),
+            },
+          ],
+        }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    const order = await screen.findByRole("checkbox", {
+      name: "Select the draft of Sites",
+    });
+    expect(order).toHaveProperty("disabled", true);
+    expect(
+      screen.getByText("Waiting for a rejected draft to be resubmitted"),
+    ).toBeDefined();
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Select all waiting" }),
+    );
+    expect(order).toHaveProperty("checked", false);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 1 draft?",
+    });
+    expect(within(dialog).queryByText(/skipped/)).toBeNull();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+        {
+          people: ["p1"],
+          lists: [],
+          choices: [],
+          orders: [],
+          columns: [],
+          columnOrder: false,
+        },
+      ]);
+    });
+  });
+
   it("rejects the drafts selected, asking for a reason", async () => {
     const fetch = await openDrafts({
       "POST /api/drafts/rejection": () => Response.json({ changeSetId: s1 }),
@@ -496,13 +580,13 @@ describe("the Drafts page", () => {
     ]);
   });
 
-  it("says when rejecting changed nothing, as for a draft already rejected for that reason", async () => {
+  it("says when rejecting changed nothing, as when another Approver rejected the drafts for that reason first", async () => {
     await openDrafts({
       "POST /api/drafts/rejection": () => Response.json({ changeSetId: null }),
     });
     await userEvent.click(
       await screen.findByRole("checkbox", {
-        name: "Select the draft of Drew Fictional",
+        name: "Select the draft of Avery Fictional",
       }),
     );
     await userEvent.click(screen.getByRole("button", { name: "Reject…" }));

@@ -562,7 +562,7 @@ describe("approving and rejecting", () => {
     expect((await approve([ownId], own.cookie)).statusCode).toBe(200);
   });
 
-  it("refuses drafts that are gone, and those that no longer fit, but approves rejected ones", async () => {
+  it("refuses drafts that are gone, rejected, or no longer fit", async () => {
     const missing = await approve([randomUUID()]);
     expect(missing.statusCode).toBe(404);
     expect((await reject([randomUUID()], "Fictional")).statusCode).toBe(404);
@@ -571,7 +571,18 @@ describe("approving and rejecting", () => {
     expect((await reject([person.id], "Fictional reason")).statusCode).toBe(
       200,
     );
-    // An Approver who changes their mind approves a rejected draft after all.
+    // A rejected draft is back with its makers, so is approved only once sent again.
+    const rejected = await approve([person.id]);
+    expect(rejected.statusCode).toBe(409);
+    expect(rejected.json()).toEqual({
+      error:
+        "One of these drafts, or one it depends on, was rejected; it can be approved once that draft is resubmitted",
+    });
+    await send(
+      editor.cookie,
+      "DELETE",
+      `/api/people/${person.id}/draft/rejection`,
+    );
     expect((await approve([person.id])).statusCode).toBe(200);
     expect(await draftRow(person.id)).toBeUndefined();
     expect(await live(person.id)).toBeDefined();
@@ -687,7 +698,7 @@ describe("approving and rejecting", () => {
     );
     expect(waiting.statusCode).toBe(409);
     expect(waiting.json()).toEqual({
-      error: "Only a rejected draft is sent for approval again",
+      error: "Only a rejected draft can be resubmitted",
     });
     await reject([person.id], "Fictional reason");
     const resent = await saved(

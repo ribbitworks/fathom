@@ -226,6 +226,167 @@ describe("the table of lists", () => {
     ]);
   });
 
+  it("marks a list waiting while anything in it waits, and rejected only once everything drafted in it was", async () => {
+    const drafted = (state: string, more: object) => ({
+      ...removal,
+      state,
+      ...(state === "rejected" ? { reason: "Not yet" } : {}),
+      ...more,
+    });
+    const described = {
+      action: "changed",
+      changed: ["description"],
+      live: { description: "" },
+    };
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              choices: [
+                choice("c9", "Fenwick", {
+                  draft: drafted("rejected", {
+                    action: "created",
+                    changed: ["label"],
+                  }),
+                }),
+                ...locations.choices,
+              ],
+              orderDraft: drafted("waiting", {
+                live: ["c1", "c2", "c3", "c4"],
+                uses: ["c9"],
+              }),
+            },
+            {
+              ...skills,
+              description: "What people know.",
+              draft: drafted("rejected", described),
+            },
+            {
+              ...empty,
+              description: "Kept empty.",
+              choices: [
+                choice("c8", "Spare", { draft: drafted("waiting", {}) }),
+              ],
+              draft: drafted("rejected", described),
+            },
+          ],
+        }),
+    });
+    const names = async () =>
+      within(await screen.findByRole("table", { name: "Lists" }))
+        .getAllByRole("row")
+        .slice(1)
+        .map((tableRow) => tableRow.firstElementChild?.textContent);
+    const history = renderApp("/lists");
+    expect(await names()).toEqual([
+      "Locations Draft: reordered",
+      "Skills Rejected",
+      "Empty List Draft",
+    ]);
+    act(() => {
+      history.push("/lists?show=drafts");
+    });
+    await waitFor(async () => {
+      expect(await names()).toContain("Skills");
+    });
+    expect(await names()).toEqual([
+      "Locations Draft: reordered",
+      "Skills",
+      "Empty List Draft",
+    ]);
+  });
+
+  it("strikes through and leaves uncounted a choice drafted to be removed", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              choices: locations.choices.map((one) =>
+                one.id === "c2" ? { ...one, draft: removal } : one,
+              ),
+            },
+          ],
+        }),
+    });
+    renderApp("/lists");
+    const table = await screen.findByRole("table", { name: "Lists" });
+    const [drafted] = within(table).getAllByRole("row").slice(1);
+    const choices = within(drafted as HTMLElement).getAllByRole("cell")[2];
+    expect(choices?.textContent).toBe(
+      "(2) Kestrel Bay, Northmere, Corran Quay",
+    );
+    expect(
+      within(choices as HTMLElement).getByText("Northmere").className,
+    ).toMatch(/struck/);
+  });
+
+  it("keeps a list or choice a draft retires or restores where it is live, marked, until applied", async () => {
+    const retiring = (retired: boolean) => ({
+      ...removal,
+      action: "changed",
+      changed: ["retired"],
+      live: { retired: !retired },
+    });
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              retired: true,
+              draft: retiring(true),
+              choices: locations.choices.map((one) =>
+                one.id === "c2"
+                  ? { ...one, retired: true, draft: retiring(true) }
+                  : one,
+              ),
+            },
+            { ...regions, retired: false, draft: retiring(false) },
+          ],
+        }),
+    });
+    const names = async () =>
+      within(await screen.findByRole("table", { name: "Lists" }))
+        .getAllByRole("row")
+        .slice(1)
+        .map((tableRow) => tableRow.firstElementChild?.textContent);
+    const history = renderApp("/lists");
+    expect(await names()).toEqual(["Locations Draft: retired"]);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Show retired (1)" }),
+    );
+    expect(await names()).toEqual([
+      "Locations Draft: retired",
+      "Retired",
+      "Regions Draft: restored",
+    ]);
+    await userEvent.click(screen.getByRole("link", { name: "Locations" }));
+    const opened = await screen.findByRole("region", { name: /./ });
+    expect(within(opened).getAllByText("Draft: retired")).toHaveLength(2);
+    expect(
+      within(document.getElementById("choice-c2") as HTMLElement).getAllByText(
+        "Draft: retired",
+      ).length,
+    ).toBeGreaterThan(0);
+    act(() => {
+      history.push("/lists?show=drafts");
+    });
+    await waitFor(async () => {
+      expect(await names()).toEqual([
+        "Regions Draft: restored",
+        "Retired",
+        "Locations Draft: retired",
+      ]);
+    });
+  });
+
   it("shows retired lists only when asked", async () => {
     serverAnswers({
       "GET /api/session": viewer,
@@ -1594,6 +1755,14 @@ describe("only the latest change", () => {
 });
 
 describe("drafts on the Lists page", () => {
+  // An Approver who may not edit lists, so has their menus only to decide drafts.
+  const approverOnly = () =>
+    Response.json({
+      ...fictionalUser,
+      roles: ["viewer", "approver"],
+      permissions: ["configuration:view", "drafts:approve", "plan:view"],
+    });
+
   const approver = () =>
     Response.json({
       ...fictionalUser,
@@ -1700,7 +1869,7 @@ describe("drafts on the Lists page", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
     });
-    expect(within(dialog).getByText("the list Teams")).toBeDefined();
+    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );
@@ -1718,7 +1887,7 @@ describe("drafts on the Lists page", () => {
     });
   });
 
-  it("shows a rejected choice's reason in its menu, and sends it for approval again", async () => {
+  it("shows a rejected choice's reason in its menu, and resubmits it", async () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": draftedAnswer,
@@ -1729,9 +1898,9 @@ describe("drafts on the Lists page", () => {
     focusRow("c1");
     await userEvent.keyboard("{ContextMenu}");
     const item = await screen.findByRole("menuitem", {
-      name: "Send for approval again",
+      name: "Resubmit",
     });
-    expect(screen.getByText("Rejected: Keep the old name")).toBeDefined();
+    expect(screen.getByText("Reason: Keep the old name")).toBeDefined();
     await userEvent.click(item);
     await waitFor(() => {
       expect(
@@ -1744,19 +1913,40 @@ describe("drafts on the Lists page", () => {
     });
   });
 
-  it("discards a draft of the order from the bar above the choices", async () => {
+  // Opens the menu of a list's drafts, beside its name in the panel, once no other menu is open.
+  const listMenu = async (name: string) => {
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: `Drafts of ${name}` }),
+    );
+    return screen.findByRole("menu");
+  };
+  const chooseInListMenu = async (name: string, item: string) => {
+    await userEvent.click(
+      within(await listMenu(name)).getByRole("menuitem", { name: item }),
+    );
+  };
+
+  it("discards a draft of the order from the list's menu", async () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": draftedAnswer,
       "DELETE /api/lists/l1/order/draft": savedAs(),
     });
     renderApp("/lists/l1");
-    const bar = await screen.findByRole("group", {
-      name: "Draft of the order",
-    });
-    expect(within(bar).getByText("Draft: order")).toBeDefined();
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    expect(within(panel()).getByText("Draft: reordered")).toBeDefined();
+    // A click on a draft's details closes the menu.
     await userEvent.click(
-      within(bar).getByRole("button", { name: "Discard draft" }),
+      within(await listMenu("Locations")).getByText(
+        "Reordered by Fictional Editor",
+      ),
+    );
+    const menu = await listMenu("Locations");
+    await userEvent.click(
+      within(menu).getByRole("menuitem", { name: "Discard new order" }),
     );
     expect(
       await screen.findByText("Discarded the draft of the order of Locations."),
@@ -1813,6 +2003,54 @@ describe("drafts on the Lists page", () => {
   const otherAnswer = () =>
     Response.json({ lists: [reordered, renamed, empty, regions, added] });
 
+  it("holds a list's own draft and its new order of choices in its menu, and asks before rejecting the order", async () => {
+    serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...reordered,
+              draft: renamed.draft,
+              orderDraft: { ...reordered.orderDraft, state: "waiting" },
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    const menu = await listMenu("Locations");
+    expect(within(menu).getByText("Reason: Keep Skills")).toBeDefined();
+    expect(within(menu).getByText("Changed by Fictional Editor")).toBeDefined();
+    expect(
+      within(menu).getByText("Reordered by Fictional Editor"),
+    ).toBeDefined();
+    // The list's own draft was rejected, so it is back with its makers, with nothing to decide:
+    // only the new order offers Reject.
+    const rejects = within(menu).getAllByRole("menuitem", { name: "Reject…" });
+    expect(rejects).toHaveLength(1);
+    await userEvent.click(rejects[0] as HTMLElement);
+    expect(
+      await screen.findByRole("dialog", { name: "Reject 1 draft?" }),
+    ).toBeDefined();
+  });
+
+  it("takes back rejected drafts when showing the drafts applied", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": otherAnswer,
+    });
+    renderApp("/lists/l1?show=drafts");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    const table = screen.getByRole("table", { name: "Lists" });
+    expect(within(table).getByText("Skills")).toBeDefined();
+    expect(within(table).queryByText("Talents")).toBeNull();
+    expect(within(panel()).queryByText(/moved/)).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Drafts of Locations" }),
+    ).toBeNull();
+  });
+
   it("marks a moved choice in a rejected order, and leaves a choice drafted to be removed alone", async () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
@@ -1828,10 +2066,10 @@ describe("drafts on the Lists page", () => {
     focusRow("c4");
     await userEvent.keyboard("{Enter}r{Delete}{Alt>}{ArrowUp}{/Alt}");
     expect(screen.queryByLabelText("name")).toBeNull();
-    const bar = screen.getByRole("group", { name: "Draft of the order" });
-    expect(within(bar).getByText("Keep the old order")).toBeDefined();
+    const menu = await listMenu("Locations");
+    expect(within(menu).getByText("Reason: Keep the old order")).toBeDefined();
     await userEvent.click(
-      within(bar).getByRole("button", { name: "Send again" }),
+      within(menu).getByRole("menuitem", { name: "Resubmit" }),
     );
     await waitFor(() => {
       expect(sent(fetch, "DELETE", "/api/lists/l1/order/draft/rejection")).toBe(
@@ -1842,7 +2080,7 @@ describe("drafts on the Lists page", () => {
     expect(sent(fetch, "PUT", "/api/lists/l1/choices/c4/retired")).toBe(false);
   });
 
-  it("shows a renamed list's live row, sends its rejected draft again, and discards it", async () => {
+  it("shows a renamed list's live row, resubmits its rejected draft, and discards it", async () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": otherAnswer,
@@ -1853,52 +2091,44 @@ describe("drafts on the Lists page", () => {
     const table = await screen.findByRole("table", { name: "Lists" });
     // Under the renamed list, and under the list whose choices have drafts.
     expect(within(table).getAllByText("Live")).toHaveLength(2);
-    const bar = await screen.findByRole("group", { name: "Draft" });
+    const menu = await listMenu("Talents");
+    expect(within(menu).getByText("Reason: Keep Skills")).toBeDefined();
     await userEvent.click(
-      within(bar).getByRole("button", { name: "Send again" }),
+      within(menu).getByRole("menuitem", { name: "Resubmit" }),
     );
     await waitFor(() => {
       expect(sent(fetch, "DELETE", "/api/lists/l2/draft/rejection")).toBe(true);
     });
-    await userEvent.click(
-      within(bar).getByRole("button", { name: "Discard draft" }),
-    );
+    await chooseInListMenu("Talents", "Discard draft");
     expect(
       await screen.findByText("Discarded the draft of Talents."),
     ).toBeDefined();
   });
 
-  it("names the drafts a rejection or approval includes, from the bars and a choice's menu", async () => {
+  it("names the drafts a rejection or approval includes, from the list's and a choice's menu", async () => {
     serverAnswers({
       "GET /api/session": approver,
       "GET /api/lists": draftedAnswer,
     });
     const history = renderApp("/lists/l5");
-    const bar = await screen.findByRole("group", { name: "Draft" });
-    await userEvent.click(within(bar).getByRole("button", { name: "Reject…" }));
+    await chooseInListMenu("Teams", "Reject…");
     const rejecting = await screen.findByRole("dialog", {
       name: "Reject 2 drafts?",
     });
     expect(
-      within(rejecting).getByText(
-        "Other drafts use these, so they are rejected too:",
-      ),
-    ).toBeDefined();
-    expect(
-      within(rejecting).getByText("the choice Platform in Teams"),
+      within(rejecting).getByText("Includes 1 related draft."),
     ).toBeDefined();
     await userEvent.click(
       within(rejecting).getByRole("button", { name: "Cancel" }),
     );
-    await userEvent.click(within(bar).getByRole("button", { name: "Approve" }));
+    await chooseInListMenu("Teams", "Approve…");
     await userEvent.click(
       within(
         await screen.findByRole("dialog", { name: "Approve 1 draft?" }),
       ).getByRole("button", { name: "Cancel" }),
     );
-    // Closing the dialog puts focus back on its button, which would close a menu opened first.
     await waitFor(() => {
-      expect(document.activeElement?.textContent).toBe("Approve");
+      expect(screen.queryByRole("dialog")).toBeNull();
     });
     focusRow("c8");
     await userEvent.keyboard("{ContextMenu}");
@@ -1914,27 +2144,33 @@ describe("drafts on the Lists page", () => {
       ).getByRole("button", { name: "Cancel" }),
     );
     history.push("/lists/l1");
-    const order = await screen.findByRole("group", {
-      name: "Draft of the order",
-    });
-    await userEvent.click(
-      within(order).getByRole("button", { name: "Approve" }),
-    );
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    await chooseInListMenu("Locations", "Approve…");
     expect(
       await screen.findByRole("dialog", { name: "Approve 1 draft?" }),
     ).toBeDefined();
   });
 
-  it("approves or rejects every draft waiting among the lists from the bar above them", async () => {
+  // The Draft menu above the lists, opened.
+  const openDraftMenu = async () => {
+    await userEvent.click(
+      // Not a list's menu of drafts, "Drafts of" the list, beside its name in the panel.
+      await screen.findByRole("button", { name: /^Draft(?!s of)/ }),
+    );
+    return screen.findByRole("menu");
+  };
+
+  it("approves or rejects every draft waiting among the lists from the Draft menu", async () => {
     serverAnswers({
       "GET /api/session": approver,
       "GET /api/lists": draftedAnswer,
     });
     renderApp("/lists");
-    expect(
-      await screen.findByText("3 drafts waiting among the lists shown"),
-    ).toBeDefined();
-    await userEvent.click(screen.getByRole("button", { name: "Reject all…" }));
+    const menu = await openDraftMenu();
+    expect(within(menu).getByText("Waiting drafts")).toBeDefined();
+    await userEvent.click(
+      within(menu).getByRole("menuitem", { name: "Reject 3 drafts…" }),
+    );
     await userEvent.click(
       within(await screen.findByRole("dialog")).getByRole("button", {
         name: "Cancel",
@@ -1943,13 +2179,521 @@ describe("drafts on the Lists page", () => {
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
     });
-    await userEvent.click(screen.getByRole("button", { name: "Approve all" }));
+    await userEvent.click(
+      within(await openDraftMenu()).getByRole("menuitem", {
+        name: /^Approve \d+ drafts?…$/,
+      }),
+    );
     expect(
       await screen.findByRole("dialog", { name: "Approve 3 drafts?" }),
     ).toBeDefined();
   });
 
-  it("rejects every draft waiting with those that use them, naming them first", async () => {
+  it("counts the related drafts a rejection includes, and the drafts approving all skips", async () => {
+    const [platform] = added.choices;
+    const twoChoices = {
+      ...added,
+      choices: [
+        ...added.choices,
+        { ...platform, ...choice("c9", "Payments"), draft: platform?.draft },
+      ],
+    };
+    serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            { ...skills, draft: { ...removal } },
+            {
+              ...twoChoices,
+              draft: { ...added.draft, state: "rejected", reason: "Not yet" },
+            },
+          ],
+        }),
+    });
+    renderApp("/lists");
+    await userEvent.click(
+      within(await openDraftMenu()).getByRole("menuitem", {
+        name: "Approve 3 drafts…",
+      }),
+    );
+    const approving = await screen.findByRole("dialog", {
+      name: "Approve 1 draft?",
+    });
+    expect(
+      within(approving).getByText(
+        "2 drafts are skipped because they depend on rejected drafts.",
+      ),
+    ).toBeDefined();
+    await userEvent.click(
+      within(approving).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  it("counts the related drafts rejecting a list includes", async () => {
+    const [platform] = added.choices;
+    serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...added,
+              choices: [
+                ...added.choices,
+                {
+                  ...platform,
+                  ...choice("c9", "Payments"),
+                  draft: platform?.draft,
+                },
+              ],
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    await chooseInListMenu("Teams", "Reject…");
+    const rejecting = await screen.findByRole("dialog", {
+      name: "Reject 3 drafts?",
+    });
+    expect(
+      within(rejecting).getByText("Includes 2 related drafts."),
+    ).toBeDefined();
+  });
+
+  it("names everyone who changed a list's draft, or Fathom when no one is recorded", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              draft: {
+                ...waiting,
+                action: "changed",
+                changed: ["description"],
+                live: { description: "" },
+                editors: ["Fictional Editor", "Second Fictional Editor"],
+              },
+              orderDraft: {
+                ...waiting,
+                madeBy: null,
+                live: locations.choices.map(({ id }) => id),
+              },
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    const menu = await listMenu("Locations");
+    expect(
+      within(menu).getByText(
+        "Changed by Fictional Editor and Second Fictional Editor",
+      ),
+    ).toBeDefined();
+    expect(within(menu).getByText("Reordered by Fathom")).toBeDefined();
+  });
+
+  it("shows those who may only view a list's drafts, with nothing to do with them", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": draftedAnswer,
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    const menu = await listMenu("Teams");
+    expect(within(menu).getByText("Draft: added")).toBeDefined();
+    expect(within(menu).getByText("Added by Fictional Editor")).toBeDefined();
+    expect(within(menu).queryAllByRole("menuitem")).toEqual([]);
+    // Only the divider under the list's name: no actions follow the draft's section.
+    expect(menu.querySelectorAll(".mantine-Menu-divider")).toHaveLength(1);
+    expect(
+      screen.queryByRole("button", { name: "Actions for Platform" }),
+    ).toBeNull();
+  });
+
+  it("gives an Approver who may not edit lists what to decide, in a list's and a choice's menus", async () => {
+    serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": draftedAnswer,
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    expect(
+      within(await listMenu("Teams")).getByRole("menuitem", {
+        name: "Approve…",
+      }),
+    ).toBeDefined();
+    // Other keys move within the menu; Esc closes it, leaving the panel open.
+    await userEvent.keyboard("{ArrowDown}{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    expect(
+      screen.getByRole("heading", { name: "Teams", level: 2 }),
+    ).toBeDefined();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for Platform" }),
+    );
+    expect(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: "Approve…",
+      }),
+    ).toBeDefined();
+  });
+
+  it("disables approving a choice added to a list whose own addition was rejected", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...added,
+              draft: { ...added.draft, state: "rejected", reason: "Not yet" },
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for Platform" }),
+    );
+    const menu = await screen.findByRole("menu");
+    const approve = within(menu).getByRole("menuitem", { name: "Approve…" });
+    expect(approve.hasAttribute("data-disabled")).toBe(true);
+    expect(
+      within(menu).getByText("Waiting for a rejected draft to be resubmitted"),
+    ).toBeDefined();
+    await userEvent.click(approve);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(sent(fetch, "POST", "/api/drafts/approval")).toBe(false);
+  });
+
+  it("disables approving a new order that places a choice whose addition was rejected, and says none can be approved when all shown wait", async () => {
+    serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              choices: [
+                {
+                  ...choice("c9", "Fenwick Down"),
+                  draft: {
+                    ...waiting,
+                    state: "rejected",
+                    reason: "Not yet",
+                    action: "created",
+                    changed: ["label", "description", "retired"],
+                    live: {},
+                  },
+                },
+                ...locations.choices,
+              ],
+              orderDraft: {
+                ...waiting,
+                live: locations.choices.map(({ id }) => id),
+                uses: ["c9"],
+              },
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    const menu = await listMenu("Locations");
+    expect(
+      within(menu)
+        .getAllByRole("menuitem", { name: "Approve…" })
+        .map((item) => item.hasAttribute("data-disabled")),
+    ).toEqual([true]);
+    expect(
+      within(menu).getByText("Waiting for a rejected draft to be resubmitted"),
+    ).toBeDefined();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    // Approving all shown, when every draft shown waits, says none can be approved yet.
+    await userEvent.click(
+      within(await openDraftMenu()).getByRole("menuitem", {
+        name: "Approve 1 draft…",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Can't approve yet",
+    });
+    expect(
+      within(dialog).getByText(
+        "Waiting for a rejected draft to be resubmitted.",
+      ),
+    ).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Close" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+  });
+
+  it("skips, when approving all shown, a new order that waits on a rejected choice", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              choices: [
+                {
+                  ...choice("c9", "Fenwick Down"),
+                  draft: {
+                    ...waiting,
+                    state: "rejected",
+                    reason: "Not yet",
+                    action: "created",
+                    changed: ["label", "description", "retired"],
+                    live: {},
+                  },
+                },
+                ...locations.choices,
+              ],
+              orderDraft: {
+                ...waiting,
+                live: locations.choices.map(({ id }) => id),
+                uses: ["c9"],
+              },
+            },
+            added,
+          ],
+        }),
+      "POST /api/drafts/approval": savedAs(),
+    });
+    renderApp("/lists");
+    await userEvent.click(
+      within(await openDraftMenu()).getByRole("menuitem", {
+        name: /^Approve \d+ drafts?…$/,
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 2 drafts?",
+    });
+    expect(
+      within(dialog).getByText(
+        "1 draft is skipped because it depends on a rejected draft.",
+      ),
+    ).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+        {
+          people: [],
+          lists: ["l5"],
+          choices: ["c8"],
+          orders: [],
+          columns: [],
+          columnOrder: false,
+        },
+      ]);
+    });
+  });
+
+  it("still waits, with drafts applied, for the rejected choice a new order places, and skips it when approving all", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              choices: [
+                {
+                  ...choice("c9", "Fenwick Down"),
+                  draft: {
+                    ...waiting,
+                    state: "rejected",
+                    reason: "Not yet",
+                    action: "created",
+                    changed: ["label", "description", "retired"],
+                    live: {},
+                  },
+                },
+                ...locations.choices,
+              ],
+              orderDraft: {
+                ...waiting,
+                live: locations.choices.map(({ id }) => id),
+                uses: ["c9"],
+              },
+            },
+            added,
+          ],
+        }),
+      "POST /api/drafts/approval": savedAs(),
+    });
+    // Drafts applied takes the rejected choice back, but the order still depends on it.
+    renderApp("/lists/l1?show=drafts");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    const menu = await listMenu("Locations");
+    expect(
+      within(menu)
+        .getByRole("menuitem", { name: "Approve…" })
+        .hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(
+      within(menu).getByText("Waiting for a rejected draft to be resubmitted"),
+    ).toBeDefined();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(
+      within(await openDraftMenu()).getByRole("menuitem", {
+        name: /^Approve \d+ drafts?…$/,
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 2 drafts?",
+    });
+    expect(
+      within(dialog).getByText(
+        "1 draft is skipped because it depends on a rejected draft.",
+      ),
+    ).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+        {
+          people: [],
+          lists: ["l5"],
+          choices: ["c8"],
+          orders: [],
+          columns: [],
+          columnOrder: false,
+        },
+      ]);
+    });
+  });
+
+  it("skips, when approving all, a choice added to a list whose addition was rejected", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            locations,
+            {
+              ...added,
+              draft: { ...added.draft, state: "rejected", reason: "Not yet" },
+            },
+            { ...skills, draft: { ...removal } },
+          ],
+        }),
+      "POST /api/drafts/approval": savedAs(),
+    });
+    renderApp("/lists");
+    await userEvent.click(
+      within(await openDraftMenu()).getByRole("menuitem", {
+        name: "Approve 2 drafts…",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 1 draft?",
+    });
+    expect(
+      within(dialog).getByText(
+        "1 draft is skipped because it depends on a rejected draft.",
+      ),
+    ).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
+        {
+          people: [],
+          lists: ["l2"],
+          choices: [],
+          orders: [],
+          columns: [],
+          columnOrder: false,
+        },
+      ]);
+    });
+  });
+
+  it("says how many waiting drafts a search hides, and decides only those shown", async () => {
+    serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              orderDraft: {
+                ...waiting,
+                live: locations.choices.map(({ id }) => id),
+              },
+            },
+            added,
+          ],
+        }),
+    });
+    renderApp("/lists?search=Teams");
+    const menu = await openDraftMenu();
+    expect(within(menu).getByText("2 of 3 waiting drafts shown")).toBeDefined();
+    expect(
+      within(menu).getByRole("menuitem", { name: "Approve 2 drafts…" }),
+    ).toBeDefined();
+  });
+
+  it("offers Approvers nothing to decide on a rejected choice", async () => {
+    const [platform] = added.choices;
+    serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...added,
+              choices: [
+                {
+                  ...platform,
+                  draft: {
+                    ...platform?.draft,
+                    state: "rejected",
+                    reason: "Not yet",
+                  },
+                },
+              ],
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for Platform" }),
+    );
+    const menu = await screen.findByRole("menu");
+    expect(within(menu).getByText("Reason: Not yet")).toBeDefined();
+    expect(within(menu).queryAllByRole("menuitem")).toEqual([]);
+  });
+
+  it("rejects every draft waiting with those that use them, counting them first", async () => {
     const [platform] = added.choices;
     serverAnswers({
       "GET /api/session": approver,
@@ -1974,14 +2718,14 @@ describe("drafts on the Lists page", () => {
     });
     renderApp("/lists");
     await userEvent.click(
-      await screen.findByRole("button", { name: "Reject all…" }),
+      within(await openDraftMenu()).getByRole("menuitem", {
+        name: /^Reject \d+ drafts?…$/,
+      }),
     );
     const dialog = await screen.findByRole("dialog", {
       name: "Reject 2 drafts?",
     });
-    expect(
-      within(dialog).getByText("the choice Platform in Teams"),
-    ).toBeDefined();
+    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
   });
 
   it("leaves out live rows and places when showing the drafts applied", async () => {
@@ -1995,7 +2739,33 @@ describe("drafts on the Lists page", () => {
     expect(within(row("c1")).getByText("Draft: moved")).toBeDefined();
   });
 
-  it("discards drafts of choices from their menus, and of a list only drafted to be added from its bar", async () => {
+  it("leaves out lists and choices drafted to be removed when showing the drafts applied", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              choices: [
+                { ...locations.choices[0], draft: removal },
+                ...locations.choices.slice(1),
+              ],
+            },
+            { ...skills, draft: removal },
+            empty,
+          ],
+        }),
+    });
+    renderApp("/lists/l1?show=drafts");
+    await screen.findByRole("heading", { name: "Locations", level: 2 });
+    expect(screen.queryByText("Skills")).toBeNull();
+    expect(
+      within(panel()).queryByText(locations.choices[0]?.label as string),
+    ).toBeNull();
+  });
+
+  it("discards drafts of choices from their menus, and of a list only drafted to be added from its menu", async () => {
     const fetch = serverAnswers({
       "GET /api/session": editor,
       "GET /api/lists": draftedAnswer,
@@ -2024,12 +2794,7 @@ describe("drafts on the Lists page", () => {
     expect(
       await screen.findByText("Discarded the draft of Platform."),
     ).toBeDefined();
-    await userEvent.click(
-      within(await screen.findByRole("group", { name: "Draft" })).getByRole(
-        "button",
-        { name: "Discard draft" },
-      ),
-    );
+    await chooseInListMenu("Teams", "Discard draft");
     await waitFor(() => {
       expect(history.location.pathname).toBe("/lists");
     });

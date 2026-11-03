@@ -183,17 +183,21 @@ export function sameName(first: string, second: string): boolean {
   return first.trim().toLowerCase() === second.trim().toLowerCase();
 }
 
-// Every list as it is live, without drafts: those only drafted to be added are left out, with the
-// choices only drafted to be added, and each list and choice has its live values back, with its
-// choices in their live order.
-export function liveLists(lists: readonly List[]): List[] {
+// The lists with the drafts chosen taken back: a list or choice only drafted to be added is left out,
+// each list and choice has its live values back, and the choices their live order.
+function withDraftsUndone(
+  lists: readonly List[],
+  undone: (draft: { state: string }) => boolean,
+): List[] {
   return lists.flatMap((list): List[] => {
-    if (list.draft?.action === "created") return [];
     const { draft, orderDraft, ...rest } = list;
+    const listUndone = draft !== undefined && undone(draft);
+    if (listUndone && draft.action === "created") return [];
     const choices = list.choices.flatMap((choice) => {
-      if (choice.draft?.action === "created") return [];
       const { draft: choiceDraft, ...live } = choice;
-      const was = choiceDraft?.action === "changed" ? choiceDraft.live : {};
+      if (choiceDraft === undefined || !undone(choiceDraft)) return [choice];
+      if (choiceDraft.action === "created") return [];
+      const was = choiceDraft.action === "changed" ? choiceDraft.live : {};
       return [
         {
           ...live,
@@ -203,24 +207,70 @@ export function liveLists(lists: readonly List[]): List[] {
         },
       ];
     });
-    const order = orderDraft?.live ?? [];
+    const orderUndone = orderDraft !== undefined && undone(orderDraft);
+    const order = orderUndone ? orderDraft.live : [];
     const place = (id: string) => {
       const at = order.indexOf(id);
       return at === -1 ? order.length : at;
     };
-    return [
-      {
-        ...rest,
-        ...(draft?.action === "changed"
+    let own: Partial<List> = draft === undefined ? {} : { draft };
+    if (listUndone) {
+      own =
+        draft.action === "changed"
           ? {
               name: draft.live.name ?? rest.name,
               description: draft.live.description ?? rest.description,
               visibility: draft.live.visibility ?? rest.visibility,
               retired: draft.live.retired ?? rest.retired,
             }
-          : {}),
+          : {};
+    }
+    return [
+      {
+        ...rest,
+        ...own,
+        ...(orderDraft === undefined || orderUndone ? {} : { orderDraft }),
         choices: [...choices].sort((a, b) => place(a.id) - place(b.id)),
       },
     ];
   });
+}
+
+// Every list as it is live, without drafts.
+export const liveLists = (lists: readonly List[]): List[] =>
+  withDraftsUndone(lists, () => true);
+
+// The lists as their drafts will make them once approved, as Drafts applied shows them: rejected
+// drafts are taken back, since they are not on their way to being approved, and the lists and
+// choices drafted to be removed are left out.
+export function draftedLists(lists: readonly List[]): List[] {
+  return withDraftsUndone(lists, ({ state }) => state === "rejected")
+    .filter((list) => list.draft?.action !== "deleted")
+    .map((list) => ({
+      ...list,
+      choices: list.choices.filter(
+        (choice) => choice.draft?.action !== "deleted",
+      ),
+    }));
+}
+
+interface Retirable {
+  retired: boolean;
+  draft?: { action: string; changed: string[] } | undefined;
+}
+
+// Whether a list or choice is retired as it is live, which a draft retiring or restoring it changes.
+export const retiredLive = (record: Retirable): boolean =>
+  record.draft?.action === "changed" && record.draft.changed.includes("retired")
+    ? !record.retired
+    : record.retired;
+
+// A list's or choice's draft, saying whether it retires or restores the record when it does either.
+export function withRetiring<D extends { action: string; changed: string[] }>(
+  record: Retirable & { draft: D },
+): D & { retiring?: boolean } {
+  return record.draft.action === "changed" &&
+    record.draft.changed.includes("retired")
+    ? { ...record.draft, retiring: record.retired }
+    : record.draft;
 }

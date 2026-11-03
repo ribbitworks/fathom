@@ -1096,9 +1096,7 @@ export async function resubmitListDraft(
   return drafting(database, async (transaction, state) => {
     const draft = draftOf(state, kind, listId, choiceId);
     if (draft.state !== "rejected") {
-      throw new ConflictError(
-        "Only a rejected draft is sent for approval again",
-      );
+      throw new ConflictError("Only a rejected draft can be resubmitted");
     }
     const recordType = draftTypeOf(kind);
     const id = kind === "choice" ? (choiceId as string) : listId;

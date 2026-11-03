@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/code-review.md", "docs/standards/testing.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-02"
 ---
 
 # Code Review Standards
@@ -37,6 +37,10 @@ Files that cannot hold comments, or that tools generate and that are never edite
 ## User Experience
 
 When the change affects the user interface, it follows the principles and rules in [Visual Design](../design/visual-design.md).
+
+## Manual Tests
+
+When the change affects what a manual test in `docs/testing/` covers, or the seed data it relies on, the test is updated in the same change and still follows [Testing Standards § Manual Tests](testing.md#manual-tests): its test cases still test the feature's behavior, not this change, and every count, name and label they expect still matches the seed and the screens. A change that adds a feature a person must check by hand, before a stage is complete, adds or extends a manual test.
 
 ## Documentation Kept Current
 

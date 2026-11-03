@@ -31,28 +31,24 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { describeField } from "./changes.ts";
+import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import {
   type Asking,
   type Decision,
-  DecisionModal,
-  drafts,
-} from "./decision-dialog.tsx";
-import {
+  decisionFor,
   type DraftSelection,
-  draftNames,
-  draftTotal,
+  waitsForRejected,
   joined,
   noDrafts,
-  usedDrafts,
-  usingDrafts,
 } from "./drafts.ts";
 import { personDraftFields } from "./draft-details.tsx";
 import { EntryDetails, EntryList, EntryRow } from "./history-entries.tsx";
 import { HistorySearch } from "./history-search.tsx";
-import { listsQuery } from "./lists.ts";
+import { listsQuery, liveLists } from "./lists.ts";
 import { PageHeader } from "./page-header.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import classes from "./pages.module.css";
+import { type Phrase, PhraseList, phraseText } from "./phrase.tsx";
 import { draftWords, StatusMark } from "./status-mark.tsx";
 
 interface Drafted {
@@ -79,7 +75,7 @@ export function joinedNames(names: readonly string[]): string {
 function verb(action: PersonDraft["action"] | undefined): string {
   if (action === "created") return "drafted adding";
   if (action === "deleted") return "drafted removing";
-  if (action === undefined) return "drafted a new order of";
+  if (action === undefined) return "drafted a new order for";
   return "drafted changes to";
 }
 
@@ -92,7 +88,7 @@ interface Entry {
   who: string;
   verb: string;
   subject: string;
-  details: string[];
+  details: Phrase[];
   rejected: string;
   text: string;
   selects: DraftSelection;
@@ -109,7 +105,7 @@ function entry(
     editors?: (string | null)[] | undefined;
   },
   subject: string,
-  details: string[],
+  details: Phrase[],
   selects: Partial<DraftSelection>,
 ): Entry {
   // Everyone who changed the draft, since several people's changes to one record make one draft.
@@ -129,7 +125,7 @@ function entry(
     subject,
     details,
     rejected,
-    text: [who, did, subject, ...details, rejected].join(" "),
+    text: [who, did, subject, ...details.map(phraseText), rejected].join(" "),
     selects: { ...noDrafts(), ...selects },
   };
 }
@@ -143,17 +139,17 @@ interface Credited {
 
 // What changed in a field, naming who changed it when several people changed the draft, since
 // their changes make one draft.
-function credited(text: string, key: string, draft: Credited): string {
+function credited(text: Phrase, key: string, draft: Credited): Phrase {
   if ((draft.editors?.length ?? 0) < 2) return text;
   const by = new Map(Object.entries(draft.changedBy ?? {}));
-  return by.has(key) ? `${text} (${by.get(key) ?? "Fathom"})` : text;
+  return by.has(key) ? [...text, ` (${by.get(key) ?? "Fathom"})`] : text;
 }
 
 // What a list's or choice's draft changes, field by field, from its live value.
 function configFields(
   draft: { action: string; changed: string[]; live: object } & Credited,
   now: Record<string, unknown>,
-): string[] {
+): Phrase[] {
   if (draft.action !== "changed") return [];
   return draft.changed.map((field) =>
     credited(
@@ -172,11 +168,21 @@ function configFields(
   );
 }
 
+// A new order, from the live one, with each order marked.
+const orderPhrase = (live: string[], drafted: string[]): Phrase => [
+  "From ",
+  { value: live.join(", ") },
+  " to ",
+  { value: drafted.join(", ") },
+];
+
 // Every draft of a list, a choice, or a list's order, as entries.
 function listEntries(lists: readonly List[]): Entry[] {
-  const labelOf = (list: List, id: string) =>
-    list.choices.find((choice) => choice.id === id)?.label ??
-    "a removed choice";
+  const liveLabels = new Map(
+    liveLists(lists).flatMap(({ choices }) =>
+      choices.map(({ id, label }) => [id, label]),
+    ),
+  );
   return lists.flatMap((list) => [
     ...(list.draft
       ? [
@@ -217,7 +223,12 @@ function listEntries(lists: readonly List[]): Entry[] {
             list.orderDraft,
             list.name,
             [
-              `Order from ${list.orderDraft.live.map((id) => labelOf(list, id)).join(", ")} to ${list.choices.map(({ label }) => label).join(", ")}`,
+              orderPhrase(
+                list.orderDraft.live.map(
+                  (id) => liveLabels.get(id) ?? "a removed choice",
+                ),
+                list.choices.map(({ label }) => label),
+              ),
             ],
             { orders: [list.id] },
           ),
@@ -231,9 +242,17 @@ function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
   // A column's list is always among the lists, and every key in an order names a column shown.
   const listName = (id: unknown) =>
     (lists.find((list) => list.id === id) as List).name;
+  const fieldOf = (key: string) =>
+    data.fields.find(({ id }) => id === key) as Field;
   const columnName = (key: string) =>
-    builtInColumnNames.get(key) ??
-    (data.fields.find(({ id }) => id === key) as Field).name;
+    builtInColumnNames.get(key) ?? fieldOf(key).name;
+  // A column's name as it is live, on the live side of a new order, as a list's choices are named.
+  const liveColumnName = (key: string) => {
+    const name = builtInColumnNames.get(key);
+    if (name !== undefined) return name;
+    const { draft, name: drafted } = fieldOf(key);
+    return draft?.action === "changed" ? (draft.live.name ?? drafted) : drafted;
+  };
   return [
     ...data.fields.flatMap((field) =>
       field.draft
@@ -267,7 +286,10 @@ function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
             data.orderDraft,
             "People's columns",
             [
-              `Order from ${data.orderDraft.live.map(columnName).join(", ")} to ${data.order.map(columnName).join(", ")}`,
+              orderPhrase(
+                data.orderDraft.live.map(liveColumnName),
+                data.order.map(columnName),
+              ),
             ],
             { columnOrder: true },
           ),
@@ -299,9 +321,11 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
 
 function DraftEntry({
   shown,
+  waits,
   selection,
 }: {
   shown: Entry;
+  waits: boolean;
   // Absent for users who may not approve.
   selection?: { selected: boolean; onSelect: (selected: boolean) => void };
 }) {
@@ -313,6 +337,9 @@ function DraftEntry({
           <Checkbox
             mt={2}
             aria-label={`Select the draft of ${shown.subject}`}
+            // A rejected draft is back with its makers until they resubmit it, and a draft that
+            // depends on it waits too.
+            disabled={shown.state === "rejected" || waits}
             checked={selection.selected}
             onChange={(event) => {
               selection.onSelect(event.currentTarget.checked);
@@ -330,12 +357,19 @@ function DraftEntry({
           {shown.subject}
         </Text>
         {shown.details.length > 0 && (
-          <EntryDetails>{shown.details.join("; ")}</EntryDetails>
+          <EntryDetails>
+            <PhraseList phrases={shown.details} />
+          </EntryDetails>
         )}
       </Text>
       {shown.rejected !== "" && (
         <Text className={classes.markGap}>
           <StatusMark tone="rejected">{shown.rejected}</StatusMark>
+        </Text>
+      )}
+      {waits && (
+        <Text fz="xs" c="dimmed">
+          Waiting for a rejected draft to be resubmitted
         </Text>
       )}
     </EntryRow>
@@ -393,30 +427,25 @@ export function DraftsPage({
       ...listEntries(lists.data),
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
-    const waiting = shown.filter(({ state }) => state === "waiting");
-    // Only drafts still shown stay selected. Rejected drafts may be selected too, to approve them
-    // after all or reject them for another reason.
-    const chosen = shown.filter(({ key }) => selected.has(key));
-    const chosenWaiting = waiting.filter(({ key }) => selected.has(key));
+    // Loaded, or empty for those who see only lists.
+    const { fields, orderDraft } = peopleData as PeopleData;
+    // A draft that depends on a rejected draft cannot be approved until that one is resubmitted.
+    const waits = ({ state, selects }: Entry) =>
+      state === "waiting" &&
+      waitsForRejected(selects, lists.data, { fields, orderDraft });
+    const waiting = shown.filter(
+      (one) => one.state === "waiting" && !waits(one),
+    );
+    // Only drafts still shown, and still waiting, stay selected.
+    const chosen = waiting.filter(({ key }) => selected.has(key));
     const ask = (asking: Asking) => {
       const selection = chosen.reduce(
         (all, { selects }) => joined(all, selects),
         noDrafts(),
       );
-      // Loaded, or empty for those who see only lists.
-      const { fields, orderDraft } = peopleData as PeopleData;
-      const columns = { fields, orderDraft };
-      const others =
-        asking === "approve"
-          ? usedDrafts(selection, lists.data, columns)
-          : usingDrafts(selection, lists.data, columns);
-      setDecision({
-        asking,
-        selection: joined(selection, others),
-        ...(draftTotal(others) > 0
-          ? { included: draftNames(others, lists.data, columns.fields) }
-          : {}),
-      });
+      setDecision(
+        decisionFor(asking, selection, lists.data, { fields, orderDraft }),
+      );
       setOpened(true);
     };
     content = (
@@ -425,12 +454,9 @@ export function DraftsPage({
           <Group justify="space-between">
             <Checkbox
               label="Select all waiting"
-              checked={
-                waiting.length > 0 && chosenWaiting.length === waiting.length
-              }
+              checked={waiting.length > 0 && chosen.length === waiting.length}
               indeterminate={
-                chosenWaiting.length > 0 &&
-                chosenWaiting.length < waiting.length
+                chosen.length > 0 && chosen.length < waiting.length
               }
               disabled={waiting.length === 0}
               onChange={(event) => {
@@ -479,6 +505,7 @@ export function DraftsPage({
               <DraftEntry
                 key={one.key}
                 shown={one}
+                waits={waits(one)}
                 {...(canApprove
                   ? {
                       selection: {

@@ -678,9 +678,7 @@ export async function resubmitPersonDraft(
     const columns = await readColumns(transaction, true);
     const { before, draft } = await lockDrafted(transaction, columns, id);
     if (draft?.state !== "rejected") {
-      throw new ConflictError(
-        "Only a rejected draft is sent for approval again",
-      );
+      throw new ConflictError("Only a rejected draft can be resubmitted");
     }
     const made = clearedRejection(id, personTier(columns), before, draft);
     requireEdits(actor, made);

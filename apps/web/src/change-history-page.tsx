@@ -28,6 +28,7 @@ import { EntryDetails, EntryList, EntryRow } from "./history-entries.tsx";
 import { HistorySearch } from "./history-search.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
+import { PhraseList, phraseText } from "./phrase.tsx";
 import { count } from "./numbers.ts";
 
 // The lines an entry shows before Show more, and the names a line shows before Show all, so a
@@ -59,7 +60,7 @@ function matchingFirst<Item>(
 const lineText = (words: RecordWords) =>
   [
     words.sentence,
-    ...words.details,
+    ...words.details.map(phraseText),
     ...(words.names ?? []),
     words.searched,
   ].join(" ");
@@ -84,7 +85,9 @@ function Line({
       {lead}
       {words.sentence}
       {words.details.length > 0 && (
-        <EntryDetails>{words.details.join("; ")}</EntryDetails>
+        <EntryDetails>
+          <PhraseList phrases={words.details} />
+        </EntryDetails>
       )}
       {names.length > 0 && (
         <EntryDetails>

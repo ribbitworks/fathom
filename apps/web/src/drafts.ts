@@ -2,8 +2,9 @@
 
 // Approving and rejecting drafts through the server's API, several kinds at once: of people, People's
 // columns, lists, choices, and the order of lists' choices and of People's columns. Neither can be
-// undone. Approving a draft approves the drafts it uses too, which are named first: the server says
-// which choices or columns an order uses, and the rest are worked out here.
+// undone. Approving a draft approves the drafts it uses too, which are counted first: the server says
+// which choices or columns an order uses, and the rest are worked out here, as is what a decision
+// covers, and whether a draft waits for a rejected one it depends on.
 
 import {
   type ColumnOrderDraft,
@@ -120,6 +121,67 @@ export function usedDrafts(
   };
 }
 
+// The lists, choices, and columns in the selection whose drafts were rejected, which wait until they
+// are sent for approval again, and so hold up approving any draft that uses them.
+export function rejectedAmong(
+  selection: DraftSelection,
+  lists: readonly List[],
+  columns?: Columns,
+): DraftSelection {
+  const rejected = (draft: { state: string } | undefined) =>
+    draft?.state === "rejected";
+  const choices = choicesOf(lists);
+  return {
+    ...noDrafts(),
+    lists: selection.lists.filter((id) =>
+      rejected(lists.find((list) => list.id === id)?.draft),
+    ),
+    choices: selection.choices.filter((id) =>
+      rejected(choices.find(({ choice }) => choice.id === id)?.choice.draft),
+    ),
+    columns: selection.columns.filter((id) =>
+      rejected(columns?.fields.find((field) => field.id === id)?.draft),
+    ),
+  };
+}
+
+// The drafts in the selection that use a rejected draft, so wait until it is sent for approval
+// again: choices added to a list whose addition was rejected, and orders that place a choice or
+// column whose addition was rejected. Nothing else uses other drafts.
+export function heldBack(
+  selection: DraftSelection,
+  lists: readonly List[],
+  columns?: Columns,
+): DraftSelection {
+  const held = (one: Partial<DraftSelection>) =>
+    draftTotal(
+      rejectedAmong(
+        usedDrafts({ ...noDrafts(), ...one }, lists, columns),
+        lists,
+        columns,
+      ),
+    ) > 0;
+  return {
+    ...noDrafts(),
+    choices: selection.choices.filter((id) => held({ choices: [id] })),
+    orders: selection.orders.filter((id) => held({ orders: [id] })),
+    columnOrder: selection.columnOrder && held({ columnOrder: true }),
+  };
+}
+
+// The selection without the drafts in another.
+export const without = (
+  selection: DraftSelection,
+  other: DraftSelection,
+): DraftSelection => ({
+  people: selection.people.filter((id) => !other.people.includes(id)),
+  lists: selection.lists.filter((id) => !other.lists.includes(id)),
+  choices: selection.choices.filter((id) => !other.choices.includes(id)),
+  orders: selection.orders.filter((id) => !other.orders.includes(id)),
+  columns: selection.columns.filter((id) => !other.columns.includes(id)),
+  columnOrder: selection.columnOrder && !other.columnOrder,
+});
+
 // The drafts that use any in the selection, which must be rejected with them.
 export function usingDrafts(
   selection: DraftSelection,
@@ -177,7 +239,7 @@ export function draftNames(
   const names: string[] = fields
     .filter(({ id }) => selection.columns.includes(id))
     .map(({ name }) => `the column ${name}`);
-  if (selection.columnOrder) names.push("the order of People's columns");
+  if (selection.columnOrder) names.push("the new order for People's columns");
   for (const list of lists) {
     if (selection.lists.includes(list.id)) names.push(`the list ${list.name}`);
     for (const choice of list.choices) {
@@ -186,8 +248,71 @@ export function draftNames(
       }
     }
     if (selection.orders.includes(list.id)) {
-      names.push(`the order of ${list.name}`);
+      names.push(`the new order for ${list.name}`);
     }
   }
   return names;
+}
+
+export type Asking = "approve" | "reject";
+
+// Whether any draft in the selection waits for a rejected draft it depends on, so cannot be approved
+// until that one is resubmitted. Every list, with its rejected drafts, is needed to tell.
+export const waitsForRejected = (
+  selection: DraftSelection,
+  lists: readonly List[],
+  columns?: Columns,
+): boolean => draftTotal(heldBack(selection, lists, columns)) > 0;
+
+// The drafts to approve or reject once asked: those chosen, with any others the decision includes.
+export interface Decision {
+  asking: Asking;
+  selection: DraftSelection;
+  // The drafts chosen, named, when one menu item decides several together, so it is clear which.
+  together?: string[];
+  // How many other drafts are included: those approving the chosen ones depends on, or those that
+  // depend on the ones rejected.
+  included?: number;
+  // How many drafts chosen are skipped, since they depend on a rejected draft.
+  leftOut?: number;
+  // When every draft chosen depends on a rejected draft, so none can be approved yet.
+  waiting?: true;
+}
+
+// A decision on the drafts chosen: approving includes the drafts they depend on, and skips any that
+// depend on a rejected draft; rejecting includes the drafts that depend on them. Asked to, it names
+// the drafts chosen, when there are several.
+export function decisionFor(
+  asking: Asking,
+  chosen: DraftSelection,
+  lists: readonly List[],
+  columns?: Columns,
+  naming = false,
+): Decision {
+  const fields = columns?.fields ?? [];
+  const named = (decided: DraftSelection) =>
+    naming && draftTotal(decided) > 1
+      ? { together: draftNames(decided, lists, fields) }
+      : {};
+  if (asking === "reject") {
+    const using = usingDrafts(chosen, lists, columns);
+    return {
+      asking,
+      selection: joined(chosen, using),
+      ...named(chosen),
+      ...(draftTotal(using) > 0 ? { included: draftTotal(using) } : {}),
+    };
+  }
+  const held = heldBack(chosen, lists, columns);
+  const ready = without(chosen, held);
+  if (draftTotal(ready) === 0)
+    return { asking, selection: chosen, waiting: true };
+  const used = usedDrafts(ready, lists, columns);
+  return {
+    asking,
+    selection: joined(ready, used),
+    ...named(ready),
+    ...(draftTotal(used) > 0 ? { included: draftTotal(used) } : {}),
+    ...(draftTotal(held) > 0 ? { leftOut: draftTotal(held) } : {}),
+  };
 }

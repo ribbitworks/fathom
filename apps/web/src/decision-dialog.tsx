@@ -1,16 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Approving or rejecting drafts, from the Drafts page, the People table, or the Lists page: a dialog
-// that asks first, since neither can be undone, names any other drafts an approval includes, and
-// asks for a reason for rejecting. It saves the decision itself, and cannot be closed while it saves.
+// that asks first, since neither can be undone, showing the decision drafts.ts works out: how many
+// related drafts it includes, how many it skips because they depend on a rejected draft, or that
+// none can be approved yet. It asks for a reason for rejecting, saves the decision itself, and cannot
+// be closed while it saves.
 
 import { reasonLength } from "@fathom/shared";
-import { List, Modal, Stack, Text, Textarea } from "@mantine/core";
+import {
+  Button,
+  Group,
+  List,
+  Modal,
+  Stack,
+  Text,
+  Textarea,
+} from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { DialogActions } from "./dialog-actions.tsx";
 import {
   approveDrafts,
+  type Asking,
+  type Decision,
   type DraftSelection,
   draftTotal,
   rejectDrafts,
@@ -35,20 +47,22 @@ const unchanged = (asking: "approve" | "reject") =>
 export const drafts = (total: number) =>
   total === 1 ? "1 draft" : `${count(total)} drafts`;
 
-export type Asking = "approve" | "reject";
-
 // Asks before approving or rejecting the drafts selected, with a reason for rejecting them.
 function DecisionDialog({
   asking,
   selection,
+  together,
   included,
+  leftOut,
   onDone,
   onCancel,
   onBusy,
 }: {
   asking: Asking;
   selection: DraftSelection;
-  included: string[];
+  together: string[];
+  included: number;
+  leftOut: number;
   onDone: () => void;
   onCancel: () => void;
   onBusy: (busy: boolean) => void;
@@ -92,22 +106,38 @@ function DecisionDialog({
       <Stack gap="md">
         <Text fz="sm">
           {asking === "approve"
-            ? "What the drafts change becomes live. Approving cannot be undone."
-            : "The drafts stay, marked Rejected with your reason, until someone changes or discards them. Rejecting cannot be undone."}
+            ? "Approving cannot be undone."
+            : "The drafts go back to whoever made them, with your reason. Rejecting cannot be undone."}
         </Text>
-        {included.length > 0 && (
+        {together.length > 0 && (
           <div>
             <Text fz="sm">
               {asking === "approve"
-                ? "These drafts use others, which are approved too:"
-                : "Other drafts use these, so they are rejected too:"}
+                ? "These drafts are approved together:"
+                : "These drafts are rejected together:"}
             </Text>
             <List size="sm" mt={4}>
-              {included.map((name) => (
+              {together.map((name) => (
                 <List.Item key={name}>{name}</List.Item>
               ))}
             </List>
           </div>
+        )}
+        {included > 0 && (
+          <Text fz="sm">
+            Includes{" "}
+            {included === 1
+              ? "1 related draft"
+              : `${count(included)} related drafts`}
+            .
+          </Text>
+        )}
+        {leftOut > 0 && (
+          <Text fz="sm">
+            {leftOut === 1
+              ? "1 draft is skipped because it depends on a rejected draft."
+              : `${count(leftOut)} drafts are skipped because they depend on rejected drafts.`}
+          </Text>
         )}
         {asking === "reject" && (
           <Textarea
@@ -135,14 +165,6 @@ function DecisionDialog({
   );
 }
 
-// The drafts to approve or reject once asked: those chosen, with any others the decision includes,
-// which are named.
-export interface Decision {
-  asking: Asking;
-  selection: DraftSelection;
-  included?: string[];
-}
-
 export function DecisionModal({
   decision,
   opened,
@@ -163,13 +185,27 @@ export function DecisionModal({
       closeOnEscape={!busy}
       closeOnClickOutside={!busy}
       withCloseButton={!busy}
-      title={`${decision?.asking === "reject" ? "Reject" : "Approve"} ${drafts(total)}?`}
+      title={
+        decision?.waiting
+          ? "Can't approve yet"
+          : `${decision?.asking === "reject" ? "Reject" : "Approve"} ${drafts(total)}?`
+      }
     >
-      {decision && (
+      {decision?.waiting && (
+        <Stack gap="md">
+          <Text fz="sm">Waiting for a rejected draft to be resubmitted.</Text>
+          <Group justify="flex-end">
+            <Button onClick={onClose}>Close</Button>
+          </Group>
+        </Stack>
+      )}
+      {decision && !decision.waiting && (
         <DecisionDialog
           asking={decision.asking}
           selection={decision.selection}
-          included={decision.included ?? []}
+          together={decision.together ?? []}
+          included={decision.included ?? 0}
+          leftOut={decision.leftOut ?? 0}
           onDone={onDone}
           onCancel={onClose}
           onBusy={setBusy}

@@ -18,6 +18,7 @@ import {
 import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import { getJson } from "./api.ts";
 import { visibilityName } from "./lists.ts";
+import type { Phrase } from "./phrase.tsx";
 import { formatDay, isDay } from "./table-view.ts";
 import { count } from "./numbers.ts";
 
@@ -84,16 +85,17 @@ function valueText(field: string, value: ChangeValue): string | null {
   return value;
 }
 
-// What changed in one field, such as "Name from Sites to Locations".
-export function describeField(change: ChangedField): string {
-  const name = fieldName(change);
+// What changed in one field, such as "Name from Sites to Locations", with the field and its values
+// marked.
+export function describeField(change: ChangedField): Phrase {
+  const name = { strong: fieldName(change) };
   const before = valueText(change.field, change.oldValue);
   const after = valueText(change.field, change.newValue);
   // A view's filters and sort are not shown, and nor is a value whose names are gone.
-  if (before === null && after === null) return `${name} changed`;
-  if (before === null) return `${name} set to ${String(after)}`;
-  if (after === null) return `${name} cleared, from ${before}`;
-  return `${name} from ${before} to ${after}`;
+  if (before === null && after === null) return [name, " changed"];
+  if (before === null) return [name, " set to ", { value: String(after) }];
+  if (after === null) return [name, " cleared, from ", { value: before }];
+  return [name, " from ", { value: before }, " to ", { value: after }];
 }
 
 // The record, as a sentence names it, such as "the choice North in Sites".
@@ -143,7 +145,7 @@ export interface RecordWords {
   // What was done, after the name of who did it, such as "changed the list Sites".
   sentence: string;
   // What changed in the record, if more than the sentence says, such as "Name from A to B".
-  details: string[];
+  details: Phrase[];
   // For several records added or deleted together, their names, such as each person pasted.
   names?: string[];
   // What a search looks in for the line, beyond its words: the records' names and values as the
@@ -247,7 +249,7 @@ function recordWords(
       sentence: `rejected the draft of ${named}`,
       details:
         typeof reason?.newValue === "string"
-          ? [`Reason: ${reason.newValue}`]
+          ? [["Reason: ", { strong: reason.newValue }]]
           : [],
     };
   }
@@ -275,7 +277,7 @@ function recordWords(
         details: [],
       };
     }
-    return { sentence: `${done} a new order of ${list}`, details: [] };
+    return { sentence: `${done} a new order for ${list}`, details: [] };
   }
   if (kind === "approval" || record.draft) {
     return {

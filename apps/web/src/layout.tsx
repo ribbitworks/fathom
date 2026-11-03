@@ -7,6 +7,7 @@
 // icons, each naming its page on hover or focus, and remembers the choice. On narrow screens the
 // sidebar opens from a menu button instead.
 
+import { AppMenu } from "./app-menu.tsx";
 import type { Permission } from "@fathom/shared";
 import {
   Alert,
@@ -388,8 +389,8 @@ export function Layout({
               </Breadcrumbs>
             )}
           </Group>
-          <Menu position="bottom-end" width="max-content">
-            <Menu.Target>
+          <AppMenu position="bottom-end" width="max-content">
+            <AppMenu.Target>
               <UnstyledButton aria-label={`Your account, ${user.name}`}>
                 <Group gap="xs" wrap="nowrap">
                   <Text fz="sm" visibleFrom="xs">
@@ -400,8 +401,8 @@ export function Layout({
                   </Avatar>
                 </Group>
               </UnstyledButton>
-            </Menu.Target>
-            <Menu.Dropdown miw={200} maw="calc(100vw - 2rem)">
+            </AppMenu.Target>
+            <AppMenu.Dropdown miw={200} maw="calc(100vw - 2rem)">
               <Menu.Label>{user.email}</Menu.Label>
               <Menu.Item component={Link} to="/password">
                 Change password
@@ -410,8 +411,8 @@ export function Layout({
               <Menu.Item onClick={() => void handleSignOut()}>
                 Sign out
               </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+            </AppMenu.Dropdown>
+          </AppMenu>
         </Group>
       </AppShell.Header>
       <AppShell.Navbar

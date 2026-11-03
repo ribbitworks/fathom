@@ -176,6 +176,19 @@
   gap: 8px;
 }
 
+/* The list's name, with its drafts' marks under it, as a column's are under its name. */
+.panelNameBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.panelNameBlock .markGap {
+  margin-left: 0;
+}
+
 .panelName {
   flex: 1;
   margin: 0;
@@ -399,6 +412,18 @@
   text-overflow: ellipsis;
 }
 
+/* A column's name, with any draft's mark under it, so the mark does not widen the column. */
+.headerName {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.headerName .markGap {
+  margin-left: 0;
+}
+
 /* Which way a column is sorted, and whether it is filtered, beside its name. */
 .headerMarks {
   display: inline-flex;
@@ -489,6 +514,18 @@
   background: var(--mantine-color-sea-0);
 }
 
+/* A column with a draft is tinted as a row with one is, before the colours of the cells a draft
+   changes, so they show over it. */
+.draftColumn {
+  --column-tint: var(--mantine-color-sea-0);
+
+  background: var(--column-tint);
+}
+
+:global([data-mantine-color-scheme="dark"]) .draftColumn {
+  --column-tint: var(--mantine-color-sea-light);
+}
+
 .draftCell {
   background: var(--mantine-color-yellow-1);
 }
@@ -555,37 +592,26 @@
   text-decoration: line-through;
 }
 
-/* The bar marking a list's draft, or the draft of its choices' order, laid out as the People table's
-   bar of drafts. */
-.listDraftBar {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--mantine-color-default-border);
+/* The field a change names, such as "Name" in "Name from Level to Grade", in the text colour among
+   dimmed words, so it stands out. */
+.phraseStrong {
+  font-weight: 600;
+  color: var(--mantine-color-text);
 }
 
-.listDraftSummary {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 8px;
+/* A value a change names, such as "Level" and "Grade", set apart on a light ground as a value is in
+   code, and kept so on each line when it wraps. */
+.phraseValue {
+  padding: 0 0.25rem;
+  border-radius: var(--mantine-radius-xs);
+  background: var(--mantine-color-default-hover);
+  color: var(--mantine-color-text);
+  font-weight: 500;
+  box-decoration-break: clone;
 }
 
-.listDraftSummary .markGap {
-  margin-left: 0;
-}
-
-/* Each field a draft changes, on its own line under the mark. */
-.listDraftLine {
-  flex-basis: 100%;
-  font-size: var(--mantine-font-size-xs);
-  color: var(--mantine-color-dimmed);
-}
-
-.listDraftWords {
-  font-size: var(--mantine-font-size-sm);
-  color: var(--mantine-color-dimmed);
-}
-
-/* The name at the top of a record's menu, in the text colour, since it says whose menu it is. */
+/* The name at the top of a record's menu, in the text colour, since it says whose menu it is, with
+   a divider under it. */
 .menuTitle {
   color: var(--mantine-color-text);
   font-weight: 600;
@@ -596,6 +622,7 @@
 .draftLine {
   max-width: 22rem;
   white-space: normal;
+  color: var(--mantine-color-dimmed);
 }
 
 /* A rejection's reason, at the top of the person's menu, wraps rather than widening the menu. */
@@ -623,10 +650,6 @@
   color: var(--mantine-color-red-6);
 }
 
-.draftsBar {
-  padding: 0 4px;
-}
-
 /* A person's live row, under their draft row: light green, dimmed, marked Live like the Draft mark
    above it, and joined to the draft row. */
 .draftRow:has(+ .peopleLiveRow) {
@@ -645,6 +668,38 @@
   color: var(--mantine-color-dimmed);
 }
 
+/* A column a draft removes is struck through, as a removed person is, and the column as it is live,
+   beside a changed one, is tinted as a live row is. */
+.removedColumn,
+.removedColumn .headerLabel {
+  color: var(--mantine-color-dimmed);
+  text-decoration: line-through;
+}
+
+.liveColumn {
+  --column-tint: var(--mantine-color-green-0);
+
+  background: var(--column-tint);
+  color: var(--mantine-color-dimmed);
+}
+
+:global([data-mantine-color-scheme="dark"]) .liveColumn {
+  --column-tint: color-mix(
+    in srgb,
+    var(--mantine-color-green-5) 6%,
+    transparent
+  );
+}
+
+/* A tinted column's header stays above the rows scrolling under it, so its tint is laid over the
+   page's background rather than letting the rows show through. */
+th.draftColumn,
+th.liveColumn {
+  background:
+    linear-gradient(var(--column-tint), var(--column-tint)),
+    var(--mantine-color-body);
+}
+
 .liveMark {
   color: var(--mantine-color-text);
 }
@@ -660,7 +715,8 @@
 
 /* A cell's strike-through reaches inline text inside it whatever that text sets, but stops at an
    inline block. */
-.peopleRemovedRow .draftMark {
+.peopleRemovedRow .draftMark,
+.removedColumn .draftMark {
   display: inline-block;
 }
 
@@ -711,4 +767,11 @@
 .peopleEditor:focus {
   border-color: var(--mantine-color-sea-filled);
   outline: none;
+}
+
+/* The heading of a draft's lines in a record's menu, its mark as the table shows it, in the text
+   colour, so it reads as a heading. */
+.draftHeading {
+  color: var(--mantine-color-text);
+  font-weight: 600;
 }

@@ -8,10 +8,13 @@ import { describe, expect, it } from "vitest";
 import {
   draftNames,
   draftTotal,
+  heldBack,
   joined,
   noDrafts,
+  rejectedAmong,
   usedDrafts,
   usingDrafts,
+  without,
 } from "./drafts.ts";
 
 const waiting = { state: "waiting" as const, madeBy: null, madeAt: null };
@@ -109,7 +112,7 @@ describe("drafts an approval includes", () => {
     expect(draftNames(both, lists)).toEqual([
       "the list Teams",
       "the choice B in Teams",
-      "the order of Sites",
+      "the new order for Sites",
     ]);
   });
 });
@@ -149,6 +152,100 @@ describe("drafts of columns an approval or rejection includes", () => {
         [],
         columns.fields,
       ),
-    ).toEqual(["the column Previous site", "the order of People's columns"]);
+    ).toEqual([
+      "the column Previous site",
+      "the new order for People's columns",
+    ]);
+  });
+});
+
+describe("drafts that wait on rejected ones", () => {
+  const rejected = {
+    ...waiting,
+    state: "rejected" as const,
+    reason: "Not yet",
+  };
+  // Teams' addition and Sites' choice F are rejected; Teams' order places its waiting choice B,
+  // so uses the rejected list only through B.
+  const withRejected = [
+    {
+      ...teams,
+      draft: { ...rejected, action: "created" as const, changed: [], live: {} },
+    },
+    {
+      ...sites,
+      choices: sites.choices.map((choice) =>
+        choice.id === "f"
+          ? {
+              ...choice,
+              draft: {
+                ...rejected,
+                action: "created" as const,
+                changed: [],
+                live: {},
+              },
+            }
+          : choice,
+      ),
+    },
+  ];
+  const columns = {
+    fields: [
+      {
+        id: "f1",
+        name: "Previous site",
+        listId: "l2",
+        multiple: false,
+        required: false,
+        draft: {
+          ...rejected,
+          action: "created" as const,
+          changed: [],
+          live: {},
+        },
+      },
+    ],
+    orderDraft: { ...waiting, live: [], uses: ["f1"] },
+  };
+  const everything = {
+    people: ["p1"],
+    lists: ["l1"],
+    choices: ["b", "e", "f"],
+    orders: ["l1", "l2"],
+    columns: ["f1"],
+    columnOrder: true,
+  };
+
+  it("finds the rejected drafts among those chosen", () => {
+    expect(rejectedAmong(everything, withRejected, columns)).toEqual({
+      ...noDrafts(),
+      lists: ["l1"],
+      choices: ["f"],
+      columns: ["f1"],
+    });
+    expect(rejectedAmong(everything, withRejected)).toEqual({
+      ...noDrafts(),
+      lists: ["l1"],
+      choices: ["f"],
+    });
+  });
+
+  it("holds back what uses a rejected draft, even through a waiting one, and only that", () => {
+    const held = heldBack(everything, withRejected, columns);
+    expect(held).toEqual({
+      ...noDrafts(),
+      choices: ["b"],
+      orders: ["l1", "l2"],
+      columnOrder: true,
+    });
+    expect(heldBack(everything, lists)).toEqual(noDrafts());
+    expect(without(everything, held)).toEqual({
+      people: ["p1"],
+      lists: ["l1"],
+      choices: ["e", "f"],
+      orders: [],
+      columns: ["f1"],
+      columnOrder: false,
+    });
   });
 });

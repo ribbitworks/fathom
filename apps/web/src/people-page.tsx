@@ -31,16 +31,10 @@ import {
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { type ReactNode, useRef, useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
-import { type Decision, DecisionModal } from "./decision-dialog.tsx";
-import {
-  draftNames,
-  draftTotal,
-  joined,
-  usedDrafts,
-  usingDrafts,
-} from "./drafts.ts";
+import { DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { PageHeader } from "./page-header.tsx";
+import { type Decision, decisionFor } from "./drafts.ts";
 import classes from "./pages.module.css";
 import {
   type PeopleActions,
@@ -197,23 +191,19 @@ export function PeoplePage({
   });
 
   const actions: PeopleActions = {
-    decide: (asking, chosen) => {
+    decide: (asking, chosen, naming) => {
       // Approving names the drafts the choice uses, and rejecting those that use it.
       // Drafts are only decided once the people and lists are loaded.
-      const listsNow = lists.data as List[];
       const { fields, orderDraft } = query.data as PeopleData;
-      const columns = { fields, orderDraft };
-      const others =
-        asking === "approve"
-          ? usedDrafts(chosen, listsNow, columns)
-          : usingDrafts(chosen, listsNow, columns);
-      setDecision({
-        asking,
-        selection: joined(chosen, others),
-        ...(draftTotal(others) > 0
-          ? { included: draftNames(others, listsNow, columns.fields) }
-          : {}),
-      });
+      setDecision(
+        decisionFor(
+          asking,
+          chosen,
+          lists.data as List[],
+          { fields, orderDraft },
+          naming,
+        ),
+      );
       setDeciding(true);
     },
     discardColumn: (target, name) => {

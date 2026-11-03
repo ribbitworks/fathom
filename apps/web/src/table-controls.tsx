@@ -23,6 +23,7 @@ import {
 } from "@mantine/core";
 import type { SavedView, Show } from "@fathom/shared";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { drafts as draftCount } from "./decision-dialog.tsx";
 import { Icon } from "./icons.tsx";
 import {
   type ColumnChoice,
@@ -40,6 +41,7 @@ import {
   type View,
   viewFrom,
 } from "./table-view.ts";
+import { AppMenu } from "./app-menu.tsx";
 import classes from "./pages.module.css";
 import { count } from "./numbers.ts";
 
@@ -292,8 +294,8 @@ export function ViewsMenu({
   const empty = sameView(view, emptyView);
   if (views.length === 0 && empty) return null;
   return (
-    <Menu position="bottom-start" hideDetached={false}>
-      <Menu.Target>
+    <AppMenu position="bottom-start" hideDetached={false}>
+      <AppMenu.Target>
         <Button
           variant="default"
           aria-label={`Views${current ? `: ${current.name}` : ""}${changed ? ", changed" : ""}`}
@@ -305,8 +307,8 @@ export function ViewsMenu({
             </span>
           )}
         </Button>
-      </Menu.Target>
-      <Menu.Dropdown>
+      </AppMenu.Target>
+      <AppMenu.Dropdown>
         {[...views].sort(byName).map((saved) => (
           <Menu.Item
             key={saved.id}
@@ -326,7 +328,7 @@ export function ViewsMenu({
             {saved.id === applied && <VisuallyHidden>, applied</VisuallyHidden>}
           </Menu.Item>
         ))}
-        {!empty && <Menu.Divider />}
+        {!empty && views.length > 0 && <Menu.Divider />}
         {!empty && <Menu.Item onClick={onClear}>Clear view</Menu.Item>}
         {!empty && (
           <Menu.Item
@@ -365,8 +367,8 @@ export function ViewsMenu({
             </Menu.Item>
           </>
         )}
-      </Menu.Dropdown>
-    </Menu>
+      </AppMenu.Dropdown>
+    </AppMenu>
   );
 }
 
@@ -394,17 +396,24 @@ export function DraftMenu({
   show,
   onShow,
   filter,
+  children,
 }: {
   show: Show;
   onShow: (show: Show) => void;
   filter?: DraftFilter;
+  // What may be done with drafts beyond choosing what to show, such as deciding all those shown.
+  children?: ReactNode;
 }) {
   const marked =
     show !== "both" ||
     (filter !== undefined && isActive(filter.view.filters[filter.column.key]));
   return (
-    <Menu position="bottom-start" hideDetached={false} closeOnItemClick={false}>
-      <Menu.Target>
+    <AppMenu
+      position="bottom-start"
+      hideDetached={false}
+      closeOnItemClick={false}
+    >
+      <AppMenu.Target>
         <Button
           variant="default"
           leftSection={<Icon name="filter" />}
@@ -417,8 +426,8 @@ export function DraftMenu({
             </span>
           )}
         </Button>
-      </Menu.Target>
-      <Menu.Dropdown>
+      </AppMenu.Target>
+      <AppMenu.Dropdown>
         <Menu.Label>Show</Menu.Label>
         {showOptions.map((option) => (
           <Menu.Item
@@ -432,9 +441,63 @@ export function DraftMenu({
             {option.value === show && <VisuallyHidden>, on</VisuallyHidden>}
           </Menu.Item>
         ))}
-        {filter && <DraftFilterItems {...filter} disabled={show === "live"} />}
-      </Menu.Dropdown>
-    </Menu>
+        {filter && (
+          <DraftFilterItems
+            {...filter}
+            disabled={show === "live"}
+            // Rejected drafts are taken back with the drafts applied, so none shows as rejected.
+            unavailable={show === "drafts" ? ["rejected"] : []}
+          />
+        )}
+        {children}
+      </AppMenu.Dropdown>
+    </AppMenu>
+  );
+}
+
+// Approving or rejecting every draft waiting among the records shown, in the Draft menu, for
+// Approvers.
+export function DecideAllItems({
+  total,
+  everywhere,
+  disabled = false,
+  onDecide,
+}: {
+  // The drafts waiting among those shown, which these decide, and all those waiting, so the menu
+  // says when a search, filter or Drafts applied hides some.
+  total: number;
+  everywhere: number;
+  // While a change is still saving, so a draft not saved yet is never sent.
+  disabled?: boolean;
+  onDecide: (asking: "approve" | "reject") => void;
+}) {
+  return (
+    <>
+      <Menu.Divider />
+      <Menu.Label>
+        {total === everywhere
+          ? "Waiting drafts"
+          : `${count(total)} of ${count(everywhere)} waiting drafts shown`}
+      </Menu.Label>
+      <Menu.Item
+        closeMenuOnClick
+        disabled={disabled}
+        onClick={() => {
+          onDecide("approve");
+        }}
+      >
+        Approve {draftCount(total)}…
+      </Menu.Item>
+      <Menu.Item
+        closeMenuOnClick
+        disabled={disabled}
+        onClick={() => {
+          onDecide("reject");
+        }}
+      >
+        Reject {draftCount(total)}…
+      </Menu.Item>
+    </>
   );
 }
 
@@ -444,6 +507,8 @@ interface DraftFilter {
   onView: ChangeView;
   // Shown but unavailable while the live records alone show, since they have no drafts.
   disabled?: boolean;
+  // The choices shown but unavailable, such as rejected drafts while they are taken back.
+  unavailable?: readonly string[];
 }
 
 // The Draft menu's filter: which rows show, by whether they have a draft, waiting or rejected.
@@ -452,6 +517,7 @@ function DraftFilterItems({
   view,
   onView,
   disabled = false,
+  unavailable = [],
 }: DraftFilter) {
   const current = view.filters[column.key] ?? {};
   const any = current.any ?? [];
@@ -469,7 +535,7 @@ function DraftFilterItems({
         return (
           <Menu.Item
             key={choice.id}
-            disabled={disabled}
+            disabled={disabled || unavailable.includes(choice.id)}
             leftSection={check(on)}
             onClick={() => {
               toggle(
@@ -519,6 +585,7 @@ export function ViewBar({
   total,
   onLeave,
   saved,
+  draftItems,
 }: {
   // What the rows are, one and several, such as "person" and "people".
   one: string;
@@ -534,6 +601,8 @@ export function ViewBar({
   // Goes back to the table from the search field.
   onLeave: () => void;
   saved?: SavedViews | undefined;
+  // Added to the Draft menu, after what to show and the filter.
+  draftItems?: ReactNode;
 }) {
   const filterOnly = [draftFilter];
   const columns = [...shownColumns, ...filterOnly];
@@ -575,7 +644,9 @@ export function ViewBar({
           onView({ ...view, show });
         }}
         filter={{ column: draftFilter, view, onView }}
-      />
+      >
+        {draftItems}
+      </DraftMenu>
       {sorts.map(({ column, descending }) => (
         <Pill
           key={`sort-${column.key}`}

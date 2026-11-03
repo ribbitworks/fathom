@@ -34,10 +34,10 @@ describe("a new order of a list's choices", () => {
     expect(
       describeRecord(order(["A", "B", "C", "D"], ["B", "A", "D", "C"]))
         .sentence,
-    ).toBe("drafted a new order of Levels");
+    ).toBe("drafted a new order for Levels");
     expect(
       describeRecord(order(["P1", "P2"], ["P2", "P1"]), "approval").sentence,
-    ).toBe("approved a new order of Levels");
+    ).toBe("approved a new order for Levels");
   });
 
   it("names the list it belongs to elsewhere", () => {

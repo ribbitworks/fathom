@@ -115,9 +115,10 @@ describe("Help's Drafts page", () => {
       "Draft",
       "Draft: added",
       "Draft: removed",
-      "Rejected",
       "Draft: moved",
-      "Draft: order",
+      "Draft: reordered",
+      "Draft: retired",
+      "Rejected",
       "Live",
     ];
     // The marks come first; "Rejected" also names a row of the second table.

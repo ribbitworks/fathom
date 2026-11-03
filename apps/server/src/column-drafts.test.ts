@@ -401,6 +401,15 @@ describe("drafting the order of the columns", () => {
         })
       ).statusCode,
     ).toBe(200);
+    // Rejected drafts are back with their makers, so are approved only once sent again.
+    expect((await decide("approval", { columnOrder: true })).statusCode).toBe(
+      409,
+    );
+    await send("DELETE", `/api/people/columns/${added.id}/draft/rejection`);
+    expect((await decide("approval", { columnOrder: true })).statusCode).toBe(
+      409,
+    );
+    await send("DELETE", "/api/people/columns/order/draft/rejection");
     expect((await decide("approval", { columnOrder: true })).statusCode).toBe(
       200,
     );

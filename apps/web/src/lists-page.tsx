@@ -30,19 +30,14 @@ import { useMediaQuery } from "@mantine/hooks";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Fragment, type MouseEvent, type ReactNode, useState } from "react";
+import { DecisionModal } from "./decision-dialog.tsx";
 import {
   type Decision,
-  DecisionModal,
-  drafts as draftCount,
-} from "./decision-dialog.tsx";
-import {
+  decisionFor,
   type DraftSelection,
-  draftNames,
   draftTotal,
-  joined,
   noDrafts,
-  usedDrafts,
-  usingDrafts,
+  waitsForRejected,
 } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { ListDialog } from "./list-dialog.tsx";
@@ -67,11 +62,13 @@ import {
   deleteChoice,
   deleteList,
   discardListDraft,
+  draftedLists,
   type ListDraftTarget,
   listsQuery,
   liveLists,
   moveChoice,
   resubmitListDraft,
+  retiredLive,
   setChoiceRetired,
   setListRetired,
   updateChoice,
@@ -80,8 +77,8 @@ import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
-import { DraftMark, StatusMark } from "./status-mark.tsx";
-import { DraftMenu, TableSearch } from "./table-controls.tsx";
+import { type DraftLike, DraftMark, StatusMark } from "./status-mark.tsx";
+import { DecideAllItems, DraftMenu, TableSearch } from "./table-controls.tsx";
 
 const newListId = "list-new";
 
@@ -146,6 +143,7 @@ function ListsTable({
   selected,
   showLive,
   search: address,
+  markOf,
   onOpen,
 }: {
   lists: List[];
@@ -154,14 +152,23 @@ function ListsTable({
   search: { show?: Show; search?: string };
   // Whether a list a draft changes shows its live row under it.
   showLive: boolean;
+  // The mark beside a list, worked out from its drafts before any are taken back or left out.
+  markOf: (list: List) => DraftLike | undefined;
   onOpen: (list: List) => void;
 }) {
   const [showRetired, setShowRetired] = useState(false);
-  const current = lists.filter((list) => !list.retired);
-  const retired = lists.filter((list) => list.retired);
+  // Beside live, a list a draft retires or restores stays where it is live until approved, as one a
+  // draft removes stays, struck through.
+  const isRetired = (list: List) =>
+    showLive ? retiredLive(list) : list.retired;
+  const current = lists.filter((list) => !isRetired(list));
+  const retired = lists.filter(isRetired);
+  // A choice drafted to be removed is struck through, as in the panel, and not counted.
+  const removed = (choice: List["choices"][number]) =>
+    choice.draft?.action === "deleted";
   const row = (list: List) => {
     const offered = list.choices.filter((choice) => !choice.retired);
-    const mark = listMark(list);
+    const mark = markOf(list);
     // The list as it is live, under a list whose draft, or whose choices' drafts, change it, as a
     // person's live row is under their draft row: every cell, so like is compared with like.
     const [live] = liveLists([list]);
@@ -229,8 +236,19 @@ function ListsTable({
             {list.description}
           </span>
           <span role="cell" className={classes.listCell}>
-            <span className={classes.listCount}>({offered.length})</span>{" "}
-            {offered.map((choice) => choice.label).join(", ")}
+            <span className={classes.listCount}>
+              ({offered.filter((choice) => !removed(choice)).length})
+            </span>{" "}
+            {offered.map((choice, index) => (
+              <Fragment key={choice.id}>
+                {index > 0 && ", "}
+                {removed(choice) ? (
+                  <span className={classes.struck}>{choice.label}</span>
+                ) : (
+                  choice.label
+                )}
+              </Fragment>
+            ))}
           </span>
         </div>
         {liveRow}
@@ -328,9 +346,16 @@ export function ListsPage({
     removed: "Someone else has removed this. The lists have been refreshed.",
     blocked: opened || deciding,
   });
+  const all = query.data ?? [];
   const lists =
-    show === "live" ? liveLists(query.data ?? []) : (query.data ?? []);
+    show === "live"
+      ? liveLists(all)
+      : show === "drafts"
+        ? draftedLists(all)
+        : all;
   const open = lists.find((list) => list.id === listId);
+  // Each list with every draft, as marks are worked out before any are taken back or left out.
+  const drafted = new Map(all.map((list) => [list.id, list]));
 
   const openList = (list: List) => {
     void navigate({
@@ -566,18 +591,8 @@ export function ListsPage({
       });
     },
     decide: (asking, what) => {
-      const chosen = selectionOf(what);
-      const others =
-        asking === "approve"
-          ? usedDrafts(chosen, lists)
-          : usingDrafts(chosen, lists);
-      setDecision({
-        asking,
-        selection: joined(chosen, others),
-        ...(draftTotal(others) > 0
-          ? { included: draftNames(others, lists) }
-          : {}),
-      });
+      // Every list, with its rejected drafts, whatever is shown, so a draft that depends on one waits.
+      setDecision(decisionFor(asking, selectionOf(what), all));
       setDeciding(true);
     },
   };
@@ -643,17 +658,7 @@ export function ListsPage({
     ? waitingIn(shownLists)
     : { selection: noDrafts(), total: 0 };
   const decideAll = (asking: "approve" | "reject") => {
-    const others =
-      asking === "approve"
-        ? usedDrafts(waiting.selection, lists)
-        : usingDrafts(waiting.selection, lists);
-    setDecision({
-      asking,
-      selection: joined(waiting.selection, others),
-      ...(draftTotal(others) > 0
-        ? { included: draftNames(others, lists) }
-        : {}),
-    });
+    setDecision(decisionFor(asking, waiting.selection, all));
     setDeciding(true);
   };
 
@@ -701,44 +706,33 @@ export function ListsPage({
               }}
             />
           )}
-          {onShow && <DraftMenu show={show} onShow={onShow} />}
+          {onShow && (
+            <DraftMenu show={show} onShow={onShow}>
+              {waiting.total > 0 && (
+                <DecideAllItems
+                  total={waiting.total}
+                  everywhere={waitingIn(all).total}
+                  onDecide={decideAll}
+                />
+              )}
+            </DraftMenu>
+          )}
           <Text fz="sm" c="dimmed" role="status">
             {searchWords(search).length > 0
               ? `${count(shownLists.length)} of ${count(lists.length)}`
               : `${count(lists.length)} ${lists.length === 1 ? "list" : "lists"}`}
           </Text>
         </Group>
-        {waiting.total > 0 && (
-          <Group justify="space-between" className={classes.draftsBar}>
-            <Text fz="sm">
-              {draftCount(waiting.total)} waiting among the lists shown
-            </Text>
-            <Group gap="xs">
-              <Button
-                size="compact-sm"
-                variant="default"
-                onClick={() => {
-                  decideAll("reject");
-                }}
-              >
-                Reject all…
-              </Button>
-              <Button
-                size="compact-sm"
-                onClick={() => {
-                  decideAll("approve");
-                }}
-              >
-                Approve all
-              </Button>
-            </Group>
-          </Group>
-        )}
         <ListsTable
           lists={shownLists}
           selected={listId}
           showLive={show === "both"}
           search={showSearch}
+          markOf={(list) =>
+            show === "live"
+              ? undefined
+              : listMark(drafted.get(list.id) as List, show === "drafts")
+          }
           onOpen={openList}
         />
       </>
@@ -773,6 +767,7 @@ export function ListsPage({
             canEdit={canEdit}
             canApprove={canApprove}
             showLive={show === "both"}
+            waits={(selection) => waitsForRejected(selection, all)}
             draftActions={draftActions}
             narrow={narrow}
             actions={choiceActions(open)}

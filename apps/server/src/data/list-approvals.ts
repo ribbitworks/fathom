@@ -16,6 +16,7 @@ import {
   deleteDrafts,
   drafted,
   type Draft,
+  refuseRejected,
   rejectedField,
   setRejection,
 } from "./drafts.ts";
@@ -137,6 +138,11 @@ export async function approveListDrafts(
   const state = await readState(transaction);
   requireDrafts(state, asked);
   const approved = withUsed(state, asked);
+  refuseRejected([
+    ...approved.lists.map((id) => state.listDrafts.get(id)),
+    ...approved.choices.map((id) => state.choiceDrafts.get(id)),
+    ...approved.orders.map((id) => state.orderDrafts.get(id)),
+  ]);
   const made: Change[] = [];
   const removedLists: string[] = [];
   for (const id of approved.lists) {

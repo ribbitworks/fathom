@@ -4,13 +4,15 @@
 // personas who make and judge them would: the Engineering Operations Manager drafts adding a Skills
 // list with two choices, renaming a site, adding Harbourside to Sites, removing a choice no one
 // has, retiring a role on the team, removing the Certifications list and retiring Languages, which
-// no column draws on, moving the Co-op level and the Manager position, and a new description for
-// Positions; the Engineering Director rejects Harbourside, the Positions order, and its
-// description; a second Engineering Operations Manager gives the renamed site a description, so one
-// draft holds two people's changes, and drafts renaming Roles on the team. Drafts of People's columns
-// follow, as seedColumnDrafts sets out. Each case a draft of a list, a choice, a column, or an order
-// can be in is there to try. Removing the seed data discards these drafts first. A development-only
-// package, never included in the runtime image.
+// no column draws on, moving Harbourside to the top of Sites, the Co-op level, and the Manager
+// position, and a new description for Positions; the Engineering Director rejects Harbourside, the
+// Sites and Positions orders, and the Positions description; a second Engineering Operations
+// Manager gives the renamed site a description, so one draft holds two people's changes, drafts
+// renaming Roles on the team, and sends the Sites order for approval again, which then waits on
+// Harbourside, still rejected. Drafts of People's columns follow, as seedColumnDrafts sets out. Each
+// case a draft of a list, a choice, a column, or an order can be in is there to try. Removing the
+// seed data discards these drafts first. A development-only package, never included in the runtime
+// image.
 
 import { changes, type Database, drafts } from "@fathom/db";
 import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
@@ -31,7 +33,7 @@ export const columnRejection =
   "Fictional reason: a previous site is not needed yet.";
 
 export const listRejection =
-  "Fictional reason: keep the description until the positions are reviewed.";
+  "Fictional reason: leave Positions and Sites as they are until both are reviewed.";
 
 function listCalled(
   organization: FictionalOrganization,
@@ -147,6 +149,8 @@ export async function seedListDrafts(
       { label: "Harbourside", description: "" },
     ])
   ).result;
+  // At the top of Sites, so the order drafted uses Harbourside's draft.
+  await data.lists.moveChoice(editor, sites.id, String(harbourside?.id), null);
   await data.lists.moveChoice(
     editor,
     positions.id,
@@ -164,10 +168,12 @@ export async function seedListDrafts(
       people: [],
       lists: [positions.id],
       choices: [String(harbourside?.id)],
-      orders: [positions.id],
+      orders: [positions.id, sites.id],
     },
     listRejection,
   );
+  // Sent again on its own, so it waits on Harbourside, which stays rejected.
+  await data.lists.resubmitDraft(second, { kind: "order", listId: sites.id });
   await seedColumnDrafts(database, organization, editor, approver);
   return true;
 }

@@ -555,9 +555,7 @@ export async function resubmitColumnDraft(
   return drafting(database, async (transaction, state) => {
     const draft = draftOf(state, target);
     if (draft.state !== "rejected") {
-      throw new ConflictError(
-        "Only a rejected draft is sent for approval again",
-      );
+      throw new ConflictError("Only a rejected draft can be resubmitted");
     }
     const recordType = target.kind === "order" ? "column-order" : "field";
     const id = target.kind === "order" ? table : target.id;

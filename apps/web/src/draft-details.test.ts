@@ -4,6 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 import { configDraftFields, draftLines } from "./draft-details.tsx";
+import { phraseText } from "./phrase.tsx";
 
 const draft = {
   madeBy: "Fictional Editor",
@@ -12,14 +13,16 @@ const draft = {
 
 describe("a draft's details", () => {
   it("names who added or removed a record, or changed it when no field is shown", () => {
-    expect(draftLines({ ...draft, action: "created" }, [])).toEqual([
-      "Added by Fictional Editor",
-    ]);
-    expect(draftLines({ ...draft, action: "deleted" }, [])).toEqual([
-      "Removed by Fictional Editor",
-    ]);
     expect(
-      draftLines({ ...draft, action: "changed", madeBy: null }, []),
+      draftLines({ ...draft, action: "created" }, []).map(phraseText),
+    ).toEqual(["Added by Fictional Editor"]);
+    expect(
+      draftLines({ ...draft, action: "deleted" }, []).map(phraseText),
+    ).toEqual(["Removed by Fictional Editor"]);
+    expect(
+      draftLines({ ...draft, action: "changed", madeBy: null }, []).map(
+        phraseText,
+      ),
     ).toEqual(["Changed by Fathom"]);
   });
 
@@ -36,7 +39,7 @@ describe("a draft's details", () => {
           changedBy: { label: "Second Fictional Editor" },
         },
         changed,
-      ),
+      ).map(phraseText),
     ).toEqual([
       "Name set to North, by Second Fictional Editor",
       "Description changed, by Fictional Editor",

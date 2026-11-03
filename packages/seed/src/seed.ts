@@ -135,16 +135,20 @@ export async function seed(
       const { id, ...settings } = row;
       made.push(...recorded("field", id, "created", settings));
     }
-    // The seeded columns go after each person's name and Employee ID, before their dates, or after
-    // the columns already in order.
+    // The seeded columns go right after Employee ID, with the other columns in any stored order kept
+    // as they are, so seeding again after unseeding, which leaves their keys in it, lays them out the
+    // same way. A stored order names every built-in column, as Fathom always stores a whole order,
+    // so Employee ID is found; were it missing, the seeded columns would go first.
     const [stored] = await transaction
       .select({ keys: columnOrders.keys })
       .from(columnOrders)
       .where(eq(columnOrders.tableName, "people"));
     const added = organization.columns.map(({ id }) => id);
-    const keys = stored
-      ? [...stored.keys, ...added]
-      : ["preferredName", "employeeId", ...added, "startDate", "endDate"];
+    const others = (
+      stored?.keys ?? ["preferredName", "employeeId", "startDate", "endDate"]
+    ).filter((key) => !added.includes(key));
+    const at = others.indexOf("employeeId") + 1;
+    const keys = [...others.slice(0, at), ...added, ...others.slice(at)];
     await transaction
       .insert(columnOrders)
       .values({ tableName: "people", keys })
