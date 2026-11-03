@@ -449,6 +449,11 @@
   color: var(--mantine-color-sea-filled);
 }
 
+/* The filled shade is too dark to see on the dark panel. */
+:global([data-mantine-color-scheme="dark"]) .headerMarks {
+  color: var(--mantine-color-sea-4);
+}
+
 .headerMarks sup {
   font-size: 10px;
   line-height: 1;
@@ -473,6 +478,10 @@
 .changedMark {
   margin-left: 6px;
   color: var(--mantine-primary-color-filled);
+}
+
+:global([data-mantine-color-scheme="dark"]) .changedMark {
+  color: var(--mantine-color-sea-4);
 }
 
 /* Marks the saved view applied, keeping every view's name aligned. */

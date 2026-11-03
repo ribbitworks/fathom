@@ -44,10 +44,6 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 - **Unnamed in the access history:** The access history names each person by their live record, so a Restricted change to someone only drafted to be added shows them without a name until their draft is approved.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
 
-## Tables
-
-- **Faint marks in dark mode:** The marks beside a column's name for its sort and filter, and the mark beside a saved view's name when the table has changed since it was applied, use the filled sea blue in both modes. On the dark panel that has a contrast of 2.66 to 1, below the 3 to 1 a meaningful graphic needs. The roles marked on Help's Roles page use a lighter sea blue in dark mode for this reason; these marks could do the same. Found in review on 2026-11-02.
-
 ## Dependencies
 
 - **Advisories in minimatch and glob:** Two medium advisories, published by 2026-10-30, affect minimatch before 11.0.1 (denial of service from crafted patterns) and glob 9 to 14.0.1 (a cancelled search can keep reading files). They reach the server through @fastify/static, and development tools such as ESLint, markdownlint, and Testcontainers. In Fathom, the patterns come from code, never from users. The fixed versions are new major versions that the packages depending on them do not accept yet, so they wait for those packages' updates. The Security Plan's 90 days for medium findings runs to 2027-01-28.
