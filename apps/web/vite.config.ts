@@ -28,12 +28,21 @@ function https() {
   };
 }
 
+// 'pnpm dev' names the copy of the repository and the branch it runs from, for the page to show;
+// tests and builds have neither.
+function devLabel() {
+  const clone = environment.FATHOM_DEV_CLONE;
+  const branch = environment.FATHOM_DEV_BRANCH;
+  return clone === undefined || branch === undefined ? null : { clone, branch };
+}
+
 // Dates, names, and counts are shown in the computer's language, so tests fix one. Each test process reads it
 // as it starts, so it is set here, before Vitest starts them.
 if (environment.VITEST !== undefined) environment.LC_ALL = "en_US.UTF-8";
 
 export default defineConfig({
   plugins: [react()],
+  define: { FATHOM_DEV_LABEL: JSON.stringify(devLabel()) },
   server: {
     ...https(),
     port: Number(environment.FATHOM_DEV_PORT ?? "8443"),

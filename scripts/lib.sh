@@ -5,7 +5,8 @@
 # of project files, the copy of them that containerized scanners read, so they never see ignored
 # folders, the password the development accounts share, and a prompt for new passwords. Sourcing it
 # also exports FATHOM_SECURITY_FIXES_DATE, the date that decides which security fixes container
-# builds fetch. Source this file; do not run it.
+# builds fetch, and this copy's development and production-like ports. Source this file; do not
+# run it.
 
 info() { printf '==> %s\n' "$*"; }
 fail() {
@@ -21,6 +22,32 @@ require_git_repository() {
 # Setting another value, such as the current time, fetches fixes again within the same day.
 FATHOM_SECURITY_FIXES_DATE="${FATHOM_SECURITY_FIXES_DATE:-$(date -u +%Y-%m-%d)}"
 export FATHOM_SECURITY_FIXES_DATE
+
+# Several copies of the repository can run on one machine at once, each with its own clone number,
+# from 1 to 9, in the git-ignored .dev/clone. The number picks the ports and the names of the
+# containers, volumes and images, so the copies never share a database or replace each other's
+# containers. Clone 1, the default, uses the ports and names a single copy always has.
+FATHOM_CLONE=1
+fathom_clone_file="$(dirname "${BASH_SOURCE[0]}")/../.dev/clone"
+if [ -s "$fathom_clone_file" ]; then
+  FATHOM_CLONE="$(tr -d '[:space:]' <"$fathom_clone_file")"
+  case "$FATHOM_CLONE" in
+    [1-9]) ;;
+    *) fail ".dev/clone must hold a clone number from 1 to 9; run 'pnpm dev:setup <number>'" ;;
+  esac
+fi
+unset fathom_clone_file
+fathom_clone_offset=$((FATHOM_CLONE - 1))
+export FATHOM_DEV_PORT="${FATHOM_DEV_PORT:-$((8443 + 10 * fathom_clone_offset))}"
+export FATHOM_DEV_API_PORT="${FATHOM_DEV_API_PORT:-$((8444 + 10 * fathom_clone_offset))}"
+export FATHOM_DEV_DB_PORT="${FATHOM_DEV_DB_PORT:-$((5432 + fathom_clone_offset))}"
+export FATHOM_STACK_PORT="${FATHOM_STACK_PORT:-$((9443 + 10 * fathom_clone_offset))}"
+unset fathom_clone_offset
+
+# Prints the name given, followed by this copy's clone number unless it is clone 1.
+clone_name() {
+  if [ "$FATHOM_CLONE" = 1 ]; then printf '%s\n' "$1"; else printf '%s-%s\n' "$1" "$FATHOM_CLONE"; fi
+}
 
 require_container_runtime() {
   command -v docker >/dev/null 2>&1 || fail "A container runtime is required; see docs/operations/supported-platforms.md"

@@ -25,11 +25,15 @@ import { join } from "node:path";
 import { after, before, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { proxyProtocolHeader } from "../../packages/test-utils/src/https.ts";
+import { cloneName } from "../clone.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 // An address on the internet, which no isolated container may reach.
 const internetAddress = "1.1.1.1";
 const internetName = "example.com";
+
+// Copies of the repository running these tests at once never replace each other's containers.
+const project = cloneName("fathom-container-test", repositoryRoot);
 
 let folder;
 let certificate;
@@ -41,7 +45,7 @@ function compose(...args) {
     [
       "compose",
       "--project-name",
-      "fathom-container-test",
+      project,
       "--file",
       join(repositoryRoot, "deploy/compose.yaml"),
       ...args,
@@ -56,6 +60,8 @@ function compose(...args) {
         FATHOM_TLS_KEY: join(folder, "key.pem"),
         FATHOM_HTTPS_PORT: String(port),
         FATHOM_PUBLIC_URL: `https://localhost:${String(port)}`,
+        FATHOM_IMAGE_TAG:
+          process.env.FATHOM_IMAGE_TAG ?? cloneName("latest", repositoryRoot),
         FATHOM_SECURITY_FIXES_DATE:
           process.env.FATHOM_SECURITY_FIXES_DATE ??
           new Date().toISOString().slice(0, 10),
@@ -193,8 +199,8 @@ describe("reaching Fathom", () => {
       [
         "inspect",
         "--format",
-        '{{(index .NetworkSettings.Networks "fathom-container-test_proxy-app").IPAddress}}',
-        "fathom-container-test-proxy-1",
+        `{{(index .NetworkSettings.Networks "${project}_proxy-app").IPAddress}}`,
+        `${project}-proxy-1`,
       ],
       { encoding: "utf8" },
     ).trim();

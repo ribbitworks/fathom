@@ -34,6 +34,7 @@ import {
 } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
+import { DevBadge, devLabel } from "./dev-label.tsx";
 import { Icon, type IconName } from "./icons.tsx";
 import { useSignOutWhenIdle } from "./idle.ts";
 import classes from "./layout.module.css";
@@ -388,6 +389,7 @@ export function Layout({
                 </Text>
               </Breadcrumbs>
             )}
+            <DevBadge label={devLabel} />
           </Group>
           <AppMenu position="bottom-end" width="max-content">
             <AppMenu.Target>

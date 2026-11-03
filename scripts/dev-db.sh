@@ -17,7 +17,7 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh
 source scripts/lib.sh
 
-compose=(docker compose --file deploy/compose.dev.yaml)
+compose=(docker compose --project-name "$(clone_name fathom-dev)" --file deploy/compose.dev.yaml)
 
 start_database() {
   for name in postgres_superuser_password fathom_migrator_password fathom_app_password; do
@@ -30,7 +30,7 @@ start_database() {
 apply_migrations() {
   info "Applying migrations as the migration role"
   FATHOM_DB_HOST=127.0.0.1 \
-    FATHOM_DB_PORT="${FATHOM_DEV_DB_PORT:-5432}" \
+    FATHOM_DB_PORT="$FATHOM_DEV_DB_PORT" \
     FATHOM_DB_NAME=fathom \
     FATHOM_DB_USER=fathom_migrator \
     FATHOM_DB_PASSWORD_FILE="$PWD/.dev/secrets/fathom_migrator_password" \
@@ -44,11 +44,11 @@ run_seed() {
   if [ "$1" = seed ]; then password_file="$PWD/$(dev_account_password_file)"; fi
   start_database
   apply_migrations
-  FATHOM_PUBLIC_URL="https://localhost:${FATHOM_DEV_PORT:-8443}" \
+  FATHOM_PUBLIC_URL="https://localhost:$FATHOM_DEV_PORT" \
     FATHOM_AUTH_SECRET_FILE="$PWD/.dev/secrets/fathom_auth_secret" \
     FATHOM_SEED_PASSWORD_FILE="$password_file" \
     FATHOM_DB_HOST=127.0.0.1 \
-    FATHOM_DB_PORT="${FATHOM_DEV_DB_PORT:-5432}" \
+    FATHOM_DB_PORT="$FATHOM_DEV_DB_PORT" \
     FATHOM_DB_NAME=fathom \
     FATHOM_DB_USER=fathom_app \
     FATHOM_DB_PASSWORD_FILE="$PWD/.dev/secrets/fathom_app_password" \

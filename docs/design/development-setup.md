@@ -52,8 +52,18 @@ Developers may use any machine and container runtime listed for development in S
 ### Ways to Run Fathom
 
 - **Development mode:** PostgreSQL runs in a container, and the server and front end run directly on the machine with automatic reloading. The front end's development server forwards API requests to the server, so the browser sees one HTTPS origin. It does not send the server's security headers, so the built front end is also tested to need no inline scripts, which those headers block.
-- **Production-like mode:** The containers in the [Architecture](architecture.md) run with Docker Compose, over HTTPS, with the same network isolation as production, at `https://localhost:9443` so development mode can run alongside. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Tests of the running containers run in this mode, with throwaway secrets.
+- **Production-like mode:** The containers in the [Architecture](architecture.md) run with Docker Compose, over HTTPS, with the same network isolation as production, at `https://localhost:9443`, or the port of the copy's clone number below, so development mode can run alongside. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Tests of the running containers run in this mode, with throwaway secrets.
 - **Tests and the database:** Development mode and the database tests build images for the machine's own processor, so they run at full speed. The security report scans separate linux/amd64 builds, so what is scanned is what production runs.
+- **Several copies at once:** Each copy of the repository on one machine can run both modes and their tests alongside the others when it is given its own clone number, from 1 to 9, with `pnpm dev:setup <number>`. The number is kept in the git-ignored `.dev/clone`, and clone 1 is the default. In development mode, the top bar and the browser tab's title show the clone number, and the top bar the branch, read when `pnpm dev` starts. Each copy gets its own database, containers, production-like and scanned images, and scanner cache, and these ports, where n is the clone number:
+
+  | Port | Clone 1 | Clone n |
+  | --- | --- | --- |
+  | Development mode | 8443 | 8443 + 10 × (n - 1) |
+  | Development server's API | 8444 | 8444 + 10 × (n - 1) |
+  | Development database | 5432 | 5432 + (n - 1) |
+  | Production-like mode | 9443 | 9443 + 10 × (n - 1) |
+
+  Copying `.dev/` from another copy keeps the same development accounts' password in every copy, but also copies its clone number, so run `pnpm dev:setup <number>` straight after with the new copy's own number. Until then, the new copy uses the other's database, and `pnpm dev:reset` there would delete it. What copies still share is listed in [Issues](../issues.md#development).
 
 ### HTTPS
 
@@ -69,10 +79,10 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev:setup` | Create development secrets, such as random database passwords and the session secret, and the locally trusted HTTPS certificate in the private `.dev/` folder |
+| `pnpm dev:setup [clone number]` | Create development secrets, such as random database passwords and the session secret, and the locally trusted HTTPS certificate in the private `.dev/` folder. A clone number from 1 to 9 lets this copy run alongside others, as [Ways to Run Fathom](#ways-to-run-fathom) describes |
 | `pnpm account:create --name <name> --email <email> [--role <role>]... [--no-viewer]` | Create an account in the development database, asking for its password without showing it. It is a Viewer unless `--no-viewer` is given, with any other roles named as in [Roles](../product/roles.md) in lowercase with hyphens, such as `workforce-administrator` |
 | `pnpm db:up` and `pnpm db:down` | Start and stop the development database, whose port is published only on this machine |
-| `pnpm dev` | Start development mode: the database, with migrations applied, the server, and the front end, and open Fathom at `https://localhost:8443` in the browser. The server and the front end reload when their code changes. Ctrl+C stops them; the database keeps running until `pnpm db:down` |
+| `pnpm dev` | Start development mode: the database, with migrations applied, the server, and the front end, and open Fathom at `https://localhost:8443`, or the clone's port, in the browser. The server and the front end reload when their code changes. Ctrl+C stops them; the database keeps running until `pnpm db:down` |
 | `pnpm build` | Build the front end into `apps/web/dist`, which the server serves when `FATHOM_WEB_ROOT` points to it |
 | `pnpm db:migrate` | Apply migration files using the migration role |
 | `pnpm db:reset` | Delete and recreate the development database, and apply migrations |

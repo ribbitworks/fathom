@@ -15,10 +15,10 @@ bash scripts/dev-db.sh migrate
 
 password="$(read_new_password)"
 printf '%s\n' "$password" |
-  FATHOM_PUBLIC_URL="https://localhost:${FATHOM_DEV_PORT:-8443}" \
+  FATHOM_PUBLIC_URL="https://localhost:$FATHOM_DEV_PORT" \
     FATHOM_AUTH_SECRET_FILE="$PWD/.dev/secrets/fathom_auth_secret" \
     FATHOM_DB_HOST=127.0.0.1 \
-    FATHOM_DB_PORT="${FATHOM_DEV_DB_PORT:-5432}" \
+    FATHOM_DB_PORT="$FATHOM_DEV_DB_PORT" \
     FATHOM_DB_NAME=fathom \
     FATHOM_DB_USER=fathom_app \
     FATHOM_DB_PASSWORD_FILE="$PWD/.dev/secrets/fathom_app_password" \

@@ -99,7 +99,7 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 
 ## Project Commands
 
-- **Setup on a new branch:** `pnpm install`. A clone that already has `.dev/` needs nothing more to run the app. In a clone without it, ask the owner whether to copy `.dev/` from another clone: a fresh `pnpm dev:setup` creates new passwords that will not match the shared `fathom-dev` database.
+- **Setup on a new branch:** `pnpm install`. A clone that already has `.dev/` needs nothing more to run the app. In a clone without it, ask the owner whether to copy `.dev/` from another clone, so the development accounts keep one password everywhere, and which clone number to give it with `pnpm dev:setup <number>`, run straight after copying, since `.dev/` holds the other clone's number. Each clone number has its own database and ports, as [Development Setup](docs/design/development-setup.md#ways-to-run-fathom) describes.
 - **Workflow test step:** `pnpm check`, which runs everything listed in [Testing Standards](docs/standards/testing.md#running-tests). When a change affects the containers, the test step also runs `pnpm test:containers`.
 - **Tests only:** `pnpm test`
 - **Container tests:** `pnpm test:containers`

@@ -6,9 +6,23 @@
 # expiring, so it is safe to run repeatedly. Production secrets are never created or stored here.
 # Creating the certificate asks mkcert to add its local certificate authority to this machine's
 # trusted certificates the first time, which may ask for your password.
+# Usage: scripts/dev-setup.sh [clone number]
+#   clone number  from 1 to 9, kept in .dev/clone, for a copy of the repository that runs alongside
+#                 others on this machine; see scripts/lib.sh
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# Written before scripts/lib.sh reads it, so this also replaces a number it would reject.
+case "${1:-}" in
+  '') ;;
+  [1-9]) mkdir -p .dev && chmod 700 .dev && printf '%s\n' "$1" >.dev/clone ;;
+  *)
+    printf 'error: %s\n' "Usage: scripts/dev-setup.sh [clone number from 1 to 9]" >&2
+    exit 1
+    ;;
+esac
+
 # shellcheck source=scripts/lib.sh
 source scripts/lib.sh
 
@@ -46,4 +60,5 @@ if [ ! -s "$certs_dir/localhost-key.pem" ] ||
 fi
 chmod 644 "$certs_dir/localhost-key.pem"
 
+info "This copy is clone $FATHOM_CLONE: development mode is at https://localhost:$FATHOM_DEV_PORT and production-like mode at https://localhost:$FATHOM_STACK_PORT"
 info "Done"

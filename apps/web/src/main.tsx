@@ -16,9 +16,11 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { shouldRetry } from "./api.ts";
 import { App } from "./app.tsx";
+import { devLabel, devTitle } from "./dev-label.tsx";
 
 const root = document.getElementById("root");
 if (root === null) throw new Error("The page has no root element");
+document.title = devTitle(document.title, devLabel);
 
 createRoot(root).render(
   <StrictMode>

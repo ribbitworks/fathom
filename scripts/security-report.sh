@@ -54,7 +54,7 @@ docker run --rm --volume "$scan_copy:/src:ro" --workdir /src "$semgrep_image" \
 info "Scanning dependencies for vulnerabilities and licences"
 # Trivy also reads installed packages, read-only, to find their licences.
 docker run --rm --volume "$scan_copy:/src:ro" --volume "$PWD/node_modules:/src/node_modules:ro" \
-  --volume fathom-trivy-cache:/root/.cache/trivy "$trivy_image" \
+  --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$trivy_image" \
   fs --quiet --skip-version-check --disable-telemetry --include-dev-deps \
   --scanners vuln,license --format json --exit-code 0 /src \
   >"$report_dir/files.json" || info "The scan of dependencies for vulnerabilities did not complete"
@@ -62,16 +62,16 @@ docker run --rm --volume "$scan_copy:/src:ro" --volume "$PWD/node_modules:/src/n
 info "Scanning configuration for misconfiguration"
 # Only the project's own files are scanned; configuration files inside dependencies are not ours.
 docker run --rm --volume "$scan_copy:/src:ro" \
-  --volume fathom-trivy-cache:/root/.cache/trivy "$trivy_image" \
+  --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$trivy_image" \
   fs --quiet --skip-version-check --disable-telemetry \
   --scanners misconfig --format json --exit-code 0 /src \
   >"$report_dir/configuration.json" || info "The scan of configuration did not complete"
 
 info "Building and scanning container images for the production server's processor"
 # Runs Docker Compose for linux/amd64, with images tagged separately, so the development images
-# built for this machine are untouched.
+# built for this machine are untouched. Each copy of the repository tags and caches its own.
 compose_for_scan() {
-  DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_IMAGE_TAG=security-scan docker compose "$@"
+  DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_IMAGE_TAG="$(clone_name security-scan)" docker compose "$@"
 }
 # Each image is saved to a file that Trivy reads, so Trivy is never given access to the container
 # runtime. Every image is passed to the summary, and anything that fails is recorded as not scanned,
@@ -105,7 +105,7 @@ for compose_file in deploy/compose*.yaml deploy/compose*.yml; do
     # Saving fails if the image has no linux/amd64 build, so only what production runs is scanned.
     if ! docker save --platform linux/amd64 --output "$images_dir/$index.tar" "$image" ||
       ! docker run --rm --volume "$images_dir/$index.tar:/image.tar:ro" \
-        --volume fathom-trivy-cache:/root/.cache/trivy "$trivy_image" \
+        --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$trivy_image" \
         image --quiet --skip-version-check --disable-telemetry --scanners vuln,secret \
         --format json --exit-code 0 --input /image.tar >"$report"; then
       info "The scan of $image did not complete"

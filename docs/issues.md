@@ -1,7 +1,7 @@
 # Fathom — Issues
 
 **Status:** Working list
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-02
 
 Known problems and deferred work that are not yet scheduled in the [Implementation Plan](design/implementation-plan.md). Each item says why it was deferred. When an item is scheduled or resolved, it moves to the document that owns it, or is removed.
 
@@ -48,3 +48,8 @@ The owner decided the following on 2026-10-30, to be built together as one chang
 ## Dependencies
 
 - **Advisories in minimatch and glob:** Two medium advisories, published by 2026-10-30, affect minimatch before 11.0.1 (denial of service from crafted patterns) and glob 9 to 14.0.1 (a cancelled search can keep reading files). They reach the server through @fastify/static, and development tools such as ESLint, markdownlint, and Testcontainers. In Fathom, the patterns come from code, never from users. The fixed versions are new major versions that the packages depending on them do not accept yet, so they wait for those packages' updates. The Security Plan's 90 days for medium findings runs to 2027-01-28.
+
+## Development
+
+- **Copies of the repository share a database image:** Development mode and the database tests in every copy build and use the same `fathom-postgres:dev` image, so two copies changing the database image at once can test each other's build. Deferred as rare: the image changes far less often than the code.
+- **Copies of the repository share sign-in:** Every copy's sign-in cookie has the same name, and browsers do not keep cookies apart by port, so signing in to one copy signs the same browser out of the others. Use a separate browser profile for each copy until each has its own cookie name.

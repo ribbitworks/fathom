@@ -3,8 +3,8 @@
 
 # Runs Fathom in production-like mode on this machine: the containers from deploy/compose.yaml, built
 # for the production server's processor, with the development secrets and certificate. Fathom is
-# then at https://localhost:9443, so development mode can run alongside it. Run 'pnpm dev:setup'
-# first. Set FATHOM_STACK_PORT to use another port.
+# then at https://localhost:9443, or the port of this copy's clone number, so development mode can
+# run alongside it. Run 'pnpm dev:setup' first. Set FATHOM_STACK_PORT to use another port.
 # Usage: scripts/stack.sh up | down | reset | logs | create-account --name <name> --email <email>
 #   up              build and start the containers, and wait until they are ready
 #   down            stop the containers, keeping the database's data
@@ -17,7 +17,7 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib.sh
 source scripts/lib.sh
 
-export FATHOM_HTTPS_PORT="${FATHOM_STACK_PORT:-9443}"
+export FATHOM_HTTPS_PORT="$FATHOM_STACK_PORT"
 case "$FATHOM_HTTPS_PORT" in
   '' | *[!0-9]*) fail "FATHOM_STACK_PORT must be a port number from 1 to 65535" ;;
 esac
@@ -26,7 +26,9 @@ if [ "$FATHOM_HTTPS_PORT" -lt 1 ] || [ "$FATHOM_HTTPS_PORT" -gt 65535 ]; then
   fail "FATHOM_STACK_PORT must be a port number from 1 to 65535"
 fi
 export FATHOM_PUBLIC_URL="https://localhost:$FATHOM_HTTPS_PORT"
-compose=(docker compose --project-name fathom-stack --file deploy/compose.yaml)
+FATHOM_IMAGE_TAG="${FATHOM_IMAGE_TAG:-$(clone_name latest)}"
+export FATHOM_IMAGE_TAG
+compose=(docker compose --project-name "$(clone_name fathom-stack)" --file deploy/compose.yaml)
 
 require_container_runtime
 case "${1:-}" in
