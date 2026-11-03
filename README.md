@@ -25,6 +25,12 @@ pnpm dev:reset
 
 `pnpm dev:reset` prints the accounts' password and opens Fathom in your browser, where you sign in with any of the [development accounts](docs/design/development-setup.md#development-accounts). After that, `pnpm dev` starts development mode again, keeping the data.
 
+To start again from a fresh database with the fictional data and accounts, deleting everything in the development database, including changes made by hand, stop development mode with Ctrl+C, then run:
+
+```bash
+pnpm dev:reset
+```
+
 `pnpm db:seed` and `pnpm db:unseed` add the fictional data to the development database and take it away again, deactivating the accounts; see [Development Setup](docs/design/development-setup.md#common-commands) for these and other commands.
 
 Check everything, including the tests and the security report:
