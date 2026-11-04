@@ -125,11 +125,27 @@ Allocations kept from a month, as reporting lines are, for people and planned hi
 
 ### Team Composition
 
-Reports per manager, including planned hires, compared with a range, as the [Decisions Log](../product/decisions.md#workforce) sets out. It builds on the People table's [metrics](../product/decisions.md#configuration), which count people by a column's values: reports per manager groups the same counts by manager, with a target beside each, and later ratios, such as test to development, compare two of a column's counts.
+Reports per manager, including planned hires, compared with a range, in a Teams table with a row for each manager, counted as at a month the reader picks, as the [Decisions Log](../product/decisions.md#workforce) sets out. It builds on the People table's [metrics](../product/decisions.md#configuration), which count people by a column's values: reports per manager groups the same counts by manager, with a target beside each, and later ratios, such as test to development, compare two of a column's counts.
 
 ### Demand Forecasting
 
-One estimate per feature, entered in a unit of effort, with configurable conversions between units, and compared with capacity over the forecasting horizons in the [Product Brief](../product/brief.md), worked out from features' allocations and target cycles, as the [Decisions Log](../product/decisions.md#planning) sets out.
+One estimate per feature, entered in a unit of effort, with configurable conversions between units, and compared with the capacity from [Allocations and Capacity](#allocations-and-capacity) over the forecasting horizons in the [Product Brief](../product/brief.md), worked out from features' allocations and target cycles, as the [Decisions Log](../product/decisions.md#planning) sets out. A Demand page shows the forecast as a table and a simple bar chart, for the whole organization and for each feature team, and Features gain Allocated and Remaining columns beside the estimate. Each cycle's demand on the roadmap board waits for the visual roadmap.
+
+Where a feature's effort counts in the forecast, as [Feature effort over time](../product/decisions.md#planning) and the Demand forecast set out:
+
+```mermaid
+flowchart TD
+    feature[A feature's estimate and allocations] --> allocated[Allocations count in their own months]
+    feature --> left{Done or cancelled, or allocations reach the estimate?}
+    left -->|yes| none[Nothing more counts]
+    left -->|no| cycle{Targets a cycle?}
+    cycle -->|yes| spread[The rest counts across the cycle's months, by their days]
+    cycle -->|no| later[The rest counts in Later]
+    allocated --> bands[Bands: next 6 months, 6 to 12 months, 1 to 2 years, beyond 2 years]
+    spread --> bands
+    bands --> split[Split into committed and possible, by the feature's status]
+    later --> split
+```
 
 ### Project Manager Input
 
