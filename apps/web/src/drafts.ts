@@ -27,6 +27,10 @@ export interface DraftSelection {
   columnOrder: boolean;
 }
 
+// Which draft of a table's columns: a column's, or that of the column order.
+export type ColumnDraftTarget =
+  { kind: "column"; id: string } | { kind: "order" };
+
 export const noDrafts = (): DraftSelection => ({
   people: [],
   lists: [],

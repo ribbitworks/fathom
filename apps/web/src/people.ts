@@ -20,6 +20,7 @@ import {
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import type { ColumnDraftTarget } from "./drafts.ts";
 
 export type PeopleData = z.infer<typeof peopleSchema>;
 
@@ -100,10 +101,6 @@ export async function moveColumn(
     )
   ).changeSetId;
 }
-
-// Which draft of the People table's columns: a column's, or that of the column order.
-export type ColumnDraftTarget =
-  { kind: "column"; id: string } | { kind: "order" };
 
 const columnDraftPath = (target: ColumnDraftTarget) =>
   target.kind === "order"

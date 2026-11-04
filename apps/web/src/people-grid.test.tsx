@@ -1,23 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the People table on its own: how its columns are put in order, where a dragged column
-// goes, how wide each column is, and adding people for a user who does not see start and end
-// dates. The page around it is tested in people-page.test.tsx.
+// Tests for the People table on its own: how its columns are put in order, how wide each column is,
+// adding people for a user who does not see start and end dates, and the people as they are live.
+// The grid it is built on is tested in record-grid.test.tsx, and the page around it in
+// people-page.test.tsx.
 
 import type { Field, List, Person } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import {
-  columnsFor,
-  columnWidth,
-  countedPeople,
-  droppedAfter,
-  liveFields,
-  livePeople,
-  PeopleGrid,
-} from "./people-grid.tsx";
+import { columnsFor, livePeople, PeopleGrid } from "./people-grid.tsx";
+import { columnWidth } from "./record-grid.tsx";
 import { emptyView, formatDay } from "./table-view.ts";
 import { testTheme } from "./test-support.tsx";
 
@@ -50,20 +44,6 @@ describe("the order of the columns", () => {
 
   it("offers no choices for a column whose list cannot be found", () => {
     expect(columnsFor([site], [], [], false).at(-1)?.choices).toEqual([]);
-  });
-});
-
-describe("where a dragged column goes", () => {
-  const keys = ["a", "b", "c"];
-
-  it.each([
-    ["a", "c", "c"],
-    ["c", "a", null],
-    ["c", "b", "a"],
-    ["a", "a", undefined],
-    ["x", "a", undefined],
-  ])("%s dropped on %s follows %s", (moved, onto, after) => {
-    expect(droppedAfter(keys, moved, onto)).toBe(after);
   });
 });
 
@@ -192,18 +172,7 @@ describe("adding people without dates", () => {
           showDates={false}
           view={emptyView}
           onView={noop}
-          actions={{
-            add,
-            update: noop,
-            remove: noop,
-            discard: noop,
-            resubmit: noop,
-            decide: noop,
-            moveColumn: noop,
-            editColumn: noop,
-            discardColumn: noop,
-            resubmitColumn: noop,
-          }}
+          actions={{ ...actions, add }}
         />
       </MantineProvider>,
     );
@@ -322,106 +291,105 @@ describe("the live links", () => {
   });
 });
 
-describe("the people the metrics count", () => {
-  const draft = {
-    state: "waiting" as const,
-    madeBy: null,
-    madeAt: null,
-    changed: [],
-    live: { values: {}, links: {} },
-  };
-  const person = (id: string, more: Partial<Person> = {}): Person => ({
-    id,
-    preferredName: `Fictional ${id}`,
-    employeeId: id,
-    values: {},
-    links: {},
-    ...more,
-  });
-  const people = [
-    person("p1"),
-    person("p2", { draft: { ...draft, action: "created" } }),
-    person("p3", { draft: { ...draft, action: "deleted" } }),
-  ];
-  const [column, other] = columnsFor([site], [sites], [], false);
-
-  it("are those shown, unless drafts show beside live", () => {
-    expect(countedPeople("live", people, [], () => undefined)).toEqual({
-      rows: people,
-    });
-    expect(countedPeople("drafts", people, [], () => undefined)).toEqual({
-      rows: people,
-    });
-  });
-
-  it("are, with drafts beside live, those not drafted to be removed, and as they are live by each column's live copy", () => {
-    const counted = countedPeople(
-      "both",
-      people,
-      [column, other].flatMap((each) => (each ? [each] : [])),
-      (each) => (each === column ? each : undefined),
+describe("adding someone with an Employee ID already taken", () => {
+  it("names the Employee ID taken before the name still needed, as the row is filled in and when it is added", async () => {
+    const add = vi.fn();
+    render(
+      <MantineProvider theme={testTheme}>
+        <PeopleGrid
+          people={[
+            {
+              id: "p1",
+              preferredName: "Jo Fictional",
+              employeeId: "E1",
+              values: {},
+              links: {},
+            },
+          ]}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit
+          canEditColumns={false}
+          showDates={false}
+          view={emptyView}
+          onView={noop}
+          actions={{ ...actions, add }}
+        />
+      </MantineProvider>,
     );
-    expect(counted.rows.map(({ id }) => id)).toEqual(["p1", "p2"]);
-    expect(counted.live?.rows.map(({ id }) => id)).toEqual(["p1", "p3"]);
-    expect(counted.live?.columns).toEqual([column]);
+    act(() => {
+      document.getElementById("cell-new-0-employeeId")?.focus();
+    });
+    await userEvent.keyboard("e1{Tab}{Escape}");
+    // Named in the row's mark as it is filled in, before what is still needed.
+    const mark = screen.getByTitle(
+      "New, not saved yet: Someone already has that Employee ID",
+    );
+    expect(mark.className).not.toContain("newMarkWrong");
+    const wrong = within(mark).getByText(
+      "Someone already has that Employee ID",
+    );
+    expect(wrong.className).toContain("newMarkWrong");
+    expect(wrong.parentElement?.getAttribute("aria-live")).toBe("polite");
+    // The Employee ID itself is marked, not the name still needed.
+    expect(
+      document.getElementById("cell-new-0-employeeId")?.className,
+    ).toContain("recordProblemCell");
+    expect(
+      document.getElementById("cell-new-0-preferredName")?.className,
+    ).not.toContain("recordProblemCell");
+    act(() => {
+      document.getElementById("cell-new-0-employeeId")?.focus();
+    });
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Someone already has that Employee ID",
+    );
+    expect(add).not.toHaveBeenCalled();
   });
 });
 
-describe("the live columns", () => {
-  const column = {
-    id: "f1",
-    name: "Grade",
-    type: "choice" as const,
-    listId: "l1",
-    visibility: null,
-    multiple: false,
-    required: true,
-  };
-  const draft = {
-    state: "waiting" as const,
-    madeBy: null,
-    madeAt: null,
-  };
-  it("leave out columns only drafted to be added, and put back each setting a draft changes", () => {
-    expect(
-      liveFields([
-        { ...column, id: "f0" },
-        {
-          ...column,
-          draft: {
-            ...draft,
-            action: "changed",
-            changed: ["name", "required"],
-            live: { name: "Level", required: false },
-          },
-        },
-        {
-          ...column,
-          id: "f2",
-          draft: { ...draft, action: "created", changed: [], live: {} },
-        },
-        {
-          ...column,
-          id: "f4",
-          listId: "l2",
-          draft: {
-            ...draft,
-            action: "changed",
-            changed: ["listId"],
-            live: { listId: "l1" },
-          },
-        },
-        {
-          ...column,
-          id: "f3",
-          draft: { ...draft, action: "deleted", changed: [], live: {} },
-        },
-      ]),
-    ).toEqual([
-      { ...column, id: "f0" },
-      { ...column, name: "Level", required: false },
-      { ...column, id: "f4" },
-      { ...column, id: "f3" },
-    ]);
+describe("a start date after the end date", () => {
+  it.each([
+    ["startDate", "Start", "2025-01-01"],
+    ["endDate", "End", "2023-01-01"],
+  ])("marks the date changed, %s", async (key, label, day) => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <PeopleGrid
+          people={[
+            {
+              id: "p1",
+              preferredName: "Jo Fictional",
+              employeeId: "E1",
+              startDate: "2024-01-01",
+              endDate: "2024-06-01",
+              values: {},
+              links: {},
+            },
+          ]}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit
+          canEditColumns={false}
+          showDates
+          view={emptyView}
+          onView={noop}
+          actions={actions}
+        />
+      </MantineProvider>,
+    );
+    act(() => {
+      document.getElementById(`cell-p1-${key}`)?.focus();
+    });
+    await userEvent.keyboard(`{Enter}{Control>}a{/Control}${day}{Tab}`);
+    expect(screen.getByRole("alert").textContent).toBe(
+      "The end date cannot be before the start date",
+    );
+    expect(screen.getByRole("textbox", { name: label }).className).toContain(
+      "recordEditorInvalid",
+    );
   });
 });

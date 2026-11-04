@@ -422,17 +422,17 @@
   border-radius: inherit;
 }
 
-/* The People table, edited like a spreadsheet: dense, each cell on one line, with the selected cell
+/* A table of records, such as People, edited like a spreadsheet: dense, each cell on one line, with the selected cell
    outlined. */
-.peopleTable {
+.recordTable {
   /* Room beside the first column's value for the widest mark, "Draft: removed". */
-  --people-mark-room: 7rem;
+  --record-mark-room: 7rem;
 
   width: max-content;
   min-width: 100%;
 }
 
-.peopleHeadButton {
+.recordHeadButton {
   display: flex;
   align-items: center;
   gap: 4px;
@@ -485,7 +485,7 @@
   display: block;
 }
 
-.peopleNone {
+.recordNone {
   padding: 12px;
   text-align: center;
 }
@@ -523,13 +523,18 @@
   color: var(--mantine-color-dimmed);
 }
 
+/* A new row's mark naming something wrong, rather than only what is still needed. */
+.newMarkWrong {
+  color: var(--mantine-color-error);
+}
+
 /* An open dot: nothing is saved yet. */
 .newMark .statusDot {
   background: transparent;
   border: 1.5px solid currentColor;
 }
 
-.peopleCell {
+.recordCell {
   height: 36px;
   padding: 4px var(--table-horizontal-spacing, var(--mantine-spacing-sm));
   overflow: hidden;
@@ -539,11 +544,11 @@
   outline: none;
 }
 
-.peopleCell:focus {
+.recordCell:focus {
   box-shadow: inset 0 0 0 2px var(--mantine-color-sea-filled);
 }
 
-.peopleProblem {
+.recordProblem {
   display: block;
   color: var(--mantine-color-error);
   font-size: 12px;
@@ -557,7 +562,7 @@
    and each cell the draft changes is yellow. */
 /* A new row being filled in is tinted as the draft it will be. */
 .draftRow,
-.peopleFillingRow {
+.recordFillingRow {
   background: var(--mantine-color-sea-0);
 }
 
@@ -585,7 +590,7 @@
 /* In the dark scheme, the same colours as faint tints over the dark background, so they mark a
    change without shouting, and light text stays readable on them. */
 :global([data-mantine-color-scheme="dark"]) .draftRow,
-:global([data-mantine-color-scheme="dark"]) .peopleFillingRow {
+:global([data-mantine-color-scheme="dark"]) .recordFillingRow {
   background: var(--mantine-color-sea-light);
 }
 
@@ -710,19 +715,19 @@
 
 /* A person's live row, under their draft row: light green, dimmed, marked Live like the Draft mark
    above it, and joined to the draft row. */
-.draftRow:has(+ .peopleLiveRow) {
+.draftRow:has(+ .recordLiveRow) {
   border-bottom-style: dashed;
 }
 
-.peopleLiveRow {
+.recordLiveRow {
   background: var(--mantine-color-green-0);
 }
 
-:global([data-mantine-color-scheme="dark"]) .peopleLiveRow {
+:global([data-mantine-color-scheme="dark"]) .recordLiveRow {
   background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
 }
 
-.peopleLiveRow .peopleCell {
+.recordLiveRow .recordCell {
   color: var(--mantine-color-dimmed);
 }
 
@@ -766,14 +771,14 @@ th.liveColumn {
   color: var(--mantine-color-green-6);
 }
 
-.peopleRemovedRow .peopleCell {
+.recordRemovedRow .recordCell {
   color: var(--mantine-color-dimmed);
   text-decoration: line-through;
 }
 
 /* A cell's strike-through reaches inline text inside it whatever that text sets, but stops at an
    inline block. */
-.peopleRemovedRow .draftMark,
+.recordRemovedRow .draftMark,
 .removedColumn .draftMark {
   display: inline-block;
 }
@@ -781,33 +786,33 @@ th.liveColumn {
 /* A column fits its cells' characters or its header's, whichever is wider. A header's label is
    smaller than a cell's text, so each of its characters is 0.9 of one, and has room beside it for
    its sort and filter marks. */
-.peopleCol,
-.peopleColFirst {
-  --people-col-width: max(
+.recordCol,
+.recordColFirst {
+  --record-col-width: max(
     var(--cell-chars) * 1ch,
     var(--header-chars) * 0.9ch + 1.5rem
   );
 
   width: calc(
-    var(--people-col-width) + 2 *
+    var(--record-col-width) + 2 *
       var(--table-horizontal-spacing, var(--mantine-spacing-sm))
   );
 }
 
-.peopleColFirst {
+.recordColFirst {
   width: calc(
-    var(--people-col-width) + 2 *
+    var(--record-col-width) + 2 *
       var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +
-      var(--people-mark-room)
+      var(--record-mark-room)
   );
 }
 
-.peopleColActions {
+.recordColActions {
   width: 2.75rem;
 }
 
 /* The editor fills its cell exactly, whatever is typed. */
-.peopleEditor {
+.recordEditor {
   display: block;
   box-sizing: border-box;
   width: calc(100% + 16px);
@@ -822,9 +827,20 @@ th.liveColumn {
   line-height: 20px;
 }
 
-.peopleEditor:focus {
+.recordEditor:focus {
   border-color: var(--mantine-color-sea-filled);
   outline: none;
+}
+
+/* A value refused, marked in its editor; the problem is named under the row. */
+.recordEditorInvalid,
+.recordEditorInvalid:focus {
+  border-color: var(--mantine-color-error);
+}
+
+/* A value that is wrong, in red in its cell. */
+.recordProblemCell {
+  color: var(--mantine-color-error);
 }
 
 /* The heading of a draft's lines in a record's menu, its mark as the table shows it, in the text

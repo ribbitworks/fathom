@@ -38,11 +38,11 @@ import { type Decision, decisionFor } from "./drafts.ts";
 import classes from "./pages.module.css";
 import {
   columnsFor,
-  draftColumn,
   type PeopleActions,
   PeopleGrid,
   type PeopleGridHandle,
 } from "./people-grid.tsx";
+import { draftColumn } from "./record-grid.tsx";
 import {
   createPeople,
   createView,
@@ -609,7 +609,7 @@ export function PeoplePage({
                   variant="filled"
                   disabled={!query.isSuccess || !lists.isSuccess}
                   onClick={() => {
-                    grid.current?.addPerson();
+                    grid.current?.addRow();
                   }}
                 >
                   New person

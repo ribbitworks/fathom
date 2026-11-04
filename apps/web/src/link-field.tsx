@@ -82,11 +82,16 @@ export function LinkEditor({
   name,
   initial,
   typed,
+  invalid = false,
+  describedBy,
   onDone,
   onCancel,
 }: {
   id: string;
   name: string;
+  // Whether the link was refused, and what names why, when it is shown.
+  invalid?: boolean;
+  describedBy?: string | undefined;
   initial: Link | undefined;
   // What was typed to start editing, which starts the address.
   typed: string | undefined;
@@ -156,6 +161,8 @@ export function LinkEditor({
         <form
           noValidate
           aria-label={name}
+          // The field describes itself; why the table refused the link is named under the row.
+          aria-describedby={describedBy}
           onKeyDown={onKeyDown}
           onSubmit={(event) => {
             event.preventDefault();
@@ -173,7 +180,8 @@ export function LinkEditor({
               data-autofocus
               autoComplete="off"
               value={address}
-              error={shownAddress}
+              // A link the table refused marks its address, and is named under the row.
+              error={shownAddress ?? invalid}
               onChange={(event) => {
                 setAddress(event.currentTarget.value);
               }}

@@ -26,11 +26,16 @@ export function ChoicePicker({
   multiple,
   initial,
   typed,
+  invalid = false,
+  describedBy,
   onDone,
   onCancel,
 }: {
   id: string;
   label: string;
+  // Whether the value was refused, and what names why, when it is shown.
+  invalid?: boolean;
+  describedBy?: string | undefined;
   options: Option[];
   multiple: boolean;
   initial: string[];
@@ -102,8 +107,13 @@ export function ChoicePicker({
       <Combobox.Target>
         <input
           id={id}
-          className={classes.peopleEditor}
+          className={[
+            classes.recordEditor,
+            invalid ? classes.recordEditorInvalid : "",
+          ].join(" ")}
           aria-label={label}
+          aria-invalid={invalid || undefined}
+          aria-describedby={describedBy}
           value={search}
           placeholder={labels}
           autoComplete="off"

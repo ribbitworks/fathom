@@ -458,7 +458,8 @@ describe("editing people", () => {
     await userEvent.keyboard("{Enter}{Control>}a{/Control}{Backspace}");
     await userEvent.click(document.body);
     expect(within(screen.getByRole("grid")).queryByRole("textbox")).toBeNull();
-    expect(screen.getByRole("alert").textContent).toBe("Name needed");
+    // The row is as it was, so nothing is left under it.
+    expect(screen.queryByRole("alert")).toBeNull();
     expect(bodyOf(fetch, "PATCH", "/api/people/p1")).toHaveLength(1);
   });
 
@@ -543,10 +544,8 @@ describe("editing people", () => {
     const fetch = await openPeople({ "PATCH /api/people/p1": savedAs() });
     focusCell("p1", "f1");
     await userEvent.keyboard("{Delete}");
-    expect(await screen.findByRole("alert")).toHaveProperty(
-      "textContent",
-      "Site needed",
-    );
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(cell("p1", "f1").textContent).not.toBe("");
     focusCell("p1", "f2");
     await userEvent.keyboard("{Backspace}");
     expect(bodyOf(fetch, "PATCH", "/api/people/p1")).toEqual([
@@ -785,23 +784,24 @@ describe("adding people", () => {
       newCell("Employee ID").focus();
     });
     await userEvent.keyboard("E2{Enter}");
-    expect(await screen.findByRole("alert")).toHaveProperty(
-      "textContent",
-      "Site needed",
-    );
-    act(() => {
-      newCell("Site").focus();
-    });
-    await userEvent.keyboard("nor{Enter}");
+    // An Employee ID someone already has is named before what is still needed.
     expect(await screen.findByRole("alert")).toHaveProperty(
       "textContent",
       "Someone already has that Employee ID",
     );
-    expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
     act(() => {
       newCell("Employee ID").focus();
     });
     await userEvent.keyboard("{Delete}E7{Enter}");
+    expect(await screen.findByRole("alert")).toHaveProperty(
+      "textContent",
+      "Site needed",
+    );
+    expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
+    act(() => {
+      newCell("Site").focus();
+    });
+    await userEvent.keyboard("nor{Enter}");
     expect(bodyOf(fetch, "POST", "/api/people")).toHaveLength(1);
   });
 

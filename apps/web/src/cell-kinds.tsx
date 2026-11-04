@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What each kind of cell on the People table holds and how it behaves, so a new kind of column is
+// What each kind of cell in a table of records holds and how it behaves, so a new kind of column is
 // added in one place: text, such as a name; a date; choices from a list; and a web link. Each kind
-// says how a person's value is read, live or as drafted, what clears it, how it reads in words, what
+// says how a record's value is read, live or as drafted, what clears it, how it reads in words, what
 // a pasted cell gives, the change that saves it, how wide its column is, and whether its column is
 // worth breaking down by. A kind with an editor, cell, or menu item of its own names it; the rest
 // are edited as text and shown in words.
@@ -14,9 +14,6 @@ import {
   type Link,
   linkInWords,
   linkLabel,
-  type PersonChange,
-  type PersonDraft,
-  personLengths,
   webAddress,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
@@ -34,13 +31,26 @@ import {
 type AnyColumn = Pick<TableColumn<never>, "key" | "label" | "multiple"> & {
   choices: readonly Choice[];
   required: boolean;
+  // For text columns: the most characters a value may hold.
+  maxLength?: number | undefined;
 };
 
 // The choices a column's values may name.
 type Choices = Pick<AnyColumn, "choices">;
 
-// A person's details and values, as they are or as their draft shows them live.
-type Source = PersonDraft["live"];
+// A record's details and its values in added columns, as it is or as its draft shows it live.
+export interface CellSource {
+  [detail: string]: unknown;
+  values: Readonly<Record<string, string[]>>;
+  links: Readonly<Record<string, Link>>;
+}
+
+// The change that saves a value: a detail by its key, or an added column's choices or link.
+export interface CellChange {
+  [detail: string]: unknown;
+  values?: Record<string, string[]> | undefined;
+  links?: Record<string, Link | null> | undefined;
+}
 
 export interface EditorProps {
   id: string;
@@ -48,6 +58,9 @@ export interface EditorProps {
   value: CellValue;
   // What was typed to start editing.
   typed: string;
+  // Whether the value was refused or is wrong, and what names why, when it is shown.
+  invalid: boolean;
+  describedBy?: string | undefined;
   onDone: (value: CellValue, how: Finish) => void;
   onCancel: () => void;
 }
@@ -55,7 +68,7 @@ export interface EditorProps {
 export interface CellKind {
   // What clears a cell.
   empty: CellValue;
-  read: (source: Source, key: string) => CellValue;
+  read: (source: CellSource, key: string) => CellValue;
   inWords: (column: Choices, value: CellValue) => string;
   // A value as a draft's details show it, beside the change history, when it differs from the cell:
   // choices as their names, and a link's address whole.
@@ -67,8 +80,8 @@ export interface CellKind {
     column: AnyColumn,
     content: string,
   ) => { value: CellValue } | { problem: string };
-  // The change that saves a person's value.
-  change: (key: string, value: CellValue) => PersonChange;
+  // The change that saves a record's value.
+  change: (key: string, value: CellValue) => CellChange;
   // How many characters the column's cells fit, given the longest text it held when the page opened.
   width: (column: AnyColumn, longestText: number) => number;
   // Whether the column's longest text sets its width.
@@ -81,9 +94,12 @@ export interface CellKind {
   MenuItem?: (props: { name: string; value: CellValue }) => ReactNode;
 }
 
-// The key is one of the person's own details.
-const detail = (source: Source, key: string): string =>
-  source[key as "preferredName"] ?? "";
+// The key is one of the record's own details, held as text.
+const detail = (source: CellSource, key: string): string => {
+  // eslint-disable-next-line security/detect-object-injection
+  const held = source[key];
+  return typeof held === "string" ? held : "";
+};
 
 // Text and dates are held as text.
 const asText = (value: CellValue) => value as string;
@@ -92,15 +108,11 @@ const text: CellKind = {
   empty: "",
   read: detail,
   inWords: (_column, value) => asText(value),
-  problem: (column, value) => {
-    const limit =
-      column.key === "employeeId"
-        ? personLengths.employeeId
-        : personLengths.preferredName;
-    return asText(value).trim().length > limit
+  problem: (column, value) =>
+    column.maxLength !== undefined &&
+    asText(value).trim().length > column.maxLength
       ? `${column.label} too long`
-      : undefined;
-  },
+      : undefined,
   pasted: (_column, content) => ({ value: content }),
   change: (key, value) => ({ [key]: asText(value).trim() }),
   width: (_column, longestText) => longestText,
@@ -170,10 +182,21 @@ const choice: CellKind = {
     ),
   measured: false,
   breaksDownWhenRequired: true,
-  Editor: ({ id, column, value, typed, onDone, onCancel }) => (
+  Editor: ({
+    id,
+    column,
+    value,
+    typed,
+    invalid,
+    describedBy,
+    onDone,
+    onCancel,
+  }) => (
     <ChoicePicker
       id={id}
       label={column.label}
+      invalid={invalid}
+      describedBy={describedBy}
       options={choicesFor(column, chosen(value))}
       multiple={column.multiple}
       initial={chosen(value)}
@@ -211,10 +234,21 @@ const link: CellKind = {
   width: (_column, longestText) => longestText,
   measured: true,
   breaksDownWhenRequired: false,
-  Editor: ({ id, column, value, typed, onDone, onCancel }) => (
+  Editor: ({
+    id,
+    column,
+    value,
+    typed,
+    invalid,
+    describedBy,
+    onDone,
+    onCancel,
+  }) => (
     <LinkEditor
       id={id}
       name={column.label}
+      invalid={invalid}
+      describedBy={describedBy}
       initial={linkOf(value) ?? undefined}
       typed={typed === "" ? undefined : typed}
       onDone={onDone}
