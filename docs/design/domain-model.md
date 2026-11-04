@@ -1,7 +1,7 @@
 # Fathom — Domain Model
 
 **Status:** Draft
-**Last updated:** 2026-11-03
+**Last updated:** 2026-11-04
 
 A first sketch of Fathom's core entities and how they relate. It describes structure only: terms are defined in [Domain Concepts](../product/domain.md), and rules and allowed values are in the [Decisions Log](../product/decisions.md). It describes concepts, not database tables. Items marked **proposal** are suggested modeling choices that have not been agreed.
 
@@ -74,8 +74,8 @@ The values of every built-in field are set out in the [Decisions Log](../product
 - **Feature team:** Has a name, and optionally a feature lead, who is one of its current members. Links a set of features to its members. Membership is separate from reporting lines.
 - **Feature team membership:** Records that a person joins or leaves a feature team from a given date, in force until their next record for that team, so past memberships are kept, as reporting lines are. Future-dated records represent planned changes.
 - **Reporting line:** Links a person to their manager, or records that they have none, from a given date until the person's next line starts. Past lines are kept. Future-dated lines represent planned changes.
-- **Planned hire:** A role to be filled, apart from People, with a title, a target date, a state, values for the columns it shares with People, and optionally its manager, whose team it joins. When filled, it links to the person who fills it.
-- **Hiring state:** One of Fathom's fixed states for planned hires, with the name the organization gives it.
+- **Planned hire:** A role to be filled, apart from People, with a title, a target date, a state, values for the columns it shares with People, and optionally its manager, whose team it joins. When filled, it links to the person who fills it, and a person may fill several over time. A cancelled hire keeps the open state it left, which it can go back to.
+- **Hiring state:** One of Fathom's fixed states for planned hires, with the name the organization gives it. Only the states renamed are stored, so the others keep Fathom's names.
 - **Composition target:** The range of direct reports each manager is compared with, held in planning configuration.
 
 **Proposal:** Measure team composition from people's positions and their team or feature team membership, and compare it with configurable composition targets.

@@ -343,10 +343,84 @@ export const people = fathomSchema.table(
   ],
 );
 
+// Fathom's fixed hiring states, in order, of which the first four are open, as SQL lists.
+const openHiringStates = [
+  "proposed",
+  "approved",
+  "recruiting",
+  "offer-accepted",
+];
+const sqlList = (values: readonly string[]) =>
+  values.map((value) => `'${value}'`).join(", ");
+const hiringStateList = sqlList([...openHiringStates, "filled", "cancelled"]);
+const openHiringStateList = sqlList(openHiringStates);
+
+// Planned hires: roles to be filled, kept apart from people, so they need no Employee ID and their
+// Confidential details never sit among people's. A hire's state is one of the fixed hiring states;
+// a cancelled hire keeps the open state it left, which it can go back to. A filled hire names the
+// person who filled it, and only a filled hire does. A person may fill several over time, and is
+// removed only with the hires they filled, which the server does in one draft.
+export const plannedHires = fathomSchema.table(
+  "planned_hires",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    targetDate: date("target_date").notNull(),
+    state: text("state").notNull(),
+    cancelledFrom: text("cancelled_from"),
+    managerId: uuid("manager_id").references(() => people.id, {
+      onDelete: "restrict",
+    }),
+    filledBy: uuid("filled_by").references(() => people.id, {
+      onDelete: "restrict",
+    }),
+  },
+  (table) => [
+    index("planned_hires_filled_by_index").on(table.filledBy),
+    index("planned_hires_manager_index").on(table.managerId),
+    check(
+      "planned_hires_state_known",
+      sql`${table.state} IN (${sql.raw(hiringStateList)})`,
+    ),
+    check(
+      "planned_hires_cancelled_from_open",
+      sql`${table.cancelledFrom} IS NULL OR ${table.cancelledFrom} IN (${sql.raw(openHiringStateList)})`,
+    ),
+    check(
+      "planned_hires_filled_by_person",
+      sql`(${table.state} = 'filled') = (${table.filledBy} IS NOT NULL)`,
+    ),
+    check(
+      "planned_hires_cancelled_from_state",
+      sql`(${table.state} = 'cancelled') = (${table.cancelledFrom} IS NOT NULL)`,
+    ),
+  ],
+);
+
+// The names the organization gives the fixed hiring states, for those it has renamed; the others
+// keep Fathom's names. Renamed states' names are unique, ignoring letter case; the server checks
+// them against the names of the states not renamed, which have no row.
+export const hiringStateNames = fathomSchema.table(
+  "hiring_state_names",
+  {
+    // One of the fixed hiring states, checked by the server.
+    state: text("state").primaryKey(),
+    name: text("name").notNull(),
+  },
+  (table) => [
+    uniqueIndex("hiring_state_names_name_index").on(sql`lower(${table.name})`),
+    check(
+      "hiring_state_names_state_known",
+      sql`${table.state} IN (${sql.raw(hiringStateList)})`,
+    ),
+  ],
+);
+
 // The columns people add to Fathom's tables, as ADR 0005 sets out; for now only columns on people
 // that draw on a list. A column decides what it is called, whether one choice or several can be
 // picked, and whether a value is required. Its names are unique within its table, ignoring letter
-// case. A list cannot be deleted while a column draws on it.
+// case. A list cannot be deleted while a column draws on it. A column on people can be offered on
+// planned hires too, where a value is never required.
 export const fields = fathomSchema.table(
   "fields",
   {
@@ -363,11 +437,17 @@ export const fields = fathomSchema.table(
     visibility: text("visibility"),
     multiple: boolean("multiple").notNull().default(false),
     required: boolean("required").notNull().default(false),
+    onPlannedHires: boolean("on_planned_hires").notNull().default(false),
   },
   (table) => [
     uniqueIndex("fields_table_name_index").on(
       table.tableName,
       sql`lower(${table.name})`,
+    ),
+    // Only People's columns are offered on planned hires.
+    check(
+      "fields_planned_hires_from_people",
+      sql`NOT ${table.onPlannedHires} OR ${table.tableName} = 'people'`,
     ),
     check(
       "fields_type_settings",
@@ -398,6 +478,9 @@ export const fieldValues = fathomSchema.table(
     personId: uuid("person_id").references(() => people.id, {
       onDelete: "cascade",
     }),
+    plannedHireId: uuid("planned_hire_id").references(() => plannedHires.id, {
+      onDelete: "cascade",
+    }),
     choiceId: uuid("choice_id").references(() => listItems.id, {
       onDelete: "restrict",
     }),
@@ -406,17 +489,34 @@ export const fieldValues = fathomSchema.table(
     linkText: text("link_text"),
   },
   (table) => [
-    uniqueIndex("field_values_person_choice_index").on(
-      table.fieldId,
-      table.personId,
-      table.choiceId,
-    ),
+    // Each owner's values are indexed apart, so each index holds only its own owner's rows.
+    uniqueIndex("field_values_person_choice_index")
+      .on(table.fieldId, table.personId, table.choiceId)
+      .where(sql`${table.personId} IS NOT NULL`),
     uniqueIndex("field_values_person_link_index")
       .on(table.fieldId, table.personId)
-      .where(sql`${table.linkAddress} IS NOT NULL`),
-    index("field_values_person_index").on(table.personId),
+      .where(
+        sql`${table.personId} IS NOT NULL AND ${table.linkAddress} IS NOT NULL`,
+      ),
+    uniqueIndex("field_values_planned_hire_choice_index")
+      .on(table.fieldId, table.plannedHireId, table.choiceId)
+      .where(sql`${table.plannedHireId} IS NOT NULL`),
+    uniqueIndex("field_values_planned_hire_link_index")
+      .on(table.fieldId, table.plannedHireId)
+      .where(
+        sql`${table.plannedHireId} IS NOT NULL AND ${table.linkAddress} IS NOT NULL`,
+      ),
+    index("field_values_person_index")
+      .on(table.personId)
+      .where(sql`${table.personId} IS NOT NULL`),
+    index("field_values_planned_hire_index")
+      .on(table.plannedHireId)
+      .where(sql`${table.plannedHireId} IS NOT NULL`),
     index("field_values_choice_index").on(table.choiceId),
-    check("field_values_one_owner", sql`num_nonnulls(${table.personId}) = 1`),
+    check(
+      "field_values_one_owner",
+      sql`num_nonnulls(${table.personId}, ${table.plannedHireId}) = 1`,
+    ),
     check(
       "field_values_one_kind",
       sql`num_nonnulls(${table.choiceId}, ${table.linkAddress}) = 1 AND (${table.linkAddress} IS NULL) = (${table.linkText} IS NULL)`,

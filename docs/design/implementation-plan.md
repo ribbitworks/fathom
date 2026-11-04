@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-03
+**Last updated:** 2026-11-04
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -42,6 +42,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Web Link Columns | Done |
 | Teams and Reporting Lines | In progress: schema |
 | Cycles and Releases | In progress: schema |
+| Hiring Plan | In progress: schema |
 
 ### Hello Fathom
 

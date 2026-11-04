@@ -127,6 +127,13 @@
       "when": 1793765910811,
       "tag": "0017_teams_and_reporting_lines",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793797489139,
+      "tag": "0018_planned_hires",
+      "breakpoints": true
     }
   ]
 }

@@ -338,6 +338,7 @@ export const columnRow = (id: string, field: Recorded): FieldRow => ({
   name: String(field.name),
   ...typeOf(field).settings(field),
   required: field.required === true,
+  onPlannedHires: field.onPlannedHires === true,
 });
 
 export const toFieldOut = (id: string, field: Recorded): Field => {
