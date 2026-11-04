@@ -1553,7 +1553,9 @@ describe("columns", () => {
       await screen.findByRole("button", { name: "Role on team column" }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "Edit column" }),
+      within(
+        await screen.findByRole("menu", { name: /^Role on team column/ }),
+      ).getByRole("menuitem", { name: "Edit column" }),
     );
     dialog = await screen.findByRole("dialog", { name: "Edit column" });
     await userEvent.click(
@@ -1611,10 +1613,11 @@ describe("columns", () => {
     });
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
     await userEvent.click(header("End"));
+    // Role on team's menu may still be closing, so its items are looked for only in End's own menu.
+    const endMenu = await screen.findByRole("menu", { name: /^End column/ });
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: /^Move right/ }),
+      within(endMenu).getByRole("menuitem", { name: /^Move right/ }),
     );
-    expect(moves("endDate")).toEqual([]);
 
     const th = (label: string) => header(label).closest("th") as HTMLElement;
     fireEvent.drop(th("Role on team"));
@@ -1626,6 +1629,9 @@ describe("columns", () => {
     await waitFor(() => {
       expect(moves("f1")).toHaveLength(1);
     });
+    // Moves save one after another, so once Site's has been sent, any from End's menu has been too.
+    expect(moves("endDate")).toEqual([]);
+    expect(moves("f2")).toHaveLength(1);
   });
 });
 
@@ -2066,9 +2072,10 @@ describe("searching, sorting, and filtering", () => {
     const choose = async (name: string) => {
       await userEvent.click(screen.getByRole("button", { name: /^Draft/ }));
       await userEvent.click(
-        await screen.findByRole("menuitem", {
-          name: (shown) => shown.startsWith(name),
-        }),
+        within(await screen.findByRole("menu", { name: /^Draft/ })).getByRole(
+          "menuitem",
+          { name: (shown) => shown.startsWith(name) },
+        ),
       );
       await userEvent.keyboard("{Escape}");
     };
