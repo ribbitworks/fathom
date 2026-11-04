@@ -26,6 +26,7 @@
     "dev:setup": "bash scripts/dev-setup.sh",
     "dev:reset": "bash scripts/dev-reset.sh",
     "dev": "bash scripts/dev.sh",
+    "dev:stop": "bash scripts/dev-stop.sh",
     "db:up": "bash scripts/dev-db.sh up",
     "db:down": "bash scripts/dev-db.sh down",
     "db:migrate": "bash scripts/dev-db.sh migrate",

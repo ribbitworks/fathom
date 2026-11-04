@@ -156,6 +156,64 @@ clone_name() {
   if [ "$FATHOM_CLONE" = 1 ]; then printf '%s\n' "$1"; else printf '%s-%s\n' "$1" "$FATHOM_CLONE"; fi
 }
 
+# Whether any of the processes given is still running, whoever owns it.
+any_running() {
+  local pid
+  for pid in "$@"; do
+    if ps -p "$pid" >/dev/null 2>&1; then return 0; fi
+  done
+  return 1
+}
+
+# The working folder of a process, or nothing once it has exited or cannot be read.
+folder_of() {
+  lsof -a -p "$1" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' || true
+}
+
+# Stops whatever listens on this copy's development ports from inside this checkout, such as a
+# 'pnpm dev' left running in another terminal or by an agent, so a new one can start. A port held
+# by another program, or by another copy, fails with the process's name before anything is
+# stopped, since stopping it could lose someone else's work. Without lsof nothing can be found, so
+# nothing is stopped.
+stop_dev_servers() {
+  command -v lsof >/dev/null 2>&1 || return 0
+  local root port pid folder name message
+  local found=()
+  root="$(pwd -P)"
+  for port in "$FATHOM_DEV_PORT" "$FATHOM_DEV_API_PORT"; do
+    for pid in $(lsof -nP -t -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true); do
+      folder="$(folder_of "$pid")"
+      # A server can exit between the two lookups, such as when pnpm ends the other one.
+      if [ -z "$folder" ] && ! any_running "$pid"; then continue; fi
+      case "$folder/" in
+        "$root"/*)
+          found+=("$pid")
+          continue
+          ;;
+      esac
+      message="Port $port is in use by process $pid"
+      name="$(ps -o comm= -p "$pid" 2>/dev/null || true)"
+      if [ -n "$name" ]; then message="$message, $(basename "$name")"; fi
+      if [ -n "$folder" ]; then message="$message, in $folder"; fi
+      fail "$message, which is not this copy's; stop it, or set FATHOM_DEV_PORT and FATHOM_DEV_API_PORT"
+    done
+  done
+  [ "${#found[@]}" -gt 0 ] || return 0
+  for pid in "${found[@]}"; do kill "$pid" 2>/dev/null || true; done
+  local tries=0
+  while [ "$tries" -lt 50 ] && any_running "${found[@]}"; do
+    sleep 0.1
+    tries=$((tries + 1))
+  done
+  local left=()
+  for pid in "${found[@]}"; do
+    if any_running "$pid"; then kill -9 "$pid" 2>/dev/null || true; fi
+    if any_running "$pid"; then left+=("$pid"); fi
+  done
+  [ "${#left[@]}" -eq 0 ] || fail "Could not stop process ${left[*]}; stop it by hand"
+  info "Stopped this copy's development servers that were still running"
+}
+
 require_container_runtime() {
   command -v docker >/dev/null 2>&1 || fail "A container runtime is required; see docs/operations/supported-platforms.md"
   docker info >/dev/null 2>&1 || fail "The container runtime is installed but not running"

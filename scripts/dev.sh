@@ -4,7 +4,8 @@
 # Starts development mode: the development database, with migrations applied, Fathom's server, and
 # Vite's development server for the front end, which opens Fathom at https://localhost:8443, or the
 # port of this copy's clone number, in the browser. Vite forwards API requests to the server over
-# HTTPS, and both reload when their code changes. Run 'pnpm dev:setup' first. Set FATHOM_DEV_PORT
+# HTTPS, and both reload when their code changes. It first stops this copy's development servers
+# that are still running, so it also restarts them. Run 'pnpm dev:setup' first. Set FATHOM_DEV_PORT
 # and FATHOM_DEV_API_PORT to use other ports, and FATHOM_DEV_OPEN=false to not open the browser.
 
 set -euo pipefail
@@ -20,6 +21,7 @@ command -v mkcert >/dev/null 2>&1 ||
 ca_file="$(mkcert -CAROOT)/rootCA.pem"
 [ -s "$ca_file" ] || fail "mkcert's certificate authority is missing; run 'pnpm dev:setup' again"
 
+stop_dev_servers
 bash scripts/dev-db.sh up
 bash scripts/dev-db.sh migrate
 
