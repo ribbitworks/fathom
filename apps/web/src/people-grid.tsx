@@ -31,15 +31,7 @@ import type {
   PersonRequest,
   Show,
 } from "@fathom/shared";
-import {
-  builtInColumnNames,
-  draftFilterKey,
-  isLink,
-  type Link,
-  linkLabel,
-  personLengths,
-  webAddress,
-} from "@fathom/shared";
+import { builtInColumnNames, draftFilterKey, type Link } from "@fathom/shared";
 import {
   ActionIcon,
   Menu,
@@ -57,8 +49,8 @@ import {
   useImperativeHandle,
   useState,
 } from "react";
-import { ChoicePicker, type Finish } from "./choice-picker.tsx";
-import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
+import type { Finish } from "./choice-picker.tsx";
+import { cellKinds } from "./cell-kinds.tsx";
 import {
   configDraftFields,
   draftLines,
@@ -83,7 +75,7 @@ import { focusSoon } from "./focus.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
 import { movedKeys } from "./list-drafts.tsx";
-import { draftedLists, liveLists, offered, sameName } from "./lists.ts";
+import { draftedLists, liveLists, sameName } from "./lists.ts";
 import {
   type ChangeView,
   ColumnViewItems,
@@ -97,8 +89,6 @@ import {
 import {
   applyView,
   type CellValue,
-  formatDay,
-  isDay,
   knownView,
   narrows,
   type TableColumn,
@@ -210,7 +200,8 @@ export function columnsFor(
       ? [builtIn("startDate", "date"), builtIn("endDate", "date")]
       : []),
     ...fields.map((field): Column => {
-      const kind = field.type === "link" ? "link" : "choice";
+      // A column's type is the kind of its cells.
+      const kind = field.type;
       return {
         key: field.id,
         label: field.name,
@@ -238,14 +229,12 @@ function personValue(
   kind: Column["kind"],
   key: string,
 ): CellValue {
-  // The key is a column's own.
-  /* eslint-disable security/detect-object-injection */
-  if (kind === "choice") return person.values[key] ?? [];
-  if (kind === "link") return person.links[key] ?? null;
-  /* eslint-enable security/detect-object-injection */
-  const detail = person[key as DetailKey];
-  return detail ?? "";
+  // The kind is always one of the fixed kinds.
+  // eslint-disable-next-line security/detect-object-injection
+  return cellKinds[kind].read(person, key);
 }
+
+const kindOf = (column: Column) => cellKinds[column.kind];
 
 // The keys of a person's built-in details.
 export type DetailKey =
@@ -267,9 +256,7 @@ export interface PeopleGridHandle {
 
 // A column's live value, for a person whose draft changes it.
 function liveValue(draft: PersonDraft, column: Column): CellValue {
-  if (column.kind === "choice") return draft.live.values[column.key] ?? [];
-  if (column.kind === "link") return draft.live.links[column.key] ?? null;
-  return draft.live[column.key as DetailKey] ?? "";
+  return kindOf(column).read(draft.live, column.key);
 }
 
 // Whether a draft gives a column a new value: every column of someone added, and those a change
@@ -333,18 +320,13 @@ export function countedPeople(
   };
 }
 
-// Required text, such as names, is always filled in, so is not worth breaking down by.
 const breaksDown = (column: Column) =>
-  column.kind === "choice" || !column.required;
+  !column.required || kindOf(column).breaksDownWhenRequired;
 
 const builtInDetail = (key: string) =>
   ["preferredName", "employeeId", "startDate", "endDate"].includes(key);
 
-// What clears a column's cell.
-const emptyValue = (column: Column): CellValue => {
-  if (column.kind === "choice") return [];
-  return column.kind === "link" ? null : "";
-};
+const emptyValue = (column: Column): CellValue => kindOf(column).empty;
 
 function newRowValue(newRow: NewRow, column: Column): CellValue {
   return newRow.values[column.key] ?? emptyValue(column);
@@ -365,14 +347,6 @@ function ariaSort(view: View, key: string) {
   return first.descending ? "descending" : "ascending";
 }
 
-// The 28th is in every month, so this tries each month's name.
-const longestDay = Math.max(
-  ...Array.from(
-    { length: 12 },
-    (_, month) =>
-      formatDay(`2026-${String(month + 1).padStart(2, "0")}-28`).length,
-  ),
-);
 const widestChars = 30;
 
 // How many characters a column fits in its cells and in its header, which CSS turns into its width.
@@ -380,24 +354,11 @@ export function columnWidth(
   column: Column,
   longestText: ReadonlyMap<string, number>,
 ): { cells: number; header: number } {
-  let cells: number;
-  switch (column.kind) {
-    case "choice":
-      cells = column.choices.reduce(
-        (longest, { label }) => Math.max(longest, label.length),
-        0,
-      );
-      break;
-    case "date":
-      cells = longestDay;
-      break;
-    case "text":
-    case "link":
-      cells = longestText.get(column.key) ?? 0;
-      break;
-  }
   return {
-    cells: Math.min(cells, widestChars),
+    cells: Math.min(
+      kindOf(column).width(column, longestText.get(column.key) ?? 0),
+      widestChars,
+    ),
     header: Math.min(column.label.length, widestChars),
   };
 }
@@ -421,7 +382,7 @@ function longestTexts(
 ): Map<string, number> {
   return new Map(
     columns
-      .filter(({ kind }) => kind === "text" || kind === "link")
+      .filter((column) => kindOf(column).measured)
       .map((column) => [
         column.key,
         people.reduce(
@@ -435,31 +396,13 @@ function longestTexts(
 
 // A cell's value in words.
 function shown(column: Column, value: CellValue): string {
-  if (value === null) return "";
-  if (isLink(value)) return linkLabel(value);
-  if (Array.isArray(value)) {
-    return value
-      .map((id) => column.choices.find((choice) => choice.id === id)?.label)
-      .filter((label) => label !== undefined)
-      .join(", ");
-  }
-  return column.kind === "date" && isDay(value) ? formatDay(value) : value;
+  return kindOf(column).inWords(column, value);
 }
 
-// What a cell shows: a web link as a link to follow, and anything else in words.
+// What a cell shows: its value in its kind's own cell, or in words.
 function cellContent(column: Column, value: CellValue) {
-  return column.kind === "link" && isLink(value) ? (
-    <LinkCell link={value} />
-  ) : (
-    shown(column, value)
-  );
-}
-
-// The choices a cell offers: those offered in its list, and any retired ones it already has.
-function choicesFor(column: Column, value: string[]) {
-  return column.choices
-    .filter((choice) => offered(choice) || value.includes(choice.id))
-    .map((choice) => ({ value: choice.id, label: choice.label }));
+  const { Cell } = kindOf(column);
+  return Cell === undefined ? shown(column, value) : <Cell value={value} />;
 }
 
 // What is wrong with a value for a column, if anything.
@@ -468,18 +411,7 @@ export function valueProblem(
   value: CellValue,
 ): string | undefined {
   if (column.required && isEmpty(value)) return `${column.label} needed`;
-  if (typeof value !== "string") return undefined;
-  const limit =
-    column.key === "employeeId"
-      ? personLengths.employeeId
-      : personLengths.preferredName;
-  if (column.kind === "text" && value.trim().length > limit) {
-    return `${column.label} too long`;
-  }
-  if (column.kind === "date" && value !== "" && !isDay(value)) {
-    return `${column.label}: use a date such as 2026-10-31`;
-  }
-  return undefined;
+  return kindOf(column).problem(column, value);
 }
 
 // What is wrong with a person's details taken together, if anything: an Employee ID someone else has,
@@ -508,34 +440,32 @@ function recordProblem(
   return undefined;
 }
 
-// The request that adds a new row's person.
+// The request that adds a new row's person: each column's value as its kind would save it, with
+// every choice column named and no link left empty.
 function requestFor(newRow: NewRow, columns: readonly Column[]): PersonRequest {
-  const text = (key: string) => {
-    // The key is one of the fixed details named below.
-    // eslint-disable-next-line security/detect-object-injection
-    const value = newRow.values[key];
-    return typeof value === "string" ? value.trim() : "";
-  };
-  const date = (key: string) => (text(key) === "" ? null : text(key));
-  const values = Object.fromEntries(
-    columns
-      .filter((column) => column.kind === "choice")
-      .map((column) => [column.key, newRowValue(newRow, column) as string[]]),
+  const parts = columns.map((column) =>
+    kindOf(column).change(column.key, newRowValue(newRow, column)),
   );
-  const links = Object.fromEntries(
-    columns.flatMap((column) => {
-      const link = newRowValue(newRow, column);
-      return column.kind === "link" && isLink(link) ? [[column.key, link]] : [];
-    }),
-  );
+  // Every table has its name and Employee ID columns, and its dates together or not at all.
+  const { preferredName, employeeId, startDate, endDate } = Object.assign(
+    {},
+    ...parts,
+  ) as PersonRequest;
   return {
-    preferredName: text("preferredName"),
-    employeeId: text("employeeId"),
-    ...(columns.some((column) => column.kind === "date")
-      ? { startDate: date("startDate"), endDate: date("endDate") }
-      : {}),
-    values,
-    links,
+    preferredName,
+    employeeId,
+    ...(startDate === undefined ? {} : { startDate, endDate }),
+    values: Object.assign({}, ...parts.map((part) => part.values)) as Record<
+      string,
+      string[]
+    >,
+    links: Object.fromEntries(
+      parts.flatMap((part) =>
+        Object.entries(part.links ?? {}).flatMap(([key, held]) =>
+          held === null ? [] : [[key, held]],
+        ),
+      ),
+    ),
   };
 }
 
@@ -558,27 +488,9 @@ export function pastedRows(
         const column = columns[from + offset];
         const content = cell.trim();
         if (column === undefined || content === "") continue;
-        if (column.kind === "link") {
-          const address = webAddress(content);
-          if (address === null) {
-            problem ??= `${column.label}: ${content} is not a web address`;
-          } else {
-            values[column.key] = { address, text: "" };
-          }
-          continue;
-        }
-        if (column.kind !== "choice") {
-          values[column.key] = content;
-          continue;
-        }
-        const choice = column.choices.find(
-          (option) => offered(option) && sameName(option.label, content),
-        );
-        if (choice === undefined) {
-          problem ??= `No ${column.label} called ${content}`;
-        } else {
-          values[column.key] = [choice.id];
-        }
+        const read = kindOf(column).pasted(column, content);
+        if ("problem" in read) problem ??= read.problem;
+        else values[column.key] = read.value;
       }
       return {
         key: firstKey + index,
@@ -1145,18 +1057,7 @@ export function PeopleGrid({
       return false;
     }
     setProblem(undefined);
-    let change: PersonChange;
-    if (column.kind === "link") {
-      change = { links: { [column.key]: isLink(value) ? value : null } };
-    } else if (Array.isArray(value)) {
-      change = { values: { [column.key]: value } };
-    } else if (column.kind === "date") {
-      change = { [column.key]: value === "" ? null : value };
-    } else {
-      // Text columns hold text.
-      change = { [column.key]: (value as string).trim() };
-    }
-    actions.update(row.person, change);
+    actions.update(row.person, kindOf(column).change(column.key, value));
     return true;
   };
 
@@ -1613,33 +1514,16 @@ export function PeopleGrid({
 
   const editor = (cell: Cell, column: Column, value: CellValue) => {
     const id = `${cellId(cell.row, cell.column)}-editor`;
-    if (column.kind === "link") {
+    const { Editor } = kindOf(column);
+    if (Editor !== undefined) {
       return (
-        <LinkEditor
+        <Editor
           id={id}
-          name={column.label}
-          initial={isLink(value) ? value : undefined}
-          typed={text === "" ? undefined : text}
-          onDone={(link, how) => {
-            finish(cell, link, how);
-          }}
-          onCancel={() => {
-            stopEdit(cell);
-          }}
-        />
-      );
-    }
-    if (Array.isArray(value)) {
-      return (
-        <ChoicePicker
-          id={id}
-          label={column.label}
-          options={choicesFor(column, value)}
-          multiple={column.multiple}
-          initial={value}
+          column={column}
+          value={value}
           typed={text}
-          onDone={(values, how) => {
-            finish(cell, values, how);
+          onDone={(edited, how) => {
+            finish(cell, edited, how);
           }}
           onCancel={() => {
             stopEdit(cell);
@@ -1712,17 +1596,17 @@ export function PeopleGrid({
             }
           />
         )}
-        {columns.flatMap((column) => {
-          const link = column.value(person);
-          return column.kind === "link" && isLink(link)
-            ? [
-                <LinkMenuItem
-                  key={column.key}
-                  name={column.label}
-                  link={link}
-                />,
-              ]
-            : [];
+        {columns.map((column) => {
+          const { MenuItem } = kindOf(column);
+          return (
+            MenuItem && (
+              <MenuItem
+                key={column.key}
+                name={column.label}
+                value={column.value(person)}
+              />
+            )
+          );
         })}
         {/* A rejected draft is back with its makers, until they send it again. */}
         {canApprove && decidable(person) && (

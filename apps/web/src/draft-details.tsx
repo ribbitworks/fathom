@@ -10,13 +10,13 @@ import {
   type ChangedField,
   type ChangeValue,
   type Field,
-  linkInWords,
   type List,
   type Person,
   type PersonDraft,
 } from "@fathom/shared";
 import { Menu, Text } from "@mantine/core";
 import type { ReactNode } from "react";
+import { cellKinds } from "./cell-kinds.tsx";
 import { describeField } from "./changes.ts";
 import type { DetailKey } from "./people-grid.tsx";
 import classes from "./pages.module.css";
@@ -38,15 +38,6 @@ export function personDraftFields(
   fields: readonly Field[],
   lists: readonly List[],
 ): DraftField[] {
-  const labels = (ids: readonly string[] | undefined): ChangeValue =>
-    (ids ?? []).flatMap((id) => {
-      const label = lists
-        .flatMap(({ choices }) => choices)
-        .find((choice) => choice.id === id)?.label;
-      return label === undefined ? [] : [label];
-    });
-  const live = new Map(Object.entries(draft.live.values));
-  const now = new Map(Object.entries(person.values));
   return draft.changed.flatMap((key): DraftField[] => {
     if (builtInColumnNames.has(key)) {
       if (draft.action === "created" && key === "preferredName") return [];
@@ -66,34 +57,22 @@ export function personDraftFields(
         },
       ];
     }
-    const column = fields.find(({ id }) => id === key);
-    const named = column === undefined ? {} : { column: column.name };
-    if (column?.type === "link") {
-      // The key is the column's own, which the draft names.
-      /* eslint-disable security/detect-object-injection */
-      const before = draft.live.links[key];
-      const after = person.links[key];
-      /* eslint-enable security/detect-object-injection */
-      return [
-        {
-          key,
-          field: {
-            field: "value",
-            ...named,
-            oldValue: before === undefined ? null : linkInWords(before),
-            newValue: after === undefined ? null : linkInWords(after),
-          },
-        },
-      ];
-    }
+    const field = fields.find(({ id }) => id === key);
+    // A choice may come from any list, as the column's may have changed.
+    const column = { choices: lists.flatMap(({ choices }) => choices) };
+    const kind = cellKinds[field?.type ?? "choice"];
+    // Every type of added column describes its values in a draft's details.
+    const inDetail = kind.inDetail as NonNullable<typeof kind.inDetail>;
+    const words = (from: PersonDraft["live"]) =>
+      inDetail(column, kind.read(from, key));
     return [
       {
         key,
         field: {
           field: "value",
-          ...named,
-          oldValue: labels(live.get(key)),
-          newValue: labels(now.get(key)),
+          ...(field === undefined ? {} : { column: field.name }),
+          oldValue: words(draft.live),
+          newValue: words(person),
         },
       },
     ];

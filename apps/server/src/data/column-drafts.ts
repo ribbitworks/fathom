@@ -17,7 +17,7 @@ import {
 } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
+import { type Actor, mostSensitive, seesTier } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import {
   type Change,
@@ -48,6 +48,7 @@ import {
   type Viewer,
   writeDraft,
 } from "./drafts.ts";
+import { typeOf } from "./column-types.ts";
 import { checkValuesFit, fieldChanges, fieldFields } from "./fields.ts";
 import {
   draftedList,
@@ -79,9 +80,6 @@ export const fieldRecord = (row: FieldRow): Recorded => ({
   multiple: row.multiple,
   required: row.required,
 });
-
-// Columns recorded before web link columns hold no type, and choose from a list.
-const isLinkColumn = (field: Recorded) => field.type === "link";
 
 // The People table's columns, live and in drafts, the live order of every column, and the draft of
 // the order, read together, with the lists they draw on, as the viewer sees them, with the records
@@ -270,16 +268,20 @@ function refuseHeldIn(held: Held | undefined): void {
   if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
 }
 
-// The tier of a column's values: a choice column's list's, live or as drafted, whichever is more
-// sensitive, or a web link column's visibility.
-export const columnTier = (state: ColumnsState, field: Recorded): Tier =>
-  isLinkColumn(field)
-    ? storedTier(field.visibility)
-    : listTier(state.lists, String(field.listId));
+// The tier of a column's values, as its type sets it, with each list's tier live or as drafted,
+// whichever is more sensitive.
+export function columnTier(state: ColumnsState, field: Recorded): Tier {
+  const type = typeOf(field);
+  return type.tier(type.settings(field), (listId) =>
+    listTier(state.lists, listId),
+  );
+}
 
 // Whether a column's draft draws on a list only drafted to be added, whose draft it then uses.
-export const usesAddedList = (state: ColumnsState, field: Recorded) =>
-  !isLinkColumn(field) && !state.lists.lists.has(String(field.listId));
+export function usesAddedList(state: ColumnsState, field: Recorded): boolean {
+  const { listId } = typeOf(field).settings(field);
+  return listId !== null && !state.lists.lists.has(listId);
+}
 
 const badRequest = (message: string) => new BadRequestError(message);
 
@@ -329,23 +331,20 @@ export const columnRow = (id: string, field: Recorded): FieldRow => ({
   id,
   tableName: String(field.tableName),
   name: String(field.name),
-  ...(isLinkColumn(field)
-    ? { type: "link", listId: null, visibility: String(field.visibility) }
-    : { type: "choice", listId: String(field.listId), visibility: null }),
-  multiple: field.multiple === true,
+  ...typeOf(field).settings(field),
   required: field.required === true,
 });
 
 export const toFieldOut = (id: string, field: Recorded): Field => {
-  const row = columnRow(id, field);
+  const { type, listId, visibility, multiple } = typeOf(field).settings(field);
   return {
     id,
-    name: row.name,
-    type: row.type === "link" ? "link" : "choice",
-    listId: row.listId,
-    visibility: row.visibility === null ? null : storedTier(row.visibility),
-    multiple: row.multiple,
-    required: row.required,
+    name: String(field.name),
+    type,
+    listId,
+    visibility,
+    multiple,
+    required: field.required === true,
   };
 };
 

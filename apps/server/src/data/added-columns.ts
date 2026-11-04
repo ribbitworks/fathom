@@ -7,8 +7,9 @@
 
 import { type Database, fields } from "@fathom/db";
 import { inArray } from "drizzle-orm";
-import { mostSensitive, storedTier } from "../access.ts";
+import { mostSensitive } from "../access.ts";
 import { type Draft, readDrafts, refuseHeld, type Viewer } from "./drafts.ts";
+import { typeOf } from "./column-types.ts";
 import { draftedList, listTier, readState } from "./lists.ts";
 import { type ColumnInfo, inListOrder, readColumns } from "./values.ts";
 
@@ -20,10 +21,11 @@ const added = (drafts: ReadonlyMap<string, Draft>, live: ReadonlySet<string>) =>
   );
 
 // The People table's live columns, then those drafted to be added that the viewer sees, as their
-// drafts make them, each with its values' tier: an added choice column's is its list's, live or as
-// drafted, and an added web link column's its visibility, published or as the viewer drafted it,
-// whichever is more sensitive. An added column is required only once approved, which checks that
-// the people fit it. Locking locks the live columns, as readColumns does.
+// drafts make them, each with its values' tier as its type sets it: the most sensitive of the
+// column as the viewer drafted it, with its lists as the viewer sees them and as published, and of
+// the column as published, with its lists as published, so the viewer's own unpublished changes
+// never make values less sensitive. An added column is required only once approved, which checks
+// that the people fit it. Locking locks the live columns, as readColumns does.
 export async function columnsWithAdded(
   reader: Reader,
   viewer: Viewer,
@@ -35,52 +37,33 @@ export async function columnsWithAdded(
   if (columns.length === 0) return live;
   const lists = await readState(reader, viewer);
   const published = await readState(reader);
-  // Only an added web link column's tier depends on its published draft.
-  const publishedFields = columns.some(
-    ([, draft]) => draft.fields.type === "link",
-  )
+  // A column's published draft is read only when the viewer has changed it unpublished.
+  const publishedFields = columns.some(([, draft]) => draft.unpublished)
     ? await readDrafts(reader, "field")
     : new Map<string, Draft>();
   return [
     ...live,
     ...columns.map(([id, draft]): ColumnInfo => {
       const field = draft.fields;
-      const common = {
+      const type = typeOf(field);
+      const settings = type.settings(field);
+      const publishedField = publishedFields.get(id)?.fields ?? field;
+      return {
         id,
         tableName: String(field.tableName),
         name: String(field.name),
+        ...settings,
         required: false,
-      };
-      if (field.type === "link") {
-        return {
-          ...common,
-          type: "link",
-          listId: null,
-          visibility: String(field.visibility),
-          multiple: false,
-          // The viewer's own unpublished change never makes its values less sensitive.
-          tier: mostSensitive([
-            storedTier(field.visibility),
-            storedTier(
-              publishedFields.get(id)?.fields.visibility ?? field.visibility,
-            ),
-          ]),
-          listRetired: false,
-        };
-      }
-      const listId = String(field.listId);
-      return {
-        ...common,
-        type: "choice",
-        listId,
-        visibility: null,
-        multiple: field.multiple === true,
-        // The viewer's own unpublished change to the list never makes its values less sensitive.
         tier: mostSensitive([
-          listTier(lists, listId),
-          listTier(published, listId),
+          type.tier(settings, (listId) => listTier(lists, listId)),
+          type.tier(settings, (listId) => listTier(published, listId)),
+          type.tier(type.settings(publishedField), (listId) =>
+            listTier(published, listId),
+          ),
         ]),
-        listRetired: draftedList(lists, listId)?.retired === true,
+        listRetired:
+          settings.listId !== null &&
+          draftedList(lists, settings.listId)?.retired === true,
       };
     }),
   ];

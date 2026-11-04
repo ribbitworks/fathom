@@ -85,6 +85,7 @@ import {
   readLive,
   recordSensitiveChanges,
 } from "./people.ts";
+import { typeOf } from "./column-types.ts";
 import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
 
@@ -582,11 +583,12 @@ async function undoColumnDrafts(
       if (nameTaken(state, String(wanted.name), record.id)) {
         throw new ConflictError(changedSince);
       }
-      if (wanted.type !== "link" && wanted.listId !== live?.listId) {
+      const { listId } = typeOf(wanted).settings(wanted);
+      if (listId !== null && listId !== live?.listId) {
         await checkList(
           transaction,
           state,
-          String(wanted.listId),
+          listId,
           () => new ConflictError(changedSince),
         );
       }

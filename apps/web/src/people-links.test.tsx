@@ -214,7 +214,9 @@ describe("a web link column", () => {
     act(() => {
       name.focus();
     });
-    await userEvent.paste("Casey Fictional\tE3\thttp://wiki/casey\n");
+    await userEvent.paste(
+      "Casey Fictional\tE3\thttp://wiki/casey\nDrew Fictional\tE4\n",
+    );
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([
       {
         people: [
@@ -223,6 +225,12 @@ describe("a web link column", () => {
             employeeId: "E3",
             values: {},
             links: { f1: { address: "http://wiki/casey", text: "" } },
+          },
+          {
+            preferredName: "Drew Fictional",
+            employeeId: "E4",
+            values: {},
+            links: {},
           },
         ],
       },

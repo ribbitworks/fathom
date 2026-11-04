@@ -66,6 +66,7 @@ import {
   columnsWithAdded,
   refuseHeldColumns,
 } from "./added-columns.ts";
+import { typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import {
   type ColumnInfo,
@@ -506,19 +507,11 @@ async function readPeopleIn(
         if (fieldId === null) {
           Object.assign(liveValues, { [field]: before[field] ?? null });
         } else {
-          const held = before[field];
-          if (isLink(held)) {
-            liveValues.links[fieldId] = {
-              address: held.address,
-              text: held.text,
-            };
-          } else if (
-            allColumns.find(({ id }) => id === fieldId)?.type !== "link"
-          ) {
-            liveValues.values[fieldId] = Array.isArray(held)
-              ? held.map(String)
-              : [];
-          }
+          // Only the fields of the columns read above are shown.
+          const column = allColumns.find(
+            ({ id }) => id === fieldId,
+          ) as ColumnInfo;
+          typeOf(column).showLive(liveValues, fieldId, before[field]);
         }
         /* eslint-enable security/detect-object-injection */
       }

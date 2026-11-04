@@ -36,6 +36,7 @@ import {
 import { mostSensitive, storedTier } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import { type Change, stableJson, type Transaction } from "./changes.ts";
+import { typeOf } from "./column-types.ts";
 import type { ColumnInfo } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
@@ -750,9 +751,8 @@ export async function draftedValues(
   }));
 }
 
-// Whether the columns hold a person as recorded: each choice column's values from its list, one
-// choice unless the column takes several, a link only in a web link column, and a value in every
-// required column.
+// Whether the columns hold a person as recorded: each value one its column's type holds, as
+// column-types.ts sets out, and a value in every required column.
 export function fitsColumns(
   columns: readonly ColumnInfo[],
   listOf: ReadonlyMap<string, string>,
@@ -767,14 +767,10 @@ export function fitsColumns(
     !strayValue &&
     columns.every((column) => {
       const value = person[`value:${column.id}`];
-      if (column.type === "link") {
-        return isLink(value) || (!column.required && isEmpty(value));
-      }
-      const chosen = Array.isArray(value) ? value.map(String) : [];
+      const type = typeOf(column);
       return (
-        (!column.required || chosen.length > 0) &&
-        (column.multiple || chosen.length <= 1) &&
-        chosen.every((choiceId) => listOf.get(choiceId) === column.listId)
+        (!column.required || type.count(value) > 0) &&
+        type.fits(column, value, listOf)
       );
     })
   );

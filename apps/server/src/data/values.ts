@@ -7,6 +7,7 @@
 // or a web link column's own visibility.
 
 import { storedTier } from "../access.ts";
+import { typeOf } from "./column-types.ts";
 import {
   type Database,
   fields,
@@ -60,12 +61,14 @@ export async function readColumns(
   }));
 }
 
-// The database allows only these two types of column.
+// A live column's tier, given the visibility of its own list, read with it.
 export const valuesTier = (
-  field: Pick<FieldRow, "type" | "visibility">,
+  field: FieldRow,
   listVisibility: string | null,
-): Tier =>
-  storedTier(field.type === "link" ? field.visibility : listVisibility);
+): Tier => {
+  const type = typeOf(field);
+  return type.tier(type.settings(field), () => storedTier(listVisibility));
+};
 
 // A column's value for one person, as the change history records it: the chosen choices, or a link.
 export type FieldValue = string[] | Link;

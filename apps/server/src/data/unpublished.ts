@@ -41,6 +41,7 @@ import {
   takenEmployeeIds,
   wantsNoDraft,
 } from "./drafts.ts";
+import { typeOf } from "./column-types.ts";
 import { fieldChanges } from "./fields.ts";
 import {
   choiceChanges,
@@ -256,11 +257,11 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
   const field = draftedField(columns, id);
   if (field === undefined) return true;
   if (nameTaken(columns, String(field.name), id)) return false;
-  if (field.type === "link") return true;
-  const listId = String(field.listId);
+  const { listId } = typeOf(field).settings(field);
   return (
-    listExists(columns.lists, listId) &&
-    draftedList(columns.lists, listId) !== undefined
+    listId === null ||
+    (listExists(columns.lists, listId) &&
+      draftedList(columns.lists, listId) !== undefined)
   );
 }
 

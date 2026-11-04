@@ -200,6 +200,45 @@ describe("the tier of values in a column drafted to be added", () => {
       }),
     );
   });
+
+  it("is not lowered by the editor's own unpublished change to which list the column uses", async () => {
+    const { field } = await addedColumn();
+    const secret = (
+      await send("POST", "/api/lists", {
+        name: unique("Fictional List"),
+        visibility: "confidential",
+      })
+    ).json<{ list: List }>().list;
+    const [secretChoice] = (
+      await send("POST", `/api/lists/${secret.id}/choices`, {
+        choices: [{ label: "Secret" }],
+      })
+    ).json<{ choices: Choice[] }>().choices;
+    const unpublished = { publish: false };
+    const moved = await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/people/columns/${field.id}`,
+      { name: field.name, listId: secret.id },
+      unpublished,
+    );
+    expect(moved.statusCode, moved.body).toBe(200);
+    const lowered = await test.request(
+      editor.cookie,
+      "PUT",
+      `/api/lists/${secret.id}`,
+      { name: secret.name, description: "", visibility: "general" },
+      unpublished,
+    );
+    expect(lowered.statusCode, lowered.body).toBe(200);
+    const id = await personWith({ [field.id]: [String(secretChoice?.id)] });
+    expect(await test.historyOf(id)).toContainEqual(
+      expect.objectContaining({
+        field: `value:${field.id}`,
+        tier: "confidential",
+      }),
+    );
+  });
 });
 
 describe("what people's drafts use stays while they use it", () => {
