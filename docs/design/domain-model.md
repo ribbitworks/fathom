@@ -32,8 +32,8 @@ erDiagram
     PERSON ||--o{ REPORTING_LINE : "reports through"
     PERSON ||--o{ REPORTING_LINE : manages
     FEATURE ||--o{ ALLOCATION : receives
-    PERSON |o..o{ ALLOCATION : "is allocated"
-    PLANNED_HIRE |o..o{ ALLOCATION : "is allocated"
+    PERSON |o--o{ ALLOCATION : "is allocated"
+    PLANNED_HIRE |o--o{ ALLOCATION : "is allocated"
     PLANNED_HIRE }o--o| PERSON : "reports to"
     PLANNED_HIRE |o--o| PERSON : "is filled by"
     USER }o--|{ ROLE : has
@@ -53,7 +53,7 @@ erDiagram
 - **Proposal:** Work offered or requested that may become a project, such as a bid or a customer request. Has a name, a status, and optionally a Proposal ID, a web link, an owner, who is a person, and customers. Links to the features it proposes, and to the one project it became, once won.
 - **Feature:** Has a name, a status, and optionally a description, a target cycle, an estimate, and the feature team that owns and delivers it. Has no owner of its own; ownership comes from its feature team. Can be needed by several projects. Ships in the release that includes its target cycle, and its start and end months follow from its allocations.
 - **Milestone:** A dated point in one project or one feature, with a name, which says whether it is a customer delivery date. Milestones are kept in a table of their own.
-- **Allocation:** Links one person or planned hire to one feature for one month, with a percentage.
+- **Allocation:** Puts one person or planned hire on one feature from a month, with a percentage, or with none when it stops the allocation. It is in force until the next allocation for the same person or planned hire and feature, as reporting lines are kept from a date. It points to a person or a planned hire, never both. Filling a planned hire moves its allocations to the person, as set out below.
 - **Estimate:** A feature's one estimate, its total effort, kept as one value and shown in the unit the reader picks.
 - **Customer:** A built-in table with a name.
 - **Product:** A built-in table with a name. Features are part of products through a column users add.
@@ -82,7 +82,20 @@ The values of every built-in field are set out in the [Decisions Log](../product
 
 **Proposal:** When variable capacity is added after v1, as the Decisions Log allows, give each person a monthly capacity, defaulting to a full month, so existing data needs no change.
 
-**Proposal:** Model allocations so they point to either a person or a planned hire, and transfer them to the new person when the hire is filled. How they pass to the new person is decided in the Allocations and Capacity slice of the [Implementation Plan](implementation-plan.md#allocations-and-capacity).
+Filling a planned hire is one draft, approved or rejected whole. What it does to the hire's allocations is set out in the [Decisions Log](../product/decisions.md#workforce):
+
+```mermaid
+flowchart LR
+    F[Fill the planned hire] --> H{Does any of the hire's allocations have a draft?}
+    H -- Yes --> R[Refused, naming who holds the draft]
+    H -- No --> P[Link it to an existing person, or add a new one]
+    P --> M[Move each of the hire's allocations to the person, adding percentages where both are on the same feature]
+    M --> S{Any before the person's start month?}
+    S -- Yes --> W[Keep them, warn, and leave them out of capacity and demand]
+    S -- No --> D[Approved or rejected with the fill]
+    W --> D
+    M --> V[Readers who see the placeholder rather than the person see the allocations on the placeholder until the start date]
+```
 
 ## Access Entities
 

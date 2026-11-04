@@ -121,7 +121,7 @@ Proposals, which may become projects, with their statuses, the features they pro
 
 ### Allocations and Capacity
 
-Monthly allocations, capacity by person, by manager, and by feature team, and the warnings and rules in the [Decisions Log](../product/decisions.md), shown in the monthly resource grid, with the cycle and release lines from the Cycles and Releases slice. Decided when this slice starts: whose cycle and release lines the grid shows when there are several release streams, and how a planned hire's allocations pass to the person who fills it, as the [Decisions Log](../product/decisions.md#workforce) sets out, such as from their start date.
+Allocations kept from a month, as reporting lines are, for people and planned hires; capacity by person, by manager, by feature team, and for the whole organization; and the warnings and rules in the [Decisions Log](../product/decisions.md#planning), including over- and under-allocation and allocations a date change leaves outside someone's employment. They are shown in the monthly resource grid, grouped by manager or feature team, with the cycle and release lines of one release stream at a time from the Cycles and Releases slice, as [Visual Design](visual-design.md#components) sets out. Filling a planned hire moves its allocations to the person who fills it, as the [Decisions Log](../product/decisions.md#workforce) sets out. The seed data gains fictional allocations for people and planned hires across several months, including an over-allocated person, an under-allocated one, a project's general feature, and a filled planned hire whose person starts after its target date. A manual test in [Manual Tests](../testing/) walks through the grid.
 
 ### Team Composition
 
