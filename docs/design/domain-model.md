@@ -40,8 +40,8 @@ erDiagram
     USER |o..o| PERSON : "may be"
     CHANGE_SET ||--|{ CHANGE : groups
     USER |o--o{ CHANGE_SET : makes
-    RELEASE_STREAM ||..|{ CYCLE_PATTERN : "changes over time"
-    CYCLE_PATTERN ||..o{ CYCLE : makes
+    RELEASE_STREAM ||--|{ CYCLE_PATTERN : "changes over time"
+    CYCLE_PATTERN ||--o{ CYCLE : makes
     RELEASE_STREAM ||--o{ CYCLE : defines
     RELEASE_STREAM ||--o{ RELEASE : contains
     RELEASE |o--|{ CYCLE : includes
@@ -63,8 +63,8 @@ The values of every built-in field are set out in the [Decisions Log](../product
 ## Release Entities
 
 - **Release stream:** Has a name, its place in the order of streams, and whether it is retired. Groups its cycles and releases.
-- **Cycle pattern:** **Proposal:** a release stream's cycle length, in weeks or months, and its naming pattern, from a given date until the stream's next pattern starts. A stream has one or more, so a change of length leaves the cycles made before it as they are.
-- **Cycle:** A planning period in one release stream, with a name, a start date, and an end date, made ahead from the pattern in force. It is in at most one release.
+- **Cycle pattern:** A release stream's cycle length, in weeks or months, and its naming pattern, from a given date until the stream's next pattern starts. A stream has one or more, so a change of length leaves the cycles made before it as they are.
+- **Cycle:** A planning period in one release stream, with a name, a start date, and an end date, made ahead from the pattern in force. It is in at most one release. Cycles are worked out from the patterns rather than stored, so a cycle is known by its stream and start date, as [ADR 0010](../adr/0010-cycles-from-patterns.md) sets out.
 - **Release:** A named delivery in one release stream, which includes one or more of its cycles, consecutive in the stream. Its date is the end of its last cycle, and its contents are the features that target those cycles.
 
 ## Workforce Entities

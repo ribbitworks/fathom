@@ -503,6 +503,135 @@ describe("lists", () => {
   });
 });
 
+describe("release streams", () => {
+  const uniqueViolation = "23505";
+  const checkViolation = "23514";
+  const restrictViolation = "23001";
+
+  // Adds fictional streams with the names given, and gives their ids in order.
+  async function addStreams(client: Client, ...names: string[]) {
+    const ids: string[] = [];
+    for (const name of names) {
+      const added = await client.query<{ id: string }>(
+        "INSERT INTO release_streams (name) VALUES ($1) RETURNING id",
+        [name],
+      );
+      ids.push(added.rows[0]?.id as string);
+    }
+    return ids;
+  }
+
+  const addPattern = (
+    client: Client,
+    streamId: string | undefined,
+    length = 3,
+    unit = "months",
+  ) =>
+    client.query(
+      "INSERT INTO cycle_patterns (stream_id, starts_on, length, unit, naming) VALUES ($1, '2027-01-01', $2, $3, '{YY}.{N}')",
+      [streamId, length, unit],
+    );
+
+  const addRelease = (
+    client: Client,
+    streamId: string | undefined,
+    name = "Fictional One",
+    lastCycle = "2027-04-01",
+  ) =>
+    client.query(
+      "INSERT INTO releases (stream_id, name, first_cycle, last_cycle) VALUES ($1, $2, '2027-01-01', $3)",
+      [streamId, name, lastCycle],
+    );
+
+  it("refuses a stream name already used, ignoring letter case", async () => {
+    await withClient(database.app, async (client) => {
+      await addStreams(client, "Fictional Majors");
+      expect(await errorCodeOf(addStreams(client, "fictional majors"))).toBe(
+        uniqueViolation,
+      );
+    });
+  });
+
+  it("refuses a release name already in the same stream, ignoring letter case, but not in another", async () => {
+    await withClient(database.app, async (client) => {
+      const [first, second] = await addStreams(
+        client,
+        "Fictional Named",
+        "Other Fictional Named",
+      );
+      await addRelease(client, first);
+      expect(
+        await errorCodeOf(addRelease(client, first, "fictional one")),
+      ).toBe(uniqueViolation);
+      await addRelease(client, second);
+    });
+  });
+
+  it("refuses two patterns starting on the same day in the same stream, but not in another", async () => {
+    await withClient(database.app, async (client) => {
+      const [first, second] = await addStreams(
+        client,
+        "Fictional Patterned",
+        "Other Fictional Patterned",
+      );
+      await addPattern(client, first);
+      expect(await errorCodeOf(addPattern(client, first))).toBe(
+        uniqueViolation,
+      );
+      await addPattern(client, second);
+    });
+  });
+
+  it("refuses a pattern of no length", async () => {
+    await withClient(database.app, async (client) => {
+      const [id] = await addStreams(client, "Fictional Lengthless");
+      expect(await errorCodeOf(addPattern(client, id, 0))).toBe(checkViolation);
+    });
+  });
+
+  it("refuses a pattern in a unit other than weeks or months", async () => {
+    await withClient(database.app, async (client) => {
+      const [id] = await addStreams(client, "Fictional Unknown Unit");
+      expect(await errorCodeOf(addPattern(client, id, 2, "days"))).toBe(
+        checkViolation,
+      );
+    });
+  });
+
+  it("refuses a release whose last cycle comes before its first", async () => {
+    await withClient(database.app, async (client) => {
+      const [id] = await addStreams(client, "Fictional Backwards");
+      expect(
+        await errorCodeOf(addRelease(client, id, "Fictional", "2026-10-01")),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("refuses deleting a stream that has a pattern", async () => {
+    await withClient(database.app, async (client) => {
+      const [id] = await addStreams(client, "Fictional With Pattern");
+      await addPattern(client, id);
+      expect(
+        await errorCodeOf(
+          client.query("DELETE FROM release_streams WHERE id = $1", [id]),
+        ),
+      ).toBe(restrictViolation);
+    });
+  });
+
+  it("refuses deleting a stream that has a release", async () => {
+    await withClient(database.app, async (client) => {
+      const [id] = await addStreams(client, "Fictional With Release");
+      await addRelease(client, id);
+      expect(
+        await errorCodeOf(
+          client.query("DELETE FROM release_streams WHERE id = $1", [id]),
+        ),
+      ).toBe(restrictViolation);
+    });
+  });
+});
+
 describe("recording changes", () => {
   it("records changes as one change set, and nothing when there are none", async () => {
     const pool = createPool(database.app, () => undefined);

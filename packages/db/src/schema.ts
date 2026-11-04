@@ -189,6 +189,77 @@ export const listItems = fathomSchema.table(
   ],
 );
 
+// Release streams, each with its own cycles and releases, such as major releases or patches. A
+// stream's name is unique, ignoring letter case. Streams are retired, never deleted, since releases
+// and features refer to their cycles.
+export const releaseStreams = fathomSchema.table(
+  "release_streams",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    // Lower comes first.
+    position: integer("position").notNull().default(0),
+    retired: boolean("retired").notNull().default(false),
+  },
+  (table) => [
+    uniqueIndex("release_streams_name_index").on(sql`lower(${table.name})`),
+  ],
+);
+
+// How a stream's cycles are made, from the date a pattern starts until the stream's next pattern
+// starts: their length, in weeks or months, and the pattern their names follow. A stream's cycles are
+// worked out from its patterns, not stored, so a cycle is known by its stream and its start date.
+export const cyclePatterns = fathomSchema.table(
+  "cycle_patterns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    streamId: uuid("stream_id")
+      .notNull()
+      .references(() => releaseStreams.id, { onDelete: "restrict" }),
+    startsOn: date("starts_on").notNull(),
+    length: integer("length").notNull(),
+    unit: text("unit").notNull(),
+    naming: text("naming").notNull(),
+  },
+  (table) => [
+    uniqueIndex("cycle_patterns_stream_start_index").on(
+      table.streamId,
+      table.startsOn,
+    ),
+    check("cycle_patterns_length_positive", sql`${table.length} > 0`),
+    check(
+      "cycle_patterns_unit_known",
+      sql`${table.unit} IN ('weeks', 'months')`,
+    ),
+  ],
+);
+
+// Releases, each including the consecutive cycles of its stream from its first cycle to its last,
+// named by the start dates of those cycles. A release's name is unique within its stream, ignoring
+// letter case. That no cycle is in two releases is checked by the server.
+export const releases = fathomSchema.table(
+  "releases",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    streamId: uuid("stream_id")
+      .notNull()
+      .references(() => releaseStreams.id, { onDelete: "restrict" }),
+    name: text("name").notNull(),
+    firstCycle: date("first_cycle").notNull(),
+    lastCycle: date("last_cycle").notNull(),
+  },
+  (table) => [
+    uniqueIndex("releases_stream_name_index").on(
+      table.streamId,
+      sql`lower(${table.name})`,
+    ),
+    check(
+      "releases_cycles_in_order",
+      sql`${table.lastCycle} >= ${table.firstCycle}`,
+    ),
+  ],
+);
+
 // The change history: every change made to Fathom's data, with its old and new values, grouped into
 // the change sets that were saved together. Who created and last changed a record is read from it.
 // Like the access history, it can only be added to. Changes to drafts are recorded as they are saved,

@@ -50,4 +50,5 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Development
 
 - **No tests in the shared package:** `packages/shared` has no test runner of its own, so its rules, such as which web addresses are accepted, are tested from the web app and the server instead, and its coverage is not measured on its own. Found in review on 2026-11-03.
+- **Database tests to tidy:** In `packages/db/src/database.test.ts`, each group of tests declares its own copies of PostgreSQL's error codes, which one shared set would replace, and the lists test checks several behaviours in one test. Found in review on 2026-11-03.
 - **Files the code scan skips without reporting them:** Semgrep skips files larger than 1 MB and files it judges to be minified, and its results list them only in verbose mode, so the security report cannot tell they were skipped. Fathom's repository has no such files today. Deferred until it has.
