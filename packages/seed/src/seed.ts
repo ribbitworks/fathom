@@ -385,16 +385,17 @@ export async function seedCommand(
           `Discarded ${String(unpublished)} unpublished changes made by the personas`,
         );
       }
-      const discardedLists = await unseedListDrafts(database, organization);
-      if (discardedLists > 0) {
-        console.log(
-          `Discarded ${String(discardedLists)} drafts of lists and columns made by the personas`,
-        );
-      }
+      // People first, since the drafts of lists and columns cannot be discarded while theirs use them.
       const discarded = await unseedDrafts(database, organization);
       if (discarded > 0) {
         console.log(
           `Discarded ${String(discarded)} drafts made by the personas`,
+        );
+      }
+      const discardedLists = await unseedListDrafts(database, organization);
+      if (discardedLists > 0) {
+        console.log(
+          `Discarded ${String(discardedLists)} drafts of lists and columns made by the personas`,
         );
       }
       const kept = await unseed(database, organization);

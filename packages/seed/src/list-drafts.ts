@@ -9,15 +9,21 @@
 // Sites and Positions orders, and the Positions description; a second Engineering Operations
 // Manager gives the renamed site a description, so one draft holds two people's changes, drafts
 // renaming Roles on the team, and sends the Sites order for approval again, which then waits on
-// Harbourside, still rejected. Drafts of People's columns follow, as seedColumnDrafts sets out. Each
-// persona publishes their changes before the next persona changes the same drafts and before the
-// Engineering Director decides them. Each case a draft of a list, a choice, a column, or an order can
-// be in is there to try. After them, the Engineering Operations Manager drafts adding an Equipment
-// list with one choice and leaves it unpublished, so only they see it. Removing the seed data
-// discards these drafts first. A development-only package, never included in the runtime image.
+// Harbourside, still rejected. Drafts of People's columns follow, as seedColumnDrafts sets out,
+// then a Skills column drawing on the Skills list and a person given Rust in it, as seedSkills sets
+// out. Each persona publishes their changes before the next persona changes the same drafts and
+// before the Engineering Director decides them. Each case a draft of a list, a choice, a column, or
+// an order can be in is there to try. After them, the Engineering Operations Manager drafts adding
+// an Equipment list with one choice and leaves it unpublished, so only they see it. Removing the
+// seed data discards these drafts first. A development-only package, never included in the runtime
+// image.
 
 import { changes, type Database, drafts } from "@fathom/db";
-import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
+import type {
+  FictionalList,
+  FictionalOrganization,
+  FictionalPerson,
+} from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, max, sql } from "drizzle-orm";
 import type { Actor } from "@fathom/server/access";
@@ -31,6 +37,7 @@ const approverEmail = `engineering.director@${accountDomain}`;
 // The lists the seed drafts adding, published and not, which no fictional list is called.
 export const draftedListName = "Skills";
 export const unpublishedListName = "Equipment";
+export const skillsColumnName = "Skills";
 
 export const columnRejection =
   "Fictional reason: a previous site is not needed yet.";
@@ -104,10 +111,12 @@ export async function seedListDrafts(
     description: "What people are skilled in.",
     visibility: "general",
   });
-  await data.lists.addChoices(editor, skills.id, [
-    { label: "Rust", description: "" },
-    { label: "TypeScript", description: "" },
-  ]);
+  const [rust] = (
+    await data.lists.addChoices(editor, skills.id, [
+      { label: "Rust", description: "" },
+      { label: "TypeScript", description: "" },
+    ])
+  ).result;
   await data.lists.updateChoice(
     editor,
     sites.id,
@@ -182,6 +191,7 @@ export async function seedListDrafts(
   // Sent again on its own, so it waits on Harbourside, which stays rejected.
   await data.lists.resubmitDraft(second, { kind: "order", listId: sites.id });
   await seedColumnDrafts(database, organization, editor, approver);
+  await seedSkills(database, organization, editor, skills.id, String(rust?.id));
   return true;
 }
 
@@ -234,6 +244,33 @@ async function seedColumnDrafts(
     { columns: [previousSite.id] },
     columnRejection,
   );
+}
+
+// The person given a skill, whom no other seed draft changes.
+const skilledFor = (organization: FictionalOrganization) =>
+  organization.people[6] as FictionalPerson;
+
+// Drafts that use drafts of another kind: the Engineering Operations Manager drafts adding a Skills
+// column drawing on the Skills list, and gives a person Rust in it, so approving the person approves
+// the list, the column, and Rust with them.
+async function seedSkills(
+  database: Database,
+  organization: FictionalOrganization,
+  editor: Actor,
+  listId: string,
+  rustId: string,
+): Promise<void> {
+  const data = createDataAccess(database);
+  const { result: column } = await data.people.createField(editor, {
+    name: skillsColumnName,
+    listId,
+    multiple: true,
+    required: false,
+  });
+  await data.people.update(editor, skilledFor(organization).id, {
+    values: { [column.id]: [rustId] },
+  });
+  await data.unpublished.publish(editor);
 }
 
 // Drafts adding the Equipment list with one choice, as the Engineering Operations Manager, left
@@ -363,7 +400,10 @@ async function unseedColumnDrafts(
     const seeded =
       draft.recordType === "column-order" ||
       columnIds.has(draft.recordId) ||
-      (draft.action === "created" && draft.fields.name === "Previous site");
+      (draft.action === "created" &&
+        ["Previous site", skillsColumnName].includes(
+          String(draft.fields.name),
+        ));
     if (!seeded) continue;
     await data.people.discardColumnDraft(
       editor,

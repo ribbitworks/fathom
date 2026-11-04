@@ -3,9 +3,10 @@
 // Tests for working out, as the server does, which other drafts approving or rejecting a selection
 // includes, and how they are named.
 
-import type { Choice, List } from "@fathom/shared";
+import type { Choice, Field, List, Person } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
+  type Columns,
   draftNames,
   draftTotal,
   heldBack,
@@ -247,5 +248,145 @@ describe("drafts that wait on rejected ones", () => {
       columns: ["f1"],
       columnOrder: false,
     });
+  });
+});
+
+describe("drafts of people and columns that use drafts of another kind", () => {
+  // A column drafted to be added, drawing on the list Teams, itself drafted to be added.
+  const squad: Field = {
+    id: "f2",
+    name: "Squad",
+    listId: "l1",
+    multiple: false,
+    required: false,
+    draft: { ...waiting, action: "created", changed: [], live: {} },
+  };
+  // A live column on the live list Sites.
+  const site: Field = {
+    id: "f3",
+    name: "Site",
+    listId: "l2",
+    multiple: false,
+    required: false,
+  };
+  const person = (
+    id: string,
+    values: Record<string, string[]>,
+    draft: Partial<NonNullable<Person["draft"]>> = {},
+  ): Person => ({
+    id,
+    preferredName: id.toUpperCase(),
+    employeeId: id,
+    values,
+    draft: {
+      ...waiting,
+      action: "changed",
+      changed: Object.keys(values),
+      live: { values: {} },
+      ...draft,
+    },
+  });
+  // Given a new squad, B, and a new site, E; given a live site, D; given nothing new.
+  const ada = person("ada", { f2: ["b"], f3: ["e"] });
+  const bo = person("bo", { f3: ["d"] });
+  const cy = person("cy", { f2: ["b"] }, { unpublished: true });
+  const columns = { fields: [squad, site], people: [ada, bo, cy] };
+
+  it("approves the new columns and choices a person is given, and the new lists they belong to", () => {
+    expect(
+      usedDrafts({ ...noDrafts(), people: ["ada"] }, lists, columns),
+    ).toEqual({
+      ...noDrafts(),
+      lists: ["l1"],
+      choices: ["b", "e"],
+      columns: ["f2"],
+    });
+    expect(
+      usedDrafts({ ...noDrafts(), people: ["bo"] }, lists, columns),
+    ).toEqual(noDrafts());
+  });
+
+  it("approves a new list with a column drawing on it", () => {
+    expect(
+      usedDrafts({ ...noDrafts(), columns: ["f2"] }, lists, columns),
+    ).toEqual({ ...noDrafts(), lists: ["l1"] });
+  });
+
+  it("rejects the columns drawing on a new list, and the people given what is rejected, with it", () => {
+    expect(
+      usingDrafts({ ...noDrafts(), lists: ["l1"] }, lists, columns),
+    ).toEqual({
+      ...noDrafts(),
+      people: ["ada"],
+      choices: ["b", "c"],
+      orders: ["l1"],
+      columns: ["f2"],
+    });
+    expect(
+      usingDrafts({ ...noDrafts(), choices: ["e"] }, lists, columns),
+    ).toEqual({ ...noDrafts(), people: ["ada"], orders: [] });
+    expect(
+      usingDrafts({ ...noDrafts(), choices: ["d"] }, lists, columns).people,
+    ).toEqual([]); // The column order placing a column rejected, chosen or on a new list rejected, is rejected too.
+    const placing = {
+      ...columns,
+      orderDraft: { uses: ["f2"] } as Columns["orderDraft"],
+    };
+    expect(
+      usingDrafts({ ...noDrafts(), columns: ["f2"] }, lists, placing)
+        .columnOrder,
+    ).toBe(true);
+    expect(
+      usingDrafts({ ...noDrafts(), lists: ["l1"] }, lists, placing).columnOrder,
+    ).toBe(true);
+    // A column order already rejected with them is not added again.
+    expect(
+      usingDrafts(
+        { ...noDrafts(), columns: ["f2"], columnOrder: true },
+        lists,
+        { ...columns, orderDraft: { uses: ["f2"] } as Columns["orderDraft"] },
+      ).columnOrder,
+    ).toBe(false);
+  });
+
+  it("finds nothing used by a person with no draft", () => {
+    const plain: Person = { ...bo, draft: undefined };
+    expect(
+      usedDrafts({ ...noDrafts(), people: ["bo"] }, lists, {
+        ...columns,
+        people: [plain],
+      }),
+    ).toEqual(noDrafts());
+  });
+
+  it("holds back a person and a column that use a rejected draft", () => {
+    const rejectedTeams: List = {
+      ...teams,
+      draft: {
+        ...waiting,
+        state: "rejected",
+        action: "created",
+        changed: [],
+        live: {},
+      },
+    };
+    expect(
+      heldBack(
+        { ...noDrafts(), people: ["ada", "bo"], columns: ["f2"] },
+        [rejectedTeams, sites],
+        columns,
+      ),
+    ).toEqual({ ...noDrafts(), people: ["ada"], columns: ["f2"] });
+  });
+
+  it("names people first", () => {
+    expect(
+      draftNames(
+        { ...noDrafts(), people: ["ada"], columns: ["f2"], lists: ["l1"] },
+        lists,
+        columns.fields,
+        columns.people,
+      ),
+    ).toEqual(["ADA", "the column Squad", "the list Teams"]);
   });
 });

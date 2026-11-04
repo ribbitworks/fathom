@@ -57,7 +57,8 @@ import {
   removeEmptyOrders,
 } from "./lists.ts";
 import { personChanges, readLive, recordSensitiveChanges } from "./people.ts";
-import { type ColumnInfo, readColumns } from "./values.ts";
+import { columnsWithAdded } from "./added-columns.ts";
+import type { ColumnInfo } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 type Row = typeof unpublishedDrafts.$inferSelect;
@@ -109,7 +110,7 @@ async function readVersions(
   rows: Row[],
 ): Promise<Versions> {
   const personIds = idsOf(rows, "person");
-  const columns = await readColumns(reader);
+  const columns = await columnsWithAdded(reader, userId);
   return {
     rows,
     mine: {
@@ -227,8 +228,9 @@ export async function readUnpublished(
 }
 
 // Whether the record as the user's draft makes it still fits the data as it is now: a name or
-// Employee ID no one else has, and a list to belong to. Every change to drafts counts unpublished
-// drafts too, so this holds unless the data was changed some other way.
+// Employee ID no one else has, and a list to belong to or draw on, live or drafted to be added.
+// Every change to drafts counts unpublished drafts too, so this holds unless the data was changed
+// some other way.
 function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
   const { lists, columns } = versions.mine;
   const id = row.recordId;
@@ -252,10 +254,12 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
     );
   }
   const field = draftedField(columns, id);
+  if (field === undefined) return true;
+  const listId = String(field.listId);
   return (
-    field === undefined ||
-    (!nameTaken(columns, String(field.name), id) &&
-      columns.lists.lists.has(String(field.listId)))
+    !nameTaken(columns, String(field.name), id) &&
+    listExists(columns.lists, listId) &&
+    draftedList(columns.lists, listId) !== undefined
   );
 }
 

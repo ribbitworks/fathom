@@ -207,7 +207,10 @@ describe("the Drafts page", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
     });
-    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
+    expect(
+      within(dialog).getByText("Also approves the drafts these depend on:"),
+    ).toBeDefined();
+    expect(within(dialog).getByText("the list Teams")).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );
@@ -219,6 +222,84 @@ describe("the Drafts page", () => {
           choices: ["c3"],
           orders: [],
           columns: [],
+          columnOrder: false,
+        },
+      ]);
+    });
+  });
+
+  it("approves a person with the new list, column, and choice they are given, naming them", async () => {
+    const created = (more: object = {}) =>
+      draft({ action: "created", changed: [], live: {}, ...more });
+    const guilds = {
+      id: "l3",
+      name: "Guilds",
+      description: "",
+      visibility: "general",
+      retired: false,
+      choices: [
+        {
+          id: "c4",
+          label: "Tooling",
+          description: "",
+          retired: false,
+          draft: created(),
+        },
+      ],
+      draft: created(),
+    };
+    const guild = {
+      id: "f2",
+      name: "Guild",
+      listId: "l3",
+      multiple: false,
+      required: false,
+      draft: created(),
+    };
+    const given = person("p6", "Finley Fictional", {
+      values: { f2: ["c4"] },
+      draft: draft({ action: "changed", changed: ["f2"] }),
+    });
+    const fetch = await openDrafts({
+      "GET /api/people": () =>
+        Response.json({
+          people: [given],
+          fields: [site, guild],
+          order: [],
+          views: [],
+        }),
+      "GET /api/lists": () => Response.json({ lists: [sites, guilds] }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the draft of Finley Fictional",
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 4 drafts?",
+    });
+    for (const name of [
+      "the column Guild",
+      "the list Guilds",
+      "the choice Tooling in Guilds",
+    ]) {
+      expect(within(dialog).getByText(name)).toBeDefined();
+    }
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+        {
+          people: ["p6"],
+          lists: ["l3"],
+          choices: ["c4"],
+          orders: [],
+          columns: ["f2"],
           columnOrder: false,
         },
       ]);
@@ -295,7 +376,9 @@ describe("the Drafts page", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: /^Approve/ }));
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
+    expect(
+      within(dialog).getByText("Also approves the drafts these depend on:"),
+    ).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );

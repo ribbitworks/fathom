@@ -173,10 +173,11 @@ export async function resubmitListDraft(
     .changeSetId;
 }
 
-// Whether a choice can be given to people: it is live, so not only drafted to be added, and not
-// retired, as its draft makes it.
+// Whether a choice can be given to people: it is not retired, as its draft makes it, nor drafted
+// to be removed. A choice only drafted to be added is offered too, and a person given it is
+// approved with it.
 export const offered = (choice: Choice) =>
-  !choice.retired && choice.draft?.action !== "created";
+  !choice.retired && choice.draft?.action !== "deleted";
 
 // Text for comparing names: trimmed and in lower case.
 export function sameName(first: string, second: string): boolean {

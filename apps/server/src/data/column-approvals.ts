@@ -176,7 +176,7 @@ export async function rejectColumnDrafts(
     fieldsOrderUses(state).some((id) => asked.columns.includes(id))
   ) {
     throw new ConflictError(
-      "Other drafts use one of these drafts; reject them together, or once they no longer use it",
+      "Other drafts depend on these drafts. Reject them together, or wait until those drafts no longer depend on these.",
     );
   }
   const made: Change[] = [];

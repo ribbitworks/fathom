@@ -27,9 +27,10 @@ import type {
   ListRequest,
   OrderDraft,
 } from "@fathom/shared";
-import { tierSchema } from "@fathom/shared";
+import { type Tier, tierSchema } from "@fathom/shared";
 import { and, asc, count, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
+import { mostSensitive } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import {
   type Change,
@@ -182,6 +183,21 @@ export async function readState(
       orders: await readHeld(reader, "choice-order", viewer),
     },
   };
+}
+
+// The tier of a list's choices: its visibility, live or as drafted, whichever is more sensitive, so
+// a draft never shows values to someone the live list would not. A list the state does not hold,
+// live or drafted, is treated as the most sensitive.
+export function listTier(state: ListsState, listId: string): Tier {
+  const versions = [state.lists.get(listId), draftedList(state, listId)].filter(
+    (version) => version !== undefined,
+  );
+  // A tier the server no longer knows is treated as the most sensitive rather than trusted.
+  return mostSensitive(
+    (versions.length === 0 ? [{}] : versions).map((version) =>
+      tierSchema.catch("confidential").parse(version.visibility),
+    ),
+  );
 }
 
 // A list or choice as its draft makes it: undefined once removed, or before it is added.
@@ -386,10 +402,12 @@ export const choicesHaveDrafts = (state: ListsState, listId: string) =>
 // Refuses a change to a list while a column draws on it, live or in a draft, naming the columns
 // others may see: live ones and published drafts. A column only in someone's unpublished draft
 // counts too, so the list cannot go from under it, but is not named, since only its maker sees it.
+// The editor's unpublished drafts of columns stand in for the published drafts of the same columns.
 export async function refuseIfUsed(
   transaction: Reader,
   id: string,
   change: string,
+  editor?: string,
 ): Promise<void> {
   const live = await transaction
     .select({ id: fields.id, name: fields.name })
@@ -408,7 +426,26 @@ export async function refuseIfUsed(
           sql`${table.fields}->>'listId' = ${id}`,
         ),
       );
-  const shown = [...live, ...(await drafted(drafts))];
+  const replaced =
+    editor === undefined
+      ? new Set<string>()
+      : new Set(
+          (
+            await transaction
+              .select({ id: unpublishedDrafts.recordId })
+              .from(unpublishedDrafts)
+              .where(
+                and(
+                  eq(unpublishedDrafts.recordType, "field"),
+                  eq(unpublishedDrafts.userId, editor),
+                ),
+              )
+          ).map((row) => row.id),
+        );
+  const shown = [
+    ...live,
+    ...(await drafted(drafts)).filter((column) => !replaced.has(column.id)),
+  ];
   const named = [...new Set(shown.map(({ name }) => name))].sort((a, b) =>
     a.toLowerCase().localeCompare(b.toLowerCase()),
   );
@@ -430,10 +467,11 @@ export async function refuseIfUsed(
 export const choiceInUse =
   "This choice cannot be removed while it is in use; retire it instead";
 
-// Refuses removing a choice that people have, live or in a draft.
+// Refuses removing a choice that people have, live or in a draft, as the editor sees the drafts.
 export async function refuseIfChosen(
   transaction: Reader,
   id: string,
+  editor?: string,
 ): Promise<void> {
   const [held] = await transaction
     .select({ total: count() })
@@ -441,9 +479,25 @@ export async function refuseIfChosen(
     .where(eq(fieldValues.choiceId, id));
   if (
     Number(held?.total) > 0 ||
-    (await draftsUse(transaction, { choice: id }))
+    (await draftsUse(transaction, { choice: id }, editor))
   ) {
     throw new ConflictError(choiceInUse);
+  }
+}
+
+// Refuses discarding the drafts adding the choices given while people's drafts, published or not,
+// have any of them, as the editor sees the drafts.
+async function refuseIfDraftsChoose(
+  transaction: Reader,
+  editor: string,
+  choiceIds: readonly string[],
+): Promise<void> {
+  for (const id of choiceIds) {
+    if (await draftsUse(transaction, { choice: id }, editor)) {
+      throw new ConflictError(
+        "This choice can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again.",
+      );
+    }
   }
 }
 
@@ -862,7 +916,7 @@ export async function setListRetired(
       id,
       async (transaction, _state, list) => {
         if (retired && list.retired !== true) {
-          await refuseIfUsed(transaction, id, "retired");
+          await refuseIfUsed(transaction, id, "retired", madeBy);
         }
         return { ...list, retired };
       },
@@ -972,11 +1026,13 @@ export async function deleteList(
     const list = changeableList(state, id);
     const live = state.lists.get(id);
     if (live === undefined) {
+      await refuseIfUsed(transaction, id, "discarded", madeBy);
+      await refuseIfDraftsChoose(transaction, madeBy, addedChoices(state, id));
       const made = discardingList(state, id);
       await removeDiscarded(transaction, madeBy, made);
       return recordChanges(transaction, madeBy, made, "discard");
     }
-    await refuseIfUsed(transaction, id, "deleted");
+    await refuseIfUsed(transaction, id, "deleted", madeBy);
     if (choicesHaveDrafts(state, id)) {
       throw new ConflictError(
         "This list's choices have drafts; approve or discard them before deleting the list",
@@ -1154,11 +1210,12 @@ export async function deleteChoice(
     const choice = changeableChoice(state, listId, id);
     const live = state.choices.get(id)?.record;
     if (live === undefined) {
+      await refuseIfDraftsChoose(transaction, madeBy, [id]);
       const made = discardingChoice(state, id);
       await removeDiscarded(transaction, madeBy, made);
       return recordChanges(transaction, madeBy, made, "discard");
     }
-    await refuseIfChosen(transaction, id);
+    await refuseIfChosen(transaction, id, madeBy);
     return saveDraft(
       transaction,
       madeBy,
@@ -1214,6 +1271,17 @@ export async function discardListDraft(
 ): Promise<string | null> {
   return drafting(database, madeBy, async (transaction, state) => {
     draftOf(state, kind, listId, choiceId);
+    if (kind === "list" && !state.lists.has(listId)) {
+      await refuseIfUsed(transaction, listId, "discarded", madeBy);
+      await refuseIfDraftsChoose(
+        transaction,
+        madeBy,
+        addedChoices(state, listId),
+      );
+    }
+    if (kind === "choice" && !state.choices.has(choiceId as string)) {
+      await refuseIfDraftsChoose(transaction, madeBy, [choiceId as string]);
+    }
     let made: Change[];
     if (kind === "list") made = discardingList(state, listId);
     else if (kind === "order") made = discardingOrder(state, listId);

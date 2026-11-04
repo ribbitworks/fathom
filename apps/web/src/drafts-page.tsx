@@ -452,11 +452,11 @@ export function DraftsPage({
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
     // Loaded, or empty for those who see only lists.
-    const { fields, orderDraft } = peopleData as PeopleData;
+    const { fields, orderDraft, people } = peopleData as PeopleData;
     // A draft that depends on a rejected draft cannot be approved until that one is resubmitted.
     const waits = ({ state, selects }: Entry) =>
       state === "waiting" &&
-      waitsForRejected(selects, lists.data, { fields, orderDraft });
+      waitsForRejected(selects, lists.data, { fields, orderDraft, people });
     // A draft only its maker sees, or one someone is changing, is not decided until published.
     const waiting = shown.filter(
       (one) =>
@@ -473,7 +473,11 @@ export function DraftsPage({
         noDrafts(),
       );
       setDecision(
-        decisionFor(asking, selection, lists.data, { fields, orderDraft }),
+        decisionFor(asking, selection, lists.data, {
+          fields,
+          orderDraft,
+          people,
+        }),
       );
       setOpened(true);
     };

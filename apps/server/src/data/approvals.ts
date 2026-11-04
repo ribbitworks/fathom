@@ -53,6 +53,8 @@ import {
   asksForColumns,
   rejectColumnDrafts,
 } from "./column-approvals.ts";
+import { columnsWithAdded } from "./added-columns.ts";
+import { refuseUsedAcross, withUsedAcross } from "./draft-uses.ts";
 import {
   approveListDrafts,
   asksForLists,
@@ -62,18 +64,19 @@ import { inListOrder, readColumns, valueField } from "./values.ts";
 
 const noDraft = "One of these people has no draft; refresh to see the latest";
 
-// Checks the actor may approve or reject drafts of people, and reads the drafts asked for, with the
+// Checks the actor may approve or reject the drafts of people asked for, and reads them, with the
 // people as they are live. A draft the actor is not shown, since it changes only what they may not
 // see, is answered as one that does not exist, so asking reveals nothing; one they see only part of
-// is refused.
-async function readAsked(
+// is refused. Values in columns drafted to be added are judged by those columns' tiers, so this is
+// checked before the drafts the people use are read or approved.
+async function seenAsked(
   transaction: Transaction,
   actor: Actor,
   ids: readonly string[],
   today: string,
 ) {
   requirePermission(actor, "people:view");
-  const columns = await readColumns(transaction, true);
+  const columns = await columnsWithAdded(transaction, undefined, true);
   const found = await readPersonDrafts(transaction, ids);
   if (found.size !== ids.length) throw new NotFoundError(noDraft);
   const live = await readLive(transaction, columns, ids, true);
@@ -99,6 +102,20 @@ async function readAsked(
   }
   await refuseHeldDecision(transaction, "person", ids);
   return { columns, found, live };
+}
+
+type Seen = Awaited<ReturnType<typeof seenAsked>>;
+
+// The drafts of people asked for, checked as above, with the live columns, which by now include
+// those drafted to be added that the people use, approved with them.
+async function readAsked(
+  transaction: Transaction,
+  actor: Actor,
+  ids: readonly string[],
+  today: string,
+) {
+  const { found, live } = await seenAsked(transaction, actor, ids, today);
+  return { columns: await readColumns(transaction, true), found, live };
 }
 
 const detailColumns = (id: string, person: Recorded) => ({
@@ -270,18 +287,22 @@ async function deciding(
   await lockDrafts(transaction);
 }
 
-// Approves the drafts asked for, with the drafts they use, applying them all to the live records,
-// and returns the change set that applied them. Lists and choices come first, then columns, which
-// may draw on them, then people, who may be given both.
+// Approves the drafts asked for, with the drafts they use, of any kind, applying them all to the
+// live records, and returns the change set that applied them. Lists and choices come first, then
+// columns, which may draw on them, then people, who may be given both.
 export async function approveDrafts(
   database: Database,
   actor: Actor,
-  asked: DraftsRequest,
+  requested: DraftsRequest,
   today: string = new Date().toISOString().slice(0, 10),
 ): Promise<string | null> {
   try {
     return await database.transaction(async (transaction) => {
-      await deciding(transaction, actor, asked);
+      await deciding(transaction, actor, requested);
+      if (requested.people.length > 0) {
+        await seenAsked(transaction, actor, requested.people, today);
+      }
+      const asked = await withUsedAcross(transaction, requested);
       const made = asksForLists(asked)
         ? await approveListDrafts(transaction, asked)
         : [];
@@ -326,6 +347,11 @@ export async function rejectDrafts(
 ): Promise<string | null> {
   return database.transaction(async (transaction) => {
     await deciding(transaction, actor, asked);
+    const seen =
+      asked.people.length > 0
+        ? await seenAsked(transaction, actor, asked.people, today)
+        : undefined;
+    await refuseUsedAcross(transaction, asked);
     const made = asksForLists(asked)
       ? await rejectListDrafts(transaction, asked, reason)
       : [];
@@ -334,34 +360,23 @@ export async function rejectDrafts(
         ...(await rejectColumnDrafts(transaction, actor, asked, reason)),
       );
     }
-    if (asked.people.length > 0) {
+    if (seen !== undefined) {
       made.push(
-        ...(await rejectPeopleIn(
-          transaction,
-          actor,
-          asked.people,
-          reason,
-          today,
-        )),
+        ...(await rejectPeopleIn(transaction, asked.people, seen, reason)),
       );
     }
     return recordChanges(transaction, actor.user.id, made, "rejection");
   });
 }
 
+// The rejections of the drafts of people asked for, each recorded at its draft's tier, judged with
+// the columns drafted to be added, since rejecting leaves those columns' drafts in place.
 async function rejectPeopleIn(
   transaction: Transaction,
-  actor: Actor,
   ids: readonly string[],
+  { columns, found, live }: Seen,
   reason: string,
-  today: string,
 ): Promise<Change[]> {
-  const { columns, found, live } = await readAsked(
-    transaction,
-    actor,
-    ids,
-    today,
-  );
   const tierOf = personTier(columns);
   const made: Change[] = [];
   for (const id of ids) {

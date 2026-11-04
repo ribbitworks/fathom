@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-02"
+last_updated: "2026-11-03"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
 
 ## Scope
 
-Verifies how drafts of people, columns, lists, choices, and column and choice orders are shown on the People, Lists and Drafts pages, and what a Workforce Administrator and an Approver can do with them.
+Verifies how drafts of people, columns, lists, choices, and column and choice orders are shown on the People, Lists and Drafts pages, and what a Workforce Administrator and an Approver can do with them, including drafts that use drafts of another kind.
 
 ## Test Environment
 
@@ -41,7 +41,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 ### R1: Restore the Seed Data
 
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. It cannot restore the seed data once its drafts have been approved, as in DRAFT-26 and DRAFT-27; use R2 then.
+Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. It cannot restore the seed data once its drafts have been approved, as in DRAFT-26, DRAFT-27 and DRAFT-30; use R2 then.
 
 1. In the second terminal, run:
 
@@ -105,12 +105,12 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Expected:** The name is struck through, with a yellow dot and **Draft: removed** under it.
   - **Notes:**
 
-- [ ] **Step 4.** Look at the last column header.
-  - **Expected:** It is **Previous site**, with a red dot and **Rejected** under it.
+- [ ] **Step 4.** Look at the last two column headers.
+  - **Expected:** **Previous site**, with a red dot and **Rejected** under it, then **Skills**, with a yellow dot and **Draft: added** under it.
   - **Notes:**
 
 - [ ] **Step 5.** Read the column headers from left to right.
-  - **Expected:** Name, Employee ID, Grade, Level, Site, Position, Role on team, Start, End, Previous site.
+  - **Expected:** Name, Employee ID, Grade, Level, Site, Position, Role on team, Start, End, Previous site, Skills.
   - **Notes:**
 
 ### DRAFT-02: A Workforce Administrator Can Discard Column Drafts but Not Approve Them
@@ -138,7 +138,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** In the Draft menu, select **Drafts applied**.
-  - **Expected:** The columns are Name, Employee ID, Grade, Site, Position, Start, End. No row or column has a green dot and **Live**.
+  - **Expected:** The columns are Name, Employee ID, Grade, Site, Position, Start, End, Skills. No row or column has a green dot and **Live**.
   - **Notes:**
 
 - [ ] **Step 2.** Open the Draft menu.
@@ -218,11 +218,11 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** As DRAFT-05.
 
 - [ ] **Step 1.** Open the Draft menu.
-  - **Expected:** Under **Waiting drafts** it offers **Approve 6 drafts…** and **Reject 6 drafts…**.
+  - **Expected:** Under **Waiting drafts** it offers **Approve 8 drafts…** and **Reject 8 drafts…**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve 6 drafts…**.
-  - **Expected:** A dialog titled **Approve 6 drafts?** opens, with only **Approving cannot be undone.** above its buttons.
+- [ ] **Step 2.** Select **Approve 8 drafts…**.
+  - **Expected:** A dialog titled **Approve 10 drafts?** opens. Under **Also approves the drafts these depend on:** it lists *the list Skills* and *the choice Rust in Skills*.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Cancel**.
@@ -370,7 +370,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 2.** Read the **People's columns** entry.
-  - **Expected:** It reads **From Name, Employee ID, Site, Position, Level, Role on team, Start, End to Name, Employee ID, Grade, Site, Position, Role on team, Start, End, Previous site**.
+  - **Expected:** It reads **From Name, Employee ID, Site, Position, Level, Role on team, Start, End to Name, Employee ID, Grade, Site, Position, Role on team, Start, End, Previous site, Skills**.
   - **Notes:**
 
 - [ ] **Step 3.** Read the **Sites** entry.
@@ -402,7 +402,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
 
 - [ ] **Step 1.** In the Draft menu, select **Discard new order**.
-  - **Expected:** The columns are Name, Employee ID, Site, Position, Grade, Level, Role on team, Start, End, Previous site. **Grade** has a yellow dot and **Draft**, without **Draft: moved**.
+  - **Expected:** The columns are Name, Employee ID, Site, Position, Grade, Level, Role on team, Start, End, Previous site, Skills. **Grade** has a yellow dot and **Draft**, without **Draft: moved**.
   - **Notes:**
 
 - [ ] **Step 2.** Open the **Drafts** page, and type **new order for People** in the search box.
@@ -544,19 +544,19 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** R2. Signed in (P1) as `engineering.director@fathom.test`. **Drafts** page open.
 
 - [ ] **Step 1.** Select **Select all waiting**.
-  - **Expected:** The button at the top right reads **Approve 16 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
+  - **Expected:** The button at the top right reads **Approve 18 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve 16 drafts**.
-  - **Expected:** A dialog titled **Approve 16 drafts?** opens.
+- [ ] **Step 2.** Select **Approve 18 drafts**.
+  - **Expected:** A dialog titled **Approve 18 drafts?** opens.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Approve**.
-  - **Expected:** The dialog closes, and a notice reads **Approved 16 drafts.**
+  - **Expected:** The dialog closes, and a notice reads **Approved 18 drafts.**
   - **Notes:**
 
 - [ ] **Step 4.** Open the **People** page.
-  - **Expected:** The columns are Name, Employee ID, Grade, Site, Position, Start, End, Previous site. Of the column headers, only **Previous site** has a mark: a red dot and **Rejected**.
+  - **Expected:** The columns are Name, Employee ID, Grade, Site, Position, Start, End, Previous site, Skills. Of the column headers, only **Previous site** has a mark: a red dot and **Rejected**.
   - **Notes:**
 
 - [ ] **Step 5.** Open the **Lists** page.
@@ -576,11 +576,73 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 3.** Select **Approve…**.
-  - **Expected:** A dialog titled **Approve 2 drafts?** opens. It says **Includes 1 related draft.**
+  - **Expected:** A dialog titled **Approve 2 drafts?** opens. Under **Also approves the drafts these depend on:** it lists *the choice Harbourside in Sites*.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Approve**.
   - **Expected:** **Harbourside** is the first choice, with no mark. The **Draft: reordered** mark under **Sites** is gone.
+  - **Notes:**
+
+**Afterwards:** R2.
+
+### DRAFT-28: Drafts That Others Use Cannot Be Discarded
+
+**Preconditions:** R2 done after DRAFT-27. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open.
+
+- [ ] **Step 1.** Select **Skills** in the row with the yellow dot.
+  - **Expected:** A panel opens. **Rust** and **TypeScript** each have a yellow dot and **Draft: added**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **⋯** button at the end of the **Rust** row, then **Discard draft**.
+  - **Expected:** A red notice reads **This choice can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again.**. **Rust** still has a yellow dot and **Draft: added**.
+  - **Notes:**
+
+- [ ] **Step 3.** Close the notice and the panel. Open **People**, and select the **Skills** column name to open its column menu.
+  - **Expected:** The menu has **Discard draft**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Discard draft**.
+  - **Expected:** A red notice reads **The Skills column can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again.**. **Skills** is still the last column, with a yellow dot and **Draft: added**.
+  - **Notes:**
+
+- [ ] **Step 5.** Close the notice. Look at the top bar, beside your name.
+  - **Expected:** It shows **Publish 3 changes**: the three changes the seed data holds.
+  - **Notes:**
+
+### DRAFT-29: A New List Is Rejected Only With the Drafts That Use It
+
+**Preconditions:** As DRAFT-28, signed in (P1) as `engineering.director@fathom.test` instead. **Lists** page open.
+
+- [ ] **Step 1.** Select **Skills** in the row with the yellow dot, then the **⋯** button beside **Skills** at the top of the panel, then **Reject…**.
+  - **Expected:** A dialog titled **Reject 5 drafts?** opens. Under **Also rejects the drafts that use these:** it lists *Silje Holm-Schrøder*, *the column Skills*, *the choice Rust in Skills* and *the choice TypeScript in Skills*. It has a **Reason** box.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Cancel**, then close the panel.
+  - **Expected:** The dialog and the panel close. **Skills** still has a yellow dot and **Draft: added**.
+  - **Notes:**
+
+### DRAFT-30: A Person's Draft Is Approved With the New List, Column and Choice It Uses
+
+**Preconditions:** As DRAFT-29. **Drafts** page open.
+
+- [ ] **Step 1.** Type **Silje** in the search box.
+  - **Expected:** One entry is shown: **Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the entry's checkbox, then **Approve**.
+  - **Expected:** A dialog titled **Approve 4 drafts?** opens. Under **Also approves the drafts these depend on:** it lists *the column Skills*, *the list Skills* and *the choice Rust in Skills*.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Approve**.
+  - **Expected:** The dialog closes, and a notice reads **Approved 4 drafts.** The page says **No drafts match the search.**
+  - **Notes:**
+
+- [ ] **Step 4.** Open **Lists**, and select **Skills**.
+  - **Expected:** A panel opens. **Rust** has no mark. **TypeScript** has a yellow dot and **Draft: added**.
+  - **Notes:**
+
+- [ ] **Step 5.** Close the panel. Open **People**, and type **Silje Holm-Schrøder** in the search box.
+  - **Expected:** Her row has no mark, and her **Skills** cell reads **Rust**.
   - **Notes:**
 
 **Afterwards:** R2.

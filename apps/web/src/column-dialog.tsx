@@ -85,11 +85,11 @@ export function ColumnDialog({
     nameProblem(name, personLengths.column, taken, duplicate) ??
     (nameRefused ? duplicate : undefined);
   const shownProblem = tried || name !== "" ? problem : undefined;
-  // Retired lists, and lists only drafted to be added, are not offered, except the one the column
-  // already draws on.
+  // Retired lists, and lists drafted to be removed, are not offered, except the one the column
+  // already draws on. A list only drafted to be added is offered, and is approved with the column.
   const offered = lists.filter(
     (list) =>
-      (!list.retired && list.draft?.action !== "created") ||
+      (!list.retired && list.draft?.action !== "deleted") ||
       list.id === field?.listId,
   );
   const listProblem = tried && listId === null ? "List needed" : undefined;
@@ -123,14 +123,23 @@ export function ColumnDialog({
           label="List"
           data={[
             { value: "", label: "" },
-            // A list whose values not everyone may see says who may.
-            ...offered.map((list) => ({
-              value: list.id,
-              label:
-                list.visibility === "general"
-                  ? list.name
-                  : `${list.name} (${visibilityName(list.visibility)})`,
-            })),
+            // A list whose values not everyone may see says who may, and one only drafted to be
+            // added says it is new.
+            ...offered.map((list) => {
+              const notes = [
+                ...(list.draft?.action === "created" ? ["new"] : []),
+                ...(list.visibility === "general"
+                  ? []
+                  : [visibilityName(list.visibility)]),
+              ];
+              return {
+                value: list.id,
+                label:
+                  notes.length === 0
+                    ? list.name
+                    : `${list.name} (${notes.join(", ")})`,
+              };
+            }),
           ]}
           value={listId ?? ""}
           error={listProblem}

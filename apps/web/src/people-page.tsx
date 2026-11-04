@@ -197,13 +197,13 @@ export function PeoplePage({
     decide: (asking, chosen, naming) => {
       // Approving names the drafts the choice uses, and rejecting those that use it.
       // Drafts are only decided once the people and lists are loaded.
-      const { fields, orderDraft } = query.data as PeopleData;
+      const { fields, orderDraft, people } = query.data as PeopleData;
       setDecision(
         decisionFor(
           asking,
           chosen,
           lists.data as List[],
-          { fields, orderDraft },
+          { fields, orderDraft, people },
           naming,
         ),
       );

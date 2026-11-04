@@ -23,6 +23,7 @@ import {
 } from "@fathom/db";
 import { type Tier, tierSchema } from "@fathom/shared";
 import {
+  type AnyColumn,
   and,
   eq,
   inArray,
@@ -650,10 +651,12 @@ export async function takenEmployeeIds(
 }
 
 // Whether any person's draft, published or not, changes the column, even to clear it, or has the
-// choice, given.
+// choice, given. The editor's unpublished drafts stand in for the published drafts of the same
+// people, so a draft they have changed or discarded but not yet published no longer counts.
 export async function draftsUse(
   reader: Reader,
   use: { column: string } | { choice: string },
+  editor?: string,
 ): Promise<boolean> {
   for (const table of [drafts, unpublishedDrafts]) {
     const found = await reader
@@ -665,6 +668,9 @@ export async function draftsUse(
           "column" in use
             ? sql`${table.fields} ? ${`value:${use.column}`}::text`
             : sql`EXISTS (SELECT 1 FROM jsonb_each(${table.fields}) AS held(field, value) WHERE jsonb_typeof(held.value) = 'array' AND held.value @> ${JSON.stringify([use.choice])}::jsonb)`,
+          table === drafts && editor !== undefined
+            ? notReplacedBy(table.recordId, editor)
+            : undefined,
         ),
       )
       .limit(1);
@@ -672,6 +678,10 @@ export async function draftsUse(
   }
   return false;
 }
+
+// Whether the editor holds no unpublished draft of the person whose published draft is given.
+const notReplacedBy = (recordId: AnyColumn, editor: string) =>
+  sql`NOT EXISTS (SELECT 1 FROM ${unpublishedDrafts} WHERE ${unpublishedDrafts.recordType} = 'person' AND ${unpublishedDrafts.recordId} = ${recordId} AND ${unpublishedDrafts.userId} = ${editor})`;
 
 // The changes recorded for a rejected draft whose reason is cleared, as when it is changed again or
 // discarded, so it waits for approval again.

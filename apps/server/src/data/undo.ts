@@ -30,6 +30,7 @@ import {
   requireTierEdit,
   seesTier,
 } from "../access.ts";
+import { choicesWithAdded, columnsWithAdded } from "./added-columns.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import {
   type Change,
@@ -54,6 +55,7 @@ import {
   writePersonDraft,
 } from "./drafts.ts";
 import {
+  checkList,
   columnRow,
   columnTier,
   nameTaken,
@@ -61,7 +63,7 @@ import {
   removeEmptyColumnOrder,
   writeColumnOrderDraft,
 } from "./column-drafts.ts";
-import { checkValuesFit, lockFields } from "./fields.ts";
+import { checkLiveList, checkValuesFit, lockFields } from "./fields.ts";
 import {
   choiceLabelTaken,
   choicesHaveDrafts,
@@ -82,13 +84,7 @@ import {
   readLive,
   recordSensitiveChanges,
 } from "./people.ts";
-import {
-  type ColumnInfo,
-  fieldOfValue,
-  inListOrder,
-  readColumns,
-  writeValues,
-} from "./values.ts";
+import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
 
 const changedSince =
@@ -232,7 +228,11 @@ async function checkFits(
   if (record.recordType === "field") {
     for (const current of await lockFields(transaction)) {
       if (current.id === record.id) {
-        await checkValuesFit(transaction, current, { ...current, ...values });
+        const wanted = { ...current, ...values };
+        await checkValuesFit(transaction, current, wanted);
+        if (wanted.listId !== current.listId) {
+          await checkLiveList(transaction, wanted.listId);
+        }
       }
     }
   }
@@ -415,10 +415,9 @@ async function undoPersonDrafts(
     ),
   );
   const listOf = new Map(
-    (await inListOrder(transaction, chosen)).map(({ id, listId }) => [
-      id,
-      listId,
-    ]),
+    (await choicesWithAdded(transaction, editor, chosen)).map(
+      ({ id, listId }) => [id, listId],
+    ),
   );
   for (const { id, person } of wanted) {
     if (person !== undefined) {
@@ -514,20 +513,23 @@ async function undoListDrafts(
         throw new ConflictError(changedSince);
       }
     }
-    // What drafting itself refuses: retiring or removing a list a column draws on, removing a list
-    // whose choices have drafts, and removing a choice that people have.
+    // What drafting itself refuses: retiring, removing, or discarding a list a column draws on,
+    // removing a list whose choices have drafts, and removing a choice that people have.
+    if (isList && live === undefined && wanted === undefined) {
+      await refuseIfUsed(transaction, record.id, "discarded", editor);
+    }
     if (isList && live !== undefined) {
       if (wanted === undefined) {
-        await refuseIfUsed(transaction, record.id, "deleted");
+        await refuseIfUsed(transaction, record.id, "deleted", editor);
         if (choicesHaveDrafts(state, record.id)) {
           throw new ConflictError(changedSince);
         }
       } else if (wanted.retired === true && now?.retired !== true) {
-        await refuseIfUsed(transaction, record.id, "retired");
+        await refuseIfUsed(transaction, record.id, "retired", editor);
       }
     }
-    if (!isList && live !== undefined && wanted === undefined) {
-      await refuseIfChosen(transaction, record.id);
+    if (!isList && wanted === undefined) {
+      await refuseIfChosen(transaction, record.id, editor);
     }
     await writeDraft(transaction, editor, recordType, record.id, live, wanted);
   }
@@ -572,14 +574,16 @@ async function undoColumnDrafts(
     }
     // What drafting checks, checked again, since the data may have changed since.
     if (wanted !== undefined) {
-      const list = state.lists.lists.get(String(wanted.listId));
-      const listChanges = wanted.listId !== live?.listId;
-      if (
-        nameTaken(state, String(wanted.name), record.id) ||
-        list === undefined ||
-        (listChanges && list.retired === true)
-      ) {
+      if (nameTaken(state, String(wanted.name), record.id)) {
         throw new ConflictError(changedSince);
+      }
+      if (wanted.listId !== live?.listId) {
+        await checkList(
+          transaction,
+          state,
+          String(wanted.listId),
+          () => new ConflictError(changedSince),
+        );
       }
       await checkValuesFit(
         transaction,
@@ -591,12 +595,15 @@ async function undoColumnDrafts(
       // draft of a person may change it, and the actor must be able to change its values.
       const tier = columnTier(state, live);
       if (
-        (await draftsUse(transaction, { column: record.id })) ||
+        (await draftsUse(transaction, { column: record.id }, editor)) ||
         !actor.permissions.includes("people:edit") ||
         !seesTier(actor, tier)
       ) {
         throw new ConflictError(changedSince);
       }
+    } else if (await draftsUse(transaction, { column: record.id }, editor)) {
+      // Taking out a column drafted to be added, which people's drafts give values in.
+      throw new ConflictError(changedSince);
     }
     await writeDraft(transaction, editor, "field", record.id, live, wanted);
   }
@@ -714,7 +721,7 @@ async function undoIn(
   await lockRecords(transaction, records);
   // A column's values are as sensitive as its list is now, or was when they changed, whichever is
   // more sensitive.
-  const tierNow = personTier(await readColumns(transaction));
+  const tierNow = personTier(await columnsWithAdded(transaction, undefined));
   // So is a saved view's history, as sensitive as the columns it uses are now.
   const viewTiers = new Map<string, Tier>();
   for (const record of records) {
@@ -838,7 +845,7 @@ async function undoIn(
     await undoPersonDrafts(
       transaction,
       actor.user.id,
-      await readColumns(transaction),
+      await columnsWithAdded(transaction, actor.user.id),
       personDrafts,
     );
   }

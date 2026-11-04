@@ -184,6 +184,7 @@ const listsRoute = createRoute({
         listId={listsRoute.useParams().listId}
         canEdit={permissions.includes("configuration:edit")}
         canApprove={permissions.includes("drafts:approve")}
+        seesPeople={permissions.includes("people:view")}
         show={show ?? "both"}
         search={search ?? ""}
         onShow={(next) => {

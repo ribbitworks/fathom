@@ -2,14 +2,16 @@
 
 // Approving and rejecting drafts through the server's API, several kinds at once: of people, People's
 // columns, lists, choices, and the order of lists' choices and of People's columns. Neither can be
-// undone. Approving a draft approves the drafts it uses too, which are counted first: the server says
-// which choices or columns an order uses, and the rest are worked out here, as is what a decision
-// covers, and whether a draft waits for a rejected one it depends on.
+// undone. Approving a draft approves the drafts it uses too, of any kind, which are counted first:
+// the server says which choices or columns an order uses, and the rest, such as the new choices and
+// columns a person is given and the new lists they belong to, are worked out here, as is what a
+// decision covers, and whether a draft waits for a rejected one it depends on.
 
 import {
   type ColumnOrderDraft,
   type Field,
   type List,
+  type Person,
   savedSchema,
 } from "@fathom/shared";
 import { sendJsonFor } from "./api.ts";
@@ -76,48 +78,94 @@ function placedByOrder(list: List): string[] {
   return list.orderDraft?.uses ?? [];
 }
 
-// The People table's columns and the draft of their order, where the selection may hold them.
+// The People table's columns, the draft of their order, and its people, where the selection may
+// hold them.
 export interface Columns {
   fields: readonly Field[];
   orderDraft?: ColumnOrderDraft | undefined;
+  people?: readonly Person[] | undefined;
 }
 
-// The other drafts approving the selection approves too: choices an order places that are only
-// drafted to be added, and lists only drafted to be added that choices are added to, and the
-// columns only drafted to be added that the column order places.
+const addedField = (fields: readonly Field[], id: string) =>
+  fields.find((field) => field.id === id)?.draft?.action === "created";
+
+// A list only drafted to be added.
+const addedList = (lists: readonly List[], id: string) =>
+  lists.find((list) => list.id === id)?.draft?.action === "created";
+
+// The columns, and choices, only drafted to be added that a person's draft gives them.
+function usedByPerson(
+  person: Person,
+  lists: readonly List[],
+  fields: readonly Field[],
+): { columns: string[]; choices: string[] } {
+  const added = new Set(
+    choicesOf(lists)
+      .filter(({ choice }) => choice.draft?.action === "created")
+      .map(({ choice }) => choice.id),
+  );
+  const changed = person.draft?.changed ?? [];
+  const values = Object.entries(person.values).filter(([id]) =>
+    changed.includes(id),
+  );
+  return {
+    columns: values.map(([id]) => id).filter((id) => addedField(fields, id)),
+    choices: values.flatMap(([, chosen]) =>
+      chosen.filter((id) => added.has(id)),
+    ),
+  };
+}
+
+// The other drafts approving the selection approves too: the columns and choices only drafted to be
+// added that people are given, the choices an order places that are only drafted to be added, the
+// columns only drafted to be added that the column order places, and the lists only drafted to be
+// added that any of those choices are added to or columns draw on.
 export function usedDrafts(
   selection: DraftSelection,
   lists: readonly List[],
   columns?: Columns,
 ): DraftSelection {
+  const fields = columns?.fields ?? [];
   const choices = new Set<string>();
+  const fieldIds = new Set<string>();
+  for (const person of columns?.people ?? []) {
+    if (!selection.people.includes(person.id)) continue;
+    const used = usedByPerson(person, lists, fields);
+    for (const id of used.columns) fieldIds.add(id);
+    for (const id of used.choices) choices.add(id);
+  }
   for (const listId of selection.orders) {
     const list = lists.find(({ id }) => id === listId);
     for (const id of list === undefined ? [] : placedByOrder(list)) {
-      if (!selection.choices.includes(id)) choices.add(id);
+      choices.add(id);
     }
+  }
+  if (selection.columnOrder) {
+    for (const id of columns?.orderDraft?.uses ?? []) fieldIds.add(id);
   }
   const listIds = new Set<string>();
   for (const { list, choice } of choicesOf(lists)) {
     if (
       (selection.choices.includes(choice.id) || choices.has(choice.id)) &&
       choice.draft?.action === "created" &&
-      list.draft?.action === "created" &&
-      !selection.lists.includes(list.id)
+      addedList(lists, list.id)
     ) {
       listIds.add(list.id);
     }
   }
-  const placedColumns = selection.columnOrder
-    ? (columns?.orderDraft?.uses ?? []).filter(
-        (id) => !selection.columns.includes(id),
-      )
-    : [];
+  for (const field of fields) {
+    if (
+      (selection.columns.includes(field.id) || fieldIds.has(field.id)) &&
+      addedList(lists, field.listId)
+    ) {
+      listIds.add(field.listId);
+    }
+  }
   return {
     ...noDrafts(),
-    lists: [...listIds],
-    choices: [...choices],
-    columns: placedColumns,
+    lists: [...listIds].filter((id) => !selection.lists.includes(id)),
+    choices: [...choices].filter((id) => !selection.choices.includes(id)),
+    columns: [...fieldIds].filter((id) => !selection.columns.includes(id)),
   };
 }
 
@@ -146,8 +194,8 @@ export function rejectedAmong(
 }
 
 // The drafts in the selection that use a rejected draft, so wait until it is sent for approval
-// again: choices added to a list whose addition was rejected, and orders that place a choice or
-// column whose addition was rejected. Nothing else uses other drafts.
+// again: choices added to, and columns drawing on, a list whose addition was rejected, orders that
+// place a choice or column whose addition was rejected, and people given one.
 export function heldBack(
   selection: DraftSelection,
   lists: readonly List[],
@@ -163,8 +211,10 @@ export function heldBack(
     ) > 0;
   return {
     ...noDrafts(),
+    people: selection.people.filter((id) => held({ people: [id] })),
     choices: selection.choices.filter((id) => held({ choices: [id] })),
     orders: selection.orders.filter((id) => held({ orders: [id] })),
+    columns: selection.columns.filter((id) => held({ columns: [id] })),
     columnOrder: selection.columnOrder && held({ columnOrder: true }),
   };
 }
@@ -182,12 +232,15 @@ export const without = (
   columnOrder: selection.columnOrder && !other.columnOrder,
 });
 
-// The drafts that use any in the selection, which must be rejected with them.
+// The drafts that use any in the selection, which must be rejected with them: the choices added to,
+// the order of, and the columns drawing on, a list only drafted to be added; the orders that place
+// such a choice, or column; and the people given any of them.
 export function usingDrafts(
   selection: DraftSelection,
   lists: readonly List[],
   columns?: Columns,
 ): DraftSelection {
+  const fields = columns?.fields ?? [];
   const choices = new Set<string>();
   const orders = new Set<string>();
   for (const list of lists) {
@@ -205,14 +258,47 @@ export function usingDrafts(
       orders.add(list.id);
     }
   }
+  const fieldIds = new Set(
+    fields
+      .filter(
+        ({ id, listId, draft }) =>
+          draft?.action === "created" &&
+          selection.lists.includes(listId) &&
+          addedList(lists, listId) &&
+          !selection.columns.includes(id),
+      )
+      .map(({ id }) => id),
+  );
+  const rejecting = {
+    choices: new Set([...selection.choices, ...choices]),
+    columns: new Set([...selection.columns, ...fieldIds]),
+  };
+  const people = (columns?.people ?? [])
+    // Only published drafts are decided, so only they must be rejected together.
+    .filter(
+      ({ id, draft }) =>
+        draft !== undefined &&
+        draft.unpublished !== true &&
+        !selection.people.includes(id),
+    )
+    .filter((person) => {
+      const used = usedByPerson(person, lists, fields);
+      return (
+        used.columns.some((id) => rejecting.columns.has(id)) ||
+        used.choices.some((id) => rejecting.choices.has(id))
+      );
+    })
+    .map(({ id }) => id);
   return {
     ...noDrafts(),
+    people,
     choices: [...choices].filter((id) => !selection.choices.includes(id)),
     orders: [...orders].filter((id) => !selection.orders.includes(id)),
+    columns: [...fieldIds],
     columnOrder:
       !selection.columnOrder &&
-      (columns?.orderDraft?.uses ?? []).some((id) =>
-        selection.columns.includes(id),
+      (columns?.orderDraft?.uses ?? []).some(
+        (id) => selection.columns.includes(id) || fieldIds.has(id),
       ),
   };
 }
@@ -235,10 +321,16 @@ export function draftNames(
   selection: DraftSelection,
   lists: readonly List[],
   fields: readonly Field[] = [],
+  people: readonly Person[] = [],
 ): string[] {
-  const names: string[] = fields
-    .filter(({ id }) => selection.columns.includes(id))
-    .map(({ name }) => `the column ${name}`);
+  const names: string[] = people
+    .filter(({ id }) => selection.people.includes(id))
+    .map(({ preferredName }) => preferredName);
+  names.push(
+    ...fields
+      .filter(({ id }) => selection.columns.includes(id))
+      .map(({ name }) => `the column ${name}`),
+  );
   if (selection.columnOrder) names.push("the new order for People's columns");
   for (const list of lists) {
     if (selection.lists.includes(list.id)) names.push(`the list ${list.name}`);
@@ -270,9 +362,9 @@ export interface Decision {
   selection: DraftSelection;
   // The drafts chosen, named, when one menu item decides several together, so it is clear which.
   together?: string[];
-  // How many other drafts are included: those approving the chosen ones depends on, or those that
-  // depend on the ones rejected.
-  included?: number;
+  // The other drafts included, named: those the chosen ones use, when approving, or those that use
+  // the ones rejected.
+  included?: string[];
   // How many drafts chosen are skipped, since they depend on a rejected draft.
   leftOut?: number;
   // When every draft chosen depends on a rejected draft, so none can be approved yet.
@@ -290,17 +382,17 @@ export function decisionFor(
   naming = false,
 ): Decision {
   const fields = columns?.fields ?? [];
+  const names = (decided: DraftSelection) =>
+    draftNames(decided, lists, fields, columns?.people);
   const named = (decided: DraftSelection) =>
-    naming && draftTotal(decided) > 1
-      ? { together: draftNames(decided, lists, fields) }
-      : {};
+    naming && draftTotal(decided) > 1 ? { together: names(decided) } : {};
   if (asking === "reject") {
     const using = usingDrafts(chosen, lists, columns);
     return {
       asking,
       selection: joined(chosen, using),
       ...named(chosen),
-      ...(draftTotal(using) > 0 ? { included: draftTotal(using) } : {}),
+      ...(draftTotal(using) > 0 ? { included: names(using) } : {}),
     };
   }
   const held = heldBack(chosen, lists, columns);
@@ -312,7 +404,7 @@ export function decisionFor(
     asking,
     selection: joined(ready, used),
     ...named(ready),
-    ...(draftTotal(used) > 0 ? { included: draftTotal(used) } : {}),
+    ...(draftTotal(used) > 0 ? { included: names(used) } : {}),
     ...(draftTotal(held) > 0 ? { leftOut: draftTotal(held) } : {}),
   };
 }

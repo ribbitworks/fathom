@@ -419,7 +419,6 @@ function shown(column: Column, value: CellValue): string {
 }
 
 // The choices a cell offers: those offered in its list, and any retired ones it already has.
-// Choices only drafted to be added are not offered until approved.
 function choicesFor(column: Column, value: string[]) {
   return column.choices
     .filter((choice) => offered(choice) || value.includes(choice.id))

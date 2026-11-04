@@ -61,7 +61,7 @@ function DecisionDialog({
   asking: Asking;
   selection: DraftSelection;
   together: string[];
-  included: number;
+  included: string[];
   leftOut: number;
   onDone: () => void;
   onCancel: () => void;
@@ -123,14 +123,19 @@ function DecisionDialog({
             </List>
           </div>
         )}
-        {included > 0 && (
-          <Text fz="sm">
-            Includes{" "}
-            {included === 1
-              ? "1 related draft"
-              : `${count(included)} related drafts`}
-            .
-          </Text>
+        {included.length > 0 && (
+          <div>
+            <Text fz="sm">
+              {asking === "approve"
+                ? "Also approves the drafts these depend on:"
+                : "Also rejects the drafts that use these:"}
+            </Text>
+            <List size="sm" mt={4}>
+              {included.map((name) => (
+                <List.Item key={name}>{name}</List.Item>
+              ))}
+            </List>
+          </div>
         )}
         {leftOut > 0 && (
           <Text fz="sm">
@@ -204,7 +209,7 @@ export function DecisionModal({
           asking={decision.asking}
           selection={decision.selection}
           together={decision.together ?? []}
-          included={decision.included ?? 0}
+          included={decision.included ?? []}
           leftOut={decision.leftOut ?? 0}
           onDone={onDone}
           onCancel={onClose}

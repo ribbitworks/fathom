@@ -1435,6 +1435,38 @@ describe("columns", () => {
     });
   });
 
+  it("offers lists drafted to be added, marked new, and not those drafted to be removed", async () => {
+    const draft = (action: string) => ({
+      state: "waiting",
+      madeBy: "Fictional Editor",
+      madeAt: "2026-10-30T15:00:00.000Z",
+      action,
+      changed: [],
+      live: {},
+    });
+    await openPeople({
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            { ...sites, draft: draft("changed") },
+            { ...list("l4", "Guilds", []), draft: draft("created") },
+            {
+              ...list("l5", "Chapters", []),
+              visibility: "confidential",
+              draft: draft("created"),
+            },
+            { ...list("l6", "Gone", []), draft: draft("deleted") },
+          ],
+        }),
+    });
+    const dialog = await newColumnDialog();
+    expect(
+      within(within(dialog).getByRole("combobox", { name: "List" }))
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["", "Sites", "Guilds (new)", "Chapters (new, Confidential)"]);
+  });
+
   it("says what is wrong with a new column, and shows the server's refusals", async () => {
     let answer = refused(409, "There is already a column with that name");
     const fetch = await openPeople({
@@ -2665,7 +2697,9 @@ describe("drafts of columns", () => {
       within(menu).getByRole("menuitem", { name: "Approve new order…" }),
     );
     const dialog = await screen.findByRole("dialog");
-    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
+    expect(
+      within(dialog).getByText("Also approves the drafts these depend on:"),
+    ).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );

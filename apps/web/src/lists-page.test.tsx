@@ -196,6 +196,29 @@ describe("who sees the Lists page", () => {
     expect(screen.queryByRole("button", { name: "New list" })).toBeNull();
   });
 
+  it("does not read people for an editor who may see them but not approve", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          roles: ["viewer", "workforce-administrator"],
+          permissions: [
+            "configuration:edit",
+            "configuration:view",
+            "people:view",
+            "plan:view",
+          ],
+        }),
+      "GET /api/greeting": greeting,
+      "GET /api/lists": listsAnswer,
+    });
+    renderApp("/lists");
+    expect(await screen.findByRole("table", { name: "Lists" })).toBeDefined();
+    expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
+      false,
+    );
+  });
+
   it("is not linked or shown for anyone else", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
@@ -1890,7 +1913,9 @@ describe("drafts on the Lists page", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Approve 2 drafts?",
     });
-    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
+    expect(
+      within(dialog).getByText("Also approves the drafts these depend on:"),
+    ).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );
@@ -2137,7 +2162,7 @@ describe("drafts on the Lists page", () => {
       name: "Reject 2 drafts?",
     });
     expect(
-      within(rejecting).getByText("Includes 1 related draft."),
+      within(rejecting).getByText("Also rejects the drafts that use these:"),
     ).toBeDefined();
     await userEvent.click(
       within(rejecting).getByRole("button", { name: "Cancel" }),
@@ -2210,7 +2235,7 @@ describe("drafts on the Lists page", () => {
     ).toBeDefined();
   });
 
-  it("counts the related drafts a rejection includes, and the drafts approving all skips", async () => {
+  it("names the related drafts a rejection includes, and counts the drafts approving all skips", async () => {
     const [platform] = added.choices;
     const twoChoices = {
       ...added,
@@ -2254,7 +2279,7 @@ describe("drafts on the Lists page", () => {
     });
   });
 
-  it("counts the related drafts rejecting a list includes", async () => {
+  it("names the related drafts rejecting a list includes", async () => {
     const [platform] = added.choices;
     serverAnswers({
       "GET /api/session": approverOnly,
@@ -2282,8 +2307,89 @@ describe("drafts on the Lists page", () => {
       name: "Reject 3 drafts?",
     });
     expect(
-      within(rejecting).getByText("Includes 2 related drafts."),
+      within(rejecting).getByText("Also rejects the drafts that use these:"),
     ).toBeDefined();
+  });
+
+  it("decides a list only once the people are read, naming those whose drafts use it", async () => {
+    let answerPeople: (people: Response) => void = () => undefined;
+    const draft = {
+      ...waiting,
+      action: "created",
+      changed: [],
+      live: {},
+    };
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          roles: ["viewer", "approver", "leadership"],
+          permissions: [
+            "configuration:view",
+            "drafts:approve",
+            "people:view",
+            "plan:view",
+          ],
+        }),
+      "GET /api/lists": () => Response.json({ lists: [added] }),
+      "GET /api/people": () =>
+        new Promise<Response>((resolve) => {
+          answerPeople = resolve;
+        }),
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    expect(
+      within(await listMenu("Teams")).queryByRole("menuitem", {
+        name: "Reject…",
+      }),
+    ).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    answerPeople(
+      Response.json({
+        people: [
+          {
+            id: "p9",
+            preferredName: "Casey Fictional",
+            employeeId: "E9",
+            startDate: null,
+            endDate: null,
+            values: { f9: ["c8"] },
+            draft: {
+              ...draft,
+              action: "changed",
+              changed: ["f9"],
+              live: { values: {} },
+            },
+          },
+        ],
+        fields: [
+          {
+            id: "f9",
+            name: "Team",
+            listId: "l5",
+            multiple: false,
+            required: false,
+            draft,
+          },
+        ],
+        order: ["preferredName", "employeeId", "f9"],
+        views: [],
+      }),
+    );
+    await waitFor(async () => {
+      await chooseInListMenu("Teams", "Reject…");
+    });
+    const rejecting = await screen.findByRole("dialog", {
+      name: "Reject 4 drafts?",
+    });
+    for (const name of [
+      "Casey Fictional",
+      "the column Team",
+      "the choice Platform in Teams",
+    ]) {
+      expect(within(rejecting).getByText(name)).toBeDefined();
+    }
   });
 
   it("names everyone who changed a list's draft, or Fathom when no one is recorded", async () => {
@@ -2746,7 +2852,9 @@ describe("drafts on the Lists page", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Reject 2 drafts?",
     });
-    expect(within(dialog).getByText("Includes 1 related draft.")).toBeDefined();
+    expect(
+      within(dialog).getByText("Also rejects the drafts that use these:"),
+    ).toBeDefined();
   });
 
   it("leaves out live rows and places when showing the drafts applied", async () => {

@@ -14,7 +14,6 @@ import {
   type FieldDraft,
   type FieldRequest,
   type Tier,
-  tierSchema,
 } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -53,7 +52,9 @@ import { checkValuesFit, fieldChanges, fieldFields } from "./fields.ts";
 import {
   draftedList,
   heldByOf,
+  listExists,
   type ListsState,
+  listTier,
   readState,
   unpublishedMark,
 } from "./lists.ts";
@@ -264,32 +265,39 @@ function refuseHeldIn(held: Held | undefined): void {
   if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
 }
 
-// The tier of a column's values: its list's visibility, live or as drafted, whichever is more
-// sensitive, so a draft never shows values to someone the live list would not.
-export function columnTier(state: ColumnsState, field: Recorded): Tier {
-  const listId = String(field.listId);
-  const live = state.lists.lists.get(listId);
-  const draft = draftedList(state.lists, listId);
-  // A tier the server no longer knows is treated as the most sensitive rather than trusted.
-  return mostSensitive(
-    [live?.visibility, draft?.visibility]
-      .filter((visibility) => visibility !== undefined)
-      .map((visibility) => tierSchema.catch("confidential").parse(visibility)),
-  );
-}
+// The tier of a column's values: its list's, live or as drafted, whichever is more sensitive.
+export const columnTier = (state: ColumnsState, field: Recorded): Tier =>
+  listTier(state.lists, String(field.listId));
 
-// Refuses a list a column may not draw on: one that is not live, or is retired.
-async function checkList(
+// Whether a column's draft draws on a list only drafted to be added, whose draft it then uses.
+export const usesAddedList = (state: ColumnsState, field: Recorded) =>
+  !state.lists.lists.has(String(field.listId));
+
+const badRequest = (message: string) => new BadRequestError(message);
+
+// Refuses a list a column may not draw on: one that is neither live nor drafted to be added, one
+// drafted to be removed, or one that is retired: a live list as it is live, since approving its
+// retirement is refused while a column draws on it. The refusal is made by the caller's own error.
+export async function checkList(
   transaction: Transaction,
   state: ColumnsState,
   listId: string,
+  refusal: (message: string) => Error,
 ) {
-  const list = state.lists.lists.get(listId);
-  if (list === undefined) throw new BadRequestError("There is no such list");
-  if (list.retired === true) {
-    throw new BadRequestError("Choose a list that is not retired");
+  const list = listExists(state.lists, listId)
+    ? draftedList(state.lists, listId)
+    : undefined;
+  if (list === undefined) throw refusal("There is no such list");
+  if ((state.lists.lists.get(listId) ?? list).retired === true) {
+    throw refusal("Choose a list that is not retired");
   }
-  // Locked shared, so the list cannot be approved as retired until this draft is saved.
+  // Someone else holding a list only drafted to be added may be discarding it.
+  const held = state.lists.lists.has(listId)
+    ? undefined
+    : state.lists.held.lists.get(listId);
+  if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
+  // Locked shared, so the list cannot be approved as retired until this draft is saved. A list only
+  // drafted to be added has no row yet; the drafts lock keeps its draft in place instead.
   await transaction
     .select({ id: lists.id })
     .from(lists)
@@ -370,7 +378,7 @@ export async function createField(
 ): Promise<Saved<Field>> {
   return drafting(database, madeBy, async (transaction, state) => {
     if (nameTaken(state, request.name)) throw new ConflictError(duplicateField);
-    await checkList(transaction, state, request.listId);
+    await checkList(transaction, state, request.listId, badRequest);
     const id = randomUUID();
     const field = { tableName: table, ...request };
     // A new column has no values, so it can be required only while there is no one yet.
@@ -419,6 +427,9 @@ export async function updateField(
       state.fields.get(id) ?? { ...field, required: false },
     );
     await checkValuesFit(transaction, current, request);
+    if (request.listId !== current.listId) {
+      await checkList(transaction, state, request.listId, badRequest);
+    }
     const after = { ...field, ...request };
     const changeSetId = await saveFieldDraft(
       transaction,
@@ -473,6 +484,21 @@ function discardingOrder(state: ColumnsState): Change[] {
   ];
 }
 
+// Refuses discarding a column drafted to be added while people's drafts, published or not, give
+// anyone a value in it, as the editor sees the drafts.
+async function refuseIfDraftsFill(
+  transaction: Transaction,
+  editor: string,
+  id: string,
+  field: Recorded,
+): Promise<void> {
+  if (await draftsUse(transaction, { column: id }, editor)) {
+    throw new ConflictError(
+      `The ${String(field.name)} column can't be discarded while other drafts depend on it. Discard those drafts, or change them so they no longer use it, then try again.`,
+    );
+  }
+}
+
 // Drafts removing a column and its values; removing a column only drafted to be added discards its
 // draft. Its values are people's data, so the actor must also be able to change people, and the
 // tier of the column's values, and drafts of people must not change it.
@@ -485,12 +511,13 @@ export async function deleteField(
     const field = changeableField(state, id);
     const live = state.fields.get(id);
     if (live === undefined) {
+      await refuseIfDraftsFill(transaction, actor.user.id, id, field);
       const made = discardingField(state, id);
       await discardDrafts(transaction, actor.user.id, "field", [id]);
       await removeEmptyColumnOrder(transaction, actor.user.id);
       return recordChanges(transaction, actor.user.id, made, "discard");
     }
-    if (await draftsUse(transaction, { column: id })) {
+    if (await draftsUse(transaction, { column: id }, actor.user.id)) {
       throw new ConflictError(
         `Drafts change ${String(field.name)}; approve or discard them before deleting the column`,
       );
@@ -576,7 +603,11 @@ export async function discardColumnDraft(
   target: ColumnDraftTarget,
 ): Promise<string | null> {
   return drafting(database, madeBy, async (transaction, state) => {
-    draftOf(state, target);
+    const draft = draftOf(state, target);
+    // A column not live is only drafted to be added, so its draft holds all its settings.
+    if (target.kind === "column" && !state.fields.has(target.id)) {
+      await refuseIfDraftsFill(transaction, madeBy, target.id, draft.fields);
+    }
     const made =
       target.kind === "order"
         ? discardingOrder(state)

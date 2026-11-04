@@ -48,8 +48,8 @@ export async function lockFields(
     .for("update");
 }
 
-// Refuses a list that does not exist or is retired, since a retired list is no longer offered.
-async function checkList(transaction: Transaction, listId: string) {
+// Refuses a live list that does not exist or is retired, since a retired list is no longer offered.
+export async function checkLiveList(transaction: Transaction, listId: string) {
   const [list] = await transaction
     .select({ retired: lists.retired })
     .from(lists)
@@ -72,7 +72,8 @@ export const peopleHave = (total: number) =>
 
 // Refuses settings that the people already in Fathom, live or in drafts, do not meet: a required
 // column that someone has no value for, or one choice where someone has several. A draft that
-// changes someone without changing the column keeps their live value.
+// changes someone without changing the column keeps their live value. The caller checks the list,
+// which a draft may draw from before it is approved.
 export async function checkValuesFit(
   transaction: Transaction,
   field: FieldRow,
@@ -148,7 +149,6 @@ export async function checkValuesFit(
         `${field.name} has values from its list, so its list cannot change`,
       );
     }
-    await checkList(transaction, request.listId);
   }
 }
 

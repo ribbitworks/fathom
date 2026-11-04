@@ -43,7 +43,7 @@ import { type Actor, mostSensitive, seesTier } from "../access.ts";
 import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
 import { personTier } from "./people.ts";
-import { readColumns } from "./values.ts";
+import { columnsWithAdded } from "./added-columns.ts";
 import { viewTiersNow } from "./views.ts";
 
 // The most recent change sets shown at once; older ones are read by naming the last one read. When
@@ -456,7 +456,7 @@ export async function readChangeHistory(
   );
   const words = searchWords(search);
   // Each column's tier now, read once for every batch.
-  const tierNow = personTier(await readColumns(database));
+  const tierNow = personTier(await columnsWithAdded(database, undefined));
   const found: Batch["entries"] = [];
   let next: string | null = before ?? null;
   let read = 0;

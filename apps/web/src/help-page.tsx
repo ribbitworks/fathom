@@ -90,12 +90,18 @@ const lifecycle: [string, string][] = [
     "Published",
     "It waits for an Approver. If someone changes it, only they see their changes until they publish them.",
   ],
-  ["Approved", "The change goes live. This can't be undone."],
+  [
+    "Approved",
+    "The change goes live. Any new list, column, or choice it depends on is approved with it. This can't be undone.",
+  ],
   [
     "Rejected",
-    "It goes back to the person who made it, who can change it, resubmit it, or discard it. Drafts that depend on it wait.",
+    "It goes back to the person who made it, who can change it, resubmit it, or discard it. Drafts that depend on it wait. Rejecting a new list, column, or choice also rejects the drafts that depend on it.",
   ],
-  ["Discarded", "The draft is deleted, and the record stays as it is."],
+  [
+    "Discarded",
+    "The draft is deleted, and the record stays as it is. A new list, column, or choice can't be discarded while other drafts depend on it; discard or change those drafts first.",
+  ],
 ];
 
 // What the Draft menu above each table with drafts shows.

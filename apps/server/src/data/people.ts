@@ -57,6 +57,11 @@ import {
   tidy,
   writePersonDraft,
 } from "./drafts.ts";
+import {
+  choicesWithAdded,
+  columnsWithAdded,
+  refuseHeldColumns,
+} from "./added-columns.ts";
 import { recordEvents } from "./history.ts";
 import {
   type ColumnInfo,
@@ -183,16 +188,24 @@ export async function recordSensitiveChanges(
 
 type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
 
-// Every choice asked for in the requests, in list order, read at once. The drafts lock keeps them
-// from being deleted until the drafts holding them are saved.
+// Every choice asked for in the requests, live or drafted to be added as the editor sees it, in list
+// order, read at once. The drafts lock keeps them from being deleted, or their drafts discarded,
+// until the drafts holding them are saved.
 async function choicesAskedFor(
   transaction: Transaction,
+  editor: string,
   requests: readonly {
     values?: Readonly<Record<string, readonly string[]>> | undefined;
   }[],
 ): Promise<ChoiceRow[]> {
-  return inListOrder(
+  await refuseHeldColumns(
     transaction,
+    editor,
+    requests.flatMap((request) => Object.keys(request.values ?? {})),
+  );
+  return choicesWithAdded(
+    transaction,
+    editor,
     requests.flatMap((request) => Object.values(request.values ?? {}).flat()),
   );
 }
@@ -363,7 +376,7 @@ async function readPeopleIn(
   today: string,
 ): Promise<PeopleRead> {
   const restricted = seesTier(actor, "restricted");
-  const allColumns = await readColumns(database);
+  const allColumns = await columnsWithAdded(database, actor.user.id);
   const columns = allColumns.filter((column) => seesTier(actor, column.tier));
   const tierOf = personTier(allColumns);
   const shownFields = new Set<string>([
@@ -521,8 +534,8 @@ export async function createPeople(
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
-    const columns = await readColumns(transaction, true);
-    const known = await choicesAskedFor(transaction, requests);
+    const columns = await columnsWithAdded(transaction, actor.user.id, true);
+    const known = await choicesAskedFor(transaction, actor.user.id, requests);
     const made: Change[] = [];
     const added: { id: string; fields: Recorded }[] = [];
     for (const request of requests) {
@@ -589,7 +602,7 @@ export async function updatePerson(
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
-    const columns = await readColumns(transaction, true);
+    const columns = await columnsWithAdded(transaction, actor.user.id, true);
     const { before, draft, person } = await lockDrafted(
       transaction,
       actor,
@@ -603,7 +616,7 @@ export async function updatePerson(
     const current = valuesOf(person);
     const changedValues = checkedValues(
       columns,
-      await choicesAskedFor(transaction, [change]),
+      await choicesAskedFor(transaction, actor.user.id, [change]),
       change.values ?? {},
       current,
     );
@@ -653,7 +666,7 @@ export async function deletePerson(
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
-    const columns = await readColumns(transaction, true);
+    const columns = await columnsWithAdded(transaction, actor.user.id, true);
     const { before, draft, person } = await lockDrafted(
       transaction,
       actor,
@@ -687,7 +700,7 @@ export async function resubmitPersonDraft(
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
-    const columns = await readColumns(transaction, true);
+    const columns = await columnsWithAdded(transaction, actor.user.id, true);
     const { before, draft } = await lockDrafted(
       transaction,
       actor,
@@ -718,7 +731,7 @@ export async function discardPersonDraft(
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
-    const columns = await readColumns(transaction, true);
+    const columns = await columnsWithAdded(transaction, actor.user.id, true);
     const { before, draft, person } = await lockDrafted(
       transaction,
       actor,

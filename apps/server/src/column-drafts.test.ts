@@ -688,6 +688,60 @@ describe("more refusals", () => {
 });
 
 describe("undoing changes to columns saved before columns had drafts", () => {
+  it("puts back the list a column drew on only while that list is live and not retired", async () => {
+    const { list: first } = await liveList(["A"]);
+    const { list: second } = await liveList(["B"]);
+    const field = await liveColumn(first.id);
+    await test.connection
+      .update(fields)
+      .set({ listId: second.id })
+      .where(eq(fields.id, field.id));
+    const changed = await test.connection.transaction((transaction) =>
+      recordChanges(transaction, editor.id, [
+        {
+          recordType: "field",
+          recordId: field.id,
+          action: "changed",
+          field: "listId",
+          tier: "general",
+          oldValue: first.id,
+          newValue: second.id,
+        },
+      ]),
+    );
+    const setRetired = (retired: boolean) =>
+      test.connection
+        .update(lists)
+        .set({ retired })
+        .where(eq(lists.id, first.id));
+    await setRetired(true);
+    expect(
+      (await send("POST", `/api/undo/${String(changed)}`)).statusCode,
+    ).toBe(400);
+    expect((await liveField(field.id))?.listId).toBe(second.id);
+    await setRetired(false);
+    expect(
+      (await send("POST", `/api/undo/${String(changed)}`)).statusCode,
+    ).toBe(200);
+    expect((await liveField(field.id))?.listId).toBe(first.id);
+    const gone = await test.connection.transaction((transaction) =>
+      recordChanges(transaction, editor.id, [
+        {
+          recordType: "field",
+          recordId: field.id,
+          action: "changed",
+          field: "listId",
+          tier: "general",
+          oldValue: randomUUID(),
+          newValue: first.id,
+        },
+      ]),
+    );
+    expect((await send("POST", `/api/undo/${String(gone)}`)).statusCode).toBe(
+      400,
+    );
+  });
+
   it("puts back a column's settings and the order, and takes out a column added, unless values or drafts hold it", async () => {
     const { list, choices } = await liveList(["A"]);
     const field = await liveColumn(list.id);
@@ -980,5 +1034,125 @@ describe("undoing changes to column drafts", () => {
     expect(
       (await readPeople()).fields.find(({ id }) => id === column.id),
     ).not.toHaveProperty("draft");
+  });
+});
+
+describe("columns drawing on lists drafted to be added", () => {
+  async function addedList() {
+    const response = await send("POST", "/api/lists", {
+      name: unique("Fictional List"),
+    });
+    expect(response.statusCode, response.body).toBe(201);
+    return response.json<{ list: List; changeSetId: string }>();
+  }
+
+  const liveListRow = async (id: string) =>
+    (await test.connection.select().from(lists).where(eq(lists.id, id))).at(0);
+
+  it("drafts a column on a list drafted to be added, and approves the list with the column", async () => {
+    const { list } = await addedList();
+    const { field } = await draftColumn(list.id);
+    expect(
+      (await readPeople()).fields.find(({ id }) => id === field.id),
+    ).toMatchObject({ listId: list.id, draft: { action: "created" } });
+    const approved = await decide("approval", { columns: [field.id] });
+    expect(approved.statusCode, approved.body).toBe(200);
+    expect(await liveListRow(list.id)).toMatchObject({ name: list.name });
+    expect(await liveField(field.id)).toMatchObject({ listId: list.id });
+    expect(await test.historyOf(list.id)).toContainEqual(
+      expect.objectContaining({ action: "created", madeBy: approver.id }),
+    );
+  });
+
+  it("approves the list with a column the order of the columns places", async () => {
+    const { list } = await addedList();
+    const { field } = await draftColumn(list.id);
+    await send("PUT", `/api/people/columns/${field.id}/position`, {
+      after: null,
+    });
+    const approved = await decide("approval", { columnOrder: true });
+    expect(approved.statusCode, approved.body).toBe(200);
+    expect(await liveListRow(list.id)).toBeDefined();
+    expect((await liveOrder())[0]).toBe(field.id);
+  });
+
+  it("moves a column's draft onto a list drafted to be added", async () => {
+    const { list: live } = await liveList(["A"]);
+    const { field } = await draftColumn(live.id);
+    const { list } = await addedList();
+    const moved = await send("PUT", `/api/people/columns/${field.id}`, {
+      name: field.name,
+      listId: list.id,
+    });
+    expect(moved.statusCode, moved.body).toBe(200);
+    expect((await decide("approval", { columns: [field.id] })).statusCode).toBe(
+      200,
+    );
+    expect(await liveField(field.id)).toMatchObject({ listId: list.id });
+  });
+
+  it("refuses a list drafted to be removed", async () => {
+    const removed = await liveList(["B"]);
+    await send("DELETE", `/api/lists/${removed.list.id}`);
+    expect(
+      (
+        await send("POST", "/api/people/columns", {
+          name: unique("Fictional Column"),
+          listId: removed.list.id,
+        })
+      ).statusCode,
+    ).toBe(400);
+  });
+
+  it("rejects the list only together with the column, and approves neither while the list is rejected", async () => {
+    const { list } = await addedList();
+    const { field } = await draftColumn(list.id);
+    const alone = await decide("rejection", {
+      lists: [list.id],
+      reason: "Not yet",
+    });
+    expect(alone.statusCode).toBe(409);
+    expect(alone.json<{ error: string }>().error).toContain(
+      "Reject them together",
+    );
+    expect(
+      (
+        await decide("rejection", {
+          lists: [list.id],
+          columns: [field.id],
+          reason: "Not yet",
+        })
+      ).statusCode,
+    ).toBe(200);
+    expect(
+      (await send("DELETE", `/api/people/columns/${field.id}/draft/rejection`))
+        .statusCode,
+    ).toBe(200);
+    const approved = await decide("approval", { columns: [field.id] });
+    expect(approved.statusCode).toBe(409);
+    expect(approved.json<{ error: string }>().error).toContain("rejected");
+    expect(await liveListRow(list.id)).toBeUndefined();
+    expect(await liveField(field.id)).toBeUndefined();
+    await send("DELETE", `/api/people/columns/${field.id}/draft`);
+    await send("DELETE", `/api/lists/${list.id}/draft`);
+  });
+
+  it("keeps a list drafted to be added that a column draws on from being discarded, deleted, or undone", async () => {
+    const { list, changeSetId } = await addedList();
+    const { field } = await draftColumn(list.id);
+    for (const [method, url] of [
+      ["DELETE", `/api/lists/${list.id}/draft`],
+      ["DELETE", `/api/lists/${list.id}`],
+      ["POST", `/api/undo/${changeSetId}`],
+    ] as const) {
+      const refused = await send(method, url);
+      expect(refused.statusCode, url).toBe(409);
+    }
+    expect(
+      (await send("DELETE", `/api/people/columns/${field.id}`)).statusCode,
+    ).toBe(200);
+    expect(
+      (await send("DELETE", `/api/lists/${list.id}/draft`)).statusCode,
+    ).toBe(200);
   });
 });

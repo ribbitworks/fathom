@@ -74,6 +74,7 @@ import {
   setListRetired,
   updateChoice,
 } from "./lists.ts";
+import { peopleQuery } from "./people.ts";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
@@ -326,10 +327,14 @@ export function ListsPage({
   onShow,
   search = "",
   onSearch,
+  seesPeople = false,
 }: {
   listId: string | undefined;
   canEdit: boolean;
   canApprove: boolean;
+  // Whether the user sees people, whose columns and drafts may use drafts of lists and choices, so
+  // deciding those here includes them as the Drafts page does.
+  seesPeople?: boolean;
   // Which version of each list and choice shows: the draft beside the live one, the draft alone, or
   // the live one alone, which is read only.
   show?: Show;
@@ -345,8 +350,12 @@ export function ListsPage({
     ...(show === "both" ? {} : { show }),
     ...(search === "" ? {} : { search }),
   };
-  const canApprove = mayApprove && show !== "live";
   const query = useQuery(listsQuery);
+  const readsPeople = seesPeople && mayApprove;
+  const people = useQuery({ ...peopleQuery, enabled: readsPeople });
+  // Deciding waits for the people, since rejecting must include the drafts of people that use a list.
+  const canApprove =
+    mayApprove && show !== "live" && (!readsPeople || people.isSuccess);
   const narrow = useMediaQuery("(max-width: 48em)");
   const navigate = useNavigate();
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
@@ -607,7 +616,7 @@ export function ListsPage({
     },
     decide: (asking, what) => {
       // Every list, with its rejected drafts, whatever is shown, so a draft that depends on one waits.
-      setDecision(decisionFor(asking, selectionOf(what), all));
+      setDecision(decisionFor(asking, selectionOf(what), all, people.data));
       setDeciding(true);
     },
   };
@@ -673,7 +682,7 @@ export function ListsPage({
     ? waitingIn(shownLists)
     : { selection: noDrafts(), total: 0 };
   const decideAll = (asking: "approve" | "reject") => {
-    setDecision(decisionFor(asking, waiting.selection, all));
+    setDecision(decisionFor(asking, waiting.selection, all, people.data));
     setDeciding(true);
   };
 
@@ -782,7 +791,7 @@ export function ListsPage({
             canEdit={canEdit}
             canApprove={canApprove}
             showLive={show === "both"}
-            waits={(selection) => waitsForRejected(selection, all)}
+            waits={(selection) => waitsForRejected(selection, all, people.data)}
             draftActions={draftActions}
             narrow={narrow}
             actions={choiceActions(open)}
