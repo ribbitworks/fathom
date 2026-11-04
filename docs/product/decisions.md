@@ -82,7 +82,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Built-in details:** Every person has a preferred name and an Employee ID, both required, and start and end dates, both optional; a person with no start date counts as current. The Employee ID is the ID the organization uses for them, free text of up to 40 characters, and no two people can have the same one, ignoring letter case. Site, position, level, role on the team, and other details are columns that draw on lists, as set out under [Configuration](#configuration).
 - **Deleting people:** A person entered by mistake can be deleted while nothing uses them, and Undo brings them back. People who leave are given an end date instead.
 - **Gender:** Recorded because the company works across several countries, and colleagues cannot always tell someone's gender from their name.
-- **System of record:** Fathom holds a manually maintained copy of employee details from the HR system.
+- **System of record:** Fathom holds a manually maintained copy of employee details from the company's HR system.
 - **Use limits:** Fathom's data is used only for planning, not for performance evaluation or discipline.
 - **Former employees:** People who leave are kept rather than deleted. A person is active from their start date until their end date passes; there is no separate flag.
 - **Who is listed:** Users who cannot see Restricted data see only current staff, so the list does not reveal someone's start or end date before it arrives.

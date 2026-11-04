@@ -53,7 +53,7 @@ Personas are named as they are widely known in the software industry. Each organ
 
 ## Out of scope for v1
 
-- Integrations with external systems (Jira, Primavera P6, the HR system)
+- Integrations with external systems (Jira, Primavera P6, HR systems)
 - Sign-in through a corporate directory
 - Live collaborative editing
 - Cost, rates, and budget tracking. Fathom tracks people and time only.
@@ -80,7 +80,7 @@ Personas are named as they are widely known in the software industry. Each organ
 - **Access:** Role-based. A user can have one or more roles, and roles grant access to tiers of data by sensitivity.
 - **Editing:** No live collaboration. Draft changes are approved before they reach the live plan.
 - **Configurability:** A fixed core of built-in tables, extended with custom fields and tables. See the [Decisions Log](decisions.md#configuration).
-- **Employee data:** A manually maintained copy of details held in the HR system.
+- **Employee data:** A manually maintained copy of details held in the company's HR system.
 - **Authentication:** Local accounts managed in Fathom for v1.
 - **Tech stack:** TypeScript end to end with PostgreSQL, in Docker. See [ADR 0001](../adr/0001-tech-stack.md).
 
@@ -90,7 +90,7 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 
 - Sign-in through the corporate directory (Active Directory / Entra ID / LDAP)
 - Reading project data from a Primavera P6 database
-- Integrations with Jira and the HR system
+- Integrations with Jira and HR systems
 - Other integrations as needs emerge
 - Physical resources, such as equipment, planned and allocated alongside people
 

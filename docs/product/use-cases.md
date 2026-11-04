@@ -76,7 +76,7 @@ flowchart TD
 ### Maintain Employee Records
 
 - **Actor:** Engineering Operations Manager
-- **Goal:** Keep Fathom's copy of employee details from the HR system current, including teams, managers, and end dates.
+- **Goal:** Keep Fathom's copy of employee details from the company's HR system current, including teams, managers, and end dates.
 - **Outcome:** People can be planned for. People who leave are kept, with their end date, rather than deleted.
 
 ### Plan a Hire

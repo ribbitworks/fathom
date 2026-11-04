@@ -18,14 +18,14 @@ Fathom is used by about 20–30 people in the software organization at first: Pr
 
 ## What Personal Information Fathom Holds
 
-Fathom holds a small set of work-related details about each employee in the software organization. They are copied by hand from the HR system, which remains the official record.
+Fathom holds a small set of work-related details about each employee in the software organization. They are copied by hand from the company's HR system, which remains the official record.
 
 Each employee's preferred name, Employee ID, and start and end dates are built in. Their site, position, level, and role on the team are columns the role that maintains workforce information adds, each choosing from a list that role keeps, such as a list of sites. Each list is marked with who may see what is chosen from it, so a column can be General, Restricted, or Confidential. A column can instead hold a web link for each employee, such as the address of a page about them, marked the same way. That marking can later be lowered, which shows the details already chosen to more people; such a change is recorded and can be undone. Any further column that holds personal information is brought to HR for approval before it is used.
 
 | Information | Why it is needed | Sensitivity |
 | --- | --- | --- |
 | Preferred name | To identify people in plans | General |
-| Employee ID (the ID the company uses for each employee, such as their the HR system number) | To tell apart people with the same name, and to match records to the HR system | General |
+| Employee ID (the ID the company uses for each employee, such as their number in the HR system) | To tell apart people with the same name, and to match records to the HR system | General |
 | Site | To plan work across locations | General |
 | Position (for example Software Engineer, Test Engineer) | To plan the mix of skills on each team | General |
 | Team and manager | To see who reports to whom | General |
