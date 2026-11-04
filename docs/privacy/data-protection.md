@@ -35,6 +35,7 @@ Each employee's preferred name, Employee ID, and start and end dates are built i
 | Role on the team (for example Team Lead, Design Authority) | To see who leads and who holds design responsibility on each team | General |
 | Start date and end date | To avoid planning work for someone before they join or after they leave | Restricted |
 | Past managers, and the date each change of manager took effect | To count each manager's team for past months | Restricted |
+| Past feature teams, and the dates each person joins and leaves feature teams | To count each feature team's capacity for past months, kept Restricted because a person's first feature team usually starts on their start date | Restricted |
 
 ### The Hiring Plan
 

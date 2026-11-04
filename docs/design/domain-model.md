@@ -11,20 +11,24 @@ The diagram shows the core relationships only. Dashed lines are proposals or rel
 
 ```mermaid
 erDiagram
-    PROJECT }o..o{ FEATURE : needs
+    PROJECT }o--o{ FEATURE : needs
     PROJECT ||--|| FEATURE : "general feature"
     PROJECT |o--o{ MILESTONE : has
     FEATURE |o--o{ MILESTONE : has
     PROJECT }o--o{ CUSTOMER : "driven by"
+    PROPOSAL }o--o{ FEATURE : proposes
+    PROPOSAL |o--o| PROJECT : "becomes"
+    PROPOSAL }o--o{ CUSTOMER : "made for"
+    PERSON |o--o{ PROPOSAL : owns
     FEATURE }o..o{ PRODUCT : "part of"
     PROJECT }o..o{ PRODUCT : "delivers requirements for"
     FEATURE }o--o| CYCLE : targets
     PERSON |o--o{ PROJECT : owns
     PERSON ||--o| TEAM : manages
     FEATURE_TEAM |o--o{ FEATURE : "owns and delivers"
-    FEATURE_TEAM ||..o{ MEMBERSHIP : has
-    PERSON ||..o{ MEMBERSHIP : holds
-    PERSON ||--o{ FEATURE_TEAM : leads
+    FEATURE_TEAM ||--o{ MEMBERSHIP : has
+    PERSON ||--o{ MEMBERSHIP : holds
+    PERSON |o--o{ FEATURE_TEAM : leads
     PERSON ||--o{ REPORTING_LINE : "reports through"
     PERSON ||--o{ REPORTING_LINE : manages
     FEATURE ||--o{ ALLOCATION : receives
@@ -45,11 +49,12 @@ erDiagram
 
 ## Planning Entities
 
-- **Project:** Has a number, a name, and optionally an owner and customers. Has milestones, which give it its dates, and links to the features it needs. Has one general feature, which takes allocations made to the project directly.
+- **Project:** Has a name, and optionally a Project ID, an owner, who is a person, and customers. Has milestones, which give it its dates, and links to the features it needs, which its draft holds whichever side they are edited from. Has one general feature, which takes allocations made to the project directly. May have come from a proposal.
+- **Proposal:** Work offered or requested that may become a project, such as a bid or a customer request. Has a name, a status, and optionally a Proposal ID, a web link, an owner, who is a person, and customers. Links to the features it proposes, and to the one project it became, once won.
 - **Feature:** Has a name, a status, and optionally a description, a target cycle, an estimate, and the feature team that owns and delivers it. Has no owner of its own; ownership comes from its feature team. Can be needed by several projects. Ships in the release that includes its target cycle, and its start and end months follow from its allocations.
-- **Milestone:** A dated point in a project or a feature, which says whether it is a customer delivery date.
+- **Milestone:** A dated point in one project or one feature, with a name, which says whether it is a customer delivery date. Milestones are kept in a table of their own.
 - **Allocation:** Links one person or planned hire to one feature for one month, with a percentage.
-- **Estimate:** A feature's one estimate, kept in one unit of effort and shown in the unit the reader picks.
+- **Estimate:** A feature's one estimate, its total effort, kept as one value and shown in the unit the reader picks.
 - **Customer:** A built-in table with a name.
 - **Product:** A built-in table with a name. Features are part of products through a column users add.
 
@@ -66,8 +71,8 @@ The values of every built-in field are set out in the [Decisions Log](../product
 
 - **Person:** An employee, current or former, with their preferred name, Employee ID, start and end dates, values for the columns added to People, and their work email address if the link to user accounts proposed below is adopted. Whether they are active follows from their start and end dates.
 - **Team:** One manager's direct reports, with an optional name. Its members follow from their reporting lines.
-- **Feature team:** Can be named. Links a set of features to its members and its feature lead. Membership is separate from reporting lines.
-- **Feature team membership:** Links a person to a feature team from a given date. Future-dated memberships represent planned changes.
+- **Feature team:** Has a name, and optionally a feature lead, who is one of its current members. Links a set of features to its members. Membership is separate from reporting lines.
+- **Feature team membership:** Records that a person joins or leaves a feature team from a given date, in force until their next record for that team, so past memberships are kept, as reporting lines are. Future-dated records represent planned changes.
 - **Reporting line:** Links a person to their manager, or records that they have none, from a given date until the person's next line starts. Past lines are kept. Future-dated lines represent planned changes.
 - **Planned hire:** A role to be filled, with the details listed in the Decisions Log. Links to its manager, whose team it joins, and, when filled, to the new person.
 - **Composition target:** The range of direct reports each manager is compared with, held in planning configuration.

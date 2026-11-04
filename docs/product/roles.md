@@ -8,7 +8,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 ## Proposed Roles
 
 - **Viewer:** Sees the plan, including everyone's work assignments. Every account gets this role unless it is left off, as for a person who runs Fathom without seeing people data.
-- **Project Planner:** Edits projects, features, milestones, releases, products, customers, and estimates across the whole plan.
+- **Project Planner:** Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan.
 - **Resource Planner:** Sees people's General details, and edits allocations across the whole plan.
 - **People Manager:** Proposes feature teams, and sees people, with Restricted details for everyone, because people move between managers over time.
 - **Workforce Administrator:** Maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.
@@ -20,7 +20,7 @@ Proposed roles for controlling what each user can see, edit, and approve, built 
 
 | Area | Viewer | Project Planner | Resource Planner | People Manager | Workforce Administrator | Leadership | Approver | Administrator |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Plan: projects, features, milestones, releases and the cycles they include (**proposal**), products and customers (**proposal**), and estimates | View | Edit | View | View | View | View | View | None |
+| Plan: projects, proposals, features, milestones, releases and the cycles they include (**proposal**), products and customers (**proposal**), and estimates | View | Edit | View | View | View | View | View | None |
 | Allocations | View | View | Edit | View | View | View | View | None |
 | People, teams, and reporting lines (General) | None | None | View | View | Edit | View | None | None |
 | Feature teams (General), with seeing them coming with seeing the plan (**proposal**) | View | View | View | Propose | Edit | View | Approve | None |

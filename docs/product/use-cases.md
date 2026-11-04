@@ -1,7 +1,7 @@
 # Fathom — Use Cases
 
 **Status:** Draft
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-03
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md) and the [Decisions Log](decisions.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
@@ -12,6 +12,12 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 - **Actor:** Project Manager
 - **Goal:** Put a new project on the plan, with its owner, the features it needs, and its milestones, such as customer delivery dates.
 - **Outcome:** Once approved, the project appears on the timeline and the roadmap.
+
+### Track a Proposal
+
+- **Actor:** Project Manager
+- **Goal:** Record a bid or customer request with the features it proposes, and make it a project once it is won.
+- **Outcome:** Its features count toward the forecast while it is open. Once won, the project it becomes needs them; once lost or withdrawn, Fathom warns about features nothing else needs.
 
 ### Shape the Roadmap
 

@@ -31,7 +31,7 @@ Personas are named as they are widely known in the software industry. Each organ
 
 ## Goals for v1
 
-- **Projects, features, and milestones:** Plan projects with the features they need and their milestones.
+- **Projects, features, and milestones:** Plan projects with the features they need and their milestones, and the proposals that may become projects.
 - **People and teams:** Keep a list of people with their teams, feature teams, capacity, and the employee details planning needs.
 - **Org structure:** Record who reports to whom, including planned changes, and show it as an org chart.
 - **Hiring plan:** Track the roles that need to be hired and when, and include planned hires in the plan before they are hired.

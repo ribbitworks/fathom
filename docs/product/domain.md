@@ -1,13 +1,14 @@
 # Fathom — Domain Concepts
 
 **Status:** Draft
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-03
 
 The terms Fathom uses, defined so they fit any software organization, whatever its titles and practices. How an organization works with them, such as who leads what or how often it releases, is its own configuration. See also the [Product Brief](brief.md) and the [Decisions Log](decisions.md).
 
 ## Planning Terms
 
-- **Project:** Work delivered to its customers, identified by a number. A project's scope is the features it needs.
+- **Project:** Work delivered to its customers, identified by its name and, optionally, a Project ID. A project's scope is the features it needs.
+- **Proposal:** Work offered or requested that may become a project, such as a bid or a customer request, with the features it proposes.
 - **Customer:** Who a project's work is for, external or internal.
 - **Product:** What a feature is part of.
 - **Feature:** The unit Fathom plans: a body of related work, sized in weeks to months of effort, that one feature team delivers. A feature is like an epic: it groups stories or tasks, which Fathom does not hold. What counts as one feature is set out in the [Decisions Log](decisions.md#planning).

@@ -14,6 +14,10 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 - **Simpler, more flexible roles:** Roles may need rethinking as planning arrives, for example so a Project Manager can edit their own projects' details without editing the whole plan. The owner expects the redesign to be both simpler and more flexible, so the defaults set on 2026-10-31 are not refined further until then.
 
+## Planning
+
+- **Which delivery a feature is needed by:** The release warning checks each needed feature against its project's earliest customer delivery date still to come, so a phased project warns about features only its later deliveries need. Saying which delivery each feature is needed by was deferred by the owner on 2026-11-03 until the warnings prove noisy.
+
 ## Account Administration
 
 - **Two administrators choosing the same email address at once:** Two accounts given the same email address at the same moment, by creating or changing them, can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.

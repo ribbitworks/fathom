@@ -105,7 +105,11 @@ People managers and their current direct reports: each person's reporting line, 
 
 ### Projects and Feature Teams
 
-Projects with their customers, from a built-in Customers table, the features they need, their milestones, and the release warnings in the Decisions Log. Feature teams with their members and feature leads, owning features. People Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md).
+Projects with their customers, from a built-in Customers table, the features they need, edited from either Projects or Features, and their general features. Milestones of projects and features, in a Milestones table of their own, and the release warnings, all as the [Decisions Log](../product/decisions.md#planning) sets out. Feature teams with their names, members and feature leads, owning features, with membership kept from a date as reporting lines are, as the [Decisions Log](../product/decisions.md#workforce) sets out. People Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md).
+
+### Proposals
+
+Proposals, which may become projects, with their statuses, the features they propose, and making a won proposal a project, as the [Decisions Log](../product/decisions.md#planning) sets out. They reuse the patterns Projects and Feature Teams sets, so they come straight after it.
 
 ### Allocations and Capacity
 
