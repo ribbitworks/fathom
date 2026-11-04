@@ -39,6 +39,8 @@ The slices are built in this order, which may change as work progresses. The tab
 | Seed Accounts | Done |
 | Change History | Done |
 | Draft and Approval | Done |
+| Web Link Columns | Done |
+| Teams and Reporting Lines | In progress: schema |
 | Cycles and Releases | In progress: schema |
 
 ### Hello Fathom

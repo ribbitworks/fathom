@@ -517,3 +517,44 @@ export const unpublishedDrafts = fathomSchema.table(
     index("unpublished_drafts_user_index").on(table.userId),
   ],
 );
+
+// Who each person reports to, from a date until their next line starts, so past managers are kept
+// and capacity by manager can be counted for past months. A line with no manager records that the
+// person has none from that date. Anyone named as a manager is kept, since past lines name them.
+export const reportingLines = fathomSchema.table(
+  "reporting_lines",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => people.id, { onDelete: "cascade" }),
+    managerId: uuid("manager_id").references(() => people.id, {
+      onDelete: "restrict",
+    }),
+    fromDate: date("from_date").notNull(),
+  },
+  (table) => [
+    uniqueIndex("reporting_lines_person_from_index").on(
+      table.personId,
+      table.fromDate,
+    ),
+    index("reporting_lines_manager_index").on(table.managerId),
+    check(
+      "reporting_lines_not_self",
+      sql`${table.managerId} IS NULL OR ${table.managerId} <> ${table.personId}`,
+    ),
+  ],
+);
+
+// A team is the people who report directly to one manager, so its name is kept with the manager and
+// stays with them when reports move. Only named teams have a row.
+export const teams = fathomSchema.table(
+  "teams",
+  {
+    managerId: uuid("manager_id")
+      .primaryKey()
+      .references(() => people.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+  },
+  (table) => [uniqueIndex("teams_name_index").on(sql`lower(${table.name})`)],
+);
