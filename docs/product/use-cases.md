@@ -19,6 +19,28 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 - **Goal:** Record a bid or customer request with the features it proposes, and make it a project once it is won.
 - **Outcome:** Its features count toward the forecast while it is open. Once won, the project it becomes needs them; once lost or withdrawn, Fathom warns about features nothing else needs.
 
+A proposal starts Open, and becomes Won when it is made a project, or Lost or Withdrawn, as the [Decisions Log](decisions.md#planning) sets out, each change a draft that needs [approval](decisions.md#planning). Whether a Lost or Withdrawn proposal can be opened again is not decided.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Open
+    Open --> Won: made a project
+    Open --> Lost
+    Open --> Withdrawn
+    note right of Withdrawn: Opening a Lost or Withdrawn proposal again is not decided
+```
+
+Once approved, making it a project links the project to it and makes its features needed by the project; ending it any other way leaves its features as they are, with a warning for those nothing else needs.
+
+```mermaid
+flowchart TD
+    open[Open proposal] -->|made a project| draft[Drafts, waiting for approval]
+    draft -->|approved| won[Won, linked to the project, which needs its features]
+    draft -->|rejected| rejected[Rejected, back with its makers]
+    open -->|lost or withdrawn, once approved| ended[Lost or Withdrawn]
+    ended --> warn[Warning on features nothing else needs]
+```
+
 ### Shape the Roadmap
 
 - **Actor:** Product Manager
