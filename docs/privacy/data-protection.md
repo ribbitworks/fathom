@@ -34,6 +34,7 @@ Each employee's preferred name, Employee ID, and start and end dates are built i
 | Level (for example P1–P5, M1–M5, co-op) | To plan the experience mix on teams and the roles to hire | General |
 | Role on the team (for example Team Lead, Design Authority) | To see who leads and who holds design responsibility on each team | General |
 | Start date and end date | To avoid planning work for someone before they join or after they leave | Restricted |
+| Past managers, and the date each change of manager took effect | To count each manager's team for past months | Restricted |
 
 ### The Hiring Plan
 

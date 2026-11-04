@@ -20,8 +20,7 @@ erDiagram
     PROJECT }o..o{ PRODUCT : "delivers requirements for"
     FEATURE }o--o| CYCLE : targets
     PERSON |o--o{ PROJECT : owns
-    PERSON ||..o{ TEAM : manages
-    TEAM |o..o{ PERSON : includes
+    PERSON ||--o| TEAM : manages
     FEATURE_TEAM |o--o{ FEATURE : "owns and delivers"
     FEATURE_TEAM ||..o{ MEMBERSHIP : has
     PERSON ||..o{ MEMBERSHIP : holds
@@ -31,7 +30,6 @@ erDiagram
     FEATURE ||--o{ ALLOCATION : receives
     PERSON |o..o{ ALLOCATION : "is allocated"
     PLANNED_HIRE |o..o{ ALLOCATION : "is allocated"
-    PLANNED_HIRE }o--|| TEAM : joins
     PLANNED_HIRE }o--|| PERSON : "reports to"
     PLANNED_HIRE |o--o| PERSON : "is filled by"
     USER }o--|{ ROLE : has
@@ -67,11 +65,12 @@ The values of every built-in field are set out in the [Decisions Log](../product
 ## Workforce Entities
 
 - **Person:** An employee, current or former, with their preferred name, Employee ID, start and end dates, values for the columns added to People, and their work email address if the link to user accounts proposed below is adopted. Whether they are active follows from their start and end dates.
-- **Team:** Can be named. Links a manager to their direct reports.
+- **Team:** One manager's direct reports, with an optional name. Its members follow from their reporting lines.
 - **Feature team:** Can be named. Links a set of features to its members and its feature lead. Membership is separate from reporting lines.
 - **Feature team membership:** Links a person to a feature team from a given date. Future-dated memberships represent planned changes.
-- **Reporting line:** Links a person to their manager from a given date. Future-dated lines represent planned changes.
-- **Planned hire:** A role to be filled, with the details listed in the Decisions Log. Links to its team and manager and, when filled, to the new person.
+- **Reporting line:** Links a person to their manager, or records that they have none, from a given date until the person's next line starts. Past lines are kept. Future-dated lines represent planned changes.
+- **Planned hire:** A role to be filled, with the details listed in the Decisions Log. Links to its manager, whose team it joins, and, when filled, to the new person.
+- **Composition target:** The range of direct reports each manager is compared with, held in planning configuration.
 
 **Proposal:** Measure team composition from people's positions and their team or feature team membership, and compare it with configurable composition targets.
 

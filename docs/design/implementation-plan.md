@@ -96,7 +96,7 @@ The Product Manager's roadmap: features with the built-in columns in the Decisio
 
 ### Teams and Reporting Lines
 
-Teams with their managers and current direct reports. They set the pattern for changes dated ahead, which feature team membership and allocations reuse.
+People managers and their current direct reports: each person's reporting line, with the date it takes effect from, shown as Manager and Team columns on People, teams' optional names, and the rules, drafts, and warnings in the [Decisions Log](../product/decisions.md#workforce). The seed data gains managers, reports, named and unnamed teams, a person with no manager, and a manager whose end date has passed while people still report to them. Reporting lines set the pattern for records in force from a date until the next one starts, which feature team membership and allocations reuse. Future dates come with planned reporting changes and the org chart in [The Organization](../product/roadmap.md#stage-the-organization) stage.
 
 ### Projects and Feature Teams
 
@@ -112,7 +112,7 @@ Planned hires and their ramp-up through allocations, shown in the plan as propos
 
 ### Team Composition
 
-Reports per manager, including planned hires, compared with a target. It builds on the People table's [metrics](../product/decisions.md#configuration), which count people by a column's values: reports per manager groups the same counts by manager, with a target beside each, and later ratios, such as test to development, compare two of a column's counts.
+Reports per manager, including planned hires, compared with a range, as the [Decisions Log](../product/decisions.md#workforce) sets out. It builds on the People table's [metrics](../product/decisions.md#configuration), which count people by a column's values: reports per manager groups the same counts by manager, with a target beside each, and later ratios, such as test to development, compare two of a column's counts.
 
 ### Demand Forecasting
 
