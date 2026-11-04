@@ -92,7 +92,12 @@ Release streams, as many as an organization uses, each with a configurable cycle
 
 ### Features and the Roadmap
 
-The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind, priority, and product, which the owner will judge once seen. Decided when this slice starts: whether features have a built-in description before text columns arrive, where a feature's effort falls in time for demand, as the [Decisions Log](../product/decisions.md#planning) asks, and whether increments are linked, as the [Domain Model](domain-model.md#open-questions) asks. A test page of the roadmap board proposed in [ADR 0009](../adr/0009-roadmap-and-timeline-views.md), on seed data, comes with the slice.
+The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind, priority, and product, which the owner will judge once seen. Features have a built-in description, and their increments are not linked, as the [Decisions Log](../product/decisions.md#planning) sets out, which also says where a feature's effort falls in time, for the Demand Forecasting slice. The seed data gains fictional features across the cycles of a release stream, with some in Later, for the test page below.
+
+A test page of the roadmap board proposed in [ADR 0009](../adr/0009-roadmap-and-timeline-views.md) comes with the slice, so the owner can judge the board before The Organization stage. It is labelled as a test and left off the main navigation:
+
+- **Roadmap board:** The real features of one release stream, with a column for each cycle and Later, and cards moved by mouse, by Alt and the arrow keys, and from their menu. Moves are real drafts of the target cycle, marked as on tables.
+- **Timeline sketch:** Read only, with rows for feature teams and bars across cycles drawn from fixed fictional data in the page, since feature teams and allocations do not exist yet, to judge lanes and row height.
 
 ### Teams and Reporting Lines
 
@@ -116,7 +121,7 @@ Reports per manager, including planned hires, compared with a range, as the [Dec
 
 ### Demand Forecasting
 
-One estimate per feature, entered in a unit of effort, with configurable conversions between units, and compared with capacity over the forecasting horizons in the [Product Brief](../product/brief.md), worked out from features' target cycles.
+One estimate per feature, entered in a unit of effort, with configurable conversions between units, and compared with capacity over the forecasting horizons in the [Product Brief](../product/brief.md), worked out from features' allocations and target cycles, as the [Decisions Log](../product/decisions.md#planning) sets out.
 
 ### Project Manager Input
 

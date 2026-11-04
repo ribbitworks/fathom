@@ -46,7 +46,7 @@ erDiagram
 ## Planning Entities
 
 - **Project:** Has a number, a name, and optionally an owner and customers. Has milestones, which give it its dates, and links to the features it needs. Has one general feature, which takes allocations made to the project directly.
-- **Feature:** Has a name, a status, and optionally a target cycle, an estimate, and the feature team that owns and delivers it. Has no owner of its own; ownership comes from its feature team. Can be needed by several projects. Ships in the release that includes its target cycle, and its start and end months follow from its allocations.
+- **Feature:** Has a name, a status, and optionally a description, a target cycle, an estimate, and the feature team that owns and delivers it. Has no owner of its own; ownership comes from its feature team. Can be needed by several projects. Ships in the release that includes its target cycle, and its start and end months follow from its allocations.
 - **Milestone:** A dated point in a project or a feature, which says whether it is a customer delivery date.
 - **Allocation:** Links one person or planned hire to one feature for one month, with a percentage.
 - **Estimate:** A feature's one estimate, kept in one unit of effort and shown in the unit the reader picks.
@@ -113,9 +113,8 @@ Approving drafts, whether one or several at once, applies them all to the live r
 
 ## Not Yet Modeled
 
-Initiatives, themes, and priorities are not built in: an organization that uses them adds them as columns. How projects relate to products, if at all, is not yet decided. Physical resources are a future possibility in the [Product Brief](../product/brief.md#future-possibilities). Dotted-line reporting relationships and licenses are out of scope for v1, as listed in the [Product Brief](../product/brief.md).
+Initiatives, themes, and priorities are not built in: an organization that uses them adds them as columns. Links between the features that are increments of the same work are not built in either; such a column groups them, as the [Decisions Log](../product/decisions.md#planning) sets out. How projects relate to products, if at all, is not yet decided. Physical resources are a future possibility in the [Product Brief](../product/brief.md#future-possibilities). Dotted-line reporting relationships and licenses are out of scope for v1, as listed in the [Product Brief](../product/brief.md).
 
 ## Open Questions
 
-1. **Linked increments:** Work too large for one cycle is split into one feature for each increment. Are the increments linked to each other, or is a column users add, such as Initiative, enough? To be answered in the Features and the Roadmap slice.
 1. **Allocations with variable capacity:** Once a person can have less than a full month, does a 50% allocation mean half a month, or half of that person's capacity?
