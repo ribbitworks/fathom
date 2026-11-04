@@ -1,7 +1,7 @@
 # Fathom — Issues
 
 **Status:** Working list
-**Last updated:** 2026-11-02
+**Last updated:** 2026-11-03
 
 Known problems and deferred work that are not yet scheduled in the [Implementation Plan](design/implementation-plan.md). Each item says why it was deferred. When an item is scheduled or resolved, it moves to the document that owns it, or is removed.
 
@@ -17,6 +17,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Account Administration
 
 - **Two administrators choosing the same email address at once:** Two accounts given the same email address at the same moment, by creating or changing them, can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.
+- **Renaming yourself:** Only Administrators change an account's name, so anyone else who wants theirs shown differently asks one. The owner suggested on 2026-11-03 that every user could change their own name. Their email address would stay with Administrators, since it signs them in and is [proposed to link them to their person record](product/roles.md#access-to-your-own-record-and-your-reports). Not yet decided.
 
 ## Lists
 

@@ -391,7 +391,7 @@ function ChangeActive({
       <Stack>
         <Text size="sm">
           {own
-            ? "You will be signed out everywhere, and will not be able to sign in until another Administrator reactivates your account."
+            ? "You will be signed out everywhere, and will not be able to sign in until an Administrator reactivates your account."
             : account.active
               ? `${account.name} will be signed out everywhere, and will not be able to sign in until the account is reactivated.`
               : `${account.name} will be able to sign in again.`}

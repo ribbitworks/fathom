@@ -261,7 +261,7 @@ describe("changing one's own account", () => {
     });
     expect(
       within(dialog).getByText(
-        "You will be signed out everywhere, and will not be able to sign in until another Administrator reactivates your account.",
+        "You will be signed out everywhere, and will not be able to sign in until an Administrator reactivates your account.",
       ),
     ).toBeDefined();
   });
