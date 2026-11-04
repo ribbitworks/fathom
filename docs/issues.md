@@ -39,7 +39,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Drafts
 
 - **A draft's lineage:** No one place shows how a draft came to be where it is: who made and changed it, who rejected it and why, when it was sent again, and which drafts it uses or that use it. The record's menu, the Drafts page and the change history each hold part of it, which makes a draft waiting on a rejected one hard to follow. A view of a draft's lineage was suggested by the owner while testing drafts by hand on 2026-11-02.
-- **A column's tier and its creator:** The Security Plan says a column can only be given a tier its creator can see, but adding a column has never checked it: a Workforce Administrator sees every tier, so no role reaches the gap today. Found in review on 2026-11-01.
+- **A column removal's status:** Removing a column whose tier the editor cannot see is refused with 409, while adding or changing one, or a list, is refused with 403, so the web app shows the server's reason for the first and its own permission message for the others. Found in review on 2026-11-03.
 - **Unnamed in the access history:** The access history names each person by their live record, so a Restricted change to someone only drafted to be added shows them without a name until their draft is approved.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
 

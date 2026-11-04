@@ -222,10 +222,14 @@ function createListAccess(database: Database): ListAccess {
       requireAnyPermission(actor, ["configuration:view", "people:view"]);
       return lists.readLists(database, actor.user.id);
     },
-    create: async (actor, request) =>
-      lists.createList(database, editor(actor), request),
-    update: async (actor, id, request) =>
-      lists.updateList(database, editor(actor), id, request),
+    create: async (actor, request) => {
+      editor(actor);
+      return lists.createList(database, actor, request);
+    },
+    update: async (actor, id, request) => {
+      editor(actor);
+      return lists.updateList(database, actor, id, request);
+    },
     setRetired: async (actor, id, { retired }) =>
       lists.setListRetired(database, editor(actor), id, retired),
     delete: async (actor, id) => lists.deleteList(database, editor(actor), id),
@@ -293,10 +297,14 @@ function createPeopleAccess(database: Database): PeopleAccess {
       peopleData.discardPersonDraft(database, actor, id),
     resubmitDraft: async (actor, id) =>
       peopleData.resubmitPersonDraft(database, actor, id),
-    createField: async (actor, request) =>
-      columnDrafts.createField(database, editor(actor), request),
-    updateField: async (actor, id, request) =>
-      columnDrafts.updateField(database, editor(actor), id, request),
+    createField: async (actor, request) => {
+      editor(actor);
+      return columnDrafts.createField(database, actor, request);
+    },
+    updateField: async (actor, id, request) => {
+      editor(actor);
+      return columnDrafts.updateField(database, actor, id, request);
+    },
     moveColumn: async (actor, key, after) =>
       columnDrafts.moveColumn(database, editor(actor), key, after),
     deleteField: async (actor, id) => {

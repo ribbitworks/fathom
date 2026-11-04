@@ -7,14 +7,21 @@
 // reading them in place.
 
 import { columnOrders, drafts, fields, fieldValues, lists } from "@fathom/db";
-import type { Choice, Field, List, Permission, Person } from "@fathom/shared";
+import {
+  type Choice,
+  type Field,
+  fieldRequestSchema,
+  type List,
+  type Permission,
+  type Person,
+} from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Actor } from "./access.ts";
 import { recordChanges } from "./data/changes.ts";
 import { createDataAccess } from "./data/index.ts";
-import { ConflictError } from "./errors.ts";
+import { ConflictError, ForbiddenError } from "./errors.ts";
 import { startTestApp, type TestApp } from "./test-app.ts";
 
 let test: TestApp;
@@ -308,6 +315,127 @@ describe("drafting columns", () => {
         field.id,
       ),
     ).rejects.toThrow(/your roles do not let you change/);
+  });
+
+  // An actor who may change configuration and see people, but not Restricted details, as no role
+  // grants today. It is the editor's own user, so it sees the editor's unpublished drafts.
+  const generalOnly = (): Actor => ({
+    user: { id: editor.id, name: "Fictional Editor", email: "" },
+    roles: ["workforce-administrator"],
+    permissions: ["configuration:edit", "configuration:view", "people:view"],
+  });
+  const choice = (listId: string, name = unique("Fictional Column")) =>
+    fieldRequestSchema.parse({ name, listId });
+  const draftCount = async () =>
+    (await test.connection.select({ id: drafts.recordId }).from(drafts)).length;
+
+  it("lets only someone who sees a column's visibility give it or change it", async () => {
+    const people = createDataAccess(test.connection).people;
+    const restricted = (await liveList(["A"], "restricted")).list;
+    const general = (await liveList(["B"])).list;
+    const before = await draftCount();
+    const refusals = [
+      choice(restricted.id),
+      fieldRequestSchema.parse({
+        name: unique("Fictional Column"),
+        type: "link",
+        visibility: "restricted",
+      }),
+    ];
+    for (const request of refusals) {
+      await expect(
+        people.createField(generalOnly(), request),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    }
+    expect(await draftCount()).toBe(before);
+
+    // A list only drafted to be added, and a General list drafted to become Restricted.
+    const draftedOnly = (
+      await send("POST", "/api/lists", {
+        name: unique("Fictional List"),
+        visibility: "restricted",
+      })
+    ).json<{ list: List }>().list;
+    const raised = (await liveList(["C"])).list;
+    await send("PUT", `/api/lists/${raised.id}`, {
+      name: raised.name,
+      visibility: "restricted",
+    });
+    for (const list of [draftedOnly, raised]) {
+      await expect(
+        people.createField(generalOnly(), choice(list.id)),
+      ).rejects.toThrow(/whose details your roles let you see/);
+    }
+    await send("DELETE", `/api/lists/${draftedOnly.id}/draft`);
+    await send("DELETE", `/api/lists/${raised.id}/draft`);
+
+    const { result } = await people.createField(
+      generalOnly(),
+      choice(general.id),
+    );
+    await expect(
+      people.updateField(
+        generalOnly(),
+        result.id,
+        choice(restricted.id, result.name),
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    await send("DELETE", `/api/people/columns/${result.id}/draft`);
+
+    // Drafted to a General list, a Restricted column still holds Restricted values while live.
+    const hidden = await liveColumn(restricted.id);
+    await send("PUT", `/api/people/columns/${hidden.id}`, {
+      name: hidden.name,
+      listId: general.id,
+    });
+    await expect(
+      people.updateField(
+        generalOnly(),
+        hidden.id,
+        choice(general.id, hidden.name),
+      ),
+    ).rejects.toThrow(/your roles do not let you see/);
+    await send("DELETE", `/api/people/columns/${hidden.id}/draft`);
+  });
+
+  it("lets only someone who sees a list's visibility give it or change it", async () => {
+    const lists = createDataAccess(test.connection).lists;
+    const before = await draftCount();
+    await expect(
+      lists.create(generalOnly(), {
+        name: unique("Fictional List"),
+        description: "",
+        visibility: "restricted",
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+    expect(await draftCount()).toBe(before);
+
+    const general = (await liveList(["A"])).list;
+    await expect(
+      lists.update(generalOnly(), general.id, {
+        name: general.name,
+        description: "",
+        visibility: "restricted",
+      }),
+    ).rejects.toThrow(/a visibility your roles let you see/);
+    const restricted = (await liveList(["B"], "restricted")).list;
+    await expect(
+      lists.update(generalOnly(), restricted.id, {
+        name: restricted.name,
+        description: "",
+        visibility: "general",
+      }),
+    ).rejects.toThrow(/your roles do not let you see/);
+    expect(await draftCount()).toBe(before);
+
+    const renamed = unique("Fictional List");
+    const { result } = await lists.update(generalOnly(), general.id, {
+      name: renamed,
+      description: "",
+      visibility: "general",
+    });
+    expect(result.name).toBe(renamed);
+    await send("DELETE", `/api/lists/${general.id}/draft`);
   });
 
   it("needs an Approver who sees the values a removal deletes", async () => {

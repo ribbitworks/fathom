@@ -30,8 +30,13 @@ import type {
 import { type Tier, tierSchema } from "@fathom/shared";
 import { and, asc, count, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { mostSensitive, storedTier } from "../access.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "../errors.ts";
 import {
   type Change,
   changesBetween,
@@ -836,11 +841,21 @@ async function saveDraft(
   ]);
 }
 
+// A list's visibility is the tier of the columns that draw on it, so, as for a column, it can be
+// given only a tier the editor sees, and only someone who sees a list's values may change it.
+function refuseUnseenVisibility(actor: Actor, tier: Tier, message: string) {
+  if (!seesTier(actor, tier)) throw new ForbiddenError(message);
+}
+
+const unseenVisibility = "Give the list a visibility your roles let you see";
+
 export async function createList(
   database: Database,
-  madeBy: string,
+  actor: Actor,
   request: ListRequest,
 ): Promise<Saved<List>> {
+  const madeBy = actor.user.id;
+  refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
   return drafting(database, madeBy, async (transaction, state) => {
     if (listNameTaken(state, request.name)) {
       throw new ConflictError(duplicateList);
@@ -890,11 +905,18 @@ async function changeList(
 
 export async function updateList(
   database: Database,
-  madeBy: string,
+  actor: Actor,
   id: string,
   request: ListRequest,
 ): Promise<Saved<List>> {
+  const madeBy = actor.user.id;
   return changeList(database, madeBy, id, async (_transaction, state, list) => {
+    refuseUnseenVisibility(
+      actor,
+      listTier(state, id),
+      `${String(list.name)} holds people's details your roles do not let you see, so someone who may must change it`,
+    );
+    refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
     if (listNameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateList);
     }

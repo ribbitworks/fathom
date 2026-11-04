@@ -18,7 +18,12 @@ import {
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { type Actor, mostSensitive, seesTier } from "../access.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "../errors.ts";
 import {
   type Change,
   recordChanges,
@@ -396,13 +401,31 @@ async function saveFieldDraft(
   ]);
 }
 
+const unseenTier =
+  "Choose a list, or a visibility, whose details your roles let you see";
+
+// Refuses a column whose tier the actor cannot see: the Security Plan lets a column be given only a
+// tier its creator can see, and, as with removing one, only someone who sees a column's details
+// may change it.
+function refuseUnseenTier(
+  actor: Actor,
+  state: ColumnsState,
+  field: Recorded,
+  message = unseenTier,
+) {
+  if (!seesTier(actor, columnTier(state, field))) {
+    throw new ForbiddenError(message);
+  }
+}
+
 // Drafts adding a column at the end of the People table. It can be required only while there is no
 // one yet.
 export async function createField(
   database: Database,
-  madeBy: string,
+  actor: Actor,
   request: FieldRequest,
 ): Promise<Saved<Field>> {
+  const madeBy = actor.user.id;
   return drafting(database, madeBy, async (transaction, state) => {
     if (nameTaken(state, request.name)) throw new ConflictError(duplicateField);
     if (request.listId !== undefined) {
@@ -410,6 +433,7 @@ export async function createField(
     }
     const id = randomUUID();
     const field = requested(request);
+    refuseUnseenTier(actor, state, field);
     // A new column has no values, so it can be required only while there is no one yet.
     await checkValuesFit(
       transaction,
@@ -440,12 +464,17 @@ function changeableField(state: ColumnsState, id: string): Recorded {
 // Drafts a change to a column's settings, which must fit the people's values, live and in drafts.
 export async function updateField(
   database: Database,
-  madeBy: string,
+  actor: Actor,
   id: string,
   request: FieldRequest,
 ): Promise<Saved<Field>> {
+  const madeBy = actor.user.id;
   return drafting(database, madeBy, async (transaction, state) => {
     const field = changeableField(state, id);
+    const live = state.fields.get(id);
+    const unseen = `${String(field.name)} holds people's details your roles do not let you see, so someone who may must change it`;
+    refuseUnseenTier(actor, state, field, unseen);
+    if (live !== undefined) refuseUnseenTier(actor, state, live, unseen);
     if (columnRow(id, field).type !== request.type) {
       throw new BadRequestError(sameType);
     }
@@ -454,15 +483,13 @@ export async function updateField(
     }
     // The live values are checked against the live column, so a change already drafted is checked
     // again here.
-    const current = columnRow(
-      id,
-      state.fields.get(id) ?? { ...field, required: false },
-    );
+    const current = columnRow(id, live ?? { ...field, required: false });
     await checkValuesFit(transaction, current, request);
     if (request.listId !== undefined && request.listId !== current.listId) {
       await checkList(transaction, state, request.listId, badRequest);
     }
     const after = { ...field, ...requested(request) };
+    refuseUnseenTier(actor, state, after);
     const changeSetId = await saveFieldDraft(
       transaction,
       madeBy,
