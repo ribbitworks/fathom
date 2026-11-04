@@ -48,6 +48,7 @@ Personas are named as they are widely known in the software industry. Each organ
 - **Change history:** See who changed what, and when, for the data each user may see.
 - **Custom fields and tables:** Let users add their own fields to Fathom's built-in tables, and their own tables, set up in plain language rather than database terms.
 - **Exports:** Export the plan and roadmap, limited to what each user's roles allow.
+- **Importing people:** Add and update people from a CSV or TSV file.
 - **Snapshots:** Save point-in-time snapshots of the plan and view them later.
 - **Backups:** Provide automated backup and restore of Fathom's data.
 

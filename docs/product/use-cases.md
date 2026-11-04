@@ -79,6 +79,19 @@ flowchart TD
 - **Goal:** Keep Fathom's copy of employee details from the company's HR system current, including teams, managers, and end dates.
 - **Outcome:** People can be planned for. People who leave are kept, with their end date, rather than deleted.
 
+Details are typed or pasted into People, or [imported](decisions.md#people-and-privacy) from a file:
+
+```mermaid
+flowchart TD
+    export[Save people as a CSV or TSV file] --> headers[Rename headers to People's column names]
+    headers --> choose[Choose the file on People]
+    choose --> check{Any problems?}
+    check -- Yes --> fix[Fix the rows and columns listed] --> choose
+    check -- No --> preview[See how many people are added and changed]
+    preview --> import[Import: unpublished drafts]
+    import --> publish[Publish] --> approve[An Approver approves or rejects]
+```
+
 ### Plan a Hire
 
 - **Actor:** Engineering Operations Manager

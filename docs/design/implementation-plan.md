@@ -101,6 +101,10 @@ People managers and their current direct reports: each person's reporting line, 
 
 Planned hires, apart from People, in the states and with the details, columns shared with People, placeholders, and drafts set out in the [Decisions Log](../product/decisions.md#workforce), with the Workforce Administrator renaming the states. Filling a planned hire links it to an existing person or adds a new one, and new employees can be added before they start. Placeholders show with their manager's team, and count toward its reports once the Team Composition slice compares them with the range. The seed data gains planned hires in every state, one filled by a new employee who has not started, and one filled by an internal transfer. Allocating planned hires waits for the Allocations and Capacity slice.
 
+### Importing People
+
+Importing people from a CSV or TSV file, as the [Decisions Log](../product/decisions.md#people-and-privacy) sets out, after Teams and Reporting Lines and the People table shared with the Hiring Plan. The browser reads the file, with an open-source parser chosen as [ADR 0002](../adr/0002-libraries.md) sets out, which handles quoted cells, Excel's UTF-8 files, and either separator, and sends its rows as the edits pasting them would make, so the server's checks are those of any edit and it parses no files. The server checks the whole import in one request, so problems only it finds are listed with the others. The preview lists problems in a table that can be copied, for fixing the file. Other tables, such as the Hiring Plan, may take imports later in the same way.
+
 ### Cycles and Releases
 
 Release streams, as many as an organization uses, each with a configurable cycle length and cycle names that can change from a chosen date, and releases with typed names that include consecutive cycles, as set out in the [Decisions Log](../product/decisions.md#planning). Each cycle knows its share of the months it spans, as the Decisions Log sets out, which capacity and the timeline use.

@@ -41,6 +41,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Release planning:** Cycles, releases, and release streams.
 - **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
 - **Web link columns:** Added by the owner. A column on People holding one web link for each person, ahead of the other column types.
+- **Importing people:** Added by the owner. Adding and updating people from a CSV or TSV file.
 - **Projects, features, and milestones:** Projects, proposals, and milestones, building on the roadmap's features.
 - **Resource assignment** and **Capacity visibility**
 - **Team composition:** Reports per manager compared with a target, without filters.
