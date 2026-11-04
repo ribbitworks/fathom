@@ -38,7 +38,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Change history:** Who changed what, and when, for the data each user may see.
 - **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which People Managers' proposals are approved by an Approver.
 - **Roadmap view:** First built as the Product Manager's working roadmap, an input to the rest of the plan: features in a table grouped by cycle. The visual roadmap comes in a later stage.
-- **Release planning:** Cycles, releases, and patches.
+- **Release planning:** Cycles, releases, and release streams.
 - **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
 - **Projects, features, and milestones:** Projects and milestones, building on the roadmap's features.
 - **Resource assignment** and **Capacity visibility**

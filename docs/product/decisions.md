@@ -1,6 +1,6 @@
 # Fathom — Decisions Log
 
-**Last updated:** 2026-11-02
+**Last updated:** 2026-11-03
 
 Detailed product decisions made so far. The [Product Brief](brief.md) holds the high-level picture. Domain terms are defined in [Domain Concepts](domain.md). Open questions at this level of detail are raised when the related feature is worked on.
 
@@ -16,6 +16,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
 - **Project scope:** A project's scope is the features it needs. A feature can probably be needed by several projects, as the owner thinks. Fathom warns when a feature a project needs is in no release yet, or in a release dated after one of the project's customer delivery dates.
 - **Feature scope:** Any planned work is a feature, including work such as a set of bug fixes, which a column users add can mark as a different kind. Work too large for one cycle is split into features of its own, one for each increment. A feature developed on a branch or behind a feature flag is still one feature, which ships in the release where it is turned on.
 - **Feature timing:** A feature targets a cycle. Its start and end are months, which follow from its allocations; a feature with no allocations has no months yet, and is placed only by its target cycle. Only milestones have dates to the day.
+- **Feature effort over time:** Open question, to be answered in the Features and the Roadmap slice: where a feature's effort falls in time for demand, whether its whole estimate in its target cycle, an expected duration until it has allocations, or its allocations where they exist.
 - **Feature statuses:** A fixed set, because Fathom acts on them: Possible, Planned, In progress, Done, and Cancelled. A feature starts as Possible. Possible features count toward the forecast but not toward over-allocation, and done or cancelled features raise no warnings. To be reviewed once seen in practice.
 - **Features that may come:** The same records as planned features, with the status Possible. A feature starts on the roadmap and is planned, staffed, and released without being copied.
 - **Milestones:** A milestone has a name and a date, and says whether it is a customer delivery date, which the release warnings check. Other kinds of milestone are a column users add. Feature milestones are not linked to project milestones.
@@ -39,10 +40,11 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
   - **What needs approval:** Everything users change, except saved views, and accounts, roles, and system settings, which an Administrator manages.
   - **Change history:** Records every edit to a draft, and every approval and rejection. It shows what happened but cannot stop a change, so it does not replace approval.
 - **Editing model:** No live collaboration. Saving a change (subject to approval) and refreshing to see others' changes is acceptable.
-- **Cycles:** Each release stream's cycle length, in weeks or months, is configurable, so the patch stream's cycle length sets how often patches come. A change to cycle length applies from a chosen date forward, so cycles already made keep their names and dates. Cycles are made ahead from their pattern, at least two years ahead, so features expected far ahead can target a cycle, and a feature with no target cycle is shown as Later. To be reviewed once seen in practice.
+- **Cycles:** Each release stream's cycle length, in weeks or months, is configurable, so each stream can have its own pace. A change to cycle length applies from a chosen date forward, so cycles already made keep their names and dates. Cycles are made ahead from their pattern, at least two years ahead, so features expected far ahead can target a cycle, and a feature with no target cycle is shown as Later. To be reviewed once seen in practice.
 - **Cycle names:** Cycles are named by a configurable pattern, for example the last two digits of the year the cycle ends in and its number within that year.
-- **Releases:** A release includes one or more cycles, and its date is the end of its last cycle. Its contents are the features that target them, rather than being chosen separately. A cycle that is in no release is simply not released yet; Fathom has no separate candidate state.
-- **Patches:** Patches and major releases are separate release streams, each with its own cycle length. Features of any kind can ship in a patch.
+- **Releases:** A release includes one or more cycles, and its date is the end of its last cycle. Its contents are the features that target them, rather than being chosen separately. A cycle that is in no release is simply not released yet; Fathom has no separate candidate state. A cycle is in at most one release, and a release's cycles are consecutive in its stream. Releases are named by those who make them, uniquely within their stream, decided by the owner on 2026-11-03.
+- **Release streams:** An organization adds the release streams it uses, each with its own cycles, and renames, orders, and retires them. Fathom starts with none. What a release is for, such as a patch, is up to the organization, decided by the owner on 2026-11-03.
+- **Months across cycles:** A month that falls in more than one cycle counts toward each in proportion to its days in it. This applies to counting allocations, capacity, and demand only: Fathom never schedules work, and never moves one date because another moved, decided by the owner on 2026-11-03.
 - **Monthly resource grid:** Allocations are shown as a grid, with people and planned hires as rows and months as columns. Each cell shows what that person works on that month, and the ends of cycles and releases are marked as vertical lines.
 
 ## Workforce

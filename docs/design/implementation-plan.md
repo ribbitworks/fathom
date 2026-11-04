@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-01
+**Last updated:** 2026-11-03
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -88,11 +88,11 @@ It is built in two steps. The first gives people drafts: shown in place on the P
 
 ### Cycles and Releases
 
-Release streams for major releases and patches, each with a configurable cycle length and cycle names, and releases that include cycles, as set out in the [Decisions Log](../product/decisions.md#planning). Releases set the pattern for records that link to other records, which features, teams, and feature teams reuse.
+Release streams, as many as an organization uses, each with a configurable cycle length and cycle names that can change from a chosen date, and releases with typed names that include consecutive cycles, as set out in the [Decisions Log](../product/decisions.md#planning). Each cycle knows its share of the months it spans, as the Decisions Log sets out, which capacity and the timeline use. Releases set the pattern for records that link to other records, which features, teams, and feature teams reuse.
 
 ### Features and the Roadmap
 
-The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind, priority, and product, which the owner will judge once seen. Whether features have a built-in description before text columns arrive is decided when this slice starts.
+The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind, priority, and product, which the owner will judge once seen. Decided when this slice starts: whether features have a built-in description before text columns arrive, where a feature's effort falls in time for demand, as the [Decisions Log](../product/decisions.md#planning) asks, and whether increments are linked, as the [Domain Model](domain-model.md#open-questions) asks. A test page of the roadmap board proposed in [ADR 0009](../adr/0009-roadmap-and-timeline-views.md), on seed data, comes with the slice.
 
 ### Teams and Reporting Lines
 
@@ -104,7 +104,7 @@ Projects with their customers, from a built-in Customers table, the features the
 
 ### Allocations and Capacity
 
-Monthly allocations, capacity by person, by manager, and by feature team, and the warnings and rules in the [Decisions Log](../product/decisions.md), shown in the monthly resource grid, with the cycle and release lines from the Cycles and Releases slice.
+Monthly allocations, capacity by person, by manager, and by feature team, and the warnings and rules in the [Decisions Log](../product/decisions.md), shown in the monthly resource grid, with the cycle and release lines from the Cycles and Releases slice. Decided when this slice starts: whose cycle and release lines the grid shows when there are several release streams.
 
 ### Hiring Plan
 

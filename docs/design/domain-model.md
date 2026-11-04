@@ -1,13 +1,13 @@
 # Fathom — Domain Model
 
 **Status:** Draft
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-03
 
 A first sketch of Fathom's core entities and how they relate. It describes structure only: terms are defined in [Domain Concepts](../product/domain.md), and rules and allowed values are in the [Decisions Log](../product/decisions.md). It describes concepts, not database tables. Items marked **proposal** are suggested modeling choices that have not been agreed.
 
 ## Overview
 
-The diagram shows the core relationships only. Dashed lines are proposals or relationships whose cardinality is not yet confirmed. Access records and snapshots are described below but not drawn. Patches appear as release streams.
+The diagram shows the core relationships only. Dashed lines are proposals or relationships whose cardinality is not yet confirmed. Access records and snapshots are described below but not drawn. Each release stream has its own cycles.
 
 ```mermaid
 erDiagram
@@ -38,6 +38,8 @@ erDiagram
     USER |o..o| PERSON : "may be"
     CHANGE_SET ||--|{ CHANGE : groups
     USER |o--o{ CHANGE_SET : makes
+    RELEASE_STREAM ||..|{ CYCLE_PATTERN : "changes over time"
+    CYCLE_PATTERN ||..o{ CYCLE : makes
     RELEASE_STREAM ||--o{ CYCLE : defines
     RELEASE_STREAM ||--o{ RELEASE : contains
     RELEASE |o--|{ CYCLE : includes
@@ -57,9 +59,10 @@ The values of every built-in field are set out in the [Decisions Log](../product
 
 ## Release Entities
 
-- **Cycle:** A planning period, with a name, a start date, and an end date, made ahead from its release stream's pattern.
-- **Release:** A named delivery in one release stream, which includes one or more of its cycles. Its date is the end of its last cycle, and its contents are the features that target those cycles.
-- **Release stream:** Defines a cycle length and naming pattern, from a given date, and groups releases. Patches and major releases are separate streams.
+- **Release stream:** Has a name, its place in the order of streams, and whether it is retired. Groups its cycles and releases.
+- **Cycle pattern:** **Proposal:** a release stream's cycle length, in weeks or months, and its naming pattern, from a given date until the stream's next pattern starts. A stream has one or more, so a change of length leaves the cycles made before it as they are.
+- **Cycle:** A planning period in one release stream, with a name, a start date, and an end date, made ahead from the pattern in force. It is in at most one release.
+- **Release:** A named delivery in one release stream, which includes one or more of its cycles, consecutive in the stream. Its date is the end of its last cycle, and its contents are the features that target those cycles.
 
 ## Workforce Entities
 
@@ -115,4 +118,5 @@ Initiatives, themes, and priorities are not built in: an organization that uses 
 
 ## Open Questions
 
+1. **Linked increments:** Work too large for one cycle is split into one feature for each increment. Are the increments linked to each other, or is a column users add, such as Initiative, enough? To be answered in the Features and the Roadmap slice.
 1. **Allocations with variable capacity:** Once a person can have less than a full month, does a 50% allocation mean half a month, or half of that person's capacity?
