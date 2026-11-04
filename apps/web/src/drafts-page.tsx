@@ -250,9 +250,10 @@ function listEntries(lists: readonly List[]): Entry[] {
 
 // Every draft of a People column, or of the column order, as entries.
 function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
-  // A column's list is always among the lists, and every key in an order names a column shown.
+  // A choice column's list is always among the lists, and every key in an order names a column
+  // shown. A web link column has no list.
   const listName = (id: unknown) =>
-    (lists.find((list) => list.id === id) as List).name;
+    id === null ? null : (lists.find((list) => list.id === id) as List).name;
   const fieldOf = (key: string) =>
     data.fields.find(({ id }) => id === key) as Field;
   const columnName = (key: string) =>

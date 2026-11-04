@@ -306,7 +306,7 @@ describe("the Drafts page", () => {
     });
   });
 
-  it("puts drafts of columns and of the column order in words, and approves the order with the columns it places", async () => {
+  it("puts drafts of columns, web link columns included, and of the column order in words, and approves the order with the columns it places", async () => {
     const levels = {
       ...sites,
       id: "l2",
@@ -346,6 +346,15 @@ describe("the Drafts page", () => {
               }),
             },
             { ...site, id: "f4", name: "Team" },
+            {
+              ...site,
+              id: "f5",
+              name: "Wiki",
+              type: "link",
+              listId: null,
+              visibility: "general",
+              draft: draft({ action: "created", changed: ["name"], live: {} }),
+            },
           ],
           order: ["preferredName", "f2", "employeeId", "f1", "f3", "f4"],
           orderDraft: draft({
@@ -362,6 +371,7 @@ describe("the Drafts page", () => {
       screen.getByText(wholeText(/List from Sites to Levels/)),
     ).toBeDefined();
     expect(screen.getByText("the column Previous site")).toBeDefined();
+    expect(screen.getByText("the column Wiki")).toBeDefined();
     expect(
       screen.getByText(
         wholeText(

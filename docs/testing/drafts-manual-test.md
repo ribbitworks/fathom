@@ -646,3 +646,37 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 **Afterwards:** R2.
+
+### DRAFT-31: A Web Link Column's Draft Is Shown and Approved on the Drafts Page
+
+**Preconditions:** R2 done after DRAFT-30. Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+
+- [ ] **Step 1.** Select **New column**.
+  - **Expected:** A dialog titled **New column** opens.
+  - **Notes:**
+
+- [ ] **Step 2.** Type **Wiki** in **Name**, and choose **Web link** in **Type**.
+  - **Expected:** The **List** box and **Several choices** are gone from the dialog.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Add column**.
+  - **Expected:** The dialog closes. **Wiki** is the last column, with a yellow dot and **Draft: added** under its name.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Publish 4 changes** in the top bar: the three changes the seed data holds, and **Wiki**.
+  - **Expected:** A notice reads **Published 4 changes.**
+  - **Notes:**
+
+- [ ] **Step 5.** Sign in (P1) as `engineering.director@fathom.test`, open **Drafts**, and type **Wiki** in the search box.
+  - **Expected:** The page loads, with one entry, beginning **Engineering Operations Manager drafted adding the column Wiki**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the entry's checkbox, then **Approve**, then **Approve** in the dialog titled **Approve 1 draft?**.
+  - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.** The page says **No drafts match the search.**
+  - **Notes:**
+
+- [ ] **Step 7.** Open **People**.
+  - **Expected:** **Wiki** is the last column, with no mark under its name.
+  - **Notes:**
+
+**Afterwards:** R2.

@@ -43,6 +43,10 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Unnamed in the access history:** The access history names each person by their live record, so a Restricted change to someone only drafted to be added shows them without a name until their draft is approved.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
 
+## Error Pages
+
+- **Every page error blamed on the server:** The router shows any error while drawing a page as "Fathom could not reach its server", with a way to try again, so a page failing on data it did not expect reads as the server being down and sends the reader looking in the wrong place. Found while testing the Drafts page by hand on 2026-11-03; a plainer page for errors other than failed requests is deferred as outside the fix made then.
+
 ## Dependencies
 
 - **Advisories in minimatch and glob:** Two medium advisories, published by 2026-10-30, affect minimatch before 11.0.1 (denial of service from crafted patterns) and glob 9 to 14.0.1 (a cancelled search can keep reading files). They reach the server through @fastify/static, and development tools such as ESLint, markdownlint, and Testcontainers. In Fathom, the patterns come from code, never from users. The fixed versions are new major versions that the packages depending on them do not accept yet, so they wait for those packages' updates. The Security Plan's 90 days for medium findings runs to 2027-01-28.
