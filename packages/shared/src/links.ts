@@ -55,10 +55,10 @@ const isHostName = (host: string) =>
         hostPart.test(part) && !part.startsWith("-") && !part.endsWith("-"),
     );
 const dotted = /\./u;
-const authorityOf = /^https?:\/\/([^/?#]*)/u;
-// The host of an address typed without its scheme, as typed, before the URL parser reads it.
-const typedHost = /^[^/?#\\]*/u;
 const port = /:\d*$/u;
+
+// The text up to the first character the pattern finds, or all of it when there is none.
+const upTo = (text: string, end: RegExp) => text.slice(0, text.search(end));
 
 // Names the scheme, such as javascript:, rather than starting with the host; a colon before digits
 // is a port.
@@ -77,13 +77,14 @@ export function webAddress(address: string): string | null {
     typedScheme ? value : `https://${value}`,
   );
   if (!parsed.success) return null;
-  const authority = authorityOf.exec(parsed.data)?.[1] ?? "";
+  const authority = upTo(parsed.data.replace(/^https?:\/\//u, ""), /[/?#]|$/u);
   // Sign-in details before the host, as in https://example.com@elsewhere.test, can make a link
   // seem to lead somewhere it does not.
   if (authority.includes("@")) return null;
   const host = authority.replace(port, "");
   if (!isHostName(host) && !ipv6Host.test(host)) return null;
-  if (!typedScheme && !dotted.test(typedHost.exec(value)?.[0] ?? "")) {
+  // The host of an address typed without its scheme, as typed, before the URL parser reads it.
+  if (!typedScheme && !dotted.test(upTo(value, /[/?#\\]|$/u))) {
     return null;
   }
   return parsed.data;
