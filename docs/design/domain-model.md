@@ -34,7 +34,7 @@ erDiagram
     FEATURE ||--o{ ALLOCATION : receives
     PERSON |o..o{ ALLOCATION : "is allocated"
     PLANNED_HIRE |o..o{ ALLOCATION : "is allocated"
-    PLANNED_HIRE }o--|| PERSON : "reports to"
+    PLANNED_HIRE }o--o| PERSON : "reports to"
     PLANNED_HIRE |o--o| PERSON : "is filled by"
     USER }o--|{ ROLE : has
     USER |o..o| PERSON : "may be"
@@ -74,14 +74,15 @@ The values of every built-in field are set out in the [Decisions Log](../product
 - **Feature team:** Has a name, and optionally a feature lead, who is one of its current members. Links a set of features to its members. Membership is separate from reporting lines.
 - **Feature team membership:** Records that a person joins or leaves a feature team from a given date, in force until their next record for that team, so past memberships are kept, as reporting lines are. Future-dated records represent planned changes.
 - **Reporting line:** Links a person to their manager, or records that they have none, from a given date until the person's next line starts. Past lines are kept. Future-dated lines represent planned changes.
-- **Planned hire:** A role to be filled, with the details listed in the Decisions Log. Links to its manager, whose team it joins, and, when filled, to the new person.
+- **Planned hire:** A role to be filled, apart from People, with a title, a target date, a state, values for the columns it shares with People, and optionally its manager, whose team it joins. When filled, it links to the person who fills it.
+- **Hiring state:** One of Fathom's fixed states for planned hires, with the name the organization gives it.
 - **Composition target:** The range of direct reports each manager is compared with, held in planning configuration.
 
 **Proposal:** Measure team composition from people's positions and their team or feature team membership, and compare it with configurable composition targets.
 
 **Proposal:** When variable capacity is added after v1, as the Decisions Log allows, give each person a monthly capacity, defaulting to a full month, so existing data needs no change.
 
-**Proposal:** Model allocations so they point to either a person or a planned hire, and transfer them to the new person when the hire is filled. The alternative is to treat a planned hire as a person record in a "planned" state, which is simpler for allocations but mixes real and hypothetical people.
+**Proposal:** Model allocations so they point to either a person or a planned hire, and transfer them to the new person when the hire is filled. How they pass to the new person is decided in the Allocations and Capacity slice of the [Implementation Plan](implementation-plan.md#allocations-and-capacity).
 
 ## Access Entities
 
@@ -98,7 +99,7 @@ Fields are assigned to tiers as set in the Decisions Log, and tier checks happen
 
 Built-in tables and custom fields and tables are set out in the [Decisions Log](../product/decisions.md#configuration), and how they are stored is proposed in [ADR 0005](../adr/0005-flexible-data-model.md).
 
-- **Field definition:** A custom field on a built-in or custom table, with a name, field type, sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. A "Choice from a list" field, the first built, names its list, takes its tier from the list's visibility, and says whether it takes one choice or several.
+- **Field definition:** A custom field on a built-in or custom table, with a name, field type, sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. A "Choice from a list" field, the first built, names its list, takes its tier from the list's visibility, and says whether it takes one choice or several. A field on People also says whether planned hires have it too.
 - **Column order:** The order of a table's columns, built-in and custom alike, the same for every user.
 - **Saved view:** A table's search, filters, sort, what its Draft menu shows, and the columns its metrics break down by, saved under a name unique within the table, with the user who saved it. Its sensitivity is that of the most sensitive column it filters, sorts, or breaks down by; a People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.

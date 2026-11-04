@@ -22,6 +22,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 ## People Terms
 
 - **Resource:** Anything that can be allocated to work, currently people and planned hires.
+- **Planned hire:** A role to be filled, planned before anyone is hired for it, which is filled by a new or existing employee.
 - **Team:** The people who report to a manager.
 - **Feature team:** The people working on a set of related features. Membership is separate from reporting lines.
 - **Feature lead:** The person who leads a feature team.

@@ -56,7 +56,7 @@ Seeing people is kept to the roles that work with them, so Product Managers, Pro
 
 ## Planned Hires in the Plan
 
-**Proposal:** In the plan, a planned hire appears as a placeholder showing only its position, team, and the first month it can be allocated, which are General-tier data. Its other hiring details stay Confidential. This lets Viewers and Resource Planners see and allocate planned hires without seeing the hiring plan.
+**Decided:** A planned hire appears as a placeholder, while the [Decisions Log](decisions.md#workforce) says it shows one. Everyone who sees people sees it with its manager's team, showing only its title, manager, the first month it can be allocated, and its values for the columns it shares with People, such as position and level, each at its column's visibility. Viewers see it in the plan by its title and first month, as they see people by name, without the People table's details. Its state, exact target date, and other hiring details stay Confidential, seen by the Workforce Administrator and Leadership. This lets Viewers and Resource Planners see and allocate planned hires without seeing the hiring plan, decided by the owner on 2026-11-03.
 
 ## Safeguards for Administrators
 

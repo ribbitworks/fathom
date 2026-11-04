@@ -39,9 +39,9 @@ Each employee's preferred name, Employee ID, and start and end dates are built i
 
 ### The Hiring Plan
 
-Fathom also holds a hiring plan of roles to be filled, treated as Confidential because it can reveal plans before they are announced. Each planned role records details such as its position, level, team, manager, and target date, so it names the manager the new hire will report to. Once filled, it is linked to the person hired. A role planned to replace someone could reveal that they are leaving before it is announced.
+Fathom also holds a hiring plan of roles to be filled, treated as Confidential because it can reveal plans before they are announced. Each planned role records its title, manager, target date, and state, such as whether its headcount is approved, and details such as its position and level, so it names the manager the new hire will report to. Once filled, it is linked to the person hired, who may be an existing employee moving to the role. A role planned to replace someone could reveal that they are leaving before it is announced.
 
-It is proposed that all Fathom users see each planned role only as a placeholder in the plan, showing its position, team, the first month it can be assigned work, and its work assignments, while its other details stay Confidential.
+Users who may see employee details see each planned role, until it is filled and its new employee has started, only as a placeholder: its title, manager, the month it is expected to start, and details it shares with employees, such as position and level. Every Fathom user sees it in the plan by its title and that month, with its work assignments. Its state, exact target date, and other details stay Confidential, so the placeholder does not say whether its headcount is approved or whether it replaces someone. A new employee added before their start date is seen only by those who may see start dates; everyone else keeps seeing the filled role's placeholder until they start.
 
 ### How the Information Is Used
 

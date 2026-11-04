@@ -66,7 +66,7 @@ The visual design in the roadmap's [After Hello Fathom](../product/roadmap.md#af
 
 People with the employee details the roadmap's [first stage](../product/roadmap.md#stage-who-is-working-on-what) allows.
 
-It is built in two steps: user-defined lists of choices, as set out in the [Decisions Log](../product/decisions.md#configuration), and people, with fictional seed data and commands to load and remove it, whose details such as site or position are columns drawing on lists. Teams with their managers and direct reports come in the Teams and Reporting Lines slice. The lists step adds the change history the Decisions Log requires, which every later slice records its changes in. The people step adds columns on People that draw on lists, held in the values table [ADR 0005](../adr/0005-flexible-data-model.md) proposes, and undo in one step for lists and people. The other field types and custom tables wait for the custom fields stage.
+It is built in two steps: user-defined lists of choices, as set out in the [Decisions Log](../product/decisions.md#configuration), and people, with fictional seed data and commands to load and remove it, whose details such as site or position are columns drawing on lists. Teams with their managers and direct reports come in the Teams and Reporting Lines slice. The lists step adds the change history the Decisions Log requires, which every later slice records its changes in. The people step adds columns on People that draw on lists, held in the values table [ADR 0005](../adr/0005-flexible-data-model.md) proposes, and undo in one step for lists and people. The other field types, apart from Web link, and custom tables wait for the custom fields stage.
 
 ### Seed Accounts
 
@@ -86,9 +86,21 @@ Plan approval, built on lists and people first, as the owner intends approval to
 
 It is built in two steps. The first gives people drafts: shown in place on the People table, approved and rejected there and on a Drafts page, explained on Help's Drafts page, undone like other changes, and recorded in the change history, with seed drafts of people added, changed, and removed, and rejected. The second gives drafts to lists, choices, columns, and their order, with drafts that use other drafts approved together, which Help's Drafts page then explains, and adds the seed draft that uses another. A third makes drafts private until published, as [ADR 0008](../adr/0008-unpublished-drafts.md) sets out, with seed data holding unpublished changes and a record someone else holds.
 
+### Web Link Columns
+
+A second type of column on People, Web link: each person's value is one web address, http or https only, intranet hosts included, never a file or folder, with an optional name shown in its place. A Web link column sets its own visibility, since it has no list to take one from.
+
+### Teams and Reporting Lines
+
+People managers and their current direct reports: each person's reporting line, with the date it takes effect from, shown as Manager and Team columns on People, teams' optional names, and the rules, drafts, and warnings in the [Decisions Log](../product/decisions.md#workforce). The seed data gains managers, reports, named and unnamed teams, a person with no manager, and a manager whose end date has passed while people still report to them. Reporting lines set the pattern for records that link to other records, which features, feature teams, and planned hires reuse, and for records in force from a date until the next one starts, which feature team membership and allocations reuse. Future dates come with planned reporting changes and the org chart in [The Organization](../product/roadmap.md#stage-the-organization) stage.
+
+### Hiring Plan
+
+Planned hires, apart from People, in the states and with the details, columns shared with People, placeholders, and drafts set out in the [Decisions Log](../product/decisions.md#workforce), with the Workforce Administrator renaming the states. Filling a planned hire links it to an existing person or adds a new one, and new employees can be added before they start. Placeholders show with their manager's team, and count toward its reports once the Team Composition slice compares them with the range. The seed data gains planned hires in every state, one filled by a new employee who has not started, and one filled by an internal transfer. Allocating planned hires waits for the Allocations and Capacity slice.
+
 ### Cycles and Releases
 
-Release streams, as many as an organization uses, each with a configurable cycle length and cycle names that can change from a chosen date, and releases with typed names that include consecutive cycles, as set out in the [Decisions Log](../product/decisions.md#planning). Each cycle knows its share of the months it spans, as the Decisions Log sets out, which capacity and the timeline use. Releases set the pattern for records that link to other records, which features, teams, and feature teams reuse.
+Release streams, as many as an organization uses, each with a configurable cycle length and cycle names that can change from a chosen date, and releases with typed names that include consecutive cycles, as set out in the [Decisions Log](../product/decisions.md#planning). Each cycle knows its share of the months it spans, as the Decisions Log sets out, which capacity and the timeline use.
 
 ### Features and the Roadmap
 
@@ -98,10 +110,6 @@ A test page of the roadmap board proposed in [ADR 0009](../adr/0009-roadmap-and-
 
 - **Roadmap board:** The real features of one release stream, with a column for each cycle and Later, and cards moved by mouse, by Alt and the arrow keys, and from their menu. Moves are real drafts of the target cycle, marked as on tables.
 - **Timeline sketch:** Read only, with rows for feature teams and bars across cycles drawn from fixed fictional data in the page, since feature teams and allocations do not exist yet, to judge lanes and row height.
-
-### Teams and Reporting Lines
-
-People managers and their current direct reports: each person's reporting line, with the date it takes effect from, shown as Manager and Team columns on People, teams' optional names, and the rules, drafts, and warnings in the [Decisions Log](../product/decisions.md#workforce). The seed data gains managers, reports, named and unnamed teams, a person with no manager, and a manager whose end date has passed while people still report to them. Reporting lines set the pattern for records in force from a date until the next one starts, which feature team membership and allocations reuse. Future dates come with planned reporting changes and the org chart in [The Organization](../product/roadmap.md#stage-the-organization) stage.
 
 ### Projects and Feature Teams
 
@@ -113,11 +121,7 @@ Proposals, which may become projects, with their statuses, the features they pro
 
 ### Allocations and Capacity
 
-Monthly allocations, capacity by person, by manager, and by feature team, and the warnings and rules in the [Decisions Log](../product/decisions.md), shown in the monthly resource grid, with the cycle and release lines from the Cycles and Releases slice. Decided when this slice starts: whose cycle and release lines the grid shows when there are several release streams.
-
-### Hiring Plan
-
-Planned hires and their ramp-up through allocations, shown in the plan as proposed in [Roles](../product/roles.md).
+Monthly allocations, capacity by person, by manager, and by feature team, and the warnings and rules in the [Decisions Log](../product/decisions.md), shown in the monthly resource grid, with the cycle and release lines from the Cycles and Releases slice. Decided when this slice starts: whose cycle and release lines the grid shows when there are several release streams, and how a planned hire's allocations pass to the person who fills it, as the [Decisions Log](../product/decisions.md#workforce) sets out, such as from their start date.
 
 ### Team Composition
 
