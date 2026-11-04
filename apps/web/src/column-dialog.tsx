@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The dialog for adding a column to the People table or changing one: its name, the list it draws
-// on, whether several choices can be picked, and whether it must be filled in. Changing a column also
-// offers deleting it. The name is checked against the other columns as it is typed. The dialog cannot
-// be closed while a change is being saved.
+// The dialog for adding a column to the People table or changing one: its name, its type, which is
+// set once, whether it must be filled in, and, for a choice column, the list it draws on and whether
+// several choices can be picked, or, for a web link column, who may see its links. Changing a column
+// also offers deleting it. The name is checked against the other columns as it is typed. The dialog
+// cannot be closed while a change is being saved.
 
 import {
   type Field,
   type FieldRequest,
+  type FieldType,
+  fieldTypeSchema,
   type List,
   personLengths,
+  type Tier,
 } from "@fathom/shared";
 import {
   Button,
@@ -23,12 +27,18 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
-import { Count, nameProblem } from "./list-dialog.tsx";
+import { Count, nameProblem, VisibleTo } from "./list-dialog.tsx";
 import { sameName, visibilityName } from "./lists.ts";
 import { createField, updateField } from "./people.ts";
 
 const conflict = 409;
 const duplicate = "Already a column";
+
+// Every type must be named, which the compiler checks.
+const typeNames: Record<FieldType, string> = {
+  choice: "Choice from a list",
+  link: "Web link",
+};
 
 export function ColumnDialog({
   field,
@@ -50,6 +60,10 @@ export function ColumnDialog({
   onBusy: (busy: boolean) => void;
 }) {
   const [name, setName] = useState(field?.name ?? "");
+  const [type, setType] = useState<FieldType>(field?.type ?? "choice");
+  const [visibility, setVisibility] = useState<Tier>(
+    field?.visibility ?? "general",
+  );
   const [listId, setListId] = useState<string | null>(field?.listId ?? null);
   const [multiple, setMultiple] = useState(field?.multiple ?? false);
   const [required, setRequired] = useState(field?.required ?? false);
@@ -92,7 +106,8 @@ export function ColumnDialog({
       (!list.retired && list.draft?.action !== "deleted") ||
       list.id === field?.listId,
   );
-  const listProblem = tried && listId === null ? "List needed" : undefined;
+  const needsList = type === "choice" && listId === null;
+  const listProblem = tried && needsList ? "List needed" : undefined;
 
   return (
     <form
@@ -100,9 +115,20 @@ export function ColumnDialog({
       onSubmit={(event) => {
         event.preventDefault();
         setTried(true);
-        if (problem !== undefined || listId === null) return;
+        if (problem !== undefined || needsList) return;
         setSentName(name);
-        saving.mutate({ name: name.trim(), listId, multiple, required });
+        saving.mutate(
+          type === "link"
+            ? { name: name.trim(), type, visibility, multiple: false, required }
+            : {
+                name: name.trim(),
+                type,
+                // A choice column cannot be saved without its list, as checked above.
+                listId: listId as string,
+                multiple,
+                required,
+              },
+        );
       }}
     >
       <Stack gap="md">
@@ -120,40 +146,67 @@ export function ColumnDialog({
           }}
         />
         <NativeSelect
-          label="List"
-          data={[
-            { value: "", label: "" },
-            // A list whose values not everyone may see says who may, and one only drafted to be
-            // added says it is new.
-            ...offered.map((list) => {
-              const notes = [
-                ...(list.draft?.action === "created" ? ["new"] : []),
-                ...(list.visibility === "general"
-                  ? []
-                  : [visibilityName(list.visibility)]),
-              ];
-              return {
-                value: list.id,
-                label:
-                  notes.length === 0
-                    ? list.name
-                    : `${list.name} (${notes.join(", ")})`,
-              };
-            }),
-          ]}
-          value={listId ?? ""}
-          error={listProblem}
+          label="Type"
+          description={
+            field === undefined ? undefined : "A column's type cannot change"
+          }
+          disabled={field !== undefined}
+          data={fieldTypeSchema.options.map((option) => ({
+            value: option,
+            // The type is always one of the fixed types named above.
+            // eslint-disable-next-line security/detect-object-injection
+            label: typeNames[option],
+          }))}
+          value={type}
           onChange={(event) => {
-            setListId(event.currentTarget.value || null);
+            setType(fieldTypeSchema.parse(event.currentTarget.value));
           }}
         />
-        <Checkbox
-          label="Several choices"
-          checked={multiple}
-          onChange={(event) => {
-            setMultiple(event.currentTarget.checked);
-          }}
-        />
+        {type === "link" ? (
+          <VisibleTo
+            id="column-visibility"
+            value={visibility}
+            onChange={setVisibility}
+          />
+        ) : (
+          <>
+            <NativeSelect
+              label="List"
+              data={[
+                { value: "", label: "" },
+                // A list whose values not everyone may see says who may, and one only drafted to be
+                // added says it is new.
+                ...offered.map((list) => {
+                  const notes = [
+                    ...(list.draft?.action === "created" ? ["new"] : []),
+                    ...(list.visibility === "general"
+                      ? []
+                      : [visibilityName(list.visibility)]),
+                  ];
+                  return {
+                    value: list.id,
+                    label:
+                      notes.length === 0
+                        ? list.name
+                        : `${list.name} (${notes.join(", ")})`,
+                  };
+                }),
+              ]}
+              value={listId ?? ""}
+              error={listProblem}
+              onChange={(event) => {
+                setListId(event.currentTarget.value || null);
+              }}
+            />
+            <Checkbox
+              label="Several choices"
+              checked={multiple}
+              onChange={(event) => {
+                setMultiple(event.currentTarget.checked);
+              }}
+            />
+          </>
+        )}
         <Checkbox
           label="Must be filled in"
           checked={required}

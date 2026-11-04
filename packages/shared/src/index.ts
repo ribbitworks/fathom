@@ -91,6 +91,18 @@ export {
   retiredRequestSchema,
 } from "./lists.ts";
 export {
+  addressProblem,
+  isLink,
+  type Link,
+  linkInWords,
+  linkLabel,
+  linkLengths,
+  type LinkProblems,
+  linkProblems,
+  linkValueSchema,
+  webAddress,
+} from "./links.ts";
+export {
   changeSetIdSchema,
   columnKeySchema,
   type ColumnOrderDraft,
@@ -102,6 +114,9 @@ export {
   fieldMoveSchema,
   fieldRequestSchema,
   fieldSchema,
+  type FieldType,
+  fieldTypeSchema,
+  type Links,
   type Person,
   type PersonChange,
   type PersonRequest,

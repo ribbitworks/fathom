@@ -624,6 +624,7 @@ describe("adding people", () => {
             startDate: "2026-11-02",
             endDate: null,
             values: { f1: ["c1"], f2: [] },
+            links: {},
           },
         ],
       },
@@ -840,6 +841,7 @@ describe("adding people", () => {
             startDate: null,
             endDate: null,
             values: { f1: ["c1"], f2: ["r1"] },
+            links: {},
           },
           {
             preferredName: "Eli Fictional",
@@ -847,6 +849,7 @@ describe("adding people", () => {
             startDate: "2025-02-01",
             endDate: null,
             values: { f1: ["c2"], f2: [] },
+            links: {},
           },
         ],
       },
@@ -1426,7 +1429,13 @@ describe("columns", () => {
       within(dialog).getByRole("button", { name: "Add column" }),
     );
     expect(bodyOf(fetch, "POST", "/api/people/columns")).toEqual([
-      { name: "Office", listId: "l1", multiple: true, required: false },
+      {
+        name: "Office",
+        type: "choice",
+        listId: "l1",
+        multiple: true,
+        required: false,
+      },
     ]);
     await settle();
     await userEvent.keyboard("{Meta>}z{/Meta}");
@@ -1546,7 +1555,13 @@ describe("columns", () => {
     await userEvent.type(name, "Roles");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(bodyOf(fetch, "PUT", "/api/people/columns/f2")).toEqual([
-      { name: "Roles", listId: "l2", multiple: true, required: false },
+      {
+        name: "Roles",
+        type: "choice",
+        listId: "l2",
+        multiple: true,
+        required: false,
+      },
     ]);
     // The simulated server still answers with the old name once the change has saved.
     await userEvent.click(

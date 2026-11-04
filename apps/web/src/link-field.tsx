@@ -1,0 +1,217 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Web links in a table's cells, for any table with a web link column. The cell shows the link's
+// text, with its address as the cell's title, and clicking it opens the address in a new tab. An
+// address Fathom does not accept, which the server never stores, is shown as plain text instead and
+// is never followed. Editing opens a small form beside the cell, with the address, checked once it
+// is left, and the text to show, which may be left empty to show the address. Enter saves, Esc
+// cancels, and Tab moves between the form's fields, then saves and moves on to the next cell, as
+// Shift+Tab does to the one before; clicking away saves what will do.
+
+import {
+  type Link,
+  linkLabel,
+  linkLengths,
+  linkProblems,
+  webAddress,
+} from "@fathom/shared";
+import {
+  Button,
+  Group,
+  Menu,
+  Popover,
+  Stack,
+  Text,
+  TextInput,
+} from "@mantine/core";
+import { type KeyboardEvent, type MouseEvent, useState } from "react";
+import type { Finish } from "./choice-picker.tsx";
+import { Count } from "./list-dialog.tsx";
+import classes from "./pages.module.css";
+
+// Clicking a link in a cell leaves focus on the cell, so the keys that move around the table still
+// work.
+const focusCell = (event: MouseEvent<HTMLElement>) => {
+  event.currentTarget.closest<HTMLElement>('[role="gridcell"]')?.focus();
+};
+
+// The address is checked again here, so a link that reached the browser some other way can never
+// run anything. Opening without the referrer keeps the page address, which holds the table's search
+// and filters, from reaching the linked site.
+export function LinkCell({ link }: { link: Link }) {
+  const href = webAddress(link.address);
+  const label = linkLabel(link);
+  if (href === null) return <span title={link.address}>{label}</span>;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={href}
+      // Tab moves between cells; the row's menu opens the link from the keyboard.
+      tabIndex={-1}
+      className={classes.cellLink}
+      onClick={focusCell}
+    >
+      {label}
+    </a>
+  );
+}
+
+// The item in a row's menu that opens a link in a new tab, or nothing for an address Fathom does
+// not accept.
+export function LinkMenuItem({ name, link }: { name: string; link: Link }) {
+  const href = webAddress(link.address);
+  if (href === null) return null;
+  return (
+    <Menu.Item
+      component="a"
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={href}
+    >
+      Open {name}
+    </Menu.Item>
+  );
+}
+
+// Edits a cell's link, finishing with the link, or with null when both fields are emptied.
+export function LinkEditor({
+  id,
+  name,
+  initial,
+  typed,
+  onDone,
+  onCancel,
+}: {
+  id: string;
+  name: string;
+  initial: Link | undefined;
+  // What was typed to start editing, which starts the address.
+  typed: string | undefined;
+  onDone: (link: Link | null, finish: Finish) => void;
+  onCancel: () => void;
+}) {
+  const textId = `${id}-text`;
+  const [address, setAddress] = useState(typed ?? initial?.address ?? "");
+  const [text, setText] = useState(initial?.text ?? "");
+  const [tried, setTried] = useState(false);
+  const [leftAddress, setLeftAddress] = useState(false);
+  const link = { address: address.trim(), text: text.trim() };
+  const cleared = link.address === "" && link.text === "";
+  const problems = cleared ? {} : linkProblems(link);
+  // An address is judged once it has been typed and left, or saving is tried, never while it is
+  // being typed.
+  const shownAddress = tried || leftAddress ? problems.address : undefined;
+
+  const finish = (how: Finish) => {
+    setTried(true);
+    if (problems.address !== undefined || problems.text !== undefined) return;
+    onDone(
+      cleared
+        ? null
+        : // Accepted, as just checked.
+          { address: webAddress(link.address) as string, text: link.text },
+      how,
+    );
+  };
+
+  // Tab past the last field, or Shift+Tab before the first, saves and moves on, as in other cells.
+  const onKeyDown = (event: KeyboardEvent) => {
+    const field = (event.target as HTMLElement).id;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      onCancel();
+    } else if (event.key === "Tab" && !event.shiftKey && field === textId) {
+      event.preventDefault();
+      finish("next");
+    } else if (event.key === "Tab" && event.shiftKey && field === id) {
+      event.preventDefault();
+      finish("previous");
+    }
+  };
+
+  return (
+    <Popover
+      opened
+      onDismiss={() => {
+        finish("leave");
+      }}
+      closeOnEscape={false}
+      trapFocus
+      position="bottom-start"
+      width={360}
+      withinPortal
+      hideDetached={false}
+      shadow="md"
+    >
+      <Popover.Target>
+        <span className={classes.linkLabel}>
+          {initial ? linkLabel(initial) : ""}
+        </span>
+      </Popover.Target>
+      <Popover.Dropdown>
+        <form
+          noValidate
+          aria-label={name}
+          onKeyDown={onKeyDown}
+          onSubmit={(event) => {
+            event.preventDefault();
+            finish("enter");
+          }}
+        >
+          <Stack gap="sm">
+            <Text fz="sm" fw={600}>
+              {name}
+            </Text>
+            <TextInput
+              id={id}
+              label="Address"
+              placeholder="example.com or http://wiki/"
+              data-autofocus
+              autoComplete="off"
+              value={address}
+              error={shownAddress}
+              onChange={(event) => {
+                setAddress(event.currentTarget.value);
+              }}
+              onBlur={() => {
+                setLeftAddress(address.trim() !== "");
+              }}
+            />
+            <TextInput
+              id={textId}
+              label="Text to show"
+              description="Leave empty to show the address."
+              autoComplete="off"
+              value={text}
+              error={problems.text}
+              rightSection={
+                <Count length={link.text.length} maximum={linkLengths.text} />
+              }
+              rightSectionWidth={56}
+              onChange={(event) => {
+                setText(event.currentTarget.value);
+              }}
+            />
+            <Group gap="xs" justify="flex-end">
+              <Button
+                variant="subtle"
+                color="gray"
+                size="compact-sm"
+                onClick={onCancel}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" size="compact-sm">
+                Save
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+      </Popover.Dropdown>
+    </Popover>
+  );
+}

@@ -24,7 +24,9 @@ import {
 export const fieldFields = [
   "tableName",
   "name",
+  "type",
   "listId",
+  "visibility",
   "multiple",
   "required",
 ] as const;
@@ -77,32 +79,29 @@ export const peopleHave = (total: number) =>
 export async function checkValuesFit(
   transaction: Transaction,
   field: FieldRow,
-  request: FieldRequest,
+  request: Pick<FieldRequest, "multiple" | "required"> & {
+    listId?: string | null | undefined;
+  },
 ): Promise<void> {
   const inDrafts = await draftedValues(transaction, field.id);
+  const listChanges = (request.listId ?? null) !== field.listId;
   if (
     request.required &&
-    inDrafts.some(({ adds, chosen }) =>
-      // A draft adding someone holds only the columns with choices.
-      adds ? chosen === undefined : chosen?.length === 0,
+    inDrafts.some(({ adds, held }) =>
+      // A draft adding someone holds only the columns with values.
+      adds ? held === undefined : held === 0,
     )
   ) {
     throw new ConflictError(
       `Drafts leave ${field.name} empty, so it cannot be required yet`,
     );
   }
-  if (
-    !request.multiple &&
-    inDrafts.some(({ chosen }) => (chosen?.length ?? 0) > 1)
-  ) {
+  if (!request.multiple && inDrafts.some(({ held }) => (held ?? 0) > 1)) {
     throw new ConflictError(
       `Drafts have several choices for ${field.name}, so it cannot take only one yet`,
     );
   }
-  if (
-    request.listId !== field.listId &&
-    inDrafts.some(({ chosen }) => (chosen?.length ?? 0) > 0)
-  ) {
+  if (listChanges && inDrafts.some(({ held }) => (held ?? 0) > 0)) {
     throw new ConflictError(
       `Drafts have values from the list of ${field.name}, so its list cannot change`,
     );
@@ -137,7 +136,7 @@ export async function checkValuesFit(
       );
     }
   }
-  if (request.listId !== field.listId) {
+  if (listChanges) {
     const used = await totalOf(
       transaction
         .select({ total: count() })

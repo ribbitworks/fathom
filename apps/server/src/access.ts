@@ -6,7 +6,7 @@
 // changes the shared lists in packages/shared.
 
 import type { Permission, Role, Tier } from "@fathom/shared";
-import { roleSchema } from "@fathom/shared";
+import { roleSchema, tierSchema } from "@fathom/shared";
 import { ForbiddenError } from "./errors.ts";
 
 // Every role must be listed, which the compiler checks.
@@ -123,6 +123,10 @@ const tierPermissions: Record<Tier, { view: Permission; edit: Permission }> = {
 };
 
 const tierRank: readonly Tier[] = ["general", "restricted", "confidential"];
+
+// A tier as stored, or, for one the server no longer knows, the most sensitive, rather than trusted.
+export const storedTier = (value: unknown): Tier =>
+  tierSchema.catch("confidential").parse(value);
 
 // The most sensitive of some tiers, or General when there are none.
 export function mostSensitive(tiers: readonly Tier[]): Tier {

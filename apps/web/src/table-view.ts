@@ -9,6 +9,8 @@
 import {
   type Filter,
   folded,
+  type Link,
+  linkLabel,
   searchWords,
   type Show,
   type ViewDefinition,
@@ -17,10 +19,11 @@ import {
 import { useState } from "react";
 import { z } from "zod";
 
-// What a cell holds: text, a date as YYYY-MM-DD or empty, or the identifiers of chosen choices.
-export type CellValue = string | string[];
+// What a cell holds: text, a date as YYYY-MM-DD or empty, the identifiers of chosen choices, or a
+// web link, or null for no link.
+export type CellValue = string | string[] | Link | null;
 
-export type Kind = "text" | "date" | "choice";
+export type Kind = "text" | "date" | "choice" | "link";
 
 export interface ColumnChoice {
   id: string;
@@ -252,9 +255,11 @@ export function formatDay(value: string): string {
   return day.format(new Date(`${value}T00:00:00Z`));
 }
 
-// Each kind's values are of one type: text and dates are strings, and choices are lists.
+// Each kind's values are of one type: text and dates are strings, choices are lists, and links are
+// links or null.
 const asText = (value: CellValue) => value as string;
 const asChoices = (value: CellValue) => value as string[];
+const asLink = (value: CellValue) => value as Link | null;
 
 interface Rules {
   isEmpty: (value: CellValue) => boolean;
@@ -314,10 +319,34 @@ const choiceRules: Rules = {
     asChoices(value).some((id) => (filter.any ?? []).includes(id)),
 };
 
+// A link is searched and filtered by its text and its address, and sorted by what it shows.
+const linkRules: Rules = {
+  isEmpty: (value) => asLink(value) === null,
+  words: (_column, value) => {
+    const link = asLink(value);
+    return link === null ? "" : `${link.text} ${link.address}`;
+  },
+  compare: (_column, a, b) =>
+    collator.compare(
+      linkLabel(asLink(a) as Link),
+      linkLabel(asLink(b) as Link),
+    ),
+  matches: (value, filter) => {
+    const contains = folded((filter.contains ?? "").trim());
+    const link = asLink(value) as Link;
+    return (
+      contains !== "" &&
+      (folded(link.text).includes(contains) ||
+        folded(link.address).includes(contains))
+    );
+  },
+};
+
 const rules: Record<Kind, Rules> = {
   text: textRules,
   date: dateRules,
   choice: choiceRules,
+  link: linkRules,
 };
 
 const rulesFor = (column: TableColumn<never>) => rules[column.kind];

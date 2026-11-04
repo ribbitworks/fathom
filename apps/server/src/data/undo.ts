@@ -29,6 +29,7 @@ import {
   requirePermission,
   requireTierEdit,
   seesTier,
+  storedTier,
 } from "../access.ts";
 import { choicesWithAdded, columnsWithAdded } from "./added-columns.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
@@ -132,6 +133,8 @@ const text: Convert = (value) => String(value);
 const flag: Convert = (value) => value === true;
 const day: Convert = (value) => (typeof value === "string" ? value : null);
 const tier: Convert = (value) => tierSchema.catch("general").parse(value);
+// A tier the server no longer knows is put back as the most sensitive.
+const sensitiveTier: Convert = (value) => storedTier(value);
 // Read back through the view's own checks whenever it is read.
 const asStored: Convert = (value) => value;
 
@@ -147,7 +150,10 @@ const columnsOf: Record<
   field: {
     tableName: text,
     name: text,
+    type: text,
+    // A web link column has no list, and a choice column no visibility, which are never recorded.
     listId: text,
+    visibility: sensitiveTier,
     multiple: flag,
     required: flag,
   },
@@ -230,7 +236,7 @@ async function checkFits(
       if (current.id === record.id) {
         const wanted = { ...current, ...values };
         await checkValuesFit(transaction, current, wanted);
-        if (wanted.listId !== current.listId) {
+        if (wanted.listId !== null && wanted.listId !== current.listId) {
           await checkLiveList(transaction, wanted.listId);
         }
       }
@@ -238,9 +244,8 @@ async function checkFits(
   }
 }
 
-// A list of identifiers or keys as the history holds it.
-const ids = (value: unknown): string[] =>
-  Array.isArray(value) ? value.map(String) : [];
+// A list of identifiers or keys as the history holds it: an order is always recorded whole.
+const ids = (value: unknown): string[] => (value as unknown[]).map(String);
 
 // Where to put back a choice or column: after the record it followed, at the top, or at the end if
 // the one it followed is gone.
@@ -280,7 +285,7 @@ async function putBackPlaceAndValues(
   for (const [field, value] of old) {
     const fieldId = fieldOfValue(field);
     if (fieldId !== null) {
-      await writeValues(transaction, id, fieldId, ids(value));
+      await writeValues(transaction, id, fieldId, value);
     }
   }
 }
@@ -363,7 +368,7 @@ function reversed(rows: readonly StoredChange[]): Change[] {
     recordId: row.recordId,
     action: opposite.get(row.action) ?? "changed",
     field: row.field,
-    tier: tierSchema.catch("confidential").parse(row.tier),
+    tier: storedTier(row.tier),
     oldValue: row.newValue,
     newValue: row.oldValue,
     draft: row.draft,
@@ -577,7 +582,7 @@ async function undoColumnDrafts(
       if (nameTaken(state, String(wanted.name), record.id)) {
         throw new ConflictError(changedSince);
       }
-      if (wanted.listId !== live?.listId) {
+      if (wanted.type !== "link" && wanted.listId !== live?.listId) {
         await checkList(
           transaction,
           state,

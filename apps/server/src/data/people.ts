@@ -17,6 +17,9 @@ import {
   people,
 } from "@fathom/db";
 import {
+  isLink,
+  type Link,
+  type Links,
   type Person,
   type PersonChange,
   type PersonDraft,
@@ -48,6 +51,7 @@ import {
   draftFields,
   draftMakers,
   draftTier,
+  fitsColumns,
   lockDrafts,
   readHeld,
   readPersonDrafts,
@@ -65,6 +69,7 @@ import {
 import { recordEvents } from "./history.ts";
 import {
   type ColumnInfo,
+  type FieldValue,
   inListOrder,
   readColumns,
   readValues,
@@ -102,7 +107,7 @@ export function personTier(columns: readonly ColumnInfo[]) {
 
 export function recorded(
   row: PersonRow,
-  values: ReadonlyMap<string, readonly string[]>,
+  values: ReadonlyMap<string, FieldValue>,
 ): Recorded {
   const record: Recorded = {
     preferredName: row.preferredName,
@@ -110,8 +115,9 @@ export function recorded(
     startDate: row.startDate,
     endDate: row.endDate,
   };
-  for (const [fieldId, choiceIds] of values) {
-    if (choiceIds.length > 0) record[valueField(fieldId)] = [...choiceIds];
+  for (const [fieldId, value] of values) {
+    if (isLink(value)) record[valueField(fieldId)] = { ...value };
+    else if (value.length > 0) record[valueField(fieldId)] = [...value];
   }
   return record;
 }
@@ -124,6 +130,18 @@ function valuesOf(person: Recorded): Map<string, string[]> {
       return fieldId === null || !Array.isArray(value)
         ? []
         : [[fieldId, value.map(String)]];
+    }),
+  );
+}
+
+// A person's links, by column, as recorded.
+function linksOf(person: Recorded): Links {
+  return Object.fromEntries(
+    Object.entries(person).flatMap(([field, value]) => {
+      const fieldId = fieldOfValue(field);
+      return fieldId === null || !isLink(value)
+        ? []
+        : [[fieldId, { address: value.address, text: value.text }]];
     }),
   );
 }
@@ -196,12 +214,16 @@ async function choicesAskedFor(
   editor: string,
   requests: readonly {
     values?: Readonly<Record<string, readonly string[]>> | undefined;
+    links?: Readonly<Record<string, Link | null>> | undefined;
   }[],
 ): Promise<ChoiceRow[]> {
   await refuseHeldColumns(
     transaction,
     editor,
-    requests.flatMap((request) => Object.keys(request.values ?? {})),
+    requests.flatMap((request) => [
+      ...Object.keys(request.values ?? {}),
+      ...Object.keys(request.links ?? {}),
+    ]),
   );
   return choicesWithAdded(
     transaction,
@@ -221,7 +243,7 @@ function checkedValues(
   const checked = new Map<string, string[]>();
   for (const [fieldId, choiceIds] of Object.entries(requested)) {
     const column = columns.find(({ id }) => id === fieldId);
-    if (column === undefined) {
+    if (column?.type !== "choice") {
       throw new BadRequestError("There is no such column");
     }
     const choices = known.filter(({ id }) => choiceIds.includes(id));
@@ -251,9 +273,26 @@ function checkedValues(
   return checked;
 }
 
-// Whether the live people given, as they are now, fit their columns: each value from the column's
-// list, one choice unless the column takes several, and a value in every required column. Used after
-// an undo or an approval puts people's values in place, since the columns may have changed since.
+// The links asked for each column, as recorded: a link, or no choices for a link removed. The
+// shared schema has already checked and normalized each link.
+function checkedLinks(
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, Link | null>>,
+): Recorded {
+  return Object.fromEntries(
+    Object.entries(requested).map(([fieldId, link]) => {
+      const column = columns.find(({ id }) => id === fieldId);
+      if (column?.type !== "link") {
+        throw new BadRequestError("There is no such column");
+      }
+      return [valueField(fieldId), link === null ? [] : { ...link }];
+    }),
+  );
+}
+
+// Whether the live people given, as they are now, fit their columns, as fitsColumns sets out. Used
+// after an undo or an approval puts people's values in place, since the columns may have changed
+// since.
 export async function peopleFitColumns(
   transaction: Transaction,
   personIds: readonly string[],
@@ -271,21 +310,22 @@ export async function peopleFitColumns(
   );
   const choices = await inListOrder(
     transaction,
-    [...values.values()].flatMap((byColumn) => [...byColumn.values()].flat()),
+    [...values.values()].flatMap((byColumn) =>
+      [...byColumn.values()].flatMap((value) => (isLink(value) ? [] : value)),
+    ),
   );
+  const listOf = new Map(choices.map(({ id, listId }) => [id, listId]));
   return present.every(({ id }) =>
-    columns.every((column) => {
-      const chosen = values.get(id)?.get(column.id) ?? [];
-      return (
-        (!column.required || chosen.length > 0) &&
-        (column.multiple || chosen.length <= 1) &&
-        chosen.every(
-          (choiceId) =>
-            choices.find((choice) => choice.id === choiceId)?.listId ===
-            column.listId,
-        )
-      );
-    }),
+    fitsColumns(
+      columns,
+      listOf,
+      Object.fromEntries(
+        [...(values.get(id) ?? [])].map(([fieldId, value]) => [
+          valueField(fieldId),
+          value,
+        ]),
+      ),
+    ),
   );
 }
 
@@ -431,6 +471,11 @@ async function readPeopleIn(
             shownFields.has(valueField(fieldId)),
           ),
         ),
+        links: Object.fromEntries(
+          Object.entries(linksOf(person)).filter(([fieldId]) =>
+            shownFields.has(valueField(fieldId)),
+          ),
+        ),
         ...(seen ? { draft: seen } : {}),
         ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
       },
@@ -452,7 +497,7 @@ async function readPeopleIn(
       .filter((field) => shownFields.has(field))
       .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
     if (fields.length === 0) return undefined;
-    const liveValues: PersonDraft["live"] = { values: {} };
+    const liveValues: PersonDraft["live"] = { values: {}, links: {} };
     if (before !== undefined) {
       for (const field of fields) {
         const fieldId = fieldOfValue(field);
@@ -461,10 +506,19 @@ async function readPeopleIn(
         if (fieldId === null) {
           Object.assign(liveValues, { [field]: before[field] ?? null });
         } else {
-          const chosen = before[field];
-          liveValues.values[fieldId] = Array.isArray(chosen)
-            ? chosen.map(String)
-            : [];
+          const held = before[field];
+          if (isLink(held)) {
+            liveValues.links[fieldId] = {
+              address: held.address,
+              text: held.text,
+            };
+          } else if (
+            allColumns.find(({ id }) => id === fieldId)?.type !== "link"
+          ) {
+            liveValues.values[fieldId] = Array.isArray(held)
+              ? held.map(String)
+              : [];
+          }
         }
         /* eslint-enable security/detect-object-injection */
       }
@@ -541,6 +595,7 @@ export async function createPeople(
     for (const request of requests) {
       const id = randomUUID();
       const values = checkedValues(columns, known, request.values, undefined);
+      const links = checkedLinks(columns, request.links);
       const row: PersonRow = {
         id,
         preferredName: request.preferredName,
@@ -548,7 +603,7 @@ export async function createPeople(
         startDate: request.startDate ?? null,
         endDate: request.endDate ?? null,
       };
-      const after = recorded(row, values);
+      const after = { ...recorded(row, values), ...links };
       checkComplete(columns, after);
       made.push(...personChanges(columns, id, "created", undefined, after));
       added.push({ id, fields: after });
@@ -637,6 +692,7 @@ export async function updatePerson(
           choiceIds,
         ]),
       ),
+      ...checkedLinks(columns, change.links ?? {}),
     });
     checkComplete(columns, after);
     const made = personChanges(columns, id, "changed", person, after);

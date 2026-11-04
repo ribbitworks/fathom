@@ -24,7 +24,9 @@ import { testTheme } from "./test-support.tsx";
 const site: Field = {
   id: "f1",
   name: "Site",
+  type: "choice" as const,
   listId: "l1",
+  visibility: null,
   multiple: false,
   required: false,
 };
@@ -87,6 +89,7 @@ describe("how wide each column is", () => {
     startDate: null,
     endDate: null,
     values: {},
+    links: {},
   });
   const grid = (people: Person[]) => (
     <MantineProvider theme={testTheme}>
@@ -222,6 +225,7 @@ describe("adding people without dates", () => {
             preferredName: "Hana Fictional",
             employeeId: "E1",
             values: { f1: ["c1"] },
+            links: {},
           },
         },
         {
@@ -230,6 +234,7 @@ describe("adding people without dates", () => {
             preferredName: "Ian Fictional",
             employeeId: "E2",
             values: { f1: [] },
+            links: {},
           },
         },
       ],
@@ -245,7 +250,7 @@ describe("the live people", () => {
     madeBy: null,
     madeAt: null,
     changed: [],
-    live: { values: {} },
+    live: { values: {}, links: {} },
   };
   const person = (id: string, more: Partial<Person> = {}): Person => ({
     id,
@@ -254,6 +259,7 @@ describe("the live people", () => {
     startDate: "2024-01-01",
     endDate: null,
     values: {},
+    links: {},
     ...more,
   });
 
@@ -274,6 +280,7 @@ describe("the live people", () => {
             live: {
               preferredName: "Fictional p4",
               values: { f1: ["c1"], f2: [] },
+              links: {},
             },
           },
         }),
@@ -286,19 +293,49 @@ describe("the live people", () => {
   });
 });
 
+describe("the live links", () => {
+  it("puts back each link a draft changes, keeping the rest", () => {
+    const kept = { address: "https://kept.example.test/", text: "" };
+    const live = { address: "https://live.example.test/", text: "Live" };
+    const [person] = livePeople([
+      {
+        id: "p1",
+        preferredName: "Fictional p1",
+        employeeId: "p1",
+        values: {},
+        links: {
+          f1: { address: "https://drafted.example.test/", text: "" },
+          f2: kept,
+          f3: { address: "https://added.example.test/", text: "" },
+        },
+        draft: {
+          action: "changed",
+          changed: ["f1", "f3"],
+          live: { values: {}, links: { f1: live } },
+          state: "waiting",
+          madeBy: null,
+          madeAt: null,
+        },
+      },
+    ]);
+    expect(person?.links).toEqual({ f2: kept, f1: live });
+  });
+});
+
 describe("the people the metrics count", () => {
   const draft = {
     state: "waiting" as const,
     madeBy: null,
     madeAt: null,
     changed: [],
-    live: { values: {} },
+    live: { values: {}, links: {} },
   };
   const person = (id: string, more: Partial<Person> = {}): Person => ({
     id,
     preferredName: `Fictional ${id}`,
     employeeId: id,
     values: {},
+    links: {},
     ...more,
   });
   const people = [
@@ -334,7 +371,9 @@ describe("the live columns", () => {
   const column = {
     id: "f1",
     name: "Grade",
+    type: "choice" as const,
     listId: "l1",
+    visibility: null,
     multiple: false,
     required: true,
   };

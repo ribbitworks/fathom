@@ -218,21 +218,34 @@ export async function unseed(
         personId: fieldValues.personId,
         fieldId: fieldValues.fieldId,
         choiceId: fieldValues.choiceId,
+        linkAddress: fieldValues.linkAddress,
+        linkText: fieldValues.linkText,
       })
       .from(fieldValues)
       .where(inArray(fieldValues.personId, presentIds));
     for (const row of present) {
       const byColumn = new Map<string, string[]>();
-      for (const { personId, fieldId, choiceId } of held) {
+      const links: Record<string, { address: string; text: string }> = {};
+      for (const { personId, fieldId, choiceId, ...link } of held) {
         if (personId !== row.id) continue;
-        byColumn.set(fieldId, [...(byColumn.get(fieldId) ?? []), choiceId]);
+        if (choiceId === null) {
+          links[valueField(fieldId)] = {
+            address: String(link.linkAddress),
+            text: String(link.linkText),
+          };
+        } else {
+          byColumn.set(fieldId, [...(byColumn.get(fieldId) ?? []), choiceId]);
+        }
       }
       made.push(
         ...recorded(
           "person",
           row.id,
           "deleted",
-          personFields({ ...row, values: Object.fromEntries(byColumn) }),
+          {
+            ...personFields({ ...row, values: Object.fromEntries(byColumn) }),
+            ...links,
+          },
           dates,
         ),
       );

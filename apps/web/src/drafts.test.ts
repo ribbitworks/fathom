@@ -124,7 +124,9 @@ describe("drafts of columns an approval or rejection includes", () => {
       {
         id: "f1",
         name: "Previous site",
+        type: "choice" as const,
         listId: "l1",
+        visibility: null,
         multiple: false,
         required: false,
       },
@@ -195,7 +197,9 @@ describe("drafts that wait on rejected ones", () => {
       {
         id: "f1",
         name: "Previous site",
+        type: "choice" as const,
         listId: "l2",
+        visibility: null,
         multiple: false,
         required: false,
         draft: {
@@ -256,7 +260,9 @@ describe("drafts of people and columns that use drafts of another kind", () => {
   const squad: Field = {
     id: "f2",
     name: "Squad",
+    type: "choice" as const,
     listId: "l1",
+    visibility: null,
     multiple: false,
     required: false,
     draft: { ...waiting, action: "created", changed: [], live: {} },
@@ -265,7 +271,9 @@ describe("drafts of people and columns that use drafts of another kind", () => {
   const site: Field = {
     id: "f3",
     name: "Site",
+    type: "choice" as const,
     listId: "l2",
+    visibility: null,
     multiple: false,
     required: false,
   };
@@ -278,11 +286,12 @@ describe("drafts of people and columns that use drafts of another kind", () => {
     preferredName: id.toUpperCase(),
     employeeId: id,
     values,
+    links: {},
     draft: {
       ...waiting,
       action: "changed",
       changed: Object.keys(values),
-      live: { values: {} },
+      live: { values: {}, links: {} },
       ...draft,
     },
   });

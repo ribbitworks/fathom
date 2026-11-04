@@ -44,7 +44,7 @@ function usedByPerson(state: ColumnsState, draft: Draft) {
     const columnId = fieldOfValue(field);
     if (columnId === null) continue;
     if (addedColumn(state, columnId)) columns.push(columnId);
-    for (const choiceId of [value].flat().map(String)) {
+    for (const choiceId of Array.isArray(value) ? value.map(String) : []) {
       if (addedChoice(state, choiceId)) choices.push(choiceId);
     }
   }

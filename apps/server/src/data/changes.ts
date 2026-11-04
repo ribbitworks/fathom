@@ -48,9 +48,20 @@ export interface Saved<Result> {
   changeSetId: string | null;
 }
 
-// Values as stored in the history, so lists of choices compare by what they hold.
+// A value as JSON with each object's keys in order, since the database's JSON keeps keys in an order
+// of its own, so a link read back from a draft is the same as the link written.
+export function stableJson(value: unknown): string {
+  return JSON.stringify(value, (_key, held: unknown) =>
+    held !== null && typeof held === "object" && !Array.isArray(held)
+      ? Object.fromEntries(
+          Object.entries(held).sort(([a], [b]) => a.localeCompare(b)),
+        )
+      : held,
+  );
+}
+
 function sameValue(first: unknown, second: unknown): boolean {
-  return JSON.stringify(first) === JSON.stringify(second);
+  return stableJson(first) === stableJson(second);
 }
 
 // The changes between two versions of a record, one for each field that differs. A missing version

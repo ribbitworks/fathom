@@ -283,9 +283,13 @@ export const fields = fathomSchema.table(
     // The table the column is on, such as "people", checked by the server.
     tableName: text("table_name").notNull(),
     name: text("name").notNull(),
-    listId: uuid("list_id")
-      .notNull()
-      .references(() => lists.id, { onDelete: "restrict" }),
+    // "choice" for a column drawing on a list, or "link" for a web link.
+    type: text("type").notNull().default("choice"),
+    listId: uuid("list_id").references(() => lists.id, {
+      onDelete: "restrict",
+    }),
+    // The tier of a link column's values, which a choice column takes from its list instead.
+    visibility: text("visibility"),
     multiple: boolean("multiple").notNull().default(false),
     required: boolean("required").notNull().default(false),
   },
@@ -293,6 +297,10 @@ export const fields = fathomSchema.table(
     uniqueIndex("fields_table_name_index").on(
       table.tableName,
       sql`lower(${table.name})`,
+    ),
+    check(
+      "fields_type_settings",
+      sql`(${table.type} = 'choice' AND ${table.listId} IS NOT NULL AND ${table.visibility} IS NULL) OR (${table.type} = 'link' AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL AND NOT ${table.multiple})`,
     ),
   ],
 );
@@ -305,9 +313,10 @@ export const columnOrders = fathomSchema.table("column_orders", {
   keys: jsonb("keys").$type<string[]>().notNull().default([]),
 });
 
-// The values of columns, one row for each record, column, and choice, as ADR 0005 sets out. Each
-// table that can have columns has its own owner column, and exactly one is set. A value is deleted
-// with its record or column, and a choice cannot be deleted while a value uses it.
+// The values of columns, one row for each record, column, and choice, or for each record and link
+// column, as ADR 0005 sets out. Each table that can have columns has its own owner column, and
+// exactly one is set. A value is deleted with its record or column, and a choice cannot be deleted
+// while a value uses it.
 export const fieldValues = fathomSchema.table(
   "field_values",
   {
@@ -318,9 +327,12 @@ export const fieldValues = fathomSchema.table(
     personId: uuid("person_id").references(() => people.id, {
       onDelete: "cascade",
     }),
-    choiceId: uuid("choice_id")
-      .notNull()
-      .references(() => listItems.id, { onDelete: "restrict" }),
+    choiceId: uuid("choice_id").references(() => listItems.id, {
+      onDelete: "restrict",
+    }),
+    linkAddress: text("link_address"),
+    // Empty to show the address itself.
+    linkText: text("link_text"),
   },
   (table) => [
     uniqueIndex("field_values_person_choice_index").on(
@@ -328,9 +340,22 @@ export const fieldValues = fathomSchema.table(
       table.personId,
       table.choiceId,
     ),
+    uniqueIndex("field_values_person_link_index")
+      .on(table.fieldId, table.personId)
+      .where(sql`${table.linkAddress} IS NOT NULL`),
     index("field_values_person_index").on(table.personId),
     index("field_values_choice_index").on(table.choiceId),
     check("field_values_one_owner", sql`num_nonnulls(${table.personId}) = 1`),
+    check(
+      "field_values_one_kind",
+      sql`num_nonnulls(${table.choiceId}, ${table.linkAddress}) = 1 AND (${table.linkAddress} IS NULL) = (${table.linkText} IS NULL)`,
+    ),
+    // The server checks each address in full; this keeps anything but a web address out whatever
+    // writes the row.
+    check(
+      "field_values_web_address",
+      sql`${table.linkAddress} IS NULL OR ${table.linkAddress} ~ '^https?://'`,
+    ),
   ],
 );
 

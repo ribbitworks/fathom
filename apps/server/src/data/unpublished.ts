@@ -255,9 +255,10 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
   }
   const field = draftedField(columns, id);
   if (field === undefined) return true;
+  if (nameTaken(columns, String(field.name), id)) return false;
+  if (field.type === "link") return true;
   const listId = String(field.listId);
   return (
-    !nameTaken(columns, String(field.name), id) &&
     listExists(columns.lists, listId) &&
     draftedList(columns.lists, listId) !== undefined
   );

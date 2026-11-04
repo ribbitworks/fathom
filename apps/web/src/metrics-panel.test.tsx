@@ -18,14 +18,18 @@ import { emptyView, type View } from "./table-view.ts";
 const level: Field = {
   id: "f1",
   name: "Level",
+  type: "choice" as const,
   listId: "l1",
+  visibility: null,
   multiple: false,
   required: false,
 };
 const role: Field = {
   id: "f2",
   name: "Role",
+  type: "choice" as const,
   listId: "l2",
+  visibility: null,
   multiple: false,
   required: false,
 };
@@ -64,6 +68,7 @@ const person = (
   preferredName: `Fictional ${id}`,
   employeeId: id,
   values: { f1: levels, f2: roles },
+  links: {},
   ...(draft ? { draft } : {}),
 });
 
@@ -204,19 +209,19 @@ describe("the Metrics panel", () => {
         ...draft,
         action: "created",
         changed: [],
-        live: { values: {} },
+        live: { values: {}, links: {} },
       }),
       person("c2", ["p4"], ["test"], {
         ...draft,
         action: "changed",
         changed: ["f1"],
-        live: { values: { f1: ["p3"] } },
+        live: { values: { f1: ["p3"] }, links: {} },
       }),
       person("f", ["p3"], ["dev"], {
         ...draft,
         action: "deleted",
         changed: [],
-        live: { values: {} },
+        live: { values: {}, links: {} },
       }),
     ];
     const { unmount } = render(
@@ -348,7 +353,7 @@ describe("the Metrics panel", () => {
         madeAt: null,
         action: "created",
         changed: [],
-        live: { values: {} },
+        live: { values: {}, links: {} },
       }),
     ];
     const { unmount } = render(
@@ -459,7 +464,7 @@ describe("the Metrics panel", () => {
         ...waiting,
         action: "changed",
         changed: ["f1"],
-        live: { values: { f1: ["p3"] } },
+        live: { values: { f1: ["p3"] }, links: {} },
       }),
     ];
     const added: Field = {

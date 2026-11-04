@@ -32,6 +32,37 @@ const conflict = 409;
 const nearLimit = 5;
 
 // The count of characters, shown only near the limit, and in red over it.
+// Who may see the values chosen from a list, or held in a column with a visibility of its own.
+export function VisibleTo({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: Tier;
+  onChange: (tier: Tier) => void;
+}) {
+  return (
+    <Stack gap={6}>
+      <Text fz="sm" fw={500} id={id}>
+        Visible to
+      </Text>
+      <SegmentedControl
+        aria-labelledby={id}
+        value={value}
+        onChange={(chosen) => {
+          onChange(tierSchema.parse(chosen));
+        }}
+        data={tierSchema.options.map((tier) => ({
+          value: tier,
+          label: visibilityName(tier),
+        }))}
+        w="fit-content"
+      />
+    </Stack>
+  );
+}
+
 export function Count({
   length,
   maximum,
@@ -152,23 +183,11 @@ export function ListDialog({
             setDescription(event.currentTarget.value);
           }}
         />
-        <Stack gap={6}>
-          <Text fz="sm" fw={500} id="list-visibility">
-            Visible to
-          </Text>
-          <SegmentedControl
-            aria-labelledby="list-visibility"
-            value={visibility}
-            onChange={(value) => {
-              setVisibility(tierSchema.parse(value));
-            }}
-            data={tierSchema.options.map((tier) => ({
-              value: tier,
-              label: visibilityName(tier),
-            }))}
-            w="fit-content"
-          />
-        </Stack>
+        <VisibleTo
+          id="list-visibility"
+          value={visibility}
+          onChange={setVisibility}
+        />
         {saving.error && !refusedAsTaken && (
           <Text fz="sm" c="red" role="alert">
             {describeProblem(

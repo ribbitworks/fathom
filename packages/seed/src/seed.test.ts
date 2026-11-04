@@ -94,6 +94,41 @@ describe("seeding", () => {
     expect(await totalOf(people)).toBe(20);
   });
 
+  it("records each link a removed person had", async () => {
+    const [person] = organization.people;
+    const personId = String(person?.id);
+    const link = { address: "https://wiki.example.test/", text: "Wiki" };
+    const [column] = await connection
+      .insert(fields)
+      .values({
+        tableName: "people",
+        name: "Fictional Hand Link",
+        type: "link",
+        visibility: "general",
+      })
+      .returning({ id: fields.id });
+    const fieldId = String(column?.id);
+    await connection.insert(fieldValues).values({
+      fieldId,
+      personId,
+      linkAddress: link.address,
+      linkText: link.text,
+    });
+    await unseed(connection, organization);
+    const [removed] = await connection
+      .select({ oldValue: changes.oldValue })
+      .from(changes)
+      .where(
+        and(
+          eq(changes.recordId, personId),
+          eq(changes.field, `value:${fieldId}`),
+        ),
+      );
+    expect(removed?.oldValue).toEqual(link);
+    await connection.delete(fields).where(eq(fields.id, fieldId));
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
   it("removes only what seeding added, keeping a column and list that people added by hand use", async () => {
     const [site] = organization.columns;
     const [sites, positions] = organization.lists;

@@ -17,7 +17,7 @@ import {
 } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { type Actor, mostSensitive, seesTier } from "../access.ts";
+import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import {
   type Change,
@@ -73,10 +73,15 @@ const toBeRemoved =
 export const fieldRecord = (row: FieldRow): Recorded => ({
   tableName: row.tableName,
   name: row.name,
+  type: row.type,
   listId: row.listId,
+  visibility: row.visibility,
   multiple: row.multiple,
   required: row.required,
 });
+
+// Columns recorded before web link columns hold no type, and choose from a list.
+const isLinkColumn = (field: Recorded) => field.type === "link";
 
 // The People table's columns, live and in drafts, the live order of every column, and the draft of
 // the order, read together, with the lists they draw on, as the viewer sees them, with the records
@@ -265,13 +270,16 @@ function refuseHeldIn(held: Held | undefined): void {
   if (held !== undefined) throw new ConflictError(heldMessage(held.holder));
 }
 
-// The tier of a column's values: its list's, live or as drafted, whichever is more sensitive.
+// The tier of a column's values: a choice column's list's, live or as drafted, whichever is more
+// sensitive, or a web link column's visibility.
 export const columnTier = (state: ColumnsState, field: Recorded): Tier =>
-  listTier(state.lists, String(field.listId));
+  isLinkColumn(field)
+    ? storedTier(field.visibility)
+    : listTier(state.lists, String(field.listId));
 
 // Whether a column's draft draws on a list only drafted to be added, whose draft it then uses.
 export const usesAddedList = (state: ColumnsState, field: Recorded) =>
-  !state.lists.lists.has(String(field.listId));
+  !isLinkColumn(field) && !state.lists.lists.has(String(field.listId));
 
 const badRequest = (message: string) => new BadRequestError(message);
 
@@ -321,18 +329,38 @@ export const columnRow = (id: string, field: Recorded): FieldRow => ({
   id,
   tableName: String(field.tableName),
   name: String(field.name),
-  listId: String(field.listId),
+  ...(isLinkColumn(field)
+    ? { type: "link", listId: null, visibility: String(field.visibility) }
+    : { type: "choice", listId: String(field.listId), visibility: null }),
   multiple: field.multiple === true,
   required: field.required === true,
 });
 
-export const toFieldOut = (id: string, field: Recorded): Field => ({
-  id,
-  name: String(field.name),
-  listId: String(field.listId),
-  multiple: field.multiple === true,
-  required: field.required === true,
+export const toFieldOut = (id: string, field: Recorded): Field => {
+  const row = columnRow(id, field);
+  return {
+    id,
+    name: row.name,
+    type: row.type === "link" ? "link" : "choice",
+    listId: row.listId,
+    visibility: row.visibility === null ? null : storedTier(row.visibility),
+    multiple: row.multiple,
+    required: row.required,
+  };
+};
+
+// A column's settings as a request asks for them, as recorded.
+const requested = (request: FieldRequest): Recorded => ({
+  tableName: table,
+  name: request.name,
+  type: request.type,
+  listId: request.listId ?? null,
+  visibility: request.visibility ?? null,
+  multiple: request.multiple,
+  required: request.required,
 });
+
+const sameType = "A column's type cannot change";
 
 // Saves a column's draft as wanted and records the changes, clearing a rejection.
 async function saveFieldDraft(
@@ -378,9 +406,11 @@ export async function createField(
 ): Promise<Saved<Field>> {
   return drafting(database, madeBy, async (transaction, state) => {
     if (nameTaken(state, request.name)) throw new ConflictError(duplicateField);
-    await checkList(transaction, state, request.listId, badRequest);
+    if (request.listId !== undefined) {
+      await checkList(transaction, state, request.listId, badRequest);
+    }
     const id = randomUUID();
-    const field = { tableName: table, ...request };
+    const field = requested(request);
     // A new column has no values, so it can be required only while there is no one yet.
     await checkValuesFit(
       transaction,
@@ -417,6 +447,9 @@ export async function updateField(
 ): Promise<Saved<Field>> {
   return drafting(database, madeBy, async (transaction, state) => {
     const field = changeableField(state, id);
+    if (columnRow(id, field).type !== request.type) {
+      throw new BadRequestError(sameType);
+    }
     if (nameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateField);
     }
@@ -427,10 +460,10 @@ export async function updateField(
       state.fields.get(id) ?? { ...field, required: false },
     );
     await checkValuesFit(transaction, current, request);
-    if (request.listId !== current.listId) {
+    if (request.listId !== undefined && request.listId !== current.listId) {
       await checkList(transaction, state, request.listId, badRequest);
     }
-    const after = { ...field, ...request };
+    const after = { ...field, ...requested(request) };
     const changeSetId = await saveFieldDraft(
       transaction,
       madeBy,

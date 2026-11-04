@@ -32,6 +32,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 - **Undo while adding people:** Undoing a change while people being added are still saving, or later undoing a change made while they were, briefly shows the table without them, or with them as they were before they were saved, until it reloads.
 - **Splitting the People table:** `apps/web/src/people-grid.tsx` holds the table's editing, its menus, and how drafts of columns and their order are shown, and is large enough to split, such as the live copies of columns and the marks under their names into a module of their own. Found in review on 2026-11-02.
+- **The seed's change history tiers:** The seed records every change to people's values as General, whatever the tier of the column, so a Restricted or Confidential column's seeded values show in the change history to users who may not see them. Only fictional seed data is affected. Found in review on 2026-11-03.
 - **Pasting several choices:** Pasting into a column that takes several choices reads each cell as one choice name. How several are pasted into one cell was left for later by the owner.
 
 ## Drafts
@@ -47,4 +48,5 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Development
 
+- **No tests in the shared package:** `packages/shared` has no test runner of its own, so its rules, such as which web addresses are accepted, are tested from the web app and the server instead, and its coverage is not measured on its own. Found in review on 2026-11-03.
 - **Files the code scan skips without reporting them:** Semgrep skips files larger than 1 MB and files it judges to be minified, and its results list them only in verbose mode, so the security report cannot tell they were skipped. Fathom's repository has no such files today. Deferred until it has.

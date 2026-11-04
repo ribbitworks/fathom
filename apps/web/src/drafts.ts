@@ -153,12 +153,13 @@ export function usedDrafts(
       listIds.add(list.id);
     }
   }
-  for (const field of fields) {
+  for (const { id, listId } of fields) {
     if (
-      (selection.columns.includes(field.id) || fieldIds.has(field.id)) &&
-      addedList(lists, field.listId)
+      (selection.columns.includes(id) || fieldIds.has(id)) &&
+      listId !== null &&
+      addedList(lists, listId)
     ) {
-      listIds.add(field.listId);
+      listIds.add(listId);
     }
   }
   return {
@@ -263,6 +264,7 @@ export function usingDrafts(
       .filter(
         ({ id, listId, draft }) =>
           draft?.action === "created" &&
+          listId !== null &&
           selection.lists.includes(listId) &&
           addedList(lists, listId) &&
           !selection.columns.includes(id),

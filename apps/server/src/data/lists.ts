@@ -30,7 +30,7 @@ import type {
 import { type Tier, tierSchema } from "@fathom/shared";
 import { and, asc, count, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { mostSensitive } from "../access.ts";
+import { mostSensitive, storedTier } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import {
   type Change,
@@ -195,7 +195,7 @@ export function listTier(state: ListsState, listId: string): Tier {
   // A tier the server no longer knows is treated as the most sensitive rather than trusted.
   return mostSensitive(
     (versions.length === 0 ? [{}] : versions).map((version) =>
-      tierSchema.catch("confidential").parse(version.visibility),
+      storedTier(version.visibility),
     ),
   );
 }

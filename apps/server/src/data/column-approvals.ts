@@ -118,16 +118,21 @@ export async function approveColumnDrafts(
       continue;
     }
     const after = columnRow(id, field);
-    // The list is locked, so it cannot be retired while the column comes to draw on it.
-    const [list] = await transaction
-      .select({ retired: lists.retired })
-      .from(lists)
-      .where(eq(lists.id, after.listId))
-      .for("share");
-    if (list === undefined || (list.retired && live?.listId !== after.listId)) {
-      throw new ConflictError(
-        `The list the column ${after.name} draws on is no longer offered; change the column, then approve it`,
-      );
+    if (after.listId !== null) {
+      // The list is locked, so it cannot be retired while the column comes to draw on it.
+      const [list] = await transaction
+        .select({ retired: lists.retired })
+        .from(lists)
+        .where(eq(lists.id, after.listId))
+        .for("share");
+      if (
+        list === undefined ||
+        (list.retired && live?.listId !== after.listId)
+      ) {
+        throw new ConflictError(
+          `The list the column ${after.name} draws on is no longer offered; change the column, then approve it`,
+        );
+      }
     }
     const before =
       live === undefined ? { ...after, required: false } : columnRow(id, live);
@@ -137,10 +142,10 @@ export async function approveColumnDrafts(
       await appendColumn(transaction, id);
       made.push(...fieldChanges(id, "created", undefined, after));
     } else {
-      const { name, listId, multiple, required } = after;
+      const { name, listId, visibility, multiple, required } = after;
       await transaction
         .update(fields)
-        .set({ name, listId, multiple, required })
+        .set({ name, listId, visibility, multiple, required })
         .where(eq(fields.id, id));
       made.push(...fieldChanges(id, "changed", before, after));
     }

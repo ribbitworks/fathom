@@ -62,6 +62,7 @@ const sortNames: Record<Kind, [string, string]> = {
   text: ["Sort A to Z", "Sort Z to A"],
   date: ["Oldest first", "Newest first"],
   choice: ["List order", "Reverse list order"],
+  link: ["Sort A to Z", "Sort Z to A"],
 };
 
 // Lists of more choices than this can be narrowed by typing.
@@ -175,7 +176,8 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
       if (filter.empty) parts.push("no date");
       return `${column.label}: ${parts.join(" or ")}`;
     }
-    case "text": {
+    case "text":
+    case "link": {
       const contains = (filter.contains ?? "").trim();
       if (contains !== "") parts.push(`contains “${contains}”`);
       if (filter.empty) parts.push("empty");
@@ -977,6 +979,7 @@ function FilterForm({
         </Stack>
       );
     case "text":
+    case "link":
       return (
         <Stack gap="xs">
           <TextInput

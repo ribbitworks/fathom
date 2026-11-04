@@ -21,7 +21,7 @@ import {
   unpublishedDrafts,
   users,
 } from "@fathom/db";
-import { type Tier, tierSchema } from "@fathom/shared";
+import { isLink, type Tier } from "@fathom/shared";
 import {
   type AnyColumn,
   and,
@@ -33,9 +33,9 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { mostSensitive } from "../access.ts";
+import { mostSensitive, storedTier } from "../access.ts";
 import { ConflictError } from "../errors.ts";
-import type { Change, Transaction } from "./changes.ts";
+import { type Change, stableJson, type Transaction } from "./changes.ts";
 import type { ColumnInfo } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
@@ -83,7 +83,7 @@ export const rejectedField = "rejected";
 
 // Values as stored, so lists of choices compare by what they hold.
 const same = (first: unknown, second: unknown) =>
-  JSON.stringify(first ?? null) === JSON.stringify(second ?? null);
+  stableJson(first ?? null) === stableJson(second ?? null);
 
 // A person's choices for a column, cleared when there are none.
 const isEmpty = (value: unknown) =>
@@ -547,7 +547,7 @@ export async function draftMakers(
         makers.delete(row.recordId);
         continue;
       }
-      const recorded = tierSchema.catch("confidential").parse(row.tier);
+      const recorded = storedTier(row.tier);
       if (
         row.kind === "rejection" ||
         row.kind === "resubmission" ||
@@ -712,20 +712,28 @@ export function clearedRejection(
 export const asDraft = (made: readonly Change[]): Change[] =>
   made.map((change) => ({ ...change, draft: true }));
 
-// The columns' values as a draft holds them, for checking that a column's settings fit the drafts
-// too: each draft, published or not, that adds or changes a person, with its choices by column, as
-// the person will have them.
+// How many values a recorded value holds: its choices, or one link, or undefined when none is
+// recorded.
+export function valueCount(value: unknown): number | undefined {
+  if (Array.isArray(value)) return value.length;
+  if (isLink(value)) return 1;
+  return undefined;
+}
+
+// A column's values as drafts hold them, for checking that the column's settings fit the drafts
+// too: for each draft, published or not, that adds or changes a person, how many values it gives
+// the column, or undefined when it leaves the column as it is.
 export async function draftedValues(
   reader: Reader,
   columnId: string,
-): Promise<{ adds: boolean; chosen: string[] | undefined }[]> {
+): Promise<{ adds: boolean; held: number | undefined }[]> {
   const rows = [];
   for (const table of [drafts, unpublishedDrafts]) {
     rows.push(
       ...(await reader
         .select({
           action: table.action,
-          chosen: sql<unknown>`${table.fields} -> ${`value:${columnId}`}::text`,
+          value: sql<unknown>`${table.fields} -> ${`value:${columnId}`}::text`,
         })
         .from(table)
         .where(
@@ -736,14 +744,15 @@ export async function draftedValues(
         )),
     );
   }
-  return rows.map(({ action, chosen }) => ({
+  return rows.map(({ action, value }) => ({
     adds: action === "created",
-    chosen: Array.isArray(chosen) ? chosen.map(String) : undefined,
+    held: valueCount(value),
   }));
 }
 
-// Whether the columns hold a person as recorded: each value from its column's list, one choice
-// unless the column takes several, and a value in every required column.
+// Whether the columns hold a person as recorded: each choice column's values from its list, one
+// choice unless the column takes several, a link only in a web link column, and a value in every
+// required column.
 export function fitsColumns(
   columns: readonly ColumnInfo[],
   listOf: ReadonlyMap<string, string>,
@@ -758,6 +767,9 @@ export function fitsColumns(
     !strayValue &&
     columns.every((column) => {
       const value = person[`value:${column.id}`];
+      if (column.type === "link") {
+        return isLink(value) || (!column.required && isEmpty(value));
+      }
       const chosen = Array.isArray(value) ? value.map(String) : [];
       return (
         (!column.required || chosen.length > 0) &&

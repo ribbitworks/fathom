@@ -10,6 +10,7 @@ import {
   type ChangedField,
   type ChangeValue,
   type Field,
+  linkInWords,
   type List,
   type Person,
   type PersonDraft,
@@ -66,12 +67,31 @@ export function personDraftFields(
       ];
     }
     const column = fields.find(({ id }) => id === key);
+    const named = column === undefined ? {} : { column: column.name };
+    if (column?.type === "link") {
+      // The key is the column's own, which the draft names.
+      /* eslint-disable security/detect-object-injection */
+      const before = draft.live.links[key];
+      const after = person.links[key];
+      /* eslint-enable security/detect-object-injection */
+      return [
+        {
+          key,
+          field: {
+            field: "value",
+            ...named,
+            oldValue: before === undefined ? null : linkInWords(before),
+            newValue: after === undefined ? null : linkInWords(after),
+          },
+        },
+      ];
+    }
     return [
       {
         key,
         field: {
           field: "value",
-          ...(column === undefined ? {} : { column: column.name }),
+          ...named,
           oldValue: labels(live.get(key)),
           newValue: labels(now.get(key)),
         },

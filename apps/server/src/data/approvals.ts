@@ -60,7 +60,7 @@ import {
   asksForLists,
   rejectListDrafts,
 } from "./list-approvals.ts";
-import { inListOrder, readColumns, valueField } from "./values.ts";
+import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
 
 const noDraft = "One of these people has no draft; refresh to see the latest";
 
@@ -126,20 +126,17 @@ const detailColumns = (id: string, person: Recorded) => ({
   endDate: (person.endDate as string | null | undefined) ?? null,
 });
 
-// The choices a person is to have in each column a draft sets, by column.
-function valuesSet(draft: Draft, person: Recorded): [string, string[]][] {
+// The values a person is to have in each column a draft sets, by column, as recorded.
+function valuesSet(draft: Draft, person: Recorded): [string, unknown][] {
   const fields =
     draft.action === "created"
       ? Object.keys(person)
       : Object.keys(draft.fields);
-  return fields.flatMap((field): [string, string[]][] => {
+  return fields.flatMap((field): [string, unknown][] => {
     const fieldId = fieldOfValue(field);
     // The field is the person's own.
     // eslint-disable-next-line security/detect-object-injection
-    const chosen = person[field];
-    return fieldId === null
-      ? []
-      : [[fieldId, Array.isArray(chosen) ? chosen.map(String) : []]];
+    return fieldId === null ? [] : [[fieldId, person[field]]];
   });
 }
 
@@ -151,7 +148,7 @@ const detailNames = new Set([
 ]);
 
 // Makes the live people as their drafts make them, in as few statements as PostgreSQL allows:
-// people added together, removed together, and their columns' choices replaced together. Each
+// people added together, removed together, and their columns' values replaced together. Each
 // person whose details change is updated on their own.
 async function apply(
   transaction: Transaction,
@@ -160,7 +157,7 @@ async function apply(
   const added: ReturnType<typeof detailColumns>[] = [];
   const removed: string[] = [];
   const replaced: { personId: string; fieldId: string }[] = [];
-  const chosen: { personId: string; fieldId: string; choiceId: string }[] = [];
+  const chosen: ReturnType<typeof valueRows> = [];
   for (const [id, { draft, person }] of wanted) {
     if (person === undefined) {
       removed.push(id);
@@ -180,11 +177,9 @@ async function apply(
         .set({ preferredName, employeeId, startDate, endDate })
         .where(eq(people.id, id));
     }
-    for (const [fieldId, choiceIds] of valuesSet(draft, person)) {
+    for (const [fieldId, value] of valuesSet(draft, person)) {
       replaced.push({ personId: id, fieldId });
-      chosen.push(
-        ...choiceIds.map((choiceId) => ({ personId: id, fieldId, choiceId })),
-      );
+      chosen.push(...valueRows(id, fieldId, value));
     }
   }
   for (const chunk of inChunks(removed)) {

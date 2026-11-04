@@ -213,12 +213,14 @@ async function seedColumnDrafts(
   const levels = listCalled(organization, "Levels");
   const level = columnCalled(organization, "Level");
   const { result: previousSite } = await data.people.createField(editor, {
+    type: "choice",
     name: "Previous site",
     listId: sites.id,
     multiple: false,
     required: false,
   });
   await data.people.updateField(editor, level, {
+    type: "choice",
     name: "Grade",
     listId: levels.id,
     multiple: false,
@@ -227,6 +229,7 @@ async function seedColumnDrafts(
   await data.unpublished.publish(editor);
   const second = await actorOf(database, secondEditorEmail);
   await data.people.updateField(second, level, {
+    type: "choice",
     name: "Grade",
     listId: levels.id,
     multiple: false,
@@ -262,6 +265,7 @@ async function seedSkills(
 ): Promise<void> {
   const data = createDataAccess(database);
   const { result: column } = await data.people.createField(editor, {
+    type: "choice",
     name: skillsColumnName,
     listId,
     multiple: true,

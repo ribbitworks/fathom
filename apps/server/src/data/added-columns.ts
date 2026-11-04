@@ -7,7 +7,7 @@
 
 import { type Database, fields } from "@fathom/db";
 import { inArray } from "drizzle-orm";
-import { mostSensitive } from "../access.ts";
+import { mostSensitive, storedTier } from "../access.ts";
 import { type Draft, readDrafts, refuseHeld, type Viewer } from "./drafts.ts";
 import { draftedList, listTier, readState } from "./lists.ts";
 import { type ColumnInfo, inListOrder, readColumns } from "./values.ts";
@@ -20,7 +20,8 @@ const added = (drafts: ReadonlyMap<string, Draft>, live: ReadonlySet<string>) =>
   );
 
 // The People table's live columns, then those drafted to be added that the viewer sees, as their
-// drafts make them, each with its values' tier: an added column's is its list's, live or as drafted,
+// drafts make them, each with its values' tier: an added choice column's is its list's, live or as
+// drafted, and an added web link column's its visibility, published or as the viewer drafted it,
 // whichever is more sensitive. An added column is required only once approved, which checks that
 // the people fit it. Locking locks the live columns, as readColumns does.
 export async function columnsWithAdded(
@@ -34,18 +35,46 @@ export async function columnsWithAdded(
   if (columns.length === 0) return live;
   const lists = await readState(reader, viewer);
   const published = await readState(reader);
+  // Only an added web link column's tier depends on its published draft.
+  const publishedFields = columns.some(
+    ([, draft]) => draft.fields.type === "link",
+  )
+    ? await readDrafts(reader, "field")
+    : new Map<string, Draft>();
   return [
     ...live,
     ...columns.map(([id, draft]): ColumnInfo => {
       const field = draft.fields;
-      const listId = String(field.listId);
-      return {
+      const common = {
         id,
         tableName: String(field.tableName),
         name: String(field.name),
-        listId,
-        multiple: field.multiple === true,
         required: false,
+      };
+      if (field.type === "link") {
+        return {
+          ...common,
+          type: "link",
+          listId: null,
+          visibility: String(field.visibility),
+          multiple: false,
+          // The viewer's own unpublished change never makes its values less sensitive.
+          tier: mostSensitive([
+            storedTier(field.visibility),
+            storedTier(
+              publishedFields.get(id)?.fields.visibility ?? field.visibility,
+            ),
+          ]),
+          listRetired: false,
+        };
+      }
+      const listId = String(field.listId);
+      return {
+        ...common,
+        type: "choice",
+        listId,
+        visibility: null,
+        multiple: field.multiple === true,
         // The viewer's own unpublished change to the list never makes its values less sensitive.
         tier: mostSensitive([
           listTier(lists, listId),

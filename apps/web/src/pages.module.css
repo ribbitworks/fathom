@@ -330,6 +330,23 @@
   font-weight: 400;
 }
 
+/* A web link in a cell reads as a link, and is cut short like any other cell's text. */
+.cellLink {
+  color: var(--mantine-color-anchor);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.cellLink,
+.linkLabel {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
 .cellBelow {
   display: flex;
   gap: 8px;

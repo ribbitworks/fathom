@@ -84,13 +84,18 @@ function withView(views: readonly SavedView[], saved: SavedView): SavedView[] {
 
 // A person with a change applied, as the table shows it before it is saved.
 function changed(person: Person, change: PersonChange): Person {
-  const { values, preferredName, employeeId, ...dates } = change;
+  const { values, links, preferredName, employeeId, ...dates } = change;
   return {
     ...person,
     ...dates,
     preferredName: preferredName ?? person.preferredName,
     employeeId: employeeId ?? person.employeeId,
     values: { ...person.values, ...values },
+    links: Object.fromEntries(
+      Object.entries({ ...person.links, ...links }).flatMap(([key, link]) =>
+        link === null ? [] : [[key, link]],
+      ),
+    ),
   };
 }
 
@@ -105,7 +110,7 @@ function adding(id: string, request: PersonRequest): Person {
       action: "created",
       // A draft adding someone changes everything, so names nothing in particular.
       changed: [],
-      live: { values: {} },
+      live: { values: {}, links: {} },
       state: "waiting",
       madeBy: null,
       madeAt: new Date().toISOString(),
@@ -113,13 +118,22 @@ function adding(id: string, request: PersonRequest): Person {
   };
 }
 
-// A person as they are live, without their draft.
+// A person as they are live, without their draft. A web link column the draft changes that is not
+// in the live links had no link.
 function asLive(person: Person, draft: PersonDraft): Person {
-  const { values, ...details } = draft.live;
+  const { values, links, ...details } = draft.live;
   const live: Person = {
     ...person,
     ...(details as Partial<Person>),
     values: { ...person.values, ...values },
+    links: {
+      ...Object.fromEntries(
+        Object.entries(person.links).filter(
+          ([key]) => !draft.changed.includes(key),
+        ),
+      ),
+      ...links,
+    },
   };
   delete live.draft;
   return live;
@@ -132,7 +146,7 @@ function drafted(person: Person): Person {
     draft: {
       action: "deleted",
       changed: [],
-      live: { values: {} },
+      live: { values: {}, links: {} },
       state: "waiting",
       madeBy: null,
       madeAt: new Date().toISOString(),

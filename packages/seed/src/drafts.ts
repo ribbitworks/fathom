@@ -226,6 +226,7 @@ export async function seedDrafts(
         startDate: newcomer.startDate,
         endDate: newcomer.endDate,
         values: newcomer.values,
+        links: {},
       })),
     );
   }

@@ -34,7 +34,11 @@ import type {
 import {
   builtInColumnNames,
   draftFilterKey,
+  isLink,
+  type Link,
+  linkLabel,
   personLengths,
+  webAddress,
 } from "@fathom/shared";
 import {
   ActionIcon,
@@ -54,6 +58,7 @@ import {
   useState,
 } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
+import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
 import {
   configDraftFields,
   draftLines,
@@ -135,10 +140,10 @@ export interface PeopleActions {
   resubmitColumn: (target: ColumnDraftTarget) => void;
 }
 
-// A person's own detail, keyed by its name, or a column drawing on a list, keyed by its identifier.
+// A person's own detail, keyed by its name, or an added column, keyed by its identifier.
 export interface Column extends TableColumn<Person> {
   required: boolean;
-  // For columns drawing on a list: the column and its list's choices.
+  // For added columns: the column, and, for one drawing on a list, its list's choices.
   field?: Field;
   choices: Choice[];
 }
@@ -176,8 +181,8 @@ const headerPadding = "0.5rem";
 const pasteLimit = 1000;
 
 // The People table's columns, in the order given by their keys: each person's name and Employee ID,
-// the columns drawing on lists, and, for those who may see them, start and end dates. A column the
-// order does not name yet comes at the end.
+// the added columns, and, for those who may see them, start and end dates. A column the order does
+// not name yet comes at the end.
 export function columnsFor(
   fields: readonly Field[],
   lists: readonly List[],
@@ -204,16 +209,19 @@ export function columnsFor(
     ...(showDates
       ? [builtIn("startDate", "date"), builtIn("endDate", "date")]
       : []),
-    ...fields.map((field): Column => ({
-      key: field.id,
-      label: field.name,
-      kind: "choice",
-      required: field.required,
-      field,
-      choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
-      multiple: field.multiple,
-      value: (person) => personValue(person, "choice", field.id),
-    })),
+    ...fields.map((field): Column => {
+      const kind = field.type === "link" ? "link" : "choice";
+      return {
+        key: field.id,
+        label: field.name,
+        kind,
+        required: field.required,
+        field,
+        choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
+        multiple: field.multiple,
+        value: (person) => personValue(person, kind, field.id),
+      };
+    }),
   ];
   const place = (column: Column) => {
     const at = order.indexOf(column.key);
@@ -231,8 +239,10 @@ function personValue(
   key: string,
 ): CellValue {
   // The key is a column's own.
-  // eslint-disable-next-line security/detect-object-injection
+  /* eslint-disable security/detect-object-injection */
   if (kind === "choice") return person.values[key] ?? [];
+  if (kind === "link") return person.links[key] ?? null;
+  /* eslint-enable security/detect-object-injection */
   const detail = person[key as DetailKey];
   return detail ?? "";
 }
@@ -258,6 +268,7 @@ export interface PeopleGridHandle {
 // A column's live value, for a person whose draft changes it.
 function liveValue(draft: PersonDraft, column: Column): CellValue {
   if (column.kind === "choice") return draft.live.values[column.key] ?? [];
+  if (column.kind === "link") return draft.live.links[column.key] ?? null;
   return draft.live[column.key as DetailKey] ?? "";
 }
 
@@ -285,6 +296,12 @@ export function livePeople(people: readonly Person[]): Person[] {
         return live.length === 0 ? [] : [[key, live]];
       }),
     ]);
+    const links: Record<string, Link> = {
+      ...Object.fromEntries(
+        Object.entries(rest.links).filter(([key]) => !columns.includes(key)),
+      ),
+      ...draft.live.links,
+    };
     const details: Partial<Person> = Object.fromEntries(
       draft.changed
         .filter(builtInDetail)
@@ -293,7 +310,7 @@ export function livePeople(people: readonly Person[]): Person[] {
           draft.live[key as DetailKey] ?? null,
         ]),
     );
-    return [{ ...rest, ...details, values }];
+    return [{ ...rest, ...details, values, links }];
   });
 }
 
@@ -323,12 +340,20 @@ const breaksDown = (column: Column) =>
 const builtInDetail = (key: string) =>
   ["preferredName", "employeeId", "startDate", "endDate"].includes(key);
 
+// What clears a column's cell.
+const emptyValue = (column: Column): CellValue => {
+  if (column.kind === "choice") return [];
+  return column.kind === "link" ? null : "";
+};
+
 function newRowValue(newRow: NewRow, column: Column): CellValue {
-  return newRow.values[column.key] ?? (column.kind === "choice" ? [] : "");
+  return newRow.values[column.key] ?? emptyValue(column);
 }
 
 function isEmpty(value: CellValue): boolean {
-  return Array.isArray(value) ? value.length === 0 : value.trim() === "";
+  if (value === null) return true;
+  if (Array.isArray(value)) return value.length === 0;
+  return typeof value === "string" && value.trim() === "";
 }
 
 // How a column is sorted, as assistive technology reads it.
@@ -367,6 +392,7 @@ export function columnWidth(
       cells = longestDay;
       break;
     case "text":
+    case "link":
       cells = longestText.get(column.key) ?? 0;
       break;
   }
@@ -395,7 +421,7 @@ function longestTexts(
 ): Map<string, number> {
   return new Map(
     columns
-      .filter(({ kind }) => kind === "text")
+      .filter(({ kind }) => kind === "text" || kind === "link")
       .map((column) => [
         column.key,
         people.reduce(
@@ -409,6 +435,8 @@ function longestTexts(
 
 // A cell's value in words.
 function shown(column: Column, value: CellValue): string {
+  if (value === null) return "";
+  if (isLink(value)) return linkLabel(value);
   if (Array.isArray(value)) {
     return value
       .map((id) => column.choices.find((choice) => choice.id === id)?.label)
@@ -416,6 +444,15 @@ function shown(column: Column, value: CellValue): string {
       .join(", ");
   }
   return column.kind === "date" && isDay(value) ? formatDay(value) : value;
+}
+
+// What a cell shows: a web link as a link to follow, and anything else in words.
+function cellContent(column: Column, value: CellValue) {
+  return column.kind === "link" && isLink(value) ? (
+    <LinkCell link={value} />
+  ) : (
+    shown(column, value)
+  );
 }
 
 // The choices a cell offers: those offered in its list, and any retired ones it already has.
@@ -485,6 +522,12 @@ function requestFor(newRow: NewRow, columns: readonly Column[]): PersonRequest {
       .filter((column) => column.kind === "choice")
       .map((column) => [column.key, newRowValue(newRow, column) as string[]]),
   );
+  const links = Object.fromEntries(
+    columns.flatMap((column) => {
+      const link = newRowValue(newRow, column);
+      return column.kind === "link" && isLink(link) ? [[column.key, link]] : [];
+    }),
+  );
   return {
     preferredName: text("preferredName"),
     employeeId: text("employeeId"),
@@ -492,11 +535,13 @@ function requestFor(newRow: NewRow, columns: readonly Column[]): PersonRequest {
       ? { startDate: date("startDate"), endDate: date("endDate") }
       : {}),
     values,
+    links,
   };
 }
 
 // The new rows pasted text makes, from the given column across: one for each line, with each cell's
-// text matched to the column's choices by name, and any problem found.
+// text matched to the column's choices by name, or taken as a web link's address, and any problem
+// found.
 export function pastedRows(
   text: string,
   columns: readonly Column[],
@@ -513,6 +558,15 @@ export function pastedRows(
         const column = columns[from + offset];
         const content = cell.trim();
         if (column === undefined || content === "") continue;
+        if (column.kind === "link") {
+          const address = webAddress(content);
+          if (address === null) {
+            problem ??= `${column.label}: ${content} is not a web address`;
+          } else {
+            values[column.key] = { address, text: "" };
+          }
+          continue;
+        }
         if (column.kind !== "choice") {
           values[column.key] = content;
           continue;
@@ -591,6 +645,7 @@ export function liveFields(fields: readonly Field[]): Field[] {
         ...rest,
         name: draft.live.name ?? rest.name,
         listId: draft.live.listId ?? rest.listId,
+        visibility: draft.live.visibility ?? rest.visibility,
         multiple: draft.live.multiple ?? rest.multiple,
         required: draft.live.required ?? rest.required,
       },
@@ -1034,7 +1089,7 @@ export function PeopleGrid({
     setActive(cell);
     setEditing(cell);
     setMenuFor(undefined);
-    setText(typed ?? (Array.isArray(value) ? "" : value));
+    setText(typed ?? (typeof value === "string" ? value : ""));
     focusSoon(`${cellId(cell.row, cell.column)}-editor`);
   };
 
@@ -1091,12 +1146,15 @@ export function PeopleGrid({
     }
     setProblem(undefined);
     let change: PersonChange;
-    if (Array.isArray(value)) {
+    if (column.kind === "link") {
+      change = { links: { [column.key]: isLink(value) ? value : null } };
+    } else if (Array.isArray(value)) {
       change = { values: { [column.key]: value } };
     } else if (column.kind === "date") {
       change = { [column.key]: value === "" ? null : value };
     } else {
-      change = { [column.key]: value.trim() };
+      // Text columns hold text.
+      change = { [column.key]: (value as string).trim() };
     }
     actions.update(row.person, change);
     return true;
@@ -1277,7 +1335,7 @@ export function PeopleGrid({
       startEdit(cell);
     } else if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
-      save(cell, column.kind === "choice" ? [] : "");
+      save(cell, emptyValue(column));
     } else if (event.key.length === 1) {
       event.preventDefault();
       startEdit(cell, event.key);
@@ -1555,6 +1613,22 @@ export function PeopleGrid({
 
   const editor = (cell: Cell, column: Column, value: CellValue) => {
     const id = `${cellId(cell.row, cell.column)}-editor`;
+    if (column.kind === "link") {
+      return (
+        <LinkEditor
+          id={id}
+          name={column.label}
+          initial={isLink(value) ? value : undefined}
+          typed={text === "" ? undefined : text}
+          onDone={(link, how) => {
+            finish(cell, link, how);
+          }}
+          onCancel={() => {
+            stopEdit(cell);
+          }}
+        />
+      );
+    }
     if (Array.isArray(value)) {
       return (
         <ChoicePicker
@@ -1638,6 +1712,18 @@ export function PeopleGrid({
             }
           />
         )}
+        {columns.flatMap((column) => {
+          const link = column.value(person);
+          return column.kind === "link" && isLink(link)
+            ? [
+                <LinkMenuItem
+                  key={column.key}
+                  name={column.label}
+                  link={link}
+                />,
+              ]
+            : [];
+        })}
         {/* A rejected draft is back with its makers, until they send it again. */}
         {canApprove && decidable(person) && (
           <>
@@ -1968,7 +2054,7 @@ export function PeopleGrid({
                         >
                           {editingHere
                             ? editor(cell, column, valueAt(row, column))
-                            : shown(column, valueAt(row, column))}
+                            : cellContent(column, valueAt(row, column))}
                           {changes && !editingHere && (
                             <VisuallyHidden>
                               {live === undefined

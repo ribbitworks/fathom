@@ -576,3 +576,47 @@ describe("filters that are not columns", () => {
     ).toEqual(view({ filters: { long: { any: ["yes"] } } }));
   });
 });
+
+describe("web link columns", () => {
+  interface Linked {
+    id: string;
+    link: { address: string; text: string } | null;
+  }
+  const linkColumns: TableColumn<Linked>[] = [
+    {
+      key: "page",
+      label: "Page",
+      kind: "link",
+      choices: [],
+      multiple: false,
+      value: (row) => row.link,
+    },
+  ];
+  const linked: Linked[] = [
+    { id: "a", link: { address: "https://b.example.test/", text: "" } },
+    { id: "b", link: { address: "https://z.example.test/", text: "Alpha" } },
+    { id: "c", link: null },
+  ];
+  const shown = (changes: Partial<View>) =>
+    applyView(linked, linkColumns, view(changes)).map((row) => row.id);
+
+  it("are searched by their text and their address", () => {
+    expect(shown({ search: "alpha" })).toEqual(["b"]);
+    expect(shown({ search: "b.example" })).toEqual(["a"]);
+  });
+
+  it("are filtered by what their text or address contains, or by being empty", () => {
+    expect(shown({ filters: { page: { contains: "z.example" } } })).toEqual([
+      "b",
+    ]);
+    expect(shown({ filters: { page: { empty: true } } })).toEqual(["c"]);
+  });
+
+  it("are sorted by what they show, with empty ones last", () => {
+    expect(shown({ sort: [{ key: "page", descending: false }] })).toEqual([
+      "b",
+      "a",
+      "c",
+    ]);
+  });
+});

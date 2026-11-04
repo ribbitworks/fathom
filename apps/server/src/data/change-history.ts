@@ -22,6 +22,8 @@ import {
   type ChangeEntry,
   changeKindSchema,
   type ChangeValue,
+  isLink,
+  linkInWords,
   matchesWords,
   recordSearchText,
   searchWords,
@@ -39,7 +41,7 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { type Actor, mostSensitive, seesTier } from "../access.ts";
+import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
 import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
 import { personTier } from "./people.ts";
@@ -157,10 +159,7 @@ async function listTiersNow(
 ): Promise<(listId: string | undefined) => Tier> {
   const ids = [...new Set(facts.lists.values())];
   const tiers = new Map<string, Tier>(
-    [...facts.visibilities].map(([id, value]) => [
-      id,
-      tierSchema.catch("confidential").parse(value),
-    ]),
+    [...facts.visibilities].map(([id, value]) => [id, storedTier(value)]),
   );
   for (const chunk of inChunks(ids)) {
     const rows = await database
@@ -168,7 +167,7 @@ async function listTiersNow(
       .from(lists)
       .where(inArray(lists.id, chunk));
     for (const { id, visibility } of rows) {
-      tiers.set(id, tierSchema.catch("confidential").parse(visibility));
+      tiers.set(id, storedTier(visibility));
     }
   }
   return (listId) =>
@@ -186,6 +185,9 @@ function shown(
       const found = builtInColumnNames.get(id) ?? name(id);
       return found === undefined ? [] : [found];
     });
+  if (fieldOfValue(row.field) !== null && isLink(value)) {
+    return linkInWords(value);
+  }
   if (
     fieldOfValue(row.field) !== null ||
     row.recordType === "column-order" ||
@@ -214,13 +216,16 @@ async function visibleRows(
 ): Promise<{ row: StoredChange; tier: Tier }[]> {
   const listTier = await listTiersNow(database, facts);
   // A person's choices are as sensitive as the lists they come from, and as their column's list,
-  // even once the column is deleted or draws on another list.
+  // even once the column is deleted or draws on another list, and their links as the web link
+  // column's visibility last recorded, even once the column is deleted.
   const valueTiers = (row: StoredChange): Tier[] => {
     const columnId = fieldOfValue(row.field);
     if (columnId === null) return [];
+    const visibility = facts.visibilities.get(columnId);
     return [
       tierNow(row.field),
       listTier(facts.lists.get(columnId)),
+      ...(visibility === undefined ? [] : [storedTier(visibility)]),
       ...[row.oldValue, row.newValue]
         .flatMap(strings)
         .map((choiceId) => listTier(facts.lists.get(choiceId))),
@@ -261,7 +266,7 @@ async function visibleRows(
       : await viewTiersNow(database, held);
   return rows.flatMap((row) => {
     // A tier the server no longer knows is treated as the most sensitive rather than trusted.
-    const recorded = tierSchema.catch("confidential").parse(row.tier);
+    const recorded = storedTier(row.tier);
     const tier = mostSensitive([
       recorded,
       ...(row.recordType === "person" ? valueTiers(row) : []),
