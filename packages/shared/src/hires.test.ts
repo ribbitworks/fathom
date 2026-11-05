@@ -1,111 +1,94 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for planned hires: the moves between hiring states a change may make, and what a request to
-// add or change a hire accepts.
+// Tests for planned hires: what a request to add or change a hire accepts, and how a hire's
+// temporary ID is written.
 
 import { describe, expect, it } from "vitest";
 import {
-  type HiringState,
   hireChangeSchema,
-  hireLengths,
   hireRequestSchema,
-  hiringStateNames,
-  hiringStateSchema,
-  nextHiringStates,
+  hiringMeaningNames,
+  hiringMeaningSchema,
+  temporaryId,
 } from "./hires.ts";
+import { personLengths } from "./people.ts";
 
+const position = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
 const manager = "6f1c2b9e-4d3a-4f8b-9c7e-2a1b3c4d5e6f";
+const state = "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d";
 
-describe("moves between hiring states", () => {
-  it.each<[HiringState, HiringState[]]>([
-    ["proposed", ["approved", "cancelled"]],
-    ["approved", ["proposed", "recruiting", "cancelled"]],
-    ["recruiting", ["approved", "offer-accepted", "cancelled"]],
-    ["offer-accepted", ["recruiting", "cancelled"]],
-  ])("moves a hire %s one state either way, or cancels it", (state, next) => {
-    expect(nextHiringStates(state, null)).toEqual(next);
+describe("hiring meanings and temporary IDs", () => {
+  it("names each meaning", () => {
+    expect(Object.keys(hiringMeaningNames)).toEqual(
+      hiringMeaningSchema.options,
+    );
+    expect(Object.values(hiringMeaningNames)).toEqual(["Proposed", "Open"]);
   });
 
-  it("moves a cancelled hire back only to the state it left", () => {
-    expect(nextHiringStates("cancelled", "recruiting")).toEqual(["recruiting"]);
-  });
-
-  it("leaves a cancelled hire that left no state where it is", () => {
-    expect(nextHiringStates("cancelled", null)).toEqual([]);
-  });
-
-  it("never moves a filled hire", () => {
-    expect(nextHiringStates("filled", null)).toEqual([]);
-  });
-
-  it("names every state", () => {
-    expect(Object.keys(hiringStateNames)).toEqual(hiringStateSchema.options);
-    expect(Object.values(hiringStateNames)).toEqual([
-      "Proposed",
-      "Approved",
-      "Recruiting",
-      "Offer accepted",
-      "Filled",
-      "Cancelled",
-    ]);
+  it("writes a temporary ID as TBD- and its number", () => {
+    expect(temporaryId(7)).toBe("TBD-7");
   });
 });
 
 describe("adding a hire", () => {
-  it("starts it proposed, with no manager, unless told otherwise", () => {
-    expect(
-      hireRequestSchema.parse({
-        title: " Engineer ",
-        targetDate: "2027-03-01",
-      }),
-    ).toEqual({
-      title: "Engineer",
-      targetDate: "2027-03-01",
-      state: "proposed",
+  it("gives it a temporary ID, no target date, and no manager unless told otherwise", () => {
+    expect(hireRequestSchema.parse({ positionId: position })).toEqual({
+      requisition: null,
+      positionId: position,
+      targetDate: null,
       managerId: null,
     });
   });
 
-  it("takes any open state and a manager", () => {
+  it("takes a requisition, a target date, a state, and a manager", () => {
     expect(
       hireRequestSchema.parse({
-        title: "Engineer",
+        requisition: " REQ-1042 ",
+        positionId: position,
         targetDate: "2027-03-01",
-        state: "offer-accepted",
+        stateId: state,
         managerId: manager,
       }),
-    ).toMatchObject({ state: "offer-accepted", managerId: manager });
+    ).toEqual({
+      requisition: "REQ-1042",
+      positionId: position,
+      targetDate: "2027-03-01",
+      stateId: state,
+      managerId: manager,
+    });
   });
 
   it.each([
-    ["an empty title", { title: "  " }],
-    ["a title too long", { title: "x".repeat(hireLengths.title + 1) }],
+    ["no position", { positionId: undefined }],
+    ["an empty requisition", { requisition: "  " }],
+    [
+      "a requisition too long",
+      { requisition: "x".repeat(personLengths.employeeId + 1) },
+    ],
+    ["a requisition that looks like a temporary ID", { requisition: "tbd-12" }],
     ["a date that is not a day", { targetDate: "2027-03" }],
-    ["the filled state", { state: "filled" }],
-    ["the cancelled state", { state: "cancelled" }],
+    ["a state that is not an identifier", { stateId: "open" }],
     ["a manager that is not an identifier", { managerId: "someone" }],
   ])("refuses %s", (_what, wrong) => {
     expect(
-      hireRequestSchema.safeParse({
-        title: "Engineer",
-        targetDate: "2027-03-01",
-        ...wrong,
-      }).success,
+      hireRequestSchema.safeParse({ positionId: position, ...wrong }).success,
     ).toBe(false);
   });
 });
 
 describe("changing a hire", () => {
   it("takes any of its details alone", () => {
-    expect(hireChangeSchema.parse({ state: "cancelled" })).toEqual({
-      state: "cancelled",
+    expect(hireChangeSchema.parse({ stateId: state })).toEqual({
+      stateId: state,
     });
     expect(hireChangeSchema.parse({ managerId: null })).toEqual({
       managerId: null,
     });
   });
 
-  it("never fills a hire", () => {
-    expect(hireChangeSchema.safeParse({ state: "filled" }).success).toBe(false);
+  it("clears the requisition and the target date with null", () => {
+    expect(
+      hireChangeSchema.parse({ requisition: null, targetDate: null }),
+    ).toEqual({ requisition: null, targetDate: null });
   });
 });

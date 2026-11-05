@@ -66,6 +66,7 @@ import {
   columnsWithAdded,
   refuseHeldColumns,
 } from "./added-columns.ts";
+import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { refuseRemovingHiresPeople } from "./hires.ts";
@@ -104,6 +105,7 @@ const toBeRemoved =
 const detailFields = [
   "preferredName",
   "employeeId",
+  "positionId",
   "startDate",
   "endDate",
 ] as const;
@@ -135,6 +137,7 @@ export function recorded(
   const record: Recorded = {
     preferredName: row.preferredName,
     employeeId: row.employeeId,
+    positionId: row.positionId,
     startDate: row.startDate,
     endDate: row.endDate,
   };
@@ -461,6 +464,7 @@ async function readPeopleIn(
   const shownFields = new Set<string>([
     "preferredName",
     "employeeId",
+    "positionId",
     "teamName",
     ...(restricted ? ["startDate", "endDate", "managerId", "managerFrom"] : []),
     ...columns.map(({ id }) => valueField(id)),
@@ -506,6 +510,7 @@ async function readPeopleIn(
         id,
         preferredName: String(person.preferredName),
         employeeId: String(person.employeeId),
+        positionId: String(person.positionId),
         ...(restricted
           ? {
               startDate: (person.startDate as string | null) ?? null,
@@ -636,6 +641,9 @@ export async function createPeople(
     await lockDrafts(transaction);
     const columns = await columnsWithAdded(transaction, actor.user.id, true);
     const known = await choicesAskedFor(transaction, actor.user.id, requests);
+    for (const positionId of new Set(requests.map((one) => one.positionId))) {
+      await checkBuiltInChoice(transaction, "positions", positionId);
+    }
     const made: Change[] = [];
     const added: { id: string; fields: Recorded }[] = [];
     for (const request of requests) {
@@ -646,6 +654,7 @@ export async function createPeople(
         id,
         preferredName: request.preferredName,
         employeeId: request.employeeId,
+        positionId: request.positionId,
         startDate: request.startDate ?? null,
         endDate: request.endDate ?? null,
         isManager: false,
@@ -746,6 +755,14 @@ export async function updatePerson(
     if (person === undefined) {
       if (before === undefined) throw new NotFoundError(noPerson);
       throw new ConflictError(toBeRemoved);
+    }
+    if (change.positionId !== undefined) {
+      await checkBuiltInChoice(
+        transaction,
+        "positions",
+        change.positionId,
+        person.positionId,
+      );
     }
     const current = valuesOf(person);
     const changedValues = checkedValues(

@@ -110,7 +110,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 5.** Read the column headers from left to right.
-  - **Expected:** Name, Employee ID, Grade, Level, Site, Position, Role on team, Start, End, Manager, Manager since, Team, Team name, Previous site, Skills.
+  - **Expected:** Name, Employee ID, Grade, Level, Position, Site, Role on team, Start, End, Manager, Manager since, Team, Team name, Previous site, Skills.
   - **Notes:**
 
 ### DRAFT-02: A Workforce Administrator Can Discard Column Drafts but Not Approve Them
@@ -138,7 +138,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** In the Draft menu, select **Drafts applied**.
-  - **Expected:** The columns are Name, Employee ID, Grade, Site, Position, Start, End, Manager, Manager since, Team, Team name, Skills. No row or column has a green dot and **Live**.
+  - **Expected:** The columns are Name, Employee ID, Grade, Position, Site, Start, End, Manager, Manager since, Team, Team name, Skills. No row or column has a green dot and **Live**.
   - **Notes:**
 
 - [ ] **Step 2.** Open the Draft menu.
@@ -154,7 +154,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** In the Draft menu, select **Live only**.
-  - **Expected:** The columns are Name, Employee ID, Site, Position, Level, Role on team, Start, End, Manager, Manager since, Team, Team name. No column or row has a mark.
+  - **Expected:** The columns are Name, Employee ID, Position, Site, Level, Role on team, Start, End, Manager, Manager since, Team, Team name. No column or row has a mark.
   - **Notes:**
 
 - [ ] **Step 2.** Open the Draft menu.
@@ -250,7 +250,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** Signed in (P1) as `engineering.director@fathom.test`. **Lists** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the mark beside each list's name.
-  - **Expected:** Certifications: **Draft: removed**, with the name struck through. Languages: **Draft: retired**. Levels: **Draft: reordered**. Positions: **Draft**. Roles on teams: **Draft**. Sites: **Draft**. Skills: **Draft: added**. Each has a yellow dot.
+  - **Expected:** Certifications: **Draft: removed**, with the name struck through. Languages: **Draft: retired**. Levels: **Draft: reordered**. Positions: **Draft**. Roles on teams: **Draft**. Sites: **Draft**. Skills: **Draft: added**. Each has a yellow dot. Hiring states has no mark.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the row under each list.
@@ -342,7 +342,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** As DRAFT-10.
 
 - [ ] **Step 1.** In the Draft menu, select **Drafts applied**.
-  - **Expected:** The count beside the search box reads **6 lists**. Certifications and Languages are not in the table. No row has a green dot and **Live**.
+  - **Expected:** The count beside the search box reads **7 lists**. Certifications and Languages are not in the table. No row has a green dot and **Live**.
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Positions** and **Sites** rows.
@@ -370,7 +370,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 2.** Read the **People's columns** entry.
-  - **Expected:** It reads **From Name, Employee ID, Site, Position, Level, Role on team, Start, End, Manager, Manager since, Team, Team name to Name, Employee ID, Grade, Site, Position, Role on team, Start, End, Manager, Manager since, Team, Team name, Previous site, Skills**.
+  - **Expected:** It reads **From Name, Employee ID, Position, Site, Level, Role on team, Start, End, Manager, Manager since, Team, Team name to Name, Employee ID, Grade, Position, Site, Role on team, Start, End, Manager, Manager since, Team, Team name, Previous site, Skills**.
   - **Notes:**
 
 - [ ] **Step 3.** Read the **Sites** entry.
@@ -402,7 +402,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
 
 - [ ] **Step 1.** In the Draft menu, select **Discard new order**.
-  - **Expected:** The columns are Name, Employee ID, Site, Position, Grade, Level, Role on team, Start, End, Manager, Manager since, Team, Team name, Previous site, Skills. **Grade** has a yellow dot and **Draft**, without **Draft: moved**.
+  - **Expected:** The columns are Name, Employee ID, Position, Site, Grade, Level, Role on team, Start, End, Manager, Manager since, Team, Team name, Previous site, Skills. **Grade** has a yellow dot and **Draft**, without **Draft: moved**.
   - **Notes:**
 
 - [ ] **Step 2.** Open the **Drafts** page, and type **new order for People** in the search box.
@@ -556,7 +556,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 4.** Open the **People** page.
-  - **Expected:** The columns are Name, Employee ID, Grade, Site, Position, Start, End, Manager, Manager since, Team, Team name, Previous site, Skills. Of the column headers, only **Previous site** has a mark: a red dot and **Rejected**.
+  - **Expected:** The columns are Name, Employee ID, Grade, Position, Site, Start, End, Manager, Manager since, Team, Team name, Previous site, Skills. Of the column headers, only **Previous site** has a mark: a red dot and **Rejected**.
   - **Notes:**
 
 - [ ] **Step 5.** Open the **Lists** page.

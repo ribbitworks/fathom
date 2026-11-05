@@ -2359,6 +2359,7 @@ describe("drafts on the Lists page", () => {
             id: "p9",
             preferredName: "Casey Fictional",
             employeeId: "E9",
+            positionId: "position-1",
             startDate: null,
             endDate: null,
             values: { f9: ["c8"] },

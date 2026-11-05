@@ -18,7 +18,12 @@ import type {
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type Method, startTestApp, type TestApp } from "./test-app.ts";
+import {
+  type Method,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
@@ -87,6 +92,7 @@ async function draftPerson(person: object = {}) {
       {
         preferredName: unique("Fictional Person"),
         employeeId: unique("E"),
+        positionId: testPosition,
         ...person,
       },
     ],
@@ -178,7 +184,7 @@ describe("drafts as people see them", () => {
     const planner = await test.signedIn(["resource-planner"]);
     expect((await seen(planner.cookie, added.id))?.draft).toMatchObject({
       action: "created",
-      changed: ["preferredName", "employeeId", field.id],
+      changed: ["preferredName", "employeeId", "positionId", field.id],
       live: { values: {} },
       state: "waiting",
       madeBy: "Fictional User 1",
@@ -250,6 +256,7 @@ describe("drafts as people see them", () => {
         preferredName: name,
         values,
         employeeId: unique("E"),
+        positionId: testPosition,
       }),
     ];
     const response = await send(editor.cookie, "GET", "/api/people");
@@ -260,7 +267,7 @@ describe("drafts as people see them", () => {
       twins.map(({ id }) => id).sort(),
     );
     // Details a draft adding someone leaves empty are not among what it changes.
-    expect(listed[0]?.draft?.changed.slice(2)).toEqual(
+    expect(listed[0]?.draft?.changed.slice(3)).toEqual(
       [first.field.id, second.field.id].sort(),
     );
     // A column with nothing chosen is left out.
@@ -302,6 +309,7 @@ describe("drafts as people see them", () => {
       fields: {
         preferredName: "Fictional Unrecorded",
         employeeId: unique("E"),
+        positionId: testPosition,
       },
     });
     expect((await seen(editor.cookie, id))?.draft).toMatchObject({
@@ -433,11 +441,31 @@ describe("changing drafts", () => {
     const drafted = await draftPerson();
     const draftedId = (await draftRow(drafted.id))?.fields.employeeId as string;
     for (const people of [
-      [{ preferredName: "Fictional", employeeId: employeeId.toLowerCase() }],
-      [{ preferredName: "Fictional", employeeId: draftedId }],
       [
-        { preferredName: "Fictional", employeeId: "E-Twin" },
-        { preferredName: "Fictional", employeeId: "e-twin" },
+        {
+          preferredName: "Fictional",
+          employeeId: employeeId.toLowerCase(),
+          positionId: testPosition,
+        },
+      ],
+      [
+        {
+          preferredName: "Fictional",
+          employeeId: draftedId,
+          positionId: testPosition,
+        },
+      ],
+      [
+        {
+          preferredName: "Fictional",
+          employeeId: "E-Twin",
+          positionId: testPosition,
+        },
+        {
+          preferredName: "Fictional",
+          employeeId: "e-twin",
+          positionId: testPosition,
+        },
       ],
     ]) {
       const response = await send(editor.cookie, "POST", "/api/people", {
@@ -556,7 +584,13 @@ describe("approving and rejecting", () => {
     // An Approver may approve their own drafts.
     const own = await test.signedIn(["approver", "workforce-administrator"]);
     const response = await send(own.cookie, "POST", "/api/people", {
-      people: [{ preferredName: "Fictional Own", employeeId: unique("E") }],
+      people: [
+        {
+          preferredName: "Fictional Own",
+          employeeId: unique("E"),
+          positionId: testPosition,
+        },
+      ],
     });
     const [ownId = ""] = response.json<{ ids: string[] }>().ids;
     expect((await approve([ownId], own.cookie)).statusCode).toBe(200);
@@ -599,7 +633,11 @@ describe("approving and rejecting", () => {
         recordType: "person",
         recordId: clash,
         action: "created",
-        fields: { preferredName: "Fictional Clash", employeeId },
+        fields: {
+          preferredName: "Fictional Clash",
+          employeeId,
+          positionId: testPosition,
+        },
       },
       {
         recordType: "person",
@@ -608,6 +646,7 @@ describe("approving and rejecting", () => {
         fields: {
           preferredName: "Fictional Stray",
           employeeId: unique("E"),
+          positionId: testPosition,
           [`value:${field.id}`]: [String(elsewhere.choices[0]?.id)],
         },
       },

@@ -16,7 +16,7 @@ import type {
 import { and, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { startTestApp, type TestApp } from "./test-app.ts";
+import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 let test: TestApp;
 let admin: { id: string; cookie: string };
@@ -89,6 +89,7 @@ async function makePersonWithColumn(name: string, visibility = "general") {
       {
         preferredName: `${name} Person`,
         employeeId: `E-${name}`,
+        positionId: testPosition,
         values: { [field.id]: [north.id] },
       },
     ],
@@ -612,8 +613,16 @@ describe("the change history", () => {
     // Names in other scripts, found by part of a name and in any letter case.
     const { ids: added } = (await send("POST", "/api/people", {
       people: [
-        { preferredName: "편성현", employeeId: "E-Lambda-ko" },
-        { preferredName: "Вероника Елисеева", employeeId: "E-Lambda-ru" },
+        {
+          preferredName: "편성현",
+          employeeId: "E-Lambda-ko",
+          positionId: testPosition,
+        },
+        {
+          preferredName: "Вероника Елисеева",
+          employeeId: "E-Lambda-ru",
+          positionId: testPosition,
+        },
       ],
     })) as unknown as { ids: string[] };
     expect(added).toHaveLength(2);
@@ -660,7 +669,13 @@ describe("the change history", () => {
     expect(await viewed(planner.id)).toHaveLength(0);
 
     await send("POST", "/api/people", {
-      people: [{ preferredName: "Omicron Other", employeeId: "E-Omicron-2" }],
+      people: [
+        {
+          preferredName: "Omicron Other",
+          employeeId: "E-Omicron-2",
+          positionId: testPosition,
+        },
+      ],
     });
     const manager = await test.signedIn(["people-manager"]);
     expect(

@@ -60,10 +60,21 @@ function otherChoice(
   const column = organization.columns.at(columnIndex);
   const list = organization.lists.find(({ id }) => id === column?.listId);
   const columnId = String(column?.id);
-  // Every fictional person has a site, a position, and a level.
+  // Every fictional person has a site and a level.
   const had = new Map(Object.entries(person.values)).get(columnId) as string[];
   const other = list?.choices.find(({ id }) => !had.includes(id));
   return { [columnId]: [String(other?.id)] };
+}
+
+// A position other than the one a person has, never Architect, which no one is given.
+function otherPosition(
+  organization: FictionalOrganization,
+  person: FictionalPerson,
+): string {
+  const other = organization.positions.find(
+    ({ id, label }) => id !== person.positionId && label !== "Architect",
+  );
+  return String(other?.id);
 }
 
 // The drafts of the people given, and of the newcomers, found by Employee ID, since drafting
@@ -274,6 +285,7 @@ export async function seedDrafts(
       newcomers.map((newcomer) => ({
         preferredName: newcomer.preferredName,
         employeeId: newcomer.employeeId,
+        positionId: newcomer.positionId,
         startDate: newcomer.startDate,
         endDate: newcomer.endDate,
         values: newcomer.values,
@@ -294,7 +306,7 @@ export async function seedDrafts(
       () =>
         data.people.update(editor, leaving.id, {
           endDate: "2027-06-30",
-          values: otherChoice(organization, leaving, 2),
+          values: otherChoice(organization, leaving, 1),
         }),
     ],
     [removed, () => data.people.delete(editor, removed.id)],
@@ -302,7 +314,7 @@ export async function seedDrafts(
       refused,
       () =>
         data.people.update(editor, refused.id, {
-          values: otherChoice(organization, refused, 1),
+          positionId: otherPosition(organization, refused),
         }),
     ],
     [moved, () => data.people.update(editor, moved.id, { managerId: top.id })],
@@ -323,7 +335,7 @@ export async function seedDrafts(
   if (!done.others.has(changed.id)) {
     const second = await actorOf(database, secondEditorEmail);
     await data.people.update(second, changed.id, {
-      values: otherChoice(organization, changed, 2),
+      values: otherChoice(organization, changed, 1),
     });
     await data.unpublished.publish(second);
     made = true;
@@ -394,7 +406,7 @@ export async function seedUnpublishedPeople(
   const [changed] = drafting(organization);
   const person = unpublishedFor(organization);
   const site = valueField(String(organization.columns[0]?.id));
-  const position = valueField(String(organization.columns[1]?.id));
+  const position = "positionId";
   let made = false;
   if (!(await changedSince(database, organization, person.id, site))) {
     await data.people.update(await actorOf(database, editorEmail), person.id, {
@@ -405,7 +417,7 @@ export async function seedUnpublishedPeople(
   if (!(await changedSince(database, organization, changed.id, position))) {
     const second = await actorOf(database, secondEditorEmail);
     await data.people.update(second, changed.id, {
-      values: otherChoice(organization, changed, 1),
+      positionId: otherPosition(organization, changed),
     });
     made = true;
   }

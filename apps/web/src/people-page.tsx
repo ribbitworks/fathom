@@ -84,12 +84,14 @@ function withView(views: readonly SavedView[], saved: SavedView): SavedView[] {
 
 // A person with a change applied, as the table shows it before it is saved.
 function changed(person: Person, change: PersonChange): Person {
-  const { values, links, preferredName, employeeId, ...dates } = change;
+  const { values, links, preferredName, employeeId, positionId, ...dates } =
+    change;
   return {
     ...person,
     ...dates,
     preferredName: preferredName ?? person.preferredName,
     employeeId: employeeId ?? person.employeeId,
+    positionId: positionId ?? person.positionId,
     values: { ...person.values, ...values },
     links: Object.fromEntries(
       Object.entries({ ...person.links, ...links }).flatMap(([key, link]) =>

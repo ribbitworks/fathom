@@ -71,7 +71,28 @@ const roles = {
   visibility: "restricted",
 };
 const old = list("l3", "Old List", [], true);
-const listsAnswer = () => Response.json({ lists: [sites, roles, old] });
+// The built-in Positions list.
+const positions = {
+  ...list("positions", "Positions", [
+    choice("position-1", "Engineer"),
+    choice("position-2", "Tester"),
+    // Drafted to be added, so not yet offered as a position.
+    {
+      ...choice("position-3", "Technician"),
+      draft: {
+        action: "created",
+        changed: ["label"],
+        live: {},
+        state: "waiting",
+        madeBy: null,
+        madeAt: null,
+      },
+    },
+  ]),
+  builtIn: "positions",
+};
+const listsAnswer = () =>
+  Response.json({ lists: [sites, roles, old, positions] });
 
 const site = {
   id: "f1",
@@ -91,6 +112,7 @@ const avery = {
   id: "p1",
   preferredName: "Avery Fictional",
   employeeId: "E1",
+  positionId: "position-1",
   startDate: "2024-03-01",
   endDate: null,
   values: { f1: ["c1"], f2: ["r1", "r2"] },
@@ -99,6 +121,7 @@ const blake = {
   id: "p2",
   preferredName: "Blake Fictional",
   employeeId: "E2",
+  positionId: "position-1",
   startDate: null,
   endDate: null,
   values: { f1: ["c3"] },
@@ -106,6 +129,7 @@ const blake = {
 const order = [
   "preferredName",
   "employeeId",
+  "positionId",
   "f1",
   "f2",
   "startDate",
@@ -158,6 +182,7 @@ function cell(row: string, key: string): HTMLElement {
 const columnKeys = new Map([
   ["Name", "preferredName"],
   ["Employee ID", "employeeId"],
+  ["Position", "positionId"],
   ["Site", "f1"],
   ["Role on team", "f2"],
   ["Start", "startDate"],
@@ -240,7 +265,15 @@ describe("who sees the People page", () => {
       within(grid)
         .getAllByRole("columnheader")
         .map((header) => header.textContent),
-    ).toEqual(["Employee ID", "Name", "Site", "Manager", "Team", "Team name"]);
+    ).toEqual([
+      "Employee ID",
+      "Name",
+      "Site",
+      "Position",
+      "Manager",
+      "Team",
+      "Team name",
+    ]);
     expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
     expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
     expect(screen.queryByRole("row", { name: "New person" })).toBeNull();
@@ -384,7 +417,7 @@ describe("editing people", () => {
       { employeeId: "Z9" },
     ]);
     await waitFor(() => {
-      expect(document.activeElement).toBe(cell("p2", "f1"));
+      expect(document.activeElement).toBe(cell("p2", "positionId"));
     });
     focusCell("p2", "preferredName");
     await userEvent.keyboard("{F2}");
@@ -615,7 +648,7 @@ describe("adding people", () => {
       newCell("Name").focus();
     });
     // Typing starts the row, and Tab goes straight on to typing in the next cell.
-    await userEvent.keyboard("Casey{Tab}E9{Tab}har{Tab}{Tab}");
+    await userEvent.keyboard("Casey{Tab}E9{Tab}eng{Tab}har{Tab}{Tab}");
     const start = await screen.findByLabelText("Start", { selector: "input" });
     fireEvent.change(start, { target: { value: "2026-11-02" } });
     await userEvent.type(start, "{Enter}");
@@ -625,6 +658,7 @@ describe("adding people", () => {
           {
             preferredName: "Casey",
             employeeId: "E9",
+            positionId: "position-1",
             startDate: "2026-11-02",
             endDate: null,
             values: { f1: ["c1"], f2: [] },
@@ -652,6 +686,7 @@ describe("adding people", () => {
       id: "p9",
       preferredName: "Casey",
       employeeId: "E9",
+      positionId: "position-1",
       values: { f1: ["c1"] },
       draft: draftOf({ action: "created" }),
     };
@@ -684,10 +719,10 @@ describe("adding people", () => {
     await userEvent.keyboard("Casey{Tab}E9{Tab}");
     await waitFor(() => {
       expect(newCell("Name").textContent).toBe(
-        "Casey New, not saved yet: Site needed",
+        "Casey New, not saved yet: Position, Site needed",
       );
     });
-    await userEvent.keyboard("har{Tab}");
+    await userEvent.keyboard("eng{Tab}har{Tab}");
     await waitFor(() => {
       expect(newCell("Name").textContent).toBe("Casey New, not saved yet");
     });
@@ -701,7 +736,7 @@ describe("adding people", () => {
     );
     expect(newCell("Name").textContent).toBe("");
     // Their Employee ID is taken already.
-    await userEvent.keyboard("Dee{Tab}E9{Tab}har{Tab}");
+    await userEvent.keyboard("Dee{Tab}E9{Tab}eng{Tab}har{Tab}");
     await userEvent.keyboard("{Escape}{Enter}");
     expect(await screen.findByRole("alert")).toHaveProperty(
       "textContent",
@@ -743,7 +778,7 @@ describe("adding people", () => {
     act(() => {
       newCell("Name").focus();
     });
-    await userEvent.keyboard("Casey{Tab}E9{Tab}har{Tab}");
+    await userEvent.keyboard("Casey{Tab}E9{Tab}eng{Tab}har{Tab}");
     await userEvent.keyboard("{Escape}{Enter}");
     expect(await screen.findByText("Draft: added")).toBeDefined();
     await userEvent.keyboard("Dee{Tab}{Escape}");
@@ -757,7 +792,7 @@ describe("adding people", () => {
     const rows = screen.getAllByRole("row", { name: "New person" });
     expect(rows.map((row) => inRow(row, "Name").textContent)).toEqual([
       "Casey New, not saved yet",
-      "Dee New, not saved yet: Employee ID, Site needed",
+      "Dee New, not saved yet: Employee ID, Position, Site needed",
     ]);
   });
 
@@ -800,6 +835,14 @@ describe("adding people", () => {
     await userEvent.keyboard("{Delete}E7{Enter}");
     expect(await screen.findByRole("alert")).toHaveProperty(
       "textContent",
+      "Position needed",
+    );
+    act(() => {
+      newCell("Position").focus();
+    });
+    await userEvent.keyboard("eng{Enter}");
+    expect(await screen.findByRole("alert")).toHaveProperty(
+      "textContent",
       "Site needed",
     );
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
@@ -835,7 +878,7 @@ describe("adding people", () => {
     });
     await paste(
       newCell("Name"),
-      "Dana Fictional\tE10\tharbour\tTeam Lead\n\nEli Fictional\tE11\tNorthmere\t\t2025-02-01\n",
+      "Dana Fictional\tE10\tengineer\tharbour\tTeam Lead\n\nEli Fictional\tE11\tEngineer\tNorthmere\t\t2025-02-01\n",
     );
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([
       {
@@ -843,6 +886,7 @@ describe("adding people", () => {
           {
             preferredName: "Dana Fictional",
             employeeId: "E10",
+            positionId: "position-1",
             startDate: null,
             endDate: null,
             values: { f1: ["c1"], f2: ["r1"] },
@@ -851,6 +895,7 @@ describe("adding people", () => {
           {
             preferredName: "Eli Fictional",
             employeeId: "E11",
+            positionId: "position-1",
             startDate: "2025-02-01",
             endDate: null,
             values: { f1: ["c2"], f2: [] },
@@ -867,7 +912,7 @@ describe("adding people", () => {
     await paste(newCell("Name"), "   ");
     await paste(
       newCell("Employee ID"),
-      "E21\tOld Mill\nE22\tAtlantis\tTeam Lead\textra\textra\textra\textra",
+      "E21\tEngineer\tOld Mill\nE22\tEngineer\tAtlantis\tTeam Lead\textra\textra\textra\textra",
     );
     const rows = screen.getAllByRole("row", { name: "New person" });
     expect(rows).toHaveLength(3);
@@ -885,7 +930,7 @@ describe("adding people", () => {
     const last = screen.getAllByRole("row", { name: "New person" }).at(-1);
     await paste(
       inRow(last as HTMLElement, "Name"),
-      "Iris Fictional\tE23\tHarbour",
+      "Iris Fictional\tE23\tEngineer\tHarbour",
     );
     expect(screen.getAllByRole("row", { name: "New person" })).toHaveLength(4);
   });
@@ -904,7 +949,7 @@ describe("adding people", () => {
 
   it("gives back the new rows when they cannot be added", async () => {
     await openPeople({ "POST /api/people": refused(500) });
-    await paste(newCell("Name"), "Fay Fictional\tE30\tHarbour");
+    await paste(newCell("Name"), "Fay Fictional\tE30\tEngineer\tHarbour");
     expect(
       await screen.findByText(
         "Fathom could not add the people. Try again in a moment.",
@@ -945,6 +990,18 @@ describe("the choice picker", () => {
     ]);
   });
 
+  it("changes a person's position, picked from the Positions list", async () => {
+    const fetch = await openPeople({ "PATCH /api/people/p2": savedAs() });
+    focusCell("p2", "positionId");
+    await userEvent.keyboard("te");
+    expect(await offeredOptions()).toEqual(["Tester"]);
+    await userEvent.keyboard("s");
+    await userEvent.keyboard("{Enter}");
+    expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([
+      { positionId: "position-2" },
+    ]);
+  });
+
   it("gives up a single choice when the cell is left", async () => {
     const fetch = await openPeople();
     focusCell("p1", "f1");
@@ -964,7 +1021,7 @@ describe("new rows that will not do", () => {
       screen.getAllByRole("row", { name: "New person" })[0] as HTMLElement;
     await paste(
       inRow(first(), "Name"),
-      "Gale Fictional\tE40\tHarbour\t\t31/10/2026",
+      "Gale Fictional\tE40\tEngineer\tHarbour\t\t31/10/2026",
     );
     expect(await within(first()).findByRole("alert")).toHaveProperty(
       "textContent",
@@ -1056,8 +1113,12 @@ describe("drafts", () => {
               ...avery,
               draft: draftOf({
                 action: "changed",
-                changed: ["f1", "f2", "startDate"],
-                live: { startDate: null, values: { f1: ["c2"] } },
+                changed: ["positionId", "f1", "f2", "startDate"],
+                live: {
+                  positionId: "position-2",
+                  startDate: null,
+                  values: { f1: ["c2"] },
+                },
               }),
             },
             {
@@ -1074,6 +1135,7 @@ describe("drafts", () => {
               id: "p3",
               preferredName: "Casey Fictional",
               employeeId: "E3",
+              positionId: "position-1",
               draft: draftOf({ action: "deleted", state: "rejected" }),
             },
           ],
@@ -1083,6 +1145,9 @@ describe("drafts", () => {
         }),
     });
     expect(cell("p1", "f1").textContent).toBe("Harbour, draft, live Northmere");
+    expect(cell("p1", "positionId").textContent).toBe(
+      "Engineer, draft, live Tester",
+    );
     expect(cell("p1", "startDate").textContent).toBe(
       "Mar 1, 2024, draft, live empty",
     );
@@ -1098,6 +1163,7 @@ describe("drafts", () => {
     ).toEqual([
       "Avery Fictional Live",
       "E1",
+      "Tester",
       "Northmere",
       "",
       "",
@@ -1166,6 +1232,7 @@ describe("drafts", () => {
               id: "p3",
               preferredName: "Casey Fictional",
               employeeId: "E3",
+              positionId: "position-1",
               draft: draftOf({
                 action: "deleted",
                 state: "rejected",
@@ -1439,7 +1506,7 @@ describe("columns", () => {
       within(listSelect)
         .getAllByRole("option")
         .map((option) => option.textContent),
-    ).toEqual(["", "Sites", "Roles on the team (Restricted)"]);
+    ).toEqual(["", "Sites", "Roles on the team (Restricted)", "Positions"]);
     await userEvent.selectOptions(listSelect, "Sites");
     await userEvent.click(within(dialog).getByLabelText("Several choices"));
     await userEvent.click(within(dialog).getByLabelText("Must be filled in"));
@@ -1622,7 +1689,7 @@ describe("columns", () => {
       await screen.findByRole("menuitem", { name: /^Move left/ }),
     );
     await waitFor(() => {
-      expect(moves("f2")).toEqual([{ after: "employeeId" }]);
+      expect(moves("f2")).toEqual([{ after: "positionId" }]);
     });
 
     // Built-in columns move too, to the very start.
@@ -1841,6 +1908,7 @@ describe("searching, sorting, and filtering", () => {
                 id: "p9",
                 preferredName: "Casey Fictional",
                 employeeId: "E9",
+                positionId: "position-1",
                 values: { f1: ["c2"] },
               },
             ],
@@ -1854,7 +1922,7 @@ describe("searching, sorting, and filtering", () => {
     act(() => {
       cell("new-0", "preferredName").focus();
     });
-    await userEvent.keyboard("Casey{Tab}E9{Tab}north{Tab}");
+    await userEvent.keyboard("Casey{Tab}E9{Tab}eng{Tab}north{Tab}");
     await userEvent.keyboard("{Escape}{Enter}");
     await waitFor(() => {
       expect(shownNames()).toEqual(["Avery Fictional", "Casey Fictional"]);
@@ -1981,6 +2049,7 @@ describe("searching, sorting, and filtering", () => {
               id: "p3",
               preferredName: "Casey Fictional",
               employeeId: "E3",
+              positionId: "position-1",
               draft: draftOf({ action: "deleted", state: "rejected" }),
             },
           ],
@@ -2096,6 +2165,7 @@ describe("searching, sorting, and filtering", () => {
               id: "p3",
               preferredName: "Casey Fictional",
               employeeId: "E3",
+              positionId: "position-1",
               draft: draftOf({ action: "created" }),
             },
           ],
@@ -2146,12 +2216,14 @@ describe("searching, sorting, and filtering", () => {
               ...avery,
               preferredName: "Avery Drafted",
               employeeId: "E9",
+              positionId: "position-1",
               draft: draftOf({
                 action: "changed",
                 changed: ["preferredName", "employeeId", "f1"],
                 live: {
                   preferredName: "Avery Fictional",
                   employeeId: "E1",
+                  positionId: "position-1",
                   values: {},
                 },
                 changedBy: { preferredName: "Ann Fictional", employeeId: null },
@@ -2342,13 +2414,21 @@ describe("searching, sorting, and filtering", () => {
       "nobody",
     );
     expect(screen.getByText("No matching people").closest("td")?.colSpan).toBe(
-      6,
+      7,
     );
     expect(
       within(screen.getByRole("grid"))
         .getAllByRole("columnheader")
         .map((th) => th.textContent),
-    ).toEqual(["Name", "Employee ID", "Site", "Manager", "Team", "Team name"]);
+    ).toEqual([
+      "Name",
+      "Employee ID",
+      "Position",
+      "Site",
+      "Manager",
+      "Team",
+      "Team name",
+    ]);
   });
 
   describe("saved views", () => {

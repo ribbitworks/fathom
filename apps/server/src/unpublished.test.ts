@@ -18,7 +18,12 @@ import type {
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type Method, startTestApp, type TestApp } from "./test-app.ts";
+import {
+  type Method,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 interface User {
   id: string;
@@ -126,6 +131,7 @@ async function draftPeople(who: User, names: string[]): Promise<string[]> {
     people: names.map((preferredName) => ({
       preferredName,
       employeeId: unique("E"),
+      positionId: testPosition,
     })),
   });
   return body.ids;
@@ -461,7 +467,13 @@ describe("values that must be unique", () => {
     const { list: unused } = await liveList([]);
     const employeeId = unique("E-Held");
     await saved(alice, "POST", "/api/people", {
-      people: [{ preferredName: "Fictional Taken", employeeId }],
+      people: [
+        {
+          preferredName: "Fictional Taken",
+          employeeId,
+          positionId: testPosition,
+        },
+      ],
     });
     await saved(alice, "PATCH", `/api/people/${person}`, {
       values: { [siteColumn.id]: [south.id] },
@@ -470,7 +482,11 @@ describe("values that must be unique", () => {
       bob,
       "POST",
       "/api/people",
-      { people: [{ preferredName: "Fictional", employeeId }] },
+      {
+        people: [
+          { preferredName: "Fictional", employeeId, positionId: testPosition },
+        ],
+      },
       "Someone already has that Employee ID",
     );
     const listName = unique("Fictional Held List");
@@ -1026,11 +1042,19 @@ describe("publishing and discarding", () => {
     const employeeId = unique("E-Clash");
     await clash(async () => {
       await saved(bob, "POST", "/api/people", {
-        people: [{ preferredName: "Fictional Clash", employeeId }],
+        people: [
+          {
+            preferredName: "Fictional Clash",
+            employeeId,
+            positionId: testPosition,
+          },
+        ],
       });
-      await test.connection
-        .insert(people)
-        .values({ preferredName: "Fictional Other", employeeId });
+      await test.connection.insert(people).values({
+        preferredName: "Fictional Other",
+        employeeId,
+        positionId: testPosition,
+      });
     }, "Fictional Clash");
 
     const listName = unique("Fictional Clash List");

@@ -67,6 +67,7 @@ const person = (
   id,
   preferredName: `Fictional ${id}`,
   employeeId: id,
+  positionId: "position-1",
   values: { f1: levels, f2: roles },
   links: {},
   ...(draft ? { draft } : {}),
@@ -268,7 +269,7 @@ describe("the Metrics panel", () => {
       within(picker)
         .getAllByRole("option")
         .map((option) => option.textContent),
-    ).toEqual(["Choose a column", "Team", "Level"]);
+    ).toEqual(["Choose a column", "Position", "Team", "Level"]);
     expect((picker as HTMLSelectElement).value).toBe("");
     expect(panel().textContent).toContain("Choose a column to count people");
   });

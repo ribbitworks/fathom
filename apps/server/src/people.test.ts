@@ -6,7 +6,15 @@
 // duplicates, missing and unoffered values, and settings the data does not fit; lists and choices in
 // use; and the change and access history every change records.
 
-import { accessHistory, fieldValues, people, recordChanges } from "@fathom/db";
+import {
+  accessHistory,
+  fieldValues,
+  listItems,
+  lists,
+  people,
+  plannedHires,
+  recordChanges,
+} from "@fathom/db";
 import {
   type Choice,
   type Field,
@@ -19,7 +27,13 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
 import { peopleHave } from "./data/fields.ts";
-import { type Method, startTestApp, type TestApp } from "./test-app.ts";
+import {
+  type Method,
+  startTestApp,
+  type TestApp,
+  testPosition,
+  otherTestPosition,
+} from "./test-app.ts";
 
 // How long a test waits for something to happen, so a busy computer does not fail it.
 const waitLimit = { timeout: 10_000 };
@@ -115,6 +129,7 @@ async function columnWith(
 interface NewPerson {
   preferredName?: string;
   employeeId?: string;
+  positionId?: string;
   startDate?: string | null;
   endDate?: string | null;
   values?: Record<string, string[]>;
@@ -124,6 +139,7 @@ function personRequest(person: NewPerson = {}) {
   return {
     preferredName: person.preferredName ?? unique("Fictional Person"),
     employeeId: person.employeeId ?? unique("E"),
+    positionId: testPosition,
     ...person,
   };
 }
@@ -452,6 +468,7 @@ describe("adding people", () => {
     ).toEqual([
       ["created", "preferredName", "general"],
       ["created", "employeeId", "general"],
+      ["created", "positionId", "general"],
       ["created", "startDate", "restricted"],
       ["created", `value:${field.id}`, "restricted"],
     ]);
@@ -609,6 +626,7 @@ describe("changing and deleting people", () => {
     const response = await send(cookie, "PATCH", `/api/people/${id}`, {
       preferredName: "Fictional Renamed",
       employeeId: unique("Changed"),
+      positionId: testPosition,
       startDate: "2025-01-01",
       endDate: "2026-01-01",
       values: { [field.id]: [String(b), String(a)] },
@@ -696,7 +714,13 @@ describe("changing and deleting people", () => {
       (await test.historyOf(id))
         .filter(({ action }) => action === "deleted")
         .map(({ field: name }) => name),
-    ).toEqual(["preferredName", "employeeId", "endDate", `value:${field.id}`]);
+    ).toEqual([
+      "preferredName",
+      "employeeId",
+      "positionId",
+      "endDate",
+      `value:${field.id}`,
+    ]);
     expect(
       (await accessOf(editorId)).find(
         ({ action }) => action === "restricted-changed",
@@ -705,6 +729,92 @@ describe("changing and deleting people", () => {
       action: "restricted-changed",
       subjectId: id,
     });
+  });
+});
+
+describe("positions and IDs", () => {
+  it("gives a person a position from the Positions list, and changes it", async () => {
+    const { cookie } = await editor();
+    const { id } = await addLivePerson(cookie);
+    expect((await readPerson(cookie, id))?.positionId).toBe(testPosition);
+    const changed = await send(cookie, "PATCH", `/api/people/${id}`, {
+      positionId: otherTestPosition,
+    });
+    expect(changed.statusCode).toBe(200);
+    expect(await readPerson(cookie, id)).toMatchObject({
+      positionId: otherTestPosition,
+      draft: {
+        changed: ["positionId"],
+        live: { positionId: testPosition },
+      },
+    });
+  });
+
+  it("refuses a position from another list, one that is not a choice, or one retired", async () => {
+    const { cookie } = await editor();
+    const [positions] = await test.connection
+      .select({ id: lists.id })
+      .from(lists)
+      .where(eq(lists.builtIn, "positions"));
+    const [retired] = await test.connection
+      .insert(listItems)
+      .values({
+        listId: String(positions?.id),
+        label: unique("Fictional Retired Position"),
+        retired: true,
+      })
+      .returning({ id: listItems.id });
+    const [state] = await test.connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(eq(lists.builtIn, "hiring-states"));
+    for (const positionId of [
+      String(state?.id),
+      randomUUID(),
+      String(retired?.id),
+    ]) {
+      const response = await send(cookie, "POST", "/api/people", {
+        people: [personRequest({ positionId })],
+      });
+      expect(response.statusCode).toBe(400);
+    }
+    const { id } = await addPerson(cookie);
+    expect(
+      (
+        await send(cookie, "PATCH", `/api/people/${id}`, {
+          positionId: String(retired?.id),
+        })
+      ).statusCode,
+    ).toBe(400);
+  });
+
+  it("refuses an Employee ID that looks like a temporary ID, or that a planned hire's requisition already is", async () => {
+    const { cookie } = await editor();
+    const tbd = await send(cookie, "POST", "/api/people", {
+      people: [personRequest({ employeeId: "tbd-4" })],
+    });
+    expect(tbd.statusCode).toBe(400);
+    const requisition = unique("Fictional-REQ");
+    const [open] = await test.connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(eq(lists.builtIn, "hiring-states"));
+    await test.connection.insert(plannedHires).values({
+      requisition,
+      positionId: testPosition,
+      stateId: String(open?.id),
+    });
+    const added = await send(cookie, "POST", "/api/people", {
+      people: [personRequest({ employeeId: requisition.toLowerCase() })],
+    });
+    expect(added.statusCode).toBe(409);
+    const { id } = await addPerson(cookie);
+    const changed = await send(cookie, "PATCH", `/api/people/${id}`, {
+      employeeId: requisition,
+    });
+    expect(changed.statusCode).toBe(409);
   });
 });
 

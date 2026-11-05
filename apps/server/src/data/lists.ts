@@ -16,6 +16,8 @@ import {
   fieldValues,
   listItems,
   lists,
+  people,
+  plannedHires,
   unpublishedDrafts,
 } from "@fathom/db";
 import type {
@@ -27,8 +29,8 @@ import type {
   ListRequest,
   OrderDraft,
 } from "@fathom/shared";
-import { type Tier, tierSchema } from "@fathom/shared";
-import { and, asc, count, eq, sql } from "drizzle-orm";
+import { builtInListSchema, type Tier, tierSchema } from "@fathom/shared";
+import { and, asc, count, eq, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
 import {
@@ -68,6 +70,7 @@ import {
   type Viewer,
   writeDraft,
 } from "./drafts.ts";
+import { builtInColumns } from "./built-in-lists.ts";
 
 type ListRow = typeof lists.$inferSelect;
 type ChoiceRow = typeof listItems.$inferSelect;
@@ -151,6 +154,8 @@ export const choiceRecord = (row: ChoiceRow): Recorded => ({
 // the viewer sees them, with the records others hold.
 export interface ListsState {
   lists: Map<string, Recorded>;
+  // The key of each built-in list, by list.
+  builtIn: Map<string, string>;
   choices: Map<string, { record: Recorded; position: number }>;
   listDrafts: Map<string, Draft>;
   choiceDrafts: Map<string, Draft>;
@@ -173,6 +178,11 @@ export async function readState(
     .orderBy(asc(listItems.position), asc(listItems.id));
   return {
     lists: new Map(listRows.map((row) => [row.id, listRecord(row)])),
+    builtIn: new Map(
+      listRows.flatMap(({ id, builtIn }) =>
+        builtIn === null ? [] : [[id, builtIn]],
+      ),
+    ),
     choices: new Map(
       choiceRows.map((row) => [
         row.id,
@@ -408,16 +418,27 @@ export const choicesHaveDrafts = (state: ListsState, listId: string) =>
 // others may see: live ones and published drafts. A column only in someone's unpublished draft
 // counts too, so the list cannot go from under it, but is not named, since only its maker sees it.
 // The editor's unpublished drafts of columns stand in for the published drafts of the same columns.
+// A built-in list's built-in column always draws on it.
 export async function refuseIfUsed(
   transaction: Reader,
   id: string,
   change: string,
   editor?: string,
 ): Promise<void> {
-  const live = await transaction
-    .select({ id: fields.id, name: fields.name })
-    .from(fields)
-    .where(eq(fields.listId, id));
+  const builtIn = await transaction
+    .select({ key: lists.builtIn })
+    .from(lists)
+    .where(eq(lists.id, id));
+  const live = [
+    ...builtIn.flatMap(({ key }) => {
+      const name = key === null ? undefined : builtInColumns.get(key);
+      return name === undefined ? [] : [{ id: key, name }];
+    }),
+    ...(await transaction
+      .select({ id: fields.id, name: fields.name })
+      .from(fields)
+      .where(eq(fields.listId, id))),
+  ];
   const drafted = async (table: typeof drafts | typeof unpublishedDrafts) =>
     transaction
       .select({
@@ -472,7 +493,8 @@ export async function refuseIfUsed(
 export const choiceInUse =
   "This choice cannot be removed while it is in use; retire it instead";
 
-// Refuses removing a choice that people have, live or in a draft, as the editor sees the drafts.
+// Refuses removing a choice that people or planned hires have, live or in a draft, as the editor
+// sees the drafts: as a value in a column, a position, or a hiring state.
 export async function refuseIfChosen(
   transaction: Reader,
   id: string,
@@ -482,8 +504,17 @@ export async function refuseIfChosen(
     .select({ total: count() })
     .from(fieldValues)
     .where(eq(fieldValues.choiceId, id));
+  const [positioned] = await transaction
+    .select({ total: count() })
+    .from(people)
+    .where(eq(people.positionId, id));
+  const [hired] = await transaction
+    .select({ total: count() })
+    .from(plannedHires)
+    .where(or(eq(plannedHires.positionId, id), eq(plannedHires.stateId, id)));
   if (
-    Number(held?.total) > 0 ||
+    Number(held?.total) + Number(positioned?.total) + Number(hired?.total) >
+      0 ||
     (await draftsUse(transaction, { choice: id }, editor))
   ) {
     throw new ConflictError(choiceInUse);
@@ -680,6 +711,10 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
         // A tier the server no longer knows is treated as General rather than trusted.
         visibility: tierSchema.catch("general").parse(list.visibility),
         retired: list.retired === true,
+        builtIn: builtInListSchema
+          .nullable()
+          .catch(null)
+          .parse(state.builtIn.get(id) ?? null),
         choices: draftedOrder(state, id).map((choiceId) =>
           choiceOut(state, makers, choiceId),
         ),
@@ -917,6 +952,11 @@ export async function updateList(
       `${String(list.name)} holds people's details your roles do not let you see, so someone who may must change it`,
     );
     refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
+    if (state.builtIn.has(id) && request.visibility !== list.visibility) {
+      throw new ConflictError(
+        "A built-in list's visibility is that of the column drawing on it",
+      );
+    }
     if (listNameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateList);
     }

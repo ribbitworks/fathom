@@ -65,6 +65,7 @@ describe("a fictional organization", () => {
         list.id,
         ...list.choices.map(({ id }) => id),
       ]),
+      ...organization.positions.map(({ id }) => id),
       ...organization.columns.map(({ id }) => id),
       ...organization.people.map(({ id }) => id),
     ];
@@ -98,6 +99,16 @@ describe("a fictional organization", () => {
         expect(chosen.every((id) => offered.includes(id))).toBe(true);
         if (!column?.multiple) expect(chosen).toHaveLength(1);
       }
+    }
+  });
+
+  it("gives each person a position, never Architect, so a choice no one has can be removed", () => {
+    const offered = new Map(
+      organization.positions.map(({ id, label }) => [id, label]),
+    );
+    for (const person of organization.people) {
+      expect(offered.has(person.positionId)).toBe(true);
+      expect(offered.get(person.positionId)).not.toBe("Architect");
     }
   });
 

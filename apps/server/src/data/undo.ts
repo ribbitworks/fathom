@@ -103,17 +103,18 @@ const planRecordTypes: ReadonlySet<string> = new Set(recordTypeSchema.options);
 const changedSince =
   "This has been changed since, so it can no longer be undone";
 
-// The permission each kind of record needs to change it.
-const editPermission = {
-  list: "configuration:edit",
-  "list-item": "configuration:edit",
-  "choice-order": "configuration:edit",
-  field: "configuration:edit",
-  "column-order": "configuration:edit",
-  person: "people:edit",
-  "planned-hire": "confidential:edit",
+// The permissions each kind of record needs to change it: planned hires, those to edit people and
+// see Confidential data, until they are a permission area of their own.
+const editPermissions = {
+  list: ["configuration:edit"],
+  "list-item": ["configuration:edit"],
+  "choice-order": ["configuration:edit"],
+  field: ["configuration:edit"],
+  "column-order": ["configuration:edit"],
+  person: ["people:edit"],
+  "planned-hire": ["people:edit", "confidential:view"],
   // Who may change each view is checked for the view itself.
-  "saved-view": "people:view",
+  "saved-view": ["people:view"],
 } as const;
 
 // The order kinds of record are put back in, so a record comes back before those that belong to it.
@@ -151,7 +152,8 @@ const textOrNull: Convert = (value) =>
 const tier: Convert = (value) => tierSchema.catch("general").parse(value);
 // A tier the server no longer knows is put back as the most sensitive.
 const sensitiveTier: Convert = (value) => storedTier(value);
-// Read back through the view's own checks whenever it is read.
+// Put back as recorded: a hire's temporary number, a number or none, and a view's definition,
+// read back through the view's own checks whenever it is read.
 const asStored: Convert = (value) => value;
 
 // The database columns each kind of record has, as the change history names its fields, and how to
@@ -176,14 +178,16 @@ const columnsOf: Record<
   person: {
     preferredName: text,
     employeeId: text,
+    positionId: text,
     startDate: textOrNull,
     endDate: textOrNull,
   },
   "planned-hire": {
-    title: text,
+    requisition: textOrNull,
+    temporaryNumber: asStored,
+    positionId: text,
     targetDate: textOrNull,
-    state: text,
-    cancelledFrom: textOrNull,
+    stateId: text,
     managerId: textOrNull,
     filledBy: textOrNull,
   },
@@ -246,13 +250,21 @@ function columnValues(record: Undone): Record<string, unknown> {
   );
 }
 
-// Checks that putting back a record's old settings still holds with the data as it is now: a list
-// can be retired only while no column draws on it, and a column's settings must fit its values.
+// Checks that putting back a record's old settings still holds with the data as it is now: an ID
+// must be one no other person or hire has taken since, a list can be retired only while no column
+// draws on it, and a column's settings must fit its values.
 async function checkFits(
   transaction: Transaction,
   record: Undone,
   values: Record<string, unknown>,
 ): Promise<void> {
+  const putBackId = values.employeeId ?? values.requisition;
+  if (
+    typeof putBackId === "string" &&
+    (await takenEmployeeIds(transaction, [putBackId], [record.id])).length > 0
+  ) {
+    throw new ConflictError(changedSince);
+  }
   if (record.recordType === "list" && values.retired === true) {
     await refuseIfUsed(transaction, record.id, "retired");
   }
@@ -320,7 +332,18 @@ async function recreate(
   transaction: Transaction,
   record: Undone,
 ): Promise<void> {
-  const row = { ...columnValues(record), id: record.id };
+  const row: Record<string, unknown> = {
+    ...columnValues(record),
+    id: record.id,
+  };
+  // A person or hire whose history was recorded before Position was built in has none to put back.
+  if (
+    (record.recordType === "person" || record.recordType === "planned-hire") &&
+    row.positionId === undefined
+  ) {
+    throw new ConflictError(changedSince);
+  }
+  await checkFits(transaction, record, row);
   // Each table takes the columns read for its own kind of record.
   await transaction
     .insert(tableOf(record))
@@ -431,6 +454,8 @@ async function undoPersonDrafts(
     let person: Recorded | undefined;
     if (record.action === "deleted") {
       person = fromOld(old);
+      if (person.positionId === undefined)
+        throw new ConflictError(changedSince);
     } else if (record.action === "changed") {
       const now = drafted(live.get(record.id), draft);
       if (now === undefined) throw new ConflictError(changedSince);
@@ -777,10 +802,11 @@ async function undoIn(
     );
   }
   for (const record of records) {
-    requirePermission(
-      actor,
-      editPermission[record.recordType as keyof typeof editPermission],
-    );
+    for (const permission of editPermissions[
+      record.recordType as keyof typeof editPermissions
+    ]) {
+      requirePermission(actor, permission);
+    }
   }
   const draftRecords = records.filter(({ draft }) => draft);
   const liveRecords = records.filter(({ draft }) => !draft);

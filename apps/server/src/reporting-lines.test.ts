@@ -10,7 +10,7 @@ import { type ChangeHistory, type Person, roleSchema } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { startTestApp, type TestApp } from "./test-app.ts";
+import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 // The server takes today's date from the clock, so the tests fix it, to give the same days on every
 // run.
@@ -65,6 +65,7 @@ async function person(details: object = {}): Promise<string> {
       {
         preferredName: unique("Fictional Person"),
         employeeId: unique("RL"),
+        positionId: testPosition,
         startDate: "2020-01-01",
         ...details,
       },
@@ -254,7 +255,11 @@ describe("a reporting line", () => {
   it("refuses a manager only drafted to be added", async () => {
     const drafted = await test.request(cookie, "POST", "/api/people", {
       people: [
-        { preferredName: unique("Fictional Person"), employeeId: unique("RL") },
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: unique("RL"),
+          positionId: testPosition,
+        },
       ],
     });
     const managerId = String(drafted.json<{ ids: string[] }>().ids[0]);
@@ -622,6 +627,7 @@ describe("a team's name", () => {
       people: [1, 2].map(() => ({
         preferredName: unique("Fictional Person"),
         employeeId: unique("RL"),
+        positionId: testPosition,
         teamName: name,
       })),
     });

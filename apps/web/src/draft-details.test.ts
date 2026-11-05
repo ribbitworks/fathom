@@ -70,6 +70,7 @@ describe("a draft's details", () => {
       id,
       preferredName,
       employeeId: id,
+      positionId: "position-1",
       values: {},
       links: {},
     });
@@ -115,6 +116,7 @@ describe("a draft's details", () => {
         id: "p3",
         preferredName: "Fictional Moved Report",
         employeeId: "p3",
+        positionId: "position-1",
         values: {},
         links: {},
       },
@@ -139,6 +141,7 @@ describe("a draft's details", () => {
         id: "p4",
         preferredName: "Fictional Menu Report",
         employeeId: "p4",
+        positionId: "position-1",
         values: {},
         links: {},
       },
@@ -162,6 +165,7 @@ describe("a draft's details", () => {
         id: "p2",
         preferredName: "Fictional Starter",
         employeeId: "p2",
+        positionId: "position-1",
         values: {},
         links: {},
       },
@@ -185,6 +189,63 @@ describe("a draft's details", () => {
       null,
       null,
       null,
+    ]);
+  });
+
+  it("names positions by their labels, with none for one no longer in any list", () => {
+    const positions = {
+      id: "positions",
+      name: "Positions",
+      description: "",
+      visibility: "general" as const,
+      retired: false,
+      builtIn: "positions" as const,
+      choices: [
+        {
+          id: "position-1",
+          label: "Engineer",
+          description: "",
+          retired: false,
+        },
+        { id: "position-2", label: "Tester", description: "", retired: false },
+      ],
+    };
+    const person = (positionId: string): Person => ({
+      id: "p3",
+      preferredName: "Fictional Mover",
+      employeeId: "p3",
+      positionId,
+      values: {},
+      links: {},
+    });
+    const wording = (
+      positionId: string,
+      action: "created" | "changed",
+      live?: string,
+    ) =>
+      personDraftFields(
+        person(positionId),
+        {
+          action,
+          changed: ["positionId"],
+          live: {
+            values: {},
+            links: {},
+            ...(live === undefined ? {} : { positionId: live }),
+          },
+          state: "waiting",
+          madeBy: null,
+          madeAt: null,
+        },
+        [],
+        [positions],
+      ).map(({ field }) => [field.oldValue, field.newValue]);
+    expect(wording("position-2", "changed", "position-1")).toEqual([
+      ["Engineer", "Tester"],
+    ]);
+    expect(wording("position-1", "created")).toEqual([[null, "Engineer"]]);
+    expect(wording("removed", "changed", "position-1")).toEqual([
+      ["Engineer", null],
     ]);
   });
 });

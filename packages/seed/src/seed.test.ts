@@ -66,6 +66,10 @@ afterAll(async () => {
 });
 
 const organization = fictionalOrganization({ size: 20 });
+// A seeded position, which people added by hand are given.
+const handPosition = String(
+  organization.positions.find(({ label }) => label === "Software Engineer")?.id,
+);
 
 // A session secret and an account password used only by tests.
 const sessionSecret = "fictional-session-secret-for-tests-only-0123456789";
@@ -87,14 +91,23 @@ describe("seeding", () => {
   it("adds the lists, columns, and people, recorded as made by Fathom itself, and adds nothing the second time", async () => {
     expect(await seed(connection, organization)).toBe(true);
     expect(await totalOf(people)).toBe(20);
-    expect(await totalOf(lists)).toBe(6);
-    expect(await totalOf(fields)).toBe(4);
+    // With the two lists Fathom builds in, Positions holding the seeded positions.
+    expect(await totalOf(lists)).toBe(7);
+    expect(await totalOf(fields)).toBe(3);
     const [order] = await connection.select().from(columnOrders);
-    expect(order?.keys.slice(0, 3)).toEqual([
+    expect(order?.keys.slice(0, 4)).toEqual([
       "preferredName",
       "employeeId",
+      "positionId",
       organization.columns[0]?.id,
     ]);
+    const positioned = await connection
+      .select({ total: count() })
+      .from(people)
+      .innerJoin(listItems, eq(listItems.id, people.positionId))
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(eq(lists.builtIn, "positions"));
+    expect(positioned[0]?.total).toBe(20);
     const recorded = await connection
       .select({ total: count() })
       .from(changes)
@@ -168,6 +181,7 @@ describe("seeding", () => {
       id: handId,
       preferredName: "Fictional Hand Report",
       employeeId: "H-2",
+      positionId: handPosition,
     });
     await connection
       .insert(reportingLines)
@@ -176,6 +190,9 @@ describe("seeding", () => {
     const manager = organization.people.find(({ id }) => id === managerId);
     expect(kept).toContain(
       `${String(manager?.preferredName)}, whom people added by hand report to, or have`,
+    );
+    expect(kept).toContain(
+      "The Software Engineer position, which people or planned hires added by hand have, live or in drafts",
     );
     const left = await connection.select({ id: people.id }).from(people);
     expect(left.map(({ id }) => id)).toContain(managerId);
@@ -188,11 +205,12 @@ describe("seeding", () => {
 
   it("removes only what seeding added, keeping a column and list that people added by hand use", async () => {
     const [site] = organization.columns;
-    const [sites, positions] = organization.lists;
+    const [sites, levels] = organization.lists;
     await connection.insert(people).values({
       id: "00000000-0000-4000-8000-000000000001",
       preferredName: "Fictional Hand Entry",
       employeeId: "H-1",
+      positionId: handPosition,
     });
     await connection.insert(fieldValues).values({
       fieldId: String(site?.id),
@@ -200,25 +218,32 @@ describe("seeding", () => {
       choiceId: String(sites?.choices[0]?.id),
     });
     await connection.insert(listItems).values({
-      listId: String(positions?.id),
+      listId: String(levels?.id),
       label: "Fictional Hand Choice",
     });
     const kept = await unseed(connection, organization);
     expect(kept).toEqual([
       "The Site column, which people added by hand have values in, live or in drafts",
       "The Sites list, which a column uses",
-      "The Positions list, which has choices added by hand",
+      "The Levels list, which has choices added by hand",
+      "The Software Engineer position, which people or planned hires added by hand have, live or in drafts",
     ]);
     expect(await totalOf(people)).toBe(1);
     expect(await totalOf(fields)).toBe(1);
-    expect(await totalOf(lists)).toBe(2);
+    expect(await totalOf(lists)).toBe(4);
     expect(await unseed(connection, organization)).toEqual(kept);
   });
 
   it("puts seeded columns right after Employee ID in a stored order, once each, when seeding again", async () => {
     await connection.delete(people);
     await connection.delete(fields);
-    await connection.delete(lists);
+    await connection.delete(lists).where(isNull(lists.builtIn));
+    await connection.delete(listItems).where(
+      inArray(
+        listItems.id,
+        organization.positions.map(({ id }) => id),
+      ),
+    );
     await connection.delete(columnOrders);
     await connection.insert(columnOrders).values({
       tableName: "people",
@@ -397,9 +422,9 @@ describe("the seed command", () => {
     // by hand, the fourteen of lists, and the five of columns.
     expect(await connection.select().from(drafts)).toHaveLength(24);
     expect(await holders()).toHaveLength(4);
-    const positions = fictionalOrganization({ size: 1 }).lists[1];
+    const levels = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
-      listId: String(positions?.id),
+      listId: String(levels?.id),
       label: "Fictional Hand Choice",
     });
     // A column drafted by hand on the list kept is not the seed's, so is left alone.
@@ -410,7 +435,7 @@ describe("the seed command", () => {
       fields: {
         tableName: "people",
         name: "Fictional Hand Column",
-        listId: String(positions?.id),
+        listId: String(levels?.id),
         multiple: false,
         required: false,
       },
@@ -443,7 +468,7 @@ describe("the seed command", () => {
       "Discarded 5 drafts made by the personas",
       "Discarded 17 drafts of lists and columns made by the personas",
       "Removed the fictional data",
-      "Kept: The Positions list, which has choices added by hand",
+      "Kept: The Levels list, which has choices added by hand",
       ...addresses.map((email) => `Deactivated the account ${email}`),
     ]);
     expect(

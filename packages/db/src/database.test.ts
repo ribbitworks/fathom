@@ -90,9 +90,18 @@ function withPasswordFile<T>(
   }
 }
 
+// A position every fictional person and hire below is given, in the built-in Positions list.
+const aPosition =
+  "(SELECT id FROM list_items WHERE label = 'Fictional Position')";
+
 beforeAll(async () => {
   database = await startTestDatabase();
   await runMigrations(database.migrator);
+  await withClient(database.app, (client) =>
+    client.query(
+      "INSERT INTO list_items (list_id, label) SELECT id, 'Fictional Position' FROM lists WHERE built_in = 'positions'",
+    ),
+  );
 });
 
 afterAll(async () => {
@@ -669,7 +678,7 @@ describe("reporting lines and teams", () => {
     for (let index = 0; index < count; index += 1) {
       added += 1;
       const row = await client.query<{ id: string }>(
-        "INSERT INTO people (preferred_name, employee_id) VALUES ($1, $2) RETURNING id",
+        `INSERT INTO people (preferred_name, employee_id, position_id) VALUES ($1, $2, ${aPosition}) RETURNING id`,
         [`Fictional Line Person ${String(added)}`, `RL-${String(added)}`],
       );
       ids.push(row.rows[0]?.id as string);
@@ -771,27 +780,40 @@ describe("planned hires", () => {
   async function addPerson(client: Client) {
     added += 1;
     const row = await client.query<{ id: string }>(
-      "INSERT INTO people (preferred_name, employee_id) VALUES ($1, $2) RETURNING id",
+      `INSERT INTO people (preferred_name, employee_id, position_id) VALUES ($1, $2, ${aPosition}) RETURNING id`,
       [`Fictional Hire Person ${String(added)}`, `PH-${String(added)}`],
     );
     return row.rows[0]?.id as string;
   }
 
-  // Adds a fictional planned hire, and gives its id.
+  // Adds a fictional planned hire, open unless told otherwise, with a temporary number of its own
+  // unless given a requisition, and gives its id.
   async function addHire(
     client: Client,
     hire: {
-      state?: string;
-      cancelledFrom?: string | null;
+      requisition?: string | null;
+      temporaryNumber?: number | null;
+      stateId?: string;
       managerId?: string | null;
       filledBy?: string | null;
     } = {},
   ) {
     const row = await client.query<{ id: string }>(
-      "INSERT INTO planned_hires (title, target_date, state, cancelled_from, manager_id, filled_by) VALUES ('Fictional test engineer', '2027-03-01', $1, $2, $3, $4) RETURNING id",
+      `INSERT INTO planned_hires (requisition, temporary_number, position_id, state_id, manager_id, filled_by)
+       VALUES ($1, $2, ${aPosition}, coalesce($3, (SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'hiring-states' AND i.meaning = 'open')), $4, $5) RETURNING id`,
       [
-        hire.state ?? "proposed",
-        hire.cancelledFrom ?? null,
+        hire.requisition ?? null,
+        hire.requisition === undefined
+          ? (hire.temporaryNumber ??
+            Number(
+              (
+                await client.query<{ number: string }>(
+                  "SELECT nextval('planned_hire_temporary_numbers') AS number",
+                )
+              ).rows[0]?.number,
+            ))
+          : (hire.temporaryNumber ?? null),
+        hire.stateId ?? null,
         hire.managerId ?? null,
         hire.filledBy ?? null,
       ],
@@ -799,58 +821,83 @@ describe("planned hires", () => {
     return row.rows[0]?.id as string;
   }
 
-  it("names the person who filled a hire only once it is filled, and the state a cancelled hire left only once cancelled", async () => {
+  it("starts with the built-in lists, hiring states each with a meaning, and keeps them from being retired", async () => {
     await withClient(database.app, async (client) => {
-      const person = await addPerson(client);
-      expect(await errorCodeOf(addHire(client, { state: "filled" }))).toBe(
-        checkViolation,
+      const lists = await client.query(
+        "SELECT name, built_in, visibility FROM lists WHERE built_in IS NOT NULL ORDER BY built_in",
       );
-      expect(
-        await errorCodeOf(
-          addHire(client, { state: "recruiting", filledBy: person }),
-        ),
-      ).toBe(checkViolation);
-      expect(await errorCodeOf(addHire(client, { state: "cancelled" }))).toBe(
-        checkViolation,
+      expect(lists.rows).toEqual([
+        {
+          name: "Hiring states",
+          built_in: "hiring-states",
+          visibility: "confidential",
+        },
+        { name: "Positions", built_in: "positions", visibility: "general" },
+      ]);
+      const states = await client.query(
+        "SELECT label, meaning FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'hiring-states' ORDER BY i.position",
       );
-      expect(
-        await errorCodeOf(addHire(client, { cancelledFrom: "approved" })),
-      ).toBe(checkViolation);
-      await addHire(client, { state: "filled", filledBy: person });
-      await addHire(client, { state: "cancelled", cancelledFrom: "approved" });
-    });
-  });
-
-  it("lets one person fill several hires over time", async () => {
-    await withClient(database.app, async (client) => {
-      const person = await addPerson(client);
-      await addHire(client, { state: "filled", filledBy: person });
-      await addHire(client, { state: "filled", filledBy: person });
-    });
-  });
-
-  it("refuses a state Fathom does not know, and a cancelled hire that left a state that is not open", async () => {
-    await withClient(database.app, async (client) => {
-      const person = await addPerson(client);
-      expect(
-        await errorCodeOf(
-          addHire(client, { state: "Filled", filledBy: person }),
-        ),
-      ).toBe(checkViolation);
-      for (const left of ["filled", "cancelled", "on hold"]) {
-        expect(
-          await errorCodeOf(
-            addHire(client, { state: "cancelled", cancelledFrom: left }),
-          ),
-        ).toBe(checkViolation);
+      expect(states.rows).toEqual([
+        { label: "Proposed", meaning: "proposed" },
+        { label: "Open", meaning: "open" },
+      ]);
+      for (const change of [
+        "UPDATE lists SET retired = true WHERE built_in = 'hiring-states'",
+        "UPDATE lists SET visibility = 'restricted' WHERE built_in = 'positions'",
+        "UPDATE lists SET built_in = 'skills' WHERE built_in = 'positions'",
+        "UPDATE list_items SET meaning = 'filled' WHERE label = 'Open'",
+      ]) {
+        expect(await errorCodeOf(client.query(change))).toBe(checkViolation);
       }
       expect(
         await errorCodeOf(
           client.query(
-            "INSERT INTO hiring_state_names (state, name) VALUES ('on-hold', 'Fictional On hold')",
+            "INSERT INTO lists (name, built_in) VALUES ('Fictional Positions', 'positions')",
           ),
         ),
+      ).toBe(uniqueViolation);
+    });
+  });
+
+  it("knows a hire by exactly one of a requisition and a temporary number, each used once", async () => {
+    await withClient(database.app, async (client) => {
+      await addHire(client, { requisition: "Fictional-REQ-1" });
+      expect(
+        await errorCodeOf(addHire(client, { requisition: "fictional-req-1" })),
+      ).toBe(uniqueViolation);
+      expect(
+        await errorCodeOf(
+          addHire(client, {
+            requisition: "Fictional-REQ-2",
+            temporaryNumber: 9001,
+          }),
+        ),
       ).toBe(checkViolation);
+      expect(await errorCodeOf(addHire(client, { requisition: null }))).toBe(
+        checkViolation,
+      );
+      expect(
+        await errorCodeOf(addHire(client, { requisition: "TBD-12" })),
+      ).toBe(checkViolation);
+      await addHire(client, { temporaryNumber: 9002 });
+      expect(
+        await errorCodeOf(addHire(client, { temporaryNumber: 9002 })),
+      ).toBe(uniqueViolation);
+    });
+  });
+
+  it("lets one person fill several hires over time, and keeps a hire's choices from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const person = await addPerson(client);
+      await addHire(client, { filledBy: person });
+      await addHire(client, { filledBy: person });
+      for (const label of ["Open", "Fictional Position"]) {
+        expect(
+          await errorCodeOf(
+            client.query("DELETE FROM list_items WHERE label = $1", [label]),
+          ),
+        ).toBe(restrictViolation);
+      }
     });
   });
 
@@ -859,7 +906,7 @@ describe("planned hires", () => {
       const manager = await addPerson(client);
       const person = await addPerson(client);
       await addHire(client, { managerId: manager });
-      await addHire(client, { state: "filled", filledBy: person });
+      await addHire(client, { filledBy: person });
       for (const id of [manager, person]) {
         expect(
           await errorCodeOf(
@@ -934,21 +981,6 @@ describe("planned hires", () => {
       ).toBe(checkViolation);
     });
   });
-
-  it("refuses a hiring state name already used, ignoring letter case", async () => {
-    await withClient(database.app, async (client) => {
-      await client.query(
-        "INSERT INTO hiring_state_names (state, name) VALUES ('approved', 'Fictional Headcount Approved')",
-      );
-      expect(
-        await errorCodeOf(
-          client.query(
-            "INSERT INTO hiring_state_names (state, name) VALUES ('recruiting', 'fictional headcount approved')",
-          ),
-        ),
-      ).toBe(uniqueViolation);
-    });
-  });
 });
 
 describe("recording changes", () => {
@@ -1007,7 +1039,7 @@ describe("people and columns", () => {
       [name, listId],
     );
     const person = await client.query<{ id: string }>(
-      "INSERT INTO people (preferred_name, employee_id) VALUES ('Fictional Person', $1) RETURNING id",
+      `INSERT INTO people (preferred_name, employee_id, position_id) VALUES ('Fictional Person', $1, ${aPosition}) RETURNING id`,
       [`id-${name}`],
     );
     const ids = {
@@ -1026,19 +1058,19 @@ describe("people and columns", () => {
   it("refuses an employee ID already used, ignoring letter case, and an end date before the start date", async () => {
     await withClient(database.app, async (client) => {
       await client.query(
-        "INSERT INTO people (preferred_name, employee_id) VALUES ('Fictional One', 'E-100')",
+        `INSERT INTO people (preferred_name, employee_id, position_id) VALUES ('Fictional One', 'E-100', ${aPosition})`,
       );
       expect(
         await errorCodeOf(
           client.query(
-            "INSERT INTO people (preferred_name, employee_id) VALUES ('Fictional Two', 'e-100')",
+            `INSERT INTO people (preferred_name, employee_id, position_id) VALUES ('Fictional Two', 'e-100', ${aPosition})`,
           ),
         ),
       ).toBe(uniqueViolation);
       expect(
         await errorCodeOf(
           client.query(
-            "INSERT INTO people (preferred_name, employee_id, start_date, end_date) VALUES ('Fictional Three', 'E-101', '2026-05-01', '2026-04-30')",
+            `INSERT INTO people (preferred_name, employee_id, position_id, start_date, end_date) VALUES ('Fictional Three', 'E-101', ${aPosition}, '2026-05-01', '2026-04-30')`,
           ),
         ),
       ).toBe(checkViolation);

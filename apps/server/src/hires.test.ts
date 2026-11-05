@@ -2,15 +2,33 @@
 
 // Tests for planned hires, against a migrated PostgreSQL server: who sees the whole hiring plan and
 // who sees only its placeholders; drafting hires added, changed, moved between states, and removed;
-// approving, rejecting, discarding, resending, and undoing those drafts; keeping the people hires
-// name; and recording changes to the plan in the access history without naming the hire.
+// their requisitions and temporary IDs; approving, rejecting, discarding, resending, and undoing
+// those drafts; keeping the people hires name; and recording changes to the plan in the access
+// history without naming the hire.
 
-import { accessHistory, drafts, plannedHires } from "@fathom/db";
+import {
+  accessHistory,
+  changes,
+  changeSets,
+  drafts,
+  listItems,
+  lists,
+  people,
+  plannedHires,
+  rolePermissions,
+  roles,
+  userRoles,
+} from "@fathom/db";
 import type { ChangeHistory, Hire, Hires, Unpublished } from "@fathom/shared";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { startTestApp, type TestApp } from "./test-app.ts";
+import {
+  otherTestPosition,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 interface User {
   id: string;
@@ -24,12 +42,46 @@ let editor: User;
 let approver: User;
 // A Resource Planner, who sees people, so the hiring plan's placeholders.
 let planner: User;
+// The hiring states: Proposed and Open, as Fathom starts them, and a second state meaning Open.
+let proposed: string;
+let open: string;
+let recruiting: string;
+// A position no longer offered.
+const retiredPosition = "00000000-0000-4000-8000-00000000f003";
 
 beforeAll(async () => {
   test = await startTestApp();
   editor = await test.signedIn(["workforce-administrator"]);
   approver = await test.signedIn(["approver", "leadership"]);
   planner = await test.signedIn(["resource-planner"]);
+  const states = await test.connection
+    .select({ id: listItems.id, label: listItems.label, listId: lists.id })
+    .from(listItems)
+    .innerJoin(lists, eq(lists.id, listItems.listId))
+    .where(eq(lists.builtIn, "hiring-states"));
+  proposed = String(states.find(({ label }) => label === "Proposed")?.id);
+  open = String(states.find(({ label }) => label === "Open")?.id);
+  const [added] = await test.connection
+    .insert(listItems)
+    .values({
+      listId: String(states[0]?.listId),
+      label: "Fictional Recruiting",
+      position: 3,
+      meaning: "open",
+    })
+    .returning({ id: listItems.id });
+  recruiting = String(added?.id);
+  const [positions] = await test.connection
+    .select({ id: lists.id })
+    .from(lists)
+    .where(eq(lists.builtIn, "positions"));
+  await test.connection.insert(listItems).values({
+    id: retiredPosition,
+    listId: String(positions?.id),
+    label: "Fictional Retired Position",
+    position: 3,
+    retired: true,
+  });
 });
 
 afterAll(async () => {
@@ -38,7 +90,7 @@ afterAll(async () => {
 
 let count = 0;
 
-// A title or name no other test uses, so tests sharing the database do not collide.
+// A name or ID no other test uses, so tests sharing the database do not collide.
 function unique(prefix: string): string {
   count += 1;
   return `${prefix} ${String(count)}`;
@@ -46,7 +98,7 @@ function unique(prefix: string): string {
 
 const send = (
   who: User,
-  method: "GET" | "POST" | "PATCH" | "DELETE",
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE",
   url: string,
   payload?: object,
   options?: { publish?: boolean },
@@ -76,6 +128,7 @@ async function person(details: object = {}): Promise<string> {
         {
           preferredName: unique("Fictional Person"),
           employeeId: unique("HP"),
+          positionId: testPosition,
           startDate: "2020-01-01",
           ...details,
         },
@@ -88,16 +141,19 @@ async function person(details: object = {}): Promise<string> {
   return id;
 }
 
+// A hire with a temporary ID, the test position, and a target date unless told otherwise.
+const hireRequest = (details: object = {}) => ({
+  positionId: testPosition,
+  targetDate: "2027-03-15",
+  ...details,
+});
+
 async function draftHire(
   details: object = {},
   who = editor,
 ): Promise<{ id: string; changeSetId: string }> {
   return ok(
-    await send(who, "POST", "/api/planned-hires", {
-      title: unique("Fictional Role"),
-      targetDate: "2027-03-15",
-      ...details,
-    }),
+    await send(who, "POST", "/api/planned-hires", hireRequest(details)),
     201,
   );
 }
@@ -136,70 +192,107 @@ async function liveRow(id: string) {
   return row;
 }
 
+// The number of a temporary ID, such as 7 for TBD-7.
+const numberOf = (hire: Hire | undefined) =>
+  Number(hire?.temporaryId?.replace("TBD-", ""));
+
+const placeholderKeys = [
+  "expected",
+  "id",
+  "managerId",
+  "managerName",
+  "positionId",
+  "requisition",
+  "temporaryId",
+];
+
 describe("the hiring plan", () => {
-  it("is shown whole, with its drafts, to those who see Confidential data, by title", async () => {
+  it("is shown whole, with its drafts, to those who see Confidential data, by ID", async () => {
     const manager = await person();
     const later = await liveHire({
-      title: "Zz Fictional Role",
+      requisition: "Zz-Fictional-REQ",
       managerId: manager,
-      state: "approved",
+      stateId: open,
     });
-    const sooner = await draftHire({ title: "Aa Fictional Role" });
+    const sooner = await draftHire({ requisition: "Aa-Fictional-REQ" });
     const { hires, wholePlan } = await hiresSeen(editor);
     expect(wholePlan).toBe(true);
     const ids = hires.map(({ id }) => id);
     expect(ids.indexOf(sooner.id)).toBeLessThan(ids.indexOf(later));
     expect(hires.find(({ id }) => id === later)).toMatchObject({
-      title: "Zz Fictional Role",
+      requisition: "Zz-Fictional-REQ",
+      temporaryId: null,
+      positionId: testPosition,
       managerId: manager,
       managerName: expect.stringMatching(/^Fictional Person/) as unknown,
-      firstMonth: "2027-03",
+      expected: "2027-03",
       targetDate: "2027-03-15",
-      state: "approved",
-      cancelledFrom: null,
+      stateId: open,
     });
     expect(hires.find(({ id }) => id === sooner.id)).toMatchObject({
       managerId: null,
       managerName: null,
-      state: "proposed",
+      stateId: proposed,
       draft: { action: "created", state: "waiting", live: {} },
     });
     expect(
       hires.find(({ id }) => id === sooner.id)?.draft?.changed.sort(),
-    ).toEqual(["state", "targetDate", "title"]);
+    ).toEqual(["positionId", "requisition", "stateId", "targetDate"]);
   });
 
-  it("shows those who see people but not Confidential data only the open hires' placeholders, as they are live", async () => {
-    const open = await liveHire({ title: unique("Fictional Placeholder") });
-    const cancelled = await liveHire();
-    await changed(cancelled, { state: "cancelled" });
-    await approved({ plannedHires: [cancelled] });
-    await changed(open, { title: unique("Fictional Renamed") });
+  it("shows those who see people but not Confidential data only placeholders, as they are live", async () => {
+    const shown = await liveHire({ stateId: proposed });
+    await changed(shown, { positionId: otherTestPosition });
     const drafted = await draftHire();
     const { hires, wholePlan } = await hiresSeen(planner);
     expect(wholePlan).toBe(false);
     const ids = hires.map(({ id }) => id);
-    expect(ids).toContain(open);
-    expect(ids).not.toContain(cancelled);
+    expect(ids).toContain(shown);
     expect(ids).not.toContain(drafted.id);
-    const placeholder = hires.find(({ id }) => id === open);
-    expect(Object.keys(placeholder ?? {}).sort()).toEqual([
-      "firstMonth",
-      "id",
-      "managerId",
-      "managerName",
-      "title",
-    ]);
-    expect(placeholder?.title).toMatch(/^Fictional Placeholder/);
+    const placeholder = hires.find(({ id }) => id === shown);
+    expect(Object.keys(placeholder ?? {}).sort()).toEqual(placeholderKeys);
+    expect(placeholder?.positionId).toBe(testPosition);
   });
 
-  it("lists hires of the same title in the same order every time", async () => {
-    const title = unique("Fictional Twin");
-    const ids = [await liveHire({ title }), await liveHire({ title })].sort();
-    const { hires } = await hiresSeen(editor);
-    expect(
-      hires.filter((hire) => hire.title === title).map(({ id }) => id),
-    ).toEqual(ids);
+  it("expects a hire in the month of its target date, or from this month without one", async () => {
+    const dated = await liveHire({ targetDate: "2028-11-30" });
+    const undated = await liveHire({ targetDate: null });
+    expect((await hireSeen(dated, planner))?.expected).toBe("2028-11");
+    expect(await hireSeen(undated)).toMatchObject({
+      expected: new Date().toISOString().slice(0, 7),
+      targetDate: null,
+    });
+  });
+
+  it("shows a filled hire whose person has not started as a placeholder only to those who do not see that person", async () => {
+    const starter = await person({ startDate: "2099-01-01" });
+    const started = await person();
+    const waiting = randomUUID();
+    const done = randomUUID();
+    await test.connection.insert(plannedHires).values([
+      {
+        id: waiting,
+        temporaryNumber: 900_001,
+        positionId: testPosition,
+        stateId: open,
+        targetDate: "2098-06-01",
+        filledBy: starter,
+      },
+      {
+        id: done,
+        temporaryNumber: 900_002,
+        positionId: testPosition,
+        stateId: open,
+        filledBy: started,
+      },
+    ]);
+    const forPlanner = (await hiresSeen(planner)).hires.map(({ id }) => id);
+    expect(forPlanner).toContain(waiting);
+    expect(forPlanner).not.toContain(done);
+    expect((await hireSeen(waiting, planner))?.expected).toBe("2099-01");
+    const restricted = await test.signedIn(["people-manager"]);
+    expect(await hireSeen(waiting, restricted)).toBeUndefined();
+    expect(await hireSeen(waiting)).toBeUndefined();
   });
 
   it("shows drafts written without the change history without who made them", async () => {
@@ -225,14 +318,15 @@ describe("the hiring plan", () => {
     await ok(await send(editor, "DELETE", `/api/planned-hires/${id}/draft`));
   });
 
-  it("shows the user's own unpublished changes as theirs, and names them among their unpublished changes", async () => {
-    const id = await liveHire({ title: unique("Fictional Removed") });
+  it("shows the user's own unpublished changes as theirs, and names them by position and ID among their unpublished changes", async () => {
+    const requisition = unique("Fictional-Removed");
+    const id = await liveHire({ requisition });
     const { id: added } = await ok<{ id: string }>(
       await send(
         editor,
         "POST",
         "/api/planned-hires",
-        { title: "Fictional Unpublished", targetDate: "2027-03-15" },
+        hireRequest({ positionId: otherTestPosition }),
         { publish: false },
       ),
       201,
@@ -242,7 +336,8 @@ describe("the hiring plan", () => {
         publish: false,
       }),
     );
-    expect((await hireSeen(added))?.draft).toMatchObject({
+    const shown = await hireSeen(added);
+    expect(shown?.draft).toMatchObject({
       action: "created",
       unpublished: true,
     });
@@ -250,8 +345,12 @@ describe("the hiring plan", () => {
       await send(editor, "GET", "/api/unpublished"),
     );
     const subjects = JSON.stringify(changes);
-    expect(subjects).toContain("the planned hire Fictional Unpublished");
-    expect(subjects).toContain("the planned hire Fictional Removed");
+    expect(subjects).toContain(
+      `the planned hire Fictional Lead, ${String(shown?.temporaryId)}`,
+    );
+    expect(subjects).toContain(
+      `the planned hire Fictional Engineer, ${requisition}`,
+    );
     await ok(await send(editor, "POST", "/api/unpublished/discard"));
     expect(await hireSeen(added)).toBeUndefined();
     expect((await hireSeen(id))?.draft).toBeUndefined();
@@ -291,16 +390,18 @@ describe("adding a hire", () => {
       .select({ id: accessHistory.id })
       .from(accessHistory)
       .where(eq(accessHistory.actorId, editor.id));
-    const { id, changeSetId } = await draftHire({ title: "Fictional Analyst" });
+    const { id, changeSetId } = await draftHire({
+      requisition: "Fictional-REQ-Analyst",
+    });
     expect(changeSetId).toEqual(expect.any(String));
     expect(await liveRow(id)).toBeUndefined();
     const history = await test.historyOf(id);
     expect(history).toContainEqual(
       expect.objectContaining({
         action: "created",
-        field: "title",
+        field: "requisition",
         tier: "confidential",
-        newValue: "Fictional Analyst",
+        newValue: "Fictional-REQ-Analyst",
       }),
     );
     expect(history.every(({ tier }) => tier === "confidential")).toBe(true);
@@ -317,29 +418,102 @@ describe("adding a hire", () => {
     });
   });
 
-  it("needs the rights to change people and Confidential data", async () => {
-    const response = await send(planner, "POST", "/api/planned-hires", {
-      title: "Fictional Role",
-      targetDate: "2027-03-15",
+  it("gives a hire with no requisition a temporary ID never used before, even once its draft is discarded", async () => {
+    const first = await draftHire();
+    const firstNumber = numberOf(await hireSeen(first.id));
+    await ok(
+      await send(editor, "DELETE", `/api/planned-hires/${first.id}/draft`),
+    );
+    const second = await draftHire();
+    expect(numberOf(await hireSeen(second.id))).toBeGreaterThan(firstNumber);
+    expect(await hireSeen(second.id)).toMatchObject({ requisition: null });
+  });
+
+  it("starts a hire in the first state meaning Proposed, or in the state given", async () => {
+    expect((await hireSeen((await draftHire()).id))?.stateId).toBe(proposed);
+    const given = await draftHire({ stateId: recruiting });
+    expect((await hireSeen(given.id))?.stateId).toBe(recruiting);
+  });
+
+  it.each([
+    ["a position from another list", () => ({ positionId: open })],
+    ["a position that is not a choice", () => ({ positionId: randomUUID() })],
+    ["a retired position", () => ({ positionId: retiredPosition })],
+    ["a state from another list", () => ({ stateId: testPosition })],
+  ])("refuses %s", async (_what, wrong) => {
+    const response = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest(wrong()),
+    );
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("refuses an ID someone has, ignoring letter case: an Employee ID, or another hire's requisition, live or drafted", async () => {
+    const employeeId = unique("Fictional-ID");
+    await person({ employeeId });
+    const requisition = unique("Fictional-REQ");
+    await draftHire({ requisition });
+    for (const taken of [employeeId.toLowerCase(), requisition.toUpperCase()]) {
+      const response = await send(
+        editor,
+        "POST",
+        "/api/planned-hires",
+        hireRequest({ requisition: taken }),
+      );
+      expect(response.statusCode).toBe(409);
+      expect(refusal(response)).toBe("Someone already has that ID");
+    }
+    const clash = await send(editor, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: requisition,
+          positionId: testPosition,
+        },
+      ],
     });
+    expect(clash.statusCode).toBe(409);
+  });
+
+  it("refuses a requisition that looks like a temporary ID", async () => {
+    const response = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest({ requisition: "tbd-3" }),
+    );
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("needs the rights to change people and see Confidential data", async () => {
+    const response = await send(
+      planner,
+      "POST",
+      "/api/planned-hires",
+      hireRequest(),
+    );
     expect(response.statusCode).toBe(403);
   });
 
   it("refuses a manager who is not a live person, or whom a draft removes", async () => {
-    const unknown = await send(editor, "POST", "/api/planned-hires", {
-      title: "Fictional Role",
-      targetDate: "2027-03-15",
-      managerId: randomUUID(),
-    });
+    const unknown = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest({ managerId: randomUUID() }),
+    );
     expect(unknown.statusCode).toBe(400);
     expect(refusal(unknown)).toBe("Choose a manager from People");
     const leaving = await person();
     await ok(await send(editor, "DELETE", `/api/people/${leaving}`));
-    const removed = await send(editor, "POST", "/api/planned-hires", {
-      title: "Fictional Role",
-      targetDate: "2027-03-15",
-      managerId: leaving,
-    });
+    const removed = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest({ managerId: leaving }),
+    );
     expect(removed.statusCode).toBe(400);
   });
 });
@@ -347,91 +521,107 @@ describe("adding a hire", () => {
 describe("changing a hire", () => {
   it("drafts new details, keeping what is live beside them", async () => {
     const manager = await person();
-    const id = await liveHire({ title: "Fictional Tester" });
+    const id = await liveHire();
     await changed(id, {
-      title: "Fictional Lead Tester",
+      requisition: "Fictional-REQ-Lead",
+      positionId: otherTestPosition,
       targetDate: "2027-06-01",
       managerId: manager,
-      state: "approved",
+      stateId: open,
     });
-    expect((await liveRow(id))?.title).toBe("Fictional Tester");
+    expect((await liveRow(id))?.positionId).toBe(testPosition);
     expect(await hireSeen(id)).toMatchObject({
-      title: "Fictional Lead Tester",
-      firstMonth: "2027-06",
+      requisition: "Fictional-REQ-Lead",
+      temporaryId: null,
+      positionId: otherTestPosition,
+      expected: "2027-06",
       managerId: manager,
-      state: "approved",
+      stateId: open,
       draft: {
         action: "changed",
         changed: expect.arrayContaining([
-          "title",
+          "requisition",
+          "positionId",
           "targetDate",
-          "state",
+          "stateId",
           "managerId",
         ]) as unknown,
         live: {
-          title: "Fictional Tester",
+          requisition: null,
+          positionId: testPosition,
           targetDate: "2027-03-15",
-          state: "proposed",
+          stateId: proposed,
           managerId: null,
         },
       },
     });
   });
 
+  it("gives a hire whose requisition is cleared a new temporary ID", async () => {
+    const id = await liveHire();
+    const before = numberOf(await hireSeen(id));
+    await changed(id, { requisition: unique("Fictional-REQ") });
+    await changed(id, { requisition: null });
+    const after = await hireSeen(id);
+    expect(after?.requisition).toBeNull();
+    expect(numberOf(after)).toBeGreaterThan(before);
+  });
+
   it("changes nothing when nothing differs", async () => {
-    const id = await liveHire({ title: "Fictional Same" });
-    expect(await changed(id, { title: "Fictional Same" })).toBeNull();
+    const id = await liveHire({ requisition: "Fictional-REQ-Same" });
+    expect(
+      await changed(id, {
+        requisition: "Fictional-REQ-Same",
+        positionId: testPosition,
+      }),
+    ).toBeNull();
+    expect(await changed(id, { requisition: "Fictional-REQ-Same" })).toBeNull();
   });
 
-  it("moves a hire one state at a time, cancels it from any open state, and brings it back to the state it left", async () => {
-    const id = await liveHire({ state: "recruiting" });
-    const skip = await change(id, { state: "proposed" });
-    expect(skip.statusCode).toBe(409);
-    expect(refusal(skip)).toMatch(/one state at a time/);
-    await changed(id, { state: "cancelled" });
-    expect(await hireSeen(id)).toMatchObject({
-      state: "cancelled",
-      cancelledFrom: "recruiting",
-    });
-    expect((await change(id, { state: "approved" })).statusCode).toBe(409);
-    await changed(id, { state: "recruiting" });
-    expect(await hireSeen(id)).toMatchObject({
-      state: "recruiting",
-      cancelledFrom: null,
-    });
-    await changed(id, { state: "offer-accepted" });
-    expect((await hireSeen(id))?.state).toBe("offer-accepted");
+  it("moves a hire between states in any order", async () => {
+    const id = await liveHire({ stateId: recruiting });
+    await changed(id, { stateId: proposed });
+    expect((await hireSeen(id))?.stateId).toBe(proposed);
+    await changed(id, { stateId: open });
+    await changed(id, { stateId: recruiting });
+    expect((await hireSeen(id))?.stateId).toBe(recruiting);
   });
 
-  it("never moves a filled hire", async () => {
+  it("keeps a retired position a hire has, but refuses giving it one", async () => {
     const id = randomUUID();
     await test.connection.insert(plannedHires).values({
       id,
-      title: "Fictional Filled Role",
-      targetDate: "2026-01-01",
-      state: "filled",
-      filledBy: await person(),
+      temporaryNumber: 900_003,
+      positionId: retiredPosition,
+      stateId: open,
     });
-    const response = await change(id, { state: "cancelled" });
-    expect(response.statusCode).toBe(409);
-    expect(refusal(response)).toBe("A filled hire stays filled");
+    await changed(id, { stateId: proposed, positionId: retiredPosition });
+    expect(
+      (await change(await liveHire(), { positionId: retiredPosition }))
+        .statusCode,
+    ).toBe(400);
+  });
+
+  it("keeps a filled hire, which cannot be removed", async () => {
+    const id = randomUUID();
+    await test.connection.insert(plannedHires).values({
+      id,
+      temporaryNumber: 900_004,
+      positionId: testPosition,
+      stateId: open,
+      filledBy: await person({ startDate: "2099-01-01" }),
+    });
     const removing = await send(editor, "DELETE", `/api/planned-hires/${id}`);
     expect(removing.statusCode).toBe(409);
-    await changed(id, { title: "Fictional Filled Role, renamed" });
-    await approved({ plannedHires: [id] });
-    expect(await liveRow(id)).toMatchObject({
-      title: "Fictional Filled Role, renamed",
-      state: "filled",
-    });
   });
 
   it("is refused for a hire that is not there, or that a draft removes", async () => {
-    expect(
-      (await change(randomUUID(), { title: "Fictional Role" })).statusCode,
-    ).toBe(404);
+    expect((await change(randomUUID(), { stateId: open })).statusCode).toBe(
+      404,
+    );
     const id = await liveHire();
     await ok(await send(editor, "DELETE", `/api/planned-hires/${id}`));
-    const response = await change(id, { title: "Fictional Role" });
+    const response = await change(id, { stateId: open });
     expect(response.statusCode).toBe(409);
   });
 
@@ -443,14 +633,12 @@ describe("changing a hire", () => {
         other,
         "PATCH",
         `/api/planned-hires/${id}`,
-        { title: unique("Fictional Held") },
+        { requisition: unique("Fictional-Held") },
         { publish: false },
       ),
     );
     expect((await hireSeen(id))?.heldBy).toEqual(expect.any(String));
-    expect((await change(id, { title: "Fictional Role" })).statusCode).toBe(
-      409,
-    );
+    expect((await change(id, { stateId: open })).statusCode).toBe(409);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 });
@@ -485,20 +673,25 @@ describe("removing a hire", () => {
 
 describe("a hire's draft", () => {
   it("is approved into the live hire", async () => {
-    const id = await liveHire({ title: "Fictional Before" });
-    await changed(id, { title: "Fictional After", state: "cancelled" });
+    const id = await liveHire();
+    await changed(id, {
+      requisition: "Fictional-REQ-After",
+      stateId: open,
+      targetDate: null,
+    });
     await approved({ plannedHires: [id] });
     expect(await liveRow(id)).toMatchObject({
-      title: "Fictional After",
-      state: "cancelled",
-      cancelledFrom: "proposed",
+      requisition: "Fictional-REQ-After",
+      temporaryNumber: null,
+      stateId: open,
+      targetDate: null,
     });
     expect((await hireSeen(id))?.draft).toBeUndefined();
   });
 
   it("is rejected with a reason, resent unchanged, and rejected again", async () => {
     const id = await liveHire();
-    await changed(id, { title: unique("Fictional Rejected") });
+    await changed(id, { requisition: unique("Fictional-Rejected") });
     const reject = async (reason: string) =>
       ok(
         await send(approver, "POST", "/api/drafts/rejection", {
@@ -536,20 +729,20 @@ describe("a hire's draft", () => {
 
   it("clears its rejection when changed again", async () => {
     const id = await liveHire();
-    await changed(id, { title: unique("Fictional Rejected") });
+    await changed(id, { stateId: open });
     await ok(
       await send(approver, "POST", "/api/drafts/rejection", {
         plannedHires: [id],
         reason: "Fictional reason",
       }),
     );
-    await changed(id, { title: unique("Fictional Fixed") });
+    await changed(id, { stateId: recruiting });
     expect((await hireSeen(id))?.draft?.state).toBe("waiting");
   });
 
   it("is decided only by Approvers who see people and Confidential data, and only when there", async () => {
     const id = await liveHire();
-    await changed(id, { title: unique("Fictional Role") });
+    await changed(id, { stateId: open });
     const unseeing = await test.signedIn(["approver", "resource-planner"]);
     expect(
       (
@@ -572,13 +765,13 @@ describe("a hire's draft", () => {
   });
 
   it("is discarded, leaving the hire as it is live, or gone if only drafted to be added", async () => {
-    const id = await liveHire({ title: "Fictional Kept" });
+    const id = await liveHire();
     const discard = (hire: string) =>
       send(editor, "DELETE", `/api/planned-hires/${hire}/draft`);
     expect((await discard(id)).statusCode).toBe(404);
-    await changed(id, { title: "Fictional Changed" });
+    await changed(id, { positionId: otherTestPosition });
     await ok(await discard(id));
-    expect(await hireSeen(id)).toMatchObject({ title: "Fictional Kept" });
+    expect(await hireSeen(id)).toMatchObject({ positionId: testPosition });
     expect((await hireSeen(id))?.draft).toBeUndefined();
 
     await ok(await send(editor, "DELETE", `/api/planned-hires/${id}`));
@@ -599,12 +792,12 @@ describe("a hire's draft", () => {
 
     const manager = await person();
     const id = await liveHire({
-      title: "Fictional Original",
+      requisition: "Fictional-REQ-Original",
       managerId: manager,
     });
-    const renamed = await changed(id, { title: "Fictional Renamed" });
-    await ok(await undo(renamed));
-    expect((await hireSeen(id))?.title).toBe("Fictional Original");
+    const moved = await changed(id, { positionId: otherTestPosition });
+    await ok(await undo(moved));
+    expect((await hireSeen(id))?.positionId).toBe(testPosition);
 
     const removed = (
       await ok<{ changeSetId: string }>(
@@ -613,7 +806,7 @@ describe("a hire's draft", () => {
     ).changeSetId;
     await ok(await undo(removed));
     expect(await hireSeen(id)).toMatchObject({
-      title: "Fictional Original",
+      requisition: "Fictional-REQ-Original",
       managerId: manager,
     });
   });
@@ -654,11 +847,7 @@ describe("the people hires name", () => {
         editor,
         "POST",
         "/api/planned-hires",
-        {
-          title: unique("Fictional Role"),
-          targetDate: "2027-03-15",
-          managerId: manager,
-        },
+        hireRequest({ managerId: manager }),
         { publish: false },
       ),
       201,
@@ -682,19 +871,44 @@ describe("the people hires name", () => {
   });
 });
 
+describe("the choices hires have", () => {
+  it("cannot be removed while a hire, live or in a draft, has them as its position or state", async () => {
+    const [positions] = await test.connection
+      .select({ id: lists.id })
+      .from(lists)
+      .where(eq(lists.builtIn, "positions"));
+    const listId = String(positions?.id);
+    const [kept] = await test.connection
+      .insert(listItems)
+      .values({ listId, label: unique("Fictional Kept Position"), position: 9 })
+      .returning({ id: listItems.id });
+    const choiceId = String(kept?.id);
+    const { id } = await draftHire({ positionId: choiceId });
+    const remove = () =>
+      send(editor, "DELETE", `/api/lists/${listId}/choices/${choiceId}`);
+    expect((await remove()).statusCode).toBe(409);
+    await approved({ plannedHires: [id] });
+    expect((await remove()).statusCode).toBe(409);
+    await test.connection
+      .delete(plannedHires)
+      .where(and(eq(plannedHires.id, id)));
+    expect((await remove()).statusCode).toBe(200);
+  });
+});
+
 describe("changes to the hiring plan in the change history", () => {
-  it("are shown to those who see people and Confidential data, naming states and managers", async () => {
+  it("are shown to those who see people and Confidential data, naming the hire by position and ID, and its states and manager", async () => {
     const manager = await person();
-    const id = await liveHire({ title: unique("Fictional Historic") });
-    await changed(id, { state: "cancelled", managerId: manager });
+    const requisition = unique("Fictional-Historic");
+    const id = await liveHire({ requisition });
+    await changed(id, { stateId: recruiting, managerId: manager });
     const entries = async (who: User) =>
       (
         await ok<ChangeHistory>(await send(who, "GET", "/api/changes"))
-      ).entries.filter((entry) =>
-        JSON.stringify(entry).includes("Fictional Historic"),
-      );
+      ).entries.filter((entry) => JSON.stringify(entry).includes(requisition));
     const seen = JSON.stringify(await entries(approver));
-    expect(seen).toContain("Cancelled");
+    expect(seen).toContain(`Fictional Engineer, ${requisition}`);
+    expect(seen).toContain("Fictional Recruiting");
     expect(seen).toContain("Proposed");
     expect(seen).toContain("Fictional Person");
     expect(await entries(planner)).toEqual([]);
@@ -704,36 +918,33 @@ describe("changes to the hiring plan in the change history", () => {
 describe("each role's view of the hiring plan", () => {
   it("shows a People Manager, who sees Restricted but not Confidential data, only placeholders and none of the plan's history", async () => {
     const manager = await test.signedIn(["people-manager"]);
-    const id = await liveHire({ title: unique("Fictional Managed") });
-    await changed(id, { state: "cancelled" });
+    const requisition = unique("Fictional-Managed");
+    const id = await liveHire({ requisition });
+    await changed(id, { stateId: open });
     const { hires, wholePlan } = await hiresSeen(manager);
     expect(wholePlan).toBe(false);
     expect(
       Object.keys(hires.find((hire) => hire.id === id) ?? {}).sort(),
-    ).toEqual(["firstMonth", "id", "managerId", "managerName", "title"]);
+    ).toEqual(placeholderKeys);
     expect(
       JSON.stringify(
         (await ok<ChangeHistory>(await send(manager, "GET", "/api/changes")))
           .entries,
       ),
-    ).not.toContain("Fictional Managed");
+    ).not.toContain(requisition);
   });
 
   it("shows Leadership the whole plan, without letting it change the plan", async () => {
     const leader = await test.signedIn(["leadership"]);
-    const id = await liveHire({ state: "approved" });
-    expect((await hireSeen(id, leader))?.state).toBe("approved");
+    const id = await liveHire({ stateId: open });
+    expect((await hireSeen(id, leader))?.stateId).toBe(open);
     expect(
-      (
-        await send(leader, "POST", "/api/planned-hires", {
-          title: "Fictional Role",
-          targetDate: "2027-03-15",
-        })
-      ).statusCode,
+      (await send(leader, "POST", "/api/planned-hires", hireRequest()))
+        .statusCode,
     ).toBe(403);
-    expect(
-      (await change(id, { title: "Fictional Role" }, leader)).statusCode,
-    ).toBe(403);
+    expect((await change(id, { stateId: proposed }, leader)).statusCode).toBe(
+      403,
+    );
   });
 
   it.each([["administrator"], ["project-planner"], ["approver"]] as const)(
@@ -748,7 +959,8 @@ describe("each role's view of the hiring plan", () => {
 
   it("shows Administrators that the hiring plan changed, without naming the hire", async () => {
     const administrator = await test.signedIn(["administrator"]);
-    await draftHire({ title: unique("Fictional Unnamed") });
+    const requisition = unique("Fictional-Unnamed");
+    await draftHire({ requisition });
     const { entries } = await ok<{
       entries: { action: string; subject: unknown }[];
     }>(await send(administrator, "GET", "/api/access-history"));
@@ -757,13 +969,13 @@ describe("each role's view of the hiring plan", () => {
     );
     expect(changes.length).toBeGreaterThan(0);
     expect(changes.every(({ subject }) => subject === null)).toBe(true);
-    expect(JSON.stringify(entries)).not.toContain("Fictional Unnamed");
+    expect(JSON.stringify(entries)).not.toContain(requisition);
   });
 
   it("answers an Approver who does not see Confidential data as if a hire had no draft", async () => {
     const approving = await test.signedIn(["approver", "people-manager"]);
     const id = await liveHire();
-    await changed(id, { title: unique("Fictional Role") });
+    await changed(id, { stateId: open });
     expect(
       (
         await send(approving, "POST", "/api/drafts/rejection", {
@@ -775,8 +987,8 @@ describe("each role's view of the hiring plan", () => {
   });
 
   it("keeps a placeholder as it is live, without who holds it or why its draft was rejected", async () => {
-    const id = await liveHire({ title: unique("Fictional Open") });
-    await changed(id, { state: "cancelled" });
+    const id = await liveHire();
+    await changed(id, { positionId: otherTestPosition });
     await ok(
       await send(approver, "POST", "/api/drafts/rejection", {
         plannedHires: [id],
@@ -789,19 +1001,14 @@ describe("each role's view of the hiring plan", () => {
         other,
         "PATCH",
         `/api/planned-hires/${id}`,
-        { title: unique("Fictional Held") },
+        { requisition: unique("Fictional-Held") },
         { publish: false },
       ),
     );
     const placeholder = await hireSeen(id, planner);
-    expect(Object.keys(placeholder ?? {}).sort()).toEqual([
-      "firstMonth",
-      "id",
-      "managerId",
-      "managerName",
-      "title",
-    ]);
-    expect(placeholder?.title).toMatch(/^Fictional Open/);
+    expect(Object.keys(placeholder ?? {}).sort()).toEqual(placeholderKeys);
+    expect(placeholder?.positionId).toBe(testPosition);
+    expect(placeholder?.requisition).toBeNull();
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
 });
@@ -833,11 +1040,12 @@ describe("a hire's manager", () => {
         publish: false,
       }),
     );
-    const response = await send(editor, "POST", "/api/planned-hires", {
-      title: "Fictional Role",
-      targetDate: "2027-03-15",
-      managerId: leaving,
-    });
+    const response = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest({ managerId: leaving }),
+    );
     expect(response.statusCode).toBe(400);
     await ok(await send(other, "POST", "/api/unpublished/discard"));
   });
@@ -858,4 +1066,254 @@ describe("a hire's manager", () => {
     );
     await test.connection.delete(drafts).where(eq(drafts.recordId, manager));
   });
+});
+
+describe("the built-in lists", () => {
+  const builtIn = async (key: "positions" | "hiring-states") => {
+    const [list] = await test.connection
+      .select({ id: lists.id, name: lists.name })
+      .from(lists)
+      .where(eq(lists.builtIn, key));
+    return list as { id: string; name: string };
+  };
+
+  it("cannot be removed, retired, or given another visibility", async () => {
+    const who = await test.signedIn(["workforce-administrator", "leadership"]);
+    const positions = await builtIn("positions");
+    const states = await builtIn("hiring-states");
+    const removed = await send(who, "DELETE", `/api/lists/${positions.id}`);
+    expect(removed.statusCode).toBe(409);
+    expect(refusal(removed)).toBe(
+      "This list cannot be deleted while a column draws on it: Position",
+    );
+    const retired = await send(who, "PUT", `/api/lists/${states.id}/retired`, {
+      retired: true,
+    });
+    expect(retired.statusCode).toBe(409);
+    expect(refusal(retired)).toBe(
+      "This list cannot be retired while a column draws on it: State",
+    );
+    const hidden = await send(who, "PUT", `/api/lists/${positions.id}`, {
+      name: positions.name,
+      description: "",
+      visibility: "restricted",
+    });
+    expect(hidden.statusCode).toBe(409);
+    expect(refusal(hidden)).toBe(
+      "A built-in list's visibility is that of the column drawing on it",
+    );
+  });
+
+  it("refuses a hiring state with no meaning", async () => {
+    const states = await builtIn("hiring-states");
+    const [plain] = await test.connection
+      .insert(listItems)
+      .values({ listId: states.id, label: unique("Fictional No Meaning") })
+      .returning({ id: listItems.id });
+    const response = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest({ stateId: String(plain?.id) }),
+    );
+    expect(response.statusCode).toBe(400);
+    await test.connection
+      .delete(listItems)
+      .where(eq(listItems.id, String(plain?.id)));
+  });
+
+  it("refuses a hire with no state given while no state meaning Proposed is offered", async () => {
+    const retire = (retired: boolean) =>
+      test.connection
+        .update(listItems)
+        .set({ retired })
+        .where(eq(listItems.id, proposed));
+    await retire(true);
+    try {
+      const response = await send(
+        editor,
+        "POST",
+        "/api/planned-hires",
+        hireRequest(),
+      );
+      expect(response.statusCode).toBe(409);
+      expect(refusal(response)).toBe(
+        "No state is offered meaning Proposed; choose one",
+      );
+    } finally {
+      await retire(false);
+    }
+  });
+});
+
+describe("a filled hire", () => {
+  it("is not shown once its person has started, even after they have left", async () => {
+    const left = await person({
+      startDate: "2019-01-01",
+      endDate: "2020-06-30",
+    });
+    const id = randomUUID();
+    await test.connection.insert(plannedHires).values({
+      id,
+      temporaryNumber: 900_005,
+      positionId: testPosition,
+      stateId: open,
+      filledBy: left,
+    });
+    expect(await hireSeen(id, planner)).toBeUndefined();
+  });
+});
+
+describe("a hire Fathom holds no history of", () => {
+  it("is named in the change history as it is now, by position and ID", async () => {
+    const withRequisition = randomUUID();
+    const withNumber = randomUUID();
+    const requisition = unique("Fictional-Carried");
+    await test.connection.insert(plannedHires).values([
+      {
+        id: withRequisition,
+        requisition,
+        positionId: testPosition,
+        stateId: proposed,
+      },
+      {
+        id: withNumber,
+        temporaryNumber: 900_006,
+        positionId: otherTestPosition,
+        stateId: proposed,
+      },
+    ]);
+    await changed(withRequisition, { stateId: open });
+    await changed(withNumber, { stateId: open });
+    const seen = JSON.stringify(
+      (await ok<ChangeHistory>(await send(approver, "GET", "/api/changes")))
+        .entries,
+    );
+    expect(seen).toContain(`Fictional Engineer, ${requisition}`);
+    expect(seen).toContain("Fictional Lead, TBD-900006");
+  });
+});
+
+describe("undoing changes to the hiring plan", () => {
+  it("needs the rights to change hires when undoing, not only when the change was made", async () => {
+    const maker = await test.signedIn(["workforce-administrator"]);
+    const { changeSetId } = await draftHire({}, maker);
+    const [role] = await test.connection
+      .insert(roles)
+      .values({ name: unique("Fictional People Editor") })
+      .returning({ id: roles.id });
+    await test.connection.insert(rolePermissions).values(
+      ["people:view", "people:edit"].map((permission) => ({
+        roleId: String(role?.id),
+        permission,
+      })),
+    );
+    await test.connection
+      .delete(userRoles)
+      .where(eq(userRoles.userId, maker.id));
+    await test.connection
+      .insert(userRoles)
+      .values({ userId: maker.id, roleId: String(role?.id) });
+    const response = await send(maker, "POST", `/api/undo/${changeSetId}`);
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("does not put back a requisition someone has taken since", async () => {
+    const requisition = unique("Fictional-Taken");
+    const { id } = await draftHire({ requisition });
+    const cleared = await changed(id, { requisition: null });
+    await person({ employeeId: requisition });
+    const response = await send(editor, "POST", `/api/undo/${String(cleared)}`);
+    expect(response.statusCode).toBe(409);
+  });
+
+  it("does not put back a hire removed before it had a position and state", async () => {
+    const id = randomUUID();
+    const [set] = await test.connection
+      .insert(changeSets)
+      .values({ madeBy: editor.id })
+      .returning({ id: changeSets.id });
+    await test.connection.insert(changes).values({
+      changeSetId: String(set?.id),
+      recordType: "planned-hire",
+      recordId: id,
+      action: "deleted",
+      field: "title",
+      tier: "confidential",
+      oldValue: "Fictional Old Role",
+      newValue: null,
+      draft: true,
+    });
+    const response = await send(editor, "POST", `/api/undo/${String(set?.id)}`);
+    expect(response.statusCode).toBe(409);
+  });
+});
+
+describe("undoing changes saved straight to live people", () => {
+  // A change set saved before people had drafts, as the change history holds it.
+  async function liveChange(
+    recordId: string,
+    action: "changed" | "deleted",
+    values: Record<string, [unknown, unknown]>,
+    draft = false,
+  ) {
+    const [set] = await test.connection
+      .insert(changeSets)
+      .values({ madeBy: editor.id })
+      .returning({ id: changeSets.id });
+    await test.connection.insert(changes).values(
+      Object.entries(values).map(([field, [oldValue, newValue]]) => ({
+        changeSetId: String(set?.id),
+        recordType: "person",
+        recordId,
+        action,
+        field,
+        tier: "general",
+        oldValue,
+        newValue,
+        draft,
+      })),
+    );
+    return String(set?.id);
+  }
+
+  it("does not put back an Employee ID a planned hire's requisition has taken since", async () => {
+    const now = unique("Fictional-New-ID");
+    const id = await person({ employeeId: now });
+    const old = unique("Fictional-Old-ID");
+    const undo = async () =>
+      send(
+        editor,
+        "POST",
+        `/api/undo/${await liveChange(id, "changed", { employeeId: [old, now] })}`,
+      );
+    // Free, it is put back; taken by a hire since, it is not.
+    expect((await undo()).statusCode).toBe(200);
+    await test.connection
+      .update(people)
+      .set({ employeeId: now })
+      .where(eq(people.id, id));
+    await draftHire({ requisition: old });
+    expect((await undo()).statusCode).toBe(409);
+  });
+
+  it.each([
+    ["live", false],
+    ["in a draft", true],
+  ])(
+    "does not put back someone removed %s before people had positions",
+    async (_where, draft) => {
+      const changeSetId = await liveChange(
+        randomUUID(),
+        "deleted",
+        {
+          preferredName: ["Fictional Removed Long Ago", null],
+          employeeId: [unique("Fictional-Gone"), null],
+        },
+        draft,
+      );
+      const response = await send(editor, "POST", `/api/undo/${changeSetId}`);
+      expect(response.statusCode).toBe(409);
+    },
+  );
 });

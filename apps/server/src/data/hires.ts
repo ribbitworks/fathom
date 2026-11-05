@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Planned hires, as part of the data access layer. The hiring plan is Confidential, so every change
-// to a hire is recorded at that tier, and only those who see Confidential data see hires' drafts,
-// their history, and the hires that are not open. Everyone who sees people sees each open hire's
-// placeholder: its title, manager, and first month. Every change is a draft, as drafts.ts sets out,
-// and changing the hiring plan is recorded in the access history, without naming the hire.
+// to a hire is recorded at that tier, and only those who see Confidential data see hires' drafts and
+// their history. Everyone who sees people sees each placeholder: a hire not yet filled, or, for
+// readers who do not see the person who filled it, one whose person has not started, with its ID,
+// position, manager, and expected month. Every change is a draft, as drafts.ts sets out, and
+// changing the hiring plan is recorded in the access history, without naming the hire.
 
 import {
   type Database,
@@ -12,6 +13,7 @@ import {
   inChunks,
   people,
   plannedHires,
+  plannedHireTemporaryNumbers,
   unpublishedDrafts,
 } from "@fathom/db";
 import {
@@ -20,10 +22,7 @@ import {
   type HireDraft,
   type HireRequest,
   type Hires,
-  type HiringState,
-  hiringStateSchema,
-  nextHiringStates,
-  openHiringStates,
+  temporaryId,
 } from "@fathom/shared";
 import { and, eq, inArray, or, type SQL, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -34,6 +33,7 @@ import {
   seesTier,
 } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import { checkBuiltInChoice, firstChoiceMeaning } from "./built-in-lists.ts";
 import {
   type Change,
   changesBetween,
@@ -58,6 +58,7 @@ import {
   refuseRejected,
   rejectedField,
   setRejection,
+  takenEmployeeIds,
   type Viewer,
   writeDraft,
 } from "./drafts.ts";
@@ -73,28 +74,49 @@ const toBeRemoved =
   "This planned hire's draft removes it; discard the draft to change it";
 const noDraft =
   "One of these planned hires has no draft; refresh to see the latest";
+const duplicateId = "Someone already has that ID";
 
 export const hireFields = [
-  "title",
+  "requisition",
+  "temporaryNumber",
+  "positionId",
   "targetDate",
-  "state",
-  "cancelledFrom",
+  "stateId",
   "managerId",
   "filledBy",
 ] as const;
 
 // Every detail of a hire is part of the hiring plan, so Confidential, even those a placeholder
-// shows, since a hire stops being a placeholder once cancelled.
+// shows, since the change history shows changes to them beside the rest.
 export const hireTier = () => "confidential" as const;
 
 export function recordedHire(row: HireRow): Recorded {
   return {
-    title: row.title,
+    requisition: row.requisition,
+    temporaryNumber: row.temporaryNumber,
+    positionId: row.positionId,
     targetDate: row.targetDate,
-    state: row.state,
-    cancelledFrom: row.cancelledFrom,
+    stateId: row.stateId,
     managerId: row.managerId,
     filledBy: row.filledBy,
+  };
+}
+
+const textOrNull = (value: unknown): string | null =>
+  typeof value === "string" ? value : null;
+
+// The hire's ID, as the ID column shows it: its requisition, or its temporary ID.
+export function hireIdOf(hire: Recorded): {
+  requisition: string | null;
+  temporaryId: string | null;
+} {
+  const requisition = textOrNull(hire.requisition);
+  return {
+    requisition,
+    temporaryId:
+      requisition === null && typeof hire.temporaryNumber === "number"
+        ? temporaryId(hire.temporaryNumber)
+        : null,
   };
 }
 
@@ -159,25 +181,20 @@ export const readHireDrafts = (
   viewer?: Viewer,
 ) => readDrafts(reader, recordType, ids, viewer);
 
-// A state Fathom does not know reads as Cancelled, so a hire in it is never shown as a placeholder.
-const stateOf = (hire: Recorded): HiringState =>
-  hiringStateSchema.catch("cancelled").parse(hire.state);
+const byId = new Intl.Collator("en", { sensitivity: "base", numeric: true });
 
-const cancelledFromOf = (hire: Recorded): HiringState | null =>
-  hire.cancelledFrom === null || hire.cancelledFrom === undefined
-    ? null
-    : hiringStateSchema.catch("cancelled").parse(hire.cancelledFrom);
+interface Named {
+  name: string;
+  startDate: string | null;
+  current: boolean;
+}
 
-const isOpen = (hire: Recorded) => openHiringStates.includes(stateOf(hire));
-
-const byTitle = new Intl.Collator("en", { sensitivity: "base" });
-
-async function managersOf(
+async function peopleNamed(
   reader: Reader,
   ids: readonly string[],
   today: string,
-): Promise<Map<string, { name: string; current: boolean }>> {
-  const managers = new Map<string, { name: string; current: boolean }>();
+): Promise<Map<string, Named>> {
+  const found = new Map<string, Named>();
   for (const chunk of inChunks([...new Set(ids)])) {
     const rows = await reader
       .select({
@@ -189,15 +206,20 @@ async function managersOf(
       .from(people)
       .where(inArray(people.id, chunk));
     for (const { id, name, ...dates } of rows) {
-      managers.set(id, { name, current: currentOn(dates, today) });
+      found.set(id, {
+        name,
+        startDate: dates.startDate,
+        current: currentOn(dates, today),
+      });
     }
   }
-  return managers;
+  return found;
 }
 
-// The hires the actor may see, by title: the whole hiring plan, as drafts make it, for those who see
-// Confidential data, and otherwise the placeholders of the open hires as they are live, without
-// their drafts.
+// The hires the actor may see, by ID: the whole hiring plan, as drafts make it, for those who see
+// Confidential data, and otherwise the placeholders as they are live, without their drafts. A filled
+// hire is left out once its person is seen instead: by readers who see Restricted data, or by
+// everyone once the person has started.
 export async function readHires(
   database: Database,
   actor: Actor,
@@ -223,51 +245,69 @@ export async function readHires(
         ...live.keys(),
         ...[...draftsNow.keys()].filter((id) => !live.has(id)),
       ];
-      const versions = ids.flatMap((id) => {
+      // Every hire read is live or drafted, so has a version; one drafted to be removed shows as
+      // it is.
+      const versions = ids.map((id) => {
         const before = live.get(id);
         const draft = draftsNow.get(id);
-        const hire = drafted(before, draft) ?? before;
-        if (hire === undefined || (!wholePlan && !isOpen(hire))) return [];
-        return [{ id, before, draft, hire }];
+        const hire = (drafted(before, draft) ?? before) as Recorded;
+        return { id, before, draft, hire };
       });
       // Readers who cannot see Restricted data see only current staff, so a hire names its manager
       // to them only while the manager is current, as People shows them.
       const restricted = seesTier(actor, "restricted");
-      const managers = await managersOf(
+      const named = await peopleNamed(
         transaction,
         versions.flatMap(({ hire, before }) =>
-          [hire.managerId, before?.managerId].filter(
-            (managerId): managerId is string => typeof managerId === "string",
+          [hire.managerId, hire.filledBy, before?.managerId].filter(
+            (personId): personId is string => typeof personId === "string",
           ),
         ),
         today,
       );
-      const hires = versions.map(({ id, before, draft, hire }): Hire => {
+      const thisMonth = today.slice(0, 7);
+      const hires = versions.flatMap(({ id, before, draft, hire }): Hire[] => {
+        const filler =
+          typeof hire.filledBy === "string"
+            ? named.get(hire.filledBy)
+            : undefined;
+        // A filled hire gives way to its person once they have started, or to readers who see them.
+        if (
+          typeof hire.filledBy === "string" &&
+          (restricted ||
+            filler === undefined ||
+            filler.startDate === null ||
+            filler.startDate <= today)
+        ) {
+          return [];
+        }
         const manager =
           typeof hire.managerId === "string"
-            ? managers.get(hire.managerId)
+            ? named.get(hire.managerId)
             : undefined;
         const shown = manager !== undefined && (restricted || manager.current);
-        const managerId = shown ? String(hire.managerId) : null;
-        const targetDate = String(hire.targetDate);
-        return {
-          id,
-          title: String(hire.title),
-          managerId,
-          managerName: shown ? manager.name : null,
-          firstMonth: targetDate.slice(0, 7),
-          ...(wholePlan
-            ? {
-                targetDate,
-                state: stateOf(hire),
-                cancelledFrom: cancelledFromOf(hire),
-                ...(draft === undefined
-                  ? {}
-                  : { draft: shownDraft(id, before, draft) }),
-                ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
-              }
-            : {}),
-        };
+        const targetDate = textOrNull(hire.targetDate);
+        const expectedOn = filler?.startDate ?? targetDate;
+        return [
+          {
+            id,
+            ...hireIdOf(hire),
+            positionId: String(hire.positionId),
+            managerId: shown ? String(hire.managerId) : null,
+            managerName: shown ? manager.name : null,
+            expected: expectedOn === null ? thisMonth : expectedOn.slice(0, 7),
+            ...(wholePlan
+              ? {
+                  targetDate,
+                  stateId: String(hire.stateId),
+                  ...(draft === undefined
+                    ? {}
+                    : { draft: shownDraft(id, before, draft) }),
+                  ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
+                }
+              : {}),
+          },
+        ];
       });
 
       function shownDraft(
@@ -275,20 +315,32 @@ export async function readHires(
         before: Recorded | undefined,
         draft: Draft,
       ): HireDraft {
-        const fields = draftFields(before, draft).filter(
-          (field) => field !== "cancelledFrom" && field !== "filledBy",
-        );
+        // A hire's ID is one field to the reader, whichever of the two a draft changes.
+        const fields = [
+          ...new Set(
+            draftFields(before, draft)
+              .filter((field) => field !== "filledBy")
+              .map((field) =>
+                field === "temporaryNumber" ? "requisition" : field,
+              ),
+          ),
+        ];
         const liveValues: HireDraft["live"] = {};
         if (before !== undefined) {
           for (const field of fields) {
-            if (field === "title") liveValues.title = String(before.title);
-            if (field === "targetDate") {
-              liveValues.targetDate = String(before.targetDate);
+            if (field === "requisition") {
+              liveValues.requisition = textOrNull(before.requisition);
             }
-            if (field === "state") liveValues.state = stateOf(before);
+            if (field === "positionId") {
+              liveValues.positionId = String(before.positionId);
+            }
+            if (field === "targetDate") {
+              liveValues.targetDate = textOrNull(before.targetDate);
+            }
+            if (field === "stateId")
+              liveValues.stateId = String(before.stateId);
             if (field === "managerId") {
-              liveValues.managerId =
-                typeof before.managerId === "string" ? before.managerId : null;
+              liveValues.managerId = textOrNull(before.managerId);
             }
           }
         }
@@ -314,20 +366,21 @@ export async function readHires(
         };
       }
 
-      hires.sort(
-        (a, b) => byTitle.compare(a.title, b.title) || a.id.localeCompare(b.id),
-      );
+      // No two hires have the same ID, ignoring letter case, so the order is always the same.
+      const shownId = (hire: Hire) =>
+        String(hire.requisition ?? hire.temporaryId);
+      hires.sort((a, b) => byId.compare(shownId(a), shownId(b)));
       return { hires, wholePlan };
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
 }
 
-// Changes to the hiring plan need the Workforce Administrator's rights to change people and
-// Confidential data.
+// Until planned hires are a permission area of their own, changing them needs the rights to edit
+// people and to see Confidential data, as the Decisions Log sets out.
 function requireHiringEdit(actor: Actor): void {
   requirePermission(actor, "people:edit");
-  requirePermission(actor, "confidential:edit");
+  requirePermission(actor, "confidential:view");
 }
 
 // Whether a hire may have the manager given: none, or a live person whom no draft removes,
@@ -378,6 +431,51 @@ async function checkManager(
   }
 }
 
+// Refuses a requisition that a person's Employee ID or another hire's requisition already is, live
+// or in a draft, ignoring letter case.
+async function checkRequisition(
+  transaction: Transaction,
+  requisition: string | null,
+  id: string,
+): Promise<void> {
+  if (
+    requisition !== null &&
+    (await takenEmployeeIds(transaction, [requisition], [id])).length > 0
+  ) {
+    throw new ConflictError(duplicateId);
+  }
+}
+
+// A new temporary number, never used before.
+async function nextTemporaryNumber(transaction: Transaction): Promise<number> {
+  const { rows } = await transaction.execute<{ number: string }>(
+    sql`SELECT nextval(${`"fathom"."${String(plannedHireTemporaryNumbers.seqName)}"`}::regclass) AS number`,
+  );
+  return Number(rows[0]?.number);
+}
+
+// The hire's ID as a change makes it: a requisition given replaces the temporary number, and one
+// cleared gives the hire a new temporary number.
+async function idAsChanged(
+  transaction: Transaction,
+  hire: Recorded,
+  requisition: string | null | undefined,
+): Promise<Pick<Recorded, "requisition" | "temporaryNumber">> {
+  const current = textOrNull(hire.requisition);
+  if (requisition === undefined || requisition === current) {
+    return {
+      requisition: current,
+      temporaryNumber:
+        typeof hire.temporaryNumber === "number" ? hire.temporaryNumber : null,
+    };
+  }
+  if (requisition !== null) return { requisition, temporaryNumber: null };
+  return {
+    requisition: null,
+    temporaryNumber: await nextTemporaryNumber(transaction),
+  };
+}
+
 export async function createHire(
   database: Database,
   actor: Actor,
@@ -387,12 +485,22 @@ export async function createHire(
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     await checkManager(transaction, request.managerId);
+    await checkBuiltInChoice(transaction, "positions", request.positionId);
+    const stateId =
+      request.stateId ??
+      (await firstChoiceMeaning(transaction, "hiring-states", "proposed"));
+    await checkBuiltInChoice(transaction, "hiring-states", stateId);
     const id = randomUUID();
+    await checkRequisition(transaction, request.requisition, id);
     const after: Recorded = {
-      title: request.title,
+      requisition: request.requisition,
+      temporaryNumber:
+        request.requisition === null
+          ? await nextTemporaryNumber(transaction)
+          : null,
+      positionId: request.positionId,
       targetDate: request.targetDate,
-      state: request.state,
-      cancelledFrom: null,
+      stateId,
       managerId: request.managerId,
       filledBy: null,
     };
@@ -430,31 +538,7 @@ async function lockDraftedHire(
   return { before, draft, hire: drafted(before, draft) };
 }
 
-// The state a change moves a hire to, refusing a move the states do not allow, with the state a
-// cancelled hire left.
-function movedState(
-  hire: Recorded,
-  wanted: HiringState | undefined,
-): Pick<Recorded, "state" | "cancelledFrom"> {
-  const state = stateOf(hire);
-  const cancelledFrom = cancelledFromOf(hire);
-  if (wanted === undefined || wanted === state) {
-    return { state, cancelledFrom };
-  }
-  if (!nextHiringStates(state, cancelledFrom).includes(wanted)) {
-    throw new ConflictError(
-      state === "filled"
-        ? "A filled hire stays filled"
-        : "A planned hire moves one state at a time, to Cancelled, or back to the state it was cancelled from",
-    );
-  }
-  return {
-    state: wanted,
-    cancelledFrom: wanted === "cancelled" ? state : null,
-  };
-}
-
-// Drafts a change to some of a hire's details, or a move to another state.
+// Drafts a change to some of a hire's details, or a move to another state, in any order.
 export async function updateHire(
   database: Database,
   actor: Actor,
@@ -473,16 +557,38 @@ export async function updateHire(
     if (change.managerId !== undefined) {
       await checkManager(transaction, change.managerId);
     }
+    if (change.positionId !== undefined) {
+      await checkBuiltInChoice(
+        transaction,
+        "positions",
+        change.positionId,
+        hire.positionId,
+      );
+    }
+    if (change.stateId !== undefined) {
+      await checkBuiltInChoice(
+        transaction,
+        "hiring-states",
+        change.stateId,
+        hire.stateId,
+      );
+    }
+    if (typeof change.requisition === "string") {
+      await checkRequisition(transaction, change.requisition, id);
+    }
     const after: Recorded = {
       ...hire,
-      ...(change.title === undefined ? {} : { title: change.title }),
+      ...(await idAsChanged(transaction, hire, change.requisition)),
+      ...(change.positionId === undefined
+        ? {}
+        : { positionId: change.positionId }),
       ...(change.targetDate === undefined
         ? {}
         : { targetDate: change.targetDate }),
+      ...(change.stateId === undefined ? {} : { stateId: change.stateId }),
       ...(change.managerId === undefined
         ? {}
         : { managerId: change.managerId }),
-      ...movedState(hire, change.state),
     };
     const made = hireChanges(id, "changed", hire, after);
     if (made.length === 0) return null;
@@ -496,9 +602,8 @@ export async function updateHire(
   });
 }
 
-// Drafts removing a hire entered by mistake; removing one only drafted to be added discards that
-// draft. Filled hires are refused until filling, which removes one together with its person, is
-// built.
+// Drafts removing a hire, which is how a hire is cancelled; removing one only drafted to be added
+// discards that draft. Filled hires are refused, since the person who filled one is kept with it.
 export async function deleteHire(
   database: Database,
   actor: Actor,
@@ -513,7 +618,7 @@ export async function deleteHire(
       id,
     );
     if (hire === undefined) return null;
-    if (stateOf(hire) === "filled") {
+    if (typeof hire.filledBy === "string") {
       throw new ConflictError(
         "A filled hire is kept; give its person an end date instead",
       );
@@ -693,12 +798,14 @@ export async function approveHiresIn(
       continue;
     }
     const row = {
-      title: String(hire.title),
-      targetDate: String(hire.targetDate),
-      state: stateOf(hire),
-      cancelledFrom: cancelledFromOf(hire),
-      managerId: typeof hire.managerId === "string" ? hire.managerId : null,
-      filledBy: typeof hire.filledBy === "string" ? hire.filledBy : null,
+      requisition: textOrNull(hire.requisition),
+      temporaryNumber:
+        typeof hire.temporaryNumber === "number" ? hire.temporaryNumber : null,
+      positionId: String(hire.positionId),
+      targetDate: textOrNull(hire.targetDate),
+      stateId: String(hire.stateId),
+      managerId: textOrNull(hire.managerId),
+      filledBy: textOrNull(hire.filledBy),
     };
     if (before === undefined) {
       await transaction.insert(plannedHires).values({ id, ...row });
@@ -752,7 +859,8 @@ export async function rejectHiresIn(
 
 // Puts back the drafts of the hires a change set changed in their drafts: the hire it drafted adding
 // taken out, the one it drafted removing put back as it was, and the fields it changed put back. A
-// manager put back must still be a live person, and a hire still be there to change.
+// manager put back must still be a live person, a requisition still be one no one else has, and a
+// hire still be there to change.
 export async function undoHireDrafts(
   transaction: Transaction,
   editor: string,
@@ -772,11 +880,18 @@ export async function undoHireDrafts(
     let hire: Recorded | undefined;
     if (record.action === "deleted") {
       hire = {
-        cancelledFrom: null,
+        requisition: null,
+        temporaryNumber: null,
+        targetDate: null,
         managerId: null,
         filledBy: null,
         ...Object.fromEntries([...old].filter(([, value]) => value !== null)),
       };
+      // A hire recorded before it had a position, a state, and an ID, all recorded together since,
+      // cannot be put back.
+      if (hire.positionId === undefined) {
+        throw new ConflictError(changedSince);
+      }
     } else if (record.action === "changed") {
       // A hire changed since is refused before this, so it is still there.
       const now = drafted(
@@ -785,7 +900,12 @@ export async function undoHireDrafts(
       ) as Recorded;
       hire = { ...now, ...Object.fromEntries(old) };
     }
-    if (!(await managerAllowed(transaction, hire?.managerId))) {
+    if (
+      !(await managerAllowed(transaction, hire?.managerId)) ||
+      (typeof hire?.requisition === "string" &&
+        (await takenEmployeeIds(transaction, [hire.requisition], [record.id]))
+          .length > 0)
+    ) {
       throw new ConflictError(changedSince);
     }
     await writeDraft(

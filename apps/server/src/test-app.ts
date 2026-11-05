@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A Fathom server for tests, against a migrated PostgreSQL server of its own, with helpers to sign in
-// fictional accounts holding given roles, to send requests as them, and to approve the drafts of
-// lists that tests set up. Unless asked not to, each change sent is published straight after, as
-// its maker would, so tests of drafts see them as everyone does. Used only by tests.
+// A Fathom server for tests, against a migrated PostgreSQL server of its own, whose built-in
+// Positions list offers two fictional positions, with helpers to sign in fictional accounts holding
+// given roles, to send requests as them, and to approve the drafts of lists that tests set up.
+// Unless asked not to, each change sent is published straight after, as its maker would, so tests
+// of drafts see them as everyone does. Used only by tests.
 
 import {
   changes,
@@ -12,6 +13,8 @@ import {
   createDatabase,
   createPool,
   type Database,
+  listItems,
+  lists,
   runMigrations,
 } from "@fathom/db";
 import type { Role } from "@fathom/shared";
@@ -34,6 +37,10 @@ const secret = "fictional-session-secret-for-tests-only-0123456789";
 const password = "fictional password 1";
 
 export type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+
+// The positions every test app's Positions list offers, for the people and planned hires tests add.
+export const testPosition = "00000000-0000-4000-8000-00000000f001";
+export const otherTestPosition = "00000000-0000-4000-8000-00000000f002";
 
 export interface TestApp {
   app: App;
@@ -89,6 +96,24 @@ export async function startTestApp({
   await runMigrations(database.migrator);
   const pool = createPool(database.app, () => undefined);
   const connection = createDatabase(pool);
+  const [positions] = await connection
+    .select({ id: lists.id })
+    .from(lists)
+    .where(eq(lists.builtIn, "positions"));
+  await connection.insert(listItems).values([
+    {
+      id: testPosition,
+      listId: String(positions?.id),
+      label: "Fictional Engineer",
+      position: 1,
+    },
+    {
+      id: otherTestPosition,
+      listId: String(positions?.id),
+      label: "Fictional Lead",
+      position: 2,
+    },
+  ]);
   const auth: Auth = createAuth(connection, { publicUrl, secret });
   const data = createDataAccess(connection);
   const app = await buildApp({

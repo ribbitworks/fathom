@@ -7,7 +7,7 @@
 
 import type { Choice, Field, List } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { startTestApp, type TestApp } from "./test-app.ts";
+import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 let test: TestApp;
 
@@ -69,6 +69,7 @@ describe("required columns", () => {
     const person = {
       preferredName: "Fictional Person",
       employeeId: "E-1",
+      positionId: testPosition,
       values: {
         [siteId]: [String(choice?.id)],
         [optional.id]: [String(choice?.id)],

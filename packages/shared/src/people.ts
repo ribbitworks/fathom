@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People and the columns people add to the People table. Every person has a preferred name and an
-// Employee ID, which are General, and may have start and end dates, which are Restricted. A choice
-// column draws on a list, and its values are choices from that list, as sensitive as the list's
-// visibility; a web link column holds one link for each person, as sensitive as the column's own
-// visibility. What a user receives leaves out what their roles do not let them see.
+// People and the columns people add to the People table. Every person has a preferred name, an
+// Employee ID, and a position, which are General, and may have start and end dates, which are
+// Restricted. A choice column draws on a list, and its values are choices from that list, as
+// sensitive as the list's visibility; a web link column holds one link for each person, as sensitive
+// as the column's own visibility. What a user receives leaves out what their roles do not let them
+// see.
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
@@ -106,6 +107,7 @@ export const personDraftSchema = z.object({
   live: z.object({
     preferredName: z.string().optional(),
     employeeId: z.string().optional(),
+    positionId: z.string().optional(),
     startDate: day.nullable().optional(),
     endDate: day.nullable().optional(),
     managerId: z.string().nullable().optional(),
@@ -125,6 +127,8 @@ export const personSchema = z.object({
   id: z.string(),
   preferredName: z.string(),
   employeeId: z.string(),
+  // A choice in the built-in Positions list.
+  positionId: z.string(),
   // Left out for users who cannot see Restricted details; null when not set.
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
@@ -176,8 +180,23 @@ export const peopleSchema = z.object({
   views: z.array(savedViewSchema),
 });
 
+// The prefix of planned hires' temporary IDs, such as TBD-7, which no ID typed in starts with,
+// ignoring letter case, so it never matches one.
+export const temporaryIdPrefix = "TBD-";
+
+// An ID in the ID column: a person's Employee ID or a planned hire's requisition.
+export const recordIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(personLengths.employeeId)
+  .refine(
+    (id) => !id.toLowerCase().startsWith(temporaryIdPrefix.toLowerCase()),
+    `An ID cannot start with ${temporaryIdPrefix}, which temporary IDs use`,
+  );
+
 const preferredName = z.string().trim().min(1).max(personLengths.preferredName);
-const employeeId = z.string().trim().min(1).max(personLengths.employeeId);
+const employeeId = recordIdSchema;
 // An empty name removes it.
 const teamName = z
   .string()
@@ -196,6 +215,7 @@ const reporting = {
 export const personRequestSchema = z.object({
   preferredName,
   employeeId,
+  positionId: z.uuid(),
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
   ...reporting,
@@ -215,6 +235,7 @@ export const peopleRequestSchema = z.object({
 export const personChangeSchema = z.object({
   preferredName: preferredName.optional(),
   employeeId: employeeId.optional(),
+  positionId: z.uuid().optional(),
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
   ...reporting,

@@ -51,6 +51,7 @@ async function columnTiers(reader: Reader): Promise<Map<string, Tier>> {
   return new Map<string, Tier>([
     ["preferredName", "general"],
     ["employeeId", "general"],
+    ["positionId", "general"],
     ["startDate", "restricted"],
     ["endDate", "restricted"],
     ...(await readColumns(reader)).map((column): [string, Tier] => [

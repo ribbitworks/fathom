@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The People table: the table of records record-grid.tsx sets out, with what is particular to
-// people. Its columns are each person's name and Employee ID, their manager, their team, which
-// follows from their manager, and their own team's name, the added columns, and, for those who may
-// see them, start and end dates and the date their manager is theirs from. A person's Employee ID
-// must be one no one else has, and their end date cannot be before their start date.
+// people. Its columns are each person's name, Employee ID, and position, their manager, their team,
+// which follows from their manager, and their own team's name, the added columns, and, for those
+// who may see them, start and end dates and the date their manager is theirs from. A person's
+// Employee ID must be one no one else has, and their end date cannot be before their start date.
 
 import type {
   Choice,
@@ -136,7 +136,8 @@ function teamChoices(people: readonly Person[]): Choice[] {
 
 const asIds = (value: CellValue) => value as string[];
 
-const managerOf = (id: string | null | undefined): string[] =>
+// A single choice as a cell's value: the one chosen, or none.
+const chosen = (id: string | null | undefined): string[] =>
   typeof id === "string" ? [id] : [];
 
 // Gone by today while someone still reports to them, for readers who may see when people leave.
@@ -181,8 +182,8 @@ function makeReportingColumns(
     choices: managerChoices(people, today),
     emptyLabel: "No manager",
     retiredLabel: "No longer offered",
-    value: (person) => managerOf(person.manager?.id),
-    live: (draft) => managerOf(draft.live.managerId),
+    value: (person) => chosen(person.manager?.id),
+    live: (draft) => chosen(draft.live.managerId),
     change: (value) => ({ managerId: asIds(value)[0] ?? null }),
   };
   return [
@@ -204,10 +205,11 @@ function makeReportingColumns(
   ];
 }
 
-// The People table's columns, in the order given by their keys: each person's name and Employee
-// ID, for those who may see them, start and end dates, their manager, for those who may see it, the
-// date their manager is theirs from, their team and team name, and the added columns. A column the
-// order does not name yet comes at the end. Managers are picked from the people given.
+// The People table's columns, in the order given by their keys: each person's name, Employee ID,
+// and position, from the built-in Positions list, for those who may see them, start and end dates,
+// their manager, for those who may see it, the date their manager is theirs from, their team and
+// team name, and the added columns. A column the order does not name yet comes at the end. Managers
+// are picked from the people given.
 export function columnsFor(
   fields: readonly Field[],
   lists: readonly List[],
@@ -230,10 +232,27 @@ export function columnsFor(
       maxLength,
     });
   const [manager, team] = reportingColumns(people, today());
+  const position: Column = {
+    key: "positionId",
+    kind: "choice",
+    // Every built-in column is named.
+    label: builtInColumnNames.get("positionId") as string,
+    required: true,
+    multiple: false,
+    // Only live positions, since a position must be a choice the list already has.
+    choices: (
+      lists.find(({ builtIn }) => builtIn === "positions")?.choices ?? []
+    ).filter(({ draft }) => draft?.action !== "created"),
+    value: (person) => [person.positionId],
+    live: (draft) => chosen(draft.live.positionId),
+    // A required column is never saved empty, so a change always holds a position.
+    change: (value) => ({ positionId: asIds(value)[0] }),
+  };
   return inOrder(
     [
       builtIn("preferredName", "text", true, personLengths.preferredName),
       builtIn("employeeId", "text", true, personLengths.employeeId),
+      position,
       ...(showDates
         ? [builtIn("startDate", "date"), builtIn("endDate", "date")]
         : []),
@@ -379,11 +398,12 @@ function recordProblem(
 // The request that adds a person, from each column's value as its kind would save it, with every
 // choice column named and no link left empty.
 function requestFor(parts: readonly PersonChange[]): PersonRequest {
-  // Every table has its name, Employee ID and Manager columns, and its dates together or not at
-  // all.
+  // Every table has its name, Employee ID, Position and Manager columns, and its dates together or
+  // not at all.
   const {
     preferredName,
     employeeId,
+    positionId,
     startDate,
     endDate,
     managerId,
@@ -393,6 +413,7 @@ function requestFor(parts: readonly PersonChange[]): PersonRequest {
   return {
     preferredName,
     employeeId,
+    positionId,
     ...(startDate === undefined ? {} : { startDate, endDate }),
     ...(managerId == null
       ? {}

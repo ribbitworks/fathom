@@ -14,6 +14,7 @@ import { textLimit } from "./views.ts";
 export const builtInColumnNames: ReadonlyMap<string, string> = new Map([
   ["preferredName", "Name"],
   ["employeeId", "Employee ID"],
+  ["positionId", "Position"],
   ["startDate", "Start"],
   ["endDate", "End"],
   ["managerId", "Manager"],

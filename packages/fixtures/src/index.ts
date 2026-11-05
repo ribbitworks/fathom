@@ -64,6 +64,8 @@ export interface FictionalPerson {
   id: string;
   preferredName: string;
   employeeId: string;
+  // A choice in the built-in Positions list.
+  positionId: string;
   // As YYYY-MM-DD, or null when not set.
   startDate: string | null;
   endDate: string | null;
@@ -85,6 +87,8 @@ export interface FictionalTeam {
 
 export interface FictionalOrganization {
   lists: FictionalList[];
+  // The choices the seed data adds to the built-in Positions list, which Fathom makes itself.
+  positions: FictionalList["choices"];
   columns: FictionalColumn[];
   people: FictionalPerson[];
   // One current line for everyone but the person at the top and those no manager was employed for.
@@ -116,7 +120,8 @@ const sites = list("sites", "Sites", [
   "Ashgrove",
   "Corran Quay",
 ]);
-// Architect is never given to anyone, so the seed data can draft removing a choice no one has.
+// The choices of the built-in Positions list. Architect is never given to anyone, so the seed data
+// can draft removing a choice no one has.
 const positions = list("positions", "Positions", [
   "Software Engineer",
   "Test Engineer",
@@ -158,7 +163,6 @@ function column(
 }
 
 const siteColumn = column("site", "Site", sites);
-const positionColumn = column("position", "Position", positions);
 const levelColumn = column("level", "Level", levels);
 const teamRoleColumn = column("team-role", "Role on team", teamRoles, true);
 
@@ -227,7 +231,7 @@ const teamNames = [
 // else generated.
 function reporting(
   people: readonly FictionalPerson[],
-  positionOf: (person: FictionalPerson) => string | undefined,
+  positionOf: (person: FictionalPerson) => string,
   managerChoice: string,
   seed: number,
   referenceDate: string,
@@ -356,6 +360,7 @@ export function fictionalOrganization({
         id: fictionalId(`person:${String(index)}`),
         preferredName: pickName(),
         employeeId: `E${String(10001 + index)}`,
+        positionId: choice(positions, position),
         startDate: day(start),
         endDate: end === null ? null : day(end),
         values: {
@@ -367,7 +372,6 @@ export function fictionalOrganization({
               ),
             ),
           ],
-          [positionColumn.id]: [choice(positions, position)],
           [levelColumn.id]: [choice(levels, level)],
           ...(roles.length > 0
             ? {
@@ -387,16 +391,17 @@ export function fictionalOrganization({
     .filter(({ endDate }) => endDate !== null)
     .sort((a, b) => String(b.endDate).localeCompare(String(a.endDate)))[0];
   if (lastToLeave !== undefined) {
-    lastToLeave.values[positionColumn.id] = [managerChoice];
+    lastToLeave.positionId = managerChoice;
     lastToLeave.values[levelColumn.id] = [choice(levels, "M1")];
   }
   return {
-    lists: [sites, positions, levels, teamRoles, certifications, languages],
-    columns: [siteColumn, positionColumn, levelColumn, teamRoleColumn],
+    lists: [sites, levels, teamRoles, certifications, languages],
+    positions: positions.choices,
+    columns: [siteColumn, levelColumn, teamRoleColumn],
     people,
     ...reporting(
       people,
-      (person) => person.values[positionColumn.id]?.[0],
+      (person) => person.positionId,
       managerChoice,
       seed,
       referenceDate,

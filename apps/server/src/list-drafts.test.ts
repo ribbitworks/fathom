@@ -11,7 +11,7 @@ import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { recordChanges } from "./data/changes.ts";
-import { startTestApp, type TestApp } from "./test-app.ts";
+import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
@@ -423,6 +423,7 @@ async function personWith(fieldId: string, choiceId: string) {
       {
         preferredName: unique("Fictional Person"),
         employeeId: unique("E"),
+        positionId: testPosition,
         values: { [fieldId]: [choiceId] },
       },
     ],

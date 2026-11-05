@@ -68,6 +68,7 @@ import {
 import { personChanges, readLive, recordSensitiveChanges } from "./people.ts";
 import {
   hireChanges,
+  hireIdOf,
   readHireDrafts,
   readLiveHires,
   recordHiringChanges,
@@ -207,7 +208,12 @@ function subjectOf(versions: Versions, row: Row): string {
     return String(versionOf(versions, "person", id)?.preferredName);
   }
   if (row.recordType === "planned-hire") {
-    return `the planned hire ${String(versionOf(versions, "planned-hire", id)?.title)}`;
+    // A hire is named by its position and ID, such as "Software Engineer, TBD-7".
+    // A hire whose draft is listed is live or drafted, so has a version.
+    const hire = versionOf(versions, "planned-hire", id) as Recorded;
+    const position = versionOf(versions, "list-item", String(hire.positionId));
+    const { requisition, temporaryId } = hireIdOf(hire);
+    return `the planned hire ${String(position?.label)}, ${String(requisition ?? temporaryId)}`;
   }
   if (row.recordType === "list") return `the list ${listName(id)}`;
   if (row.recordType === "list-item") {

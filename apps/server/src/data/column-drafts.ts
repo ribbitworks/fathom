@@ -792,6 +792,7 @@ export async function readColumnsOut(
   const visible = new Set([
     "preferredName",
     "employeeId",
+    "positionId",
     "managerId",
     "team",
     "teamName",

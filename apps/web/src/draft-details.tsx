@@ -84,6 +84,25 @@ export function personDraftFields(
         },
       ];
     }
+    if (key === "positionId") {
+      const labelOf = (id: string | undefined) =>
+        lists
+          .flatMap(({ choices }) => choices)
+          .find((choice) => choice.id === id)?.label ?? null;
+      return [
+        {
+          key,
+          field: {
+            field: key,
+            oldValue:
+              draft.action === "created"
+                ? null
+                : labelOf(draft.live.positionId),
+            newValue: labelOf(person.positionId),
+          },
+        },
+      ];
+    }
     if (builtInColumnNames.has(key)) {
       if (draft.action === "created" && key === "preferredName") return [];
       const detail = key as DetailKey;

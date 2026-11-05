@@ -69,6 +69,12 @@ export const orderDraftSchema = z.object({
 
 export type OrderDraft = z.infer<typeof orderDraftSchema>;
 
+// The lists Fathom builds in, each drawn on by a built-in column: Positions, for people and planned
+// hires, and the hiring states, a list with meanings.
+export const builtInListSchema = z.enum(["positions", "hiring-states"]);
+
+export type BuiltInList = z.infer<typeof builtInListSchema>;
+
 // A list as its draft, if any, makes it, with the draft beside, or, for a draft that removes it, as
 // it is.
 export const listSchema = z.object({
@@ -78,6 +84,8 @@ export const listSchema = z.object({
   visibility: tierSchema,
   // A retired list is no longer offered for new values.
   retired: z.boolean(),
+  // Which built-in list it is, which cannot be removed or retired; null or absent for any other.
+  builtIn: builtInListSchema.nullable().optional(),
   // In order, as a draft of the order makes it, offered and retired alike, with choices drafted to
   // be added after the rest, in the order they were drafted.
   choices: z.array(choiceSchema),

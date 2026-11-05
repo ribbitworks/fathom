@@ -288,6 +288,7 @@ describe("drafts of people and columns that use drafts of another kind", () => {
     id,
     preferredName: id.toUpperCase(),
     employeeId: id,
+    positionId: "position-1",
     values,
     links: {},
     draft: {

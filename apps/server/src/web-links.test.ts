@@ -16,7 +16,12 @@ import {
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { type Method, startTestApp, type TestApp } from "./test-app.ts";
+import {
+  type Method,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 let test: TestApp;
 
@@ -76,6 +81,7 @@ async function addPerson(cookie: string, links: object = {}) {
       {
         preferredName: unique("Fictional Person"),
         employeeId: unique("E"),
+        positionId: testPosition,
         links,
       },
     ],
@@ -227,6 +233,7 @@ describe("people's links", () => {
         {
           preferredName: unique("Fictional Person"),
           employeeId: unique("E"),
+          positionId: testPosition,
           values: { [field.id]: [] },
         },
       ],

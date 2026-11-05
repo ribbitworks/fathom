@@ -132,6 +132,7 @@ const detailColumns = (id: string, person: Recorded) => ({
   id,
   preferredName: String(person.preferredName),
   employeeId: String(person.employeeId),
+  positionId: String(person.positionId),
   startDate: (person.startDate as string | null | undefined) ?? null,
   endDate: (person.endDate as string | null | undefined) ?? null,
 });
@@ -153,6 +154,7 @@ function valuesSet(draft: Draft, person: Recorded): [string, unknown][] {
 const detailNames = new Set([
   "preferredName",
   "employeeId",
+  "positionId",
   "startDate",
   "endDate",
 ]);
@@ -178,13 +180,11 @@ async function apply(
     } else if (
       Object.keys(draft.fields).some((field) => detailNames.has(field))
     ) {
-      const { preferredName, employeeId, startDate, endDate } = detailColumns(
-        id,
-        person,
-      );
+      const { preferredName, employeeId, positionId, startDate, endDate } =
+        detailColumns(id, person);
       await transaction
         .update(people)
-        .set({ preferredName, employeeId, startDate, endDate })
+        .set({ preferredName, employeeId, positionId, startDate, endDate })
         .where(eq(people.id, id));
     }
     for (const [fieldId, value] of valuesSet(draft, person)) {

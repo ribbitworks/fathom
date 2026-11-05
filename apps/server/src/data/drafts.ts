@@ -18,6 +18,7 @@ import {
   fieldOfValue,
   inChunks,
   people,
+  plannedHires,
   unpublishedDrafts,
   users,
 } from "@fathom/db";
@@ -617,11 +618,11 @@ export const addPersonDrafts = (
     added.map(({ id, fields }) => ({ id, fields: tidy(fields) })),
   );
 
-// The Employee IDs asked for that someone else already has, ignoring letter case: a live person, or
-// a person as their draft makes them, published or not. A live person's Employee ID stays taken
-// until a draft that changes it is approved, so approving drafts one at a time never finds two
-// people with the same one, and an unpublished draft's until it is discarded, so publishing never
-// finds it taken.
+// The IDs asked for that another row of the ID column already has, ignoring letter case: a person's
+// Employee ID or a planned hire's requisition, live or as a draft makes it, published or not. A live
+// ID stays taken until a draft that changes it is approved, so approving drafts one at a time never
+// finds two rows with the same one, and an unpublished draft's until it is discarded, so publishing
+// never finds it taken. The records excepted are people or hires, whose identifiers never clash.
 export async function takenEmployeeIds(
   reader: Reader,
   employeeIds: readonly string[],
@@ -639,9 +640,28 @@ export async function takenEmployeeIds(
           except.length === 0 ? undefined : notInArray(people.id, [...except]),
         ),
       );
+    const liveHires = await reader
+      .select({ value: sql<string>`${plannedHires.requisition}` })
+      .from(plannedHires)
+      .where(
+        and(
+          inArray(sql`lower(${plannedHires.requisition})`, chunk),
+          except.length === 0
+            ? undefined
+            : notInArray(plannedHires.id, [...except]),
+        ),
+      );
     for (const { value } of [
       ...live,
+      ...liveHires,
       ...(await draftedPersonValues(reader, "employeeId", chunk, except)),
+      ...(await draftedTexts(
+        reader,
+        "planned-hire",
+        "requisition",
+        chunk,
+        except,
+      )),
     ]) {
       taken.add(value.toLowerCase());
     }
@@ -651,8 +671,18 @@ export async function takenEmployeeIds(
 
 // The values of a person's text field, such as an Employee ID, that drafts of people other than
 // those excepted hold, published or not, among those given in lower case.
-export async function draftedPersonValues(
+export const draftedPersonValues = (
   reader: Reader,
+  field: string,
+  lowered: readonly string[],
+  except: readonly string[],
+) => draftedTexts(reader, "person", field, lowered, except);
+
+// The values of a text field that drafts of records of the type given, other than those excepted,
+// hold, published or not, among those given in lower case.
+async function draftedTexts(
+  reader: Reader,
+  recordType: string,
   field: string,
   lowered: readonly string[],
   except: readonly string[],
@@ -665,7 +695,7 @@ export async function draftedPersonValues(
         .from(table)
         .where(
           and(
-            eq(table.recordType, "person"),
+            eq(table.recordType, recordType),
             inArray(sql`lower(${table.fields}->>${field}::text)`, [...lowered]),
             except.length === 0
               ? undefined
@@ -677,9 +707,10 @@ export async function draftedPersonValues(
   return found;
 }
 
-// Whether any person's draft, published or not, changes the column, even to clear it, or has the
-// choice, given. The editor's unpublished drafts stand in for the published drafts of the same
-// people, so a draft they have changed or discarded but not yet published no longer counts.
+// Whether any person's draft, published or not, changes the column, even to clear it, or whether a
+// draft of a person or a planned hire has the choice, given, as a value or a position or state. The
+// editor's unpublished drafts stand in for the published drafts of the same records, so a draft
+// they have changed or discarded but not yet published no longer counts.
 export async function draftsUse(
   reader: Reader,
   use: { column: string } | { choice: string },
@@ -690,15 +721,36 @@ export async function draftsUse(
       .select({ one: sql`1` })
       .from(table)
       .where(
-        and(
-          eq(table.recordType, "person"),
-          "column" in use
-            ? sql`${table.fields} ? ${`value:${use.column}`}::text`
-            : sql`EXISTS (SELECT 1 FROM jsonb_each(${table.fields}) AS held(field, value) WHERE jsonb_typeof(held.value) = 'array' AND held.value @> ${JSON.stringify([use.choice])}::jsonb)`,
-          table === drafts && editor !== undefined
-            ? notReplacedBy(table.recordId, editor)
-            : undefined,
-        ),
+        "column" in use
+          ? and(
+              eq(table.recordType, "person"),
+              sql`${table.fields} ? ${`value:${use.column}`}::text`,
+              table === drafts && editor !== undefined
+                ? notReplacedBy("person", table.recordId, editor)
+                : undefined,
+            )
+          : or(
+              and(
+                eq(table.recordType, "person"),
+                or(
+                  sql`EXISTS (SELECT 1 FROM jsonb_each(${table.fields}) AS held(field, value) WHERE jsonb_typeof(held.value) = 'array' AND held.value @> ${JSON.stringify([use.choice])}::jsonb)`,
+                  sql`${table.fields}->>'positionId' = ${use.choice}`,
+                ),
+                table === drafts && editor !== undefined
+                  ? notReplacedBy("person", table.recordId, editor)
+                  : undefined,
+              ),
+              and(
+                eq(table.recordType, "planned-hire"),
+                or(
+                  sql`${table.fields}->>'positionId' = ${use.choice}`,
+                  sql`${table.fields}->>'stateId' = ${use.choice}`,
+                ),
+                table === drafts && editor !== undefined
+                  ? notReplacedBy("planned-hire", table.recordId, editor)
+                  : undefined,
+              ),
+            ),
       )
       .limit(1);
     if (found.length > 0) return true;
@@ -706,9 +758,13 @@ export async function draftsUse(
   return false;
 }
 
-// Whether the editor holds no unpublished draft of the person whose published draft is given.
-const notReplacedBy = (recordId: AnyColumn, editor: string) =>
-  sql`NOT EXISTS (SELECT 1 FROM ${unpublishedDrafts} WHERE ${unpublishedDrafts.recordType} = 'person' AND ${unpublishedDrafts.recordId} = ${recordId} AND ${unpublishedDrafts.userId} = ${editor})`;
+// Whether the editor holds no unpublished draft of the record whose published draft is given.
+const notReplacedBy = (
+  recordType: string,
+  recordId: AnyColumn,
+  editor: string,
+) =>
+  sql`NOT EXISTS (SELECT 1 FROM ${unpublishedDrafts} WHERE ${unpublishedDrafts.recordType} = ${recordType} AND ${unpublishedDrafts.recordId} = ${recordId} AND ${unpublishedDrafts.userId} = ${editor})`;
 
 // The changes recorded for a rejected draft whose reason is cleared, as when it is changed again or
 // discarded, so it waits for approval again.

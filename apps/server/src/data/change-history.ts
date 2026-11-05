@@ -12,7 +12,9 @@ import {
   type Database,
   fieldOfValue,
   inChunks,
+  listItems,
   lists,
+  plannedHires,
   users,
 } from "@fathom/db";
 import {
@@ -22,14 +24,13 @@ import {
   type ChangeEntry,
   changeKindSchema,
   type ChangeValue,
-  hiringStateNames,
-  hiringStateSchema,
   isLink,
   linkInWords,
   matchesWords,
   recordSearchText,
   recordTypeSchema,
   searchWords,
+  temporaryId,
   type Tier,
   tierSchema,
 } from "@fathom/shared";
@@ -71,7 +72,8 @@ const peopleKinds: readonly RecordType[] = ["person", "saved-view"];
 // The hiring plan, by those who see people and Confidential data.
 const hiringKinds: readonly RecordType[] = ["planned-hire"];
 
-const stateFields = new Set(["state", "cancelledFrom"]);
+// The fields a planned hire is named by: its position and its ID.
+const hireNameFields = ["positionId", "requisition", "temporaryNumber"];
 
 // The plan's records, such as release streams, are seen with the plan or planning configuration.
 const planKinds: readonly RecordType[] = recordTypeSchema.options;
@@ -95,7 +97,7 @@ const belonging = new Map<string, string>([
 ]);
 
 // The fields that name a record.
-const nameFields = ["name", "label", "preferredName", "title"];
+const nameFields = ["name", "label", "preferredName"];
 
 // Fields that only tie a record to where it belongs, which the history does not show.
 const unshownFields = new Set(["tableName", "createdBy"]);
@@ -110,10 +112,10 @@ export interface ReadChangeHistory {
   includedSensitive: boolean;
 }
 
-// Fields whose value is one record's identifier: a choice's list, a list's order, or a person's
-// manager.
+// Fields whose value is one record's identifier: a choice's list, a list's order, a manager, or a
+// choice in a built-in list, such as a position or a hiring state.
 const referencesOne = (field: string) =>
-  ["listId", "order", "managerId"].includes(field);
+  ["listId", "order", "managerId", "positionId", "stateId"].includes(field);
 
 const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
@@ -191,8 +193,104 @@ async function readFacts(
         facts.visibilities.set(recordId, value);
       else facts.names.set(recordId, String(value));
     }
+    // Choices Fathom made itself, such as the hiring states it starts with, have no history, so
+    // are named as they are.
+    const unnamed = chunk.filter(
+      (id) => !facts.names.has(id) && uuidPattern.test(id),
+    );
+    if (unnamed.length > 0) {
+      for (const choice of await database
+        .select({
+          id: listItems.id,
+          label: listItems.label,
+          listId: listItems.listId,
+        })
+        .from(listItems)
+        .where(inArray(listItems.id, unnamed))) {
+        facts.names.set(choice.id, choice.label);
+        facts.lists.set(choice.id, choice.listId);
+      }
+    }
   }
   return facts;
+}
+
+const uuidPattern =
+  /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
+
+// Names each planned hire given by its position and ID, as the history the actor may see last
+// recorded them, such as "Software Engineer, TBD-7". Removing a hire records no values, so the name
+// it had stays.
+async function nameHires(
+  database: Database,
+  actor: Actor,
+  ids: readonly string[],
+  facts: Facts,
+): Promise<void> {
+  const latest = new Map<string, Map<string, unknown>>();
+  for (const chunk of inChunks([...new Set(ids)])) {
+    const rows = await database
+      .select({
+        recordId: changes.recordId,
+        field: changes.field,
+        value: changes.newValue,
+      })
+      .from(changes)
+      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+      .where(
+        and(
+          eq(changes.recordType, "planned-hire"),
+          inArray(changes.recordId, chunk),
+          inArray(changes.field, hireNameFields),
+          sql`${changes.action} <> 'deleted'`,
+          seenSets(actor),
+        ),
+      )
+      .orderBy(asc(changes.id));
+    for (const { recordId, field, value } of rows) {
+      const fields = latest.get(recordId) ?? new Map<string, unknown>();
+      fields.set(field, value);
+      latest.set(recordId, fields);
+    }
+  }
+  // A hire records its position and ID together when added, so every hire read has both.
+  const positions = [...latest.values()].map((fields) =>
+    String(fields.get("positionId")),
+  );
+  await readFacts(
+    database,
+    actor,
+    positions.filter((id) => !facts.names.has(id)),
+    facts,
+  );
+  for (const [id, fields] of latest) {
+    const position = facts.names.get(String(fields.get("positionId")));
+    const requisition = fields.get("requisition");
+    const shownId =
+      typeof requisition === "string"
+        ? requisition
+        : temporaryId(Number(fields.get("temporaryNumber")));
+    facts.names.set(id, `${String(position)}, ${shownId}`);
+  }
+  // Hires carried over from before they had positions and IDs are named as they are now.
+  const unnamed = [...new Set(ids)].filter((id) => !latest.has(id));
+  for (const chunk of inChunks(unnamed)) {
+    for (const hire of await database
+      .select({
+        id: plannedHires.id,
+        requisition: plannedHires.requisition,
+        temporaryNumber: plannedHires.temporaryNumber,
+        position: listItems.label,
+      })
+      .from(plannedHires)
+      .innerJoin(listItems, eq(listItems.id, plannedHires.positionId))
+      .where(inArray(plannedHires.id, chunk))) {
+      facts.names.set(
+        hire.id,
+        `${hire.position}, ${hire.requisition ?? temporaryId(Number(hire.temporaryNumber))}`,
+      );
+    }
+  }
 }
 
 // Each list's visibility now: as it is, or, for a list deleted since, as it was last recorded. A
@@ -240,10 +338,6 @@ function shown(
     return value === null ? null : named(strings(value));
   }
   if (row.field === "definition") return null;
-  if (row.recordType === "planned-hire" && stateFields.has(row.field)) {
-    const state = hiringStateSchema.safeParse(value);
-    return state.success ? hiringStateNames[state.data] : null;
-  }
   if (
     referencesOne(row.field) ||
     (row.recordType === "planned-hire" && row.field === "filledBy")
@@ -440,6 +534,14 @@ async function readBatch(
     ...rows.map((row) => row.recordId),
     ...rows.flatMap((row) => referencedIds(row)),
   ]);
+  await nameHires(
+    database,
+    actor,
+    rows
+      .filter((row) => row.recordType === "planned-hire")
+      .map((row) => row.recordId),
+    facts,
+  );
   // Lists named only through their choices and columns.
   await readFacts(
     database,

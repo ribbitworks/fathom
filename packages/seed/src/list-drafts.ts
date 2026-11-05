@@ -18,7 +18,7 @@
 // seed data discards these drafts first. A development-only package, never included in the runtime
 // image.
 
-import { changes, type Database, drafts } from "@fathom/db";
+import { changes, type Database, drafts, lists } from "@fathom/db";
 import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, max, sql } from "drizzle-orm";
@@ -47,6 +47,22 @@ function listCalled(
 ): FictionalList {
   // The fictional organization always has the lists the seed drafts.
   return organization.lists.find((one) => one.name === name) as FictionalList;
+}
+
+// The built-in Positions list, as the seed data fills it.
+export async function positionsList(
+  reader: Pick<Database, "select">,
+  organization: FictionalOrganization,
+): Promise<FictionalList> {
+  const [builtIn] = await reader
+    .select({ id: lists.id, name: lists.name })
+    .from(lists)
+    .where(eq(lists.builtIn, "positions"));
+  return {
+    id: String(builtIn?.id),
+    name: String(builtIn?.name),
+    choices: organization.positions,
+  };
 }
 
 const choiceCalled = (list: FictionalList, label: string) =>
@@ -99,7 +115,7 @@ export async function seedListDrafts(
   const approver = await actorOf(database, approverEmail);
   const sites = listCalled(organization, "Sites");
   const levels = listCalled(organization, "Levels");
-  const positions = listCalled(organization, "Positions");
+  const positions = await positionsList(database, organization);
   const teamRoles = listCalled(organization, "Roles on the team");
 
   const { result: skills } = await data.lists.create(editor, {
@@ -301,9 +317,13 @@ export async function unseedListDrafts(
 ): Promise<number> {
   const data = createDataAccess(database);
   const editor = await actorOf(database, editorEmail);
-  const listIds = new Set(organization.lists.map(({ id }) => id));
+  const seeded = [
+    ...organization.lists,
+    await positionsList(database, organization),
+  ];
+  const listIds = new Set(seeded.map(({ id }) => id));
   const choiceIds = new Set(
-    organization.lists.flatMap(({ choices }) => choices.map(({ id }) => id)),
+    seeded.flatMap(({ choices }) => choices.map(({ id }) => id)),
   );
   const found = await database
     .select({
@@ -325,7 +345,7 @@ export async function unseedListDrafts(
     }
   }
   const listOf = new Map(
-    organization.lists.flatMap((list) =>
+    seeded.flatMap((list) =>
       list.choices.map((choice) => [choice.id, list.id]),
     ),
   );

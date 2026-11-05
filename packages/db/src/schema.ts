@@ -185,9 +185,18 @@ export const accessHistory = fathomSchema.table(
   (table) => [index("access_history_occurred_at_index").on(table.occurredAt)],
 );
 
-// Lists of choices that people define, such as locations or skills, for columns elsewhere to draw on.
-// A list's name is unique, ignoring letter case. Its visibility is the sensitivity tier of the values
-// chosen from it, checked by the server. A retired list is no longer offered for new values.
+// The lists Fathom builds in, for its built-in columns to draw on, and the meanings Fathom fixes for
+// the choices of those that have them, as SQL lists.
+const sqlList = (values: readonly string[]) =>
+  values.map((value) => `'${value}'`).join(", ");
+const builtInListList = sqlList(["positions", "hiring-states"]);
+const meaningList = sqlList(["proposed", "open"]);
+
+// Lists of choices, such as locations or skills, for columns elsewhere to draw on. Most are defined
+// by people; a built-in list is known by its key, cannot be removed, and is drawn on by a built-in
+// column. A list's name is unique, ignoring letter case. Its visibility is the sensitivity tier of the
+// values chosen from it, checked by the server; Positions is always General. A retired list is no
+// longer offered for new values.
 export const lists = fathomSchema.table(
   "lists",
   {
@@ -196,14 +205,31 @@ export const lists = fathomSchema.table(
     description: text("description").notNull().default(""),
     visibility: text("visibility").notNull().default("general"),
     retired: boolean("retired").notNull().default(false),
+    builtIn: text("built_in"),
   },
-  (table) => [uniqueIndex("lists_name_index").on(sql`lower(${table.name})`)],
+  (table) => [
+    uniqueIndex("lists_name_index").on(sql`lower(${table.name})`),
+    uniqueIndex("lists_built_in_index").on(table.builtIn),
+    check(
+      "lists_built_in_known",
+      sql`${table.builtIn} IS NULL OR ${table.builtIn} IN (${sql.raw(builtInListList)})`,
+    ),
+    check(
+      "lists_positions_general",
+      sql`${table.builtIn} IS DISTINCT FROM 'positions' OR ${table.visibility} = 'general'`,
+    ),
+    check(
+      "lists_built_in_kept",
+      sql`${table.builtIn} IS NULL OR NOT ${table.retired}`,
+    ),
+  ],
 );
 
 // The choices in each list, in the order set for it. Labels are unique within a list, ignoring
 // letter case, so two people saving at once cannot add the same choice twice. A retired choice stays
-// on records that have it, but is no longer offered. Deleting a list deletes its choices; the change
-// history keeps a record of both.
+// on records that have it, but is no longer offered. In a list with meanings, each choice is tied to
+// one of them, which the server checks, as it does that each meaning keeps a choice offered.
+// Deleting a list deletes its choices; the change history keeps a record of both.
 export const listItems = fathomSchema.table(
   "list_items",
   {
@@ -216,11 +242,16 @@ export const listItems = fathomSchema.table(
     // Lower comes first.
     position: integer("position").notNull().default(0),
     retired: boolean("retired").notNull().default(false),
+    meaning: text("meaning"),
   },
   (table) => [
     uniqueIndex("list_items_list_label_index").on(
       table.listId,
       sql`lower(${table.label})`,
+    ),
+    check(
+      "list_items_meaning_known",
+      sql`${table.meaning} IS NULL OR ${table.meaning} IN (${sql.raw(meaningList)})`,
     ),
   ],
 );
@@ -369,22 +400,28 @@ export const changes = fathomSchema.table(
 
 // People: employees, current and former, with the details every person has. A person is current
 // from their start date until their end date passes; one with no start date counts as current.
-// Employee IDs are unique, ignoring letter case. People who leave are kept, not deleted; deleting is
-// only for a person entered by mistake whom nothing uses. Other details are columns drawing on lists.
-// Only people flagged as managers can be named as a manager, which the server checks rather
-// than the database, since past reporting lines may name people no longer flagged.
+// Employee IDs are unique, ignoring letter case, among themselves and, checked by the server, with
+// planned hires' requisitions. A person's position is a choice in the built-in Positions list,
+// which the server checks. People who leave are kept, not deleted; deleting is only for a person
+// entered by mistake whom nothing uses. Other details are columns drawing on lists. Only people
+// flagged as managers can be named as a manager, which the server checks rather than the database,
+// since past reporting lines may name people no longer flagged.
 export const people = fathomSchema.table(
   "people",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     preferredName: text("preferred_name").notNull(),
     employeeId: text("employee_id").notNull(),
+    positionId: uuid("position_id")
+      .notNull()
+      .references(() => listItems.id, { onDelete: "restrict" }),
     startDate: date("start_date"),
     endDate: date("end_date"),
     isManager: boolean("is_manager").notNull().default(false),
   },
   (table) => [
     uniqueIndex("people_employee_id_index").on(sql`lower(${table.employeeId})`),
+    index("people_position_index").on(table.positionId),
     check(
       "people_dates_in_order",
       sql`${table.endDate} IS NULL OR ${table.startDate} IS NULL OR ${table.endDate} >= ${table.startDate}`,
@@ -392,31 +429,31 @@ export const people = fathomSchema.table(
   ],
 );
 
-// Fathom's fixed hiring states, in order, of which the first four are open, as SQL lists.
-const openHiringStates = [
-  "proposed",
-  "approved",
-  "recruiting",
-  "offer-accepted",
-];
-const sqlList = (values: readonly string[]) =>
-  values.map((value) => `'${value}'`).join(", ");
-const hiringStateList = sqlList([...openHiringStates, "filled", "cancelled"]);
-const openHiringStateList = sqlList(openHiringStates);
+// The numbers of planned hires' temporary IDs, such as 7 in TBD-7, never reused.
+export const plannedHireTemporaryNumbers = fathomSchema.sequence(
+  "planned_hire_temporary_numbers",
+);
 
-// Planned hires: roles to be filled, kept apart from people, so they need no Employee ID and their
-// Confidential details never sit among people's. A hire's state is one of the fixed hiring states;
-// a cancelled hire keeps the open state it left, which it can go back to. A filled hire names the
-// person who filled it, and only a filled hire does. A person may fill several over time, and is
+// Planned hires: roles to be filled, kept apart from people, so their Confidential details never sit
+// among people's, but shown beside them on People. A hire is known by its requisition or, until it
+// has one, by a temporary number; requisitions are unique, ignoring letter case, among themselves
+// and, checked by the server, with Employee IDs, and never look like a temporary ID. Its state is a
+// choice in the built-in hiring states list and its position one in Positions, which the server
+// checks. A filled hire names the person who filled it. A person may fill several over time, and is
 // removed only with the hires they filled, which the server does in one draft.
 export const plannedHires = fathomSchema.table(
   "planned_hires",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    title: text("title").notNull(),
-    targetDate: date("target_date").notNull(),
-    state: text("state").notNull(),
-    cancelledFrom: text("cancelled_from"),
+    requisition: text("requisition"),
+    temporaryNumber: integer("temporary_number"),
+    positionId: uuid("position_id")
+      .notNull()
+      .references(() => listItems.id, { onDelete: "restrict" }),
+    targetDate: date("target_date"),
+    stateId: uuid("state_id")
+      .notNull()
+      .references(() => listItems.id, { onDelete: "restrict" }),
     managerId: uuid("manager_id").references(() => people.id, {
       onDelete: "restrict",
     }),
@@ -425,42 +462,23 @@ export const plannedHires = fathomSchema.table(
     }),
   },
   (table) => [
+    uniqueIndex("planned_hires_requisition_index").on(
+      sql`lower(${table.requisition})`,
+    ),
+    uniqueIndex("planned_hires_temporary_number_index").on(
+      table.temporaryNumber,
+    ),
     index("planned_hires_filled_by_index").on(table.filledBy),
     index("planned_hires_manager_index").on(table.managerId),
+    index("planned_hires_position_index").on(table.positionId),
+    index("planned_hires_state_index").on(table.stateId),
     check(
-      "planned_hires_state_known",
-      sql`${table.state} IN (${sql.raw(hiringStateList)})`,
+      "planned_hires_one_id",
+      sql`num_nonnulls(${table.requisition}, ${table.temporaryNumber}) = 1`,
     ),
     check(
-      "planned_hires_cancelled_from_open",
-      sql`${table.cancelledFrom} IS NULL OR ${table.cancelledFrom} IN (${sql.raw(openHiringStateList)})`,
-    ),
-    check(
-      "planned_hires_filled_by_person",
-      sql`(${table.state} = 'filled') = (${table.filledBy} IS NOT NULL)`,
-    ),
-    check(
-      "planned_hires_cancelled_from_state",
-      sql`(${table.state} = 'cancelled') = (${table.cancelledFrom} IS NOT NULL)`,
-    ),
-  ],
-);
-
-// The names the organization gives the fixed hiring states, for those it has renamed; the others
-// keep Fathom's names. Renamed states' names are unique, ignoring letter case; the server checks
-// them against the names of the states not renamed, which have no row.
-export const hiringStateNames = fathomSchema.table(
-  "hiring_state_names",
-  {
-    // One of the fixed hiring states, checked by the server.
-    state: text("state").primaryKey(),
-    name: text("name").notNull(),
-  },
-  (table) => [
-    uniqueIndex("hiring_state_names_name_index").on(sql`lower(${table.name})`),
-    check(
-      "hiring_state_names_state_known",
-      sql`${table.state} IN (${sql.raw(hiringStateList)})`,
+      "planned_hires_requisition_not_temporary",
+      sql`${table.requisition} IS NULL OR lower(${table.requisition}) NOT LIKE 'tbd-%'`,
     ),
   ],
 );

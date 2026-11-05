@@ -278,6 +278,7 @@ describe("lists", () => {
       description: "",
       visibility: "general",
       retired: false,
+      builtIn: null,
       choices: [],
       draft: expect.objectContaining({
         action: "created",

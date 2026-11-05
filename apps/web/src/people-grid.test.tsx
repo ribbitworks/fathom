@@ -24,6 +24,23 @@ const site: Field = {
   multiple: false,
   required: false,
 };
+// The built-in Positions list, with the one position the people below have.
+const positions: List = {
+  id: "positions",
+  name: "Positions",
+  description: "",
+  visibility: "general",
+  retired: false,
+  builtIn: "positions",
+  choices: [
+    {
+      id: "position-1",
+      label: "Fictional Engineer",
+      description: "",
+      retired: false,
+    },
+  ],
+};
 const sites: List = {
   id: "l1",
   name: "Sites",
@@ -43,6 +60,7 @@ describe("the order of the columns", () => {
       "f1",
       "employeeId",
       "preferredName",
+      "positionId",
       "startDate",
       "endDate",
       "managerId",
@@ -76,6 +94,7 @@ describe("how wide each column is", () => {
     id,
     preferredName,
     employeeId: "E1",
+    positionId: "position-1",
     startDate: null,
     endDate: null,
     values: {},
@@ -179,8 +198,8 @@ describe("adding people without dates", () => {
         <PeopleGrid
           people={[]}
           fields={[site]}
-          order={["preferredName", "employeeId", "f1"]}
-          lists={[sites]}
+          order={["preferredName", "employeeId", "positionId", "f1"]}
+          lists={[sites, positions]}
           canEdit
           canEditColumns={false}
           showDates={false}
@@ -193,7 +212,9 @@ describe("adding people without dates", () => {
     act(() => {
       document.getElementById("cell-new-0-preferredName")?.focus();
     });
-    await userEvent.paste("Hana Fictional\tE1\tHarbour\nIan Fictional");
+    await userEvent.paste(
+      "Hana Fictional\tE1\tFictional Engineer\tHarbour\nIan Fictional\t\tFictional Engineer",
+    );
     expect(add).not.toHaveBeenCalled();
     expect(screen.getByRole("alert").textContent).toBe("Employee ID needed");
     act(() => {
@@ -207,6 +228,7 @@ describe("adding people without dates", () => {
           request: {
             preferredName: "Hana Fictional",
             employeeId: "E1",
+            positionId: "position-1",
             values: { f1: ["c1"] },
             links: {},
           },
@@ -216,6 +238,7 @@ describe("adding people without dates", () => {
           request: {
             preferredName: "Ian Fictional",
             employeeId: "E2",
+            positionId: "position-1",
             values: { f1: [] },
             links: {},
           },
@@ -239,6 +262,7 @@ describe("the live people", () => {
     id,
     preferredName: `Fictional ${id}`,
     employeeId: id,
+    positionId: "position-1",
     startDate: "2024-01-01",
     endDate: null,
     values: {},
@@ -285,6 +309,7 @@ describe("the live links", () => {
         id: "p1",
         preferredName: "Fictional p1",
         employeeId: "p1",
+        positionId: "position-1",
         values: {},
         links: {
           f1: { address: "https://drafted.example.test/", text: "" },
@@ -316,6 +341,7 @@ describe("adding someone with an Employee ID already taken", () => {
               id: "p1",
               preferredName: "Jo Fictional",
               employeeId: "E1",
+              positionId: "position-1",
               values: {},
               links: {},
             },
@@ -377,6 +403,7 @@ describe("a start date after the end date", () => {
               id: "p1",
               preferredName: "Jo Fictional",
               employeeId: "E1",
+              positionId: "position-1",
               startDate: "2024-01-01",
               endDate: "2024-06-01",
               values: {},
@@ -413,6 +440,7 @@ describe("managers and teams", () => {
     id,
     preferredName: `Fictional ${id}`,
     employeeId: id,
+    positionId: "position-1",
     startDate: "2024-01-01",
     endDate: null,
     values: {},
@@ -438,7 +466,7 @@ describe("managers and teams", () => {
         people={people}
         fields={[]}
         order={[]}
-        lists={[]}
+        lists={[positions]}
         canEdit
         canEditColumns={false}
         showDates
@@ -556,7 +584,14 @@ describe("managers and teams", () => {
 
   it("leaves Manager since out for those who may not see dates", () => {
     expect(columnsFor([], [], [], false, people).map(({ key }) => key)).toEqual(
-      ["preferredName", "employeeId", "managerId", "team", "teamName"],
+      [
+        "preferredName",
+        "employeeId",
+        "positionId",
+        "managerId",
+        "team",
+        "teamName",
+      ],
     );
   });
 
@@ -677,6 +712,7 @@ describe("managers and teams", () => {
         order: [
           "preferredName",
           "employeeId",
+          "positionId",
           "managerId",
           "team",
           "teamName",
@@ -686,7 +722,7 @@ describe("managers and teams", () => {
     );
     focus("new-0", "preferredName");
     await userEvent.paste(
-      "Fictional p6\tp6\tFictional p1\tHarbour Crew\tQuay Crew\t2024-05-01\nFictional p7\tp7\tFictional p2",
+      "Fictional p6\tp6\tFictional Engineer\tFictional p1\tHarbour Crew\tQuay Crew\t2024-05-01\nFictional p7\tp7\tFictional Engineer\tFictional p2",
     );
     expect(add).toHaveBeenCalledWith(
       [
@@ -695,6 +731,7 @@ describe("managers and teams", () => {
           request: {
             preferredName: "Fictional p6",
             employeeId: "p6",
+            positionId: "position-1",
             startDate: null,
             endDate: null,
             managerId: "p1",
@@ -709,6 +746,7 @@ describe("managers and teams", () => {
           request: {
             preferredName: "Fictional p7",
             employeeId: "p7",
+            positionId: "position-1",
             startDate: null,
             endDate: null,
             managerId: "p2",

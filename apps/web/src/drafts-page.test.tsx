@@ -64,6 +64,7 @@ const person = (id: string, preferredName: string, more: object = {}) => ({
   id,
   preferredName,
   employeeId: `E-${id}`,
+  positionId: "position-1",
   startDate: null,
   endDate: null,
   values: {},

@@ -10,7 +10,7 @@ import type { Choice, Field, List, Person } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { listTier, type ListsState } from "./data/lists.ts";
-import { startTestApp, type TestApp } from "./test-app.ts";
+import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
@@ -79,6 +79,7 @@ async function personWith(values: Record<string, string[]>) {
       {
         preferredName: unique("Fictional Person"),
         employeeId: unique("U"),
+        positionId: testPosition,
         values,
       },
     ],
@@ -136,6 +137,7 @@ describe("people given what is only drafted to be added", () => {
         {
           preferredName: unique("Fictional Person"),
           employeeId: unique("U"),
+          positionId: testPosition,
           values: { [field.id]: [String(secret?.id)] },
         },
       ],
@@ -171,6 +173,7 @@ describe("the tier of values in a column drafted to be added", () => {
       listTier(
         {
           lists: new Map(),
+          builtIn: new Map(),
           choices: new Map(),
           listDrafts: new Map(),
           choiceDrafts: new Map(),
@@ -323,6 +326,7 @@ describe("what people's drafts use stays while they use it", () => {
     const person = {
       preferredName: unique("Fictional Person"),
       employeeId: unique("U"),
+      positionId: testPosition,
     };
     for (const values of [
       { [field.id]: [] },

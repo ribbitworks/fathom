@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Adds the fictional organization from @fathom/fixtures to a development database, and removes it
-// again: its lists, the columns on people drawing on them, about 150 people, and its release
-// streams, from ./releases.ts, each recorded in the change history as made by Fathom itself, and an
-// account for each persona, from ./accounts.ts, recorded in the access history. Seeding twice adds
-// nothing more, and removing takes away only what seeding added, keeping a seeded column, list, or
-// release stream that something added by hand still uses, and deactivating the accounts. Drafts
-// made by the personas, from ./drafts.ts, are added once the accounts are, and discarded before the
-// rest is removed, unpublished changes first. A development-only package, never included in the
-// runtime image. Usage: node src/seed.ts seed | unseed | accounts, where accounts adds only the
-// personas' accounts, with the FATHOM_DB_* settings for the application role, and FATHOM_PUBLIC_URL
-// and FATHOM_AUTH_SECRET_FILE, as the account command reads. Seeding also needs
+// again: its lists, the choices it adds to the built-in Positions list, the columns on people
+// drawing on its lists, about 150 people, and its release streams, from ./releases.ts, each
+// recorded in the change history as made by Fathom itself, and an account for each persona, from
+// ./accounts.ts, recorded in the access history. Seeding twice adds nothing more, and removing
+// takes away only what seeding added, keeping a seeded column, list, or release stream that
+// something added by hand still uses, and deactivating the accounts. Drafts made by the personas,
+// from ./drafts.ts, are added once the accounts are, and discarded before the rest is removed,
+// unpublished changes first. A development-only package, never included in the runtime image.
+// Usage: node src/seed.ts seed | unseed | accounts, where accounts adds only the personas'
+// accounts, with the FATHOM_DB_* settings for the application role, and FATHOM_PUBLIC_URL and
+// FATHOM_AUTH_SECRET_FILE, as the account command reads. Seeding also needs
 // FATHOM_SEED_PASSWORD_FILE, naming the file that holds the accounts' shared password.
 
 import {
@@ -30,9 +31,11 @@ import {
   inChunks,
   loadDatabaseConfig,
   people,
+  plannedHires,
   recordChanges,
   reportingLines,
   teams,
+  unpublishedDrafts,
   valueField,
 } from "@fathom/db";
 import {
@@ -53,6 +56,7 @@ import {
   unseedUnpublished,
 } from "./drafts.ts";
 import {
+  positionsList,
   seedListDrafts,
   seedUnpublishedList,
   unseedListDrafts,
@@ -116,6 +120,7 @@ function personFields(
   return {
     preferredName: person.preferredName,
     employeeId: person.employeeId,
+    positionId: person.positionId,
     startDate: person.startDate,
     endDate: person.endDate,
     ...reporting,
@@ -169,16 +174,40 @@ export async function seed(
         );
       }
     }
+    const positionsId = (await positionsList(transaction, organization)).id;
+    const [last] = await transaction
+      .select({
+        position: sql<number>`coalesce(max(${listItems.position}), 0)`,
+      })
+      .from(listItems)
+      .where(eq(listItems.listId, positionsId));
+    for (const [index, choice] of organization.positions.entries()) {
+      await transaction.insert(listItems).values({
+        id: choice.id,
+        listId: positionsId,
+        label: choice.label,
+        position: Number(last?.position) + index + 1,
+      });
+      made.push(
+        ...recorded("list-item", choice.id, "created", {
+          listId: positionsId,
+          label: choice.label,
+          description: "",
+          retired: false,
+        }),
+      );
+    }
     for (const column of organization.columns) {
       const row = { ...column, tableName: "people", required: false };
       await transaction.insert(fields).values(row);
       const { id, ...settings } = row;
       made.push(...recorded("field", id, "created", settings));
     }
-    // The seeded columns go right after Employee ID, with the other columns in any stored order
+    // The seeded columns go right after Position, with the other columns in any stored order
     // kept as they are, so seeding again after unseeding, which leaves their keys in it, lays them
     // out the same way. A stored order names every built-in column, as Fathom always stores a whole
-    // order, so Employee ID is found; were it missing, the seeded columns would go first.
+    // order, so Position is found; an order stored before Position was built in has them after
+    // Employee ID, which Position then goes just after.
     const [stored] = await transaction
       .select({ keys: columnOrders.keys })
       .from(columnOrders)
@@ -187,7 +216,10 @@ export async function seed(
     const others = (stored?.keys ?? [...builtInColumnNames.keys()]).filter(
       (key) => !added.includes(key),
     );
-    const at = others.indexOf("employeeId") + 1;
+    const at =
+      others.indexOf(
+        others.includes("positionId") ? "positionId" : "employeeId",
+      ) + 1;
     const keys = [...others.slice(0, at), ...added, ...others.slice(at)];
     await transaction
       .insert(columnOrders)
@@ -414,6 +446,56 @@ export async function unseed(
             retired: choice.retired,
           }),
         ),
+      );
+    }
+    // The seeded positions, unless people or planned hires added by hand have them, live or in
+    // drafts.
+    for (const choice of organization.positions) {
+      const [row] = await transaction
+        .select()
+        .from(listItems)
+        .where(eq(listItems.id, choice.id));
+      if (row === undefined) continue;
+      const used = await total(
+        transaction
+          .select({ total: count() })
+          .from(people)
+          .where(eq(people.positionId, choice.id)),
+      );
+      const hired = await total(
+        transaction
+          .select({ total: count() })
+          .from(plannedHires)
+          .where(eq(plannedHires.positionId, choice.id)),
+      );
+      const drafted = await total(
+        transaction
+          .select({ total: count() })
+          .from(drafts)
+          .where(sql`${drafts.fields}->>'positionId' = ${choice.id}`),
+      );
+      const unpublished = await total(
+        transaction
+          .select({ total: count() })
+          .from(unpublishedDrafts)
+          .where(
+            sql`${unpublishedDrafts.fields}->>'positionId' = ${choice.id}`,
+          ),
+      );
+      if (used + hired + drafted + unpublished > 0) {
+        kept.push(
+          `The ${row.label} position, which people or planned hires added by hand have, live or in drafts`,
+        );
+        continue;
+      }
+      await transaction.delete(listItems).where(eq(listItems.id, choice.id));
+      made.push(
+        ...recorded("list-item", row.id, "deleted", {
+          listId: row.listId,
+          label: row.label,
+          description: row.description,
+          retired: row.retired,
+        }),
       );
     }
     // Made by Fathom itself.

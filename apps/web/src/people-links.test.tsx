@@ -47,6 +47,7 @@ const avery = {
   id: "p1",
   preferredName: "Avery Fictional",
   employeeId: "E1",
+  positionId: "position-1",
   values: {},
   links: { f1: page },
 };
@@ -54,6 +55,7 @@ const blake = {
   id: "p2",
   preferredName: "Blake Fictional",
   employeeId: "E2",
+  positionId: "position-1",
   values: {},
   links: {},
 };
@@ -67,6 +69,23 @@ const peopleAnswer =
       views: [],
     });
 const saved = () => Response.json({ changeSetId: s1 });
+// The built-in Positions list, with the one position everyone here has.
+const positions = {
+  id: "positions",
+  name: "Positions",
+  description: "",
+  visibility: "general",
+  retired: false,
+  builtIn: "positions",
+  choices: [
+    {
+      id: "position-1",
+      label: "Fictional Engineer",
+      description: "",
+      retired: false,
+    },
+  ],
+};
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -78,7 +97,7 @@ async function openPeople(answers: Answers = {}) {
   const fetch = serverAnswers({
     "GET /api/session": editor,
     "GET /api/people": peopleAnswer(),
-    "GET /api/lists": () => Response.json({ lists: [] }),
+    "GET /api/lists": () => Response.json({ lists: [positions] }),
     ...answers,
   });
   renderApp("/people");
@@ -175,7 +194,9 @@ describe("a web link column", () => {
     });
     await userEvent.keyboard("Casey{Tab}E9{Tab}");
     await waitFor(() => {
-      expect(name.textContent).toBe("Casey New, not saved yet: Profile needed");
+      expect(name.textContent).toBe(
+        "Casey New, not saved yet: Profile, Position needed",
+      );
     });
   });
 
@@ -215,7 +236,7 @@ describe("a web link column", () => {
       name.focus();
     });
     await userEvent.paste(
-      "Casey Fictional\tE3\thttp://wiki/casey\nDrew Fictional\tE4\n",
+      "Casey Fictional\tE3\thttp://wiki/casey\tFictional Engineer\nDrew Fictional\tE4\t\tFictional Engineer\n",
     );
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([
       {
@@ -223,12 +244,14 @@ describe("a web link column", () => {
           {
             preferredName: "Casey Fictional",
             employeeId: "E3",
+            positionId: "position-1",
             values: {},
             links: { f1: { address: "http://wiki/casey", text: "" } },
           },
           {
             preferredName: "Drew Fictional",
             employeeId: "E4",
+            positionId: "position-1",
             values: {},
             links: {},
           },

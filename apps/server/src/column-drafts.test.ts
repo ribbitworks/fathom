@@ -22,7 +22,7 @@ import type { Actor } from "./access.ts";
 import { recordChanges } from "./data/changes.ts";
 import { createDataAccess } from "./data/index.ts";
 import { ConflictError, ForbiddenError } from "./errors.ts";
-import { startTestApp, type TestApp } from "./test-app.ts";
+import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
@@ -108,6 +108,7 @@ async function livePerson(values: Record<string, string[]> = {}) {
       {
         preferredName: unique("Fictional Person"),
         employeeId: unique("E"),
+        positionId: testPosition,
         values,
       },
     ],
@@ -294,6 +295,7 @@ describe("drafting columns", () => {
         {
           preferredName: unique("Fictional Person"),
           employeeId: unique("E"),
+          positionId: testPosition,
           values: { [field.id]: [String(choices[0]?.id)] },
         },
       ],
@@ -688,7 +690,10 @@ describe("orders stored before the reporting columns", () => {
   it("put each built-in column an order does not name just after the one it follows, live and drafted", async () => {
     const stored = await liveOrder();
     const added = stored.filter(
-      (key) => !before.includes(key) && !reporting.includes(key),
+      (key) =>
+        !before.includes(key) &&
+        !reporting.includes(key) &&
+        key !== "positionId",
     );
     const older = [...before, ...added];
     const write = (keys: string[]) =>
@@ -698,13 +703,22 @@ describe("orders stored before the reporting columns", () => {
         .where(eq(columnOrders.tableName, "people"));
     await write(older);
     try {
-      const shown = [...before, ...reporting, ...added];
+      const shown = [
+        "preferredName",
+        "employeeId",
+        "positionId",
+        "startDate",
+        "endDate",
+        ...reporting,
+        ...added,
+      ];
       expect((await readPeople()).order).toEqual(shown);
       const general = await test.signedIn(["resource-planner"]);
       const seen = await readPeople(general.cookie);
       expect(seen.order).toEqual([
         "preferredName",
         "employeeId",
+        "positionId",
         "managerId",
         "team",
         "teamName",
@@ -731,6 +745,7 @@ describe("orders stored before the reporting columns", () => {
       const read = await readPeople();
       expect(read.order).toEqual([
         "employeeId",
+        "positionId",
         "preferredName",
         "startDate",
         "endDate",
@@ -852,6 +867,7 @@ describe("more refusals", () => {
         {
           preferredName: unique("Fictional Person"),
           employeeId: unique("E"),
+          positionId: testPosition,
           values: { [field.id]: [String(choices[0]?.id)] },
         },
       ],
@@ -1027,6 +1043,7 @@ describe("undoing changes to columns saved before columns had drafts", () => {
         {
           preferredName: unique("Fictional Person"),
           employeeId: unique("E"),
+          positionId: testPosition,
           values: { [drafted.id]: [String(choices[0]?.id)] },
         },
       ],
