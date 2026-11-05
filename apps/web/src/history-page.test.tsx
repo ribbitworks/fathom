@@ -260,6 +260,57 @@ describe("the entries", () => {
     ]);
   });
 
+  it("say which role was created or changed, any name it had before, and what it was given or lost, marking changes as worth checking", async () => {
+    const roleEntry = (
+      id: number,
+      action: string,
+      details: Record<string, unknown>,
+    ) => ({
+      id,
+      occurredAt: "2026-10-30T19:00:00.000Z",
+      actor: admin,
+      action,
+      subject: null,
+      details,
+    });
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () =>
+        Response.json({
+          entries: [
+            roleEntry(13, "role-changed", {
+              role: "Fictional Checkers",
+              previousName: "Fictional Auditors",
+              granted: ["people:view", "changes:view"],
+              withdrawn: ["restricted:view"],
+            }),
+            roleEntry(12, "role-changed", {
+              role: "Fictional Checkers",
+              granted: [],
+              withdrawn: [],
+            }),
+            roleEntry(11, "role-created", {
+              role: "Fictional Auditors",
+              granted: ["plan:view", "retired:permission"],
+            }),
+            roleEntry(10, "role-created", { role: "Fictional Empty" }),
+          ],
+        }),
+    });
+    renderApp("/history");
+    const lines = (await screen.findAllByRole("listitem")).map((item) =>
+      item.textContent.slice(
+        String(item.querySelector("time")?.textContent).length,
+      ),
+    );
+    expect(lines).toEqual([
+      "Worth checking: Fictional Person changed the role: Fictional Checkers, before named Fictional Auditors; granting View People, View Change history; withdrawing View Restricted details",
+      "Worth checking: Fictional Person changed the role: Fictional Checkers",
+      "Fictional Person created the role: Fictional Auditors; granting View Plan, retired:permission",
+      "Fictional Person created the role: Fictional Empty",
+    ]);
+  });
+
   it("show each entry's date, with its year, and time, in the time zone the tests fix", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,

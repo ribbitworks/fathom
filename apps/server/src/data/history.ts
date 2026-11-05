@@ -88,6 +88,10 @@ const storedDetailsSchema = z
   .object({
     roles: z.array(z.string()).optional(),
     previousRoles: z.array(z.string()).optional(),
+    role: z.string().optional(),
+    previousName: z.string().optional(),
+    granted: z.array(z.string()).optional(),
+    withdrawn: z.array(z.string()).optional(),
   })
   .catch({});
 
@@ -99,8 +103,10 @@ function knownRoles(roles: string[] | undefined): Role[] | undefined {
 }
 
 function knownDetails(details: unknown): HistoryDetails {
-  const { roles, previousRoles } = storedDetailsSchema.parse(details);
+  const { roles, previousRoles, ...role } = storedDetailsSchema.parse(details);
   return {
+    // A role's name and permissions are shown as stored, so one renamed since still reads.
+    ...role,
     ...(roles === undefined ? {} : { roles: knownRoles(roles) }),
     ...(previousRoles === undefined
       ? {}

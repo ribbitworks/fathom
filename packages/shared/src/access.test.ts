@@ -1,9 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the plain-English descriptions of permissions, shown when roles are set.
+// Tests for permissions as roles are set: their plain-English descriptions, the grid that places
+// them, their short names, what editing implies, and the roles Fathom starts with.
 
 import { describe, expect, it } from "vitest";
-import { permissionDescriptions, permissionSchema } from "./access.ts";
+import {
+  permissionDescriptions,
+  permissionGrid,
+  permissionLabel,
+  permissionSchema,
+  startingRoles,
+  withImplied,
+} from "./access.ts";
 
 describe("permissionDescriptions", () => {
   it.each(permissionSchema.options)(
@@ -19,4 +27,47 @@ describe("permissionDescriptions", () => {
       expect(needs).not.toBe(permission);
     },
   );
+});
+
+describe("permissionGrid", () => {
+  it("places every permission exactly once", () => {
+    const placed = permissionGrid.flatMap(({ actions }) =>
+      Object.values(actions),
+    );
+    expect([...placed].sort()).toEqual([...permissionSchema.options].sort());
+  });
+});
+
+describe("permissionLabel", () => {
+  it("names a permission by its action and area", () => {
+    expect(permissionLabel("people:edit")).toBe("Edit People");
+    expect(permissionLabel("feature-teams:propose")).toBe(
+      "Draft Feature teams",
+    );
+    expect(permissionLabel("accounts:manage")).toBe("Edit Accounts");
+  });
+
+  it("shows a permission it does not know as stored", () => {
+    expect(permissionLabel("retired:permission")).toBe("retired:permission");
+  });
+});
+
+describe("withImplied", () => {
+  it("adds viewing what may be edited, in the shared list's order, and drops what it does not know", () => {
+    expect(
+      withImplied(["people:edit", "retired:permission", "plan:view"]),
+    ).toEqual(["plan:view", "people:view", "people:edit"]);
+  });
+});
+
+describe("startingRoles", () => {
+  it("name every starting role once, each granting known permissions", () => {
+    const names = Object.values(startingRoles).map(({ name }) => name);
+    expect(new Set(names).size).toBe(names.length);
+    for (const { permissions } of Object.values(startingRoles)) {
+      expect(withImplied(permissions)).toEqual(
+        expect.arrayContaining([...permissions]),
+      );
+    }
+  });
 });

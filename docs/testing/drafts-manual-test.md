@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-03"
+last_updated: "2026-11-04"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -21,7 +21,7 @@ Verifies how drafts of people, columns, lists, choices, and column and choice or
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
+R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes. The accounts must hold their roles as Fathom starts them: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change people, lists and columns, and its changes are drafts; it cannot approve them.
 - **Approver account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts; it cannot change people, lists or columns.

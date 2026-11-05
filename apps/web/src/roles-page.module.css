@@ -1,0 +1,66 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The Roles page: the sensitivity tiers named in text, in their own colours, and the summary of what
+   a role allows, where a line just added is bold in an accent colour before settling to plain text,
+   and a line just taken away is struck through in red and fades before it goes. Each colour is deep
+   in light mode and bright in dark, so it is seen in both. Without motion, both hold until they
+   end. */
+
+.restricted {
+  color: var(--mantine-color-orange-text);
+  font-weight: 600;
+}
+
+.confidential {
+  color: var(--mantine-color-red-text);
+  font-weight: 600;
+}
+
+.added {
+  --added-colour: var(--mantine-color-teal-8);
+
+  font-weight: 600;
+  color: var(--added-colour);
+  animation: settle 3s ease-in forwards;
+}
+
+.removed {
+  color: var(--mantine-color-red-8);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+  animation: leave 3s linear forwards;
+}
+
+:global([data-mantine-color-scheme="dark"]) .added {
+  --added-colour: var(--mantine-color-teal-3);
+}
+
+:global([data-mantine-color-scheme="dark"]) .removed {
+  color: var(--mantine-color-red-4);
+}
+
+@keyframes settle {
+  0%,
+  75% {
+    color: var(--added-colour);
+  }
+  100% {
+    color: inherit;
+  }
+}
+
+@keyframes leave {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .added,
+  .removed {
+    animation: none;
+  }
+}

@@ -28,6 +28,10 @@ export const accessActionSchema = z.enum([
   // Someone saw the whole hiring plan. Recorded at most once a day for each user, as Restricted
   // views are.
   "hiring-plan-viewed",
+  // Someone created a role, or changed a role's name, description, or what it grants, naming the
+  // role and the permissions granted or withdrawn.
+  "role-created",
+  "role-changed",
 ]);
 
 export type AccessAction = z.infer<typeof accessActionSchema>;
@@ -35,6 +39,12 @@ export type AccessAction = z.infer<typeof accessActionSchema>;
 export const historyDetailsSchema = z.object({
   roles: z.array(roleSchema).optional(),
   previousRoles: z.array(roleSchema).optional(),
+  // For a role created or changed: its name then, any name it had before, and the permissions
+  // granted or withdrawn, as stored, so a permission renamed since is still shown.
+  role: z.string().optional(),
+  previousName: z.string().optional(),
+  granted: z.array(z.string()).optional(),
+  withdrawn: z.array(z.string()).optional(),
 });
 
 export type HistoryDetails = z.infer<typeof historyDetailsSchema>;

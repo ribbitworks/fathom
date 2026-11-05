@@ -105,6 +105,35 @@ describe("the sidebar", () => {
     ).toBeNull();
   });
 
+  it("shows Roles under Administration to those who may edit roles, without Accounts", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["plan:view", "roles:edit"],
+        }),
+      "GET /api/roles": () => Response.json({ roles: [] }),
+    });
+    renderApp("/roles");
+    const header = await screen.findByText("Roles", { selector: "header *" });
+    expect(header.parentElement?.textContent).toBe("Administration/Roles");
+    expect(within(sidebar()).getByText("Administration")).toBeDefined();
+    expect(
+      within(sidebar())
+        .getAllByRole("link", { name: "Roles" })
+        .map((link) => [
+          link.getAttribute("href"),
+          link.getAttribute("aria-current"),
+        ]),
+    ).toEqual([
+      ["/roles", "page"],
+      ["/help/roles", null],
+    ]);
+    expect(
+      within(sidebar()).queryByRole("link", { name: "Accounts" }),
+    ).toBeNull();
+  });
+
   it("marks the current page, and pages still to come", async () => {
     serverAnswers({
       "GET /api/session": administrator,

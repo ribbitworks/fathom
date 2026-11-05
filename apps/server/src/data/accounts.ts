@@ -3,8 +3,9 @@
 // Local accounts that sign in with a password: creating them, with the roles they hold, and the
 // administration that needs the accounts:manage permission, which lists accounts, changes their
 // names, email addresses, and roles, resets their passwords, and deactivates them. Administrators
-// manage their own account like any other, except that the last active Administrator keeps the role
-// and stays active, so no one can lock everyone out, and nobody resets their own password here.
+// manage their own account like any other, except that some active account must keep the
+// permissions to manage accounts and to edit roles, so no one can lock everyone out, and nobody
+// resets their own password here.
 // Public sign-up is turned off, so accounts are created here, through Better Auth's own storage,
 // which hashes passwords.
 
@@ -16,7 +17,7 @@ import {
   users,
 } from "@fathom/db";
 import { type Account, type Role, roleSchema } from "@fathom/shared";
-import { and, asc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { type Actor, requirePermission } from "../access.ts";
 import {
@@ -28,7 +29,12 @@ import {
 import type { Auth } from "./auth.ts";
 import type { Transaction } from "./changes.ts";
 import { type HistoryEvent, recordEvent, recordEvents } from "./history.ts";
-import { addRoles, readRoles } from "./roles.ts";
+import {
+  addRoles,
+  keepAccessManaged,
+  lockAccessManagers,
+  readRoles,
+} from "./roles.ts";
 
 export interface NewAccount {
   name: string;
@@ -116,22 +122,30 @@ export async function createAccount(
 
 // Deactivates or reactivates an account, recording who did it in the access history, and signs it
 // out everywhere when deactivated. The actor is null for the server's operators, as when the
-// development seed command does it. Callers check permissions first.
+// development seed command does it. Callers check permissions first. When asked to keep Fathom
+// manageable, as for Administrators acting in Fathom, deactivating is refused if it would leave no
+// active account able to manage accounts or edit roles; the server's operators are not held to it.
 export async function setAccountActive(
   auth: Auth,
   database: Database,
   userId: string,
   active: boolean,
   actorId: string | null,
-  // Runs first in the change's transaction, and refuses it by throwing.
-  check: (transaction: Transaction) => Promise<void> = async () => {},
+  keepManaged = false,
 ): Promise<void> {
+  const guarded = keepManaged && !active;
   await database.transaction(async (transaction) => {
-    await check(transaction);
+    if (guarded) await lockAccessManagers(transaction);
     await transaction
       .update(users)
       .set({ deactivatedAt: active ? null : new Date() })
       .where(eq(users.id, userId));
+    if (guarded) {
+      await keepAccessManaged(
+        transaction,
+        "The last active account that can manage accounts or edit roles cannot be deactivated",
+      );
+    }
     await recordEvent(transaction, {
       actorId,
       action: active ? "account-reactivated" : "account-deactivated",
@@ -198,40 +212,6 @@ export function createAccountAdministration(
     };
   }
 
-  // Changes to accounts that could remove an Administrator wait for each other until their
-  // transaction ends, so two at once cannot each leave the other as the last Administrator and then
-  // remove it. Each takes this lock before any account's row, so none waits on another in the
-  // opposite order. Relies on PostgreSQL's default isolation, under which each statement sees what
-  // the change before it saved.
-  async function lockAdministrators(transaction: Transaction): Promise<void> {
-    await transaction.execute(
-      sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.administrators', 0))`,
-    );
-  }
-
-  // Refuses a change that leaves an account without the Administrator role, or deactivated, when no
-  // other active account holds the role. Callers take lockAdministrators first.
-  async function keepAnAdministrator(
-    transaction: Transaction,
-    userId: string,
-    refusal: string,
-  ): Promise<void> {
-    const [other] = await transaction
-      .select({ id: users.id })
-      .from(userRoles)
-      .innerJoin(users, eq(users.id, userRoles.userId))
-      .innerJoin(roleTable, eq(roleTable.id, userRoles.roleId))
-      .where(
-        and(
-          eq(roleTable.key, "administrator"),
-          isNull(users.deactivatedAt),
-          ne(users.id, userId),
-        ),
-      )
-      .limit(1);
-    if (other === undefined) throw new ConflictError(refusal);
-  }
-
   async function signOutEverywhere(userId: string): Promise<void> {
     await (await auth.$context).internalAdapter.deleteUserSessions(userId);
   }
@@ -261,7 +241,7 @@ export function createAccountAdministration(
           ? undefined
           : await checkEmail(auth, change.email, userId);
       await database.transaction(async (transaction) => {
-        await lockAdministrators(transaction);
+        await lockAccessManagers(transaction);
         const previous = await readAccount(userId, transaction);
         const name = change.name?.trim() ?? previous.name;
         const email = changedEmail ?? previous.email;
@@ -288,13 +268,6 @@ export function createAccountAdministration(
           });
         }
         if (events.length === 0) return;
-        if (rolesChanged && !roles.includes("administrator")) {
-          await keepAnAdministrator(
-            transaction,
-            userId,
-            "The last active Administrator keeps the Administrator role",
-          );
-        }
         await transaction
           .update(users)
           .set({ name, email, updatedAt: new Date() })
@@ -316,6 +289,10 @@ export function createAccountAdministration(
               ),
             );
           await addRoles(transaction, userId, roles);
+          await keepAccessManaged(
+            transaction,
+            "The last active account that can manage accounts or edit roles keeps that access",
+          );
         }
         await recordEvents(transaction, events);
       });
@@ -397,16 +374,7 @@ export function createAccountAdministration(
         userId,
         active,
         actor.user.id,
-        active
-          ? undefined
-          : async (transaction) => {
-              await lockAdministrators(transaction);
-              await keepAnAdministrator(
-                transaction,
-                userId,
-                "The last active Administrator cannot be deactivated",
-              );
-            },
+        true,
       );
       return readAccount(userId);
     },

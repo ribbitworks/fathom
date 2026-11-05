@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-03"
+last_updated: "2026-11-04"
 ---
 
 # Manual Test: Metrics on the People Table
@@ -17,11 +17,11 @@ Verifies the People table's Metrics panel: breaking people down by one column or
 
 - A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
 - A desktop web browser whose window can be made narrower than 768 pixels.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data command (R1).
+- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1 and R2).
 
 ## Test Accounts
 
-R1 creates this account, with every other development account, so it exists once R1 has run. The accounts share one password, which R1 prints when it finishes.
+R1 creates this account, with every other development account, so it exists once R1 has run. The accounts share one password, which R1 prints when it finishes. The accounts must hold their roles as Fathom starts them: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It sees every column on People, including Start and End, and can save views.
 
@@ -50,6 +50,20 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 
 2. Confirm that the last line printed gives the shared password, with no error above it.
 3. Reload the browser page.
+
+### R2: Reset the Database
+
+Use only where this test says so. This deletes every account and record in the development database, including anything added by hand, and puts every role back as Fathom starts it. Ask the owner before running it on a database others use.
+
+1. Stop Fathom: press Ctrl+C in the first terminal.
+2. In the second terminal, run:
+
+   ```sh
+   pnpm db:reset && pnpm db:seed
+   ```
+
+3. Confirm that the last line printed gives the shared password, with no error above it.
+4. Start Fathom again (R0).
 
 ### P1: Sign In
 

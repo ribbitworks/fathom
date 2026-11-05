@@ -4,7 +4,8 @@
 // became user-defined move into lists of their own, keeping their labels and descriptions, in
 // alphabetical order, the roles accounts held before roles became editable stay theirs, everyone
 // already named as a manager is flagged as a manager, and the Position column and planned hires'
-// states carry over to the built-in Positions and hiring states lists.
+// states carry over to the built-in Positions and hiring states lists, and every role that could
+// manage accounts can then also edit roles.
 
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
@@ -28,6 +29,8 @@ let beforeRoles: string;
 let hiringDatabase: TestDatabase;
 let beforeHiring: string;
 let namedDatabase: TestDatabase;
+let editDatabase: TestDatabase;
+let beforeEdit: string;
 
 // The migration that builds in Positions and the hiring states.
 const hiringRows = "0022_hiring_rows";
@@ -201,16 +204,42 @@ beforeAll(async () => {
     await namedPool.end();
   }
   await runMigrations(namedDatabase.migrator);
-}, 240_000);
+
+  editDatabase = await startTestDatabase();
+  beforeEdit = migrationsBefore("0023_roles_edit_permission");
+  const editPool = createPool(editDatabase.migrator);
+  try {
+    await migrate(createDatabase(editPool), {
+      migrationsFolder: beforeEdit,
+      migrationsSchema: "fathom_migrations",
+      migrationsTable: "migrations",
+    });
+    await editPool.query(
+      `INSERT INTO fathom.roles (name, description) VALUES
+        ('Fictional Account Keeper', ''),
+        ('Fictional Watcher', '');
+       INSERT INTO fathom.role_permissions (role_id, permission)
+        SELECT id, 'accounts:manage' FROM fathom.roles WHERE name = 'Fictional Account Keeper'
+        UNION ALL
+        SELECT id, 'history:view' FROM fathom.roles WHERE name = 'Fictional Watcher';
+       UPDATE fathom.roles SET description = 'Fictional changed description.' WHERE key = 'leadership'`,
+    );
+  } finally {
+    await editPool.end();
+  }
+  await runMigrations(editDatabase.migrator);
+}, 300_000);
 
 afterAll(async () => {
   rmSync(earlier, { recursive: true, force: true });
   rmSync(beforeRoles, { recursive: true, force: true });
   rmSync(beforeHiring, { recursive: true, force: true });
+  rmSync(beforeEdit, { recursive: true, force: true });
   await database.container.stop();
   await rolesDatabase.container.stop();
   await hiringDatabase.container.stop();
   await namedDatabase.container.stop();
+  await editDatabase.container.stop();
 });
 
 describe("upgrading to user-defined lists", () => {
@@ -515,6 +544,44 @@ describe("upgrading to built-in lists where no column is named Position", () => 
           visibility: "general",
           retired: false,
           built_in: "positions",
+        },
+      ]);
+    } finally {
+      await pool.end();
+    }
+  });
+});
+
+describe("upgrading to a permission of its own for editing roles", () => {
+  it("gives it to every role that could manage accounts, and to no other", async () => {
+    const pool = createPool(editDatabase.migrator);
+    try {
+      const rows = await pool.query<{ name: string }>(
+        `SELECT r.name FROM fathom.role_permissions p JOIN fathom.roles r ON r.id = p.role_id
+         WHERE p.permission = 'roles:edit' ORDER BY r.name`,
+      );
+      expect(rows.rows).toEqual([
+        { name: "Administrator" },
+        { name: "Fictional Account Keeper" },
+      ]);
+    } finally {
+      await pool.end();
+    }
+  });
+
+  it("rewords the People Manager description, leaving other roles' descriptions as they were", async () => {
+    const pool = createPool(editDatabase.migrator);
+    try {
+      const rows = await pool.query<{ key: string; description: string }>(
+        `SELECT key, description FROM fathom.roles
+         WHERE key IN ('people-manager', 'leadership') ORDER BY key`,
+      );
+      expect(rows.rows).toEqual([
+        { key: "leadership", description: "Fictional changed description." },
+        {
+          key: "people-manager",
+          description:
+            "Sees people, including everyone's Restricted details, and proposes feature teams.",
         },
       ]);
     } finally {

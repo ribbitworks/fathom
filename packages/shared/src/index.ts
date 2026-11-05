@@ -21,14 +21,35 @@ export {
   passwordResetSchema,
 } from "./accounts.ts";
 export {
+  type GridAction,
+  gridActions,
+  impliedPermissions,
   type Permission,
   permissionDescriptions,
+  permissionGrid,
+  permissionLabel,
   permissionSchema,
   type Role,
   roleSchema,
+  startingRoles,
   type Tier,
   tierSchema,
+  withImplied,
 } from "./access.ts";
+export {
+  type RoleChange,
+  roleChangeSchema,
+  roleEffectsRequestSchema,
+  type RoleEffects,
+  roleEffectsSchema,
+  roleLengths,
+  roleListSchema,
+  type RoleRequest,
+  roleRequestSchema,
+  roleResponseSchema,
+  type RoleSummary,
+  roleSummarySchema,
+} from "./roles.ts";
 export {
   builtInColumnNames,
   type ChangedField,

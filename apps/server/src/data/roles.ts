@@ -14,7 +14,9 @@ import {
   users,
 } from "@fathom/db";
 import { type Role, roleSchema } from "@fathom/shared";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { ConflictError } from "../errors.ts";
+import type { Transaction } from "./changes.ts";
 
 // Takes the database or a transaction, which both read the same way.
 export async function readRoles(
@@ -79,4 +81,45 @@ export async function readActorAccess(
       .where(eq(userRoles.userId, userId)),
   ]);
   return { roles, permissions: granted.map(({ permission }) => permission) };
+}
+
+// Changes that could leave nobody able to manage accounts, or to edit roles, wait for each other
+// until their transaction ends, so two at once cannot each leave the other as the last such account
+// and then remove it. Each takes this lock before any account's or role's row, so none waits on
+// another in the opposite order. Relies on PostgreSQL's default isolation, under which each
+// statement sees what the change before it saved.
+export async function lockAccessManagers(
+  transaction: Transaction,
+): Promise<void> {
+  await transaction.execute(
+    sql`SELECT pg_advisory_xact_lock(hashtextextended('fathom.administrators', 0))`,
+  );
+}
+
+// The permissions that keep Fathom manageable: without an active account holding each, nobody could
+// give anyone access again.
+const keptPermissions = ["accounts:manage", "roles:edit"] as const;
+
+// Refuses a change, made earlier in the same transaction, that leaves no active account whose roles
+// grant each of the permissions that keep Fathom manageable. Callers take lockAccessManagers first,
+// and the refusal undoes the change.
+export async function keepAccessManaged(
+  transaction: Transaction,
+  refusal: string,
+): Promise<void> {
+  for (const permission of keptPermissions) {
+    const [holder] = await transaction
+      .select({ id: users.id })
+      .from(userRoles)
+      .innerJoin(users, eq(users.id, userRoles.userId))
+      .innerJoin(rolePermissions, eq(rolePermissions.roleId, userRoles.roleId))
+      .where(
+        and(
+          eq(rolePermissions.permission, permission),
+          isNull(users.deactivatedAt),
+        ),
+      )
+      .limit(1);
+    if (holder === undefined) throw new ConflictError(refusal);
+  }
 }

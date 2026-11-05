@@ -15,9 +15,9 @@ export const accountLengths = { name: 100 } as const;
 // differ. The joiner emoji need is left alone, and a byte order mark counts as a space.
 const invisible = /[\u00AD\u200B\u2060]/u;
 
-// An account's name, as others see it: plain text, with each run of spaces kept as one, so it is
-// harder to make it look like someone else's.
-const accountName = z
+// An account's or role's name, as others see it: plain text, with each run of spaces kept as one,
+// so it is harder to make it look like another's.
+export const accountName = z
   .string()
   .overwrite((name) => name.replace(/\s+/gu, " ").trim())
   .min(1, "Enter a name")

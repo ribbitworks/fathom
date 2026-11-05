@@ -31,6 +31,7 @@ import { ListsPage } from "./lists-page.tsx";
 import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
+import { RolesPage } from "./roles-page.tsx";
 import { sessionQuery } from "./session.ts";
 import { SignIn } from "./sign-in.tsx";
 import { viewProps, viewSearchSchema } from "./table-view.ts";
@@ -97,6 +98,15 @@ const accountsRoute = createRoute({
   beforeLoad: requiring("accounts:manage"),
   component: function Accounts() {
     return <AccountsPage user={signedIn.useRouteContext().user} />;
+  },
+});
+
+const rolesRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/roles",
+  beforeLoad: requiring("roles:edit"),
+  component: function Roles() {
+    return <RolesPage user={signedIn.useRouteContext().user} />;
   },
 });
 
@@ -285,6 +295,7 @@ const routeTree = rootRoute.addChildren([
   signedInRoute.addChildren([
     homeRoute,
     accountsRoute,
+    rolesRoute,
     historyRoute,
     changesRoute,
     listsRoute,

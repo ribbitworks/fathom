@@ -53,6 +53,7 @@ const sidebarId = "sections";
 type Page =
   | "/"
   | "/accounts"
+  | "/roles"
   | "/history"
   | "/changes"
   | "/drafts"
@@ -143,6 +144,12 @@ const sections: { label: string; items: Item[] }[] = [
         to: "/accounts",
         permission: "accounts:manage",
       },
+      {
+        label: "Roles",
+        icon: "roles",
+        to: "/roles",
+        permission: "roles:edit",
+      },
     ],
   },
   {
@@ -187,6 +194,18 @@ export function firstPage(
         item.permission !== undefined &&
         opens(item, permissions),
     )?.to;
+}
+
+// The pages in the sidebar that some permissions open, by name, leaving out those open to everyone,
+// such as Help, so the result of setting roles can say which pages a role's holders see.
+export function pagesOpened(permissions: readonly Permission[]): string[] {
+  return sections.flatMap(({ items }) =>
+    items
+      .filter(
+        (item) => item.permission !== undefined && opens(item, permissions),
+      )
+      .map((item) => item.label),
+  );
 }
 
 // Where the user is, as the top bar names it: the sidebar's section and page, or their own account.

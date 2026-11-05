@@ -41,6 +41,8 @@ export const permissionSchema = z.enum([
   "drafts:submit",
   "drafts:approve",
   "accounts:manage",
+  // Changing what roles grant, apart from managing accounts, as the Decisions Log sets out.
+  "roles:edit",
   "history:view",
   // The change history, holding only changes to data the reader may see.
   "changes:view",
@@ -151,6 +153,11 @@ export const permissionDescriptions: Record<
       "Manages user accounts: creates them, changes their names, email addresses, and roles, resets passwords, and deactivates them.",
     without: "Cannot manage user accounts.",
   },
+  "roles:edit": {
+    allows:
+      "Creates and changes roles: their names, descriptions, and what they grant, including roles the user holds.",
+    without: "Cannot change roles.",
+  },
   "history:view": {
     allows:
       "Sees the access history: who changed accounts or protected data, or looked at protected data, and when.",
@@ -167,3 +174,184 @@ export const permissionDescriptions: Record<
 export const tierSchema = z.enum(["general", "restricted", "confidential"]);
 
 export type Tier = z.infer<typeof tierSchema>;
+
+// Editing data lets a user view it too, as Roles decides, so a role granting the first grants the
+// second, whether or not it is stored.
+export const impliedPermissions: Partial<Record<Permission, Permission>> = {
+  "plan:edit": "plan:view",
+  "allocations:edit": "allocations:view",
+  "people:edit": "people:view",
+  "restricted:edit": "restricted:view",
+  "confidential:edit": "confidential:view",
+  "configuration:edit": "configuration:view",
+};
+
+// Everything some granted permissions let a user do, in the order of the shared list. A permission
+// not in the list grants nothing, rather than being trusted.
+export function withImplied(granted: readonly string[]): Permission[] {
+  const known = permissionSchema.options.filter((permission) =>
+    granted.includes(permission),
+  );
+  const implied = known.flatMap(
+    // The permission is always one of the list above.
+    // eslint-disable-next-line security/detect-object-injection
+    (permission) => impliedPermissions[permission] ?? [],
+  );
+  return permissionSchema.options.filter(
+    (permission) => known.includes(permission) || implied.includes(permission),
+  );
+}
+
+// The actions a role can be given on an area, as the columns of the grid that sets them.
+export const gridActions = ["view", "draft", "approve", "edit"] as const;
+
+export type GridAction = (typeof gridActions)[number];
+
+// The areas a role grants actions on, as the rows of the grid that sets them, with the permission
+// each action on the area is. Every permission is in exactly one place, which a test checks.
+export const permissionGrid: readonly {
+  area: string;
+  actions: Partial<Record<GridAction, Permission>>;
+}[] = [
+  { area: "Plan", actions: { view: "plan:view", edit: "plan:edit" } },
+  {
+    area: "Allocations",
+    actions: { view: "allocations:view", edit: "allocations:edit" },
+  },
+  { area: "People", actions: { view: "people:view", edit: "people:edit" } },
+  {
+    area: "Restricted details",
+    actions: { view: "restricted:view", edit: "restricted:edit" },
+  },
+  {
+    area: "Confidential data",
+    actions: { view: "confidential:view", edit: "confidential:edit" },
+  },
+  {
+    area: "Feature teams",
+    actions: {
+      draft: "feature-teams:propose",
+      approve: "feature-teams:approve",
+      edit: "feature-teams:edit",
+    },
+  },
+  {
+    area: "Drafts of every kind",
+    actions: { draft: "drafts:submit", approve: "drafts:approve" },
+  },
+  {
+    area: "Configuration",
+    actions: { view: "configuration:view", edit: "configuration:edit" },
+  },
+  { area: "Change history", actions: { view: "changes:view" } },
+  { area: "Access history", actions: { view: "history:view" } },
+  { area: "Accounts", actions: { edit: "accounts:manage" } },
+  { area: "Roles", actions: { edit: "roles:edit" } },
+];
+
+const actionNames: Record<GridAction, string> = {
+  view: "View",
+  draft: "Draft",
+  approve: "Approve",
+  edit: "Edit",
+};
+
+// A permission's short name, such as "Edit People", for lists of what changed.
+export function permissionLabel(permission: string): string {
+  for (const { area, actions } of permissionGrid) {
+    for (const action of gridActions) {
+      // The action is always one of the fixed list above.
+      // eslint-disable-next-line security/detect-object-injection
+      const [granted, name] = [actions[action], actionNames[action]];
+      if (granted === permission) return `${name} ${area}`;
+    }
+  }
+  return permission;
+}
+
+// The roles Fathom starts with, as the migrations store them, which a test checks: their names,
+// what each is for, and what each grants. A starting role can be put back to this version from the
+// Roles page. Every role must be listed, which the compiler checks.
+export const startingRoles: Record<
+  Role,
+  { name: string; description: string; permissions: readonly Permission[] }
+> = {
+  viewer: {
+    name: "Viewer",
+    description: "Sees the plan, including everyone's work assignments.",
+    permissions: ["plan:view", "allocations:view", "changes:view"],
+  },
+  "project-planner": {
+    name: "Project Planner",
+    description:
+      "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan.",
+    permissions: ["plan:edit", "drafts:submit", "changes:view"],
+  },
+  // Resource Planners see people, since they allocate them.
+  "resource-planner": {
+    name: "Resource Planner",
+    description:
+      "Sees people's General details, and edits allocations across the whole plan.",
+    permissions: [
+      "people:view",
+      "allocations:edit",
+      "drafts:submit",
+      "changes:view",
+    ],
+  },
+  // People Managers edit feature teams directly until plan approval arrives, as Roles sets out.
+  "people-manager": {
+    name: "People Manager",
+    description:
+      "Sees people, including everyone's Restricted details, and proposes feature teams.",
+    permissions: [
+      "people:view",
+      "feature-teams:propose",
+      "feature-teams:edit",
+      "restricted:view",
+      "changes:view",
+    ],
+  },
+  "workforce-administrator": {
+    name: "Workforce Administrator",
+    description:
+      "Maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.",
+    permissions: [
+      "people:edit",
+      "feature-teams:edit",
+      "restricted:edit",
+      "confidential:edit",
+      "configuration:edit",
+      "changes:view",
+    ],
+  },
+  leadership: {
+    name: "Leadership",
+    description:
+      "Sees people, with their Restricted and Confidential data, without editing it.",
+    permissions: [
+      "people:view",
+      "restricted:view",
+      "confidential:view",
+      "changes:view",
+    ],
+  },
+  // Approvers see lists, so every Approver can judge drafts of them.
+  approver: {
+    name: "Approver",
+    description:
+      "Approves or rejects drafts of the data their roles let them see.",
+    permissions: [
+      "drafts:approve",
+      "feature-teams:approve",
+      "configuration:view",
+      "changes:view",
+    ],
+  },
+  administrator: {
+    name: "Administrator",
+    description:
+      "Manages user accounts, role assignments, and system settings, without access to Restricted or Confidential data.",
+    permissions: ["accounts:manage", "roles:edit", "history:view"],
+  },
+};

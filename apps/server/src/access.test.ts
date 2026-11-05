@@ -76,7 +76,7 @@ const expected: [Role, Permission[]][] = [
     ],
   ],
   // Running Fathom needs no access to people data, so Administrators hold Viewer only if given it.
-  ["administrator", ["accounts:manage", "history:view"]],
+  ["administrator", ["accounts:manage", "roles:edit", "history:view"]],
 ];
 
 describe("what each role lets a user do on its own", () => {

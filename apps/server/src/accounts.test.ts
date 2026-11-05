@@ -662,7 +662,8 @@ describe("the last active Administrator", () => {
     );
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
-      error: "The last active Administrator keeps the Administrator role",
+      error:
+        "The last active account that can manage accounts or edit roles keeps that access",
     });
     expect(
       (await request(admin.cookie, "GET", "/api/accounts")).statusCode,
@@ -693,7 +694,8 @@ describe("the last active Administrator", () => {
     );
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
-      error: "The last active Administrator cannot be deactivated",
+      error:
+        "The last active account that can manage accounts or edit roles cannot be deactivated",
     });
     expect(
       (await request(admin.cookie, "GET", "/api/session")).statusCode,
@@ -724,6 +726,55 @@ describe("the last active Administrator", () => {
       { roles: [] },
     );
     expect(given.statusCode).toBe(200);
+  });
+
+  it("may give up the role while another active account manages accounts and edits roles through a role of its own", async () => {
+    const admin = await lastAdministrator();
+    const holder = await newAccount([]);
+    const [keeper, manager] = await connection
+      .insert(roleTable)
+      .values([
+        { name: "Fictional Keeper of Both" },
+        { name: "Fictional Account Manager Only" },
+      ])
+      .returning({ id: roleTable.id });
+    if (keeper === undefined || manager === undefined) {
+      throw new Error("The roles were not made");
+    }
+    await connection.insert(rolePermissions).values([
+      { roleId: keeper.id, permission: "accounts:manage" },
+      { roleId: keeper.id, permission: "roles:edit" },
+      { roleId: manager.id, permission: "accounts:manage" },
+    ]);
+    try {
+      // Managing accounts alone is not enough: nobody else could edit roles.
+      await connection
+        .insert(userRoles)
+        .values({ userId: holder.id, roleId: manager.id });
+      const refused = await request(
+        admin.cookie,
+        "PATCH",
+        `/api/accounts/${admin.id}`,
+        { roles: ["viewer"] },
+      );
+      expect(refused.statusCode).toBe(409);
+      await connection
+        .insert(userRoles)
+        .values({ userId: holder.id, roleId: keeper.id });
+      const given = await request(
+        admin.cookie,
+        "PATCH",
+        `/api/accounts/${admin.id}`,
+        { roles: ["viewer"] },
+      );
+      expect(given.statusCode).toBe(200);
+    } finally {
+      // Later tests make their own last Administrator, so nobody else may keep these permissions.
+      await connection
+        .update(users)
+        .set({ deactivatedAt: new Date() })
+        .where(eq(users.id, holder.id));
+    }
   });
 
   it("is kept when two administrators each remove the other's role at once", async () => {

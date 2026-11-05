@@ -8,6 +8,7 @@ import {
   accessActionSchema,
   type HistoryEntry,
   historyListSchema,
+  permissionLabel,
   type Role,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
@@ -82,6 +83,16 @@ const actionWords: Record<AccessAction, ActionWords> = {
     verb: "viewed the hiring plan",
     caution: false,
   },
+  "role-created": {
+    verb: "created the role",
+    caution: false,
+  },
+  // Worth checking, since a change to a role can give its holders, including whoever made it, more
+  // access.
+  "role-changed": {
+    verb: "changed the role",
+    caution: true,
+  },
 };
 
 // An action recorded by another version of Fathom, which this one does not know, is shown as it was
@@ -129,8 +140,30 @@ function names(roles: readonly Role[]): string {
   return roles.length === 0 ? "no roles" : roles.map(roleName).join(", ");
 }
 
+function permissionNames(permissions: readonly string[]): string {
+  return permissions.map(permissionLabel).join(", ");
+}
+
+// What a role entry names: the role, any name it had before, and the permissions it was given or
+// lost.
+function describeRole(details: HistoryEntry["details"]): string {
+  const parts = [
+    details.previousName === undefined
+      ? String(details.role)
+      : `${String(details.role)}, before named ${details.previousName}`,
+    ...(details.granted !== undefined && details.granted.length > 0
+      ? [`granting ${permissionNames(details.granted)}`]
+      : []),
+    ...(details.withdrawn !== undefined && details.withdrawn.length > 0
+      ? [`withdrawing ${permissionNames(details.withdrawn)}`]
+      : []),
+  ];
+  return parts.join("; ");
+}
+
 // The roles involved in an entry, in words, or an empty string when none were.
 export function describeDetails({ details }: HistoryEntry): string {
+  if (details.role !== undefined) return describeRole(details);
   if (details.previousRoles !== undefined && details.roles !== undefined) {
     return `from ${names(details.previousRoles)} to ${names(details.roles)}`;
   }

@@ -7,62 +7,24 @@
 // list in packages/shared, with its plain-English description.
 
 import type { Permission, Role, Tier } from "@fathom/shared";
-import { permissionSchema, roleSchema, tierSchema } from "@fathom/shared";
+import {
+  roleSchema,
+  startingRoles,
+  tierSchema,
+  withImplied,
+} from "@fathom/shared";
 import { ForbiddenError } from "./errors.ts";
 
-// What each role Fathom starts with grants, as the migration that made roles editable stored it,
-// which a test checks. Every role must be listed, which the compiler checks.
-export const startingGrants: Record<Role, readonly Permission[]> = {
-  viewer: ["plan:view", "allocations:view", "changes:view"],
-  "project-planner": ["plan:edit", "drafts:submit", "changes:view"],
-  // Resource Planners see people, since they allocate them.
-  "resource-planner": [
-    "people:view",
-    "allocations:edit",
-    "drafts:submit",
-    "changes:view",
-  ],
-  // People Managers edit feature teams directly until plan approval arrives, as Roles sets out.
-  "people-manager": [
-    "people:view",
-    "feature-teams:propose",
-    "feature-teams:edit",
-    "restricted:view",
-    "changes:view",
-  ],
-  "workforce-administrator": [
-    "people:edit",
-    "feature-teams:edit",
-    "restricted:edit",
-    "confidential:edit",
-    "configuration:edit",
-    "changes:view",
-  ],
-  leadership: [
-    "people:view",
-    "restricted:view",
-    "confidential:view",
-    "changes:view",
-  ],
-  // Approvers see lists, so every Approver can judge drafts of them.
-  approver: [
-    "drafts:approve",
-    "feature-teams:approve",
-    "configuration:view",
-    "changes:view",
-  ],
-  administrator: ["accounts:manage", "history:view"],
-};
-
-// Editing data lets a user view it too, as Roles decides.
-const viewedWhenEdited: Partial<Record<Permission, Permission>> = {
-  "plan:edit": "plan:view",
-  "allocations:edit": "allocations:view",
-  "people:edit": "people:view",
-  "restricted:edit": "restricted:view",
-  "confidential:edit": "confidential:view",
-  "configuration:edit": "configuration:view",
-};
+// What each role Fathom starts with grants, from the shared starting roles.
+export const startingGrants: Record<Role, readonly Permission[]> =
+  Object.fromEntries(
+    roleSchema.options.map((role) => [
+      role,
+      // The role is always one of the fixed roles.
+      // eslint-disable-next-line security/detect-object-injection
+      startingRoles[role].permissions,
+    ]),
+  ) as Record<Role, readonly Permission[]>;
 
 export interface SignedInUser {
   id: string;
@@ -85,16 +47,7 @@ export function actorWith(
   grantedPermissions: readonly string[],
 ): Actor {
   const roles = roleSchema.options.filter((role) => heldRoles.includes(role));
-  const granted = permissionSchema.options.filter((permission) =>
-    grantedPermissions.includes(permission),
-  );
-  const permissions = new Set([
-    ...granted,
-    // The permission is always one of the fixed permissions listed above.
-    // eslint-disable-next-line security/detect-object-injection
-    ...granted.flatMap((permission) => viewedWhenEdited[permission] ?? []),
-  ]);
-  return { user, roles, permissions: [...permissions].sort() };
+  return { user, roles, permissions: withImplied(grantedPermissions).sort() };
 }
 
 // An actor holding starting roles as Fathom first grants them, for tests and seed data.
