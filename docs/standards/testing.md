@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-03"
+last_updated: "2026-11-05"
 ---
 
 # Testing Standards
@@ -24,6 +24,8 @@ Fathom's additions to the shared [Testing Standards](shared/testing.md), which d
 | Manual | What a person sees and does in a feature, by hand in a real browser, as [Manual Tests](#manual-tests) describes | Before a stage that changes the feature is complete, and when the owner asks |
 
 Every new or changed API operation has integration tests, as well as unit tests for its rules.
+
+Until Fathom is first deployed with real data, migrations have no upgrade tests, since no migration converts existing data, as the [Decisions Log](../product/decisions.md#platform-and-operations) records.
 
 ## Access Control Tests
 

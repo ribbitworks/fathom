@@ -12,7 +12,7 @@ import { createDatabase, createPool } from "./client.ts";
 import { type DatabaseConfig, loadDatabaseConfig } from "./config.ts";
 import { describeError } from "./errors.ts";
 
-export const migrationsFolder = fileURLToPath(
+const migrationsFolder = fileURLToPath(
   new URL("../migrations", import.meta.url),
 );
 const migrationsSchema = "fathom_migrations";
