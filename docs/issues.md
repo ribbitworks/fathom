@@ -55,6 +55,10 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **An order draft that moves only Restricted columns:** A draft of the column order that moves only columns a reader may not see, such as Start or Manager since, is still sent to that reader as a draft of the order whose live and drafted orders are the same. Found in review on 2026-11-04.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
 
+## Appearance
+
+- **Choosing light or dark mode:** Light and dark modes follow each person's system setting, as [Visual Design](design/visual-design.md) sets out. The owner wants a setting in Fathom to choose one, asked for on 2026-11-04 and deferred until more pages are built.
+
 ## Error Pages
 
 - **Every page error blamed on the server:** The router shows any error while drawing a page as "Fathom could not reach its server", with a way to try again, so a page failing on data it did not expect reads as the server being down and sends the reader looking in the wrong place. Found while testing the Drafts page by hand on 2026-11-03; a plainer page for errors other than failed requests is deferred as outside the fix made then.
