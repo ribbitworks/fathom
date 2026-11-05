@@ -23,11 +23,13 @@ beforeAll(async () => {
   outsideFolder = mkdtempSync(join(repositoryRoot, ".tmp", "dev-server-"));
   outsideFile = join(outsideFolder, "outside.txt");
   writeFileSync(outsideFile, "fictional-outside-marker");
-  // A free port, without opening the browser.
+  // A free port, without opening the browser. Bound to one address, since localhost can resolve to
+  // ::1 and 127.0.0.1, and fetch gives up on the first after 250 milliseconds when the machine is
+  // busy, then finds nothing listening on the second.
   server = await createServer({
     root: webFolder,
     logLevel: "silent",
-    server: { port: 0, open: false },
+    server: { host: "127.0.0.1", port: 0, open: false },
   });
   await server.listen();
   url = String(server.resolvedUrls?.local[0]);
