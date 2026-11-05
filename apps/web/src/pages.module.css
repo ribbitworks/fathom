@@ -923,3 +923,169 @@ th.liveColumn {
   color: var(--mantine-color-dimmed);
   text-decoration: line-through;
 }
+
+/* The Releases page's timeline: a sticky column of stream names, as wide as the timeline's style
+   sets, beside tracks that scroll sideways, a day being the same width everywhere at each zoom,
+   with today's line under the names. */
+.timelineScroll {
+  overflow-x: auto;
+}
+
+.timeline {
+  position: relative;
+  width: max-content;
+}
+
+.timelineHead,
+.timelineRow {
+  display: flex;
+}
+
+.timelineHead {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.timelineLabel {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  width: var(--timeline-label);
+  padding: 0 var(--mantine-spacing-sm);
+  background: var(--mantine-color-body);
+  border-right: 1px solid var(--mantine-color-default-border);
+  font-size: var(--mantine-font-size-sm);
+}
+
+.timelineTrack {
+  position: relative;
+  flex: none;
+}
+
+/* A row above the axis for today's label, so it covers none of the axis's labels. */
+.timelineMarks {
+  height: 20px;
+}
+
+/* One tier of the axis, such as the years above the months. */
+.timelineTier {
+  position: relative;
+  height: 24px;
+}
+
+.timelineMarks + .timelineTier,
+.timelineTier + .timelineTier {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.timelineTick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  padding: 4px;
+  overflow: hidden;
+  border-left: 1px solid var(--mantine-color-default-border);
+  color: var(--mantine-color-dimmed);
+  font-size: var(--mantine-font-size-xs);
+  white-space: nowrap;
+}
+
+.timelineRows,
+.timelineLane {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.timelineRow:not(:last-child) {
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.timelineRow .timelineTrack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.timelineLane {
+  position: relative;
+  height: 24px;
+}
+
+.timelineCycle,
+.timelineRelease {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 0 6px;
+  font-size: var(--mantine-font-size-xs);
+  line-height: 22px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* A line of the panel's colour between cycles, so each shows its own length. */
+.timelineCycle {
+  border-left: 1px solid var(--mantine-color-body);
+  background: var(--mantine-color-default-hover);
+}
+
+.timelineReleaseSlot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+.timelineRelease {
+  border: 1px solid var(--mantine-color-sea-filled);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-sea-light);
+  color: var(--mantine-color-sea-light-color);
+  font-weight: 500;
+}
+
+.timelineReleaseDraft {
+  border-style: dashed;
+}
+
+.timelineShipsReach {
+  position: absolute;
+  top: 50%;
+  border-top: 1px dashed var(--mantine-color-sea-filled);
+}
+
+.timelineShips {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--mantine-color-body);
+  background: var(--mantine-color-sea-filled);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.timelineToday {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  border-left: 2px solid var(--mantine-color-red-6);
+  pointer-events: none;
+}
+
+.timelineTodayLabel {
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  padding: 0 2px;
+  background: var(--mantine-color-body);
+  color: var(--mantine-color-red-7);
+  font-size: var(--mantine-font-size-xs);
+  font-weight: 600;
+}

@@ -11,11 +11,12 @@ last_updated: "2026-11-04"
 
 ## Scope
 
-Verifies the Releases page: how release streams, their cycles and their releases are shown, what a Workforce Administrator, a Project Planner and an Approver can do with them, and how their drafts are published, approved, rejected, resubmitted and discarded.
+Verifies the Releases page: how release streams, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator, a Project Planner and an Approver can do with them, and how their drafts are published, approved, rejected, resubmitted and discarded.
 
 ## Test Environment
 
 - A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place and the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) added.
+- Roles as Fathom starts them: no change made to what any role grants in this clone's database. [R2](#r2-start-from-an-empty-database) puts them back.
 - A desktop web browser.
 - Two terminals open at the repository root: the first runs Fathom ([R0](#r0-start-fathom)), the second the data commands ([R1](#r1-restore-the-seed-data) and [R2](#r2-start-from-an-empty-database)).
 
@@ -89,11 +90,12 @@ Use only where a test case says so. This deletes every account and record in the
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a record's name. A hollow dot means the change is still unpublished.
 - **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Name**, **Cycles now** and **Releases**. Selecting a row opens the stream in the side panel.
 - **Side panel:** the panel beside the streams table for the selected stream, which the table narrows to make room for, headed with its name, with the sections **Cycle schedule**, **Releases** and **Cycles**. Its close button, an **×**, is at its top right, and dragging its left edge resizes it.
+- **Timeline:** the section headed **Timeline** below the streams table, with **Today**, **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right. It has a row for each stream that is not retired, named on the left, with a lane of the stream's cycles above a lane of its releases, under an axis of two rows of dates. Hovering over a cycle or a release shows its name and dates.
 - **⋯ menu:** the menu that opens from a **⋯** button: beside the side panel's close button for the stream itself, when it has a draft, or at the end of a row in the side panel for that change of cycles or release.
 
 ## Test Cases
 
-Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-start-from-an-empty-database). Part 1 starts from an empty database; REL-10 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left. Tick each step whose expected result you see, and write anything else under its notes. To run the test again, start again from [R2](#r2-start-from-an-empty-database).
+Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-start-from-an-empty-database). Part 1 starts from an empty database; REL-10 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-25 restores the seed data for Part 4. Tick each step whose expected result you see, and write anything else under its notes. To run the test again, start again from [R2](#r2-start-from-an-empty-database).
 
 ### Part 1: From an Empty Database
 
@@ -491,4 +493,94 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 - [ ] **Step 5.** Select the **⋯** button at the end of the **Harbor 2** row, then **Discard draft**.
   - **Expected:** A notification says **Discarded the draft.** The row reads **26.3 to 26.4 · ships 2026-12-31** again, with nothing after the date.
+  - **Notes:**
+
+### Part 4: The Timeline
+
+#### REL-25: The Timeline Shows Every Current Stream
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `team.member@fathom.test`, shown as **Team Member**. Run after REL-24. **Releases** page open from the left-hand menu.
+
+- [ ] **Step 1.** Run [R1](#r1-restore-the-seed-data).
+  - **Expected:** [R1](#r1-restore-the-seed-data) finishes with no error. After the page reloads, the streams table shows **Testing Stream**, **Platform** and **Patches**, none under **Retired**.
+  - **Notes:**
+
+- [ ] **Step 2.** Scroll below the streams table to the timeline, and select **Year**.
+  - **Expected:** **Year** is highlighted. The timeline has three rows, named **Testing Stream**, **Platform** and **Patches**. The axis's top row names years, such as **2027**, and its second row half years, such as **Jan to Jun 27** and **Jul to Dec 27**. A red line, labelled **Today** in a row of its own above the axis, crosses every row, about a sixth of the way across the timeline.
+  - **Notes:**
+
+- [ ] **Step 3.** Read **Platform**'s two lanes.
+  - **Expected:** The cycles **27.1** and **27.2** are each a quarter long, and **27.3** and the cycles after it half a year long, each block as long as its dates on the axis. In the lane below, **Harbor 3** spans **27.1** to **27.3**, with a diamond at its right end.
+  - **Notes:**
+
+- [ ] **Step 4.** Hover over **Harbor 1**'s span, scrolling the timeline left to it if needed.
+  - **Expected:** A tooltip reads **Harbor 1: 26.1 to 26.2, ships 2026-06-30**.
+  - **Notes:**
+
+- [ ] **Step 5.** Read **Patches**' cycles lane.
+  - **Expected:** Each four-week cycle is a block as long as its dates on the axis, named inside only when its name fits. Hovering over one shows its name and dates, such as **P26.3: 2026-11-02 to 2026-11-29**.
+  - **Notes:**
+
+#### REL-26: The Timeline Zooms In and Out
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `team.member@fathom.test`, shown as **Team Member**. Run after REL-25. **Releases** page open, scrolled to the timeline, at **Year**.
+
+- [ ] **Step 1.** Select **All**.
+  - **Expected:** The whole timeline fits across, from 2026 to 2030, with no scrolling sideways, and the **−** button is greyed out.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **+**.
+  - **Expected:** The timeline widens and can be scrolled sideways again, no zoom button is highlighted, and **−** can be selected again.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Quarter**, then **Month**.
+  - **Expected:** At **Quarter**, the axis's top row names quarters, such as **Q1 2027**, and its second row months, such as **Jan**. At **Month**, the top row names months, such as **Jan 2027**, and the second row each week by its Monday, such as **Nov 9**, or, where that does not fit, just the day of the month, such as **9**. The red **Today** line stays where it was across the timeline at each zoom.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Week**, then **Days**.
+  - **Expected:** At **Week**, the second row names each week by its Monday, such as **Nov 9**, with short unlabelled marks for the days along its bottom. At **Days**, it names each day, such as **Mon 9**.
+  - **Notes:**
+
+- [ ] **Step 5.** Scroll the timeline sideways away from today, then select **Today**.
+  - **Expected:** The timeline scrolls back so the **Today** line is about a sixth of the way across.
+  - **Notes:**
+
+- [ ] **Step 6.** Reload the page and scroll to the timeline.
+  - **Expected:** **Days** is still highlighted, with the **Today** line about a sixth of the way across.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Year**.
+  - **Expected:** **Year** is highlighted, as REL-25 left it.
+  - **Notes:**
+
+#### REL-27: A Release's Own Ship Day Is Marked on the Timeline
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-26. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+
+- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 2** row, then **Change…**. Type `20270131` in **Ships on**, and select **Save**.
+  - **Expected:** A notification says **Drafted the change to the release.**
+  - **Notes:**
+
+- [ ] **Step 2.** Close the side panel, scroll to the timeline, select **6 months**, and find **Harbor 2** in **Platform**'s releases lane.
+  - **Expected:** **Harbor 2**'s span, across **26.3** and **26.4**, has a dashed edge. A dashed line runs on from its right end, past the start of **Harbor 3**, to a diamond about a month later, at the end of January 2027.
+  - **Notes:**
+
+- [ ] **Step 3.** Hover over **Harbor 2**'s span.
+  - **Expected:** A tooltip reads **Harbor 2, Draft: 26.3 to 26.4, ships 2027-01-31**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Platform** in the table, then, in the side panel, the **⋯** button at the end of the **Harbor 2** row, then **Discard draft**.
+  - **Expected:** A notification says **Discarded the draft.** On the timeline, **Harbor 2**'s span has a solid edge, with its diamond at its right end and no dashed line.
+  - **Notes:**
+
+#### REL-28: A Retired Stream Is Left Off the Timeline
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. Run after REL-27. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
+
+- [ ] **Step 1.** In the side panel, select **Retire**.
+  - **Expected:** A notification says **Drafted retiring Patches.** The timeline has two rows, **Testing Stream** and **Platform**, and no **Patches** row.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **⋯** button beside the side panel's close button, then **Discard draft**.
+  - **Expected:** A notification says **Discarded the draft.** The timeline's **Patches** row is back, after **Platform**.
   - **Notes:**

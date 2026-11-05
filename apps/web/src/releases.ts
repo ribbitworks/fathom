@@ -143,7 +143,7 @@ export const releaseDate = (
 
 const dayMs = 24 * 60 * 60 * 1000;
 
-const daysBetween = (from: string, to: string): number =>
+export const daysBetween = (from: string, to: string): number =>
   Math.round((Date.parse(to) - Date.parse(from)) / dayMs);
 
 // How far a release's own day is from the end of its last cycle, in words, such as "31 days after
@@ -158,6 +158,16 @@ export function shipsOffCycle(
   if (days === 0) return undefined;
   const count = Math.abs(days);
   return `${String(count)} ${count === 1 ? "day" : "days"} ${days > 0 ? "after" : "before"} ${cycleNamed(stream, release.lastCycle)} ends`;
+}
+
+// A release's cycles, in words, such as "26.1 to 26.2", or the one cycle's name.
+export function releaseCycles(
+  stream: ReleaseStream,
+  release: { firstCycle: string; lastCycle: string },
+): string {
+  const first = cycleNamed(stream, release.firstCycle);
+  const last = cycleNamed(stream, release.lastCycle);
+  return first === last ? first : `${first} to ${last}`;
 }
 
 const node = (

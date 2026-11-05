@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Releases page: every release stream in one table, with how its cycles are made now and its
-// releases, and the selected stream in a side panel at its own address, as the Lists page does
-// with lists. The panel holds the stream's changes of cycles, its releases, and its cycles, worked
-// out at least two years ahead, each with its share of the months it spans. Those who edit planning
-// configuration add, rename, retire, and restore streams and change their cycles; those who edit
-// the plan make releases from consecutive cycles. Every change is a draft, shown in place with its
-// mark, which its makers discard or resubmit, and Approvers approve or reject, here or on the
-// Drafts page, from each record's menu.
+// releases, above a timeline of them all, and the selected stream in a side panel at its own
+// address, as the Lists page does with lists. The panel holds the stream's changes of cycles, its
+// releases, and its cycles, worked out at least two years ahead, each with its share of the months
+// it spans. Those who edit planning configuration add, rename, retire, and restore streams and
+// change their cycles; those who edit the plan make releases from consecutive cycles. Every change
+// is a draft, shown in place with its mark, which its makers discard or resubmit, and Approvers
+// approve or reject, here or on the Drafts page, from each record's menu.
 
 import type {
   CyclePattern,
@@ -63,9 +63,9 @@ import {
   StreamDialog,
 } from "./release-dialogs.tsx";
 import {
-  cycleNamed,
   discardRecordDraft,
   recordNodes,
+  releaseCycles,
   releaseDate,
   shipsOffCycle,
   releaseStreamsQuery,
@@ -74,6 +74,7 @@ import {
   type SavedStream,
   setStreamRetired,
 } from "./releases.ts";
+import { ReleasesTimeline } from "./releases-timeline.tsx";
 import { sidePanelScroll, useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { DraftMark, HoldMarks } from "./status-mark.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
@@ -135,7 +136,13 @@ function monthsInWords(months: readonly { month: string; share: number }[]) {
 const patternWords = (pattern: CyclePattern) =>
   `Every ${String(pattern.length)} ${pattern.unit === "weeks" ? "week" : "month"}${pattern.length === 1 ? "" : "s"}, named ${pattern.naming}`;
 
-const today = () => new Date().toISOString().slice(0, 10);
+// Today where the reader is, as YYYY-MM-DD; in UTC it would already be tomorrow on an evening west
+// of Greenwich.
+function today(): string {
+  const now = new Date();
+  const two = (part: number) => String(part).padStart(2, "0");
+  return `${String(now.getFullYear())}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
+}
 
 // The pattern in force today, or the first, when none has started yet.
 function patternNow(stream: ReleaseStream): CyclePattern | undefined {
@@ -461,8 +468,6 @@ function Releases({
       )}
       {stream.releases.map((release) => {
         const node = nodeOf(actions, "release", release.id);
-        const first = cycleNamed(stream, release.firstCycle);
-        const last = cycleNamed(stream, release.lastCycle);
         const changeable =
           actions.canEditReleases &&
           release.heldBy === undefined &&
@@ -479,7 +484,7 @@ function Releases({
               <Marks node={node} />
             </span>
             <span>
-              {first === last ? first : `${first} to ${last}`}
+              {releaseCycles(stream, release)}
               <Text span c="dimmed" fz="sm" className={classes.figures}>
                 {" "}
                 · ships {releaseDate(stream, release) ?? ""}
@@ -935,14 +940,15 @@ export function ReleasesPage({
             No release streams yet.
           </Text>
         ) : (
-          <div className={sidePanelScroll}>
+          <Stack gap="lg" className={sidePanelScroll}>
             <StreamTable
               streams={streams}
               actions={actions}
               selected={open?.id}
               onOpen={openStream}
             />
-          </div>
+            <ReleasesTimeline streams={streams} today={today()} />
+          </Stack>
         )}
       </WithSidePanel>
       <Modal

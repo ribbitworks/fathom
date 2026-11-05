@@ -1,22 +1,33 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the Releases page: each release stream with how its cycles are made, its releases, and
-// its cycles, and what those who see the plan may do there.
+// its cycles, the timeline of them all, and what those who see the plan may do there.
 
 import type { ReleaseStream, ReleaseStreams } from "@fathom/shared";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { MantineProvider } from "@mantine/core";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ReleasesTimeline } from "./releases-timeline.tsx";
 import {
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
   fictionalUser,
+  quarters,
   recordDraft,
   renderApp,
   serverAnswers,
   signedIn,
   streamId,
+  testTheme,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -1159,5 +1170,450 @@ describe("drafts in a stream's panel", () => {
         .getAllByRole("menuitem")
         .map(({ textContent }) => textContent),
     ).toEqual(["Change…", "Remove", "Discard draft"]);
+  });
+});
+
+describe("the timeline", () => {
+  // The view leaves 540 pixels for the tracks beside the streams' names, and the tests start at
+  // Month, which shows 180 days across them: three pixels a day.
+  const room = 540;
+  let viewWidth = 140 + room;
+  beforeEach(() => {
+    viewWidth = 140 + room;
+    localStorage.setItem(zoomKey, '"month"');
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
+      () => viewWidth,
+    );
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    localStorage.removeItem(zoomKey);
+  });
+
+  const zoomKey = "fathom-releases-timeline-zoom";
+
+  async function showTimeline(shown: ReleaseStream[], today: string) {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(`${today}T12:00:00Z`));
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer(shown),
+    });
+    renderApp("/releases");
+    return screen.findByRole("region", { name: "Timeline" });
+  }
+
+  const items = (timeline: HTMLElement, list: string) =>
+    within(within(timeline).getByRole("list", { name: list })).getAllByRole(
+      "listitem",
+    );
+
+  const view = (timeline: HTMLElement) =>
+    within(timeline).getByRole("list", { name: "Release streams" })
+      .parentElement?.parentElement as HTMLElement;
+
+  const widths = (timeline: HTMLElement) =>
+    items(timeline, "Cycles of Fictional Majors").map(
+      ({ style }) => style.width,
+    );
+
+  it("draws each cycle at its real length, with its dates", async () => {
+    const timeline = await showTimeline([fictionalStream()], "2027-02-15");
+    const cycles = items(timeline, "Cycles of Fictional Majors");
+    expect(cycles.map((cycle) => cycle.getAttribute("title"))).toEqual([
+      "27.1: 2027-01-01 to 2027-03-31",
+      "27.2: 2027-04-01 to 2027-06-30",
+      "27.3: 2027-07-01 to 2027-09-30",
+      "27.4: 2027-10-01 to 2027-12-31",
+    ]);
+    expect(
+      within(cycles[0] as HTMLElement).getByText(
+        "27.1, 2027-01-01 to 2027-03-31",
+      ),
+    ).toBeDefined();
+    // Three pixels a day: 90 days in the first quarter, 91 in the second.
+    expect(cycles.map(({ style }) => [style.left, style.width])).toEqual([
+      ["0px", "270px"],
+      ["270px", "273px"],
+      ["543px", "276px"],
+      ["819px", "276px"],
+    ]);
+  });
+
+  it("names a cycle only when its name fits", async () => {
+    const timeline = await showTimeline(
+      [
+        fictionalStream({
+          cycles: [
+            ...quarters(1),
+            {
+              startsOn: "2027-04-01",
+              endsOn: "2027-04-03",
+              name: "Fictional Short",
+              months: [],
+            },
+          ],
+        }),
+      ],
+      "2027-02-15",
+    );
+    expect(
+      items(timeline, "Cycles of Fictional Majors").map(
+        (cycle) => cycle.querySelector("[aria-hidden]")?.textContent,
+      ),
+    ).toEqual(["27.1", ""]);
+  });
+
+  it("spans each release across its cycles, marked on the day it ships", async () => {
+    const timeline = await showTimeline(
+      [
+        fictionalStream({
+          releases: [
+            fictionalRelease({ lastCycle: "2027-04-01" }),
+            fictionalRelease({
+              id: "30000000-0000-4000-8000-000000000002",
+              name: "Fictional Two",
+              firstCycle: "2027-07-01",
+              lastCycle: "2027-07-01",
+              shipsOn: "2027-08-14",
+              draft: recordDraft(),
+            }),
+          ],
+        }),
+      ],
+      "2027-02-15",
+    );
+    const releases = items(timeline, "Releases of Fictional Majors");
+    expect(releases.map((item) => item.getAttribute("title"))).toEqual([
+      "Fictional One: 27.1 to 27.2, ships 2027-06-30",
+      "Fictional Two, Draft: 27.3, ships 2027-08-14",
+    ]);
+    const [one, two] = releases.map((item) =>
+      [...item.querySelectorAll<HTMLElement>("[aria-hidden]")].map(
+        ({ style }) => [style.left, style.width],
+      ),
+    );
+    // The first ships when its last cycle ends; the second's marker is 46 days before 27.3 ends,
+    // with a line back to it from that end.
+    expect(one).toEqual([
+      ["0px", "543px"],
+      ["543px", ""],
+    ]);
+    expect(two).toEqual([
+      ["0px", "276px"],
+      ["135px", "141px"],
+      ["135px", ""],
+    ]);
+  });
+
+  it("marks today across every stream", async () => {
+    const timeline = await showTimeline(
+      [
+        fictionalStream(),
+        fictionalStream({ id: "s2", name: "Fictional Minors" }),
+      ],
+      "2027-02-15",
+    );
+    expect(
+      within(timeline)
+        .getAllByRole("list", { name: /^Cycles of/ })
+        .map((list) => list.getAttribute("aria-label")),
+    ).toEqual(["Cycles of Fictional Majors", "Cycles of Fictional Minors"]);
+    expect(
+      within(timeline).getByText(
+        (_, element) => element?.textContent === "Today, 2027-02-15",
+        { selector: "span" },
+      ),
+    ).toBeDefined();
+  });
+
+  it("marks today by the reader's own date, late in their evening too", async () => {
+    // West of Greenwich, where it is already the next day in UTC.
+    vi.stubEnv("TZ", "America/Los_Angeles");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2027, 1, 15, 23, 30));
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([fictionalStream()]),
+    });
+    renderApp("/releases");
+    const timeline = await screen.findByRole("region", { name: "Timeline" });
+    expect(
+      within(timeline).getByText(
+        (_, element) => element?.textContent === "Today, 2027-02-15",
+        { selector: "span" },
+      ),
+    ).toBeDefined();
+  });
+
+  it("leaves today out once it is past the last cycle", async () => {
+    const timeline = await showTimeline([fictionalStream()], "2028-02-15");
+    expect(within(timeline).queryByText(/^Today/)).toBeNull();
+  });
+
+  it("opens with today a sixth of the way across, and goes back to it", async () => {
+    const timeline = await showTimeline([fictionalStream()], "2027-06-15");
+    // Today is 165 days in, at 495 pixels, with a sixth of the view before it.
+    const todayAt = 495 - room / 6;
+    expect(view(timeline).scrollLeft).toBe(todayAt);
+    view(timeline).scrollLeft = 600;
+    await userEvent.click(
+      within(timeline).getByRole("button", { name: "Today" }),
+    );
+    expect(view(timeline).scrollLeft).toBe(todayAt);
+  });
+
+  it("offers no Today button once today is past the last cycle", async () => {
+    const timeline = await showTimeline([fictionalStream()], "2028-02-15");
+    expect(
+      within(timeline).queryByRole("button", { name: "Today" }),
+    ).toBeNull();
+    expect(view(timeline).scrollLeft).toBe(0);
+  });
+
+  const pixels = (days: number, shown: number) =>
+    `${String(Math.round(((days * room) / shown) * 100) / 100)}px`;
+
+  it("keeps today a sixth of the way across while zooming, until the reader scrolls", async () => {
+    const timeline = await showTimeline([fictionalStream()], "2027-06-15");
+    // Its own scrolling, to today, does not count as the reader's.
+    fireEvent.scroll(view(timeline));
+    await userEvent.click(
+      within(timeline).getByRole("radio", { name: "Week" }),
+    );
+    // Today is 165 days in; Week shows 42 days across 540 pixels.
+    expect(view(timeline).scrollLeft).toBeCloseTo((165 * room) / 42 - room / 6);
+  });
+
+  it("keeps the day in the middle of the view when an earlier stream moves the timeline's start", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2027-06-15T12:00:00Z"));
+    const shown = (streams: ReleaseStream[]) => (
+      <MantineProvider theme={testTheme}>
+        <ReleasesTimeline streams={streams} today="2027-06-15" />
+      </MantineProvider>
+    );
+    const { rerender } = render(shown([fictionalStream()]));
+    const timeline = screen.getByRole("region", { name: "Timeline" });
+    view(timeline).scrollLeft = 270;
+    fireEvent.scroll(view(timeline));
+    // The middle, 540 pixels in at three a day, is day 180 from 2027-01-01. A stream from
+    // 2026-07-01 starts the timeline 184 days sooner.
+    rerender(
+      shown([
+        fictionalStream(),
+        fictionalStream({
+          id: "s2",
+          name: "Fictional Minors",
+          cycles: [
+            {
+              startsOn: "2026-07-01",
+              endsOn: "2026-09-30",
+              name: "M1",
+              months: [],
+            },
+          ],
+        }),
+      ]),
+    );
+    expect(view(timeline).scrollLeft).toBe((180 + 184) * 3 - room / 2);
+  });
+
+  it("zooms, keeping the zoom for next time and the middle of the view in place", async () => {
+    const timeline = await showTimeline([fictionalStream()], "2027-02-15");
+    view(timeline).scrollLeft = 270;
+    fireEvent.scroll(view(timeline));
+    expect(widths(timeline)).toEqual(["270px", "273px", "276px", "276px"]);
+    await userEvent.click(
+      within(timeline).getByRole("radio", { name: "Week" }),
+    );
+    // Week shows 42 days. The day in the middle, 180, stays there.
+    expect(widths(timeline)[0]).toBe(pixels(90, 42));
+    expect(view(timeline).scrollLeft).toBeCloseTo((180 * room) / 42 - room / 2);
+    expect(localStorage.getItem(zoomKey)).toBe('"week"');
+  });
+
+  it("zooms in and out a step at a time, as far as the whole timeline", async () => {
+    const timeline = await showTimeline([fictionalStream()], "2027-02-15");
+    const zoomOut = within(timeline).getByRole("button", { name: "Zoom out" });
+    await userEvent.click(
+      within(timeline).getByRole("button", { name: "Zoom in" }),
+    );
+    expect(widths(timeline)[0]).toBe(pixels(90, 120));
+    expect(localStorage.getItem(zoomKey)).toBe("120");
+    expect(
+      within(timeline)
+        .getAllByRole("radio")
+        .filter((radio) => (radio as HTMLInputElement).checked),
+    ).toEqual([]);
+    await userEvent.click(zoomOut);
+    await userEvent.click(zoomOut);
+    expect(widths(timeline)[0]).toBe(pixels(90, 270));
+    // Half as much again would be more than the timeline's 365 days.
+    await userEvent.click(zoomOut);
+    expect(widths(timeline)[0]).toBe(pixels(90, 365));
+    expect(zoomOut).toHaveProperty("disabled", true);
+  });
+
+  it("zooms in no further than two weeks", async () => {
+    localStorage.setItem(zoomKey, "5");
+    const timeline = await showTimeline([fictionalStream()], "2027-02-15");
+    expect(widths(timeline)[0]).toBe(pixels(90, 14));
+    expect(
+      within(timeline).getByRole("button", { name: "Zoom in" }),
+    ).toHaveProperty("disabled", true);
+  });
+
+  it("shows the whole timeline at All, and at a zoom showing more than it", async () => {
+    const timeline = await showTimeline(
+      [fictionalStream({ cycles: quarters(2) })],
+      "2027-02-15",
+    );
+    // Two quarters, 181 days, fill the view at Quarter, which shows a year, as at All.
+    for (const zoom of ["All", "Quarter"]) {
+      await userEvent.click(
+        within(timeline).getByRole("radio", { name: zoom }),
+      );
+      expect(widths(timeline)[0]).toBe(pixels(90, 181));
+    }
+  });
+
+  it("widens its days as the view widens", async () => {
+    // Mantine's controls watch their own sizes too, so every watcher is told.
+    const watchers: (() => unknown)[] = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => unknown) {
+          watchers.push(callback);
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+    const timeline = await showTimeline([fictionalStream()], "2027-02-15");
+    viewWidth = 140 + 2 * room;
+    act(() => {
+      for (const watcher of watchers) watcher();
+    });
+    expect(widths(timeline)[0]).toBe("540px");
+  });
+
+  // The labels of the axis's tier holding the label given.
+  const tierLabels = (timeline: HTMLElement, label: string) =>
+    [
+      ...((
+        within(timeline).getAllByText(label)[0]?.parentElement as HTMLElement
+      ).children as HTMLCollectionOf<HTMLElement>),
+    ].map(({ textContent }) => textContent);
+
+  it("names each level's own period above the next smaller one", async () => {
+    localStorage.setItem(zoomKey, '"year"');
+    viewWidth = 140 + 2 * room;
+    const timeline = await showTimeline(
+      [
+        fictionalStream({ cycles: quarters(12) }),
+        fictionalStream({
+          id: "s2",
+          name: "Fictional Minors",
+          cycles: [
+            {
+              startsOn: "2026-12-14",
+              endsOn: "2027-01-10",
+              name: "M1",
+              months: [],
+            },
+          ],
+        }),
+      ],
+      "2027-02-15",
+    );
+    // Year shows three years across 1,080 pixels: December 2026 is too narrow for its year, and
+    // has room only for its half year's first month.
+    expect(tierLabels(timeline, "2027")).toEqual(["", "2027", "2028", "2029"]);
+    expect(tierLabels(timeline, "Jan to Jun 27").slice(0, 3)).toEqual([
+      "Jul",
+      "Jan to Jun 27",
+      "Jul to Dec 27",
+    ]);
+    await userEvent.click(
+      within(timeline).getByRole("radio", { name: "6 months" }),
+    );
+    expect(tierLabels(timeline, "Jan to Jun 2027").slice(0, 2)).toEqual([
+      "",
+      "Jan to Jun 2027",
+    ]);
+    expect(tierLabels(timeline, "Q1 27").slice(0, 3)).toEqual([
+      "Q4 26",
+      "Q1 27",
+      "Q2 27",
+    ]);
+  });
+
+  it("names periods by their first months at All, when their names do not fit", async () => {
+    localStorage.setItem(zoomKey, '"all"');
+    viewWidth = 140 + 2 * room;
+    const timeline = await showTimeline(
+      [fictionalStream({ cycles: quarters(40) })],
+      "2027-02-15",
+    );
+    // Ten years across 1,080 pixels: a half year is about 54 pixels, too narrow for
+    // "Jan to Jun 27".
+    expect(tierLabels(timeline, "Jul").slice(0, 3)).toEqual([
+      "Jan",
+      "Jul",
+      "Jan",
+    ]);
+  });
+
+  // The axis's lowest tier, the one with the tick whose label is given.
+  const tierOf = (timeline: HTMLElement, label: string) =>
+    within(timeline).getAllByText(label)[0]?.parentElement as HTMLElement;
+
+  it("marks weeks by their Mondays at Week, with their days as marks", async () => {
+    localStorage.setItem(zoomKey, '"week"');
+    const timeline = await showTimeline([fictionalStream()], "2027-02-15");
+    const weeks = tierOf(timeline, "Feb 15");
+    expect(weeks.style.backgroundImage).toContain("repeating-linear-gradient");
+    expect(
+      [...weeks.children].slice(0, 3).map(({ textContent }) => textContent),
+    ).toEqual(["", "Jan 4", "Jan 11"]);
+  });
+
+  it("names each day at Days, when the view has room", async () => {
+    localStorage.setItem(zoomKey, '"days"');
+    viewWidth = 140 + 2 * room;
+    const timeline = await showTimeline([fictionalStream()], "2027-02-15");
+    const days = tierOf(timeline, "Mon 15");
+    expect(days.style.backgroundImage).toBe("");
+    expect(
+      [...days.children].slice(0, 4).map(({ textContent }) => textContent),
+    ).toEqual(["Fri 1", "Sat 2", "Sun 3", "Mon 4"]);
+  });
+
+  it("starts at Year when the zoom kept is not one it knows", async () => {
+    localStorage.setItem(zoomKey, '"decade"');
+    const timeline = await showTimeline([fictionalStream()], "2027-02-15");
+    // Year shows three years, more than the timeline's one.
+    expect(widths(timeline)[0]).toBe(pixels(90, 365));
+    expect(
+      within(timeline).getByRole("radio", { name: "Year" }),
+    ).toHaveProperty("checked", true);
+  });
+
+  it("is left out while no stream has cycles", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": answer([
+        fictionalStream({ cycles: [], patterns: [] }),
+      ]),
+    });
+    renderApp("/releases");
+    await screen.findByRole("table", { name: "Release streams" });
+    expect(screen.queryByRole("region", { name: "Timeline" })).toBeNull();
   });
 });

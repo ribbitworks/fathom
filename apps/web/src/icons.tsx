@@ -98,6 +98,7 @@ const paths = {
     </>
   ),
   plus: <path d="M8 3v10M3 8h10" />,
+  minus: <path d="M3 8h10" />,
   check: <path d="M3 8.5l3.2 3L13 4.5" />,
   search: (
     <>
