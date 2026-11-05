@@ -415,6 +415,8 @@
 
 /* A cell moved to is never left under the header row. */
 .tableScroll {
+  /* Contains its cells' visually hidden text, which would otherwise stretch the page. */
+  position: relative;
   min-height: 0;
   overflow: auto;
   scroll-padding-top: var(--fathom-table-head-height);
