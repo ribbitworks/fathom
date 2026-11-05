@@ -169,6 +169,13 @@
       "when": 1793860710095,
       "tag": "0023_roles_edit_permission",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1793882932387,
+      "tag": "0024_release_colour",
+      "breakpoints": true
     }
   ]
 }

@@ -308,7 +308,9 @@ export const cyclePatterns = fathomSchema.table(
 // named by the start dates of those cycles. A release's name is unique within its stream, ignoring
 // letter case. That no cycle is in two releases is checked by the server. A release ships at the
 // end of its last cycle unless it has a ships-on date, earlier or later, but not before its first
-// cycle starts.
+// cycle starts. A release's colour is a palette name checked by the server, not the database, so the
+// palette can change without a migration; a release with none, or with a name the palette no longer
+// has, shows the default colour.
 export const releases = fathomSchema.table(
   "releases",
   {
@@ -320,6 +322,7 @@ export const releases = fathomSchema.table(
     firstCycle: date("first_cycle").notNull(),
     lastCycle: date("last_cycle").notNull(),
     shipsOn: date("ships_on"),
+    colour: text("colour"),
   },
   (table) => [
     uniqueIndex("releases_stream_name_index").on(
