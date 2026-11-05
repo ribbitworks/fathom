@@ -191,7 +191,9 @@ export const listItems = fathomSchema.table(
 
 // Release streams, each with its own cycles and releases, such as major releases or patches. A
 // stream's name is unique, ignoring letter case. Streams are retired, never deleted, since releases
-// and features refer to their cycles.
+// and features refer to their cycles. A stream's cycles are those starting on or before its
+// cycles-until date, which the server sets when the stream is drafted, since a stream is added only
+// once approved.
 export const releaseStreams = fathomSchema.table(
   "release_streams",
   {
@@ -200,6 +202,7 @@ export const releaseStreams = fathomSchema.table(
     // Lower comes first.
     position: integer("position").notNull().default(0),
     retired: boolean("retired").notNull().default(false),
+    cyclesUntil: date("cycles_until").notNull(),
   },
   (table) => [
     uniqueIndex("release_streams_name_index").on(sql`lower(${table.name})`),
@@ -236,7 +239,9 @@ export const cyclePatterns = fathomSchema.table(
 
 // Releases, each including the consecutive cycles of its stream from its first cycle to its last,
 // named by the start dates of those cycles. A release's name is unique within its stream, ignoring
-// letter case. That no cycle is in two releases is checked by the server.
+// letter case. That no cycle is in two releases is checked by the server. A release ships at the
+// end of its last cycle unless it has a ships-on date, earlier or later, but not before its first
+// cycle starts.
 export const releases = fathomSchema.table(
   "releases",
   {
@@ -247,6 +252,7 @@ export const releases = fathomSchema.table(
     name: text("name").notNull(),
     firstCycle: date("first_cycle").notNull(),
     lastCycle: date("last_cycle").notNull(),
+    shipsOn: date("ships_on"),
   },
   (table) => [
     uniqueIndex("releases_stream_name_index").on(
@@ -256,6 +262,10 @@ export const releases = fathomSchema.table(
     check(
       "releases_cycles_in_order",
       sql`${table.lastCycle} >= ${table.firstCycle}`,
+    ),
+    check(
+      "releases_ships_after_first_cycle",
+      sql`${table.shipsOn} IS NULL OR ${table.shipsOn} >= ${table.firstCycle}`,
     ),
   ],
 );

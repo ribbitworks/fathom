@@ -134,6 +134,13 @@
       "when": 1793797489139,
       "tag": "0018_planned_hires",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793842799448,
+      "tag": "0019_cycles_until_and_ships_on",
+      "breakpoints": true
     }
   ]
 }

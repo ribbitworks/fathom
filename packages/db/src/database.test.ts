@@ -507,13 +507,14 @@ describe("release streams", () => {
   const uniqueViolation = "23505";
   const checkViolation = "23514";
   const restrictViolation = "23001";
+  const notNullViolation = "23502";
 
   // Adds fictional streams with the names given, and gives their ids in order.
   async function addStreams(client: Client, ...names: string[]) {
     const ids: string[] = [];
     for (const name of names) {
       const added = await client.query<{ id: string }>(
-        "INSERT INTO release_streams (name) VALUES ($1) RETURNING id",
+        "INSERT INTO release_streams (name, cycles_until) VALUES ($1, '2029-01-01') RETURNING id",
         [name],
       );
       ids.push(added.rows[0]?.id as string);
@@ -537,10 +538,11 @@ describe("release streams", () => {
     streamId: string | undefined,
     name = "Fictional One",
     lastCycle = "2027-04-01",
+    shipsOn: string | null = null,
   ) =>
     client.query(
-      "INSERT INTO releases (stream_id, name, first_cycle, last_cycle) VALUES ($1, $2, '2027-01-01', $3)",
-      [streamId, name, lastCycle],
+      "INSERT INTO releases (stream_id, name, first_cycle, last_cycle, ships_on) VALUES ($1, $2, '2027-01-01', $3, $4)",
+      [streamId, name, lastCycle, shipsOn],
     );
 
   it("refuses a stream name already used, ignoring letter case", async () => {
@@ -603,6 +605,29 @@ describe("release streams", () => {
       const [id] = await addStreams(client, "Fictional Backwards");
       expect(
         await errorCodeOf(addRelease(client, id, "Fictional", "2026-10-01")),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("refuses a stream without the date its cycles are made until", async () => {
+    await withClient(database.app, async (client) => {
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO release_streams (name) VALUES ('Fictional Endless')",
+          ),
+        ),
+      ).toBe(notNullViolation);
+    });
+  });
+
+  it("refuses a release that ships before its first cycle starts", async () => {
+    await withClient(database.app, async (client) => {
+      const [id] = await addStreams(client, "Fictional Early");
+      expect(
+        await errorCodeOf(
+          addRelease(client, id, "Fictional", "2027-04-01", "2026-12-31"),
+        ),
       ).toBe(checkViolation);
     });
   });
