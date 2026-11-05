@@ -24,19 +24,21 @@ export const historyQuery = queryOptions({
 interface ActionWords {
   // What the actor did, before the name of the account it was done to.
   verb: string;
-  // Changes that reveal impersonation or lock someone out deserve a second look.
+  // Changes that could give access, reveal impersonation, or lock someone out need a second look.
   caution: boolean;
 }
 
 // Every action must be described, which the compiler checks.
 const actionWords: Record<AccessAction, ActionWords> = {
+  // Worth checking, since the account's roles give it access, Confidential data included.
   "account-created": {
     verb: "created the account for",
-    caution: false,
+    caution: true,
   },
+  // Worth checking, since a new role can give more access, Confidential data included.
   "roles-changed": {
     verb: "changed the roles of",
-    caution: false,
+    caution: true,
   },
   "name-changed": {
     verb: "changed the name of",

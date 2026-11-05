@@ -216,10 +216,10 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "Fictional Person changed the roles of Fictional Planner: from Viewer to no roles",
+      "Worth checking: Fictional Person changed the roles of Fictional Planner: from Viewer to no roles",
       "Worth checking: Fictional Person reset the password for A removed account",
       "A removed account future-action: Fictional Planner",
-      "Fathom's operators created the account for Fictional Planner: with Viewer, Project Planner",
+      "Worth checking: Fathom's operators created the account for Fictional Planner: with Viewer, Project Planner",
     ]);
   });
 
@@ -341,8 +341,8 @@ describe("the entries", () => {
         ),
       ),
     ).toEqual([
-      "Fictional Person changed the roles of Fictional Planner: from Viewer to no roles",
-      "Fathom's operators created the account for Fictional Planner: with Viewer, Project Planner",
+      "Worth checking: Fictional Person changed the roles of Fictional Planner: from Viewer to no roles",
+      "Worth checking: Fathom's operators created the account for Fictional Planner: with Viewer, Project Planner",
     ]);
     const field = screen.getByRole("textbox", {
       name: "Search access history",
@@ -361,7 +361,7 @@ describe("the entries", () => {
       "GET /api/access-history": () => Response.json({ entries }),
     });
     renderApp("/history");
-    expect(await screen.findAllByText("Worth checking:")).toHaveLength(1);
+    expect(await screen.findAllByText("Worth checking:")).toHaveLength(3);
   });
 
   it("show a loading indicator until they arrive", async () => {
