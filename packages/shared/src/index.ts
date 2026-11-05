@@ -22,6 +22,7 @@ export {
 } from "./accounts.ts";
 export {
   type Permission,
+  permissionDescriptions,
   permissionSchema,
   type Role,
   roleSchema,

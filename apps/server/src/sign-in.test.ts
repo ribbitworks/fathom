@@ -305,20 +305,40 @@ describe("signing in", () => {
     expect(await roles()).toEqual(["leadership"]);
   });
 
-  it("grants nothing for a role whose key the server does not know, or that has none", async () => {
+  it("grants what a role stores, whether or not it is a starting role, and nothing the server does not know", async () => {
     const email = await newAccount();
     await database.superuserQuery(
       `INSERT INTO fathom.roles (key, name) VALUES ('retired-role', 'Fictional Retired Role'), (NULL, 'Fictional Copied Role')`,
     );
     await database.superuserQuery(
+      `INSERT INTO fathom.role_permissions (role_id, permission) SELECT id, p FROM fathom.roles, (VALUES ('people:view'), ('retired:permission')) AS g (p) WHERE name = 'Fictional Copied Role'`,
+    );
+    await database.superuserQuery(
       `INSERT INTO fathom.user_roles (user_id, role_id) SELECT u.id, r.id FROM fathom.users u, fathom.roles r WHERE u.email = '${email}' AND r.name IN ('Fictional Retired Role', 'Fictional Copied Role')`,
     );
     const cookie = sessionCookie((await signIn(email)).headers["set-cookie"]);
-    const session = await app.inject({
-      url: "/api/session",
-      headers: { cookie },
+    const session = async () =>
+      (await app.inject({ url: "/api/session", headers: { cookie } })).json<{
+        roles: string[];
+        permissions: string[];
+      }>();
+    expect(await session()).toMatchObject({
+      roles: [],
+      permissions: ["people:view"],
     });
-    expect(session.json()).toMatchObject({ roles: [] });
+    // A change to what a role grants takes effect at the next request.
+    await database.superuserQuery(
+      `INSERT INTO fathom.role_permissions (role_id, permission) SELECT id, 'restricted:edit' FROM fathom.roles WHERE name = 'Fictional Copied Role'`,
+    );
+    expect((await session()).permissions).toEqual([
+      "people:view",
+      "restricted:edit",
+      "restricted:view",
+    ]);
+    await database.superuserQuery(
+      `DELETE FROM fathom.role_permissions WHERE role_id = (SELECT id FROM fathom.roles WHERE name = 'Fictional Copied Role')`,
+    );
+    expect((await session()).permissions).toEqual([]);
   });
 
   it("does not say who is signed in without a session", async () => {

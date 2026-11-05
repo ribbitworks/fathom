@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The specification of what each role lets a user do, from the proposal in docs/product/roles.md,
-// checked one role at a time. A change to the roles changes this table and the mapping it checks,
-// together. Also tests the permission check the data
-// access layer makes.
+// The specification of what each starting role lets a user do, from docs/product/roles.md, checked one
+// role at a time. A change to the starting roles changes this table and the mapping it checks,
+// together. Also tests building a user's permissions from what their stored roles grant, and the
+// permission checks the data access layer makes.
 
 import { type Permission, permissionSchema, type Role } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   actorFor,
+  actorWith,
   requireAnyPermission,
   requirePermission,
   rolesGranting,
@@ -110,6 +111,28 @@ describe("what each role lets a user do on its own", () => {
       "leadership",
     ]);
     expect(rolesGranting("plan:view")).toEqual(["viewer", "project-planner"]);
+  });
+});
+
+describe("permissions from stored roles", () => {
+  it("grants what the roles store, with viewing what may be edited, whatever roles are named", () => {
+    const actor = actorWith(user, [], ["plan:edit", "drafts:approve"]);
+    expect(actor.roles).toEqual([]);
+    expect(actor.permissions).toEqual([
+      "drafts:approve",
+      "plan:edit",
+      "plan:view",
+    ]);
+  });
+
+  it("ignores a permission the server does not know, and names only known roles", () => {
+    const actor = actorWith(
+      user,
+      ["viewer", "retired-role" as Role],
+      ["retired:permission", "history:view"],
+    );
+    expect(actor.roles).toEqual(["viewer"]);
+    expect(actor.permissions).toEqual(["history:view"]);
   });
 });
 

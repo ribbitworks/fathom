@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What each role lets a user do, from the proposal in docs/product/roles.md, and the checks the data
-// access layer makes. A user can do what any of their roles allows. Changing what a role grants
-// changes this mapping and the test that spells it out; adding or renaming a role or permission also
-// changes the shared lists in packages/shared.
+// What a user's roles let them do, and the checks the data access layer makes. A user can do what any
+// of their roles allows. Roles and what they grant are kept in the database, where they can be
+// edited; the starting roles below are what migration 0020 stored, kept here for tests and seed data
+// that act as a starting role without reading the database. Adding a permission changes the shared
+// list in packages/shared, with its plain-English description.
 
 import type { Permission, Role, Tier } from "@fathom/shared";
-import { roleSchema, tierSchema } from "@fathom/shared";
+import { permissionSchema, roleSchema, tierSchema } from "@fathom/shared";
 import { ForbiddenError } from "./errors.ts";
 
-// Every role must be listed, which the compiler checks. The roles Fathom starts with grant the same,
-// as stored by the migration that made roles editable, which a test checks.
-export const grants: Record<Role, readonly Permission[]> = {
+// What each role Fathom starts with grants, as the migration that made roles editable stored it,
+// which a test checks. Every role must be listed, which the compiler checks.
+export const startingGrants: Record<Role, readonly Permission[]> = {
   viewer: ["plan:view", "allocations:view", "changes:view"],
   "project-planner": ["plan:edit", "drafts:submit", "changes:view"],
   // Resource Planners see people, since they allocate them.
@@ -76,14 +77,17 @@ export interface Actor {
   permissions: Permission[];
 }
 
-export function actorFor(
+// An actor holding roles that grant the permissions given, as read from the database. A permission
+// the server does not know grants nothing, rather than being trusted.
+export function actorWith(
   user: SignedInUser,
   heldRoles: readonly Role[],
+  grantedPermissions: readonly string[],
 ): Actor {
   const roles = roleSchema.options.filter((role) => heldRoles.includes(role));
-  // The role is always one of the fixed roles listed above.
-  // eslint-disable-next-line security/detect-object-injection
-  const granted = roles.flatMap((role) => grants[role]);
+  const granted = permissionSchema.options.filter((permission) =>
+    grantedPermissions.includes(permission),
+  );
   const permissions = new Set([
     ...granted,
     // The permission is always one of the fixed permissions listed above.
@@ -93,7 +97,21 @@ export function actorFor(
   return { user, roles, permissions: [...permissions].sort() };
 }
 
-// The roles that grant a permission on their own.
+// An actor holding starting roles as Fathom first grants them, for tests and seed data.
+export function actorFor(
+  user: SignedInUser,
+  heldRoles: readonly Role[],
+): Actor {
+  return actorWith(
+    user,
+    heldRoles,
+    // The role is always one of the fixed roles listed above.
+    // eslint-disable-next-line security/detect-object-injection
+    heldRoles.flatMap((role) => startingGrants[role]),
+  );
+}
+
+// The starting roles that grant a permission on their own.
 export function rolesGranting(permission: Permission): Role[] {
   return roleSchema.options.filter((role) =>
     actorFor({ id: "", name: "", email: "" }, [role]).permissions.includes(

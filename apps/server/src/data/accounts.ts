@@ -16,7 +16,7 @@ import {
   users,
 } from "@fathom/db";
 import { type Account, type Role, roleSchema } from "@fathom/shared";
-import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { type Actor, requirePermission } from "../access.ts";
 import {
@@ -300,9 +300,21 @@ export function createAccountAdministration(
           .set({ name, email, updatedAt: new Date() })
           .where(eq(users.id, userId));
         if (rolesChanged) {
+          // Only the starting roles are given here, so roles made later, which have no key, stay.
           await transaction
             .delete(userRoles)
-            .where(eq(userRoles.userId, userId));
+            .where(
+              and(
+                eq(userRoles.userId, userId),
+                inArray(
+                  userRoles.roleId,
+                  transaction
+                    .select({ id: roleTable.id })
+                    .from(roleTable)
+                    .where(isNotNull(roleTable.key)),
+                ),
+              ),
+            );
           await addRoles(transaction, userId, roles);
         }
         await recordEvents(transaction, events);

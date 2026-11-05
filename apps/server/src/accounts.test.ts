@@ -29,7 +29,7 @@ import {
 } from "@fathom/test-utils";
 import { and, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { grants, rolesGranting } from "./access.ts";
+import { rolesGranting, startingGrants } from "./access.ts";
 import { addRoles } from "./data/roles.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
@@ -131,7 +131,7 @@ function request(
 }
 
 describe("stored roles", () => {
-  it("start as the roles Fathom has always had, granting exactly what the server grants each", async () => {
+  it("start as the roles Fathom has always had, granting exactly what the server first grants each", async () => {
     const rows = await connection
       .select({ key: roleTable.key, permission: rolePermissions.permission })
       .from(roleTable)
@@ -148,7 +148,7 @@ describe("stored roles", () => {
       ),
     ).toEqual(
       Object.fromEntries(
-        Object.entries(grants).map(([role, granted]) => [
+        Object.entries(startingGrants).map(([role, granted]) => [
           role,
           [...granted].sort(),
         ]),
@@ -365,6 +365,32 @@ describe("administering accounts", () => {
     expect(session.json()).toMatchObject({
       roles: ["viewer", "resource-planner"],
     });
+  });
+
+  it("keeps a role made later, which the account dialog cannot give, when changing roles", async () => {
+    const { cookie } = await signedIn(["administrator"]);
+    const other = await signedIn(["viewer"]);
+    const [copied] = await connection
+      .insert(roleTable)
+      .values({ name: "Fictional Kept Role" })
+      .returning({ id: roleTable.id });
+    if (copied === undefined) throw new Error("No role was made");
+    await connection
+      .insert(rolePermissions)
+      .values({ roleId: copied.id, permission: "history:view" });
+    await connection
+      .insert(userRoles)
+      .values({ userId: other.id, roleId: copied.id });
+    await request(cookie, "PATCH", `/api/accounts/${other.id}`, {
+      roles: ["viewer", "resource-planner"],
+    });
+    const session = await request(other.cookie, "GET", "/api/session");
+    expect(session.json()).toMatchObject({
+      roles: ["viewer", "resource-planner"],
+    });
+    expect(session.json<{ permissions: string[] }>().permissions).toContain(
+      "history:view",
+    );
   });
 
   it("lets administrators change their own roles, which apply on their next request", async () => {

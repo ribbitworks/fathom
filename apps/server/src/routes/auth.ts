@@ -16,7 +16,7 @@ import { fromNodeHeaders } from "better-auth/node";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { type Actor, actorFor, type SignedInUser } from "../access.ts";
+import { type Actor, actorWith, type SignedInUser } from "../access.ts";
 import { type Auth, clientAddressHeader } from "../data/auth.ts";
 import type { DataAccess } from "../data/index.ts";
 
@@ -68,8 +68,10 @@ export async function readActor(
   const user = await readSession(auth, request, reply);
   if (user === null) return null;
   // A deactivated account grants nothing, even while a session of its own lasts.
-  const roles = await data.readActorRoles(user.id);
-  return roles === null ? null : actorFor(user, roles);
+  const access = await data.readActorAccess(user.id);
+  return access === null
+    ? null
+    : actorWith(user, access.roles, access.permissions);
 }
 
 // Replaces what Better Auth answers, for a status, when its answer would say too much.

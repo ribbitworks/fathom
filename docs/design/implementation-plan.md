@@ -43,7 +43,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts and People's columns; the Manager flag's schema |
 | Cycles and Releases | In progress: schema |
 | Hiring Plan | In progress: schema and server |
-| Editable Roles | In progress: schema |
+| Editable Roles | In progress: schema, and the server reading roles from the database |
 
 ### Hello Fathom
 
@@ -107,10 +107,10 @@ Planned hires, apart from People, in the states and with the details, columns sh
 
 Roles kept in the database as sets of permissions, as the [Decisions Log](../product/decisions.md#people-and-privacy) sets out, built in this order, each step its own pull request:
 
-1. **Schema:** roles, and the permissions each grants. Accounts hold roles by reference, and the migration makes today's eight roles with exactly what they grant now, so nobody's access changes. Until the server reads what roles grant from the database, a starting role's key decides it, so the application cannot change a key, and a role it adds cannot take a starting role's.
-2. **Server:** what a user may do is read from their roles in the database. Each permission gains its plain-English descriptions, and every page names the permission it needs from the same list.
-3. **Roles page:** an Administrator who may edit roles sees each role's permissions as a grid of areas and actions, with the plain-English result beside it, copies and edits roles, and sees which accounts a change affects before saving it. The account dialog shows the result of the roles it gives. Roles' names and descriptions are then read from the database, replacing the copies in the web app and [Roles](../product/roles.md), which already differ slightly.
-4. **Finer permissions:** split by area, one area at a time, starting with approving, so Approvers approve only the kinds of drafts their roles name.
+1. **Schema:** roles, and the permissions each grants. Accounts hold roles by reference, and the migration makes today's eight roles with exactly what they grant now, so nobody's access changes. The application cannot change a starting role's key, and a role it adds cannot take one.
+2. **Server:** what a user may do is read from their roles in the database, on every request. Each permission gains its plain-English descriptions, naming any permission it does nothing without.
+3. **Roles page:** an Administrator who may edit roles sees each role's permissions as a grid of areas and actions, with the plain-English result beside it, copies and edits roles, and sees which accounts a change affects before saving it. The account dialog shows the result of the roles it gives. Roles' names and descriptions are then read from the database, replacing the copies in the web app and [Roles](../product/roles.md), which already differ slightly. Which pages a role does not open is worked out from the permission each sidebar page names. Before roles can be edited, the last-Administrator guard moves from the Administrator role to the permissions to manage accounts and to edit roles, and accounts gain roles made later as well as starting roles.
+4. **Finer permissions:** split by area, one area at a time, starting with approving, so Approvers approve only the kinds of drafts their roles name. Releases are an area of their own, apart from the rest of the plan, so approving draft releases, which Project Managers and the Engineering Director generally do, can be granted on its own, decided by the owner on 2026-11-04.
 
 Scope, such as one's own reporting line, follows later, as [Issues](../issues.md#roles) records.
 

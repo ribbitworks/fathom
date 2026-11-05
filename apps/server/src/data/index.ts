@@ -24,7 +24,6 @@ import type {
   PersonChange,
   PersonRequest,
   RetiredRequest,
-  Role,
   SavedView,
   SavedViewChange,
   SavedViewRequest,
@@ -53,15 +52,16 @@ import {
   publishUnpublished,
   readUnpublished,
 } from "./unpublished.ts";
-import { readActorRoles } from "./roles.ts";
+import { type ActorAccess, readActorAccess } from "./roles.ts";
 import * as views from "./views.ts";
 
 export interface DataAccess {
   // Fails, with a message naming the settings to check, unless the database can be queried.
   checkConnection(): Promise<void>;
-  // The roles of the signed-in user making a request, or null if their account is deactivated. The
-  // server needs them to know who is asking, so it is the one function that checks no permission.
-  readActorRoles(userId: string): Promise<Role[] | null>;
+  // The roles of the signed-in user making a request, and what they grant, or null if their account
+  // is deactivated. The server needs them to know who is asking, so it is the one function that
+  // checks no permission.
+  readActorAccess(userId: string): Promise<ActorAccess | null>;
   readGreeting(actor: Actor): Promise<string>;
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
@@ -390,7 +390,7 @@ export function createDataAccess(database: Database): DataAccess {
         );
       }
     },
-    readActorRoles: (userId) => readActorRoles(database, userId),
+    readActorAccess: (userId) => readActorAccess(database, userId),
     readHistory: async (actor) => {
       requirePermission(actor, "history:view");
       return readHistory(database, actor.permissions.includes("people:view"));

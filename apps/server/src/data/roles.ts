@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Reads and adds the roles users hold. Part of the data access layer, the only server code that
-// queries the database. Roles are kept in the database; until what each grants is read from there
-// too, the server knows a role by the key of the starting role it is, and a role without a key it
-// knows grants nothing, rather than being trusted.
+// Reads and adds the roles users hold, and what their roles grant. Part of the data access layer, the
+// only server code that queries the database. Roles are kept in the database with the permissions
+// they grant, read afresh on every request, so a change to a role takes effect at once. A user's
+// roles are also named by the key of the starting role each is, for showing; roles made later have
+// no key and are known only by what they grant.
 
 import {
   type Database,
+  rolePermissions,
   roles as roleTable,
   userRoles,
   users,
@@ -50,16 +52,31 @@ export async function addRoles(
     .onConflictDoNothing();
 }
 
-// The roles of a signed-in user making a request, or null if their account has been deactivated, so
-// a session that outlives a deactivation, however briefly, grants nothing.
-export async function readActorRoles(
+// What a signed-in user making a request holds: their roles' keys, and every permission their roles
+// grant, as stored.
+export interface ActorAccess {
+  roles: Role[];
+  permissions: string[];
+}
+
+// What a signed-in user making a request holds, or null if their account has been deactivated, so a
+// session that outlives a deactivation, however briefly, grants nothing.
+export async function readActorAccess(
   database: Database,
   userId: string,
-): Promise<Role[] | null> {
+): Promise<ActorAccess | null> {
   const [user] = await database
     .select({ deactivatedAt: users.deactivatedAt })
     .from(users)
     .where(eq(users.id, userId));
   if (user?.deactivatedAt !== null) return null;
-  return readRoles(database, userId);
+  const [roles, granted] = await Promise.all([
+    readRoles(database, userId),
+    database
+      .selectDistinct({ permission: rolePermissions.permission })
+      .from(userRoles)
+      .innerJoin(rolePermissions, eq(rolePermissions.roleId, userRoles.roleId))
+      .where(eq(userRoles.userId, userId)),
+  ]);
+  return { roles, permissions: granted.map(({ permission }) => permission) };
 }
