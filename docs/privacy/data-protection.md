@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-11-03
+**Last updated:** 2026-11-04
 
 ## Purpose of This Document
 
@@ -20,7 +20,7 @@ Fathom is used by about 20–30 people in the software organization at first: Pr
 
 Fathom holds a small set of work-related details about each employee in the software organization. They are copied by hand from the company's HR system, which remains the official record. They can also be imported from a CSV or TSV file, which Fathom reads in the user's browser and does not keep.
 
-Each employee's preferred name, Employee ID, start and end dates, and whether they manage people are built in. Their site, position, level, and role on the team are columns the role that maintains workforce information adds, each choosing from a list that role keeps, such as a list of sites. Each list is marked with who may see what is chosen from it, so a column can be General, Restricted, or Confidential. A column can instead hold a web link for each employee, such as the address of a page about them, marked the same way. That marking can later be lowered, which shows the details already chosen to more people; such a change is recorded and can be undone. Any further column that holds personal information is brought to HR for approval before it is used.
+Each employee's preferred name, Employee ID, position, start and end dates, and whether they manage people are built in, with positions chosen from a list that role keeps. Their site, level, and role on the team are columns the role that maintains workforce information adds, each choosing from a list that role keeps, such as a list of sites. Each list is marked with who may see what is chosen from it, so a column can be General, Restricted, or Confidential. A column can instead hold a web link for each employee, such as the address of a page about them, marked the same way. That marking can later be lowered, which shows the details already chosen to more people; such a change is recorded and can be undone. Any further column that holds personal information is brought to HR for approval before it is used.
 
 | Information | Why it is needed | Sensitivity |
 | --- | --- | --- |
@@ -39,9 +39,9 @@ Each employee's preferred name, Employee ID, start and end dates, and whether th
 
 ### The Hiring Plan
 
-Fathom also holds a hiring plan of roles to be filled, treated as Confidential because it can reveal plans before they are announced. Each planned role records its title, manager, target date, and state, such as whether its headcount is approved, and details such as its position and level, so it names the manager the new hire will report to. Once filled, it is linked to the person hired, who may be an existing employee moving to the role. A role planned to replace someone could reveal that they are leaving before it is announced.
+Fathom also holds a hiring plan of roles to be filled, treated as Confidential because it can reveal plans before they are announced. Each planned role records its requisition, or a temporary ID until it has one, its position, manager, target date, and state, such as whether its headcount is approved, and details such as its site and level, so it names the manager the new hire will report to. Once filled, it is linked to the person hired, and the person takes its place, who may be an existing employee moving to the role. A role planned to replace someone could reveal that they are leaving before it is announced.
 
-Users who may see employee details see each planned role, until it is filled and its new employee has started, only as a placeholder: its title, manager, the month it is expected to start, and details it shares with employees, such as position and level. Every Fathom user sees it in the plan by its title and that month, with its work assignments. Its state, exact target date, and other details stay Confidential, so the placeholder does not say whether its headcount is approved or whether it replaces someone. A new employee added before their start date is seen only by those who may see start dates; everyone else keeps seeing the filled role's placeholder until they start.
+Users who may see employee details see each planned role, until it is filled and its new employee has started, only as a placeholder, a row beside employees: its requisition, position, manager, the month it is expected to start, and details it shares with employees, such as site and level. Every Fathom user sees it in the plan by its position, requisition, and that month, with its work assignments. Its state, exact target date, and other details stay Confidential, so the placeholder does not say whether its headcount is approved or whether it replaces someone. A new employee added before their start date is seen only by those who may see start dates; everyone else keeps seeing the filled role's placeholder until they start.
 
 ### How the Information Is Used
 

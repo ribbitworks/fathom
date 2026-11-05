@@ -70,13 +70,13 @@ The values of every built-in field are set out in the [Decisions Log](../product
 
 ## Workforce Entities
 
-- **Person:** An employee, current or former, with their preferred name, Employee ID, start and end dates, whether they are flagged as a manager, whom others can report to, values for the columns added to People, and their work email address if the link to user accounts proposed below is adopted. Whether they are active follows from their start and end dates.
+- **Person:** An employee, current or former, with their preferred name, Employee ID, position, start and end dates, whether they are flagged as a manager, whom others can report to, values for the columns added to People, and their work email address if the link to user accounts proposed below is adopted. Whether they are active follows from their start and end dates.
 - **Team:** One manager's direct reports, with an optional name. Its members follow from their reporting lines. A team is known by its manager, and stored only once named, so a link to a team points to its manager.
 - **Feature team:** Has a name, and optionally a feature lead, who is one of its current members. Links a set of features to its members. Membership is separate from reporting lines.
 - **Feature team membership:** Records that a person joins or leaves a feature team from a given date, in force until their next record for that team, so past memberships are kept, as reporting lines are. Future-dated records represent planned changes.
 - **Reporting line:** Links a person to their manager, or records that they have none, from a given date until the person's next line starts. Past lines are kept. Future-dated lines represent planned changes.
-- **Planned hire:** A role to be filled, apart from People, with a title, a target date, a state, values for the columns it shares with People, and optionally its manager, whose team it joins. When filled, it links to the person who fills it, and a person may fill several over time. A cancelled hire keeps the open state it left, which it can go back to.
-- **Hiring state:** One of Fathom's fixed states for planned hires, with the name the organization gives it. Only the states renamed are stored, so the others keep Fathom's names.
+- **Planned hire:** A role to be filled, kept as a record apart from people but shown beside them as a row of the People table, with its requisition, or a temporary ID until it has one, a position, a state, and optionally a target date, its manager, whose team it joins, and values for the columns it shares with people. When filled, it links to the person who fills it and leaves People, and a person may fill several over time.
+- **Hiring state:** A choice in the built-in list of hiring states, a list with meanings, each meaning Proposed or Open. The organization names its own states, as many as it uses.
 - **Composition target:** The range of direct reports each manager is compared with, held in planning configuration.
 
 **Proposal:** Measure team composition from people's positions and their team or feature team membership, and compare it with configurable composition targets.
@@ -119,8 +119,8 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
 - **Custom record:** One row of a custom table, holding values for its fields.
 - **Custom value:** The value of one custom field for one record, built-in or custom.
-- **List:** A list of choices that people define, with a name, a description, a visibility, and whether it is retired. Columns elsewhere draw on lists.
-- **Choice:** One entry in a list, with a name, a description, its place in the list's order, and whether it is retired.
+- **List:** A list of choices, with a name, a description, a visibility, and whether it is retired. Most are defined by people; a few are built in, drawn on by built-in columns, such as Positions and the lists with meanings, and cannot be removed. Columns elsewhere draw on lists.
+- **Choice:** One entry in a list, with a name, a description, its place in the list's order, and whether it is retired, and, in a list with meanings, the meaning it is tied to.
 
 ## Change and History Entities
 
