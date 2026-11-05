@@ -1333,3 +1333,36 @@ describe("database server", () => {
     ).toBe(rejectedByAccessRules);
   });
 });
+
+describe("roles", () => {
+  it("lets the application rename and describe roles, but never change a role's key", async () => {
+    await withClient(database.app, async (client) => {
+      expect(
+        await errorCodeOf(
+          client.query(
+            "UPDATE roles SET key = 'fictional-key' WHERE key = 'viewer'",
+          ),
+        ),
+      ).toBe(insufficientPrivilege);
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO roles (key, name) VALUES ('administrator', 'Fictional Keyed Role')",
+          ),
+        ),
+      ).toBe("23505");
+      const added = await client.query<{ id: string }>(
+        "INSERT INTO roles (name, description) VALUES ('Fictional Unkeyed Role', 'For a test.') RETURNING id",
+      );
+      const where = `WHERE id = '${added.rows[0]?.id ?? ""}'`;
+      await client.query(
+        `UPDATE roles SET name = 'Fictional Renamed Role', description = '', updated_at = now() ${where}`,
+      );
+      const read = await client.query(`SELECT key, name FROM roles ${where}`);
+      expect(read.rows).toEqual([
+        { key: null, name: "Fictional Renamed Role" },
+      ]);
+      await client.query(`DELETE FROM roles ${where}`);
+    });
+  });
+});

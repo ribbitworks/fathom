@@ -9,8 +9,9 @@ import type { Permission, Role, Tier } from "@fathom/shared";
 import { roleSchema, tierSchema } from "@fathom/shared";
 import { ForbiddenError } from "./errors.ts";
 
-// Every role must be listed, which the compiler checks.
-const grants: Record<Role, readonly Permission[]> = {
+// Every role must be listed, which the compiler checks. The roles Fathom starts with grant the same,
+// as stored by the migration that made roles editable, which a test checks.
+export const grants: Record<Role, readonly Permission[]> = {
   viewer: ["plan:view", "allocations:view", "changes:view"],
   "project-planner": ["plan:edit", "drafts:submit", "changes:view"],
   // Resource Planners see people, since they allocate them.

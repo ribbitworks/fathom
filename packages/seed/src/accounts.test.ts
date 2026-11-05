@@ -11,6 +11,7 @@ import {
   createDatabase,
   createPool,
   type Database,
+  roles as roleTable,
   runMigrations,
   sessions,
   userRoles,
@@ -160,8 +161,9 @@ describe("seeding the accounts", () => {
         .where(eq(users.id, id));
       expect(row).toEqual({ name: account.name, deactivatedAt: null });
       const roles = await connection
-        .select({ role: userRoles.role })
+        .select({ role: roleTable.key })
         .from(userRoles)
+        .innerJoin(roleTable, eq(roleTable.id, userRoles.roleId))
         .where(eq(userRoles.userId, id));
       expect(roles.map(({ role }) => role).sort()).toEqual(
         [...account.roles].sort(),

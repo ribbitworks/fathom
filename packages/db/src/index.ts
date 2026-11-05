@@ -37,6 +37,8 @@ export {
   releases,
   releaseStreams,
   reportingLines,
+  rolePermissions,
+  roles,
   savedViews,
   sessions,
   teams,

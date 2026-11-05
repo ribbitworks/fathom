@@ -300,15 +300,18 @@ describe("signing in", () => {
       }>().roles;
     expect(await roles()).toEqual([]);
     await database.superuserQuery(
-      `INSERT INTO fathom.user_roles (user_id, role) SELECT id, 'leadership' FROM fathom.users WHERE email = '${email}'`,
+      `INSERT INTO fathom.user_roles (user_id, role_id) SELECT u.id, r.id FROM fathom.users u, fathom.roles r WHERE u.email = '${email}' AND r.key = 'leadership'`,
     );
     expect(await roles()).toEqual(["leadership"]);
   });
 
-  it("ignores a stored role the server no longer knows", async () => {
+  it("grants nothing for a role whose key the server does not know, or that has none", async () => {
     const email = await newAccount();
     await database.superuserQuery(
-      `INSERT INTO fathom.user_roles (user_id, role) SELECT id, 'retired-role' FROM fathom.users WHERE email = '${email}'`,
+      `INSERT INTO fathom.roles (key, name) VALUES ('retired-role', 'Fictional Retired Role'), (NULL, 'Fictional Copied Role')`,
+    );
+    await database.superuserQuery(
+      `INSERT INTO fathom.user_roles (user_id, role_id) SELECT u.id, r.id FROM fathom.users u, fathom.roles r WHERE u.email = '${email}' AND r.name IN ('Fictional Retired Role', 'Fictional Copied Role')`,
     );
     const cookie = sessionCookie((await signIn(email)).headers["set-cookie"]);
     const session = await app.inject({

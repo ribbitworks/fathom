@@ -8,7 +8,13 @@
 // Public sign-up is turned off, so accounts are created here, through Better Auth's own storage,
 // which hashes passwords.
 
-import { accounts, type Database, userRoles, users } from "@fathom/db";
+import {
+  accounts,
+  type Database,
+  roles as roleTable,
+  userRoles,
+  users,
+} from "@fathom/db";
 import { type Account, type Role, roleSchema } from "@fathom/shared";
 import { and, asc, eq, isNull, ne, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -214,9 +220,10 @@ export function createAccountAdministration(
       .select({ id: users.id })
       .from(userRoles)
       .innerJoin(users, eq(users.id, userRoles.userId))
+      .innerJoin(roleTable, eq(roleTable.id, userRoles.roleId))
       .where(
         and(
-          eq(userRoles.role, "administrator"),
+          eq(roleTable.key, "administrator"),
           isNull(users.deactivatedAt),
           ne(users.id, userId),
         ),

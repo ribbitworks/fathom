@@ -12,6 +12,10 @@ import {
   createDatabase,
   createPool,
   type Database,
+  databaseCodes,
+  hasDatabaseCode,
+  rolePermissions,
+  roles as roleTable,
   runMigrations,
   userRoles,
   users,
@@ -23,9 +27,10 @@ import {
   type TestCertificate,
   type TestDatabase,
 } from "@fathom/test-utils";
-import { and, eq, inArray, isNull, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { rolesGranting } from "./access.ts";
+import { grants, rolesGranting } from "./access.ts";
+import { addRoles } from "./data/roles.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
@@ -124,6 +129,99 @@ function request(
     ...(payload === undefined ? {} : { payload }),
   });
 }
+
+describe("stored roles", () => {
+  it("start as the roles Fathom has always had, granting exactly what the server grants each", async () => {
+    const rows = await connection
+      .select({ key: roleTable.key, permission: rolePermissions.permission })
+      .from(roleTable)
+      .innerJoin(rolePermissions, eq(rolePermissions.roleId, roleTable.id))
+      .where(isNotNull(roleTable.key));
+    const stored = new Map<string, string[]>();
+    for (const { key, permission } of rows) {
+      if (key !== null)
+        stored.set(key, [...(stored.get(key) ?? []), permission]);
+    }
+    expect(
+      Object.fromEntries(
+        [...stored].map(([key, permissions]) => [key, permissions.sort()]),
+      ),
+    ).toEqual(
+      Object.fromEntries(
+        Object.entries(grants).map(([role, granted]) => [
+          role,
+          [...granted].sort(),
+        ]),
+      ),
+    );
+  });
+
+  it("cannot be deleted while an account holds them", async () => {
+    const [role] = await connection
+      .insert(roleTable)
+      .values({ name: "Fictional Held Role" })
+      .returning({ id: roleTable.id });
+    if (role === undefined) throw new Error("No role was made");
+    await connection.insert(users).values({
+      id: "fictional-holder",
+      name: "Fictional Holder",
+      email: "holder@example.com",
+    });
+    try {
+      await connection
+        .insert(userRoles)
+        .values({ userId: "fictional-holder", roleId: role.id });
+      const refused: unknown = await connection
+        .delete(roleTable)
+        .where(eq(roleTable.id, role.id))
+        .then(
+          () => undefined,
+          (error: unknown) => error,
+        );
+      expect(hasDatabaseCode(refused, databaseCodes.restrictViolation)).toBe(
+        true,
+      );
+    } finally {
+      await connection.delete(users).where(eq(users.id, "fictional-holder"));
+      await connection.delete(roleTable).where(eq(roleTable.id, role.id));
+    }
+  });
+
+  it("must all exist for an account to be given them", async () => {
+    // Only the migration role can change a key. The change is undone when the transaction fails.
+    const migratorPool = createPool(database.migrator, () => undefined);
+    const migrator = createDatabase(migratorPool);
+    await expect(
+      migrator.transaction(async (transaction) => {
+        await transaction
+          .update(roleTable)
+          .set({ key: null })
+          .where(eq(roleTable.key, "leadership"));
+        await addRoles(transaction, "fictional-nobody", [
+          "viewer",
+          "leadership",
+        ]);
+      }),
+    ).rejects.toThrow("A role to be given is missing from the database");
+    await migratorPool.end();
+    const [leadership] = await connection
+      .select({ id: roleTable.id })
+      .from(roleTable)
+      .where(eq(roleTable.key, "leadership"));
+    expect(leadership).toBeDefined();
+  });
+
+  it("have names unique whatever their case", async () => {
+    const refused: unknown = await connection
+      .insert(roleTable)
+      .values({ name: "VIEWER" })
+      .then(
+        () => undefined,
+        (error: unknown) => error,
+      );
+    expect(hasDatabaseCode(refused, databaseCodes.uniqueViolation)).toBe(true);
+  });
+});
 
 describe("who may manage accounts", () => {
   // The access control pattern: every role on its own, allowed exactly when it grants the permission.
@@ -520,7 +618,8 @@ describe("the last active Administrator", () => {
             connection
               .select({ id: userRoles.userId })
               .from(userRoles)
-              .where(eq(userRoles.role, "administrator")),
+              .innerJoin(roleTable, eq(roleTable.id, userRoles.roleId))
+              .where(eq(roleTable.key, "administrator")),
           ),
         ),
       );

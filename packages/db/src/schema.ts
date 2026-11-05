@@ -116,18 +116,54 @@ export const rateLimits = fathomSchema.table("rate_limits", {
   lastRequest: bigint("last_request", { mode: "number" }).notNull(),
 });
 
-// The roles each user holds. Role names are checked by the server,
-// not the database, so renaming a role needs no migration.
+// Roles, each a set of permissions that can be edited and copied, as the Decisions Log sets out.
+// The roles Fathom starts with keep a key, so setup and seed data can find them however they are
+// renamed; roles made later have none. Names are unique whatever their case.
+export const roles = fathomSchema.table(
+  "roles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    key: text("key").unique(),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [uniqueIndex("roles_name_index").on(sql`lower(${table.name})`)],
+);
+
+// The permissions each role grants. Permission names are checked by the server, not the database,
+// so one the server no longer knows grants nothing, and splitting a permission needs only a
+// migration that gives its parts to every role holding it.
+export const rolePermissions = fathomSchema.table(
+  "role_permissions",
+  {
+    roleId: uuid("role_id")
+      .notNull()
+      .references(() => roles.id, { onDelete: "cascade" }),
+    permission: text("permission").notNull(),
+    createdAt: createdAt(),
+  },
+  (table) => [primaryKey({ columns: [table.roleId, table.permission] })],
+);
+
+// The roles each user holds. A role held by any account cannot be deleted, so nobody's access
+// vanishes unseen.
 export const userRoles = fathomSchema.table(
   "user_roles",
   {
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    role: text("role").notNull(),
+    roleId: uuid("role_id")
+      .notNull()
+      .references(() => roles.id, { onDelete: "restrict" }),
     createdAt: createdAt(),
   },
-  (table) => [primaryKey({ columns: [table.userId, table.role] })],
+  (table) => [
+    primaryKey({ columns: [table.userId, table.roleId] }),
+    index("user_roles_role_id_index").on(table.roleId),
+  ],
 );
 
 // Who did what, and when, to accounts and to protected data, without the values. It can only be

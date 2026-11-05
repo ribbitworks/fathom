@@ -1260,7 +1260,7 @@ describe("undo", () => {
     });
     expect((await undo(cookie, randomUUID())).statusCode).toBe(404);
     await test.connection.execute(
-      `DELETE FROM fathom.user_roles WHERE user_id = '${id}' AND role = 'workforce-administrator'`,
+      `DELETE FROM fathom.user_roles WHERE user_id = '${id}' AND role_id = (SELECT id FROM fathom.roles WHERE key = 'workforce-administrator')`,
     );
     expect((await undo(cookie, changeSetId)).statusCode).toBe(403);
   });
