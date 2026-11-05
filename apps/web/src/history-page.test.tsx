@@ -203,7 +203,7 @@ describe("the entries", () => {
     );
   });
 
-  it("say who did what to whose account, and which roles were involved", async () => {
+  it("say who did what to whose account, and which roles were involved, marking changes that give access", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,
       "GET /api/access-history": () => Response.json({ entries }),

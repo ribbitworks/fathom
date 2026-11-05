@@ -177,7 +177,7 @@ Run the test cases in order. Start with R2. Tick each step whose expected result
   - **Notes:**
 
 - [ ] **Step 5.** Sign out (P2), and sign in (P1) as `fathom.administrator@fathom.test`. Select **Access history** in the left-hand menu.
-  - **Expected:** The latest entry says Fathom Administrator **changed the role** Approver, granting View Access history, and is flagged for attention.
+  - **Expected:** The latest entry says Fathom Administrator **changed the role** Approver, granting View Access history, and is marked as worth checking.
   - **Notes:**
 
 ### ROLE-07: Restoring a Starting Role's Template
