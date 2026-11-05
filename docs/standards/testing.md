@@ -25,7 +25,7 @@ Fathom's additions to the shared [Testing Standards](shared/testing.md), which d
 
 Every new or changed API operation has integration tests, as well as unit tests for its rules.
 
-Until Fathom is first deployed with real data, migrations have no upgrade tests, since no migration converts existing data, as the [Decisions Log](../product/decisions.md#platform-and-operations) records.
+Until Fathom is first deployed with real data, migrations have no upgrade tests, since no migration converts existing data and databases are reset instead, as the [Decisions Log](../product/decisions.md#platform-and-operations) records.
 
 ## Access Control Tests
 

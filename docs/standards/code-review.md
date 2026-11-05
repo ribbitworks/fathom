@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/code-review.md", "docs/standards/testing.md"]
-last_updated: "2026-11-02"
+last_updated: "2026-11-05"
 ---
 
 # Code Review Standards
@@ -33,6 +33,10 @@ Each `/* v8 ignore */` comment a change adds is checked against [Testing Standar
 ## Architecture and Design
 
 The change follows the project's architecture decision records in `docs/adr/` and its design documents.
+
+## Migrations
+
+Until Fathom is first deployed with real data, the shared rule that applied migrations are never edited is relaxed: a merged migration may be edited in place, and every development database is then reset, as the [Decisions Log](../product/decisions.md#platform-and-operations) records. A change that edits one says so, and names the reset, in its pull request.
 
 ## File Headers
 

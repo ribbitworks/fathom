@@ -53,7 +53,7 @@ function migrationFiles(): Map<string, MigrationFile> {
 }
 
 // Drizzle does not notice when a migration file is edited after it was applied, so every applied
-// migration is checked against its file. Applied migrations must never be edited.
+// migration is checked against its file, and a database that applied an edited one is reset.
 export async function verifyAppliedMigrations(
   database: Pick<Pool, "query">,
 ): Promise<void> {
@@ -75,7 +75,7 @@ export async function verifyAppliedMigrations(
     }
     if (file.hash !== migration.hash) {
       throw new Error(
-        `The migration ${file.name} was changed after it was applied; applied migrations must never be edited. In development, run 'pnpm db:reset'.`,
+        `The migration ${file.name} was changed after it was applied. In development, run 'pnpm db:reset'.`,
       );
     }
   }
