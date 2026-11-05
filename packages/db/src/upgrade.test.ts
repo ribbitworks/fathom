@@ -5,7 +5,7 @@
 // alphabetical order, the roles accounts held before roles became editable stay theirs, everyone
 // already named as a manager is flagged as a manager, and the Position column and planned hires'
 // states carry over to the built-in Positions and hiring states lists, and every role that could
-// manage accounts can then also edit roles.
+// manage accounts can then edit roles and, later, Fathom's settings, with its time zone stored.
 
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
@@ -564,6 +564,34 @@ describe("upgrading to a permission of its own for editing roles", () => {
         { name: "Administrator" },
         { name: "Fictional Account Keeper" },
       ]);
+    } finally {
+      await pool.end();
+    }
+  });
+
+  it("then gives editing settings to every role that can edit roles, and to no other", async () => {
+    const pool = createPool(editDatabase.migrator);
+    try {
+      const rows = await pool.query<{ name: string }>(
+        `SELECT r.name FROM fathom.role_permissions p JOIN fathom.roles r ON r.id = p.role_id
+         WHERE p.permission = 'settings:edit' ORDER BY r.name`,
+      );
+      expect(rows.rows).toEqual([
+        { name: "Administrator" },
+        { name: "Fictional Account Keeper" },
+      ]);
+    } finally {
+      await pool.end();
+    }
+  });
+
+  it("then stores Fathom's time zone as America/Vancouver", async () => {
+    const pool = createPool(editDatabase.migrator);
+    try {
+      const rows = await pool.query(
+        "SELECT value FROM fathom.app_info WHERE key = 'time-zone'",
+      );
+      expect(rows.rows).toEqual([{ value: "America/Vancouver" }]);
     } finally {
       await pool.end();
     }

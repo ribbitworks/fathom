@@ -176,6 +176,13 @@
       "when": 1793882932387,
       "tag": "0024_release_colour",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1793884816854,
+      "tag": "0025_time_zone_setting",
+      "breakpoints": true
     }
   ]
 }
