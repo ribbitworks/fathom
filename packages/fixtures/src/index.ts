@@ -69,6 +69,8 @@ export interface FictionalPerson {
   // As YYYY-MM-DD, or null when not set.
   startDate: string | null;
   endDate: string | null;
+  // Marked as a manager, whom others can report to: everyone whose position is Manager.
+  isManager: boolean;
   // The chosen choices of each column, by column.
   values: Record<string, string[]>;
 }
@@ -363,6 +365,7 @@ export function fictionalOrganization({
         positionId: choice(positions, position),
         startDate: day(start),
         endDate: end === null ? null : day(end),
+        isManager: manager,
         values: {
           [siteColumn.id]: [
             choice(
@@ -393,6 +396,7 @@ export function fictionalOrganization({
   if (lastToLeave !== undefined) {
     lastToLeave.positionId = managerChoice;
     lastToLeave.values[levelColumn.id] = [choice(levels, "M1")];
+    lastToLeave.isManager = true;
   }
   return {
     lists: [sites, levels, teamRoles, certifications, languages],

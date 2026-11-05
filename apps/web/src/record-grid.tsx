@@ -504,6 +504,14 @@ function cellContent(column: AnyColumn, value: CellValue) {
   return Cell === undefined ? shown(column, value) : <Cell value={value} />;
 }
 
+// What a live row's cell shows: in words, so nothing in it can be focused or followed, except a
+// kind edited in one step, such as a checkbox, whose cell is drawn as it is in other rows.
+function liveContent(column: AnyColumn, value: CellValue) {
+  return kindOf(column).toggled === undefined
+    ? shown(column, value)
+    : cellContent(column, value);
+}
+
 // Whether a value is missing from a column that needs one.
 const neededProblem = (column: AnyColumn, value: CellValue) =>
   column.required && isEmpty(value) ? `${column.label} needed` : undefined;
@@ -1096,11 +1104,18 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     focusSoon(cellId(target.row, target.column));
   };
 
+  // Starts editing a cell, or, for a kind edited in one step, such as a checkbox, saves the value
+  // editing gives, unless what started it was typing.
   const startEdit = (cell: Cell, typed?: string) => {
     const { row, column } = at(cell);
     if ((row.record && locked(row.record)) || column.readOnly === true) return;
     const value = valueAt(row, column);
     setActive(cell);
+    const { toggled } = kindOf(column);
+    if (toggled !== undefined) {
+      if (typed === undefined) save(cell, toggled(value));
+      return;
+    }
     setEditing(cell);
     setMenuFor(undefined);
     setText(typed ?? (typeof value === "string" ? value : ""));
@@ -2213,8 +2228,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               setActive(cell);
                             }
                           }}
+                          onClick={() => {
+                            if (kindOf(column).toggled !== undefined) {
+                              startEdit(cell);
+                            }
+                          }}
                           onDoubleClick={() => {
-                            startEdit(cell);
+                            if (kindOf(column).toggled === undefined) {
+                              startEdit(cell);
+                            }
                           }}
                         >
                           {editingHere
@@ -2292,7 +2314,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             key={column.key}
                             className={classes.recordCell}
                           >
-                            {shown(
+                            {liveContent(
                               liveColumn(column),
                               changedIn(draft, column)
                                 ? column.live(draft)

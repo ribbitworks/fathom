@@ -271,6 +271,7 @@ describe("who sees the People page", () => {
       "Site",
       "Position",
       "Manager",
+      "Manager?",
       "Team",
       "Team name",
     ]);
@@ -355,31 +356,31 @@ describe("the table", () => {
     await userEvent.keyboard("{ArrowDown}");
     expect(document.activeElement).toBe(cell("p2", "employeeId"));
     await userEvent.keyboard("{End}");
-    expect(document.activeElement).toBe(cell("p2", "teamName"));
+    expect(document.activeElement).toBe(cell("p2", "isManager"));
     await userEvent.keyboard("{Home}{ArrowUp}{ArrowUp}{ArrowLeft}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     await userEvent.keyboard("{Control>}{ArrowDown}{/Control}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     // Ctrl+End and Ctrl+Home go to the table's last and first cells.
     await userEvent.keyboard("{Control>}{End}{/Control}");
-    expect(document.activeElement).toBe(cell("new-0", "teamName"));
+    expect(document.activeElement).toBe(cell("new-0", "isManager"));
     await userEvent.keyboard("{Meta>}{Home}{/Meta}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     // Tab moves across, on to the next row at the end of one, and back with Shift+Tab.
     await userEvent.keyboard("{Tab}");
     expect(document.activeElement).toBe(cell("p1", "employeeId"));
-    focusCell("p1", "teamName");
+    focusCell("p1", "isManager");
     await userEvent.keyboard("{Tab}");
     expect(document.activeElement).toBe(cell("p2", "preferredName"));
     await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
-    expect(document.activeElement).toBe(cell("p1", "teamName"));
+    expect(document.activeElement).toBe(cell("p1", "isManager"));
     // From the first cell, Shift+Tab leaves the table, and so does Tab from the last.
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
     expect(document.activeElement).not.toBe(cell("p1", "preferredName"));
-    focusCell("new-0", "teamName");
+    focusCell("new-0", "isManager");
     await userEvent.keyboard("{Tab}");
-    expect(document.activeElement).not.toBe(cell("new-0", "teamName"));
+    expect(document.activeElement).not.toBe(cell("new-0", "isManager"));
   });
 });
 
@@ -1172,6 +1173,7 @@ describe("drafts", () => {
       "",
       "",
       "",
+      "No",
       "",
     ]);
     // Moving down from the draft row skips the live row.
@@ -1713,11 +1715,11 @@ describe("columns", () => {
       header("Name").focus();
     });
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
-    await userEvent.click(header("Team name"));
-    // Role on team's menu may still be closing, so its items are looked for only in Team name's own
+    await userEvent.click(header("Manager?"));
+    // Role on team's menu may still be closing, so its items are looked for only in Manager?'s own
     // menu.
     const endMenu = await screen.findByRole("menu", {
-      name: /^Team name column/,
+      name: /^Manager\? column/,
     });
     await userEvent.click(
       within(endMenu).getByRole("menuitem", { name: /^Move right/ }),
@@ -1733,9 +1735,9 @@ describe("columns", () => {
     await waitFor(() => {
       expect(moves("f1")).toHaveLength(1);
     });
-    // Moves save one after another, so once Site's has been sent, any from Team name's menu has been
+    // Moves save one after another, so once Site's has been sent, any from Manager?'s menu has been
     // too.
-    expect(moves("teamName")).toEqual([]);
+    expect(moves("isManager")).toEqual([]);
     expect(moves("f2")).toHaveLength(1);
   });
 });
@@ -2414,7 +2416,7 @@ describe("searching, sorting, and filtering", () => {
       "nobody",
     );
     expect(screen.getByText("No matching people").closest("td")?.colSpan).toBe(
-      7,
+      8,
     );
     expect(
       within(screen.getByRole("grid"))
@@ -2428,6 +2430,7 @@ describe("searching, sorting, and filtering", () => {
       "Manager",
       "Team",
       "Team name",
+      "Manager?",
     ]);
   });
 

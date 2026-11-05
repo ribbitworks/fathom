@@ -120,7 +120,7 @@ async function approved(ids: { people?: string[]; plannedHires?: string[] }) {
   await ok(await approve(ids));
 }
 
-// A fictional person, approved so they are live, who started in 2020 unless told otherwise.
+// A fictional person, approved so they are live and marked as a manager unless told otherwise.
 async function person(details: object = {}): Promise<string> {
   const { ids } = await ok<{ ids: string[] }>(
     await send(editor, "POST", "/api/people", {
@@ -130,6 +130,7 @@ async function person(details: object = {}): Promise<string> {
           employeeId: unique("HP"),
           positionId: testPosition,
           startDate: "2020-01-01",
+          isManager: true,
           ...details,
         },
       ],
@@ -1031,6 +1032,89 @@ describe("a hire's manager", () => {
       expect((await hireSeen(id))?.managerId).toBe(manager);
     },
   );
+
+  it("must be marked as a manager while the hire is not yet filled, as people's managers are", async () => {
+    const unmarked = await person({ isManager: false });
+    const created = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest({ managerId: unmarked }),
+    );
+    expect(created.statusCode).toBe(400);
+    const id = await liveHire();
+    expect((await change(id, { managerId: unmarked })).statusCode).toBe(400);
+  });
+
+  it("stays marked as a manager while a hire not yet filled names them, and cannot be named again once cleared", async () => {
+    const manager = await person();
+    const other = await person();
+    const id = await liveHire({ managerId: manager });
+    const unmark = () =>
+      send(editor, "PATCH", `/api/people/${manager}`, { isManager: false });
+    const refused = await unmark();
+    expect(refused.statusCode).toBe(409);
+    expect(refusal(refused)).toBe(
+      "Manager? stays checked while a planned hire not yet filled names this person as its manager",
+    );
+    await changed(id, { managerId: other });
+    expect((await unmark()).statusCode).toBe(409);
+    await approved({ plannedHires: [id] });
+    await ok(await unmark());
+    await approved({ people: [manager] });
+    expect((await change(id, { managerId: manager })).statusCode).toBe(400);
+  });
+
+  it("is refused on approval once no longer marked as a manager, however that came about", async () => {
+    const manager = await person({ preferredName: "Fictional Unmarked" });
+    const { id } = await draftHire({ managerId: manager });
+    await test.connection
+      .update(people)
+      .set({ isManager: false })
+      .where(eq(people.id, manager));
+    const response = await approve({ plannedHires: [id] });
+    expect(response.statusCode).toBe(409);
+    expect(refusal(response)).toBe(
+      "Fictional Unmarked is not a manager yet: check Manager? on their row and have it approved first",
+    );
+  });
+
+  it("stays marked as a manager when undoing a change would clear it while a hire names them", async () => {
+    const manager = await person();
+    const path = `/api/people/${manager}`;
+    await ok(await send(editor, "PATCH", path, { isManager: false }));
+    const { changeSetId } = await ok<{ changeSetId: string }>(
+      await send(editor, "PATCH", path, { isManager: true }),
+    );
+    await draftHire({ managerId: manager });
+    const undone = await send(editor, "POST", `/api/undo/${changeSetId}`);
+    expect(undone.statusCode).toBe(409);
+    expect(refusal(undone)).toBe(
+      "Manager? stays checked while a planned hire not yet filled names this person as its manager",
+    );
+  });
+
+  it("is needed by a manager an undo puts back on a hire not yet filled", async () => {
+    const first = await person({ preferredName: "Fictional First Manager" });
+    const second = await person();
+    const { id } = await draftHire({ managerId: first });
+    const changeSetId = await changed(id, { managerId: second });
+    await ok(
+      await send(editor, "PATCH", `/api/people/${first}`, {
+        isManager: false,
+      }),
+    );
+    await approved({ people: [first] });
+    const undone = await send(
+      editor,
+      "POST",
+      `/api/undo/${String(changeSetId)}`,
+    );
+    expect(undone.statusCode).toBe(409);
+    expect(refusal(undone)).toBe(
+      "Fictional First Manager is not a manager yet: check Manager? on their row and have it approved first",
+    );
+  });
 
   it("is refused while someone's unpublished change removes them", async () => {
     const leaving = await person();

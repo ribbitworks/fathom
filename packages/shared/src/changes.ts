@@ -18,6 +18,7 @@ export const builtInColumnNames: ReadonlyMap<string, string> = new Map([
   ["startDate", "Start"],
   ["endDate", "End"],
   ["managerId", "Manager"],
+  ["isManager", "Manager?"],
   ["managerFrom", "Manager since"],
   ["team", "Team"],
   ["teamName", "Team name"],

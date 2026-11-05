@@ -113,6 +113,7 @@ export const personDraftSchema = z.object({
     managerId: z.string().nullable().optional(),
     managerFrom: day.nullable().optional(),
     teamName: z.string().nullable().optional(),
+    isManager: z.boolean().optional(),
     values: valuesSchema,
     links: linksSchema.default({}),
   }),
@@ -147,6 +148,8 @@ export const personSchema = z.object({
   team: z.string().nullable().optional(),
   // The name of the person's own team, the people who report to them.
   teamName: z.string().nullable().optional(),
+  // Whether others can be named as reporting to the person, which is General.
+  isManager: z.boolean().optional(),
   values: valuesSchema,
   links: linksSchema.default({}),
   draft: personDraftSchema.optional(),
@@ -210,6 +213,7 @@ const reporting = {
   managerId: z.uuid().nullable().optional(),
   managerFrom: day.optional(),
   teamName: teamName.optional(),
+  isManager: z.boolean().optional(),
 };
 
 export const personRequestSchema = z.object({

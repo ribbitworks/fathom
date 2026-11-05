@@ -235,6 +235,63 @@ export function changedReporting(
   return fields;
 }
 
+// Why someone cannot be named as a manager until marked as one, which takes an approval first.
+export const notMarked = ({ preferredName }: { preferredName: string }) =>
+  `${preferredName} is not a manager yet: check Manager? on their row and have it approved first`;
+
+const stillReporting =
+  "Manager? stays checked while anyone reports to this person, or is drafted to";
+
+// Refuses clearing the Manager? mark of people anyone still employed reports to, by a line in force
+// or yet to start. When drafting, drafts naming them as a manager, published or not, count too; on
+// approval, each drafted line is checked against its manager when it is approved instead.
+export async function refuseUnmarkingManagers(
+  reader: Reader,
+  ids: readonly string[],
+  today: string,
+  { drafted }: { drafted: boolean },
+): Promise<void> {
+  for (const chunk of inChunks([...ids])) {
+    const named = await reader
+      .select({ personId: reportingLines.personId })
+      .from(reportingLines)
+      .where(inArray(reportingLines.managerId, chunk));
+    const reports = [...new Set(named.map(({ personId }) => personId))];
+    const lines = await readLines(reader, reports);
+    const employed = new Set<string>();
+    for (const part of inChunks(reports)) {
+      for (const { id } of await reader
+        .select({ id: people.id })
+        .from(people)
+        .where(
+          and(
+            inArray(people.id, part),
+            sql`(${people.endDate} IS NULL OR ${people.endDate} >= ${today})`,
+          ),
+        )) {
+        employed.add(id);
+      }
+    }
+    const reporting = [...lines].some(
+      ([personId, own]) =>
+        employed.has(personId) &&
+        own.some(
+          (line) =>
+            line.managerId !== null &&
+            chunk.includes(line.managerId) &&
+            (line.fromDate > today || line === inForceOn(own, today)),
+        ),
+    );
+    if (
+      reporting ||
+      (drafted &&
+        (await draftedPersonValues(reader, "managerId", chunk, [])).length > 0)
+    ) {
+      throw new ConflictError(stillReporting);
+    }
+  }
+}
+
 // Whether a draft changes a person's line.
 export const changesLine = (draft: Draft) =>
   draft.action === "created" ||
@@ -245,6 +302,7 @@ export interface Manager {
   preferredName: string;
   startDate: string | null;
   endDate: string | null;
+  isManager: boolean;
   // Drafted to be removed, published or not.
   removing: boolean;
 }
@@ -278,6 +336,7 @@ export async function readManagers(
         preferredName: people.preferredName,
         startDate: people.startDate,
         endDate: people.endDate,
+        isManager: people.isManager,
       })
       .from(people)
       .where(inArray(people.id, chunk))) {
@@ -290,8 +349,9 @@ export async function readManagers(
 // Refuses a line that breaks the rules: one starting before the person does, or after today except
 // a new employee's first, which starts on their start date; before the line now in force, or, when
 // only its date moves, not after the line before it; or to a manager who is not a live person
-// employed on the day it starts, or who is drafted to be removed. Checked when drafted and again when
-// approved, against the live people, so a manager is never someone only drafted to be added.
+// marked as a manager and employed on the day it starts, or who is drafted to be removed. Checked
+// when drafted and again when approved, against the live people, so a manager is never someone only
+// drafted to be added.
 export async function checkLine(
   reader: Reader,
   id: string,
@@ -360,6 +420,7 @@ export async function checkLine(
       `${manager.preferredName} is drafted to be removed, so cannot be anyone's manager`,
     );
   }
+  if (!manager.isManager) throw new BadRequestError(notMarked(manager));
   if (
     (manager.startDate !== null && manager.startDate > from) ||
     (manager.endDate !== null && manager.endDate < from)

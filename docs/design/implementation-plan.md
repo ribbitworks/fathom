@@ -40,7 +40,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Change History | Done |
 | Draft and Approval | Done |
 | Web Link Columns | Done |
-| Teams and Reporting Lines | In progress: schema, server, seed, Drafts and People's columns; the Manager flag's schema |
+| Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, and a manual test |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline; changing one cycle's length next |
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID |
 | Editable Roles | In progress: schema, and the server reading roles from the database |

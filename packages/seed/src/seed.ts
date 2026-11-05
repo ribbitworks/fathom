@@ -123,6 +123,7 @@ function personFields(
     positionId: person.positionId,
     startDate: person.startDate,
     endDate: person.endDate,
+    isManager: person.isManager,
     ...reporting,
     ...Object.fromEntries(
       Object.entries(person.values).map(([columnId, chosen]) => [

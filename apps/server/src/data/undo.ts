@@ -90,12 +90,23 @@ import {
   personTier,
   readLive,
   recordSensitiveChanges,
+  withMark,
 } from "./people.ts";
-import { refuseLoop, refuseTakenTeamNames } from "./reporting.ts";
+import {
+  notMarked,
+  readManagers,
+  refuseLoop,
+  refuseTakenTeamNames,
+  refuseUnmarkingManagers,
+} from "./reporting.ts";
 import { typeOf } from "./column-types.ts";
 import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
-import { recordHiringChanges, undoHireDrafts } from "./hires.ts";
+import {
+  recordHiringChanges,
+  refuseUnmarkingHireManagers,
+  undoHireDrafts,
+} from "./hires.ts";
 
 // Kinds of the plan's records, whose changes are not undone yet.
 const planRecordTypes: ReadonlySet<string> = new Set(recordTypeSchema.options);
@@ -181,6 +192,7 @@ const columnsOf: Record<
     positionId: text,
     startDate: textOrNull,
     endDate: textOrNull,
+    isManager: flag,
   },
   "planned-hire": {
     requisition: textOrNull,
@@ -460,7 +472,10 @@ async function undoPersonDrafts(
       const now = drafted(live.get(record.id), draft);
       if (now === undefined) throw new ConflictError(changedSince);
       // Columns left with nothing chosen are left out.
-      person = tidy({ ...now, ...Object.fromEntries(old) });
+      person = withMark(
+        tidy({ ...now, ...Object.fromEntries(old) }),
+        live.get(record.id),
+      );
     }
     return { id: record.id, person };
   });
@@ -492,8 +507,9 @@ async function undoPersonDrafts(
   }
 }
 
-// Refuses putting back, among the fields given, a team name another team has taken since, or a
-// line that, with the drafts made since, makes a loop.
+// Refuses putting back, among the fields given: a team name another team has taken since; a line to
+// a manager no longer checked as one, or one that makes a loop with the drafts made since; and an
+// unchecked Manager? while people report to the person.
 async function refuseUndoneReporting(
   transaction: Transaction,
   editor: string,
@@ -501,6 +517,7 @@ async function refuseUndoneReporting(
   person: Recorded,
   putBack: ReadonlySet<string>,
 ): Promise<void> {
+  const today = new Date().toISOString().slice(0, 10);
   if (putBack.has("teamName") && typeof person.teamName === "string") {
     await refuseTakenTeamNames(transaction, [{ id, name: person.teamName }]);
   }
@@ -508,14 +525,26 @@ async function refuseUndoneReporting(
     (putBack.has("managerId") || putBack.has("managerFrom")) &&
     typeof person.managerFrom === "string"
   ) {
+    if (typeof person.managerId === "string") {
+      const manager = (await readManagers(transaction, [person.managerId])).get(
+        person.managerId,
+      );
+      if (manager !== undefined && !manager.isManager) {
+        throw new ConflictError(notMarked(manager));
+      }
+    }
     await refuseLoop(
       transaction,
       editor,
       id,
       typeof person.managerId === "string" ? person.managerId : null,
       person.managerFrom,
-      new Date().toISOString().slice(0, 10),
+      today,
     );
+  }
+  if (putBack.has("isManager") && person.isManager !== true) {
+    await refuseUnmarkingManagers(transaction, [id], today, { drafted: true });
+    await refuseUnmarkingHireManagers(transaction, [id], { drafted: true });
   }
 }
 

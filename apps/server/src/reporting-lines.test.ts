@@ -58,7 +58,8 @@ async function approved(ids: readonly string[]) {
   expect(response.statusCode, response.body).toBe(200);
 }
 
-// A fictional person, approved so they are live, who started in 2020 unless told otherwise.
+// A fictional person, approved so they are live, who started in 2020 and is marked as a manager
+// unless told otherwise.
 async function person(details: object = {}): Promise<string> {
   const response = await test.request(cookie, "POST", "/api/people", {
     people: [
@@ -67,6 +68,7 @@ async function person(details: object = {}): Promise<string> {
         employeeId: unique("RL"),
         positionId: testPosition,
         startDate: "2020-01-01",
+        isManager: true,
         ...details,
       },
     ],
@@ -586,6 +588,150 @@ describe("a reporting line", () => {
     const seen = await readPerson(report, planner.cookie);
     expect(seen?.manager?.id).toBe(manager);
     expect(seen?.managerLeft).toBeUndefined();
+  });
+});
+
+describe("the Manager? mark", () => {
+  const notMarked = (name: string) =>
+    `${name} is not a manager yet: check Manager? on their row and have it approved first`;
+  const stillReporting =
+    "Manager? stays checked while anyone reports to this person, or is drafted to";
+  const nameOf = async (id: string) =>
+    String((await readPerson(id))?.preferredName);
+
+  it("is needed before anyone can be drafted to report to someone, and only once approved", async () => {
+    const manager = await person({ isManager: false });
+    const report = await person();
+    const refused = await change(report, { managerId: manager });
+    expect(refused.statusCode).toBe(400);
+    expect(refused.json<{ error: string }>().error).toBe(
+      notMarked(await nameOf(manager)),
+    );
+    await changed(manager, { isManager: true });
+    expect((await change(report, { managerId: manager })).statusCode).toBe(400);
+    await approved([manager]);
+    await reportsTo(report, manager);
+    expect((await readPerson(report))?.manager?.id).toBe(manager);
+  });
+
+  it("is General, and recorded only when it changes", async () => {
+    const id = await person({ isManager: false });
+    const general = await test.signedIn(["resource-planner"]);
+    expect((await readPerson(id, general.cookie))?.isManager).toBe(false);
+    await changed(id, { isManager: true });
+    expect(await readPerson(id)).toMatchObject({
+      isManager: true,
+      draft: { changed: ["isManager"], live: { isManager: false } },
+    });
+    await approved([id]);
+    expect((await readPerson(id, general.cookie))?.isManager).toBe(true);
+    await changed(id, { isManager: false });
+    expect((await readPerson(id))?.draft?.live.isManager).toBe(true);
+    const marked = (await test.historyOf(id)).filter(
+      ({ field }) => field === "isManager",
+    );
+    expect(
+      marked.map(({ oldValue, newValue, tier }) => [oldValue, newValue, tier]),
+    ).toEqual([
+      [null, true, "general"],
+      [null, true, "general"],
+      [true, false, "general"],
+    ]);
+  });
+
+  it("cannot be cleared while anyone still employed reports to them, now or from a later date", async () => {
+    const manager = await person();
+    const report = await person();
+    await reportsTo(report, manager, "2021-01-01");
+    const refused = await change(manager, { isManager: false });
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json<{ error: string }>().error).toBe(stillReporting);
+    const starter = await person({ startDate: day(30) });
+    const next = await person();
+    await reportsTo(report, next);
+    await reportsTo(starter, manager, day(30));
+    expect((await change(manager, { isManager: false })).statusCode).toBe(409);
+    await changed(starter, { managerId: next, managerFrom: day(30) });
+    await approved([starter]);
+    await changed(manager, { isManager: false });
+    await approved([manager]);
+    expect((await readPerson(manager))?.isManager).toBe(false);
+  });
+
+  it("can be cleared once everyone reporting to them has left", async () => {
+    const manager = await person();
+    const report = await person();
+    await reportsTo(report, manager, "2021-01-01");
+    await changed(report, { endDate: "2022-01-01" });
+    await approved([report]);
+    await changed(manager, { isManager: false });
+    await approved([manager]);
+    expect((await readPerson(manager))?.isManager).toBe(false);
+  });
+
+  it("cannot be cleared while a draft names them as a manager", async () => {
+    const manager = await person();
+    const report = await person();
+    await changed(report, { managerId: manager });
+    expect((await change(manager, { isManager: false })).statusCode).toBe(409);
+  });
+
+  it("leaves no draft when checked and unchecked again, or unchecked when it never was", async () => {
+    const id = await person({ isManager: false });
+    await changed(id, { isManager: true });
+    await changed(id, { isManager: false });
+    expect((await readPerson(id))?.draft).toBeUndefined();
+    const response = await change(id, { isManager: false });
+    expect(response.json<{ changeSetId: string | null }>().changeSetId).toBe(
+      null,
+    );
+    expect((await readPerson(id))?.draft).toBeUndefined();
+  });
+
+  it("is needed by a manager an undo puts back", async () => {
+    const first = await person();
+    const second = await person();
+    const report = await person();
+    await changed(report, { managerId: first });
+    const response = await change(report, { managerId: second });
+    const { changeSetId } = response.json<{ changeSetId: string }>();
+    await changed(first, { isManager: false });
+    await approved([first]);
+    const undone = await test.request(
+      cookie,
+      "POST",
+      `/api/undo/${changeSetId}`,
+    );
+    expect(undone.statusCode).toBe(409);
+    expect(undone.json<{ error: string }>().error).toBe(
+      notMarked(await nameOf(first)),
+    );
+  });
+
+  it("is not cleared by undoing a change while a draft names them as a manager", async () => {
+    const manager = await person();
+    const report = await person();
+    await changed(manager, { isManager: false });
+    const response = await change(manager, { isManager: true });
+    const { changeSetId } = response.json<{ changeSetId: string }>();
+    await changed(report, { managerId: manager });
+    const undone = await test.request(
+      cookie,
+      "POST",
+      `/api/undo/${changeSetId}`,
+    );
+    expect(undone.statusCode).toBe(409);
+    expect(undone.json<{ error: string }>().error).toBe(stillReporting);
+  });
+
+  it("cannot be cleared by approval while someone reports to them", async () => {
+    const manager = await person();
+    const report = await person();
+    await changed(manager, { isManager: false });
+    await reportsTo(report, manager);
+    const response = await approve([manager]);
+    expect(response.statusCode).toBe(409);
+    expect(response.json<{ error: string }>().error).toBe(stillReporting);
   });
 });
 

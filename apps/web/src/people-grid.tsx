@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The People table: the table of records record-grid.tsx sets out, with what is particular to
-// people. Its columns are each person's name, Employee ID, and position, their manager, their team,
-// which follows from their manager, and their own team's name, the added columns, and, for those
-// who may see them, start and end dates and the date their manager is theirs from. A person's
-// Employee ID must be one no one else has, and their end date cannot be before their start date.
+// people. Its columns are each person's name, Employee ID, and position, their manager, whether they
+// are marked as a manager, whom others can report to, their team, which follows from their manager,
+// and their own team's name, the added columns, and, for those who may see them, start and end dates
+// and the date their manager is theirs from. A person's Employee ID must be one no one else has, and
+// their end date cannot be before their start date.
 
 import type {
   Choice,
@@ -33,6 +34,7 @@ import {
   type RowProblem,
 } from "./record-grid.tsx";
 import { StatusMark } from "./status-mark.tsx";
+import { flagChoice } from "./cell-kinds.tsx";
 import type { CellValue } from "./table-view.ts";
 
 export type PeopleActions = RecordActions<Person, PersonChange, PersonRequest>;
@@ -48,7 +50,8 @@ export type DetailKey =
   | "startDate"
   | "endDate"
   | "managerFrom"
-  | "teamName";
+  | "teamName"
+  | "isManager";
 
 const detailKeys: readonly DetailKey[] = [
   "preferredName",
@@ -57,6 +60,7 @@ const detailKeys: readonly DetailKey[] = [
   "endDate",
   "managerFrom",
   "teamName",
+  "isManager",
 ];
 
 const collator = new Intl.Collator(undefined, { sensitivity: "base" });
@@ -64,13 +68,20 @@ const collator = new Intl.Collator(undefined, { sensitivity: "base" });
 // Today as YYYY-MM-DD, by the same clock the server's checks use.
 const today = () => new Date().toISOString().slice(0, 10);
 
-// Whether someone may be given as a manager: live, so neither drafted to be added or removed nor
-// still being added, and not gone by today, as far as the reader sees their end date. Fathom checks
-// the rest, such as loops.
+// Whether someone is marked as a manager live, whatever their draft makes them.
+const markedLive = (person: Person) =>
+  person.draft?.changed.includes("isManager") === true
+    ? person.draft.live.isManager === true
+    : person.isManager === true;
+
+// Whether someone may be given as a manager: live and marked as a manager live, so neither drafted
+// to be added or removed nor still being added, and not gone by today, as far as the reader sees
+// their end date. Fathom checks the rest, such as loops.
 const mayManage = (person: Person, today: string) =>
   person.draft?.action !== "deleted" &&
   person.draft?.action !== "created" &&
   !isPending(person) &&
+  markedLive(person) &&
   (person.endDate == null || person.endDate >= today);
 
 // Who each person reports to, live or as drafted, whoever the people shown name as a manager.
@@ -95,8 +106,8 @@ const choice = (id: string, label: string, retired: boolean): Choice => ({
 const byLabel = (choices: Choice[]) =>
   choices.sort((a, b) => collator.compare(a.label, b.label));
 
-// The people a person may report to, by name, and, no longer offered, those who have gone while
-// someone still reports to them.
+// The people a person may report to, by name, and, no longer offered, those who have gone, or are
+// no longer marked as managers, while someone still reports to them.
 function managerChoices(people: readonly Person[], today: string): Choice[] {
   const named = managersNamed(people);
   const shown = new Set(people.map(({ id }) => id));
@@ -135,6 +146,8 @@ function teamChoices(people: readonly Person[]): Choice[] {
 }
 
 const asIds = (value: CellValue) => value as string[];
+
+const markedChoice = choice(flagChoice, "Yes", false);
 
 // A single choice as a cell's value: the one chosen, or none.
 const chosen = (id: string | null | undefined): string[] =>
@@ -189,7 +202,6 @@ function makeReportingColumns(
   return [
     {
       ...manager,
-      breaksDown: false,
       mark: (person) => <LeftMark person={person} />,
     },
     {
@@ -257,6 +269,11 @@ export function columnsFor(
         ? [builtIn("startDate", "date"), builtIn("endDate", "date")]
         : []),
       manager,
+      {
+        ...builtIn("isManager", "flag"),
+        choices: [markedChoice],
+        emptyLabel: "No",
+      },
       ...(showDates
         ? [
             // Fathom takes today, or a new person's start date, when no date is given.
@@ -409,6 +426,7 @@ function requestFor(parts: readonly PersonChange[]): PersonRequest {
     managerId,
     managerFrom,
     teamName,
+    isManager,
   } = Object.assign({}, ...parts) as PersonRequest;
   return {
     preferredName,
@@ -419,6 +437,7 @@ function requestFor(parts: readonly PersonChange[]): PersonRequest {
       ? {}
       : { managerId, ...(managerFrom === undefined ? {} : { managerFrom }) }),
     ...(teamName == null || teamName === "" ? {} : { teamName }),
+    ...(isManager === true ? { isManager } : {}),
     values: Object.assign({}, ...parts.map((part) => part.values)) as Record<
       string,
       string[]

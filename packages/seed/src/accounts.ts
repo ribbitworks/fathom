@@ -2,9 +2,10 @@
 
 // Development accounts, one for each persona in docs/product/brief.md, named after the persona and
 // holding its default roles from docs/product/roles.md, so each role can be tried by signing in as
-// it. They share one password. Accounts are never deleted, since the change history and saved views
-// refer to them, so removing the seed data deactivates them, and seeding again reactivates them.
-// Development only: the seed package is never part of the runtime image.
+// it, and a Resource Planner, which sees people without their Restricted details. They share one
+// password. Accounts are never deleted, since the change history and saved views refer to them, so
+// removing the seed data deactivates them, and seeding again reactivates them. Development only:
+// the seed package is never part of the runtime image.
 
 import { type Database, users } from "@fathom/db";
 import { createAccount, setAccountActive } from "@fathom/server/accounts";
@@ -74,6 +75,13 @@ export const personaAccounts: readonly PersonaAccount[] = [
     name: "Team Member",
     email: `team.member@${accountDomain}`,
     roles: ["viewer"],
+  },
+  // No persona sees people without Restricted details, so this account shows what such a reader
+  // sees.
+  {
+    name: "Resource Planner",
+    email: `resource.planner@${accountDomain}`,
+    roles: ["viewer", "resource-planner"],
   },
   {
     name: "Fathom Administrator",

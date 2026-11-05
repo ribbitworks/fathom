@@ -56,7 +56,11 @@ import {
 } from "./column-approvals.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { refuseUsedAcross, withUsedAcross } from "./draft-uses.ts";
-import { applyReporting, refuseRemovingManagers } from "./reporting.ts";
+import {
+  applyReporting,
+  refuseRemovingManagers,
+  refuseUnmarkingManagers,
+} from "./reporting.ts";
 import {
   approveListDrafts,
   asksForLists,
@@ -69,6 +73,7 @@ import {
   checkHiresAsked,
   recordHiringChanges,
   refuseRemovingHiresPeople,
+  refuseUnmarkingHireManagers,
   rejectHiresIn,
 } from "./hires.ts";
 
@@ -135,6 +140,7 @@ const detailColumns = (id: string, person: Recorded) => ({
   positionId: String(person.positionId),
   startDate: (person.startDate as string | null | undefined) ?? null,
   endDate: (person.endDate as string | null | undefined) ?? null,
+  isManager: person.isManager === true,
 });
 
 // The values a person is to have in each column a draft sets, by column, as recorded.
@@ -157,6 +163,7 @@ const detailNames = new Set([
   "positionId",
   "startDate",
   "endDate",
+  "isManager",
 ]);
 
 // Makes the live people as their drafts make them, in as few statements as PostgreSQL allows:
@@ -180,11 +187,24 @@ async function apply(
     } else if (
       Object.keys(draft.fields).some((field) => detailNames.has(field))
     ) {
-      const { preferredName, employeeId, positionId, startDate, endDate } =
-        detailColumns(id, person);
+      const {
+        preferredName,
+        employeeId,
+        positionId,
+        startDate,
+        endDate,
+        isManager,
+      } = detailColumns(id, person);
       await transaction
         .update(people)
-        .set({ preferredName, employeeId, positionId, startDate, endDate })
+        .set({
+          preferredName,
+          employeeId,
+          positionId,
+          startDate,
+          endDate,
+          isManager,
+        })
         .where(eq(people.id, id));
     }
     for (const [fieldId, value] of valuesSet(draft, person)) {
@@ -271,6 +291,16 @@ async function approvePeopleIn(
   await refuseRemovingHiresPeople(transaction, removed);
   await apply(transaction, wanted);
   await applyReporting(transaction, wanted, today);
+  const unmarked = ids.filter(
+    (id) =>
+      live.get(id)?.isManager === true &&
+      wanted.get(id)?.person !== undefined &&
+      wanted.get(id)?.person?.isManager !== true,
+  );
+  await refuseUnmarkingManagers(transaction, unmarked, today, {
+    drafted: false,
+  });
+  await refuseUnmarkingHireManagers(transaction, unmarked, { drafted: false });
   for (const chunk of inChunks([...ids])) {
     await transaction
       .delete(drafts)

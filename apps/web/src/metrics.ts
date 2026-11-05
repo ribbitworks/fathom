@@ -24,6 +24,11 @@ const filledGroup = "filled";
 
 // The groups a value falls in: each choice it holds, or whether it is filled in.
 function groupsOf(column: TableColumn<never>, value: CellValue): string[] {
+  if (column.kind === "flag") {
+    return (value as string[]).length > 0
+      ? [...(value as string[])]
+      : [emptyGroup];
+  }
   if (isEmptyIn(column, value)) return [emptyGroup];
   return column.kind === "choice"
     ? [...new Set(value as string[])]
@@ -80,7 +85,7 @@ export function groupsFor(
   held: (group: string) => boolean,
 ): Group[] {
   const filled =
-    column.kind === "choice"
+    column.kind === "choice" || column.kind === "flag"
       ? column.choices
           .filter((choice) => choice.retired !== true || held(choice.id))
           .map(({ id, label }) => ({ id, label }))

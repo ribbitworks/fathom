@@ -19,11 +19,11 @@ import {
 import { useState } from "react";
 import { z } from "zod";
 
-// What a cell holds: text, a date as YYYY-MM-DD or empty, the identifiers of chosen choices, or a
-// web link, or null for no link.
+// What a cell holds: text, a date as YYYY-MM-DD or empty, the identifiers of chosen choices, a web
+// link, or null for no link, or, for a checkbox, its one choice when checked and nothing when not.
 export type CellValue = string | string[] | Link | null;
 
-export type Kind = "text" | "date" | "choice" | "link";
+export type Kind = "text" | "date" | "choice" | "link" | "flag";
 
 export interface ColumnChoice {
   id: string;
@@ -337,11 +337,27 @@ const linkRules: Rules = {
   },
 };
 
+// A checkbox is never empty, so it sorts either way: checked or not, filtered by its one choice or
+// by the empty choice, which names the unchecked.
+const checked = (value: CellValue) => asChoices(value).length > 0;
+
+const flagRules: Rules = {
+  isEmpty: () => false,
+  words: (column, value) =>
+    checked(value) ? choiceRules.words(column, value) : "",
+  compare: (_column, a, b) => Number(checked(b)) - Number(checked(a)),
+  matches: (value, filter) =>
+    checked(value)
+      ? asChoices(value).some((id) => (filter.any ?? []).includes(id))
+      : filter.empty === true,
+};
+
 const rules: Record<Kind, Rules> = {
   text: textRules,
   date: dateRules,
   choice: choiceRules,
   link: linkRules,
+  flag: flagRules,
 };
 
 const rulesFor = (column: TableColumn<never>) => rules[column.kind];

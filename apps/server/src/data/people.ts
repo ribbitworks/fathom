@@ -69,7 +69,10 @@ import {
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
-import { refuseRemovingHiresPeople } from "./hires.ts";
+import {
+  refuseRemovingHiresPeople,
+  refuseUnmarkingHireManagers,
+} from "./hires.ts";
 import {
   changedReporting,
   checkLine,
@@ -81,6 +84,7 @@ import {
   refuseRemovingManagers,
   refuseReportsOutside,
   refuseTakenTeamNames,
+  refuseUnmarkingManagers,
   reportingFields,
   reportingOf,
   shownReporting,
@@ -108,6 +112,7 @@ const detailFields = [
   "positionId",
   "startDate",
   "endDate",
+  "isManager",
 ] as const;
 const personFields = [...detailFields, ...reportingFields];
 
@@ -140,12 +145,26 @@ export function recorded(
     positionId: row.positionId,
     startDate: row.startDate,
     endDate: row.endDate,
+    // Recorded only when marked, so adding or removing someone who is not records nothing for it.
+    ...(row.isManager ? { isManager: true } : {}),
   };
   for (const [fieldId, value] of values) {
     if (isLink(value)) record[valueField(fieldId)] = { ...value };
     else if (value.length > 0) record[valueField(fieldId)] = [...value];
   }
   return record;
+}
+
+// A person as recorded, with Manager? left out unless checked, or unchecked from a live check,
+// since only a check is recorded: so unchecking what the live person does not have changes nothing.
+export function withMark(
+  person: Recorded,
+  live: Recorded | undefined,
+): Recorded {
+  if (person.isManager === true || live?.isManager === true) return person;
+  return Object.fromEntries(
+    Object.entries(person).filter(([field]) => field !== "isManager"),
+  );
 }
 
 // A person's choices, by column, as recorded.
@@ -466,6 +485,7 @@ async function readPeopleIn(
     "employeeId",
     "positionId",
     "teamName",
+    "isManager",
     ...(restricted ? ["startDate", "endDate", "managerId", "managerFrom"] : []),
     ...columns.map(({ id }) => valueField(id)),
   ]);
@@ -511,6 +531,7 @@ async function readPeopleIn(
         preferredName: String(person.preferredName),
         employeeId: String(person.employeeId),
         positionId: String(person.positionId),
+        isManager: person.isManager === true,
         ...(restricted
           ? {
               startDate: (person.startDate as string | null) ?? null,
@@ -560,7 +581,9 @@ async function readPeopleIn(
         const fieldId = fieldOfValue(field);
         // The fields are the person's own, named just above.
         /* eslint-disable security/detect-object-injection */
-        if (fieldId === null) {
+        if (field === "isManager") {
+          liveValues.isManager = before.isManager === true;
+        } else if (fieldId === null) {
           Object.assign(liveValues, { [field]: before[field] ?? null });
         } else {
           // Only the fields of the columns read above are shown.
@@ -657,7 +680,7 @@ export async function createPeople(
         positionId: request.positionId,
         startDate: request.startDate ?? null,
         endDate: request.endDate ?? null,
-        isManager: false,
+        isManager: request.isManager ?? false,
       };
       const after = {
         ...recorded(row, values),
@@ -779,18 +802,21 @@ export async function updatePerson(
       ),
     );
     // Columns left with nothing chosen are left out.
-    const after = tidy({
-      ...person,
-      ...details,
-      ...Object.fromEntries(
-        [...changedValues].map(([fieldId, choiceIds]) => [
-          valueField(fieldId),
-          choiceIds,
-        ]),
-      ),
-      ...checkedLinks(columns, change.links ?? {}),
-      ...changedReporting(person, change, today),
-    });
+    const after = withMark(
+      tidy({
+        ...person,
+        ...details,
+        ...Object.fromEntries(
+          [...changedValues].map(([fieldId, choiceIds]) => [
+            valueField(fieldId),
+            choiceIds,
+          ]),
+        ),
+        ...checkedLinks(columns, change.links ?? {}),
+        ...changedReporting(person, change, today),
+      }),
+      before,
+    );
     checkComplete(columns, after);
     const made = personChanges(columns, id, "changed", person, after);
     requireEdits(actor, made);
@@ -819,6 +845,12 @@ export async function updatePerson(
       await refuseReportsOutside(transaction, [{ id, person: after }], today, {
         editor: actor.user.id,
       });
+    }
+    if (person.isManager === true && after.isManager === false) {
+      await refuseUnmarkingManagers(transaction, [id], today, {
+        drafted: true,
+      });
+      await refuseUnmarkingHireManagers(transaction, [id], { drafted: true });
     }
     if (
       typeof after.teamName === "string" &&

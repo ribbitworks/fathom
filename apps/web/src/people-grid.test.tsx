@@ -10,7 +10,13 @@ import { MantineProvider } from "@mantine/core";
 import { act, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { columnsFor, livePeople, PeopleGrid } from "./people-grid.tsx";
+import { countRows } from "./metrics.ts";
+import {
+  type Column,
+  columnsFor,
+  livePeople,
+  PeopleGrid,
+} from "./people-grid.tsx";
 import { columnWidth } from "./record-grid.tsx";
 import { emptyView, formatDay } from "./table-view.ts";
 import { testTheme } from "./test-support.tsx";
@@ -64,6 +70,7 @@ describe("the order of the columns", () => {
       "startDate",
       "endDate",
       "managerId",
+      "isManager",
       "managerFrom",
       "team",
       "teamName",
@@ -443,6 +450,7 @@ describe("managers and teams", () => {
     positionId: "position-1",
     startDate: "2024-01-01",
     endDate: null,
+    isManager: true,
     values: {},
     links: {},
     ...more,
@@ -485,7 +493,7 @@ describe("managers and teams", () => {
   const text = (row: string, key: string) =>
     document.getElementById(`cell-${row}-${key}`)?.textContent;
 
-  it("offers everyone still employed as a manager, and keeps those gone, or not shown, for the people who report to them", () => {
+  it("offers everyone marked as a manager and still employed, and keeps those gone, or not shown, for the people who report to them", () => {
     const manager = columnsFor([], [], [], true, people).find(
       ({ key }) => key === "managerId",
     );
@@ -582,6 +590,16 @@ describe("managers and teams", () => {
     expect(team?.readOnly).toBe(true);
   });
 
+  it("breaks people down by manager, counting each manager's direct reports", () => {
+    const manager = columnsFor([], [], [], true, people).find(
+      ({ key }) => key === "managerId",
+    ) as Column;
+    expect(manager.breaksDown).not.toBe(false);
+    const counts = countRows(people, [manager]);
+    expect(counts.of(["p1"])).toBe(2);
+    expect(counts.of(["p3"])).toBe(1);
+  });
+
   it("leaves Manager since out for those who may not see dates", () => {
     expect(columnsFor([], [], [], false, people).map(({ key }) => key)).toEqual(
       [
@@ -589,10 +607,44 @@ describe("managers and teams", () => {
         "employeeId",
         "positionId",
         "managerId",
+        "isManager",
         "team",
         "teamName",
       ],
     );
+  });
+
+  it("offers only those marked as managers live, keeping a manager no longer marked for their reports", () => {
+    const draft = (live: boolean): Person["draft"] => ({
+      action: "changed",
+      changed: ["isManager"],
+      live: { isManager: live, values: {}, links: {} },
+      state: "waiting",
+      madeBy: null,
+      madeAt: null,
+    });
+    const choices = columnsFor([], [], [], true, [
+      person("p1", { isManager: false }),
+      person("p2", { isManager: false, draft: draft(true) }),
+      person("p3", { isManager: true, draft: draft(false) }),
+      person("p4", { isManager: false, manager: lead("p5") }),
+      person("p5", { isManager: false }),
+    ]).find(({ key }) => key === "managerId")?.choices;
+    expect(choices?.map(({ id, retired }) => [id, retired])).toEqual([
+      ["p2", false],
+      ["p5", true],
+    ]);
+  });
+
+  it("shows whether each person is marked as a manager as a checkbox, and filters by it", () => {
+    render(
+      grid({
+        people: [person("p1"), person("p2", { isManager: false })],
+        view: { ...emptyView, filters: { isManager: { empty: true } } },
+      }),
+    );
+    expect(text("p2", "isManager")).toBe("No");
+    expect(document.getElementById("cell-p1-isManager")).toBeNull();
   });
 
   it("shows each person's manager and team, marking a manager who has left", () => {
@@ -702,6 +754,84 @@ describe("managers and teams", () => {
     await userEvent.keyboard("{Enter}{Control>}a{/Control}{Backspace}{Enter}");
     expect(screen.getByRole("alert").textContent).toBe("Manager since needed");
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it("checks and unchecks Manager? with one click, Space, or Enter, but not by typing", async () => {
+    const update = vi.fn();
+    render(
+      grid({
+        people: [person("p1", { isManager: false }), person("p2")],
+        actions: { ...actions, update },
+      }),
+    );
+    await userEvent.click(
+      document.getElementById("cell-p1-isManager") as HTMLElement,
+    );
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: "p1" }),
+      { isManager: true },
+    );
+    focus("p2", "isManager");
+    await userEvent.keyboard(" ");
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: "p2" }),
+      { isManager: false },
+    );
+    await userEvent.keyboard("{Enter}");
+    expect(update).toHaveBeenCalledTimes(3);
+    await userEvent.keyboard("y");
+    expect(update).toHaveBeenCalledTimes(3);
+    await userEvent.dblClick(
+      document.getElementById("cell-p2-isManager") as HTMLElement,
+    );
+    expect(update).toHaveBeenCalledTimes(5);
+    expect(document.getElementById("cell-p2-isManager-editor")).toBeNull();
+  });
+
+  it("says what Manager? was live beside a draft that changes it", () => {
+    const changing = (live: boolean): Person["draft"] => ({
+      action: "changed",
+      changed: ["isManager"],
+      live: { isManager: live, values: {}, links: {} },
+      state: "waiting",
+      madeBy: null,
+      madeAt: null,
+    });
+    render(
+      grid({
+        people: [
+          person("p1", { isManager: false, draft: changing(true) }),
+          person("p2", { isManager: true, draft: changing(false) }),
+        ],
+      }),
+    );
+    expect(text("p1", "isManager")).toBe("No, draft, live Yes");
+    expect(text("p2", "isManager")).toBe("Yes, draft, live No");
+  });
+
+  it("adds people pasted as managers or not, and refuses a Manager? that is neither", async () => {
+    const add = vi.fn();
+    render(
+      grid({
+        actions: { ...actions, add },
+        order: ["preferredName", "employeeId", "positionId", "isManager"],
+      }),
+    );
+    focus("new-0", "preferredName");
+    await userEvent.paste(
+      "Fictional p6\tp6\tFictional Engineer\tYes\nFictional p7\tp7\tFictional Engineer\tno",
+    );
+    const requests = (add.mock.calls[0]?.[0] ?? []) as {
+      request: { isManager?: boolean };
+    }[];
+    expect(requests.map(({ request }) => request.isManager)).toEqual([
+      true,
+      undefined,
+    ]);
+    focus("new-0", "preferredName");
+    await userEvent.paste("Fictional p8\tp8\tFictional Engineer\tmaybe");
+    expect(add).toHaveBeenCalledTimes(1);
+    expect(document.body.textContent).toContain("Manager?: use Yes or No");
   });
 
   it("adds people with managers pasted by name, and their team's name, but not a team pasted", async () => {

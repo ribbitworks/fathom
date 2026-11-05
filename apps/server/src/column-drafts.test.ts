@@ -685,7 +685,13 @@ describe("reading columns", () => {
 
 describe("orders stored before the reporting columns", () => {
   const before = ["preferredName", "employeeId", "startDate", "endDate"];
-  const reporting = ["managerId", "managerFrom", "team", "teamName"];
+  const reporting = [
+    "managerId",
+    "isManager",
+    "managerFrom",
+    "team",
+    "teamName",
+  ];
 
   it("put each built-in column an order does not name just after the one it follows, live and drafted", async () => {
     const stored = await liveOrder();
@@ -720,6 +726,7 @@ describe("orders stored before the reporting columns", () => {
         "employeeId",
         "positionId",
         "managerId",
+        "isManager",
         "team",
         "teamName",
         ...added.filter((key) => seen.fields.some(({ id }) => id === key)),

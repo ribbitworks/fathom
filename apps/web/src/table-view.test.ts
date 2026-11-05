@@ -254,6 +254,39 @@ describe("sorting", () => {
     ]);
   });
 
+  it("sorts and filters a checkbox either way, and finds a checked one by its choice", () => {
+    const manager: TableColumn<Row> = {
+      key: "manager",
+      label: "Manager?",
+      kind: "flag",
+      choices: [{ id: "yes", label: "Yes" }],
+      multiple: false,
+      emptyLabel: "No",
+      value: (row) => (row.name.startsWith("C") ? ["yes"] : []),
+    };
+    const flagged = (changes: Partial<View>) =>
+      ids(applyView(rows, [...columns, manager], view(changes)));
+    expect(flagged({ sort: [{ key: "manager", descending: false }] })).toEqual([
+      "d",
+      "a",
+      "b",
+      "c",
+    ]);
+    expect(flagged({ sort: [{ key: "manager", descending: true }] })).toEqual([
+      "a",
+      "b",
+      "c",
+      "d",
+    ]);
+    expect(flagged({ filters: { manager: { any: ["yes"] } } })).toEqual(["d"]);
+    expect(flagged({ filters: { manager: { empty: true } } })).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+    expect(flagged({ search: "yes" })).toEqual(["d"]);
+  });
+
   it("keeps empty values in the order given", () => {
     const blank = [...rows, { id: "e", name: "", start: "", levels: [] }];
     expect(

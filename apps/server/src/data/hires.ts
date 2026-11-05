@@ -24,7 +24,7 @@ import {
   type Hires,
   temporaryId,
 } from "@fathom/shared";
-import { and, eq, inArray, or, type SQL, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
@@ -64,6 +64,7 @@ import {
 } from "./drafts.ts";
 import { recordEvent } from "./history.ts";
 import { currentOn } from "./people.ts";
+import { notMarked } from "./reporting.ts";
 
 type Reader = Pick<Database, "select">;
 type HireRow = typeof plannedHires.$inferSelect;
@@ -476,6 +477,34 @@ async function idAsChanged(
   };
 }
 
+const unfilled = (hire: Recorded) => typeof hire.filledBy !== "string";
+
+// Whether a hire not yet filled, as a change leaves it, names a manager it did not name before: a
+// new hire's manager, or a changed one.
+const newlyManaged = (before: Recorded | undefined, after: Recorded) =>
+  typeof after.managerId === "string" &&
+  unfilled(after) &&
+  before?.managerId !== after.managerId;
+
+// Refuses a manager who is not marked as a manager for a hire not yet filled, as people's managers
+// are.
+async function refuseUnmarked(
+  reader: Reader,
+  managerId: string,
+  refused: (message: string) => Error,
+): Promise<void> {
+  const [manager] = await reader
+    .select({
+      preferredName: people.preferredName,
+      isManager: people.isManager,
+    })
+    .from(people)
+    .where(eq(people.id, managerId));
+  if (manager !== undefined && !manager.isManager) {
+    throw refused(notMarked(manager));
+  }
+}
+
 export async function createHire(
   database: Database,
   actor: Actor,
@@ -504,6 +533,13 @@ export async function createHire(
       managerId: request.managerId,
       filledBy: null,
     };
+    if (newlyManaged(undefined, after)) {
+      await refuseUnmarked(
+        transaction,
+        String(after.managerId),
+        (message) => new BadRequestError(message),
+      );
+    }
     await addDrafts(transaction, actor.user.id, recordType, [
       { id, fields: after },
     ]);
@@ -590,6 +626,13 @@ export async function updateHire(
         ? {}
         : { managerId: change.managerId }),
     };
+    if (newlyManaged(hire, after)) {
+      await refuseUnmarked(
+        transaction,
+        String(after.managerId),
+        (message) => new BadRequestError(message),
+      );
+    }
     const made = hireChanges(id, "changed", hire, after);
     if (made.length === 0) return null;
     const all = [
@@ -752,6 +795,46 @@ export async function refuseRemovingHiresPeople(
   }
 }
 
+// Refuses clearing the Manager? mark of people a hire not yet filled names as its manager, live or,
+// when drafting, in a hire's draft, published or not.
+export async function refuseUnmarkingHireManagers(
+  reader: Reader,
+  ids: readonly string[],
+  { drafted }: { drafted: boolean },
+): Promise<void> {
+  for (const chunk of inChunks([...ids])) {
+    const [live] = await reader
+      .select({ id: plannedHires.id })
+      .from(plannedHires)
+      .where(
+        and(
+          inArray(plannedHires.managerId, chunk),
+          isNull(plannedHires.filledBy),
+        ),
+      )
+      .limit(1);
+    let named = live !== undefined;
+    for (const table of drafted && !named ? [drafts, unpublishedDrafts] : []) {
+      const [found] = await reader
+        .select({ id: table.recordId })
+        .from(table)
+        .where(
+          and(
+            eq(table.recordType, recordType),
+            inArray(sql`${table.fields}->>'managerId'`, chunk),
+          ),
+        )
+        .limit(1);
+      named ||= found !== undefined;
+    }
+    if (named) {
+      throw new ConflictError(
+        "Manager? stays checked while a planned hire not yet filled names this person as its manager",
+      );
+    }
+  }
+}
+
 // Checks the actor may approve or reject the drafts of the hires asked for, and reads them with the
 // hires as they are live. Only those who see Confidential data see hires' drafts, so for anyone
 // else they are answered as drafts that do not exist.
@@ -793,6 +876,13 @@ export async function approveHiresIn(
     const before = live.get(id);
     const hire = drafted(before, draft);
     made.push(...hireChanges(id, draft.action, before, hire));
+    if (hire !== undefined && newlyManaged(before, hire)) {
+      await refuseUnmarked(
+        transaction,
+        String(hire.managerId),
+        (message) => new ConflictError(message),
+      );
+    }
     if (hire === undefined) {
       await transaction.delete(plannedHires).where(eq(plannedHires.id, id));
       continue;
@@ -859,8 +949,8 @@ export async function rejectHiresIn(
 
 // Puts back the drafts of the hires a change set changed in their drafts: the hire it drafted adding
 // taken out, the one it drafted removing put back as it was, and the fields it changed put back. A
-// manager put back must still be a live person, a requisition still be one no one else has, and a
-// hire still be there to change.
+// hire must still be there to change, a requisition still be one no one else has, and a manager put
+// back must still be a live person, checked as a manager while the hire is not yet filled.
 export async function undoHireDrafts(
   transaction: Transaction,
   editor: string,
@@ -877,6 +967,7 @@ export async function undoHireDrafts(
   for (const record of records) {
     const old = new Map(record.old);
     old.delete(rejectedField);
+    const now = drafted(live.get(record.id), draftsNow.get(record.id));
     let hire: Recorded | undefined;
     if (record.action === "deleted") {
       hire = {
@@ -894,11 +985,7 @@ export async function undoHireDrafts(
       }
     } else if (record.action === "changed") {
       // A hire changed since is refused before this, so it is still there.
-      const now = drafted(
-        live.get(record.id),
-        draftsNow.get(record.id),
-      ) as Recorded;
-      hire = { ...now, ...Object.fromEntries(old) };
+      hire = { ...(now as Recorded), ...Object.fromEntries(old) };
     }
     if (
       !(await managerAllowed(transaction, hire?.managerId)) ||
@@ -907,6 +994,13 @@ export async function undoHireDrafts(
           .length > 0)
     ) {
       throw new ConflictError(changedSince);
+    }
+    if (hire !== undefined && newlyManaged(now, hire)) {
+      await refuseUnmarked(
+        transaction,
+        String(hire.managerId),
+        (message) => new ConflictError(message),
+      );
     }
     await writeDraft(
       transaction,

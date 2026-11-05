@@ -69,6 +69,7 @@ const sortNames: Record<Kind, [string, string]> = {
   date: ["Oldest first", "Newest first"],
   choice: ["List order", "Reverse list order"],
   link: ["Sort A to Z", "Sort Z to A"],
+  flag: ["Checked first", "Unchecked first"],
 };
 
 // Lists of more choices than this can be narrowed by typing.
@@ -163,6 +164,7 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
   const parts: string[] = [];
   switch (column.kind) {
     case "choice":
+    case "flag":
       parts.push(
         ...column.choices
           .filter((choice) => (filter.any ?? []).includes(choice.id))
@@ -953,6 +955,7 @@ function FilterForm({
   );
   switch (column.kind) {
     case "choice":
+    case "flag":
       return (
         <ChoiceFilter
           column={column}

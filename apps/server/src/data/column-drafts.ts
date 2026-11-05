@@ -796,6 +796,7 @@ export async function readColumnsOut(
     "managerId",
     "team",
     "teamName",
+    "isManager",
     ...(seesTier(actor, "restricted")
       ? ["startDate", "endDate", "managerFrom"]
       : []),

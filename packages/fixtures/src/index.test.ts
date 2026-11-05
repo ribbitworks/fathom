@@ -165,6 +165,19 @@ describe("a fictional organization", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
+  it("marks as managers everyone whose position is Manager, and so everyone a line names", () => {
+    const named = new Set(
+      organization.reportingLines.map(({ managerId }) => managerId),
+    );
+    const manager = organization.positions.find(
+      ({ label }) => label === "Manager",
+    )?.id;
+    for (const person of organization.people) {
+      expect(person.isManager).toBe(person.positionId === manager);
+      if (named.has(person.id)) expect(person.isManager).toBe(true);
+    }
+  });
+
   it("leaves people with no manager when none is employed for them, as in a tiny organization", () => {
     // With this seed, nobody has left and no manager is among the three.
     const tiny = fictionalOrganization({ size: 3, seed: 1 });

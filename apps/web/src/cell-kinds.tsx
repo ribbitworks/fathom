@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // What each kind of cell in a table of records holds and how it behaves, so a new kind of column is
-// added in one place: text, such as a name; a date; choices from a list; and a web link. Each kind
-// says how a record's value is read, live or as drafted, what clears it, how it reads in words,
-// what a pasted cell gives, the change that saves it, how wide its column is, and whether its
-// column is worth breaking down by. A kind with an editor, cell, or menu item of its own names it;
-// the rest are edited as text and shown in words.
+// added in one place: text, such as a name; a date; choices from a list; a web link; and a
+// checkbox. Each kind says how a record's value is read, live or as drafted, what clears it, how it
+// reads in words, what a pasted cell gives, the change that saves it, how wide its column is, and
+// whether its column is worth breaking down by. A kind with an editor, cell, or menu item of its
+// own names it; the rest are edited as text and shown in words.
 
 import {
   type ChangeValue,
@@ -20,6 +20,7 @@ import {
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
+import { FlagCell } from "./flag-field.tsx";
 import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
 import { offered, sameName } from "./lists.ts";
 import {
@@ -92,6 +93,9 @@ export interface CellKind {
   // always filled in, so is not.
   breaksDownWhenRequired: boolean;
   Editor?: (props: EditorProps) => ReactNode;
+  // For a kind edited in one step, such as a checkbox: the value editing gives, in place of an
+  // editor.
+  toggled?: (value: CellValue) => CellValue;
   Cell?: (props: { value: CellValue }) => ReactNode;
   MenuItem?: (props: { name: string; value: CellValue }) => ReactNode;
 }
@@ -273,9 +277,36 @@ const link: CellKind = {
   },
 };
 
+// A checkbox, read from a detail held as true or false, checked when it holds its one choice.
+export const flagChoice = "yes";
+
+const flag: CellKind = {
+  empty: [],
+  problem: () => undefined,
+  measured: false,
+  read: (source, key) =>
+    // eslint-disable-next-line security/detect-object-injection
+    source[key] === true ? [flagChoice] : [],
+  inWords: (_column, value) => (chosen(value).length > 0 ? "Yes" : "No"),
+  pasted: (column, content) => {
+    const word = content.trim().toLowerCase();
+    if (["yes", "y", "true", "x", "1"].includes(word)) {
+      return { value: [flagChoice] };
+    }
+    if (["no", "n", "false", "", "0"].includes(word)) return { value: [] };
+    return { problem: `${column.label}: use Yes or No` };
+  },
+  change: (key, value) => ({ [key]: chosen(value).length > 0 }),
+  width: () => 3,
+  breaksDownWhenRequired: true,
+  toggled: (value) => (chosen(value).length > 0 ? [] : [flagChoice]),
+  Cell: ({ value }) => <FlagCell checked={chosen(value).length > 0} />,
+};
+
 export const cellKinds: Readonly<Record<Kind, CellKind>> = {
   text,
   date,
   choice,
   link,
+  flag,
 };

@@ -123,6 +123,25 @@ describe("a column's groups", () => {
     expect(counted(role).at(-1)).toEqual({ id: emptyGroup, label: "No role" });
   });
 
+  it("are a checkbox's one choice and what it calls the unchecked, counting each row in one", () => {
+    const manager: TableColumn<Row> = {
+      key: "manager",
+      label: "Manager?",
+      kind: "flag",
+      choices: [{ id: "yes", label: "Yes" }],
+      multiple: false,
+      emptyLabel: "No",
+      value: (row) => (row.role.includes("dev") ? ["yes"] : []),
+    };
+    expect(groupsFor(manager, () => true)).toEqual([
+      { id: "yes", label: "Yes" },
+      { id: emptyGroup, label: "No" },
+    ]);
+    const counted = countRows(rows, [manager]);
+    expect(counted.of(["yes"])).toBe(2);
+    expect(counted.of([emptyGroup])).toBe(2);
+  });
+
   it("are Populated and Empty for columns without choices", () => {
     expect(counted(start).map(({ label }) => label)).toEqual([
       "Populated",
