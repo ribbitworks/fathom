@@ -43,6 +43,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Teams and Reporting Lines | In progress: schema, server, seed and Drafts |
 | Cycles and Releases | In progress: schema |
 | Hiring Plan | In progress: schema |
+| Editable Roles | Next |
 
 ### Hello Fathom
 
@@ -101,6 +102,17 @@ People managers and their current direct reports: each person's reporting line, 
 ### Hiring Plan
 
 Planned hires, apart from People, in the states and with the details, columns shared with People, placeholders, and drafts set out in the [Decisions Log](../product/decisions.md#workforce), with the Workforce Administrator renaming the states. Filling a planned hire links it to an existing person or adds a new one, and new employees can be added before they start. Placeholders show with their manager's team, and count toward its reports once the Team Composition slice compares them with the range. The seed data gains planned hires in every state, one filled by a new employee who has not started, and one filled by an internal transfer. Allocating planned hires waits for the Allocations and Capacity slice.
+
+### Editable Roles
+
+Roles kept in the database as sets of permissions, as the [Decisions Log](../product/decisions.md#people-and-privacy) sets out, built in this order, each step its own pull request:
+
+1. **Schema:** roles, and the permissions each grants. Accounts hold roles by reference, and the migration makes today's eight roles with exactly what they grant now, so nobody's access changes.
+2. **Server:** what a user may do is read from their roles in the database. Each permission gains its plain-English descriptions, and every page names the permission it needs from the same list.
+3. **Roles page:** an Administrator who may edit roles sees each role's permissions as a grid of areas and actions, with the plain-English result beside it, copies and edits roles, and sees which accounts a change affects before saving it. The account dialog shows the result of the roles it gives.
+4. **Finer permissions:** split by area, one area at a time, starting with approving, so Approvers approve only the kinds of drafts their roles name.
+
+Scope, such as one's own reporting line, follows later, as [Issues](../issues.md#roles) records.
 
 ### Importing People
 
