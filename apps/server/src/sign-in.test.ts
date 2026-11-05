@@ -571,7 +571,12 @@ describe("account command", () => {
     });
     expect(session.json()).toMatchObject({
       roles: ["administrator"],
-      permissions: ["accounts:manage", "history:view", "roles:edit"],
+      permissions: [
+        "accounts:manage",
+        "history:view",
+        "roles:edit",
+        "settings:edit",
+      ],
     });
   });
 

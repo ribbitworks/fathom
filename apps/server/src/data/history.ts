@@ -60,13 +60,15 @@ export async function recordEvents(
 }
 
 // Records that a user saw people's Restricted details, or the hiring plan, at most once a day for
-// each user and kind of view, by the database's date, so what they see often does not bury other
-// entries.
+// each user and kind of view, by the day in Fathom's time zone, so what they see often does not bury
+// other entries. Changing the time zone checks PostgreSQL knows it.
 export async function recordRestrictedView(
   database: Database,
   actorId: string,
+  timeZone: string,
   action: "restricted-viewed" | "hiring-plan-viewed" = "restricted-viewed",
 ): Promise<void> {
+  const startOfToday = sql`(now() AT TIME ZONE ${timeZone})::date::timestamp AT TIME ZONE ${timeZone}`;
   const today = await database
     .select({ id: accessHistory.id })
     .from(accessHistory)
@@ -74,7 +76,7 @@ export async function recordRestrictedView(
       and(
         eq(accessHistory.actorId, actorId),
         eq(accessHistory.action, action),
-        gte(accessHistory.occurredAt, sql`current_date`),
+        gte(accessHistory.occurredAt, startOfToday),
       ),
     )
     .limit(1);
@@ -92,6 +94,8 @@ const storedDetailsSchema = z
     previousName: z.string().optional(),
     granted: z.array(z.string()).optional(),
     withdrawn: z.array(z.string()).optional(),
+    timeZone: z.string().optional(),
+    previousTimeZone: z.string().optional(),
   })
   .catch({});
 

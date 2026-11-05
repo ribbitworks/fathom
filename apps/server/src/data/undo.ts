@@ -102,6 +102,7 @@ import {
 import { typeOf } from "./column-types.ts";
 import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
+import { readToday } from "./settings.ts";
 import {
   recordHiringChanges,
   refuseUnmarkingHireManagers,
@@ -456,7 +457,12 @@ async function undoPersonDrafts(
   records: readonly Undone[],
 ): Promise<void> {
   const ids = records.map(({ id }) => id);
-  const live = await readLive(transaction, columns, { ids, lock: true });
+  const today = await readToday(transaction);
+  const live = await readLive(transaction, columns, {
+    ids,
+    lock: true,
+    asOf: today,
+  });
   const draftsNow = await readPersonDrafts(transaction, ids, editor);
   const undone = (id: string) =>
     new Set(records.find((record) => record.id === id)?.old.keys());
@@ -501,7 +507,14 @@ async function undoPersonDrafts(
       if (taken.length > 0 || !fitsColumns(columns, listOf, person)) {
         throw new ConflictError(changedSince);
       }
-      await refuseUndoneReporting(transaction, editor, id, person, undone(id));
+      await refuseUndoneReporting(
+        transaction,
+        editor,
+        id,
+        person,
+        undone(id),
+        today,
+      );
     }
     await writePersonDraft(transaction, editor, id, live.get(id), person);
   }
@@ -516,8 +529,8 @@ async function refuseUndoneReporting(
   id: string,
   person: Recorded,
   putBack: ReadonlySet<string>,
+  today: string,
 ): Promise<void> {
-  const today = new Date().toISOString().slice(0, 10);
   if (putBack.has("teamName") && typeof person.teamName === "string") {
     await refuseTakenTeamNames(transaction, [{ id, name: person.teamName }]);
   }

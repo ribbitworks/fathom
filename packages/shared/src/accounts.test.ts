@@ -101,6 +101,7 @@ describe("responses", () => {
         user: { id: "1", name: "Fictional User", email: "user@example.test" },
         roles: ["administrator"],
         permissions: ["accounts:manage"],
+        settings: { timeZone: "America/Vancouver" },
       }).success,
     ).toBe(true);
   });

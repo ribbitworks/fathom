@@ -54,6 +54,7 @@ type Page =
   | "/"
   | "/accounts"
   | "/roles"
+  | "/settings"
   | "/history"
   | "/changes"
   | "/drafts"
@@ -149,6 +150,12 @@ const sections: { label: string; items: Item[] }[] = [
         icon: "roles",
         to: "/roles",
         permission: "roles:edit",
+      },
+      {
+        label: "Settings",
+        icon: "settings",
+        to: "/settings",
+        permission: "settings:edit",
       },
     ],
   },

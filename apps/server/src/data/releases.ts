@@ -20,7 +20,6 @@ import {
 } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import { NotFoundError } from "../errors.ts";
-import { isoDay } from "./people.ts";
 import type { Saved } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
 import {
@@ -43,6 +42,7 @@ import {
   saveRecordDraft,
 } from "./records.ts";
 import { cyclesUntilOf, streamPatterns } from "./release-kinds.ts";
+import { readToday } from "./settings.ts";
 
 // The records of a kind in a stream, as shown, in order of the day given by a field.
 function inStream(
@@ -179,8 +179,9 @@ export async function createStream(
   database: Database,
   editor: string,
   request: ReleaseStreamRequest,
-  today = isoDay(new Date()),
+  asOf?: string,
 ): Promise<Saved<ReleaseStream>> {
+  const today = asOf ?? (await readToday(database));
   const id = randomUUID();
   return changingStream(database, editor, id, (transaction, state) =>
     saveRecordDraft(transaction, editor, state, "release-stream", id, {

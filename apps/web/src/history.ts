@@ -95,6 +95,10 @@ const actionWords: Record<AccessAction, ActionWords> = {
     verb: "changed the role",
     caution: true,
   },
+  "time-zone-changed": {
+    verb: "changed Fathom's time zone",
+    caution: false,
+  },
 };
 
 // An action recorded by another version of Fathom, which this one does not know, is shown as it was
@@ -163,9 +167,14 @@ function describeRole(details: HistoryEntry["details"]): string {
   return parts.join("; ");
 }
 
-// The roles involved in an entry, in words, or an empty string when none were.
+// The roles or time zones involved in an entry, in words, or an empty string when none were.
 export function describeDetails({ details }: HistoryEntry): string {
   if (details.role !== undefined) return describeRole(details);
+  if (details.timeZone !== undefined) {
+    return details.previousTimeZone === undefined
+      ? `to ${details.timeZone}`
+      : `from ${details.previousTimeZone} to ${details.timeZone}`;
+  }
   if (details.previousRoles !== undefined && details.roles !== undefined) {
     return `from ${names(details.previousRoles)} to ${names(details.roles)}`;
   }

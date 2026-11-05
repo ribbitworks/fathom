@@ -46,6 +46,13 @@ const paths = {
       <path d="M6 8l1.5 1.5L10.5 6.5" />
     </>
   ),
+  settings: (
+    <>
+      <path d="M2.5 4.5h6M11.5 4.5h2M2.5 11.5h2M7.5 11.5h6" />
+      <circle cx="10" cy="4.5" r="1.5" />
+      <circle cx="6" cy="11.5" r="1.5" />
+    </>
+  ),
   history: (
     <>
       <circle cx="8" cy="8" r="6" />

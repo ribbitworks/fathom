@@ -32,6 +32,8 @@ export const accessActionSchema = z.enum([
   // role and the permissions granted or withdrawn.
   "role-created",
   "role-changed",
+  // Someone changed Fathom's time zone, naming the time zones before and after.
+  "time-zone-changed",
 ]);
 
 export type AccessAction = z.infer<typeof accessActionSchema>;
@@ -45,6 +47,8 @@ export const historyDetailsSchema = z.object({
   previousName: z.string().optional(),
   granted: z.array(z.string()).optional(),
   withdrawn: z.array(z.string()).optional(),
+  timeZone: z.string().optional(),
+  previousTimeZone: z.string().optional(),
 });
 
 export type HistoryDetails = z.infer<typeof historyDetailsSchema>;

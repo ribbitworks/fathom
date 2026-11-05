@@ -42,6 +42,7 @@ export const fictionalUser = {
   },
   roles: ["viewer"],
   permissions: ["plan:view"],
+  settings: { timeZone: "America/Vancouver" },
 };
 export const signedIn = () => Response.json(fictionalUser);
 export const signedOut = () =>

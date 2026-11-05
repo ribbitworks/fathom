@@ -158,7 +158,7 @@ export function authRoutes(
         if (actor === null) {
           return reply.status(unauthorized).send({ error: "Unauthorized" });
         }
-        return actor;
+        return { ...actor, settings: await data.readSettings() };
       },
     );
     done();

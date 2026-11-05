@@ -28,6 +28,8 @@ import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
+import { SettingsPage } from "./settings-page.tsx";
+import { setTimeZone } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
@@ -64,10 +66,13 @@ const signedInRoute = createRoute({
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
       throw redirect({ to: "/sign-in", search: { redirect: location.href } });
     }
+    // Every page works out today in Fathom's time zone, as the session has it now.
+    setTimeZone(session.settings.timeZone);
     return {
       user: session.user,
       roles: session.roles,
       permissions: session.permissions,
+      timeZone: session.settings.timeZone,
     };
   },
   component: function SignedIn() {
@@ -107,6 +112,15 @@ const rolesRoute = createRoute({
   beforeLoad: requiring("roles:edit"),
   component: function Roles() {
     return <RolesPage user={signedIn.useRouteContext().user} />;
+  },
+});
+
+const settingsRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/settings",
+  beforeLoad: requiring("settings:edit"),
+  component: function Settings() {
+    return <SettingsPage timeZone={signedIn.useRouteContext().timeZone} />;
   },
 });
 
@@ -296,6 +310,7 @@ const routeTree = rootRoute.addChildren([
     homeRoute,
     accountsRoute,
     rolesRoute,
+    settingsRoute,
     historyRoute,
     changesRoute,
     listsRoute,

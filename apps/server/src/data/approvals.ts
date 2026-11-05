@@ -68,6 +68,7 @@ import {
 } from "./list-approvals.ts";
 import { approveRecordDrafts, rejectRecordDrafts } from "./records.ts";
 import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
+import { readToday } from "./settings.ts";
 import {
   approveHiresIn,
   checkHiresAsked,
@@ -94,7 +95,11 @@ async function seenAsked(
   const columns = await columnsWithAdded(transaction, undefined, true);
   const found = await readPersonDrafts(transaction, ids);
   if (found.size !== ids.length) throw new NotFoundError(noDraft);
-  const live = await readLive(transaction, columns, { ids, lock: true, today });
+  const live = await readLive(transaction, columns, {
+    ids,
+    lock: true,
+    asOf: today,
+  });
   const tierOf = personTier(columns);
   const shown = new Set(columns.map(({ id }) => valueField(id)));
   const seen = (field: string) =>
@@ -342,8 +347,9 @@ export async function approveDrafts(
   database: Database,
   actor: Actor,
   requested: DraftsRequest,
-  today: string = new Date().toISOString().slice(0, 10),
+  asOf?: string,
 ): Promise<string | null> {
+  const today = asOf ?? (await readToday(database));
   try {
     return await database.transaction(async (transaction) => {
       await deciding(transaction, actor, requested);
@@ -397,8 +403,9 @@ export async function rejectDrafts(
   actor: Actor,
   asked: DraftsRequest,
   reason: string,
-  today: string = new Date().toISOString().slice(0, 10),
+  asOf?: string,
 ): Promise<string | null> {
+  const today = asOf ?? (await readToday(database));
   return database.transaction(async (transaction) => {
     await deciding(transaction, actor, asked);
     const seen =

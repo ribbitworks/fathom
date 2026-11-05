@@ -311,6 +311,46 @@ describe("the entries", () => {
     ]);
   });
 
+  it("say which time zone Fathom moved from and to, or to, for an entry naming no time zone before", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () =>
+        Response.json({
+          entries: [
+            {
+              id: 14,
+              occurredAt: "2026-10-30T19:00:00.000Z",
+              actor: admin,
+              action: "time-zone-changed",
+              subject: null,
+              details: {
+                timeZone: "Asia/Kolkata",
+                previousTimeZone: "America/Vancouver",
+              },
+            },
+            {
+              id: 13,
+              occurredAt: "2026-10-30T18:00:00.000Z",
+              actor: admin,
+              action: "time-zone-changed",
+              subject: null,
+              details: { timeZone: "America/Vancouver" },
+            },
+          ],
+        }),
+    });
+    renderApp("/history");
+    const lines = (await screen.findAllByRole("listitem")).map((item) =>
+      item.textContent.slice(
+        String(item.querySelector("time")?.textContent).length,
+      ),
+    );
+    expect(lines).toEqual([
+      "Fictional Person changed Fathom's time zone: from America/Vancouver to Asia/Kolkata",
+      "Fictional Person changed Fathom's time zone: to America/Vancouver",
+    ]);
+  });
+
   it("show each entry's date, with its year, and time, in the time zone the tests fix", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,

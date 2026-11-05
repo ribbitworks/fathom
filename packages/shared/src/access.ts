@@ -43,6 +43,8 @@ export const permissionSchema = z.enum([
   "accounts:manage",
   // Changing what roles grant, apart from managing accounts, as the Decisions Log sets out.
   "roles:edit",
+  // Changing settings for the whole of Fathom, such as its time zone.
+  "settings:edit",
   "history:view",
   // The change history, holding only changes to data the reader may see.
   "changes:view",
@@ -158,6 +160,11 @@ export const permissionDescriptions: Record<
       "Creates and changes roles: their names, descriptions, and what they grant, including roles the user holds.",
     without: "Cannot change roles.",
   },
+  "settings:edit": {
+    allows:
+      "Changes settings for the whole of Fathom, such as the time zone that decides which day is today.",
+    without: "Cannot change Fathom's settings.",
+  },
   "history:view": {
     allows:
       "Sees the access history: who changed accounts or protected data, or looked at protected data, and when.",
@@ -247,6 +254,7 @@ export const permissionGrid: readonly {
   { area: "Access history", actions: { view: "history:view" } },
   { area: "Accounts", actions: { edit: "accounts:manage" } },
   { area: "Roles", actions: { edit: "roles:edit" } },
+  { area: "Settings", actions: { edit: "settings:edit" } },
 ];
 
 const actionNames: Record<GridAction, string> = {
@@ -352,6 +360,11 @@ export const startingRoles: Record<
     name: "Administrator",
     description:
       "Manages user accounts, role assignments, and system settings, without access to Restricted or Confidential data.",
-    permissions: ["accounts:manage", "roles:edit", "history:view"],
+    permissions: [
+      "accounts:manage",
+      "roles:edit",
+      "settings:edit",
+      "history:view",
+    ],
   },
 };

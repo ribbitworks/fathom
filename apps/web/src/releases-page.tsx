@@ -78,6 +78,7 @@ import { ReleasesTimeline } from "./releases-timeline.tsx";
 import { sidePanelScroll, useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { DraftMark, HoldMarks } from "./status-mark.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
+import { today } from "./today.ts";
 
 type Dialog =
   | { kind: "stream"; stream?: ReleaseStream }
@@ -135,14 +136,6 @@ function monthsInWords(months: readonly { month: string; share: number }[]) {
 
 const patternWords = (pattern: CyclePattern) =>
   `Every ${String(pattern.length)} ${pattern.unit === "weeks" ? "week" : "month"}${pattern.length === 1 ? "" : "s"}, named ${pattern.naming}`;
-
-// Today where the reader is, as YYYY-MM-DD; in UTC it would already be tomorrow on an evening west
-// of Greenwich.
-function today(): string {
-  const now = new Date();
-  const two = (part: number) => String(part).padStart(2, "0");
-  return `${String(now.getFullYear())}-${two(now.getMonth() + 1)}-${two(now.getDate())}`;
-}
 
 // The pattern in force today, or the first, when none has started yet.
 function patternNow(stream: ReleaseStream): CyclePattern | undefined {

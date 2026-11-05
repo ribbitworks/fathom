@@ -35,6 +35,7 @@ import type {
   SavedView,
   SavedViewChange,
   SavedViewRequest,
+  Settings,
   Unpublished,
 } from "@fathom/shared";
 import { draftsRequestSchema } from "@fathom/shared";
@@ -63,6 +64,7 @@ import {
   readUnpublished,
 } from "./unpublished.ts";
 import { type ActorAccess, readActorAccess } from "./roles.ts";
+import { changeTimeZone, readSettings, readTimeZone } from "./settings.ts";
 import * as views from "./views.ts";
 
 export interface DataAccess {
@@ -73,6 +75,10 @@ export interface DataAccess {
   // checks no permission.
   readActorAccess(userId: string): Promise<ActorAccess | null>;
   readGreeting(actor: Actor): Promise<string>;
+  // Settings for the whole of Fathom, which every signed-in user's screens follow, so reading them
+  // checks no permission.
+  readSettings(): Promise<Settings>;
+  changeTimeZone(actor: Actor, timeZone: string): Promise<Settings>;
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
   // The change sets saved before the one named, or the latest, holding only the changes the actor
@@ -310,6 +316,7 @@ function createHireAccess(database: Database): HireAccess {
         await recordRestrictedView(
           database,
           actor.user.id,
+          await readTimeZone(database),
           "hiring-plan-viewed",
         );
       }
@@ -456,7 +463,11 @@ function createPeopleAccess(database: Database): PeopleAccess {
       requirePermission(actor, "people:view");
       const read = await peopleData.readPeople(database, actor);
       if (read.includedRestricted) {
-        await recordRestrictedView(database, actor.user.id);
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          await readTimeZone(database),
+        );
       }
       // The columns as their drafts make them, and their order, as the actor may see them.
       // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
@@ -539,7 +550,11 @@ export function createDataAccess(database: Database): DataAccess {
       requirePermission(actor, "changes:view");
       const read = await readChangeHistory(database, actor, before, search);
       if (read.includedSensitive) {
-        await recordRestrictedView(database, actor.user.id);
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          await readTimeZone(database),
+        );
       }
       return { entries: read.entries, next: read.next };
     },
@@ -570,5 +585,8 @@ export function createDataAccess(database: Database): DataAccess {
       requirePermission(actor, "plan:view");
       return readGreeting(database);
     },
+    readSettings: async () => readSettings(database),
+    changeTimeZone: async (actor, timeZone) =>
+      changeTimeZone(database, actor, timeZone),
   };
 }

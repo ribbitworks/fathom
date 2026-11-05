@@ -1330,20 +1330,24 @@ describe("the timeline", () => {
     ).toBeDefined();
   });
 
-  it("marks today by the reader's own date, late in their evening too", async () => {
-    // West of Greenwich, where it is already the next day in UTC.
+  it("marks today in Fathom's time zone, not the reader's own", async () => {
+    // Late on 15 February for a reader in Los Angeles is already the 16th in Tokyo.
     vi.stubEnv("TZ", "America/Los_Angeles");
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2027, 1, 15, 23, 30));
     serverAnswers({
-      "GET /api/session": signedIn,
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          settings: { timeZone: "Asia/Tokyo" },
+        }),
       "GET /api/release-streams": answer([fictionalStream()]),
     });
     renderApp("/releases");
     const timeline = await screen.findByRole("region", { name: "Timeline" });
     expect(
       within(timeline).getByText(
-        (_, element) => element?.textContent === "Today, 2027-02-15",
+        (_, element) => element?.textContent === "Today, 2027-02-16",
         { selector: "span" },
       ),
     ).toBeDefined();

@@ -65,6 +65,7 @@ import {
 import { recordEvent } from "./history.ts";
 import { currentOn } from "./people.ts";
 import { notMarked } from "./reporting.ts";
+import { readToday } from "./settings.ts";
 
 type Reader = Pick<Database, "select">;
 type HireRow = typeof plannedHires.$inferSelect;
@@ -224,9 +225,10 @@ async function peopleNamed(
 export async function readHires(
   database: Database,
   actor: Actor,
-  today: string = new Date().toISOString().slice(0, 10),
+  asOf?: string,
 ): Promise<Hires> {
   requireAnyPermission(actor, ["confidential:view", "people:view"]);
+  const today = asOf ?? (await readToday(database));
   return database.transaction(
     async (transaction) => {
       const wholePlan = seesTier(actor, "confidential");

@@ -36,6 +36,7 @@ import {
 import { StatusMark } from "./status-mark.tsx";
 import { flagChoice } from "./cell-kinds.tsx";
 import type { CellValue } from "./table-view.ts";
+import { today } from "./today.ts";
 
 export type PeopleActions = RecordActions<Person, PersonChange, PersonRequest>;
 
@@ -64,9 +65,6 @@ const detailKeys: readonly DetailKey[] = [
 ];
 
 const collator = new Intl.Collator(undefined, { sensitivity: "base" });
-
-// Today as YYYY-MM-DD, by the same clock the server's checks use.
-const today = () => new Date().toISOString().slice(0, 10);
 
 // Whether someone is marked as a manager live, whatever their draft makes them.
 const markedLive = (person: Person) =>

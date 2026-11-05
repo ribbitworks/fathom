@@ -69,6 +69,7 @@ import {
 import { checkBuiltInChoice } from "./built-in-lists.ts";
 import { typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
+import { readToday } from "./settings.ts";
 import {
   refuseRemovingHiresPeople,
   refuseUnmarkingHireManagers,
@@ -115,8 +116,6 @@ const detailFields = [
   "isManager",
 ] as const;
 const personFields = [...detailFields, ...reportingFields];
-
-export const isoDay = (moment: Date) => moment.toISOString().slice(0, 10);
 
 // The tier of each field of a person: dates are Restricted, and so are changes to their manager,
 // which name past managers, each column's values are as sensitive as its list, and the rest is
@@ -399,13 +398,14 @@ export async function readLive(
   {
     ids,
     lock = false,
-    today = isoDay(new Date()),
+    asOf,
   }: {
     ids?: readonly string[] | undefined;
     lock?: boolean;
-    today?: string | undefined;
+    asOf?: string | undefined;
   } = {},
 ): Promise<Map<string, Recorded>> {
+  const today = asOf ?? (await readToday(reader));
   const rows: PersonRow[] = [];
   const read = async (chunk?: readonly string[]) => {
     const query = reader
@@ -461,8 +461,9 @@ export function currentOn(person: Recorded, today: string): boolean {
 export async function readPeople(
   database: Database,
   actor: Actor,
-  today: string = new Date().toISOString().slice(0, 10),
+  asOf?: string,
 ): Promise<PeopleRead> {
+  const today = asOf ?? (await readToday(database));
   // People and their drafts are read as of one moment, so an approval saved meanwhile is seen
   // whole or not at all.
   return database.transaction(
@@ -489,7 +490,7 @@ async function readPeopleIn(
     ...(restricted ? ["startDate", "endDate", "managerId", "managerFrom"] : []),
     ...columns.map(({ id }) => valueField(id)),
   ]);
-  const live = await readLive(database, allColumns, { today });
+  const live = await readLive(database, allColumns, { asOf: today });
   const draftsNow = await readPersonDrafts(database, undefined, actor.user.id);
   const held = await readHeld(database, "person", actor.user.id);
   const makers = await draftMakers(
@@ -657,9 +658,10 @@ export async function createPeople(
   database: Database,
   actor: Actor,
   requests: readonly PersonRequest[],
-  today: string = isoDay(new Date()),
+  asOf?: string,
 ): Promise<{ ids: string[]; changeSetId: string | null }> {
   requirePermission(actor, "people:edit");
+  const today = asOf ?? (await readToday(database));
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const columns = await columnsWithAdded(transaction, actor.user.id, true);
@@ -744,7 +746,7 @@ async function lockDrafted(
   person: Recorded | undefined;
 }> {
   const before = (
-    await readLive(transaction, columns, { ids: [id], lock: true, today })
+    await readLive(transaction, columns, { ids: [id], lock: true, asOf: today })
   ).get(id);
   const draft = (await readPersonDrafts(transaction, [id], actor.user.id)).get(
     id,
@@ -762,9 +764,10 @@ export async function updatePerson(
   actor: Actor,
   id: string,
   change: PersonChange,
-  today: string = isoDay(new Date()),
+  asOf?: string,
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
+  const today = asOf ?? (await readToday(database));
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const columns = await columnsWithAdded(transaction, actor.user.id, true);

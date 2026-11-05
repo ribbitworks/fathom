@@ -2,16 +2,16 @@
 title: "Manual Test: Editing Roles"
 category: "How-To"
 audience: "AI Coding Assistant"
-applies_to: ["apps/web/src/roles*.ts*", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
+applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-04"
+last_updated: "2026-11-05"
 ---
 
 # Manual Test: Editing Roles
 
 ## Scope
 
-Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, copying and creating roles, the refusals, and the access history entries that changes leave.
+Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, copying and creating roles, the refusals, and the access history entries that changes leave. It also verifies the Settings page, where the Administrator changes Fathom's time zone.
 
 ## Test Environment
 
@@ -23,7 +23,7 @@ Verifies the Roles page: who sees it, the list of roles, the dialog that sets wh
 
 R2 creates these accounts, with every other development account. They share one password, which R2 prints when it finishes. Every account holds its roles as Fathom starts them.
 
-- **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds only the Administrator role, so it can manage accounts, edit roles, and see the access history.
+- **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds only the Administrator role, so it can manage accounts, edit roles, change Fathom's settings, and see the access history.
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It cannot edit roles.
 - **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Viewer, Project Planner and Approver roles.
 
@@ -93,7 +93,7 @@ Run the test cases in order. Start with R2. Tick each step whose expected result
   - **Notes:**
 
 - [ ] **Step 3.** Sign out (P2), and sign in (P1) as `fathom.administrator@fathom.test`.
-  - **Expected:** The left-hand menu shows **Accounts** and **Roles** under **Administration**.
+  - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings** under **Administration**.
   - **Notes:**
 
 ### ROLE-02: The Roles Page Lists Every Role
@@ -252,7 +252,35 @@ Run the test cases in order. Start with R2. Tick each step whose expected result
   - **Expected:** **Edit** on **Roles** is still ticked; nothing changed.
   - **Notes:**
 
-### ROLE-11: Put Every Role Back
+### ROLE-11: Changing Fathom's Time Zone
+
+**Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`.
+
+- [ ] **Step 1.** Select **Settings** under **Administration** in the left-hand menu.
+  - **Expected:** The **Settings** page shows **Time zone** set to **America/Vancouver**, with the day and time there under it, such as **It is Thursday, November 5, 2026 at 6:06 AM there.**, matching a clock in Vancouver. **Save** is turned off.
+  - **Notes:**
+
+- [ ] **Step 2.** Type `Kolkata` in **Time zone**, and choose the time zone for India from the list.
+  - **Expected:** The line under it shows the day and time in India, matching a clock there, and **Save** is turned on.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Save**.
+  - **Expected:** A green banner says **Fathom's time zone is now** followed by the time zone chosen, and **Save** is turned off again.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Access history** under **History** in the left-hand menu.
+  - **Expected:** The newest entry says **Fathom Administrator changed Fathom's time zone: from America/Vancouver to** the time zone chosen.
+  - **Notes:**
+
+- [ ] **Step 5.** Open **Settings** again, choose **America/Vancouver**, and select **Save**.
+  - **Expected:** A green banner says **Fathom's time zone is now America/Vancouver.**
+  - **Notes:**
+
+- [ ] **Step 6.** Sign out (P2), sign in (P1) as `engineering.operations.manager@fathom.test`, and change the browser's address to end in `/settings`.
+  - **Expected:** The left-hand menu has no **Settings** page, and the page says **There is no page at this address.**
+  - **Notes:**
+
+### ROLE-12: Put Every Role Back
 
 **Preconditions:** All the test cases above run.
 
