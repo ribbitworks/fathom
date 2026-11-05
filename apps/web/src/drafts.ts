@@ -1,20 +1,30 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Approving and rejecting drafts through the server's API, several kinds at once: of people, People's
-// columns, lists, choices, and the order of lists' choices and of People's columns. Neither can be
-// undone. Approving a draft approves the drafts it uses too, of any kind, which are counted first:
-// the server says which choices or columns an order uses, and the rest, such as the new choices and
-// columns a person is given and the new lists they belong to, are worked out here, as is what a
-// decision covers, and whether a draft waits for a rejected one it depends on.
+// Approving and rejecting drafts through the server's API, several kinds at once: of people,
+// People's columns, lists, choices, and the order of lists' choices and of People's columns.
+// Neither can be undone. Approving a draft approves the drafts it uses too, of any kind, which are
+// counted first: the server says which choices or columns an order uses, and the rest, such as the
+// new choices and columns a person is given and the new lists they belong to, are worked out here,
+// as is what a decision covers, and whether a draft waits for a rejected one it depends on.
 
 import {
   type ColumnOrderDraft,
   type Field,
   type List,
   type Person,
+  type RecordRef,
   savedSchema,
 } from "@fathom/shared";
 import { sendJsonFor } from "./api.ts";
+import {
+  type RecordNode,
+  recordNames,
+  recordsJoined,
+  recordsWithout,
+  rejectedRecords,
+  usedRecords,
+  usingRecords,
+} from "./record-drafts.ts";
 
 // Drafts chosen to approve or reject, by kind: an order is named by its list.
 export interface DraftSelection {
@@ -25,6 +35,8 @@ export interface DraftSelection {
   columns: string[];
   // The draft of the order of the People table's columns.
   columnOrder: boolean;
+  // The plan's records, such as release streams, by kind.
+  records: RecordRef[];
 }
 
 // Which draft of a table's columns: a column's, or that of the column order.
@@ -38,6 +50,7 @@ export const noDrafts = (): DraftSelection => ({
   orders: [],
   columns: [],
   columnOrder: false,
+  records: [],
 });
 
 export const draftTotal = (selection: DraftSelection) =>
@@ -46,6 +59,7 @@ export const draftTotal = (selection: DraftSelection) =>
   selection.choices.length +
   selection.orders.length +
   selection.columns.length +
+  selection.records.length +
   (selection.columnOrder ? 1 : 0);
 
 // Approves the drafts chosen, and those they use, all together, and gives the change set that
@@ -82,12 +96,13 @@ function placedByOrder(list: List): string[] {
   return list.orderDraft?.uses ?? [];
 }
 
-// The People table's columns, the draft of their order, and its people, where the selection may
-// hold them.
+// The People table's columns, the draft of their order, and its people, and the plan's records,
+// where the selection may hold them.
 export interface Columns {
   fields: readonly Field[];
   orderDraft?: ColumnOrderDraft | undefined;
   people?: readonly Person[] | undefined;
+  records?: readonly RecordNode[] | undefined;
 }
 
 const addedField = (fields: readonly Field[], id: string) =>
@@ -171,11 +186,12 @@ export function usedDrafts(
     lists: [...listIds].filter((id) => !selection.lists.includes(id)),
     choices: [...choices].filter((id) => !selection.choices.includes(id)),
     columns: [...fieldIds].filter((id) => !selection.columns.includes(id)),
+    records: usedRecords(selection.records, columns?.records ?? []),
   };
 }
 
-// The lists, choices, and columns in the selection whose drafts were rejected, which wait until they
-// are sent for approval again, and so hold up approving any draft that uses them.
+// The lists, choices, and columns in the selection whose drafts were rejected, which wait until
+// they are sent for approval again, and so hold up approving any draft that uses them.
 export function rejectedAmong(
   selection: DraftSelection,
   lists: readonly List[],
@@ -195,6 +211,7 @@ export function rejectedAmong(
     columns: selection.columns.filter((id) =>
       rejected(columns?.fields.find((field) => field.id === id)?.draft),
     ),
+    records: rejectedRecords(selection.records, columns?.records ?? []),
   };
 }
 
@@ -221,6 +238,7 @@ export function heldBack(
     orders: selection.orders.filter((id) => held({ orders: [id] })),
     columns: selection.columns.filter((id) => held({ columns: [id] })),
     columnOrder: selection.columnOrder && held({ columnOrder: true }),
+    records: selection.records.filter((ref) => held({ records: [ref] })),
   };
 }
 
@@ -235,6 +253,7 @@ export const without = (
   orders: selection.orders.filter((id) => !other.orders.includes(id)),
   columns: selection.columns.filter((id) => !other.columns.includes(id)),
   columnOrder: selection.columnOrder && !other.columnOrder,
+  records: recordsWithout(selection.records, other.records),
 });
 
 // The drafts that use any in the selection, which must be rejected with them: the choices added to,
@@ -306,6 +325,7 @@ export function usingDrafts(
       (columns?.orderDraft?.uses ?? []).some(
         (id) => selection.columns.includes(id) || fieldIds.has(id),
       ),
+    records: usingRecords(selection.records, columns?.records ?? []),
   };
 }
 
@@ -320,6 +340,7 @@ export const joined = (
   orders: [...new Set([...first.orders, ...second.orders])],
   columns: [...new Set([...first.columns, ...second.columns])],
   columnOrder: first.columnOrder || second.columnOrder,
+  records: recordsJoined(first.records, second.records),
 });
 
 // The drafts in a selection by name, for saying which others an approval includes.
@@ -328,6 +349,7 @@ export function draftNames(
   lists: readonly List[],
   fields: readonly Field[] = [],
   people: readonly Person[] = [],
+  records: readonly RecordNode[] = [],
 ): string[] {
   const names: string[] = people
     .filter(({ id }) => selection.people.includes(id))
@@ -349,13 +371,14 @@ export function draftNames(
       names.push(`the new order for ${list.name}`);
     }
   }
+  names.push(...recordNames(selection.records, records));
   return names;
 }
 
 export type Asking = "approve" | "reject";
 
-// Whether any draft in the selection waits for a rejected draft it depends on, so cannot be approved
-// until that one is resubmitted. Every list, with its rejected drafts, is needed to tell.
+// Whether any draft in the selection waits for a rejected draft it depends on, so cannot be
+// approved until that one is resubmitted. Every list, with its rejected drafts, is needed to tell.
 export const waitsForRejected = (
   selection: DraftSelection,
   lists: readonly List[],
@@ -389,7 +412,7 @@ export function decisionFor(
 ): Decision {
   const fields = columns?.fields ?? [];
   const names = (decided: DraftSelection) =>
-    draftNames(decided, lists, fields, columns?.people);
+    draftNames(decided, lists, fields, columns?.people, columns?.records);
   const named = (decided: DraftSelection) =>
     naming && draftTotal(decided) > 1 ? { together: names(decided) } : {};
   if (asking === "reject") {

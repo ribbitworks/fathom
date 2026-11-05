@@ -43,6 +43,20 @@ describe("draftsRequestSchema", () => {
     ).toBe(tooFewOrMany);
   });
 
+  it("refuses the same record of the plan twice", () => {
+    const id = randomUUID();
+    expect(
+      message(
+        draftsRequestSchema.safeParse({
+          records: [
+            { type: "release", id },
+            { type: "release", id },
+          ],
+        }),
+      ),
+    ).toBe("Each record once");
+  });
+
   it("refuses the same draft twice", () => {
     const id = randomUUID();
     expect(message(draftsRequestSchema.safeParse({ choices: [id, id] }))).toBe(

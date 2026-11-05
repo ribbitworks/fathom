@@ -7,12 +7,12 @@
 
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { isDay } from "@fathom/shared";
 import {
   applyView,
   emptyView,
   folded,
   isActive,
-  isDay,
   knownView,
   narrows,
   sameView,

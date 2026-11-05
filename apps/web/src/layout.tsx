@@ -4,8 +4,8 @@
 // the pages, current and still to come, that the user's roles allow, marking those still to come,
 // and a top bar saying where they are, with their own account's menu for changing their name and
 // password, in dialogs, and signing out, which also happens after a time without use. The sidebar
-// collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice. On
-// narrow screens the sidebar opens from a menu button instead.
+// collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
+// On narrow screens the sidebar opens from a menu button instead.
 
 import { AboutBox, build } from "./about.tsx";
 import { AppMenu } from "./app-menu.tsx";
@@ -58,6 +58,7 @@ type Page =
   | "/drafts"
   | "/lists/{-$listId}"
   | "/people"
+  | "/releases/{-$streamId}"
   | "/help/roles"
   | "/help/drafts";
 
@@ -94,7 +95,13 @@ const sections: { label: string; items: Item[] }[] = [
         permission: "plan:view",
       },
       { label: "Projects", icon: "projects", permission: "plan:view" },
-      { label: "Releases", icon: "releases", permission: "plan:view" },
+      {
+        label: "Releases",
+        icon: "releases",
+        to: "/releases/{-$streamId}",
+        nested: true,
+        permission: ["plan:view", "configuration:view"],
+      },
     ],
   },
   {
@@ -110,8 +117,8 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Drafts",
         icon: "drafts",
         to: "/drafts",
-        // Drafts of people, and of lists, which Approvers see.
-        permission: ["people:view", "configuration:view"],
+        // Drafts of people, of lists, which Approvers see, and of the plan's records.
+        permission: ["people:view", "configuration:view", "plan:view"],
       },
       {
         label: "Capacity",
@@ -329,7 +336,8 @@ export function Layout({
   // Those who may make drafts have unpublished changes to publish.
   const makesDrafts =
     permissions.includes("people:edit") ||
-    permissions.includes("configuration:edit");
+    permissions.includes("configuration:edit") ||
+    permissions.includes("plan:edit");
   const navigate = useNavigate();
   const router = useRouter();
   const pathname = useRouterState({
@@ -351,7 +359,8 @@ export function Layout({
 
   const rail = collapsed && !narrow;
 
-  // On narrow screens, the sidebar covers the page, so it closes once the user moves to another one.
+  // On narrow screens, the sidebar covers the page, so it closes once the user moves to another
+  // one.
   useEffect(close, [pathname, close]);
 
   function leave() {

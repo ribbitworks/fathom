@@ -10,11 +10,20 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { drafts } from "./decision-dialog.tsx";
 import {
+  fictionalPattern,
+  fictionalRelease,
+  fictionalStream,
   fictionalUser,
+  recordDraft,
   renderApp,
   serverAnswers,
+  streamId,
   wholeText,
 } from "./test-support.tsx";
+
+// No release streams, for drafts of other kinds.
+const noStreams = () =>
+  Response.json({ streams: [], canEditStreams: false, canEditReleases: false });
 
 const s1 = "00000000-0000-4000-8000-000000000001";
 
@@ -106,6 +115,7 @@ async function openDrafts(answers: Answers = {}) {
   const fetch = serverAnswers({
     "GET /api/session": approver,
     "GET /api/people": peopleWith([changed, added, removed, rejected, live]),
+    "GET /api/release-streams": noStreams,
     "GET /api/lists": () => Response.json({ lists: [sites] }),
     ...answers,
   });
@@ -182,6 +192,7 @@ describe("the Drafts page", () => {
     };
     const fetch = await openDrafts({
       "GET /api/people": peopleWith([]),
+      "GET /api/release-streams": noStreams,
       "GET /api/lists": () => Response.json({ lists: [drafted, teams] }),
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
@@ -223,6 +234,7 @@ describe("the Drafts page", () => {
           orders: [],
           columns: [],
           columnOrder: false,
+          records: [],
         },
       ]);
     });
@@ -268,6 +280,7 @@ describe("the Drafts page", () => {
           order: [],
           views: [],
         }),
+      "GET /api/release-streams": noStreams,
       "GET /api/lists": () => Response.json({ lists: [sites, guilds] }),
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
     });
@@ -301,6 +314,7 @@ describe("the Drafts page", () => {
           orders: [],
           columns: ["f2"],
           columnOrder: false,
+          records: [],
         },
       ]);
     });
@@ -315,6 +329,7 @@ describe("the Drafts page", () => {
     };
     const fetch = serverAnswers({
       "GET /api/session": approver,
+      "GET /api/release-streams": noStreams,
       "GET /api/lists": () => Response.json({ lists: [sites, levels] }),
       "GET /api/people": () =>
         Response.json({
@@ -401,6 +416,7 @@ describe("the Drafts page", () => {
           orders: [],
           columns: ["f2"],
           columnOrder: true,
+          records: [],
         },
       ]);
     });
@@ -409,6 +425,7 @@ describe("the Drafts page", () => {
   it("opens for Approvers who see lists but not people, with only the drafts of lists", async () => {
     const fetch = serverAnswers({
       "GET /api/session": session(["drafts:approve", "configuration:view"]),
+      "GET /api/release-streams": noStreams,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -428,6 +445,79 @@ describe("the Drafts page", () => {
     expect(fetch.mock.calls.some(([url]) => url.endsWith("/api/people"))).toBe(
       false,
     );
+  });
+
+  it("opens for Approvers who see only the plan, putting drafts of streams, cycles, and releases in words, and approves a release with the stream it uses", async () => {
+    const stream = fictionalStream({
+      draft: recordDraft({ action: "created" }),
+      patterns: [
+        fictionalPattern({
+          draft: recordDraft({ changed: ["length"], live: { length: "2" } }),
+        }),
+      ],
+      releases: [
+        fictionalRelease({
+          draft: recordDraft({
+            action: "created",
+            uses: [{ type: "release-stream", id: streamId }],
+          }),
+        }),
+      ],
+    });
+    const fetch = serverAnswers({
+      "GET /api/session": session(["drafts:approve", "plan:view"]),
+      "GET /api/release-streams": () =>
+        Response.json({
+          streams: [
+            fictionalStream({
+              id: "10000000-0000-4000-8000-000000000002",
+              name: "Fictional Minors",
+              patterns: [
+                fictionalPattern({
+                  id: "20000000-0000-4000-8000-000000000002",
+                }),
+              ],
+            }),
+            stream,
+          ],
+          canEditStreams: false,
+          canEditReleases: false,
+        }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    renderApp("/drafts");
+    expect(await entries()).toEqual([
+      "Fictional Editor drafted adding the release stream Fictional Majors",
+      "Fictional Editor drafted changes to the cycles of Fictional Majors from 2027-01-01: Length from 2 to 3",
+      "Fictional Editor drafted adding the release Fictional One in Fictional Majors",
+    ]);
+    await userEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Select the draft of the release Fictional One in Fictional Majors",
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 2 drafts?",
+    });
+    expect(
+      within(dialog).getByText("the release stream Fictional Majors"),
+    ).toBeDefined();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    await waitFor(() => {
+      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+        expect.objectContaining({
+          records: [
+            { type: "release", id: fictionalRelease().id },
+            { type: "release-stream", id: streamId },
+          ],
+        }),
+      ]);
+    });
   });
 
   it("names everyone who changed a draft", async () => {
@@ -469,6 +559,7 @@ describe("the Drafts page", () => {
           }),
         }),
       ]),
+      "GET /api/release-streams": noStreams,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -531,6 +622,7 @@ describe("the Drafts page", () => {
         orders: [],
         columns: [],
         columnOrder: false,
+        records: [],
       },
     ]);
   });
@@ -574,6 +666,7 @@ describe("the Drafts page", () => {
   it("keeps a new order that waits on a rejected choice from being selected, and approves the rest", async () => {
     const fetch = await openDrafts({
       "GET /api/people": peopleWith([changed]),
+      "GET /api/release-streams": noStreams,
       "GET /api/lists": () =>
         Response.json({
           lists: [
@@ -630,6 +723,7 @@ describe("the Drafts page", () => {
           orders: [],
           columns: [],
           columnOrder: false,
+          records: [],
         },
       ]);
     });
@@ -668,6 +762,7 @@ describe("the Drafts page", () => {
         orders: [],
         columns: [],
         columnOrder: false,
+        records: [],
         reason: "Fictional reason",
       },
     ]);

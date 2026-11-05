@@ -108,6 +108,7 @@ describe("drafts an approval includes", () => {
       orders: ["l2"],
       columns: [],
       columnOrder: false,
+      records: [],
     });
     expect(draftTotal(both)).toBe(4);
     expect(draftNames(both, lists)).toEqual([
@@ -219,6 +220,7 @@ describe("drafts that wait on rejected ones", () => {
     orders: ["l1", "l2"],
     columns: ["f1"],
     columnOrder: true,
+    records: [],
   };
 
   it("finds the rejected drafts among those chosen", () => {
@@ -251,6 +253,7 @@ describe("drafts that wait on rejected ones", () => {
       orders: [],
       columns: ["f1"],
       columnOrder: false,
+      records: [],
     });
   });
 });

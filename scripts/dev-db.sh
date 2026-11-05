@@ -3,7 +3,7 @@
 
 # Manages the development database, a PostgreSQL container built from Fathom's own image and
 # reachable only from this machine. Run 'pnpm dev:setup' first to create its secrets.
-# Usage: scripts/dev-db.sh up | down | migrate | reset | seed | unseed
+# Usage: scripts/dev-db.sh up | down | migrate | reset | seed | unseed | seed-accounts
 #   up       build and start the database, and wait until it is ready
 #   down     stop the database, keeping its data
 #   migrate  apply the reviewed migrations as the migration role
@@ -11,6 +11,8 @@
 #   seed     start the database, apply the migrations, and add the fictional data, unless it is there,
 #            with an account for each persona, sharing the password it prints
 #   unseed   remove the fictional data, keeping anything added by hand, and deactivate the accounts
+#   seed-accounts  add only the account for each persona, with no fictional data, sharing the
+#            password it prints
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -44,7 +46,7 @@ apply_migrations() {
 run_seed() {
   local password_file=""
   [ -s .dev/secrets/fathom_auth_secret ] || fail "Development secrets are missing; run 'pnpm dev:setup' first"
-  if [ "$1" = seed ]; then password_file="$PWD/$(dev_account_password_file)"; fi
+  if [ "$1" = seed ] || [ "$1" = accounts ]; then password_file="$PWD/$(dev_account_password_file)"; fi
   start_database
   apply_migrations
   FATHOM_PUBLIC_URL="https://localhost:$FATHOM_DEV_PORT" \
@@ -56,7 +58,7 @@ run_seed() {
     FATHOM_DB_USER=fathom_app \
     FATHOM_DB_PASSWORD_FILE="$PWD/.dev/secrets/fathom_app_password" \
     node packages/seed/src/seed.ts "$1"
-  if [ "$1" = seed ]; then
+  if [ "$1" = seed ] || [ "$1" = accounts ]; then
     info "Sign in as any development account, listed in docs/design/development-setup.md, with the password $(cat "$password_file")"
   fi
 }
@@ -73,5 +75,6 @@ case "${1:-}" in
     apply_migrations
     ;;
   seed | unseed) run_seed "$1" ;;
-  *) fail "Usage: scripts/dev-db.sh up | down | migrate | reset | seed | unseed" ;;
+  seed-accounts) run_seed accounts ;;
+  *) fail "Usage: scripts/dev-db.sh up | down | migrate | reset | seed | unseed | seed-accounts" ;;
 esac

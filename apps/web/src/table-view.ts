@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Filtering, searching, and sorting any table, in the browser, over the rows the user has been sent,
-// as ADR 0006 sets out. A table describes its columns, each of a kind, and how to read a row's value
-// in each; each kind says how its values are searched, sorted, and filtered, so a new kind is added
-// in one place. The view a table shows, its search, filters, sort, and metrics, is kept in the page
-// address, with the saved view it started from, if any.
+// Filtering, searching, and sorting any table, in the browser, over the rows the user has been
+// sent, as ADR 0006 sets out. A table describes its columns, each of a kind, and how to read a
+// row's value in each; each kind says how its values are searched, sorted, and filtered, so a new
+// kind is added in one place. The view a table shows, its search, filters, sort, and metrics, is
+// kept in the page address, with the saved view it started from, if any.
 
 import {
   type Filter,
@@ -69,13 +69,6 @@ export const emptyView: View = {
   filters: {},
   sort: [],
 };
-
-const isoDay = z.iso.date();
-
-// Whether text is a whole date, such as 2026-10-31, that exists.
-export function isDay(text: string): boolean {
-  return isoDay.safeParse(text).success;
-}
 
 export type { Filter } from "@fathom/shared";
 
@@ -437,11 +430,11 @@ interface Snapshot {
   known: Set<string>;
 }
 
-// The rows to show, kept where they were when the view last changed, so editing a row never moves it
-// or hides it. Rows since deleted drop out. Rows added since come at the end: those the user added,
-// in the order they added them, which stay whether or not they match, then others, in the order
-// given, only if the view shows them. The view's rows are taken afresh whenever the view changes; between changes, `apply` runs
-// only on rows added since.
+// The rows to show, kept where they were when the view last changed, so editing a row never moves
+// it or hides it. Rows since deleted drop out. Rows added since come at the end: those the user
+// added, in the order they added them, which stay whether or not they match, then others, in the
+// order given, only if the view shows them. The view's rows are taken afresh whenever the view
+// changes; between changes, `apply` runs only on rows added since.
 export function useSteadyOrder<Row>(
   all: readonly Row[],
   view: View,

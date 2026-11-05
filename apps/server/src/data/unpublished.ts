@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A user's unpublished changes to drafts, as ADR 0008 sets out: listing them, publishing them all at
-// once, so they wait for approval and everyone who sees the records sees them, and discarding them
-// all at once. Part of the data access layer. Publishing writes each unpublished draft over the
-// published draft of the same record, or removes the published draft when the user wants none, and
-// publishes the change sets that hold the changes; discarding records the changes it takes back, as
-// a change set only the user sees, so the change sets it ends are never published.
+// A user's unpublished changes to drafts, as ADR 0008 sets out: listing them, publishing them all
+// at once, so they wait for approval and everyone who sees the records sees them, and discarding
+// them all at once. Part of the data access layer. Publishing writes each unpublished draft over
+// the published draft of the same record, or removes the published draft when the user wants none,
+// and publishes the change sets that hold the changes; discarding records the changes it takes
+// back, as a change set only the user sees, so the change sets it ends are never published.
 
 import {
   changes,
@@ -57,6 +57,14 @@ import {
   readState,
   removeEmptyOrders,
 } from "./lists.ts";
+import {
+  isRecordType,
+  readRecordVersions,
+  recordFits,
+  type RecordVersions,
+  recordSubject,
+  takingBackRecord,
+} from "./records.ts";
 import { personChanges, readLive, recordSensitiveChanges } from "./people.ts";
 import {
   hireChanges,
@@ -72,7 +80,11 @@ type Row = typeof unpublishedDrafts.$inferSelect;
 
 // Anyone who may make drafts may publish or discard their own changes.
 const requireDrafting = (actor: Actor) => {
-  requireAnyPermission(actor, ["people:edit", "configuration:edit"]);
+  requireAnyPermission(actor, [
+    "people:edit",
+    "configuration:edit",
+    "plan:edit",
+  ]);
 };
 
 // The user's unpublished drafts, in the order they were made.
@@ -114,6 +126,7 @@ interface Versions {
     mine: Map<string, Draft>;
     theirs: Map<string, Draft>;
   };
+  records: RecordVersions;
 }
 
 async function readVersions(
@@ -145,6 +158,7 @@ async function readVersions(
       mine: await readHireDrafts(reader, hireIds, userId),
       theirs: await readHireDrafts(reader, hireIds),
     },
+    records: await readRecordVersions(reader, userId),
   };
 }
 
@@ -186,6 +200,9 @@ function subjectOf(versions: Versions, row: Row): string {
   const listName = (listId: string) =>
     (versionOf(versions, "list", listId)?.name as string | undefined) ??
     "a removed list";
+  if (isRecordType(row.recordType)) {
+    return recordSubject(versions.records, row.recordType, id);
+  }
   if (row.recordType === "person") {
     return String(versionOf(versions, "person", id)?.preferredName);
   }
@@ -263,6 +280,9 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
   const { lists, columns } = versions.mine;
   const id = row.recordId;
   if (row.recordType === "column-order" || wantsNoDraft(row)) return true;
+  if (isRecordType(row.recordType)) {
+    return recordFits(versions.records, row.recordType, id);
+  }
   if (row.recordType === "choice-order") {
     return draftedList(lists, id) !== undefined;
   }
@@ -380,6 +400,9 @@ export async function publishUnpublished(
 function takingBack(versions: Versions, row: Row): Change[] {
   const id = row.recordId;
   const { mine, theirs } = versions;
+  if (isRecordType(row.recordType)) {
+    return takingBackRecord(versions.records, row.recordType, id);
+  }
   if (row.recordType === "person") {
     const live = versions.people.live.get(id);
     const before = drafted(live, versions.people.mine.get(id));

@@ -1,8 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Helpers for the front-end tests: a simulated server that answers each request the test expects,
-// a fictional signed-in user, and Fathom's front end started on a page of the test's choosing.
+// Helpers for the front-end tests: a simulated server that answers each request the test expects, a
+// fictional signed-in user, fictional release streams, and Fathom's front end started on a page of
+// the test's choosing.
 
+import type {
+  Cycle,
+  CyclePattern,
+  RecordDraft,
+  Release,
+  ReleaseStream,
+} from "@fathom/shared";
 import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
@@ -74,3 +82,72 @@ export const wholeText =
       ![...element.children].some((child) => matches(child))
     );
   };
+
+// A fictional release stream, cycle pattern, release, and draft of one of them, with ids as the
+// server gives them, for each test to override what it needs.
+export const streamId = "10000000-0000-4000-8000-000000000001";
+
+export const recordDraft = (
+  fields: Partial<RecordDraft> = {},
+): RecordDraft => ({
+  action: "changed",
+  changed: [],
+  live: {},
+  uses: [],
+  state: "waiting",
+  madeBy: "Fictional Editor",
+  madeAt: "2026-10-30T15:00:00.000Z",
+  ...fields,
+});
+
+export const fictionalPattern = (
+  fields: Partial<CyclePattern> = {},
+): CyclePattern => ({
+  id: "20000000-0000-4000-8000-000000000001",
+  startsOn: "2027-01-01",
+  length: 3,
+  unit: "months",
+  naming: "{YY}.{N}",
+  ...fields,
+});
+
+export const fictionalRelease = (fields: Partial<Release> = {}): Release => ({
+  id: "30000000-0000-4000-8000-000000000001",
+  name: "Fictional One",
+  firstCycle: "2027-01-01",
+  lastCycle: "2027-01-01",
+  shipsOn: null,
+  ...fields,
+});
+
+// Cycles of three months from 2027-01-01, named 27.1 to 27.4 and so on.
+export const quarters = (count: number): Cycle[] =>
+  Array.from({ length: count }, (_, at) => {
+    const year = 2027 + Math.floor(at / 4);
+    const quarter = at % 4;
+    const month = (offset: number) =>
+      `${String(year)}-${String(quarter * 3 + offset + 1).padStart(2, "0")}`;
+    // Day 0 of the month after the quarter is the quarter's last day.
+    const endsOn = new Date(Date.UTC(year, quarter * 3 + 3, 0))
+      .toISOString()
+      .slice(0, 10);
+    return {
+      startsOn: `${month(0)}-01`,
+      endsOn,
+      name: `${String(year).slice(2)}.${String(quarter + 1)}`,
+      months: [0, 1, 2].map((offset) => ({ month: month(offset), share: 1 })),
+    };
+  });
+
+export const fictionalStream = (
+  fields: Partial<ReleaseStream> = {},
+): ReleaseStream => ({
+  id: streamId,
+  name: "Fictional Majors",
+  retired: false,
+  cyclesUntil: "2027-12-31",
+  patterns: [fictionalPattern()],
+  cycles: quarters(4),
+  releases: [],
+  ...fields,
+});

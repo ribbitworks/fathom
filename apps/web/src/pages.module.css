@@ -165,26 +165,39 @@
   border-top: 1px solid var(--mantine-color-default-border);
 }
 
-/* The side panel for one list: beside the table, below the top bar, or the whole screen when
-   narrow. */
+/* The side panel for one record, such as a list: beside the table, which narrows to make room, or
+   the whole screen below the top bar when narrow. */
 .panel,
 .panelNarrow {
-  position: fixed;
-  top: 56px;
-  right: 0;
-  bottom: 0;
-  z-index: 150;
   display: flex;
   flex-direction: column;
-  width: clamp(440px, 42%, 720px);
+  min-height: 0;
   background: var(--mantine-color-body);
-  border-left: 1px solid var(--mantine-color-default-border);
-  box-shadow: var(--mantine-shadow-lg);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-default);
+}
+
+.panel {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Holds a record's panel in its place beside the table. */
+.panelSlot {
+  display: flex;
+  min-height: 0;
 }
 
 .panelNarrow {
-  width: 100%;
-  border-left: 0;
+  position: fixed;
+  top: var(--app-shell-header-offset, 56px);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  /* Above the table's header row. */
+  z-index: 150;
+  border: 0;
+  border-radius: 0;
 }
 
 .panelHead {
@@ -872,4 +885,41 @@ th.liveColumn {
 .viewParts dd {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+/* The Releases page's side panel: a section for each part of a stream, each a heading over compact
+   rows with the row's menu in a narrow last column, and the section's action under its rows. */
+.panelSection {
+  padding: 12px 12px 4px;
+}
+
+.panelSection + .panelSection {
+  border-top: 1px solid var(--mantine-color-default-border);
+}
+
+.recordRow {
+  display: grid;
+  grid-template-columns: minmax(7rem, max-content) 1fr 28px;
+  gap: 16px;
+  align-items: center;
+  min-height: 36px;
+  padding: 2px 0;
+  font-size: 14px;
+}
+
+/* The Releases panel's table of cycles: names, days, and releases stay on one line, and only the
+   months wrap. */
+.cycleCell {
+  white-space: nowrap;
+}
+
+/* A cycle's months wrap, but never to a word on each line. */
+.monthsCell {
+  min-width: 12rem;
+}
+
+/* A row in a record's panel that its draft removes, struck through as a table's row is. */
+.removedRow.recordRow > span:not(:last-child) {
+  color: var(--mantine-color-dimmed);
+  text-decoration: line-through;
 }

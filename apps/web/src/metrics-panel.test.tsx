@@ -11,7 +11,7 @@ import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { share } from "./metrics.ts";
-import { panelWidth, panelWidths } from "./metrics-panel.tsx";
+import { panelWidth, panelWidths } from "./side-panel.tsx";
 import { PeopleGrid } from "./people-grid.tsx";
 import { emptyView, type View } from "./table-view.ts";
 
@@ -522,7 +522,7 @@ describe("the Metrics panel", () => {
     expect(edge.getAttribute("aria-valuenow")).toBe(
       String(panelWidths.start - panelWidths.step),
     );
-    expect(layout.style.getPropertyValue("--metrics-width")).toBe(
+    expect(layout.style.getPropertyValue("--side-panel-width")).toBe(
       `${String(panelWidths.start - panelWidths.step)}px`,
     );
     edge.setPointerCapture = vi.fn();

@@ -11,14 +11,15 @@ import {
   hasDatabaseCode,
   recordChanges as recordChangeSet,
 } from "@fathom/db";
-import type { Tier } from "@fathom/shared";
+import type { RecordType as PlanRecordType, Tier } from "@fathom/shared";
 import { ConflictError } from "../errors.ts";
 
 export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 // The kinds of record whose changes are recorded. A person's column values are recorded on the
 // person, one field for each column, so the person's history holds all of their details. A table's
-// column order is one record, named after its table.
+// column order is one record, named after its table. The plan's records, such as release streams,
+// are recorded field by field.
 export type RecordType =
   | "list"
   | "list-item"
@@ -27,7 +28,8 @@ export type RecordType =
   | "column-order"
   | "person"
   | "planned-hire"
-  | "saved-view";
+  | "saved-view"
+  | PlanRecordType;
 
 export interface Change {
   recordType: RecordType;
@@ -49,8 +51,8 @@ export interface Saved<Result> {
   changeSetId: string | null;
 }
 
-// A value as JSON with each object's keys in order, since the database's JSON keeps keys in an order
-// of its own, so a link read back from a draft is the same as the link written.
+// A value as JSON with each object's keys in order, since the database's JSON keeps keys in an
+// order of its own, so a link read back from a draft is the same as the link written.
 export function stableJson(value: unknown): string {
   return JSON.stringify(value, (_key, held: unknown) =>
     held !== null && typeof held === "object" && !Array.isArray(held)

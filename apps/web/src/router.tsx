@@ -28,6 +28,7 @@ import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
+import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { sessionQuery } from "./session.ts";
@@ -129,7 +130,7 @@ const draftsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/drafts",
   validateSearch: historySearch,
-  beforeLoad: requiring("people:view", "configuration:view"),
+  beforeLoad: requiring("people:view", "configuration:view", "plan:view"),
   component: function Drafts() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = draftsRoute.useNavigate();
@@ -137,6 +138,14 @@ const draftsRoute = createRoute({
       <DraftsPage
         canApprove={permissions.includes("drafts:approve")}
         seesPeople={permissions.includes("people:view")}
+        seesLists={
+          permissions.includes("people:view") ||
+          permissions.includes("configuration:view")
+        }
+        seesPlan={
+          permissions.includes("plan:view") ||
+          permissions.includes("configuration:view")
+        }
         search={draftsRoute.useSearch().search ?? ""}
         onSearch={(search, replace) => {
           void navigate({ search: { search: search || undefined }, replace });
@@ -203,6 +212,23 @@ const listsRoute = createRoute({
   },
 });
 
+// Release streams, with their cycles and releases, seen with the plan or planning configuration,
+// with the stream in the address, if any, open in its side panel.
+const releasesRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/releases/{-$streamId}",
+  beforeLoad: requiring("plan:view", "configuration:view"),
+  component: function Releases() {
+    const { permissions } = signedIn.useRouteContext();
+    return (
+      <ReleasesPage
+        streamId={releasesRoute.useParams().streamId}
+        canApprove={permissions.includes("drafts:approve")}
+      />
+    );
+  },
+});
+
 const peopleRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/people",
@@ -262,6 +288,7 @@ const routeTree = rootRoute.addChildren([
     historyRoute,
     changesRoute,
     listsRoute,
+    releasesRoute,
     peopleRoute,
     draftsRoute,
     helpRoute,

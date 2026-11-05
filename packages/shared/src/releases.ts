@@ -1,0 +1,138 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Release streams, their cycle patterns, and their releases, as the Decisions Log sets out. Each
+// stream has its own cycles, worked out from its patterns, and releases that each include
+// consecutive cycles of the stream, named by the days their first and last cycles start. Streams,
+// patterns, and releases have drafts, shown in place of the live values, with the draft beside.
+
+import { z } from "zod";
+import { type Cycle, cycleUnitSchema } from "./cycles.ts";
+import { daySchema } from "./days.ts";
+import { heldBySchema, recordDraftSchema } from "./drafts.ts";
+
+export const releaseLengths = {
+  name: 40,
+  naming: 40,
+} as const;
+
+// How drafts and decisions name a stream, a change of its cycles, and a release, in the server and
+// the browser alike.
+export const planSubjects = {
+  stream: (stream: string) => `the release stream ${stream}`,
+  pattern: (stream: string, startsOn: string) =>
+    `the cycles of ${stream} from ${startsOn}`,
+  release: (release: string, stream: string) =>
+    `the release ${release} in ${stream}`,
+};
+
+export const shipsBeforeStart =
+  "A release cannot ship before its first cycle starts";
+
+// The longest cycle in each unit: two years.
+export const longestCycle = { weeks: 104, months: 24 } as const;
+
+const day = daySchema;
+
+export const cycleSchema: z.ZodType<Cycle> = z.object({
+  startsOn: z.string(),
+  endsOn: z.string(),
+  name: z.string(),
+  months: z.array(z.object({ month: z.string(), share: z.number() })),
+});
+
+export const cyclePatternSchema = z.object({
+  id: z.string(),
+  startsOn: z.string(),
+  length: z.number().int(),
+  unit: cycleUnitSchema,
+  naming: z.string(),
+  draft: recordDraftSchema.optional(),
+  heldBy: heldBySchema,
+});
+
+export type CyclePattern = z.infer<typeof cyclePatternSchema>;
+
+export const releaseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  // The days the release's first and last cycles start.
+  firstCycle: z.string(),
+  lastCycle: z.string(),
+  // Null when the release ships at the end of its last cycle.
+  shipsOn: z.string().nullable(),
+  draft: recordDraftSchema.optional(),
+  heldBy: heldBySchema,
+});
+
+export type Release = z.infer<typeof releaseSchema>;
+
+// A stream as its draft, if any, makes it, with its patterns, its cycles as those patterns make
+// them, and its releases, each as its draft makes it, by the day it starts. A draft that removes a
+// record shows it as it is.
+export const releaseStreamSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  retired: z.boolean(),
+  // The stream's cycles are those starting on or before it.
+  cyclesUntil: z.string(),
+  patterns: z.array(cyclePatternSchema),
+  cycles: z.array(cycleSchema),
+  releases: z.array(releaseSchema),
+  draft: recordDraftSchema.optional(),
+  heldBy: heldBySchema,
+});
+
+export type ReleaseStream = z.infer<typeof releaseStreamSchema>;
+
+// Every stream, in order, with whether the user may change streams and their patterns, and
+// releases.
+export const releaseStreamsSchema = z.object({
+  streams: z.array(releaseStreamSchema),
+  canEditStreams: z.boolean(),
+  canEditReleases: z.boolean(),
+});
+
+export type ReleaseStreams = z.infer<typeof releaseStreamsSchema>;
+
+export const releaseStreamRequestSchema = z.object({
+  name: z.string().trim().min(1).max(releaseLengths.name),
+});
+
+export type ReleaseStreamRequest = z.infer<typeof releaseStreamRequestSchema>;
+
+export const cyclesUntilRequestSchema = z.object({ cyclesUntil: day });
+
+export type CyclesUntilRequest = z.infer<typeof cyclesUntilRequestSchema>;
+
+export const cyclePatternRequestSchema = z
+  .object({
+    startsOn: day,
+    length: z.number().int().min(1),
+    unit: cycleUnitSchema,
+    naming: z.string().trim().min(1).max(releaseLengths.naming),
+  })
+  .refine(
+    ({ length, unit }) =>
+      length <= (unit === "weeks" ? longestCycle.weeks : longestCycle.months),
+    "A cycle can be at most two years long",
+  );
+
+export type CyclePatternRequest = z.infer<typeof cyclePatternRequestSchema>;
+
+export const releaseRequestSchema = z
+  .object({
+    name: z.string().trim().min(1).max(releaseLengths.name),
+    firstCycle: day,
+    lastCycle: day,
+    shipsOn: day.nullable().default(null),
+  })
+  .refine(
+    ({ firstCycle, lastCycle }) => lastCycle >= firstCycle,
+    "A release's last cycle cannot come before its first",
+  )
+  .refine(
+    ({ firstCycle, shipsOn }) => shipsOn === null || shipsOn >= firstCycle,
+    shipsBeforeStart,
+  );
+
+export type ReleaseRequest = z.infer<typeof releaseRequestSchema>;

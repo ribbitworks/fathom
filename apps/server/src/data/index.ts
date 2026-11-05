@@ -11,6 +11,8 @@ import type {
   Choice,
   ChoiceRequest,
   ColumnOrderDraft,
+  CyclePatternRequest,
+  CyclesUntilRequest,
   DraftsAsked,
   Field,
   FieldRequest,
@@ -20,9 +22,15 @@ import type {
   HistoryEntry,
   List,
   ListRequest,
+  Permission,
   Person,
   PersonChange,
   PersonRequest,
+  RecordType,
+  ReleaseRequest,
+  ReleaseStream,
+  ReleaseStreamRequest,
+  ReleaseStreams,
   RetiredRequest,
   SavedView,
   SavedViewChange,
@@ -45,6 +53,8 @@ import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
 import * as hireData from "./hires.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
+import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
+import * as releases from "./releases.ts";
 import type { Saved } from "./changes.ts";
 import { undoChangeSet } from "./undo.ts";
 import {
@@ -73,8 +83,8 @@ export interface DataAccess {
     before?: string,
     search?: string,
   ): Promise<ChangeHistory>;
-  // Lists of choices, which everyone who sees planning configuration may read, and only those who may
-  // edit it may change.
+  // Lists of choices, which everyone who sees planning configuration may read, and only those who
+  // may edit it may change.
   lists: ListAccess;
   // Approving and rejecting drafts of every kind, several kinds at once; neither can be undone.
   drafts: DraftAccess;
@@ -84,8 +94,73 @@ export interface DataAccess {
   hires: HireAccess;
   // The actor's own unpublished changes to drafts, which only they see until they publish them.
   unpublished: UnpublishedAccess;
+  // Release streams, their cycle patterns, and their releases, which everyone who sees the plan or
+  // planning configuration may read.
+  releases: ReleaseAccess;
+  // Discarding and resubmitting drafts of the plan's records, whatever their kind.
+  records: RecordAccess;
   // Undoes a change set the actor made, returning the change set that undid it.
   undo(actor: Actor, changeSetId: string): Promise<ChangeSetId>;
+}
+
+// Every change to release streams, patterns, and releases is a draft. Streams and their patterns
+// are planning configuration, edited by those who edit it; releases are part of the plan.
+export interface ReleaseAccess {
+  read(actor: Actor): Promise<ReleaseStreams>;
+  createStream(
+    actor: Actor,
+    request: ReleaseStreamRequest,
+  ): Promise<Saved<ReleaseStream>>;
+  updateStream(
+    actor: Actor,
+    id: string,
+    change: Partial<ReleaseStreamRequest & RetiredRequest & CyclesUntilRequest>,
+  ): Promise<Saved<ReleaseStream>>;
+  addPattern(
+    actor: Actor,
+    streamId: string,
+    request: CyclePatternRequest,
+  ): Promise<Saved<ReleaseStream>>;
+  updatePattern(
+    actor: Actor,
+    streamId: string,
+    id: string,
+    request: CyclePatternRequest,
+  ): Promise<Saved<ReleaseStream>>;
+  deletePattern(
+    actor: Actor,
+    streamId: string,
+    id: string,
+  ): Promise<ChangeSetId>;
+  addRelease(
+    actor: Actor,
+    streamId: string,
+    request: ReleaseRequest,
+  ): Promise<Saved<ReleaseStream>>;
+  updateRelease(
+    actor: Actor,
+    streamId: string,
+    id: string,
+    request: ReleaseRequest,
+  ): Promise<Saved<ReleaseStream>>;
+  deleteRelease(
+    actor: Actor,
+    streamId: string,
+    id: string,
+  ): Promise<ChangeSetId>;
+}
+
+export interface RecordAccess {
+  discardDraft(
+    actor: Actor,
+    type: RecordType,
+    id: string,
+  ): Promise<ChangeSetId>;
+  resubmitDraft(
+    actor: Actor,
+    type: RecordType,
+    id: string,
+  ): Promise<ChangeSetId>;
 }
 
 // The change set a change was saved in, which undoing it names; null when nothing changed.
@@ -159,8 +234,8 @@ export interface ListAccess {
 }
 
 export interface PeopleAccess {
-  // Everyone the actor may see, with the columns whose values they may see, and the saved views they
-  // may see. Reading anyone's Restricted details is recorded in the access history.
+  // Everyone the actor may see, with the columns whose values they may see, and the saved views
+  // they may see. Reading anyone's Restricted details is recorded in the access history.
   read(actor: Actor): Promise<{
     people: Person[];
     fields: Field[];
@@ -192,7 +267,8 @@ export interface PeopleAccess {
     after: string | null,
   ): Promise<ChangeSetId>;
   deleteField(actor: Actor, id: string): Promise<ChangeSetId>;
-  // Discards a draft of a column or of the column order, or sends a rejected one for approval again.
+  // Discards a draft of a column or of the column order, or sends a rejected one for approval
+  // again.
   discardColumnDraft(
     actor: Actor,
     target: ColumnDraftTarget,
@@ -201,8 +277,8 @@ export interface PeopleAccess {
     actor: Actor,
     target: ColumnDraftTarget,
   ): Promise<ChangeSetId>;
-  // Saved views of the People table, which anyone who sees people may save, and only their maker, or
-  // someone who may change planning configuration, may change or delete.
+  // Saved views of the People table, which anyone who sees people may save, and only their maker,
+  // or someone who may change planning configuration, may change or delete.
   createView(
     actor: Actor,
     request: SavedViewRequest,
@@ -310,6 +386,70 @@ function createListAccess(database: Database): ListAccess {
   };
 }
 
+// Who may change each kind of the plan's records.
+const recordEditors: Record<RecordType, Permission> = {
+  "release-stream": "configuration:edit",
+  "cycle-pattern": "configuration:edit",
+  release: "plan:edit",
+};
+
+function recordEditor(actor: Actor, type: RecordType): string {
+  // The kind is always one of the fixed kinds listed above.
+  // eslint-disable-next-line security/detect-object-injection
+  requirePermission(actor, recordEditors[type]);
+  return actor.user.id;
+}
+
+function createReleaseAccess(database: Database): ReleaseAccess {
+  const streams = (actor: Actor) => recordEditor(actor, "release-stream");
+  const plan = (actor: Actor) => recordEditor(actor, "release");
+  return {
+    // Planning configuration is seen with the plan, as Roles proposes.
+    read: async (actor) => {
+      requireAnyPermission(actor, ["plan:view", "configuration:view"]);
+      return {
+        streams: await releases.readReleaseStreams(database, actor.user.id),
+        canEditStreams: actor.permissions.includes("configuration:edit"),
+        canEditReleases: actor.permissions.includes("plan:edit"),
+      };
+    },
+    createStream: async (actor, request) =>
+      releases.createStream(database, streams(actor), request),
+    updateStream: async (actor, id, change) =>
+      releases.updateStream(database, streams(actor), id, change),
+    addPattern: async (actor, streamId, request) =>
+      releases.addToStream(database, streams(actor), streamId, {
+        type: "cycle-pattern",
+        request,
+      }),
+    updatePattern: async (actor, streamId, id, request) =>
+      releases.changeInStream(database, streams(actor), streamId, id, {
+        type: "cycle-pattern",
+        request,
+      }),
+    deletePattern: async (actor, streamId, id) =>
+      releases.removeFromStream(
+        database,
+        streams(actor),
+        streamId,
+        "cycle-pattern",
+        id,
+      ),
+    addRelease: async (actor, streamId, request) =>
+      releases.addToStream(database, plan(actor), streamId, {
+        type: "release",
+        request,
+      }),
+    updateRelease: async (actor, streamId, id, request) =>
+      releases.changeInStream(database, plan(actor), streamId, id, {
+        type: "release",
+        request,
+      }),
+    deleteRelease: async (actor, streamId, id) =>
+      releases.removeFromStream(database, plan(actor), streamId, "release", id),
+  };
+}
+
 function createPeopleAccess(database: Database): PeopleAccess {
   return {
     read: async (actor) => {
@@ -404,6 +544,13 @@ export function createDataAccess(database: Database): DataAccess {
       return { entries: read.entries, next: read.next };
     },
     lists: createListAccess(database),
+    releases: createReleaseAccess(database),
+    records: {
+      discardDraft: async (actor, type, id) =>
+        discardRecordDraft(database, recordEditor(actor, type), type, id),
+      resubmitDraft: async (actor, type, id) =>
+        resubmitRecordDraft(database, recordEditor(actor, type), type, id),
+    },
     drafts: {
       approve: async (actor, asked) =>
         approveDrafts(database, actor, draftsRequestSchema.parse(asked)),

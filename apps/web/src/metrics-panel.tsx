@@ -3,9 +3,10 @@
 // The Metrics panel beside a table: how many of the rows the view shows fall in each group of a
 // column, or of two columns crossed, and what share of those rows each is. Only the columns the
 // table has are offered, which are those the user may see. With drafts shown beside live, each
-// figure counts the rows as their drafts show them, with the live figure beside it where it differs.
-// Esc, from anywhere in the panel, or its close button closes it. Its edge beside the table is
-// dragged, or moved with the arrow keys, to resize it, and the width is kept for next time.
+// figure counts the rows as their drafts show them, with the live figure beside it where it
+// differs. Esc, from anywhere in the panel, or its close button closes it. Its edge beside the
+// table is dragged, or moved with the arrow keys, to resize it, and the width is kept for next
+// time.
 
 import {
   ActionIcon,
@@ -15,8 +16,7 @@ import {
   Table,
   Text,
 } from "@mantine/core";
-import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
-import { type CSSProperties, type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Icon } from "./icons.tsx";
 import classes from "./metrics.module.css";
 import {
@@ -29,20 +29,8 @@ import {
   share,
 } from "./metrics.ts";
 import { count } from "./numbers.ts";
+import { useNarrow, WithSidePanel } from "./side-panel.tsx";
 import type { TableColumn } from "./table-view.ts";
-
-const useNarrow = () => useMediaQuery("(max-width: 48em)");
-
-// The panel's width in pixels: at first, and the least it and the table beside it may have.
-export const panelWidths = { start: 448, least: 320, step: 32 } as const;
-
-// The width to give the panel, kept between the least it may have and the most that leaves the
-// table its least.
-export function panelWidth(wanted: number, room: number): number {
-  return Math.round(
-    Math.max(panelWidths.least, Math.min(wanted, room - panelWidths.least)),
-  );
-}
 
 // A table and the bar above it, with the Metrics panel beside them while it is open.
 export function WithMetrics({
@@ -52,62 +40,15 @@ export function WithMetrics({
   panel: ReactNode;
   children: ReactNode;
 }) {
-  const narrow = useNarrow();
-  const layout = useRef<HTMLDivElement>(null);
-  const [width, setWidth] = useLocalStorage<number>({
-    key: "fathom-metrics-width",
-    defaultValue: panelWidths.start,
-  });
-  const beside = Boolean(panel) && !narrow;
-  // The layout's styles also keep the table its least width, however wide the panel was left.
-  // The layout is drawn by the time its edge is moved.
-  const box = () => (layout.current as HTMLDivElement).getBoundingClientRect();
-  const resize = (wanted: number) => {
-    setWidth(panelWidth(wanted, box().width));
-  };
   return (
-    <div
-      ref={layout}
-      className={
-        beside ? [classes.layout, classes.layoutOpen].join(" ") : classes.layout
-      }
-      // The width the panel is dragged to.
-      style={{ "--metrics-width": `${String(width)}px` } as CSSProperties}
+    <WithSidePanel
+      panel={panel}
+      label="Resize metrics"
+      controls={metricsPanelId}
+      storageKey="fathom-metrics-width"
     >
       {children}
-      {beside ? (
-        <div className={classes.panelPlace}>
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize metrics"
-            aria-controls={metricsPanelId}
-            aria-valuenow={width}
-            aria-valuemin={panelWidths.least}
-            tabIndex={0}
-            className={classes.resizer}
-            onPointerDown={(event) => {
-              event.currentTarget.setPointerCapture(event.pointerId);
-            }}
-            onPointerMove={(event) => {
-              if (!event.currentTarget.hasPointerCapture(event.pointerId)) {
-                return;
-              }
-              resize(box().right - event.clientX);
-            }}
-            onKeyDown={(event) => {
-              const step = { ArrowLeft: 1, ArrowRight: -1 }[event.key];
-              if (step === undefined) return;
-              event.preventDefault();
-              resize(width + step * panelWidths.step);
-            }}
-          />
-          {panel}
-        </div>
-      ) : (
-        panel
-      )}
-    </div>
+    </WithSidePanel>
   );
 }
 
@@ -148,8 +89,8 @@ export function MetricsPanel<Row>({
   noun: string;
   // The rows the view shows, as the table shows them, leaving out any drafted to be removed.
   rows: readonly Row[];
-  // With drafts shown beside live, the same rows as they are live, and the columns as they are live;
-  // a column without a live copy has no live figures.
+  // With drafts shown beside live, the same rows as they are live, and the columns as they are
+  // live; a column without a live copy has no live figures.
   live?: CountedRows<Row> | undefined;
   // The columns rows may be broken down by.
   offered: readonly TableColumn<Row>[];

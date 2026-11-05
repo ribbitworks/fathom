@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Approving and rejecting drafts, one at a time or several at once, as the Decisions Log sets out:
-// of people here, and of lists, choices, and the order of lists' choices in list-approvals.ts.
-// Part of the data access layer. Approving applies the drafts to the live records, all in one
-// change set or none of them, and rejecting keeps them, marked Rejected with the Approver's reason.
-// An Approver may approve their own drafts, and needs roles that see every value in the drafts they
-// approve or reject. Neither can be undone.
+// of people here, of lists, choices, and the order of lists' choices in list-approvals.ts, and of
+// the plan's records, such as release streams, in records.ts. Part of the data access layer.
+// Approving applies the drafts to the live records, all in one change set or none of them, and
+// rejecting keeps them, marked Rejected with the Approver's reason. An Approver may approve their
+// own drafts, and needs roles that see every value in the drafts they approve or reject. Neither
+// can be undone.
 
 import {
   type Database,
@@ -61,6 +62,7 @@ import {
   asksForLists,
   rejectListDrafts,
 } from "./list-approvals.ts";
+import { approveRecordDrafts, rejectRecordDrafts } from "./records.ts";
 import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
 import {
   approveHiresIn,
@@ -295,13 +297,17 @@ async function deciding(
   if (asksForColumns(asked)) requirePermission(actor, "people:view");
   // Planned hires are seen beside the people who manage and fill them.
   if (asked.plannedHires.length > 0) requirePermission(actor, "people:view");
+  // The plan's records, such as release streams, are seen with the plan or planning configuration.
+  if (asked.records.length > 0) {
+    requireAnyPermission(actor, ["plan:view", "configuration:view"]);
+  }
   await lockDrafts(transaction);
 }
 
 // Approves the drafts asked for, with the drafts they use, of any kind, applying them all to the
-// live records, and returns the change set that applied them. Lists and choices come first, then
-// columns, which may draw on them, then people, who may be given both, then planned hires, whose
-// managers are people.
+// live records, and returns the change set that applied them. The plan's records come first, then
+// lists and choices, then columns, which may draw on them, then people, who may be given both, then
+// planned hires, whose managers are people.
 export async function approveDrafts(
   database: Database,
   actor: Actor,
@@ -316,9 +322,10 @@ export async function approveDrafts(
       }
       await checkHiresAsked(transaction, actor, requested.plannedHires);
       const asked = await withUsedAcross(transaction, requested);
-      const made = asksForLists(asked)
-        ? await approveListDrafts(transaction, asked)
-        : [];
+      const made = await approveRecordDrafts(transaction, asked.records);
+      if (asksForLists(asked)) {
+        made.push(...(await approveListDrafts(transaction, asked)));
+      }
       if (asksForColumns(asked)) {
         made.push(...(await approveColumnDrafts(transaction, actor, asked)));
       }
@@ -369,9 +376,10 @@ export async function rejectDrafts(
         ? await seenAsked(transaction, actor, asked.people, today)
         : undefined;
     await refuseUsedAcross(transaction, asked);
-    const made = asksForLists(asked)
-      ? await rejectListDrafts(transaction, asked, reason)
-      : [];
+    const made = await rejectRecordDrafts(transaction, asked.records, reason);
+    if (asksForLists(asked)) {
+      made.push(...(await rejectListDrafts(transaction, asked, reason)));
+    }
     if (asksForColumns(asked)) {
       made.push(
         ...(await rejectColumnDrafts(transaction, actor, asked, reason)),

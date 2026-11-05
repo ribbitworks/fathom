@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The change history, through the server's API, a page of change sets at a time, and how each is put
-// in words: a sentence for each record it changed, such as "changed the list Sites" or "drafted
+// The change history, through the server's API, a page of change sets at a time, and how each is
+// put in words: a sentence for each record it changed, such as "changed the list Sites" or "drafted
 // changes to Fictional Person", and what changed in it, such as "Name from Sites to Locations".
 
 import {
@@ -12,6 +12,7 @@ import {
   changeHistorySchema,
   type ChangeKind,
   type ChangeValue,
+  isDay,
   recordSearchText,
   tierSchema,
 } from "@fathom/shared";
@@ -19,7 +20,7 @@ import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import { getJson } from "./api.ts";
 import { visibilityName } from "./lists.ts";
 import type { Phrase } from "./phrase.tsx";
-import { formatDay, isDay } from "./table-view.ts";
+import { formatDay } from "./table-view.ts";
 import { count } from "./numbers.ts";
 
 // The change history holding every word of a search, if any, a page at a time.
@@ -59,6 +60,12 @@ const fieldNames = new Map([
   ["order", "Place"],
   ["definition", "Filters and sort"],
   ["rejected", "Reason"],
+  ["startsOn", "From"],
+  ["length", "Length"],
+  ["unit", "Unit"],
+  ["naming", "Names"],
+  ["firstCycle", "First cycle"],
+  ["lastCycle", "Last cycle"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {
@@ -118,6 +125,14 @@ function thing({ kind, name, list }: ChangedRecord): string {
       return `the order of ${called}`;
     case "saved-view":
       return `the view ${called}`;
+    case "release-stream":
+      return `the release stream ${called}`;
+    case "cycle-pattern":
+      return list === null ? "a stream's cycles" : `the cycles of ${list}`;
+    case "release":
+      return list === null
+        ? `the release ${called}`
+        : `the release ${called} in ${list}`;
     default:
       return "a record";
   }
@@ -160,6 +175,9 @@ const plurals = new Map([
   ["list-item", "choices"],
   ["field", "columns"],
   ["saved-view", "views"],
+  ["release-stream", "release streams"],
+  ["cycle-pattern", "changes of cycles"],
+  ["release", "releases"],
 ]);
 
 // What was done to a record added or deleted, by what the change set did: "added" or "deleted" for

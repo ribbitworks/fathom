@@ -15,6 +15,9 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Planning
 
+- **Freezes between cycles:** A stream's cycles follow one another with no gap, so a freeze, such as the end of December, can only be a short cycle with a name and number of its own. Deferred by the owner on 2026-11-04 until a stream needs one; a cycle marked as a gap, unnamed and not counted, would fit the cycle patterns.
+- **Undoing changes to the plan's records:** The change history refuses undoing a change to a release stream, cycle pattern, or release, since undoing one can break the rules for cycles and releases that approving checks. Deferred until undo is wanted for them.
+- **Ordering release streams:** Streams keep the order they were added in; moving them, as the Decisions Log allows, is not built yet. Deferred until an organization has enough streams for the order to matter, since the monthly resource grid's picker defaults to the first.
 - **Which delivery a feature is needed by:** The release warning checks each needed feature against its project's earliest customer delivery date still to come, so a phased project warns about features only its later deliveries need. Saying which delivery each feature is needed by was deferred by the owner on 2026-11-03 until the warnings prove noisy.
 
 ## Account Administration

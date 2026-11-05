@@ -2,13 +2,13 @@
 
 // Draft rows: the changes waiting for approval, as the Decisions Log sets out. Part of the data
 // access layer. Each person, list, and choice has at most one draft, which adds it, changes some of
-// its fields, or removes it, and each list's choices have at most one draft of their order; everyone
-// who sees the records sees the published drafts in place of the live values. A draft is kept as the
-// change history records the record, holding all of an added record's fields, only the fields that
-// differ from the live record, or none for a removal, and the live record changes only when an
-// Approver approves it. A user's changes to drafts are kept as their unpublished drafts, as ADR 0008
-// sets out, which they see in place of the published ones and which hold the records for them until
-// they publish or discard them, as unpublished.ts sets out.
+// its fields, or removes it, and each list's choices have at most one draft of their order;
+// everyone who sees the records sees the published drafts in place of the live values. A draft is
+// kept as the change history records the record, holding all of an added record's fields, only the
+// fields that differ from the live record, or none for a removal, and the live record changes only
+// when an Approver approves it. A user's changes to drafts are kept as their unpublished drafts, as
+// ADR 0008 sets out, which they see in place of the published ones and which hold the records for
+// them until they publish or discard them, as unpublished.ts sets out.
 
 import {
   changes,
@@ -21,7 +21,11 @@ import {
   unpublishedDrafts,
   users,
 } from "@fathom/db";
-import { isLink, type Tier } from "@fathom/shared";
+import {
+  isLink,
+  type RecordType as PlanRecordType,
+  type Tier,
+} from "@fathom/shared";
 import {
   type AnyColumn,
   and,
@@ -48,8 +52,8 @@ export type Recorded = Record<string, unknown>;
 export type DraftRow = typeof drafts.$inferSelect;
 type UnpublishedRow = typeof unpublishedDrafts.$inferSelect;
 
-// The user whose own unpublished drafts are read in place of the published ones, or undefined to read
-// the published drafts alone, as Approvers decide them.
+// The user whose own unpublished drafts are read in place of the published ones, or undefined to
+// read the published drafts alone, as Approvers decide them.
 export type Viewer = string | undefined;
 
 // The kinds of record that have drafts. A list's choice order is one record, named by its list.
@@ -60,7 +64,8 @@ export type DraftType =
   | "list-item"
   | "choice-order"
   | "field"
-  | "column-order";
+  | "column-order"
+  | PlanRecordType;
 
 export interface Draft {
   action: Change["action"];
@@ -368,9 +373,9 @@ function sameDraft(
   );
 }
 
-// Keeps the draft the editor intends for a record as their unpublished draft: none at all when it is
-// the published draft, so the record is no longer held, and one that wants no draft when the editor
-// wants none but there is a published one.
+// Keeps the draft the editor intends for a record as their unpublished draft: none at all when it
+// is the published draft, so the record is no longer held, and one that wants no draft when the
+// editor wants none but there is a published one.
 async function keepUnpublished(
   transaction: Transaction,
   editor: string,
@@ -458,8 +463,8 @@ export async function deleteDrafts(
   }
 }
 
-// Marks the published drafts of the records of one kind given as waiting again, or as rejected for a
-// reason.
+// Marks the published drafts of the records of one kind given as waiting again, or as rejected for
+// a reason.
 export async function setRejection(
   transaction: Transaction,
   recordType: DraftType,
@@ -485,7 +490,8 @@ export interface Maker {
   fieldEditors: Map<string, string | null>;
 }
 
-// For readers who see every field of a draft, such as those of lists and columns, which are General.
+// For readers who see every field of a draft, such as those of lists and columns, which are
+// General.
 export const everything = () => true;
 
 // The change sets holding a user's unpublished changes since they last discarded them all, which

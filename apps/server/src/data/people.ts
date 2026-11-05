@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // People and their details: reading everyone a user may see, with their drafts, and drafting people
-// added, one or several pasted at once, changed, and removed, and discarding drafts. Part of the data
-// access layer, the only server code that queries the database. Every change is a draft, as
+// added, one or several pasted at once, changed, and removed, and discarding drafts. Part of the
+// data access layer, the only server code that queries the database. Every change is a draft, as
 // drafts.ts sets out, which reaches the live people only once approved, as approvals.ts sets out.
-// Every change is recorded in the change history, field by field, with each field's tier: a person's
-// name and Employee ID are General, their start and end dates Restricted, and each column's values as
-// sensitive as its list. Users see and change only the tiers their roles allow, and changes to
-// Restricted or Confidential details are also recorded in the access history.
+// Every change is recorded in the change history, field by field, with each field's tier: a
+// person's name and Employee ID are General, their start and end dates Restricted, and each
+// column's values as sensitive as its list. Users see and change only the tiers their roles allow,
+// and changes to Restricted or Confidential details are also recorded in the access history.
 
 import {
   type Database,
@@ -109,7 +109,7 @@ const detailFields = [
 ] as const;
 const personFields = [...detailFields, ...reportingFields];
 
-const isoDay = (moment: Date) => moment.toISOString().slice(0, 10);
+export const isoDay = (moment: Date) => moment.toISOString().slice(0, 10);
 
 // The tier of each field of a person: dates are Restricted, and so are changes to their manager,
 // which name past managers, each column's values are as sensitive as its list, and the rest is
@@ -229,9 +229,9 @@ export async function recordSensitiveChanges(
 
 type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
 
-// Every choice asked for in the requests, live or drafted to be added as the editor sees it, in list
-// order, read at once. The drafts lock keeps them from being deleted, or their drafts discarded,
-// until the drafts holding them are saved.
+// Every choice asked for in the requests, live or drafted to be added as the editor sees it, in
+// list order, read at once. The drafts lock keeps them from being deleted, or their drafts
+// discarded, until the drafts holding them are saved.
 async function choicesAskedFor(
   transaction: Transaction,
   editor: string,
@@ -255,8 +255,8 @@ async function choicesAskedFor(
   );
 }
 
-// Checks the choices asked for each column, and returns them in list order. Choices a person already
-// has stay valid when retired; new ones must be offered.
+// Checks the choices asked for each column, and returns them in list order. Choices a person
+// already has stay valid when retired; new ones must be offered.
 function checkedValues(
   columns: readonly ColumnInfo[],
   known: readonly ChoiceRow[],
@@ -623,7 +623,8 @@ async function refuseTakenIds(
   }
 }
 
-// Drafts adding people, all saved together, and returns them with the change set they were saved in.
+// Drafts adding people, all saved together, and returns them with the change set they were saved
+// in.
 export async function createPeople(
   database: Database,
   actor: Actor,
@@ -892,8 +893,8 @@ export async function resubmitPersonDraft(
   });
 }
 
-// Discards a person's draft, so they are as they are live, or, for someone only drafted to be added,
-// gone.
+// Discards a person's draft, so they are as they are live, or, for someone only drafted to be
+// added, gone.
 export async function discardPersonDraft(
   database: Database,
   actor: Actor,

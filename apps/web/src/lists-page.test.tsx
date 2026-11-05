@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the Lists page, with the server's responses simulated: who sees it; the table of lists;
-// the side panel and its address; adding, editing, moving, retiring, restoring, and removing choices
-// from the keyboard and the choice menus, including pasting several at once; creating, editing,
-// retiring, and deleting lists; and Undo, focus, and the server's refusals throughout. Where dropped
-// choices end up is tested in list-panel.test.ts.
+// the side panel and its address; adding, editing, moving, retiring, restoring, and removing
+// choices from the keyboard and the choice menus, including pasting several at once; creating,
+// editing, retiring, and deleting lists; and Undo, focus, and the server's refusals throughout.
+// Where dropped choices end up is tested in list-panel.test.ts.
 
 import {
   act,
@@ -121,16 +121,20 @@ async function openPanel(answers: Answers = {}, path = "/lists/l1") {
   });
   const history = renderApp(path);
   await screen.findByRole("heading", { name: "Locations", level: 2 });
-  // Opening the panel moves focus into it a moment later; waiting for that keeps it from taking focus
-  // away from a row the test focuses next.
+  // Opening the panel moves focus into it a moment later; waiting for that keeps it from taking
+  // focus away from a row the test focuses next.
   await waitFor(() => {
     expect(panel().contains(document.activeElement)).toBe(true);
   });
   return { fetch, history };
 }
 
+// The panel, which is a dialog on a narrow screen.
 function panel(): HTMLElement {
-  return screen.getByRole("region", { name: /./ });
+  return (
+    screen.queryByRole("region", { name: /./ }) ??
+    screen.getByRole("dialog", { name: /./ })
+  );
 }
 
 function row(id: string): HTMLElement {
@@ -166,7 +170,8 @@ function undone(fetch: ReturnType<typeof serverAnswers>): string[] {
     .map(([url]) => url.slice("/api/undo/".length));
 }
 
-// Matches an accessible name that starts with the text, such as a menu item followed by its shortcut.
+// Matches an accessible name that starts with the text, such as a menu item followed by its
+// shortcut.
 function startsWith(text: string) {
   return (name: string) => name.startsWith(text);
 }
@@ -561,9 +566,10 @@ describe("the side panel", () => {
       removeEventListener: () => undefined,
     }));
     await openPanel();
-    expect(
+    expect([
+      panel().getAttribute("aria-modal"),
       row("c1").querySelector("[data-rbd-drag-handle-draggable-id]"),
-    ).toBeNull();
+    ]).toEqual(["true", null]);
   });
 });
 
@@ -1928,6 +1934,7 @@ describe("drafts on the Lists page", () => {
           orders: [],
           columns: [],
           columnOrder: false,
+          records: [],
         },
       ]);
     });
@@ -2631,6 +2638,7 @@ describe("drafts on the Lists page", () => {
           orders: [],
           columns: [],
           columnOrder: false,
+          records: [],
         },
       ]);
     });
@@ -2710,6 +2718,7 @@ describe("drafts on the Lists page", () => {
           orders: [],
           columns: [],
           columnOrder: false,
+          records: [],
         },
       ]);
     });
@@ -2757,6 +2766,7 @@ describe("drafts on the Lists page", () => {
           orders: [],
           columns: [],
           columnOrder: false,
+          records: [],
         },
       ]);
     });

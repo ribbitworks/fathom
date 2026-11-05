@@ -2,8 +2,9 @@
 
 // Tests for the People page, with the server's responses simulated: who sees it and what they see;
 // moving around the table and editing people's details from the keyboard; adding people in the new
-// rows and by pasting; deleting people; adding, changing, moving, and deleting columns; and Undo and
-// the server's refusals throughout. Helpers that need no page are tested in people-grid.test.ts.
+// rows and by pasting; deleting people; adding, changing, moving, and deleting columns; and Undo
+// and the server's refusals throughout. Helpers that need no page are tested in
+// people-grid.test.ts.
 
 import {
   act,
@@ -1249,6 +1250,7 @@ describe("drafts", () => {
         orders: [],
         columns: [],
         columnOrder: false,
+        records: [],
       },
     ]);
     expect(bodyOf(fetch, "POST", "/api/drafts/rejection")).toEqual([
@@ -1259,6 +1261,7 @@ describe("drafts", () => {
         orders: [],
         columns: [],
         columnOrder: false,
+        records: [],
         reason: "Fictional reason",
       },
     ]);
@@ -2241,10 +2244,12 @@ describe("searching, sorting, and filtering", () => {
     const start = await screen.findByRole("dialog", { name: "Filter Start" });
     const from = within(start).getByRole("textbox", { name: "From" });
     const to = within(start).getByRole("textbox", { name: "To" });
+    // A date still being typed is not yet wrong, and filters nothing.
     await userEvent.type(from, "2024-01");
     expect(
-      within(start).getByText("Use a date such as 2026-10-31"),
-    ).toBeDefined();
+      within(start).queryByText("Use a date such as 2026-10-31"),
+    ).toBeNull();
+    expect(screen.queryByText(/^Start: from /)).toBeNull();
     await userEvent.type(from, "-01");
     expect(screen.getByText(/^Start: from /)).toBeDefined();
     await userEvent.type(to, "2024-12-31");
@@ -2754,6 +2759,7 @@ describe("drafts of columns", () => {
           orders: [],
           columns: ["f3"],
           columnOrder: true,
+          records: [],
         },
       ]);
     });
@@ -3023,6 +3029,7 @@ describe("drafts of columns", () => {
           orders: [],
           columns: ["f1"],
           columnOrder: false,
+          records: [],
         },
       ]);
     });

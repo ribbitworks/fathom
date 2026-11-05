@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Drafts page: every draft the user may see, of people, People's columns, lists, choices, and the
-// order of lists' choices and of People's columns, newest first, each a sentence saying who drafted what, with what it changes from its live
+// The Drafts page: every draft the user may see, of people, People's columns, lists, choices, the
+// order of lists' choices and of People's columns, and the plan's records, such as release streams,
+// newest first, each a sentence saying who drafted what, with what it changes from its live
 // value, and rejected drafts marked with their reason. A search narrows them. Approvers select
 // drafts, one or several at once, and approve or reject them, as they can on the People table and
 // the Lists page too. Approving or rejecting names any other drafts it includes.
@@ -16,6 +17,9 @@ import {
   matchesWords,
   type Person,
   type PersonDraft,
+  type RecordDraft,
+  type RecordType,
+  type ReleaseStream,
   searchWords,
 } from "@fathom/shared";
 import {
@@ -45,6 +49,11 @@ import { personDraftFields } from "./draft-details.tsx";
 import { EntryDetails, EntryList, EntryRow } from "./history-entries.tsx";
 import { HistorySearch } from "./history-search.tsx";
 import { listsQuery, liveLists } from "./lists.ts";
+import {
+  recordNodes,
+  recordSubjects,
+  releaseStreamsQuery,
+} from "./releases.ts";
 import { PageHeader } from "./page-header.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import classes from "./pages.module.css";
@@ -335,6 +344,46 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
   );
 }
 
+// Every draft of a release stream, a change of its cycles, or a release, as entries.
+function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
+  const of = (
+    type: RecordType,
+    record: {
+      id: string;
+      draft?: RecordDraft | undefined;
+      heldBy?: string | undefined;
+    },
+    now: Record<string, unknown>,
+    subject: string,
+  ): Entry[] =>
+    record.draft === undefined
+      ? []
+      : [
+          entry(
+            `${type} ${record.id}`,
+            record.draft,
+            subject,
+            configFields(record.draft, now),
+            { records: [{ type, id: record.id }] },
+            record.heldBy,
+          ),
+        ];
+  return streams.flatMap((stream) => [
+    ...of("release-stream", stream, stream, recordSubjects.stream(stream)),
+    ...stream.patterns.flatMap((pattern) =>
+      of(
+        "cycle-pattern",
+        pattern,
+        { ...pattern, length: String(pattern.length) },
+        recordSubjects.pattern(stream, pattern),
+      ),
+    ),
+    ...stream.releases.flatMap((release) =>
+      of("release", release, release, recordSubjects.release(stream, release)),
+    ),
+  ]);
+}
+
 function DraftEntry({
   shown,
   waits,
@@ -405,17 +454,27 @@ function DraftEntry({
 export function DraftsPage({
   canApprove,
   seesPeople = true,
+  seesLists = true,
+  seesPlan = true,
   search,
   onSearch,
 }: {
   canApprove: boolean;
   // Whether the user sees people, so their drafts; those who see only lists see only theirs.
   seesPeople?: boolean;
+  // Whether the user sees lists, through people or planning configuration.
+  seesLists?: boolean;
+  // Whether the user sees the plan's records, such as release streams.
+  seesPlan?: boolean;
   search: string;
   onSearch: (search: string, replace: boolean) => void;
 }) {
   const people = useQuery({ ...peopleQuery, enabled: seesPeople });
-  const lists = useQuery(listsQuery);
+  const listsRead = useQuery({ ...listsQuery, enabled: seesLists });
+  const lists = seesLists
+    ? listsRead
+    : { ...listsRead, isPending: false, isError: false, data: [] };
+  const releases = useQuery({ ...releaseStreamsQuery, enabled: seesPlan });
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [decision, setDecision] = useState<Decision>();
   const [opened, setOpened] = useState(false);
@@ -424,9 +483,14 @@ export function DraftsPage({
   const peopleData: PeopleData | undefined = seesPeople
     ? people.data
     : { people: [], fields: [], order: [], views: [] };
-  if ((seesPeople && people.isPending) || lists.isPending) {
+  const streams = seesPlan ? releases.data?.streams : [];
+  if (
+    (seesPeople && people.isPending) ||
+    lists.isPending ||
+    (seesPlan && releases.isPending)
+  ) {
     content = <Loader role="status" aria-label="Loading" />;
-  } else if (people.isError || lists.isError) {
+  } else if (people.isError || lists.isError || releases.isError) {
     content = (
       <Alert color="red" role="alert">
         <Group justify="space-between">
@@ -438,6 +502,7 @@ export function DraftsPage({
             onClick={() => {
               void people.refetch();
               void lists.refetch();
+              void releases.refetch();
             }}
           >
             Try again
@@ -450,15 +515,22 @@ export function DraftsPage({
     const all = [
       ...personEntries(peopleData as PeopleData, lists.data),
       ...columnEntries(peopleData as PeopleData, lists.data),
-      ...listEntries(lists.data),
+      ...listEntries(lists.data as List[]),
+      ...recordEntries(streams as ReleaseStream[]),
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
     // Loaded, or empty for those who see only lists.
     const { fields, orderDraft, people } = peopleData as PeopleData;
+    const records = recordNodes(streams as ReleaseStream[]);
     // A draft that depends on a rejected draft cannot be approved until that one is resubmitted.
     const waits = ({ state, selects }: Entry) =>
       state === "waiting" &&
-      waitsForRejected(selects, lists.data, { fields, orderDraft, people });
+      waitsForRejected(selects, lists.data as List[], {
+        fields,
+        orderDraft,
+        people,
+        records,
+      });
     // A draft only its maker sees, or one someone is changing, is not decided until published.
     const waiting = shown.filter(
       (one) =>
@@ -475,10 +547,11 @@ export function DraftsPage({
         noDrafts(),
       );
       setDecision(
-        decisionFor(asking, selection, lists.data, {
+        decisionFor(asking, selection, lists.data as List[], {
           fields,
           orderDraft,
           people,
+          records,
         }),
       );
       setOpened(true);

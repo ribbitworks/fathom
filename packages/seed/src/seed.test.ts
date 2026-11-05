@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for seeding a database with the fictional organization and removing it again, against a
-// migrated PostgreSQL server: what is added and recorded, that seeding twice adds nothing more, that
-// removing keeps what was added by hand and what it still uses, and the command that runs both.
+// migrated PostgreSQL server: what is added and recorded, that seeding twice adds nothing more,
+// that removing keeps what was added by hand and what it still uses, and the command that runs
+// both.
 
 import {
   changes,
@@ -342,8 +343,9 @@ describe("the seed command", () => {
     expect(reportingDrafts).toHaveLength(2);
     expect(await holders()).toHaveLength(4);
     // Seeding again after the Approver approves the waiting drafts nobody is changing, but the
-    // person given a skill, which would approve the Skills list too, makes none again, and leaves alone a draft made by hand of another seeded person, which removing the
-    // seed data discards, since it removes that person.
+    // person given a skill, which would approve the Skills list too, makes none again, and leaves
+    // alone a draft made by hand of another seeded person, which removing the seed data discards,
+    // since it removes that person.
     const waiting = (
       await connection
         .select({ id: drafts.recordId })
@@ -430,6 +432,7 @@ describe("the seed command", () => {
     const addresses = personaAccounts.map(({ email }) => email);
     expect(log.mock.calls.map(([line]) => line as string)).toEqual([
       "Added 150 fictional people, with their lists and columns",
+      "Added fictional release streams, with their cycles and releases",
       ...addresses.map((email) => `Account ready: ${email}`),
       "Added drafts made by the personas",
       "Added drafts of lists and columns made by the personas",
@@ -537,11 +540,22 @@ describe("the seed command", () => {
     await connection.insert(lists).values({ name: "Sites" });
     expect(await seedCommand(["seed"], environment())).toBe(1);
     expect(problems.mock.calls.map(([line]) => line as string)).toEqual([
-      "error: Usage: seed.ts seed | unseed",
+      "error: Usage: seed.ts seed | unseed | accounts",
       expect.stringMatching(/^error: /),
       "error: FATHOM_SEED_PASSWORD_FILE is not set",
-      "error: A list, column, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
+      "error: A list, column, release stream, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
     ]);
     vi.restoreAllMocks();
+  });
+
+  it("adds only the personas' accounts when asked, with no fictional data", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const before = await totalOf(people);
+    expect(await seedCommand(["accounts"], environment())).toBe(0);
+    expect(log.mock.calls.map(([line]) => line as string)).toEqual(
+      personaAccounts.map(({ email }) => `Account ready: ${email}`),
+    );
+    expect(await totalOf(people)).toBe(before);
+    log.mockRestore();
   });
 });

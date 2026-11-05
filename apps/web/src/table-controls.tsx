@@ -24,6 +24,7 @@ import {
 } from "@mantine/core";
 import type { SavedView, Show } from "@fathom/shared";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { DayInput } from "./day-input.tsx";
 import { drafts as draftCount } from "./decision-dialog.tsx";
 import { Icon } from "./icons.tsx";
 import { metricsButtonId, metricsPanelId, metricsTitleId } from "./metrics.ts";
@@ -34,7 +35,6 @@ import {
   folded,
   formatDay,
   isActive,
-  isDay,
   type Kind,
   emptyView,
   knownView,
@@ -321,8 +321,9 @@ const byName = (first: SavedView, second: SavedView) =>
   first.name.localeCompare(second.name, undefined, { sensitivity: "base" });
 
 // The menu of a table's saved views, named after the one the view started from, marked when the
-// view has changed since, or, with none applied, from the table's default view. Choosing a view applies it. The menu clears the view, saves it as a new
-// one, and updates, renames, or deletes the one applied when the user may change it.
+// view has changed since, or, with none applied, from the table's default view. Choosing a view
+// applies it. The menu clears the view, saves it as a new one, and updates, renames, or deletes the
+// one applied when the user may change it.
 export function ViewsMenu({
   saved: { views, applied, onApply, onName, onUpdate, onDelete },
   columns,
@@ -363,7 +364,8 @@ export function ViewsMenu({
         {[...views].sort(byName).map((saved) => (
           <Menu.Item
             key={saved.id}
-            // Room for the applied view's check mark only while one is applied, so the names line up.
+            // Room for the applied view's check mark only while one is applied, so the names line
+            // up.
             leftSection={
               current && (
                 <span className={classes.appliedMark} aria-hidden>
@@ -657,7 +659,8 @@ export function ViewBar({
 }) {
   const filterOnly = [draftFilter];
   const columns = [...shownColumns, ...filterOnly];
-  // Each level of the sort, in order, with its column; a column the table does not have is left out.
+  // Each level of the sort, in order, with its column; a column the table does not have is left
+  // out.
   const sorts = view.sort.flatMap(({ key, descending }) =>
     shownColumns
       .filter((column) => column.key === key)
@@ -779,9 +782,9 @@ export function ViewBar({
 }
 
 // A filter the table's headers do not offer, opened from its button in the bar above the table,
-// which focus goes back to when it closes.
-// The marks beside a column's name: which way it is sorted, its level when sorted by several, and
-// whether it is filtered. Screen readers hear these from the header's name, as headerState gives it.
+// which focus goes back to when it closes. The marks beside a column's name: which way it is
+// sorted, its level when sorted by several, and whether it is filtered. Screen readers hear these
+// from the header's name, as headerState gives it.
 export function HeaderMarks({
   column,
   view,
@@ -963,6 +966,8 @@ function FilterForm({
         <Stack gap="xs">
           <DayInput
             label="From"
+            size="sm"
+            required={false}
             value={filter.from}
             autoFocus
             onChange={(from) => {
@@ -971,6 +976,8 @@ function FilterForm({
           />
           <DayInput
             label="To"
+            size="sm"
+            required={false}
             value={filter.to}
             {...(filter.from !== undefined &&
             filter.to !== undefined &&
@@ -1003,41 +1010,6 @@ function FilterForm({
         </Stack>
       );
   }
-}
-
-// A date typed as YYYY-MM-DD, which filters once it is a whole date; until then, the column is not
-// filtered by it.
-function DayInput({
-  label,
-  value,
-  autoFocus = false,
-  problem,
-  onChange,
-}: {
-  label: string;
-  value: string | undefined;
-  autoFocus?: boolean;
-  // What is wrong with the date beside the others, if anything.
-  problem?: string;
-  onChange: (day: string | undefined) => void;
-}) {
-  const [text, setText] = useState(value ?? "");
-  const whole = text === "" || isDay(text);
-  return (
-    <TextInput
-      label={label}
-      size="sm"
-      autoComplete="off"
-      {...(autoFocus ? { "data-autofocus": true } : {})}
-      value={text}
-      error={whole ? problem : "Use a date such as 2026-10-31"}
-      onChange={(event) => {
-        const next = event.currentTarget.value.trim();
-        setText(next);
-        onChange(isDay(next) ? next : undefined);
-      }}
-    />
-  );
 }
 
 // The choices to show, offered ones first, then retired ones under their own heading.

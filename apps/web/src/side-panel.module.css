@@ -1,0 +1,85 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Styles for a page's content with a side panel beside it, such as the Metrics panel beside a table
+   or a record's panel beside its list. */
+
+/* The content, and the panel beside it while it is open, so the content narrows rather than being
+   covered. The content keeps its own height, up to the room there is, and scrolls within it. */
+.layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  align-items: start;
+  gap: var(--mantine-spacing-md);
+}
+
+.layout > * {
+  min-width: 0;
+  max-height: 100%;
+}
+
+/* The panel as wide as it was dragged, leaving the content at least 20rem. */
+.layoutOpen {
+  grid-template-columns:
+    minmax(0, 1fr)
+    clamp(
+      20rem,
+      var(--side-panel-width),
+      calc(100% - 20rem - var(--mantine-spacing-md))
+    );
+}
+
+/* Where the panel goes, beside the content, with its edge for resizing. */
+.panelPlace {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  position: relative;
+  display: flex;
+  min-height: 0;
+}
+
+/* The panel fills its place. */
+.panelPlace > * {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The edge between the content and the panel, dragged to resize the panel, marked on hover and when
+   focused. */
+.resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--mantine-spacing-md));
+  width: var(--mantine-spacing-md);
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 1px);
+  width: 2px;
+  border-radius: 1px;
+}
+
+.resizer:hover::after,
+.resizer:focus-visible::after {
+  background: var(--mantine-primary-color-filled);
+}
+
+.resizer:focus-visible {
+  outline: none;
+}
+
+/* Content that scrolls within its place beside the panel, such as a list of records. */
+.scroll {
+  max-height: 100%;
+  overflow: auto;
+}

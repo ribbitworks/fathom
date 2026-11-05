@@ -22,7 +22,12 @@ import {
   plannedHires,
   savedViews,
 } from "@fathom/db";
-import { type Tier, tierSchema } from "@fathom/shared";
+import {
+  type RecordType as PlanRecordType,
+  recordTypeSchema,
+  type Tier,
+  tierSchema,
+} from "@fathom/shared";
 import { and, asc, count, eq, gt, inArray, or, sql } from "drizzle-orm";
 import {
   type Actor,
@@ -92,6 +97,9 @@ import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
 import { recordHiringChanges, undoHireDrafts } from "./hires.ts";
 
+// Kinds of the plan's records, whose changes are not undone yet.
+const planRecordTypes: ReadonlySet<string> = new Set(recordTypeSchema.options);
+
 const changedSince =
   "This has been changed since, so it can no longer be undone";
 
@@ -150,7 +158,7 @@ const asStored: Convert = (value) => value;
 // read each column's value from the history. Other fields, such as a record's place in its order or
 // a person's values for a column, are put back separately.
 const columnsOf: Record<
-  Exclude<RecordType, "column-order" | "choice-order">,
+  Exclude<RecordType, "column-order" | "choice-order" | PlanRecordType>,
   Readonly<Record<string, Convert>>
 > = {
   list: { name: text, description: text, visibility: tier, retired: flag },
@@ -225,7 +233,8 @@ function columnValues(record: Undone): Record<string, unknown> {
   ) {
     return {};
   }
-  const columns = columnsOf[record.recordType];
+  // Changes to the plan's records are refused before any is put back.
+  const columns = columnsOf[record.recordType as keyof typeof columnsOf];
   return Object.fromEntries(
     [...record.old].flatMap(([field, value]) =>
       Object.hasOwn(columns, field)
@@ -486,8 +495,8 @@ async function refuseUndoneReporting(
 }
 
 // A record's old values without the rejection a change cleared: undoing a change to a draft puts
-// back the editor's unpublished draft, which is waiting once published, and the published draft keeps
-// its rejection until then.
+// back the editor's unpublished draft, which is waiting once published, and the published draft
+// keeps its rejection until then.
 function withoutRejection(
   old: ReadonlyMap<string, unknown>,
 ): Map<string, unknown> {
@@ -587,9 +596,9 @@ async function undoListDrafts(
 }
 
 // Puts back the drafts of the columns and the column order a change set changed in their drafts, as
-// for lists: the column it drafted adding taken out, the one it drafted removing put back as it was,
-// the settings it changed put back, and an order as it was. Each must still have a name no one else
-// has taken since, and draw on a list that is there.
+// for lists: the column it drafted adding taken out, the one it drafted removing put back as it
+// was, the settings it changed put back, and an order as it was. Each must still have a name no one
+// else has taken since, and draw on a list that is there.
 async function undoColumnDrafts(
   transaction: Transaction,
   actor: Actor,
@@ -762,8 +771,16 @@ async function undoIn(
     .where(eq(changes.changeSetId, changeSetId))
     .orderBy(asc(changes.id));
   const records = recordsOf(rows);
+  if (records.some(({ recordType }) => planRecordTypes.has(recordType))) {
+    throw new ConflictError(
+      "Changes to release streams and releases cannot be undone yet; change or discard the draft instead",
+    );
+  }
   for (const record of records) {
-    requirePermission(actor, editPermission[record.recordType]);
+    requirePermission(
+      actor,
+      editPermission[record.recordType as keyof typeof editPermission],
+    );
   }
   const draftRecords = records.filter(({ draft }) => draft);
   const liveRecords = records.filter(({ draft }) => !draft);
@@ -940,8 +957,8 @@ export async function undoChangeSet(
       undoIn(transaction, actor, changeSetId),
     );
   } catch (error) {
-    // Something the undo would put back conflicts with a change made since, such as a name now taken
-    // or a choice now deleted.
+    // Something the undo would put back conflicts with a change made since, such as a name now
+    // taken or a choice now deleted.
     if (
       [
         databaseCodes.uniqueViolation,

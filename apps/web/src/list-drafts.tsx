@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts on the Lists page: the tint of a row with a draft, a draft shown before the server has saved
-// it, and the menu of a list's drafts, its own and that of its choices' order, with what can be done
-// with each: discarding it or resubmitting it, for those who may edit lists, and
-// approving or rejecting it, for Approvers.
+// Drafts on the Lists page: the tint of a row with a draft, a draft shown before the server has
+// saved it, and the menu of a list's drafts, its own and that of its choices' order, with what can
+// be done with each: discarding it or resubmitting it, for those who may edit lists, and approving
+// or rejecting it, for Approvers.
 
 import type { Choice, List } from "@fathom/shared";
 import { ActionIcon, Menu } from "@mantine/core";
@@ -152,11 +152,11 @@ export function ordinal(place: number): string {
   return `${String(place)}${suffix}`;
 }
 
-// The mark beside a list on the Lists page. A list drafted to be added or removed shows that draft's
-// mark. Otherwise the mark says whether anything in it, the list itself, its choices, or their
-// order, still waits for approval, as "Draft: reordered" when only the order does; it is red only once
-// everything drafted in it was rejected. Drafts applied leaves rejected drafts out, as it shows
-// them taken back.
+// The mark beside a list on the Lists page. A list drafted to be added or removed shows that
+// draft's mark. Otherwise the mark says whether anything in it, the list itself, its choices, or
+// their order, still waits for approval, as "Draft: reordered" when only the order does; it is red
+// only once everything drafted in it was rejected. Drafts applied leaves rejected drafts out, as it
+// shows them taken back.
 export function listMark(
   list: List,
   leaveOutRejected = false,
@@ -185,8 +185,8 @@ export function listMark(
 }
 
 // The menu of a list's drafts, beside its name in the panel, laid out as a record's menu on the
-// People page: a short section for the list's own draft and one for a new order of its choices, each
-// with its mark, who made it, any reason it was rejected, and what the user may do with it.
+// People page: a short section for the list's own draft and one for a new order of its choices,
+// each with its mark, who made it, any reason it was rejected, and what the user may do with it.
 export function ListDraftMenu({
   list,
   orderWaits,
@@ -306,7 +306,7 @@ export function ListDraftMenu({
   );
 }
 
-const madeVerb = (action: "created" | "changed" | "deleted") => {
+export const madeVerb = (action: "created" | "changed" | "deleted") => {
   if (action === "created") return "Added";
   return action === "deleted" ? "Removed" : "Changed";
 };
@@ -314,7 +314,7 @@ const madeVerb = (action: "created" | "changed" | "deleted") => {
 const listed = new Intl.ListFormat("en", { type: "conjunction" });
 
 // Everyone who changed a draft, since several people's changes to one record make one draft.
-const makers = (draft: {
+export const makers = (draft: {
   madeBy: string | null;
   editors?: (string | null)[] | undefined;
 }) =>
@@ -327,7 +327,7 @@ const makers = (draft: {
 // What may be done with one draft, in a menu: deciding it, for Approvers, unless it waits for a
 // rejected draft it depends on, and resubmitting it once rejected, or discarding it, for those who
 // may edit lists.
-function DraftItems({
+export function DraftItems({
   canEdit,
   canApprove,
   rejected,

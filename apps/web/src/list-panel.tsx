@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The side panel for one list: its name, description, and choices in order. Opening it puts focus in
-// it. Users who may edit lists work from the keyboard. An empty row at the end takes new choices: Tab
-// moves to the description and Enter adds the choice and starts the next, and pasting several lines
-// adds one choice for each. Arrow keys select a choice, Enter edits it in place, Alt+arrows move it,
-// R retires or restores it, and Delete removes it, each also in the choice's menu. Choices can also
-// be dragged by their grip. Esc closes an open menu, then the panel. Viewers see the same choices,
-// read only. Drafts are marked in place: the list's and its order's under its name, each choice's on
-// its row, with what can be done with them in the list's menu beside its name and in each choice's
-// menu. A list or choice a draft removes is struck through and read only.
+// The side panel for one list: its name, description, and choices in order. Opening it puts focus
+// in it. Users who may edit lists work from the keyboard. An empty row at the end takes new
+// choices: Tab moves to the description and Enter adds the choice and starts the next, and pasting
+// several lines adds one choice for each. Arrow keys select a choice, Enter edits it in place,
+// Alt+arrows move it, R retires or restores it, and Delete removes it, each also in the choice's
+// menu. Choices can also be dragged by their grip. Esc closes an open menu, then the panel. Viewers
+// see the same choices, read only. Drafts are marked in place: the list's and its order's under its
+// name, each choice's on its row, with what can be done with them in the list's menu beside its
+// name and in each choice's menu. A list or choice a draft removes is struck through and read only.
 
 import {
   DragDropContext,
@@ -22,7 +22,14 @@ import {
   type List,
   listLengths,
 } from "@fathom/shared";
-import { ActionIcon, Button, Menu, Text, VisuallyHidden } from "@mantine/core";
+import {
+  ActionIcon,
+  Button,
+  FocusTrap,
+  Menu,
+  Text,
+  VisuallyHidden,
+} from "@mantine/core";
 import {
   type ClipboardEvent,
   type FocusEvent,
@@ -857,9 +864,10 @@ export function ListPanel({
     );
   };
 
-  // A moved choice's live place, shown as the People table shows a person's live row: dimmed, marked
-  // Live, read only, and skipped by the keyboard, just after the choice it followed in the live order,
-  // or at the top. Assistive technology hears the live place with the moved choice instead.
+  // A moved choice's live place, shown as the People table shows a person's live row: dimmed,
+  // marked Live, read only, and skipped by the keyboard, just after the choice it followed in the
+  // live order, or at the top. Assistive technology hears the live place with the moved choice
+  // instead.
   const liveOffered = (list.orderDraft?.live ?? []).filter((id) =>
     offered.some((choice) => choice.id === id),
   );
@@ -897,166 +905,172 @@ export function ListPanel({
   const gridRole = canEdit ? "grid" : "table";
 
   return (
-    <section
-      className={narrow ? classes.panelNarrow : classes.panel}
-      aria-labelledby={titleId}
-      onKeyDown={(event) => {
-        // Esc closes an open menu, then the panel, from anywhere in it, unless something inside, such
-        // as a choice being edited, has used it already.
-        if (event.key !== "Escape" || event.defaultPrevented) return;
-        if (menuFor === undefined) {
-          onClose();
-          return;
-        }
-        setMenuFor(undefined);
-        focusSoon(rowId({ id: menuFor }));
-      }}
-    >
-      <div className={classes.panelHead}>
-        <div className={classes.panelTitle}>
-          <div className={classes.panelNameBlock}>
-            <h2
-              id={titleId}
-              className={[
-                classes.panelName,
-                listRemoved ? classes.struck : "",
-              ].join(" ")}
-              tabIndex={-1}
-            >
-              {list.name}
-            </h2>
-            {list.draft && (
-              <DraftMark draft={withRetiring({ ...list, draft: list.draft })} />
+    <FocusTrap active={narrow}>
+      <section
+        className={narrow ? classes.panelNarrow : classes.panel}
+        aria-labelledby={titleId}
+        // Covering the page on a narrow screen, it holds focus until it is closed.
+        {...(narrow ? { role: "dialog", "aria-modal": true } : {})}
+        onKeyDown={(event) => {
+          // Esc closes an open menu, then the panel, from anywhere in it, unless something inside,
+          // such as a choice being edited, has used it already.
+          if (event.key !== "Escape" || event.defaultPrevented) return;
+          if (menuFor === undefined) {
+            onClose();
+            return;
+          }
+          setMenuFor(undefined);
+          focusSoon(rowId({ id: menuFor }));
+        }}
+      >
+        <div className={classes.panelHead}>
+          <div className={classes.panelTitle}>
+            <div className={classes.panelNameBlock}>
+              <h2
+                id={titleId}
+                className={[
+                  classes.panelName,
+                  listRemoved ? classes.struck : "",
+                ].join(" ")}
+                tabIndex={-1}
+              >
+                {list.name}
+              </h2>
+              {list.draft && (
+                <DraftMark
+                  draft={withRetiring({ ...list, draft: list.draft })}
+                />
+              )}
+              {list.orderDraft && <DraftMark draft={list.orderDraft} />}
+              <HoldMarks heldBy={list.heldBy ?? list.orderHeldBy} />
+            </div>
+            {canEdit && (
+              <Button
+                variant="subtle"
+                color="gray"
+                size="compact-sm"
+                onClick={onEditList}
+              >
+                Edit list
+              </Button>
             )}
-            {list.orderDraft && <DraftMark draft={list.orderDraft} />}
-            <HoldMarks heldBy={list.heldBy ?? list.orderHeldBy} />
+            {(list.draft ?? list.orderDraft) && (
+              <ListDraftMenu
+                list={list}
+                orderWaits={waits({ ...noDrafts(), orders: [list.id] })}
+                canEdit={mayEdit}
+                canApprove={canApprove}
+                actions={draftActions}
+              />
+            )}
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              aria-label="Close"
+              onClick={onClose}
+            >
+              <Icon name="close" />
+            </ActionIcon>
           </div>
-          {canEdit && (
+          {list.description && (
+            <Text fz="sm" c="dimmed" mt={4}>
+              {list.description}
+            </Text>
+          )}
+        </div>
+        <div className={classes.panelBody}>
+          {offered.length === 0 && !canEdit && (
+            <Text fz="sm" c="dimmed" p="md">
+              No choices yet
+            </Text>
+          )}
+          <div role={gridRole} aria-label="Choices">
+            <DragDropContext onDragEnd={drop}>
+              <Droppable droppableId="choices">
+                {(provided) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    role="rowgroup"
+                  >
+                    {offered.map((choice, index) => (
+                      <Fragment key={choice.id}>
+                        {index === 0 && liveRowsAfter(null)}
+                        {row(choice, index)}
+                        {liveUnder(choice)}
+                        {liveRowsAfter(choice.id)}
+                      </Fragment>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
+            {canEdit && (
+              <div
+                role="row"
+                className={[classes.choice, classes.entry].join(" ")}
+              >
+                <span className={classes.plus} aria-hidden>
+                  <Icon name="plus" size={14} />
+                </span>
+                <Fields
+                  idPrefix="choice-entry"
+                  draft={entry}
+                  problem={entryProblem}
+                  label="New choice "
+                  onChange={(next) => {
+                    setEntry(next);
+                    setEntryProblem(undefined);
+                  }}
+                  onKeyDown={onEntryKey}
+                  onFocus={() => {
+                    setSelected(undefined);
+                  }}
+                  onPaste={paste}
+                />
+              </div>
+            )}
+          </div>
+          {shownRetired.length > 0 && (
+            <>
+              <Text
+                id="list-panel-retired"
+                className={classes.retiredLabel}
+                fz="xs"
+                fw={600}
+              >
+                Retired
+              </Text>
+              <div role={gridRole} aria-labelledby="list-panel-retired">
+                {shownRetired.map((choice, index) => (
+                  <Fragment key={choice.id}>
+                    {row(choice, index)}
+                    {liveUnder(choice)}
+                  </Fragment>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+        {retired.length > 0 && (
+          <div className={classes.panelFoot}>
             <Button
               variant="subtle"
               color="gray"
               size="compact-sm"
-              onClick={onEditList}
+              aria-pressed={showRetired}
+              onClick={() => {
+                setShowRetired(!showRetired);
+              }}
             >
-              Edit list
+              {showRetired
+                ? "Hide retired"
+                : `Show retired (${count(retired.length)})`}
             </Button>
-          )}
-          {(list.draft ?? list.orderDraft) && (
-            <ListDraftMenu
-              list={list}
-              orderWaits={waits({ ...noDrafts(), orders: [list.id] })}
-              canEdit={mayEdit}
-              canApprove={canApprove}
-              actions={draftActions}
-            />
-          )}
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            aria-label="Close"
-            onClick={onClose}
-          >
-            <Icon name="close" />
-          </ActionIcon>
-        </div>
-        {list.description && (
-          <Text fz="sm" c="dimmed" mt={4}>
-            {list.description}
-          </Text>
+          </div>
         )}
-      </div>
-      <div className={classes.panelBody}>
-        {offered.length === 0 && !canEdit && (
-          <Text fz="sm" c="dimmed" p="md">
-            No choices yet
-          </Text>
-        )}
-        <div role={gridRole} aria-label="Choices">
-          <DragDropContext onDragEnd={drop}>
-            <Droppable droppableId="choices">
-              {(provided) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  role="rowgroup"
-                >
-                  {offered.map((choice, index) => (
-                    <Fragment key={choice.id}>
-                      {index === 0 && liveRowsAfter(null)}
-                      {row(choice, index)}
-                      {liveUnder(choice)}
-                      {liveRowsAfter(choice.id)}
-                    </Fragment>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
-          {canEdit && (
-            <div
-              role="row"
-              className={[classes.choice, classes.entry].join(" ")}
-            >
-              <span className={classes.plus} aria-hidden>
-                <Icon name="plus" size={14} />
-              </span>
-              <Fields
-                idPrefix="choice-entry"
-                draft={entry}
-                problem={entryProblem}
-                label="New choice "
-                onChange={(next) => {
-                  setEntry(next);
-                  setEntryProblem(undefined);
-                }}
-                onKeyDown={onEntryKey}
-                onFocus={() => {
-                  setSelected(undefined);
-                }}
-                onPaste={paste}
-              />
-            </div>
-          )}
-        </div>
-        {shownRetired.length > 0 && (
-          <>
-            <Text
-              id="list-panel-retired"
-              className={classes.retiredLabel}
-              fz="xs"
-              fw={600}
-            >
-              Retired
-            </Text>
-            <div role={gridRole} aria-labelledby="list-panel-retired">
-              {shownRetired.map((choice, index) => (
-                <Fragment key={choice.id}>
-                  {row(choice, index)}
-                  {liveUnder(choice)}
-                </Fragment>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-      {retired.length > 0 && (
-        <div className={classes.panelFoot}>
-          <Button
-            variant="subtle"
-            color="gray"
-            size="compact-sm"
-            aria-pressed={showRetired}
-            onClick={() => {
-              setShowRetired(!showRetired);
-            }}
-          >
-            {showRetired
-              ? "Hide retired"
-              : `Show retired (${count(retired.length)})`}
-          </Button>
-        </div>
-      )}
-    </section>
+      </section>
+    </FocusTrap>
   );
 }

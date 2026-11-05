@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Builds Fathom's HTTPS application: security headers, rate limiting, a time limit for each request,
-// a check that requests changing data come from Fathom's own pages, validation with the shared Zod
-// schemas, error responses that reveal no internal details, logs without personal data, sign-in,
-// which every other API route requires, the API routes, which reach data only through the data
-// access layer, and the built front end. It never serves plain HTTP.
+// Builds Fathom's HTTPS application: security headers, rate limiting, a time limit for each
+// request, a check that requests changing data come from Fathom's own pages, validation with the
+// shared Zod schemas, error responses that reveal no internal details, logs without personal data,
+// sign-in, which every other API route requires, the API routes, which reach data only through the
+// data access layer, and the built front end. It never serves plain HTTP.
 
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -30,6 +30,7 @@ import { historyRoutes } from "./routes/history.ts";
 import { listRoutes } from "./routes/lists.ts";
 import { peopleRoutes } from "./routes/people.ts";
 import { hireRoutes } from "./routes/hires.ts";
+import { releaseRoutes } from "./routes/releases.ts";
 import { undoRoutes } from "./routes/undo.ts";
 import { unpublishedRoutes } from "./routes/unpublished.ts";
 import { pageFallback, webRoutes } from "./routes/web.ts";
@@ -184,6 +185,9 @@ export async function buildApp(options: AppOptions) {
   await app.register(draftRoutes(options.data.drafts));
   await app.register(peopleRoutes(options.data.people));
   await app.register(hireRoutes(options.data.hires));
+  await app.register(
+    releaseRoutes(options.data.releases, options.data.records),
+  );
   await app.register(undoRoutes(options.data));
   await app.register(unpublishedRoutes(options.data.unpublished));
   await app.register(greetingRoutes(options.data));

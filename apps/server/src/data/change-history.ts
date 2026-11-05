@@ -28,6 +28,7 @@ import {
   linkInWords,
   matchesWords,
   recordSearchText,
+  recordTypeSchema,
   searchWords,
   type Tier,
   tierSchema,
@@ -48,11 +49,12 @@ import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
 import { personTier } from "./people.ts";
 import { columnsWithAdded } from "./added-columns.ts";
+import { recordKinds } from "./records.ts";
 import { viewTiersNow } from "./views.ts";
 
 // The most recent change sets shown at once; older ones are read by naming the last one read. When
-// change sets read are hidden or, in a search, do not match, reading goes on, up to ten times as many
-// for one page.
+// change sets read are hidden or, in a search, do not match, reading goes on, up to ten times as
+// many for one page.
 const shownChangeSets = 200;
 const searchedChangeSets = 2000;
 
@@ -71,6 +73,27 @@ const hiringKinds: readonly RecordType[] = ["planned-hire"];
 
 const stateFields = new Set(["state", "cancelledFrom"]);
 
+// The plan's records, such as release streams, are seen with the plan or planning configuration.
+const planKinds: readonly RecordType[] = recordTypeSchema.options;
+
+// The plan's records are General plan data, seen with the plan or planning configuration rather
+// than through the tiers of people's data.
+const seesPlanKinds = (actor: Actor) =>
+  actor.permissions.includes("plan:view") ||
+  actor.permissions.includes("configuration:view");
+
+// The kinds of record that belong to another, which the history names them by, as a choice is by
+// its list.
+const belonging = new Map<string, string>([
+  ["list-item", "listId"],
+  ...recordKinds.flatMap((kind) =>
+    Object.keys(kind.links).map((field): [string, string] => [
+      kind.type,
+      field,
+    ]),
+  ),
+]);
+
 // The fields that name a record.
 const nameFields = ["name", "label", "preferredName", "title"];
 
@@ -82,7 +105,8 @@ type StoredChange = typeof changes.$inferSelect;
 export interface ReadChangeHistory {
   entries: ChangeEntry[];
   next: string | null;
-  // Whether any change shown is to Restricted or Confidential data, which the access history records.
+  // Whether any change shown is to Restricted or Confidential data, which the access history
+  // records.
   includedSensitive: boolean;
 }
 
@@ -149,7 +173,11 @@ async function readFacts(
       .where(
         and(
           inArray(changes.recordId, chunk),
-          inArray(changes.field, [...nameFields, "listId", "visibility"]),
+          inArray(changes.field, [
+            ...nameFields,
+            ...new Set(belonging.values()),
+            "visibility",
+          ]),
           sql`${changes.newValue} IS NOT NULL`,
           seenSets(actor),
         ),
@@ -157,8 +185,10 @@ async function readFacts(
       .orderBy(changes.recordId, changes.field, desc(changes.id));
     // Names, labels, and lists are always recorded as text.
     for (const { recordId, field, value } of rows) {
-      if (field === "listId") facts.lists.set(recordId, String(value));
-      else if (field === "visibility") facts.visibilities.set(recordId, value);
+      if ([...belonging.values()].includes(field)) {
+        facts.lists.set(recordId, String(value));
+      } else if (field === "visibility")
+        facts.visibilities.set(recordId, value);
       else facts.names.set(recordId, String(value));
     }
   }
@@ -221,6 +251,8 @@ function shown(
     return typeof value === "string" ? (name(value) ?? null) : null;
   }
   if (typeof value === "string" || typeof value === "boolean") return value;
+  // Such as the length of a release stream's cycles.
+  if (typeof value === "number") return String(value);
   return null;
 }
 
@@ -296,7 +328,10 @@ async function visibleRows(
           [viewTiers.get(row.recordId) as Tier]
         : []),
     ]);
-    return seesTier(actor, tier) ? [{ row, tier }] : [];
+    const seen = planKinds.includes(row.recordType as RecordType)
+      ? seesPlanKinds(actor) && tier === "general"
+      : seesTier(actor, tier);
+    return seen ? [{ row, tier }] : [];
   });
 }
 
@@ -317,7 +352,7 @@ function recordsOf(
       draft: row.draft,
       name: name(row.recordId) ?? null,
       list:
-        row.recordType === "list-item" && listId !== undefined
+        belonging.has(row.recordType) && listId !== undefined
           ? (name(listId) ?? null)
           : null,
       fields: [],
@@ -328,7 +363,7 @@ function recordsOf(
       row.action !== "changed" ||
       unshownFields.has(row.field) ||
       (row.field === rejectedField && row.newValue === null) ||
-      (row.recordType === "list-item" && row.field === "listId")
+      belonging.get(row.recordType) === row.field
     ) {
       continue;
     }
@@ -429,8 +464,8 @@ async function readBatch(
             {
               entry: {
                 id: set.id,
-                // Unpublished changes all discarded at once are shown as drafts discarded, and a kind
-                // the server no longer knows as saved changes.
+                // Unpublished changes all discarded at once are shown as drafts discarded, and a
+                // kind the server no longer knows as saved changes.
                 kind: changeKindSchema
                   .catch("edit")
                   .parse(set.kind === "withdrawal" ? "discard" : set.kind),
@@ -448,7 +483,8 @@ async function readBatch(
   };
 }
 
-// The text a search looks in: who saved the change set, and the names and values of what it changed.
+// The text a search looks in: who saved the change set, and the names and values of what it
+// changed.
 function searchedText(entry: ChangeEntry): string {
   return [
     entry.madeBy ?? "Fathom",
@@ -476,13 +512,24 @@ export async function readChangeHistory(
       ? hiringKinds
       : []),
   ];
+  const plan = seesPlanKinds(actor);
   const tiers = tierSchema.options.filter((tier) => seesTier(actor, tier));
-  if (kinds.length === 0) {
+  if (kinds.length === 0 && !plan) {
     return { entries: [], next: null, includedSensitive: false };
   }
-  const mayShow = and(
-    inArray(changes.recordType, [...kinds]),
-    inArray(changes.tier, tiers),
+  const mayShow = or(
+    kinds.length === 0
+      ? undefined
+      : and(
+          inArray(changes.recordType, [...kinds]),
+          inArray(changes.tier, tiers),
+        ),
+    plan
+      ? and(
+          inArray(changes.recordType, [...planKinds]),
+          eq(changes.tier, "general"),
+        )
+      : undefined,
   );
   const words = searchWords(search);
   // Each column's tier now, read once for every batch.

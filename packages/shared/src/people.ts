@@ -8,6 +8,7 @@
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
+import { daySchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import { listLengths } from "./lists.ts";
@@ -21,7 +22,7 @@ export const personLengths = {
 } as const;
 
 // A date without a time, such as 2026-10-31.
-const day = z.iso.date();
+const day = daySchema;
 
 // A column chooses from a list, or holds a web link. A column's type never changes.
 export const fieldTypeSchema = z.enum(["choice", "link"]);
@@ -97,8 +98,8 @@ const requestedValuesSchema = z.record(
 // A person's draft, as the user may see it: whether it adds, changes, or removes them, the columns
 // it changes, by key, and their live values, which a draft that adds someone has none of. Columns
 // the user may not see are left out, and so is a draft that changes only those. A rejected draft's
-// reason is as sensitive as the most sensitive value in the draft, and is left out for users who may
-// not see it.
+// reason is as sensitive as the most sensitive value in the draft, and is left out for users who
+// may not see it.
 export const personDraftSchema = z.object({
   action: draftActionSchema,
   changed: z.array(z.string()),
@@ -118,8 +119,8 @@ export const personDraftSchema = z.object({
 
 export type PersonDraft = z.infer<typeof personDraftSchema>;
 
-// A person as the user sees them: as their draft, if any, makes them, with the draft beside, or, for
-// a draft that removes them, as they are.
+// A person as the user sees them: as their draft, if any, makes them, with the draft beside, or,
+// for a draft that removes them, as they are.
 export const personSchema = z.object({
   id: z.string(),
   preferredName: z.string(),
@@ -252,7 +253,8 @@ export const fieldRequestSchema = z
 
 export type FieldRequest = z.infer<typeof fieldRequestSchema>;
 
-// The key of a column on the People table: a built-in column's name, or an added column's identifier.
+// The key of a column on the People table: a built-in column's name, or an added column's
+// identifier.
 export const columnKeySchema = z.string().min(1).max(64);
 
 // Moves a column to just after another, or to the start when there is none.

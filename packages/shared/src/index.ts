@@ -65,6 +65,24 @@ export {
   nextHiringStates,
   openHiringStates,
 } from "./hires.ts";
+export {
+  addDays,
+  addMonths,
+  type Cycle,
+  cycleName,
+  type CyclePatternLike,
+  cyclesOf,
+  type CycleUnit,
+  cycleUnitSchema,
+  defaultNaming,
+  horizonFrom,
+  type MonthShare,
+  monthShares,
+  namingTokens,
+  patternStartFits,
+  yearsAhead,
+} from "./cycles.ts";
+export { daySchema, isDay, typedDay } from "./days.ts";
 export { folded, matchesWords, searchWords } from "./search.ts";
 export {
   type AccessAction,
@@ -85,6 +103,12 @@ export {
   draftsRequestSchema,
   heldBySchema,
   reasonLength,
+  type RecordDraft,
+  recordDraftSchema,
+  type RecordRef,
+  recordRefSchema,
+  type RecordType,
+  recordTypeSchema,
   rejectionRequestSchema,
   type Unpublished,
   unpublishedDoneSchema,
@@ -124,6 +148,29 @@ export {
   linkValueSchema,
   webAddress,
 } from "./links.ts";
+export {
+  type CyclePattern,
+  type CyclePatternRequest,
+  cyclePatternRequestSchema,
+  cyclePatternSchema,
+  cycleSchema,
+  type CyclesUntilRequest,
+  cyclesUntilRequestSchema,
+  longestCycle,
+  type Release,
+  releaseLengths,
+  type ReleaseRequest,
+  releaseRequestSchema,
+  releaseSchema,
+  planSubjects,
+  shipsBeforeStart,
+  type ReleaseStream,
+  type ReleaseStreamRequest,
+  releaseStreamRequestSchema,
+  releaseStreamSchema,
+  type ReleaseStreams,
+  releaseStreamsSchema,
+} from "./releases.ts";
 export {
   changeSetIdSchema,
   columnKeySchema,

@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Adds the fictional organization from @fathom/fixtures to a development database, and removes it
-// again: its lists, the columns on people drawing on them, and about 150 people, each recorded in the
-// change history as made by Fathom itself, and an account for each persona, from ./accounts.ts,
-// recorded in the access history. Seeding twice adds nothing more, and removing takes away only what
-// seeding added, keeping a seeded column or list that something added by hand still uses, and
-// deactivating the accounts. Drafts made by the personas, from ./drafts.ts, are added once the
-// accounts are, and discarded before the rest is removed, unpublished changes first. A development-only package, never included
-// in the runtime image.
-// Usage: node src/seed.ts seed | unseed, with the FATHOM_DB_* settings for the application role,
-// and FATHOM_PUBLIC_URL and FATHOM_AUTH_SECRET_FILE, as the account command reads. Seeding also
-// needs FATHOM_SEED_PASSWORD_FILE, naming the file that holds the accounts' shared password.
+// again: its lists, the columns on people drawing on them, about 150 people, and its release
+// streams, from ./releases.ts, each recorded in the change history as made by Fathom itself, and an
+// account for each persona, from ./accounts.ts, recorded in the access history. Seeding twice adds
+// nothing more, and removing takes away only what seeding added, keeping a seeded column, list, or
+// release stream that something added by hand still uses, and deactivating the accounts. Drafts
+// made by the personas, from ./drafts.ts, are added once the accounts are, and discarded before the
+// rest is removed, unpublished changes first. A development-only package, never included in the
+// runtime image. Usage: node src/seed.ts seed | unseed | accounts, where accounts adds only the
+// personas' accounts, with the FATHOM_DB_* settings for the application role, and FATHOM_PUBLIC_URL
+// and FATHOM_AUTH_SECRET_FILE, as the account command reads. Seeding also needs
+// FATHOM_SEED_PASSWORD_FILE, naming the file that holds the accounts' shared password.
 
 import {
   type ChangeRecord,
@@ -57,6 +58,7 @@ import {
   unseedListDrafts,
 } from "./list-drafts.ts";
 import { passwordLength } from "@fathom/shared";
+import { seedReleases, unseedReleases } from "./releases.ts";
 
 // The development data set's size.
 export const developmentSize = 150;
@@ -173,10 +175,10 @@ export async function seed(
       const { id, ...settings } = row;
       made.push(...recorded("field", id, "created", settings));
     }
-    // The seeded columns go right after Employee ID, with the other columns in any stored order kept
-    // as they are, so seeding again after unseeding, which leaves their keys in it, lays them out the
-    // same way. A stored order names every built-in column, as Fathom always stores a whole order,
-    // so Employee ID is found; were it missing, the seeded columns would go first.
+    // The seeded columns go right after Employee ID, with the other columns in any stored order
+    // kept as they are, so seeding again after unseeding, which leaves their keys in it, lays them
+    // out the same way. A stored order names every built-in column, as Fathom always stores a whole
+    // order, so Employee ID is found; were it missing, the seeded columns would go first.
     const [stored] = await transaction
       .select({ keys: columnOrders.keys })
       .from(columnOrders)
@@ -446,8 +448,8 @@ export async function seedCommand(
   environment: NodeJS.ProcessEnv = process.env,
 ): Promise<number> {
   const [command] = args;
-  if (command !== "seed" && command !== "unseed") {
-    console.error("error: Usage: seed.ts seed | unseed");
+  if (command !== "seed" && command !== "unseed" && command !== "accounts") {
+    console.error("error: Usage: seed.ts seed | unseed | accounts");
     return 1;
   }
   let pool: ReturnType<typeof createPool> | undefined;
@@ -457,7 +459,11 @@ export async function seedCommand(
     const organization = fictionalOrganization({ size: developmentSize });
     // Read first, so missing settings stop the command before anything is changed.
     const auth = createAuth(database, loadAuthConfig(environment));
-    if (command === "seed") {
+    if (command === "accounts") {
+      const password = readPassword(environment);
+      const accounts = await seedAccounts(auth, database, password);
+      for (const email of accounts) console.log(`Account ready: ${email}`);
+    } else if (command === "seed") {
       const password = readPassword(environment);
       const added = await seed(database, organization);
       console.log(
@@ -465,6 +471,11 @@ export async function seedCommand(
           ? `Added ${String(organization.people.length)} fictional people, with their lists and columns`
           : "The fictional data is already in the database",
       );
+      if (await seedReleases(database)) {
+        console.log(
+          "Added fictional release streams, with their cycles and releases",
+        );
+      }
       const accounts = await seedAccounts(auth, database, password);
       for (const email of accounts) console.log(`Account ready: ${email}`);
       if (await seedDrafts(database, organization)) {
@@ -485,7 +496,8 @@ export async function seedCommand(
           `Discarded ${String(unpublished)} unpublished changes made by the personas`,
         );
       }
-      // People first, since the drafts of lists and columns cannot be discarded while theirs use them.
+      // People first, since the drafts of lists and columns cannot be discarded while theirs use
+      // them.
       const discarded = await unseedDrafts(database, organization);
       if (discarded > 0) {
         console.log(
@@ -498,7 +510,10 @@ export async function seedCommand(
           `Discarded ${String(discardedLists)} drafts of lists and columns made by the personas`,
         );
       }
-      const kept = await unseed(database, organization);
+      const kept = [
+        ...(await unseedReleases(database)),
+        ...(await unseed(database, organization)),
+      ];
       console.log("Removed the fictional data");
       for (const item of kept) console.log(`Kept: ${item}`);
       for (const email of await unseedAccounts(auth, database)) {
@@ -510,7 +525,7 @@ export async function seedCommand(
     console.error(
       `error: ${
         hasDatabaseCode(error, databaseCodes.uniqueViolation)
-          ? "A list, column, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
+          ? "A list, column, release stream, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
           : describeError(error)
       }`,
     );

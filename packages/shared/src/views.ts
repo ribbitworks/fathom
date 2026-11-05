@@ -6,6 +6,7 @@
 // not see. Their maker, and those who may change planning configuration, may change them.
 
 import { z } from "zod";
+import { daySchema } from "./days.ts";
 
 export const viewLengths = { name: 80 } as const;
 
@@ -25,8 +26,8 @@ const key = z.string().min(1).max(keyLimit);
 // open; for choices, when it holds any of them. With `empty`, an empty value matches too.
 export const filterSchema = z.object({
   contains: z.string().max(textLimit).optional(),
-  from: z.iso.date().optional(),
-  to: z.iso.date().optional(),
+  from: daySchema.optional(),
+  to: daySchema.optional(),
   any: z.array(key).max(textLimit).optional(),
   empty: z.boolean().optional(),
 });

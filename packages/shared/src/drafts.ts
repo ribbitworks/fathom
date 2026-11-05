@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Drafts: changes waiting for approval, at most one for each record, as the Decisions Log sets out.
-// People, lists, choices, the People table's columns, and the order of each list's choices and of
-// the People table's columns have drafts, which an Approver approves or rejects, several kinds at
-// once.
+// People, lists, choices, the People table's columns, the order of each list's choices and of the
+// People table's columns, and the plan's records, such as release streams, have drafts, which an
+// Approver approves or rejects, several kinds at once.
 
 import { z } from "zod";
 
@@ -16,10 +16,10 @@ export type DraftState = z.infer<typeof draftStateSchema>;
 // The most a rejection's reason holds.
 export const reasonLength = 500;
 
-// What every draft tells the user beside what it changes: whether it waits or was rejected, with the
-// reason, who last changed it, of the changes the user may see, or null for Fathom itself, and when,
-// both null when the history holds no such change, as for drafts written another way, and everyone
-// who changed it.
+// What every draft tells the user beside what it changes: whether it waits or was rejected, with
+// the reason, who last changed it, of the changes the user may see, or null for Fathom itself, and
+// when, both null when the history holds no such change, as for drafts written another way, and
+// everyone who changed it.
 export const draftShape = {
   state: draftStateSchema,
   reason: z.string().optional(),
@@ -34,12 +34,46 @@ export const draftShape = {
   unpublished: z.boolean().optional(),
 };
 
-// Who holds a record by having unpublished changes to it, by name, when it is someone other than the
-// user: until they publish or discard them, the user sees the record as published and cannot change,
-// approve, or reject it.
+// Who holds a record by having unpublished changes to it, by name, when it is someone other than
+// the user: until they publish or discard them, the user sees the record as published and cannot
+// change, approve, or reject it.
 export const heldBySchema = z.string().optional();
 
 export const draftActionSchema = z.enum(["created", "changed", "deleted"]);
+
+// The kinds of the plan's records that have drafts through one set of rules for all of them, each
+// with its own fields, which may link to other records.
+export const recordTypeSchema = z.enum([
+  "release-stream",
+  "cycle-pattern",
+  "release",
+]);
+
+export type RecordType = z.infer<typeof recordTypeSchema>;
+
+export const recordRefSchema = z.object({
+  type: recordTypeSchema,
+  id: z.uuid(),
+});
+
+export type RecordRef = z.infer<typeof recordRefSchema>;
+
+// A record's draft: whether it adds, changes, or removes the record, the fields it changes, and
+// their live values, which a draft that adds the record has none of, and the records only drafted
+// to be added that it links to, whose drafts approving it approves, and which are rejected only
+// together with it.
+export const recordDraftSchema = z.object({
+  action: draftActionSchema,
+  changed: z.array(z.string()),
+  live: z.record(
+    z.string(),
+    z.union([z.string(), z.number(), z.boolean(), z.null()]),
+  ),
+  uses: z.array(recordRefSchema),
+  ...draftShape,
+});
+
+export type RecordDraft = z.infer<typeof recordDraftSchema>;
 
 // The most drafts approved or rejected at once, as many people as can be added at once.
 export const draftsAtOnce = 1000;
@@ -55,8 +89,8 @@ const ids = (what: string) =>
     .default([]);
 
 // The drafts an Approver approves or rejects at once: of people, planned hires, lists, choices, and
-// the People table's columns, of the order of lists' choices, named by their list, and of the order
-// of the People table's columns.
+// the People table's columns, of the order of lists' choices, named by their list, of the order of
+// the People table's columns, and of the plan's records, by kind.
 const draftsAsked = z.object({
   people: ids("person"),
   plannedHires: ids("planned hire"),
@@ -65,6 +99,16 @@ const draftsAsked = z.object({
   orders: ids("list"),
   columns: ids("column"),
   columnOrder: z.boolean().default(false),
+  records: z
+    .array(recordRefSchema)
+    .max(draftsAtOnce)
+    .refine(
+      (given) =>
+        new Set(given.map(({ type, id }) => `${type} ${id}`)).size ===
+        given.length,
+      "Each record once",
+    )
+    .default([]),
 });
 
 type Asked = z.infer<typeof draftsAsked>;
@@ -78,6 +122,7 @@ const fewEnough = (asked: Asked) => {
     asked.choices.length +
     asked.orders.length +
     asked.columns.length +
+    asked.records.length +
     (asked.columnOrder ? 1 : 0);
   return total > 0 && total <= draftsAtOnce;
 };

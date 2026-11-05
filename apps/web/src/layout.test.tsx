@@ -33,8 +33,9 @@ afterEach(() => {
 
 describe("the first page a user may open", () => {
   it("is never the Overview, so someone sent there from it cannot be sent back", () => {
-    expect(firstPage(permissionSchema.options)).toBe("/people");
-    expect(firstPage(["plan:view"])).toBeUndefined();
+    expect(firstPage(permissionSchema.options)).toBe("/releases/{-$streamId}");
+    expect(firstPage(["people:view"])).toBe("/people");
+    expect(firstPage(["allocations:view"])).toBeUndefined();
   });
 });
 

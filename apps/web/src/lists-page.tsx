@@ -76,6 +76,7 @@ import {
 } from "./lists.ts";
 import { peopleQuery } from "./people.ts";
 import { PageHeader } from "./page-header.tsx";
+import { sidePanelScroll, WithSidePanel } from "./side-panel.tsx";
 import classes from "./pages.module.css";
 import { useSaving } from "./saving.ts";
 import { count } from "./numbers.ts";
@@ -88,6 +89,7 @@ import {
 import { DecideAllItems, DraftMenu, TableSearch } from "./table-controls.tsx";
 
 const newListId = "list-new";
+const listPanelId = "list-panel";
 
 const linkId = (list: { id: string }) => `list-link-${list.id}`;
 
@@ -272,7 +274,7 @@ function ListsTable({
     );
   };
   return (
-    <Paper withBorder>
+    <Paper withBorder className={classes.tablePanel}>
       <div role="table" aria-label="Lists" className={classes.listTable}>
         <div role="row" className={classes.listHead}>
           <span role="columnheader">Name</span>
@@ -353,7 +355,8 @@ export function ListsPage({
   const query = useQuery(listsQuery);
   const readsPeople = seesPeople && mayApprove;
   const people = useQuery({ ...peopleQuery, enabled: readsPeople });
-  // Deciding waits for the people, since rejecting must include the drafts of people that use a list.
+  // Deciding waits for the people, since rejecting must include the drafts of people that use a
+  // list.
   const canApprove =
     mayApprove && show !== "live" && (!readsPeople || people.isSuccess);
   const narrow = useMediaQuery("(max-width: 48em)");
@@ -615,7 +618,8 @@ export function ListsPage({
       });
     },
     decide: (asking, what) => {
-      // Every list, with its rejected drafts, whatever is shown, so a draft that depends on one waits.
+      // Every list, with its rejected drafts, whatever is shown, so a draft that depends on one
+      // waits.
       setDecision(decisionFor(asking, selectionOf(what), all, people.data));
       setDeciding(true);
     },
@@ -648,14 +652,16 @@ export function ListsPage({
     setOpened(true);
   };
 
-  // Clicking the page outside the panel, the table's rows, and any control closes the panel. Menus and
-  // dialogs are drawn outside the page, so clicks in them do not count.
+  // Clicking the page outside the panel, the table's rows, and any control closes the panel. Menus
+  // and dialogs are drawn outside the page, so clicks in them do not count.
   const onPageClick = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
     if (
       open &&
       event.currentTarget.contains(target) &&
-      !target.closest("[data-list-row], [data-list-panel], button, a")
+      !target.closest(
+        "[data-list-row], [data-list-panel], [data-side-panel], button, a",
+      )
     ) {
       closePanel(open);
     }
@@ -747,24 +753,26 @@ export function ListsPage({
               : `${count(lists.length)} ${lists.length === 1 ? "list" : "lists"}`}
           </Text>
         </Group>
-        <ListsTable
-          lists={shownLists}
-          selected={listId}
-          showLive={show === "both"}
-          search={showSearch}
-          markOf={(list) =>
-            show === "live"
-              ? undefined
-              : listMark(drafted.get(list.id) as List, show === "drafts")
-          }
-          onOpen={openList}
-        />
+        <div className={sidePanelScroll}>
+          <ListsTable
+            lists={shownLists}
+            selected={listId}
+            showLive={show === "both"}
+            search={showSearch}
+            markOf={(list) =>
+              show === "live"
+                ? undefined
+                : listMark(drafted.get(list.id) as List, show === "drafts")
+            }
+            onOpen={openList}
+          />
+        </div>
       </>
     );
   }
 
   return (
-    <Stack gap="md" onClick={onPageClick}>
+    <Stack gap="md" className={classes.tablePage} onClick={onPageClick}>
       <PageHeader
         title="Lists"
         action={
@@ -782,28 +790,38 @@ export function ListsPage({
           </Group>
         }
       />
-      {content}
-      {open && (
-        <div data-list-panel>
-          <ListPanel
-            key={open.id}
-            list={open}
-            canEdit={canEdit}
-            canApprove={canApprove}
-            showLive={show === "both"}
-            waits={(selection) => waitsForRejected(selection, all, people.data)}
-            draftActions={draftActions}
-            narrow={narrow}
-            actions={choiceActions(open)}
-            onClose={() => {
-              closePanel(open);
-            }}
-            onEditList={() => {
-              openDialog({ kind: "edit", list: open });
-            }}
-          />
-        </div>
-      )}
+      <WithSidePanel
+        label="Resize the list's panel"
+        controls={listPanelId}
+        storageKey="fathom-record-panel-width"
+        panel={
+          open && (
+            <div data-list-panel id={listPanelId} className={classes.panelSlot}>
+              <ListPanel
+                key={open.id}
+                list={open}
+                canEdit={canEdit}
+                canApprove={canApprove}
+                showLive={show === "both"}
+                waits={(selection) =>
+                  waitsForRejected(selection, all, people.data)
+                }
+                draftActions={draftActions}
+                narrow={narrow}
+                actions={choiceActions(open)}
+                onClose={() => {
+                  closePanel(open);
+                }}
+                onEditList={() => {
+                  openDialog({ kind: "edit", list: open });
+                }}
+              />
+            </div>
+          )
+        }
+      >
+        {content}
+      </WithSidePanel>
       <DecisionModal
         decision={decision}
         opened={deciding}

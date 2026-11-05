@@ -2,18 +2,20 @@
 
 // What each kind of cell in a table of records holds and how it behaves, so a new kind of column is
 // added in one place: text, such as a name; a date; choices from a list; and a web link. Each kind
-// says how a record's value is read, live or as drafted, what clears it, how it reads in words, what
-// a pasted cell gives, the change that saves it, how wide its column is, and whether its column is
-// worth breaking down by. A kind with an editor, cell, or menu item of its own names it; the rest
-// are edited as text and shown in words.
+// says how a record's value is read, live or as drafted, what clears it, how it reads in words,
+// what a pasted cell gives, the change that saves it, how wide its column is, and whether its
+// column is worth breaking down by. A kind with an editor, cell, or menu item of its own names it;
+// the rest are edited as text and shown in words.
 
 import {
   type ChangeValue,
   type Choice,
+  isDay,
   isLink,
   type Link,
   linkInWords,
   linkLabel,
+  typedDay,
   webAddress,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
@@ -23,7 +25,6 @@ import { offered, sameName } from "./lists.ts";
 import {
   type CellValue,
   formatDay,
-  isDay,
   type Kind,
   type TableColumn,
 } from "./table-view.ts";
@@ -82,7 +83,8 @@ export interface CellKind {
   ) => { value: CellValue } | { problem: string };
   // The change that saves a record's value.
   change: (key: string, value: CellValue) => CellChange;
-  // How many characters the column's cells fit, given the longest text it held when the page opened.
+  // How many characters the column's cells fit, given the longest text it held when the page
+  // opened.
   width: (column: AnyColumn, longestText: number) => number;
   // Whether the column's longest text sets its width.
   measured: boolean;
@@ -133,11 +135,17 @@ const date: CellKind = {
   ...text,
   inWords: (_column, value) =>
     isDay(asText(value)) ? formatDay(asText(value)) : asText(value),
-  problem: (column, value) =>
-    asText(value) !== "" && !isDay(asText(value))
+  problem: (column, value) => {
+    const day = typedDay(asText(value));
+    return day !== "" && !isDay(day)
       ? `${column.label}: use a date such as 2026-10-31`
-      : undefined,
-  change: (key, value) => ({ [key]: value === "" ? null : value }),
+      : undefined;
+  },
+  // A day typed as digits alone, such as 20261031, is kept as 2026-10-31.
+  change: (key, value) => {
+    const day = typedDay(asText(value));
+    return { [key]: day === "" ? null : day };
+  },
   width: () => longestDay,
   measured: false,
   breaksDownWhenRequired: false,
