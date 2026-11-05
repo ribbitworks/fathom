@@ -2,7 +2,8 @@
 
 // Tests upgrading a database that already holds data: choices made in the fixed lists before lists
 // became user-defined move into lists of their own, keeping their labels and descriptions, in
-// alphabetical order, and the roles accounts held before roles became editable stay theirs.
+// alphabetical order, the roles accounts held before roles became editable stay theirs, and everyone
+// already named as a manager is flagged as a manager.
 
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
@@ -76,7 +77,41 @@ beforeAll(async () => {
         ('fictional-1', 'viewer'),
         ('fictional-1', 'project-planner'),
         ('fictional-1', 'retired-role'),
-        ('fictional-2', 'administrator')`,
+        ('fictional-2', 'administrator');
+       INSERT INTO fathom.people (id, preferred_name, employee_id, start_date) VALUES
+        ('00000000-0000-4000-8000-000000000001', 'Current Manager', 'F1', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000002', 'Former Manager', 'F2', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000003', 'Starter Manager', 'F3', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000004', 'Hiring Manager', 'F4', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000005', 'Cancelled Hire Manager', 'F5', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000006', 'Report', 'F6', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000007', 'Future Starter', 'F7', '2099-01-01'),
+        ('00000000-0000-4000-8000-000000000008', 'Next Manager', 'F8', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000009', 'Mover', 'F9', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000010', 'Replaced Manager', 'F10', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000011', 'Today Manager', 'F11', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000012', 'Moved Today', 'F12', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000013', 'Proposed Hire Manager', 'F13', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000014', 'Approved Hire Manager', 'F14', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000015', 'Accepted Hire Manager', 'F15', '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000016', 'Filled Hire Manager', 'F16', '2019-01-01');
+       INSERT INTO fathom.reporting_lines (person_id, manager_id, from_date) VALUES
+        ('00000000-0000-4000-8000-000000000006', '00000000-0000-4000-8000-000000000002', '2020-01-01'),
+        ('00000000-0000-4000-8000-000000000006', '00000000-0000-4000-8000-000000000001', '2021-01-01'),
+        ('00000000-0000-4000-8000-000000000001', NULL, '2019-01-01'),
+        ('00000000-0000-4000-8000-000000000007', '00000000-0000-4000-8000-000000000003', '2099-01-01'),
+        ('00000000-0000-4000-8000-000000000009', '00000000-0000-4000-8000-000000000001', '2020-01-01'),
+        ('00000000-0000-4000-8000-000000000009', '00000000-0000-4000-8000-000000000008', '2099-01-01'),
+        ('00000000-0000-4000-8000-000000000012', '00000000-0000-4000-8000-000000000010', '2020-01-01'),
+        ('00000000-0000-4000-8000-000000000012', '00000000-0000-4000-8000-000000000011', (now() AT TIME ZONE 'UTC')::date);
+       INSERT INTO fathom.planned_hires (title, target_date, state, cancelled_from, manager_id) VALUES
+        ('Fictional Open Hire', '2099-01-01', 'recruiting', NULL, '00000000-0000-4000-8000-000000000004'),
+        ('Fictional Cancelled Hire', '2099-01-01', 'cancelled', 'approved', '00000000-0000-4000-8000-000000000005'),
+        ('Fictional Proposed Hire', '2099-01-01', 'proposed', NULL, '00000000-0000-4000-8000-000000000013'),
+        ('Fictional Approved Hire', '2099-01-01', 'approved', NULL, '00000000-0000-4000-8000-000000000014'),
+        ('Fictional Accepted Hire', '2099-01-01', 'offer-accepted', NULL, '00000000-0000-4000-8000-000000000015');
+       INSERT INTO fathom.planned_hires (title, target_date, state, manager_id, filled_by) VALUES
+        ('Fictional Filled Hire', '2020-01-01', 'filled', '00000000-0000-4000-8000-000000000016', '00000000-0000-4000-8000-000000000006')`,
     );
   } finally {
     await rolesPool.end();
@@ -148,6 +183,29 @@ describe("upgrading to editable roles", () => {
         { user_id: "fictional-1", key: "project-planner" },
         { user_id: "fictional-1", key: "viewer" },
         { user_id: "fictional-2", key: "administrator" },
+      ]);
+    } finally {
+      await pool.end();
+    }
+  });
+});
+
+describe("upgrading to the manager flag", () => {
+  it("flags everyone a reporting line in force or yet to start, or an open planned hire, names as manager", async () => {
+    const pool = createPool(rolesDatabase.migrator);
+    try {
+      const rows = await pool.query<{ preferred_name: string }>(
+        "SELECT preferred_name FROM fathom.people WHERE is_manager ORDER BY preferred_name",
+      );
+      expect(rows.rows.map((row) => row.preferred_name)).toEqual([
+        "Accepted Hire Manager",
+        "Approved Hire Manager",
+        "Current Manager",
+        "Hiring Manager",
+        "Next Manager",
+        "Proposed Hire Manager",
+        "Starter Manager",
+        "Today Manager",
       ]);
     } finally {
       await pool.end();

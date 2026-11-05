@@ -647,6 +647,7 @@ export async function createPeople(
         employeeId: request.employeeId,
         startDate: request.startDate ?? null,
         endDate: request.endDate ?? null,
+        isManager: false,
       };
       const after = {
         ...recorded(row, values),

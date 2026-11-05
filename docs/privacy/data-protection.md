@@ -20,7 +20,7 @@ Fathom is used by about 20–30 people in the software organization at first: Pr
 
 Fathom holds a small set of work-related details about each employee in the software organization. They are copied by hand from the company's HR system, which remains the official record. They can also be imported from a CSV or TSV file, which Fathom reads in the user's browser and does not keep.
 
-Each employee's preferred name, Employee ID, and start and end dates are built in. Their site, position, level, and role on the team are columns the role that maintains workforce information adds, each choosing from a list that role keeps, such as a list of sites. Each list is marked with who may see what is chosen from it, so a column can be General, Restricted, or Confidential. A column can instead hold a web link for each employee, such as the address of a page about them, marked the same way. That marking can later be lowered, which shows the details already chosen to more people; such a change is recorded and can be undone. Any further column that holds personal information is brought to HR for approval before it is used.
+Each employee's preferred name, Employee ID, start and end dates, and whether they manage people are built in. Their site, position, level, and role on the team are columns the role that maintains workforce information adds, each choosing from a list that role keeps, such as a list of sites. Each list is marked with who may see what is chosen from it, so a column can be General, Restricted, or Confidential. A column can instead hold a web link for each employee, such as the address of a page about them, marked the same way. That marking can later be lowered, which shows the details already chosen to more people; such a change is recorded and can be undone. Any further column that holds personal information is brought to HR for approval before it is used.
 
 | Information | Why it is needed | Sensitivity |
 | --- | --- | --- |
@@ -28,7 +28,7 @@ Each employee's preferred name, Employee ID, and start and end dates are built i
 | Employee ID (the ID the company uses for each employee, such as their number in the HR system) | To tell apart people with the same name, and to match records to the HR system | General |
 | Site | To plan work across locations | General |
 | Position (for example Software Engineer, Test Engineer) | To plan the mix of skills on each team | General |
-| Team and manager | To see who reports to whom | General |
+| Team and manager, and whether the employee manages people | To see who reports to whom, and to offer only those flagged as managers as anyone's manager | General |
 | Feature teams and feature leads (small groups formed to deliver related pieces of work, separate from reporting lines, and the person leading each) | To see who works together on what | General |
 | Work assignments (which projects and features, and what share of each month) | To plan workload and spot overloaded people | General |
 | Level (for example P1–P5, M1–M5, co-op) | To plan the experience mix on teams and the roles to hire | General |

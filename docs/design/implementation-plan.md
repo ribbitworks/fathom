@@ -40,7 +40,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Change History | Done |
 | Draft and Approval | Done |
 | Web Link Columns | Done |
-| Teams and Reporting Lines | In progress: schema, server, seed, Drafts and People's columns |
+| Teams and Reporting Lines | In progress: schema, server, seed, Drafts and People's columns; the Manager flag's schema |
 | Cycles and Releases | In progress: schema |
 | Hiring Plan | In progress: schema and server |
 | Editable Roles | In progress: schema |
@@ -97,7 +97,7 @@ A second type of column on People, Web link: each person's value is one web addr
 
 ### Teams and Reporting Lines
 
-People managers and their current direct reports: each person's reporting line, with the date it takes effect from, shown as Manager and Team columns on People, teams' optional names, and the rules, drafts, and warnings in the [Decisions Log](../product/decisions.md#workforce). The seed data gains managers, reports, named and unnamed teams, a person with no manager, and a manager whose end date has passed while people still report to them. Reporting lines set the pattern for records that link to other records, which features, feature teams, and planned hires reuse, and for records in force from a date until the next one starts, which feature team membership and allocations reuse. Future dates come with planned reporting changes and the org chart in [The Organization](../product/roadmap.md#stage-the-organization) stage.
+People managers and their current direct reports: each person's reporting line, with the date it takes effect from, shown as Manager and Team columns on People, the Manager flag that decides who can be a manager, teams' optional names, and the rules, drafts, and warnings in the [Decisions Log](../product/decisions.md#workforce). The seed data gains managers, reports, named and unnamed teams, a person with no manager, and a manager whose end date has passed while people still report to them. Reporting lines set the pattern for records that link to other records, which features, feature teams, and planned hires reuse, and for records in force from a date until the next one starts, which feature team membership and allocations reuse. Future dates come with planned reporting changes and the org chart in [The Organization](../product/roadmap.md#stage-the-organization) stage.
 
 ### Hiring Plan
 

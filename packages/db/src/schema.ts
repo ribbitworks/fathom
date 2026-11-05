@@ -371,6 +371,8 @@ export const changes = fathomSchema.table(
 // from their start date until their end date passes; one with no start date counts as current.
 // Employee IDs are unique, ignoring letter case. People who leave are kept, not deleted; deleting is
 // only for a person entered by mistake whom nothing uses. Other details are columns drawing on lists.
+// Only people flagged as managers can be named as a manager, which the server checks rather
+// than the database, since past reporting lines may name people no longer flagged.
 export const people = fathomSchema.table(
   "people",
   {
@@ -379,6 +381,7 @@ export const people = fathomSchema.table(
     employeeId: text("employee_id").notNull(),
     startDate: date("start_date"),
     endDate: date("end_date"),
+    isManager: boolean("is_manager").notNull().default(false),
   },
   (table) => [
     uniqueIndex("people_employee_id_index").on(sql`lower(${table.employeeId})`),
