@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Findings the security report's scans leave out, each an exception the Security Plan records with
+# its reason, approval, and expiry. An entry stops applying on its expiry date, so the finding fails
+# the report again unless the exception is renewed.
+
+vulnerabilities:
+  # Rated high, with no fix released by Debian, in the application's base image's zlib.
+  - id: CVE-2026-76844
+    purls:
+      - pkg:deb/debian/zlib1g
+    expired_at: 2026-12-05
+    statement: No fix released by Debian; see the Security Plan's exceptions.

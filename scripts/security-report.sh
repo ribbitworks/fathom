@@ -77,8 +77,9 @@ compose_for_scan() {
   DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_IMAGE_TAG="$(clone_name security-scan)" docker compose "$@"
 }
 # Each image is saved to a file that Trivy reads, so Trivy is never given access to the container
-# runtime. Every image is passed to the summary, and anything that fails is recorded as not scanned,
-# so the report can never pass on a partial or stale scan.
+# runtime. Findings the Security Plan excepts, listed in .trivyignore.yaml, are left out until each
+# exception expires. Every image is passed to the summary, and anything that fails is recorded as
+# not scanned, so the report can never pass on a partial or stale scan.
 images_dir="$(mktemp -d "$PWD/.tmp/images.XXXXXX")"
 trap 'rm -rf "$scan_copy" "$images_dir"' EXIT
 image_reports=()
@@ -108,9 +109,10 @@ for compose_file in deploy/compose*.yaml deploy/compose*.yml; do
     # Saving fails if the image has no linux/amd64 build, so only what production runs is scanned.
     if ! docker save --platform linux/amd64 --output "$images_dir/$index.tar" "$image" ||
       ! docker run --rm --volume "$images_dir/$index.tar:/image.tar:ro" \
+        --volume "$PWD/.trivyignore.yaml:/trivyignore.yaml:ro" \
         --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$trivy_image" \
         image --quiet --skip-version-check --disable-telemetry --scanners vuln,secret \
-        --format json --exit-code 0 --input /image.tar >"$report"; then
+        --ignorefile /trivyignore.yaml --format json --exit-code 0 --input /image.tar >"$report"; then
       info "The scan of $image did not complete"
       rm -f "$report"
     fi

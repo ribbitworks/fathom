@@ -126,6 +126,7 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 | Finding | Reason | Approved | Expires |
 | --- | --- | --- | --- |
 | Medium and low findings in the system libraries of the application's distroless base image, such as glibc and zlib, with no fix released by Debian | No fix exists. The image has no shell or package manager, runs as a user other than root with a read-only filesystem, and has no route out. Fixes arrive through base image updates, and the exception ends sooner if one does | 2026-10-30, by Fathom's owner | 2027-01-28 |
+| CVE-2026-76844, rated high, in the zlib of the application's distroless base image, with no fix released by Debian. Its advisory names another package, webpack-dev-middleware, so it may be a database error | No fix exists, and the same protections as above apply. Listed in `.trivyignore.yaml`, which the container image scan reads, and which stops leaving it out on the expiry date. The exception ends sooner if Debian releases a fix or the advisory is corrected | 2026-11-05, by Fathom's owner | 2026-12-05 |
 
 ## Source Code Assurance
 
