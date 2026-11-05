@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-11-04
+**Last updated:** 2026-11-05
 
 ## Purpose of This Document
 
@@ -75,7 +75,7 @@ Under the proposed roles:
 - **Work assignments** are maintained by Engineering Managers and the Engineering Director.
 - **Changes waiting for approval:** Changes to employee details, teams, reporting lines, and the hiring plan wait for approval, by someone whose roles let them see that information, such as the Engineering Director, before they take effect. Until then, they are seen by everyone who may see that information. A rejected change is kept, with the approver's reason, until it is changed or discarded.
 - **Feature teams** are proposed by Engineering Managers and approved by those who approve plan changes, such as the Engineering Director.
-- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. Roles can be changed in Fathom, by whoever may edit them, held by the administrator role at first. An administrator could still reach such information by giving their own account another role, by widening a role they hold, or by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. The Engineering Director holds this role at first, so for now the safeguards on granting access rely on the access history. A second person is planned to take on this role later.
+- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. Roles can be changed in Fathom, by whoever may edit them, held by the administrator role at first. An administrator could still reach such information by giving their own account another role, by widening a role they hold, or by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. The Engineering Director holds this role at first, so for now the safeguards on granting access rely on the access history. A change granting Confidential data takes effect at once, without a second person confirming it, until HR asks for such a check. A second person is planned to take on this role later.
 
 ## How the Information Is Protected
 

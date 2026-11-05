@@ -1,7 +1,7 @@
 # Fathom — Issues
 
 **Status:** Working list
-**Last updated:** 2026-11-04
+**Last updated:** 2026-11-05
 
 Known problems and deferred work that are not yet scheduled in the [Implementation Plan](design/implementation-plan.md). Each item says why it was deferred. When an item is scheduled or resolved, it moves to the document that owns it, or is removed.
 
@@ -12,6 +12,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Roles
 
 - **Access limited to one's own part of the organization:** Permissions apply to everyone's data, so People Managers see Restricted details for everyone, and a Project Manager cannot be limited to editing their own projects. The owner decided on 2026-11-04 that permissions will take a scope, such as one's own reporting line, and that it must be built; it waits until roles are editable and Teams and Reporting Lines is built, and may use the linked person records proposed in [Roles](product/roles.md#access-to-your-own-record-and-your-reports).
+- **A second person confirming Confidential grants:** A change granting Confidential data, to a role or to an account's roles, takes effect at once, without a second person confirming it. It is recorded in the access history, and flagged there when made through a role. Deferred by the owner on 2026-11-05, since few applications have such a check; built if HR asks for it.
 
 ## Planning
 
