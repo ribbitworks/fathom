@@ -69,6 +69,21 @@ import {
 import { typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import {
+  changedReporting,
+  checkLine,
+  defaultFrom,
+  readLines,
+  readManagers,
+  readTeamNames,
+  refuseLoop,
+  refuseRemovingManagers,
+  refuseReportsOutside,
+  refuseTakenTeamNames,
+  reportingFields,
+  reportingOf,
+  shownReporting,
+} from "./reporting.ts";
+import {
   type ColumnInfo,
   type FieldValue,
   inListOrder,
@@ -91,13 +106,19 @@ const detailFields = [
   "startDate",
   "endDate",
 ] as const;
+const personFields = [...detailFields, ...reportingFields];
 
-// The tier of each field of a person: dates are Restricted, each column's values are as sensitive
-// as its list, and the rest is General. Every value field recorded is for one of the columns given.
+const isoDay = (moment: Date) => moment.toISOString().slice(0, 10);
+
+// The tier of each field of a person: dates are Restricted, and so are changes to their manager,
+// which name past managers, each column's values are as sensitive as its list, and the rest is
+// General. Every value field recorded is for one of the columns given.
 export function personTier(columns: readonly ColumnInfo[]) {
   const tiers = new Map<string, Tier>([
     ["startDate", "restricted"],
     ["endDate", "restricted"],
+    ["managerId", "restricted"],
+    ["managerFrom", "restricted"],
     ...columns.map((column): [string, Tier] => [
       valueField(column.id),
       column.tier,
@@ -156,7 +177,7 @@ export function personChanges(
   after: Recorded | undefined,
 ): Change[] {
   const fieldNames = [
-    ...detailFields,
+    ...personFields,
     ...new Set(
       [...Object.keys(before ?? {}), ...Object.keys(after ?? {})].filter(
         (field) => fieldOfValue(field) !== null,
@@ -347,12 +368,20 @@ function checkComplete(columns: readonly ColumnInfo[], person: Recorded): void {
   }
 }
 
-// The live people given, as recorded, by person, locked for a change when asked.
+// The live people given, or everyone, as recorded, by person, with their current reporting lines as
+// of today, locked for a change when asked.
 export async function readLive(
   reader: Pick<Database, "select">,
   columns: readonly ColumnInfo[],
-  ids?: readonly string[],
-  lock = false,
+  {
+    ids,
+    lock = false,
+    today = isoDay(new Date()),
+  }: {
+    ids?: readonly string[] | undefined;
+    lock?: boolean;
+    today?: string | undefined;
+  } = {},
 ): Promise<Map<string, Recorded>> {
   const rows: PersonRow[] = [];
   const read = async (chunk?: readonly string[]) => {
@@ -370,8 +399,16 @@ export async function readLive(
     rows.map(({ id }) => id),
     columns.map(({ id }) => id),
   );
+  const lines = await readLines(reader, ids);
+  const teamNames = await readTeamNames(reader, ids);
   return new Map(
-    rows.map((row) => [row.id, recorded(row, values.get(row.id) ?? new Map())]),
+    rows.map((row) => [
+      row.id,
+      {
+        ...recorded(row, values.get(row.id) ?? new Map()),
+        ...reportingOf(lines.get(row.id), teamNames.get(row.id), today),
+      },
+    ]),
   );
 }
 
@@ -423,10 +460,11 @@ async function readPeopleIn(
   const shownFields = new Set<string>([
     "preferredName",
     "employeeId",
-    ...(restricted ? ["startDate", "endDate"] : []),
+    "teamName",
+    ...(restricted ? ["startDate", "endDate", "managerId", "managerFrom"] : []),
     ...columns.map(({ id }) => valueField(id)),
   ]);
-  const live = await readLive(database, allColumns);
+  const live = await readLive(database, allColumns, { today });
   const draftsNow = await readPersonDrafts(database, undefined, actor.user.id);
   const held = await readHeld(database, "person", actor.user.id);
   const makers = await draftMakers(
@@ -442,6 +480,12 @@ async function readPeopleIn(
     ...live.keys(),
     ...[...draftsNow.keys()].filter((id) => !live.has(id)),
   ];
+  const everyone = new Map(
+    ids.map((id) => [
+      id,
+      drafted(live.get(id), draftsNow.get(id)) ?? live.get(id),
+    ]),
+  );
   const shown = ids.flatMap((id): Person[] => {
     const before = live.get(id);
     const draft = draftsNow.get(id);
@@ -467,6 +511,12 @@ async function readPeopleIn(
               endDate: (person.endDate as string | null) ?? null,
             }
           : {}),
+        ...shownReporting(person, before, {
+          everyone,
+          live,
+          restricted,
+          today,
+        }),
         values: Object.fromEntries(
           [...valuesOf(person)].filter(([fieldId]) =>
             shownFields.has(valueField(fieldId)),
@@ -491,8 +541,8 @@ async function readPeopleIn(
   ): PersonDraft | undefined {
     // In a fixed order, since drafts are stored without one: the details, then the columns.
     const rank = (field: string) => {
-      const at = detailFields.indexOf(field as (typeof detailFields)[number]);
-      return at === -1 ? detailFields.length : at;
+      const at = personFields.indexOf(field as (typeof personFields)[number]);
+      return at === -1 ? personFields.length : at;
     };
     const fields = draftFields(before, draft)
       .filter((field) => shownFields.has(field))
@@ -577,6 +627,7 @@ export async function createPeople(
   database: Database,
   actor: Actor,
   requests: readonly PersonRequest[],
+  today: string = isoDay(new Date()),
 ): Promise<{ ids: string[]; changeSetId: string | null }> {
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
@@ -596,16 +647,43 @@ export async function createPeople(
         startDate: request.startDate ?? null,
         endDate: request.endDate ?? null,
       };
-      const after = { ...recorded(row, values), ...links };
+      const after = {
+        ...recorded(row, values),
+        ...links,
+        ...(request.managerId == null
+          ? {}
+          : {
+              managerId: request.managerId,
+              managerFrom:
+                request.managerFrom ??
+                defaultFrom({ startDate: row.startDate }, today),
+            }),
+        ...(request.teamName == null ? {} : { teamName: request.teamName }),
+      };
       checkComplete(columns, after);
       made.push(...personChanges(columns, id, "created", undefined, after));
       added.push({ id, fields: after });
     }
     requireEdits(actor, made);
+    const managers = await readManagers(
+      transaction,
+      requests.map(({ managerId }) => managerId ?? null),
+    );
+    for (const { id, fields } of added) {
+      await checkLine(transaction, id, fields, [], today, managers);
+    }
     await refuseTakenIds(
       transaction,
       requests.map(({ employeeId }) => employeeId),
       [],
+    );
+    await refuseTakenTeamNames(
+      transaction,
+      added.flatMap(({ id, fields }) =>
+        typeof fields.teamName === "string"
+          ? [{ id, name: fields.teamName }]
+          : [],
+      ),
     );
     await addPersonDrafts(transaction, actor.user.id, added);
     const drafts = asDraft(made);
@@ -624,12 +702,15 @@ async function lockDrafted(
   actor: Actor,
   columns: readonly ColumnInfo[],
   id: string,
+  today?: string,
 ): Promise<{
   before: Recorded | undefined;
   draft: Draft | undefined;
   person: Recorded | undefined;
 }> {
-  const before = (await readLive(transaction, columns, [id], true)).get(id);
+  const before = (
+    await readLive(transaction, columns, { ids: [id], lock: true, today })
+  ).get(id);
   const draft = (await readPersonDrafts(transaction, [id], actor.user.id)).get(
     id,
   );
@@ -646,6 +727,7 @@ export async function updatePerson(
   actor: Actor,
   id: string,
   change: PersonChange,
+  today: string = isoDay(new Date()),
 ): Promise<string | null> {
   requirePermission(actor, "people:edit");
   return database.transaction(async (transaction) => {
@@ -656,6 +738,7 @@ export async function updatePerson(
       actor,
       columns,
       id,
+      today,
     );
     if (person === undefined) {
       if (before === undefined) throw new NotFoundError(noPerson);
@@ -686,11 +769,43 @@ export async function updatePerson(
         ]),
       ),
       ...checkedLinks(columns, change.links ?? {}),
+      ...changedReporting(person, change, today),
     });
     checkComplete(columns, after);
     const made = personChanges(columns, id, "changed", person, after);
     requireEdits(actor, made);
     if (made.length === 0) return null;
+    const lines =
+      before === undefined ? [] : (await readLines(transaction, [id])).get(id);
+    await checkLine(transaction, id, after, lines ?? [], today);
+    if (
+      typeof after.managerFrom === "string" &&
+      (after.managerId !== person.managerId ||
+        after.managerFrom !== person.managerFrom)
+    ) {
+      await refuseLoop(
+        transaction,
+        actor.user.id,
+        id,
+        typeof after.managerId === "string" ? after.managerId : null,
+        after.managerFrom,
+        today,
+      );
+    }
+    if (
+      before !== undefined &&
+      (after.startDate !== person.startDate || after.endDate !== person.endDate)
+    ) {
+      await refuseReportsOutside(transaction, [{ id, person: after }], today, {
+        editor: actor.user.id,
+      });
+    }
+    if (
+      typeof after.teamName === "string" &&
+      after.teamName !== person.teamName
+    ) {
+      await refuseTakenTeamNames(transaction, [{ id, name: after.teamName }]);
+    }
     if (change.employeeId !== undefined) {
       await refuseTakenIds(transaction, [change.employeeId], [id]);
     }
@@ -706,7 +821,7 @@ export async function updatePerson(
 
 // Drafts removing a person entered by mistake, recording everything they held; removing someone
 // only drafted to be added discards that draft. People who leave are given an end date instead.
-// Nothing uses people yet; later slices refuse to remove a person who is, for example, on a team.
+// Nobody who is or was anyone's manager can be removed.
 export async function deletePerson(
   database: Database,
   actor: Actor,
@@ -724,6 +839,9 @@ export async function deletePerson(
     );
     // Already drafted to be removed.
     if (person === undefined) return null;
+    if (before !== undefined) {
+      await refuseRemovingManagers(transaction, [id]);
+    }
     const made = [
       ...asDraft(personChanges(columns, id, "deleted", person, undefined)),
       ...clearedRejection(id, personTier(columns), before, draft),

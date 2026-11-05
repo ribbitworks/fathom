@@ -19,16 +19,12 @@
 // image.
 
 import { changes, type Database, drafts } from "@fathom/db";
-import type {
-  FictionalList,
-  FictionalOrganization,
-  FictionalPerson,
-} from "@fathom/fixtures";
+import type { FictionalList, FictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, max, sql } from "drizzle-orm";
 import type { Actor } from "@fathom/server/access";
 import { accountDomain } from "./accounts.ts";
-import { actorOf } from "./drafts.ts";
+import { actorOf, skilledFor } from "./drafts.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
 const secondEditorEmail = `engineering.operations.manager.2@${accountDomain}`;
@@ -248,10 +244,6 @@ async function seedColumnDrafts(
     columnRejection,
   );
 }
-
-// The person given a skill, whom no other seed draft changes.
-const skilledFor = (organization: FictionalOrganization) =>
-  organization.people[6] as FictionalPerson;
 
 // Drafts that use drafts of another kind: the Engineering Operations Manager drafts adding a Skills
 // column drawing on the Skills list, and gives a person Rust in it, so approving the person approves

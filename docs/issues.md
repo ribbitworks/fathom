@@ -57,4 +57,5 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Development
 
 - **Database tests to tidy:** In `packages/db/src/database.test.ts`, each group of tests declares its own copies of PostgreSQL's error codes, which one shared set would replace, and the lists test checks several behaviours in one test. Found in review on 2026-11-03.
+- **Reseeding after a seed draft of a list is approved:** Once an Approver approves the seed's draft adding the Skills list, the list is no longer seed data, so removing the seed data keeps it, and seeding again then stops with "There is already a list with that name" while making the drafts of lists. `pnpm dev:reset` recovers. Found in a manual check on 2026-11-03.
 - **Files the code scan skips without reporting them:** Semgrep skips files larger than 1 MB and files it judges to be minified, and its results list them only in verbose mode, so the security report cannot tell they were skipped. Fathom's repository has no such files today. Deferred until it has.

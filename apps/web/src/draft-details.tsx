@@ -29,6 +29,35 @@ export interface DraftField {
   field: ChangedField;
 }
 
+// A person's reporting fields as a draft words them, live and drafted: managers by name, found
+// among the people given, so a manager not among them is said to be someone not shown, never none,
+// or left unnamed when no people are given.
+const notShown = "someone not shown in People";
+
+function reportingValues(
+  key: string,
+  person: Person,
+  live: PersonDraft["live"],
+  people: readonly Person[] | undefined,
+): [ChangeValue, ChangeValue] | undefined {
+  switch (key) {
+    case "managerId":
+      return [
+        live.managerId == null || people === undefined
+          ? null
+          : (people.find(({ id }) => id === live.managerId)?.preferredName ??
+            notShown),
+        person.manager?.preferredName ?? null,
+      ];
+    case "managerFrom":
+      return [live.managerFrom ?? null, person.managerFrom ?? null];
+    case "teamName":
+      return [live.teamName ?? null, person.teamName ?? null];
+    default:
+      return undefined;
+  }
+}
+
 // What a person's draft changes, field by field, as the change history words it: each built-in
 // detail and column, from its live value to the draft's. A draft adding someone does not repeat
 // their name.
@@ -37,8 +66,24 @@ export function personDraftFields(
   draft: PersonDraft,
   fields: readonly Field[],
   lists: readonly List[],
+  // Absent where the people are not to hand, when an old manager goes unnamed.
+  people?: readonly Person[],
 ): DraftField[] {
   return draft.changed.flatMap((key): DraftField[] => {
+    const reporting = reportingValues(key, person, draft.live, people);
+    if (reporting !== undefined) {
+      const [oldValue, newValue] = reporting;
+      return [
+        {
+          key,
+          field: {
+            field: key,
+            oldValue: draft.action === "created" ? null : oldValue,
+            newValue,
+          },
+        },
+      ];
+    }
     if (builtInColumnNames.has(key)) {
       if (draft.action === "created" && key === "preferredName") return [];
       const detail = key as DetailKey;

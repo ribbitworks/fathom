@@ -40,7 +40,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Change History | Done |
 | Draft and Approval | Done |
 | Web Link Columns | Done |
-| Teams and Reporting Lines | In progress: schema |
+| Teams and Reporting Lines | In progress: schema, server, seed and Drafts |
 | Cycles and Releases | In progress: schema |
 | Hiring Plan | In progress: schema |
 

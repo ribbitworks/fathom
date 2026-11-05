@@ -55,6 +55,7 @@ import {
 } from "./column-approvals.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { refuseUsedAcross, withUsedAcross } from "./draft-uses.ts";
+import { applyReporting, refuseRemovingManagers } from "./reporting.ts";
 import {
   approveListDrafts,
   asksForLists,
@@ -79,7 +80,7 @@ async function seenAsked(
   const columns = await columnsWithAdded(transaction, undefined, true);
   const found = await readPersonDrafts(transaction, ids);
   if (found.size !== ids.length) throw new NotFoundError(noDraft);
-  const live = await readLive(transaction, columns, ids, true);
+  const live = await readLive(transaction, columns, { ids, lock: true, today });
   const tierOf = personTier(columns);
   const shown = new Set(columns.map(({ id }) => valueField(id)));
   const seen = (field: string) =>
@@ -254,7 +255,12 @@ async function approvePeopleIn(
       );
     }
   }
+  await refuseRemovingManagers(
+    transaction,
+    ids.filter((id) => live.has(id) && wanted.get(id)?.person === undefined),
+  );
   await apply(transaction, wanted);
+  await applyReporting(transaction, wanted, today);
   for (const chunk of inChunks([...ids])) {
     await transaction
       .delete(drafts)

@@ -619,7 +619,7 @@ export async function takenEmployeeIds(
   const taken = new Set<string>();
   for (const chunk of inChunks(lowered)) {
     const live = await reader
-      .select({ employeeId: people.employeeId })
+      .select({ value: people.employeeId })
       .from(people)
       .where(
         and(
@@ -627,28 +627,42 @@ export async function takenEmployeeIds(
           except.length === 0 ? undefined : notInArray(people.id, [...except]),
         ),
       );
-    const drafted = [];
-    for (const table of [drafts, unpublishedDrafts]) {
-      drafted.push(
-        ...(await reader
-          .select({ employeeId: sql<string>`${table.fields}->>'employeeId'` })
-          .from(table)
-          .where(
-            and(
-              eq(table.recordType, "person"),
-              inArray(sql`lower(${table.fields}->>'employeeId')`, chunk),
-              except.length === 0
-                ? undefined
-                : notInArray(table.recordId, [...except]),
-            ),
-          )),
-      );
-    }
-    for (const { employeeId } of [...live, ...drafted]) {
-      taken.add(employeeId.toLowerCase());
+    for (const { value } of [
+      ...live,
+      ...(await draftedPersonValues(reader, "employeeId", chunk, except)),
+    ]) {
+      taken.add(value.toLowerCase());
     }
   }
   return employeeIds.filter((id) => taken.has(id.toLowerCase()));
+}
+
+// The values of a person's text field, such as an Employee ID, that drafts of people other than
+// those excepted hold, published or not, among those given in lower case.
+export async function draftedPersonValues(
+  reader: Reader,
+  field: string,
+  lowered: readonly string[],
+  except: readonly string[],
+): Promise<{ value: string }[]> {
+  const found = [];
+  for (const table of [drafts, unpublishedDrafts]) {
+    found.push(
+      ...(await reader
+        .select({ value: sql<string>`${table.fields}->>${field}::text` })
+        .from(table)
+        .where(
+          and(
+            eq(table.recordType, "person"),
+            inArray(sql`lower(${table.fields}->>${field}::text)`, [...lowered]),
+            except.length === 0
+              ? undefined
+              : notInArray(table.recordId, [...except]),
+          ),
+        )),
+    );
+  }
+  return found;
 }
 
 // Whether any person's draft, published or not, changes the column, even to clear it, or has the

@@ -78,3 +78,20 @@ describe("personChangeSchema", () => {
     ).toEqual(["Each choice once"]);
   });
 });
+
+describe("a team name in a change to a person", () => {
+  it("is trimmed, and removed when empty", () => {
+    expect(personChangeSchema.parse({ teamName: " Platform " })).toEqual({
+      teamName: "Platform",
+    });
+    expect(personChangeSchema.parse({ teamName: "  " })).toEqual({
+      teamName: null,
+    });
+  });
+
+  it("is at most 60 characters", () => {
+    expect(
+      personChangeSchema.safeParse({ teamName: "x".repeat(61) }).success,
+    ).toBe(false);
+  });
+});

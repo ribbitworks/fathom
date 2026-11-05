@@ -325,6 +325,7 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
             drafted.draft,
             data.fields,
             lists,
+            data.people,
           ).map(({ key, field }) =>
             credited(describeField(field), key, drafted.draft),
           ),

@@ -71,10 +71,26 @@ export interface FictionalPerson {
   values: Record<string, string[]>;
 }
 
+// Who a person reports to, from a date, as YYYY-MM-DD.
+export interface FictionalLine {
+  personId: string;
+  managerId: string;
+  fromDate: string;
+}
+
+export interface FictionalTeam {
+  managerId: string;
+  name: string;
+}
+
 export interface FictionalOrganization {
   lists: FictionalList[];
   columns: FictionalColumn[];
   people: FictionalPerson[];
+  // One current line for everyone but the person at the top and those no manager was employed for.
+  reportingLines: FictionalLine[];
+  // Names for about half the managers' teams; the rest have none.
+  teams: FictionalTeam[];
   // People made like the rest but not added, for drafts that add them.
   newcomers: FictionalPerson[];
 }
@@ -188,6 +204,94 @@ function name(namer: Faker, order: NameSource["order"]): string {
   return `${namer.person.firstName(sex)} ${namer.person.lastName(sex)}`;
 }
 
+const teamNames = [
+  "Platform",
+  "Payments",
+  "Mobile",
+  "Data",
+  "Search",
+  "Identity",
+  "Billing",
+  "Tools",
+  "Quality",
+  "Integrations",
+  "Reporting",
+  "Infrastructure",
+];
+
+// Who reports to whom: the earliest current manager at the top, with no manager; other managers
+// under someone who started before them, so there are no loops; and everyone else under a manager.
+// Each line starts when both have started, so the manager is employed that day, and a new
+// employee's starts on their start date. One manager who has left keeps reports who were never
+// moved, so the warning about them shows. Made by a generator of their own, so they change nothing
+// else generated.
+function reporting(
+  people: readonly FictionalPerson[],
+  positionOf: (person: FictionalPerson) => string | undefined,
+  managerChoice: string,
+  seed: number,
+  referenceDate: string,
+): { reportingLines: FictionalLine[]; teams: FictionalTeam[] } {
+  const faker = new Faker({ locale: [base], seed: seed + 50 });
+  const started = (person: FictionalPerson) =>
+    String(person.startDate) <= referenceDate;
+  const managers = people
+    .filter((person) => positionOf(person) === managerChoice && started(person))
+    .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+  const top = managers.find(({ endDate }) => endDate === null);
+  const departed = managers.find(
+    ({ endDate }) => endDate !== null && endDate < referenceDate,
+  );
+  // The day a line starts, once both have started, or undefined when either has left by then.
+  const fromFor = (person: FictionalPerson, manager: FictionalPerson) => {
+    const from =
+      String(person.startDate) > String(manager.startDate)
+        ? String(person.startDate)
+        : String(manager.startDate);
+    return [manager.endDate, person.endDate].every(
+      (end) => end === null || from <= end,
+    )
+      ? from
+      : undefined;
+  };
+  const reportingLines: FictionalLine[] = [];
+  let keptByDeparted = 0;
+  for (const person of people) {
+    if (person === top) continue;
+    const isManager = managers.includes(person);
+    const candidates = managers.filter(
+      (manager) =>
+        manager !== person &&
+        manager.endDate === null &&
+        fromFor(person, manager) !== undefined &&
+        (!isManager || managers.indexOf(manager) < managers.indexOf(person)),
+    );
+    const stays =
+      departed !== undefined &&
+      !isManager &&
+      person.endDate === null &&
+      keptByDeparted < 3 &&
+      fromFor(person, departed) !== undefined;
+    let manager = stays ? departed : undefined;
+    if (manager === undefined && candidates.length > 0) {
+      manager = faker.helpers.arrayElement(candidates);
+    }
+    if (manager === undefined) continue;
+    if (stays) keptByDeparted += 1;
+    reportingLines.push({
+      personId: person.id,
+      managerId: manager.id,
+      fromDate: String(fromFor(person, manager)),
+    });
+  }
+  const named = managers.filter((_, index) => index % 2 === 0);
+  const teams = teamNames.slice(0, named.length).map((name, index) => ({
+    managerId: String(named.at(index)?.id),
+    name: `${name} team`,
+  }));
+  return { reportingLines, teams };
+}
+
 // A fictional organization of the given size: its lists, the columns on people drawing on them, and
 // its people, current and former, and a few who start after the reference date, with a few
 // newcomers made after them, so making newcomers changes nothing else.
@@ -276,10 +380,27 @@ export function fictionalOrganization({
       };
     },
   );
+  const people = everyone.slice(0, size);
+  const managerChoice = choice(positions, "Manager");
+  // The last to leave was a manager, so someone who has left still has reports.
+  const lastToLeave = people
+    .filter(({ endDate }) => endDate !== null)
+    .sort((a, b) => String(b.endDate).localeCompare(String(a.endDate)))[0];
+  if (lastToLeave !== undefined) {
+    lastToLeave.values[positionColumn.id] = [managerChoice];
+    lastToLeave.values[levelColumn.id] = [choice(levels, "M1")];
+  }
   return {
     lists: [sites, positions, levels, teamRoles, certifications, languages],
     columns: [siteColumn, positionColumn, levelColumn, teamRoleColumn],
-    people: everyone.slice(0, size),
+    people,
+    ...reporting(
+      people,
+      (person) => person.values[positionColumn.id]?.[0],
+      managerChoice,
+      seed,
+      referenceDate,
+    ),
     newcomers: everyone.slice(size),
   };
 }

@@ -2,12 +2,13 @@
 
 // Drafts in the fictional organization, made through the server's data access layer as the personas
 // who make and judge them would, so they are drafted and recorded exactly as in use: the
-// Engineering Operations Manager drafts adding two newcomers, changing three people, and removing
-// one, and publishes them, a second Engineering Operations Manager changes another detail in one of
-// those drafts, so one draft holds two people's changes, and publishes it, and the Engineering
-// Director rejects two of the drafts with a reason. Each case a draft can be in is there to try:
-// waiting to add, change, or remove someone, and rejected. Then come changes left unpublished, which
-// hold their records: the Engineering Operations Manager's change to another person's site, and the
+// Engineering Operations Manager drafts adding two newcomers, changing three people, moving a
+// report of the manager who has left to another manager, naming a team, and removing someone, and
+// publishes them, a second Engineering Operations Manager changes another detail in one of those
+// drafts, so one draft holds two people's changes, and publishes it, and the Engineering Director
+// rejects two of the drafts with a reason. Each case a draft can be in is there to try: waiting to
+// add, change, or remove someone, and rejected. Then come changes left unpublished, which hold
+// their records: the Engineering Operations Manager's change to another person's site, and the
 // second Engineering Operations Manager's change to a published draft. Removing the seed data
 // discards the drafts first, unpublished ones included. A development-only package, never included
 // in the runtime image.
@@ -131,6 +132,7 @@ async function draftedSinceSeeding(
   organization: FictionalOrganization,
   editorId: string,
 ) {
+  const { moved, named } = reportingDrafts(organization);
   const since = and(
     eq(changes.recordType, "person"),
     eq(changes.draft, true),
@@ -142,10 +144,10 @@ async function draftedSinceSeeding(
     .where(
       and(
         since,
-        inArray(
-          changes.recordId,
-          drafting(organization).map(({ id }) => id),
-        ),
+        inArray(changes.recordId, [
+          ...drafting(organization).map(({ id }) => id),
+          ...[moved, named].map(({ id }) => id),
+        ]),
       ),
     );
   const newcomers = await database
@@ -195,6 +197,54 @@ const drafting = (organization: FictionalOrganization) =>
     FictionalPerson,
   ];
 
+// The person the drafts of lists and columns give a skill, whom no other seed draft changes.
+export const skilledFor = (organization: FictionalOrganization) =>
+  organization.people[6] as FictionalPerson;
+
+// The seeded people whose reporting the drafts change, among those no other draft changes: a report
+// of the manager who has left, moved to the manager at the top, who has none, so the move makes no
+// loop; and a manager whose team has no name, given one. A fictional organization too small to have
+// them is refused.
+export function reportingDrafts(organization: FictionalOrganization): {
+  top: FictionalPerson;
+  moved: FictionalPerson;
+  named: FictionalPerson;
+} {
+  const { people, reportingLines, teams } = organization;
+  const others = new Set(
+    [
+      ...drafting(organization),
+      unpublishedFor(organization),
+      skilledFor(organization),
+    ].map(({ id }) => id),
+  );
+  const later = people.filter(({ id }) => !others.has(id));
+  const lineOf = (id: string) =>
+    reportingLines.find(({ personId }) => personId === id);
+  const managers = new Set(reportingLines.map(({ managerId }) => managerId));
+  const left = (id: string) =>
+    people.find((person) => person.id === id)?.endDate != null;
+  const top = people.find(
+    ({ id, endDate }) =>
+      managers.has(id) && lineOf(id) === undefined && endDate === null,
+  );
+  const moved = later.find(({ id }) => left(String(lineOf(id)?.managerId)));
+  const named = later.find(
+    ({ id, endDate }) =>
+      managers.has(id) &&
+      endDate === null &&
+      !teams.some(({ managerId }) => managerId === id),
+  );
+  if (top === undefined || moved === undefined || named === undefined) {
+    throw new Error(
+      "The fictional organization is too small for the drafts of reporting lines and team names",
+    );
+  }
+  return { top, moved, named };
+}
+
+export const draftedTeamName = "Observability team";
+
 // Makes each draft the seed data has that it has not made since the fictional people were last
 // added, so a run that stopped partway is finished, and drafts approved, rejected, or discarded since
 // are not made again, such as a removal that has since been approved. The two drafts the seed data
@@ -209,6 +259,7 @@ export async function seedDrafts(
   const editor = await actorOf(database, editorEmail);
   const approver = await actorOf(database, approverEmail);
   const [changed, leaving, removed, refused] = drafting(organization);
+  const { top, moved, named } = reportingDrafts(organization);
   const done = await draftedSinceSeeding(
     database,
     organization,
@@ -253,6 +304,11 @@ export async function seedDrafts(
         data.people.update(editor, refused.id, {
           values: otherChoice(organization, refused, 1),
         }),
+    ],
+    [moved, () => data.people.update(editor, moved.id, { managerId: top.id })],
+    [
+      named,
+      () => data.people.update(editor, named.id, { teamName: draftedTeamName }),
     ],
   ];
   let made = newcomers.length > 0;

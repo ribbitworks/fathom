@@ -100,4 +100,64 @@ describe("a fictional organization", () => {
       }
     }
   });
+
+  it("gives people managers who are employed when each line starts, with no loops", () => {
+    const byId = new Map(organization.people.map((one) => [one.id, one]));
+    const managerOf = new Map(
+      organization.reportingLines.map((line) => [
+        line.personId,
+        line.managerId,
+      ]),
+    );
+    for (const line of organization.reportingLines) {
+      const person = byId.get(line.personId);
+      const manager = byId.get(line.managerId);
+      expect(line.personId).not.toBe(line.managerId);
+      for (const one of [person, manager]) {
+        expect(line.fromDate >= String(one?.startDate)).toBe(true);
+        expect(one?.endDate == null || line.fromDate <= one.endDate).toBe(true);
+      }
+      expect(
+        line.fromDate <= "2026-11-01" || line.fromDate === person?.startDate,
+      ).toBe(true);
+      const seen = new Set([line.personId]);
+      for (let at = managerOf.get(line.personId); at; at = managerOf.get(at)) {
+        expect(seen.has(at)).toBe(false);
+        seen.add(at);
+      }
+    }
+  });
+
+  it("has a person with no manager, a manager who has left with reports, and named and unnamed teams", () => {
+    const { people, reportingLines, teams } = organization;
+    const current = people.filter(({ endDate }) => endDate === null);
+    expect(
+      current.some(
+        ({ id }) => !reportingLines.some((line) => line.personId === id),
+      ),
+    ).toBe(true);
+    const left = new Set(
+      people.filter(({ endDate }) => endDate !== null).map(({ id }) => id),
+    );
+    expect(
+      reportingLines.some(
+        (line) =>
+          left.has(line.managerId) &&
+          current.some(({ id }) => id === line.personId),
+      ),
+    ).toBe(true);
+    const managers = new Set(reportingLines.map(({ managerId }) => managerId));
+    const named = new Set(teams.map(({ managerId }) => managerId));
+    expect([...managers].some((id) => named.has(id))).toBe(true);
+    expect([...managers].some((id) => !named.has(id))).toBe(true);
+    const names = teams.map(({ name }) => name.toLowerCase());
+    expect(new Set(names).size).toBe(names.length);
+  });
+
+  it("leaves people with no manager when none is employed for them, as in a tiny organization", () => {
+    // With this seed, nobody has left and no manager is among the three.
+    const tiny = fictionalOrganization({ size: 3, seed: 1 });
+    expect(tiny.people.every(({ endDate }) => endDate === null)).toBe(true);
+    expect(tiny.reportingLines).toEqual([]);
+  });
 });

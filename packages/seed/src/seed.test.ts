@@ -18,6 +18,8 @@ import {
   lists,
   people,
   recordChanges,
+  reportingLines,
+  teams,
   unpublishedDrafts,
   runMigrations,
   users,
@@ -33,7 +35,14 @@ import { personaAccounts } from "./accounts.ts";
 import { actorFor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
 import { columnRejection, listRejection } from "./list-drafts.ts";
-import { actorOf, rejection, seedDrafts, unseedDrafts } from "./drafts.ts";
+import {
+  actorOf,
+  draftedTeamName,
+  rejection,
+  reportingDrafts,
+  seedDrafts,
+  unseedDrafts,
+} from "./drafts.ts";
 import { seed, seedCommand, unseed } from "./seed.ts";
 
 let database: TestDatabase;
@@ -61,7 +70,14 @@ const organization = fictionalOrganization({ size: 20 });
 const sessionSecret = "fictional-session-secret-for-tests-only-0123456789";
 const accountPassword = "fictional-seed-password";
 
-async function totalOf(table: typeof people | typeof lists | typeof fields) {
+async function totalOf(
+  table:
+    | typeof people
+    | typeof lists
+    | typeof fields
+    | typeof reportingLines
+    | typeof teams,
+) {
   const [row] = await connection.select({ total: count() }).from(table);
   return row?.total;
 }
@@ -90,6 +106,20 @@ describe("seeding", () => {
       .from(changes)
       .where(eq(changes.recordId, String(person?.id)));
     expect(history).toContainEqual({ field: "startDate", tier: "restricted" });
+    expect(organization.reportingLines.length).toBeGreaterThan(10);
+    expect(await totalOf(reportingLines)).toBe(
+      organization.reportingLines.length,
+    );
+    expect(await totalOf(teams)).toBe(organization.teams.length);
+    const [line] = organization.reportingLines;
+    const lineHistory = await connection
+      .select({ field: changes.field, tier: changes.tier })
+      .from(changes)
+      .where(eq(changes.recordId, String(line?.personId)));
+    expect(lineHistory).toContainEqual({
+      field: "managerId",
+      tier: "restricted",
+    });
     expect(await seed(connection, organization)).toBe(false);
     expect(await totalOf(people)).toBe(20);
   });
@@ -126,6 +156,32 @@ describe("seeding", () => {
       );
     expect(removed?.oldValue).toEqual(link);
     await connection.delete(fields).where(eq(fields.id, fieldId));
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
+  it("keeps the seeded managers whom people added by hand report to, and those above them", async () => {
+    const [line] = organization.reportingLines;
+    const managerId = String(line?.managerId);
+    const handId = "00000000-0000-4000-8000-000000000002";
+    await connection.insert(people).values({
+      id: handId,
+      preferredName: "Fictional Hand Report",
+      employeeId: "H-2",
+    });
+    await connection
+      .insert(reportingLines)
+      .values({ personId: handId, managerId, fromDate: "2026-01-01" });
+    const kept = await unseed(connection, organization);
+    const manager = organization.people.find(({ id }) => id === managerId);
+    expect(kept).toContain(
+      `${String(manager?.preferredName)}, whom people added by hand report to, or have`,
+    );
+    const left = await connection.select({ id: people.id }).from(people);
+    expect(left.map(({ id }) => id)).toContain(managerId);
+    await connection.delete(people).where(eq(people.id, handId));
+    expect(await unseed(connection, organization)).toEqual([]);
+    expect(await totalOf(people)).toBe(0);
+    expect(await totalOf(reportingLines)).toBe(0);
     expect(await seed(connection, organization)).toBe(true);
   });
 
@@ -185,6 +241,12 @@ describe("seeding", () => {
 });
 
 describe("seed drafts", () => {
+  it("refuse an organization too small for the drafts of reporting lines and team names", () => {
+    expect(() => reportingDrafts(fictionalOrganization({ size: 20 }))).toThrow(
+      "The fictional organization is too small for the drafts of reporting lines and team names",
+    );
+  });
+
   it("need the personas' accounts, and are discarded only when there are some", async () => {
     await expect(seedDrafts(connection, organization)).rejects.toThrow(
       /^The account engineering\.operations\.manager@fathom\.test is missing/,
@@ -214,13 +276,13 @@ describe("the seed command", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], environment())).toBe(0);
     const made = await connection.select().from(drafts);
-    // Of people, then of lists: a site renamed and described by two people, a role retired, Roles on
-    // the team renamed, Languages retired, the Sites, Levels, and Positions orders, and a Positions
-    // description; the Skills list, its two choices, and Harbourside added; and a person, an unused
-    // position, and the Certifications list removed; then the Skills column added, and a person given
-    // Rust in it.
+    // Of people, then of lists: a person moved to another manager, a team named, a site renamed and
+    // described by two people, a role retired, Roles on the team renamed, Languages retired, the
+    // Sites, Levels, and Positions orders, and a Positions description; the Skills list, its two
+    // choices, and Harbourside added; and a person, an unused position, and the Certifications list
+    // removed; then the Skills column added, and a person given Rust in it.
     expect(made.map(({ action }) => action).sort()).toEqual([
-      ...Array<string>(14).fill("changed"),
+      ...Array<string>(16).fill("changed"),
       ...Array<string>(8).fill("created"),
       ...Array<string>(4).fill("deleted"),
     ]);
@@ -270,7 +332,14 @@ describe("the seed command", () => {
     );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
-    expect(await connection.select().from(drafts)).toHaveLength(26);
+    expect(await connection.select().from(drafts)).toHaveLength(28);
+    const reportingDrafts = made.filter(
+      ({ fields }) => "managerId" in fields || "teamName" in fields,
+    );
+    expect(
+      reportingDrafts.map(({ fields }) => fields.teamName ?? null),
+    ).toEqual(expect.arrayContaining([draftedTeamName, null]));
+    expect(reportingDrafts).toHaveLength(2);
     expect(await holders()).toHaveLength(4);
     // Seeding again after the Approver approves the waiting drafts nobody is changing, but the
     // person given a skill, which would approve the Skills list too, makes none again, and leaves alone a draft made by hand of another seeded person, which removing the

@@ -218,11 +218,11 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** As DRAFT-05.
 
 - [ ] **Step 1.** Open the Draft menu.
-  - **Expected:** Under **Waiting drafts** it offers **Approve 8 drafts…** and **Reject 8 drafts…**.
+  - **Expected:** Under **Waiting drafts** it offers **Approve 10 drafts…** and **Reject 10 drafts…**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve 8 drafts…**.
-  - **Expected:** A dialog titled **Approve 10 drafts?** opens. Under **Also approves the drafts these depend on:** it lists *the list Skills* and *the choice Rust in Skills*.
+- [ ] **Step 2.** Select **Approve 10 drafts…**.
+  - **Expected:** A dialog titled **Approve 12 drafts?** opens. Under **Also approves the drafts these depend on:** it lists *the list Skills* and *the choice Rust in Skills*.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Cancel**.
@@ -544,15 +544,15 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 **Preconditions:** R2. Signed in (P1) as `engineering.director@fathom.test`. **Drafts** page open.
 
 - [ ] **Step 1.** Select **Select all waiting**.
-  - **Expected:** The button at the top right reads **Approve 18 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
+  - **Expected:** The button at the top right reads **Approve 20 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve 18 drafts**.
-  - **Expected:** A dialog titled **Approve 18 drafts?** opens.
+- [ ] **Step 2.** Select **Approve 20 drafts**.
+  - **Expected:** A dialog titled **Approve 20 drafts?** opens.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Approve**.
-  - **Expected:** The dialog closes, and a notice reads **Approved 18 drafts.**
+  - **Expected:** The dialog closes, and a notice reads **Approved 20 drafts.**
   - **Notes:**
 
 - [ ] **Step 4.** Open the **People** page.
@@ -625,7 +625,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
 
 **Preconditions:** As DRAFT-29. **Drafts** page open.
 
-- [ ] **Step 1.** Type **Silje** in the search box.
+- [ ] **Step 1.** Type **Silje Skills** in the search box.
   - **Expected:** One entry is shown: **Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust**.
   - **Notes:**
 

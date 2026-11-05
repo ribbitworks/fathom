@@ -85,6 +85,7 @@ import {
   readLive,
   recordSensitiveChanges,
 } from "./people.ts";
+import { refuseLoop, refuseTakenTeamNames } from "./reporting.ts";
 import { typeOf } from "./column-types.ts";
 import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
@@ -397,8 +398,10 @@ async function undoPersonDrafts(
   records: readonly Undone[],
 ): Promise<void> {
   const ids = records.map(({ id }) => id);
-  const live = await readLive(transaction, columns, ids, true);
+  const live = await readLive(transaction, columns, { ids, lock: true });
   const draftsNow = await readPersonDrafts(transaction, ids, editor);
+  const undone = (id: string) =>
+    new Set(records.find((record) => record.id === id)?.old.keys());
   const wanted = records.map((record) => {
     const draft = draftsNow.get(record.id);
     const old = withoutRejection(record.old);
@@ -435,8 +438,36 @@ async function undoPersonDrafts(
       if (taken.length > 0 || !fitsColumns(columns, listOf, person)) {
         throw new ConflictError(changedSince);
       }
+      await refuseUndoneReporting(transaction, editor, id, person, undone(id));
     }
     await writePersonDraft(transaction, editor, id, live.get(id), person);
+  }
+}
+
+// Refuses putting back, among the fields given, a team name another team has taken since, or a
+// line that, with the drafts made since, makes a loop.
+async function refuseUndoneReporting(
+  transaction: Transaction,
+  editor: string,
+  id: string,
+  person: Recorded,
+  putBack: ReadonlySet<string>,
+): Promise<void> {
+  if (putBack.has("teamName") && typeof person.teamName === "string") {
+    await refuseTakenTeamNames(transaction, [{ id, name: person.teamName }]);
+  }
+  if (
+    (putBack.has("managerId") || putBack.has("managerFrom")) &&
+    typeof person.managerFrom === "string"
+  ) {
+    await refuseLoop(
+      transaction,
+      editor,
+      id,
+      typeof person.managerId === "string" ? person.managerId : null,
+      person.managerFrom,
+      new Date().toISOString().slice(0, 10),
+    );
   }
 }
 

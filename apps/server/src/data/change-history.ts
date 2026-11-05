@@ -80,6 +80,11 @@ export interface ReadChangeHistory {
   includedSensitive: boolean;
 }
 
+// Fields whose value is one record's identifier: a choice's list, a list's order, or a person's
+// manager.
+const referencesOne = (field: string) =>
+  ["listId", "order", "managerId"].includes(field);
+
 const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
 
@@ -92,7 +97,7 @@ function referencedIds(row: StoredChange): string[] {
   if (row.recordType === "column-order" || row.recordType === "choice-order") {
     return values.flatMap(strings);
   }
-  if (row.field === "listId" || row.field === "order") {
+  if (referencesOne(row.field)) {
     return values.filter((value) => typeof value === "string");
   }
   return [];
@@ -196,7 +201,7 @@ function shown(
     return value === null ? null : named(strings(value));
   }
   if (row.field === "definition") return null;
-  if (row.field === "listId" || row.field === "order") {
+  if (referencesOne(row.field)) {
     return typeof value === "string" ? (name(value) ?? null) : null;
   }
   if (typeof value === "string" || typeof value === "boolean") return value;

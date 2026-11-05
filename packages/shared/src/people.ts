@@ -16,6 +16,7 @@ import { savedViewSchema } from "./views.ts";
 export const personLengths = {
   preferredName: 100,
   employeeId: 40,
+  teamName: 60,
   column: listLengths.name,
 } as const;
 
@@ -106,6 +107,9 @@ export const personDraftSchema = z.object({
     employeeId: z.string().optional(),
     startDate: day.nullable().optional(),
     endDate: day.nullable().optional(),
+    managerId: z.string().nullable().optional(),
+    managerFrom: day.nullable().optional(),
+    teamName: z.string().nullable().optional(),
     values: valuesSchema,
     links: linksSchema.default({}),
   }),
@@ -123,6 +127,21 @@ export const personSchema = z.object({
   // Left out for users who cannot see Restricted details; null when not set.
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
+  // Who the person reports to now, which is General, and since when, which is Restricted and left
+  // out like the dates. Users who see only General details see the live manager, never a draft's;
+  // those who see Restricted details see the manager as drafted.
+  manager: z
+    .object({ id: z.string(), preferredName: z.string() })
+    .nullable()
+    .optional(),
+  managerFrom: day.nullable().optional(),
+  // Set, for users who see Restricted details, when the manager's end date has passed.
+  managerLeft: z.boolean().optional(),
+  // The name of the manager's team, the team the person is on; null while it has none, when it is
+  // shown by its manager's name.
+  team: z.string().nullable().optional(),
+  // The name of the person's own team, the people who report to them.
+  teamName: z.string().nullable().optional(),
   values: valuesSchema,
   links: linksSchema.default({}),
   draft: personDraftSchema.optional(),
@@ -158,12 +177,27 @@ export const peopleSchema = z.object({
 
 const preferredName = z.string().trim().min(1).max(personLengths.preferredName);
 const employeeId = z.string().trim().min(1).max(personLengths.employeeId);
+// An empty name removes it.
+const teamName = z
+  .string()
+  .trim()
+  .max(personLengths.teamName)
+  .transform((name) => (name === "" ? null : name))
+  .nullable();
+// A new manager, or null for none, from the date given, or from today, or the person's start date
+// if it is later.
+const reporting = {
+  managerId: z.uuid().nullable().optional(),
+  managerFrom: day.optional(),
+  teamName: teamName.optional(),
+};
 
 export const personRequestSchema = z.object({
   preferredName,
   employeeId,
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
+  ...reporting,
   values: requestedValuesSchema.default({}),
   links: z.record(z.uuid(), linkValueSchema).default({}),
 });
@@ -182,6 +216,7 @@ export const personChangeSchema = z.object({
   employeeId: employeeId.optional(),
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
+  ...reporting,
   values: requestedValuesSchema.optional(),
   links: requestedLinksSchema.optional(),
 });

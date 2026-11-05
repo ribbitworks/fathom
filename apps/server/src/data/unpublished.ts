@@ -124,7 +124,7 @@ async function readVersions(
     },
     people: {
       columns,
-      live: await readLive(reader, columns, personIds),
+      live: await readLive(reader, columns, { ids: personIds }),
       mine: await readPersonDrafts(reader, personIds, userId),
       theirs: await readPersonDrafts(reader, personIds),
     },

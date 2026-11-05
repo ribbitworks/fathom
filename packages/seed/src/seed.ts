@@ -26,9 +26,12 @@ import {
   listItems,
   lists,
   hasDatabaseCode,
+  inChunks,
   loadDatabaseConfig,
   people,
   recordChanges,
+  reportingLines,
+  teams,
   valueField,
 } from "@fathom/db";
 import {
@@ -80,14 +83,39 @@ function recorded(
     }));
 }
 
-const dates = ["startDate", "endDate"];
+// The fields of a person that are Restricted: their dates, and their manager, as the server records
+// them.
+const restrictedFields = ["startDate", "endDate", "managerId", "managerFrom"];
 
-function personFields(person: FictionalOrganization["people"][number]) {
+// A person's current line and their team's name, as the server records them.
+interface Reporting {
+  managerId?: string | null;
+  managerFrom?: string;
+  teamName?: string;
+}
+
+function reportingOf(
+  line: { managerId: string | null; fromDate: string } | undefined,
+  teamName: string | undefined,
+): Reporting {
+  return {
+    ...(line === undefined
+      ? {}
+      : { managerId: line.managerId, managerFrom: line.fromDate }),
+    ...(teamName === undefined ? {} : { teamName }),
+  };
+}
+
+function personFields(
+  person: FictionalOrganization["people"][number],
+  reporting: Reporting = {},
+) {
   return {
     preferredName: person.preferredName,
     employeeId: person.employeeId,
     startDate: person.startDate,
     endDate: person.endDate,
+    ...reporting,
     ...Object.fromEntries(
       Object.entries(person.values).map(([columnId, chosen]) => [
         valueField(columnId),
@@ -162,6 +190,12 @@ export async function seed(
       .insert(columnOrders)
       .values({ tableName: "people", keys })
       .onConflictDoUpdate({ target: columnOrders.tableName, set: { keys } });
+    const lineOf = new Map(
+      organization.reportingLines.map((line) => [line.personId, line]),
+    );
+    const teamOf = new Map(
+      organization.teams.map(({ managerId, name }) => [managerId, name]),
+    );
     for (const person of organization.people) {
       const { values, ...row } = person;
       await transaction.insert(people).values(row);
@@ -179,10 +213,19 @@ export async function seed(
           "person",
           person.id,
           "created",
-          personFields(person),
-          dates,
+          personFields(
+            person,
+            reportingOf(lineOf.get(person.id), teamOf.get(person.id)),
+          ),
+          restrictedFields,
         ),
       );
+    }
+    for (const chunk of inChunks(organization.reportingLines)) {
+      await transaction.insert(reportingLines).values(chunk);
+    }
+    for (const chunk of inChunks(organization.teams)) {
+      await transaction.insert(teams).values(chunk);
     }
     // Made by Fathom itself.
     await recordChanges(transaction, null, made);
@@ -202,17 +245,54 @@ export async function unseed(
   return database.transaction(async (transaction) => {
     const kept: string[] = [];
     const made: Change[] = [];
-    // The seeded people still there, and all their values, read at once.
-    const present = await transaction
+    // The seeded people still there, and all their values, read at once, but for those whom people
+    // added by hand report to, or have, and the managers above them.
+    const seededIds = organization.people.map(({ id }) => id);
+    const lines = await transaction
       .select()
-      .from(people)
-      .where(
-        inArray(
-          people.id,
-          organization.people.map(({ id }) => id),
-        ),
-      );
+      .from(reportingLines)
+      .orderBy(reportingLines.fromDate);
+    const managing = new Set<string>();
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const line of lines) {
+        const handled =
+          !seededIds.includes(line.personId) || managing.has(line.personId);
+        if (
+          handled &&
+          line.managerId !== null &&
+          seededIds.includes(line.managerId) &&
+          !managing.has(line.managerId)
+        ) {
+          managing.add(line.managerId);
+          grew = true;
+        }
+      }
+    }
+    const present = (
+      await transaction
+        .select()
+        .from(people)
+        .where(inArray(people.id, seededIds))
+    ).filter(({ id }) => !managing.has(id));
     const presentIds = present.map(({ id }) => id);
+    if (managing.size > 0) {
+      for (const row of await transaction
+        .select({ preferredName: people.preferredName })
+        .from(people)
+        .where(inArray(people.id, [...managing]))) {
+        kept.push(
+          `${row.preferredName}, whom people added by hand report to, or have`,
+        );
+      }
+    }
+    const currentLine = new Map(lines.map((line) => [line.personId, line]));
+    const teamNames = new Map(
+      (await transaction.select().from(teams)).map(({ managerId, name }) => [
+        managerId,
+        name,
+      ]),
+    );
     const held = await transaction
       .select({
         personId: fieldValues.personId,
@@ -243,13 +323,19 @@ export async function unseed(
           row.id,
           "deleted",
           {
-            ...personFields({ ...row, values: Object.fromEntries(byColumn) }),
+            ...personFields(
+              { ...row, values: Object.fromEntries(byColumn) },
+              reportingOf(currentLine.get(row.id), teamNames.get(row.id)),
+            ),
             ...links,
           },
-          dates,
+          restrictedFields,
         ),
       );
     }
+    await transaction
+      .delete(reportingLines)
+      .where(inArray(reportingLines.personId, presentIds));
     await transaction.delete(people).where(inArray(people.id, presentIds));
     for (const column of organization.columns) {
       const [row] = await transaction
