@@ -42,6 +42,8 @@ export interface TableColumn<Row> {
   multiple: boolean;
   // For choice columns: what a filter calls an empty value, when not "Empty".
   emptyLabel?: string;
+  // For choice columns: what a filter calls the choices no longer offered, when not "Retired".
+  retiredLabel?: string;
   value: (row: Row) => CellValue;
 }
 

@@ -538,6 +538,7 @@ export function PeoplePage({
                         lists.data,
                         query.data.order,
                         showDates,
+                        query.data.people,
                       ),
                       [draftColumn],
                     ),

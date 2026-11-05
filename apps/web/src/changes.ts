@@ -59,9 +59,6 @@ const fieldNames = new Map([
   ["order", "Place"],
   ["definition", "Filters and sort"],
   ["rejected", "Reason"],
-  ["managerId", "Manager"],
-  ["managerFrom", "Manager since"],
-  ["teamName", "Team name"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {

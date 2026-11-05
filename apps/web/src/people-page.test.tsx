@@ -109,6 +109,10 @@ const order = [
   "f2",
   "startDate",
   "endDate",
+  "managerId",
+  "managerFrom",
+  "team",
+  "teamName",
 ];
 const peopleAnswer = () =>
   Response.json({
@@ -235,7 +239,7 @@ describe("who sees the People page", () => {
       within(grid)
         .getAllByRole("columnheader")
         .map((header) => header.textContent),
-    ).toEqual(["Employee ID", "Name", "Site"]);
+    ).toEqual(["Employee ID", "Name", "Site", "Manager", "Team", "Team name"]);
     expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
     expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
     expect(screen.queryByRole("row", { name: "New person" })).toBeNull();
@@ -317,31 +321,31 @@ describe("the table", () => {
     await userEvent.keyboard("{ArrowDown}");
     expect(document.activeElement).toBe(cell("p2", "employeeId"));
     await userEvent.keyboard("{End}");
-    expect(document.activeElement).toBe(cell("p2", "endDate"));
+    expect(document.activeElement).toBe(cell("p2", "teamName"));
     await userEvent.keyboard("{Home}{ArrowUp}{ArrowUp}{ArrowLeft}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     await userEvent.keyboard("{Control>}{ArrowDown}{/Control}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     // Ctrl+End and Ctrl+Home go to the table's last and first cells.
     await userEvent.keyboard("{Control>}{End}{/Control}");
-    expect(document.activeElement).toBe(cell("new-0", "endDate"));
+    expect(document.activeElement).toBe(cell("new-0", "teamName"));
     await userEvent.keyboard("{Meta>}{Home}{/Meta}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     // Tab moves across, on to the next row at the end of one, and back with Shift+Tab.
     await userEvent.keyboard("{Tab}");
     expect(document.activeElement).toBe(cell("p1", "employeeId"));
-    focusCell("p1", "endDate");
+    focusCell("p1", "teamName");
     await userEvent.keyboard("{Tab}");
     expect(document.activeElement).toBe(cell("p2", "preferredName"));
     await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
-    expect(document.activeElement).toBe(cell("p1", "endDate"));
+    expect(document.activeElement).toBe(cell("p1", "teamName"));
     // From the first cell, Shift+Tab leaves the table, and so does Tab from the last.
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
     expect(document.activeElement).not.toBe(cell("p1", "preferredName"));
-    focusCell("new-0", "endDate");
+    focusCell("new-0", "teamName");
     await userEvent.keyboard("{Tab}");
-    expect(document.activeElement).not.toBe(cell("new-0", "endDate"));
+    expect(document.activeElement).not.toBe(cell("new-0", "teamName"));
   });
 });
 
@@ -1090,7 +1094,19 @@ describe("drafts", () => {
       [...(liveRow?.querySelectorAll("td") ?? [])].map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Avery Fictional Live", "E1", "Northmere", "", "", "", ""]);
+    ).toEqual([
+      "Avery Fictional Live",
+      "E1",
+      "Northmere",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
     // Moving down from the draft row skips the live row.
     focusCell("p1", "employeeId");
     await userEvent.keyboard("{ArrowDown}");
@@ -1627,9 +1643,12 @@ describe("columns", () => {
       header("Name").focus();
     });
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
-    await userEvent.click(header("End"));
-    // Role on team's menu may still be closing, so its items are looked for only in End's own menu.
-    const endMenu = await screen.findByRole("menu", { name: /^End column/ });
+    await userEvent.click(header("Team name"));
+    // Role on team's menu may still be closing, so its items are looked for only in Team name's own
+    // menu.
+    const endMenu = await screen.findByRole("menu", {
+      name: /^Team name column/,
+    });
     await userEvent.click(
       within(endMenu).getByRole("menuitem", { name: /^Move right/ }),
     );
@@ -1644,8 +1663,9 @@ describe("columns", () => {
     await waitFor(() => {
       expect(moves("f1")).toHaveLength(1);
     });
-    // Moves save one after another, so once Site's has been sent, any from End's menu has been too.
-    expect(moves("endDate")).toEqual([]);
+    // Moves save one after another, so once Site's has been sent, any from Team name's menu has been
+    // too.
+    expect(moves("teamName")).toEqual([]);
     expect(moves("f2")).toHaveLength(1);
   });
 });
@@ -2317,13 +2337,13 @@ describe("searching, sorting, and filtering", () => {
       "nobody",
     );
     expect(screen.getByText("No matching people").closest("td")?.colSpan).toBe(
-      3,
+      6,
     );
     expect(
       within(screen.getByRole("grid"))
         .getAllByRole("columnheader")
         .map((th) => th.textContent),
-    ).toEqual(["Name", "Employee ID", "Site"]);
+    ).toEqual(["Name", "Employee ID", "Site", "Manager", "Team", "Team name"]);
   });
 
   describe("saved views", () => {

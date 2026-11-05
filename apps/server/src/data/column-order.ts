@@ -5,18 +5,14 @@
 // sets out, which approving writes here.
 
 import { columnOrders, type Database, fields } from "@fathom/db";
+import { builtInColumnNames } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import type { Transaction } from "./changes.ts";
 
 const table = "people";
 
 // The People table's built-in columns, in the order they start in.
-export const builtInColumns = [
-  "preferredName",
-  "employeeId",
-  "startDate",
-  "endDate",
-] as const;
+export const builtInColumns: readonly string[] = [...builtInColumnNames.keys()];
 
 type Reader = Pick<Database, "select">;
 
@@ -30,8 +26,8 @@ async function storedOrder(reader: Reader, lock = false): Promise<string[]> {
   return row?.keys ?? [];
 }
 
-// Every current column's key, in order: as stored, skipping deleted columns, then any column the
-// stored order does not name yet, built-in columns first.
+// Every current column's key, in order: as stored, skipping deleted columns, with every built-in
+// column, then any added column the stored order does not name yet.
 export async function readColumnOrder(reader: Reader): Promise<string[]> {
   return currentOrder(reader, await storedOrder(reader));
 }
@@ -45,11 +41,26 @@ async function currentOrder(
     .from(fields)
     .where(eq(fields.tableName, table))
     .orderBy(asc(fields.id));
-  const current = [...builtInColumns, ...added.map(({ id }) => id)];
-  return [
-    ...stored.filter((key) => current.includes(key)),
-    ...current.filter((key) => !stored.includes(key)),
-  ];
+  const addedKeys = added.map(({ id }) => id);
+  const order = withBuiltIns(
+    stored.filter(
+      (key) => builtInColumns.includes(key) || addedKeys.includes(key),
+    ),
+  );
+  return [...order, ...addedKeys.filter((key) => !order.includes(key))];
+}
+
+// An order with every built-in column: one it does not name, such as one added since it was stored,
+// goes just after the built-in column it follows in their starting order.
+export function withBuiltIns(stored: readonly string[]): string[] {
+  const order = [...stored];
+  for (const [index, key] of builtInColumns.entries()) {
+    if (order.includes(key)) continue;
+    const at =
+      index === 0 ? -1 : order.indexOf(builtInColumns[index - 1] as string);
+    order.splice(at + 1, 0, key);
+  }
+  return order;
 }
 
 // Saves the order of the People table's columns.

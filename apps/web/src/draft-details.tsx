@@ -32,7 +32,7 @@ export interface DraftField {
 // A person's reporting fields as a draft words them, live and drafted: managers by name, found
 // among the people given, so a manager not among them is said to be someone not shown, never none,
 // or left unnamed when no people are given.
-const notShown = "someone not shown in People";
+export const notShown = "Someone not shown in People";
 
 function reportingValues(
   key: string,

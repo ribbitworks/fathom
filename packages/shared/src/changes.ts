@@ -8,13 +8,18 @@
 import { z } from "zod";
 import { textLimit } from "./views.ts";
 
-// The labels of the People table's built-in columns, shared so the table and the history name them
-// alike.
+// The labels of the People table's built-in columns, in the order a new table starts with them,
+// shared so the table and the history name them alike. A person's team is the team of their
+// manager; their team name is that of their own team.
 export const builtInColumnNames: ReadonlyMap<string, string> = new Map([
   ["preferredName", "Name"],
   ["employeeId", "Employee ID"],
   ["startDate", "Start"],
   ["endDate", "End"],
+  ["managerId", "Manager"],
+  ["managerFrom", "Manager since"],
+  ["team", "Team"],
+  ["teamName", "Team name"],
 ]);
 
 // A value as the history shows it: text, such as a name or a date, yes or no, the names of several

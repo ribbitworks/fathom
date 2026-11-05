@@ -30,7 +30,11 @@ import {
   type Saved,
   type Transaction,
 } from "./changes.ts";
-import { builtInColumns, readColumnOrder } from "./column-order.ts";
+import {
+  builtInColumns,
+  readColumnOrder,
+  withBuiltIns,
+} from "./column-order.ts";
 import {
   asDraft,
   clearedRejection,
@@ -139,15 +143,16 @@ export const addedFields = (state: ColumnsState): string[] =>
     .map(([id]) => id);
 
 const keyExists = (state: ColumnsState, key: string) =>
-  (builtInColumns as readonly string[]).includes(key) ||
-  fieldExists(state, key);
+  builtInColumns.includes(key) || fieldExists(state, key);
 
 // The order a draft of the column order holds, of columns that still exist.
 export function heldColumnOrder(state: ColumnsState): string[] | undefined {
   if (state.orderDraft === undefined) return undefined;
   // Written only by writeColumnOrderDraft, which always holds an order.
-  return (state.orderDraft.fields.order as string[]).filter((key) =>
-    keyExists(state, key),
+  return withBuiltIns(
+    (state.orderDraft.fields.order as string[]).filter((key) =>
+      keyExists(state, key),
+    ),
   );
 }
 
@@ -787,7 +792,12 @@ export async function readColumnsOut(
   const visible = new Set([
     "preferredName",
     "employeeId",
-    ...(seesTier(actor, "restricted") ? ["startDate", "endDate"] : []),
+    "managerId",
+    "team",
+    "teamName",
+    ...(seesTier(actor, "restricted")
+      ? ["startDate", "endDate", "managerFrom"]
+      : []),
     ...shown.map(({ id }) => id),
   ]);
   const orderMaker = (

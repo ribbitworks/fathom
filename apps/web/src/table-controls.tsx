@@ -54,7 +54,13 @@ export type ChangeView = (view: View, replace?: boolean) => void;
 // A column as the controls need it, whatever its rows.
 type AnyColumn = Pick<
   TableColumn<never>,
-  "key" | "label" | "kind" | "choices" | "multiple" | "emptyLabel"
+  | "key"
+  | "label"
+  | "kind"
+  | "choices"
+  | "multiple"
+  | "emptyLabel"
+  | "retiredLabel"
 >;
 
 // Each kind's sorts, ascending then descending.
@@ -1107,7 +1113,7 @@ function ChoiceFilter({
           {retired.length > 0 && (
             <Stack gap={6} role="group" aria-labelledby={retiredId}>
               <Text id={retiredId} fz="xs" fw={600} c="dimmed" mt={4}>
-                Retired
+                {column.retiredLabel ?? "Retired"}
               </Text>
               {retired.map((choice) => box(choice, false))}
             </Stack>

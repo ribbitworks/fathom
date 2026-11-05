@@ -681,6 +681,73 @@ describe("reading columns", () => {
   });
 });
 
+describe("orders stored before the reporting columns", () => {
+  const before = ["preferredName", "employeeId", "startDate", "endDate"];
+  const reporting = ["managerId", "managerFrom", "team", "teamName"];
+
+  it("put each built-in column an order does not name just after the one it follows, live and drafted", async () => {
+    const stored = await liveOrder();
+    const added = stored.filter(
+      (key) => !before.includes(key) && !reporting.includes(key),
+    );
+    const older = [...before, ...added];
+    const write = (keys: string[]) =>
+      test.connection
+        .update(columnOrders)
+        .set({ keys })
+        .where(eq(columnOrders.tableName, "people"));
+    await write(older);
+    try {
+      const shown = [...before, ...reporting, ...added];
+      expect((await readPeople()).order).toEqual(shown);
+      const general = await test.signedIn(["resource-planner"]);
+      const seen = await readPeople(general.cookie);
+      expect(seen.order).toEqual([
+        "preferredName",
+        "employeeId",
+        "managerId",
+        "team",
+        "teamName",
+        ...added.filter((key) => seen.fields.some(({ id }) => id === key)),
+      ]);
+
+      await send("PUT", "/api/people/columns/employeeId/position", {
+        after: null,
+      });
+      await test.connection
+        .update(drafts)
+        .set({
+          fields: {
+            order: [
+              "employeeId",
+              "preferredName",
+              "startDate",
+              "endDate",
+              ...added,
+            ],
+          },
+        })
+        .where(eq(drafts.recordType, "column-order"));
+      const read = await readPeople();
+      expect(read.order).toEqual([
+        "employeeId",
+        "preferredName",
+        "startDate",
+        "endDate",
+        ...reporting,
+        ...added,
+      ]);
+      expect(read.orderDraft?.live).toEqual(shown);
+      const seenDrafted = await readPeople(general.cookie);
+      expect(seenDrafted.order).not.toContain("managerFrom");
+      expect(seenDrafted.orderDraft?.live).toEqual(seen.order);
+    } finally {
+      await send("DELETE", "/api/people/columns/order/draft");
+      await write(stored);
+    }
+  });
+});
+
 describe("rejected drafts of columns", () => {
   it("are waiting again once changed, discarded, or moved, and show their reasons meanwhile", async () => {
     const { list } = await liveList(["A"]);

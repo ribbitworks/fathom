@@ -47,6 +47,7 @@ import {
   type CSSProperties,
   type DragEvent,
   type KeyboardEvent,
+  type ReactNode,
   type Ref,
   useImperativeHandle,
   useState,
@@ -167,8 +168,16 @@ export interface Column<
   choices: Choice[];
   // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
+  // Set for a column whose values follow from another's, which is edited instead.
+  readOnly?: boolean;
+  // The key of the column whose drafts change this one's values, when another's do.
+  changesWith?: string;
+  // Set false for a column not worth breaking down by, such as one with a choice for each record.
+  breaksDown?: boolean;
   live: (draft: DraftOf<Rec>) => CellValue;
   change: (value: CellValue) => Change;
+  // Shown after a record's value, such as a warning about it.
+  mark?: (record: Rec) => ReactNode;
 }
 
 // What is particular to a kind of record: what its table and rows are called, its columns, how its
@@ -184,11 +193,13 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // What removing a record is called in its menu, such as "Remove person".
   removeLabel: string;
   nameOf: (record: Rec) => string;
-  // The table's columns, in the order given by their keys, from its added columns and their lists.
+  // The table's columns, in the order given by their keys, from its added columns and their lists,
+  // and the records, live or as drafted, for columns whose choices are records.
   columnsFor: (
     fields: readonly Field[],
     lists: readonly List[],
     order: readonly string[],
+    records: readonly Rec[],
   ) => Column<Rec, Change>[];
   // The records as they are live, without drafts.
   liveRecords: (records: readonly Rec[]) => Rec[];
@@ -200,11 +211,13 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
     lists: readonly List[],
   ) => DraftField[];
   // What is wrong with a record's values taken together, if anything, beside the other records'
-  // values, and the column whose value is wrong, when one is; the column changed, when only one is.
+  // values, and the column whose value is wrong, when one is; the column changed, when only one is,
+  // with the record's values before it changed.
   recordProblem: (
     values: Record<string, CellValue>,
     others: () => Record<string, CellValue>[],
     changed?: string,
+    before?: Record<string, CellValue>,
   ) => RowProblem | undefined;
   // The request that adds a record, from the changes that save each of its columns' values.
   request: (changes: Change[]) => Request;
@@ -351,21 +364,31 @@ const pendingPrefix = "pending-";
 
 const pendingId = () => `${pendingPrefix}${crypto.randomUUID()}`;
 
-const isPending = (record: GridRecord) => record.id.startsWith(pendingPrefix);
+export const isPending = (record: GridRecord) =>
+  record.id.startsWith(pendingPrefix);
 
 // What the table can do for whoever opens it: put focus on the row for adding a record.
 export interface RecordGridHandle {
   addRow: () => void;
 }
 
+// Whether a draft changing a record names a column, or the column its values follow from.
+const changedIn = (
+  draft: GridDraft,
+  column: { key: string; changesWith?: string | undefined },
+) =>
+  draft.changed.includes(column.key) ||
+  (column.changesWith !== undefined &&
+    draft.changed.includes(column.changesWith));
+
 // Whether a draft gives a column a new value: every column of a record added, and those a change
 // names. A removal shows the record as it is.
 function draftChanges(
   draft: GridDraft | undefined,
-  column: { key: string },
+  column: { key: string; changesWith?: string | undefined },
 ): boolean {
   if (draft === undefined || draft.action === "deleted") return false;
-  return draft.action === "created" || draft.changed.includes(column.key);
+  return draft.action === "created" || changedIn(draft, column);
 }
 
 // The records the metrics count, as the Draft menu shows them. With drafts beside live, they count
@@ -393,8 +416,11 @@ export function countedRecords<
 
 type AnyColumn = Column<never>;
 
-const breaksDown = (column: Pick<AnyColumn, "required" | "kind">) =>
-  !column.required || kindOf(column).breaksDownWhenRequired;
+const breaksDown = (
+  column: Pick<AnyColumn, "required" | "kind" | "breaksDown">,
+) =>
+  column.breaksDown ??
+  (!column.required || kindOf(column).breaksDownWhenRequired);
 
 const emptyValue = (column: { kind: Kind }): CellValue => kindOf(column).empty;
 
@@ -526,7 +552,8 @@ export function pastedRows(
       for (const [offset, cell] of line.split("\t").entries()) {
         const column = columns[from + offset];
         const content = cell.trim();
-        if (column === undefined || content === "") continue;
+        if (column === undefined || column.readOnly === true || content === "")
+          continue;
         const read = kindOf(column).pasted(column, content);
         if ("problem" in read) problem ??= read.problem;
         else values[column.key] = read.value;
@@ -815,14 +842,24 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // The columns with their lists as they are live, for the live records and each live row, so a
   // choice's drafted name is not shown as live.
   const listsLive = liveLists(lists);
-  const liveColumns = table.columnsFor(fields, listsLive, order);
+  const liveColumns = table.columnsFor(
+    fields,
+    listsLive,
+    order,
+    table.liveRecords(everyone),
+  );
   // Both are made from the same fields, so every column has its live one.
   const liveColumn = (column: Column<Rec, Change>) =>
     liveColumns.find(({ key }) => key === column.key) as Column<Rec, Change>;
   const columns =
     asked.show === "live"
       ? liveColumns
-      : table.columnsFor(fields, applied ? draftedLists(lists) : lists, order);
+      : table.columnsFor(
+          fields,
+          applied ? draftedLists(lists) : lists,
+          order,
+          everyone,
+        );
   const known = knownView(
     asked,
     columns,
@@ -926,7 +963,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     return shown(
       // Only changed columns have a live copy beside them.
       liveBeside(column) as Column<Rec, Change>,
-      draft?.action === "changed" && draft.changed.includes(column.key)
+      draft?.action === "changed" && changedIn(draft, column)
         ? column.live(draft)
         : column.value(record),
     );
@@ -1061,7 +1098,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
 
   const startEdit = (cell: Cell, typed?: string) => {
     const { row, column } = at(cell);
-    if (row.record && locked(row.record)) return;
+    if ((row.record && locked(row.record)) || column.readOnly === true) return;
     const value = valueAt(row, column);
     setActive(cell);
     setEditing(cell);
@@ -1155,6 +1192,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           { ...valuesOf(row.record), [column.key]: value },
           otherValues(everyRowsValues(), key),
           column.key,
+          valuesOf(row.record),
         ),
     );
     if (refused !== undefined) {
@@ -1381,6 +1419,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       startEdit(cell);
     } else if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
+      if (column.readOnly === true) return;
       if (!save(cell, emptyValue(column))) putBack();
     } else if (event.key.length === 1) {
       event.preventDefault();
@@ -2156,6 +2195,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               : classes.recordProblemCell,
                           ].join(" ")}
                           aria-readonly={
+                            column.readOnly === true ||
                             draft?.action === "deleted" ||
                             row.record?.heldBy !== undefined ||
                             (row.record && isPending(row.record))
@@ -2180,6 +2220,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                           {editingHere
                             ? editor(cell, column, valueAt(row, column))
                             : cellContent(column, valueAt(row, column))}
+                          {row.record &&
+                            !editingHere &&
+                            column.mark?.(row.record)}
                           {changes && !editingHere && (
                             <VisuallyHidden>
                               {live === undefined
@@ -2251,7 +2294,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                           >
                             {shown(
                               liveColumn(column),
-                              draft.changed.includes(column.key)
+                              changedIn(draft, column)
                                 ? column.live(draft)
                                 : column.value(record),
                             )}

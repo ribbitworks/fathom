@@ -226,7 +226,7 @@ describe("a table of another kind of record", () => {
     });
   });
 
-  it("checks a changed record whole, naming the column changed and giving the other records' values", async () => {
+  it("checks a changed record whole, naming the column changed and giving the other records' values and its own before", async () => {
     const recordProblem = vi.fn(
       (
         values: Record<string, unknown>,
@@ -259,6 +259,7 @@ describe("a table of another kind of record", () => {
       { name: "Gizmo", code: "G1", f1: [] },
       expect.any(Function),
       "name",
+      { name: "Gadget g1", code: "G1", f1: [] },
     );
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: "g1" }), {
       name: "Gizmo",

@@ -39,7 +39,17 @@ describe("the order of the columns", () => {
       columnsFor([site], [sites], ["f1", "employeeId"], true).map(
         ({ key }) => key,
       ),
-    ).toEqual(["f1", "employeeId", "preferredName", "startDate", "endDate"]);
+    ).toEqual([
+      "f1",
+      "employeeId",
+      "preferredName",
+      "startDate",
+      "endDate",
+      "managerId",
+      "managerFrom",
+      "team",
+      "teamName",
+    ]);
   });
 
   it("offers no choices for a column whose list cannot be found", () => {
@@ -96,7 +106,9 @@ describe("how wide each column is", () => {
     retired,
   });
   const widthOf = (field: Field, list: List) => {
-    const [, , column] = columnsFor([field], [list], [], false);
+    const column = columnsFor([field], [list], [], false).find(
+      ({ key }) => key === field.id,
+    );
     return column && columnWidth(column, new Map());
   };
 
@@ -127,7 +139,9 @@ describe("how wide each column is", () => {
   });
 
   it("fits a date column to the longest date", () => {
-    const [, , start] = columnsFor([], [], [], true);
+    const start = columnsFor([], [], [], true).find(
+      ({ key }) => key === "startDate",
+    );
     const width = start && columnWidth(start, new Map());
     const longest = Math.max(
       ...Array.from(
@@ -165,7 +179,7 @@ describe("adding people without dates", () => {
         <PeopleGrid
           people={[]}
           fields={[site]}
-          order={[]}
+          order={["preferredName", "employeeId", "f1"]}
           lists={[sites]}
           canEdit
           canEditColumns={false}
@@ -391,5 +405,441 @@ describe("a start date after the end date", () => {
     expect(screen.getByRole("textbox", { name: label }).className).toContain(
       "recordEditorInvalid",
     );
+  });
+});
+
+describe("managers and teams", () => {
+  const person = (id: string, more: Partial<Person> = {}): Person => ({
+    id,
+    preferredName: `Fictional ${id}`,
+    employeeId: id,
+    startDate: "2024-01-01",
+    endDate: null,
+    values: {},
+    links: {},
+    ...more,
+  });
+  const lead = (id: string) => ({ id, preferredName: `Fictional ${id}` });
+  const people = [
+    person("p1", { teamName: "Harbour Crew", manager: null }),
+    person("p2", { manager: lead("p1"), team: "Harbour Crew" }),
+    person("p3", { endDate: "2025-01-01", manager: lead("p1") }),
+    person("p4", {
+      manager: lead("p3"),
+      team: null,
+      managerLeft: true,
+      managerFrom: "2024-02-01",
+    }),
+    person("p5", { manager: { id: "p9", preferredName: "Fictional p9" } }),
+  ];
+  const grid = (more: Partial<Parameters<typeof PeopleGrid>[0]> = {}) => (
+    <MantineProvider theme={testTheme}>
+      <PeopleGrid
+        people={people}
+        fields={[]}
+        order={[]}
+        lists={[]}
+        canEdit
+        canEditColumns={false}
+        showDates
+        view={emptyView}
+        onView={noop}
+        actions={actions}
+        {...more}
+      />
+    </MantineProvider>
+  );
+  const focus = (row: string, key: string) => {
+    act(() => {
+      document.getElementById(`cell-${row}-${key}`)?.focus();
+    });
+  };
+  const text = (row: string, key: string) =>
+    document.getElementById(`cell-${row}-${key}`)?.textContent;
+
+  it("offers everyone still employed as a manager, and keeps those gone, or not shown, for the people who report to them", () => {
+    const manager = columnsFor([], [], [], true, people).find(
+      ({ key }) => key === "managerId",
+    );
+    expect(
+      manager?.choices.map(({ id, label, retired }) => [id, label, retired]),
+    ).toEqual([
+      ["p1", "Fictional p1", false],
+      ["p2", "Fictional p2", false],
+      ["p3", "Fictional p3", true],
+      ["p4", "Fictional p4", false],
+      ["p5", "Fictional p5", false],
+      ["p9", "Fictional p9", true],
+    ]);
+    expect(manager?.retiredLabel).toBe("No longer offered");
+  });
+
+  it("offers nobody drafted to be added or removed, or still being added", () => {
+    const draft = { state: "waiting" as const, madeBy: null, madeAt: null };
+    const manager = columnsFor([], [], [], true, [
+      person("p1"),
+      person("p2", {
+        draft: {
+          ...draft,
+          action: "created",
+          changed: [],
+          live: { values: {}, links: {} },
+        },
+      }),
+      person("p3", {
+        draft: {
+          ...draft,
+          action: "deleted",
+          changed: [],
+          live: { values: {}, links: {} },
+        },
+      }),
+      person("pending-p4"),
+    ]).find(({ key }) => key === "managerId");
+    expect(manager?.choices.map(({ id }) => id)).toEqual(["p1"]);
+  });
+
+  it("shows live managers, teams and Left marks when only live people are shown", () => {
+    const draft = { state: "waiting" as const, madeBy: null, madeAt: null };
+    render(
+      grid({
+        view: { ...emptyView, show: "live" },
+        people: [
+          person("p1", {
+            teamName: "Drafted Crew",
+            draft: {
+              ...draft,
+              action: "changed",
+              changed: ["teamName"],
+              live: { teamName: "Harbour Crew", values: {}, links: {} },
+            },
+          }),
+          person("p2", {
+            manager: lead("p1"),
+            team: "Drafted Crew",
+            managerFrom: null,
+          }),
+          person("p3", { endDate: "2025-01-01" }),
+          person("p4", {
+            manager: lead("p1"),
+            team: "Drafted Crew",
+            managerFrom: "2024-01-01",
+            draft: {
+              ...draft,
+              action: "changed",
+              changed: ["managerId"],
+              live: { managerId: "p3", values: {}, links: {} },
+            },
+          }),
+        ],
+      }),
+    );
+    expect(text("p2", "team")).toBe("Harbour Crew");
+    expect(text("p1", "teamName")).toBe("Harbour Crew");
+    expect(text("p4", "managerId")).toBe(
+      "Fictional p3 Left: their end date has passed",
+    );
+    expect(text("p4", "team")).toBe("Fictional p3");
+  });
+
+  it("names each team by its name, or by its manager's while it has none, and shows only the managers' teams", () => {
+    const team = columnsFor([], [], [], true, people).find(
+      ({ key }) => key === "team",
+    );
+    expect(team?.choices.map(({ id, label }) => [id, label])).toEqual([
+      ["p3", "Fictional p3"],
+      ["p9", "Fictional p9"],
+      ["p1", "Harbour Crew"],
+    ]);
+    expect(team?.readOnly).toBe(true);
+  });
+
+  it("leaves Manager since out for those who may not see dates", () => {
+    expect(columnsFor([], [], [], false, people).map(({ key }) => key)).toEqual(
+      ["preferredName", "employeeId", "managerId", "team", "teamName"],
+    );
+  });
+
+  it("shows each person's manager and team, marking a manager who has left", () => {
+    render(grid());
+    expect(text("p2", "managerId")).toBe("Fictional p1");
+    expect(text("p2", "team")).toBe("Harbour Crew");
+    expect(text("p1", "teamName")).toBe("Harbour Crew");
+    expect(text("p1", "managerId")).toBe("");
+    expect(text("p4", "managerId")).toBe(
+      "Fictional p3 Left: their end date has passed",
+    );
+    expect(text("p4", "team")).toBe("Fictional p3");
+    expect(text("p5", "managerId")).toBe("Fictional p9");
+  });
+
+  it("marks a drafted manager, and the team that follows, with the live ones", () => {
+    const drafted = person("p2", {
+      manager: lead("p4"),
+      team: null,
+      draft: {
+        state: "waiting",
+        madeBy: null,
+        madeAt: null,
+        action: "changed",
+        changed: ["managerId", "managerFrom"],
+        live: { managerId: "p1", values: {}, links: {} },
+      },
+    });
+    render(
+      grid({
+        people: people.map((other) => (other.id === "p2" ? drafted : other)),
+      }),
+    );
+    expect(text("p2", "managerId")).toBe(
+      "Fictional p4, draft, live Fictional p1",
+    );
+    expect(text("p2", "team")).toBe("Fictional p4, draft, live Harbour Crew");
+    const liveRow = document
+      .getElementById("cell-p2-team")
+      ?.closest("tr")?.nextElementSibling;
+    const keys = columnsFor([], [], [], true).map(({ key }) => key);
+    const liveCells = [...(liveRow?.querySelectorAll("td") ?? [])];
+    expect(liveCells[keys.indexOf("managerId")]?.textContent).toBe(
+      "Fictional p1",
+    );
+    expect(liveCells[keys.indexOf("team")]?.textContent).toBe("Harbour Crew");
+  });
+
+  it("changes a person's manager, offering only those still employed, and clears it with Delete", async () => {
+    const update = vi.fn();
+    render(grid({ actions: { ...actions, update } }));
+    focus("p2", "managerId");
+    await userEvent.keyboard("{Enter}");
+    const options = await screen.findAllByRole("option");
+    expect(options.map(({ textContent }) => textContent)).toEqual([
+      "Fictional p1",
+      "Fictional p2",
+      "Fictional p4",
+      "Fictional p5",
+    ]);
+    await userEvent.click(screen.getByRole("option", { name: "Fictional p4" }));
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: "p2" }),
+      { managerId: "p4" },
+    );
+    focus("p2", "managerId");
+    await userEvent.keyboard("{Delete}");
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: "p2" }),
+      { managerId: null },
+    );
+  });
+
+  it("keeps the Team column read only, since a team follows from its manager", async () => {
+    const update = vi.fn();
+    render(grid({ actions: { ...actions, update } }));
+    focus("p2", "team");
+    await userEvent.keyboard("{Enter}x{Delete}");
+    expect(screen.queryByRole("option")).toBeNull();
+    expect(within(screen.getByRole("grid")).queryByRole("textbox")).toBeNull();
+    expect(update).not.toHaveBeenCalled();
+    expect(
+      document.getElementById("cell-p2-team")?.getAttribute("aria-readonly"),
+    ).toBe("true");
+  });
+
+  it("names a team, and moves the date a manager is someone's from, but never clears that date", async () => {
+    const update = vi.fn();
+    render(grid({ actions: { ...actions, update } }));
+    focus("p1", "teamName");
+    await userEvent.keyboard("{Enter}{Control>}a{/Control}Quay Crew{Enter}");
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: "p1" }),
+      { teamName: "Quay Crew" },
+    );
+    focus("p4", "managerFrom");
+    await userEvent.keyboard("{Enter}{Control>}a{/Control}2024-03-01{Enter}");
+    expect(update).toHaveBeenLastCalledWith(
+      expect.objectContaining({ id: "p4" }),
+      { managerFrom: "2024-03-01" },
+    );
+    update.mockClear();
+    focus("p4", "managerFrom");
+    await userEvent.keyboard("{Delete}");
+    expect(update).not.toHaveBeenCalled();
+    expect(text("p4", "managerFrom")).toBe(formatDay("2024-02-01"));
+    await userEvent.keyboard("{Enter}{Control>}a{/Control}{Backspace}{Enter}");
+    expect(screen.getByRole("alert").textContent).toBe("Manager since needed");
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("adds people with managers pasted by name, and their team's name, but not a team pasted", async () => {
+    const add = vi.fn();
+    render(
+      grid({
+        actions: { ...actions, add },
+        order: [
+          "preferredName",
+          "employeeId",
+          "managerId",
+          "team",
+          "teamName",
+          "managerFrom",
+        ],
+      }),
+    );
+    focus("new-0", "preferredName");
+    await userEvent.paste(
+      "Fictional p6\tp6\tFictional p1\tHarbour Crew\tQuay Crew\t2024-05-01\nFictional p7\tp7\tFictional p2",
+    );
+    expect(add).toHaveBeenCalledWith(
+      [
+        {
+          id: expect.stringMatching(/^pending-/) as string,
+          request: {
+            preferredName: "Fictional p6",
+            employeeId: "p6",
+            startDate: null,
+            endDate: null,
+            managerId: "p1",
+            managerFrom: "2024-05-01",
+            teamName: "Quay Crew",
+            values: {},
+            links: {},
+          },
+        },
+        {
+          id: expect.stringMatching(/^pending-/) as string,
+          request: {
+            preferredName: "Fictional p7",
+            employeeId: "p7",
+            startDate: null,
+            endDate: null,
+            managerId: "p2",
+            values: {},
+            links: {},
+          },
+        },
+      ],
+      expect.any(Function),
+      expect.any(Function),
+    );
+  });
+
+  it("refuses Manager since for someone with no manager and no line, but moves a line with no manager", async () => {
+    const update = vi.fn();
+    render(
+      grid({
+        actions: { ...actions, update },
+        people: [
+          ...people,
+          person("p6", { manager: null, managerFrom: "2024-03-01" }),
+        ],
+      }),
+    );
+    focus("p1", "managerFrom");
+    await userEvent.keyboard("{Enter}2024-05-01{Enter}");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Choose a manager, or leave Manager since empty",
+    );
+    expect(update).not.toHaveBeenCalled();
+    await userEvent.keyboard("{Escape}");
+    focus("p6", "managerFrom");
+    await userEvent.keyboard("{Enter}{Control>}a{/Control}2024-04-01{Enter}");
+    expect(update).toHaveBeenCalledWith(expect.objectContaining({ id: "p6" }), {
+      managerFrom: "2024-04-01",
+    });
+  });
+
+  it("gives the same live people and columns again for the same people", () => {
+    expect(livePeople(people)).toBe(livePeople(people));
+    const team = () =>
+      columnsFor([], [], [], true, people).find(({ key }) => key === "team");
+    expect(team()).toBe(team());
+  });
+
+  it("refuses a new person's Manager since without a manager", async () => {
+    const add = vi.fn();
+    render(
+      grid({
+        actions: { ...actions, add },
+        order: ["preferredName", "employeeId", "managerFrom"],
+      }),
+    );
+    focus("new-0", "preferredName");
+    await userEvent.paste("Fictional p6\tp6\t2024-05-01");
+    expect(add).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Choose a manager, or leave Manager since empty",
+    );
+  });
+
+  it("puts back each person's live manager, and their team as the manager's live team name has it", () => {
+    const draft = {
+      state: "waiting" as const,
+      madeBy: null,
+      madeAt: null,
+    };
+    expect(
+      livePeople([
+        person("p1", {
+          teamName: "Drafted Crew",
+          draft: {
+            ...draft,
+            action: "changed",
+            changed: ["teamName"],
+            live: { teamName: "Harbour Crew", values: {}, links: {} },
+          },
+        }),
+        person("p2", {
+          manager: lead("p1"),
+          team: "Drafted Crew",
+          managerFrom: "2026-01-01",
+          draft: {
+            ...draft,
+            action: "changed",
+            changed: ["managerId", "managerFrom"],
+            live: {
+              managerId: "p4",
+              managerFrom: "2024-01-01",
+              values: {},
+              links: {},
+            },
+          },
+        }),
+        person("p3", {
+          manager: lead("p1"),
+          team: "Drafted Crew",
+        }),
+        person("p4"),
+        person("p5", {
+          manager: lead("p1"),
+          draft: {
+            ...draft,
+            action: "changed",
+            changed: ["managerId"],
+            live: { managerId: null, values: {}, links: {} },
+          },
+        }),
+        person("p6", {
+          manager: null,
+          draft: {
+            ...draft,
+            action: "changed",
+            changed: ["managerId"],
+            live: { managerId: "p9", values: {}, links: {} },
+          },
+        }),
+      ]),
+    ).toEqual([
+      person("p1", { teamName: "Harbour Crew" }),
+      person("p2", {
+        manager: lead("p4"),
+        team: null,
+        managerFrom: "2024-01-01",
+      }),
+      person("p3", { manager: lead("p1"), team: "Harbour Crew" }),
+      person("p4"),
+      person("p5", { manager: null }),
+      person("p6", {
+        manager: { id: "p9", preferredName: "Someone not shown in People" },
+      }),
+    ]);
   });
 });

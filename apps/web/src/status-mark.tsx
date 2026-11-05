@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The mark beside a record with a draft, in words after a dot: yellow for a draft, red once
-// rejected, and green for the live row under a draft. The People table, the Lists page, the Drafts
-// page, and Help's Drafts page all draw it here, so they show the same mark.
+// rejected, and green for the live row under a draft, with red too for a warning about a value. The
+// People table, the Lists page, the Drafts page, and Help's Drafts page all draw it here, so they
+// show the same mark.
 
 import type { DraftState } from "@fathom/shared";
 import { VisuallyHidden } from "@mantine/core";
@@ -69,6 +70,7 @@ const toneClass = new Map([
   ["live", classes.liveMark],
   ["unpublished", classes.unpublishedMark],
   ["held", classes.heldMark],
+  ["warning", classes.draftRejected],
 ]);
 
 // A rejected draft's dot cannot also be hollow, so its unpublished changes have a mark of their own.
@@ -106,7 +108,7 @@ export function StatusMark({
   spaced = false,
   children,
 }: {
-  tone: "draft" | "rejected" | "live" | "unpublished" | "held";
+  tone: "draft" | "rejected" | "live" | "unpublished" | "held" | "warning";
   // Set apart from what it follows, such as a person's name.
   spaced?: boolean;
   children: ReactNode;

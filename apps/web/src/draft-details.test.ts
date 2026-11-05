@@ -130,7 +130,7 @@ describe("a draft's details", () => {
       [],
       [],
     );
-    expect(field?.field.oldValue).toBe("someone not shown in People");
+    expect(field?.field.oldValue).toBe("Someone not shown in People");
   });
 
   it("leaves an old manager unnamed when no people are given", () => {

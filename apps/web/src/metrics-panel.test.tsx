@@ -268,7 +268,7 @@ describe("the Metrics panel", () => {
       within(picker)
         .getAllByRole("option")
         .map((option) => option.textContent),
-    ).toEqual(["Choose a column", "Level"]);
+    ).toEqual(["Choose a column", "Team", "Level"]);
     expect((picker as HTMLSelectElement).value).toBe("");
     expect(panel().textContent).toContain("Choose a column to count people");
   });

@@ -40,6 +40,7 @@ import {
 } from "@fathom/fixtures";
 import { createAuth } from "@fathom/server/auth";
 import { loadAuthConfig } from "@fathom/server/config";
+import { builtInColumnNames } from "@fathom/shared";
 import { and, count, eq, inArray, sql } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -181,9 +182,9 @@ export async function seed(
       .from(columnOrders)
       .where(eq(columnOrders.tableName, "people"));
     const added = organization.columns.map(({ id }) => id);
-    const others = (
-      stored?.keys ?? ["preferredName", "employeeId", "startDate", "endDate"]
-    ).filter((key) => !added.includes(key));
+    const others = (stored?.keys ?? [...builtInColumnNames.keys()]).filter(
+      (key) => !added.includes(key),
+    );
     const at = others.indexOf("employeeId") + 1;
     const keys = [...others.slice(0, at), ...added, ...others.slice(at)];
     await transaction
