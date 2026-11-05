@@ -74,6 +74,14 @@ const actionWords: Record<AccessAction, ActionWords> = {
     verb: "changed the Restricted or Confidential details of",
     caution: false,
   },
+  "hiring-plan-changed": {
+    verb: "changed the hiring plan",
+    caution: false,
+  },
+  "hiring-plan-viewed": {
+    verb: "viewed the hiring plan",
+    caution: false,
+  },
 };
 
 // An action recorded by another version of Fathom, which this one does not know, is shown as it was

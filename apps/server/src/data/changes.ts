@@ -26,6 +26,7 @@ export type RecordType =
   | "field"
   | "column-order"
   | "person"
+  | "planned-hire"
   | "saved-view";
 
 export interface Change {

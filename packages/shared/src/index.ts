@@ -46,6 +46,24 @@ export {
   historySearchLength,
   recordSearchText,
 } from "./changes.ts";
+export {
+  type Hire,
+  type HireChange,
+  type HireDraft,
+  hireChangeSchema,
+  hireDraftSchema,
+  hireLengths,
+  type HireRequest,
+  hireRequestSchema,
+  type Hires,
+  hireSchema,
+  hiresSchema,
+  type HiringState,
+  hiringStateNames,
+  hiringStateSchema,
+  nextHiringStates,
+  openHiringStates,
+} from "./hires.ts";
 export { folded, matchesWords, searchWords } from "./search.ts";
 export {
   type AccessAction,

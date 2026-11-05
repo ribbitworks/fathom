@@ -23,6 +23,11 @@ export const accessActionSchema = z.enum([
   // Someone changed a person's Restricted or Confidential details, naming the person to readers
   // who may see people.
   "restricted-changed",
+  // Someone changed the hiring plan, which is Confidential, without naming the planned hire.
+  "hiring-plan-changed",
+  // Someone saw the whole hiring plan. Recorded at most once a day for each user, as Restricted
+  // views are.
+  "hiring-plan-viewed",
 ]);
 
 export type AccessAction = z.infer<typeof accessActionSchema>;

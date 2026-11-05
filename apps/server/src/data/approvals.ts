@@ -62,6 +62,13 @@ import {
   rejectListDrafts,
 } from "./list-approvals.ts";
 import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
+import {
+  approveHiresIn,
+  checkHiresAsked,
+  recordHiringChanges,
+  refuseRemovingHiresPeople,
+  rejectHiresIn,
+} from "./hires.ts";
 
 const noDraft = "One of these people has no draft; refresh to see the latest";
 
@@ -255,10 +262,11 @@ async function approvePeopleIn(
       );
     }
   }
-  await refuseRemovingManagers(
-    transaction,
-    ids.filter((id) => live.has(id) && wanted.get(id)?.person === undefined),
+  const removed = ids.filter(
+    (id) => live.has(id) && wanted.get(id)?.person === undefined,
   );
+  await refuseRemovingManagers(transaction, removed);
+  await refuseRemovingHiresPeople(transaction, removed);
   await apply(transaction, wanted);
   await applyReporting(transaction, wanted, today);
   for (const chunk of inChunks([...ids])) {
@@ -285,12 +293,15 @@ async function deciding(
   }
   // Columns are seen on the People table, with the people's values in them.
   if (asksForColumns(asked)) requirePermission(actor, "people:view");
+  // Planned hires are seen beside the people who manage and fill them.
+  if (asked.plannedHires.length > 0) requirePermission(actor, "people:view");
   await lockDrafts(transaction);
 }
 
 // Approves the drafts asked for, with the drafts they use, of any kind, applying them all to the
 // live records, and returns the change set that applied them. Lists and choices come first, then
-// columns, which may draw on them, then people, who may be given both.
+// columns, which may draw on them, then people, who may be given both, then planned hires, whose
+// managers are people.
 export async function approveDrafts(
   database: Database,
   actor: Actor,
@@ -303,6 +314,7 @@ export async function approveDrafts(
       if (requested.people.length > 0) {
         await seenAsked(transaction, actor, requested.people, today);
       }
+      await checkHiresAsked(transaction, actor, requested.plannedHires);
       const asked = await withUsedAcross(transaction, requested);
       const made = asksForLists(asked)
         ? await approveListDrafts(transaction, asked)
@@ -315,7 +327,11 @@ export async function approveDrafts(
           ...(await approvePeopleIn(transaction, actor, asked.people, today)),
         );
       }
+      made.push(
+        ...(await approveHiresIn(transaction, actor, asked.plannedHires)),
+      );
       await recordSensitiveChanges(transaction, actor.user.id, made);
+      await recordHiringChanges(transaction, actor.user.id, made);
       return recordChanges(transaction, actor.user.id, made, "approval");
     });
   } catch (error) {
@@ -366,6 +382,10 @@ export async function rejectDrafts(
         ...(await rejectPeopleIn(transaction, asked.people, seen, reason)),
       );
     }
+    made.push(
+      ...(await rejectHiresIn(transaction, actor, asked.plannedHires, reason)),
+    );
+    await recordHiringChanges(transaction, actor.user.id, made);
     return recordChanges(transaction, actor.user.id, made, "rejection");
   });
 }

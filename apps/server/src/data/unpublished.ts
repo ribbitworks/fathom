@@ -58,6 +58,12 @@ import {
   removeEmptyOrders,
 } from "./lists.ts";
 import { personChanges, readLive, recordSensitiveChanges } from "./people.ts";
+import {
+  hireChanges,
+  readHireDrafts,
+  readLiveHires,
+  recordHiringChanges,
+} from "./hires.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import type { ColumnInfo } from "./values.ts";
 
@@ -103,6 +109,11 @@ interface Versions {
     mine: Map<string, Draft>;
     theirs: Map<string, Draft>;
   };
+  hires: {
+    live: Map<string, Recorded>;
+    mine: Map<string, Draft>;
+    theirs: Map<string, Draft>;
+  };
 }
 
 async function readVersions(
@@ -111,6 +122,7 @@ async function readVersions(
   rows: Row[],
 ): Promise<Versions> {
   const personIds = idsOf(rows, "person");
+  const hireIds = idsOf(rows, "planned-hire");
   const columns = await columnsWithAdded(reader, userId);
   return {
     rows,
@@ -128,6 +140,11 @@ async function readVersions(
       mine: await readPersonDrafts(reader, personIds, userId),
       theirs: await readPersonDrafts(reader, personIds),
     },
+    hires: {
+      live: await readLiveHires(reader, hireIds),
+      mine: await readHireDrafts(reader, hireIds, userId),
+      theirs: await readHireDrafts(reader, hireIds),
+    },
   };
 }
 
@@ -144,6 +161,13 @@ function versionOf(
     return (
       drafted(live, versions.people.mine.get(id)) ??
       drafted(live, versions.people.theirs.get(id))
+    );
+  }
+  if (recordType === "planned-hire") {
+    const live = versions.hires.live.get(id);
+    return (
+      drafted(live, versions.hires.mine.get(id)) ??
+      drafted(live, versions.hires.theirs.get(id))
     );
   }
   if (recordType === "list") {
@@ -164,6 +188,9 @@ function subjectOf(versions: Versions, row: Row): string {
     "a removed list";
   if (row.recordType === "person") {
     return String(versionOf(versions, "person", id)?.preferredName);
+  }
+  if (row.recordType === "planned-hire") {
+    return `the planned hire ${String(versionOf(versions, "planned-hire", id)?.title)}`;
   }
   if (row.recordType === "list") return `the list ${listName(id)}`;
   if (row.recordType === "list-item") {
@@ -240,6 +267,7 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
     return draftedList(lists, id) !== undefined;
   }
   if (row.recordType === "person") return !taken.has(id);
+  if (row.recordType === "planned-hire") return true;
   if (row.recordType === "list") {
     const list = draftedList(lists, id);
     return list === undefined || !listNameTaken(lists, String(list.name), id);
@@ -364,6 +392,12 @@ function takingBack(versions: Versions, row: Row): Change[] {
       after,
     );
   }
+  if (row.recordType === "planned-hire") {
+    const live = versions.hires.live.get(id);
+    const before = drafted(live, versions.hires.mine.get(id));
+    const after = drafted(live, versions.hires.theirs.get(id));
+    return hireChanges(id, actionTo(before, after), before, after);
+  }
   if (row.recordType === "list" || row.recordType === "list-item") {
     const isList = row.recordType === "list";
     const versionIn = isList ? draftedList : draftedChoice;
@@ -417,6 +451,7 @@ export async function discardUnpublished(
       .delete(unpublishedDrafts)
       .where(eq(unpublishedDrafts.userId, userId));
     await recordSensitiveChanges(transaction, userId, made);
+    await recordHiringChanges(transaction, userId, made);
     await recordChanges(transaction, userId, made, "withdrawal");
     return rows.length;
   });

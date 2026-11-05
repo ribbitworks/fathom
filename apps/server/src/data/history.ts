@@ -59,11 +59,13 @@ export async function recordEvents(
   }
 }
 
-// Records that a user saw people's Restricted details, at most once a day for each user, by the
-// database's date, so the people they see often do not bury other entries.
+// Records that a user saw people's Restricted details, or the hiring plan, at most once a day for
+// each user and kind of view, by the database's date, so what they see often does not bury other
+// entries.
 export async function recordRestrictedView(
   database: Database,
   actorId: string,
+  action: "restricted-viewed" | "hiring-plan-viewed" = "restricted-viewed",
 ): Promise<void> {
   const today = await database
     .select({ id: accessHistory.id })
@@ -71,17 +73,13 @@ export async function recordRestrictedView(
     .where(
       and(
         eq(accessHistory.actorId, actorId),
-        eq(accessHistory.action, "restricted-viewed"),
+        eq(accessHistory.action, action),
         gte(accessHistory.occurredAt, sql`current_date`),
       ),
     )
     .limit(1);
   if (today.length > 0) return;
-  await recordEvent(database, {
-    actorId,
-    action: "restricted-viewed",
-    subjectId: null,
-  });
+  await recordEvent(database, { actorId, action, subjectId: null });
 }
 
 // Details as stored, read leniently: entries can never be changed, so a role renamed since one was

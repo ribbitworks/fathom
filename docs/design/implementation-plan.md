@@ -42,7 +42,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Web Link Columns | Done |
 | Teams and Reporting Lines | In progress: schema, server, seed and Drafts |
 | Cycles and Releases | In progress: schema |
-| Hiring Plan | In progress: schema |
+| Hiring Plan | In progress: schema and server |
 | Editable Roles | In progress: schema |
 
 ### Hello Fathom

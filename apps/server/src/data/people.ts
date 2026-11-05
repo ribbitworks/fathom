@@ -68,6 +68,7 @@ import {
 } from "./added-columns.ts";
 import { typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
+import { refuseRemovingHiresPeople } from "./hires.ts";
 import {
   changedReporting,
   checkLine,
@@ -821,7 +822,8 @@ export async function updatePerson(
 
 // Drafts removing a person entered by mistake, recording everything they held; removing someone
 // only drafted to be added discards that draft. People who leave are given an end date instead.
-// Nobody who is or was anyone's manager can be removed.
+// Nobody who is or was anyone's manager can be removed, nor anyone a planned hire names, as its
+// manager or as who filled it.
 export async function deletePerson(
   database: Database,
   actor: Actor,
@@ -842,6 +844,7 @@ export async function deletePerson(
     if (before !== undefined) {
       await refuseRemovingManagers(transaction, [id]);
     }
+    await refuseRemovingHiresPeople(transaction, [id]);
     const made = [
       ...asDraft(personChanges(columns, id, "deleted", person, undefined)),
       ...clearedRejection(id, personTier(columns), before, draft),

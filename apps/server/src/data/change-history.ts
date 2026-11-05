@@ -22,6 +22,8 @@ import {
   type ChangeEntry,
   changeKindSchema,
   type ChangeValue,
+  hiringStateNames,
+  hiringStateSchema,
   isLink,
   linkInWords,
   matchesWords,
@@ -64,9 +66,13 @@ const configurationKinds: readonly RecordType[] = [
   "column-order",
 ];
 const peopleKinds: readonly RecordType[] = ["person", "saved-view"];
+// The hiring plan, by those who see people and Confidential data.
+const hiringKinds: readonly RecordType[] = ["planned-hire"];
+
+const stateFields = new Set(["state", "cancelledFrom"]);
 
 // The fields that name a record.
-const nameFields = ["name", "label", "preferredName"];
+const nameFields = ["name", "label", "preferredName", "title"];
 
 // Fields that only tie a record to where it belongs, which the history does not show.
 const unshownFields = new Set(["tableName", "createdBy"]);
@@ -97,7 +103,10 @@ function referencedIds(row: StoredChange): string[] {
   if (row.recordType === "column-order" || row.recordType === "choice-order") {
     return values.flatMap(strings);
   }
-  if (referencesOne(row.field)) {
+  if (
+    referencesOne(row.field) ||
+    (row.recordType === "planned-hire" && row.field === "filledBy")
+  ) {
     return values.filter((value) => typeof value === "string");
   }
   return [];
@@ -201,7 +210,14 @@ function shown(
     return value === null ? null : named(strings(value));
   }
   if (row.field === "definition") return null;
-  if (referencesOne(row.field)) {
+  if (row.recordType === "planned-hire" && stateFields.has(row.field)) {
+    const state = hiringStateSchema.safeParse(value);
+    return state.success ? hiringStateNames[state.data] : null;
+  }
+  if (
+    referencesOne(row.field) ||
+    (row.recordType === "planned-hire" && row.field === "filledBy")
+  ) {
     return typeof value === "string" ? (name(value) ?? null) : null;
   }
   if (typeof value === "string" || typeof value === "boolean") return value;
@@ -455,6 +471,10 @@ export async function readChangeHistory(
       ? configurationKinds
       : []),
     ...(actor.permissions.includes("people:view") ? peopleKinds : []),
+    ...(actor.permissions.includes("people:view") &&
+    seesTier(actor, "confidential")
+      ? hiringKinds
+      : []),
   ];
   const tiers = tierSchema.options.filter((tier) => seesTier(actor, tier));
   if (kinds.length === 0) {

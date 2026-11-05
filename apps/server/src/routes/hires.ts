@@ -1,0 +1,99 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Planned hires: reading those the user may see, and drafting hires added, changed, moved between
+// states, and removed, discarding drafts, and sending rejected ones for approval again. Approving and
+// rejecting drafts is in drafts.ts. The data access layer checks the actor's permissions.
+
+import {
+  changeSetIdSchema,
+  hireChangeSchema,
+  hireRequestSchema,
+  hiresSchema,
+  savedSchema,
+} from "@fathom/shared";
+import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
+import { z } from "zod";
+import type { HireAccess } from "../data/index.ts";
+
+const created = 201;
+const hireParams = z.object({ hireId: z.uuid() });
+const saved = { 200: savedSchema };
+
+export function hireRoutes(hires: HireAccess): FastifyPluginCallbackZod {
+  return (app, _options, done) => {
+    app.get(
+      "/api/planned-hires",
+      { schema: { response: { 200: hiresSchema } } },
+      async (request) => hires.read(request.actor),
+    );
+
+    app.post(
+      "/api/planned-hires",
+      {
+        schema: {
+          body: hireRequestSchema,
+          response: {
+            [created]: z.object({
+              id: z.string(),
+              changeSetId: changeSetIdSchema,
+            }),
+          },
+        },
+      },
+      async (request, reply) => {
+        const { result, changeSetId } = await hires.create(
+          request.actor,
+          request.body,
+        );
+        return reply.status(created).send({ id: result, changeSetId });
+      },
+    );
+
+    app.patch(
+      "/api/planned-hires/:hireId",
+      {
+        schema: { params: hireParams, body: hireChangeSchema, response: saved },
+      },
+      async (request) => ({
+        changeSetId: await hires.update(
+          request.actor,
+          request.params.hireId,
+          request.body,
+        ),
+      }),
+    );
+
+    app.delete(
+      "/api/planned-hires/:hireId",
+      { schema: { params: hireParams, response: saved } },
+      async (request) => ({
+        changeSetId: await hires.delete(request.actor, request.params.hireId),
+      }),
+    );
+
+    app.delete(
+      "/api/planned-hires/:hireId/draft",
+      { schema: { params: hireParams, response: saved } },
+      async (request) => ({
+        changeSetId: await hires.discardDraft(
+          request.actor,
+          request.params.hireId,
+        ),
+      }),
+    );
+
+    // Sends a rejected draft for approval again, unchanged.
+    app.delete(
+      "/api/planned-hires/:hireId/draft/rejection",
+      { schema: { params: hireParams, response: saved } },
+      async (request) => ({
+        changeSetId: await hires.resubmitDraft(
+          request.actor,
+          request.params.hireId,
+        ),
+      }),
+    );
+
+    done();
+  };
+}

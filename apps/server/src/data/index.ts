@@ -14,6 +14,9 @@ import type {
   DraftsAsked,
   Field,
   FieldRequest,
+  HireChange,
+  HireRequest,
+  Hires,
   HistoryEntry,
   List,
   ListRequest,
@@ -39,9 +42,10 @@ import { readGreeting } from "./greeting.ts";
 import * as columnDrafts from "./column-drafts.ts";
 import { type ColumnDraftTarget, readColumnsOut } from "./column-drafts.ts";
 import { readChangeHistory } from "./change-history.ts";
-import { readHistory, recordRestrictedView } from "./history.ts";
 import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
+import * as hireData from "./hires.ts";
+import { readHistory, recordRestrictedView } from "./history.ts";
 import type { Saved } from "./changes.ts";
 import { undoChangeSet } from "./undo.ts";
 import {
@@ -76,6 +80,8 @@ export interface DataAccess {
   drafts: DraftAccess;
   // People, and the columns on the People table.
   people: PeopleAccess;
+  // Planned hires: the hiring plan, or its placeholders.
+  hires: HireAccess;
   // The actor's own unpublished changes to drafts, which only they see until they publish them.
   unpublished: UnpublishedAccess;
   // Undoes a change set the actor made, returning the change set that undid it.
@@ -207,6 +213,48 @@ export interface PeopleAccess {
     change: SavedViewChange,
   ): Promise<Saved<SavedView>>;
   deleteView(actor: Actor, id: string): Promise<ChangeSetId>;
+}
+
+// Every change to planned hires is a draft, which reaches the live hires once approved. Reading the
+// whole hiring plan is recorded in the access history.
+export interface HireAccess {
+  read(actor: Actor): Promise<Hires>;
+  create(actor: Actor, request: HireRequest): Promise<Saved<string>>;
+  update(actor: Actor, id: string, change: HireChange): Promise<ChangeSetId>;
+  delete(actor: Actor, id: string): Promise<ChangeSetId>;
+  discardDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+  resubmitDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+}
+
+function createHireAccess(database: Database): HireAccess {
+  return {
+    read: async (actor) => {
+      const read = await hireData.readHires(database, actor);
+      if (read.wholePlan && read.hires.length > 0) {
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          "hiring-plan-viewed",
+        );
+      }
+      return read;
+    },
+    create: async (actor, request) => {
+      const { id, changeSetId } = await hireData.createHire(
+        database,
+        actor,
+        request,
+      );
+      return { result: id, changeSetId };
+    },
+    update: async (actor, id, change) =>
+      hireData.updateHire(database, actor, id, change),
+    delete: async (actor, id) => hireData.deleteHire(database, actor, id),
+    discardDraft: async (actor, id) =>
+      hireData.discardHireDraft(database, actor, id),
+    resubmitDraft: async (actor, id) =>
+      hireData.resubmitHireDraft(database, actor, id),
+  };
 }
 
 // Checks the actor may change lists, and returns who to record as making the change.
@@ -363,6 +411,7 @@ export function createDataAccess(database: Database): DataAccess {
         rejectDrafts(database, actor, draftsRequestSchema.parse(asked), reason),
     },
     people: createPeopleAccess(database),
+    hires: createHireAccess(database),
     unpublished: {
       read: async (actor) => readUnpublished(database, actor),
       publish: async (actor) => publishUnpublished(database, actor),

@@ -19,6 +19,7 @@ import {
   listItems,
   lists,
   people,
+  plannedHires,
   savedViews,
 } from "@fathom/db";
 import { type Tier, tierSchema } from "@fathom/shared";
@@ -89,6 +90,7 @@ import { refuseLoop, refuseTakenTeamNames } from "./reporting.ts";
 import { typeOf } from "./column-types.ts";
 import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
+import { recordHiringChanges, undoHireDrafts } from "./hires.ts";
 
 const changedSince =
   "This has been changed since, so it can no longer be undone";
@@ -101,6 +103,7 @@ const editPermission = {
   field: "configuration:edit",
   "column-order": "configuration:edit",
   person: "people:edit",
+  "planned-hire": "confidential:edit",
   // Who may change each view is checked for the view itself.
   "saved-view": "people:view",
 } as const;
@@ -114,6 +117,7 @@ const kindOrder: readonly RecordType[] = [
   "field",
   "column-order",
   "person",
+  "planned-hire",
   "saved-view",
 ];
 
@@ -125,6 +129,7 @@ const tables = {
   "list-item": listItems,
   field: fields,
   person: people,
+  "planned-hire": plannedHires,
   "saved-view": savedViews,
 } as const;
 const tableOf = (record: Undone) =>
@@ -133,7 +138,8 @@ const tableOf = (record: Undone) =>
 type Convert = (value: unknown) => unknown;
 const text: Convert = (value) => String(value);
 const flag: Convert = (value) => value === true;
-const day: Convert = (value) => (typeof value === "string" ? value : null);
+const textOrNull: Convert = (value) =>
+  typeof value === "string" ? value : null;
 const tier: Convert = (value) => tierSchema.catch("general").parse(value);
 // A tier the server no longer knows is put back as the most sensitive.
 const sensitiveTier: Convert = (value) => storedTier(value);
@@ -162,8 +168,16 @@ const columnsOf: Record<
   person: {
     preferredName: text,
     employeeId: text,
-    startDate: day,
-    endDate: day,
+    startDate: textOrNull,
+    endDate: textOrNull,
+  },
+  "planned-hire": {
+    title: text,
+    targetDate: textOrNull,
+    state: text,
+    cancelledFrom: textOrNull,
+    managerId: textOrNull,
+    filledBy: textOrNull,
   },
   "saved-view": {
     tableName: text,
@@ -841,6 +855,7 @@ async function undoIn(
       );
     }
     await recordSensitiveChanges(transaction, actor.user.id, undoing);
+    await recordHiringChanges(transaction, actor.user.id, undoing);
     return recordChanges(transaction, actor.user.id, undoing, "edit", false);
   }
 
@@ -863,13 +878,20 @@ async function undoIn(
   const personDrafts = draftRecords.filter(
     ({ recordType }) => recordType === "person",
   );
+  const hireDrafts = draftRecords.filter(
+    ({ recordType }) => recordType === "planned-hire",
+  );
   const columnKinds: readonly RecordType[] = ["field", "column-order"];
   const columnDrafts = draftRecords.filter(({ recordType }) =>
     columnKinds.includes(recordType),
   );
-  const listDrafts = draftRecords.filter(
-    ({ recordType }) =>
-      recordType !== "person" && !columnKinds.includes(recordType),
+  const listKinds: readonly RecordType[] = [
+    "list",
+    "list-item",
+    "choice-order",
+  ];
+  const listDrafts = draftRecords.filter(({ recordType }) =>
+    listKinds.includes(recordType),
   );
   if (listDrafts.length > 0) {
     await undoListDrafts(transaction, actor.user.id, listDrafts);
@@ -887,6 +909,9 @@ async function undoIn(
       personDrafts,
     );
   }
+  if (hireDrafts.length > 0) {
+    await undoHireDrafts(transaction, actor.user.id, hireDrafts, changedSince);
+  }
   // The people put back must still fit their columns as they are now.
   const restored = liveRecords.filter(
     (record) => record.recordType === "person" && record.action !== "created",
@@ -900,6 +925,7 @@ async function undoIn(
     throw new ConflictError(changedSince);
   }
   await recordSensitiveChanges(transaction, actor.user.id, undoing);
+  await recordHiringChanges(transaction, actor.user.id, undoing);
   return recordChanges(transaction, actor.user.id, undoing);
 }
 

@@ -54,11 +54,12 @@ const ids = (what: string) =>
     )
     .default([]);
 
-// The drafts an Approver approves or rejects at once: of people, lists, choices, and the People
-// table's columns, of the order of lists' choices, named by their list, and of the order of the
-// People table's columns.
+// The drafts an Approver approves or rejects at once: of people, planned hires, lists, choices, and
+// the People table's columns, of the order of lists' choices, named by their list, and of the order
+// of the People table's columns.
 const draftsAsked = z.object({
   people: ids("person"),
+  plannedHires: ids("planned hire"),
   lists: ids("list"),
   choices: ids("choice"),
   orders: ids("list"),
@@ -72,6 +73,7 @@ type Asked = z.infer<typeof draftsAsked>;
 const fewEnough = (asked: Asked) => {
   const total =
     asked.people.length +
+    asked.plannedHires.length +
     asked.lists.length +
     asked.choices.length +
     asked.orders.length +

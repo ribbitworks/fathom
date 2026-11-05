@@ -54,7 +54,13 @@ export type Viewer = string | undefined;
 
 // The kinds of record that have drafts. A list's choice order is one record, named by its list.
 export type DraftType =
-  "person" | "list" | "list-item" | "choice-order" | "field" | "column-order";
+  | "person"
+  | "planned-hire"
+  | "list"
+  | "list-item"
+  | "choice-order"
+  | "field"
+  | "column-order";
 
 export interface Draft {
   action: Change["action"];
