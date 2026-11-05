@@ -126,6 +126,7 @@ describe("changes to release streams sent to the server", () => {
     firstCycle: "2027-04-01",
     lastCycle: "2027-07-01",
     shipsOn: null,
+    colour: "grape" as const,
   };
 
   it("adds a release to a stream", async () => {

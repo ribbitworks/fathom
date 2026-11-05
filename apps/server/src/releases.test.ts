@@ -515,6 +515,42 @@ describe("releases", () => {
     ).toBe("2027-07-31");
   });
 
+  it("take a colour from the palette, which approving applies", async () => {
+    const stream = await liveStream();
+    const response = await draftRelease(stream.id, {
+      name: "Fictional Coloured",
+      ...firstHalf,
+      colour: "grape",
+    });
+    expect(
+      response.json<{ stream: ReleaseStream }>().stream.releases[0]?.colour,
+    ).toBe("grape");
+    await approveAll((await readStream(stream.id)) as ReleaseStream);
+    const [approved] = (await readStream(stream.id))?.releases ?? [];
+    expect([approved?.colour, approved?.draft]).toEqual(["grape", undefined]);
+  });
+
+  it("may not take a colour the palette does not have", async () => {
+    const stream = await liveStream();
+    const response = await draftRelease(stream.id, {
+      name: "Fictional Beige",
+      ...firstHalf,
+      colour: "beige",
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("show a colour the palette no longer has as the default", async () => {
+    const stream = await liveStream();
+    await draftRelease(stream.id, { name: "Fictional Faded", ...firstHalf });
+    await approveAll((await readStream(stream.id)) as ReleaseStream);
+    await test.connection
+      .update(releases)
+      .set({ colour: "beige" })
+      .where(eq(releases.streamId, stream.id));
+    expect((await readStream(stream.id))?.releases[0]?.colour).toBeNull();
+  });
+
   it("may not ship before their first cycle starts", async () => {
     const stream = await liveStream();
     const response = await draftRelease(stream.id, {

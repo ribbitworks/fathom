@@ -73,6 +73,7 @@ const streams: ReleaseStreams = {
           firstCycle: "2027-01-01",
           lastCycle: "2027-04-01",
           shipsOn: null,
+          colour: null,
         },
       ],
     },
@@ -401,6 +402,38 @@ describe("a stream's panel", () => {
       "27.1 · ships 2027-03-31",
       "27.2 to 27.3 · ships 2027-08-15, 46 days before 27.3 ends",
       "2031-01-01 · ships ",
+    ]);
+  });
+
+  it("shows each release's colour before its name, hidden from screen readers", async () => {
+    await openStream([
+      fictionalStream({
+        releases: [
+          release,
+          fictionalRelease({
+            id: "30000000-0000-4000-8000-000000000002",
+            name: "Fictional Two",
+            firstCycle: "2027-04-01",
+            lastCycle: "2027-04-01",
+            colour: "grape",
+          }),
+        ],
+      }),
+    ]);
+    expect(
+      [
+        ...section("Releases").querySelectorAll<HTMLElement>(
+          ".mantine-ColorSwatch-root",
+        ),
+      ].map((swatch) => [
+        swatch.getAttribute("aria-hidden"),
+        swatch.nextSibling?.textContent,
+        swatch.querySelector<HTMLElement>(".mantine-ColorSwatch-colorOverlay")
+          ?.style.backgroundColor,
+      ]),
+    ).toEqual([
+      ["true", "Fictional One", "var(--mantine-color-sea-filled)"],
+      ["true", "Fictional Two", "var(--mantine-color-grape-filled)"],
     ]);
   });
 
@@ -1306,6 +1339,34 @@ describe("the timeline", () => {
       ["0px", "276px"],
       ["135px", "141px"],
       ["135px", ""],
+    ]);
+  });
+
+  it("draws each release in its colour, or sea when it has none", async () => {
+    const timeline = await showTimeline(
+      [
+        fictionalStream({
+          releases: [
+            fictionalRelease(),
+            fictionalRelease({
+              id: "30000000-0000-4000-8000-000000000002",
+              name: "Fictional Two",
+              firstCycle: "2027-07-01",
+              lastCycle: "2027-07-01",
+              colour: "grape",
+            }),
+          ],
+        }),
+      ],
+      "2027-02-15",
+    );
+    expect(
+      items(timeline, "Releases of Fictional Majors").map(({ style }) =>
+        style.getPropertyValue("--release-filled"),
+      ),
+    ).toEqual([
+      "var(--mantine-color-sea-filled)",
+      "var(--mantine-color-grape-filled)",
     ]);
   });
 

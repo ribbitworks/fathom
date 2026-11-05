@@ -19,10 +19,13 @@ import {
   type CyclePattern,
   type CycleUnit,
   type Release,
+  type ReleaseColour,
+  releaseColours,
   type ReleaseStream,
   shipsBeforeStart,
 } from "@fathom/shared";
 import {
+  ColorSwatch,
   Group,
   NumberInput,
   SegmentedControl,
@@ -39,12 +42,16 @@ import { DayInput } from "./day-input.tsx";
 import { Count } from "./list-dialog.tsx";
 import classes from "./pages.module.css";
 import {
+  colourName,
+  colourVariable,
   createStream,
+  defaultColour,
   lastCycleEnd,
   renameStream,
   type SavedStream,
   setCyclesUntil,
   shipsOffCycle,
+  shownColour,
   savePattern,
   saveRelease,
 } from "./releases.ts";
@@ -469,6 +476,23 @@ function freeCycles(stream: ReleaseStream, release: Release | undefined) {
     }));
 }
 
+const colourChoices = [
+  { value: defaultColour, label: `${colourName(null)} (default)` },
+  ...releaseColours.map((colour) => ({
+    value: colour,
+    label: colourName(colour),
+  })),
+];
+
+const Swatch = ({ colour }: { colour: string }) => (
+  <ColorSwatch
+    color={colourVariable(colour, "filled")}
+    size={14}
+    withShadow={false}
+    aria-hidden
+  />
+);
+
 export function ReleaseDialog({
   stream,
   release,
@@ -483,6 +507,9 @@ export function ReleaseDialog({
   const [firstCycle, setFirst] = useState(release?.firstCycle ?? "");
   const [lastCycle, setLast] = useState(release?.lastCycle ?? "");
   const [shipsOn, setShipsOn] = useState(release?.shipsOn ?? null);
+  const [colour, setColour] = useState<ReleaseColour | null>(
+    release?.colour ?? null,
+  );
   // Whether something typed in Ships on is not yet a day.
   const [shipsUnfinished, setShipsUnfinished] = useState(false);
   const [tried, setTried] = useState(false);
@@ -490,7 +517,7 @@ export function ReleaseDialog({
     () =>
       saveRelease(
         stream.id,
-        { name: name.trim(), firstCycle, lastCycle, shipsOn },
+        { name: name.trim(), firstCycle, lastCycle, shipsOn, colour },
         release?.id,
       ),
     saving,
@@ -592,6 +619,25 @@ export function ReleaseDialog({
           onChange={(day, typed) => {
             setShipsOn(day ?? null);
             setShipsUnfinished(typed && day === undefined);
+          }}
+        />
+        <Select
+          label="Colour"
+          description="How the release is drawn on the timeline"
+          data={colourChoices}
+          value={shownColour(colour)}
+          allowDeselect={false}
+          leftSection={<Swatch colour={shownColour(colour)} />}
+          renderOption={({ option }) => (
+            <Group gap="xs" wrap="nowrap">
+              <Swatch colour={option.value} />
+              {option.label}
+            </Group>
+          )}
+          onChange={(value) => {
+            setColour(
+              releaseColours.find((choice) => choice === value) ?? null,
+            );
           }}
         />
         <DialogActions

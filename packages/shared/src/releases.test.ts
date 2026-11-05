@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the requests that change release streams, their cycle patterns, and their releases: how
-// long a cycle may be, the order of a release's cycles, and the day it ships.
+// long a cycle may be, the order of a release's cycles, the day it ships, and its colour.
 
 import { describe, expect, it } from "vitest";
 import {
   cyclePatternRequestSchema,
+  knownColour,
   planSubjects,
   releaseRequestSchema,
   shipsBeforeStart,
@@ -72,6 +73,24 @@ describe("releaseRequestSchema", () => {
         releaseRequestSchema.safeParse({ ...release, shipsOn: "2026-12-31" }),
       ),
     ).toBe(shipsBeforeStart);
+  });
+});
+
+describe("a release's colour", () => {
+  it("is the default unless one from the palette is given", () => {
+    expect([
+      releaseRequestSchema.parse(release).colour,
+      releaseRequestSchema.parse({ ...release, colour: "teal" }).colour,
+      releaseRequestSchema.safeParse({ ...release, colour: "sea" }).success,
+    ]).toEqual([null, "teal", false]);
+  });
+
+  it("is read as the default once the palette no longer has it", () => {
+    expect([
+      knownColour("grape"),
+      knownColour("beige"),
+      knownColour(null),
+    ]).toEqual(["grape", null, null]);
   });
 });
 

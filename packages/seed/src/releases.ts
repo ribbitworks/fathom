@@ -18,6 +18,7 @@ import {
   unpublishedDrafts,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
+import type { ReleaseColour } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 
 interface SeededStream {
@@ -29,7 +30,12 @@ interface SeededStream {
     unit: "weeks" | "months";
     naming: string;
   }[];
-  releases: { name: string; firstCycle: string; lastCycle: string }[];
+  releases: {
+    name: string;
+    firstCycle: string;
+    lastCycle: string;
+    colour?: ReleaseColour;
+  }[];
 }
 
 export const seededStreams: readonly SeededStream[] = [
@@ -42,7 +48,12 @@ export const seededStreams: readonly SeededStream[] = [
     ],
     releases: [
       { name: "Harbor 1", firstCycle: "2026-01-01", lastCycle: "2026-04-01" },
-      { name: "Harbor 2", firstCycle: "2026-07-01", lastCycle: "2026-10-01" },
+      {
+        name: "Harbor 2",
+        firstCycle: "2026-07-01",
+        lastCycle: "2026-10-01",
+        colour: "grape",
+      },
       { name: "Harbor 3", firstCycle: "2027-01-01", lastCycle: "2027-07-01" },
     ],
   },
@@ -62,6 +73,7 @@ export const seededStreams: readonly SeededStream[] = [
         name: "Patch December",
         firstCycle: "2026-11-02",
         lastCycle: "2026-11-30",
+        colour: "orange",
       },
     ],
   },

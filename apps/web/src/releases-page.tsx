@@ -19,6 +19,7 @@ import {
   ActionIcon,
   Alert,
   Button,
+  ColorSwatch,
   FocusTrap,
   Group,
   Loader,
@@ -68,6 +69,8 @@ import {
   releaseCycles,
   releaseDate,
   shipsOffCycle,
+  shownColour,
+  colourVariable,
   releaseStreamsQuery,
   removeFromStream,
   resubmitRecordDraft,
@@ -473,6 +476,15 @@ function Releases({
             )}
           >
             <span>
+              <ColorSwatch
+                component="span"
+                color={colourVariable(shownColour(release.colour), "filled")}
+                size={10}
+                withShadow={false}
+                mr={6}
+                display="inline-block"
+                aria-hidden
+              />
               {release.name}
               <Marks node={node} />
             </span>

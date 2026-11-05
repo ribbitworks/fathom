@@ -22,6 +22,7 @@ import { visibilityName } from "./lists.ts";
 import type { Phrase } from "./phrase.tsx";
 import { formatDay } from "./table-view.ts";
 import { count } from "./numbers.ts";
+import { colourName } from "./releases.ts";
 
 // The change history holding every word of a search, if any, a page at a time.
 export const changesQuery = (search: string) =>
@@ -66,6 +67,7 @@ const fieldNames = new Map([
   ["naming", "Names"],
   ["firstCycle", "First cycle"],
   ["lastCycle", "Last cycle"],
+  ["colour", "Colour"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {
@@ -92,10 +94,24 @@ function valueText(field: string, value: ChangeValue): string | null {
   return value;
 }
 
-// What changed in one field, such as "Name from Sites to Locations", with the field and its values
-// marked.
-export function describeField(change: ChangedField): Phrase {
+// What changed in one field of a record of the kind given, such as "Name from Sites to Locations",
+// with the field and its values marked.
+export function describeField(change: ChangedField, kind?: string): Phrase {
   const name = { strong: fieldName(change) };
+  if (
+    kind === "release" &&
+    change.field === "colour" &&
+    (change.oldValue !== null || change.newValue !== null)
+  ) {
+    // A release always shows a colour, so going to or from the default is a change between two.
+    return [
+      name,
+      " from ",
+      { value: colourName(change.oldValue) },
+      " to ",
+      { value: colourName(change.newValue) },
+    ];
+  }
   const before = valueText(change.field, change.oldValue);
   const after = valueText(change.field, change.newValue);
   // A view's filters and sort are not shown, and nor is a value whose names are gone.
@@ -300,7 +316,7 @@ function recordWords(
   if (kind === "approval" || record.draft) {
     return {
       sentence: `${kind === "approval" ? "approved" : "drafted"} changes to ${named}`,
-      details: record.fields.map(describeField),
+      details: record.fields.map((field) => describeField(field, record.kind)),
     };
   }
   const [only] = record.fields;
@@ -336,6 +352,6 @@ function recordWords(
   }
   return {
     sentence: `changed ${named}`,
-    details: record.fields.map(describeField),
+    details: record.fields.map((field) => describeField(field, record.kind)),
   };
 }

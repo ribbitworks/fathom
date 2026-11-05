@@ -162,23 +162,27 @@ function credited(text: Phrase, key: string, draft: Credited): Phrase {
   return by.has(key) ? [...text, ` (${by.get(key) ?? "Fathom"})`] : text;
 }
 
-// What a list's or choice's draft changes, field by field, from its live value.
+// What a list's, choice's, or plan record's draft changes, field by field, from its live value.
 function configFields(
   draft: { action: string; changed: string[]; live: object } & Credited,
   now: Record<string, unknown>,
+  kind?: RecordType,
 ): Phrase[] {
   if (draft.action !== "changed") return [];
   return draft.changed.map((field) =>
     credited(
-      describeField({
-        field,
-        // The fields are the record's own, as its draft names them.
-        /* eslint-disable security/detect-object-injection */
-        oldValue: ((draft.live as Record<string, unknown>)[field] ??
-          null) as ChangeValue,
-        newValue: (now[field] ?? null) as ChangeValue,
-        /* eslint-enable security/detect-object-injection */
-      }),
+      describeField(
+        {
+          field,
+          // The fields are the record's own, as its draft names them.
+          /* eslint-disable security/detect-object-injection */
+          oldValue: ((draft.live as Record<string, unknown>)[field] ??
+            null) as ChangeValue,
+          newValue: (now[field] ?? null) as ChangeValue,
+          /* eslint-enable security/detect-object-injection */
+        },
+        kind,
+      ),
       field,
       draft,
     ),
@@ -363,7 +367,7 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
             `${type} ${record.id}`,
             record.draft,
             subject,
-            configFields(record.draft, now),
+            configFields(record.draft, now, type),
             { records: [{ type, id: record.id }] },
             record.heldBy,
           ),

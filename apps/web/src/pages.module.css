@@ -1041,11 +1041,12 @@ th.liveColumn {
   bottom: 0;
 }
 
+/* Text stays in the body's text colour, since some colours' own text shades are hard to read. */
 .timelineRelease {
-  border: 1px solid var(--mantine-color-sea-filled);
+  border: 1px solid var(--release-filled);
   border-radius: var(--mantine-radius-sm);
-  background: var(--mantine-color-sea-light);
-  color: var(--mantine-color-sea-light-color);
+  background: var(--release-light);
+  color: var(--mantine-color-text);
   font-weight: 500;
 }
 
@@ -1056,7 +1057,7 @@ th.liveColumn {
 .timelineShipsReach {
   position: absolute;
   top: 50%;
-  border-top: 1px dashed var(--mantine-color-sea-filled);
+  border-top: 1px dashed var(--release-filled);
 }
 
 .timelineShips {
@@ -1066,7 +1067,7 @@ th.liveColumn {
   width: 11px;
   height: 11px;
   border: 1px solid var(--mantine-color-body);
-  background: var(--mantine-color-sea-filled);
+  background: var(--release-filled);
   transform: translate(-50%, -50%) rotate(45deg);
 }
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/product/decisions.md"]
-last_updated: "2026-11-04"
+last_updated: "2026-11-05"
 ---
 
 # Manual Test: Release Streams, Cycles and Releases
@@ -254,7 +254,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 4.** Read the rows under **Releases** in the side panel.
-  - **Expected:** **Harbor 1**, **26.1 to 26.2 · ships 2026-06-30**; **Harbor 2**, **26.3 to 26.4 · ships 2026-12-31**; **Harbor 3**, **27.1 to 27.3 · ships 2027-12-31**. No row has a **⋯** button, and there is no **New release…** button.
+  - **Expected:** **Harbor 1**, **26.1 to 26.2 · ships 2026-06-30**; **Harbor 2**, **26.3 to 26.4 · ships 2026-12-31**; **Harbor 3**, **27.1 to 27.3 · ships 2027-12-31**. A small square before each name is blue for **Harbor 1** and **Harbor 3**, and purple for **Harbor 2**. No row has a **⋯** button, and there is no **New release…** button.
   - **Notes:**
 
 #### REL-11: Cycles Show the Months They Span
@@ -583,4 +583,40 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 - [ ] **Step 2.** Select the **⋯** button beside the side panel's close button, then **Discard draft**.
   - **Expected:** A notification says **Discarded the draft.** The timeline's **Patches** row is back, after **Platform**.
+  - **Notes:**
+
+#### REL-29: A Release's Colour Is Chosen in Its Dialog
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-28. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+
+- [ ] **Step 1.** Close the side panel, scroll to the timeline, select **Year**, and find **Platform**'s and **Patches**' releases lanes, scrolling the timeline left if **Harbor 1** is not wholly in view.
+  - **Expected:** **Harbor 1** and **Harbor 3** are blue, **Harbor 2** is purple, **Patch December** is orange and **Patch October** is blue. Each diamond is the colour of its span, and each name is in the page's usual text colour.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Platform** in the table, then, in the side panel, the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
+  - **Expected:** A dialog titled **Change Harbor 1** opens. Its last field, **Colour**, reads **Sea (default)**, with a blue square before it and **How the release is drawn on the timeline** under its label.
+  - **Notes:**
+
+- [ ] **Step 3.** Open **Colour**.
+  - **Expected:** The list offers **Sea (default)**, then **Indigo**, **Violet**, **Grape**, **Pink**, **Red**, **Orange**, **Yellow**, **Lime**, **Green** and **Teal**, each with a square of its colour.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Teal**, then **Save**.
+  - **Expected:** A notification says **Drafted the change to the release.** The **Harbor 1** row has a hollow yellow dot and **Draft**, and its square is teal. On the timeline, **Harbor 1**'s span is teal, with a dashed edge.
+  - **Notes:**
+
+- [ ] **Step 5.** Publish ([P3](#p3-publish)), then sign in as `project.manager@fathom.test` ([P1](#p1-sign-in)) and open **Drafts** from the left-hand menu.
+  - **Expected:** The draft of **the release Harbor 1 in Platform** lists **Colour from Sea to Teal**.
+  - **Notes:**
+
+- [ ] **Step 6.** Approve the draft, then open **Releases** from the left-hand menu.
+  - **Expected:** **Harbor 1**'s span on the timeline is teal, with a solid edge.
+  - **Notes:**
+
+- [ ] **Step 7.** Sign in as `product.manager@fathom.test` ([P1](#p1-sign-in)), select **Platform** in the table, then the **⋯** button at the end of the **Harbor 1** row, then **Change…**. Select **Sea (default)** in **Colour**, then **Save**.
+  - **Expected:** A notification says **Drafted the change to the release.** The **Harbor 1** row's square and its span on the timeline are blue again, with a dashed edge.
+  - **Notes:**
+
+- [ ] **Step 8.** Select the **⋯** button at the end of the **Harbor 1** row, then **Discard draft**.
+  - **Expected:** A notification says **Discarded the draft.** **Harbor 1** is teal again, as approved in Step 6.
   - **Notes:**

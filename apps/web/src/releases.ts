@@ -11,6 +11,8 @@ import {
   planSubjects,
   type RecordRef,
   type RecordType,
+  knownColour,
+  type ReleaseColour,
   type ReleaseRequest,
   type ReleaseStream,
   releaseStreamSchema,
@@ -18,6 +20,7 @@ import {
   savedSchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
+import type { CSSProperties } from "react";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 import type { RecordNode } from "./record-drafts.ts";
@@ -159,6 +162,32 @@ export function shipsOffCycle(
   const count = Math.abs(days);
   return `${String(count)} ${count === 1 ? "day" : "days"} ${days > 0 ? "after" : "before"} ${cycleNamed(stream, release.lastCycle)} ends`;
 }
+
+// The colour a release with none is shown in: the accent, which the palette leaves out.
+export const defaultColour = "sea";
+
+// A release's colour as the theme names it.
+export const shownColour = (colour: ReleaseColour | null): string =>
+  colour ?? defaultColour;
+
+// A shade of a theme colour, as a CSS value.
+export const colourVariable = (colour: string, shade: "filled" | "light") =>
+  `var(--mantine-color-${colour}-${shade})`;
+
+// A colour's name in words, such as "Grape", or "Sea" for a release with none.
+export function colourName(colour: unknown): string {
+  const shown = shownColour(knownColour(colour));
+  return `${shown.charAt(0).toUpperCase()}${shown.slice(1)}`;
+}
+
+// The style that draws a release, and its Ships on marker, in its colour.
+export const releaseColourStyle = (
+  colour: ReleaseColour | null,
+): CSSProperties =>
+  ({
+    "--release-filled": colourVariable(shownColour(colour), "filled"),
+    "--release-light": colourVariable(shownColour(colour), "light"),
+  }) as CSSProperties;
 
 // A release's cycles, in words, such as "26.1 to 26.2", or the one cycle's name.
 export function releaseCycles(

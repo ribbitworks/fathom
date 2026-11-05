@@ -33,7 +33,7 @@ import {
   timelineAxis,
   timelineLayout,
 } from "./timeline.ts";
-import { daysBetween } from "./releases.ts";
+import { daysBetween, releaseColourStyle } from "./releases.ts";
 import { draftWords } from "./status-mark.tsx";
 
 type Preset = "all" | "year" | "half" | "quarter" | "month" | "week" | "days";
@@ -122,7 +122,11 @@ function ReleaseSpan({ span, px }: { span: ReleaseLayout; px: Px }) {
   return (
     <li
       className={classes.timelineReleaseSlot}
-      style={{ left: px(left), width: px(Math.max(end, shipsAt) - left) }}
+      style={{
+        ...releaseColourStyle(release.colour),
+        left: px(left),
+        width: px(Math.max(end, shipsAt) - left),
+      }}
       title={words}
     >
       <span

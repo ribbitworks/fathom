@@ -523,8 +523,48 @@ describe("the dialog making or changing a release", () => {
         firstCycle: "2027-04-01",
         lastCycle: "2027-04-01",
         shipsOn: null,
+        colour: null,
       },
     ]);
+  });
+
+  it("makes a release in the colour chosen", async () => {
+    const fetch = serverAnswers({
+      [`POST ${streamPath}/releases`]: savedStream,
+    });
+    const { onSaved } = show((handlers) => (
+      <ReleaseDialog stream={releasing} {...handlers} />
+    ));
+    await userEvent.type(box("Name"), "Fictional Two");
+    await choose("First cycle", "27.2 (2027-04-01 to 2027-06-30)");
+    expect(picker("Colour").value).toBe("Sea (default)");
+    await choose("Colour", "Grape");
+    await userEvent.click(screen.getByRole("button", { name: "Make release" }));
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(bodiesOf(fetch)).toMatchObject([{ colour: "grape" }]);
+  });
+
+  it("gives a release the default colour again once Sea is chosen", async () => {
+    const release = fictionalRelease({ colour: "teal" });
+    const fetch = serverAnswers({
+      [`PUT ${streamPath}/releases/${release.id}`]: savedStream,
+    });
+    const { onSaved } = show((handlers) => (
+      <ReleaseDialog
+        stream={fictionalStream({ releases: [release] })}
+        release={release}
+        {...handlers}
+      />
+    ));
+    expect(picker("Colour").value).toBe("Teal");
+    await choose("Colour", "Sea (default)");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(bodiesOf(fetch)).toMatchObject([{ colour: null }]);
   });
 
   it("says the day a release ships at the end of its last cycle", async () => {
@@ -740,6 +780,7 @@ describe("the dialog making or changing a release", () => {
         firstCycle: "2027-01-01",
         lastCycle: "2027-01-01",
         shipsOn: "2027-04-15",
+        colour: null,
       },
     ]);
   });

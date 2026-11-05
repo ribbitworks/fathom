@@ -75,7 +75,7 @@ export const patternKind: RecordKind = {
 export const releaseKind: RecordKind = {
   type: "release",
   table: releases,
-  fields: ["streamId", "name", "firstCycle", "lastCycle", "shipsOn"],
+  fields: ["streamId", "name", "firstCycle", "lastCycle", "shipsOn", "colour"],
   links: { streamId: "release-stream" },
   unique: {
     field: "name",

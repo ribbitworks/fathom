@@ -10,6 +10,7 @@ import type { Database } from "@fathom/db";
 import {
   cyclesOf,
   horizonFrom,
+  knownColour,
   type CyclePattern,
   type CyclePatternRequest,
   type Release,
@@ -99,6 +100,7 @@ function streamOut(
       firstCycle: String(record.firstCycle),
       lastCycle: String(record.lastCycle),
       shipsOn: typeof record.shipsOn === "string" ? record.shipsOn : null,
+      colour: knownColour(record.colour),
       ...extras(state, makers, "release", releaseId),
     }),
   );
@@ -235,6 +237,7 @@ const releaseRecord = (streamId: string, request: ReleaseRequest) => ({
   firstCycle: request.firstCycle,
   lastCycle: request.lastCycle,
   shipsOn: request.shipsOn,
+  colour: request.colour,
 });
 
 // Drafts adding a pattern or release to a stream.

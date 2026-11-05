@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for how the change history words a new order of a list's choices, one choice moved, drafted
-// or approved, and how it names the plan's records, such as release streams.
+// or approved, how it names the plan's records, such as release streams, and how it words a
+// release's colour.
 
 import type { ChangedRecord } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { describeRecord } from "./changes.ts";
+import { describeField, describeRecord } from "./changes.ts";
 
 const order = (
   oldValue: string[],
@@ -89,5 +90,39 @@ describe("the plan's records in the change history", () => {
     ],
   ])("names %s", (_case, record, sentence) => {
     expect(describeRecord(record).sentence).toBe(sentence);
+  });
+});
+
+describe("a release's colour in the change history", () => {
+  const colour = (oldValue: string | null, newValue: string | null) =>
+    describeField({ field: "colour", oldValue, newValue }, "release");
+  const from = (before: string, after: string) => [
+    { strong: "Colour" },
+    " from ",
+    { value: before },
+    " to ",
+    { value: after },
+  ];
+
+  it("names the colours, the default as sea", () => {
+    expect([
+      colour("teal", "grape"),
+      colour(null, "grape"),
+      colour("teal", null),
+    ]).toEqual([
+      from("Teal", "Grape"),
+      from("Sea", "Grape"),
+      from("Teal", "Sea"),
+    ]);
+  });
+
+  it("shows a colour the palette no longer has as sea", () => {
+    expect(colour("beige", "teal")).toEqual(from("Sea", "Teal"));
+  });
+
+  it("words a colour field of another kind as any other field", () => {
+    expect(
+      describeField({ field: "colour", oldValue: null, newValue: "teal" }),
+    ).toEqual([{ strong: "Colour" }, " set to ", { value: "teal" }]);
   });
 });

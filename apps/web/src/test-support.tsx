@@ -118,6 +118,7 @@ export const fictionalRelease = (fields: Partial<Release> = {}): Release => ({
   firstCycle: "2027-01-01",
   lastCycle: "2027-01-01",
   shipsOn: null,
+  colour: null,
   ...fields,
 });
 
