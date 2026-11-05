@@ -183,7 +183,6 @@ describe("the collapsed sidebar", () => {
 describe("the top bar", () => {
   it.each([
     ["/", "Plan/Overview"],
-    ["/password", "Your account/Change password"],
     ["/help/roles", "Help/Roles"],
   ])("names where the user is on %s", async (path, place) => {
     serverAnswers({

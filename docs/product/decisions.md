@@ -97,7 +97,7 @@ Detailed product decisions made so far. The [Product Brief](brief.md) holds the 
   - *Restricted:* gender, start and end dates, active status, and past managers and the dates reporting lines take effect from, since a person's first line usually starts on their start date, and past feature team memberships and the dates people join and leave feature teams, for the same reason, decided by the owner on 2026-11-03. Counts of reports by manager for past months stay General, like capacity.
   - *Confidential:* the hiring plan and future-dated reorgs, apart from planned hires' placeholders. A placeholder's title, manager, and first month it can be allocated are General, and its values for shared columns keep their columns' visibility, as [Roles](roles.md#planned-hires-in-the-plan) sets out.
 - **Consistent enforcement:** Exports, snapshots, and search results follow the same access rules as screens.
-- **Access history:** Fathom records who viewed or changed Restricted or Confidential data, and every change to user accounts and their roles, without recording the values. A user viewing people's Restricted or Confidential details is recorded at most once a day, so frequent use does not bury other entries. Whose details changed is shown only to readers who may see people; others see that a change was made, and by whom.
+- **Access history:** Fathom records who viewed or changed Restricted or Confidential data, and every change to user accounts and their roles, including users changing their own name or password, without recording the values. Entries are kept by account, not by name, and the access history shows each account's email address beside its name, since the email address is what tells accounts apart. A user viewing people's Restricted or Confidential details is recorded at most once a day, so frequent use does not bury other entries. Whose details changed is shown only to readers who may see people; others see that a change was made, and by whom.
 - **Separation of duties:** Running the system, such as backups and updates, does not require access to people data in Fathom.
 - **Data outside the app:** Backups are encrypted, server login is restricted, and backup files are kept only in approved locations.
 
@@ -139,6 +139,7 @@ The company is a private company in British Columbia, so BC PIPA is expected to 
 
 - **Tech stack:** Recorded in [ADR 0001](../adr/0001-tech-stack.md).
 - **Authentication:** Local accounts managed in Fathom for v1.
+- **Your own account:** Every user changes their own name and password from their account's menu, whatever their roles. Their email address and roles stay with Administrators, since the email address signs them in. So nobody can act under a colleague's name, a user cannot take a name another account has, ignoring letter case, and the access history marks their change of name as worth checking. Every account's name is plain text of up to 100 characters. Decided by the owner on 2026-11-03.
 - **Snapshots:** Taken both manually and on a schedule, and contain projects, features, and allocations only, with their custom field values. The schedule is to be decided.
 - **Exports:** PDF, and CSV or TSV for use in Excel.
 - **Backup operations:** Run and monitored by the owner's department, since IT is too busy to support custom applications.

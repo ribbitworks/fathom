@@ -8,6 +8,7 @@
 // taken as a host.
 
 import { z } from "zod";
+import { isPlainText } from "./text.ts";
 
 export const linkLengths = { address: 2000, text: 200 } as const;
 
@@ -64,11 +65,6 @@ const upTo = (text: string, end: RegExp) => text.slice(0, text.search(end));
 // is a port.
 const scheme = /^[a-z][a-z\d+.-]*:(?!\d)/iu;
 
-// In a link's text, control characters and the marks that change which way text runs, which could
-// make the address shown beside it read as another. Other format characters, such as those joining
-// emoji, are left alone.
-const textControl = /[\p{Cc}\u200E\u200F\u202A-\u202E\u2066-\u2069]/u;
-
 // An address in the form it is kept, or null when Fathom does not accept it.
 export function webAddress(address: string): string | null {
   const value = address.trim();
@@ -113,7 +109,7 @@ export function linkProblems(link: Link): LinkProblems {
   }
   if (text.length > linkLengths.text) {
     problems.text = `The text is too long; use at most ${String(linkLengths.text)} characters`;
-  } else if (textControl.test(text)) {
+  } else if (!isPlainText(text)) {
     problems.text = "Use plain text, without control characters";
   }
   return problems;

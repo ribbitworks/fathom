@@ -49,6 +49,15 @@ const actionWords: Record<AccessAction, ActionWords> = {
     verb: "reset the password for",
     caution: true,
   },
+  "password-changed": {
+    verb: "changed their own password",
+    caution: false,
+  },
+  // Worth checking, since someone could take a name to act as another.
+  "own-name-changed": {
+    verb: "changed their own name",
+    caution: true,
+  },
   "account-deactivated": {
     verb: "deactivated the account for",
     caution: true,
@@ -81,14 +90,26 @@ export function actorName({ actor }: HistoryEntry): string {
   return actor === null ? "Fathom's operators" : nameOf(actor);
 }
 
-// A person's name, or a plain description when their account no longer exists.
-export function nameOf(person: { name: string | null }): string {
-  return person.name ?? "A removed account";
+// A person's name, or a plain description when their account no longer exists, with an account's
+// email address, which tells it from another with a name that looks the same.
+export function nameOf(person: {
+  name: string | null;
+  email?: string | null | undefined;
+}): string {
+  const name = person.name ?? "A removed account";
+  return person.email ? `${name} (${person.email})` : name;
 }
 
 // Whom an entry names, if anyone: an account, or a person whose details changed.
 export function subjectName({ action, subject }: HistoryEntry): string | null {
-  if (subject === null) return null;
+  // The verb already says whose password or name it was.
+  if (
+    subject === null ||
+    action === "password-changed" ||
+    action === "own-name-changed"
+  ) {
+    return null;
+  }
   if (action === "restricted-changed") {
     // Unnamed for readers who may not see people, and for a person deleted since.
     return subject.name ?? "a person";

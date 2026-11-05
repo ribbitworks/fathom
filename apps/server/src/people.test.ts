@@ -974,7 +974,8 @@ describe("access history", () => {
     const administrator = await test.signedIn(["administrator"]);
     expect(await entriesBy(administrator.cookie, editorId)).toEqual([
       ["restricted-viewed", null],
-      ["restricted-changed", { id, name: null }],
+      // A person has no account, so no email address.
+      ["restricted-changed", { id, name: null, email: null }],
     ]);
     const seesPeople = await test.signedIn([
       "administrator",
@@ -982,7 +983,7 @@ describe("access history", () => {
     ]);
     expect(await entriesBy(seesPeople.cookie, editorId)).toEqual([
       ["restricted-viewed", null],
-      ["restricted-changed", { id, name }],
+      ["restricted-changed", { id, name, email: null }],
     ]);
   });
 });

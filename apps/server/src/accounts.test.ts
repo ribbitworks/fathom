@@ -8,6 +8,7 @@
 // records each change.
 
 import {
+  accounts,
   createDatabase,
   createPool,
   type Database,
@@ -698,6 +699,204 @@ describe("changing one's own password", () => {
       },
     );
     expect(response.statusCode).toBe(400);
+  });
+});
+
+describe("recording one's own password change", () => {
+  type Entry = { action: string; subject: { id: string } };
+  async function entriesFor(id: string) {
+    const admin = await signedIn(["administrator"]);
+    const history = await request(admin.cookie, "GET", "/api/access-history");
+    return history
+      .json<{ entries: Entry[] }>()
+      .entries.filter((entry) => entry.subject.id === id);
+  }
+
+  it("records the change, naming the user as both who and whom, without the passwords", async () => {
+    const user = await signedIn(["viewer"]);
+    await request(user.cookie, "POST", "/api/auth/change-password", {
+      currentPassword: password,
+      newPassword,
+    });
+    const self = { id: user.id, name: expect.any(String) as unknown };
+    expect(await entriesFor(user.id)).toMatchObject([
+      { action: "password-changed", actor: self, subject: self, details: {} },
+      { action: "account-created" },
+    ]);
+  });
+
+  it("records nothing when the current password is wrong", async () => {
+    const user = await signedIn(["viewer"]);
+    await request(user.cookie, "POST", "/api/auth/change-password", {
+      currentPassword: "not the password",
+      newPassword,
+    });
+    expect(await entriesFor(user.id)).toMatchObject([
+      { action: "account-created" },
+    ]);
+  });
+
+  it("refuses, with an error, a password saved through Better Auth with no one signed in, but not other changes to an account", async () => {
+    const user = await newAccount([]);
+    const [account] = await connection
+      .select({ id: accounts.id, password: accounts.password })
+      .from(accounts)
+      .where(eq(accounts.userId, user.id));
+    const { internalAdapter } = await auth.$context;
+    await expect(
+      internalAdapter.updateAccount(String(account?.id), {
+        password: "not a hash",
+      }),
+    ).rejects.toThrow("Sign in to change your password");
+    await internalAdapter.updateAccount(String(account?.id), {
+      scope: "fictional",
+    });
+    const [after] = await connection
+      .select({ password: accounts.password, scope: accounts.scope })
+      .from(accounts)
+      .where(eq(accounts.userId, user.id));
+    expect(after).toEqual({ password: account?.password, scope: "fictional" });
+    expect(await entriesFor(user.id)).toMatchObject([
+      { action: "account-created" },
+    ]);
+  });
+
+  it("keeps the old password when the change cannot be recorded", async () => {
+    const user = await signedIn(["viewer"]);
+    await database.superuserQuery(
+      "ALTER TABLE fathom.access_history ADD CONSTRAINT fictional_refusal CHECK (action <> 'password-changed') NOT VALID",
+    );
+    try {
+      const response = await request(
+        user.cookie,
+        "POST",
+        "/api/auth/change-password",
+        { currentPassword: password, newPassword },
+      );
+      expect(response.statusCode).not.toBe(200);
+    } finally {
+      await database.superuserQuery(
+        "ALTER TABLE fathom.access_history DROP CONSTRAINT fictional_refusal",
+      );
+    }
+    expect(await signIn(user.email, newPassword)).toBe("");
+    expect(await signIn(user.email)).not.toBe("");
+  });
+});
+
+describe("changing one's own name", () => {
+  it("lets any user change it, recorded with them as both who and whom", async () => {
+    const user = await signedIn([]);
+    const response = await request(user.cookie, "PUT", "/api/account/name", {
+      name: " Fictional Self-Renamed ",
+    });
+    expect(response.statusCode).toBe(204);
+    const session = await request(user.cookie, "GET", "/api/session");
+    expect(session.json()).toMatchObject({
+      user: { name: "Fictional Self-Renamed", email: user.email },
+    });
+    const admin = await signedIn(["administrator"]);
+    const history = await request(admin.cookie, "GET", "/api/access-history");
+    const self = {
+      id: user.id,
+      name: "Fictional Self-Renamed",
+      email: user.email,
+    };
+    expect(
+      history
+        .json<{ entries: { subject: { id: string } }[] }>()
+        .entries.filter((entry) => entry.subject.id === user.id),
+    ).toMatchObject([
+      { action: "own-name-changed", actor: self, subject: self },
+      { action: "account-created" },
+    ]);
+  });
+
+  it("records nothing when the name is the same", async () => {
+    const user = await signedIn([]);
+    const { name } = (await request(user.cookie, "GET", "/api/session")).json<{
+      user: { name: string };
+    }>().user;
+    await request(user.cookie, "PUT", "/api/account/name", { name });
+    const admin = await signedIn(["administrator"]);
+    const history = await request(admin.cookie, "GET", "/api/access-history");
+    expect(
+      history
+        .json<{ entries: { action: string; subject: { id: string } }[] }>()
+        .entries.filter((entry) => entry.subject.id === user.id)
+        .map((entry) => entry.action),
+    ).toEqual(["account-created"]);
+  });
+
+  it("changes only the name, never the email address or roles sent with it", async () => {
+    const user = await signedIn(["viewer"]);
+    await request(user.cookie, "PUT", "/api/account/name", {
+      name: "Fictional Climber",
+      email: "climber@example.test",
+      roles: ["administrator"],
+    });
+    expect(
+      (await request(user.cookie, "GET", "/api/session")).json(),
+    ).toMatchObject({
+      user: { name: "Fictional Climber", email: user.email },
+      roles: ["viewer"],
+    });
+  });
+
+  it("refuses a name another account has, ignoring letter case and extra spaces", async () => {
+    const other = await newAccount([]);
+    await request(
+      (await signedIn(["administrator"])).cookie,
+      "PATCH",
+      `/api/accounts/${other.id}`,
+      { name: "Fictional Director" },
+    );
+    const user = await signedIn([]);
+    const response = await request(user.cookie, "PUT", "/api/account/name", {
+      name: " fictional   DIRECTOR ",
+    });
+    expect(response.statusCode).toBe(409);
+    expect(response.json()).toMatchObject({
+      error: "Another account already has that name; choose another",
+    });
+  });
+
+  it.each([
+    ["longer than 100 characters", "n".repeat(101)],
+    ["holding a control character", "Fictional\u0007Name"],
+    ["holding a zero-width space", "Fictional\u200BName"],
+  ])("refuses a name %s", async (_, name) => {
+    const user = await signedIn([]);
+    const response = await request(user.cookie, "PUT", "/api/account/name", {
+      name,
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("holds an Administrator's new accounts to the same rules for names", async () => {
+    const admin = await signedIn(["administrator"]);
+    const response = await request(admin.cookie, "POST", "/api/accounts", {
+      name: "n".repeat(101),
+      email: "long-name@example.test",
+      password,
+      roles: [],
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("refuses an empty name", async () => {
+    const user = await signedIn([]);
+    const response = await request(user.cookie, "PUT", "/api/account/name", {
+      name: " ",
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("refuses a request with no one signed in", async () => {
+    const response = await request("", "PUT", "/api/account/name", {
+      name: "Fictional Nobody",
+    });
+    expect(response.statusCode).toBe(401);
   });
 });
 

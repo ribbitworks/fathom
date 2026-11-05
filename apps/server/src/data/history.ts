@@ -126,7 +126,9 @@ export async function readHistory(
       details: accessHistory.details,
       actorId: accessHistory.actorId,
       actorName: actors.name,
+      actorEmail: actors.email,
       subjectId: accessHistory.subjectId,
+      subjectEmail: subjects.email,
       // A subject is an account or, for changes to Restricted details, a person.
       subjectName: namesPeople
         ? sql<
@@ -146,10 +148,12 @@ export async function readHistory(
     action: row.action,
     details: knownDetails(row.details),
     actor:
-      row.actorId === null ? null : { id: row.actorId, name: row.actorName },
+      row.actorId === null
+        ? null
+        : { id: row.actorId, name: row.actorName, email: row.actorEmail },
     subject:
       row.subjectId === null
         ? null
-        : { id: row.subjectId, name: row.subjectName },
+        : { id: row.subjectId, name: row.subjectName, email: row.subjectEmail },
   }));
 }

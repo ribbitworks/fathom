@@ -2,10 +2,10 @@
 
 // The frame around every page for a signed-in user: a sidebar of Fathom's sections, showing only
 // the pages, current and still to come, that the user's roles allow, marking those still to come,
-// and a top bar saying where they are, with their own account's menu for changing their password
-// and signing out, which also happens after a time without use. The sidebar collapses to a rail of
-// icons, each naming its page on hover or focus, and remembers the choice. On narrow screens the
-// sidebar opens from a menu button instead.
+// and a top bar saying where they are, with their own account's menu for changing their name and
+// password, in dialogs, and signing out, which also happens after a time without use. The sidebar
+// collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice. On
+// narrow screens the sidebar opens from a menu button instead.
 
 import { AboutBox, build } from "./about.tsx";
 import { AppMenu } from "./app-menu.tsx";
@@ -39,6 +39,8 @@ import { DevBadge, devLabel } from "./dev-label.tsx";
 import { Icon, type IconName } from "./icons.tsx";
 import { useSignOutWhenIdle } from "./idle.ts";
 import classes from "./layout.module.css";
+import { ChangeNameDialog } from "./change-name.tsx";
+import { ChangePasswordDialog } from "./change-password.tsx";
 import { initials } from "./names.ts";
 import { type SignedInUser, sessionQuery, signOut } from "./session.ts";
 import { UnpublishedControl } from "./unpublished.tsx";
@@ -56,7 +58,6 @@ type Page =
   | "/drafts"
   | "/lists/{-$listId}"
   | "/people"
-  | "/password"
   | "/help/roles"
   | "/help/drafts";
 
@@ -190,7 +191,6 @@ const places = new Map<string, [string, string]>([
         : [[item.to.replace("/{-$listId}", ""), [section.label, item.label]]],
     ),
   ),
-  ["/password", ["Your account", "Change password"]],
 ]);
 
 // In the rail, each page's name shows beside its icon on hover or focus.
@@ -342,6 +342,8 @@ export function Layout({
     defaultValue: false,
   });
   const [failed, setFailed] = useState(false);
+  const [changingName, setChangingName] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const narrow = useMediaQuery("(max-width: 48em)");
   // A list's address, such as /lists/ followed by its identifier, is a place within the Lists page.
   const place =
@@ -443,7 +445,18 @@ export function Layout({
               </AppMenu.Target>
               <AppMenu.Dropdown miw={200} maw="calc(100vw - 2rem)">
                 <Menu.Label>{user.email}</Menu.Label>
-                <Menu.Item component={Link} to="/password">
+                <Menu.Item
+                  onClick={() => {
+                    setChangingName(true);
+                  }}
+                >
+                  Change name
+                </Menu.Item>
+                <Menu.Item
+                  onClick={() => {
+                    setChangingPassword(true);
+                  }}
+                >
                   Change password
                 </Menu.Item>
                 <Menu.Divider />
@@ -502,6 +515,19 @@ export function Layout({
         )}
         <Outlet />
       </AppShell.Main>
+      <ChangeNameDialog
+        name={user.name}
+        opened={changingName}
+        onClose={() => {
+          setChangingName(false);
+        }}
+      />
+      <ChangePasswordDialog
+        opened={changingPassword}
+        onClose={() => {
+          setChangingPassword(false);
+        }}
+      />
     </AppShell>
   );
 }

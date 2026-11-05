@@ -138,6 +138,71 @@ describe("the entries", () => {
     ]);
   });
 
+  it("say who changed their own password or name without naming them twice, marking a name as worth checking", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () =>
+        Response.json({
+          entries: [
+            {
+              id: 6,
+              occurredAt: "2026-10-30T17:00:00.000Z",
+              actor: subject,
+              action: "password-changed",
+              subject,
+              details: {},
+            },
+            {
+              id: 5,
+              occurredAt: "2026-10-30T16:00:00.000Z",
+              actor: subject,
+              action: "own-name-changed",
+              subject,
+              details: {},
+            },
+          ],
+        }),
+    });
+    renderApp("/history");
+    const lines = (await screen.findAllByRole("listitem")).map((item) =>
+      item.textContent.slice(
+        String(item.querySelector("time")?.textContent).length,
+      ),
+    );
+    expect(lines).toEqual([
+      "Fictional Planner changed their own password",
+      "Worth checking: Fictional Planner changed their own name",
+    ]);
+  });
+
+  it("give each account's email address beside its name, when known", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () =>
+        Response.json({
+          entries: [
+            {
+              id: 7,
+              occurredAt: "2026-10-30T18:00:00.000Z",
+              actor: { ...admin, email: "person@example.test" },
+              action: "own-name-changed",
+              subject: { ...admin, email: "person@example.test" },
+              details: {},
+            },
+          ],
+        }),
+    });
+    renderApp("/history");
+    const item = await screen.findByRole("listitem");
+    expect(
+      item.textContent.slice(
+        String(item.querySelector("time")?.textContent).length,
+      ),
+    ).toBe(
+      "Worth checking: Fictional Person (person@example.test) changed their own name",
+    );
+  });
+
   it("say who did what to whose account, and which roles were involved", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,

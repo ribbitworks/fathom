@@ -12,6 +12,9 @@ export const accessActionSchema = z.enum([
   "name-changed",
   "email-changed",
   "password-reset",
+  // A user changed their own password, giving their current one, or their own name.
+  "password-changed",
+  "own-name-changed",
   "account-deactivated",
   "account-reactivated",
   // Someone saw people's Restricted or Confidential details, such as start and end dates. Recorded
@@ -32,7 +35,13 @@ export const historyDetailsSchema = z.object({
 export type HistoryDetails = z.infer<typeof historyDetailsSchema>;
 
 // An account or person named in the history, whose name is null if it no longer exists.
-const personSchema = z.object({ id: z.string(), name: z.string().nullable() });
+// An account, or a person whose details changed. An account's email address, which signs it in,
+// tells it from another with a name that looks the same; a person has none.
+const personSchema = z.object({
+  id: z.string(),
+  name: z.string().nullable(),
+  email: z.string().nullable().optional(),
+});
 
 // Entries can never be changed, so one recorded by another version of Fathom, with an action this
 // version does not know, is shown as it was stored rather than refused.

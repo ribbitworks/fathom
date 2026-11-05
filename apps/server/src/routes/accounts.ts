@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Account administration: listing accounts, creating them, and changing their names, email
-// addresses, roles, passwords, and whether they can sign in. The data access layer checks the actor
-// may manage accounts.
+// Accounts: Administrators list them, create them, and change their names, email addresses, roles,
+// passwords, and whether they can sign in, and every user changes their own name. The data access
+// layer checks the actor may do each.
 
 import {
   accountActiveSchema,
@@ -10,6 +10,7 @@ import {
   accountListSchema,
   accountSchema,
   newAccountSchema,
+  ownNameSchema,
   passwordResetSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
@@ -75,6 +76,15 @@ export function accountRoutes(
           request.params.id,
           request.body.password,
         );
+        return reply.status(noContent).send();
+      },
+    );
+
+    app.put(
+      "/api/account/name",
+      { schema: { body: ownNameSchema } },
+      async (request, reply) => {
+        await accounts.renameSelf(request.actor, request.body.name);
         return reply.status(noContent).send();
       },
     );

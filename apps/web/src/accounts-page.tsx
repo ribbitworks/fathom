@@ -44,6 +44,7 @@ import { Controller, useForm } from "react-hook-form";
 import {
   accountsQuery,
   createAccount,
+  nameProblem,
   resetPassword,
   roleDescription,
   roleName,
@@ -165,7 +166,7 @@ function CreateAccount({ onDone, onBusy }: DialogProps) {
       <Stack>
         <TextInput
           label="Name"
-          error={errors.name && "Enter the person's name."}
+          error={nameProblem(errors.name, "Enter the person's name.")}
           {...form.register("name")}
         />
         <TextInput
@@ -260,7 +261,7 @@ function EditAccount({
       <Stack>
         <TextInput
           label="Name"
-          error={errors.name && "Enter the person's name."}
+          error={nameProblem(errors.name, "Enter the person's name.")}
           {...form.register("name")}
         />
         <TextInput

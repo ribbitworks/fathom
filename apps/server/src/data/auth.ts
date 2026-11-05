@@ -16,9 +16,11 @@ import {
 } from "@fathom/db";
 import { passwordLength, sessionIdleMinutes } from "@fathom/shared";
 import { betterAuth } from "better-auth";
+import { APIError } from "better-auth/api";
 import { eq } from "drizzle-orm";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { AuthConfig } from "../config.ts";
+import { recordEvent } from "./history.ts";
 
 // The header the server sets to each request's client address, which Better Auth uses to limit
 // sign-in attempts. Any copy a client sends is removed first, so it cannot be forged.
@@ -92,8 +94,34 @@ export function createAuth(
         log?.(level, message);
       },
     },
-    // A deactivated account cannot start a session, even with the right password.
     databaseHooks: {
+      // A user changing their own password is recorded in the access history before the new one is
+      // saved, so if it cannot be recorded, the password is not changed. Better Auth runs here
+      // without a transaction, so a save that fails after the entry is written leaves an entry for a
+      // change that did not happen, which is accepted as safer than a change without one. The entry
+      // names the signed-in user, since Fathom's only way to change a password through Better Auth
+      // is changing one's own; a plugin that let one user set another's would need it changed.
+      // Administrators' resets do not come through Better Auth, and record their own entries. A
+      // password set with no one signed in is refused with an error.
+      account: {
+        update: {
+          before: async (account, context) => {
+            if (account.password === undefined) return;
+            const userId = context?.context.session?.user.id;
+            if (userId === undefined) {
+              throw new APIError("FORBIDDEN", {
+                message: "Sign in to change your password",
+              });
+            }
+            await recordEvent(database, {
+              actorId: userId,
+              action: "password-changed",
+              subjectId: userId,
+            });
+          },
+        },
+      },
+      // A deactivated account cannot start a session, even with the right password.
       session: {
         create: {
           before: async (session) => {

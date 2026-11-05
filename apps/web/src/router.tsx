@@ -21,7 +21,6 @@ import {
 } from "@tanstack/react-router";
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
-import { ChangePassword } from "./change-password.tsx";
 import { DraftsHelpPage, RolesHelpPage } from "./help-page.tsx";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { DraftsPage } from "./drafts-page.tsx";
@@ -226,12 +225,6 @@ const peopleRoute = createRoute({
   },
 });
 
-const changePasswordRoute = createRoute({
-  getParentRoute: () => signedInRoute,
-  path: "/password",
-  component: ChangePassword,
-});
-
 // What each role allows, open to every signed-in user, whatever their roles.
 const helpRoute = createRoute({
   getParentRoute: () => signedInRoute,
@@ -271,7 +264,6 @@ const routeTree = rootRoute.addChildren([
     listsRoute,
     peopleRoute,
     draftsRoute,
-    changePasswordRoute,
     helpRoute,
     draftsHelpRoute,
   ]),

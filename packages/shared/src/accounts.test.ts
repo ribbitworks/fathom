@@ -29,6 +29,13 @@ describe("account requests", () => {
     expect(newAccountSchema.parse(account).name).toBe("Fictional User");
   });
 
+  it("keeps each run of spaces in a name as one", () => {
+    expect(
+      newAccountSchema.parse({ ...account, name: "Fictional \t \uFEFF User" })
+        .name,
+    ).toBe("Fictional User");
+  });
+
   it.each([
     ["an empty name", { name: " " }],
     ["an address that is not an email", { email: "not an email" }],
@@ -38,6 +45,11 @@ describe("account requests", () => {
       { password: "p".repeat(passwordLength.maximum + 1) },
     ],
     ["a role Fathom does not have", { roles: ["owner"] }],
+    ["a name longer than 100 characters", { name: "n".repeat(101) }],
+    ["a name holding a control character", { name: "A\u0007B" }],
+    ["a name holding a zero-width space", { name: "A\u200BB" }],
+    ["a name holding a word joiner", { name: "A\u2060B" }],
+    ["a name holding a soft hyphen", { name: "A\u00ADB" }],
   ])("refuses an account with %s", (_, refused) => {
     expect(newAccountSchema.safeParse({ ...account, ...refused }).success).toBe(
       false,

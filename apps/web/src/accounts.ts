@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Account administration and changing one's own password, through the server's API, with the names
-// users see for each role and what the Help page says each lets them do.
+// Account administration, and changing one's own name and password, through the server's API, with
+// the names users see for each role and what the Help page says each lets them do.
 
 import {
   type Account,
@@ -9,6 +9,7 @@ import {
   accountListSchema,
   accountSchema,
   type NewAccountRequest,
+  type OwnNameRequest,
   type PasswordChangeRequest,
   type Role,
 } from "@fathom/shared";
@@ -90,6 +91,20 @@ export async function resetPassword(
   await sendJson("PUT", `/api/accounts/${encodeURIComponent(id)}/password`, {
     password,
   });
+}
+
+// What is wrong with a name the account rules refuse: the form's own words when it is empty, and the
+// rule it breaks otherwise.
+export function nameProblem(
+  error: { type: string; message?: string | undefined } | undefined,
+  empty: string,
+): string | undefined {
+  if (error === undefined) return undefined;
+  return error.type === "too_small" ? empty : `${String(error.message)}.`;
+}
+
+export async function changeOwnName(request: OwnNameRequest): Promise<void> {
+  await sendJson("PUT", "/api/account/name", request);
 }
 
 export async function changePassword(

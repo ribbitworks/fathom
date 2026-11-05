@@ -7,7 +7,6 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Access History
 
-- **Users changing their own password:** Not yet recorded in the access history. Only changes administrators make to accounts are. Deferred by the owner while the access history was first built.
 - **Sign-ins, sign-outs, and failed sign-ins:** Not recorded in the access history. The server's request log already records each sign-in attempt with its time and network address, and active sessions are kept in the database. Deferred by the owner; worth revisiting if HR or IT asks for them.
 
 ## Roles
@@ -21,7 +20,8 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Account Administration
 
 - **Two administrators choosing the same email address at once:** Two accounts given the same email address at the same moment, by creating or changing them, can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.
-- **Renaming yourself:** Only Administrators change an account's name, so anyone else who wants theirs shown differently asks one. The owner suggested on 2026-11-03 that every user could change their own name. Their email address would stay with Administrators, since it signs them in and is [proposed to link them to their person record](product/roles.md#access-to-your-own-record-and-your-reports). Not yet decided.
+- **Changing a password after deactivation:** Changing one's own password goes straight to Better Auth, which does not check that the account is still active, so a session made just before an account is deactivated could still change its password. The session cannot be used for anything else. Found in review on 2026-11-03.
+- **Two users taking the same name at once:** The check that a name is free when users change their own takes no lock, so two users renaming themselves to the same name at the same moment could both succeed, and Administrators creating or renaming accounts do not check names at all. Both renames are still recorded and marked as worth checking. Accepted as unlikely with 20 to 30 users, like the email address case above. Found in review on 2026-11-03.
 
 ## Lists
 

@@ -157,6 +157,9 @@ export interface AccountAdministration {
   resetPassword(actor: Actor, userId: string, password: string): Promise<void>;
   // Deactivating signs the user out everywhere.
   setActive(actor: Actor, userId: string, active: boolean): Promise<Account>;
+  // Changes the signed-in user's own name, which needs no role, recording it in the access history.
+  // A name another account has is refused, so nobody can act under a colleague's name.
+  renameSelf(actor: Actor, name: string): Promise<void>;
 }
 
 export function createAccountAdministration(
@@ -330,6 +333,40 @@ export function createAccountAdministration(
         });
       });
       await signOutEverywhere(userId);
+    },
+
+    async renameSelf(actor, name) {
+      const userId = actor.user.id;
+      const next = name.trim();
+      // The name and its history entry are saved together, so no change goes unrecorded.
+      await database.transaction(async (transaction) => {
+        const previous = await readAccount(userId, transaction);
+        if (next === previous.name) return;
+        const [taken] = await transaction
+          .select({ id: users.id })
+          .from(users)
+          .where(
+            and(
+              sql`lower(${users.name}) = lower(${next})`,
+              ne(users.id, userId),
+            ),
+          )
+          .limit(1);
+        if (taken !== undefined) {
+          throw new ConflictError(
+            "Another account already has that name; choose another",
+          );
+        }
+        await transaction
+          .update(users)
+          .set({ name: next, updatedAt: new Date() })
+          .where(eq(users.id, userId));
+        await recordEvent(transaction, {
+          actorId: userId,
+          action: "own-name-changed",
+          subjectId: userId,
+        });
+      });
     },
 
     async setActive(actor, userId, active) {

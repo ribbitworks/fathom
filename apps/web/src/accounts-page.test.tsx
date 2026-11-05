@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the Accounts page and the Change password page, with the server's responses simulated:
-// who sees the Accounts page, the list of accounts, creating accounts, editing their names, email
-// addresses, and roles, resetting passwords, deactivating and reactivating, the server's refusals,
-// and changing one's own password.
+// Tests for the Accounts page and the Change name and Change password dialogs, with the server's
+// responses simulated: who sees the Accounts page, the list of accounts, creating accounts, editing
+// their names, email addresses, and roles, resetting passwords, deactivating and reactivating, the
+// server's refusals, and changing one's own name and password.
 
 import { roleSchema } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
@@ -619,29 +619,7 @@ describe("changing an account", () => {
 });
 
 describe("changing one's own password", () => {
-  async function changePassword(
-    current: string,
-    next: string,
-    repeated = next,
-  ) {
-    await userEvent.type(
-      await screen.findByLabelText("Current password"),
-      current,
-    );
-    await userEvent.type(screen.getByLabelText("New password"), next);
-    await userEvent.type(screen.getByLabelText("New password again"), repeated);
-    await userEvent.click(
-      screen.getByRole("button", { name: "Change password" }),
-    );
-  }
-
-  it("is linked for every user, and says when the password has changed", async () => {
-    const fetch = serverAnswers({
-      "GET /api/session": signedIn,
-      "GET /api/greeting": greeting,
-      "POST /api/auth/change-password": () => Response.json({}),
-    });
-    renderApp("/");
+  async function openDialog(): Promise<HTMLElement> {
     await userEvent.click(
       await screen.findByRole("button", {
         name: "Your account, Fictional Person",
@@ -650,10 +628,51 @@ describe("changing one's own password", () => {
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Change password" }),
     );
-    await changePassword("fictional password 1", "fictional password 2");
-    expect((await screen.findByRole("status")).textContent).toMatch(
-      /has been changed/,
+    return screen.findByRole("dialog", { name: "Change password" });
+  }
+
+  async function changePassword(
+    dialog: HTMLElement,
+    current: string,
+    next: string,
+    repeated = next,
+  ) {
+    await userEvent.type(
+      within(dialog).getByLabelText("Current password"),
+      current,
     );
+    await userEvent.type(within(dialog).getByLabelText("New password"), next);
+    await userEvent.type(
+      within(dialog).getByLabelText("New password again"),
+      repeated,
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change password" }),
+    );
+  }
+
+  it("is offered to every user, and confirms the change like other changes", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "POST /api/auth/change-password": () => Response.json({}),
+    });
+    renderApp("/");
+    await changePassword(
+      await openDialog(),
+      "fictional password 1",
+      "fictional password 2",
+    );
+    expect(
+      await screen.findByText(
+        "Your password has been changed, and you have been signed out everywhere else.",
+      ),
+    ).toBeDefined();
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Change password" }),
+      ).toBeNull();
+    });
     expect(fetch).toHaveBeenCalledWith(
       "/api/auth/change-password",
       expect.objectContaining({
@@ -666,45 +685,280 @@ describe("changing one's own password", () => {
   });
 
   it("asks for the new password twice, the same each time", async () => {
-    serverAnswers({ "GET /api/session": signedIn });
-    renderApp("/password");
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
     await changePassword(
+      dialog,
       "fictional password 1",
       "fictional password 2",
       "different",
     );
     expect(
-      await screen.findByText("The new passwords do not match."),
+      await within(dialog).findByText("The new passwords do not match."),
     ).toBeDefined();
   });
 
   it("asks for the current password and a long enough new one", async () => {
-    serverAnswers({ "GET /api/session": signedIn });
-    renderApp("/password");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Change password" }),
-    );
-    expect(
-      await screen.findByText("Enter your current password."),
-    ).toBeDefined();
-    expect(screen.getByText("Use 12 to 128 characters.")).toBeDefined();
-  });
-
-  it.each([
-    [{ code: "INVALID_PASSWORD" }, 400, "Your current password is not right."],
-    [
-      { error: "Fictional" },
-      500,
-      "Fathom could not change your password. Try again in a moment.",
-    ],
-  ])("explains a refusal plainly", async (body, status, message) => {
     serverAnswers({
       "GET /api/session": signedIn,
-      "POST /api/auth/change-password": () => Response.json(body, { status }),
+      "GET /api/greeting": greeting,
     });
-    renderApp("/password");
-    await changePassword("not the password", "fictional password 2");
-    expect((await screen.findByRole("alert")).textContent).toBe(message);
+    renderApp("/");
+    const dialog = await openDialog();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change password" }),
+    );
+    expect(
+      await within(dialog).findByText("Enter your current password."),
+    ).toBeDefined();
+    expect(within(dialog).getByText("Use 12 to 128 characters.")).toBeDefined();
+  });
+
+  it("names a wrong current password beside it, keeping the dialog open", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "POST /api/auth/change-password": () =>
+        Response.json({ code: "INVALID_PASSWORD" }, { status: 400 }),
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await changePassword(dialog, "not the password", "fictional password 2");
+    expect(
+      await within(dialog).findByText("Your current password is not right."),
+    ).toBeDefined();
+    expect(within(dialog).queryByRole("alert")).toBeNull();
+    expect(document.activeElement).toBe(
+      within(dialog).getByLabelText("Current password"),
+    );
+  });
+
+  it("starts afresh when opened again", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "POST /api/auth/change-password": () =>
+        Response.json({ code: "INVALID_PASSWORD" }, { status: 400 }),
+    });
+    renderApp("/");
+    const first = await openDialog();
+    await changePassword(first, "not the password", "fictional password 2");
+    await within(first).findByText("Your current password is not right.");
+    await userEvent.click(
+      within(first).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("dialog", { name: "Change password" }),
+      ).toBeNull();
+    });
+    const dialog = await openDialog();
+    for (const label of [
+      "Current password",
+      "New password",
+      "New password again",
+    ]) {
+      expect(within(dialog).getByLabelText<HTMLInputElement>(label).value).toBe(
+        "",
+      );
+    }
+    expect(
+      within(dialog).queryByText("Your current password is not right."),
+    ).toBeNull();
+  });
+
+  it("stays open while the change is being saved", async () => {
+    let answer: (response: Response) => void = () => undefined;
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "POST /api/auth/change-password": () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await changePassword(
+      dialog,
+      "fictional password 1",
+      "fictional password 2",
+    );
+    await userEvent.keyboard("{Escape}");
+    expect(
+      screen.getByRole("dialog", { name: "Change password" }),
+    ).toBeDefined();
+    expect(within(dialog).queryByRole("button", { name: "Close" })).toBeNull();
+    answer(Response.json({}));
+    expect(
+      await screen.findByText(
+        "Your password has been changed, and you have been signed out everywhere else.",
+      ),
+    ).toBeDefined();
+  });
+
+  it("explains another refusal plainly", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "POST /api/auth/change-password": () =>
+        Response.json({ error: "Fictional" }, { status: 500 }),
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await changePassword(
+      dialog,
+      "fictional password 1",
+      "fictional password 2",
+    );
+    expect((await within(dialog).findByRole("alert")).textContent).toBe(
+      "Fathom could not make this change. Try again in a moment.",
+    );
+  });
+});
+
+describe("changing one's own name", () => {
+  async function openDialog(): Promise<HTMLElement> {
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Your account, Fictional Person",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Change name" }),
+    );
+    return screen.findByRole("dialog", { name: "Change name" });
+  }
+
+  it("is offered to every user, starts from their name, and confirms the change like other changes", async () => {
+    let session = signedIn;
+    const fetch = serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/greeting": greeting,
+      "PUT /api/account/name": () => {
+        session = () =>
+          Response.json({
+            ...fictionalUser,
+            user: { ...fictionalUser.user, name: "Fictional Renamed" },
+          });
+        return new Response(null, { status: 204 });
+      },
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    const name = within(dialog).getByLabelText("Name");
+    expect((name as HTMLInputElement).value).toBe("Fictional Person");
+    await userEvent.clear(name);
+    await userEvent.type(name, "Fictional Renamed");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText("Your name has been changed."),
+    ).toBeDefined();
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Change name" })).toBeNull();
+    });
+    expect(
+      await screen.findByRole("button", {
+        name: "Your account, Fictional Renamed",
+      }),
+    ).toBeDefined();
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/account/name",
+      expect.objectContaining({
+        body: JSON.stringify({ name: "Fictional Renamed" }),
+      }),
+    );
+  });
+
+  it("asks for a name", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await userEvent.clear(within(dialog).getByLabelText("Name"));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(await within(dialog).findByText("Enter your name.")).toBeDefined();
+  });
+
+  it("names the rule a name breaks", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    const name = within(dialog).getByLabelText("Name");
+    await userEvent.clear(name);
+    await userEvent.type(name, "n".repeat(101));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(
+      await within(dialog).findByText("Use at most 100 characters."),
+    ).toBeDefined();
+  });
+
+  it("explains a refusal plainly, keeping the dialog open", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "PUT /api/account/name": () =>
+        Response.json(
+          { error: "Another account already has that name; choose another" },
+          { status: 409 },
+        ),
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect((await within(dialog).findByRole("alert")).textContent).toBe(
+      "Another account already has that name; choose another",
+    );
+  });
+
+  it("stays open while the change is being saved", async () => {
+    let answer: (response: Response) => void = () => undefined;
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "PUT /api/account/name": () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await userEvent.keyboard("{Escape}");
+    expect(screen.getByRole("dialog", { name: "Change name" })).toBeDefined();
+    expect(within(dialog).queryByRole("button", { name: "Close" })).toBeNull();
+    answer(new Response(null, { status: 204 }));
+    expect(
+      await screen.findByText("Your name has been changed."),
+    ).toBeDefined();
+  });
+
+  it("closes without saving on Cancel", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Change name" })).toBeNull();
+    });
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/account/name",
+      expect.anything(),
+    );
   });
 });
 

@@ -27,7 +27,7 @@ The rest follow from them:
 
 ## Layout
 
-- **Frame:** A deep-water sidebar on the left, the same in both modes, groups pages into sections. The sidebar shows only the pages the user's roles allow, including pages still to come, marked "Later", so people can see what Fathom will offer them. Fathom opens on the Overview, or, for a user who may not see the plan, on the first page their roles allow, or Help's Roles page if there is none. Help is the last section, open to everyone, with its own icon for each page. A top bar names where the user is and holds their account menu, wide enough for their email address, with Change password and Sign out.
+- **Frame:** A deep-water sidebar on the left, the same in both modes, groups pages into sections. The sidebar shows only the pages the user's roles allow, including pages still to come, marked "Later", so people can see what Fathom will offer them. Fathom opens on the Overview, or, for a user who may not see the plan, on the first page their roles allow, or Help's Roles page if there is none. Help is the last section, open to everyone, with its own icon for each page. A top bar names where the user is and holds their account menu, wide enough for their email address, with Change name, Change password, and Sign out.
 - **Collapsed sidebar:** The sidebar collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
 - **Narrow screens:** The sidebar opens from a menu button, and closes when the user moves to another page.
 - **Pages:** Each page starts with a heading and the page's main action on the right. Content sits in bordered panels on a canvas a shade darker than them.
