@@ -37,7 +37,7 @@ export function notifyUndoable(message: string, undo: () => void): void {
         <Text fz="sm">{message}</Text>
         <Button
           size="compact-sm"
-          variant="subtle"
+          variant="default"
           onClick={() => {
             closeUndoNotice();
             undo();

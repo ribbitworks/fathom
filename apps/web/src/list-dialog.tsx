@@ -201,8 +201,7 @@ export function ListDialog({
           {list && !builtIn && (
             <>
               <Button
-                variant="subtle"
-                color="gray"
+                variant="default"
                 disabled={saving.isPending}
                 onClick={() => {
                   onRetire(list);
@@ -211,7 +210,7 @@ export function ListDialog({
                 {list.retired ? "Restore list" : "Retire list"}
               </Button>
               <Button
-                variant="subtle"
+                variant="outline"
                 color="red"
                 disabled={saving.isPending}
                 onClick={() => {
@@ -224,8 +223,7 @@ export function ListDialog({
           )}
           <Group gap="xs" ml="auto">
             <Button
-              variant="subtle"
-              color="gray"
+              variant="default"
               disabled={saving.isPending}
               onClick={onCancel}
             >

@@ -319,7 +319,7 @@ function Section({
       {children}
       {add && (
         <Button
-          variant="subtle"
+          variant="default"
           size="compact-sm"
           mt={4}
           leftSection={<Icon name="plus" size={14} />}
@@ -418,7 +418,7 @@ function Patterns({
       {editable && stream.patterns.length > 0 && (
         <Menu position="bottom-start">
           <Menu.Target>
-            <Button variant="subtle" size="compact-sm" mt={4}>
+            <Button variant="default" size="compact-sm" mt={4}>
               Change…
             </Button>
           </Menu.Target>
@@ -690,8 +690,7 @@ function StreamPanel({
             {editable && (
               <>
                 <Button
-                  variant="subtle"
-                  color="gray"
+                  variant="default"
                   size="compact-sm"
                   onClick={() => {
                     actions.open({ kind: "stream", stream });
@@ -700,8 +699,7 @@ function StreamPanel({
                   Rename
                 </Button>
                 <Button
-                  variant="subtle"
-                  color="gray"
+                  variant="default"
                   size="compact-sm"
                   onClick={() => {
                     actions.run(

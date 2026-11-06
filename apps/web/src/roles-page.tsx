@@ -630,7 +630,7 @@ function RoleForm({
           others={
             starting !== undefined && (
               <Button
-                variant="subtle"
+                variant="default"
                 disabled={busy || asStarted}
                 onClick={() => {
                   form.setValue("name", starting.name, { shouldDirty: true });

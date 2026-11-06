@@ -120,8 +120,7 @@ export function ViewDialog({
           )}
         <Group gap="xs" justify="flex-end" mt="xs">
           <Button
-            variant="subtle"
-            color="gray"
+            variant="default"
             disabled={saving.isPending}
             onClick={onCancel}
           >

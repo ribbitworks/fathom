@@ -14,12 +14,15 @@ export function DialogActions({
   label,
   onCancel,
   others,
+  removes = false,
 }: {
   error: Error | null;
   pending: boolean;
   label: string;
   onCancel: () => void;
   others?: ReactNode;
+  // Whether the change deletes or deactivates something, which is shown in red.
+  removes?: boolean;
 }) {
   return (
     <>
@@ -43,7 +46,11 @@ export function DialogActions({
           >
             Cancel
           </Button>
-          <Button type="submit" loading={pending}>
+          <Button
+            type="submit"
+            loading={pending}
+            {...(removes ? { color: "red" } : {})}
+          >
             {label}
           </Button>
         </Group>

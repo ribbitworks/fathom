@@ -770,7 +770,7 @@ export function ViewBar({
       {(narrows(view) || view.sort.length > 0) && (
         <Button
           size="compact-sm"
-          variant="subtle"
+          variant="default"
           onClick={() => {
             // The metrics stay, counting every row.
             onView({ ...emptyView, breakdown: view.breakdown });

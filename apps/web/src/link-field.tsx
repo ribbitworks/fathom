@@ -205,12 +205,7 @@ export function LinkEditor({
               }}
             />
             <Group gap="xs" justify="flex-end">
-              <Button
-                variant="subtle"
-                color="gray"
-                size="compact-sm"
-                onClick={onCancel}
-              >
+              <Button variant="default" size="compact-sm" onClick={onCancel}>
                 Cancel
               </Button>
               <Button type="submit" size="compact-sm">

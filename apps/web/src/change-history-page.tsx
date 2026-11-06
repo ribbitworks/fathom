@@ -166,7 +166,7 @@ function Entry({
           </ul>
           {lines.length > shownLines && (
             <Button
-              variant="subtle"
+              variant="default"
               size="compact-xs"
               mt={4}
               aria-expanded={all}

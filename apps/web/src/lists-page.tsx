@@ -309,7 +309,7 @@ function ListsTable({
       {retired.length > 0 && (
         <div className={classes.listFoot}>
           <Button
-            variant="subtle"
+            variant={showRetired ? "light" : "default"}
             color="gray"
             size="compact-sm"
             aria-pressed={showRetired}

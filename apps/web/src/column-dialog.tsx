@@ -225,7 +225,7 @@ export function ColumnDialog({
         <Group gap="xs" mt="xs">
           {field && (
             <Button
-              variant="subtle"
+              variant="outline"
               color="red"
               disabled={saving.isPending}
               onClick={() => {
@@ -237,8 +237,7 @@ export function ColumnDialog({
           )}
           <Group gap="xs" ml="auto">
             <Button
-              variant="subtle"
-              color="gray"
+              variant="default"
               disabled={saving.isPending}
               onClick={onCancel}
             >

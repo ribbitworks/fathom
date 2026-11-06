@@ -1120,12 +1120,7 @@ export function ListPanel({
               <HoldMarks heldBy={list.heldBy ?? list.orderHeldBy} />
             </div>
             {canEdit && (
-              <Button
-                variant="subtle"
-                color="gray"
-                size="compact-sm"
-                onClick={onEditList}
-              >
+              <Button variant="default" size="compact-sm" onClick={onEditList}>
                 Edit list
               </Button>
             )}
@@ -1247,7 +1242,7 @@ export function ListPanel({
         {retired.length > 0 && (
           <div className={classes.panelFoot}>
             <Button
-              variant="subtle"
+              variant={showRetired ? "light" : "default"}
               color="gray"
               size="compact-sm"
               aria-pressed={showRetired}

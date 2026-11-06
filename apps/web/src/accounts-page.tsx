@@ -290,8 +290,7 @@ function EditAccount({
             <>
               {!own && (
                 <Button
-                  variant="subtle"
-                  color="gray"
+                  variant="default"
                   disabled={saving.isPending}
                   onClick={() => {
                     onOpen({ kind: "password", account });
@@ -301,8 +300,8 @@ function EditAccount({
                 </Button>
               )}
               <Button
-                variant="subtle"
-                color={account.active ? "red" : "gray"}
+                variant={account.active ? "outline" : "default"}
+                color="red"
                 disabled={saving.isPending || lastAdministrator}
                 onClick={() => {
                   onOpen({ kind: "active", account, own });
@@ -401,6 +400,7 @@ function ChangeActive({
           error={changing.error}
           pending={changing.isPending}
           label={account.active ? "Deactivate" : "Reactivate"}
+          removes={account.active}
           onCancel={onDone}
         />
       </Stack>
