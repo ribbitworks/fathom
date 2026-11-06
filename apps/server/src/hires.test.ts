@@ -19,7 +19,14 @@ import {
   roles,
   userRoles,
 } from "@fathom/db";
-import type { ChangeHistory, Hire, Hires, Unpublished } from "@fathom/shared";
+import {
+  type ChangeHistory,
+  dayIn,
+  defaultTimeZone,
+  type Hire,
+  type Hires,
+  type Unpublished,
+} from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -260,7 +267,7 @@ describe("the hiring plan", () => {
     const undated = await liveHire({ targetDate: null });
     expect((await hireSeen(dated, planner))?.expected).toBe("2028-11");
     expect(await hireSeen(undated)).toMatchObject({
-      expected: new Date().toISOString().slice(0, 7),
+      expected: dayIn(defaultTimeZone).slice(0, 7),
       targetDate: null,
     });
   });

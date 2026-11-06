@@ -17,6 +17,8 @@ import {
 } from "@fathom/db";
 import {
   type Choice,
+  dayIn,
+  defaultTimeZone,
   type Field,
   type List,
   type Person,
@@ -363,13 +365,8 @@ describe("who sees Confidential values", () => {
 });
 
 describe("who is listed and what each user sees", () => {
-  // The database's date, which decides who is current, rather than this computer's.
-  async function today(): Promise<string> {
-    const result = await test.connection.execute<{ today: string }>(
-      sql`SELECT current_date::text AS today`,
-    );
-    return String(result.rows[0]?.today);
-  }
+  // Today in Fathom's time zone, which decides who is current.
+  const today = () => dayIn(defaultTimeZone);
 
   it("shows users who cannot see Restricted details only current staff, without dates or Restricted values", async () => {
     const { cookie } = await editor();
@@ -384,7 +381,7 @@ describe("who is listed and what each user sees", () => {
     const { ids } = await addPeople(cookie, [
       { startDate: "2020-01-01", values },
       { startDate: null, values },
-      { startDate: "2020-01-01", endDate: await today() },
+      { startDate: "2020-01-01", endDate: today() },
       { startDate: "2020-01-01", endDate: "2021-01-01" },
       { startDate: "2999-01-01" },
     ]);

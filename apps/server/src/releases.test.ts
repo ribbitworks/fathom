@@ -8,6 +8,8 @@
 import { cyclePatterns, drafts, releases, releaseStreams } from "@fathom/db";
 import {
   type ChangeHistory,
+  dayIn,
+  defaultTimeZone,
   horizonFrom,
   type ReleaseStream,
   type ReleaseStreams,
@@ -118,7 +120,8 @@ async function liveStream(): Promise<ReleaseStream> {
 
 const firstHalf = { firstCycle: "2027-01-01", lastCycle: "2027-04-01" };
 
-const today = () => new Date().toISOString().slice(0, 10);
+// Today in Fathom's time zone, which the tests leave as it starts.
+const today = () => dayIn(defaultTimeZone);
 
 const changeCyclesUntil = (streamId: string, cyclesUntil: string) =>
   test.request(
