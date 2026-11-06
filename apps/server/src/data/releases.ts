@@ -11,7 +11,13 @@ import {
   cyclesOf,
   horizonFrom,
   knownColour,
+  longestCycle,
+  movedCycles,
+  movedReleases,
+  patternsForLength,
+  type CycleLengthRequest,
   type CyclePattern,
+  type CyclePatternLike,
   type CyclePatternRequest,
   type Release,
   type ReleaseRequest,
@@ -20,7 +26,7 @@ import {
   type RecordType,
 } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
-import { NotFoundError } from "../errors.ts";
+import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Saved } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
 import {
@@ -41,8 +47,14 @@ import {
   recordDraftOut,
   recordHeldBy,
   saveRecordDraft,
+  saveRecordDrafts,
+  type Wanted,
 } from "./records.ts";
-import { cyclesUntilOf, streamPatterns } from "./release-kinds.ts";
+import {
+  cyclesUntilOf,
+  streamPatterns,
+  streamReleases,
+} from "./release-kinds.ts";
 import { readToday } from "./settings.ts";
 
 // The records of a kind in a stream, as shown, in order of the day given by a field.
@@ -294,23 +306,138 @@ export async function changeInStream(
 }
 
 // Drafts removing a pattern or release of a stream; removing one only drafted to be added discards
-// its draft.
+// its draft, as records.ts discards drafts.
 export async function removeFromStream(
   database: Database,
   editor: string,
   streamId: string,
   type: "cycle-pattern" | "release",
   id: string,
+  mayChangeCycles: boolean,
 ): Promise<string | null> {
   const discards = await drafting(database, editor, (_transaction, state) => {
     inStreamRecord(state, type, streamId, id);
     return Promise.resolve(addedOnly(state, type, id));
   });
-  if (discards) return discardRecordDraft(database, editor, type, id);
+  if (discards) {
+    return discardRecordDraft(database, editor, type, id, mayChangeCycles);
+  }
   return (
     await changingStream(database, editor, streamId, (transaction, state) => {
       inStreamRecord(state, type, streamId, id);
       return saveRecordDraft(transaction, editor, state, type, id, undefined);
     })
   ).changeSetId;
+}
+
+type Kept = ReturnType<typeof streamPatterns>;
+
+const samePattern = (first: CyclePatternLike, second: CyclePatternLike) =>
+  first.startsOn === second.startsOn &&
+  first.length === second.length &&
+  first.unit === second.unit &&
+  first.naming === second.naming;
+
+// The drafts that take a stream's patterns to those wanted: each record keeps its start day, so no
+// record takes a day another still holds; the rest are removed, and new days added.
+function patternDrafts(
+  state: RecordsState,
+  streamId: string,
+  kept: Kept,
+  wanted: readonly CyclePatternLike[],
+): Wanted[] {
+  const drafts: Wanted[] = [];
+  for (const { id, pattern } of kept) {
+    const same = wanted.find(({ startsOn }) => startsOn === pattern.startsOn);
+    if (same !== undefined && samePattern(same, pattern)) continue;
+    const record = changeableRecord(state, "cycle-pattern", id);
+    drafts.push({
+      type: "cycle-pattern",
+      id,
+      record: same === undefined ? undefined : { ...record, ...same },
+    });
+  }
+  for (const pattern of wanted) {
+    if (kept.some((old) => old.pattern.startsOn === pattern.startsOn)) continue;
+    drafts.push({
+      type: "cycle-pattern",
+      id: randomUUID(),
+      record: { streamId, ...pattern },
+    });
+  }
+  return drafts;
+}
+
+// The drafts that move a stream's releases with their cycles, refusing a release that would include
+// a cycle no longer made or start after its Ships on day.
+function releaseDrafts(
+  state: RecordsState,
+  streamId: string,
+  moved: ReadonlyMap<string, string | undefined>,
+): Wanted[] {
+  const found = streamReleases(state, streamId).map(({ id, release }) => ({
+    id,
+    record: release,
+    name: String(release.name),
+    firstCycle: String(release.firstCycle),
+    lastCycle: String(release.lastCycle),
+    shipsOn: typeof release.shipsOn === "string" ? release.shipsOn : null,
+  }));
+  const moving = movedReleases(
+    found,
+    moved,
+    cyclesUntilOf(state, streamId),
+    nameOf(state, streamId),
+  );
+  if ("problem" in moving) throw new ConflictError(moving.problem);
+  return moving.moves.map(({ release, firstCycle, lastCycle }) => {
+    changeableRecord(state, "release", release.id);
+    return {
+      type: "release",
+      id: release.id,
+      record: { ...release.record, firstCycle, lastCycle },
+    };
+  });
+}
+
+const nameOf = (state: RecordsState, streamId: string): string =>
+  String(shownVersion(state, "release-stream", streamId)?.name);
+
+// Drafts one cycle's new length, with the patterns that give it, and the releases on cycles that
+// move, moved with them, all in one change set, as the Decisions Log sets out.
+export async function changeCycleLength(
+  database: Database,
+  editor: string,
+  streamId: string,
+  startsOn: string,
+  request: CycleLengthRequest,
+): Promise<Saved<ReleaseStream>> {
+  return changingStream(database, editor, streamId, (transaction, state) => {
+    changeableRecord(state, "release-stream", streamId);
+    const kept = streamPatterns(state, streamId);
+    const patterns = kept.map(({ pattern }) => pattern);
+    const until = cyclesUntilOf(state, streamId);
+    const before = cyclesOf(patterns, until);
+    if (!before.some((cycle) => cycle.startsOn === startsOn)) {
+      throw new NotFoundError("There is no such cycle in this stream");
+    }
+    const { unit } = patterns
+      .filter((pattern) => pattern.startsOn <= startsOn)
+      .sort((a, b) => a.startsOn.localeCompare(b.startsOn))
+      // A cycle starts on that day, so a pattern makes it.
+      .at(-1) as CyclePatternLike;
+    if (request.length > longestCycle[unit === "weeks" ? "weeks" : "months"]) {
+      throw new ConflictError("A cycle can be at most two years long.");
+    }
+    const made = patternsForLength(patterns, { startsOn, ...request });
+    if ("problem" in made) throw new ConflictError(made.problem);
+    return saveRecordDrafts(transaction, editor, state, [
+      ...patternDrafts(state, streamId, kept, made.patterns),
+      ...releaseDrafts(
+        state,
+        streamId,
+        movedCycles(before, cyclesOf(made.patterns, until)),
+      ),
+    ]);
+  });
 }

@@ -2,14 +2,17 @@
 
 // Release streams, their cycle patterns, and their releases: reading every stream, with its cycles;
 // drafting streams added, renamed, retired, restored, and given the day their cycles are made
-// until, and patterns and releases added, changed, and removed; and discarding the drafts of the
-// plan's records, of any kind, or sending rejected ones for approval again. Every change answers
-// with the change set it was saved in. The data access layer checks the actor's permissions.
+// until, patterns and releases added, changed, and removed, and one cycle given a new length; and
+// discarding the drafts of the plan's records, of any kind, or sending rejected ones for approval
+// again. Every change answers with the change set it was saved in. The data access layer checks
+// the actor's permissions.
 
 import {
   changeSetIdSchema,
+  cycleLengthRequestSchema,
   cyclePatternRequestSchema,
   cyclesUntilRequestSchema,
+  daySchema,
   recordTypeSchema,
   releaseRequestSchema,
   releaseStreamRequestSchema,
@@ -37,6 +40,7 @@ const streamResponse = z.object({
 });
 const streamParams = z.object({ streamId: z.uuid() });
 const memberParams = z.object({ streamId: z.uuid(), id: z.uuid() });
+const cycleParams = z.object({ streamId: z.uuid(), startsOn: daySchema });
 const recordParams = z.object({ type: recordTypeSchema, id: z.uuid() });
 const saved = { 200: savedSchema };
 
@@ -119,6 +123,26 @@ export function releaseRoutes(
         const { result, changeSetId } = await releases.updateStream(
           request.actor,
           request.params.streamId,
+          request.body,
+        );
+        return { stream: result, changeSetId };
+      },
+    );
+
+    app.put(
+      "/api/release-streams/:streamId/cycles/:startsOn/length",
+      {
+        schema: {
+          params: cycleParams,
+          body: cycleLengthRequestSchema,
+          response: { 200: streamResponse },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await releases.changeCycleLength(
+          request.actor,
+          request.params.streamId,
+          request.params.startsOn,
           request.body,
         );
         return { stream: result, changeSetId };

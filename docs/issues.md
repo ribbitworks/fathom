@@ -16,6 +16,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Planning
 
+- **Cycles from the 29th to the 31st:** A monthly cycle that starts on one of these days starts on the last day of shorter months. Changing one such cycle's length counts the cycles after it from that cycle's own start, so they can stay on the 28th from then on. Deferred by the owner on 2026-11-05 as rare in practice.
 - **Freezes between cycles:** A stream's cycles follow one another with no gap, so a freeze, such as the end of December, can only be a short cycle with a name and number of its own. Deferred by the owner on 2026-11-04 until a stream needs one; a cycle marked as a gap, unnamed and not counted, would fit the cycle patterns.
 - **Undoing changes to the plan's records:** The change history refuses undoing a change to a release stream, cycle pattern, or release, since undoing one can break the rules for cycles and releases that approving checks. Deferred until undo is wanted for them.
 - **Ordering release streams:** Streams keep the order they were added in; moving them, as the Decisions Log allows, is not built yet. Deferred until an organization has enough streams for the order to matter, since the monthly resource grid's picker defaults to the first.
@@ -71,6 +72,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Development
 
+- **Checks started at once in several clones can time out:** When `pnpm check` runs in several clones at the same time, Testcontainers can time out while it waits for a test database's port bindings. The cause is the machine's load, not the code. Capping how many test databases a suite starts at once may fix it. Found on 2026-11-05.
 - **Database tests to tidy:** In `packages/db/src/database.test.ts`, each group of tests declares its own copies of PostgreSQL's error codes, which one shared set would replace, and the lists test checks several behaviours in one test. Found in review on 2026-11-03.
 - **Reseeding after a seed draft of a list is approved:** Once an Approver approves the seed's draft adding the Skills list, the list is no longer seed data, so removing the seed data keeps it, and seeding again then stops with "There is already a list with that name" while making the drafts of lists. `pnpm dev:reset` recovers. Found in a manual check on 2026-11-03.
 - **Files the code scan skips without reporting them:** Semgrep skips files larger than 1 MB and files it judges to be minified, and its results list them only in verbose mode, so the security report cannot tell they were skipped. Fathom's repository has no such files today. Deferred until it has.

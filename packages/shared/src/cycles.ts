@@ -169,3 +169,162 @@ export function patternStartFits(
     (cycle) => cycle.startsOn === startsOn,
   );
 }
+
+// After one cycle's length changes, whether the cycles after it move by the change, or the next one
+// keeps its end date and is shortened or lengthened to fit.
+export const laterCyclesSchema = z.enum(["move", "keep"]);
+
+export type LaterCycles = z.infer<typeof laterCyclesSchema>;
+
+export interface LengthChange {
+  startsOn: string;
+  // In the unit of the pattern that makes the cycle.
+  length: number;
+  later: LaterCycles;
+}
+
+// The day after a span of a pattern's unit from a day.
+const after = (startsOn: string, length: number, unit: CycleUnit): string =>
+  unit === "weeks"
+    ? addDays(startsOn, 7 * length)
+    : addMonths(startsOn, length);
+
+const dayMs = 24 * 60 * 60 * 1000;
+
+const daysFrom = (first: string, second: string): number =>
+  Math.round((parseDay(second).getTime() - parseDay(first).getTime()) / dayMs);
+
+// Months differ in length by up to three days, so a cycle counted in months lands within this many
+// days of where counting in days alone would put it.
+const monthSlack = 31;
+
+// The pattern that makes the cycle starting on a day: the last to start on or before it.
+const makerOf = (
+  sorted: readonly CyclePatternLike[],
+  day: string,
+): CyclePatternLike | undefined =>
+  sorted.filter(({ startsOn }) => startsOn <= day).at(-1);
+
+// A pattern's pace and names from another day, or with another length.
+const from = (
+  pattern: CyclePatternLike,
+  startsOn: string,
+  length = pattern.length,
+): CyclePatternLike => ({
+  startsOn,
+  length,
+  unit: pattern.unit,
+  naming: pattern.naming,
+});
+
+const samePace = (first: CyclePatternLike, second: CyclePatternLike) =>
+  first.length === second.length &&
+  first.unit === second.unit &&
+  first.naming === second.naming;
+
+// The patterns without any that only carry on the one before.
+function withoutRepeats(
+  patterns: readonly CyclePatternLike[],
+): CyclePatternLike[] {
+  const kept: CyclePatternLike[] = [];
+  for (const pattern of patterns) {
+    const before = kept.at(-1);
+    const carriesOn =
+      before !== undefined &&
+      samePace(before, pattern) &&
+      cyclesOf([before], pattern.startsOn).some(
+        ({ startsOn }) => startsOn === pattern.startsOn,
+      );
+    if (!carriesOn) kept.push(pattern);
+  }
+  return kept;
+}
+
+// The patterns that give a stream's cycles one cycle's new length, as the Decisions Log sets out; or
+// why the change cannot be made. Every pattern starts on a cycle the others make, so no cycle is
+// cut short.
+export function patternsForLength(
+  patterns: readonly CyclePatternLike[],
+  change: LengthChange,
+): { patterns: CyclePatternLike[] } | { problem: string } {
+  const sorted = [...patterns].sort((a, b) =>
+    a.startsOn.localeCompare(b.startsOn),
+  );
+  const cycle = cyclesOf(sorted, change.startsOn).at(-1);
+  const maker = makerOf(sorted, change.startsOn);
+  if (cycle?.startsOn !== change.startsOn || maker === undefined) {
+    return { problem: "No cycle starts on that day." };
+  }
+  const nextStart = addDays(cycle.endsOn, 1);
+  // The next cycle always exists, since every pattern makes cycles without end.
+  const next = cyclesOf(sorted, nextStart).at(-1) as Cycle;
+  const nextMaker = makerOf(sorted, nextStart) as CyclePatternLike;
+  const newNextStart = after(change.startsOn, change.length, maker.unit);
+  // A whole cycle of its pattern counts as its pattern's length, even where a short month makes
+  // counting from its own start land on another day.
+  const whole = cyclesOf([maker], nextStart).some(
+    ({ startsOn }) => startsOn === nextStart,
+  );
+  if (newNextStart === nextStart || (whole && change.length === maker.length)) {
+    return { problem: "Choose a new length." };
+  }
+  const changed = from(maker, change.startsOn, change.length);
+  const before = sorted
+    .filter(({ startsOn }) => startsOn < change.startsOn)
+    .map((pattern) => from(pattern, pattern.startsOn));
+  if (change.later === "keep") {
+    if (newNextStart > next.endsOn) {
+      return { problem: "The next cycle would have no days left." };
+    }
+    const nextEnd = addDays(next.endsOn, 1);
+    let length = 1;
+    while (after(newNextStart, length, nextMaker.unit) < nextEnd) length += 1;
+    if (after(newNextStart, length, nextMaker.unit) !== nextEnd) {
+      return {
+        problem: `The next cycle can't keep its end date in whole ${nextMaker.unit}.`,
+      };
+    }
+    const rest = sorted
+      .filter(({ startsOn }) => startsOn >= nextEnd)
+      .map((pattern) => from(pattern, pattern.startsOn));
+    const carriesOn =
+      rest[0]?.startsOn === nextEnd ? [] : [from(nextMaker, nextEnd)];
+    return {
+      patterns: withoutRepeats([
+        ...before,
+        changed,
+        from(nextMaker, newNextStart, length),
+        ...carriesOn,
+        ...rest,
+      ]),
+    };
+  }
+  const moved: CyclePatternLike[] = [
+    ...before,
+    changed,
+    from(nextMaker, newNextStart),
+  ];
+  // Each later pattern starts where the cycle it started on now starts, counted in cycles, since
+  // cycles in months move by whole months rather than by days.
+  const shift = Math.max(0, daysFrom(nextStart, newNextStart));
+  for (const later of sorted.filter(({ startsOn }) => startsOn > nextStart)) {
+    const index = cyclesOf(sorted, later.startsOn).length - 1;
+    const { startsOn } = cyclesOf(
+      moved,
+      addDays(later.startsOn, shift + monthSlack),
+    ).at(index) as Cycle;
+    moved.push(from(later, startsOn));
+  }
+  return { patterns: withoutRepeats(moved) };
+}
+
+// Where each of a stream's cycles starts once its patterns change, by the day it started, matched
+// one for one in order; a cycle no longer made has none.
+export function movedCycles(
+  before: readonly Cycle[],
+  after: readonly Cycle[],
+): Map<string, string | undefined> {
+  return new Map(
+    before.map((cycle, index) => [cycle.startsOn, after.at(index)?.startsOn]),
+  );
+}

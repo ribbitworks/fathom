@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The dialogs of the Releases page: naming a release stream; changing a stream's cycles from a day,
-// with their length and how they are named, showing the first names they make; the day a stream's
-// cycles are made until; and making or changing a release from consecutive cycles of its stream
+// with their length and how they are named, showing the first names they make; one cycle's length,
+// showing the cycles it makes and the releases that move; the day a stream's cycles are made
+// until; and making or changing a release from consecutive cycles of its stream
 // that no other release includes, shipping at the end of its last cycle or on a day of its own.
 // Each saves its change as a draft, and cannot be closed while it saves.
 
@@ -18,6 +19,7 @@ import {
   releaseLengths,
   type CyclePattern,
   type CycleUnit,
+  type LaterCycles,
   type Release,
   type ReleaseColour,
   releaseColours,
@@ -28,6 +30,7 @@ import {
   ColorSwatch,
   Group,
   NumberInput,
+  Radio,
   SegmentedControl,
   Select,
   Stack,
@@ -42,11 +45,13 @@ import { DayInput } from "./day-input.tsx";
 import { Count } from "./list-dialog.tsx";
 import classes from "./pages.module.css";
 import {
+  changeCycleLength,
   colourName,
   colourVariable,
   createStream,
   defaultColour,
   lastCycleEnd,
+  lengthChangeOf,
   renameStream,
   type SavedStream,
   setCyclesUntil,
@@ -234,8 +239,8 @@ export function CyclesUntilDialog({
     >
       <Stack gap="md">
         <DayInput
-          label="Cycles until"
-          description="Cycles that start on or before this day are made"
+          label="Planned to"
+          description="The last cycle starts by this day"
           autoFocus
           value={stream.cyclesUntil}
           problem={problem}
@@ -450,6 +455,121 @@ export function PatternDialog({
                 ? "Set up cycles"
                 : "Change cycles"
           }
+          onCancel={saving.onCancel}
+        />
+      </Stack>
+    </form>
+  );
+}
+
+const unitWords = (length: number, unit: CycleUnit) =>
+  `${unit === "weeks" ? "week" : "month"}${length === 1 ? "" : "s"}`;
+
+const listed = new Intl.ListFormat("en", { type: "conjunction" });
+
+const movedWords = (moved: readonly string[]) =>
+  `${listed.format(moved)} ${moved.length === 1 ? "moves with its" : "move with their"} cycles.`;
+
+export function CycleLengthDialog({
+  stream,
+  cycle,
+  ...saving
+}: {
+  stream: ReleaseStream;
+  cycle: Cycle;
+} & Saving) {
+  // Every cycle is made by the last pattern to start on or before it.
+  const maker = stream.patterns
+    .filter(
+      ({ draft, startsOn }) =>
+        draft?.action !== "deleted" && startsOn <= cycle.startsOn,
+    )
+    .at(-1) as CyclePattern;
+  const { unit } = maker;
+  const longest = unit === "weeks" ? longestCycle.weeks : longestCycle.months;
+  const [length, setLength] = useState<number | string>(maker.length);
+  const [later, setLater] = useState<LaterCycles>("move");
+  const [tried, setTried] = useState(false);
+  const save = useSave(
+    () =>
+      changeCycleLength(stream.id, cycle.startsOn, {
+        length: Number(length),
+        later,
+      }),
+    saving,
+  );
+  const lengthOk =
+    Number.isInteger(Number(length)) &&
+    Number(length) >= 1 &&
+    Number(length) <= longest;
+  // A length that is not a whole number of the unit shows the cycles as they are now.
+  const { cycles, moved, ships, problem } = lengthChangeOf(
+    stream,
+    cycle.startsOn,
+    {
+      length: lengthOk ? Number(length) : maker.length,
+      later,
+    },
+  );
+  return (
+    <form
+      noValidate
+      onSubmit={(event) => {
+        event.preventDefault();
+        setTried(true);
+        if (lengthOk && problem === undefined) save.mutate(undefined);
+      }}
+    >
+      <Stack gap="md">
+        <NumberInput
+          label="Length"
+          description={`${cycle.startsOn} to ${cycle.endsOn}`}
+          data-autofocus
+          min={1}
+          max={longest}
+          w={220}
+          value={length}
+          rightSection={
+            <Text fz="sm" c="dimmed" pr="xs">
+              {unitWords(Number(length), unit)}
+            </Text>
+          }
+          rightSectionWidth={72}
+          error={tried && !lengthOk ? "From 1 to two years" : undefined}
+          onChange={setLength}
+        />
+        <Radio.Group label="Later cycles" value={later} onChange={setLater}>
+          <Stack gap="xs" mt={4}>
+            <Radio value="move" label="Move with it" />
+            <Radio
+              value="keep"
+              label="Keep their dates"
+              description="The next cycle stretches or shrinks to fit"
+            />
+          </Stack>
+        </Radio.Group>
+        <CyclesPreview
+          id="changed-cycles"
+          title="New dates"
+          cycles={cycles.slice(0, 3)}
+        />
+        {moved.length > 0 && <Text fz="sm">{movedWords(moved)}</Text>}
+        {ships.map(({ name, on }) => (
+          <Text key={name} fz="sm">
+            {name} ships {on}.
+          </Text>
+        ))}
+        {lengthOk &&
+          (tried || Number(length) !== maker.length) &&
+          problem !== undefined && (
+            <Text fz="sm" c="red" role="alert">
+              {problem}
+            </Text>
+          )}
+        <DialogActions
+          error={save.error}
+          pending={save.isPending}
+          label="Change length"
           onCancel={saving.onCancel}
         />
       </Stack>

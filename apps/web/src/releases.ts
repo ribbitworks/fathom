@@ -7,7 +7,13 @@
 
 import {
   changeSetIdSchema,
+  type Cycle,
+  type CycleLengthRequest,
   type CyclePatternRequest,
+  cyclesOf,
+  movedCycles,
+  movedReleases,
+  patternsForLength,
   planSubjects,
   type RecordRef,
   type RecordType,
@@ -102,6 +108,77 @@ export async function removeFromStream(
 ): Promise<string | null> {
   return (await sendDeleteFor(memberPath(streamId, member, id), savedSchema))
     .changeSetId;
+}
+
+// Drafts one cycle's new length, which moves the releases on cycles that move.
+export const changeCycleLength = (
+  streamId: string,
+  startsOn: string,
+  request: CycleLengthRequest,
+): Promise<SavedStream> =>
+  sendJsonFor(
+    "PUT",
+    `${streamPath(streamId)}/cycles/${encodeURIComponent(startsOn)}/length`,
+    request,
+    streamResponse,
+  );
+
+// What a new length for one cycle makes of its stream, as the server would draft it: the cycles
+// from that one on, the names of the releases that move with their cycles, the new ship dates of
+// releases that ship when their last cycle ends, and why it cannot be made, if it cannot. Cycles
+// the length cannot make are shown as they are now.
+export function lengthChangeOf(
+  stream: ReleaseStream,
+  startsOn: string,
+  request: CycleLengthRequest,
+): {
+  cycles: Cycle[];
+  moved: string[];
+  ships: { name: string; on: string }[];
+  problem?: string;
+} {
+  const from = (cycles: readonly Cycle[]) =>
+    cycles.filter((cycle) => cycle.startsOn >= startsOn);
+  const made = patternsForLength(
+    stream.patterns.filter(({ draft }) => draft?.action !== "deleted"),
+    { startsOn, ...request },
+  );
+  if ("problem" in made) {
+    return {
+      cycles: from(stream.cycles),
+      moved: [],
+      ships: [],
+      problem: made.problem,
+    };
+  }
+  const cycles = cyclesOf(made.patterns, stream.cyclesUntil);
+  const kept = stream.releases.filter(
+    ({ draft }) => draft?.action !== "deleted",
+  );
+  const moved = movedCycles(stream.cycles, cycles);
+  const moving = movedReleases(kept, moved, stream.cyclesUntil, stream.name);
+  if ("problem" in moving) {
+    return {
+      cycles: from(cycles),
+      moved: [],
+      ships: [],
+      problem: moving.problem,
+    };
+  }
+  // Every release's last cycle is still made, or moving it would have been refused above.
+  const ships = kept.flatMap(({ name, lastCycle, shipsOn }) => {
+    const last = moved.get(lastCycle);
+    const on = (cycles.find((cycle) => cycle.startsOn === last) as Cycle)
+      .endsOn;
+    return shipsOn === null && on !== lastCycleEnd(stream, lastCycle)
+      ? [{ name, on }]
+      : [];
+  });
+  return {
+    cycles: from(cycles),
+    moved: moving.moves.map(({ release }) => release.name),
+    ships,
+  };
 }
 
 const draftPath = ({ type, id }: RecordRef) =>

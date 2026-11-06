@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   cyclePatternRequestSchema,
   knownColour,
+  movedReleases,
   planSubjects,
   releaseRequestSchema,
   shipsBeforeStart,
@@ -105,5 +106,62 @@ describe("planSubjects", () => {
       "the cycles of Fictional Majors from 2027-07-01",
       "the release Fictional One in Fictional Majors",
     ]);
+  });
+});
+
+describe("releases moved with their cycles", () => {
+  const release = {
+    name: "Fictional Later",
+    firstCycle: "2027-07-01",
+    lastCycle: "2027-10-01",
+    shipsOn: null,
+  };
+  const moved = new Map<string, string | undefined>([
+    ["2027-01-01", "2027-01-01"],
+    ["2027-07-01", "2027-06-01"],
+    ["2027-10-01", "2027-09-01"],
+  ]);
+
+  it("move to where their cycles now start", () => {
+    expect(
+      movedReleases([release], moved, "2027-12-31", "Fictional Majors"),
+    ).toEqual({
+      moves: [{ release, firstCycle: "2027-06-01", lastCycle: "2027-09-01" }],
+    });
+  });
+
+  it("stay as they are when their cycles do", () => {
+    const early = {
+      ...release,
+      firstCycle: "2027-01-01",
+      lastCycle: "2027-01-01",
+    };
+    expect(
+      movedReleases([early], moved, "2027-12-31", "Fictional Majors"),
+    ).toEqual({ moves: [] });
+  });
+
+  it("may not include a cycle no longer made", () => {
+    const gone = new Map([...moved, ["2027-10-01", undefined]]);
+    expect(
+      movedReleases([release], gone, "2027-12-31", "Fictional Majors"),
+    ).toEqual({
+      problem:
+        "Fictional Later would move past 2027-12-31, the end of Fictional Majors's plan.",
+    });
+  });
+
+  it("may not start after they ship", () => {
+    const later = new Map([...moved, ["2027-07-01", "2027-08-01"]]);
+    expect(
+      movedReleases(
+        [{ ...release, shipsOn: "2027-07-15" }],
+        later,
+        "2027-12-31",
+        "Fictional Majors",
+      ),
+    ).toEqual({
+      problem: "Fictional Later would start after it ships on 2027-07-15.",
+    });
   });
 });

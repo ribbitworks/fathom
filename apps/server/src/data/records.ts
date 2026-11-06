@@ -15,7 +15,12 @@ import type { RecordDraft, RecordRef, RecordType } from "@fathom/shared";
 import { recordTypeSchema } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
-import { ConflictError, NotFoundError, type RequestError } from "../errors.ts";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  type RequestError,
+} from "../errors.ts";
 import {
   type Change,
   changesBetween,
@@ -371,6 +376,13 @@ function holderBreaking(
   return undefined;
 }
 
+// A record as one change wants it, or undefined to remove it.
+export interface Wanted {
+  type: RecordType;
+  id: string;
+  record: Recorded | undefined;
+}
+
 // Keeps the editor's draft of a record as wanted, or of its removal when nothing is wanted, and
 // records the changes, clearing a rejection; refuses a record that breaks a rule. Returns the
 // change set, or null when nothing changed.
@@ -382,31 +394,52 @@ export async function saveRecordDraft(
   id: string,
   wanted: Recorded | undefined,
 ): Promise<string | null> {
-  const kind = kindOf(type);
-  refuseHeldIn(state, type, id);
-  const live = stateOf(state, type).live.get(id);
-  const before = versionOf(state, type, id);
-  const misfit = misfitOf(
-    kind,
-    state,
-    id,
-    wanted,
-    (before ?? wanted) as Recorded,
-  );
-  if (misfit !== undefined) throw misfit;
-  const made = asDraft(kindChanges(kind, id, before, wanted));
-  if (made.length === 0) return null;
-  await writeDraft(transaction, editor, type, id, live, wanted);
-  return recordChanges(transaction, editor, [
-    ...made,
-    ...clearedRejection(
-      id,
-      () => "general",
-      live,
-      stateOf(state, type).drafts.get(id),
-      type,
-    ),
+  return saveRecordDrafts(transaction, editor, state, [
+    { type, id, record: wanted },
   ]);
+}
+
+// Keeps the editor's drafts of several records as wanted, in one change set, judging each against
+// the others as they will all be, so a change that needs them all is not refused part way.
+export async function saveRecordDrafts(
+  transaction: Transaction,
+  editor: string,
+  state: RecordsState,
+  wanted: readonly Wanted[],
+): Promise<string | null> {
+  let after = state;
+  for (const { type, id, record } of wanted) {
+    refuseHeldIn(state, type, id);
+    after = withVersion(after, type, id, record);
+  }
+  const made: Change[] = [];
+  for (const { type, id, record } of wanted) {
+    const kind = kindOf(type);
+    const live = stateOf(state, type).live.get(id);
+    const before = versionOf(state, type, id);
+    const misfit = misfitOf(
+      kind,
+      after,
+      id,
+      record,
+      (before ?? record) as Recorded,
+    );
+    if (misfit !== undefined) throw misfit;
+    const changes = asDraft(kindChanges(kind, id, before, record));
+    if (changes.length === 0) continue;
+    await writeDraft(transaction, editor, type, id, live, record);
+    made.push(
+      ...changes,
+      ...clearedRejection(
+        id,
+        () => "general",
+        live,
+        stateOf(state, type).drafts.get(id),
+        type,
+      ),
+    );
+  }
+  return made.length === 0 ? null : recordChanges(transaction, editor, made);
 }
 
 // The records only drafted to be added that belong to one, through the links of their kinds, and
@@ -450,23 +483,47 @@ const draftedRefs = (state: RecordsState): RecordRef[] =>
     })),
   );
 
+// A record's draft with the drafts bound to it, which it uses and which use it in turn, such as the
+// patterns and moved releases of a change of one cycle's length, which are discarded only together.
+function boundWith(state: RecordsState, root: RecordRef): RecordRef[] {
+  const users = new Set(usingRecords(state, [root]).map(refKey));
+  return withUsedRecords(state, [root]).filter(
+    (ref) => refKey(ref) === refKey(root) || users.has(refKey(ref)),
+  );
+}
+
 // Discards the editor's draft of a record, so the record is as it is live, or, for one only drafted
-// to be added, gone, with the drafts of the records only drafted to be added that belong to it.
-// Refused while other drafts, published or not, use any of them.
+// to be added, gone, with the drafts bound to it and the drafts of the records only drafted to be
+// added that belong to any of them. Refused while other drafts, published or not, use any of them,
+// and, to an editor who may not change cycles, when it would discard a draft of a stream's cycles.
 export async function discardRecordDraft(
   database: Database,
   editor: string,
   type: RecordType,
   id: string,
+  mayChangeCycles: boolean,
 ): Promise<string | null> {
   return drafting(database, editor, async (transaction, state) => {
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
     refuseHeldIn(state, type, id);
     if (!stateOf(state, type).drafts.has(id)) throw new NotFoundError(noDraft);
-    const root = { type, id };
-    const discarded = addedOnly(state, type, id)
-      ? addedBelow(state, root)
-      : [root];
+    const discarded = [
+      ...new Map(
+        boundWith(state, { type, id })
+          .flatMap((ref) =>
+            addedOnly(state, ref.type, ref.id) ? addedBelow(state, ref) : [ref],
+          )
+          .map((ref) => [refKey(ref), ref]),
+      ).values(),
+    ];
+    if (
+      !mayChangeCycles &&
+      discarded.some((ref) => ref.type === "cycle-pattern")
+    ) {
+      throw new ForbiddenError(
+        "Only someone who changes cycles can discard this.",
+      );
+    }
     const keys = new Set(discarded.map(refKey));
     const added = discarded.filter((ref) => addedOnly(state, ref.type, ref.id));
     const addedKeys = new Set(added.map(refKey));

@@ -4,12 +4,14 @@
 // releases, above a timeline of them all, and the selected stream in a side panel at its own
 // address, as the Lists page does with lists. The panel holds the stream's changes of cycles, its
 // releases, and its cycles, worked out at least two years ahead, each with its share of the months
-// it spans. Those who edit planning configuration add, rename, retire, and restore streams and
-// change their cycles; those who edit the plan make releases from consecutive cycles. Every change
-// is a draft, shown in place with its mark, which its makers discard or resubmit, and Approvers
-// approve or reject, here or on the Drafts page, from each record's menu.
+// it spans and a menu to change its length. Those who edit planning configuration add, rename,
+// retire, and restore streams and change their cycles; those who edit the plan make releases from
+// consecutive cycles. Every change is a draft, shown in place with its mark, which its makers
+// discard or resubmit, and Approvers approve or reject, here or on the Drafts page, from each
+// record's menu.
 
 import type {
+  Cycle,
   CyclePattern,
   RecordRef,
   Release,
@@ -29,6 +31,7 @@ import {
   Stack,
   Table,
   Text,
+  VisuallyHidden,
 } from "@mantine/core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -58,6 +61,7 @@ import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import type { RecordNode } from "./record-drafts.ts";
 import {
+  CycleLengthDialog,
   CyclesUntilDialog,
   PatternDialog,
   ReleaseDialog,
@@ -87,6 +91,7 @@ type Dialog =
   | { kind: "stream"; stream?: ReleaseStream }
   | { kind: "pattern"; stream: ReleaseStream; pattern?: CyclePattern }
   | { kind: "cycles-until"; stream: ReleaseStream }
+  | { kind: "cycle-length"; stream: ReleaseStream; cycle: Cycle }
   | { kind: "release"; stream: ReleaseStream; release?: Release };
 
 const panelId = "release-stream-panel";
@@ -100,7 +105,10 @@ const dialogTitle = (dialog: Dialog): string => {
       : `Rename ${dialog.stream.name}`;
   }
   if (dialog.kind === "cycles-until") {
-    return `Change when ${dialog.stream.name}'s cycles end`;
+    return `Change how far ${dialog.stream.name} is planned`;
+  }
+  if (dialog.kind === "cycle-length") {
+    return `Change the length of ${dialog.cycle.name}`;
   }
   if (dialog.kind === "pattern") {
     return dialog.pattern === undefined
@@ -403,7 +411,7 @@ function Patterns({
       })}
       <Group gap="xs" mih={36}>
         <Text fz="sm">
-          Cycles until{" "}
+          Planned to{" "}
           <span className={classes.figures}>{stream.cyclesUntil}</span>
         </Text>
       </Group>
@@ -420,7 +428,7 @@ function Patterns({
                 actions.open({ kind: "cycles-until", stream });
               }}
             >
-              End date…
+              Planned to…
             </Menu.Item>
             <Menu.Item
               onClick={() => {
@@ -536,8 +544,18 @@ function Releases({
   );
 }
 
-function Cycles({ stream }: { stream: ReleaseStream }) {
+function Cycles({
+  stream,
+  actions,
+}: {
+  stream: ReleaseStream;
+  actions: Actions;
+}) {
   if (stream.cycles.length === 0) return null;
+  const editable =
+    actions.canEditStreams &&
+    stream.heldBy === undefined &&
+    stream.draft?.action !== "deleted";
   const releaseOf = (startsOn: string) =>
     stream.releases.find(
       (release) =>
@@ -556,6 +574,11 @@ function Cycles({ stream }: { stream: ReleaseStream }) {
               <Table.Th>Ends</Table.Th>
               <Table.Th>Release</Table.Th>
               <Table.Th>Months</Table.Th>
+              {editable && (
+                <Table.Th>
+                  <VisuallyHidden>Actions</VisuallyHidden>
+                </Table.Th>
+              )}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
@@ -578,6 +601,35 @@ function Cycles({ stream }: { stream: ReleaseStream }) {
                 <Table.Td className={classes.monthsCell}>
                   {monthsInWords(cycle.months)}
                 </Table.Td>
+                {editable && (
+                  <Table.Td className={classes.cycleCell}>
+                    <Menu position="bottom-end">
+                      <Menu.Target>
+                        <ActionIcon
+                          variant="subtle"
+                          color="gray"
+                          size="sm"
+                          aria-label={`Menu of ${cycle.name}`}
+                        >
+                          <Icon name="more" />
+                        </ActionIcon>
+                      </Menu.Target>
+                      <Menu.Dropdown>
+                        <Menu.Item
+                          onClick={() => {
+                            actions.open({
+                              kind: "cycle-length",
+                              stream,
+                              cycle,
+                            });
+                          }}
+                        >
+                          Change length…
+                        </Menu.Item>
+                      </Menu.Dropdown>
+                    </Menu>
+                  </Table.Td>
+                )}
               </Table.Tr>
             ))}
           </Table.Tbody>
@@ -683,7 +735,7 @@ function StreamPanel({
         <div className={classes.panelBody}>
           <Patterns stream={stream} actions={actions} />
           <Releases stream={stream} actions={actions} />
-          <Cycles stream={stream} />
+          <Cycles stream={stream} actions={actions} />
         </div>
       </section>
     </FocusTrap>
@@ -994,6 +1046,14 @@ export function ReleasesPage({
           <CyclesUntilDialog
             stream={dialog.stream}
             onSaved={saved("Drafted the change to the cycles.")}
+            {...savingProps}
+          />
+        )}
+        {dialog?.kind === "cycle-length" && (
+          <CycleLengthDialog
+            stream={dialog.stream}
+            cycle={dialog.cycle}
+            onSaved={saved("Drafted the new length.")}
             {...savingProps}
           />
         )}

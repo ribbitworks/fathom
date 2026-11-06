@@ -48,7 +48,7 @@ Seeing people is kept to the roles that work with them, so Product Managers, Pro
 
 ## Releases
 
-**Proposal:** Project Planners, such as Project Managers, make releases and choose which cycles each includes. The Workforce Administrator sets up release streams, their cycle lengths, and their naming patterns.
+**Proposal:** Project Planners, such as Project Managers, make releases and choose which cycles each includes. The Workforce Administrator sets up release streams, their cycle lengths, and their naming patterns. Changing one cycle's length also moves the releases on cycles that move, which the Workforce Administrator may do without editing releases otherwise, as the [Decisions Log](decisions.md#planning) sets out.
 
 ## Access to Your Own Record and Your Reports
 

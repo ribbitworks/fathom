@@ -31,7 +31,7 @@ export interface RecordKind {
   // The record as the Drafts page names it, such as "the release stream Major".
   subject: (state: RecordsState, id: string) => string;
   // The drafts the record's draft uses beyond the records it links to, such as the cycle patterns
-  // only drafted to be added that make a release's cycles.
+  // drafted that make a release's cycles, asked of a draft that removes the record too.
   alsoUses?: (state: RecordsState, id: string) => RecordRef[];
   // Values a record added is given beside its fields, such as its place at the end of an order,
   // from the kind's rows, including those added before it in the same approval.
@@ -108,14 +108,14 @@ const field = (record: Recorded | undefined, name: string): unknown =>
   record?.[name];
 
 // The drafts a record's draft uses: those of the records only drafted to be added that it links to,
-// and any others its kind names. A record with no draft, or whose draft removes it, uses none.
+// unless it removes the record, and any others its kind names. A record with no draft uses none.
 export function usesOf(
   kind: RecordKind,
   state: RecordsState,
   id: string,
 ): RecordRef[] {
+  if (!state[kind.type].drafts.has(id)) return [];
   const version = versionOf(state, kind.type, id);
-  if (!state[kind.type].drafts.has(id) || version === undefined) return [];
   const linked = Object.entries(kind.links).flatMap(([name, type]) => {
     const target = field(version, name);
     return typeof target === "string" && addedOnly(state, type, target)

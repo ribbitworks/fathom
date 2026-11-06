@@ -862,15 +862,45 @@ describe("changing a stream's cycles", () => {
       }),
     );
     await userEvent.click(
-      await screen.findByRole("menuitem", { name: "End date…" }),
+      await screen.findByRole("menuitem", { name: "Planned to…" }),
     );
     const dialog = await screen.findByRole("dialog", {
-      name: "Change when Fictional Majors's cycles end",
+      name: "Change how far Fictional Majors is planned",
     });
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await screen.findByText("Drafted the change to the cycles."),
     ).toBeDefined();
+  });
+});
+
+describe("changing one cycle's length", () => {
+  const saved = () => Response.json({ stream: fictionalStream(), changeSetId });
+
+  it("is offered on each cycle to those who change cycles, and drafts the new length", async () => {
+    const { fetch } = await openStream([fictionalStream()], {
+      can: editsAll,
+      answers: { [`PUT ${streamPath}/cycles/2027-04-01/length`]: saved },
+    });
+    await chooseInMenu("27.2", "Change length…");
+    const dialog = await screen.findByRole("dialog", {
+      name: "Change the length of 27.2",
+    });
+    const length = within(dialog).getByRole("textbox", { name: "Length" });
+    await userEvent.clear(length);
+    await userEvent.type(length, "2");
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change length" }),
+    );
+    expect(await screen.findByText("Drafted the new length.")).toBeDefined();
+    expect(calls(fetch, "PUT")).toHaveLength(1);
+  });
+
+  it("is not offered to those who do not change cycles", async () => {
+    await openStream([fictionalStream()], {
+      can: { canEditReleases: true },
+    });
+    expect(screen.queryByRole("button", { name: "Menu of 27.2" })).toBeNull();
   });
 });
 

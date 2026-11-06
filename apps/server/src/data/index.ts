@@ -11,6 +11,7 @@ import type {
   Choice,
   ChoiceRequest,
   ColumnOrderDraft,
+  CycleLengthRequest,
   CyclePatternRequest,
   CyclesUntilRequest,
   DraftsAsked,
@@ -154,6 +155,14 @@ export interface ReleaseAccess {
     streamId: string,
     id: string,
   ): Promise<ChangeSetId>;
+  // Changing one cycle's length changes the stream's patterns, and moves the releases on cycles
+  // that move, which those who change cycles may do, as the Decisions Log sets out.
+  changeCycleLength(
+    actor: Actor,
+    streamId: string,
+    startsOn: string,
+    request: CycleLengthRequest,
+  ): Promise<Saved<ReleaseStream>>;
 }
 
 export interface RecordAccess {
@@ -441,6 +450,7 @@ function createReleaseAccess(database: Database): ReleaseAccess {
         streamId,
         "cycle-pattern",
         id,
+        true,
       ),
     addRelease: async (actor, streamId, request) =>
       releases.addToStream(database, plan(actor), streamId, {
@@ -453,7 +463,22 @@ function createReleaseAccess(database: Database): ReleaseAccess {
         request,
       }),
     deleteRelease: async (actor, streamId, id) =>
-      releases.removeFromStream(database, plan(actor), streamId, "release", id),
+      releases.removeFromStream(
+        database,
+        plan(actor),
+        streamId,
+        "release",
+        id,
+        actor.permissions.includes(recordEditors["cycle-pattern"]),
+      ),
+    changeCycleLength: async (actor, streamId, startsOn, request) =>
+      releases.changeCycleLength(
+        database,
+        streams(actor),
+        streamId,
+        startsOn,
+        request,
+      ),
   };
 }
 
@@ -562,7 +587,13 @@ export function createDataAccess(database: Database): DataAccess {
     releases: createReleaseAccess(database),
     records: {
       discardDraft: async (actor, type, id) =>
-        discardRecordDraft(database, recordEditor(actor, type), type, id),
+        discardRecordDraft(
+          database,
+          recordEditor(actor, type),
+          type,
+          id,
+          actor.permissions.includes(recordEditors["cycle-pattern"]),
+        ),
       resubmitDraft: async (actor, type, id) =>
         resubmitRecordDraft(database, recordEditor(actor, type), type, id),
     },

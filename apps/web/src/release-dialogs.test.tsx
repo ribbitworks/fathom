@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the dialogs of the Releases page, with the server's answers simulated: naming a stream,
-// changing its cycles, the day its cycles are made until, and making or changing a release, each
-// with what it refuses before saving, what it sends, and what it does while and once it saves.
+// changing its cycles, one cycle's length, the day its cycles are made until, and making or
+// changing a release, each with what it refuses before saving, what it sends, and what it does
+// while and once it saves.
 
 import { shipsBeforeStart } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
@@ -13,6 +14,7 @@ import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { dayProblem } from "./day-input.tsx";
 import {
+  CycleLengthDialog,
   CyclesUntilDialog,
   PatternDialog,
   ReleaseDialog,
@@ -180,8 +182,8 @@ describe("the dialog of the day a stream's cycles are made until", () => {
     "counts the cycles a later or earlier day makes: %s",
     async (_case, typed, count) => {
       show((handlers) => <CyclesUntilDialog stream={stream} {...handlers} />);
-      await userEvent.clear(box("Cycles until"));
-      await userEvent.type(box("Cycles until"), typed);
+      await userEvent.clear(box("Planned to"));
+      await userEvent.type(box("Planned to"), typed);
       expect(screen.getByText(count)).toBeDefined();
     },
   );
@@ -206,8 +208,8 @@ describe("the dialog of the day a stream's cycles are made until", () => {
     const { onSaved } = show((handlers) => (
       <CyclesUntilDialog stream={stream} {...handlers} />
     ));
-    await userEvent.clear(box("Cycles until"));
-    await userEvent.type(box("Cycles until"), "20280630");
+    await userEvent.clear(box("Planned to"));
+    await userEvent.type(box("Planned to"), "20280630");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalled();
@@ -218,7 +220,7 @@ describe("the dialog of the day a stream's cycles are made until", () => {
   it("asks for a whole day before saving", async () => {
     const fetch = serverAnswers({});
     show((handlers) => <CyclesUntilDialog stream={stream} {...handlers} />);
-    await userEvent.clear(box("Cycles until"));
+    await userEvent.clear(box("Planned to"));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect([screen.getByText(dayProblem), fetch.mock.calls]).toEqual([
       expect.anything(),
@@ -232,8 +234,8 @@ describe("the dialog of the day a stream's cycles are made until", () => {
       releases: [fictionalRelease({ lastCycle: "2027-07-01" })],
     });
     show((handlers) => <CyclesUntilDialog stream={releasing} {...handlers} />);
-    await userEvent.clear(box("Cycles until"));
-    await userEvent.type(box("Cycles until"), "20270501");
+    await userEvent.clear(box("Planned to"));
+    await userEvent.type(box("Planned to"), "20270501");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect([
       screen.getByText(
@@ -256,8 +258,8 @@ describe("the dialog of the day a stream's cycles are made until", () => {
     const { onSaved } = show((handlers) => (
       <CyclesUntilDialog stream={releasing} {...handlers} />
     ));
-    await userEvent.clear(box("Cycles until"));
-    await userEvent.type(box("Cycles until"), "20270501");
+    await userEvent.clear(box("Planned to"));
+    await userEvent.type(box("Planned to"), "20270501");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => {
       expect(onSaved).toHaveBeenCalled();
@@ -838,5 +840,189 @@ describe("the dialog making or changing a release", () => {
       expect.anything(),
       [],
     ]);
+  });
+});
+
+describe("the dialog changing one cycle's length", () => {
+  const second = stream.cycles[1] as (typeof stream.cycles)[number];
+  const withLater = fictionalStream({
+    releases: [
+      fictionalRelease({
+        name: "Fictional Later",
+        firstCycle: "2027-07-01",
+        lastCycle: "2027-10-01",
+      }),
+    ],
+  });
+  const lengthBox = () =>
+    screen.getByRole<HTMLInputElement>("textbox", { name: "Length" });
+
+  async function typeLength(length: string) {
+    await userEvent.clear(lengthBox());
+    await userEvent.type(lengthBox(), length);
+  }
+
+  it("shows the cycles it makes, and the releases that move with them", async () => {
+    show((handlers) => (
+      <CycleLengthDialog stream={withLater} cycle={second} {...handlers} />
+    ));
+    expect(lengthBox().value).toBe("3");
+    expect(cyclesIn("New dates")).toEqual([
+      "27.22027-04-01 to 2027-06-30",
+      "27.32027-07-01 to 2027-09-30",
+      "27.42027-10-01 to 2027-12-31",
+    ]);
+    await typeLength("2");
+    expect(cyclesIn("New dates")).toEqual([
+      "27.22027-04-01 to 2027-05-31",
+      "27.32027-06-01 to 2027-08-31",
+      "27.42027-09-01 to 2027-11-30",
+    ]);
+    expect(
+      screen.queryByText("Fictional Later moves with its cycles."),
+    ).not.toBeNull();
+    expect(
+      screen.queryByText("Fictional Later ships 2027-11-30."),
+    ).not.toBeNull();
+  });
+
+  it("keeps the next cycle's end date when asked, moving no release after it", async () => {
+    const lastOnly = fictionalStream({
+      releases: [
+        fictionalRelease({
+          name: "Fictional Last",
+          firstCycle: "2027-10-01",
+          lastCycle: "2027-10-01",
+        }),
+      ],
+    });
+    show((handlers) => (
+      <CycleLengthDialog stream={lastOnly} cycle={second} {...handlers} />
+    ));
+    await typeLength("2");
+    await userEvent.click(
+      screen.getByRole("radio", { name: "Keep their dates" }),
+    );
+    expect(cyclesIn("New dates")).toEqual([
+      "27.22027-04-01 to 2027-05-31",
+      "27.32027-06-01 to 2027-09-30",
+      "27.42027-10-01 to 2027-12-31",
+    ]);
+    expect(screen.queryByText(/with its cycles|ships/)).toBeNull();
+  });
+
+  it("sends the length and what happens to later cycles", async () => {
+    const fetch = serverAnswers({
+      [`PUT ${streamPath}/cycles/2027-04-01/length`]: savedStream,
+    });
+    const { onSaved } = show((handlers) => (
+      <CycleLengthDialog stream={stream} cycle={second} {...handlers} />
+    ));
+    await typeLength("4");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change length" }),
+    );
+    await waitFor(() => {
+      expect(onSaved).toHaveBeenCalled();
+    });
+    expect(bodiesOf(fetch)).toEqual([{ length: 4, later: "move" }]);
+  });
+
+  it("refuses the length the cycle has now, once asked to save", async () => {
+    const fetch = serverAnswers({});
+    show((handlers) => (
+      <CycleLengthDialog stream={stream} cycle={second} {...handlers} />
+    ));
+    expect(screen.queryByRole("alert")).toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change length" }),
+    );
+    expect(screen.getByRole("alert").textContent).toBe("Choose a new length.");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("names every release that moves", async () => {
+    const both = fictionalStream({
+      releases: [
+        fictionalRelease({
+          name: "Fictional Third",
+          firstCycle: "2027-07-01",
+          lastCycle: "2027-07-01",
+        }),
+        fictionalRelease({
+          id: "30000000-0000-4000-8000-000000000002",
+          name: "Fictional Fourth",
+          firstCycle: "2027-10-01",
+          lastCycle: "2027-10-01",
+        }),
+      ],
+    });
+    show((handlers) => (
+      <CycleLengthDialog stream={both} cycle={second} {...handlers} />
+    ));
+    await typeLength("2");
+    expect(
+      screen.queryByText(
+        "Fictional Third and Fictional Fourth move with their cycles.",
+      ),
+    ).not.toBeNull();
+  });
+
+  it("counts in the unit of the pattern that makes the cycle", async () => {
+    const sprints = fictionalStream({
+      patterns: [fictionalPattern({ length: 2, unit: "weeks" })],
+      cycles: [
+        {
+          startsOn: "2027-01-01",
+          endsOn: "2027-01-14",
+          name: "27.1",
+          months: [],
+        },
+      ],
+    });
+    show((handlers) => (
+      <CycleLengthDialog
+        stream={sprints}
+        cycle={sprints.cycles[0] as (typeof sprints.cycles)[number]}
+        {...handlers}
+      />
+    ));
+    expect(screen.getByText("weeks")).not.toBeNull();
+    await typeLength("1");
+    expect(screen.getByText("week")).not.toBeNull();
+    expect(cyclesIn("New dates")[0]).toBe("27.12027-01-01 to 2027-01-07");
+  });
+
+  it("asks for a length from one cycle to two years", async () => {
+    const fetch = serverAnswers({});
+    show((handlers) => (
+      <CycleLengthDialog stream={stream} cycle={second} {...handlers} />
+    ));
+    await userEvent.clear(lengthBox());
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change length" }),
+    );
+    expect(screen.getByText("From 1 to two years")).not.toBeNull();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("refuses moving a release's first cycle after its Ships on day", async () => {
+    const shipping = fictionalStream({
+      releases: [
+        fictionalRelease({
+          name: "Fictional Later",
+          firstCycle: "2027-07-01",
+          lastCycle: "2027-10-01",
+          shipsOn: "2027-07-15",
+        }),
+      ],
+    });
+    show((handlers) => (
+      <CycleLengthDialog stream={shipping} cycle={second} {...handlers} />
+    ));
+    await typeLength("4");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "Fictional Later would start after it ships on 2027-07-15.",
+    );
   });
 });

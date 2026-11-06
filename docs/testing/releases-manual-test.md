@@ -11,7 +11,7 @@ last_updated: "2026-11-05"
 
 ## Scope
 
-Verifies the Releases page: how release streams, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator, a Project Planner and an Approver can do with them, and how their drafts are published, approved, rejected, resubmitted and discarded.
+Verifies the Releases page: how release streams, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator, a Project Planner and an Approver can do with them, including changing one cycle's length, and how their drafts are published, approved, rejected, resubmitted and discarded.
 
 ## Test Environment
 
@@ -91,11 +91,11 @@ Use only where a test case says so. This deletes every account and record in the
 - **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Name**, **Cycles now** and **Releases**. Selecting a row opens the stream in the side panel.
 - **Side panel:** the panel beside the streams table for the selected stream, which the table narrows to make room for, headed with its name, with the sections **Cycle schedule**, **Releases** and **Cycles**. Its close button, an **×**, is at its top right, and dragging its left edge resizes it.
 - **Timeline:** the section headed **Timeline** below the streams table, with **Today**, **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right. It has a row for each stream that is not retired, named on the left, with a lane of the stream's cycles above a lane of its releases, under an axis of two rows of dates. Hovering over a cycle or a release shows its name and dates.
-- **⋯ menu:** the menu that opens from a **⋯** button: beside the side panel's close button for the stream itself, when it has a draft, or at the end of a row in the side panel for that change of cycles or release.
+- **⋯ menu:** the menu that opens from a **⋯** button: beside the side panel's close button for the stream itself, when it has a draft, at the end of a row in the side panel for that change of cycles or release, or at the end of a row of the **Cycles** table for that cycle.
 
 ## Test Cases
 
-Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-start-from-an-empty-database). Part 1 starts from an empty database; REL-10 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-25 restores the seed data for Part 4. Tick each step whose expected result you see, and write anything else under its notes. To run the test again, start again from [R2](#r2-start-from-an-empty-database).
+Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-start-from-an-empty-database). Part 1 starts from an empty database; REL-10 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-25 restores the seed data for Part 4, and REL-30 restores it again for Part 5. Tick each step whose expected result you see, and write anything else under its notes. To run the test again, start again from [R2](#r2-start-from-an-empty-database).
 
 ### Part 1: From an Empty Database
 
@@ -144,7 +144,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 4.** Select **Set up cycles**.
-  - **Expected:** The dialog closes, and a notification says **Drafted the cycles.** Under **Cycle schedule**, a row reads **From 2027-01-04**, then **Every 2 weeks, named Sprint {#}** with a hollow yellow dot and **Draft: added**, and below it **Cycles until** and a day two years after today, with a **Change…** button under it. Below **Releases**, a **Cycles** section, its count in brackets, lists the cycles from **Sprint 1** on. In the table, the **Cycles now** column of **Testing Stream** reads **Every 2 weeks, named Sprint {#}**.
+  - **Expected:** The dialog closes, and a notification says **Drafted the cycles.** Under **Cycle schedule**, a row reads **From 2027-01-04**, then **Every 2 weeks, named Sprint {#}** with a hollow yellow dot and **Draft: added**, and below it **Planned to** and a day two years after today, with a **Change…** button under it. Below **Releases**, a **Cycles** section, its count in brackets, lists the cycles from **Sprint 1** on. In the table, the **Cycles now** column of **Testing Stream** reads **Every 2 weeks, named Sprint {#}**.
   - **Notes:**
 
 - [ ] **Step 5.** Publish ([P3](#p3-publish)).
@@ -250,7 +250,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 3.** Select **Platform** and read the rows under **Cycle schedule** in the side panel.
-  - **Expected:** **From 2026-01-01**, **Every 3 months, named {YY}.{N}**, then **From 2027-07-01**, **Every 6 months, named {YY}.{N}**. Below them, **Cycles until 2029-12-31**. Neither row has a **⋯** button, and there is no **Change…** button.
+  - **Expected:** **From 2026-01-01**, **Every 3 months, named {YY}.{N}**, then **From 2027-07-01**, **Every 6 months, named {YY}.{N}**. Below them, **Planned to 2029-12-31**. Neither row has a **⋯** button, and there is no **Change…** button.
   - **Notes:**
 
 - [ ] **Step 4.** Read the rows under **Releases** in the side panel.
@@ -274,7 +274,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 4.** Read the section's heading, then scroll to the last row and read its **Name** and **Starts** columns.
-  - **Expected:** **Cycles (26)**. The last row is **P28.9**, starting **2028-08-07**, the last cycle to start on or before the stream's **Cycles until** day, **2028-08-31**.
+  - **Expected:** **Cycles (26)**. The last row is **P28.9**, starting **2028-08-07**, the last cycle to start on or before the stream's **Planned to** day, **2028-08-31**.
   - **Notes:**
 
 #### REL-12: Cycles Change Only From the Start of a Cycle
@@ -282,7 +282,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. Run after REL-11. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** In the side panel, select **Change…** under **Cycle schedule**, then **Length or names from a date…**.
-  - **Expected:** The menu offers **End date…** and **Length or names from a date…**. A dialog titled **Change the length or names of Platform's cycles** opens, with **From the start of** and the text **Cycles before it keep their names and dates**.
+  - **Expected:** The menu offers **Planned to…** and **Length or names from a date…**. A dialog titled **Change the length or names of Platform's cycles** opens, with **From the start of** and the text **Cycles before it keep their names and dates**.
   - **Notes:**
 
 - [ ] **Step 2.** Open the **From the start of** list.
@@ -451,8 +451,8 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. Run after REL-22. **Platform** open in the side panel.
 
-- [ ] **Step 1.** Under **Cycle schedule**, select **Change…** below **Cycles until 2029-12-31**, then **End date…**.
-  - **Expected:** A dialog titled **Change when Platform's cycles end** opens, with **2029-12-31** in **Cycles until**. Below it, **11 cycles in all, as now**, then **Last cycles**: **28.2** with **2028-07-01 to 2028-12-31**, **29.1** with **2029-01-01 to 2029-06-30**, and **29.2** with **2029-07-01 to 2029-12-31**.
+- [ ] **Step 1.** Under **Cycle schedule**, select **Change…** below **Planned to 2029-12-31**, then **Planned to…**.
+  - **Expected:** A dialog titled **Change how far Platform is planned** opens, with **2029-12-31** in **Planned to**. Below it, **11 cycles in all, as now**, then **Last cycles**: **28.2** with **2028-07-01 to 2028-12-31**, **29.1** with **2029-01-01 to 2029-06-30**, and **29.2** with **2029-07-01 to 2029-12-31**.
   - **Notes:**
 
 - [ ] **Step 2.** Replace the day with `20270630`.
@@ -464,11 +464,11 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 4.** Select **Save**.
-  - **Expected:** A notification says **Drafted the change to the cycles.** The panel's heading shows a hollow yellow dot and **Draft**, **Cycles until 2030-12-31**, and the **Cycles** section reads **Cycles (13)**, its last row **30.2** from **2030-07-01**.
+  - **Expected:** A notification says **Drafted the change to the cycles.** The panel's heading shows a hollow yellow dot and **Draft**, **Planned to 2030-12-31**, and the **Cycles** section reads **Cycles (13)**, its last row **30.2** from **2030-07-01**.
   - **Notes:**
 
 - [ ] **Step 5.** Select the **⋯** button in the panel's heading, then **Discard draft**.
-  - **Expected:** A notification says **Discarded the draft.** **Cycles until 2029-12-31** again, and **Cycles (11)**.
+  - **Expected:** A notification says **Discarded the draft.** **Planned to 2029-12-31** again, and **Cycles (11)**.
   - **Notes:**
 
 #### REL-24: A Release Ships on a Day of Its Own
@@ -619,4 +619,130 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 - [ ] **Step 8.** Select the **⋯** button at the end of the **Harbor 1** row, then **Discard draft**.
   - **Expected:** A notification says **Discarded the draft.** **Harbor 1** is teal again, as approved in Step 6.
+  - **Notes:**
+
+### Part 5: Changing One Cycle's Length
+
+#### REL-30: A Cycle's New Length Moves the Cycles and Releases After It
+
+**Preconditions:** Run after REL-29. Restore the seed data ([R1](#r1-restore-the-seed-data)). Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+
+- [ ] **Step 1.** In the side panel's **Cycles** table, select the **⋯** button at the end of the **27.1** row, then **Change length…**.
+  - **Expected:** A dialog titled **Change the length of 27.1** opens. **Length** reads **3**, followed by **months**, with **2027-01-01 to 2027-03-31** under its label. Under **Later cycles**, **Move with it** is selected, and **Keep their dates** is offered. **New dates** lists **27.1**, **2027-01-01 to 2027-03-31**; **27.2**, **2027-04-01 to 2027-06-30**; and **27.3**, **2027-07-01 to 2027-12-31**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Change length**.
+  - **Expected:** The dialog stays open and says **Choose a new length.** in red.
+  - **Notes:**
+
+- [ ] **Step 3.** Replace **3** in **Length** with `2`.
+  - **Expected:** The red line is gone. **New dates** lists **27.1**, **2027-01-01 to 2027-02-28**; **27.2**, **2027-03-01 to 2027-05-31**; and **27.3**, **2027-06-01 to 2027-11-30**. Below it, the dialog says **Harbor 3 moves with its cycles.** and **Harbor 3 ships 2027-11-30.**
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Change length**.
+  - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, the rows **From 2027-01-01**, **Every 2 months, named {YY}.{N}** and **From 2027-03-01**, **Every 3 months, named {YY}.{N}** each have a hollow yellow dot and **Draft: added**, and **From 2027-06-01**, **Every 6 months, named {YY}.{N}** has a hollow yellow dot and **Draft**. The **Harbor 3** row has a hollow yellow dot and **Draft**, and reads **27.1 to 27.3 · ships 2027-11-30**. In the **Cycles** table, **27.3** runs from **2027-06-01** to **2027-11-30**.
+  - **Notes:**
+
+- [ ] **Step 5.** Publish ([P3](#p3-publish)).
+  - **Expected:** The dots on the three rows of the cycle schedule and on **Harbor 3** are filled.
+  - **Notes:**
+
+#### REL-31: Approving One Draft of a New Length Approves Them All
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `project.manager@fathom.test`, shown as **Project Manager**. Run after REL-30. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+
+- [ ] **Step 1.** Look at the end of the rows of the side panel's **Cycles** table.
+  - **Expected:** No row has a **⋯** button.
+  - **Notes:**
+
+- [ ] **Step 2.** Under **Releases**, select the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
+  - **Expected:** A dialog titled **Approve 4 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Platform from 2027-01-01**, **the cycles of Platform from 2027-03-01** and **the cycles of Platform from 2027-06-01**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Approve**.
+  - **Expected:** A notification says **Approved 4 drafts.** No row under **Cycle schedule** or **Releases** has a mark, and **Harbor 3** still reads **27.1 to 27.3 · ships 2027-11-30**.
+  - **Notes:**
+
+#### REL-32: Later Cycles Keep Their Dates, and the Change Is Rejected Whole
+
+**Preconditions:** Run after REL-31. Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
+
+- [ ] **Step 1.** In the **Cycles** table, select the **⋯** button at the end of the **P26.4** row, then **Change length…**. Replace **4** in **Length** with `2`, and select **Keep their dates**.
+  - **Expected:** **Length** is followed by **weeks**. **New dates** lists **P26.4**, **2026-11-30 to 2026-12-13**; **P27.1**, **2026-12-14 to 2027-01-24**; and **P27.2**, **2027-01-25 to 2027-02-21**. Below it, the dialog says **Patch December ships 2026-12-13.**
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Change length**, then publish ([P3](#p3-publish)).
+  - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, the rows **From 2026-11-30**, **From 2026-12-14** and **From 2027-01-25** each have a yellow dot and **Draft: added**. **Patch December** has no mark, and reads **P26.3 to P26.4 · ships 2026-12-13**, the new end of **P26.4**, since it has no Ships on day of its own.
+  - **Notes:**
+
+- [ ] **Step 3.** Sign in as `project.manager@fathom.test` ([P1](#p1-sign-in)) and open **Patches** on the **Releases** page. Select the **⋯** button at the end of the **From 2026-11-30** row, then **Reject…**.
+  - **Expected:** A dialog titled **Reject 3 drafts?** says **Also rejects the drafts that use these:**, listing **the cycles of Patches from 2026-12-14** and **the cycles of Patches from 2027-01-25**, with a **Reason** box.
+  - **Notes:**
+
+- [ ] **Step 4.** Type `Keep four weeks` and select **Reject**.
+  - **Expected:** A notification says **Rejected 3 drafts.** The three rows each have a red mark and **Rejected**.
+  - **Notes:**
+
+#### REL-33: Discarding One Draft of a New Length Discards Them All
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. Run after REL-32. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
+
+- [ ] **Step 1.** Select the **⋯** button at the end of the **From 2026-12-14** row, then **Discard draft**, and publish ([P3](#p3-publish)).
+  - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only the row **From 2026-09-07**, and **P26.4** runs from **2026-11-30** to **2026-12-27** again.
+  - **Notes:**
+
+- [ ] **Step 2.** In the **Cycles** table, select the **⋯** button at the end of the **P26.2** row, then **Change length…**. Replace **4** in **Length** with `6`.
+  - **Expected:** **New dates** lists **P26.2**, **2026-10-05 to 2026-11-15**; **P26.3**, **2026-11-16 to 2026-12-13**; and **P27.1**, **2026-12-14 to 2027-01-10**. Below it, the dialog says **Patch December moves with its cycles.**, **Patch October ships 2026-11-15.** and **Patch December ships 2027-01-10.**
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Change length**.
+  - **Expected:** A notification says **Drafted the new length.** **Patch December** has a hollow yellow dot and **Draft**, and reads **P26.3 to P27.1 · ships 2027-01-10**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the **⋯** button at the end of the **From 2026-10-05** row, then **Discard draft**.
+  - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only the row **From 2026-09-07**. **Patch December** has no mark, and reads **P26.3 to P26.4 · ships 2026-12-27**. There is no **Publish** button in the top bar.
+  - **Notes:**
+
+#### REL-34: A New Length That Would Start a Release After It Ships Is Refused
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-33. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
+
+- [ ] **Step 1.** Select the **⋯** button at the end of the **Patch December** row, then **Change…**. Type `2026-11-10` in **Ships on**, select **Save**, then publish ([P3](#p3-publish)).
+  - **Expected:** **Patch December** has a yellow dot and **Draft**, and reads **P26.3 to P26.4 · ships 2026-11-10**.
+  - **Notes:**
+
+- [ ] **Step 2.** Sign in as `engineering.operations.manager@fathom.test` ([P1](#p1-sign-in)) and open **Patches** on the **Releases** page. In the **Cycles** table, select the **⋯** button at the end of the **P26.2** row, then **Change length…**, and replace **4** in **Length** with `6`.
+  - **Expected:** The dialog says **Patch December would start after it ships on 2026-11-10.** in red.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Change length**.
+  - **Expected:** The dialog stays open, and nothing is drafted: the cycle schedule behind it still has only the row **From 2026-09-07**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Cancel**. Sign in as `product.manager@fathom.test` ([P1](#p1-sign-in)), open **Patches**, select the **⋯** button at the end of the **Patch December** row, then **Discard draft**, and publish ([P3](#p3-publish)).
+  - **Expected:** A notification says **Discarded the draft.** **Patch December** has no mark, and reads **P26.3 to P26.4 · ships 2026-12-27**.
+  - **Notes:**
+
+#### REL-35: A Release Moved by Whole Cycles Is Decided With the New Length
+
+**Preconditions:** Run after REL-34. Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
+
+- [ ] **Step 1.** In the **Cycles** table, select the **⋯** button at the end of the **P26.2** row, then **Change length…**. Replace **4** in **Length** with `8`.
+  - **Expected:** **New dates** lists **P26.2**, **2026-10-05 to 2026-11-29**; **P26.3**, **2026-11-30 to 2026-12-27**; and **P27.1**, **2026-12-28 to 2027-01-24**. Below it, the dialog says **Patch December moves with its cycles.**, **Patch October ships 2026-11-29.** and **Patch December ships 2027-01-24.**
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Change length**, then publish ([P3](#p3-publish)).
+  - **Expected:** **Patch December** has a yellow dot and **Draft**, and reads **P26.3 to P27.1 · ships 2027-01-24**.
+  - **Notes:**
+
+- [ ] **Step 3.** Sign in as `project.manager@fathom.test` ([P1](#p1-sign-in)) and open **Patches** on the **Releases** page. Select the **⋯** button at the end of the **Patch December** row, then **Discard draft**.
+  - **Expected:** A notification says **Only someone who changes cycles can discard this.** **Patch December** still has its mark.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the **⋯** button at the end of the **Patch December** row, then **Approve…**.
+  - **Expected:** A dialog titled **Approve 3 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Patches from 2026-10-05** and **the cycles of Patches from 2026-11-30**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Cancel**. Sign in as `engineering.operations.manager@fathom.test` ([P1](#p1-sign-in)), open **Patches**, select the **⋯** button at the end of the **From 2026-10-05** row, then **Discard draft**, and publish ([P3](#p3-publish)).
+  - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only the row **From 2026-09-07**. **Patch December** has no mark, and reads **P26.3 to P26.4 · ships 2026-12-27**.
   - **Notes:**

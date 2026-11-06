@@ -6,7 +6,7 @@
 // patterns, and releases have drafts, shown in place of the live values, with the draft beside.
 
 import { z } from "zod";
-import { type Cycle, cycleUnitSchema } from "./cycles.ts";
+import { type Cycle, cycleUnitSchema, laterCyclesSchema } from "./cycles.ts";
 import { daySchema } from "./days.ts";
 import { heldBySchema, recordDraftSchema } from "./drafts.ts";
 
@@ -162,3 +162,57 @@ export const releaseRequestSchema = z
   );
 
 export type ReleaseRequest = z.infer<typeof releaseRequestSchema>;
+
+// A new length for one cycle, in the unit of the pattern that makes it, which the server checks
+// against that unit's longest cycle.
+export const cycleLengthRequestSchema = z.object({
+  length: z.number().int().min(1).max(longestCycle.weeks),
+  later: laterCyclesSchema,
+});
+
+export type CycleLengthRequest = z.infer<typeof cycleLengthRequestSchema>;
+
+// What a release's place among its stream's cycles depends on.
+export interface ReleaseCycles {
+  name: string;
+  firstCycle: string;
+  lastCycle: string;
+  shipsOn: string | null;
+}
+
+export interface ReleaseMove<Moved extends ReleaseCycles> {
+  release: Moved;
+  firstCycle: string;
+  lastCycle: string;
+}
+
+// The releases that move with their cycles when a stream's cycles change, given where each cycle
+// now starts, each with the cycles it moves to; or why the change cannot be made: a release would
+// include a cycle no longer made, or start after its Ships on day, as the Decisions Log sets out.
+export function movedReleases<Moved extends ReleaseCycles>(
+  releases: readonly Moved[],
+  moved: ReadonlyMap<string, string | undefined>,
+  until: string,
+  stream: string,
+): { moves: ReleaseMove<Moved>[] } | { problem: string } {
+  const moves: ReleaseMove<Moved>[] = [];
+  for (const release of releases) {
+    const firstCycle = moved.get(release.firstCycle);
+    const lastCycle = moved.get(release.lastCycle);
+    if (firstCycle === release.firstCycle && lastCycle === release.lastCycle) {
+      continue;
+    }
+    if (firstCycle === undefined || lastCycle === undefined) {
+      return {
+        problem: `${release.name} would move past ${until}, the end of ${stream}'s plan.`,
+      };
+    }
+    if (release.shipsOn !== null && firstCycle > release.shipsOn) {
+      return {
+        problem: `${release.name} would start after it ships on ${release.shipsOn}.`,
+      };
+    }
+    moves.push({ release, firstCycle, lastCycle });
+  }
+  return { moves };
+}

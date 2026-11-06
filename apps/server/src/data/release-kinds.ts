@@ -20,12 +20,12 @@ import {
 } from "@fathom/shared";
 import type { Recorded } from "./drafts.ts";
 import {
-  addedOnly,
   type RecordKind,
   type RecordsState,
   type Touched,
   shownIds,
   shownVersion,
+  stateOf,
   versionOf,
 } from "./record-state.ts";
 
@@ -70,6 +70,31 @@ export const patternKind: RecordKind = {
       String(pattern?.startsOn),
     );
   },
+  // A stream's drafts of its cycles, and of its releases' cycles, are decided together, as the
+  // Decisions Log sets out, so a pattern's draft uses the others' in its stream, and the drafts
+  // that move its live releases to other cycles, or remove one its drafted cycles no longer make.
+  alsoUses: (state, id) => {
+    const streamId = String(shownVersion(state, "cycle-pattern", id)?.streamId);
+    const drafted = streamPatterns(state, streamId).map(
+      ({ pattern }) => pattern,
+    );
+    const moved = [...stateOf(state, "release").drafts.keys()].flatMap(
+      (releaseId): RecordRef[] => {
+        const live = stateOf(state, "release").live.get(releaseId);
+        if (live?.streamId !== streamId) return [];
+        const version = versionOf(state, "release", releaseId);
+        const bound =
+          version === undefined
+            ? !releaseFits(cyclesOf(drafted, String(live.lastCycle)), live)
+            : cyclesChanged(version, live);
+        return bound ? [{ type: "release", id: releaseId }] : [];
+      },
+    );
+    return [
+      ...patternDrafts(state, streamId).filter((pattern) => pattern.id !== id),
+      ...moved,
+    ];
+  },
 };
 
 export const releaseKind: RecordKind = {
@@ -89,21 +114,21 @@ export const releaseKind: RecordKind = {
       nameIn(state, String(release?.streamId)),
     );
   },
-  // A release whose cycles only patterns drafted to be added make uses those patterns' drafts.
+  // A release drafted onto other cycles, or onto cycles only the stream's drafted patterns make,
+  // uses those patterns' drafts.
   alsoUses: (state, id) => {
-    // Only a record its draft keeps is asked what else it uses.
-    const release = versionOf(state, "release", id) as Recorded;
+    const release = versionOf(state, "release", id);
+    if (release === undefined) return [];
     const streamId = String(release.streamId);
-    const live = livePatterns(state, streamId);
-    if (releaseFits(cyclesOf(live, String(release.lastCycle)), release)) {
-      return [];
-    }
-    return patternIds(state, streamId)
-      .filter((patternId) => addedOnly(state, "cycle-pattern", patternId))
-      .map((patternId): RecordRef => ({
-        type: "cycle-pattern",
-        id: patternId,
-      }));
+    const live = stateOf(state, "release").live.get(id);
+    const bound =
+      live === undefined
+        ? !releaseFits(
+            cyclesOf(livePatterns(state, streamId), String(release.lastCycle)),
+            release,
+          )
+        : cyclesChanged(release, live);
+    return bound ? patternDrafts(state, streamId) : [];
   },
 };
 
@@ -121,6 +146,11 @@ const patternIds = (state: RecordsState, streamId: string) =>
   shownIds(state, "cycle-pattern").filter(
     (id) => shownVersion(state, "cycle-pattern", id)?.streamId === streamId,
   );
+
+const patternDrafts = (state: RecordsState, streamId: string): RecordRef[] =>
+  patternIds(state, streamId)
+    .filter((id) => stateOf(state, "cycle-pattern").drafts.has(id))
+    .map((id) => ({ type: "cycle-pattern", id }));
 
 // A stream's patterns as their drafts make them, those drafted to be removed left out.
 export function streamPatterns(
@@ -172,6 +202,10 @@ function releaseFits(cycles: readonly Cycle[], release: Recorded): boolean {
     String(release.firstCycle) <= String(release.lastCycle)
   );
 }
+
+const cyclesChanged = (version: Recorded, live: Recorded) =>
+  version.firstCycle !== live.firstCycle ||
+  version.lastCycle !== live.lastCycle;
 
 const overlaps = (first: Recorded, second: Recorded) =>
   String(first.firstCycle) <= String(second.lastCycle) &&
