@@ -43,7 +43,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
 | Org Chart Additions | Next: team colours, then the person detail view, then chart fields, filters, and sort |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
-| Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID |
+| Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID; lists with meanings edited on the Lists page, which marks built-in lists |
 | Editable Roles | In progress: schema, the server reading roles from the database, and the Roles page; next, the account dialog |
 
 ### Hello Fathom

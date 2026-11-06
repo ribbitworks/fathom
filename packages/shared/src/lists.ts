@@ -4,7 +4,8 @@
 // on. Each list has a name, an optional description, and a visibility: the sensitivity tier of the
 // values chosen from it. Its choices are in the order set for them, and lists and choices can each
 // be retired. Lists, choices, and the order of each list's choices have drafts, shown in place of
-// the live values, with the draft beside.
+// the live values, with the draft beside. In a built-in list with meanings, each choice is tied to
+// one of the meanings Fathom fixes for it, which Fathom acts on while showing the choice's name.
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
@@ -26,10 +27,27 @@ const configDraft = <Live extends z.ZodRawShape>(live: Live) =>
     ...draftShape,
   });
 
+// Every meaning Fathom fixes for the choices of a list with meanings, with its name.
+export const meaningSchema = z.enum(["proposed", "open"]);
+
+export type Meaning = z.infer<typeof meaningSchema>;
+
+export const meaningNames: Readonly<Record<Meaning, string>> = {
+  proposed: "Proposed",
+  open: "Open",
+};
+
+export function meaningName(meaning: Meaning): string {
+  // The meaning is always one of the fixed meanings named above.
+  // eslint-disable-next-line security/detect-object-injection
+  return meaningNames[meaning];
+}
+
 export const choiceDraftSchema = configDraft({
   label: z.string(),
   description: z.string(),
   retired: z.boolean(),
+  meaning: meaningSchema.nullable(),
 });
 
 export type ChoiceDraft = z.infer<typeof choiceDraftSchema>;
@@ -43,6 +61,8 @@ export const choiceSchema = z.object({
   description: z.string(),
   // A retired choice stays on records that have it, but is no longer offered.
   retired: z.boolean(),
+  // The meaning it is tied to, in a list with meanings; absent in any other list.
+  meaning: meaningSchema.optional(),
   draft: choiceDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -74,6 +94,36 @@ export type OrderDraft = z.infer<typeof orderDraftSchema>;
 export const builtInListSchema = z.enum(["positions", "hiring-states"]);
 
 export type BuiltInList = z.infer<typeof builtInListSchema>;
+
+// The meanings each built-in list's choices are tied to, in the order its choices start in; a list
+// with none is not a list with meanings.
+export const listMeanings: Readonly<Record<BuiltInList, readonly Meaning[]>> = {
+  positions: [],
+  "hiring-states": ["proposed", "open"],
+};
+
+// The meanings a list's choices are tied to, by its built-in key: none for any other list.
+export const meaningsOf = (
+  builtIn: BuiltInList | null | undefined,
+): readonly Meaning[] =>
+  builtIn === null || builtIn === undefined
+    ? []
+    : // The key is always one of the built-in lists named above.
+      // eslint-disable-next-line security/detect-object-injection
+      listMeanings[builtIn];
+
+// What a list must always offer a choice for: a built-in list with meanings, each of them; any
+// other built-in list, such as Positions, any choice, since every record drawing on it needs one;
+// and a list someone defined, nothing.
+export type Kept = Meaning | "any";
+
+export const keptOf = (
+  builtIn: BuiltInList | null | undefined,
+): readonly Kept[] => {
+  if (builtIn === null || builtIn === undefined) return [];
+  const meanings = meaningsOf(builtIn);
+  return meanings.length > 0 ? meanings : ["any"];
+};
 
 // A list as its draft, if any, makes it, with the draft beside, or, for a draft that removes it, as
 // it is.
@@ -111,9 +161,12 @@ export const listRequestSchema = z.object({
 
 export type ListRequest = z.infer<typeof listRequestSchema>;
 
+// A choice's meaning is required in a list with meanings, refused in any other, and kept as it is
+// when a change leaves it out.
 export const choiceRequestSchema = z.object({
   label: z.string().trim().min(1).max(listLengths.choice),
   description,
+  meaning: meaningSchema.nullable().optional(),
 });
 
 export type ChoiceRequest = z.infer<typeof choiceRequestSchema>;

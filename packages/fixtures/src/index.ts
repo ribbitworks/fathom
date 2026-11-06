@@ -128,7 +128,7 @@ const positions = list("positions", "Positions", [
   "Software Engineer",
   "Test Engineer",
   "SDET",
-  "Manager",
+  "Engineering Manager",
   "Architect",
 ]);
 const levels = list("levels", "Levels", [
@@ -328,7 +328,7 @@ export function fictionalOrganization({
     (_, index): FictionalPerson => {
       const manager = faker.number.float() < 0.12;
       const position = manager
-        ? "Manager"
+        ? "Engineering Manager"
         : faker.helpers.arrayElement([
             "Software Engineer",
             "Software Engineer",
@@ -388,7 +388,7 @@ export function fictionalOrganization({
     },
   );
   const people = everyone.slice(0, size);
-  const managerChoice = choice(positions, "Manager");
+  const managerChoice = choice(positions, "Engineering Manager");
   // The last to leave was a manager, so someone who has left still has reports.
   const lastToLeave = people
     .filter(({ endDate }) => endDate !== null)

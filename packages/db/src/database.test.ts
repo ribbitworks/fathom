@@ -821,7 +821,7 @@ describe("planned hires", () => {
     return row.rows[0]?.id as string;
   }
 
-  it("starts with the built-in lists, hiring states each with a meaning, and keeps them from being retired", async () => {
+  it("starts with the built-in lists, Employee and Manager positions, hiring states each with a meaning, and keeps them from being retired", async () => {
     await withClient(database.app, async (client) => {
       const lists = await client.query(
         "SELECT name, built_in, visibility FROM lists WHERE built_in IS NOT NULL ORDER BY built_in",
@@ -838,14 +838,26 @@ describe("planned hires", () => {
         "SELECT label, meaning FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'hiring-states' ORDER BY i.position",
       );
       expect(states.rows).toEqual([
-        { label: "Proposed", meaning: "proposed" },
-        { label: "Open", meaning: "open" },
+        { label: "Request to hire", meaning: "proposed" },
+        { label: "Approved to hire", meaning: "open" },
+      ]);
+      const positions = await client.query(
+        "SELECT label, meaning FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'positions' ORDER BY i.position",
+      );
+      // Earlier tests add positions of their own.
+      expect(
+        positions.rows.filter(({ label }) =>
+          ["Employee", "Manager"].includes(String(label)),
+        ),
+      ).toEqual([
+        { label: "Employee", meaning: null },
+        { label: "Manager", meaning: null },
       ]);
       for (const change of [
         "UPDATE lists SET retired = true WHERE built_in = 'hiring-states'",
         "UPDATE lists SET visibility = 'restricted' WHERE built_in = 'positions'",
         "UPDATE lists SET built_in = 'skills' WHERE built_in = 'positions'",
-        "UPDATE list_items SET meaning = 'filled' WHERE label = 'Open'",
+        "UPDATE list_items SET meaning = 'filled' WHERE label = 'Approved to hire'",
       ]) {
         expect(await errorCodeOf(client.query(change))).toBe(checkViolation);
       }
@@ -891,7 +903,7 @@ describe("planned hires", () => {
       const person = await addPerson(client);
       await addHire(client, { filledBy: person });
       await addHire(client, { filledBy: person });
-      for (const label of ["Open", "Fictional Position"]) {
+      for (const label of ["Approved to hire", "Fictional Position"]) {
         expect(
           await errorCodeOf(
             client.query("DELETE FROM list_items WHERE label = $1", [label]),

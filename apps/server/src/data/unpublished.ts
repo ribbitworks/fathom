@@ -52,7 +52,9 @@ import {
   listChanges,
   listExists,
   listNameTaken,
+  listOfChoice,
   type ListsState,
+  keptOffered,
   orderChanges,
   readState,
   removeEmptyOrders,
@@ -277,14 +279,22 @@ export async function readUnpublished(
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
 }
-
 // Whether the record as the user's draft makes it still fits the data as it is now: a name or
-// Employee ID no one else has, and a list to belong to or draw on, live or drafted to be added.
-// Every change to drafts counts unpublished drafts too, so this holds unless the data was changed
+// Employee ID no one else has, a list to belong to or draw on, live or drafted to be added, and,
+// for a choice in a built-in list, a choice still offered for everything the list keeps. Every
+// change to drafts counts unpublished drafts too, so this holds unless the data was changed
 // some other way.
 function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
   const { lists, columns } = versions.mine;
   const id = row.recordId;
+  // Discarding a choice's draft can leave its list with nothing offered for something it keeps.
+  if (row.recordType === "list-item") {
+    const choiceList =
+      listOfChoice(lists, id) ?? listOfChoice(versions.theirs.lists, id);
+    if (choiceList !== undefined && !keptOffered(lists, choiceList)) {
+      return false;
+    }
+  }
   if (row.recordType === "column-order" || wantsNoDraft(row)) return true;
   if (isRecordType(row.recordType)) {
     return recordFits(versions.records, row.recordType, id);

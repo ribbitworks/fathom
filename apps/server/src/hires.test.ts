@@ -69,8 +69,10 @@ beforeAll(async () => {
     .from(listItems)
     .innerJoin(lists, eq(lists.id, listItems.listId))
     .where(eq(lists.builtIn, "hiring-states"));
-  proposed = String(states.find(({ label }) => label === "Proposed")?.id);
-  open = String(states.find(({ label }) => label === "Open")?.id);
+  proposed = String(
+    states.find(({ label }) => label === "Request to hire")?.id,
+  );
+  open = String(states.find(({ label }) => label === "Approved to hire")?.id);
   const [added] = await test.connection
     .insert(listItems)
     .values({
@@ -920,7 +922,7 @@ describe("changes to the hiring plan in the change history", () => {
     const seen = JSON.stringify(await entries(approver));
     expect(seen).toContain(`Fictional Engineer, ${requisition}`);
     expect(seen).toContain("Fictional Recruiting");
-    expect(seen).toContain("Proposed");
+    expect(seen).toContain("Request to hire");
     expect(seen).toContain("Fictional Person");
     expect(await entries(planner)).toEqual([]);
   });
@@ -1194,7 +1196,7 @@ describe("the built-in lists", () => {
     });
     expect(hidden.statusCode).toBe(409);
     expect(refusal(hidden)).toBe(
-      "A built-in list's visibility is that of the column drawing on it",
+      "A built-in list is visible to whoever can see the column that uses it",
     );
   });
 
@@ -1232,7 +1234,7 @@ describe("the built-in lists", () => {
       );
       expect(response.statusCode).toBe(409);
       expect(refusal(response)).toBe(
-        "No state is offered meaning Proposed; choose one",
+        "No state means Proposed. Choose one for the hire.",
       );
     } finally {
       await retire(false);

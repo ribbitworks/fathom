@@ -77,11 +77,13 @@ import {
   draftedList,
   listExists,
   listNameTaken,
+  listOfChoice,
   lockChoices,
   placeChoice,
   readState,
   refuseIfChosen,
   refuseIfUsed,
+  refuseLastKept,
   removeEmptyOrders,
   writeOrderDraft,
 } from "./lists.ts";
@@ -176,7 +178,13 @@ const columnsOf: Record<
   Readonly<Record<string, Convert>>
 > = {
   list: { name: text, description: text, visibility: tier, retired: flag },
-  "list-item": { listId: text, label: text, description: text, retired: flag },
+  "list-item": {
+    listId: text,
+    label: text,
+    description: text,
+    retired: flag,
+    meaning: textOrNull,
+  },
   field: {
     tableName: text,
     name: text,
@@ -657,6 +665,10 @@ async function undoListDrafts(
     }
     if (!isList && wanted === undefined) {
       await refuseIfChosen(transaction, record.id, editor);
+    }
+    if (!isList) {
+      const listId = listOfChoice(state, record.id) ?? String(wanted?.listId);
+      refuseLastKept(state, listId, record.id, wanted);
     }
     await writeDraft(transaction, editor, recordType, record.id, live, wanted);
   }

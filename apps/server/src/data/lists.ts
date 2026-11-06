@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Lists of choices that people define, and their choices: reading them, with their drafts in place,
-// and drafting lists created, edited, retired, restored, and deleted, choices added one at a time or
-// several at once, edited, retired, restored, and removed, and new orders of a list's choices; and
-// discarding drafts and sending rejected ones for approval again. Part of the data access layer, the
-// only server code that queries the database; the caller checks the actor's permissions. Every
-// change is a draft, as drafts.ts sets out, which reaches the live lists only once approved, as
-// list-approvals.ts sets out, and is recorded in the change history, field by field. A draft of a
-// list's order holds the whole order of its choices.
+// and drafting lists created, edited, retired, restored, and deleted, choices added one at a time
+// or several at once, edited, retired, restored, and removed, and new orders of a list's choices;
+// and discarding drafts and sending rejected ones for approval again. In a built-in list with
+// meanings, each choice is tied to one of the list's meanings, and each meaning keeps a choice
+// offered for it; any other built-in list keeps at least one choice offered. Part of the data
+// access layer, the only server code that queries the database; the caller checks the actor's
+// permissions. Every change is a draft, as drafts.ts sets out, which reaches the live lists only
+// once approved, as list-approvals.ts sets out, and is recorded in the change history, field by
+// field. A draft of a list's order holds the whole order of its choices.
 
 import {
   type Database,
@@ -29,8 +31,18 @@ import type {
   ListRequest,
   OrderDraft,
 } from "@fathom/shared";
-import { builtInListSchema, type Tier, tierSchema } from "@fathom/shared";
-import { and, asc, count, eq, or, sql } from "drizzle-orm";
+import {
+  builtInListSchema,
+  type Kept,
+  keptOf,
+  type Meaning,
+  meaningName,
+  meaningSchema,
+  meaningsOf,
+  type Tier,
+  tierSchema,
+} from "@fathom/shared";
+import { and, asc, count, eq, inArray, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
 import {
@@ -98,6 +110,7 @@ export const choiceFields = [
   "label",
   "description",
   "retired",
+  "meaning",
 ] as const;
 
 // The details of lists and choices are General data, whatever the visibility of the values chosen
@@ -148,6 +161,7 @@ export const choiceRecord = (row: ChoiceRow): Recorded => ({
   label: row.label,
   description: row.description,
   retired: row.retired,
+  meaning: row.meaning,
 });
 
 // Every list and choice, live and in drafts, and each list's draft of its order, read together, as
@@ -521,6 +535,129 @@ export async function refuseIfChosen(
   }
 }
 
+// A list's built-in key: one the server no longer knows is taken as none rather than trusted.
+const builtInKey = (key: unknown) =>
+  builtInListSchema
+    .nullable()
+    .catch(null)
+    .parse(key ?? null);
+
+// The meanings a list's choices are tied to: none unless it is a built-in list with meanings.
+export const meaningsIn = (state: ListsState, listId: string) =>
+  meaningsOf(builtInKey(state.builtIn.get(listId)));
+
+// Refuses a choice's meaning that does not fit its list: a list with meanings needs one of its
+// own for each choice, and any other list takes none.
+function refuseMeaningMisfit(
+  state: ListsState,
+  listId: string,
+  meaning: Meaning | null,
+): void {
+  const meanings = meaningsIn(state, listId);
+  if (meanings.length === 0) {
+    if (meaning !== null) {
+      throw new BadRequestError("Only a built-in list's choices have meanings");
+    }
+  } else if (meaning === null || !meanings.includes(meaning)) {
+    throw new BadRequestError(
+      `Choose what the choice means: ${meanings.map(meaningName).join(" or ")}`,
+    );
+  }
+}
+
+// What a list must keep a choice offered for, as its built-in key says.
+const keptIn = (state: ListsState, listId: string) =>
+  keptOf(builtInKey(state.builtIn.get(listId)));
+
+const offers = (choice: Recorded | undefined, kept: Kept) =>
+  choice !== undefined &&
+  choice.retired !== true &&
+  (kept === "any" || choice.meaning === kept);
+
+// Whether another of the list's choices than the one given is offered for what the list keeps, as
+// the state's drafts make the list.
+const othersOffer = (
+  state: ListsState,
+  listId: string,
+  id: string | undefined,
+  kept: Kept,
+) =>
+  draftedOrder(state, listId).some(
+    (other) => other !== id && offers(draftedChoice(state, other), kept),
+  );
+
+// Whether a list offers a choice for everything it keeps, as the state's drafts make it.
+export const keptOffered = (state: ListsState, listId: string) =>
+  keptIn(state, listId).every((kept) =>
+    othersOffer(state, listId, undefined, kept),
+  );
+
+// What a built-in list lacks, in words, once it has no choice for what it keeps.
+const needs = (name: string, kept: Kept) =>
+  kept === "any"
+    ? `${name} needs a choice.`
+    : `${name} needs a choice that means ${meaningName(kept)}.`;
+
+// Refuses a draft of a choice that would leave a built-in list with no choice offered for something
+// it keeps, as the editor sees the list's drafts: retiring, removing, or giving another meaning to
+// the only choice offered for a meaning, or to the last choice offered in Positions.
+export function refuseLastKept(
+  state: ListsState,
+  listId: string,
+  id: string,
+  after: Recorded | undefined,
+): void {
+  const before = draftedChoice(state, id);
+  for (const kept of keptIn(state, listId)) {
+    if (!offers(before, kept) || offers(after, kept)) continue;
+    if (!othersOffer(state, listId, id, kept)) {
+      throw new ConflictError(
+        needs(String(draftedList(state, listId)?.name), kept),
+      );
+    }
+  }
+}
+
+// Refuses approving drafts that would leave one of the built-in lists given with no live choice
+// offered for something it keeps, as when one retires the only live choice for a meaning while
+// the choice another draft adds for it waits.
+export async function refuseKeptUnoffered(
+  transaction: Reader,
+  listIds: readonly (string | undefined)[],
+): Promise<void> {
+  const ids = listIds.filter((id) => id !== undefined);
+  if (ids.length === 0) return;
+  const rows = await transaction
+    .select({
+      id: lists.id,
+      name: lists.name,
+      builtIn: lists.builtIn,
+      meaning: listItems.meaning,
+      retired: listItems.retired,
+    })
+    .from(lists)
+    .leftJoin(listItems, eq(listItems.listId, lists.id))
+    .where(and(sql`${lists.builtIn} IS NOT NULL`, inArray(lists.id, ids)));
+  const offered = new Map<
+    string,
+    { name: string; builtIn: string | null; live: Set<string | null> }
+  >();
+  for (const { id, name, builtIn, meaning, retired } of rows) {
+    const list = offered.get(id) ?? { name, builtIn, live: new Set() };
+    if (retired === false) list.live.add(meaning);
+    offered.set(id, list);
+  }
+  for (const { name, builtIn, live } of offered.values()) {
+    for (const kept of keptOf(builtInKey(builtIn))) {
+      if (kept === "any" ? live.size === 0 : !live.has(kept)) {
+        throw new ConflictError(
+          `This would leave ${name} with no ${kept === "any" ? "choices" : `choice that means ${meaningName(kept)}`}.`,
+        );
+      }
+    }
+  }
+}
+
 // Refuses discarding the drafts adding the choices given while people's drafts, published or not,
 // have any of them, as the editor sees the drafts.
 async function refuseIfDraftsChoose(
@@ -638,7 +775,23 @@ export const heldByOf = (held: ReadonlyMap<string, Held>, id: string) => {
   return holder === undefined ? {} : { heldBy: holder };
 };
 
-const shownChoiceFields = ["label", "description", "retired"] as const;
+const shownChoiceFields = [
+  "label",
+  "description",
+  "retired",
+  "meaning",
+] as const;
+
+const withMeaning = (meaning: Meaning | null) =>
+  meaning === null ? {} : { meaning };
+
+// A choice's meaning as recorded: one the server no longer knows is shown as none rather than
+// trusted.
+const meaningOf = (choice: Recorded): Meaning | null =>
+  meaningSchema
+    .nullable()
+    .catch(null)
+    .parse(choice.meaning ?? null);
 
 interface Makers {
   list: Map<string, Maker>;
@@ -657,6 +810,7 @@ function choiceOut(state: ListsState, makers: Makers, id: string): Choice {
     label: String(choice.label),
     description: String(choice.description),
     retired: choice.retired === true,
+    ...withMeaning(meaningOf(choice)),
     ...(draft === undefined
       ? {}
       : {
@@ -711,10 +865,7 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
         // A tier the server no longer knows is treated as General rather than trusted.
         visibility: tierSchema.catch("general").parse(list.visibility),
         retired: list.retired === true,
-        builtIn: builtInListSchema
-          .nullable()
-          .catch(null)
-          .parse(state.builtIn.get(id) ?? null),
+        builtIn: builtInKey(state.builtIn.get(id)),
         choices: draftedOrder(state, id).map((choiceId) =>
           choiceOut(state, makers, choiceId),
         ),
@@ -954,7 +1105,7 @@ export async function updateList(
     refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
     if (state.builtIn.has(id) && request.visibility !== list.visibility) {
       throw new ConflictError(
-        "A built-in list's visibility is that of the column drawing on it",
+        "A built-in list is visible to whoever can see the column that uses it",
       );
     }
     if (listNameTaken(state, request.name, id)) {
@@ -1129,6 +1280,9 @@ export async function addChoices(
     ) {
       throw new ConflictError(duplicateChoice);
     }
+    for (const { meaning } of requests) {
+      refuseMeaningMisfit(state, listId, meaning ?? null);
+    }
     const added = requests.map((request) => ({
       id: randomUUID(),
       record: {
@@ -1136,6 +1290,7 @@ export async function addChoices(
         label: request.label,
         description: request.description,
         retired: false,
+        meaning: request.meaning ?? null,
       },
     }));
     await addDrafts(
@@ -1174,6 +1329,8 @@ async function changeChoice(
 ): Promise<Saved<Choice>> {
   return drafting(database, madeBy, async (transaction, state) => {
     const choice = changeableChoice(state, listId, id);
+    const after = change(state, choice);
+    refuseLastKept(state, listId, id, after);
     const changeSetId = await saveDraft(
       transaction,
       madeBy,
@@ -1181,7 +1338,7 @@ async function changeChoice(
       id,
       state.choices.get(id)?.record,
       choice,
-      change(state, choice),
+      after,
       state.choiceDrafts.get(id),
     );
     const list = await listNow(transaction, madeBy, listId);
@@ -1202,7 +1359,9 @@ export async function updateChoice(
     if (choiceLabelTaken(state, listId, request.label, id)) {
       throw new ConflictError(duplicateChoice);
     }
-    return { ...choice, ...request };
+    const { meaning = meaningOf(choice), ...details } = request;
+    refuseMeaningMisfit(state, listId, meaning);
+    return { ...choice, ...details, meaning };
   });
 }
 
@@ -1271,6 +1430,7 @@ export async function deleteChoice(
   return drafting(database, madeBy, async (transaction, state) => {
     const choice = changeableChoice(state, listId, id);
     const live = state.choices.get(id)?.record;
+    refuseLastKept(state, listId, id, undefined);
     if (live === undefined) {
       await refuseIfDraftsChoose(transaction, madeBy, [id]);
       const made = discardingChoice(state, id);
@@ -1341,8 +1501,12 @@ export async function discardListDraft(
         addedChoices(state, listId),
       );
     }
-    if (kind === "choice" && !state.choices.has(choiceId as string)) {
-      await refuseIfDraftsChoose(transaction, madeBy, [choiceId as string]);
+    if (kind === "choice") {
+      const id = choiceId as string;
+      refuseLastKept(state, listId, id, state.choices.get(id)?.record);
+      if (!state.choices.has(id)) {
+        await refuseIfDraftsChoose(transaction, madeBy, [id]);
+      }
     }
     let made: Change[];
     if (kind === "list") made = discardingList(state, listId);

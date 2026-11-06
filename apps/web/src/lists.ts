@@ -199,12 +199,14 @@ function withDraftsUndone(
       if (choiceDraft === undefined || !undone(choiceDraft)) return [choice];
       if (choiceDraft.action === "created") return [];
       const was = choiceDraft.action === "changed" ? choiceDraft.live : {};
+      const meaning = was.meaning ?? live.meaning;
       return [
         {
           ...live,
           label: was.label ?? live.label,
           description: was.description ?? live.description,
           retired: was.retired ?? live.retired,
+          ...(meaning === undefined ? {} : { meaning }),
         },
       ];
     });

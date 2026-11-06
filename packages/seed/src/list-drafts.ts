@@ -181,7 +181,7 @@ export async function seedListDrafts(
   await data.lists.moveChoice(
     editor,
     positions.id,
-    choiceCalled(positions, "Manager"),
+    choiceCalled(positions, "Engineering Manager"),
     null,
   );
   await data.lists.update(editor, positions.id, {

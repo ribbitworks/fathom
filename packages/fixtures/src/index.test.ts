@@ -165,12 +165,12 @@ describe("a fictional organization", () => {
     expect(new Set(names).size).toBe(names.length);
   });
 
-  it("marks as managers everyone whose position is Manager, and so everyone a line names", () => {
+  it("marks as managers everyone whose position is Engineering Manager, and so everyone a line names", () => {
     const named = new Set(
       organization.reportingLines.map(({ managerId }) => managerId),
     );
     const manager = organization.positions.find(
-      ({ label }) => label === "Manager",
+      ({ label }) => label === "Engineering Manager",
     )?.id;
     for (const person of organization.people) {
       expect(person.isManager).toBe(person.positionId === manager);

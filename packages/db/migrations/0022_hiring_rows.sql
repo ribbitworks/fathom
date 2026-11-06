@@ -29,6 +29,15 @@ WHERE "id" = coalesce(
 INSERT INTO "fathom"."lists" ("name", "description", "built_in")
 SELECT 'Positions', '', 'positions'
 WHERE NOT EXISTS (SELECT 1 FROM "fathom"."lists" WHERE "built_in" = 'positions');--> statement-breakpoint
+-- An empty Positions list, as in a fresh Fathom, starts with positions any organization has.
+INSERT INTO "fathom"."list_items" ("list_id", "label", "position")
+SELECT "id", "label", "position"
+FROM "fathom"."lists",
+  (VALUES ('Employee', 1), ('Manager', 2)) AS "choice"("label", "position")
+WHERE "built_in" = 'positions'
+  AND NOT EXISTS (
+    SELECT 1 FROM "fathom"."list_items" WHERE "list_id" = "fathom"."lists"."id"
+  );--> statement-breakpoint
 DELETE FROM "fathom"."drafts" WHERE "record_type" = 'list' AND "action" = 'deleted'
   AND "record_id" = (SELECT "id"::text FROM "fathom"."lists" WHERE "built_in" = 'positions');--> statement-breakpoint
 DELETE FROM "fathom"."unpublished_drafts" WHERE "record_type" = 'list' AND "action" = 'deleted'
@@ -46,11 +55,11 @@ DELETE FROM "fathom"."drafts" WHERE "record_type" = 'list' AND "fields" = '{}'::
 INSERT INTO "fathom"."lists" ("name", "description", "visibility", "built_in")
 SELECT CASE WHEN EXISTS (SELECT 1 FROM "fathom"."lists" WHERE lower("name") = 'hiring states')
     THEN 'Hiring states (built in)' ELSE 'Hiring states' END,
-  'The states a planned hire moves between.', 'confidential', 'hiring-states';--> statement-breakpoint
+  '', 'confidential', 'hiring-states';--> statement-breakpoint
 INSERT INTO "fathom"."list_items" ("list_id", "label", "position", "meaning")
 SELECT "id", "label", "position", "meaning"
 FROM "fathom"."lists",
-  (VALUES ('Proposed', 1, 'proposed'), ('Open', 2, 'open')) AS "choice"("label", "position", "meaning")
+  (VALUES ('Request to hire', 1, 'proposed'), ('Approved to hire', 2, 'open')) AS "choice"("label", "position", "meaning")
 WHERE "built_in" = 'hiring-states';--> statement-breakpoint
 ALTER TABLE "fathom"."lists" ADD CONSTRAINT "lists_built_in_known" CHECK ("fathom"."lists"."built_in" IS NULL OR "fathom"."lists"."built_in" IN ('positions', 'hiring-states'));--> statement-breakpoint
 ALTER TABLE "fathom"."lists" ADD CONSTRAINT "lists_positions_general" CHECK ("fathom"."lists"."built_in" IS DISTINCT FROM 'positions' OR "fathom"."lists"."visibility" = 'general');--> statement-breakpoint

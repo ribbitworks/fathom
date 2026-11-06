@@ -5,7 +5,8 @@
 // people approved or rejected at the same time, in one change set. Approving a draft approves the
 // drafts it uses too: a choice added to a list drafted to be added uses the list's draft, and an
 // order that places a choice drafted to be added uses the choice's. A draft that others use is
-// rejected only together with them.
+// rejected only together with them. Approving never leaves a built-in list without a choice offered
+// for everything it keeps.
 
 import { lists as listTable, listItems } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";
@@ -34,6 +35,7 @@ import {
   readState,
   refuseIfChosen,
   refuseIfUsed,
+  refuseKeptUnoffered,
   removeEmptyOrders,
   writePositions,
 } from "./lists.ts";
@@ -137,6 +139,7 @@ const asChoice = (id: string, choice: Record<string, unknown>) => ({
   label: String(choice.label),
   description: String(choice.description),
   retired: choice.retired === true,
+  meaning: typeof choice.meaning === "string" ? choice.meaning : null,
 });
 
 // Approves the drafts asked for and those they use, applying them to the live lists and choices,
@@ -203,10 +206,10 @@ export async function approveListDrafts(
         .values({ ...asChoice(id, choice), position: end + 1 });
       made.push(...choiceChanges(id, "created", undefined, choice));
     } else {
-      const { label, description, retired } = asChoice(id, choice);
+      const { label, description, retired, meaning } = asChoice(id, choice);
       await transaction
         .update(listItems)
-        .set({ label, description, retired })
+        .set({ label, description, retired, meaning })
         .where(eq(listItems.id, id));
       made.push(...choiceChanges(id, "changed", live, choice));
     }
@@ -266,6 +269,10 @@ export async function approveListDrafts(
     made.push(...listChanges(id, "deleted", state.lists.get(id), undefined));
     await transaction.delete(listTable).where(eq(listTable.id, id));
   }
+  await refuseKeptUnoffered(
+    transaction,
+    approved.choices.map((id) => listOfChoice(state, id)),
+  );
   await deleteDrafts(transaction, "list", approved.lists);
   await deleteDrafts(transaction, "list-item", approved.choices);
   await deleteDrafts(transaction, "choice-order", approved.orders);

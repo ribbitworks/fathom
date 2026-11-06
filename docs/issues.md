@@ -30,6 +30,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Lists
 
+- **Filtering lists, and inviting changes to the lists Fathom fills in:** The Lists page cannot be filtered, such as to built-in lists only, to lists with or without choices, or to retired ones, and nothing says that the lists Fathom fills in, Positions and Hiring states, are the organization's to rename, and to add choices to or retire choices from, beyond the empty row under their choices. Asked for by the owner on 2026-11-05, to follow lists with meanings.
 - **Splitting the lists module:** `apps/server/src/data/lists.ts` holds both reading lists with their drafts and drafting changes to them, and is large enough to split. Deferred by the owner on 2026-11-01 as low risk at Fathom's size.
 - **Reading drafts' history:** Reading lists or people reads each draft's whole history of changes, to name who changed it, and undoing changes to drafts of lists reads every list again for each record undone. Both are fast at Fathom's size; deferred by the owner on 2026-11-01 until tables grow.
 - **Undoing a list's creation:** Undoing a change set that created a live list deletes the list without checking that nothing draws on it, so undoing an old change set that created what is now the built-in Positions list, in a database with no people, would remove it. Such change sets predate drafts, so few databases hold one; found by review on 2026-11-04, older than the built-in lists.

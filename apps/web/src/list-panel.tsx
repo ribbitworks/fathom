@@ -9,6 +9,9 @@
 // see the same choices, read only. Drafts are marked in place: the list's and its order's under its
 // name, each choice's on its row, with what can be done with them in the list's menu beside its
 // name and in each choice's menu. A list or choice a draft removes is struck through and read only.
+// A built-in list is marked so. In a list with meanings, each choice shows its meaning, chosen
+// when it is added or edited, and the last choice offered for a meaning cannot be retired, removed,
+// or given another meaning.
 
 import {
   DragDropContext,
@@ -17,13 +20,21 @@ import {
   type DropResult,
 } from "@hello-pangea/dnd";
 import {
+  type BuiltInList,
   type Choice,
   type ChoiceRequest,
+  type Kept,
+  keptOf,
   type List,
   listLengths,
+  type Meaning,
+  meaningName,
+  meaningSchema,
+  meaningsOf,
 } from "@fathom/shared";
 import {
   ActionIcon,
+  Badge,
   Button,
   FocusTrap,
   Menu,
@@ -130,6 +141,57 @@ export function liftedWhileDragging(base: string, dragging: boolean): string {
   return dragging ? `${base} ${String(classes.choiceLifted)}` : base;
 }
 
+// What a list Fathom builds in is for, shown under its choices; the organization's own description
+// of it shows under its name, as for any list.
+function builtInNote(key: BuiltInList): string {
+  switch (key) {
+    case "hiring-states":
+      return "Proposed: the request to hire is not yet approved.\nOpen: the request to hire is approved.\nKeep at least one choice for each.";
+    case "positions":
+      return "Every person and planned hire has one of these positions.\nKeep at least one.";
+  }
+}
+
+// Marks a list Fathom builds in, which cannot be retired or removed.
+export function BuiltInMark() {
+  return (
+    <Badge variant="default" radius="sm" tt="none" fw={400} size="sm">
+      Built in
+    </Badge>
+  );
+}
+
+// A choice's meaning in words, or nothing for one the server no longer knows, which it sends
+// without one.
+const meaningText = (meaning: Meaning | undefined) =>
+  meaning === undefined ? "" : meaningName(meaning);
+
+const removedChoice = (choice: Choice) => choice.draft?.action === "deleted";
+
+const offers = (choice: Choice, kept: Kept) =>
+  !choice.retired &&
+  !removedChoice(choice) &&
+  (kept === "any" || choice.meaning === kept);
+
+// What a choice is the last one offered for, as the list's drafts make it, if anything: a meaning
+// it keeps, or, in Positions, the list's last choice. It is not retired or removed, and keeps its
+// meaning, so a built-in list always has a choice to offer.
+export function lastKept(list: List, choice: Choice): Kept | undefined {
+  return keptOf(list.builtIn).find(
+    (kept) =>
+      offers(choice, kept) &&
+      !list.choices.some(
+        (other) => other.id !== choice.id && offers(other, kept),
+      ),
+  );
+}
+
+// The meaning a choice must keep, as the last one offered for it.
+const meaningKeptBy = (list: List, choice: Choice): Meaning | undefined => {
+  const kept = lastKept(list, choice);
+  return kept === "any" ? undefined : kept;
+};
+
 // The choices pasted as lines, each a name, then a tab and a description when copied from a
 // spreadsheet.
 export function pastedChoices(text: string): ChoiceRequest[] {
@@ -145,17 +207,19 @@ export function pastedChoices(text: string): ChoiceRequest[] {
 interface Draft {
   label: string;
   description: string;
+  // In a list with meanings; null in any other.
+  meaning: Meaning | null;
 }
 
-const empty: Draft = { label: "", description: "" };
-
-type Field = "label" | "description";
+type Field = "label" | "description" | "meaning";
 
 function Fields({
   idPrefix,
   draft,
   problem,
   label,
+  meanings,
+  meaningKept,
   onChange,
   onKeyDown,
   onFocus,
@@ -165,6 +229,10 @@ function Fields({
   draft: Draft;
   problem: string | undefined;
   label: string;
+  // The list's meanings, none unless it is a list with meanings.
+  meanings: readonly Meaning[];
+  // The meaning a choice must keep, as the last one offered for it.
+  meaningKept?: Meaning | undefined;
   onChange: (draft: Draft) => void;
   onKeyDown: (event: KeyboardEvent, field: Field) => void;
   onFocus?: () => void;
@@ -227,6 +295,47 @@ function Fields({
           onFocus={onFocus}
         />
       </span>
+      {meanings.length > 0 && (
+        <span className={classes.choiceMeaning} role="gridcell">
+          <select
+            id={`${idPrefix}-meaning`}
+            className={classes.cellInput}
+            value={draft.meaning ?? ""}
+            aria-label={`${label}meaning`}
+            aria-describedby={
+              meaningKept === undefined ? undefined : `${idPrefix}-meaning-kept`
+            }
+            disabled={meaningKept !== undefined}
+            onChange={(event) => {
+              onChange({
+                ...draft,
+                // The menu offers only the list's meanings.
+                meaning: meaningSchema.parse(event.currentTarget.value),
+              });
+            }}
+            onKeyDown={(event) => {
+              onKeyDown(event, "meaning");
+            }}
+            onFocus={onFocus}
+          >
+            {draft.meaning === null && (
+              <option value="" disabled>
+                Choose a meaning
+              </option>
+            )}
+            {meanings.map((meaning) => (
+              <option key={meaning} value={meaning}>
+                {meaningName(meaning)}
+              </option>
+            ))}
+          </select>
+          {meaningKept !== undefined && (
+            <span className={classes.cellBelow} id={`${idPrefix}-meaning-kept`}>
+              Needed for {meaningName(meaningKept)}
+            </span>
+          )}
+        </span>
+      )}
     </>
   );
 }
@@ -263,10 +372,13 @@ export function ListPanel({
   // changes to it.
   const canEdit = mayEdit && !listRemoved && list.heldBy === undefined;
   const canMove = canEdit && list.orderHeldBy === undefined;
+  const meanings = meaningsOf(list.builtIn);
+  const [firstMeaning = null] = meanings;
+  const empty: Draft = { label: "", description: "", meaning: firstMeaning };
   // The choices a draft of the order moves, with their live places.
   const moved = movedChoices(list);
   // A choice a draft removes cannot be changed either.
-  const removed = (choice: Choice) => choice.draft?.action === "deleted";
+  const removed = removedChoice;
   // Beside live, a choice a draft retires or restores stays where it is live until approved.
   const isRetired = (choice: Choice) =>
     showLive ? retiredLive(choice) : choice.retired;
@@ -328,10 +440,16 @@ export function ListPanel({
     if (removed(choice)) return;
     setSelected(choice.id);
     setEditing(choice.id);
-    setDraft({ label: choice.label, description: choice.description });
+    setDraft({
+      label: choice.label,
+      description: choice.description,
+      meaning: choice.meaning ?? null,
+    });
     setEditProblem(undefined);
     setMenuFor(undefined);
-    focusSoon(field === "label" ? editNameId : "choice-edit-description");
+    // A meaning that cannot change takes no focus, so its name is edited instead.
+    const editable = field === "meaning" && kept(choice) ? "label" : field;
+    focusSoon(`choice-edit-${editable === "label" ? "name" : editable}`);
   };
 
   // Saves the choice being edited, leaving it open with its problem when its name will not do.
@@ -346,10 +464,12 @@ export function ListPanel({
     const request = {
       label: draft.label.trim(),
       description: draft.description.trim(),
+      ...(draft.meaning === null ? {} : { meaning: draft.meaning }),
     };
     if (
       request.label !== choice.label ||
-      request.description !== choice.description
+      request.description !== choice.description ||
+      (draft.meaning ?? undefined) !== choice.meaning
     ) {
       actions.edit(choice, request);
     }
@@ -361,27 +481,34 @@ export function ListPanel({
     focusSoon(rowId(choice));
   };
 
-  // Adds what was typed or pasted, giving it back to the empty row if it cannot be saved.
-  const add = (requests: ChoiceRequest[], typed: Draft) => {
-    actions.add(requests, () => {
+  // Adds what was typed or pasted, giving it back to the empty row if it cannot be saved, and
+  // keeps focus there unless it has left. Pasted choices take the meaning chosen in the empty row.
+  const add = (requests: ChoiceRequest[], typed: Draft, refocus = true) => {
+    const meant =
+      typed.meaning === null
+        ? requests
+        : requests.map((request) => ({ ...request, meaning: typed.meaning }));
+    actions.add(meant, () => {
       setEntry(typed);
     });
-    setEntry(empty);
+    // The meaning chosen stays for the next choice.
+    setEntry({ ...empty, meaning: typed.meaning });
     setEntryProblem(undefined);
-    focusSoon(entryNameId);
+    if (refocus) focusSoon(entryNameId);
   };
 
-  const addEntry = () => {
+  const addEntry = (refocus = true) => {
     if (entry.label.trim() === "" && entry.description.trim() === "") return;
     const problem = problemFor(entry.label);
     if (problem !== undefined) {
       setEntryProblem(problem);
-      focusSoon(entryNameId);
+      if (refocus) focusSoon(entryNameId);
       return;
     }
     add(
       [{ label: entry.label.trim(), description: entry.description.trim() }],
       entry,
+      refocus,
     );
   };
 
@@ -418,14 +545,17 @@ export function ListPanel({
     add(choices, entry);
   };
 
+  // The last choice offered for a meaning, or in Positions, is kept offered.
+  const kept = (choice: Choice) => lastKept(list, choice) !== undefined;
+
   const retireOrRestore = (choice: Choice) => {
-    if (removed(choice)) return;
+    if (removed(choice) || kept(choice)) return;
     select(neighbourIn(choice.retired ? retired : offered, choice));
     actions.setRetired(choice, !choice.retired);
   };
 
   const remove = (choice: Choice) => {
-    if (removed(choice)) return;
+    if (removed(choice) || kept(choice)) return;
     select(neighbourIn(choice.retired ? retired : offered, choice));
     actions.remove(choice);
   };
@@ -486,10 +616,17 @@ export function ListPanel({
     }
   };
 
+  // The field Tab leaves a row from, forwards: the meaning, in a list with meanings, unless it
+  // cannot change and so takes no focus.
+  const lastField = (choice: Choice): Field =>
+    meanings.length > 0 && !kept(choice) ? "meaning" : "description";
+
   const onEditKey = (event: KeyboardEvent, field: Field, choice: Choice) => {
     const leaving =
       event.key === "Tab" &&
-      (field === "description" ? !event.shiftKey : event.shiftKey);
+      (field === lastField(choice)
+        ? !event.shiftKey
+        : event.shiftKey && field === "label");
     if (event.key === "Escape") {
       event.preventDefault();
       cancelEdit(choice);
@@ -506,7 +643,7 @@ export function ListPanel({
     } else if (event.key === "Escape") {
       if (entry.label === "" && entry.description === "") return;
       event.preventDefault();
-      setEntry(empty);
+      setEntry({ ...empty, meaning: entry.meaning });
       setEntryProblem(undefined);
     } else if (field === "label" && event.key === "ArrowUp" && !event.altKey) {
       event.preventDefault();
@@ -545,6 +682,7 @@ export function ListPanel({
     const on = { kind: "choice" as const, list, choice };
     // A choice a draft removes offers only what can be done with the draft.
     const editable = canEdit && !removed(choice) && choice.heldBy === undefined;
+    const keptFor = lastKept(list, choice);
     // Each item closes the menu and moves focus itself, so focus never stays on the menu's button.
     const act = (run: () => void) => () => {
       setMenuFor(undefined);
@@ -652,6 +790,7 @@ export function ListPanel({
               )}
               <Menu.Divider />
               <Menu.Item
+                disabled={keptFor !== undefined}
                 rightSection={<kbd>{shortcuts.retire}</kbd>}
                 onClick={act(() => {
                   retireOrRestore(choice);
@@ -661,6 +800,7 @@ export function ListPanel({
               </Menu.Item>
               <Menu.Item
                 color="red"
+                disabled={keptFor !== undefined}
                 rightSection={<kbd>{shortcuts.remove}</kbd>}
                 onClick={act(() => {
                   remove(choice);
@@ -668,6 +808,13 @@ export function ListPanel({
               >
                 Remove
               </Menu.Item>
+              {keptFor !== undefined && (
+                <Text fz="xs" c="dimmed" px="sm" py={4}>
+                  {keptFor === "any"
+                    ? "The last choice"
+                    : `Needed for ${meaningName(keptFor)}`}
+                </Text>
+              )}
             </>
           )}
           {choiceDraft && (
@@ -741,6 +888,8 @@ export function ListPanel({
             draft={draft}
             problem={editProblem}
             label=""
+            meanings={meanings}
+            meaningKept={meaningKeptBy(list, choice)}
             onChange={(next) => {
               setDraft(next);
               setEditProblem(undefined);
@@ -786,6 +935,15 @@ export function ListPanel({
             >
               {choice.description}
             </span>
+            {meanings.length > 0 && (
+              <span
+                className={classes.choiceMeaning}
+                role={cellRole}
+                data-field="meaning"
+              >
+                {meaningText(choice.meaning)}
+              </span>
+            )}
           </>
         )}
         {(canEdit ||
@@ -800,6 +958,7 @@ export function ListPanel({
       "aria-selected": canEdit ? isSelected : undefined,
       className: [
         classes.choice,
+        meanings.length > 0 ? classes.choiceWithMeaning : "",
         choice.retired ? classes.choiceRetired : "",
         isSelected || isEditing ? classes.choiceSelected : "",
         draftRowClass(
@@ -820,10 +979,13 @@ export function ListPanel({
               if (isEditing) return;
               const target = event.target as HTMLElement;
               if (target.closest("button")) return;
+              const field = target
+                .closest("[data-field]")
+                ?.getAttribute("data-field");
               startEdit(
                 choice,
-                target.closest("[data-field='description']")
-                  ? "description"
+                field === "description" || field === "meaning"
+                  ? field
                   : "label",
               );
             },
@@ -871,23 +1033,35 @@ export function ListPanel({
   const liveOffered = (list.orderDraft?.live ?? []).filter((id) =>
     offered.some((choice) => choice.id === id),
   );
-  const liveRow = (choice: Choice, key: string) => (
-    <div
-      key={key}
-      className={[classes.choice, classes.choiceLive].join(" ")}
-      aria-hidden="true"
-    >
-      <span className={classes.choiceName}>
-        {choice.draft?.live.label ?? choice.label}
-        <StatusMark tone="live" spaced>
-          Live
-        </StatusMark>
-      </span>
-      <span className={classes.choiceDescription}>
-        {choice.draft?.live.description ?? choice.description}
-      </span>
-    </div>
-  );
+  const liveRow = (choice: Choice, key: string) => {
+    const liveMeaning = choice.draft?.live.meaning ?? choice.meaning;
+    return (
+      <div
+        key={key}
+        className={[
+          classes.choice,
+          meanings.length > 0 ? classes.choiceWithMeaning : "",
+          classes.choiceLive,
+        ].join(" ")}
+        aria-hidden="true"
+      >
+        <span className={classes.choiceName}>
+          {choice.draft?.live.label ?? choice.label}
+          <StatusMark tone="live" spaced>
+            Live
+          </StatusMark>
+        </span>
+        <span className={classes.choiceDescription}>
+          {choice.draft?.live.description ?? choice.description}
+        </span>
+        {meanings.length > 0 && (
+          <span className={classes.choiceMeaning}>
+            {meaningText(liveMeaning)}
+          </span>
+        )}
+      </div>
+    );
+  };
   const liveRowsAfter = (previous: string | null) =>
     (showLive ? offered : [])
       .filter(
@@ -936,6 +1110,7 @@ export function ListPanel({
               >
                 {list.name}
               </h2>
+              {list.builtIn && <BuiltInMark />}
               {list.draft && (
                 <DraftMark
                   draft={withRetiring({ ...list, draft: list.draft })}
@@ -1009,7 +1184,17 @@ export function ListPanel({
             {canEdit && (
               <div
                 role="row"
-                className={[classes.choice, classes.entry].join(" ")}
+                className={[
+                  classes.choice,
+                  meanings.length > 0 ? classes.choiceWithMeaning : "",
+                  classes.entry,
+                ].join(" ")}
+                // Leaving the empty row, by clicking or tabbing elsewhere, adds what was typed, as
+                // leaving a choice being edited saves it.
+                onBlur={(event) => {
+                  if (event.currentTarget.contains(event.relatedTarget)) return;
+                  addEntry(false);
+                }}
               >
                 <span className={classes.plus} aria-hidden>
                   <Icon name="plus" size={14} />
@@ -1019,6 +1204,7 @@ export function ListPanel({
                   draft={entry}
                   problem={entryProblem}
                   label="New choice "
+                  meanings={meanings}
                   onChange={(next) => {
                     setEntry(next);
                     setEntryProblem(undefined);
@@ -1032,6 +1218,11 @@ export function ListPanel({
               </div>
             )}
           </div>
+          {list.builtIn && (
+            <Text fz="xs" c="dimmed" className={classes.builtInNote}>
+              {builtInNote(list.builtIn)}
+            </Text>
+          )}
           {shownRetired.length > 0 && (
             <>
               <Text

@@ -291,7 +291,24 @@
   overflow-wrap: anywhere;
 }
 
+/* Fathom's line on what a built-in list is for, lined up with its choices' names. */
+.builtInNote {
+  padding: 8px 4px 0 28px;
+  white-space: pre-line;
+}
+
+/* A list with meanings shows each choice's meaning between its description and its menu. */
+.choiceWithMeaning {
+  grid-template-columns: minmax(8rem, 13rem) 1fr 6.5rem 28px;
+}
+
+.choiceMeaning {
+  min-width: 0;
+  padding-top: 4px;
+}
+
 .choiceRetired .choiceName,
+.choiceRetired .choiceMeaning,
 .choiceRetired .choiceDescription {
   color: var(--mantine-color-dimmed);
 }
@@ -325,6 +342,11 @@
   line-height: 20px;
   resize: none;
   field-sizing: content;
+}
+
+/* A menu insets its text further than a text field, so it is pulled back to line up too. */
+select.cellInput {
+  padding-left: 2px;
 }
 
 .cellInput:focus {

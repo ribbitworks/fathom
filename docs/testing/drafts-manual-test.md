@@ -258,7 +258,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 3.** Read the Choices column of the **Positions** row with the yellow dot.
-  - **Expected:** **(4)** Manager, Software Engineer, Test Engineer, SDET, and **Architect** struck through.
+  - **Expected:** **(6)** Engineering Manager, Employee, Manager, Software Engineer, Test Engineer, SDET, and **Architect** struck through.
   - **Notes:**
 
 ### DRAFT-11: Approving All Skips a Draft That Depends on a Rejected Draft
@@ -346,7 +346,7 @@ Run the test cases in order. Start with R0, then R1. Tick each step whose expect
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Positions** and **Sites** rows.
-  - **Expected:** Positions: **Draft**, **(4)** Software Engineer, Test Engineer, SDET, Manager. Sites: **Draft**, **(4)** Kestrel Bay, Northmere Labs, Ashgrove, Corran Quay.
+  - **Expected:** Positions: **Draft**, **(6)** Employee, Manager, Software Engineer, Test Engineer, SDET, Engineering Manager. Sites: **Draft**, **(4)** Kestrel Bay, Northmere Labs, Ashgrove, Corran Quay.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Show retired (1)** under the table.

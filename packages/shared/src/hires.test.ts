@@ -7,10 +7,10 @@ import { describe, expect, it } from "vitest";
 import {
   hireChangeSchema,
   hireRequestSchema,
-  hiringMeaningNames,
   hiringMeaningSchema,
   temporaryId,
 } from "./hires.ts";
+import { meaningsOf } from "./lists.ts";
 import { personLengths } from "./people.ts";
 
 const position = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
@@ -18,11 +18,8 @@ const manager = "6f1c2b9e-4d3a-4f8b-9c7e-2a1b3c4d5e6f";
 const state = "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d";
 
 describe("hiring meanings and temporary IDs", () => {
-  it("names each meaning", () => {
-    expect(Object.keys(hiringMeaningNames)).toEqual(
-      hiringMeaningSchema.options,
-    );
-    expect(Object.values(hiringMeaningNames)).toEqual(["Proposed", "Open"]);
+  it("are those of the hiring states list", () => {
+    expect(hiringMeaningSchema.options).toEqual(meaningsOf("hiring-states"));
   });
 
   it("writes a temporary ID as TBD- and its number", () => {

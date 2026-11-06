@@ -8,18 +8,14 @@
 import { z } from "zod";
 import { daySchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
+import { meaningSchema } from "./lists.ts";
 import { recordIdSchema, temporaryIdPrefix } from "./people.ts";
 
 // The meanings Fathom fixes for the choices of the hiring states list: Proposed, the headcount not
 // yet approved, and Open, approved.
-export const hiringMeaningSchema = z.enum(["proposed", "open"]);
+export const hiringMeaningSchema = meaningSchema.extract(["proposed", "open"]);
 
 export type HiringMeaning = z.infer<typeof hiringMeaningSchema>;
-
-export const hiringMeaningNames: Readonly<Record<HiringMeaning, string>> = {
-  proposed: "Proposed",
-  open: "Open",
-};
 
 // A hire with no requisition yet is known by a temporary ID: the prefix and its number, such as
 // TBD-7.

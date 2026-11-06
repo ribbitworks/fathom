@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The dialog for creating a list or editing one: its name, description, and who can see the values
-// chosen from it. Editing also offers retiring or restoring the list, and deleting it. The name is
+// chosen from it. Editing also offers retiring or restoring the list, and deleting it, except for a
+// built-in list, which is kept, with the visibility of the column that uses it. The name is
 // checked against the other lists as it is typed. The dialog cannot be closed while a change is
 // being saved.
 
@@ -37,10 +38,13 @@ export function VisibleTo({
   id,
   value,
   onChange,
+  fixed,
 }: {
   id: string;
   value: Tier;
   onChange: (tier: Tier) => void;
+  // Why the visibility cannot be changed here, when it cannot.
+  fixed?: string | undefined;
 }) {
   return (
     <Stack gap={6}>
@@ -49,6 +53,8 @@ export function VisibleTo({
       </Text>
       <SegmentedControl
         aria-labelledby={id}
+        aria-describedby={fixed === undefined ? undefined : `${id}-fixed`}
+        disabled={fixed !== undefined}
         value={value}
         onChange={(chosen) => {
           onChange(tierSchema.parse(chosen));
@@ -59,6 +65,11 @@ export function VisibleTo({
         }))}
         w="fit-content"
       />
+      {fixed !== undefined && (
+        <Text fz="xs" c="dimmed" id={`${id}-fixed`}>
+          {fixed}
+        </Text>
+      )}
     </Stack>
   );
 }
@@ -109,6 +120,7 @@ export function ListDialog({
   onCancel: () => void;
   onBusy: (busy: boolean) => void;
 }) {
+  const builtIn = Boolean(list?.builtIn);
   const [name, setName] = useState(list?.name ?? "");
   const [description, setDescription] = useState(list?.description ?? "");
   const [visibility, setVisibility] = useState<Tier>(
@@ -187,6 +199,11 @@ export function ListDialog({
           id="list-visibility"
           value={visibility}
           onChange={setVisibility}
+          fixed={
+            builtIn
+              ? "Visible to whoever can see the column that uses this list"
+              : undefined
+          }
         />
         {saving.error && !refusedAsTaken && (
           <Text fz="sm" c="red" role="alert">
@@ -197,7 +214,7 @@ export function ListDialog({
           </Text>
         )}
         <Group gap="xs" mt="xs">
-          {list && (
+          {list && !builtIn && (
             <>
               <Button
                 variant="subtle"

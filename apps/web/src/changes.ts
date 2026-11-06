@@ -13,6 +13,8 @@ import {
   type ChangeKind,
   type ChangeValue,
   isDay,
+  meaningName,
+  meaningSchema,
   recordSearchText,
   tierSchema,
 } from "@fathom/shared";
@@ -68,6 +70,7 @@ const fieldNames = new Map([
   ["firstCycle", "First cycle"],
   ["lastCycle", "Last cycle"],
   ["colour", "Colour"],
+  ["meaning", "Meaning"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {
@@ -90,6 +93,10 @@ function valueText(field: string, value: ChangeValue): string | null {
   if (field === "visibility") {
     const tier = tierSchema.safeParse(value);
     if (tier.success) return visibilityName(tier.data);
+  }
+  if (field === "meaning") {
+    const meaning = meaningSchema.safeParse(value);
+    if (meaning.success) return meaningName(meaning.data);
   }
   return value;
 }

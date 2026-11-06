@@ -46,7 +46,7 @@ Files that cannot hold comments, or that tools generate and that are never edite
 
 ## User Experience
 
-When the change affects the user interface, it follows the principles and rules in [Visual Design](../design/visual-design.md).
+When the change affects the user interface, it follows the principles and rules in [Visual Design](../design/visual-design.md). Read aloud every sentence the change adds or rewords that people see, the server's refusals and the manual tests' expected text included, and flag any that a person would not say, as [Visual Design § Principles](../design/visual-design.md#principles) sets out under "Words people say".
 
 ## Manual Tests
 

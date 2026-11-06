@@ -242,6 +242,66 @@ describe("who sees the Lists page", () => {
 });
 
 describe("the table of lists", () => {
+  it("keeps the last position offered", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...skills,
+              builtIn: "positions",
+              name: "Positions",
+              visibility: "general",
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l2");
+    await screen.findByRole("heading", { name: "Positions", level: 2 });
+    focusRow("c5");
+    await userEvent.keyboard("{ContextMenu}");
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu)
+        .getByRole("menuitem", { name: startsWith("Retire") })
+        .hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(
+      within(menu)
+        .getByRole("menuitem", { name: startsWith("Remove") })
+        .hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(within(menu).getByText("The last choice")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    focusRow("c5");
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(document.activeElement?.getAttribute("aria-label")).toBe("name");
+    });
+    expect(screen.queryByText("The last choice")).toBeNull();
+  });
+
+  it("says under Positions' choices what the list is for", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [{ ...locations, builtIn: "positions", name: "Positions" }],
+        }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Positions", level: 2 });
+    expect(
+      screen.getByText(
+        /Every person and planned hire has one of these positions\.\s+Keep at least one\./,
+      ),
+    ).toBeTruthy();
+  });
+
   it("shows each current list with its description and offered choices in order", async () => {
     serverAnswers({
       "GET /api/session": viewer,
@@ -604,6 +664,34 @@ describe("adding choices", () => {
     await waitFor(() => {
       expect(undone(fetch)).toEqual([s1]);
     });
+  });
+
+  it("adds what was typed once focus leaves the empty row, without taking focus back", async () => {
+    const { fetch } = await openPanel({
+      "POST /api/lists/l1/choices": added("Fenwick Down"),
+    });
+    await userEvent.type(entryName(), "Fenwick Down");
+    await userEvent.click(
+      screen.getByRole("heading", { name: "Locations", level: 2 }),
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/lists/l1/choices")).toEqual([
+        { choices: [{ label: "Fenwick Down", description: "" }] },
+      ]);
+    });
+    expect(entryName().value).toBe("");
+    expect(document.activeElement).not.toBe(entryName());
+  });
+
+  it("shows what is wrong once focus leaves the empty row, adding nothing", async () => {
+    const { fetch } = await openPanel();
+    await userEvent.type(entryName(), "Northmere");
+    await userEvent.click(
+      screen.getByRole("heading", { name: "Locations", level: 2 }),
+    );
+    expect(await screen.findByText("Already in this list")).toBeTruthy();
+    expect(bodyOf(fetch, "POST", "/api/lists/l1/choices")).toEqual([]);
+    expect(document.activeElement).not.toBe(entryName());
   });
 
   it("says what is wrong with a new choice, in place", async () => {
@@ -3133,5 +3221,274 @@ describe("unpublished and held changes on the Lists page", () => {
     expect(
       within(await screen.findByRole("menu")).queryByText("Waiting drafts"),
     ).toBeNull();
+  });
+});
+
+describe("built-in lists and lists with meanings", () => {
+  const states = {
+    id: "l5",
+    name: "Hiring states",
+    description: "",
+    visibility: "confidential",
+    retired: false,
+    builtIn: "hiring-states",
+    choices: [
+      choice("c10", "Proposed", { meaning: "proposed" }),
+      choice("c11", "Open", { meaning: "open" }),
+      choice("c12", "Approved", { meaning: "open" }),
+    ],
+  };
+  const withStates = () =>
+    Response.json({ lists: [locations, skills, empty, regions, states] });
+
+  async function openStates(answers: Answers = {}) {
+    const fetch = serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": withStates,
+      [`POST /api/undo/${s1}`]: savedAs(u1),
+      ...answers,
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Hiring states", level: 2 });
+    await waitFor(() => {
+      expect(panel().contains(document.activeElement)).toBe(true);
+    });
+    return fetch;
+  }
+
+  it("marks a built-in list, and does not offer retiring or deleting it or changing its visibility", async () => {
+    await openStates();
+    const table = screen.getByRole("table", { name: "Lists" });
+    const stateRow = within(table)
+      .getByRole("link", { name: "Hiring states" })
+      .closest("[role='row']") as HTMLElement;
+    expect(within(stateRow).getByText("Built in")).toBeTruthy();
+    expect(within(panel()).getByText("Built in")).toBeTruthy();
+    expect(
+      within(panel()).getByText(
+        /Proposed: the request to hire is not yet approved\.\s+Open: the request to hire is approved\.\s+Keep at least one choice for each\./,
+      ),
+    ).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Edit list" }));
+    const dialog = await screen.findByRole("dialog", { name: "Edit list" });
+    expect(within(dialog).queryByRole("button", { name: "Retire list" })).toBe(
+      null,
+    );
+    expect(within(dialog).queryByRole("button", { name: "Delete list" })).toBe(
+      null,
+    );
+    expect(
+      within(dialog).getByText(
+        "Visible to whoever can see the column that uses this list",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(dialog).getByRole<HTMLInputElement>("radio", {
+        name: "Confidential",
+      }).disabled,
+    ).toBe(true);
+  });
+
+  it("shows each choice's meaning, and adds choices, pasted too, with the meaning chosen", async () => {
+    const fetch = await openStates({
+      "POST /api/lists/l5/choices": () =>
+        Response.json(
+          {
+            choices: [choice("c13", "Budgeted", { meaning: "open" })],
+            changeSetId: s1,
+          },
+          { status: 201 },
+        ),
+    });
+    expect(
+      within(row("c10")).getByText("Proposed", {
+        selector: "[data-field='meaning']",
+      }),
+    ).toBeTruthy();
+    expect(within(row("c12")).getByText("Open")).toBeTruthy();
+    const meaning =
+      screen.getByLabelText<HTMLSelectElement>("New choice meaning");
+    expect(meaning.value).toBe("proposed");
+    await userEvent.selectOptions(meaning, "open");
+    await userEvent.type(entryName(), "Budgeted{Enter}");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/lists/l5/choices")).toEqual([
+        { choices: [{ label: "Budgeted", description: "", meaning: "open" }] },
+      ]);
+    });
+    // The meaning chosen stays for the next choice, and pasted lines take it.
+    expect(meaning.value).toBe("open");
+    act(() => {
+      entryName().focus();
+    });
+    await userEvent.paste("Sourcing\nScreening");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/lists/l5/choices")).toHaveLength(2);
+    });
+    expect(bodyOf(fetch, "POST", "/api/lists/l5/choices")[1]).toEqual({
+      choices: [
+        { label: "Sourcing", description: "", meaning: "open" },
+        { label: "Screening", description: "", meaning: "open" },
+      ],
+    });
+  });
+
+  it("gives a choice another meaning when edited", async () => {
+    const fetch = await openStates({
+      "PUT /api/lists/l5/choices/c12": () =>
+        Response.json({
+          choice: choice("c12", "Approved", { meaning: "proposed" }),
+          changeSetId: s1,
+        }),
+    });
+    focusRow("c12");
+    await userEvent.keyboard("{Enter}");
+    await userEvent.selectOptions(screen.getByLabelText("meaning"), "proposed");
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PUT", "/api/lists/l5/choices/c12")).toEqual([
+        { label: "Approved", description: "", meaning: "proposed" },
+      ]);
+    });
+  });
+
+  it("shows nothing for a meaning the server no longer knows, and a changed meaning's live one under it", async () => {
+    const changed = {
+      id: "l5",
+      name: "Hiring states",
+      description: "",
+      visibility: "confidential",
+      retired: false,
+      builtIn: "hiring-states",
+      choices: [
+        choice("c10", "Proposed", { meaning: "proposed" }),
+        choice("c11", "Open", {
+          meaning: "proposed",
+          draft: {
+            action: "changed",
+            changed: ["meaning"],
+            live: { meaning: "open" },
+            state: "waiting",
+            madeBy: "Fictional Editor",
+            madeAt: "2026-11-01T10:00:00.000Z",
+          },
+        }),
+        choice("c14", "Unknown"),
+      ],
+    };
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () => Response.json({ lists: [changed] }),
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Hiring states", level: 2 });
+    const meaningOf = (element: Element | null) =>
+      element?.querySelector("[data-field='meaning']")?.textContent ??
+      element?.lastElementChild?.textContent;
+    expect(meaningOf(row("c14"))).toBe("");
+    expect(meaningOf(row("c11"))).toBe("Proposed");
+    expect(row("c11").nextElementSibling?.textContent).toContain("Open");
+    focusRow("c14");
+    await userEvent.keyboard("{Enter}");
+    const meaning = screen.getByLabelText<HTMLSelectElement>("meaning");
+    expect(meaning.value).toBe("");
+    expect(meaning.selectedOptions[0]?.textContent).toBe("Choose a meaning");
+  });
+
+  it("edits the name of the only choice for a meaning when its meaning is clicked, and saves it with Tab from the description", async () => {
+    const fetch = await openStates({
+      "PUT /api/lists/l5/choices/c10": () =>
+        Response.json({
+          choice: choice("c10", "Requested", { meaning: "proposed" }),
+          changeSetId: s1,
+        }),
+    });
+    await userEvent.click(
+      within(row("c10")).getByText("Proposed", {
+        selector: "[data-field='meaning']",
+      }),
+    );
+    const name = await screen.findByLabelText<HTMLInputElement>("name");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(name);
+    });
+    await userEvent.clear(name);
+    await userEvent.type(name, "Requested");
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByLabelText("description"));
+    await userEvent.tab();
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PUT", "/api/lists/l5/choices/c10")).toEqual([
+        { label: "Requested", description: "", meaning: "proposed" },
+      ]);
+    });
+  });
+
+  it("keeps the last choice offered for a meaning offered, with that meaning", async () => {
+    const fetch = await openStates();
+    focusRow("c10");
+    await userEvent.keyboard("r");
+    await userEvent.keyboard("{Delete}");
+    await userEvent.keyboard("{ContextMenu}");
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu)
+        .getByRole("menuitem", { name: startsWith("Retire") })
+        .hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(
+      within(menu)
+        .getByRole("menuitem", { name: startsWith("Remove") })
+        .hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(within(menu).getByText("Needed for Proposed")).toBeTruthy();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    focusRow("c10");
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByLabelText<HTMLSelectElement>("meaning").disabled).toBe(
+      true,
+    );
+    expect(screen.getByText("Needed for Proposed")).toBeTruthy();
+    // The meaning cannot change, so Tab leaves the row from the description.
+    await waitFor(() => {
+      expect(document.activeElement?.getAttribute("aria-label")).toBe("name");
+    });
+    await userEvent.keyboard("{Tab}");
+    expect(document.activeElement?.getAttribute("aria-label")).toBe(
+      "description",
+    );
+    await userEvent.keyboard("{Tab}");
+    await waitFor(() => {
+      expect(screen.queryByLabelText("meaning")).toBeNull();
+    });
+    // Open has another choice, so either can be retired.
+    focusRow("c11");
+    await userEvent.keyboard("{ContextMenu}");
+    const other = await screen.findByRole("menu");
+    expect(
+      within(other)
+        .getByRole("menuitem", { name: startsWith("Retire") })
+        .hasAttribute("data-disabled"),
+    ).toBe(false);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    focusRow("c11");
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => {
+      expect(document.activeElement?.getAttribute("aria-label")).toBe("name");
+    });
+    await userEvent.keyboard("{Tab}{Tab}");
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("meaning");
+    await userEvent.keyboard("{Escape}");
+    expect(
+      fetch.mock.calls.filter(
+        ([, init]) => init?.method !== "GET" && init?.method !== undefined,
+      ),
+    ).toEqual([]);
   });
 });

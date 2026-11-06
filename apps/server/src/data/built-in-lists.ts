@@ -8,7 +8,8 @@ import { type Database, listItems, lists } from "@fathom/db";
 import {
   type BuiltInList,
   type HiringMeaning,
-  hiringMeaningNames,
+  meaningName,
+  meaningsOf,
 } from "@fathom/shared";
 import { and, asc, eq } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
@@ -45,7 +46,7 @@ export async function checkBuiltInChoice(
   const name = columnName(key);
   if (
     choice?.builtIn !== key ||
-    (key === "hiring-states" && choice.meaning === null)
+    (meaningsOf(key).length > 0 && choice.meaning === null)
   ) {
     throw new BadRequestError(`Choose a ${name} from its list`);
   }
@@ -75,7 +76,7 @@ export async function firstChoiceMeaning(
     .limit(1);
   if (choice === undefined) {
     throw new ConflictError(
-      `No ${columnName(key)} is offered meaning ${String(new Map(Object.entries(hiringMeaningNames)).get(meaning))}; choose one`,
+      `No ${columnName(key)} means ${meaningName(meaning)}. Choose one for the hire.`,
     );
   }
   return choice.id;

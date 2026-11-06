@@ -52,6 +52,7 @@ import {
   selectionOf,
 } from "./list-drafts.tsx";
 import {
+  BuiltInMark,
   type ChoiceActions,
   entryNameId,
   ListPanel,
@@ -237,6 +238,11 @@ function ListsTable({
             >
               {list.name}
             </Link>
+            {list.builtIn && (
+              <span className={classes.markGap}>
+                <BuiltInMark />
+              </span>
+            )}
             {/* The row's mark sums up the list and its choices, so it carries the list's own
                 unpublished changes; without one, as when Drafts only leaves out a rejected
                 draft, they are marked on their own. */}
@@ -441,11 +447,17 @@ export function ListsPage({
         list,
         (current) => ({
           ...current,
-          choices: current.choices.map((other) =>
-            other.id === choice.id
-              ? drafting({ ...other, ...request }, ["label", "description"])
-              : other,
-          ),
+          choices: current.choices.map((other) => {
+            if (other.id !== choice.id) return other;
+            const { meaning, ...details } = request;
+            return meaning === undefined || meaning === null
+              ? drafting({ ...other, ...details }, ["label", "description"])
+              : drafting({ ...other, ...details, meaning }, [
+                  "label",
+                  "description",
+                  "meaning",
+                ]);
+          }),
         }),
         () => updateChoice(list.id, choice.id, request),
         `Fathom could not save ${request.label}.`,

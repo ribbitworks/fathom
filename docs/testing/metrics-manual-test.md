@@ -124,7 +124,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** **People** page open. Live only shown (P3).
 
 - [x] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
-  - **Expected:** The count line says **150 people**. The rows are Software Engineer 69 (46%), Test Engineer 35 (23.3%), SDET 30 (20%), Manager 16 (10.7%) and Architect 0 (0%). No row shows **Live**.
+  - **Expected:** The count line says **150 people**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 69 (46%), Test Engineer 35 (23.3%), SDET 30 (20%), Engineering Manager 16 (10.7%) and Architect 0 (0%). No row shows **Live**.
   - **Notes:**
 
 - [x] **Step 2.** Set **Break down by** to **Role on team**.
@@ -156,7 +156,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** As METRICS-02, with **Break down by** set to **Position**.
 
 - [ ] **Step 1.** Open the **Site** column menu, select **Filter…**, and pick only **Ashgrove**. Press Esc.
-  - **Expected:** The bar above the table says **47 of 150**. The count line says **47 people**. The rows are Software Engineer 20 (42.6%), Test Engineer 12 (25.5%), SDET 6 (12.8%), Manager 9 (19.1%) and Architect 0 (0%).
+  - **Expected:** The bar above the table says **47 of 150**. The count line says **47 people**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 20 (42.6%), Test Engineer 12 (25.5%), SDET 6 (12.8%), Engineering Manager 9 (19.1%) and Architect 0 (0%).
   - **Notes:**
 
 - [ ] **Step 2.** Type `Corran` in the search box.

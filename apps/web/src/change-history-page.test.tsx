@@ -229,6 +229,18 @@ describe("the entries", () => {
           record(
             "list-item",
             "changed",
+            [
+              { field: "meaning", oldValue: "open", newValue: "proposed" },
+              { field: "meaning", oldValue: null, newValue: "filled" },
+            ],
+            "Approved",
+            "Hiring states",
+          ),
+        ]),
+        entry([
+          record(
+            "list-item",
+            "changed",
             [{ field: "retired", oldValue: true, newValue: false }],
             "North",
             "Sites",
@@ -322,6 +334,7 @@ describe("the entries", () => {
       "Fathom changed the list Sites: Visibility from Everyone to Restricted; Description cleared, from Where; Retired from No to Yes; Visibility set to secret",
       "Fictional Person added the list Sites",
       "Fictional Person deleted a person",
+      "Fictional Person changed the choice Approved in Hiring states: Meaning from Open to Proposed; Meaning set to filled",
       "Fictional Person restored the choice North in Sites",
       "Fictional Person retired the choice North",
       "Fictional Person moved the choice North in Sites to the top",
