@@ -8,11 +8,11 @@
 -- values become people's and hires' positions, the first in the list's order where it holds
 -- several, with anyone left without one given a choice named Position not set. The column itself is
 -- removed, its place in the column order and in saved views taken by the built-in Position column;
--- other columns drawing on the list are kept. Drafts that would retire, remove, or change the
--- visibility of the list that becomes Positions are dropped, since a built-in list allows none of
--- those. Each hire's state becomes the choice meaning Proposed or Open that it maps to, with a
--- temporary number of its own, and cancelled and filled hires are removed, with every planned hire's
--- draft, since drafts hold the old details. Employee IDs that look like temporary IDs gain a prefix.
+-- other columns drawing on the list are kept. Drafts that would retire or remove the list that
+-- becomes Positions are dropped, since a built-in list allows neither. Each hire's state becomes
+-- the choice meaning Proposed or Open that it maps to, with a temporary number of its own, and
+-- cancelled and filled hires are removed, with every planned hire's draft, since drafts hold the
+-- old details. Employee IDs that look like temporary IDs gain a prefix.
 
 CREATE SEQUENCE "fathom"."planned_hire_temporary_numbers" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1;--> statement-breakpoint
 ALTER TABLE "fathom"."list_items" ADD COLUMN "meaning" text;--> statement-breakpoint
@@ -20,8 +20,8 @@ ALTER TABLE "fathom"."lists" ADD COLUMN "built_in" text;--> statement-breakpoint
 ALTER TABLE "fathom"."list_items" ADD CONSTRAINT "list_items_meaning_known" CHECK ("fathom"."list_items"."meaning" IS NULL OR "fathom"."list_items"."meaning" IN ('proposed', 'open'));--> statement-breakpoint
 CREATE UNIQUE INDEX "lists_built_in_index" ON "fathom"."lists" USING btree ("built_in");--> statement-breakpoint
 -- The Position column on people, if there is one, is the first column on people named Position.
--- The built-in Positions list, always General and never retired.
-UPDATE "fathom"."lists" SET "built_in" = 'positions', "visibility" = 'general', "retired" = false
+-- The built-in Positions list, keeping its visibility, and never retired.
+UPDATE "fathom"."lists" SET "built_in" = 'positions', "retired" = false
 WHERE "id" = coalesce(
   (SELECT "list_id" FROM "fathom"."fields" WHERE "table_name" = 'people' AND "type" = 'choice' AND lower("name") = 'position' ORDER BY "id" LIMIT 1),
   (SELECT "id" FROM "fathom"."lists" WHERE lower("name") = 'positions' ORDER BY "id" LIMIT 1)
@@ -42,27 +42,26 @@ DELETE FROM "fathom"."drafts" WHERE "record_type" = 'list' AND "action" = 'delet
   AND "record_id" = (SELECT "id"::text FROM "fathom"."lists" WHERE "built_in" = 'positions');--> statement-breakpoint
 DELETE FROM "fathom"."unpublished_drafts" WHERE "record_type" = 'list' AND "action" = 'deleted'
   AND "record_id" = (SELECT "id"::text FROM "fathom"."lists" WHERE "built_in" = 'positions');--> statement-breakpoint
-UPDATE "fathom"."drafts" SET "fields" = "fields" - 'visibility' - 'retired'
+UPDATE "fathom"."drafts" SET "fields" = "fields" - 'retired'
 WHERE "record_type" = 'list'
   AND "record_id" = (SELECT "id"::text FROM "fathom"."lists" WHERE "built_in" = 'positions');--> statement-breakpoint
-UPDATE "fathom"."unpublished_drafts" SET "fields" = "fields" - 'visibility' - 'retired'
+UPDATE "fathom"."unpublished_drafts" SET "fields" = "fields" - 'retired'
 WHERE "record_type" = 'list'
   AND "record_id" = (SELECT "id"::text FROM "fathom"."lists" WHERE "built_in" = 'positions');--> statement-breakpoint
 DELETE FROM "fathom"."drafts" WHERE "record_type" = 'list' AND "fields" = '{}'::jsonb
   AND "record_id" = (SELECT "id"::text FROM "fathom"."lists" WHERE "built_in" = 'positions');--> statement-breakpoint
--- The hiring states list, as sensitive as the State column, starting with one choice for each
--- meaning, named apart from any list already called Hiring states.
+-- The hiring states list, starting General with one choice for each meaning, named apart from any
+-- list already called Hiring states.
 INSERT INTO "fathom"."lists" ("name", "description", "visibility", "built_in")
 SELECT CASE WHEN EXISTS (SELECT 1 FROM "fathom"."lists" WHERE lower("name") = 'hiring states')
     THEN 'Hiring states (built in)' ELSE 'Hiring states' END,
-  '', 'confidential', 'hiring-states';--> statement-breakpoint
+  '', 'general', 'hiring-states';--> statement-breakpoint
 INSERT INTO "fathom"."list_items" ("list_id", "label", "position", "meaning")
 SELECT "id", "label", "position", "meaning"
 FROM "fathom"."lists",
   (VALUES ('Request to hire', 1, 'proposed'), ('Approved to hire', 2, 'open')) AS "choice"("label", "position", "meaning")
 WHERE "built_in" = 'hiring-states';--> statement-breakpoint
 ALTER TABLE "fathom"."lists" ADD CONSTRAINT "lists_built_in_known" CHECK ("fathom"."lists"."built_in" IS NULL OR "fathom"."lists"."built_in" IN ('positions', 'hiring-states'));--> statement-breakpoint
-ALTER TABLE "fathom"."lists" ADD CONSTRAINT "lists_positions_general" CHECK ("fathom"."lists"."built_in" IS DISTINCT FROM 'positions' OR "fathom"."lists"."visibility" = 'general');--> statement-breakpoint
 ALTER TABLE "fathom"."lists" ADD CONSTRAINT "lists_built_in_kept" CHECK ("fathom"."lists"."built_in" IS NULL OR NOT "fathom"."lists"."retired");--> statement-breakpoint
 -- Planned hires keep only the open ones, in the state each maps to, with no drafts.
 DELETE FROM "fathom"."drafts" WHERE "record_type" = 'planned-hire';--> statement-breakpoint

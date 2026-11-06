@@ -48,7 +48,9 @@ import {
 import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
 import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
+import { readHireTier } from "./hires.ts";
 import { personTier } from "./people.ts";
+import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { recordKinds } from "./records.ts";
 import { viewTiersNow } from "./views.ts";
@@ -219,8 +221,8 @@ const uuidPattern =
   /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
 
 // Names each planned hire given by its position and ID, as the history the actor may see last
-// recorded them, such as "Software Engineer, TBD-7". Removing a hire records no values, so the name
-// it had stays.
+// recorded them, such as "Software Engineer, TBD-7", or by its ID alone to those who cannot see the
+// Positions list's tier. Removing a hire records no values, so the name it had stays.
 async function nameHires(
   database: Database,
   actor: Actor,
@@ -263,6 +265,12 @@ async function nameHires(
     positions.filter((id) => !facts.names.has(id)),
     facts,
   );
+  const seesPositions = seesTier(
+    actor,
+    await builtInTier(database, "positions"),
+  );
+  const named = (position: string, shownId: string) =>
+    seesPositions ? `${position}, ${shownId}` : shownId;
   for (const [id, fields] of latest) {
     const position = facts.names.get(String(fields.get("positionId")));
     const requisition = fields.get("requisition");
@@ -270,7 +278,7 @@ async function nameHires(
       typeof requisition === "string"
         ? requisition
         : temporaryId(Number(fields.get("temporaryNumber")));
-    facts.names.set(id, `${String(position)}, ${shownId}`);
+    facts.names.set(id, named(String(position), shownId));
   }
   // Hires carried over from before they had positions and IDs are named as they are now.
   const unnamed = [...new Set(ids)].filter((id) => !latest.has(id));
@@ -287,7 +295,10 @@ async function nameHires(
       .where(inArray(plannedHires.id, chunk))) {
       facts.names.set(
         hire.id,
-        `${hire.position}, ${hire.requisition ?? temporaryId(Number(hire.temporaryNumber))}`,
+        named(
+          hire.position,
+          hire.requisition ?? temporaryId(Number(hire.temporaryNumber)),
+        ),
       );
     }
   }
@@ -362,12 +373,14 @@ async function visibleRows(
   tierNow: (field: string) => Tier,
 ): Promise<{ row: StoredChange; tier: Tier }[]> {
   const listTier = await listTiersNow(database, facts);
-  // A person's choices are as sensitive as the lists they come from, and as their column's list,
-  // even once the column is deleted or draws on another list, and their links as the web link
-  // column's visibility last recorded, even once the column is deleted.
+  const hireTierNow = await readHireTier(database);
+  // A person's details are as sensitive as they are now, such as a position as its list, their
+  // choices as the lists they come from, and as their column's list, even once the column is
+  // deleted or draws on another list, and their links as the web link column's visibility last
+  // recorded, even once the column is deleted.
   const valueTiers = (row: StoredChange): Tier[] => {
     const columnId = fieldOfValue(row.field);
-    if (columnId === null) return [];
+    if (columnId === null) return [tierNow(row.field)];
     const visibility = facts.visibilities.get(columnId);
     return [
       tierNow(row.field),
@@ -414,17 +427,21 @@ async function visibleRows(
   return rows.flatMap((row) => {
     // A tier the server no longer knows is treated as the most sensitive rather than trusted.
     const recorded = storedTier(row.tier);
-    const tier = mostSensitive([
+    // Each tier is its own permission, so the reader must see every one of them, not only the most
+    // sensitive.
+    const tiers = [
       recorded,
       ...(row.recordType === "person" ? valueTiers(row) : []),
+      ...(row.recordType === "planned-hire" ? [hireTierNow(row.field)] : []),
       ...(row.recordType === "saved-view"
         ? // Every view in the rows has its tier, found just above.
           [viewTiers.get(row.recordId) as Tier]
         : []),
-    ]);
+    ];
+    const tier = mostSensitive(tiers);
     const seen = planKinds.includes(row.recordType as RecordType)
       ? seesPlanKinds(actor) && tier === "general"
-      : seesTier(actor, tier);
+      : tiers.every((each) => seesTier(actor, each));
     return seen ? [{ row, tier }] : [];
   });
 }

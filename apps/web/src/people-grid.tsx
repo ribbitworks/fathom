@@ -226,6 +226,7 @@ export function columnsFor(
   order: readonly string[],
   showDates: boolean,
   people: readonly Person[] = [],
+  showPosition = true,
 ): Column[] {
   const builtIn = (
     key: DetailKey,
@@ -253,7 +254,8 @@ export function columnsFor(
     choices: (
       lists.find(({ builtIn }) => builtIn === "positions")?.choices ?? []
     ).filter(({ draft }) => draft?.action !== "created"),
-    value: (person) => [person.positionId],
+    value: (person) =>
+      person.positionId === undefined ? [] : [person.positionId],
     live: (draft) => chosen(draft.live.positionId),
     // A required column is never saved empty, so a change always holds a position.
     change: (value) => ({ positionId: asIds(value)[0] }),
@@ -262,7 +264,7 @@ export function columnsFor(
     [
       builtIn("preferredName", "text", true, personLengths.preferredName),
       builtIn("employeeId", "text", true, personLengths.employeeId),
-      position,
+      ...(showPosition ? [position] : []),
       ...(showDates
         ? [builtIn("startDate", "date"), builtIn("endDate", "date")]
         : []),
@@ -413,8 +415,8 @@ function recordProblem(
 // The request that adds a person, from each column's value as its kind would save it, with every
 // choice column named and no link left empty.
 function requestFor(parts: readonly PersonChange[]): PersonRequest {
-  // Every table has its name, Employee ID, Position and Manager columns, and its dates together or
-  // not at all.
+  // Every table that adds people has its name, Employee ID, Position and Manager columns, since
+  // those who cannot see positions add none, and its dates together or not at all.
   const {
     preferredName,
     employeeId,
@@ -452,6 +454,7 @@ function requestFor(parts: readonly PersonChange[]): PersonRequest {
 
 function peopleTable(
   showDates: boolean,
+  showPosition: boolean,
   people: readonly Person[],
 ): RecordTable<Person, PersonChange, PersonRequest> {
   return {
@@ -462,7 +465,7 @@ function peopleTable(
     removeLabel: "Remove person",
     nameOf: (person) => person.preferredName,
     columnsFor: (fields, lists, order, records) =>
-      columnsFor(fields, lists, order, showDates, records),
+      columnsFor(fields, lists, order, showDates, records, showPosition),
     liveRecords: livePeople,
     draftFields: (person, draft, fields, lists) =>
       personDraftFields(person, draft, fields, lists, people),
@@ -479,13 +482,22 @@ type PeopleGridProps = Omit<
   // Everyone the user may see; the view decides who is shown, and in what order.
   people: Person[];
   showDates: boolean;
+  // Whether the user sees the Positions list's tier; without it they see no Position column and
+  // cannot add people, who each need a position.
+  showPosition?: boolean;
 };
 
-export function PeopleGrid({ people, showDates, ...props }: PeopleGridProps) {
+export function PeopleGrid({
+  people,
+  showDates,
+  showPosition = true,
+  ...props
+}: PeopleGridProps) {
   return (
     <RecordGrid
       records={people}
-      table={peopleTable(showDates, people)}
+      table={peopleTable(showDates, showPosition, people)}
+      canAdd={showPosition}
       {...props}
     />
   );

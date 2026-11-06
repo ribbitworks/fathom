@@ -11,7 +11,12 @@ import { mostSensitive } from "../access.ts";
 import { type Draft, readDrafts, refuseHeld, type Viewer } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
 import { draftedList, listTier, readState } from "./lists.ts";
-import { type ColumnInfo, inListOrder, readColumns } from "./values.ts";
+import {
+  type ColumnInfo,
+  inListOrder,
+  type PeopleColumns,
+  readColumns,
+} from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 
@@ -30,7 +35,7 @@ export async function columnsWithAdded(
   reader: Reader,
   viewer: Viewer,
   lock = false,
-): Promise<ColumnInfo[]> {
+): Promise<PeopleColumns> {
   const live = await readColumns(reader, lock);
   const fieldDrafts = await readDrafts(reader, "field", undefined, viewer);
   const columns = added(fieldDrafts, new Set(live.map(({ id }) => id)));
@@ -41,7 +46,7 @@ export async function columnsWithAdded(
   const publishedFields = columns.some(([, draft]) => draft.unpublished)
     ? await readDrafts(reader, "field")
     : new Map<string, Draft>();
-  return [
+  const all = [
     ...live,
     ...columns.map(([id, draft]): ColumnInfo => {
       const field = draft.fields;
@@ -68,6 +73,7 @@ export async function columnsWithAdded(
       };
     }),
   ];
+  return Object.assign(all, { positionTier: live.positionTier });
 }
 
 // The choices given that are live, in list order, then those drafted to be added that the editor

@@ -209,6 +209,7 @@ async function liveRow(id: string) {
 const numberOf = (hire: Hire | undefined) =>
   Number(hire?.temporaryId?.replace("TBD-", ""));
 
+// Positions and Hiring states start General, so every reader of placeholders sees both.
 const placeholderKeys = [
   "expected",
   "id",
@@ -216,6 +217,7 @@ const placeholderKeys = [
   "managerName",
   "positionId",
   "requisition",
+  "stateId",
   "temporaryId",
 ];
 
@@ -398,7 +400,7 @@ describe("the hiring plan", () => {
 });
 
 describe("adding a hire", () => {
-  it("is a draft, recorded as a Confidential change and in the access history without naming the hire", async () => {
+  it("is a draft, recorded as a Confidential change, its position and state at their lists' tier, and in the access history without naming the hire", async () => {
     const before = await test.connection
       .select({ id: accessHistory.id })
       .from(accessHistory)
@@ -417,7 +419,13 @@ describe("adding a hire", () => {
         newValue: "Fictional-REQ-Analyst",
       }),
     );
-    expect(history.every(({ tier }) => tier === "confidential")).toBe(true);
+    for (const { field, tier } of history) {
+      expect(tier).toBe(
+        field === "positionId" || field === "stateId"
+          ? "general"
+          : "confidential",
+      );
+    }
     const after = await test.connection
       .select({
         action: accessHistory.action,
@@ -1188,15 +1196,6 @@ describe("the built-in lists", () => {
     expect(retired.statusCode).toBe(409);
     expect(refusal(retired)).toBe(
       "This list cannot be retired while a column draws on it: State",
-    );
-    const hidden = await send(who, "PUT", `/api/lists/${positions.id}`, {
-      name: positions.name,
-      description: "",
-      visibility: "restricted",
-    });
-    expect(hidden.statusCode).toBe(409);
-    expect(refusal(hidden)).toBe(
-      "A built-in list is visible to whoever can see the column that uses it",
     );
   });
 

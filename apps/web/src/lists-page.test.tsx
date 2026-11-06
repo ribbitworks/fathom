@@ -3256,7 +3256,7 @@ describe("built-in lists and lists with meanings", () => {
     return fetch;
   }
 
-  it("marks a built-in list, and does not offer retiring or deleting it or changing its visibility", async () => {
+  it("marks a built-in list, and offers changing its visibility but not retiring or deleting it", async () => {
     await openStates();
     const table = screen.getByRole("table", { name: "Lists" });
     const stateRow = within(table)
@@ -3278,15 +3278,10 @@ describe("built-in lists and lists with meanings", () => {
       null,
     );
     expect(
-      within(dialog).getByText(
-        "Visible to whoever can see the column that uses this list",
-      ),
-    ).toBeTruthy();
-    expect(
       within(dialog).getByRole<HTMLInputElement>("radio", {
         name: "Confidential",
       }).disabled,
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("shows each choice's meaning, and adds choices, pasted too, with the meaning chosen", async () => {

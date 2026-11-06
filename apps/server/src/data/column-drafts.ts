@@ -68,7 +68,7 @@ import {
   readState,
   unpublishedMark,
 } from "./lists.ts";
-import type { FieldRow } from "./values.ts";
+import { builtInTier, type FieldRow } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 
@@ -789,10 +789,11 @@ export async function readColumnsOut(
       },
     ];
   });
+  const seesPositions = seesTier(actor, await builtInTier(reader, "positions"));
   const visible = new Set([
     "preferredName",
     "employeeId",
-    "positionId",
+    ...(seesPositions ? ["positionId"] : []),
     "managerId",
     "team",
     "teamName",

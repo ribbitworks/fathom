@@ -35,7 +35,12 @@ import {
   requireTierEdit,
   seesTier,
 } from "../access.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "../errors.ts";
 import {
   type Change,
   changesBetween,
@@ -50,7 +55,6 @@ import {
   drafted,
   draftFields,
   draftMakers,
-  draftTier,
   fitsColumns,
   lockDrafts,
   readHeld,
@@ -92,6 +96,7 @@ import {
 } from "./reporting.ts";
 import {
   type ColumnInfo,
+  type PeopleColumns,
   type FieldValue,
   inListOrder,
   readColumns,
@@ -118,10 +123,11 @@ const detailFields = [
 const personFields = [...detailFields, ...reportingFields];
 
 // The tier of each field of a person: dates are Restricted, and so are changes to their manager,
-// which name past managers, each column's values are as sensitive as its list, and the rest is
-// General. Every value field recorded is for one of the columns given.
-export function personTier(columns: readonly ColumnInfo[]) {
+// which name past managers, the position and each column's values are as sensitive as their list,
+// and the rest is General. Every value field recorded is for one of the columns given.
+export function personTier(columns: PeopleColumns) {
   const tiers = new Map<string, Tier>([
+    ["positionId", columns.positionTier],
     ["startDate", "restricted"],
     ["endDate", "restricted"],
     ["managerId", "restricted"],
@@ -192,7 +198,7 @@ function linksOf(person: Recorded): Links {
 
 // The changes between two versions of a person, with each field's tier.
 export function personChanges(
-  columns: readonly ColumnInfo[],
+  columns: PeopleColumns,
   id: string,
   action: Change["action"],
   before: Recorded | undefined,
@@ -440,6 +446,8 @@ export interface PeopleRead {
   columns: ColumnInfo[];
   // Whether what was read included anyone's Restricted details, which the access history records.
   includedRestricted: boolean;
+  // Whether the actor cannot see the Positions list's tier, so the people read have no positions.
+  positionHidden: boolean;
 }
 
 const byName = new Intl.Collator("en", { sensitivity: "base" });
@@ -484,7 +492,7 @@ async function readPeopleIn(
   const shownFields = new Set<string>([
     "preferredName",
     "employeeId",
-    "positionId",
+    ...(seesTier(actor, allColumns.positionTier) ? ["positionId"] : []),
     "teamName",
     "isManager",
     ...(restricted ? ["startDate", "endDate", "managerId", "managerFrom"] : []),
@@ -531,7 +539,9 @@ async function readPeopleIn(
         id,
         preferredName: String(person.preferredName),
         employeeId: String(person.employeeId),
-        positionId: String(person.positionId),
+        ...(shownFields.has("positionId")
+          ? { positionId: String(person.positionId) }
+          : {}),
         isManager: person.isManager === true,
         ...(restricted
           ? {
@@ -600,7 +610,9 @@ async function readPeopleIn(
     const reason =
       draft.state === "rejected" &&
       draft.reason !== null &&
-      seesTier(actor, draftTier(tierOf, before, draft))
+      draftFields(before, draft).every((field) =>
+        seesTier(actor, tierOf(field)),
+      )
         ? { reason: draft.reason }
         : {};
     return {
@@ -630,9 +642,13 @@ async function readPeopleIn(
   return {
     people: shown,
     columns,
+    positionHidden: !shownFields.has("positionId"),
     includedRestricted:
       shown.length > 0 &&
-      (restricted || columns.some(({ tier }) => tier !== "general")),
+      (restricted ||
+        columns.some(({ tier }) => tier !== "general") ||
+        (shownFields.has("positionId") &&
+          allColumns.positionTier !== "general")),
   };
 }
 
@@ -665,6 +681,11 @@ export async function createPeople(
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const columns = await columnsWithAdded(transaction, actor.user.id, true);
+    if (!seesTier(actor, columns.positionTier)) {
+      throw new ForbiddenError(
+        "Every person needs a position, and your roles don't let you see positions",
+      );
+    }
     const known = await choicesAskedFor(transaction, actor.user.id, requests);
     for (const positionId of new Set(requests.map((one) => one.positionId))) {
       await checkBuiltInChoice(transaction, "positions", positionId);
@@ -934,8 +955,12 @@ export async function resubmitPersonDraft(
     if (draft?.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
     }
-    const made = clearedRejection(id, personTier(columns), before, draft);
-    requireEdits(actor, made);
+    const tierOf = personTier(columns);
+    // Resubmitting sends every change the draft holds, so it needs the right to make each of them.
+    for (const field of draftFields(before, draft)) {
+      requireTierEdit(actor, tierOf(field));
+    }
+    const made = clearedRejection(id, tierOf, before, draft);
     await transaction
       .update(drafts)
       .set({ state: "waiting", reason: null })

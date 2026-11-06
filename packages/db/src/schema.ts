@@ -194,9 +194,9 @@ const meaningList = sqlList(["proposed", "open"]);
 
 // Lists of choices, such as locations or skills, for columns elsewhere to draw on. Most are defined
 // by people; a built-in list is known by its key, cannot be removed, and is drawn on by a built-in
-// column. A list's name is unique, ignoring letter case. Its visibility is the sensitivity tier of the
-// values chosen from it, checked by the server; Positions is always General. A retired list is no
-// longer offered for new values.
+// column. A list's name is unique, ignoring letter case. Its visibility is the sensitivity tier of
+// the values chosen from it, checked by the server. A retired list is no longer offered for new
+// values.
 export const lists = fathomSchema.table(
   "lists",
   {
@@ -213,10 +213,6 @@ export const lists = fathomSchema.table(
     check(
       "lists_built_in_known",
       sql`${table.builtIn} IS NULL OR ${table.builtIn} IN (${sql.raw(builtInListList)})`,
-    ),
-    check(
-      "lists_positions_general",
-      sql`${table.builtIn} IS DISTINCT FROM 'positions' OR ${table.visibility} = 'general'`,
     ),
     check(
       "lists_built_in_kept",

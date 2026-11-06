@@ -128,8 +128,8 @@ export const personSchema = z.object({
   id: z.string(),
   preferredName: z.string(),
   employeeId: z.string(),
-  // A choice in the built-in Positions list.
-  positionId: z.string(),
+  // A choice in the built-in Positions list, left out for users who cannot see the list's tier.
+  positionId: z.string().optional(),
   // Left out for users who cannot see Restricted details; null when not set.
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
@@ -180,6 +180,8 @@ export const peopleSchema = z.object({
   orderDraft: columnOrderDraftSchema.optional(),
   // Who holds the order of the columns, as heldBy does a person.
   orderHeldBy: heldBySchema,
+  // Set for users who cannot see the Positions list's tier, who see no Position column.
+  positionHidden: z.literal(true).optional(),
   views: z.array(savedViewSchema),
 });
 

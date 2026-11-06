@@ -16,7 +16,7 @@ import {
 } from "@fathom/db";
 import type { Unpublished } from "@fathom/shared";
 import { and, asc, eq, max } from "drizzle-orm";
-import { type Actor, requireAnyPermission } from "../access.ts";
+import { type Actor, requireAnyPermission, seesTier } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
@@ -70,13 +70,15 @@ import {
 import { personChanges, readLive, recordSensitiveChanges } from "./people.ts";
 import {
   hireChanges,
+  type HireTier,
   hireIdOf,
   readHireDrafts,
+  readHireTier,
   readLiveHires,
   recordHiringChanges,
 } from "./hires.ts";
 import { columnsWithAdded } from "./added-columns.ts";
-import type { ColumnInfo } from "./values.ts";
+import type { PeopleColumns } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 type Row = typeof unpublishedDrafts.$inferSelect;
@@ -119,7 +121,7 @@ interface Versions {
   mine: { lists: ListsState; columns: ColumnsState };
   theirs: { lists: ListsState; columns: ColumnsState };
   people: {
-    columns: ColumnInfo[];
+    columns: PeopleColumns;
     live: Map<string, Recorded>;
     mine: Map<string, Draft>;
     theirs: Map<string, Draft>;
@@ -128,6 +130,7 @@ interface Versions {
     live: Map<string, Recorded>;
     mine: Map<string, Draft>;
     theirs: Map<string, Draft>;
+    tierOf: HireTier;
   };
   records: RecordVersions;
 }
@@ -160,6 +163,7 @@ async function readVersions(
       live: await readLiveHires(reader, hireIds),
       mine: await readHireDrafts(reader, hireIds, userId),
       theirs: await readHireDrafts(reader, hireIds),
+      tierOf: await readHireTier(reader),
     },
     records: await readRecordVersions(reader, userId),
   };
@@ -197,7 +201,7 @@ function versionOf(
 }
 
 // What a change is to, as the Drafts page names drafts.
-function subjectOf(versions: Versions, row: Row): string {
+function subjectOf(versions: Versions, row: Row, actor: Actor): string {
   const id = row.recordId;
   // A list's name is always text.
   const listName = (listId: string) =>
@@ -210,12 +214,17 @@ function subjectOf(versions: Versions, row: Row): string {
     return String(versionOf(versions, "person", id)?.preferredName);
   }
   if (row.recordType === "planned-hire") {
-    // A hire is named by its position and ID, such as "Software Engineer, TBD-7".
-    // A hire whose draft is listed is live or drafted, so has a version.
+    // A hire is named by its position and ID, such as "Software Engineer, TBD-7", or by its ID
+    // alone to those who cannot see the Positions list's tier. A hire whose draft is listed is live
+    // or drafted, so has a version.
     const hire = versionOf(versions, "planned-hire", id) as Recorded;
-    const position = versionOf(versions, "list-item", String(hire.positionId));
     const { requisition, temporaryId } = hireIdOf(hire);
-    return `the planned hire ${String(position?.label)}, ${String(requisition ?? temporaryId)}`;
+    const shownId = String(requisition ?? temporaryId);
+    if (!seesTier(actor, versions.hires.tierOf("positionId"))) {
+      return `the planned hire ${shownId}`;
+    }
+    const position = versionOf(versions, "list-item", String(hire.positionId));
+    return `the planned hire ${String(position?.label)}, ${shownId}`;
   }
   if (row.recordType === "list") return `the list ${listName(id)}`;
   if (row.recordType === "list-item") {
@@ -268,7 +277,7 @@ export async function readUnpublished(
       );
       return {
         changes: newest.map((row) => ({
-          subject: subjectOf(versions, row),
+          subject: subjectOf(versions, row, actor),
           ...(wantsNoDraft(row) ? { discarded: true } : {}),
           ...(orders.has(row.recordType) || wantsNoDraft(row)
             ? {}
@@ -368,7 +377,7 @@ export async function publishUnpublished(
     const misfit = rows.find((row) => !fits(versions, row, taken));
     if (misfit !== undefined) {
       throw new ConflictError(
-        `Your change to ${subjectOf(versions, misfit)} no longer fits the data as it is now; change or discard it, then publish again`,
+        `Your change to ${subjectOf(versions, misfit, actor)} no longer fits the data as it is now; change or discard it, then publish again`,
       );
     }
     for (const row of rows) {
@@ -435,7 +444,13 @@ function takingBack(versions: Versions, row: Row): Change[] {
     const live = versions.hires.live.get(id);
     const before = drafted(live, versions.hires.mine.get(id));
     const after = drafted(live, versions.hires.theirs.get(id));
-    return hireChanges(id, actionTo(before, after), before, after);
+    return hireChanges(
+      id,
+      actionTo(before, after),
+      before,
+      after,
+      versions.hires.tierOf,
+    );
   }
   if (row.recordType === "list" || row.recordType === "list-item") {
     const isList = row.recordType === "list";

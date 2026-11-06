@@ -77,6 +77,28 @@ describe("the order of the columns", () => {
     ]);
   });
 
+  it("leaves Position out for those who cannot see positions, and shows none for a person read without one", () => {
+    expect(
+      columnsFor([site], [sites], [], true, [], false).map(({ key }) => key),
+    ).not.toContain("positionId");
+    const position = columnsFor([site], [sites], [], true).find(
+      ({ key }) => key === "positionId",
+    );
+    expect(
+      position?.value({
+        id: "p9",
+        preferredName: "Fictional Person",
+        employeeId: "E9",
+        isManager: false,
+        manager: null,
+        team: null,
+        teamName: null,
+        values: {},
+        links: {},
+      }),
+    ).toEqual([]);
+  });
+
   it("offers no choices for a column whose list cannot be found", () => {
     expect(columnsFor([site], [], [], false).at(-1)?.choices).toEqual([]);
   });

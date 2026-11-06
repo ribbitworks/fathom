@@ -1228,10 +1228,6 @@
           "name": "lists_built_in_known",
           "value": "\"fathom\".\"lists\".\"built_in\" IS NULL OR \"fathom\".\"lists\".\"built_in\" IN ('positions', 'hiring-states')"
         },
-        "lists_positions_general": {
-          "name": "lists_positions_general",
-          "value": "\"fathom\".\"lists\".\"built_in\" IS DISTINCT FROM 'positions' OR \"fathom\".\"lists\".\"visibility\" = 'general'"
-        },
         "lists_built_in_kept": {
           "name": "lists_built_in_kept",
           "value": "\"fathom\".\"lists\".\"built_in\" IS NULL OR NOT \"fathom\".\"lists\".\"retired\""

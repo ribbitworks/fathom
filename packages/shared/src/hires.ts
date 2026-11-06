@@ -51,7 +51,8 @@ export const hireSchema = z.object({
   // Exactly one of the two is set: the requisition, or the temporary ID until it has one.
   requisition: z.string().nullable(),
   temporaryId: z.string().nullable(),
-  positionId: z.string(),
+  // Left out for readers who cannot see the Positions list's tier.
+  positionId: z.string().optional(),
   // None, too, for readers who cannot see Restricted data while the manager is not current staff.
   managerId: z.string().nullable(),
   managerName: z.string().nullable(),

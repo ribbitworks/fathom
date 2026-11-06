@@ -167,6 +167,8 @@ function reordered(
   return [...others.slice(0, at), key, ...others.slice(at)];
 }
 
+const cannotAddId = "people-cannot-add";
+
 export function PeoplePage({
   back,
   canEdit,
@@ -191,6 +193,7 @@ export function PeoplePage({
   onApply: (view: View, id: string, replace?: boolean) => void;
 }) {
   const query = useQuery(peopleQuery);
+  const positionHidden = query.data?.positionHidden === true;
   const saving =
     useIsMutating({ mutationKey: [...peopleQuery.queryKey, "change"] }) > 0;
   const lists = useQuery(listsQuery);
@@ -504,6 +507,7 @@ export function PeoplePage({
           saving={saving}
           canEditColumns={canEditColumns}
           showDates={showDates}
+          showPosition={query.data.positionHidden !== true}
           actions={actions}
           view={view}
           onView={onView}
@@ -543,6 +547,7 @@ export function PeoplePage({
                         query.data.order,
                         showDates,
                         query.data.people,
+                        query.data.positionHidden !== true,
                       ),
                       [draftColumn],
                     ),
@@ -613,7 +618,10 @@ export function PeoplePage({
               {canEdit && view.show !== "live" && (
                 <Button
                   variant="filled"
-                  disabled={!query.isSuccess || !lists.isSuccess}
+                  disabled={
+                    !query.isSuccess || !lists.isSuccess || positionHidden
+                  }
+                  aria-describedby={positionHidden ? cannotAddId : undefined}
                   onClick={() => {
                     grid.current?.addRow();
                   }}
@@ -625,6 +633,11 @@ export function PeoplePage({
           )
         }
       />
+      {canEdit && positionHidden && (
+        <Text size="sm" c="dimmed" id={cannotAddId}>
+          You can't add people, since your roles don't let you see positions.
+        </Text>
+      )}
       {content}
     </Stack>
   );

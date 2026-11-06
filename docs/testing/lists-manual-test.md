@@ -11,7 +11,7 @@ last_updated: "2026-11-05"
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions and Hiring states: their mark, the dialog that cannot retire or delete them or change their visibility, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions and Hiring states: their mark, the dialog that cannot retire or delete them but can change their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
 
 ## Test Environment
 
@@ -25,6 +25,7 @@ R2 creates these accounts, with every other development account. They share one 
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change lists, and its changes are drafts; it cannot approve them.
 - **Approver account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts.
+- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people without their Restricted details.
 
 ## Common Procedures
 
@@ -96,12 +97,12 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The panel opens with **Hiring states** at the top and **Built in** beside it. No description is shown under the name. Under the choices, in grey, it reads three lines: **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
   - **Notes:**
 
-### LIST-02: A Built-in List Cannot Be Retired or Deleted, and Keeps Its Visibility
+### LIST-02: A Built-in List Cannot Be Retired or Deleted
 
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
 - [ ] **Step 1.** Select **Edit list** at the top of the panel.
-  - **Expected:** A dialog titled **Edit list** opens. Under **Visible to**, **Confidential** is selected and every choice is greyed out, with **Visible to whoever can see the column that uses this list** under them. There is no **Retire list** or **Delete list** button.
+  - **Expected:** A dialog titled **Edit list** opens. Under **Visible to**, **General** is selected, and every choice can be selected. There is no **Retire list** or **Delete list** button.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Cancel**.
@@ -184,6 +185,30 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The dialog closes. The **Approved to hire** row still has a yellow dot and **Draft: retired**.
   - **Notes:**
 
-- [ ] **Step 4.** Reset the database (R2).
+### LIST-08: Positions' Visibility Sets Who Sees the Position Column
+
+**Preconditions:** LIST-07 done. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open, with the **Positions** panel open.
+
+- [ ] **Step 1.** Select **Edit list**. Under **Visible to**, select **Restricted**, then select **Save**.
+  - **Expected:** The dialog closes. **Positions** has a hollow yellow dot beside its name.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the Publish button.
+  - **Expected:** A notice says the changes were published.
+  - **Notes:**
+
+- [ ] **Step 3.** Sign in (P1) as `engineering.director@fathom.test`. Open the **Lists** page and select **Positions**. Select the **⋯** button beside **Edit list**, then select **Approve…**, then **Approve**.
+  - **Expected:** The dialog closes, and the dot beside **Positions** is gone.
+  - **Notes:**
+
+- [ ] **Step 4.** Sign in (P1) as `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**, which does not see Restricted details. Open the **People** page.
+  - **Expected:** The table has no **Position** column.
+  - **Notes:**
+
+- [ ] **Step 5.** Sign in (P1) as `engineering.operations.manager@fathom.test`. Open the **People** page.
+  - **Expected:** The table has a **Position** column, and **New person** can be selected.
+  - **Notes:**
+
+- [ ] **Step 6.** Reset the database (R2).
   - **Expected:** The last line printed gives the shared password, with no error above it.
   - **Notes:**

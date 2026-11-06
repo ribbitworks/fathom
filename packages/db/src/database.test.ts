@@ -830,7 +830,7 @@ describe("planned hires", () => {
         {
           name: "Hiring states",
           built_in: "hiring-states",
-          visibility: "confidential",
+          visibility: "general",
         },
         { name: "Positions", built_in: "positions", visibility: "general" },
       ]);
@@ -855,7 +855,6 @@ describe("planned hires", () => {
       ]);
       for (const change of [
         "UPDATE lists SET retired = true WHERE built_in = 'hiring-states'",
-        "UPDATE lists SET visibility = 'restricted' WHERE built_in = 'positions'",
         "UPDATE lists SET built_in = 'skills' WHERE built_in = 'positions'",
         "UPDATE list_items SET meaning = 'filled' WHERE label = 'Approved to hire'",
       ]) {

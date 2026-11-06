@@ -245,6 +245,49 @@ async function paste(target: HTMLElement, text: string) {
 }
 
 describe("who sees the People page", () => {
+  it("hides the Position column, and adding people, from those who cannot see positions", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/greeting": greeting,
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              positionId: undefined,
+              startDate: undefined,
+              endDate: undefined,
+            },
+          ],
+          fields: [site],
+          order: ["employeeId", "preferredName", "f1"],
+          positionHidden: true,
+          views: [],
+        }),
+      "GET /api/lists": listsAnswer,
+    });
+    renderApp("/people");
+    const grid = await screen.findByRole("grid", { name: "People" });
+    expect(
+      within(grid)
+        .getAllByRole("columnheader")
+        .map((header) => header.textContent),
+    ).not.toContain("Position");
+    const newPerson = screen.getByRole<HTMLButtonElement>("button", {
+      name: "New person",
+    });
+    expect(newPerson.disabled).toBe(true);
+    expect(newPerson.getAttribute("aria-describedby")).toBe(
+      "people-cannot-add",
+    );
+    expect(
+      screen.getByText(
+        "You can't add people, since your roles don't let you see positions.",
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByRole("row", { name: "New person" })).toBeNull();
+  });
+
   it("links to it for users who may see people, read only for viewers", async () => {
     serverAnswers({
       "GET /api/session": viewer,

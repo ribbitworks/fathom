@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Planned hires, as part of the data access layer. The hiring plan is Confidential, so every change
-// to a hire is recorded at that tier, and only those who see Confidential data see hires' drafts and
-// their history. Everyone who sees people sees each placeholder: a hire not yet filled, or, for
+// to a hire is recorded at that tier, and only those who see Confidential data see hires' drafts
+// and their history. Everyone who sees people sees each placeholder: a hire not yet filled, or, for
 // readers who do not see the person who filled it, one whose person has not started, with its ID,
-// position, manager, and expected month. Every change is a draft, as drafts.ts sets out, and
-// changing the hiring plan is recorded in the access history, without naming the hire.
+// manager, expected month, and its position and state to those who see their list's tier. Every
+// change is a draft, as drafts.ts sets out, and changing the hiring plan is recorded in the access
+// history, without naming the hire.
 
 import {
   type Database,
@@ -23,6 +24,7 @@ import {
   type HireRequest,
   type Hires,
   temporaryId,
+  type Tier,
 } from "@fathom/shared";
 import { and, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -30,10 +32,17 @@ import {
   type Actor,
   requireAnyPermission,
   requirePermission,
+  requireTierEdit,
   seesTier,
 } from "../access.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "../errors.ts";
 import { checkBuiltInChoice, firstChoiceMeaning } from "./built-in-lists.ts";
+import { builtInTier } from "./values.ts";
 import {
   type Change,
   changesBetween,
@@ -48,7 +57,6 @@ import {
   drafted,
   draftFields,
   draftMakers,
-  everything,
   lockDrafts,
   readDrafts,
   readHeld,
@@ -92,6 +100,27 @@ export const hireFields = [
 // shows, since the change history shows changes to them beside the rest.
 export const hireTier = () => "confidential" as const;
 
+export type HireTier = (field: string) => Tier;
+
+// The tier of each field of a hire: its position and state are as sensitive as their lists, like
+// any column drawing on a list, and the rest of the hiring plan is Confidential.
+export async function readHireTier(reader: Reader): Promise<HireTier> {
+  const positions = await builtInTier(reader, "positions");
+  const states = await builtInTier(reader, "hiring-states");
+  return (field) => {
+    if (field === "positionId") return positions;
+    if (field === "stateId") return states;
+    return "confidential";
+  };
+}
+
+// Refuses changes to fields of a tier the actor may not change.
+function requireHireEdits(actor: Actor, made: readonly Change[]): void {
+  for (const tier of new Set(made.map((change) => change.tier))) {
+    requireTierEdit(actor, tier);
+  }
+}
+
 export function recordedHire(row: HireRow): Recorded {
   return {
     requisition: row.requisition,
@@ -127,6 +156,7 @@ export function hireChanges(
   action: Change["action"],
   before: Recorded | undefined,
   after: Recorded | undefined,
+  tierOf: HireTier,
 ): Change[] {
   return changesBetween(
     recordType,
@@ -135,7 +165,7 @@ export function hireChanges(
     before,
     after,
     hireFields,
-    hireTier,
+    tierOf,
   );
 }
 
@@ -226,7 +256,7 @@ export async function readHires(
   database: Database,
   actor: Actor,
   asOf?: string,
-): Promise<Hires> {
+): Promise<Hires & { includedRestricted: boolean }> {
   requireAnyPermission(actor, ["confidential:view", "people:view"]);
   const today = asOf ?? (await readToday(database));
   return database.transaction(
@@ -237,11 +267,15 @@ export async function readHires(
         ? await readHireDrafts(transaction, undefined, actor.user.id)
         : new Map<string, Draft>();
       const held = await readHeld(transaction, recordType, actor.user.id);
+      const tierOf = await readHireTier(transaction);
+      const seesPositions = seesTier(actor, tierOf("positionId"));
+      const seesStates = seesTier(actor, tierOf("stateId"));
+      // A draft's makers are named only for the changes the reader sees.
       const makers = await draftMakers(
         transaction,
         recordType,
         [...draftsNow.keys()],
-        everything,
+        (field) => seesTier(actor, tierOf(field)),
         actor.user.id,
       );
       const ids = [
@@ -295,17 +329,15 @@ export async function readHires(
           {
             id,
             ...hireIdOf(hire),
-            positionId: String(hire.positionId),
+            ...(seesPositions ? { positionId: String(hire.positionId) } : {}),
             managerId: shown ? String(hire.managerId) : null,
             managerName: shown ? manager.name : null,
             expected: expectedOn === null ? thisMonth : expectedOn.slice(0, 7),
+            ...(seesStates ? { stateId: String(hire.stateId) } : {}),
             ...(wholePlan
               ? {
                   targetDate,
-                  stateId: String(hire.stateId),
-                  ...(draft === undefined
-                    ? {}
-                    : { draft: shownDraft(id, before, draft) }),
+                  ...shownDraft(id, before, draft),
                   ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
                 }
               : {}),
@@ -313,16 +345,21 @@ export async function readHires(
         ];
       });
 
+      // A hire's draft as the reader sees it, or none when it changes nothing they may see.
       function shownDraft(
         id: string,
         before: Recorded | undefined,
-        draft: Draft,
-      ): HireDraft {
+        draft: Draft | undefined,
+      ): { draft?: HireDraft } {
+        if (draft === undefined) return {};
+        const drafted = draftFields(before, draft);
+        const seen = (field: string) => seesTier(actor, tierOf(field));
+        if (!drafted.some(seen)) return {};
         // A hire's ID is one field to the reader, whichever of the two a draft changes.
         const fields = [
           ...new Set(
-            draftFields(before, draft)
-              .filter((field) => field !== "filledBy")
+            drafted
+              .filter((field) => field !== "filledBy" && seen(field))
               .map((field) =>
                 field === "temporaryNumber" ? "requisition" : field,
               ),
@@ -348,12 +385,15 @@ export async function readHires(
           }
         }
         const maker = makers.get(id);
-        return {
+        const shown: HireDraft = {
           action: draft.action,
           changed: fields,
           live: liveValues,
           state: draft.state,
-          ...(draft.state === "rejected" && draft.reason !== null
+          // The reason covers the whole draft, so it is shown only to those who see all of it.
+          ...(draft.state === "rejected" &&
+          draft.reason !== null &&
+          drafted.every(seen)
             ? { reason: draft.reason }
             : {}),
           ...(draft.unpublished === true ? { unpublished: true } : {}),
@@ -367,13 +407,19 @@ export async function readHires(
             ]),
           ),
         };
+        return { draft: shown };
       }
 
       // No two hires have the same ID, ignoring letter case, so the order is always the same.
       const shownId = (hire: Hire) =>
         String(hire.requisition ?? hire.temporaryId);
       hires.sort((a, b) => byId.compare(shownId(a), shownId(b)));
-      return { hires, wholePlan };
+      // Whether the placeholders shown hold a position or state more sensitive than General.
+      const includedRestricted =
+        hires.length > 0 &&
+        ((seesPositions && tierOf("positionId") !== "general") ||
+          (seesStates && tierOf("stateId") !== "general"));
+      return { hires, wholePlan, includedRestricted };
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -514,6 +560,18 @@ export async function createHire(
 ): Promise<{ id: string; changeSetId: string | null }> {
   requireHiringEdit(actor);
   return database.transaction(async (transaction) => {
+    // Every hire needs a position and a state, so one who cannot see either cannot add hires.
+    const tierOf = await readHireTier(transaction);
+    if (!seesTier(actor, tierOf("positionId"))) {
+      throw new ForbiddenError(
+        "Every planned hire needs a position, and your roles don't let you see positions",
+      );
+    }
+    if (!seesTier(actor, tierOf("stateId"))) {
+      throw new ForbiddenError(
+        "Every planned hire needs a state, and your roles don't let you see hiring states",
+      );
+    }
     await lockDrafts(transaction);
     await checkManager(transaction, request.managerId);
     await checkBuiltInChoice(transaction, "positions", request.positionId);
@@ -545,7 +603,8 @@ export async function createHire(
     await addDrafts(transaction, actor.user.id, recordType, [
       { id, fields: after },
     ]);
-    const made = asDraft(hireChanges(id, "created", undefined, after));
+    const made = asDraft(hireChanges(id, "created", undefined, after, tierOf));
+    requireHireEdits(actor, made);
     await recordHiringChanges(transaction, actor.user.id, made);
     return {
       id,
@@ -635,11 +694,13 @@ export async function updateHire(
         (message) => new BadRequestError(message),
       );
     }
-    const made = hireChanges(id, "changed", hire, after);
+    const tierOf = await readHireTier(transaction);
+    const made = hireChanges(id, "changed", hire, after, tierOf);
+    requireHireEdits(actor, made);
     if (made.length === 0) return null;
     const all = [
       ...asDraft(made),
-      ...clearedRejection(id, hireTier, before, draft, recordType),
+      ...clearedRejection(id, tierOf, before, draft, recordType),
     ];
     await writeDraft(transaction, actor.user.id, recordType, id, before, after);
     await recordHiringChanges(transaction, actor.user.id, all);
@@ -668,10 +729,12 @@ export async function deleteHire(
         "A filled hire is kept; give its person an end date instead",
       );
     }
+    const tierOf = await readHireTier(transaction);
     const made = [
-      ...asDraft(hireChanges(id, "deleted", hire, undefined)),
-      ...clearedRejection(id, hireTier, before, draft, recordType),
+      ...asDraft(hireChanges(id, "deleted", hire, undefined, tierOf)),
+      ...clearedRejection(id, tierOf, before, draft, recordType),
     ];
+    requireHireEdits(actor, made);
     await writeDraft(
       transaction,
       actor.user.id,
@@ -703,7 +766,12 @@ export async function resubmitHireDraft(
     if (draft?.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
     }
-    const made = clearedRejection(id, hireTier, before, draft, recordType);
+    const tierOf = await readHireTier(transaction);
+    // Resubmitting sends every change the draft holds, so it needs the right to make each of them.
+    for (const field of draftFields(before, draft)) {
+      requireTierEdit(actor, tierOf(field));
+    }
+    const made = clearedRejection(id, tierOf, before, draft, recordType);
     await transaction
       .update(drafts)
       .set({ state: "waiting", reason: null })
@@ -733,10 +801,12 @@ export async function discardHireDraft(
     let action: Change["action"] = "changed";
     if (hire === undefined) action = "created";
     else if (before === undefined) action = "deleted";
+    const tierOf = await readHireTier(transaction);
     const made = [
-      ...asDraft(hireChanges(id, action, hire, before)),
-      ...clearedRejection(id, hireTier, before, draft, recordType),
+      ...asDraft(hireChanges(id, action, hire, before, tierOf)),
+      ...clearedRejection(id, tierOf, before, draft, recordType),
     ];
+    requireHireEdits(actor, made);
     await writeDraft(
       transaction,
       actor.user.id,
@@ -849,8 +919,17 @@ async function seenHires(
   const found = await readHireDrafts(transaction, ids);
   if (found.size !== ids.length) throw new NotFoundError(noDraft);
   const live = await readLiveHires(transaction, ids, true);
+  const tierOf = await readHireTier(transaction);
+  for (const [id, draft] of found) {
+    const fields = draftFields(live.get(id), draft);
+    if (!fields.every((field) => seesTier(actor, tierOf(field)))) {
+      throw new ForbiddenError(
+        "One of these drafts holds details your roles do not let you see, so an Approver who sees them must decide it",
+      );
+    }
+  }
   await refuseHeldDecision(transaction, recordType, ids);
-  return { found, live };
+  return { found, live, tierOf };
 }
 
 // Checked before any drafts are approved or rejected, so a draft the actor may not decide is refused
@@ -870,14 +949,14 @@ export async function approveHiresIn(
   ids: readonly string[],
 ): Promise<Change[]> {
   if (ids.length === 0) return [];
-  const { found, live } = await seenHires(transaction, actor, ids);
+  const { found, live, tierOf } = await seenHires(transaction, actor, ids);
   refuseRejected(found.values());
   const made: Change[] = [];
   for (const id of ids) {
     const draft = found.get(id) as Draft;
     const before = live.get(id);
     const hire = drafted(before, draft);
-    made.push(...hireChanges(id, draft.action, before, hire));
+    made.push(...hireChanges(id, draft.action, before, hire, tierOf));
     if (hire !== undefined && newlyManaged(before, hire)) {
       await refuseUnmarked(
         transaction,

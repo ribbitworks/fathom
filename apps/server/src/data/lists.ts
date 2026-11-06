@@ -1103,11 +1103,6 @@ export async function updateList(
       `${String(list.name)} holds people's details your roles do not let you see, so someone who may must change it`,
     );
     refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
-    if (state.builtIn.has(id) && request.visibility !== list.visibility) {
-      throw new ConflictError(
-        "A built-in list is visible to whoever can see the column that uses it",
-      );
-    }
     if (listNameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateList);
     }

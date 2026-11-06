@@ -45,19 +45,17 @@ type ViewRow = typeof savedViews.$inferSelect;
 
 const viewFields = ["tableName", "name", "definition", "createdBy"] as const;
 
-// The tier of each of the People table's columns, by key: dates are Restricted, each added column is
-// as sensitive as its list, and the rest is General.
+// The tier of each of the People table's columns, by key: dates are Restricted, the position and
+// each added column are as sensitive as their list, and the rest is General.
 async function columnTiers(reader: Reader): Promise<Map<string, Tier>> {
+  const columns = await readColumns(reader);
   return new Map<string, Tier>([
     ["preferredName", "general"],
     ["employeeId", "general"],
-    ["positionId", "general"],
+    ["positionId", columns.positionTier],
     ["startDate", "restricted"],
     ["endDate", "restricted"],
-    ...(await readColumns(reader)).map((column): [string, Tier] => [
-      column.id,
-      column.tier,
-    ]),
+    ...columns.map((column): [string, Tier] => [column.id, column.tier]),
   ]);
 }
 

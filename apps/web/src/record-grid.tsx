@@ -790,6 +790,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   orderHeldBy?: string | undefined;
   lists: List[];
   canEdit: boolean;
+  // Whether new records can be added, for those who may edit; true unless told otherwise.
+  canAdd?: boolean;
   canApprove?: boolean;
   // Whether a change is still saving, which approving all shown waits for, so it never sends a
   // draft not saved yet.
@@ -812,6 +814,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   orderHeldBy,
   lists,
   canEdit: mayEdit,
+  canAdd = true,
   canApprove: mayApprove = false,
   saving = false,
   canEditColumns,
@@ -1044,7 +1047,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     isPending(record);
   const rows: Row<Rec>[] = [
     ...shownRecords.map((record) => ({ record })),
-    ...(canEdit ? newRows.map((newRow) => ({ newRow })) : []),
+    ...(canEdit && canAdd ? newRows.map((newRow) => ({ newRow })) : []),
   ];
   const rowKey = (row: Row<Rec>) =>
     row.newRow ? `new-${String(row.newRow.key)}` : stableId(row.record);

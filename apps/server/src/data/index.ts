@@ -259,6 +259,7 @@ export interface PeopleAccess {
     order: string[];
     orderDraft?: ColumnOrderDraft;
     orderHeldBy?: string;
+    positionHidden?: true;
     views: SavedView[];
   }>;
   // Today's reporting lines as approved, with General details only. Telling anyone that a manager
@@ -312,7 +313,8 @@ export interface PeopleAccess {
 }
 
 // Every change to planned hires is a draft, which reaches the live hires once approved. Reading the
-// whole hiring plan is recorded in the access history.
+// whole hiring plan is recorded in the access history, as is reading placeholders whose position or
+// state is more sensitive than General.
 export interface HireAccess {
   read(actor: Actor): Promise<Hires>;
   create(actor: Actor, request: HireRequest): Promise<Saved<string>>;
@@ -325,13 +327,22 @@ export interface HireAccess {
 function createHireAccess(database: Database): HireAccess {
   return {
     read: async (actor) => {
-      const read = await hireData.readHires(database, actor);
+      const { includedRestricted, ...read } = await hireData.readHires(
+        database,
+        actor,
+      );
       if (read.wholePlan && read.hires.length > 0) {
         await recordRestrictedView(
           database,
           actor.user.id,
           await readTimeZone(database),
           "hiring-plan-viewed",
+        );
+      } else if (includedRestricted) {
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          await readTimeZone(database),
         );
       }
       return read;
@@ -508,6 +519,7 @@ function createPeopleAccess(database: Database): PeopleAccess {
       return {
         people: read.people,
         ...columns,
+        ...(read.positionHidden ? { positionHidden: true as const } : {}),
         views: await views.readViews(database, actor),
       };
     },

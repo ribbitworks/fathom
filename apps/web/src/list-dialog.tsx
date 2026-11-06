@@ -2,9 +2,8 @@
 
 // The dialog for creating a list or editing one: its name, description, and who can see the values
 // chosen from it. Editing also offers retiring or restoring the list, and deleting it, except for a
-// built-in list, which is kept, with the visibility of the column that uses it. The name is
-// checked against the other lists as it is typed. The dialog cannot be closed while a change is
-// being saved.
+// built-in list, which is kept. The name is checked against the other lists as it is typed. The
+// dialog cannot be closed while a change is being saved.
 
 import {
   type List,
@@ -38,13 +37,10 @@ export function VisibleTo({
   id,
   value,
   onChange,
-  fixed,
 }: {
   id: string;
   value: Tier;
   onChange: (tier: Tier) => void;
-  // Why the visibility cannot be changed here, when it cannot.
-  fixed?: string | undefined;
 }) {
   return (
     <Stack gap={6}>
@@ -53,8 +49,6 @@ export function VisibleTo({
       </Text>
       <SegmentedControl
         aria-labelledby={id}
-        aria-describedby={fixed === undefined ? undefined : `${id}-fixed`}
-        disabled={fixed !== undefined}
         value={value}
         onChange={(chosen) => {
           onChange(tierSchema.parse(chosen));
@@ -65,11 +59,6 @@ export function VisibleTo({
         }))}
         w="fit-content"
       />
-      {fixed !== undefined && (
-        <Text fz="xs" c="dimmed" id={`${id}-fixed`}>
-          {fixed}
-        </Text>
-      )}
     </Stack>
   );
 }
@@ -199,11 +188,6 @@ export function ListDialog({
           id="list-visibility"
           value={visibility}
           onChange={setVisibility}
-          fixed={
-            builtIn
-              ? "Visible to whoever can see the column that uses this list"
-              : undefined
-          }
         />
         {saving.error && !refusedAsTaken && (
           <Text fz="sm" c="red" role="alert">

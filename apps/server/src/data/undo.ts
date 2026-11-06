@@ -106,6 +106,7 @@ import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
 import { readToday } from "./settings.ts";
 import {
+  readHireTier,
   recordHiringChanges,
   refuseUnmarkingHireManagers,
   undoHireDrafts,
@@ -868,9 +869,11 @@ async function undoIn(
   // draft, or removes a choice or column one could be given, waits for them.
   await lockDrafts(transaction);
   await lockRecords(transaction, records);
-  // A column's values are as sensitive as its list is now, or was when they changed, whichever is
-  // more sensitive.
+  // A person's details are as sensitive as they are now, such as a position or a column's values
+  // as their list, or were when they changed, whichever is more sensitive. A hire's position and
+  // state are as their lists are now, since undoing a hire's changes needs Edit Confidential too.
   const tierNow = personTier(await columnsWithAdded(transaction, undefined));
+  const hireTierNow = await readHireTier(transaction);
   // So is a saved view's history, as sensitive as the columns it uses are now.
   const viewTiers = new Map<string, Tier>();
   for (const record of records) {
@@ -884,8 +887,11 @@ async function undoIn(
     }
   }
   const undoing = reversed(rows).map((change) => {
-    if (change.recordType === "person" && fieldOfValue(change.field) !== null) {
+    if (change.recordType === "person") {
       return { ...change, tier: higher(change.tier, tierNow(change.field)) };
+    }
+    if (change.recordType === "planned-hire") {
+      return { ...change, tier: hireTierNow(change.field) };
     }
     return change.recordType === "saved-view"
       ? {
@@ -895,12 +901,29 @@ async function undoIn(
         }
       : change;
   });
-  // A view's tier is that of the columns it uses, which its maker needs only to see.
-  for (const change of undoing) {
+  // Each tier is its own permission, so the actor needs every tier a change had and has now, not
+  // only the most sensitive. A view's tier is that of the columns it uses, which its maker needs
+  // only to see.
+  const tiersOf = (change: StoredChange): Tier[] => {
+    const recorded = storedTier(change.tier);
+    if (change.recordType === "person") {
+      return [recorded, tierNow(change.field)];
+    }
+    if (change.recordType === "planned-hire") {
+      return [recorded, hireTierNow(change.field)];
+    }
     if (change.recordType === "saved-view") {
-      if (!seesTier(actor, change.tier)) throw new ForbiddenError();
-    } else if (change.tier !== "general") {
-      requireTierEdit(actor, change.tier);
+      return [recorded, viewTiers.get(change.recordId) as Tier];
+    }
+    return [recorded];
+  };
+  for (const change of rows) {
+    for (const tier of new Set(tiersOf(change))) {
+      if (change.recordType === "saved-view") {
+        if (!seesTier(actor, tier)) throw new ForbiddenError();
+      } else if (tier !== "general") {
+        requireTierEdit(actor, tier);
+      }
     }
   }
   for (const record of records) {

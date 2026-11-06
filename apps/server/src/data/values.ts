@@ -30,13 +30,29 @@ export interface ColumnInfo extends FieldRow {
   listRetired: boolean;
 }
 
+// The People table's columns, carrying the tier of the built-in Position column with them, so every
+// tier worked out from the columns read has it.
+export type PeopleColumns = readonly ColumnInfo[] & {
+  readonly positionTier: Tier;
+};
+
+// The tier of a built-in list's values: its live visibility, or the most sensitive tier when the
+// list cannot be read, rather than trusted.
+export async function builtInTier(reader: Reader, key: string): Promise<Tier> {
+  const [list] = await reader
+    .select({ visibility: lists.visibility })
+    .from(lists)
+    .where(eq(lists.builtIn, key));
+  return storedTier(list?.visibility);
+}
+
 // Every column on people, with the tier of its values. A change to people's values locks the columns
 // against change until it is saved, so a column cannot become required, or take one choice, while
 // values that would not fit are being saved.
 export async function readColumns(
   reader: Reader,
   lock = false,
-): Promise<ColumnInfo[]> {
+): Promise<PeopleColumns> {
   if (lock) {
     await reader
       .select({ id: fields.id })
@@ -54,11 +70,14 @@ export async function readColumns(
     .leftJoin(lists, eq(lists.id, fields.listId))
     .where(eq(fields.tableName, "people"))
     .orderBy(asc(fields.id));
-  return rows.map(({ field, visibility, retired }) => ({
+  const columns = rows.map(({ field, visibility, retired }) => ({
     ...field,
     tier: valuesTier(field, visibility),
     listRetired: retired ?? false,
   }));
+  return Object.assign(columns, {
+    positionTier: await builtInTier(reader, "positions"),
+  });
 }
 
 // A live column's tier, given the visibility of its own list, read with it.
