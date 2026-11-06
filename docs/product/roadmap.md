@@ -88,6 +88,7 @@ Goals the owner has added that are not yet placed in a stage:
 - **Help:** More help, such as for Fathom's pages and terms, beyond Help's Roles and Drafts pages.
 - **Renaming terms:** An organization renames Fathom's terms to its own, such as Feature to Epic, or Cycle to Program Increment.
 - **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.
+- **Publishing chosen drafts:** On the Drafts page, a user ticks some of their own unpublished drafts and publishes them for approval, or discards them, leaving the rest unpublished. Today Publish and Discard all act on every unpublished draft at once. Asked for by the owner on 2026-11-05.
 - **Automated UI tests:** The manual tests' journeys run in a real browser with Playwright, as [ADR 0002](../adr/0002-libraries.md) chose, against a database of their own, starting with the happy path of Releases, so the manual tests keep only what a person must judge, such as how a screen looks and whether it is clear. A low priority, added by the owner on 2026-11-04.
 
 These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
