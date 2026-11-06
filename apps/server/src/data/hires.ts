@@ -30,7 +30,6 @@ import { and, eq, inArray, isNull, or, type SQL, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
-  requireAnyPermission,
   requirePermission,
   requireTierEdit,
   seesTier,
@@ -248,16 +247,17 @@ async function peopleNamed(
   return found;
 }
 
-// The hires the actor may see, by ID: the whole hiring plan, as drafts make it, for those who see
-// Confidential data, and otherwise the placeholders as they are live, without their drafts. A filled
-// hire is left out once its person is seen instead: by readers who see Restricted data, or by
-// everyone once the person has started.
+// The hires the actor may see, by ID, for those who see people: the whole hiring plan, as drafts
+// make it, for those who also see Confidential data, which does nothing without seeing people, and
+// otherwise the placeholders as they are live, without their drafts. A filled hire is left out once
+// its person is seen instead: by readers who see Restricted data, or by everyone once the person has
+// started.
 export async function readHires(
   database: Database,
   actor: Actor,
   asOf?: string,
 ): Promise<Hires & { includedRestricted: boolean }> {
-  requireAnyPermission(actor, ["confidential:view", "people:view"]);
+  requirePermission(actor, "people:view");
   const today = asOf ?? (await readToday(database));
   return database.transaction(
     async (transaction) => {
