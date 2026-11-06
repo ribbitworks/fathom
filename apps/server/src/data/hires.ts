@@ -380,10 +380,10 @@ export async function readHires(
 }
 
 // Until planned hires are a permission area of their own, changing them needs the rights to edit
-// people and to see Confidential data, as the Decisions Log sets out.
+// people and to change Confidential data, as the Decisions Log sets out.
 function requireHiringEdit(actor: Actor): void {
   requirePermission(actor, "people:edit");
-  requirePermission(actor, "confidential:view");
+  requirePermission(actor, "confidential:edit");
 }
 
 // Whether a hire may have the manager given: none, or a live person whom no draft removes,

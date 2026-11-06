@@ -116,7 +116,7 @@ const changedSince =
   "This has been changed since, so it can no longer be undone";
 
 // The permissions each kind of record needs to change it: planned hires, those to edit people and
-// see Confidential data, until they are a permission area of their own.
+// change Confidential data, until they are a permission area of their own.
 const editPermissions = {
   list: ["configuration:edit"],
   "list-item": ["configuration:edit"],
@@ -124,7 +124,7 @@ const editPermissions = {
   field: ["configuration:edit"],
   "column-order": ["configuration:edit"],
   person: ["people:edit"],
-  "planned-hire": ["people:edit", "confidential:view"],
+  "planned-hire": ["people:edit", "confidential:edit"],
   // Who may change each view is checked for the view itself.
   "saved-view": ["people:view"],
 } as const;

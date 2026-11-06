@@ -25,11 +25,14 @@ import {
   defaultTimeZone,
   type Hire,
   type Hires,
+  type Permission,
+  roleSchema,
   type Unpublished,
 } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { rolesGranting } from "./access.ts";
 import {
   otherTestPosition,
   startTestApp,
@@ -495,7 +498,7 @@ describe("adding a hire", () => {
     expect(response.statusCode).toBe(400);
   });
 
-  it("needs the rights to change people and see Confidential data", async () => {
+  it("refuses a hire from someone who may not change hires", async () => {
     const response = await send(
       planner,
       "POST",
@@ -1285,26 +1288,99 @@ describe("a hire Fathom holds no history of", () => {
   });
 });
 
+// Gives the account one role, made for the test, granting just these permissions.
+async function holdOnly(
+  who: User,
+  permissions: readonly Permission[],
+): Promise<void> {
+  const [role] = await test.connection
+    .insert(roles)
+    .values({ name: unique("Fictional Test Role") })
+    .returning({ id: roles.id });
+  await test.connection.insert(rolePermissions).values(
+    permissions.map((permission) => ({
+      roleId: String(role?.id),
+      permission,
+    })),
+  );
+  await test.connection.delete(userRoles).where(eq(userRoles.userId, who.id));
+  await test.connection
+    .insert(userRoles)
+    .values({ userId: who.id, roleId: String(role?.id) });
+}
+
+describe("who may change the hiring plan", () => {
+  it("needs the right to change Confidential data, not only to see it", async () => {
+    const id = await liveHire();
+    const who = await test.signedIn([]);
+    await holdOnly(who, ["people:edit", "confidential:view"]);
+    expect(
+      (await send(who, "POST", "/api/planned-hires", hireRequest({})))
+        .statusCode,
+    ).toBe(403);
+    expect(
+      (
+        await send(who, "PATCH", `/api/planned-hires/${id}`, {
+          requisition: null,
+        })
+      ).statusCode,
+    ).toBe(403);
+    expect(
+      (await send(who, "DELETE", `/api/planned-hires/${id}`)).statusCode,
+    ).toBe(403);
+    const draft = await draftHire();
+    expect(
+      (await send(who, "DELETE", `/api/planned-hires/${draft.id}/draft`))
+        .statusCode,
+    ).toBe(403);
+    expect(
+      (
+        await send(
+          who,
+          "DELETE",
+          `/api/planned-hires/${draft.id}/draft/rejection`,
+        )
+      ).statusCode,
+    ).toBe(403);
+  });
+
+  it.each(roleSchema.options)(
+    "refuses a %s's changes to hires unless the role may edit people and change Confidential data",
+    async (role) => {
+      const live = await liveHire();
+      const { id } = await draftHire();
+      const who = await test.signedIn([role]);
+      const may =
+        rolesGranting("people:edit").includes(role) &&
+        rolesGranting("confidential:edit").includes(role);
+      const statuses = [
+        await send(who, "POST", "/api/planned-hires", hireRequest({})),
+        await send(who, "PATCH", `/api/planned-hires/${live}`, {
+          requisition: null,
+        }),
+        await send(who, "DELETE", `/api/planned-hires/${live}`),
+        await send(who, "DELETE", `/api/planned-hires/${id}/draft`),
+        await send(who, "DELETE", `/api/planned-hires/${id}/draft/rejection`),
+      ].map(({ statusCode }) => statusCode === 403);
+      expect(statuses).toEqual(statuses.map(() => !may));
+    },
+  );
+
+  it("lets those who may edit people and change Confidential data change it", async () => {
+    const who = await test.signedIn([]);
+    await holdOnly(who, ["people:edit", "confidential:edit"]);
+    expect(
+      (await send(who, "POST", "/api/planned-hires", hireRequest({})))
+        .statusCode,
+    ).toBe(201);
+  });
+});
+
 describe("undoing changes to the hiring plan", () => {
   it("needs the rights to change hires when undoing, not only when the change was made", async () => {
     const maker = await test.signedIn(["workforce-administrator"]);
     const { changeSetId } = await draftHire({}, maker);
-    const [role] = await test.connection
-      .insert(roles)
-      .values({ name: unique("Fictional People Editor") })
-      .returning({ id: roles.id });
-    await test.connection.insert(rolePermissions).values(
-      ["people:view", "people:edit"].map((permission) => ({
-        roleId: String(role?.id),
-        permission,
-      })),
-    );
-    await test.connection
-      .delete(userRoles)
-      .where(eq(userRoles.userId, maker.id));
-    await test.connection
-      .insert(userRoles)
-      .values({ userId: maker.id, roleId: String(role?.id) });
+    await holdOnly(maker, ["people:edit", "confidential:view"]);
     const response = await send(maker, "POST", `/api/undo/${changeSetId}`);
     expect(response.statusCode).toBe(403);
   });

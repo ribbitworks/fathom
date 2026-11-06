@@ -55,6 +55,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Unnamed in the access history:** The access history names each person by their live record, so a Restricted change to someone only drafted to be added shows them without a name until their draft is approved.
 - **An order draft that moves only Restricted columns:** A draft of the column order that moves only columns a reader may not see, such as Start or Manager since, is still sent to that reader as a draft of the order whose live and drafted orders are the same. Found in review on 2026-11-04.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
+- **Publishing drafts after losing a permission:** Publishing your unpublished drafts checks only that you may make some kind of draft, not each draft's own permission, so someone whose role no longer lets them change planned hires, people, or configuration can still send drafts they made earlier for approval. Found in review on 2026-11-05, and deferred by the owner as an edge case.
 
 ## Appearance
 
