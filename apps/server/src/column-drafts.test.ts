@@ -311,12 +311,12 @@ describe("drafting columns", () => {
       roles: ["workforce-administrator"],
       permissions: ["configuration:edit", "configuration:view"],
     };
-    await expect(
-      createDataAccess(test.connection).people.deleteField(
-        configurationOnly,
-        field.id,
-      ),
-    ).rejects.toThrow(/your roles do not let you change/);
+    const refusal = createDataAccess(test.connection).people.deleteField(
+      configurationOnly,
+      field.id,
+    );
+    await expect(refusal).rejects.toThrow(/your roles do not let you change/);
+    await expect(refusal).rejects.toBeInstanceOf(ForbiddenError);
   });
 
   // An actor who may change configuration and see people, but not Restricted details, as no role

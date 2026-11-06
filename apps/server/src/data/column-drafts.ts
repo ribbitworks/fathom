@@ -592,7 +592,7 @@ export async function deleteField(
       columnTier(state, live),
     ]);
     if (!actor.permissions.includes("people:edit") || !seesTier(actor, tier)) {
-      throw new ConflictError(
+      throw new ForbiddenError(
         `${String(field.name)} holds people's details your roles do not let you change, so someone who may must delete it`,
       );
     }
