@@ -34,6 +34,26 @@ export function visibilityName(tier: Tier): string {
   return visibilityNames[tier];
 }
 
+// Which lists the Lists page shows: every one, those Fathom builds in, or those people added.
+export const listKindSchema = z.enum(["all", "built-in", "custom"]);
+
+export type ListKind = z.infer<typeof listKindSchema>;
+
+const listKindNames: Record<ListKind, string> = {
+  all: "All",
+  "built-in": "Built in",
+  custom: "Custom",
+};
+
+export function listKindName(kind: ListKind): string {
+  // The kind is always one of the fixed kinds named above.
+  // eslint-disable-next-line security/detect-object-injection
+  return listKindNames[kind];
+}
+
+export const isKind = (list: List, kind: ListKind): boolean =>
+  kind === "all" || (list.builtIn != null) === (kind === "built-in");
+
 export const listsQuery = queryOptions({
   queryKey: ["lists"],
   queryFn: async () => (await getJson("/api/lists", listsSchema)).lists,

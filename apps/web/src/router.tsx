@@ -31,6 +31,7 @@ import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
+import { listKindSchema } from "./lists.ts";
 import { OrgChartPage } from "./org-chart-page.tsx";
 import { SettingsPage } from "./settings-page.tsx";
 import { setTimeZone } from "./today.ts";
@@ -216,12 +217,13 @@ const listsRoute = createRoute({
   validateSearch: z.object({
     show: showSchema.optional().catch(undefined),
     search: z.string().max(historySearchLength).optional().catch(undefined),
+    kind: listKindSchema.exclude(["all"]).optional().catch(undefined),
   }),
   beforeLoad: requiring("configuration:view"),
   component: function Lists() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = listsRoute.useNavigate();
-    const { show, search } = listsRoute.useSearch();
+    const { show, search, kind } = listsRoute.useSearch();
     return (
       <ListsPage
         listId={listsRoute.useParams().listId}
@@ -230,16 +232,23 @@ const listsRoute = createRoute({
         seesPeople={permissions.includes("people:view")}
         show={show ?? "both"}
         search={search ?? ""}
+        kind={kind ?? "all"}
         onShow={(next) => {
           void navigate({
-            search: { show: next === "both" ? undefined : next, search },
+            search: { show: next === "both" ? undefined : next, search, kind },
             replace: true,
           });
         }}
         onSearch={(next, replace) => {
           void navigate({
-            search: { show, search: next === "" ? undefined : next },
+            search: { show, search: next === "" ? undefined : next, kind },
             replace,
+          });
+        }}
+        onKind={(next) => {
+          void navigate({
+            search: { show, search, kind: next === "all" ? undefined : next },
+            replace: true,
           });
         }}
       />

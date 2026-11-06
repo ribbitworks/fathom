@@ -23,6 +23,7 @@ import {
   Loader,
   Modal,
   Paper,
+  SegmentedControl,
   Stack,
   Text,
 } from "@mantine/core";
@@ -65,7 +66,11 @@ import {
   deleteList,
   discardListDraft,
   draftedLists,
+  isKind,
   type ListDraftTarget,
+  type ListKind,
+  listKindName,
+  listKindSchema,
   listsQuery,
   liveLists,
   moveChoice,
@@ -327,6 +332,11 @@ function ListsTable({
   );
 }
 
+// The switch names each option's radio button after its own name, which is how closing a panel
+// finds the option chosen.
+const kindName = "list-kind";
+const kindOptionId = (kind: ListKind) => `${kindName}-${kind}`;
+
 export function ListsPage({
   listId,
   canEdit: mayEdit,
@@ -335,6 +345,8 @@ export function ListsPage({
   onShow,
   search = "",
   onSearch,
+  kind = "all",
+  onKind,
   seesPeople = false,
 }: {
   listId: string | undefined;
@@ -351,12 +363,15 @@ export function ListsPage({
   // accents, as on the People table.
   search?: string;
   onSearch?: (search: string, replace: boolean) => void;
+  kind?: ListKind;
+  onKind?: (kind: ListKind) => void;
 }) {
   const canEdit = mayEdit && show !== "live";
-  // What to show, and the search, stay in the address as lists are opened and closed.
+  // What to show, the search, and which lists, stay in the address as lists are opened and closed.
   const showSearch = {
     ...(show === "both" ? {} : { show }),
     ...(search === "" ? {} : { search }),
+    ...(kind === "all" ? {} : { kind }),
   };
   const query = useQuery(listsQuery);
   const readsPeople = seesPeople && mayApprove;
@@ -397,9 +412,10 @@ export function ListsPage({
       search: showSearch,
     });
   };
-  // Closing the panel puts focus back on the list's row in the table.
+  // Closing the panel puts focus back on the list's row in the table, or, if the switch has since
+  // hidden the list, on the switch, so focus is never lost.
   const closePanel = (list: List) => {
-    focusSoon(linkId(list));
+    focusSoon(isKind(list, kind) ? linkId(list) : kindOptionId(kind));
     void navigate({
       to: "/lists/{-$listId}",
       params: { listId: undefined },
@@ -679,19 +695,21 @@ export function ListsPage({
     }
   };
 
-  // The lists whose name, description, or choices hold every word searched for.
+  // The lists of the kind chosen whose name, description, or choices hold every word searched for.
   const words = searchWords(search);
-  const shownLists = lists.filter((list) =>
-    matchesWords(
-      [
-        list.name,
-        list.description,
-        ...list.choices.map(
-          ({ label, description }) => `${label} ${description}`,
-        ),
-      ].join(" "),
-      words,
-    ),
+  const shownLists = lists.filter(
+    (list) =>
+      isKind(list, kind) &&
+      matchesWords(
+        [
+          list.name,
+          list.description,
+          ...list.choices.map(
+            ({ label, description }) => `${label} ${description}`,
+          ),
+        ].join(" "),
+        words,
+      ),
   );
 
   // Every draft waiting among the lists shown, which Approvers approve or reject all at once, with
@@ -742,10 +760,25 @@ export function ListsPage({
               label="Search lists"
               value={search}
               onChange={onSearch}
-              // Leaving needs an empty search, which shows every list, and there is at least one.
+              // Leaving needs an empty search, but the switch can still leave no list to focus.
               onLeave={() => {
-                focusSoon(linkId(shownLists[0] as List));
+                const first = shownLists.at(0);
+                if (first !== undefined) focusSoon(linkId(first));
               }}
+            />
+          )}
+          {onKind && (
+            <SegmentedControl
+              aria-label="Which lists"
+              name={kindName}
+              value={kind}
+              onChange={(chosen) => {
+                onKind(listKindSchema.parse(chosen));
+              }}
+              data={listKindSchema.options.map((option) => ({
+                value: option,
+                label: listKindName(option),
+              }))}
             />
           )}
           {onShow && (
@@ -760,7 +793,7 @@ export function ListsPage({
             </DraftMenu>
           )}
           <Text fz="sm" c="dimmed" role="status">
-            {searchWords(search).length > 0
+            {searchWords(search).length > 0 || kind !== "all"
               ? `${count(shownLists.length)} of ${count(lists.length)}`
               : `${count(lists.length)} ${lists.length === 1 ? "list" : "lists"}`}
           </Text>

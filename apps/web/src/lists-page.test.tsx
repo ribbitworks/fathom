@@ -285,6 +285,143 @@ describe("the table of lists", () => {
     expect(screen.queryByText("The last choice")).toBeNull();
   });
 
+  const builtInPositions = {
+    ...locations,
+    builtIn: "positions",
+    name: "Positions",
+  };
+  const invitation = "Rename these, add your own, or retire any you don't use.";
+
+  it("shows all lists, those built in, or the custom ones, as chosen, kept in the address", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            { ...locations, builtIn: "positions", name: "Positions" },
+            skills,
+          ],
+        }),
+    });
+    const history = renderApp("/lists");
+    const table = await screen.findByRole("table", { name: "Lists" });
+    const names = () =>
+      within(table)
+        .getAllByRole("link")
+        .map((link) => link.textContent);
+    const which = screen.getByRole("radiogroup", { name: "Which lists" });
+    expect(names()).toEqual(["Positions", "Skills"]);
+    await userEvent.click(
+      within(which).getByRole("radio", { name: "Built in" }),
+    );
+    await waitFor(() => {
+      expect(names()).toEqual(["Positions"]);
+    });
+    expect(screen.getByRole("status").textContent).toBe("1 of 2");
+    expect(history.location.search).toContain("kind=built-in");
+    await userEvent.click(within(which).getByRole("radio", { name: "Custom" }));
+    await waitFor(() => {
+      expect(names()).toEqual(["Skills"]);
+    });
+    await userEvent.click(screen.getByRole("link", { name: "Skills" }));
+    await waitFor(() => {
+      expect(history.location.search).toContain("kind=custom");
+    });
+    await userEvent.click(within(which).getByRole("radio", { name: "All" }));
+    await waitFor(() => {
+      expect(names()).toEqual(["Positions", "Skills"]);
+    });
+    expect(history.location.search).not.toContain("kind=");
+  });
+
+  it("leaves the search without moving focus when no list is shown", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () => Response.json({ lists: [skills] }),
+    });
+    renderApp("/lists?kind=built-in");
+    const search = await screen.findByRole("textbox", { name: "Search lists" });
+    expect(screen.getByText("No matching lists")).toBeTruthy();
+    search.focus();
+    await userEvent.keyboard("{Escape}");
+    expect(document.activeElement).toBe(search);
+  });
+
+  it("tells those who may change lists that a built-in list is theirs to change", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () => Response.json({ lists: [builtInPositions] }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Positions", level: 2 });
+    expect(screen.getByText(new RegExp(invitation))).toBeTruthy();
+  });
+
+  it("does not tell those who may only view lists that a built-in list is theirs to change", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () => Response.json({ lists: [builtInPositions] }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", { name: "Positions", level: 2 });
+    expect(screen.getByText(/Keep at least one\./)).toBeTruthy();
+    expect(screen.queryByText(new RegExp(invitation))).toBeNull();
+  });
+
+  it("keeps the lists chosen in the address when searching or changing what to show", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({ lists: [builtInPositions, skills] }),
+    });
+    const history = renderApp("/lists?kind=custom");
+    await screen.findByRole("table", { name: "Lists" });
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search lists" }),
+      "s",
+    );
+    await waitFor(() => {
+      expect(history.location.search).toContain("search=s");
+    });
+    expect(history.location.search).toContain("kind=custom");
+  });
+
+  it.each(["all", "nonsense"])(
+    "shows every list for an address asking for %s lists",
+    async (kind) => {
+      serverAnswers({
+        "GET /api/session": editor,
+        "GET /api/lists": () =>
+          Response.json({ lists: [builtInPositions, skills] }),
+      });
+      renderApp(`/lists?kind=${kind}`);
+      const which = await screen.findByRole("radiogroup", {
+        name: "Which lists",
+      });
+      expect(within(which).getByRole("radio", { name: "All" })).toHaveProperty(
+        "checked",
+        true,
+      );
+      expect(screen.getByRole("status").textContent).toBe("2 lists");
+    },
+  );
+
+  it("puts focus on the switch when closing a list it hides", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({ lists: [builtInPositions, skills] }),
+    });
+    renderApp("/lists/l1?kind=custom");
+    await screen.findByRole("heading", { name: "Positions", level: 2 });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("radio", { name: "Custom" }),
+      );
+    });
+  });
+
   it("says under Positions' choices what the list is for", async () => {
     serverAnswers({
       "GET /api/session": editor,

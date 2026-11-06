@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-05"
+last_updated: "2026-11-06"
 ---
 
 # Manual Test: Built-in Lists and Lists with Meanings
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions and Hiring states: their mark, the dialog that cannot retire or delete them but can change their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions and Hiring states: their mark, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, the dialog that cannot retire or delete them but can change their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
 
 ## Test Environment
 
@@ -90,11 +90,11 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 3.** Select **Positions**.
-  - **Expected:** The panel opens with **Positions** at the top and **Built in** beside it. Under the choices, in grey, it reads **Every person and planned hire has one of these positions.** and, on the next line, **Keep at least one.**
+  - **Expected:** The panel opens with **Positions** at the top and **Built in** beside it. Under the choices, in grey, it reads three lines: **Rename these, add your own, or retire any you don't use.**, **Every person and planned hire has one of these positions.** and **Keep at least one.**
   - **Notes:**
 
 - [ ] **Step 4.** Select **Hiring states**.
-  - **Expected:** The panel opens with **Hiring states** at the top and **Built in** beside it. No description is shown under the name. Under the choices, in grey, it reads three lines: **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
+  - **Expected:** The panel opens with **Hiring states** at the top and **Built in** beside it. No description is shown under the name. Under the choices, in grey, it reads four lines: **Rename these, add your own, or retire any you don't use.**, **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
   - **Notes:**
 
 ### LIST-02: A Built-in List Cannot Be Retired or Deleted
@@ -211,4 +211,28 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 - [ ] **Step 6.** Reset the database (R2).
   - **Expected:** The last line printed gives the shared password, with no error above it.
+  - **Notes:**
+
+### LIST-09: The Lists Shown Can Be Narrowed to Built-in or Custom Ones
+
+**Preconditions:** LIST-08 done, so the database is as R2 leaves it. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open from the left-hand menu, with no list's panel open.
+
+- [ ] **Step 1.** Read the count at the end of the bar above the table.
+  - **Expected:** It reads **9 lists**.
+  - **Notes:**
+
+- [ ] **Step 2.** In the switch beside **Search lists**, select **Built in**.
+  - **Expected:** The table shows only **Hiring states** and **Positions**, and the count reads **2 of 9**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Custom**.
+  - **Expected:** The table shows every list except **Hiring states** and **Positions**, with **Languages** under **Show retired (1)**, and the count reads **7 of 9**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **All**.
+  - **Expected:** The table shows every list again, and the count reads **9 lists**.
+  - **Notes:**
+
+- [ ] **Step 5.** Sign in (P1) as `engineering.director@fathom.test`. Open the **Lists** page and select **Positions**.
+  - **Expected:** Under the choices, in grey, it reads two lines: **Every person and planned hire has one of these positions.** and **Keep at least one.** There is no line starting **Rename these**.
   - **Notes:**

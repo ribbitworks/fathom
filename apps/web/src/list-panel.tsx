@@ -143,12 +143,16 @@ export function liftedWhileDragging(base: string, dragging: boolean): string {
 
 // What a list Fathom builds in is for, shown under its choices; the organization's own description
 // of it shows under its name, as for any list.
-function builtInNote(key: BuiltInList): string {
+// Fathom filled the list in, so those who may change it are first told it is theirs to change.
+function builtInNote(key: BuiltInList, mayChange: boolean): string {
+  const invitation = mayChange
+    ? "Rename these, add your own, or retire any you don't use.\n"
+    : "";
   switch (key) {
     case "hiring-states":
-      return "Proposed: the request to hire is not yet approved.\nOpen: the request to hire is approved.\nKeep at least one choice for each.";
+      return `${invitation}Proposed: the request to hire is not yet approved.\nOpen: the request to hire is approved.\nKeep at least one choice for each.`;
     case "positions":
-      return "Every person and planned hire has one of these positions.\nKeep at least one.";
+      return `${invitation}Every person and planned hire has one of these positions.\nKeep at least one.`;
   }
 }
 
@@ -1215,7 +1219,7 @@ export function ListPanel({
           </div>
           {list.builtIn && (
             <Text fz="xs" c="dimmed" className={classes.builtInNote}>
-              {builtInNote(list.builtIn)}
+              {builtInNote(list.builtIn, mayEdit)}
             </Text>
           )}
           {shownRetired.length > 0 && (
