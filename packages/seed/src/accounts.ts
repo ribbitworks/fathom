@@ -2,7 +2,8 @@
 
 // Development accounts, one for each persona in docs/product/brief.md, named after the persona and
 // holding its default roles from docs/product/roles.md, so each role can be tried by signing in as
-// it, and a Resource Planner, which sees people without their Restricted details. They share one
+// it, a Resource Planner, which sees people without their Restricted details, and a Superuser, which
+// holds every starting role, and so every permission, for trying anything at once. They share one
 // password. Accounts are never deleted, since the change history and saved views refer to them, so
 // removing the seed data deactivates them, and seeding again reactivates them. Development only:
 // the seed package is never part of the runtime image.
@@ -10,7 +11,7 @@
 import { type Database, users } from "@fathom/db";
 import { createAccount, setAccountActive } from "@fathom/server/accounts";
 import type { Auth } from "@fathom/server/auth";
-import type { Role } from "@fathom/shared";
+import { type Role, roleSchema } from "@fathom/shared";
 import { and, inArray, isNull } from "drizzle-orm";
 
 // The email domain of the seeded accounts.
@@ -87,6 +88,13 @@ export const personaAccounts: readonly PersonaAccount[] = [
     name: "Fathom Administrator",
     email: `fathom.administrator@${accountDomain}`,
     roles: ["administrator"],
+  },
+  // Together the starting roles grant every permission, which a test checks, so this account can
+  // try anything without signing in as another.
+  {
+    name: "Superuser",
+    email: `superuser@${accountDomain}`,
+    roles: roleSchema.options,
   },
 ];
 

@@ -101,7 +101,7 @@ Run the test cases in order. Start with R2. Tick each step whose expected result
 **Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`. **Roles** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the **Role** and **Accounts** columns from top to bottom.
-  - **Expected:** Administrator 1, Approver 2, Leadership 2, People Manager 1, Project Planner 5, Resource Planner 3, Viewer 10, Workforce Administrator 2. Each row ends with **Edit** and **Copy** buttons, and **New role** is at the top right.
+  - **Expected:** Administrator 2, Approver 3, Leadership 3, People Manager 2, Project Planner 6, Resource Planner 4, Viewer 11, Workforce Administrator 3. Each row ends with **Edit** and **Copy** buttons, and **New role** is at the top right.
   - **Notes:**
 
 - [ ] **Step 2.** Read the **What it is for** column.
@@ -241,7 +241,7 @@ Run the test cases in order. Start with R2. Tick each step whose expected result
 **Preconditions:** **Roles** page open, signed in as `fathom.administrator@fathom.test`.
 
 - [ ] **Step 1.** Open the **Administrator** role (P3), untick **Edit** on **Roles**, and select **Save**.
-  - **Expected:** The confirmation lists **Fathom Administrator**, marked **(you)**, under **Loses** with **The Roles page no longer appears.**
+  - **Expected:** The confirmation says **This change affects 2 accounts.** It lists **Fathom Administrator**, marked **(you)**, and **Superuser**, each under **Loses** with **The Roles page no longer appears.**
   - **Notes:**
 
 - [ ] **Step 2.** Select **Save changes**.

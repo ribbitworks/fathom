@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the persona accounts, against a migrated PostgreSQL server: one for each persona, as the
-// development setup document lists them; seeding creates them with their default roles and the
-// shared password, recorded in the access history, and only once; removing deactivates and signs out
-// only them; and seeding again reactivates them.
+// development setup document lists them, and a Superuser holding every permission; seeding creates
+// them with their default roles and the shared password, recorded in the access history, and only
+// once; removing deactivates and signs out only them; and seeding again reactivates them.
 
 import {
   accessHistory,
@@ -19,6 +19,7 @@ import {
 } from "@fathom/db";
 import { createAccount } from "@fathom/server/accounts";
 import { createAuth } from "@fathom/server/auth";
+import { permissionSchema, startingRoles, withImplied } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { asc, eq, inArray } from "drizzle-orm";
 import { readFileSync } from "node:fs";
@@ -100,7 +101,7 @@ async function actionsFor(id: string) {
 }
 
 describe("the persona accounts", () => {
-  it("are one for each persona, named after it, with a second Engineering Operations Manager and a Resource Planner", () => {
+  it("are one for each persona, named after it, with a second Engineering Operations Manager, a Resource Planner and a Superuser", () => {
     expect(personaAccounts.map(({ name }) => name)).toEqual([
       "Product Manager",
       "Project Manager",
@@ -113,7 +114,24 @@ describe("the persona accounts", () => {
       "Team Member",
       "Resource Planner",
       "Fathom Administrator",
+      "Superuser",
     ]);
+  });
+
+  it("include a Superuser whose roles together grant every permission", () => {
+    const superuser = personaAccounts.find(({ name }) => name === "Superuser");
+    const granted = withImplied(
+      (superuser?.roles ?? []).flatMap(
+        // The role is always one of the starting roles.
+        // eslint-disable-next-line security/detect-object-injection
+        (role) => startingRoles[role].permissions,
+      ),
+    );
+    expect(
+      permissionSchema.options.filter(
+        (permission) => !granted.includes(permission),
+      ),
+    ).toEqual([]);
   });
 
   it("have distinct addresses on the reserved fathom.test domain", () => {

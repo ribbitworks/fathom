@@ -119,7 +119,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 
 ### Development Accounts
 
-Seeding adds these accounts: one for each persona in the [Product Brief](../product/brief.md#users), with its persona's default roles from [Roles](../product/roles.md#default-roles-by-persona); a second Engineering Operations Manager, so the seed data has drafts that two people changed; and a Resource Planner, which sees people without their Restricted details, as [Roles](../product/roles.md#what-each-role-can-do) sets out. They share a random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets, which `pnpm db:seed` prints. An account already there keeps its password, so if that file is replaced, run `pnpm dev:reset` to give every account the new one. A test checks that this table matches the accounts seeded.
+Seeding adds these accounts: one for each persona in the [Product Brief](../product/brief.md#users), with its persona's default roles from [Roles](../product/roles.md#default-roles-by-persona); a second Engineering Operations Manager, so the seed data has drafts that two people changed; a Resource Planner, which sees people without their Restricted details, as [Roles](../product/roles.md#what-each-role-can-do) sets out; and a Superuser, which holds every starting role and so may do anything, for trying a feature without changing accounts. They share a random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets, which `pnpm db:seed` prints. An account already there keeps its password, so if that file is replaced, run `pnpm dev:reset` to give every account the new one. A test checks that this table matches the accounts seeded.
 
 | Account | Name | Roles |
 | --- | --- | --- |
@@ -134,3 +134,4 @@ Seeding adds these accounts: one for each persona in the [Product Brief](../prod
 | `team.member@fathom.test` | Team Member | Viewer |
 | `resource.planner@fathom.test` | Resource Planner | Viewer, Resource Planner |
 | `fathom.administrator@fathom.test` | Fathom Administrator | Administrator |
+| `superuser@fathom.test` | Superuser | Viewer, Project Planner, Resource Planner, People Manager, Workforce Administrator, Leadership, Approver, Administrator |
