@@ -26,11 +26,12 @@ describe("what a role allows", () => {
   it("lists no pages for a role granting nothing, and every page as not appearing", () => {
     const { pages, cannot } = consequences([]);
     expect(pages).toEqual([]);
-    expect(cannot.slice(0, 12)).toEqual([
+    expect(cannot.slice(0, 13)).toEqual([
       "The Overview page does not appear.",
       "The Projects page does not appear.",
       "The Releases page does not appear.",
       "The People page does not appear.",
+      "The Org chart page does not appear.",
       "The Drafts page does not appear.",
       "The Capacity page does not appear.",
       "The Lists page does not appear.",
@@ -44,7 +45,7 @@ describe("what a role allows", () => {
 
   it("names the pages a role's permissions open, and only those others as not appearing", () => {
     const { pages, cannot } = consequences(["people:view", "roles:edit"]);
-    expect(pages).toEqual(["People", "Drafts", "Roles"]);
+    expect(pages).toEqual(["People", "Org chart", "Drafts", "Roles"]);
     expect(cannot).toContain("The Accounts page does not appear.");
     expect(cannot).not.toContain("The People page does not appear.");
   });
@@ -101,6 +102,7 @@ describe("what a change to an account's permissions does", () => {
     ).toEqual({
       gains: [
         "Sees the People page.",
+        "Sees the Org chart page.",
         "Sees the Drafts page.",
         "Sees the Roles page.",
         allows("people:view"),
@@ -117,6 +119,7 @@ describe("what a change to an account's permissions does", () => {
       gains: [],
       losses: [
         "The People page no longer appears.",
+        "The Org chart page no longer appears.",
         "The Drafts page no longer appears.",
         without("people:view"),
       ],

@@ -40,7 +40,8 @@ The slices are built in this order, which may change as work progresses. The tab
 | Change History | Done |
 | Draft and Approval | Done |
 | Web Link Columns | Done |
-| Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, and a manual test |
+| Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
+| Org Chart Additions | Next: team colours, then the person detail view, then chart fields, filters, and sort |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID |
 | Editable Roles | In progress: schema, the server reading roles from the database, and the Roles page; next, the account dialog |
@@ -97,7 +98,17 @@ A second type of column on People, Web link: each person's value is one web addr
 
 ### Teams and Reporting Lines
 
-People managers and their current direct reports: each person's reporting line, with the date it takes effect from, shown as Manager and Team columns on People, the Manager flag that decides who can be a manager, teams' optional names, and the rules, drafts, and warnings in the [Decisions Log](../product/decisions.md#workforce). The seed data gains managers, reports, named and unnamed teams, a person with no manager, and a manager whose end date has passed while people still report to them. Reporting lines set the pattern for records that link to other records, which features, feature teams, and planned hires reuse, and for records in force from a date until the next one starts, which feature team membership and allocations reuse. Future dates come with planned reporting changes and the org chart in [The Organization](../product/roadmap.md#stage-the-organization) stage.
+People managers and their current direct reports: each person's reporting line, with the date it takes effect from, shown as Manager and Team columns on People, the Manager flag that decides who can be a manager, teams' optional names, and the rules, drafts, and warnings in the [Decisions Log](../product/decisions.md#workforce). The seed data gains managers, reports, named and unnamed teams, a person with no manager, and a manager whose end date has passed while people still report to them. Reporting lines set the pattern for records that link to other records, which features, feature teams, and planned hires reuse, and for records in force from a date until the next one starts, which feature team membership and allocations reuse. The Org chart page draws today's approved reporting lines with React Flow, as [ADR 0004](../adr/0004-ui-components.md) chooses, and as the [Decisions Log](../product/decisions.md#workforce) describes, with a [manual test](../testing/org-chart-manual-test.md). Planned hires join the chart once they are rows of People. The [Org Chart Additions](#org-chart-additions) slice builds on it. Future dates come with planned reporting changes in [The Organization](../product/roadmap.md#stage-the-organization) stage, which also shows the chart on a chosen date.
+
+### Org Chart Additions
+
+The additions to the org chart that the [Decisions Log](../product/decisions.md#workforce) records, built in this order, each step its own pull request:
+
+1. **Team colours:** a column for each team's colour, from the palette releases use, which needs a migration.
+2. **Person detail view:** a page for one person, which the org chart's cards and People's rows open. Restricted details shown there are recorded in the access history, as on People.
+3. **Chart fields, filters, and sort:** cards show fields chosen from People's columns, at the tiers the reader may see, kept apart from the card's own details, with filters and sort saved as People's views are.
+
+Feature teams join the chart once the [Projects and Feature Teams](#projects-and-feature-teams) slice adds them.
 
 ### Hiring Plan
 

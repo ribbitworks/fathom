@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People and the columns on the People table: reading everyone the user may see; drafting people
-// added, one or several at once, changed, and removed, discarding drafts, and sending rejected ones
-// for approval again; adding, changing, and deleting columns; and moving any column, built-in or
-// added. Approving and rejecting drafts is in drafts.ts.
+// People and the columns on the People table: reading everyone the user may see, and the org
+// chart; drafting people added, one or several at once, changed, and removed, discarding drafts,
+// and sending rejected ones for approval again; adding, changing, and deleting columns; and moving
+// any column, built-in or added. Approving and rejecting drafts is in drafts.ts.
 // The data access layer checks the actor's permissions.
 
 import {
@@ -12,6 +12,7 @@ import {
   fieldMoveSchema,
   fieldRequestSchema,
   fieldSchema,
+  orgChartSchema,
   peopleRequestSchema,
   peopleSchema,
   personChangeSchema,
@@ -45,6 +46,12 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
       "/api/people",
       { schema: { response: { 200: peopleSchema } } },
       async (request) => people.read(request.actor),
+    );
+
+    app.get(
+      "/api/org-chart",
+      { schema: { response: { 200: orgChartSchema } } },
+      async (request) => people.readOrgChart(request.actor),
     );
 
     app.post(

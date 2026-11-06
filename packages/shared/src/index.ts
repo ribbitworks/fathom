@@ -208,6 +208,12 @@ export {
   releaseStreamsSchema,
 } from "./releases.ts";
 export {
+  type OrgChart,
+  type OrgChartPerson,
+  orgChartPersonSchema,
+  orgChartSchema,
+} from "./org-chart.ts";
+export {
   changeSetIdSchema,
   columnKeySchema,
   type ColumnOrderDraft,

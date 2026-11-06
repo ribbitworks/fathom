@@ -8,13 +8,16 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   historySearchLength,
   type Permission,
+  personLengths,
   showSchema,
 } from "@fathom/shared";
+import { Anchor } from "@mantine/core";
 import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
   getRouteApi,
+  Link,
   notFound,
   type RouterHistory,
   redirect,
@@ -28,6 +31,7 @@ import { HistoryPage } from "./history-page.tsx";
 import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
+import { OrgChartPage } from "./org-chart-page.tsx";
 import { SettingsPage } from "./settings-page.tsx";
 import { setTimeZone } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
@@ -45,6 +49,13 @@ const rootRoute = createRootRouteWithContext<{ queryClient: QueryClient }>()({
 // The signed-in user and their permissions, as the signed-in routes check them below.
 const signedIn = getRouteApi("/signed-in");
 const people = getRouteApi("/signed-in/people");
+
+// The org chart's address: the person found on it, and the manager whose team alone is shown, each
+// by Employee ID. People keeps it while opened from the chart, to lead back to it.
+const chartSearch = z.object({
+  person: z.string().max(personLengths.employeeId).optional().catch(undefined),
+  team: z.string().max(personLengths.employeeId).optional().catch(undefined),
+});
 
 // Pages only for users with a permission; anyone else is told there is no such page.
 function requiring(...permissions: Permission[]) {
@@ -256,20 +267,53 @@ const releasesRoute = createRoute({
 const peopleRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/people",
-  validateSearch: viewSearchSchema,
+  validateSearch: viewSearchSchema.extend({
+    chart: chartSearch.optional().catch(undefined),
+  }),
   beforeLoad: requiring("people:view"),
   component: function People() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = people.useNavigate();
+    const { chart, ...search } = people.useSearch();
     return (
       <PeoplePage
+        back={
+          chart !== undefined && (
+            <Anchor
+              size="sm"
+              renderRoot={(props) => (
+                <Link {...props} to="/org-chart" search={chart} />
+              )}
+            >
+              Back to org chart
+            </Anchor>
+          )
+        }
         canEdit={permissions.includes("people:edit")}
         canApprove={permissions.includes("drafts:approve")}
         canEditColumns={permissions.includes("configuration:edit")}
         showDates={permissions.includes("restricted:view")}
-        {...viewProps(people.useSearch(), (search, replace) => {
-          void navigate({ search, replace });
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, chart }, replace });
         })}
+      />
+    );
+  },
+});
+
+const orgChartRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/org-chart",
+  validateSearch: chartSearch,
+  beforeLoad: requiring("people:view"),
+  component: function OrgChart() {
+    const navigate = orgChartRoute.useNavigate();
+    return (
+      <OrgChartPage
+        search={orgChartRoute.useSearch()}
+        onSearch={(search, replace) => {
+          void navigate({ search, replace });
+        }}
       />
     );
   },
@@ -316,6 +360,7 @@ const routeTree = rootRoute.addChildren([
     listsRoute,
     releasesRoute,
     peopleRoute,
+    orgChartRoute,
     draftsRoute,
     helpRoute,
     draftsHelpRoute,

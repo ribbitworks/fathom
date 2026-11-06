@@ -25,6 +25,14 @@ const paths = {
       <path d="M1.5 13.5c.5-2.5 2.3-3.5 4.5-3.5s4 1 4.5 3.5M10.5 3.2a2.5 2.5 0 0 1 0 4.6M12 10.3c1.3.4 2.2 1.5 2.5 3.2" />
     </>
   ),
+  orgChart: (
+    <>
+      <rect x="5.5" y="1.5" width="5" height="4" rx="1" />
+      <rect x="1.5" y="10.5" width="5" height="4" rx="1" />
+      <rect x="9.5" y="10.5" width="5" height="4" rx="1" />
+      <path d="M8 5.5v2.5M4 10.5V8h8v2.5" />
+    </>
+  ),
   capacity: <path d="M2.5 13.5V9M6.2 13.5V5.5M9.8 13.5V7.5M13.5 13.5V2.5" />,
   lists: (
     <>

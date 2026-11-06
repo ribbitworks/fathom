@@ -34,7 +34,7 @@ Development uses fictional data only.
 Covers the owner's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables and simple charts rather than an interactive Gantt view.
 
 - **People and teams:** Includes feature teams and feature leads. Employee details are limited to the General tier plus start and end dates.
-- **Org structure:** People managers and their current direct reports, without planned changes or the org chart.
+- **Org structure:** People managers and their current direct reports, and the org chart of today's reporting lines, without planned changes. The owner brought the org chart forward from The Organization stage, as the [Decisions Log](decisions.md#workforce) records.
 - **Change history:** Who changed what, and when, for the data each user may see.
 - **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which People Managers' proposals are approved by an Approver.
 - **Roadmap view:** First built as the Product Manager's working roadmap, an input to the rest of the plan: features in a table grouped by cycle. The visual roadmap comes in a later stage.
@@ -63,7 +63,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 
 ## Stage: The Organization
 
-- **Org structure:** Planned reporting changes and the org chart.
+- **Org structure:** Planned reporting changes, and the org chart on a chosen date.
 - **Feature teams:** Planned membership changes, as the [Decisions Log](decisions.md#workforce) sets out.
 - **Own record and reports:** Users see their own record and their reports' records through a link to their person record, as proposed in [Roles](roles.md).
 - **Unified people view**

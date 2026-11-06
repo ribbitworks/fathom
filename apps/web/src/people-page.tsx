@@ -168,6 +168,7 @@ function reordered(
 }
 
 export function PeoplePage({
+  back,
   canEdit,
   canApprove = false,
   canEditColumns,
@@ -177,6 +178,7 @@ export function PeoplePage({
   applied,
   onApply,
 }: {
+  back?: ReactNode;
   canEdit: boolean;
   canApprove?: boolean;
   canEditColumns: boolean;
@@ -589,6 +591,7 @@ export function PeoplePage({
 
   return (
     <Stack gap="md" className={classes.tablePage}>
+      {back}
       <PageHeader
         title="People"
         action={

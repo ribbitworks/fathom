@@ -145,11 +145,11 @@ Run the test cases in order. Start with R2. Tick each step whose expected result
 **Preconditions:** The **Approver** dialog open, as at the end of ROLE-04.
 
 - [ ] **Step 1.** Tick **View** on the **People** row, and watch the summary.
-  - **Expected:** **People** appears under **Pages its holders see**, and a sentence about seeing people appears under **Can**, each in bold teal, turning to plain text after about three seconds. Under **Cannot**, **The People page does not appear.** is struck through in red and fades away over about three seconds, then goes.
+  - **Expected:** **People** and **Org chart** appear under **Pages its holders see**, and a sentence about seeing people appears under **Can**, each in bold teal, turning to plain text after about three seconds. Under **Cannot**, **The People page does not appear.** and **The Org chart page does not appear.** are struck through in red and fade away over about three seconds, then go.
   - **Notes:**
 
 - [ ] **Step 2.** Untick **View** on the **People** row.
-  - **Expected:** The lines added in Step 1 are struck through in red and fade away; **The People page does not appear.** comes back in bold teal.
+  - **Expected:** The lines added in Step 1 are struck through in red and fade away; **The People page does not appear.** and **The Org chart page does not appear.** come back in bold teal.
   - **Notes:**
 
 - [ ] **Step 3.** Tick **View** on the **Restricted details** row, leaving **People** unticked.

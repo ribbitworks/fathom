@@ -60,6 +60,7 @@ type Page =
   | "/drafts"
   | "/lists/{-$listId}"
   | "/people"
+  | "/org-chart"
   | "/releases/{-$streamId}"
   | "/help/roles"
   | "/help/drafts";
@@ -113,6 +114,12 @@ const sections: { label: string; items: Item[] }[] = [
         label: "People",
         icon: "people",
         to: "/people",
+        permission: "people:view",
+      },
+      {
+        label: "Org chart",
+        icon: "orgChart",
+        to: "/org-chart",
         permission: "people:view",
       },
       {

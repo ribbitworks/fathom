@@ -23,6 +23,7 @@ import type {
   HistoryEntry,
   List,
   ListRequest,
+  OrgChart,
   Permission,
   Person,
   PersonChange,
@@ -53,6 +54,7 @@ import { type ColumnDraftTarget, readColumnsOut } from "./column-drafts.ts";
 import { readChangeHistory } from "./change-history.ts";
 import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
+import { readOrgChart } from "./org-chart.ts";
 import * as hireData from "./hires.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
@@ -259,6 +261,9 @@ export interface PeopleAccess {
     orderHeldBy?: string;
     views: SavedView[];
   }>;
+  // Today's reporting lines as approved, with General details only. Telling anyone that a manager
+  // has left is recorded in the access history.
+  readOrgChart(actor: Actor): Promise<OrgChart>;
   // Changes to people are drafts, which reach the live people once approved.
   create(
     actor: Actor,
@@ -505,6 +510,21 @@ function createPeopleAccess(database: Database): PeopleAccess {
         ...columns,
         views: await views.readViews(database, actor),
       };
+    },
+    readOrgChart: async (actor) => {
+      requirePermission(actor, "people:view");
+      const { includedRestricted, ...chart } = await readOrgChart(
+        database,
+        actor,
+      );
+      if (includedRestricted) {
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          await readTimeZone(database),
+        );
+      }
+      return chart;
     },
     create: async (actor, requests) => {
       const { ids, changeSetId } = await peopleData.createPeople(

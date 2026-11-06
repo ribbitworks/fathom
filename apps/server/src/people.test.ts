@@ -305,6 +305,7 @@ describe("who may read and change people", () => {
 describe("signed-out requests", () => {
   it.each([
     ["GET", "/api/people"],
+    ["GET", "/api/org-chart"],
     ["POST", "/api/people"],
     ["PATCH", `/api/people/${randomUUID()}`],
     ["DELETE", `/api/people/${randomUUID()}`],

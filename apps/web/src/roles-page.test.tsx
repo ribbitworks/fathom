@@ -450,6 +450,7 @@ describe("the summary of what a role allows", () => {
       "Projects, Not built yet",
       "Releases",
       "People",
+      "Org chart",
       "Drafts",
     ]);
     expect(summaryLines(dialog, "Can")).toEqual([
@@ -506,6 +507,7 @@ describe("the summary of what a role allows", () => {
       "Projects, Not built yet",
       "Releases",
       "No longer: People",
+      "No longer: Org chart",
       // Drafts stays, since viewing the plan opens it too.
       "Drafts",
     ]);
@@ -527,6 +529,7 @@ describe("the summary of what a role allows", () => {
       // Releases and Drafts come back, since configuration opens them too.
       "Releases",
       "No longer: People",
+      "No longer: Org chart",
       "Drafts",
       "No longer: None, apart from Help.",
       "Lists",
