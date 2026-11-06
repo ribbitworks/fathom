@@ -15,9 +15,12 @@ import {
   type Database,
   listItems,
   lists,
+  rolePermissions,
+  roles as roleTable,
   runMigrations,
+  userRoles,
 } from "@fathom/db";
-import type { Role } from "@fathom/shared";
+import type { Permission, Role } from "@fathom/shared";
 import {
   createTestCertificate,
   startTestDatabase,
@@ -25,6 +28,7 @@ import {
   type TestDatabase,
 } from "@fathom/test-utils";
 import { asc, eq, inArray } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { actorFor } from "./access.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
@@ -47,6 +51,9 @@ export interface TestApp {
   connection: Database;
   // Signs in a new account holding the given roles, and returns its identifier and session cookie.
   signedIn(roles: Role[]): Promise<{ id: string; cookie: string }>;
+  // Gives the account one role, made for the test, granting just these permissions, in place of the
+  // roles it held.
+  holdOnly(userId: string, permissions: readonly Permission[]): Promise<void>;
   // Publishes the change straight after unless asked not to, or the app was started not to.
   request(
     cookie: string,
@@ -131,6 +138,20 @@ export async function startTestApp({
   return {
     app,
     connection,
+    async holdOnly(userId, permissions) {
+      const [role] = await connection
+        .insert(roleTable)
+        .values({ name: `Fictional Test Role ${randomUUID()}` })
+        .returning({ id: roleTable.id });
+      const roleId = String(role?.id);
+      if (permissions.length > 0) {
+        await connection
+          .insert(rolePermissions)
+          .values(permissions.map((permission) => ({ roleId, permission })));
+      }
+      await connection.delete(userRoles).where(eq(userRoles.userId, userId));
+      await connection.insert(userRoles).values({ userId, roleId });
+    },
     async signedIn(roles) {
       accountCount += 1;
       const email = `person${String(accountCount)}@example.test`;

@@ -15,9 +15,6 @@ import {
   lists,
   people,
   plannedHires,
-  rolePermissions,
-  roles,
-  userRoles,
 } from "@fathom/db";
 import {
   type ChangeHistory,
@@ -25,7 +22,6 @@ import {
   defaultTimeZone,
   type Hire,
   type Hires,
-  type Permission,
   roleSchema,
   type Unpublished,
 } from "@fathom/shared";
@@ -1289,32 +1285,11 @@ describe("a hire Fathom holds no history of", () => {
   });
 });
 
-// Gives the account one role, made for the test, granting just these permissions.
-async function holdOnly(
-  who: User,
-  permissions: readonly Permission[],
-): Promise<void> {
-  const [role] = await test.connection
-    .insert(roles)
-    .values({ name: unique("Fictional Test Role") })
-    .returning({ id: roles.id });
-  await test.connection.insert(rolePermissions).values(
-    permissions.map((permission) => ({
-      roleId: String(role?.id),
-      permission,
-    })),
-  );
-  await test.connection.delete(userRoles).where(eq(userRoles.userId, who.id));
-  await test.connection
-    .insert(userRoles)
-    .values({ userId: who.id, roleId: String(role?.id) });
-}
-
 describe("who may change the hiring plan", () => {
   it("needs the right to change Confidential data, not only to see it", async () => {
     const id = await liveHire();
     const who = await test.signedIn([]);
-    await holdOnly(who, ["people:edit", "confidential:view"]);
+    await test.holdOnly(who.id, ["people:edit", "confidential:view"]);
     expect(
       (await send(who, "POST", "/api/planned-hires", hireRequest({})))
         .statusCode,
@@ -1369,7 +1344,7 @@ describe("who may change the hiring plan", () => {
 
   it("lets those who may edit people and change Confidential data change it", async () => {
     const who = await test.signedIn([]);
-    await holdOnly(who, ["people:edit", "confidential:edit"]);
+    await test.holdOnly(who.id, ["people:edit", "confidential:edit"]);
     expect(
       (await send(who, "POST", "/api/planned-hires", hireRequest({})))
         .statusCode,
@@ -1381,7 +1356,7 @@ describe("undoing changes to the hiring plan", () => {
   it("needs the rights to change hires when undoing, not only when the change was made", async () => {
     const maker = await test.signedIn(["workforce-administrator"]);
     const { changeSetId } = await draftHire({}, maker);
-    await holdOnly(maker, ["people:edit", "confidential:view"]);
+    await test.holdOnly(maker.id, ["people:edit", "confidential:view"]);
     const response = await send(maker, "POST", `/api/undo/${changeSetId}`);
     expect(response.statusCode).toBe(403);
   });
