@@ -15,11 +15,12 @@ import {
   type RoleRequest,
   roleResponseSchema,
   type RoleSummary,
+  unbuiltPermissions,
   withImplied,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson, sendJsonFor } from "./api.ts";
-import { pagesOpened } from "./layout.tsx";
+import { pagesNotBuilt, pagesOpened } from "./layout.tsx";
 
 export const rolesQuery = queryOptions({
   queryKey: ["roles"],
@@ -63,6 +64,26 @@ export async function previewRole(
 const everyPage = pagesOpened(
   permissionGrid.flatMap(({ actions }) => Object.values(actions)),
 );
+
+// Every line the summary or the confirmation can show about something Fathom does not have yet: a
+// page, or a permission that does nothing until its feature is built.
+const linesNotBuilt = new Set([
+  ...pagesNotBuilt.flatMap((page) => [
+    page,
+    `The ${page} page does not appear.`,
+    `Sees the ${page} page.`,
+    `The ${page} page no longer appears.`,
+  ]),
+  ...unbuiltPermissions.flatMap((permission) => {
+    // The permission is always one of the shared list.
+    // eslint-disable-next-line security/detect-object-injection
+    const { allows, without } = permissionDescriptions[permission];
+    return [allows, without];
+  }),
+]);
+
+// Whether a line of the summary or the confirmation is about something Fathom does not have yet.
+export const notBuiltYet = (line: string): boolean => linesNotBuilt.has(line);
 
 export interface Consequences {
   pages: string[];

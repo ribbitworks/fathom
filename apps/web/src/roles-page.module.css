@@ -4,7 +4,7 @@
    a role allows, where a line just added is bold in an accent colour before settling to plain text,
    and a line just taken away is struck through in red and fades before it goes. Each colour is deep
    in light mode and bright in dark, so it is seen in both. Without motion, both hold until they
-   end. */
+   end. Something Fathom does not have yet is tagged, as the sidebar tags pages still to come. */
 
 .restricted {
   color: var(--mantine-color-orange-text);
@@ -14,6 +14,17 @@
 .confidential {
   color: var(--mantine-color-red-text);
   font-weight: 600;
+}
+
+.notBuilt {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--mantine-color-dimmed);
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: 4px;
+  padding: 0 5px;
+  margin-left: 6px;
+  white-space: nowrap;
 }
 
 .added {

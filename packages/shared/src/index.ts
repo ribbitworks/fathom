@@ -34,6 +34,7 @@ export {
   startingRoles,
   type Tier,
   tierSchema,
+  unbuiltPermissions,
   withImplied,
 } from "./access.ts";
 export {

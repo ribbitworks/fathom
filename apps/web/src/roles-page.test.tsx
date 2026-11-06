@@ -374,9 +374,67 @@ describe("the grid of permissions", () => {
       /confidential/,
     );
   });
+
+  it("marks what Fathom does not have yet, area by area or action by action", async () => {
+    // Given
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    // When
+    const dialog = await openDialog("New role", "New role");
+    // Then
+    const grid = within(dialog).getByRole("table", {
+      name: "What the role grants",
+    });
+    const area = (name: string) =>
+      within(grid).getByText(name).closest("td")?.textContent;
+    expect(area("Allocations")).toBe("Allocations, Not built yet");
+    expect(area("Feature teams")).toBe("Feature teams, Not built yet");
+    expect(area("Drafts of every kind")).toBe(
+      "Drafts of every kind, Draft not built yet",
+    );
+    expect(area("Plan")).toBe("Plan");
+    expect(box(dialog, "Edit Allocations, not built yet")).toBeDefined();
+    expect(box(dialog, "Approve Drafts of every kind")).toBeDefined();
+    expect(
+      within(dialog).getByText(/marked Not built yet/).textContent,
+    ).toContain("A role can grant it now, and it works once it is built.");
+  });
 });
 
 describe("the summary of what a role allows", () => {
+  it("marks what it grants, and what its holders cannot do, that Fathom does not have yet", async () => {
+    // Given
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    const dialog = await openDialog("New role", "New role");
+    // Then
+    expect(summaryLines(dialog, "Cannot")).toEqual(
+      expect.arrayContaining([
+        "The Capacity page does not appear., Not built yet",
+        `${permissionDescriptions["allocations:view"].without}, Not built yet`,
+        "The People page does not appear.",
+      ]),
+    );
+    // When
+    await userEvent.click(box(dialog, "Edit Allocations, not built yet"));
+    // Then
+    expect(summaryLines(dialog, "Pages its holders see")).toContain(
+      "Capacity, Not built yet",
+    );
+    expect(summaryLines(dialog, "Can")).toContain(
+      `${permissionDescriptions["allocations:edit"].allows}, Not built yet`,
+    );
+    expect(summaryLines(dialog, "Cannot")).toContain(
+      "The People page does not appear.",
+    );
+  });
+
   it("says which pages its holders see and what they can and cannot do", async () => {
     serverAnswers({
       "GET /api/session": roleEditor,
@@ -389,7 +447,7 @@ describe("the summary of what a role allows", () => {
     );
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "Overview",
-      "Projects",
+      "Projects, Not built yet",
       "Releases",
       "People",
       "Drafts",
@@ -445,7 +503,7 @@ describe("the summary of what a role allows", () => {
     // Then
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "Overview",
-      "Projects",
+      "Projects, Not built yet",
       "Releases",
       "No longer: People",
       // Drafts stays, since viewing the plan opens it too.
@@ -465,7 +523,7 @@ describe("the summary of what a role allows", () => {
     // Then
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "No longer: Overview",
-      "No longer: Projects",
+      "No longer: Projects, Not built yet",
       // Releases and Drafts come back, since configuration opens them too.
       "Releases",
       "No longer: People",
@@ -750,6 +808,54 @@ describe("changing a role", () => {
   });
 });
 
+describe("confirming a change to what is not built yet", () => {
+  it("marks each account's gains and losses that Fathom does not have yet", async () => {
+    // Given
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+      "POST /api/roles/00000000-0000-4000-8000-000000000002/effects": () =>
+        Response.json({
+          effects: [
+            {
+              account: planner,
+              before: [
+                "plan:view",
+                "allocations:view",
+                "feature-teams:propose",
+              ],
+              after: ["plan:view", "allocations:view", "allocations:edit"],
+            },
+          ],
+        }),
+    });
+    renderApp("/roles");
+    const dialog = await openDialog(
+      "Edit Fictional Auditors",
+      "Edit Fictional Auditors",
+    );
+    await userEvent.click(box(dialog, "Edit Allocations, not built yet"));
+    // When
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    // Then
+    expect(
+      await within(dialog).findByText("This change affects 1 account."),
+    ).toBeDefined();
+    const lines = (title: string) =>
+      [
+        ...(within(dialog)
+          .getByRole("heading", { name: title })
+          .parentElement?.querySelectorAll("li") ?? []),
+      ].map((item) => item.textContent);
+    expect(lines("Gains")).toEqual([
+      `${permissionDescriptions["allocations:edit"].allows}, Not built yet`,
+    ]);
+    expect(lines("Loses")).toEqual([
+      `${permissionDescriptions["feature-teams:propose"].without}, Not built yet`,
+    ]);
+  });
+});
+
 describe("restoring a starting role", () => {
   it("is offered only for Fathom's starting roles", async () => {
     serverAnswers({
@@ -843,7 +949,7 @@ describe("restoring a starting role", () => {
         .value,
     ).toBe(viewerRole.description);
     expect(box(dialog, "View Plan").checked).toBe(true);
-    expect(box(dialog, "View Allocations").checked).toBe(true);
+    expect(box(dialog, "View Allocations, not built yet").checked).toBe(true);
     expect(box(dialog, "View Change history").checked).toBe(true);
     expect(box(dialog, "View People").checked).toBe(false);
     expect(

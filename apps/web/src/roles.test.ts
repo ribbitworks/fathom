@@ -2,11 +2,17 @@
 
 // Tests for what a role's permissions mean in plain English: the pages its holders see, what they
 // can and cannot do, permissions that do nothing without another, and what an account gains and
-// loses when what it may do changes.
+// loses when what it may do changes, and which of those lines are about something not built yet.
 
-import { type Permission, permissionDescriptions } from "@fathom/shared";
+import {
+  type Permission,
+  permissionDescriptions,
+  permissionSchema,
+  unbuiltPermissions,
+} from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { consequences, difference } from "./roles.ts";
+import { pagesNotBuilt } from "./layout.tsx";
+import { consequences, difference, notBuiltYet } from "./roles.ts";
 
 const allows = (permission: Permission) =>
   // The permission is always one of the shared list.
@@ -139,5 +145,47 @@ describe("what a change to an account's permissions does", () => {
       gains: [],
       losses: [],
     });
+  });
+});
+
+describe("lines about what is not built yet", () => {
+  // Whether a line names a page Fathom does not have yet, or says what an unbuilt permission does.
+  const aboutUnbuilt = (line: string) =>
+    pagesNotBuilt.some(
+      (page) =>
+        line === page ||
+        line.includes(`the ${page} page`) ||
+        line.includes(`The ${page} page`),
+    ) ||
+    unbuiltPermissions.some(
+      (permission) =>
+        line === allows(permission) || line === without(permission),
+    );
+  const every = permissionSchema.options;
+
+  it("are recognised wherever the summary or the confirmation shows them, and no other line is", () => {
+    const lines = [
+      ...consequences(every).pages,
+      ...consequences(every).can,
+      ...consequences([]).cannot,
+      ...difference([], every).gains,
+      ...difference(every, []).losses,
+    ];
+    expect(lines.filter((line) => notBuiltYet(line))).toEqual(
+      lines.filter(aboutUnbuilt),
+    );
+  });
+
+  it("include every unbuilt page and permission a change can bring or take away", () => {
+    const expected = pagesNotBuilt.length + unbuiltPermissions.length;
+    expect(
+      difference([], every).gains.filter((line) => notBuiltYet(line)),
+    ).toHaveLength(expected);
+    expect(
+      difference(every, []).losses.filter((line) => notBuiltYet(line)),
+    ).toHaveLength(expected);
+    expect(
+      consequences(every).pages.filter((line) => notBuiltYet(line)),
+    ).toEqual([...pagesNotBuilt]);
   });
 });

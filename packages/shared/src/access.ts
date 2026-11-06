@@ -177,6 +177,18 @@ export const permissionDescriptions: Record<
   },
 };
 
+// Permissions a role can grant before Fathom has the features they govern, so they do nothing yet.
+// The Roles page marks them, as the Decisions Log sets out, so roles can be set up ahead of the
+// features. Building a feature takes its permissions out of this list.
+export const unbuiltPermissions: readonly Permission[] = [
+  "allocations:view",
+  "allocations:edit",
+  "feature-teams:propose",
+  "feature-teams:edit",
+  "feature-teams:approve",
+  "drafts:submit",
+];
+
 // The sensitivity tiers of Fathom's data. Roles grant access to tiers, not to screens.
 export const tierSchema = z.enum(["general", "restricted", "confidential"]);
 

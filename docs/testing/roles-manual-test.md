@@ -11,7 +11,7 @@ last_updated: "2026-11-05"
 
 ## Scope
 
-Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, copying and creating roles, the refusals, and the access history entries that changes leave. It also verifies the Settings page, where the Administrator changes Fathom's time zone.
+Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English and its marks on what is not built yet, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, copying and creating roles, the refusals, and the access history entries that changes leave. It also verifies the Settings page, where the Administrator changes Fathom's time zone.
 
 ## Test Environment
 
@@ -116,11 +116,15 @@ Run the test cases in order. Start with R2. Tick each step whose expected result
   - **Expected:** A dialog titled **Edit Approver** shows **Name**, **What it is for**, and the grid. The ticked boxes are **Approve** on **Feature teams** and on **Drafts of every kind**, and **View** on **Configuration** and on **Change history**. Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
   - **Notes:**
 
-- [ ] **Step 2.** Read the summary.
-  - **Expected:** **Pages its holders see** lists Releases, Drafts, Lists and Change history. **Can** names approving feature teams and drafts, seeing configuration, and seeing the change history. **Cannot** includes **The People page does not appear.** and **Restricted details are hidden wherever they appear, and only current staff are listed.**, with the tier colours.
+- [ ] **Step 2.** Read the **Area** column, and the lines under the grid.
+  - **Expected:** **Allocations** and **Feature teams** each carry a small grey **Not built yet** tag, and **Drafts of every kind** carries **Draft not built yet**. No other area is tagged. A line under the grid reads **Fathom doesn't have what is marked Not built yet. A role can grant it now, and it works once it is built.**
   - **Notes:**
 
-- [ ] **Step 3.** Look at the foot of the dialog.
+- [ ] **Step 3.** Read the summary.
+  - **Expected:** **Pages its holders see** lists Releases, Drafts, Lists and Change history. **Can** names approving feature teams, tagged **Not built yet**, and approving drafts, seeing configuration, and seeing the change history. Under **Cannot**, these lines are tagged **Not built yet**: **The Projects page does not appear.**, **The Capacity page does not appear.**, **Does not see allocations.**, **Cannot propose feature teams.**, **Cannot change feature teams.**, and **Cannot make drafts of changes to the plan or allocations.** **Cannot** includes **The People page does not appear.** and **Restricted details are hidden wherever they appear, and only current staff are listed.**, with the tier colours.
+  - **Notes:**
+
+- [ ] **Step 4.** Look at the foot of the dialog.
   - **Expected:** **Restore template** on the left, turned off, and **Cancel** and **Save** on the right.
   - **Notes:**
 

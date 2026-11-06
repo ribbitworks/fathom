@@ -215,6 +215,18 @@ export function pagesOpened(permissions: readonly Permission[]): string[] {
   );
 }
 
+// The pages in the sidebar that some permissions open but Fathom does not have yet, by name.
+export const pagesNotBuilt: readonly string[] = sections.flatMap(({ items }) =>
+  items
+    .filter(
+      (item) =>
+        item.permission !== undefined &&
+        item.to === undefined &&
+        item.box === undefined,
+    )
+    .map((item) => item.label),
+);
+
 // Where the user is, as the top bar names it: the sidebar's section and page, or their own account.
 const places = new Map<string, [string, string]>([
   ...sections.flatMap((section) =>

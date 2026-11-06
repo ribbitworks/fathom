@@ -20,6 +20,7 @@ import {
   roleSchema,
   type RoleSummary,
   startingRoles,
+  unbuiltPermissions,
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -42,7 +43,7 @@ import {
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import type { z } from "zod";
 import { nameProblem } from "./accounts.ts";
@@ -56,6 +57,7 @@ import {
   consequences,
   createRole,
   difference,
+  notBuiltYet,
   previewRole,
   rolesQuery,
   updateRole,
@@ -75,6 +77,47 @@ const actionHeadings = {
   approve: "Approve",
   edit: "Edit",
 } as const;
+
+// The words that mark something Fathom does not have yet.
+const notBuilt = "Not built yet";
+
+// Marks something Fathom does not have yet, as the sidebar marks pages still to come.
+function NotBuiltTag({ text = notBuilt }: { text?: string }) {
+  return (
+    <>
+      <VisuallyHidden>, </VisuallyHidden>
+      <span className={roleClasses.notBuilt}>{text}</span>
+    </>
+  );
+}
+
+// A line of the summary or the confirmation, marked if it is about something not built yet.
+function Line({ text }: { text: string }) {
+  return (
+    <>
+      <TierWords text={text} />
+      {notBuiltYet(text) && <NotBuiltTag />}
+    </>
+  );
+}
+
+// What a row of the grid grants that Fathom does not have yet: every action, or the ones named.
+function rowNotBuilt(
+  actions: (typeof permissionGrid)[number]["actions"],
+): string | undefined {
+  const offered = gridActions.filter((action) => action in actions);
+  const unbuilt = offered.filter((action) => {
+    // The action is always one of the fixed list.
+    // eslint-disable-next-line security/detect-object-injection
+    const permission = actions[action];
+    return permission !== undefined && unbuiltPermissions.includes(permission);
+  });
+  if (unbuilt.length === 0) return undefined;
+  if (unbuilt.length === offered.length) return notBuilt;
+  // The action is always one of the fixed list.
+  // eslint-disable-next-line security/detect-object-injection
+  return `${unbuilt.map((action) => actionHeadings[action]).join(" and ")} ${notBuilt.toLowerCase()}`;
+}
 
 // The permission granted with another, such as viewing with editing, if a granted one brings it.
 function impliedBy(
@@ -195,9 +238,12 @@ function PermissionGrid({
   disabled: boolean;
   onChange: (granted: Permission[]) => void;
 }) {
+  // The notes under the grid, which screen readers hear with it.
+  const notes = useId();
   return (
     <Stack gap={4}>
       <Table
+        aria-describedby={`${notes}-greyed ${notes}-not-built`}
         withTableBorder
         verticalSpacing={4}
         aria-label="What the role grants"
@@ -217,50 +263,64 @@ function PermissionGrid({
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {permissionGrid.map(({ area, actions }) => (
-            <Table.Tr key={area}>
-              <Table.Td>
-                <TierWords text={area} />
-              </Table.Td>
-              {gridActions.map((action) => {
-                // The action is always one of the fixed list.
-                // eslint-disable-next-line security/detect-object-injection
-                const permission = actions[action];
-                if (permission === undefined) return <Table.Td key={action} />;
-                const comesWith = impliedBy(permission, granted);
-                const label = permissionLabel(permission);
-                return (
-                  <Table.Td key={action} ta="center">
-                    <Checkbox
-                      display="inline-block"
-                      aria-label={
-                        comesWith === undefined
-                          ? label
-                          : `${label}, which comes with ${permissionLabel(comesWith)}`
-                      }
-                      checked={
-                        granted.includes(permission) || comesWith !== undefined
-                      }
-                      disabled={disabled || comesWith !== undefined}
-                      onChange={(event) => {
-                        const on = event.currentTarget.checked;
-                        onChange(
-                          on
-                            ? [...granted, permission]
-                            : granted.filter((other) => other !== permission),
-                        );
-                      }}
-                    />
-                  </Table.Td>
-                );
-              })}
-            </Table.Tr>
-          ))}
+          {permissionGrid.map(({ area, actions }) => {
+            const mark = rowNotBuilt(actions);
+            return (
+              <Table.Tr key={area}>
+                <Table.Td>
+                  <TierWords text={area} />
+                  {mark !== undefined && <NotBuiltTag text={mark} />}
+                </Table.Td>
+                {gridActions.map((action) => {
+                  // The action is always one of the fixed list.
+                  // eslint-disable-next-line security/detect-object-injection
+                  const permission = actions[action];
+                  if (permission === undefined)
+                    return <Table.Td key={action} />;
+                  const comesWith = impliedBy(permission, granted);
+                  const label = `${permissionLabel(permission)}${
+                    unbuiltPermissions.includes(permission)
+                      ? `, ${notBuilt.toLowerCase()}`
+                      : ""
+                  }`;
+                  return (
+                    <Table.Td key={action} ta="center">
+                      <Checkbox
+                        display="inline-block"
+                        aria-label={
+                          comesWith === undefined
+                            ? label
+                            : `${label}, which comes with ${permissionLabel(comesWith)}`
+                        }
+                        checked={
+                          granted.includes(permission) ||
+                          comesWith !== undefined
+                        }
+                        disabled={disabled || comesWith !== undefined}
+                        onChange={(event) => {
+                          const on = event.currentTarget.checked;
+                          onChange(
+                            on
+                              ? [...granted, permission]
+                              : granted.filter((other) => other !== permission),
+                          );
+                        }}
+                      />
+                    </Table.Td>
+                  );
+                })}
+              </Table.Tr>
+            );
+          })}
         </Table.Tbody>
       </Table>
-      <Text fz="xs" c="dimmed">
+      <Text id={`${notes}-greyed`} fz="xs" c="dimmed">
         A greyed tick comes with another action on the same area, such as View
         with Edit.
+      </Text>
+      <Text id={`${notes}-not-built`} fz="xs" c="dimmed">
+        Fathom doesn&apos;t have what is marked {notBuilt}. A role can grant it
+        now, and it works once it is built.
       </Text>
     </Stack>
   );
@@ -276,7 +336,7 @@ function Sentences({ title, items }: { title: string; items: string[] }) {
       <List size="sm" spacing={2}>
         {items.map((item) => (
           <List.Item key={item}>
-            <TierWords text={item} />
+            <Line text={item} />
           </List.Item>
         ))}
       </List>
@@ -291,7 +351,7 @@ function LeavingLine({ text }: { text: string }) {
       <VisuallyHidden>No longer: </VisuallyHidden>
       {/* The mark goes on the text itself, which a list item does not pass it down to. */}
       <span className={roleClasses.removed}>
-        <TierWords text={text} />
+        <Line text={text} />
       </span>
     </List.Item>
   );
@@ -322,7 +382,7 @@ function ChangingSentences({
               <span
                 className={change === "added" ? roleClasses.added : undefined}
               >
-                <TierWords text={text} />
+                <Line text={text} />
               </span>
             </List.Item>
           ),
