@@ -16,7 +16,7 @@ Verifies planned hires shown as rows of the People table: how their rows look be
 ## Test Environment
 
 - A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser whose operating system can switch between light and dark appearance.
+- A desktop web browser.
 - A plain text editor, for copying rows to paste.
 - Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
 
@@ -67,6 +67,7 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 
 ## Terms
 
+- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
 - **Search for:** type the text in the search box above the People table, so only the matching rows are shown.
 - **Hire rows:** the rows at the bottom of the People table whose **ID** is a requisition, such as **REQ-2042**, or starts with **TBD-**.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a row's name.
@@ -81,7 +82,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
-**Preconditions:** Operating system in light appearance. Signed in (P1) with this account. **People** page open from the left-hand menu.
+**Preconditions:** **Light** chosen in the Appearance menu. Signed in (P1) with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
   - **Expected:** **Name**, **ID**, **Position** and **State** come first, in that order, and **Expected** comes after **Start**. There is no **Kind** column.
@@ -99,15 +100,19 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** All are blank. The hire row's **Expected** cell holds a month and year, such as **Jan 2027**.
   - **Notes:**
 
-- [ ] **Step 5.** Switch the operating system to dark appearance, and look over the same rows.
-  - **Expected:** The grey names, the yellow draft cells, the red rejected cells and the light green **Live** rows under the drafted hires are all easy to read and tell apart. Switch back to light appearance afterwards.
+- [ ] **Step 5.** Choose **Dark** in the Appearance menu, and look over the same rows.
+  - **Expected:** The grey names, the yellow draft cells, the red rejected cells and the light green **Live** rows under the drafted hires are all easy to read and tell apart.
+  - **Notes:**
+
+- [ ] **Step 6.** Choose **Light** in the Appearance menu.
+  - **Expected:** The rows return to their light colours.
   - **Notes:**
 
 ### HIRE-02: A Hire's Name Can Be Typed and Cleared
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-01.
 
-**Preconditions:** As HIRE-01, in light appearance.
+**Preconditions:** As HIRE-01, with **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Search for **SDET, REQ-2042**. Select the row's **Name** cell, type **Fictional test lead**, and press Enter.
   - **Expected:** The cell reads **Fictional test lead** in the usual colour and turns yellow. The row has a hollow yellow dot and **Draft**.
@@ -240,7 +245,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-08.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in (P1) with this account. **Light** chosen in the Appearance menu. **People** page open.
 
 - [ ] **Step 1.** Select the **Skills** header, then **Edit column**.
   - **Expected:** A dialog titled **Edit column** shows **Offered on planned hires** ticked, and **Planned hires can leave it empty** under **Must be filled in**.
@@ -258,8 +263,24 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The dialog stays open, with this message in red under the checkboxes: **3 planned hires have values in Site, so it cannot be switched off for planned hires yet. Clear them first.**
   - **Notes:**
 
-- [ ] **Step 5.** Select **Cancel**. Switch the operating system to dark appearance, and open **Edit column** from the **Site** header again.
-  - **Expected:** The checkboxes, their labels and **Planned hires can leave it empty** are easy to read. Select **Cancel**, and switch back to light appearance afterwards.
+- [ ] **Step 5.** Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
+- [ ] **Step 6.** Choose **Dark** in the Appearance menu.
+  - **Expected:** The page turns dark.
+  - **Notes:**
+
+- [ ] **Step 7.** Open **Edit column** from the **Site** header again.
+  - **Expected:** The checkboxes, their labels and **Planned hires can leave it empty** are easy to read.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Cancel**.
+  - **Expected:** The dialog closes.
+  - **Notes:**
+
+- [ ] **Step 9.** Choose **Light** in the Appearance menu.
+  - **Expected:** The page returns to its light colours.
   - **Notes:**
 
 **Afterwards:** R1.

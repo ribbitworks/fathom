@@ -87,6 +87,7 @@ Use only where a test case says so. This deletes every account and record in the
 
 ## Terms
 
+- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a record's name. A hollow dot means the change is still unpublished.
 - **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Stream**, **Cycle schedule** and **Releases**. Selecting a row opens the stream in the side panel.
 - **Side panel:** the panel beside the streams table for the selected stream, which the table narrows to make room for, headed with its name, with the sections **Cycle schedule**, **Releases** and **Cycles**. Its close button, an **×**, is at its top right, and dragging its left edge resizes it.
@@ -495,12 +496,20 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 #### REL-26: A Release's Note Is Read and Written Beside Its Stream
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-25. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-25. **Light** chosen in the Appearance menu. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** Select **Harbor 2**'s underlined name, then switch between light and dark mode.
-  - **Expected:** A panel titled **Harbor 2** opens above the stream's panel, showing the note as it reads: two headings, a bullet list with **every** in bold, a checklist with its first box ticked, red text, and a link. Both panels read well in both modes.
+- [ ] **Step 1.** Select **Harbor 2**'s underlined name.
+  - **Expected:** A panel titled **Harbor 2** opens above the stream's panel, showing the note as it reads: two headings, a bullet list with **every** in bold, a checklist with its first box ticked, red text, and a link.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Editor**, type a few words at the end, and select **Save**.
+- [ ] **Step 2.** Choose **Dark** in the Appearance menu.
+  - **Expected:** Both panels read well in dark mode.
+  - **Notes:**
+
+- [ ] **Step 3.** Choose **Light** in the Appearance menu.
+  - **Expected:** Both panels return to their light colours.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Editor**, type a few words at the end, and select **Save**.
   - **Expected:** A notification says **Drafted the note on Harbor 2.** The note's panel closes, and **Harbor 2** is marked **Draft**.
   - **Notes:**

@@ -66,6 +66,7 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 
 ## Terms
 
+- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
 - **Card:** the box for one person on the chart, showing their name, their position under it, and, for a manager whose team has a name, the team's name under that.
 - **Band:** the strip of colour along the top edge of a card.
 - **Chart:** the large panel under the **Org chart** heading that holds the cards.
@@ -192,7 +193,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-09: Each Team Is Drawn in Its Colour, Reaching Down to Teams With None
 
-**Preconditions:** As ORG-02.
+**Preconditions:** As ORG-02. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Read the card for **Silje Holm-Schrøder**.
   - **Expected:** A small teal dot comes before **Platform team**. The card has no band.
@@ -210,11 +211,15 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** His card has a teal band, and a small grape (purple) dot comes before **Payments team**. His nine reports' cards have grape bands, and the lines to them are grape.
   - **Notes:**
 
-- [ ] **Step 5.** Switch the computer's appearance setting between light and dark, which Fathom follows.
+- [ ] **Step 5.** Choose **Dark** in the Appearance menu.
   - **Expected:** The bands, dots and lines keep their colours, each easy to tell apart from the card behind it.
   - **Notes:**
 
-- [ ] **Step 6.** In the finder, type **Candice**, and select **Candice Swift**.
+- [ ] **Step 6.** Choose **Light** in the Appearance menu.
+  - **Expected:** The chart returns to its light colours, the bands, dots and lines unchanged.
+  - **Notes:**
+
+- [ ] **Step 7.** In the finder, type **Candice**, and select **Candice Swift**.
   - **Expected:** Her card has a blue ring around it, and its band is blue too while she is found.
   - **Notes:**
 
@@ -264,7 +269,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-12: A Person Drafted to Another Manager Is Drawn in Both Places
 
-**Preconditions:** As ORG-02.
+**Preconditions:** As ORG-02. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Read the card for **Simone Jean**, in the column under **Silje Holm-Schrøder**.
   - **Expected:** The card is tinted blue. A yellow dot and **Draft** follow the name, and **Software Engineer** is under it.
@@ -278,8 +283,16 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Nothing opens, and the **Org chart** page stays as it was.
   - **Notes:**
 
-- [ ] **Step 4.** Switch the computer's appearance setting between light and dark.
-  - **Expected:** In both, the tinted card under **Silje Holm-Schrøder** and the light green card under **Viktoria Holmberg** are easy to tell apart from the other cards, and every word on them is easy to read.
+- [ ] **Step 4.** Look at the tinted card under **Silje Holm-Schrøder** and the light green card under **Viktoria Holmberg**.
+  - **Expected:** Both are easy to tell apart from the other cards, and every word on them is easy to read.
+  - **Notes:**
+
+- [ ] **Step 5.** Choose **Dark** in the Appearance menu.
+  - **Expected:** The two cards are still easy to tell apart from the other cards, and every word on them is easy to read.
+  - **Notes:**
+
+- [ ] **Step 6.** Choose **Light** in the Appearance menu.
+  - **Expected:** The chart returns to its light colours.
   - **Notes:**
 
 ### ORG-13: A Team Named in a Draft Is Marked

@@ -70,6 +70,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 ## Terms
 
+- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
 - **Search for:** type the person's name in the search box above the People table, so only their row is shown.
 - **Panel:** the side panel that opens beside the table from a **Background** cell, headed **Background**.
 - **Toolbar:** the row of buttons under the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, checkbox list, link, and removing a link.
@@ -132,33 +133,41 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 ### NOTE-04: Notes Read Well and Work From the Keyboard
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. Run after NOTE-03. **People** page open, with **Max Munk** searched for.
+**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. Run after NOTE-03. **Light** chosen in the Appearance menu. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Using only the keyboard, move to Max Munk's **Background** cell and press Enter.
   - **Expected:** The panel opens on **Note**. Tab reaches **Note**, **Editor** and **Markdown**, the arrow keys choose **Editor**, and Tab then puts the cursor in the note, ready to type.
   - **Notes:**
 
-- [ ] **Step 2.** Look at the note, then switch the computer to the other of light and dark mode and look again.
-  - **Expected:** In both modes, **platform** is teal, and the heading, bullets, link and checkboxes are easy to read against the panel.
+- [ ] **Step 2.** Look at the note.
+  - **Expected:** **platform** is teal, and the heading, bullets, link and checkboxes are easy to read against the panel.
   - **Notes:**
 
-- [ ] **Step 3.** Switch the computer back. Press Tab until **Cancel** has focus, and press Enter.
+- [ ] **Step 3.** Choose **Dark** in the Appearance menu.
+  - **Expected:** **platform** is still teal, and the heading, bullets, link and checkboxes are easy to read against the dark panel.
+  - **Notes:**
+
+- [ ] **Step 4.** Choose **Light** in the Appearance menu.
+  - **Expected:** The panel returns to its light colours.
+  - **Notes:**
+
+- [ ] **Step 5.** Press Tab until **Cancel** has focus, and press Enter.
   - **Expected:** Focus is visible on each control on the way, and once the panel closes, focus is back on Max Munk's **Background** cell.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Metrics** above the table, then Max Munk's **Background** cell. Drag the edge between the two panels up and down, then close the note with its close button and open it again.
+- [ ] **Step 6.** Select **Metrics** above the table, then Max Munk's **Background** cell. Drag the edge between the two panels up and down, then close the note with its close button and open it again.
   - **Expected:** The panels keep their width as the note opens and closes. The note shows above the Metrics panel on **Note**, with a close button and no **Clear**, **Cancel** or **Save**, each panel easy to read and scrolling on its own, and the edge shares the height between them. The note shrinks away as it closes and grows back as it opens, with Metrics moving smoothly to make room.
   - **Notes:**
 
-- [ ] **Step 5.** Clear the search, select Lilian Lang's **Background** cell, then its close button, then the Metrics panel's close button.
+- [ ] **Step 7.** Clear the search, select Lilian Lang's **Background** cell, then its close button, then the Metrics panel's close button.
   - **Expected:** Lilian Lang's empty note replaces Max Munk's, open in **Editor**. Once it closes, the Metrics panel fills the place again, and once that closes, the table fills the page.
   - **Notes:**
 
-- [ ] **Step 6.** Turn on reduced motion in the computer's accessibility settings. Open Max Munk's **Background** cell, then close it with its close button. Turn reduced motion off again.
+- [ ] **Step 8.** Turn on reduced motion in the computer's accessibility settings. Open Max Munk's **Background** cell, then close it with its close button. Turn reduced motion off again.
   - **Expected:** The panel appears and goes at once, without sliding.
   - **Notes:**
 
-- [ ] **Step 7.** Make the browser window as narrow as a phone's screen. Open Max Munk's **Background** cell, press Tab several times, then close it with its close button and widen the window again.
+- [ ] **Step 9.** Make the browser window as narrow as a phone's screen. Open Max Munk's **Background** cell, press Tab several times, then close it with its close button and widen the window again.
   - **Expected:** The panel covers the table, and focus stays within it until it closes.
   - **Notes:**
 

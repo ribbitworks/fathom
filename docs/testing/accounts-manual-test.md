@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-06"
+last_updated: "2026-11-07"
 ---
 
 # Manual Test: Accounts
@@ -16,7 +16,7 @@ Verifies what only a person can judge on the Accounts page and the screens aroun
 ## Test Environment
 
 - A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
+- A desktop web browser, on a computer whose appearance can be switched between light and dark.
 - Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R2 and R3).
 - A second browser, or a private window, for signing in as a second account while the first stays signed in.
 
@@ -82,6 +82,7 @@ Use only where a test case asks for it. Like R2, it deletes every account and re
 
 ## Terms
 
+- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
 - **Search box:** the box above the table with a magnifying glass at its left and the hint **Search**.
 - **Filter:** the three buttons beside the search box: **All**, **Active** and **Deactivated**, each followed by a count.
 - **Role list:** the **Role** choices in the **New account** and **Edit** dialogs, one round button for each role, with its description under its name.
@@ -104,7 +105,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ACCT-02: The Accounts Page Lists Every Account
 
-**Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`.
+**Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Select **Accounts** under **Administration** in the left-hand menu, and read the column headings.
   - **Expected:** The table has the columns **Person**, **Role**, **Status** and **Created**. **New account** is at the top right.
@@ -126,11 +127,15 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** Only the **Engineering Director** row shows.
   - **Notes:**
 
-- [ ] **Step 6.** Clear the search box. Change the computer's appearance setting to dark, and look at the page.
+- [ ] **Step 6.** Clear the search box.
+  - **Expected:** Every account's row shows again.
+  - **Notes:**
+
+- [ ] **Step 7.** Choose **Dark** in the Appearance menu.
   - **Expected:** The page has a dark ground and every word is easy to read. The **You** badge is lighter than it was in light mode, and **Active** is green.
   - **Notes:**
 
-- [ ] **Step 7.** Change the computer's appearance setting back to light.
+- [ ] **Step 8.** Choose **Light** in the Appearance menu.
   - **Expected:** The page returns to its light colours.
   - **Notes:**
 
@@ -294,9 +299,61 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The panel headed **Change password** opens. Under **New password**, before anything is typed, a checklist shows **14 to 128 characters**, **A symbol**, and **Not a common or easily guessed password**, each with a dimmed circle.
   - **Notes:**
 
-### ACCT-09: Creating the Fathom Administrator at Install
+### ACCT-09: Each Browser Keeps Its Own Appearance
 
-**Preconditions:** None. This test case empties the database, so ACCT-10 must follow it.
+**Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`. The computer's appearance set to light. **Light** chosen in the Appearance menu, as ACCT-02 leaves it. The case ends with **Light** chosen.
+
+- [ ] **Step 1.** Choose **System** in the Appearance menu.
+  - **Expected:** The page stays light, as the computer is set.
+  - **Notes:**
+
+- [ ] **Step 2.** Open the menu from your name and initials at the top right.
+  - **Expected:** Under **Appearance**, **System**, **Light** and **Dark**, with a tick beside **System** only.
+  - **Notes:**
+
+- [ ] **Step 3.** Press Escape, then press Tab until the button with your name and initials has focus, and press Enter.
+  - **Expected:** The menu opens, and the first item has focus.
+  - **Notes:**
+
+- [ ] **Step 4.** Press the down arrow until **Dark** has focus, and press Enter.
+  - **Expected:** The menu closes, and the whole page turns dark at once: the sidebar, the table and the top bar.
+  - **Notes:**
+
+- [ ] **Step 5.** Reload the page.
+  - **Expected:** The page opens dark.
+  - **Notes:**
+
+- [ ] **Step 6.** Open the menu from your name and initials.
+  - **Expected:** The tick is beside **Dark**.
+  - **Notes:**
+
+- [ ] **Step 7.** Press Escape, and sign out (P2).
+  - **Expected:** The sign-in page is dark.
+  - **Notes:**
+
+- [ ] **Step 8.** Sign in (P1) as `fathom.administrator@fathom.test`.
+  - **Expected:** The page is dark.
+  - **Notes:**
+
+- [ ] **Step 9.** Choose **System** in the Appearance menu.
+  - **Expected:** The page turns light, as the computer is set.
+  - **Notes:**
+
+- [ ] **Step 10.** Set the computer's appearance to dark.
+  - **Expected:** Fathom turns dark with it.
+  - **Notes:**
+
+- [ ] **Step 11.** Set the computer's appearance back to light.
+  - **Expected:** Fathom turns light again.
+  - **Notes:**
+
+- [ ] **Step 12.** Choose **Light** in the Appearance menu.
+  - **Expected:** The page stays light, and the tick is beside **Light**.
+  - **Notes:**
+
+### ACCT-10: Creating the Fathom Administrator at Install
+
+**Preconditions:** None. This test case empties the database, so ACCT-11 must follow it.
 
 - [ ] **Step 1.** Start with no accounts (R3). In the second terminal, run:
 
@@ -311,7 +368,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The panel headed **Change password** opens, as in ACCT-04.
   - **Notes:**
 
-### ACCT-10: Put Every Account Back
+### ACCT-11: Put Every Account Back
 
 **Preconditions:** All the test cases above run.
 

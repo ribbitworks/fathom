@@ -65,10 +65,6 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
 - **Publishing drafts after losing a permission:** Publishing your unpublished drafts checks only that you may make some kind of draft, not each draft's own permission, so someone whose role no longer lets them change planned hires, people, or configuration can still send drafts they made earlier for approval. Found in review on 2026-11-05, and deferred by the owner as an edge case.
 
-## Appearance
-
-- **Choosing light or dark mode:** Light and dark modes follow each person's system setting, as [Visual Design](design/visual-design.md) sets out. The owner wants a setting in Fathom to choose one, asked for on 2026-11-04 and deferred until more pages are built.
-
 ## Error Pages
 
 - **Every page error blamed on the server:** The router shows any error while drawing a page as "Fathom could not reach its server", with a way to try again, so a page failing on data it did not expect reads as the server being down and sends the reader looking in the wrong place. Found while testing the Drafts page by hand on 2026-11-03; a plainer page for errors other than failed requests is deferred as outside the fix made then.

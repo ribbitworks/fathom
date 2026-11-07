@@ -2,8 +2,8 @@
 
 // Fathom's visual design as a Mantine theme: IBM Plex Sans, bundled with the front end; quiet
 // neutrals with one sea-blue accent for actions and the current place; colour otherwise only for
-// meaning, or as chosen for a release; light and dark modes that follow each person's setting; and
-// tables that look alike, each header row staying in view.
+// meaning, or as chosen for a release; light and dark modes that follow the computer's setting
+// unless the person chooses one; and tables that look alike, each header row staying in view.
 
 import {
   type CSSVariablesResolver,

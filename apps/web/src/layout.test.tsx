@@ -2,10 +2,11 @@
 
 // Tests for the frame around every signed-in page: which sections the sidebar shows, how it marks
 // the current page and pages still to come, how it collapses to a rail of icons, where the top bar
-// says the user is, and how the sidebar opens and closes on narrow screens.
+// says the user is, how each person chooses light or dark mode, and how the sidebar opens and closes
+// on narrow screens.
 
 import { permissionSchema } from "@fathom/shared";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -14,6 +15,7 @@ import {
   renderApp,
   serverAnswers,
   signedIn,
+  signedOut,
 } from "./test-support.tsx";
 import { firstPage } from "./layout.tsx";
 
@@ -230,6 +232,89 @@ describe("the top bar", () => {
     await screen.findByText("There is no page at this address.");
     expect(screen.queryByRole("banner")).toBeNull();
     expect(screen.queryByRole("navigation", { name: "Sections" })).toBeNull();
+  });
+});
+
+describe("choosing light or dark mode", () => {
+  const stored = "mantine-color-scheme-value";
+  const shown = () =>
+    document.documentElement.getAttribute("data-mantine-color-scheme");
+  const accountMenu = () =>
+    screen.getByRole("button", { name: /^Your account,/ });
+
+  afterEach(() => {
+    localStorage.clear();
+    document.documentElement.removeAttribute("data-mantine-color-scheme");
+  });
+
+  async function openSignedIn() {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+  }
+
+  it("offers System, Light, and Dark under Appearance, with System chosen at first", async () => {
+    await openSignedIn();
+    await userEvent.click(accountMenu());
+    const group = await screen.findByRole("group", { name: "Appearance" });
+    expect(
+      within(group)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["System, chosen", "Light", "Dark"]);
+  });
+
+  it("switches at once to the mode chosen, marks it chosen, and keeps it in the browser", async () => {
+    await openSignedIn();
+    await userEvent.click(accountMenu());
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Dark" }),
+    );
+    expect(shown()).toBe("dark");
+    expect(localStorage.getItem(stored)).toBe("dark");
+    await userEvent.click(accountMenu());
+    expect(
+      await screen.findByRole("menuitem", { name: "Dark, chosen" }),
+    ).toBeDefined();
+    await userEvent.click(screen.getByRole("menuitem", { name: "System" }));
+    expect(localStorage.getItem(stored)).toBe("auto");
+  });
+
+  it("is chosen with the keyboard, and Escape leaves the choice as it was", async () => {
+    await openSignedIn();
+    accountMenu().focus();
+    await userEvent.keyboard("{Enter}");
+    await screen.findByRole("menuitem", { name: "Dark" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menuitem", { name: "Dark" })).toBeNull();
+    });
+    expect(localStorage.getItem(stored)).toBeNull();
+    accountMenu().focus();
+    await userEvent.keyboard("{Enter}");
+    const dark = await screen.findByRole("menuitem", { name: "Dark" });
+    while (document.activeElement !== dark) {
+      await userEvent.keyboard("{ArrowDown}");
+    }
+    await userEvent.keyboard("{Enter}");
+    expect(shown()).toBe("dark");
+  });
+
+  it("opens signed-in pages in the mode chosen before", async () => {
+    localStorage.setItem(stored, "dark");
+    await openSignedIn();
+    expect(shown()).toBe("dark");
+  });
+
+  it("shows the sign-in page in the mode chosen before", async () => {
+    localStorage.setItem(stored, "light");
+    serverAnswers({ "GET /api/session": signedOut });
+    renderApp("/");
+    await screen.findByRole("heading", { name: "Sign in" });
+    expect(shown()).toBe("light");
   });
 });
 

@@ -21,7 +21,9 @@ import {
   Stack,
   Text,
   Tooltip,
+  type MantineColorScheme,
   UnstyledButton,
+  useMantineColorScheme,
   VisuallyHidden,
 } from "@mantine/core";
 import { useDisclosure, useLocalStorage, useMediaQuery } from "@mantine/hooks";
@@ -33,7 +35,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Brand } from "./brand.tsx";
 import { DevBadge, devLabel } from "./dev-label.tsx";
 import { Icon, type IconName } from "./icons.tsx";
@@ -192,6 +194,49 @@ const sections: { label: string; items: Item[] }[] = [
     ],
   },
 ];
+
+// How Fathom looks for the person using this browser: following the computer's setting, or always
+// light or dark. Mantine keeps the choice in the browser, so it applies on every page, signing in
+// included, and to nobody else.
+const appearances: readonly { scheme: MantineColorScheme; label: string }[] = [
+  { scheme: "auto", label: "System" },
+  { scheme: "light", label: "Light" },
+  { scheme: "dark", label: "Dark" },
+];
+
+function AppearanceChoices() {
+  const { colorScheme, setColorScheme } = useMantineColorScheme();
+  const labelId = useId();
+  return (
+    <>
+      <Menu.Divider />
+      <Menu.Label id={labelId}>Appearance</Menu.Label>
+      <div role="group" aria-labelledby={labelId}>
+        {appearances.map(({ scheme, label }) => (
+          <Menu.Item
+            key={scheme}
+            leftSection={
+              <span
+                className={classes.appearanceTick}
+                data-chosen={colorScheme === scheme || undefined}
+              >
+                <Icon name="check" />
+              </span>
+            }
+            onClick={() => {
+              setColorScheme(scheme);
+            }}
+          >
+            {label}
+            {colorScheme === scheme && (
+              <VisuallyHidden>, chosen</VisuallyHidden>
+            )}
+          </Menu.Item>
+        ))}
+      </div>
+    </>
+  );
+}
 
 // The first page in the sidebar, other than the Overview, that the user's roles let them open, if
 // any: where someone who may not see the Overview starts. Never the Overview, so sending them there
@@ -516,6 +561,7 @@ export function Layout({
                 >
                   Change password
                 </Menu.Item>
+                <AppearanceChoices />
                 <Menu.Divider />
                 <Menu.Item onClick={() => void handleSignOut()}>
                   Sign out
