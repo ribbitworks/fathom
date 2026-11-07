@@ -5,6 +5,7 @@
 // from the lists their columns name, and the newest starters' onboarding notes.
 
 import { en_IN } from "@faker-js/faker";
+import { addDays } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   fictionalId,
@@ -284,4 +285,45 @@ describe("a fictional organization", () => {
     expect(tiny.people.every(({ endDate }) => endDate === null)).toBe(true);
     expect(tiny.reportingLines).toEqual([]);
   });
+});
+
+describe("the organization on another day", () => {
+  const before = fictionalOrganization({ size: 150 });
+  const shifted = (day: string | null, days: number) =>
+    day === null ? null : addDays(day, days);
+  it.each(["2027-02-28", "2027-12-31", "2028-02-29"])(
+    "on %s, has the same people and planned hires, with every person's dates moved by as many days",
+    (referenceDate) => {
+      const after = fictionalOrganization({ size: 150, referenceDate });
+      const days =
+        (Date.parse(referenceDate) - Date.parse(before.referenceDate)) /
+        86_400_000;
+      expect(after.referenceDate).toBe(referenceDate);
+      expect(
+        after.people.map(({ id, preferredName, startDate, endDate }) => [
+          id,
+          preferredName,
+          startDate,
+          endDate,
+        ]),
+      ).toEqual(
+        before.people.map(({ id, preferredName, startDate, endDate }) => [
+          id,
+          preferredName,
+          shifted(startDate, days),
+          shifted(endDate, days),
+        ]),
+      );
+      expect(
+        after.hires.map(({ id, targetDate }) => [id, targetDate === null]),
+      ).toEqual(
+        before.hires.map(({ id, targetDate }) => [id, targetDate === null]),
+      );
+      for (const hire of after.hires) {
+        if (hire.targetDate !== null && hire.filledBy === null) {
+          expect(hire.targetDate > referenceDate).toBe(true);
+        }
+      }
+    },
+  );
 });

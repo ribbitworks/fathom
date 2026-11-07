@@ -139,7 +139,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Expected:** A dialog titled **New release in Platform** opens. There is no **New release stream** button at the top right of the page.
   - **Notes:**
 
-- [ ] **Step 2.** Type `Harbor 4` in **Name**, choose **28.1 (2028-01-01 to 2028-06-30)** as both the first and the last cycle, and select **Make release**.
+- [ ] **Step 2.** Type `Harbor 4` in **Name**, choose Platform's second half-year cycle, such as **28.1 (2028-01-01 to 2028-06-30)**, as both the first and the last cycle, and select **Make release**.
   - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Harbor 4** with a hollow yellow dot and **Draft: added**. The Publish button reads **Publish 1 change**.
   - **Notes:**
 

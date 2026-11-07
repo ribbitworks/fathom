@@ -88,6 +88,7 @@ Use only where a test case says so. This deletes every account and record in the
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
+- **Seeded dates:** the seed data is dated from the day it is added, as the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and the steps name them by where they fall. **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. A cycle's name is the year it ends in and its number in that year, such as **26.4** or **P26.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a record's name. A hollow dot means the change is still unpublished.
 - **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Stream**, **Cycle schedule** and **Releases**. Selecting a row opens the stream in the side panel.
 - **Side panel:** the panel beside the streams table for the selected stream, which the table narrows to make room for, headed with its name, with the sections **Cycle schedule**, **Releases** and **Cycles**. Its close button, an **×**, is at its top right, and dragging its left edge resizes it.
@@ -187,7 +188,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 2.** Read the rows under **Releases** in the side panel.
-  - **Expected:** **Harbor 1**, **26.1 to 26.2 · ships 2026-06-30**; **Harbor 2**, **26.3 to 26.4 · ships 2026-12-31**; **Harbor 3**, **27.1 to 27.3 · ships 2027-12-31**. A small square before each name is blue for **Harbor 1** and **Harbor 3**, and purple for **Harbor 2**. **Harbor 2**'s name is underlined, and the others' are not. No row has a **⋯** button, and there is no **New release…** button.
+  - **Expected:** **Harbor 1**, from the cycle three quarters ago to the one two quarters ago, shipping on the last day of the second, such as **26.1 to 26.2 · ships 2026-06-30**; **Harbor 2**, from last quarter's cycle to this quarter's, shipping on the last day of this quarter, such as **26.3 to 26.4 · ships 2026-12-31**; **Harbor 3**, from next quarter's cycle to the first half, shipping on its last day, such as **27.1 to 27.3 · ships 2027-12-31** (see [Seeded dates](#terms)). A small square before each name is blue for **Harbor 1** and **Harbor 3**, and purple for **Harbor 2**. **Harbor 2**'s name is underlined, and the others' are not. No row has a **⋯** button, and there is no **New release…** button.
   - **Notes:**
 
 #### REL-07: Cycles Show the Months They Span
@@ -199,7 +200,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 2.** Read the first row, each column in order.
-  - **Expected:** **P26.1**, **2026-09-07**, **2026-10-04**, nothing under **Release**, **Sep 2026 80%, Oct 13%**.
+  - **Expected:** The first cycle's name, then the Monday eight weeks before this week's Monday, then the Sunday four weeks later, nothing under **Release**, and the share of each month it spans, such as **P26.1**, **2026-09-07**, **2026-10-04**, **Sep 2026 80%, Oct 13%**.
   - **Notes:**
 
 #### REL-08: Cycles Change Only From the Start of a Cycle
@@ -210,8 +211,8 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** The menu offers **Planned to…** and **Length or names from a date…**. A dialog titled **Change the length or names of Platform's cycles** opens, with **From the start of** and the text **Cycles before it keep their names and dates**.
   - **Notes:**
 
-- [ ] **Step 2.** Choose **2028-01-01 (28.1)**, change **Each cycle lasts** to `12`, and select **Change cycles**.
-  - **Expected:** A third row, **From 2028-01-01**, **Every 12 months, named {YY}.{N}**, appears with a hollow yellow dot and **Draft: added**.
+- [ ] **Step 2.** Choose the half-year cycle after the first half, such as **2028-01-01 (28.1)**, change **Each cycle lasts** to `12`, and select **Change cycles**.
+  - **Expected:** A third row, **From** that cycle's first day, then **Every 12 months, named {YY}.{N}**, such as **From 2028-01-01**, appears with a hollow yellow dot and **Draft: added**.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **⋯** button at the end of that row, then **Discard draft**.
@@ -261,7 +262,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 3.** Look under **Releases** in the side panel.
-  - **Expected:** **Patch October** and **Patch December** are listed, and there is no **New release…** button.
+  - **Expected:** Both patch releases are listed, such as **Patch November** and **Patch December**, and there is no **New release…** button.
   - **Notes:**
 
 #### REL-12: A Release Is Changed by a Draft
@@ -269,7 +270,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-11. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**.
-  - **Expected:** A dialog titled **Change Harbor 3** opens, with **Harbor 3** in **Name**, **27.1 (2027-01-01 to 2027-03-31)** as the first cycle, and **27.3 (2027-07-01 to 2027-12-31)** as the last.
+  - **Expected:** A dialog titled **Change Harbor 3** opens, with **Harbor 3** in **Name**, next quarter's cycle as the first cycle, and the first half as the last, such as **27.1 (2027-01-01 to 2027-03-31)** and **27.3 (2027-07-01 to 2027-12-31)**.
   - **Notes:**
 
 - [ ] **Step 2.** Replace the name with `Harbor Three` and select **Save**.
@@ -320,16 +321,16 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. Run after REL-15. **Platform** open in the side panel.
 
-- [ ] **Step 1.** Under **Cycle schedule**, select **Change…** below **Planned to 2029-12-31**, then **Planned to…**.
-  - **Expected:** A dialog titled **Change how far Platform is planned** opens, with **2029-12-31** in **Planned to**. Below it, **11 cycles in all, as now**, then **Last cycles**: **28.2** with **2028-07-01 to 2028-12-31**, **29.1** with **2029-01-01 to 2029-06-30**, and **29.2** with **2029-07-01 to 2029-12-31**.
+- [ ] **Step 1.** Under **Cycle schedule**, select **Change…** below **Planned to**, followed by 31 December three years after this year, such as **Planned to 2029-12-31**, then **Planned to…**.
+  - **Expected:** A dialog titled **Change how far Platform is planned** opens, with that day in **Planned to**. Below it, as many cycles in all as the **Cycles** heading counts, followed by **as now**, such as **11 cycles in all, as now**, then **Last cycles**: the last three half-year cycles, the last starting on or before that day, such as **28.2** with **2028-07-01 to 2028-12-31**, **29.1** with **2029-01-01 to 2029-06-30**, and **29.2** with **2029-07-01 to 2029-12-31**.
   - **Notes:**
 
-- [ ] **Step 2.** Replace the day with `20301231`, and select **Save**.
-  - **Expected:** A notification says **Drafted the change to the cycles.** The panel's heading shows a hollow yellow dot and **Draft**, **Planned to 2030-12-31**, and the **Cycles** section reads **Cycles (13)**, its last row **30.2** from **2030-07-01**.
+- [ ] **Step 2.** Replace the day with the same day a year later, such as `20301231`, and select **Save**.
+  - **Expected:** A notification says **Drafted the change to the cycles.** The panel's heading shows a hollow yellow dot and **Draft**, **Planned to** the new day, and the **Cycles** heading counts two more cycles, its last row a half-year cycle starting in the new day's year, such as **Planned to 2030-12-31**, **Cycles (13)** and **30.2** from **2030-07-01**.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **⋯** button in the panel's heading, then **Discard draft**.
-  - **Expected:** A notification says **Discarded the draft.** **Planned to 2029-12-31** again, and **Cycles (11)**.
+  - **Expected:** A notification says **Discarded the draft.** **Planned to** and the **Cycles** heading read as before Step 2.
   - **Notes:**
 
 #### REL-17: A Release Ships on a Day of Its Own
@@ -337,15 +338,15 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-16. **Platform** open in the side panel.
 
 - [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Harbor 2** row, then **Change…**.
-  - **Expected:** A dialog titled **Change Harbor 2** opens, with an empty **Ships on** and, under it, **Leave empty to ship at the end of its last cycle, on 2026-12-31**.
+  - **Expected:** A dialog titled **Change Harbor 2** opens, with an empty **Ships on** and, under it, **Leave empty to ship at the end of its last cycle, on** the last day of this quarter, such as **2026-12-31**.
   - **Notes:**
 
-- [ ] **Step 2.** Type `20270131` in **Ships on**, and select **Save**.
-  - **Expected:** A notification says **Drafted the change to the release.** The **Harbor 2** row has a hollow yellow dot and **Draft**, and reads **26.3 to 26.4 · ships 2027-01-31**, then, in bold, **31 days after 26.4 ends**. The **Cycles** section is unchanged: **27.1** still starts on **2027-01-01**.
+- [ ] **Step 2.** Type the day 31 days after this quarter ends, such as `20270131`, in **Ships on**, and select **Save**.
+  - **Expected:** A notification says **Drafted the change to the release.** The **Harbor 2** row has a hollow yellow dot and **Draft**, and reads its cycles and that day, then, in bold, **31 days after** this quarter's cycle **ends**, such as **26.3 to 26.4 · ships 2027-01-31** and **31 days after 26.4 ends**. The **Cycles** section is unchanged: next quarter's cycle still starts the day after this quarter ends.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **⋯** button at the end of the **Harbor 2** row, then **Discard draft**.
-  - **Expected:** A notification says **Discarded the draft.** The row reads **26.3 to 26.4 · ships 2026-12-31** again, with nothing after the date.
+  - **Expected:** A notification says **Discarded the draft.** The row reads as in Step 1, shipping on the last day of this quarter, with nothing after the date.
   - **Notes:**
 
 ### Part 4: The Timeline
@@ -363,11 +364,11 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 3.** Read **Platform**'s two lanes.
-  - **Expected:** The cycles **27.1** and **27.2** are each a quarter long, and **27.3** and the cycles after it half a year long, each block as long as its dates on the axis. In the lane below, **Harbor 3** spans **27.1** to **27.3**, with a diamond at its right end.
+  - **Expected:** The cycles up to the first half are each a quarter long, and the first half and the cycles after it half a year long, each block as long as its dates on the axis. In the lane below, **Harbor 3** spans next quarter's cycle to the first half, such as **27.1** to **27.3**, with a diamond at its right end.
   - **Notes:**
 
 - [ ] **Step 4.** Hover over **Harbor 1**'s span, scrolling the timeline left to it if needed.
-  - **Expected:** A tooltip reads **Harbor 1: 26.1 to 26.2, ships 2026-06-30**.
+  - **Expected:** A tooltip names **Harbor 1**, its cycles and the day it ships, as its row in the side panel does, such as **Harbor 1: 26.1 to 26.2, ships 2026-06-30**.
   - **Notes:**
 
 - [ ] **Step 5.** Read **Patches**' cycles lane.
@@ -379,7 +380,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `team.member@fathom.test`, shown as **Team Member**. Run after REL-18. **Releases** page open, scrolled to the timeline, at **Year**.
 
 - [ ] **Step 1.** Select **All**.
-  - **Expected:** The whole timeline fits across, from 2026 to 2030, with no scrolling sideways, and the **−** button is greyed out.
+  - **Expected:** The whole timeline fits across, from the earliest cycle of any stream to the end of the last, such as 2026 to 2030, with no scrolling sideways, and the **−** button is greyed out.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Quarter**, then **Month**.
@@ -398,12 +399,12 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-19. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 2** row, then **Change…**. Type `20270131` in **Ships on**, and select **Save**.
+- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 2** row, then **Change…**. Type the day 31 days after this quarter ends, such as `20270131`, in **Ships on**, and select **Save**.
   - **Expected:** A notification says **Drafted the change to the release.**
   - **Notes:**
 
 - [ ] **Step 2.** Close the side panel, scroll to the timeline, select **6 months**, and find **Harbor 2** in **Platform**'s releases lane.
-  - **Expected:** **Harbor 2**'s span, across **26.3** and **26.4**, has a dashed edge. A dashed line runs on from its right end, past the start of **Harbor 3**, to a diamond about a month later, at the end of January 2027.
+  - **Expected:** **Harbor 2**'s span, across last quarter's and this quarter's cycles, such as **26.3** and **26.4**, has a dashed edge. A dashed line runs on from its right end, past the start of **Harbor 3**, to a diamond about a month later, on the day typed.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Platform** in the table, then, in the side panel, the **⋯** button at the end of the **Harbor 2** row, then **Discard draft**.
@@ -415,7 +416,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-20. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Close the side panel, scroll to the timeline, select **Year**, and find **Platform**'s and **Patches**' releases lanes, scrolling the timeline left if **Harbor 1** is not wholly in view.
-  - **Expected:** **Harbor 1** and **Harbor 3** are blue, **Harbor 2** is purple, **Patch December** is orange and **Patch October** is blue. Each diamond is the colour of its span, and each name is in the page's usual text colour.
+  - **Expected:** **Harbor 1** and **Harbor 3** are blue, **Harbor 2** is purple, the later patch release, such as **Patch December**, is orange, and the earlier, such as **Patch November**, is blue. Each diamond is the colour of its span, and each name is in the page's usual text colour.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Platform** in the table, then, in the side panel, the **⋯** button at the end of the **Harbor 1** row, then **Change…**.
@@ -444,16 +445,16 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Preconditions:** Run after REL-21. Restore the seed data ([R1](#r1-restore-the-seed-data)). Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** In the side panel's **Cycles** table, select the **⋯** button at the end of the **27.1** row, then **Change length…**.
-  - **Expected:** A dialog titled **Change the length of 27.1** opens. **Length** reads **3**, followed by **months**, with **2027-01-01 to 2027-03-31** under its label. Under **Later cycles**, **Move with it** is selected, and **Keep their dates** is offered. **New dates** lists **27.1**, **2027-01-01 to 2027-03-31**; **27.2**, **2027-04-01 to 2027-06-30**; and **27.3**, **2027-07-01 to 2027-12-31**.
+- [ ] **Step 1.** In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, such as **27.1**, then **Change length…**.
+  - **Expected:** A dialog titled **Change the length of** that cycle opens. **Length** reads **3**, followed by **months**, with the cycle's dates under its label. Under **Later cycles**, **Move with it** is selected, and **Keep their dates** is offered. **New dates** lists that cycle, the next one and the first half, with their dates as now, such as **27.1**, **2027-01-01 to 2027-03-31**; **27.2**, **2027-04-01 to 2027-06-30**; and **27.3**, **2027-07-01 to 2027-12-31**.
   - **Notes:**
 
 - [ ] **Step 2.** Replace **3** in **Length** with `2`.
-  - **Expected:** The red line is gone. **New dates** lists **27.1**, **2027-01-01 to 2027-02-28**; **27.2**, **2027-03-01 to 2027-05-31**; and **27.3**, **2027-06-01 to 2027-11-30**. Below it, the dialog says **Harbor 3 moves with its cycles.** and **Harbor 3 ships 2027-11-30.**
+  - **Expected:** The red line is gone. **New dates** lists the cycle two months long, then the next a quarter and the first half half a year, each starting a month earlier than before, such as **27.1**, **2027-01-01 to 2027-02-28**; **27.2**, **2027-03-01 to 2027-05-31**; and **27.3**, **2027-06-01 to 2027-11-30**. Below it, the dialog says **Harbor 3 moves with its cycles.** and **Harbor 3 ships** on the first half's new last day, such as **Harbor 3 ships 2027-11-30.**
   - **Notes:**
 
 - [ ] **Step 3.** Select **Change length**.
-  - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, the rows **From 2027-01-01**, **Every 2 months, named {YY}.{N}** and **From 2027-03-01**, **Every 3 months, named {YY}.{N}** each have a hollow yellow dot and **Draft: added**, and **From 2027-06-01**, **Every 6 months, named {YY}.{N}** has a hollow yellow dot and **Draft**. The **Harbor 3** row has a hollow yellow dot and **Draft**, and reads **27.1 to 27.3 · ships 2027-11-30**. In the **Cycles** table, **27.3** runs from **2027-06-01** to **2027-11-30**.
+  - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, a row **From** the changed cycle's first day, **Every 2 months, named {YY}.{N}**, and a row **From** the next cycle's new first day, **Every 3 months, named {YY}.{N}**, each have a hollow yellow dot and **Draft: added**, and the first half's row, now **From** a month earlier, **Every 6 months, named {YY}.{N}**, has a hollow yellow dot and **Draft**, such as **From 2027-01-01**, **From 2027-03-01** and **From 2027-06-01**. The **Harbor 3** row has a hollow yellow dot and **Draft**, and ships on the first half's new last day, such as **27.1 to 27.3 · ships 2027-11-30**. In the **Cycles** table, the first half runs on its new dates, such as **27.3** from **2027-06-01** to **2027-11-30**.
   - **Notes:**
 
 - [ ] **Step 4.** Publish ([P3](#p3-publish)).
@@ -465,31 +466,31 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `project.manager@fathom.test`, shown as **Project Manager**. Run after REL-22. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
-  - **Expected:** A dialog titled **Approve 4 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Platform from 2027-01-01**, **the cycles of Platform from 2027-03-01** and **the cycles of Platform from 2027-06-01**.
+  - **Expected:** A dialog titled **Approve 4 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Platform from** each of the three days in REL-22 Step 3, such as **the cycles of Platform from 2027-01-01**, **the cycles of Platform from 2027-03-01** and **the cycles of Platform from 2027-06-01**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Approve**.
-  - **Expected:** A notification says **Approved 4 drafts.** No row under **Cycle schedule** or **Releases** has a mark, and **Harbor 3** still reads **27.1 to 27.3 · ships 2027-11-30**.
+  - **Expected:** A notification says **Approved 4 drafts.** No row under **Cycle schedule** or **Releases** has a mark, and **Harbor 3** still reads as in REL-22 Step 3.
   - **Notes:**
 
 #### REL-24: Later Cycles Can Keep Their Dates
 
 **Preconditions:** Run after REL-23. Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] **Step 1.** In the **Cycles** table, select the **⋯** button at the end of the **P26.4** row, then **Change length…**. Replace **4** in **Length** with `2`, and select **Keep their dates**.
-  - **Expected:** **Length** is followed by **weeks**. **New dates** lists **P26.4**, **2026-11-30 to 2026-12-13**; **P27.1**, **2026-12-14 to 2027-01-24**; and **P27.2**, **2027-01-25 to 2027-02-21**. Below it, the dialog says **Patch December ships 2026-12-13.**
+- [ ] **Step 1.** In the **Cycles** table, select the **⋯** button at the end of the later patch release's last cycle, the fourth cycle, such as **P26.4**, then **Change length…**. Replace **4** in **Length** with `2`, and select **Keep their dates**.
+  - **Expected:** **Length** is followed by **weeks**. **New dates** lists that cycle two weeks long, then a cycle from the next day to the end of the cycle after it, six weeks long, then the cycle after that as now, such as **P26.4**, **2026-11-30 to 2026-12-13**; **P27.1**, **2026-12-14 to 2027-01-24**; and **P27.2**, **2027-01-25 to 2027-02-21**. Below it, the dialog says the later patch release ships on that cycle's new last day, such as **Patch December ships 2026-12-13.**
   - **Notes:**
 
 - [ ] **Step 2.** Select **Change length**, then publish ([P3](#p3-publish)).
-  - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, the rows **From 2026-11-30**, **From 2026-12-14** and **From 2027-01-25** each have a yellow dot and **Draft: added**. **Patch December** has no mark, and reads **P26.3 to P26.4 · ships 2026-12-13**, the new end of **P26.4**, since it has no Ships on day of its own.
+  - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, a row **From** each of the three cycles' first days, such as **From 2026-11-30**, **From 2026-12-14** and **From 2027-01-25**, has a yellow dot and **Draft: added**. The later patch release has no mark, and ships on the changed cycle's new last day, since it has no Ships on day of its own, such as **Patch December**, **P26.3 to P26.4 · ships 2026-12-13**.
   - **Notes:**
 
 #### REL-25: Discarding One Draft of a New Length Discards Them All
 
 **Preconditions:** Signed in ([P1](#p1-sign-in)) as `engineering.operations.manager@fathom.test`, shown as **Engineering Operations Manager**. Run after REL-24. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] **Step 1.** Select the **⋯** button at the end of the **From 2026-12-14** row, then **Discard draft**, and publish ([P3](#p3-publish)).
-  - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only the row **From 2026-09-07**, and **P26.4** runs from **2026-11-30** to **2026-12-27** again.
+- [ ] **Step 1.** Select the **⋯** button at the end of the second of the three rows REL-24 added, such as **From 2026-12-14**, then **Discard draft**, and publish ([P3](#p3-publish)).
+  - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only its first row, and the fourth cycle is four weeks long again, such as **P26.4** from **2026-11-30** to **2026-12-27**.
   - **Notes:**
 
 ### Part 6: Release Notes

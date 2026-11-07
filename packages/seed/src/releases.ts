@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The fictional organization's release streams, added live: Platform, in quarters from 2026 and in
-// halves from July 2027, with three releases, and Patches, in four-week cycles from September 2026,
-// with two, each recorded in the change history as made by Fathom itself. Removing them first
+// The fictional organization's release streams, added live and dated from the day they are added:
+// Platform, in quarters and then halves, with three releases, and Patches, in four-week cycles, with
+// two, each recorded in the change history as made by Fathom itself. Removing them first
 // discards every draft, published or not, of their records or of records drafted to be added to
 // them, and keeps a stream that has a live pattern or release added by hand. A development-only
 // package, never included in the runtime image.
@@ -18,19 +18,28 @@ import {
   unpublishedDrafts,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
-import type { PaletteColour } from "@fathom/shared";
+import {
+  addDays,
+  addMonths,
+  lastDayOfMonth,
+  type PaletteColour,
+} from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 
 interface SeededStream {
   name: string;
   cyclesUntil: string;
+  // Each pattern and release has a key of its own, which its identifier is made from, so the seed
+  // data added on one day is found and removed on another, when its dates and names have moved.
   patterns: {
+    key: string;
     startsOn: string;
     length: number;
     unit: "weeks" | "months";
     naming: string;
   }[];
   releases: {
+    key: string;
     name: string;
     firstCycle: string;
     lastCycle: string;
@@ -40,67 +49,161 @@ interface SeededStream {
   }[];
 }
 
-export const seededStreams: readonly SeededStream[] = [
+// Each stream's name, and the keys of its patterns and releases, in the order it lists them.
+export const seededKeys = [
   {
     name: "Platform",
-    cyclesUntil: "2029-12-31",
-    patterns: [
-      { startsOn: "2026-01-01", length: 3, unit: "months", naming: "{YY}.{N}" },
-      { startsOn: "2027-07-01", length: 6, unit: "months", naming: "{YY}.{N}" },
-    ],
-    releases: [
-      { name: "Harbor 1", firstCycle: "2026-01-01", lastCycle: "2026-04-01" },
-      {
-        name: "Harbor 2",
-        firstCycle: "2026-07-01",
-        lastCycle: "2026-10-01",
-        colour: "grape",
-        note: [
-          "## Goals",
-          "",
-          "- Faster sign-in for **every** team",
-          "- Retire the old *export* format",
-          "",
-          "## Before shipping",
-          "",
-          "- [x] Freeze the scope",
-          "- [ ] Check the upgrade guide",
-          "",
-          '<span data-colour="red">Translations are late</span>; see [the plan](https://example.com/harbor-2).',
-        ].join("\n"),
-      },
-      { name: "Harbor 3", firstCycle: "2027-01-01", lastCycle: "2027-07-01" },
-    ],
+    patterns: ["quarters", "halves"],
+    releases: ["harbor-1", "harbor-2", "harbor-3"],
   },
   {
     name: "Patches",
-    cyclesUntil: "2028-08-31",
-    patterns: [
-      { startsOn: "2026-09-07", length: 4, unit: "weeks", naming: "P{YY}.{N}" },
-    ],
-    releases: [
-      {
-        name: "Patch October",
-        firstCycle: "2026-10-05",
-        lastCycle: "2026-10-05",
-      },
-      {
-        name: "Patch December",
-        firstCycle: "2026-11-02",
-        lastCycle: "2026-11-30",
-        colour: "orange",
-        note: "Holds the fixes found in `Harbor 2` testing. Nothing new ships in it.",
-      },
-    ],
+    patterns: ["four-weeks"],
+    releases: ["patch-1", "patch-2"],
   },
-];
+] as const;
 
-const streamId = (stream: SeededStream) =>
+// Platform starts some quarters before today's, is in halves from some quarters after it, and is
+// planned to the end of a year some years on. Patches starts some cycles before this week's, in
+// cycles of some weeks, and is planned to the end of the month before two years on.
+const platformDates = {
+  quartersBefore: 3,
+  quartersUntilHalves: 3,
+  yearsPlanned: 3,
+} as const;
+const patchDates = { weeks: 4, cyclesBefore: 2, monthsPlanned: 23 } as const;
+
+// The first day of the quarter a day is in, as YYYY-MM-DD.
+function quarterStart(of: string): string {
+  const [year, month] = of.split("-").map(Number);
+  const first = Math.floor((Number(month) - 1) / 3) * 3 + 1;
+  return `${String(year)}-${String(first).padStart(2, "0")}-01`;
+}
+
+// The Monday on or before a day.
+const mondayOf = (of: string): string =>
+  addDays(of, -((new Date(`${of}T00:00:00Z`).getUTCDay() + 6) % 7));
+
+const monthName = (of: string): string =>
+  new Intl.DateTimeFormat("en", { month: "long", timeZone: "UTC" }).format(
+    new Date(`${of}T00:00:00Z`),
+  );
+
+// The streams as seeded on a day, the same whatever the day: Platform, in quarters from three
+// quarters before today's and in halves from three quarters after it, with a release that has
+// shipped, one ending this quarter, and one to come; and Patches, in four-week cycles from eight
+// weeks before this week's Monday, with a release on one cycle that has shipped and one on two
+// cycles to come, each named after the month it ships in.
+export function seededStreams(today: string): readonly SeededStream[] {
+  const quarter = (offset: number) =>
+    addMonths(quarterStart(today), offset * 3);
+  const firstQuarter = -platformDates.quartersBefore;
+  const firstHalf = platformDates.quartersUntilHalves;
+  const cycleDays = patchDates.weeks * 7;
+  const patchStart = addDays(
+    mondayOf(today),
+    -patchDates.cyclesBefore * cycleDays,
+  );
+  const cycle = (index: number) => addDays(patchStart, index * cycleDays);
+  // A patch release ships on the last day of its last cycle, the day before the next starts.
+  const patchName = (lastCycle: number) =>
+    `Patch ${monthName(addDays(cycle(lastCycle + 1), -1))}`;
+  const [platform, patches] = seededKeys;
+  return [
+    {
+      name: platform.name,
+      cyclesUntil: `${String(Number(today.slice(0, 4)) + platformDates.yearsPlanned)}-12-31`,
+      patterns: [
+        {
+          key: platform.patterns[0],
+          startsOn: quarter(firstQuarter),
+          length: 3,
+          unit: "months",
+          naming: "{YY}.{N}",
+        },
+        {
+          key: platform.patterns[1],
+          startsOn: quarter(firstHalf),
+          length: 6,
+          unit: "months",
+          naming: "{YY}.{N}",
+        },
+      ],
+      releases: [
+        {
+          key: platform.releases[0],
+          name: "Harbor 1",
+          firstCycle: quarter(firstQuarter),
+          lastCycle: quarter(firstQuarter + 1),
+        },
+        {
+          key: platform.releases[1],
+          name: "Harbor 2",
+          firstCycle: quarter(-1),
+          lastCycle: quarter(0),
+          colour: "grape",
+          note: [
+            "## Goals",
+            "",
+            "- Faster sign-in for **every** team",
+            "- Retire the old *export* format",
+            "",
+            "## Before shipping",
+            "",
+            "- [x] Freeze the scope",
+            "- [ ] Check the upgrade guide",
+            "",
+            '<span data-colour="red">Translations are late</span>; see [the plan](https://example.com/harbor-2).',
+          ].join("\n"),
+        },
+        {
+          key: platform.releases[2],
+          name: "Harbor 3",
+          firstCycle: quarter(1),
+          lastCycle: quarter(firstHalf),
+        },
+      ],
+    },
+    {
+      name: patches.name,
+      cyclesUntil: lastDayOfMonth(
+        addMonths(patchStart, patchDates.monthsPlanned),
+      ),
+      patterns: [
+        {
+          key: patches.patterns[0],
+          startsOn: patchStart,
+          length: patchDates.weeks,
+          unit: "weeks",
+          naming: "P{YY}.{N}",
+        },
+      ],
+      releases: [
+        {
+          key: patches.releases[0],
+          name: patchName(1),
+          firstCycle: cycle(1),
+          lastCycle: cycle(1),
+        },
+        {
+          key: patches.releases[1],
+          name: patchName(3),
+          firstCycle: cycle(2),
+          lastCycle: cycle(3),
+          colour: "orange",
+          note: "Holds the fixes found in `Harbor 2` testing. Nothing new ships in it.",
+        },
+      ],
+    },
+  ];
+}
+
+const streamId = (stream: { name: string }) =>
   fictionalId(`release-stream:${stream.name}`);
-const patternId = (stream: SeededStream, startsOn: string) =>
-  fictionalId(`cycle-pattern:${stream.name}:${startsOn}`);
-const releaseId = (stream: SeededStream, name: string) =>
-  fictionalId(`release:${stream.name}:${name}`);
+const patternId = (stream: { name: string }, key: string) =>
+  fictionalId(`cycle-pattern:${stream.name}:${key}`);
+const releaseId = (stream: { name: string }, key: string) =>
+  fictionalId(`release:${stream.name}:${key}`);
 
 type Change = ChangeRecord & { action: "created" | "deleted" };
 
@@ -122,12 +225,15 @@ const recorded = (
 
 // Adds each stream that is not already there, as one seeded before or one of the same name added by
 // hand. Returns whether it added any.
-export async function seedReleases(database: Database): Promise<boolean> {
+export async function seedReleases(
+  database: Database,
+  today: string,
+): Promise<boolean> {
   return database.transaction(async (transaction) => {
     const present = await transaction
       .select({ id: releaseStreams.id, name: releaseStreams.name })
       .from(releaseStreams);
-    const missing = seededStreams.filter(
+    const missing = seededStreams(today).filter(
       (stream) =>
         !present.some(
           ({ id, name }) =>
@@ -157,17 +263,17 @@ export async function seedReleases(database: Database): Promise<boolean> {
           cyclesUntil: stream.cyclesUntil,
         }),
       );
-      for (const pattern of stream.patterns) {
+      for (const { key, ...pattern } of stream.patterns) {
         const row = { streamId: id, ...pattern };
-        const recordId = patternId(stream, pattern.startsOn);
+        const recordId = patternId(stream, key);
         await transaction
           .insert(cyclePatterns)
           .values({ id: recordId, ...row });
         made.push(...recorded("cycle-pattern", recordId, "created", row));
       }
-      for (const release of stream.releases) {
+      for (const { key, ...release } of stream.releases) {
         const row = { streamId: id, ...release };
-        const recordId = releaseId(stream, release.name);
+        const recordId = releaseId(stream, key);
         await transaction.insert(releases).values({ id: recordId, ...row });
         made.push(...recorded("release", recordId, "created", row));
       }
@@ -205,7 +311,7 @@ export async function unseedReleases(database: Database): Promise<string[]> {
   return database.transaction(async (transaction) => {
     const kept: string[] = [];
     const made: Change[] = [];
-    for (const stream of seededStreams) {
+    for (const stream of seededKeys) {
       const id = streamId(stream);
       const [row] = await transaction
         .select()
@@ -221,8 +327,8 @@ export async function unseedReleases(database: Database): Promise<string[]> {
         .from(releases)
         .where(eq(releases.streamId, id));
       const seeded = new Set([
-        ...stream.patterns.map(({ startsOn }) => patternId(stream, startsOn)),
-        ...stream.releases.map(({ name }) => releaseId(stream, name)),
+        ...stream.patterns.map((key) => patternId(stream, key)),
+        ...stream.releases.map((key) => releaseId(stream, key)),
       ]);
       const own = [...patternRows, ...releaseRows].map((record) => record.id);
       // A stream kept keeps every draft of it and its records, which may be people's own.

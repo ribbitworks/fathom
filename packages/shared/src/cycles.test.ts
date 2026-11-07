@@ -9,6 +9,7 @@ import {
   cycleName,
   cyclesOf,
   horizonFrom,
+  lastDayOfMonth,
   type CyclePatternLike,
   type LengthChange,
   monthShares,
@@ -315,5 +316,16 @@ describe("changing one cycle's length", () => {
         ["2027-07-01", undefined],
       ]),
     );
+  });
+});
+
+describe("the last day of a month", () => {
+  it("is found for short months, leap years and year ends", () => {
+    expect([
+      lastDayOfMonth("2027-02-03"),
+      lastDayOfMonth("2028-02-29"),
+      lastDayOfMonth("2026-12-01"),
+      lastDayOfMonth("2027-04-30"),
+    ]).toEqual(["2027-02-28", "2028-02-29", "2026-12-31", "2027-04-30"]);
   });
 });

@@ -95,6 +95,7 @@ export {
 export {
   addDays,
   addMonths,
+  lastDayOfMonth,
   type Cycle,
   cycleName,
   type CyclePatternLike,

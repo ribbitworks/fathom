@@ -17,13 +17,21 @@ import {
   runMigrations,
 } from "@fathom/db";
 import { actorFor } from "@fathom/server/access";
-import { noteProblem } from "@fathom/shared";
+import { cyclesOf, noteProblem } from "@fathom/shared";
 import { createDataAccess } from "@fathom/server/data";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { eq, inArray, isNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { seededStreams, seedReleases, unseedReleases } from "./releases.ts";
+import {
+  seededKeys,
+  seededStreams,
+  seedReleases,
+  unseedReleases,
+} from "./releases.ts";
+
+// The day the tests seed on, which the streams are dated from, as they are from today when seeded.
+const today = "2026-11-07";
 
 let database: TestDatabase;
 let pool: ReturnType<typeof createPool>;
@@ -55,8 +63,8 @@ const streamNames = async () =>
 
 describe("seeding release streams", () => {
   it("adds the streams, their patterns, and their releases once, recorded as made by Fathom itself", async () => {
-    expect(await seedReleases(connection)).toBe(true);
-    expect(await seedReleases(connection)).toBe(false);
+    expect(await seedReleases(connection, today)).toBe(true);
+    expect(await seedReleases(connection, today)).toBe(false);
     expect(await streamNames()).toEqual(["Patches", "Platform"]);
     const made = await connection
       .select({ recordType: changes.recordType })
@@ -69,7 +77,7 @@ describe("seeding release streams", () => {
   });
 
   it("gives releases that start and end with cycles of their streams", async () => {
-    await seedReleases(connection);
+    await seedReleases(connection, today);
     const viewer = actorFor(
       { id: randomUUID(), name: "", email: "" },
       "team-member",
@@ -86,13 +94,13 @@ describe("seeding release streams", () => {
       }
     }
     expect(streams.flatMap(({ releases: found }) => found)).toHaveLength(
-      seededStreams.flatMap(({ releases: seeded }) => seeded).length,
+      seededStreams(today).flatMap(({ releases: seeded }) => seeded).length,
     );
   });
 
   it("gives notes that notes allow, kept as written", async () => {
-    await seedReleases(connection);
-    const seeded = seededStreams.flatMap(({ releases: found }) =>
+    await seedReleases(connection, today);
+    const seeded = seededStreams(today).flatMap(({ releases: found }) =>
       found.flatMap(({ note }) => (note === undefined ? [] : [note])),
     );
     expect(seeded.length).toBeGreaterThan(0);
@@ -106,9 +114,114 @@ describe("seeding release streams", () => {
   });
 });
 
+describe("the streams as dated from a day", () => {
+  // Days through a year, with the ends and starts of months, quarters and years, a leap day, and
+  // each day of a week.
+  const days = [
+    "2026-11-07",
+    "2026-11-08",
+    "2026-11-09",
+    "2026-11-10",
+    "2026-11-11",
+    "2026-11-12",
+    "2026-11-13",
+    "2026-12-31",
+    "2027-01-01",
+    "2027-01-31",
+    "2027-02-28",
+    "2027-03-31",
+    "2027-04-01",
+    "2027-06-30",
+    "2027-09-30",
+    "2027-10-01",
+    "2028-02-29",
+  ];
+
+  // Each release with the days its first cycle starts and its last cycle ends, by key, each cycle
+  // one its stream makes.
+  function placed(on: string) {
+    return new Map(
+      seededStreams(on).flatMap((stream) => {
+        const cycles = cyclesOf(stream.patterns, stream.cyclesUntil);
+        return stream.releases.map(({ key, name, firstCycle, lastCycle }) => {
+          const first = cycles.find(({ startsOn }) => startsOn === firstCycle);
+          const last = cycles.find(({ startsOn }) => startsOn === lastCycle);
+          expect([first, last]).not.toContain(undefined);
+          return [
+            key,
+            {
+              name,
+              starts: String(first?.startsOn),
+              ends: String(last?.endsOn),
+            },
+          ] as const;
+        });
+      }),
+    );
+  }
+
+  it.each(days)("on %s, keep the names and keys removing them reads", (on) => {
+    expect(
+      seededStreams(on).map(({ name, patterns, releases: made }) => ({
+        name,
+        patterns: patterns.map(({ key }) => key),
+        releases: made.map(({ key }) => key),
+      })),
+    ).toEqual(seededKeys);
+  });
+
+  it.each(days)(
+    "on %s, start and end each release with its stream's cycles, in order, with none shared",
+    (on) => {
+      for (const stream of seededStreams(on)) {
+        const cycles = cyclesOf(stream.patterns, stream.cyclesUntil);
+        let after = -1;
+        for (const { firstCycle, lastCycle } of stream.releases) {
+          const first = cycles.findIndex(
+            ({ startsOn }) => startsOn === firstCycle,
+          );
+          const last = cycles.findIndex(
+            ({ startsOn }) => startsOn === lastCycle,
+          );
+          expect(first).toBeGreaterThan(after);
+          expect(first).toBeGreaterThanOrEqual(0);
+          expect(last).toBeGreaterThanOrEqual(first);
+          after = last;
+        }
+      }
+    },
+  );
+
+  it.each(days)(
+    "on %s, give each stream a release that has shipped and one under way, and Platform one to come",
+    (on) => {
+      const releases = placed(on);
+      const shipped = (key: string) => String(releases.get(key)?.ends) < on;
+      const underWay = (key: string) =>
+        String(releases.get(key)?.starts) <= on &&
+        on <= String(releases.get(key)?.ends);
+      expect([
+        shipped("harbor-1"),
+        underWay("harbor-2"),
+        String(releases.get("harbor-3")?.starts) > on,
+        shipped("patch-1"),
+        underWay("patch-2"),
+      ]).toEqual([true, true, true, true, true]);
+    },
+  );
+
+  it("names each patch release after the month it ships in", () => {
+    const releases = placed(today);
+    expect([
+      releases.get("patch-1")?.name,
+      releases.get("patch-2")?.name,
+    ]).toEqual(["Patch November", "Patch December"]);
+  });
+});
+
 describe("removing release streams", () => {
   it("removes what seeding added", async () => {
-    await seedReleases(connection);
+    await seedReleases(connection, today);
     expect(await unseedReleases(connection)).toEqual([]);
     expect(await streamNames()).toEqual([]);
   });
@@ -118,7 +231,7 @@ describe("removing release streams", () => {
   });
 
   it("keeps a stream with a release added by hand", async () => {
-    await seedReleases(connection);
+    await seedReleases(connection, today);
     const [platform] = await connection
       .select({ id: releaseStreams.id })
       .from(releaseStreams)
@@ -136,7 +249,7 @@ describe("removing release streams", () => {
   });
 
   it("discards the drafts of a stream's records and of records drafted to be added to it", async () => {
-    await seedReleases(connection);
+    await seedReleases(connection, today);
     const [patches] = await connection
       .select({ id: releaseStreams.id })
       .from(releaseStreams)
@@ -159,7 +272,7 @@ describe("removing release streams", () => {
   });
 
   it("keeps the drafts of a stream it keeps", async () => {
-    await seedReleases(connection);
+    await seedReleases(connection, today);
     const [platform] = await connection
       .select({ id: releaseStreams.id })
       .from(releaseStreams)
@@ -183,7 +296,7 @@ describe("removing release streams", () => {
   });
 
   it("leaves drafts of other kinds that name a seeded stream in their fields", async () => {
-    await seedReleases(connection);
+    await seedReleases(connection, today);
     const [patches] = await connection
       .select({ id: releaseStreams.id })
       .from(releaseStreams)
@@ -199,7 +312,7 @@ describe("removing release streams", () => {
   });
 
   it("seeding again adds back a seeded stream that was removed, leaving the one kept", async () => {
-    await seedReleases(connection);
+    await seedReleases(connection, today);
     const [platform] = await connection
       .select({ id: releaseStreams.id })
       .from(releaseStreams)
@@ -211,17 +324,17 @@ describe("removing release streams", () => {
       lastCycle: "2027-07-01",
     });
     await unseedReleases(connection);
-    expect([await seedReleases(connection), await streamNames()]).toEqual([
-      true,
-      ["Patches", "Platform"],
-    ]);
+    expect([
+      await seedReleases(connection, today),
+      await streamNames(),
+    ]).toEqual([true, ["Patches", "Platform"]]);
   });
 
   it("does not seed a stream whose name a stream added by hand has", async () => {
     await connection
       .insert(releaseStreams)
       .values({ name: "patches", cyclesUntil: "2028-12-31" });
-    await seedReleases(connection);
+    await seedReleases(connection, today);
     expect(await streamNames()).toEqual(["Platform", "patches"]);
   });
 });

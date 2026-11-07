@@ -45,7 +45,8 @@ import {
 } from "@fathom/fixtures";
 import { createAuth } from "@fathom/server/auth";
 import { loadAuthConfig } from "@fathom/server/config";
-import { builtInColumnNames } from "@fathom/shared";
+import { createDataAccess } from "@fathom/server/data";
+import { builtInColumnNames, dayIn } from "@fathom/shared";
 import { and, count, eq, inArray, sql } from "drizzle-orm";
 import { readFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -572,7 +573,13 @@ export async function seedCommand(
   try {
     pool = createPool(loadDatabaseConfig(environment));
     const database = createDatabase(pool);
-    const organization = fictionalOrganization({ size: developmentSize });
+    // Dated from today in Fathom's time zone, so the data looks the same whatever day it is added.
+    const organization = fictionalOrganization({
+      size: developmentSize,
+      referenceDate: dayIn(
+        (await createDataAccess(database).readSettings()).timeZone,
+      ),
+    });
     // Read first, so missing settings stop the command before anything is changed.
     const auth = createAuth(database, loadAuthConfig(environment));
     if (command === "accounts") {
@@ -592,7 +599,7 @@ export async function seedCommand(
           `Added ${String(organization.hires.length)} fictional planned hires`,
         );
       }
-      if (await seedReleases(database)) {
+      if (await seedReleases(database, organization.referenceDate)) {
         console.log(
           "Added fictional release streams, with their cycles and releases",
         );

@@ -74,6 +74,14 @@ export function addMonths(day: string, months: number): string {
   return formatDay(new Date(Date.UTC(year, month, dayOfMonth)));
 }
 
+// The last day of the month a day is in.
+export function lastDayOfMonth(day: string): string {
+  const date = parseDay(day);
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  return formatDay(new Date(Date.UTC(year, month, daysInMonth(year, month))));
+}
+
 // The day a pattern's cycle, counted from its first, starts on. Counting from the pattern's start,
 // rather than from the cycle before, keeps cycles on the same day of the month.
 const cycleStart = (pattern: CyclePatternLike, index: number): string =>

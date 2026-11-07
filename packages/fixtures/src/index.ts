@@ -24,6 +24,7 @@ import {
   sv,
   zh_CN,
 } from "@faker-js/faker";
+import { addMonths } from "@fathom/shared";
 import { createHash } from "node:crypto";
 
 // The fixed namespace every fictional identifier is made in.
@@ -121,6 +122,8 @@ export interface FictionalHire {
 }
 
 export interface FictionalOrganization {
+  // The day, as YYYY-MM-DD, its dates are worked out from, such as the day the seed data is added.
+  referenceDate: string;
   lists: FictionalList[];
   // The choices the seed data adds to the built-in Positions list, which Fathom makes itself.
   positions: FictionalList["choices"];
@@ -498,12 +501,7 @@ function hiresFor(
   const managers = named.filter(
     (person) => person.isManager && current(person),
   );
-  const reference = new Date(`${referenceDate}T00:00:00Z`);
-  const due = (months: number) => {
-    const target = new Date(reference);
-    target.setUTCMonth(target.getUTCMonth() + months);
-    return day(target);
-  };
+  const due = (months: number) => addMonths(referenceDate, months);
   let next = 0;
   const open = openings.map(
     (
@@ -708,6 +706,7 @@ export function fictionalOrganization({
     referenceDate,
   );
   return {
+    referenceDate,
     lists: [sites, levels, teamRoles, certifications, languages],
     positions: positions.choices,
     columns: [siteColumn, levelColumn, teamRoleColumn, onboardingColumn],

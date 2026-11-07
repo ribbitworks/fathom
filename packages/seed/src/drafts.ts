@@ -23,6 +23,7 @@ import {
   valueField,
 } from "@fathom/db";
 import type { FictionalOrganization, FictionalPerson } from "@fathom/fixtures";
+import { addMonths, lastDayOfMonth } from "@fathom/shared";
 import type { Actor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, isNull, max, ne, or, sql } from "drizzle-orm";
@@ -305,7 +306,8 @@ export async function seedDrafts(
       leaving,
       () =>
         data.people.update(editor, leaving.id, {
-          endDate: "2027-06-30",
+          // The end of the month seven months on, as a planned leaving date.
+          endDate: lastDayOfMonth(addMonths(organization.referenceDate, 7)),
           values: otherChoice(organization, leaving, 1),
         }),
     ],
