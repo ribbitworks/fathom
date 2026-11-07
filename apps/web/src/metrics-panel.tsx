@@ -77,6 +77,7 @@ type Measure = "count" | "share";
 export function MetricsPanel<Row>({
   one,
   noun,
+  kinds,
   rows,
   live,
   offered,
@@ -87,6 +88,10 @@ export function MetricsPanel<Row>({
   // What the rows are, one and several, such as "person" and "people".
   one: string;
   noun: string;
+  // For rows of several kinds, what they are called together, such as "people and planned hires",
+  // and how many of each a count holds, such as "150 people and 6 planned hires".
+  kinds?:
+    { noun: string; counted: (rows: readonly Row[]) => string } | undefined;
   // The rows the view shows, as the table shows them, leaving out any drafted to be removed.
   rows: readonly Row[];
   // With drafts shown beside live, the same rows as they are live, and the columns as they are
@@ -111,9 +116,13 @@ export function MetricsPanel<Row>({
     live && liveBy.length === by.length
       ? countRows(live.rows, liveBy)
       : undefined;
-  const rowsLabel = (total: number) =>
-    `${count(total)} ${total === 1 ? one : noun}`;
-  const capitalNoun = noun.charAt(0).toUpperCase() + noun.slice(1);
+  const rowsLabel = (counted: readonly Row[]) =>
+    kinds?.counted(counted) ??
+    `${count(counted.length)} ${counted.length === 1 ? one : noun}`;
+  const capitalNoun =
+    kinds === undefined
+      ? noun.charAt(0).toUpperCase() + noun.slice(1)
+      : "Count";
 
   // The groups of one of the columns broken down by, at its place among them.
   const groupsAt = (column: TableColumn<Row>, index: number): Group[] =>
@@ -160,7 +169,7 @@ export function MetricsPanel<Row>({
   if (first === undefined) {
     body = (
       <Text fz="sm" c="dimmed">
-        Choose a column to count {noun} by its values.
+        Choose a column to count {kinds?.noun ?? noun} by its values.
       </Text>
     );
   } else if (second === undefined) {
@@ -290,7 +299,7 @@ export function MetricsPanel<Row>({
         <div className={classes.body}>
           {/* The bar above the table announces how many rows are shown as they change. */}
           <Text fz="sm" c="dimmed" mb="sm">
-            {rowsLabel(rows.length)}
+            {rowsLabel(rows)}
             {live !== undefined && " with drafts"}
             {live !== undefined &&
               live.rows.length !== rows.length &&

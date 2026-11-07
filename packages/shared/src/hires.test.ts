@@ -18,8 +18,10 @@ const manager = "6f1c2b9e-4d3a-4f8b-9c7e-2a1b3c4d5e6f";
 const state = "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d";
 
 describe("hiring meanings and temporary IDs", () => {
-  it("are those of the hiring states list", () => {
-    expect(hiringMeaningSchema.options).toEqual(meaningsOf("hiring-states"));
+  it("are those of the hiring states list but Hired, which is people's", () => {
+    expect(hiringMeaningSchema.options).toEqual(
+      meaningsOf("hiring-states").filter((meaning) => meaning !== "hired"),
+    );
   });
 
   it("writes a temporary ID as TBD- and its number", () => {
@@ -28,8 +30,9 @@ describe("hiring meanings and temporary IDs", () => {
 });
 
 describe("adding a hire", () => {
-  it("gives it a temporary ID, no target date, and no manager unless told otherwise", () => {
+  it("gives it no name, a temporary ID, no target date, and no manager unless told otherwise", () => {
     expect(hireRequestSchema.parse({ positionId: position })).toEqual({
+      name: null,
       requisition: null,
       positionId: position,
       targetDate: null,
@@ -37,9 +40,10 @@ describe("adding a hire", () => {
     });
   });
 
-  it("takes a requisition, a target date, a state, and a manager", () => {
+  it("takes a name, a requisition, a target date, a state, and a manager", () => {
     expect(
       hireRequestSchema.parse({
+        name: " Backend engineer 3 ",
         requisition: " REQ-1042 ",
         positionId: position,
         targetDate: "2027-03-01",
@@ -47,6 +51,7 @@ describe("adding a hire", () => {
         managerId: manager,
       }),
     ).toEqual({
+      name: "Backend engineer 3",
       requisition: "REQ-1042",
       positionId: position,
       targetDate: "2027-03-01",
@@ -57,6 +62,7 @@ describe("adding a hire", () => {
 
   it.each([
     ["no position", { positionId: undefined }],
+    ["an empty name", { name: "  " }],
     ["an empty requisition", { requisition: "  " }],
     [
       "a requisition too long",

@@ -326,6 +326,11 @@ const peopleRoute = createRoute({
           )
         }
         canEdit={permissions.includes("people:edit")}
+        // Until planned hires are a permission area of their own, as the server checks.
+        canEditHires={
+          permissions.includes("people:edit") &&
+          permissions.includes("confidential:edit")
+        }
         canApprove={permissions.includes("drafts:approve")}
         canEditColumns={permissions.includes("configuration:edit")}
         showDates={permissions.includes("restricted:view")}

@@ -123,8 +123,8 @@ function gadgetTable(
     label: "Gadgets",
     one: "gadget",
     noun: "gadgets",
-    newRowLabel: "New gadget",
-    removeLabel: "Remove gadget",
+    newRowLabel: () => "New gadget",
+    removeLabel: () => "Remove gadget",
     nameOf: (one) => one.name,
     columnsFor: gadgetColumns,
     liveRecords: liveGadgets,
@@ -166,7 +166,7 @@ function renderGadgets({
   view?: View;
   canApprove?: boolean;
 }) {
-  render(
+  return render(
     <MantineProvider theme={testTheme}>
       <RecordGrid
         records={gadgets}
@@ -194,6 +194,26 @@ describe("a table of another kind of record", () => {
     expect(screen.getByRole("grid", { name: "Gadgets" })).toBeTruthy();
     expect(screen.getByRole("row", { name: "New gadget" })).toBeTruthy();
     expect(screen.getByText("No matching gadgets")).toBeTruthy();
+  });
+
+  it("counts its records in Metrics by the table's own words", () => {
+    const { unmount } = renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, breakdown: [] },
+    });
+    expect(
+      screen.getByRole("region", { name: "Metrics" }).textContent,
+    ).toContain("1 gadget");
+    unmount();
+    renderGadgets({
+      gadgets: [gadget("g1"), gadget("g2")],
+      view: { ...emptyView, breakdown: [] },
+    });
+    const panel = screen.getByRole("region", { name: "Metrics" });
+    expect(panel.textContent).toContain("2 gadgets");
+    expect(panel.textContent).toContain(
+      "Choose a column to count gadgets by its values.",
+    );
   });
 
   it("names each record's menu, removes it, and decides its draft through the table's drafts", async () => {

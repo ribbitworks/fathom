@@ -488,7 +488,7 @@ describe("adding people", () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
-      error: "Someone already has that Employee ID",
+      error: "Someone already has that ID",
     });
     expect(
       (await readPeople(cookie)).people.some(
@@ -1065,7 +1065,11 @@ describe("access history", () => {
           subject: { id: string; name: string | null } | null;
         }[];
       }>()
-      .entries.filter(({ actor }) => actor?.id === actorId)
+      .entries.filter(
+        // Reading People also reads the planned hires other tests add, which hires.test.ts covers.
+        ({ actor, action }) =>
+          actor?.id === actorId && action !== "hiring-plan-viewed",
+      )
       .map(({ action, subject }) => [action, subject]);
   }
 

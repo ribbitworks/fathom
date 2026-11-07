@@ -35,6 +35,7 @@ import {
   readState,
   refuseIfChosen,
   refuseIfUsed,
+  refuseHiredWhileHeld,
   refuseKeptUnoffered,
   removeEmptyOrders,
   writePositions,
@@ -207,6 +208,9 @@ export async function approveListDrafts(
       made.push(...choiceChanges(id, "created", undefined, choice));
     } else {
       const { label, description, retired, meaning } = asChoice(id, choice);
+      if (meaning === "hired" && live.meaning !== "hired") {
+        await refuseHiredWhileHeld(transaction, id);
+      }
       await transaction
         .update(listItems)
         .set({ label, description, retired, meaning })

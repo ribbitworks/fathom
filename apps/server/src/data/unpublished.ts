@@ -214,10 +214,11 @@ function subjectOf(versions: Versions, row: Row, actor: Actor): string {
     return String(versionOf(versions, "person", id)?.preferredName);
   }
   if (row.recordType === "planned-hire") {
-    // A hire is named by its position and ID, such as "Software Engineer, TBD-7", or by its ID
-    // alone to those who cannot see the Positions list's tier. A hire whose draft is listed is live
-    // or drafted, so has a version.
+    // A hire is named by its name, or, while it has none, by its position and ID, such as
+    // "Software Engineer, TBD-7", or by its ID alone to those who cannot see the Positions list's
+    // tier. A hire whose draft is listed is live or drafted, so has a version.
     const hire = versionOf(versions, "planned-hire", id) as Recorded;
+    if (typeof hire.name === "string") return `the planned hire ${hire.name}`;
     const { requisition, temporaryId } = hireIdOf(hire);
     const shownId = String(requisition ?? temporaryId);
     if (!seesTier(actor, versions.hires.tierOf("positionId"))) {

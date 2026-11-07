@@ -89,6 +89,20 @@ export interface FictionalTeam {
   colour: string | null;
 }
 
+// A planned hire: named, if it has a name, and known by its requisition, or by a temporary ID the
+// seed data gives it while it has none, in the first hiring state with its meaning, due on its
+// target date, as YYYY-MM-DD, if it has one, and filled by a person, when it is.
+export interface FictionalHire {
+  id: string;
+  name: string | null;
+  requisition: string | null;
+  positionId: string;
+  meaning: "proposed" | "open";
+  targetDate: string | null;
+  managerId: string | null;
+  filledBy: string | null;
+}
+
 export interface FictionalOrganization {
   lists: FictionalList[];
   // The choices the seed data adds to the built-in Positions list, which Fathom makes itself.
@@ -101,6 +115,9 @@ export interface FictionalOrganization {
   teams: FictionalTeam[];
   // People made like the rest but not added, for drafts that add them.
   newcomers: FictionalPerson[];
+  // Planned hires in each state, with requisitions and temporary IDs, most under current managers,
+  // and one filled by someone who has not started yet, and one by an internal transfer.
+  hires: FictionalHire[];
 }
 
 // How many newcomers an organization has.
@@ -304,9 +321,143 @@ function reporting(
   return { reportingLines, teams };
 }
 
+// The planned hires not yet filled, each due some months after the reference date, or with no
+// target date, under the current managers in turn, but for those with none. Invented requisitions.
+const openings: readonly {
+  name: string | null;
+  requisition: string | null;
+  position: string;
+  meaning: FictionalHire["meaning"];
+  months: number | null;
+  managed: boolean;
+}[] = [
+  {
+    name: "Backend engineer 1",
+    requisition: null,
+    position: "Software Engineer",
+    meaning: "proposed",
+    months: 5,
+    managed: true,
+  },
+  {
+    name: "Payments tester",
+    requisition: "REQ-2041",
+    position: "Test Engineer",
+    meaning: "open",
+    months: 3,
+    managed: true,
+  },
+  {
+    name: null,
+    requisition: "REQ-2042",
+    position: "SDET",
+    meaning: "open",
+    months: 2,
+    managed: true,
+  },
+  {
+    name: "Backend engineer 2",
+    requisition: null,
+    position: "Software Engineer",
+    meaning: "open",
+    months: 1,
+    managed: true,
+  },
+  {
+    name: null,
+    requisition: null,
+    position: "Engineering Manager",
+    meaning: "proposed",
+    months: null,
+    managed: false,
+  },
+  {
+    name: null,
+    requisition: "REQ-2047",
+    position: "Software Engineer",
+    meaning: "open",
+    months: 2,
+    managed: false,
+  },
+];
+
+function hiresFor(
+  people: readonly FictionalPerson[],
+  reportingLines: readonly FictionalLine[],
+  referenceDate: string,
+): FictionalHire[] {
+  const managerOf = new Map(
+    reportingLines.map(({ personId, managerId }) => [personId, managerId]),
+  );
+  const current = (person: FictionalPerson) =>
+    person.endDate === null &&
+    person.startDate !== null &&
+    person.startDate <= referenceDate;
+  // The seed data's drafts change the first few people, so hires name only those after them.
+  const named = people.slice(10);
+  const managers = named.filter(
+    (person) => person.isManager && current(person),
+  );
+  const reference = new Date(`${referenceDate}T00:00:00Z`);
+  const due = (months: number) => {
+    const target = new Date(reference);
+    target.setUTCMonth(target.getUTCMonth() + months);
+    return day(target);
+  };
+  let next = 0;
+  const open = openings.map(
+    ({ position, months, managed, ...hire }, index): FictionalHire => ({
+      id: fictionalId(`planned-hire:${String(index)}`),
+      ...hire,
+      positionId: choice(positions, position),
+      targetDate: months === null ? null : due(months),
+      managerId: managed
+        ? String(managers.at(next++ % managers.length)?.id)
+        : null,
+      filledBy: null,
+    }),
+  );
+  // Someone who has not started yet, and someone current who manages no one, as an internal
+  // transfer, each filling a hire under the manager they report to.
+  const starter = named.find(
+    (person) =>
+      person.endDate === null &&
+      person.startDate !== null &&
+      person.startDate > referenceDate &&
+      managerOf.has(person.id),
+  );
+  const transfer = named.find(
+    (person) =>
+      current(person) && !person.isManager && managerOf.has(person.id),
+  );
+  const filled = (
+    [
+      ["REQ-2036", starter, starter?.startDate ?? null],
+      ["REQ-2031", transfer, due(-2)],
+    ] as const
+  ).flatMap(([requisition, person, targetDate], index): FictionalHire[] =>
+    person === undefined
+      ? []
+      : [
+          {
+            id: fictionalId(`planned-hire:filled:${String(index)}`),
+            name: null,
+            requisition,
+            positionId: person.positionId,
+            meaning: "open",
+            targetDate,
+            // Both were found among those with a manager.
+            managerId: String(managerOf.get(person.id)),
+            filledBy: person.id,
+          },
+        ],
+  );
+  return [...open, ...filled];
+}
+
 // A fictional organization of the given size: its lists, the columns on people drawing on them, and
 // its people, current and former, and a few who start after the reference date, with a few
-// newcomers made after them, so making newcomers changes nothing else.
+// newcomers made after them, so making newcomers changes nothing else, and its planned hires.
 export function fictionalOrganization({
   size,
   seed = 2026,
@@ -404,18 +555,20 @@ export function fictionalOrganization({
     lastToLeave.values[levelColumn.id] = [choice(levels, "M1")];
     lastToLeave.isManager = true;
   }
+  const lines = reporting(
+    people,
+    (person) => person.positionId,
+    managerChoice,
+    seed,
+    referenceDate,
+  );
   return {
     lists: [sites, levels, teamRoles, certifications, languages],
     positions: positions.choices,
     columns: [siteColumn, levelColumn, teamRoleColumn],
     people,
-    ...reporting(
-      people,
-      (person) => person.positionId,
-      managerChoice,
-      seed,
-      referenceDate,
-    ),
+    ...lines,
     newcomers: everyone.slice(size),
+    hires: hiresFor(people, lines.reportingLines, referenceDate),
   };
 }

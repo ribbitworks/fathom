@@ -697,7 +697,7 @@ describe("orders stored before the reporting columns", () => {
       (key) =>
         !before.includes(key) &&
         !reporting.includes(key) &&
-        key !== "positionId",
+        !["positionId", "stateId", "expected"].includes(key),
     );
     const older = [...before, ...added];
     const write = (keys: string[]) =>
@@ -711,7 +711,9 @@ describe("orders stored before the reporting columns", () => {
         "preferredName",
         "employeeId",
         "positionId",
+        "stateId",
         "startDate",
+        "expected",
         "endDate",
         ...reporting,
         ...added,
@@ -723,6 +725,8 @@ describe("orders stored before the reporting columns", () => {
         "preferredName",
         "employeeId",
         "positionId",
+        "stateId",
+        "expected",
         "managerId",
         "isManager",
         "team",
@@ -751,8 +755,10 @@ describe("orders stored before the reporting columns", () => {
       expect(read.order).toEqual([
         "employeeId",
         "positionId",
+        "stateId",
         "preferredName",
         "startDate",
+        "expected",
         "endDate",
         ...reporting,
         ...added,

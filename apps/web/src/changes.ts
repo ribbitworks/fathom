@@ -71,6 +71,11 @@ const fieldNames = new Map([
   ["lastCycle", "Last cycle"],
   ["colour", "Colour"],
   ["meaning", "Meaning"],
+  // A planned hire's ID, start date, and the person who filled it.
+  ["requisition", "ID"],
+  ["temporaryNumber", "ID"],
+  ["targetDate", "Start"],
+  ["filledBy", "Filled by"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {
@@ -156,6 +161,8 @@ function thing({ kind, name, list }: ChangedRecord): string {
       return list === null
         ? `the release ${called}`
         : `the release ${called} in ${list}`;
+    case "planned-hire":
+      return name === null ? "a planned hire" : `the planned hire ${name}`;
     default:
       return "a record";
   }

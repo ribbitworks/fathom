@@ -88,6 +88,16 @@ describe("the plan's records in the change history", () => {
       planRecord("release", "Fictional One", null),
       "drafted adding the release Fictional One",
     ],
+    [
+      "a planned hire by name",
+      planRecord("planned-hire", "Fictional Engineer, TBD-7", null),
+      "drafted adding the planned hire Fictional Engineer, TBD-7",
+    ],
+    [
+      "a planned hire the reader may not name",
+      planRecord("planned-hire", null, null),
+      "drafted adding a planned hire",
+    ],
   ])("names %s", (_case, record, sentence) => {
     expect(describeRecord(record).sentence).toBe(sentence);
   });

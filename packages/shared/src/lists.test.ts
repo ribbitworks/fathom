@@ -7,8 +7,8 @@ import { describe, expect, it } from "vitest";
 import { keptOf, meaningName, meaningSchema, meaningsOf } from "./lists.ts";
 
 describe("lists with meanings", () => {
-  it("gives the hiring states Proposed and Open, and other lists none", () => {
-    expect(meaningsOf("hiring-states")).toEqual(["proposed", "open"]);
+  it("gives the hiring states Proposed, Open, and Hired, and other lists none", () => {
+    expect(meaningsOf("hiring-states")).toEqual(["proposed", "open", "hired"]);
     expect(meaningsOf("positions")).toEqual([]);
     expect(meaningsOf(null)).toEqual([]);
     expect(meaningsOf(undefined)).toEqual([]);
@@ -18,11 +18,12 @@ describe("lists with meanings", () => {
     expect(meaningSchema.options.map(meaningName)).toEqual([
       "Proposed",
       "Open",
+      "Hired",
     ]);
   });
 
   it("keeps a choice for each meaning, any choice in Positions, and nothing in other lists", () => {
-    expect(keptOf("hiring-states")).toEqual(["proposed", "open"]);
+    expect(keptOf("hiring-states")).toEqual(["proposed", "open", "hired"]);
     expect(keptOf("positions")).toEqual(["any"]);
     expect(keptOf(null)).toEqual([]);
     expect(keptOf(undefined)).toEqual([]);

@@ -638,6 +638,7 @@ export function ViewBar({
   onView,
   shown,
   total,
+  counted,
   onLeave,
   saved,
   draftItems,
@@ -653,6 +654,9 @@ export function ViewBar({
   onView: ChangeView;
   shown: number;
   total: number;
+  // For rows of several kinds, how many of each there are in all, such as "150 people and 6
+  // planned hires".
+  counted?: string | undefined;
   // Goes back to the table from the search field.
   onLeave: () => void;
   saved?: SavedViews | undefined;
@@ -765,7 +769,7 @@ export function ViewBar({
       >
         {narrows(view)
           ? `${count(shown)} of ${count(total)}`
-          : `${count(total)} ${total === 1 ? one : noun}`}
+          : (counted ?? `${count(total)} ${total === 1 ? one : noun}`)}
       </Text>
       {(narrows(view) || view.sort.length > 0) && (
         <Button

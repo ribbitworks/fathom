@@ -70,11 +70,13 @@ import {
   columnsWithAdded,
   refuseHeldColumns,
 } from "./added-columns.ts";
-import { checkBuiltInChoice } from "./built-in-lists.ts";
+import { checkBuiltInChoice, firstOffered } from "./built-in-lists.ts";
 import { typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { readToday } from "./settings.ts";
 import {
+  hireRow,
+  readHiresIn,
   refuseRemovingHiresPeople,
   refuseUnmarkingHireManagers,
 } from "./hires.ts";
@@ -95,6 +97,7 @@ import {
   shownReporting,
 } from "./reporting.ts";
 import {
+  builtInTier,
   type ColumnInfo,
   type PeopleColumns,
   type FieldValue,
@@ -109,7 +112,7 @@ type PersonRow = typeof people.$inferSelect;
 export type { Recorded } from "./drafts.ts";
 
 const noPerson = "There is no such person";
-const duplicateEmployeeId = "Someone already has that Employee ID";
+const duplicateEmployeeId = "Someone already has that ID";
 const toBeRemoved =
   "This person's draft removes them; discard the draft to change them";
 const detailFields = [
@@ -448,6 +451,9 @@ export interface PeopleRead {
   includedRestricted: boolean;
   // Whether the actor cannot see the Positions list's tier, so the people read have no positions.
   positionHidden: boolean;
+  // Whether what was read included planned hires' details beyond their placeholders, which the
+  // access history records apart.
+  hiringPlanViewed: boolean;
 }
 
 const byName = new Intl.Collator("en", { sensitivity: "base" });
@@ -463,9 +469,10 @@ export function currentOn(person: Recorded, today: string): boolean {
 }
 
 // Everyone the actor may see, by preferred name, as their drafts make them, with the columns whose
-// values they may see, and each draft as they may see it. A person a draft removes is shown as they
-// are, with the draft. Users who cannot see Restricted details see only current staff, so the list
-// does not reveal anyone's start or end date before it arrives, and receive no dates.
+// values they may see, and each draft as they may see it, followed by the planned hires they see,
+// as readHires sets out, by ID. A person a draft removes is shown as they are, with the draft.
+// Users who cannot see Restricted details see only current staff, so the list does not reveal
+// anyone's start or end date before it arrives, and receive no dates.
 export async function readPeople(
   database: Database,
   actor: Actor,
@@ -639,16 +646,33 @@ async function readPeopleIn(
       byName.compare(a.preferredName, b.preferredName) ||
       a.id.localeCompare(b.id),
   );
+  const hiring = await readHiresIn(database, actor, today);
+  const teamOf = new Map(
+    shown.map(({ id, teamName }) => [id, teamName ?? null]),
+  );
+  // Every person's state is the hiring states list's first choice meaning Hired.
+  const statesTier = await builtInTier(database, "hiring-states");
+  const hired = seesTier(actor, statesTier)
+    ? await firstOffered(database, "hiring-states", "hired")
+    : undefined;
   return {
-    people: shown,
+    people: [
+      ...(hired === undefined
+        ? shown
+        : shown.map((person) => ({ ...person, stateId: hired }))),
+      ...hiring.hires.map((hire) => hireRow(hire, teamOf)),
+    ],
     columns,
     positionHidden: !shownFields.has("positionId"),
     includedRestricted:
-      shown.length > 0 &&
-      (restricted ||
-        columns.some(({ tier }) => tier !== "general") ||
-        (shownFields.has("positionId") &&
-          allColumns.positionTier !== "general")),
+      (shown.length > 0 &&
+        (restricted ||
+          columns.some(({ tier }) => tier !== "general") ||
+          (shownFields.has("positionId") &&
+            allColumns.positionTier !== "general") ||
+          (hired !== undefined && statesTier !== "general"))) ||
+      hiring.includedRestricted,
+    hiringPlanViewed: hiring.wholePlan && hiring.hires.length > 0,
   };
 }
 

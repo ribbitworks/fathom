@@ -474,7 +474,7 @@ describe("changing drafts", () => {
       });
       expect(response.statusCode).toBe(409);
       expect(response.json()).toEqual({
-        error: "Someone already has that Employee ID",
+        error: "Someone already has that ID",
       });
     }
     // A person may keep, or go back to, their own.

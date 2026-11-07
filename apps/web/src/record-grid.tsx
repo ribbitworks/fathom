@@ -97,6 +97,7 @@ import {
   narrows,
   type TableColumn,
   useSteadyOrder,
+  valueOrStandIn,
   type View,
 } from "./table-view.ts";
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
@@ -166,6 +167,8 @@ export interface Column<
   // For added columns: the column, and, for one drawing on a list, its list's choices.
   field?: Field;
   choices: Choice[];
+  // Whether a choice may be put in a cell, apart from being offered in its list.
+  pickable?: (choice: Choice) => boolean;
   // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
   // Set for a column whose values follow from another's, which is edited instead.
@@ -178,6 +181,16 @@ export interface Column<
   change: (value: CellValue) => Change;
   // Shown after a record's value, such as a warning about it.
   mark?: (record: Rec) => ReactNode;
+  // For a table with several kinds of record: whether a kind has the column, which is otherwise
+  // empty and read only on its rows, and whether it needs a value there. Every kind has it, and
+  // needs a value when the column is required, unless told otherwise.
+  offeredOn?: (kind: string) => boolean;
+  requiredOn?: (kind: string) => boolean;
+  // For a table with several kinds of record: whether a kind's rows show the column's value without
+  // letting it be changed, such as a state that follows from being that kind.
+  readOnlyOn?: (kind: string) => boolean;
+  // What a new row of a kind shows before anything is put in it, such as its kind.
+  newRowValue?: (kind: string) => CellValue;
 }
 
 // What is particular to a kind of record: what its table and rows are called, its columns, how its
@@ -188,11 +201,20 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   label: string;
   one: string;
   noun: string;
-  // What assistive technology calls a new row, such as "New person".
-  newRowLabel: string;
+  // For a table of several kinds of record, what its records are called together, and how many of
+  // each some records are, which Metrics counts.
+  counted?: { noun: string; counted: (records: readonly Rec[]) => string };
+  // The kinds of record the table holds, the first of which a new row adds unless asked for
+  // another, and each record's kind; a table of one kind leaves them out.
+  kinds?: readonly string[];
+  kindOf?: (record: Rec) => string;
+  // What assistive technology calls a new row of a kind, such as "New person".
+  newRowLabel: (kind: string) => string;
   // What removing a record is called in its menu, such as "Remove person".
-  removeLabel: string;
+  removeLabel: (record: Rec) => string;
   nameOf: (record: Rec) => string;
+  // Whether a record cannot be changed by this user, though others of the table can.
+  readOnlyRecord?: (record: Rec) => boolean;
   // The table's columns, in the order given by their keys, from its added columns and their lists,
   // and the records, live or as drafted, for columns whose choices are records.
   columnsFor: (
@@ -219,8 +241,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
     changed?: string,
     before?: Record<string, CellValue>,
   ) => RowProblem | undefined;
-  // The request that adds a record, from the changes that save each of its columns' values.
-  request: (changes: Change[]) => Request;
+  // The request that adds a record of a kind, from the changes that save each of the values of the
+  // columns it has.
+  request: (changes: Change[], kind: string) => Request;
   // The drafts of the records named, to approve or reject.
   drafts: (ids: string[]) => DraftSelection;
 }
@@ -320,6 +343,8 @@ interface ShownProblem extends RowProblem {
 
 interface NewRow {
   key: number;
+  // The kind of record it adds, when not the table's first.
+  kind?: string;
   values: Record<string, CellValue>;
   problem?: string;
   // The column the problem is in, when it is in one.
@@ -357,6 +382,29 @@ const pasteLimit = 1000;
 
 const kindOf = (column: { kind: Kind }) => cellKinds[column.kind];
 
+// Whether a kind of record has a column.
+const offered = (column: AnyColumn, kind: string) =>
+  column.offeredOn?.(kind) ?? true;
+
+// Whether a kind of record's cells in a column cannot be changed.
+const readOnlyFor = (column: AnyColumn, kind: string) =>
+  column.readOnly === true ||
+  column.readOnlyOn?.(kind) === true ||
+  !offered(column, kind);
+
+// The columns a kind of record has, each required as it is for that kind.
+function columnsOn<Col extends AnyColumn>(
+  columns: readonly Col[],
+  kind: string,
+): Col[] {
+  return columns
+    .filter((column) => offered(column, kind))
+    .map((column) => ({
+      ...column,
+      required: column.requiredOn?.(kind) ?? column.required,
+    }));
+}
+
 // A record added but not saved yet is shown at once under an identifier of the table's own, until
 // the server gives its own; until then it cannot be changed. The table goes on naming its row by it,
 // so the row keeps its place, and focus, when the server's identifier replaces it.
@@ -367,9 +415,10 @@ const pendingId = () => `${pendingPrefix}${crypto.randomUUID()}`;
 export const isPending = (record: GridRecord) =>
   record.id.startsWith(pendingPrefix);
 
-// What the table can do for whoever opens it: put focus on the row for adding a record.
+// What the table can do for whoever opens it: put focus on the row for adding a record, of the
+// kind given, or of the table's first.
 export interface RecordGridHandle {
-  addRow: () => void;
+  addRow: (kind?: string) => void;
 }
 
 // Whether a draft changing a record names a column, or the column its values follow from.
@@ -423,13 +472,6 @@ const breaksDown = (
   (!column.required || kindOf(column).breaksDownWhenRequired);
 
 const emptyValue = (column: { kind: Kind }): CellValue => kindOf(column).empty;
-
-function newRowValue(
-  newRow: NewRow,
-  column: { key: string; kind: Kind },
-): CellValue {
-  return newRow.values[column.key] ?? emptyValue(column);
-}
 
 function isEmpty(value: CellValue): boolean {
   if (value === null) return true;
@@ -486,7 +528,10 @@ function longestTexts<Rec extends GridRecord>(
         column.key,
         records.reduce(
           (longest, record) =>
-            Math.max(longest, shown(column, column.value(record)).length),
+            Math.max(
+              longest,
+              shown(column, valueOrStandIn(column, record)).length,
+            ),
           0,
         ),
       ]),
@@ -550,6 +595,7 @@ export function pastedRows(
   columns: readonly AnyColumn[],
   from: number,
   firstKey: number,
+  kind = "",
 ): NewRow[] {
   return text
     .split(/\r?\n/)
@@ -560,8 +606,13 @@ export function pastedRows(
       for (const [offset, cell] of line.split("\t").entries()) {
         const column = columns[from + offset];
         const content = cell.trim();
-        if (column === undefined || column.readOnly === true || content === "")
+        if (
+          column === undefined ||
+          readOnlyFor(column, kind) ||
+          content === ""
+        ) {
           continue;
+        }
         const read = kindOf(column).pasted(column, content);
         if ("problem" in read) problem ??= read.problem;
         else values[column.key] = read.value;
@@ -1033,18 +1084,28 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
 
   // The actions column, for those who may edit records or approve drafts.
   const withActions = canEdit || canApprove;
+  // Whether the user may change a record, as they may the table's others, unless it is one they
+  // may only view.
+  const mayChange = (record: Rec) =>
+    canEdit && table.readOnlyRecord?.(record) !== true;
   // A record's menu: approving or rejecting its draft, for Approvers, and discarding it or
-  // removing the record, for those who may edit records.
+  // removing the record, for those who may change it.
   const hasMenu = (record: Rec) =>
     !isPending(record) &&
-    (canEdit || (canApprove && record.draft !== undefined));
-  // Whether a record's cells cannot be changed: by those who may only view, while it is drafted to
-  // be removed, until the draft is discarded, or while it is being added.
+    (mayChange(record) || (canApprove && record.draft !== undefined));
+  // Whether a record's cells cannot be changed: by those who may only view it, while it is drafted
+  // to be removed, until the draft is discarded, or while it is being added.
   const locked = (record: Rec) =>
-    !canEdit ||
+    !mayChange(record) ||
     record.draft?.action === "deleted" ||
     record.heldBy !== undefined ||
     isPending(record);
+  const defaultKind = table.kinds?.[0] ?? "";
+  // The kind of record a row is, or adds.
+  const rowKind = (row: Row<Rec>) =>
+    row.newRow
+      ? (row.newRow.kind ?? defaultKind)
+      : (table.kindOf?.(row.record) ?? defaultKind);
   const rows: Row<Rec>[] = [
     ...shownRecords.map((record) => ({ record })),
     ...(canEdit && canAdd ? newRows.map((newRow) => ({ newRow })) : []),
@@ -1081,8 +1142,19 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const setEditing = (cell: Cell | undefined) => {
     setEditingAt(cell === undefined ? undefined : placeOf(cell));
   };
+  // A new row's value in a column: what is put in it, or what the column shows on a new row of its
+  // kind.
+  const newValue = (newRow: NewRow, column: Column<Rec, Change>): CellValue =>
+    newRow.values[column.key] ??
+    column.newRowValue?.(newRow.kind ?? defaultKind) ??
+    emptyValue(column);
   const valueAt = (row: Row<Rec>, column: Column<Rec, Change>) =>
-    row.newRow ? newRowValue(row.newRow, column) : column.value(row.record);
+    row.newRow ? newValue(row.newRow, column) : column.value(row.record);
+  // What an empty cell of a record shows in grey, if anything.
+  const standInAt = (row: Row<Rec>, column: Column<Rec, Change>) =>
+    row.newRow || column.standIn === undefined || valueAt(row, column) !== ""
+      ? undefined
+      : column.standIn(row.record);
 
   // Focuses a cell of a new row by its key, since the row may not be drawn yet.
   const focusNew = (newKey: number) => {
@@ -1091,10 +1163,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     focusSoon(`cell-${place.row}-${place.column}`);
   };
 
-  // Adding a record goes to the last new row, of which there is always at least one.
+  // Adding a record goes to the last new row, of which there is always at least one, and which is
+  // always empty, so it takes the kind asked for.
   useImperativeHandle(ref, () => ({
-    addRow: () => {
-      focusNew((newRows.at(-1) as NewRow).key);
+    addRow: (kind = defaultKind) => {
+      const last = newRows.at(-1) as NewRow;
+      if ((last.kind ?? defaultKind) !== kind) {
+        const kept: NewRow = { ...last, kind };
+        if (kind === defaultKind) delete kept.kind;
+        setNewRows((current) => [...current.slice(0, -1), kept]);
+      }
+      focusNew(last.key);
     },
   }));
 
@@ -1111,7 +1190,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // editing gives, unless what started it was typing.
   const startEdit = (cell: Cell, typed?: string) => {
     const { row, column } = at(cell);
-    if ((row.record && locked(row.record)) || column.readOnly === true) return;
+    if (
+      (row.record && locked(row.record)) ||
+      readOnlyFor(column, rowKind(row))
+    ) {
+      return;
+    }
     const value = valueAt(row, column);
     setActive(cell);
     const { toggled } = kindOf(column);
@@ -1166,10 +1250,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const wrongSoFar = (
     values: Record<string, CellValue>,
     key: string,
+    kind: string,
   ): RowProblem | undefined => {
     if (Object.values(values).every(isEmpty)) return undefined;
     const found = firstProblem(
-      columns,
+      columnsOn(columns, kind),
       (column) => values[column.key] ?? emptyValue(column),
       () => table.recordProblem(values, otherValues(everyRowsValues(), key)),
     );
@@ -1189,11 +1274,16 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const key = rowKey(row);
     if (row.newRow) {
       const values = { ...row.newRow.values, [column.key]: value };
-      const soFar = wrongSoFar(values, key);
+      const soFar = wrongSoFar(values, key, rowKind(row));
       setNewRows((current) =>
         current.map((newRow) =>
           newRow.key === row.newRow.key
-            ? { key: newRow.key, values, ...(soFar ? { soFar } : {}) }
+            ? {
+                key: newRow.key,
+                ...kindKept(newRow),
+                values,
+                ...(soFar ? { soFar } : {}),
+              }
             : newRow,
         ),
       );
@@ -1203,7 +1293,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const before = column.value(row.record);
     if (JSON.stringify(before) === JSON.stringify(value)) return true;
     const refused = firstProblem(
-      [column],
+      columnsOn([column], rowKind(row)),
       () => value,
       () =>
         table.recordProblem(
@@ -1228,6 +1318,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
 
   const emptyNewRow = (newRow: NewRow) =>
     Object.values(newRow.values).every(isEmpty);
+
+  // A new row's kind, kept when the row is made again with new values.
+  const kindKept = (newRow: NewRow) =>
+    newRow.kind === undefined ? {} : { kind: newRow.kind };
 
   // A new row with something in it can be cleared, so it is no longer added.
   const clearable = (newRow: NewRow) => !emptyNewRow(newRow);
@@ -1260,8 +1354,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const checked = filled.map((newRow): NewRow => {
       if (newRow.problem !== undefined) return newRow;
       const found = firstProblem(
-        columns,
-        (column) => newRowValue(newRow, column),
+        columnsOn(columns, newRow.kind ?? defaultKind),
+        // The columns given are the table's own.
+        (column) => newValue(newRow, column as Column<Rec, Change>),
         () =>
           table.recordProblem(
             newRow.values,
@@ -1285,12 +1380,18 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       focusNew(withProblem.key);
       return;
     }
-    const pending = filled.map((newRow) => ({
-      id: pendingId(),
-      request: table.request(
-        columns.map((column) => column.change(newRowValue(newRow, column))),
-      ),
-    }));
+    const pending = filled.map((newRow) => {
+      const kind = newRow.kind ?? defaultKind;
+      return {
+        id: pendingId(),
+        request: table.request(
+          columnsOn(columns, kind).map((column) =>
+            column.change(newValue(newRow, column)),
+          ),
+          kind,
+        ),
+      };
+    });
     setAdded(
       (current) => new Set([...current, ...pending.map(({ id }) => id)]),
     );
@@ -1338,7 +1439,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       submitNewRows(
         newRows.map((newRow) =>
           newRow.key === row.newRow.key
-            ? { key: newRow.key, values: { ...newRow.values, [key]: value } }
+            ? {
+                key: newRow.key,
+                ...kindKept(newRow),
+                values: { ...newRow.values, [key]: value },
+              }
             : newRow,
         ),
       );
@@ -1437,7 +1542,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       startEdit(cell);
     } else if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
-      if (column.readOnly === true) return;
+      if (readOnlyFor(column, rowKind(row))) return;
       if (!save(cell, emptyValue(column))) putBack();
     } else if (event.key.length === 1) {
       event.preventDefault();
@@ -1451,7 +1556,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const pasted = event.clipboardData.getData("text/plain");
     if (!row.newRow || editing !== undefined || pasted.trim() === "") return;
     event.preventDefault();
-    const made = pastedRows(pasted, columns, cell.column, nextKey);
+    const made = pastedRows(
+      pasted,
+      columns,
+      cell.column,
+      nextKey,
+      rowKind(row),
+    ).map((newRow) => ({ ...newRow, ...kindKept(row.newRow) }));
     if (made.length > pasteLimit) {
       setProblem({
         row: rowKey(row),
@@ -1768,7 +1879,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             size="sm"
             // Tab moves between cells; the menu also opens with Shift+F10 on any of the row's cells.
             tabIndex={-1}
-            aria-label={`Actions for ${table.newRowLabel.toLowerCase()}`}
+            aria-label={`Actions for ${table.newRowLabel(rowKind(row)).toLowerCase()}`}
           >
             <Icon name="more" />
           </ActionIcon>
@@ -1778,7 +1889,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             setMenuFor(undefined);
           })}
         >
-          <MenuTitle>{table.newRowLabel}</MenuTitle>
+          <MenuTitle>{table.newRowLabel(rowKind(row))}</MenuTitle>
           <Menu.Item
             onClick={() => {
               clearNewRow(row.newRow);
@@ -1886,7 +1997,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             )}
             // Set apart from the items after it, when any are offered.
             divider={
-              (canEdit && record.heldBy === undefined) ||
+              (mayChange(record) && record.heldBy === undefined) ||
               (canApprove && decidable(record))
             }
           />
@@ -1922,7 +2033,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             </Menu.Item>
           </>
         )}
-        {canEdit && record.heldBy === undefined && (
+        {mayChange(record) && record.heldBy === undefined && (
           <>
             {draft?.state === "rejected" && (
               <Menu.Item
@@ -1951,7 +2062,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   moveTo(active.row, active.column);
                 }}
               >
-                {table.removeLabel}
+                {table.removeLabel(record)}
               </Menu.Item>
             )}
           </>
@@ -1991,6 +2102,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     <MetricsPanel
       one={table.one}
       noun={table.noun}
+      kinds={table.counted}
       {...countedRecords(
         view.show,
         shownRecords,
@@ -2023,6 +2135,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         onView={onView}
         shown={shownRecords.length}
         total={records.length}
+        counted={table.counted?.counted(records)}
         onLeave={() => {
           moveTo(active.row, active.column);
         }}
@@ -2171,10 +2284,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   <Table.Tr
                     key={key}
                     className={rowClass}
-                    aria-label={row.newRow ? table.newRowLabel : undefined}
+                    aria-label={
+                      row.newRow ? table.newRowLabel(rowKind(row)) : undefined
+                    }
                   >
                     {columns.flatMap((column, columnIndex) => {
                       const cell = { row: rowIndex, column: columnIndex };
+                      const has = offered(column, rowKind(row));
                       const editingHere =
                         editing?.row === rowIndex &&
                         editing.column === columnIndex;
@@ -2213,7 +2329,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               : classes.recordProblemCell,
                           ].join(" ")}
                           aria-readonly={
-                            column.readOnly === true ||
+                            readOnlyFor(column, rowKind(row)) ||
+                            (row.record &&
+                              table.readOnlyRecord?.(row.record)) ||
                             draft?.action === "deleted" ||
                             row.record?.heldBy !== undefined ||
                             (row.record && isPending(row.record))
@@ -2244,7 +2362,19 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         >
                           {editingHere
                             ? editor(cell, column, valueAt(row, column))
-                            : cellContent(column, valueAt(row, column))}
+                            : has &&
+                              (standInAt(row, column) === undefined ? (
+                                cellContent(column, valueAt(row, column))
+                              ) : (
+                                <Text
+                                  component="span"
+                                  inherit
+                                  c="dimmed"
+                                  fs="italic"
+                                >
+                                  {standInAt(row, column)}
+                                </Text>
+                              ))}
                           {row.record &&
                             !editingHere &&
                             column.mark?.(row.record)}
@@ -2269,11 +2399,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               <NewMark
                                 wrong={row.newRow.soFar?.message}
                                 id={`${cellId(rowIndex, 0)}-problem`}
-                                missing={columns
+                                missing={columnsOn(columns, rowKind(row))
                                   .filter(
                                     (other) =>
                                       other.required &&
-                                      isEmpty(newRowValue(row.newRow, other)),
+                                      isEmpty(newValue(row.newRow, other)),
                                   )
                                   .map(({ label }) => label)}
                               />

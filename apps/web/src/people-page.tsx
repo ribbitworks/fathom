@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The People page: everyone the user may see, in a table edited like a spreadsheet, with the columns
-// people have added, each drawing on a list. Those who may change people add, edit, and delete them;
-// those who may change planning configuration add, change, and delete columns, and move any column.
-// Every change to a person is a draft, shown in place until an Approver approves it on the Drafts
-// page. Every change shows at once and saves in the background, and the latest can be undone with Cmd+Z
-// or Ctrl+Z, or from its notification when it took something out of view. What the table shows,
-// its search, filters, and sort, is kept in the page address, and can be saved as a view shared with
-// everyone who sees people.
+// The People page: everyone the user may see, and the planned hires, in a table edited like a
+// spreadsheet, with the columns people have added, each drawing on a list. Those who may change
+// people add, edit, and delete them, and those who may also change Confidential data do the same
+// for planned hires; those who may change planning configuration add, change, and delete columns,
+// and move any column. Every change to a person is a draft, shown in place until an Approver
+// approves it on the Drafts page. Every change shows at once and saves in the background, and the
+// latest can be undone with Cmd+Z or Ctrl+Z, or from its notification when it took something out of
+// view. What the table shows, its search, filters, and sort, is kept in the page address, and can
+// be saved as a view shared with everyone who sees people.
 
 import type {
   Field,
   List,
   Person,
-  PersonChange,
   PersonDraft,
-  PersonRequest,
   SavedView,
 } from "@fathom/shared";
 import {
@@ -43,6 +42,23 @@ import {
   type PeopleGridHandle,
 } from "./people-grid.tsx";
 import { draftColumn } from "./record-grid.tsx";
+import {
+  createHires,
+  deleteHire,
+  discardHireDraft,
+  hireChange,
+  hireRequest,
+  resubmitHireDraft,
+  updateHire,
+} from "./hires.ts";
+import {
+  addedNames,
+  isHire,
+  personOnly,
+  type RowChange,
+  rowName,
+  type RowRequest,
+} from "./people-rows.ts";
 import {
   createPeople,
   createView,
@@ -82,16 +98,25 @@ function withView(views: readonly SavedView[], saved: SavedView): SavedView[] {
     : [...views, saved];
 }
 
-// A person with a change applied, as the table shows it before it is saved.
-function changed(person: Person, change: PersonChange): Person {
-  const { values, links, preferredName, employeeId, positionId, ...dates } =
-    change;
+// A row with a change applied, as the table shows it before it is saved. A planned hire's ID
+// cleared shows empty until the server gives it a temporary one.
+function changed(person: Person, change: RowChange): Person {
+  const {
+    values,
+    links,
+    preferredName,
+    employeeId,
+    positionId,
+    stateId,
+    ...dates
+  } = change;
   return {
     ...person,
     ...dates,
     preferredName: preferredName ?? person.preferredName,
     employeeId: employeeId ?? person.employeeId,
     positionId: positionId ?? person.positionId,
+    stateId: stateId ?? person.stateId,
     values: { ...person.values, ...values },
     links: Object.fromEntries(
       Object.entries({ ...person.links, ...links }).flatMap(([key, link]) =>
@@ -101,8 +126,9 @@ function changed(person: Person, change: PersonChange): Person {
   };
 }
 
-// Someone being added, as the table shows them before they are saved: a draft adding them.
-function adding(id: string, request: PersonRequest): Person {
+// Someone or a planned hire being added, as the table shows them before they are saved: a draft
+// adding them.
+function adding(id: string, request: RowRequest): Person {
   const { values, ...details } = request;
   return {
     id,
@@ -172,6 +198,7 @@ const cannotAddId = "people-cannot-add";
 export function PeoplePage({
   back,
   canEdit,
+  canEditHires = false,
   canApprove = false,
   canEditColumns,
   showDates,
@@ -182,6 +209,8 @@ export function PeoplePage({
 }: {
   back?: ReactNode;
   canEdit: boolean;
+  // Whether the user may change planned hires too.
+  canEditHires?: boolean;
   canApprove?: boolean;
   canEditColumns: boolean;
   showDates: boolean;
@@ -197,6 +226,11 @@ export function PeoplePage({
   const saving =
     useIsMutating({ mutationKey: [...peopleQuery.queryKey, "change"] }) > 0;
   const lists = useQuery(listsQuery);
+  // Adding a person or a planned hire waits for the people and lists, and needs positions seen.
+  const addButton = {
+    disabled: !query.isSuccess || !lists.isSuccess || positionHidden,
+    "aria-describedby": positionHidden ? cannotAddId : undefined,
+  };
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
   const [dialog, setDialog] = useState<Dialog>();
   const [opened, setOpened] = useState(false);
@@ -213,6 +247,13 @@ export function PeoplePage({
     removed: "Someone else has removed this. The people have been refreshed.",
     blocked: opened || namingOpened || deciding,
   });
+
+  // A row by name, as menus and notices name it, once the lists, which a row's actions wait for,
+  // are loaded.
+  const nameOf = (row: Person) =>
+    isHire(row)
+      ? `the planned hire ${rowName(row, lists.data as List[])}`
+      : row.preferredName;
 
   const actions: PeopleActions = {
     decide: (asking, chosen, naming) => {
@@ -260,13 +301,31 @@ export function PeoplePage({
           ],
         }),
         save: async () => {
-          const { ids, changeSetId } = await createPeople(
-            added.map(({ request }) => request),
-          );
-          onAdded(ids);
+          // People are added together, then planned hires together, each as one change.
+          const requests = added.map(({ request }) => request);
+          const people = requests.filter((request) => !isHire(request));
+          const hires = requests.filter(isHire);
+          const savedPeople =
+            people.length === 0
+              ? { ids: [], changeSetId: null }
+              : await createPeople(people.map(personOnly));
+          const savedHires =
+            hires.length === 0
+              ? { ids: [], changeSetId: null }
+              : await createHires(hires.map(hireRequest));
+          const ids = new Map([
+            ...people.map(
+              (request, index) => [request, savedPeople.ids.at(index)] as const,
+            ),
+            ...hires.map(
+              (request, index) => [request, savedHires.ids.at(index)] as const,
+            ),
+          ]);
+          const changeSetId = savedHires.changeSetId ?? savedPeople.changeSetId;
+          onAdded(requests.map((request) => String(ids.get(request))));
           return changeSetId;
         },
-        failure: "Fathom could not add the people. Try again in a moment.",
+        failure: `Fathom could not add ${addedNames(added.map(({ request }) => request))}. Try again in a moment.`,
         onFailed,
         onSaved: (changeSetId, before) => {
           undoable(changeSetId, before);
@@ -281,8 +340,11 @@ export function PeoplePage({
             other.id === person.id ? changed(other, change) : other,
           ),
         }),
-        save: () => updatePerson(person.id, change),
-        failure: `Fathom could not save the change to ${person.preferredName}.`,
+        save: () =>
+          isHire(person)
+            ? updateHire(person.id, hireChange(change))
+            : updatePerson(person.id, personOnly(change)),
+        failure: `Fathom could not save the change to ${nameOf(person)}.`,
         onSaved: (changeSetId, before) => {
           undoable(changeSetId, before);
         },
@@ -298,8 +360,9 @@ export function PeoplePage({
             other.id === person.id ? drafted(other) : other,
           ),
         }),
-        save: () => deletePerson(person.id),
-        failure: `Fathom could not remove ${person.preferredName}.`,
+        save: () =>
+          isHire(person) ? deleteHire(person.id) : deletePerson(person.id),
+        failure: `Fathom could not remove ${nameOf(person)}.`,
         onSaved: (changeSetId, before) => {
           undoable(changeSetId, before);
         },
@@ -318,8 +381,11 @@ export function PeoplePage({
             return { ...other, draft };
           }),
         }),
-        save: () => resubmitDraft(person.id),
-        failure: `Fathom could not send the draft of ${person.preferredName} for approval again.`,
+        save: () =>
+          isHire(person)
+            ? resubmitHireDraft(person.id)
+            : resubmitDraft(person.id),
+        failure: `Fathom could not send the draft of ${nameOf(person)} for approval again.`,
         onSaved: (changeSetId, before) => {
           undoable(changeSetId, before);
         },
@@ -336,12 +402,15 @@ export function PeoplePage({
                 other.id === person.id ? asLive(other, draft) : other,
               ),
         }),
-        save: () => discardDraft(person.id),
-        failure: `Fathom could not discard the draft of ${person.preferredName}.`,
+        save: () =>
+          isHire(person)
+            ? discardHireDraft(person.id)
+            : discardDraft(person.id),
+        failure: `Fathom could not discard the draft of ${nameOf(person)}.`,
         onSaved: (changeSetId, before) => {
           if (gone) {
             done(
-              `Discarded the draft adding ${person.preferredName}.`,
+              `Discarded the draft adding ${nameOf(person)}.`,
               changeSetId,
               before,
             );
@@ -503,6 +572,7 @@ export function PeoplePage({
           orderHeldBy={query.data.orderHeldBy}
           lists={lists.data}
           canEdit={canEdit}
+          canEditHires={canEditHires}
           canApprove={canApprove}
           saving={saving}
           canEditColumns={canEditColumns}
@@ -618,15 +688,23 @@ export function PeoplePage({
               {canEdit && view.show !== "live" && (
                 <Button
                   variant="filled"
-                  disabled={
-                    !query.isSuccess || !lists.isSuccess || positionHidden
-                  }
-                  aria-describedby={positionHidden ? cannotAddId : undefined}
+                  {...addButton}
                   onClick={() => {
                     grid.current?.addRow();
                   }}
                 >
                   New person
+                </Button>
+              )}
+              {canEditHires && view.show !== "live" && (
+                <Button
+                  variant="default"
+                  {...addButton}
+                  onClick={() => {
+                    grid.current?.addRow("planned-hire");
+                  }}
+                >
+                  New planned hire
                 </Button>
               )}
             </Group>

@@ -85,7 +85,7 @@ Use only where this test says so. This deletes every account and record in the d
 ## Terms
 
 - **Metrics panel:** the panel titled **Metrics** that opens on the right of the People table.
-- **Count line:** the line under the panel's title saying how many people it counts, such as **150 people**.
+- **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as **150 people and 6 planned hires**.
 - **Draft menu:** the menu that opens from the **Draft** button above the table, next to the search box.
 - **Views menu:** the menu that opens from the **Views** button, next to the search box.
 - **Column menu:** the menu that opens when you select a column's name in the People table's header.
@@ -100,7 +100,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** **People** page open from the left-hand menu.
 
 - [x] **Step 1.** Select **Metrics** above the table.
-  - **Expected:** The Metrics panel opens on the right, and the table narrows beside it. The panel has **Break down by** set to **Choose a column**, and says **Choose a column to count people by its values.**
+  - **Expected:** The Metrics panel opens on the right, and the table narrows beside it. The panel has **Break down by** set to **Choose a column**, and says **Choose a column to count people and planned hires by its values.**
   - **Notes:**
 
 - [FAIL] **Step 2.** Press Esc.
@@ -124,7 +124,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** **People** page open. Live only shown (P3).
 
 - [x] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
-  - **Expected:** The count line says **150 people**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 69 (46%), Test Engineer 35 (23.3%), SDET 30 (20%), Engineering Manager 16 (10.7%) and Architect 0 (0%). No row shows **Live**.
+  - **Expected:** The count line says **150 people and 6 planned hires**. The figures are headed **Count**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 72 (46.2%), Test Engineer 36 (23.1%), SDET 31 (19.9%), Engineering Manager 17 (10.9%) and Architect 0 (0%). No row shows **Live**.
   - **Notes:**
 
 - [x] **Step 2.** Set **Break down by** to **Role on team**.
@@ -132,7 +132,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 - [x] **Step 3.** Set **Break down by** to **End**.
-  - **Expected:** **Populated** shows 11 and **Empty** 139.
+  - **Expected:** **Populated** shows 11 and **Empty** 145.
   - **Notes:**[Comment: we should be able to add a date to compare how many on and before and how many on or after]
 
 ### METRICS-03: Two Columns Are Crossed
@@ -140,11 +140,11 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** As METRICS-02, with the panel open.
 
 - [x] **Step 1.** Set **Break down by** to **Position**, then **and by** to **Site**.
-  - **Expected:** A table headed **Position by Site** has a column for each site and an **All** column, and a row for each position and an **All** row. The **All** row shows Kestrel Bay 31, Northmere 33, Ashgrove 47, Corran Quay 39 and All 150. **Count** is selected above the table.
+  - **Expected:** A table headed **Position by Site** has a column for each site and an **All** column, and a row for each position and an **All** row. An **Empty** column counts the planned hires, which have no site. The **All** row shows Kestrel Bay 31, Northmere 33, Ashgrove 47, Corran Quay 39, Empty 6 and All 156. **Count** is selected above the table.
   - **Notes:**
 
 - [x] **Step 2.** Select **Share** above the table.
-  - **Expected:** Each figure becomes a percentage of the 150 people. The **All** row's **All** figure is 100%.
+  - **Expected:** Each figure becomes a percentage of the 156 rows counted. The **All** row's **All** figure is 100%.
   - **Notes:**
 
 - [x] **Step 3.** Set **and by** to **Nothing more**.
@@ -156,7 +156,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** As METRICS-02, with **Break down by** set to **Position**.
 
 - [ ] **Step 1.** Open the **Site** column menu, select **Filter…**, and pick only **Ashgrove**. Press Esc.
-  - **Expected:** The bar above the table says **47 of 150**. The count line says **47 people**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 20 (42.6%), Test Engineer 12 (25.5%), SDET 6 (12.8%), Engineering Manager 9 (19.1%) and Architect 0 (0%).
+  - **Expected:** The bar above the table says **47 of 156**. The count line says **47 people**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 20 (42.6%), Test Engineer 12 (25.5%), SDET 6 (12.8%), Engineering Manager 9 (19.1%) and Architect 0 (0%).
   - **Notes:**
 
 - [ ] **Step 2.** Type `Corran` in the search box.
@@ -164,7 +164,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 - [ ] **Step 3.** Select **Clear all** in the bar above the table.
-  - **Expected:** The search and the filter are cleared. The panel stays open, and the count line says **150 people** again.
+  - **Expected:** The search and the filter are cleared. The panel stays open, and the count line says **150 people and 6 planned hires** again.
   - **Notes:**
 
 ### METRICS-05: Metrics Follow the Draft Menu
@@ -172,7 +172,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** **People** page open, with the Draft menu's **Drafts beside live** chosen, as it is by default. Metrics panel open.
 
 - [ ] **Step 1.** Look at the count line.
-  - **Expected:** It says **151 people with drafts, 150 live**.
+  - **Expected:** It says **151 people and 7 planned hires with drafts, 156 live**.
   - **Notes:**
 
 - [ ] **Step 2.** Set **Break down by** to **Grade**.
@@ -180,7 +180,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 - [ ] **Step 3.** Open the Draft menu and select **Drafts applied**. Press Esc.
-  - **Expected:** The count line says **150 people**, without **with drafts**. No figure has a **Live** figure under it.
+  - **Expected:** The count line says **150 people and 7 planned hires**, without **with drafts**. No figure has a **Live** figure under it.
   - **Notes:**
 
 - [ ] **Step 4.** Open the Draft menu and select **Live only**. Press Esc.

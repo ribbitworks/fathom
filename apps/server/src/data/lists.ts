@@ -42,7 +42,7 @@ import {
   type Tier,
   tierSchema,
 } from "@fathom/shared";
-import { and, asc, count, eq, inArray, or, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
 import {
@@ -535,6 +535,28 @@ export async function refuseIfChosen(
   }
 }
 
+// Refuses giving a hiring state the meaning Hired, every person's state, while planned hires not
+// yet filled are in it, live or in a draft, as the editor, if any, sees the drafts. A filled hire's
+// state no longer matters, since its person is shown instead.
+export async function refuseHiredWhileHeld(
+  transaction: Reader,
+  id: string,
+  editor?: string,
+): Promise<void> {
+  const [held] = await transaction
+    .select({ total: count() })
+    .from(plannedHires)
+    .where(and(eq(plannedHires.stateId, id), isNull(plannedHires.filledBy)));
+  if (
+    Number(held?.total) > 0 ||
+    (await draftsUse(transaction, { choice: id }, editor))
+  ) {
+    throw new ConflictError(
+      "Planned hires are in this state, so it can't mean Hired. Move them to another state first.",
+    );
+  }
+}
+
 // A list's built-in key: one the server no longer knows is taken as none rather than trusted.
 const builtInKey = (key: unknown) =>
   builtInListSchema
@@ -545,6 +567,8 @@ const builtInKey = (key: unknown) =>
 // The meanings a list's choices are tied to: none unless it is a built-in list with meanings.
 export const meaningsIn = (state: ListsState, listId: string) =>
   meaningsOf(builtInKey(state.builtIn.get(listId)));
+
+const eitherOf = new Intl.ListFormat("en", { type: "disjunction" });
 
 // Refuses a choice's meaning that does not fit its list: a list with meanings needs one of its
 // own for each choice, and any other list takes none.
@@ -560,7 +584,7 @@ function refuseMeaningMisfit(
     }
   } else if (meaning === null || !meanings.includes(meaning)) {
     throw new BadRequestError(
-      `Choose what the choice means: ${meanings.map(meaningName).join(" or ")}`,
+      `Choose what the choice means: ${eitherOf.format(meanings.map(meaningName))}`,
     );
   }
 }
@@ -1326,6 +1350,9 @@ async function changeChoice(
     const choice = changeableChoice(state, listId, id);
     const after = change(state, choice);
     refuseLastKept(state, listId, id, after);
+    if (after.meaning === "hired" && choice.meaning !== "hired") {
+      await refuseHiredWhileHeld(transaction, id, madeBy);
+    }
     const changeSetId = await saveDraft(
       transaction,
       madeBy,

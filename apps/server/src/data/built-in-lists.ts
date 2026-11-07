@@ -8,6 +8,7 @@ import { type Database, listItems, lists } from "@fathom/db";
 import {
   type BuiltInList,
   type HiringMeaning,
+  type Meaning,
   meaningName,
   meaningsOf,
 } from "@fathom/shared";
@@ -27,13 +28,13 @@ const columnName = (key: BuiltInList) =>
 
 // Refuses a choice that is not a live one of the built-in list, or that is retired, unless the
 // record already has it, since a choice a record has stays valid when retired. In a list with
-// meanings, a choice must have one, since Fathom acts on the meaning.
+// meanings, a choice must have one, since Fathom acts on the meaning, which it returns.
 export async function checkBuiltInChoice(
   reader: Reader,
   key: BuiltInList,
   choiceId: string,
   had?: unknown,
-): Promise<void> {
+): Promise<string | null> {
   const [choice] = await reader
     .select({
       retired: listItems.retired,
@@ -53,14 +54,15 @@ export async function checkBuiltInChoice(
   if (choice.retired && choiceId !== had) {
     throw new BadRequestError(`Choose a ${name} that is offered`);
   }
+  return choice.meaning;
 }
 
-// The first choice offered for a meaning, in the list's order, refusing when none is.
-export async function firstChoiceMeaning(
+// The first choice offered for a meaning, in the list's order, if any is.
+export async function firstOffered(
   reader: Reader,
   key: BuiltInList,
-  meaning: HiringMeaning,
-): Promise<string> {
+  meaning: Meaning,
+): Promise<string | undefined> {
   const [choice] = await reader
     .select({ id: listItems.id })
     .from(listItems)
@@ -74,10 +76,20 @@ export async function firstChoiceMeaning(
     )
     .orderBy(asc(listItems.position), asc(listItems.id))
     .limit(1);
-  if (choice === undefined) {
+  return choice?.id;
+}
+
+// The first choice offered for a meaning, in the list's order, refusing when none is.
+export async function firstChoiceMeaning(
+  reader: Reader,
+  key: BuiltInList,
+  meaning: HiringMeaning,
+): Promise<string> {
+  const id = await firstOffered(reader, key, meaning);
+  if (id === undefined) {
     throw new ConflictError(
       `No ${columnName(key)} means ${meaningName(meaning)}. Choose one for the hire.`,
     );
   }
-  return choice.id;
+  return id;
 }

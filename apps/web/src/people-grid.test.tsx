@@ -74,6 +74,7 @@ describe("the order of the columns", () => {
       "managerFrom",
       "team",
       "teamName",
+      "expected",
     ]);
   });
 
@@ -245,7 +246,7 @@ describe("adding people without dates", () => {
       "Hana Fictional\tE1\tFictional Engineer\tHarbour\nIan Fictional\t\tFictional Engineer",
     );
     expect(add).not.toHaveBeenCalled();
-    expect(screen.getByRole("alert").textContent).toBe("Employee ID needed");
+    expect(screen.getByRole("alert").textContent).toBe("ID needed");
     act(() => {
       document.getElementById("cell-new-2-employeeId")?.focus();
     });
@@ -393,12 +394,10 @@ describe("adding someone with an Employee ID already taken", () => {
     await userEvent.keyboard("e1{Tab}{Escape}");
     // Named in the row's mark as it is filled in, before what is still needed.
     const mark = screen.getByTitle(
-      "New, not saved yet: Someone already has that Employee ID",
+      "New, not saved yet: Someone already has that ID",
     );
     expect(mark.className).not.toContain("newMarkWrong");
-    const wrong = within(mark).getByText(
-      "Someone already has that Employee ID",
-    );
+    const wrong = within(mark).getByText("Someone already has that ID");
     expect(wrong.className).toContain("newMarkWrong");
     expect(wrong.parentElement?.getAttribute("aria-live")).toBe("polite");
     // The Employee ID itself is marked, not the name still needed.
@@ -413,7 +412,7 @@ describe("adding someone with an Employee ID already taken", () => {
     });
     await userEvent.keyboard("{Enter}");
     expect(screen.getByRole("alert").textContent).toBe(
-      "Someone already has that Employee ID",
+      "Someone already has that ID",
     );
     expect(add).not.toHaveBeenCalled();
   });
@@ -632,6 +631,7 @@ describe("managers and teams", () => {
         "isManager",
         "team",
         "teamName",
+        "expected",
       ],
     );
   });
@@ -1031,5 +1031,184 @@ describe("managers and teams", () => {
         manager: { id: "p9", preferredName: "Someone not shown in People" },
       }),
     ]);
+  });
+});
+
+describe("planned hires beside people", () => {
+  const states: List = {
+    id: "states",
+    name: "Hiring states",
+    description: "",
+    visibility: "general",
+    retired: false,
+    builtIn: "hiring-states",
+    choices: [
+      {
+        id: "s-proposed",
+        label: "Request to hire",
+        description: "",
+        retired: false,
+        meaning: "proposed",
+      },
+      {
+        id: "s-hired",
+        label: "Hired",
+        description: "",
+        retired: false,
+        meaning: "hired",
+      },
+    ],
+  };
+  const rows: Person[] = [
+    {
+      id: "p1",
+      preferredName: "Avery Fictional",
+      employeeId: "E1",
+      positionId: "position-1",
+      stateId: "s-hired",
+      values: {},
+      links: {},
+    },
+    {
+      id: "h1",
+      kind: "planned-hire",
+      preferredName: "",
+      employeeId: "TBD-1",
+      positionId: "position-1",
+      stateId: "s-proposed",
+      expected: "2027-03",
+      values: {},
+      links: {},
+    },
+  ];
+
+  it("shows each person Hired, read only, and never offers Hired for a hire", () => {
+    const state = columnsFor([], [positions, states], [], true, rows).find(
+      ({ key }) => key === "stateId",
+    ) as Column;
+    expect(state.readOnlyOn?.("person")).toBe(true);
+    expect(state.readOnlyOn?.("planned-hire")).toBe(false);
+    expect(
+      state.choices.filter((option) => state.pickable?.(option) ?? true),
+    ).toEqual([states.choices[0]]);
+    expect(state.newRowValue?.("planned-hire")).toEqual(["s-proposed"]);
+    expect(state.newRowValue?.("person")).toEqual([]);
+  });
+
+  it("shows the month a hire is expected, which nobody changes, and refuses a typed ID that looks temporary", async () => {
+    const expected = columnsFor([], [positions, states], [], true, rows).find(
+      ({ key }) => key === "expected",
+    ) as Column;
+    expect(expected.choices.map(({ label }) => label)).toEqual(["Mar 2027"]);
+    expect(
+      expected.live({
+        action: "changed",
+        changed: [],
+        live: { values: {}, links: {} },
+        state: "waiting",
+        madeBy: null,
+        madeAt: null,
+      }),
+    ).toEqual([]);
+    expect(expected.change(["2027-03"])).toEqual({});
+    render(
+      <MantineProvider theme={testTheme}>
+        <PeopleGrid
+          people={rows}
+          fields={[]}
+          order={[]}
+          lists={[positions, states]}
+          canEdit
+          canEditColumns={false}
+          canEditHires
+          showDates
+          view={emptyView}
+          onView={noop}
+          actions={actions}
+        />
+      </MantineProvider>,
+    );
+    act(() => {
+      document.getElementById("cell-p1-employeeId")?.focus();
+    });
+    await userEvent.keyboard("tbd-5{Enter}");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "An ID cannot start with TBD-, which temporary IDs use",
+    );
+  });
+
+  it.each([
+    ["one of each", [0, 1], "1 person and 1 planned hire"],
+    ["planned hires alone", [1, 1], "2 planned hires"],
+    ["people alone", [0, 0], "2 people"],
+  ])(
+    "counts %s by kind, above the table and in Metrics",
+    (_case, picked, line) => {
+      render(
+        <MantineProvider theme={testTheme}>
+          <PeopleGrid
+            people={picked.map((index, at) => ({
+              ...(rows.at(index) as Person),
+              id: `r${String(at)}`,
+              employeeId: `X${String(at)}`,
+            }))}
+            fields={[]}
+            order={[]}
+            lists={[positions, states]}
+            canEdit={false}
+            canEditColumns={false}
+            showDates
+            view={{ ...emptyView, breakdown: ["positionId"] }}
+            onView={noop}
+            actions={actions}
+          />
+        </MantineProvider>,
+      );
+      const panel = screen.getByRole("region", { name: "Metrics" });
+      expect(panel.textContent).toContain(line);
+      expect(
+        screen.getAllByRole("status").map(({ textContent }) => textContent),
+      ).toContain(line);
+      expect(
+        within(panel)
+          .getAllByRole("columnheader")
+          .map((th) => th.textContent),
+      ).toContain("Count");
+    },
+  );
+
+  it("names a hire with no name by its position and ID, which sorts it", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <PeopleGrid
+          people={rows}
+          fields={[]}
+          order={[]}
+          lists={[positions, states]}
+          canEdit
+          canEditColumns={false}
+          canEditHires
+          showDates
+          view={{
+            ...emptyView,
+            sort: [{ key: "preferredName", descending: true }],
+          }}
+          onView={noop}
+          actions={actions}
+        />
+      </MantineProvider>,
+    );
+    const nameCell = document.getElementById("cell-h1-preferredName");
+    expect(nameCell?.textContent).toBe("Fictional Engineer, TBD-1");
+    expect(
+      document.getElementById("cell-p1-stateId")?.getAttribute("aria-readonly"),
+    ).toBe("true");
+    expect(
+      document.getElementById("cell-h1-stateId")?.getAttribute("aria-readonly"),
+    ).toBeNull();
+    const names = [...document.querySelectorAll("[id$='-preferredName']")]
+      .map((cell) => cell.id)
+      .filter((id) => !id.includes("new"));
+    expect(names).toEqual(["cell-h1-preferredName", "cell-p1-preferredName"]);
   });
 });

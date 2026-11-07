@@ -45,6 +45,17 @@ export interface TableColumn<Row> {
   // For choice columns: what a filter calls the choices no longer offered, when not "Retired".
   retiredLabel?: string;
   value: (row: Row) => CellValue;
+  // For text columns: what an empty cell shows in grey in its place, such as a name made from other
+  // details, which sorting, filtering, and searching take as its value.
+  standIn?: (row: Row) => string;
+}
+
+// A row's value in a column, or, when empty, what stands in for it.
+export function valueOrStandIn<Row>(column: TableColumn<Row>, row: Row) {
+  const value = column.value(row);
+  return value === "" && column.standIn !== undefined
+    ? column.standIn(row)
+    : value;
 }
 
 export interface SortLevel {
@@ -406,7 +417,7 @@ export function applyView<Row>(
     return column ? [{ column, descending: level.descending }] : [];
   });
   const read = (column: TableColumn<never>, row: Row) =>
-    column.value(row as never);
+    valueOrStandIn(column, row as never);
 
   const shown = rows.filter((row) => {
     const filtered = filters.every(({ column, filter }) =>

@@ -103,6 +103,7 @@ describe("drafts an approval includes", () => {
     );
     expect(both).toEqual({
       people: ["p1"],
+      plannedHires: [],
       lists: ["l1"],
       choices: ["b"],
       orders: ["l2"],
@@ -116,6 +117,27 @@ describe("drafts an approval includes", () => {
       "the choice B in Teams",
       "the new order for Sites",
     ]);
+  });
+});
+
+describe("planned hires an approval includes", () => {
+  const hire: Person = {
+    id: "h1",
+    kind: "planned-hire",
+    preferredName: "",
+    employeeId: "TBD-7",
+    values: {},
+    links: {},
+  };
+
+  it("names them, and takes them out of another selection", () => {
+    const chosen = { ...noDrafts(), plannedHires: ["h1", "h2"] };
+    expect(draftNames(chosen, lists, [], [hire])).toEqual([
+      "the planned hire TBD-7",
+    ]);
+    expect(
+      without(chosen, { ...noDrafts(), plannedHires: ["h2"] }).plannedHires,
+    ).toEqual(["h1"]);
   });
 });
 
@@ -215,6 +237,7 @@ describe("drafts that wait on rejected ones", () => {
   };
   const everything = {
     people: ["p1"],
+    plannedHires: [],
     lists: ["l1"],
     choices: ["b", "e", "f"],
     orders: ["l1", "l2"],
@@ -248,6 +271,7 @@ describe("drafts that wait on rejected ones", () => {
     expect(heldBack(everything, lists)).toEqual(noDrafts());
     expect(without(everything, held)).toEqual({
       people: ["p1"],
+      plannedHires: [],
       lists: ["l1"],
       choices: ["e", "f"],
       orders: [],

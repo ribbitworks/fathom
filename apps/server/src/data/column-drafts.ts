@@ -790,10 +790,16 @@ export async function readColumnsOut(
     ];
   });
   const seesPositions = seesTier(actor, await builtInTier(reader, "positions"));
+  const seesStates = seesTier(
+    actor,
+    await builtInTier(reader, "hiring-states"),
+  );
   const visible = new Set([
     "preferredName",
     "employeeId",
     ...(seesPositions ? ["positionId"] : []),
+    ...(seesStates ? ["stateId"] : []),
+    "expected",
     "managerId",
     "team",
     "teamName",

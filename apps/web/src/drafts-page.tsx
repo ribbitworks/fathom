@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Drafts page: every draft the user may see, of people, People's columns, lists, choices, the
-// order of lists' choices and of People's columns, and the plan's records, such as release streams,
-// newest first, each a sentence saying who drafted what, with what it changes from its live
-// value, and rejected drafts marked with their reason. A search narrows them. Approvers select
-// drafts, one or several at once, and approve or reject them, as they can on the People table and
-// the Lists page too. Approving or rejecting names any other drafts it includes.
+// The Drafts page: every draft the user may see, of people, planned hires, People's columns, lists,
+// choices, the order of lists' choices and of People's columns, and the plan's records, such as
+// release streams, newest first, each a sentence saying who drafted what, with what it changes from
+// its live value, and rejected drafts marked with their reason. A search narrows them. Approvers
+// select drafts, one or several at once, and approve or reject them, as they can on the People
+// table and the Lists page too. Approving or rejecting names any other drafts it includes.
 
 import {
   builtInColumnNames,
@@ -56,6 +56,7 @@ import {
 } from "./releases.ts";
 import { PageHeader } from "./page-header.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
+import { isHire, rowName } from "./people-rows.ts";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseList, phraseText } from "./phrase.tsx";
 import { draftWords, HoldMarks, StatusMark } from "./status-mark.tsx";
@@ -330,7 +331,9 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
     entry(
       `person ${drafted.person.id}`,
       drafted.draft,
-      drafted.person.preferredName,
+      isHire(drafted.person)
+        ? `the planned hire ${rowName(drafted.person, lists)}`
+        : drafted.person.preferredName,
       drafted.draft.action === "deleted"
         ? []
         : personDraftFields(
@@ -342,7 +345,9 @@ function personEntries(data: PeopleData, lists: readonly List[]): Entry[] {
           ).map(({ key, field }) =>
             credited(describeField(field), key, drafted.draft),
           ),
-      { people: [drafted.person.id] },
+      isHire(drafted.person)
+        ? { plannedHires: [drafted.person.id] }
+        : { people: [drafted.person.id] },
       drafted.person.heldBy,
     ),
   );

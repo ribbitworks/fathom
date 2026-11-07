@@ -12,6 +12,7 @@ import {
   type Database,
   drafts,
   inChunks,
+  listItems,
   people,
   plannedHires,
   plannedHireTemporaryNumbers,
@@ -23,6 +24,7 @@ import {
   type HireDraft,
   type HireRequest,
   type Hires,
+  type Person,
   temporaryId,
   type Tier,
 } from "@fathom/shared";
@@ -86,6 +88,7 @@ const noDraft =
 const duplicateId = "Someone already has that ID";
 
 export const hireFields = [
+  "name",
   "requisition",
   "temporaryNumber",
   "positionId",
@@ -101,12 +104,14 @@ export const hireTier = () => "confidential" as const;
 
 export type HireTier = (field: string) => Tier;
 
-// The tier of each field of a hire: its position and state are as sensitive as their lists, like
-// any column drawing on a list, and the rest of the hiring plan is Confidential.
+// The tier of each field of a hire: its name is General, as a person's is; its position and state
+// are as sensitive as their lists, like any column drawing on a list; and the rest of the hiring
+// plan is Confidential.
 export async function readHireTier(reader: Reader): Promise<HireTier> {
   const positions = await builtInTier(reader, "positions");
   const states = await builtInTier(reader, "hiring-states");
   return (field) => {
+    if (field === "name") return "general";
     if (field === "positionId") return positions;
     if (field === "stateId") return states;
     return "confidential";
@@ -122,6 +127,7 @@ function requireHireEdits(actor: Actor, made: readonly Change[]): void {
 
 export function recordedHire(row: HireRow): Recorded {
   return {
+    name: row.name,
     requisition: row.requisition,
     temporaryNumber: row.temporaryNumber,
     positionId: row.positionId,
@@ -260,169 +266,171 @@ export async function readHires(
   requirePermission(actor, "people:view");
   const today = asOf ?? (await readToday(database));
   return database.transaction(
-    async (transaction) => {
-      const wholePlan = seesTier(actor, "confidential");
-      const live = await readLiveHires(transaction);
-      const draftsNow = wholePlan
-        ? await readHireDrafts(transaction, undefined, actor.user.id)
-        : new Map<string, Draft>();
-      const held = await readHeld(transaction, recordType, actor.user.id);
-      const tierOf = await readHireTier(transaction);
-      const seesPositions = seesTier(actor, tierOf("positionId"));
-      const seesStates = seesTier(actor, tierOf("stateId"));
-      // A draft's makers are named only for the changes the reader sees.
-      const makers = await draftMakers(
-        transaction,
-        recordType,
-        [...draftsNow.keys()],
-        (field) => seesTier(actor, tierOf(field)),
-        actor.user.id,
-      );
-      const ids = [
-        ...live.keys(),
-        ...[...draftsNow.keys()].filter((id) => !live.has(id)),
-      ];
-      // Every hire read is live or drafted, so has a version; one drafted to be removed shows as
-      // it is.
-      const versions = ids.map((id) => {
-        const before = live.get(id);
-        const draft = draftsNow.get(id);
-        const hire = (drafted(before, draft) ?? before) as Recorded;
-        return { id, before, draft, hire };
-      });
-      // Readers who cannot see Restricted data see only current staff, so a hire names its manager
-      // to them only while the manager is current, as People shows them.
-      const restricted = seesTier(actor, "restricted");
-      const named = await peopleNamed(
-        transaction,
-        versions.flatMap(({ hire, before }) =>
-          [hire.managerId, hire.filledBy, before?.managerId].filter(
-            (personId): personId is string => typeof personId === "string",
-          ),
-        ),
-        today,
-      );
-      const thisMonth = today.slice(0, 7);
-      const hires = versions.flatMap(({ id, before, draft, hire }): Hire[] => {
-        const filler =
-          typeof hire.filledBy === "string"
-            ? named.get(hire.filledBy)
-            : undefined;
-        // A filled hire gives way to its person once they have started, or to readers who see them.
-        if (
-          typeof hire.filledBy === "string" &&
-          (restricted ||
-            filler === undefined ||
-            filler.startDate === null ||
-            filler.startDate <= today)
-        ) {
-          return [];
-        }
-        const manager =
-          typeof hire.managerId === "string"
-            ? named.get(hire.managerId)
-            : undefined;
-        const shown = manager !== undefined && (restricted || manager.current);
-        const targetDate = textOrNull(hire.targetDate);
-        const expectedOn = filler?.startDate ?? targetDate;
-        return [
-          {
-            id,
-            ...hireIdOf(hire),
-            ...(seesPositions ? { positionId: String(hire.positionId) } : {}),
-            managerId: shown ? String(hire.managerId) : null,
-            managerName: shown ? manager.name : null,
-            expected: expectedOn === null ? thisMonth : expectedOn.slice(0, 7),
-            ...(seesStates ? { stateId: String(hire.stateId) } : {}),
-            ...(wholePlan
-              ? {
-                  targetDate,
-                  ...shownDraft(id, before, draft),
-                  ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
-                }
-              : {}),
-          },
-        ];
-      });
-
-      // A hire's draft as the reader sees it, or none when it changes nothing they may see.
-      function shownDraft(
-        id: string,
-        before: Recorded | undefined,
-        draft: Draft | undefined,
-      ): { draft?: HireDraft } {
-        if (draft === undefined) return {};
-        const drafted = draftFields(before, draft);
-        const seen = (field: string) => seesTier(actor, tierOf(field));
-        if (!drafted.some(seen)) return {};
-        // A hire's ID is one field to the reader, whichever of the two a draft changes.
-        const fields = [
-          ...new Set(
-            drafted
-              .filter((field) => field !== "filledBy" && seen(field))
-              .map((field) =>
-                field === "temporaryNumber" ? "requisition" : field,
-              ),
-          ),
-        ];
-        const liveValues: HireDraft["live"] = {};
-        if (before !== undefined) {
-          for (const field of fields) {
-            if (field === "requisition") {
-              liveValues.requisition = textOrNull(before.requisition);
-            }
-            if (field === "positionId") {
-              liveValues.positionId = String(before.positionId);
-            }
-            if (field === "targetDate") {
-              liveValues.targetDate = textOrNull(before.targetDate);
-            }
-            if (field === "stateId")
-              liveValues.stateId = String(before.stateId);
-            if (field === "managerId") {
-              liveValues.managerId = textOrNull(before.managerId);
-            }
-          }
-        }
-        const maker = makers.get(id);
-        const shown: HireDraft = {
-          action: draft.action,
-          changed: fields,
-          live: liveValues,
-          state: draft.state,
-          // The reason covers the whole draft, so it is shown only to those who see all of it.
-          ...(draft.state === "rejected" &&
-          draft.reason !== null &&
-          drafted.every(seen)
-            ? { reason: draft.reason }
-            : {}),
-          ...(draft.unpublished === true ? { unpublished: true } : {}),
-          madeBy: maker?.madeBy ?? null,
-          madeAt: maker?.madeAt.toISOString() ?? null,
-          editors: maker?.editors ?? [],
-          changedBy: Object.fromEntries(
-            fields.map((field) => [
-              field,
-              maker?.fieldEditors.get(field) ?? null,
-            ]),
-          ),
-        };
-        return { draft: shown };
-      }
-
-      // No two hires have the same ID, ignoring letter case, so the order is always the same.
-      const shownId = (hire: Hire) =>
-        String(hire.requisition ?? hire.temporaryId);
-      hires.sort((a, b) => byId.compare(shownId(a), shownId(b)));
-      // Whether the placeholders shown hold a position or state more sensitive than General.
-      const includedRestricted =
-        hires.length > 0 &&
-        ((seesPositions && tierOf("positionId") !== "general") ||
-          (seesStates && tierOf("stateId") !== "general"));
-      return { hires, wholePlan, includedRestricted };
-    },
+    (transaction) => readHiresIn(transaction, actor, today),
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
+}
+
+// The hires the actor may see, as readHires sets out, read within a transaction of the caller's.
+export async function readHiresIn(
+  transaction: Reader,
+  actor: Actor,
+  today: string,
+): Promise<Hires & { includedRestricted: boolean }> {
+  const wholePlan = seesTier(actor, "confidential");
+  const live = await readLiveHires(transaction);
+  const draftsNow = wholePlan
+    ? await readHireDrafts(transaction, undefined, actor.user.id)
+    : new Map<string, Draft>();
+  const held = await readHeld(transaction, recordType, actor.user.id);
+  const tierOf = await readHireTier(transaction);
+  const seesPositions = seesTier(actor, tierOf("positionId"));
+  const seesStates = seesTier(actor, tierOf("stateId"));
+  // A draft's makers are named only for the changes the reader sees.
+  const makers = await draftMakers(
+    transaction,
+    recordType,
+    [...draftsNow.keys()],
+    (field) => seesTier(actor, tierOf(field)),
+    actor.user.id,
+  );
+  const ids = [
+    ...live.keys(),
+    ...[...draftsNow.keys()].filter((id) => !live.has(id)),
+  ];
+  // Every hire read is live or drafted, so has a version; one drafted to be removed shows as
+  // it is.
+  const versions = ids.map((id) => {
+    const before = live.get(id);
+    const draft = draftsNow.get(id);
+    const hire = (drafted(before, draft) ?? before) as Recorded;
+    return { id, before, draft, hire };
+  });
+  // Readers who cannot see Restricted data see only current staff, so a hire names its manager
+  // to them only while the manager is current, as People shows them.
+  const restricted = seesTier(actor, "restricted");
+  const named = await peopleNamed(
+    transaction,
+    versions.flatMap(({ hire, before }) =>
+      [hire.managerId, hire.filledBy, before?.managerId].filter(
+        (personId): personId is string => typeof personId === "string",
+      ),
+    ),
+    today,
+  );
+  const thisMonth = today.slice(0, 7);
+  const hires = versions.flatMap(({ id, before, draft, hire }): Hire[] => {
+    const filler =
+      typeof hire.filledBy === "string" ? named.get(hire.filledBy) : undefined;
+    // A filled hire gives way to its person once they have started, or to readers who see them.
+    if (
+      typeof hire.filledBy === "string" &&
+      (restricted ||
+        filler === undefined ||
+        filler.startDate === null ||
+        filler.startDate <= today)
+    ) {
+      return [];
+    }
+    const manager =
+      typeof hire.managerId === "string"
+        ? named.get(hire.managerId)
+        : undefined;
+    const shown = manager !== undefined && (restricted || manager.current);
+    const targetDate = textOrNull(hire.targetDate);
+    const expectedOn = filler?.startDate ?? targetDate;
+    return [
+      {
+        id,
+        name: textOrNull(hire.name),
+        ...hireIdOf(hire),
+        ...(seesPositions ? { positionId: String(hire.positionId) } : {}),
+        managerId: shown ? String(hire.managerId) : null,
+        managerName: shown ? manager.name : null,
+        expected: expectedOn === null ? thisMonth : expectedOn.slice(0, 7),
+        ...(seesStates ? { stateId: String(hire.stateId) } : {}),
+        ...(wholePlan
+          ? {
+              targetDate,
+              ...shownDraft(id, before, draft),
+              ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
+            }
+          : {}),
+      },
+    ];
+  });
+
+  // A hire's draft as the reader sees it, or none when it changes nothing they may see.
+  function shownDraft(
+    id: string,
+    before: Recorded | undefined,
+    draft: Draft | undefined,
+  ): { draft?: HireDraft } {
+    if (draft === undefined) return {};
+    const drafted = draftFields(before, draft);
+    const seen = (field: string) => seesTier(actor, tierOf(field));
+    if (!drafted.some(seen)) return {};
+    // A hire's ID is one field to the reader, whichever of the two a draft changes.
+    const fields = [
+      ...new Set(
+        drafted
+          .filter((field) => field !== "filledBy" && seen(field))
+          .map((field) =>
+            field === "temporaryNumber" ? "requisition" : field,
+          ),
+      ),
+    ];
+    const liveValues: HireDraft["live"] = {};
+    if (before !== undefined) {
+      for (const field of fields) {
+        if (field === "name") liveValues.name = textOrNull(before.name);
+        if (field === "requisition") {
+          Object.assign(liveValues, hireIdOf(before));
+        }
+        if (field === "positionId") {
+          liveValues.positionId = String(before.positionId);
+        }
+        if (field === "targetDate") {
+          liveValues.targetDate = textOrNull(before.targetDate);
+        }
+        if (field === "stateId") liveValues.stateId = String(before.stateId);
+        if (field === "managerId") {
+          liveValues.managerId = textOrNull(before.managerId);
+        }
+      }
+    }
+    const maker = makers.get(id);
+    const shown: HireDraft = {
+      action: draft.action,
+      changed: fields,
+      live: liveValues,
+      state: draft.state,
+      // The reason covers the whole draft, so it is shown only to those who see all of it.
+      ...(draft.state === "rejected" &&
+      draft.reason !== null &&
+      drafted.every(seen)
+        ? { reason: draft.reason }
+        : {}),
+      ...(draft.unpublished === true ? { unpublished: true } : {}),
+      madeBy: maker?.madeBy ?? null,
+      madeAt: maker?.madeAt.toISOString() ?? null,
+      editors: maker?.editors ?? [],
+      changedBy: Object.fromEntries(
+        fields.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
+      ),
+    };
+    return { draft: shown };
+  }
+
+  // No two hires have the same ID, ignoring letter case, so the order is always the same.
+  const shownId = (hire: Hire) => String(hire.requisition ?? hire.temporaryId);
+  hires.sort((a, b) => byId.compare(shownId(a), shownId(b)));
+  // Whether the placeholders shown hold a position or state more sensitive than General.
+  const includedRestricted =
+    hires.length > 0 &&
+    ((seesPositions && tierOf("positionId") !== "general") ||
+      (seesStates && tierOf("stateId") !== "general"));
+  return { hires, wholePlan, includedRestricted };
 }
 
 // Until planned hires are a permission area of their own, changing them needs the rights to edit
@@ -430,6 +438,14 @@ export async function readHires(
 function requireHiringEdit(actor: Actor): void {
   requirePermission(actor, "people:edit");
   requirePermission(actor, "confidential:edit");
+}
+
+// Hired is every person's state, and a hire is hired only by filling it.
+const hiredState =
+  "That state is for people. A planned hire is hired when someone fills it.";
+
+function refuseHired(meaning: string | null): void {
+  if (meaning === "hired") throw new BadRequestError(hiredState);
 }
 
 // Whether a hire may have the manager given: none, or a live person whom no draft removes,
@@ -553,11 +569,13 @@ async function refuseUnmarked(
   }
 }
 
-export async function createHire(
+// Drafts adding the hires asked for, together in one change, so they are undone together, or none
+// of them when any is refused.
+export async function createHires(
   database: Database,
   actor: Actor,
-  request: HireRequest,
-): Promise<{ id: string; changeSetId: string | null }> {
+  requests: readonly HireRequest[],
+): Promise<{ ids: string[]; changeSetId: string | null }> {
   requireHiringEdit(actor);
   return database.transaction(async (transaction) => {
     // Every hire needs a position and a state, so one who cannot see either cannot add hires.
@@ -573,41 +591,52 @@ export async function createHire(
       );
     }
     await lockDrafts(transaction);
-    await checkManager(transaction, request.managerId);
-    await checkBuiltInChoice(transaction, "positions", request.positionId);
-    const stateId =
-      request.stateId ??
-      (await firstChoiceMeaning(transaction, "hiring-states", "proposed"));
-    await checkBuiltInChoice(transaction, "hiring-states", stateId);
-    const id = randomUUID();
-    await checkRequisition(transaction, request.requisition, id);
-    const after: Recorded = {
-      requisition: request.requisition,
-      temporaryNumber:
-        request.requisition === null
-          ? await nextTemporaryNumber(transaction)
-          : null,
-      positionId: request.positionId,
-      targetDate: request.targetDate,
-      stateId,
-      managerId: request.managerId,
-      filledBy: null,
-    };
-    if (newlyManaged(undefined, after)) {
-      await refuseUnmarked(
-        transaction,
-        String(after.managerId),
-        (message) => new BadRequestError(message),
+    const ids: string[] = [];
+    const made: Change[] = [];
+    for (const request of requests) {
+      await checkManager(transaction, request.managerId);
+      await checkBuiltInChoice(transaction, "positions", request.positionId);
+      const stateId =
+        request.stateId ??
+        (await firstChoiceMeaning(transaction, "hiring-states", "proposed"));
+      refuseHired(
+        await checkBuiltInChoice(transaction, "hiring-states", stateId),
+      );
+      const id = randomUUID();
+      // Each hire is drafted before the next is checked, so two asked for cannot share an ID.
+      await checkRequisition(transaction, request.requisition, id);
+      const after: Recorded = {
+        name: request.name,
+        requisition: request.requisition,
+        temporaryNumber:
+          request.requisition === null
+            ? await nextTemporaryNumber(transaction)
+            : null,
+        positionId: request.positionId,
+        targetDate: request.targetDate,
+        stateId,
+        managerId: request.managerId,
+        filledBy: null,
+      };
+      if (newlyManaged(undefined, after)) {
+        await refuseUnmarked(
+          transaction,
+          String(after.managerId),
+          (message) => new BadRequestError(message),
+        );
+      }
+      await addDrafts(transaction, actor.user.id, recordType, [
+        { id, fields: after },
+      ]);
+      ids.push(id);
+      made.push(
+        ...asDraft(hireChanges(id, "created", undefined, after, tierOf)),
       );
     }
-    await addDrafts(transaction, actor.user.id, recordType, [
-      { id, fields: after },
-    ]);
-    const made = asDraft(hireChanges(id, "created", undefined, after, tierOf));
     requireHireEdits(actor, made);
     await recordHiringChanges(transaction, actor.user.id, made);
     return {
-      id,
+      ids,
       changeSetId: await recordChanges(transaction, actor.user.id, made),
     };
   });
@@ -663,11 +692,13 @@ export async function updateHire(
       );
     }
     if (change.stateId !== undefined) {
-      await checkBuiltInChoice(
-        transaction,
-        "hiring-states",
-        change.stateId,
-        hire.stateId,
+      refuseHired(
+        await checkBuiltInChoice(
+          transaction,
+          "hiring-states",
+          change.stateId,
+          hire.stateId,
+        ),
       );
     }
     if (typeof change.requisition === "string") {
@@ -675,6 +706,7 @@ export async function updateHire(
     }
     const after: Recorded = {
       ...hire,
+      ...(change.name === undefined ? {} : { name: change.name }),
       ...(await idAsChanged(transaction, hire, change.requisition)),
       ...(change.positionId === undefined
         ? {}
@@ -968,7 +1000,16 @@ export async function approveHiresIn(
       await transaction.delete(plannedHires).where(eq(plannedHires.id, id));
       continue;
     }
+    // The state may have come to mean Hired since the draft was made.
+    if (unfilled(hire)) {
+      const [state] = await transaction
+        .select({ meaning: listItems.meaning })
+        .from(listItems)
+        .where(eq(listItems.id, String(hire.stateId)));
+      if (state?.meaning === "hired") throw new ConflictError(hiredState);
+    }
     const row = {
+      name: textOrNull(hire.name),
       requisition: textOrNull(hire.requisition),
       temporaryNumber:
         typeof hire.temporaryNumber === "number" ? hire.temporaryNumber : null,
@@ -1052,6 +1093,7 @@ export async function undoHireDrafts(
     let hire: Recorded | undefined;
     if (record.action === "deleted") {
       hire = {
+        name: null,
         requisition: null,
         temporaryNumber: null,
         targetDate: null,
@@ -1092,4 +1134,71 @@ export async function undoHireDrafts(
       hire,
     );
   }
+}
+
+// A hire as a row of the People table: its name, if any, as its preferred name, its requisition or
+// temporary ID as its ID, and its target date, for those who see it, as its start date. Its team is
+// its manager's, named as the people given name it.
+export function hireRow(
+  hire: Hire,
+  teamOf: ReadonlyMap<string, string | null>,
+): Person {
+  // A hire has a requisition, or else a temporary ID.
+  const id = String(hire.requisition ?? hire.temporaryId);
+  const asPersonField = (field: string) => {
+    if (field === "name") return "preferredName";
+    if (field === "requisition") return "employeeId";
+    if (field === "targetDate") return "startDate";
+    return field;
+  };
+  const draft = hire.draft;
+  const live = draft?.live;
+  return {
+    id: hire.id,
+    kind: "planned-hire",
+    preferredName: hire.name ?? "",
+    employeeId: id,
+    ...(hire.positionId === undefined ? {} : { positionId: hire.positionId }),
+    ...(hire.stateId === undefined ? {} : { stateId: hire.stateId }),
+    expected: hire.expected,
+    ...(hire.targetDate === undefined ? {} : { startDate: hire.targetDate }),
+    manager:
+      hire.managerId === null
+        ? null
+        : { id: hire.managerId, preferredName: String(hire.managerName) },
+    ...(hire.managerId === null
+      ? {}
+      : { team: teamOf.get(hire.managerId) ?? null }),
+    values: {},
+    links: {},
+    ...(draft === undefined || live === undefined
+      ? {}
+      : {
+          draft: {
+            ...draft,
+            changed: draft.changed.map(asPersonField),
+            live: {
+              ...(live.name === undefined
+                ? {}
+                : { preferredName: live.name ?? "" }),
+              ...(live.requisition === undefined
+                ? {}
+                : { employeeId: live.requisition ?? String(live.temporaryId) }),
+              ...(live.positionId === undefined
+                ? {}
+                : { positionId: live.positionId }),
+              ...(live.targetDate === undefined
+                ? {}
+                : { startDate: live.targetDate }),
+              ...(live.stateId === undefined ? {} : { stateId: live.stateId }),
+              ...(live.managerId === undefined
+                ? {}
+                : { managerId: live.managerId }),
+              values: {},
+              links: {},
+            },
+          },
+        }),
+    ...(hire.heldBy === undefined ? {} : { heldBy: hire.heldBy }),
+  };
 }

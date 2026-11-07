@@ -2150,6 +2150,7 @@ describe("drafts on the Lists page", () => {
       expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: [],
+          plannedHires: [],
           lists: ["l5"],
           choices: ["c8"],
           orders: [],
@@ -2854,6 +2855,7 @@ describe("drafts on the Lists page", () => {
       expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: [],
+          plannedHires: [],
           lists: ["l5"],
           choices: ["c8"],
           orders: [],
@@ -2934,6 +2936,7 @@ describe("drafts on the Lists page", () => {
       expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: [],
+          plannedHires: [],
           lists: ["l5"],
           choices: ["c8"],
           orders: [],
@@ -2982,6 +2985,7 @@ describe("drafts on the Lists page", () => {
       expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: [],
+          plannedHires: [],
           lists: ["l2"],
           choices: [],
           orders: [],
@@ -3397,7 +3401,7 @@ describe("built-in lists and lists with meanings", () => {
     expect(within(panel()).getByText("Built in")).toBeTruthy();
     expect(
       within(panel()).getByText(
-        /Proposed: the request to hire is not yet approved\.\s+Open: the request to hire is approved\.\s+Keep at least one choice for each\./,
+        /Proposed: the request to hire is not yet approved\.\s+Open: the request to hire is approved\.\s+Hired: everyone in People who isn't a planned hire\. A planned hire is hired when someone fills it\.\s+Keep at least one choice for each\./,
       ),
     ).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Edit list" }));

@@ -340,7 +340,10 @@ export interface PeopleAccess {
 // state is more sensitive than General.
 export interface HireAccess {
   read(actor: Actor): Promise<Hires>;
-  create(actor: Actor, request: HireRequest): Promise<Saved<string>>;
+  create(
+    actor: Actor,
+    requests: readonly HireRequest[],
+  ): Promise<Saved<string[]>>;
   update(actor: Actor, id: string, change: HireChange): Promise<ChangeSetId>;
   delete(actor: Actor, id: string): Promise<ChangeSetId>;
   discardDraft(actor: Actor, id: string): Promise<ChangeSetId>;
@@ -370,13 +373,13 @@ function createHireAccess(database: Database): HireAccess {
       }
       return read;
     },
-    create: async (actor, request) => {
-      const { id, changeSetId } = await hireData.createHire(
+    create: async (actor, requests) => {
+      const { ids, changeSetId } = await hireData.createHires(
         database,
         actor,
-        request,
+        requests,
       );
-      return { result: id, changeSetId };
+      return { result: ids, changeSetId };
     },
     update: async (actor, id, change) =>
       hireData.updateHire(database, actor, id, change),
@@ -531,6 +534,14 @@ function createPeopleAccess(database: Database): PeopleAccess {
           database,
           actor.user.id,
           await readTimeZone(database),
+        );
+      }
+      if (read.hiringPlanViewed) {
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          await readTimeZone(database),
+          "hiring-plan-viewed",
         );
       }
       // The columns as their drafts make them, and their order, as the actor may see them.

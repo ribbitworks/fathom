@@ -202,13 +202,7 @@ describe("the change history", () => {
     const order = named(column.changeSetId)?.records[0];
     expect(order).toMatchObject({ kind: "column-order", action: "changed" });
     expect(order?.fields[0]?.newValue).toEqual(
-      expect.arrayContaining([
-        "Alpha site",
-        "Name",
-        "Employee ID",
-        "Start",
-        "End",
-      ]),
+      expect.arrayContaining(["Alpha site", "Name", "ID", "Start", "End"]),
     );
     expect((order?.fields[0]?.newValue as string[])[0]).toBe("Alpha site");
   });

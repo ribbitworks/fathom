@@ -84,7 +84,7 @@ export function personDraftFields(
         },
       ];
     }
-    if (key === "positionId") {
+    if (key === "positionId" || key === "stateId") {
       const labelOf = (id: string | undefined) =>
         lists
           .flatMap(({ choices }) => choices)
@@ -97,8 +97,14 @@ export function personDraftFields(
             oldValue:
               draft.action === "created"
                 ? null
-                : labelOf(draft.live.positionId),
-            newValue: labelOf(person.positionId),
+                : labelOf(
+                    key === "positionId"
+                      ? draft.live.positionId
+                      : draft.live.stateId,
+                  ),
+            newValue: labelOf(
+              key === "positionId" ? person.positionId : person.stateId,
+            ),
           },
         },
       ];

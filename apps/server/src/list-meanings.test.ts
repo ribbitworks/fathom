@@ -5,7 +5,7 @@
 // other lists' choices carry none, and drafting, discarding, undoing, publishing, and approving never
 // leave a meaning with no choice offered for it, nor Positions with none at all.
 
-import { listItems, lists } from "@fathom/db";
+import { listItems, lists, people, plannedHires } from "@fathom/db";
 import type { Choice, List } from "@fathom/shared";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -107,6 +107,7 @@ describe("a list with meanings", () => {
     expect(list.choices.map(({ label, meaning }) => [label, meaning])).toEqual([
       ["Request to hire", "proposed"],
       ["Approved to hire", "open"],
+      ["Hired", "hired"],
     ]);
     const created = await send("POST", "/api/lists", {
       name: unique("Fictional Sites"),
@@ -126,7 +127,7 @@ describe("a list with meanings", () => {
     });
     expect(without.statusCode).toBe(400);
     expect(refusal(without)).toBe(
-      "Choose what the choice means: Proposed or Open",
+      "Choose what the choice means: Proposed, Open, or Hired",
     );
     const unknown = await send("POST", `/api/lists/${states.id}/choices`, {
       choices: [{ label: unique("Fictional Closed"), meaning: "closed" }],
@@ -180,6 +181,80 @@ describe("a list with meanings", () => {
       meaning: null,
     });
     expect(cleared.statusCode).toBe(400);
+    expect((await retire(id)).statusCode).toBe(200);
+    expect((await approve({ choices: [id] })).statusCode).toBe(200);
+  });
+
+  it("refuses giving a state the meaning Hired while a planned hire is in it", async () => {
+    const label = unique("Fictional Shortlisting");
+    const {
+      choices: [added],
+    } = await addStates([{ label, meaning: "open" }]);
+    const id = String(added?.id);
+    expect((await approve({ choices: [id] })).statusCode).toBe(200);
+    const position = String(
+      (
+        await test.connection
+          .select({ id: listItems.id })
+          .from(listItems)
+          .innerJoin(lists, eq(lists.id, listItems.listId))
+          .where(eq(lists.builtIn, "positions"))
+          .limit(1)
+      )[0]?.id,
+    );
+    const hire = await send("POST", "/api/planned-hires", {
+      hires: [
+        {
+          positionId: position,
+          stateId: id,
+        },
+      ],
+    });
+    expect(hire.statusCode).toBe(201);
+    const hired = await send("PUT", choiceUrl(id), { label, meaning: "hired" });
+    expect(hired.statusCode).toBe(409);
+    expect(refusal(hired)).toBe(
+      "Planned hires are in this state, so it can't mean Hired. Move them to another state first.",
+    );
+    const [hireId = ""] = hire.json<{ ids: string[] }>().ids;
+    await send("DELETE", `/api/planned-hires/${hireId}`);
+    const remeant = await send("PUT", choiceUrl(id), {
+      label,
+      meaning: "hired",
+    });
+    expect(remeant.statusCode).toBe(200);
+    // A hire put in the state meanwhile, as it still means Open live, keeps the change from being
+    // approved, until someone fills it.
+    const later = await send("POST", "/api/planned-hires", {
+      hires: [{ positionId: position, stateId: id }],
+    });
+    const [laterId = ""] = later.json<{ ids: string[] }>().ids;
+    expect((await approve({ plannedHires: [laterId] })).statusCode).toBe(200);
+    const blocked = await approve({ choices: [id] });
+    expect(blocked.statusCode).toBe(409);
+    const [filler] = await test.connection
+      .insert(people)
+      .values({
+        preferredName: unique("Fictional Filler"),
+        employeeId: unique("FILL"),
+        positionId: position,
+      })
+      .returning({ id: people.id });
+    await test.connection
+      .update(plannedHires)
+      .set({ filledBy: String(filler?.id) })
+      .where(eq(plannedHires.id, laterId));
+    expect((await approve({ choices: [id] })).statusCode).toBe(200);
+    await test.connection
+      .update(listItems)
+      .set({ meaning: "open" })
+      .where(eq(listItems.id, id));
+    await test.connection
+      .delete(plannedHires)
+      .where(eq(plannedHires.id, laterId));
+    await test.connection
+      .delete(people)
+      .where(eq(people.id, String(filler?.id)));
     expect((await retire(id)).statusCode).toBe(200);
     expect((await approve({ choices: [id] })).statusCode).toBe(200);
   });

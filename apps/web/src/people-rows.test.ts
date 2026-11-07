@@ -1,0 +1,138 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for the People table's two kinds of row: what a planned hire is called, and what a request
+// to add one or a change to one becomes for the server.
+
+import type { List, Person } from "@fathom/shared";
+import { describe, expect, it } from "vitest";
+import { hireChange, hireRequest } from "./hires.ts";
+import { addedNames, personOnly, rowName } from "./people-rows.ts";
+
+const positions: List = {
+  id: "positions",
+  name: "Positions",
+  description: "",
+  visibility: "general",
+  retired: false,
+  builtIn: "positions",
+  choices: [
+    {
+      id: "position-1",
+      label: "Fictional Engineer",
+      description: "",
+      retired: false,
+    },
+  ],
+};
+const hire: Person = {
+  id: "h1",
+  kind: "planned-hire",
+  preferredName: "",
+  employeeId: "TBD-7",
+  positionId: "position-1",
+  values: {},
+  links: {},
+};
+
+describe("a row's name", () => {
+  it("is a planned hire's own, or its position and ID, or its ID to those who cannot see positions", () => {
+    expect(
+      rowName({ ...hire, preferredName: "Fictional opening" }, [positions]),
+    ).toBe("Fictional opening");
+    expect(rowName(hire, [positions])).toBe("Fictional Engineer, TBD-7");
+    expect(rowName(hire, [])).toBe("TBD-7");
+  });
+});
+
+describe("what a planned hire's row sends", () => {
+  it("adds a hire with no name or requisition when they are left empty, in the state chosen, if any", () => {
+    const request = {
+      preferredName: " ",
+      employeeId: "",
+      positionId: "position-1",
+      values: {},
+      links: {},
+    };
+    expect(hireRequest(request)).toEqual({
+      name: null,
+      requisition: null,
+      positionId: "position-1",
+      targetDate: null,
+      managerId: null,
+    });
+    expect(
+      hireRequest({
+        ...request,
+        preferredName: "Fictional opening",
+        employeeId: "REQ-1",
+        startDate: "2027-03-01",
+        managerId: "p1",
+        stateId: "s1",
+      }),
+    ).toEqual({
+      name: "Fictional opening",
+      requisition: "REQ-1",
+      positionId: "position-1",
+      targetDate: "2027-03-01",
+      managerId: "p1",
+      stateId: "s1",
+    });
+  });
+
+  it("changes only what a change to the row holds, a start date being the target date", () => {
+    expect(hireChange({})).toEqual({});
+    expect(
+      hireChange({
+        preferredName: "",
+        employeeId: "REQ-2",
+        positionId: "position-1",
+        startDate: null,
+        stateId: "s2",
+        managerId: null,
+      }),
+    ).toEqual({
+      name: null,
+      requisition: "REQ-2",
+      positionId: "position-1",
+      targetDate: null,
+      stateId: "s2",
+      managerId: null,
+    });
+  });
+
+  it("leaves a person's request without what only a planned hire's holds", () => {
+    expect(
+      personOnly({
+        kind: "person",
+        stateId: "s1",
+        preferredName: "Avery Fictional",
+        employeeId: "E1",
+        positionId: "position-1",
+        values: {},
+        links: {},
+      }),
+    ).toEqual({
+      preferredName: "Avery Fictional",
+      employeeId: "E1",
+      positionId: "position-1",
+      values: {},
+      links: {},
+    });
+  });
+});
+
+describe("what a notice calls the rows being added", () => {
+  it("says people, planned hires, or both", () => {
+    const person = {
+      preferredName: "Avery Fictional",
+      employeeId: "E1",
+      positionId: "position-1",
+      values: {},
+      links: {},
+    };
+    const opening = { ...person, kind: "planned-hire" as const };
+    expect(addedNames([person])).toBe("the people");
+    expect(addedNames([opening])).toBe("the planned hires");
+    expect(addedNames([person, opening])).toBe("the people and planned hires");
+  });
+});

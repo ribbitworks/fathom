@@ -18,6 +18,7 @@ import {
   listItems,
   lists,
   people,
+  plannedHires,
   recordChanges,
   reportingLines,
   teams,
@@ -189,7 +190,7 @@ describe("seeding", () => {
     const kept = await unseed(connection, organization);
     const manager = organization.people.find(({ id }) => id === managerId);
     expect(kept).toContain(
-      `${String(manager?.preferredName)}, whom people added by hand report to, or have`,
+      `${String(manager?.preferredName)}, whom people or planned hires added by hand report to, or have`,
     );
     expect(kept).toContain(
       "The Software Engineer position, which people or planned hires added by hand have, live or in drafts",
@@ -200,6 +201,34 @@ describe("seeding", () => {
     expect(await unseed(connection, organization)).toEqual([]);
     expect(await totalOf(people)).toBe(0);
     expect(await totalOf(reportingLines)).toBe(0);
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
+  it("keeps the seeded manager a planned hire added by hand names", async () => {
+    const managerId = String(organization.reportingLines.at(-1)?.managerId);
+    const [state] = await connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(eq(lists.builtIn, "hiring-states"));
+    const [hire] = await connection
+      .insert(plannedHires)
+      .values({
+        requisition: "Fictional-REQ-Hand",
+        positionId: handPosition,
+        stateId: String(state?.id),
+        managerId,
+      })
+      .returning({ id: plannedHires.id });
+    const kept = await unseed(connection, organization);
+    const manager = organization.people.find(({ id }) => id === managerId);
+    expect(kept).toContain(
+      `${String(manager?.preferredName)}, whom people or planned hires added by hand report to, or have`,
+    );
+    await connection
+      .delete(plannedHires)
+      .where(eq(plannedHires.id, String(hire?.id)));
+    expect(await unseed(connection, organization)).toEqual([]);
     expect(await seed(connection, organization)).toBe(true);
   });
 
@@ -306,10 +335,11 @@ describe("the seed command", () => {
     // described by two people, a role retired, Roles on the team renamed, Languages retired, the
     // Sites, Levels, and Positions orders, and a Positions description; the Skills list, its two
     // choices, and Harbourside added; and a person, an unused position, and the Certifications list
-    // removed; then the Skills column added, and a person given Rust in it.
+    // removed; then the Skills column added, and a person given Rust in it; and of planned hires,
+    // one moved to an open state, one added, and one given no target date, which is rejected.
     expect(made.map(({ action }) => action).sort()).toEqual([
-      ...Array<string>(16).fill("changed"),
-      ...Array<string>(8).fill("created"),
+      ...Array<string>(18).fill("changed"),
+      ...Array<string>(9).fill("created"),
       ...Array<string>(4).fill("deleted"),
     ]);
     expect(
@@ -323,6 +353,7 @@ describe("the seed command", () => {
         listRejection,
         listRejection,
         listRejection,
+        rejection,
         rejection,
         rejection,
       ].sort(),
@@ -358,9 +389,11 @@ describe("the seed command", () => {
     );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
-    expect(await connection.select().from(drafts)).toHaveLength(28);
+    expect(await connection.select().from(drafts)).toHaveLength(31);
     const reportingDrafts = made.filter(
-      ({ fields }) => "managerId" in fields || "teamName" in fields,
+      ({ recordType, fields }) =>
+        recordType === "person" &&
+        ("managerId" in fields || "teamName" in fields),
     );
     expect(
       reportingDrafts.map(({ fields }) => fields.teamName ?? null),
@@ -419,8 +452,8 @@ describe("the seed command", () => {
     ]);
     expect(await seedCommand(["seed"], environment())).toBe(0);
     // The two rejected drafts of people, the one being changed, the one given a skill, the one made
-    // by hand, the fourteen of lists, and the five of columns.
-    expect(await connection.select().from(drafts)).toHaveLength(24);
+    // by hand, the fourteen of lists, the five of columns, and the three of planned hires.
+    expect(await connection.select().from(drafts)).toHaveLength(27);
     expect(await holders()).toHaveLength(4);
     const levels = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
@@ -457,14 +490,17 @@ describe("the seed command", () => {
     const addresses = personaAccounts.map(({ email }) => email);
     expect(log.mock.calls.map(([line]) => line as string)).toEqual([
       "Added 150 fictional people, with their lists and columns",
+      "Added 8 fictional planned hires",
       "Added fictional release streams, with their cycles and releases",
       ...addresses.map((email) => `Account ready: ${email}`),
       "Added drafts made by the personas",
+      "Added drafts of planned hires made by the personas",
       "Added drafts of lists and columns made by the personas",
       "Added unpublished changes made by the personas",
       "The fictional data is already in the database",
       "The fictional data is already in the database",
       "Discarded 4 unpublished changes made by the personas",
+      "Discarded 3 drafts of planned hires",
       "Discarded 5 drafts made by the personas",
       "Discarded 17 drafts of lists and columns made by the personas",
       "Removed the fictional data",

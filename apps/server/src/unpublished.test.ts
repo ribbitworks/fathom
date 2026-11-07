@@ -487,7 +487,7 @@ describe("values that must be unique", () => {
           { preferredName: "Fictional", employeeId, positionId: testPosition },
         ],
       },
-      "Someone already has that Employee ID",
+      "Someone already has that ID",
     );
     const listName = unique("Fictional Held List");
     await saved(alice, "POST", "/api/lists", { name: listName });

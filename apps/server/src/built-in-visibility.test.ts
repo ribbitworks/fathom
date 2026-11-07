@@ -100,11 +100,10 @@ async function livePerson(): Promise<string> {
 
 async function liveHire(): Promise<string> {
   const response = await send(editor, "POST", "/api/planned-hires", {
-    positionId: testPosition,
-    targetDate: "2027-03-15",
+    hires: [{ positionId: testPosition, targetDate: "2027-03-15" }],
   });
   expect(response.statusCode, response.body).toBe(201);
-  const { id } = response.json<{ id: string }>();
+  const [id = ""] = response.json<{ ids: string[] }>().ids;
   const approved = await send(approver, "POST", "/api/drafts/approval", {
     plannedHires: [id],
   });
@@ -271,6 +270,27 @@ describe("the State column", () => {
     expect((await hireSeen(planner, id))?.stateId).toBeUndefined();
   });
 
+  it("leaves State, and a hire row's position and state, off People for those who cannot see their lists' tier", async () => {
+    const id = await liveHire();
+    const someone = await livePerson();
+    const planner = await test.signedIn("resource-planner");
+    await setVisibility("positions", "restricted");
+    await setVisibility("hiring-states", "restricted");
+    const read = await send(planner, "GET", "/api/people");
+    const { people, order } = read.json<{
+      people: Person[];
+      order: string[];
+    }>();
+    const row = people.find((person) => person.id === id);
+    expect(row).toMatchObject({ kind: "planned-hire" });
+    expect(row).not.toHaveProperty("positionId");
+    expect(row).not.toHaveProperty("stateId");
+    expect(people.find((person) => person.id === someone)).not.toHaveProperty(
+      "stateId",
+    );
+    expect(order).not.toContain("stateId");
+  });
+
   it("leaves a hire's drafted position and state out for those who see the plan but not their lists' tier", async () => {
     const id = await liveHire();
     const drafted = await send(editor, "PATCH", `/api/planned-hires/${id}`, {
@@ -385,7 +405,7 @@ describe("changes to positions and states", () => {
     const id = await liveHire();
     const add = () =>
       send(hireEditor, "POST", "/api/planned-hires", {
-        positionId: testPosition,
+        hires: [{ positionId: testPosition }],
       });
     const added = await add();
     expect(added.statusCode, added.body).toBe(201);
@@ -397,7 +417,7 @@ describe("changes to positions and states", () => {
     );
     await setVisibility("hiring-states", "general");
     // A hire added while its state could be seen can still be taken back.
-    const { id: addedId } = added.json<{ id: string }>();
+    const [addedId = ""] = added.json<{ ids: string[] }>().ids;
     expect(
       (await send(hireEditor, "DELETE", `/api/planned-hires/${addedId}/draft`))
         .statusCode,
@@ -474,7 +494,7 @@ describe("changes to positions and states", () => {
       hireEditor.cookie,
       "POST",
       "/api/planned-hires",
-      { positionId: testPosition },
+      { hires: [{ positionId: testPosition }] },
       { publish: false },
     );
     expect(made.statusCode, made.body).toBe(201);
@@ -510,6 +530,16 @@ describe("reading positions and states more sensitive than General", () => {
     await setVisibility("hiring-states", "restricted");
     await send(placeholders, "GET", "/api/planned-hires");
     expect(await viewsRecorded(placeholders)).toBe(1);
+  });
+
+  it("is recorded for people's State once the Hiring states list is above General", async () => {
+    await livePerson();
+    const reader = await grantedOnly(["people:view", "confidential:view"]);
+    await send(reader, "GET", "/api/people");
+    const before = await viewsRecorded(reader);
+    await setVisibility("hiring-states", "confidential");
+    await send(reader, "GET", "/api/people");
+    expect(await viewsRecorded(reader)).toBe(before + 1);
   });
 });
 

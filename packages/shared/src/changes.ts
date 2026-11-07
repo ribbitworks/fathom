@@ -13,9 +13,11 @@ import { textLimit } from "./views.ts";
 // manager; their team name is that of their own team.
 export const builtInColumnNames: ReadonlyMap<string, string> = new Map([
   ["preferredName", "Name"],
-  ["employeeId", "Employee ID"],
+  ["employeeId", "ID"],
   ["positionId", "Position"],
+  ["stateId", "State"],
   ["startDate", "Start"],
+  ["expected", "Expected"],
   ["endDate", "End"],
   ["managerId", "Manager"],
   ["isManager", "Manager?"],

@@ -469,7 +469,7 @@ const routes: Route[] = [
     method: "POST",
     pattern: "/api/planned-hires",
     needs: allOf("people:edit", "confidential:edit"),
-    body: () => ({ positionId: testPosition }),
+    body: () => ({ hires: [{ positionId: testPosition }] }),
   },
   {
     method: "PATCH",

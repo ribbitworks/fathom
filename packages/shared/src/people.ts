@@ -114,6 +114,7 @@ export const personDraftSchema = z.object({
     managerFrom: day.nullable().optional(),
     teamName: z.string().nullable().optional(),
     isManager: z.boolean().optional(),
+    stateId: z.string().optional(),
     values: valuesSchema,
     links: linksSchema.default({}),
   }),
@@ -122,12 +123,29 @@ export const personDraftSchema = z.object({
 
 export type PersonDraft = z.infer<typeof personDraftSchema>;
 
-// A person as the user sees them: as their draft, if any, makes them, with the draft beside, or,
-// for a draft that removes them, as they are.
+// What a row of the People table is: a person, or a planned hire not yet filled.
+export const rowKindSchema = z.enum(["person", "planned-hire"]);
+
+export type RowKind = z.infer<typeof rowKindSchema>;
+
+// A month, such as 2026-10.
+const month = z.string().regex(/^\d{4}-\d{2}$/);
+
+// A row of the People table as the user sees it: a person, or a planned hire, as its draft, if any,
+// makes it, with the draft beside, or, for a draft that removes it, as it is. A planned hire's
+// name, which may be empty, is its preferred name, its requisition or temporary ID its ID, and its
+// target date its start date.
 export const personSchema = z.object({
   id: z.string(),
+  // Left out for a person.
+  kind: rowKindSchema.optional(),
   preferredName: z.string(),
   employeeId: z.string(),
+  // A choice in the built-in hiring states list: a planned hire's state, or, for a person, the
+  // first choice meaning Hired. Left out for users who cannot see the list's tier.
+  stateId: z.string().optional(),
+  // The first month a planned hire can be allocated.
+  expected: month.optional(),
   // A choice in the built-in Positions list, left out for users who cannot see the list's tier.
   positionId: z.string().optional(),
   // Left out for users who cannot see Restricted details; null when not set.
@@ -201,6 +219,9 @@ export const recordIdSchema = z
   );
 
 const preferredName = z.string().trim().min(1).max(personLengths.preferredName);
+
+// A planned hire's name, any label that identifies it, or null for none.
+export const hireNameSchema = preferredName.nullable();
 const employeeId = recordIdSchema;
 // An empty name removes it.
 const teamName = z

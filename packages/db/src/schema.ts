@@ -191,7 +191,7 @@ export const accessHistory = fathomSchema.table(
 const sqlList = (values: readonly string[]) =>
   values.map((value) => `'${value}'`).join(", ");
 const builtInListList = sqlList(["positions", "hiring-states"]);
-const meaningList = sqlList(["proposed", "open"]);
+const meaningList = sqlList(["proposed", "open", "hired"]);
 
 // Lists of choices, such as locations or skills, for columns elsewhere to draw on. Most are defined
 // by people; a built-in list is known by its key, cannot be removed, and is drawn on by a built-in
@@ -445,6 +445,7 @@ export const plannedHires = fathomSchema.table(
   "planned_hires",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name"),
     requisition: text("requisition"),
     temporaryNumber: integer("temporary_number"),
     positionId: uuid("position_id")

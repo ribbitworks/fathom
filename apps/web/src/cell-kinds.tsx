@@ -32,6 +32,9 @@ import {
 
 type AnyColumn = Pick<TableColumn<never>, "key" | "label" | "multiple"> & {
   choices: readonly Choice[];
+  // Whether a choice may be put in a cell, apart from being offered in its list: any may, unless
+  // told otherwise.
+  pickable?: ((choice: Choice) => boolean) | undefined;
   required: boolean;
   // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
@@ -155,10 +158,14 @@ const date: CellKind = {
   breaksDownWhenRequired: false,
 };
 
-// The choices a cell offers: those offered in its list, and any retired ones it already has.
+// Whether a cell may be given a choice: one offered in its list that the column lets be picked.
+const pickable = (column: AnyColumn, option: Choice) =>
+  offered(option) && (column.pickable?.(option) ?? true);
+
+// The choices a cell offers: those it may be given, and any others it already has.
 const choicesFor = (column: AnyColumn, value: readonly string[]) =>
   column.choices
-    .filter((option) => offered(option) || value.includes(option.id))
+    .filter((option) => pickable(column, option) || value.includes(option.id))
     .map((option) => ({ value: option.id, label: option.label }));
 
 const chosen = (value: CellValue) => value as string[];
@@ -180,7 +187,7 @@ const choice: CellKind = {
   problem: () => undefined,
   pasted: (column, content) => {
     const found = column.choices.find(
-      (option) => offered(option) && sameName(option.label, content),
+      (option) => pickable(column, option) && sameName(option.label, content),
     );
     return found === undefined
       ? { problem: `No ${column.label} called ${content}` }

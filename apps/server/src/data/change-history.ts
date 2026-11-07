@@ -75,7 +75,7 @@ const peopleKinds: readonly RecordType[] = ["person", "saved-view"];
 const hiringKinds: readonly RecordType[] = ["planned-hire"];
 
 // The fields a planned hire is named by: its position and its ID.
-const hireNameFields = ["positionId", "requisition", "temporaryNumber"];
+const hireNameFields = ["name", "positionId", "requisition", "temporaryNumber"];
 
 // The plan's records, such as release streams, are seen with the plan or planning configuration.
 const planKinds: readonly RecordType[] = recordTypeSchema.options;
@@ -220,9 +220,10 @@ async function readFacts(
 const uuidPattern =
   /^[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}$/i;
 
-// Names each planned hire given by its position and ID, as the history the actor may see last
-// recorded them, such as "Software Engineer, TBD-7", or by its ID alone to those who cannot see the
-// Positions list's tier. Removing a hire records no values, so the name it had stays.
+// Names each planned hire given by its name, or, while it has none, by its position and ID, as the
+// history the actor may see last recorded them, such as "Software Engineer, TBD-7", or by its ID
+// alone to those who cannot see the Positions list's tier. Removing a hire records no values, so
+// the name it had stays.
 async function nameHires(
   database: Database,
   actor: Actor,
@@ -269,8 +270,10 @@ async function nameHires(
     actor,
     await builtInTier(database, "positions"),
   );
-  const named = (position: string, shownId: string) =>
-    seesPositions ? `${position}, ${shownId}` : shownId;
+  const named = (name: unknown, position: string, shownId: string) => {
+    if (typeof name === "string") return name;
+    return seesPositions ? `${position}, ${shownId}` : shownId;
+  };
   for (const [id, fields] of latest) {
     const position = facts.names.get(String(fields.get("positionId")));
     const requisition = fields.get("requisition");
@@ -278,7 +281,7 @@ async function nameHires(
       typeof requisition === "string"
         ? requisition
         : temporaryId(Number(fields.get("temporaryNumber")));
-    facts.names.set(id, named(String(position), shownId));
+    facts.names.set(id, named(fields.get("name"), String(position), shownId));
   }
   // Hires carried over from before they had positions and IDs are named as they are now.
   const unnamed = [...new Set(ids)].filter((id) => !latest.has(id));
@@ -286,6 +289,7 @@ async function nameHires(
     for (const hire of await database
       .select({
         id: plannedHires.id,
+        name: plannedHires.name,
         requisition: plannedHires.requisition,
         temporaryNumber: plannedHires.temporaryNumber,
         position: listItems.label,
@@ -296,6 +300,7 @@ async function nameHires(
       facts.names.set(
         hire.id,
         named(
+          hire.name,
           hire.position,
           hire.requisition ?? temporaryId(Number(hire.temporaryNumber)),
         ),

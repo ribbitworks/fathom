@@ -181,7 +181,7 @@ function cell(row: string, key: string): HTMLElement {
 // The keys of the columns, by the name each column's header shows.
 const columnKeys = new Map([
   ["Name", "preferredName"],
-  ["Employee ID", "employeeId"],
+  ["ID", "employeeId"],
   ["Position", "positionId"],
   ["Site", "f1"],
   ["Role on team", "f2"],
@@ -309,7 +309,7 @@ describe("who sees the People page", () => {
         .getAllByRole("columnheader")
         .map((header) => header.textContent),
     ).toEqual([
-      "Employee ID",
+      "ID",
       "Name",
       "Site",
       "Position",
@@ -317,6 +317,7 @@ describe("who sees the People page", () => {
       "Manager?",
       "Team",
       "Team name",
+      "Expected",
     ]);
     expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
     expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
@@ -399,24 +400,24 @@ describe("the table", () => {
     await userEvent.keyboard("{ArrowDown}");
     expect(document.activeElement).toBe(cell("p2", "employeeId"));
     await userEvent.keyboard("{End}");
-    expect(document.activeElement).toBe(cell("p2", "isManager"));
+    expect(document.activeElement).toBe(cell("p2", "expected"));
     await userEvent.keyboard("{Home}{ArrowUp}{ArrowUp}{ArrowLeft}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     await userEvent.keyboard("{Control>}{ArrowDown}{/Control}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     // Ctrl+End and Ctrl+Home go to the table's last and first cells.
     await userEvent.keyboard("{Control>}{End}{/Control}");
-    expect(document.activeElement).toBe(cell("new-0", "isManager"));
+    expect(document.activeElement).toBe(cell("new-0", "expected"));
     await userEvent.keyboard("{Meta>}{Home}{/Meta}");
     expect(document.activeElement).toBe(cell("p1", "preferredName"));
     // Tab moves across, on to the next row at the end of one, and back with Shift+Tab.
     await userEvent.keyboard("{Tab}");
     expect(document.activeElement).toBe(cell("p1", "employeeId"));
-    focusCell("p1", "isManager");
+    focusCell("p1", "expected");
     await userEvent.keyboard("{Tab}");
     expect(document.activeElement).toBe(cell("p2", "preferredName"));
     await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
-    expect(document.activeElement).toBe(cell("p1", "isManager"));
+    expect(document.activeElement).toBe(cell("p1", "expected"));
     // From the first cell, Shift+Tab leaves the table, and so does Tab from the last.
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Shift>}{Tab}{/Shift}");
@@ -455,7 +456,7 @@ describe("editing people", () => {
     const fetch = await openPeople({ "PATCH /api/people/p2": savedAs() });
     focusCell("p2", "employeeId");
     await userEvent.keyboard("Z");
-    const input = await screen.findByRole("textbox", { name: "Employee ID" });
+    const input = await screen.findByRole("textbox", { name: "ID" });
     await userEvent.type(input, "9{Tab}");
     expect(bodyOf(fetch, "PATCH", "/api/people/p2")).toEqual([
       { employeeId: "Z9" },
@@ -495,7 +496,7 @@ describe("editing people", () => {
     [
       "employeeId",
       "{Control>}a{/Control}{Backspace}E2",
-      "Someone already has that Employee ID",
+      "Someone already has that ID",
     ],
     ["preferredName", "x".repeat(101), "Name too long"],
   ])(
@@ -528,7 +529,7 @@ describe("editing people", () => {
     focusCell("p1", "employeeId");
     await userEvent.keyboard("{Enter}");
     await userEvent.type(
-      await screen.findByRole("textbox", { name: "Employee ID" }),
+      await screen.findByRole("textbox", { name: "ID" }),
       "0",
     );
     await userEvent.click(document.body);
@@ -660,19 +661,16 @@ describe("editing people", () => {
 
   it("says when a change cannot be saved", async () => {
     await openPeople({
-      "PATCH /api/people/p1": refused(
-        409,
-        "Someone already has that Employee ID",
-      ),
+      "PATCH /api/people/p1": refused(409, "Someone already has that ID"),
     });
     focusCell("p1", "employeeId");
     await userEvent.keyboard("{Enter}");
     await userEvent.type(
-      await screen.findByRole("textbox", { name: "Employee ID" }),
+      await screen.findByRole("textbox", { name: "ID" }),
       "0{Enter}",
     );
     expect(
-      await screen.findByText("Someone already has that Employee ID"),
+      await screen.findByText("Someone already has that ID"),
     ).toBeDefined();
   });
 });
@@ -775,16 +773,14 @@ describe("adding people", () => {
     const added = await screen.findByText("Draft: added");
     const row = added.closest("tr") as HTMLElement;
     expect(inRow(row, "Name").textContent).toContain("Casey");
-    expect(inRow(row, "Employee ID").getAttribute("aria-readonly")).toBe(
-      "true",
-    );
+    expect(inRow(row, "ID").getAttribute("aria-readonly")).toBe("true");
     expect(newCell("Name").textContent).toBe("");
     // Their Employee ID is taken already.
     await userEvent.keyboard("Dee{Tab}E9{Tab}eng{Tab}har{Tab}");
     await userEvent.keyboard("{Escape}{Enter}");
     expect(await screen.findByRole("alert")).toHaveProperty(
       "textContent",
-      "Someone already has that Employee ID",
+      "Someone already has that ID",
     );
     // Nothing changes them, from typing, Delete, or a menu.
     act(() => {
@@ -803,9 +799,7 @@ describe("adding people", () => {
       ).toHaveLength(2);
     });
     await waitFor(() => {
-      expect(
-        inRow(row, "Employee ID").getAttribute("aria-readonly"),
-      ).toBeNull();
+      expect(inRow(row, "ID").getAttribute("aria-readonly")).toBeNull();
     });
     expect(document.activeElement).toBe(inRow(row, "Name"));
     expect(row.isConnected).toBe(true);
@@ -836,7 +830,7 @@ describe("adding people", () => {
     const rows = screen.getAllByRole("row", { name: "New person" });
     expect(rows.map((row) => inRow(row, "Name").textContent)).toEqual([
       "Casey New, not saved yet",
-      "Dee New, not saved yet: Employee ID, Position, Site needed",
+      "Dee New, not saved yet: ID, Position, Site needed",
     ]);
   });
 
@@ -862,19 +856,19 @@ describe("adding people", () => {
     await userEvent.keyboard("C{Enter}");
     expect(await screen.findByRole("alert")).toHaveProperty(
       "textContent",
-      "Employee ID needed",
+      "ID needed",
     );
     act(() => {
-      newCell("Employee ID").focus();
+      newCell("ID").focus();
     });
     await userEvent.keyboard("E2{Enter}");
     // An Employee ID someone already has is named before what is still needed.
     expect(await screen.findByRole("alert")).toHaveProperty(
       "textContent",
-      "Someone already has that Employee ID",
+      "Someone already has that ID",
     );
     act(() => {
-      newCell("Employee ID").focus();
+      newCell("ID").focus();
     });
     await userEvent.keyboard("{Delete}E7{Enter}");
     expect(await screen.findByRole("alert")).toHaveProperty(
@@ -902,14 +896,14 @@ describe("adding people", () => {
     const rows = screen.getAllByRole("row", { name: "New person" });
     expect(rows).toHaveLength(1);
     act(() => {
-      newCell("Employee ID").focus();
+      newCell("ID").focus();
     });
     await userEvent.keyboard("{F2}");
     await userEvent.type(
-      screen.getByRole("textbox", { name: "Employee ID" }),
+      screen.getByRole("textbox", { name: "ID" }),
       "E5{Escape}",
     );
-    expect(newCell("Employee ID").textContent).toBe("");
+    expect(newCell("ID").textContent).toBe("");
     await userEvent.keyboard("{F2}{Enter}{Enter}");
     await userEvent.keyboard("{Escape}");
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
@@ -955,7 +949,7 @@ describe("adding people", () => {
     await paste(cell("p1", "preferredName"), "Somebody\tE20");
     await paste(newCell("Name"), "   ");
     await paste(
-      newCell("Employee ID"),
+      newCell("ID"),
       "E21\tEngineer\tOld Mill\nE22\tEngineer\tAtlantis\tTeam Lead\textra\textra\textra\textra",
     );
     const rows = screen.getAllByRole("row", { name: "New person" });
@@ -1218,6 +1212,7 @@ describe("drafts", () => {
       "",
       "No",
       "",
+      "",
     ]);
     // Moving down from the draft row skips the live row.
     focusCell("p1", "employeeId");
@@ -1241,7 +1236,7 @@ describe("drafts", () => {
     // A person drafted to be removed cannot be edited.
     focusCell("p3", "employeeId");
     await userEvent.keyboard("{Enter}");
-    expect(screen.queryByRole("textbox", { name: "Employee ID" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "ID" })).toBeNull();
     // Their menu sends the rejected draft for approval again, or discards it.
     await userEvent.keyboard("{Shift>}{F10}{/Shift}");
     expect(
@@ -1357,6 +1352,7 @@ describe("drafts", () => {
     expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
       {
         people: ["p1"],
+        plannedHires: [],
         lists: [],
         choices: [],
         orders: [],
@@ -1368,6 +1364,7 @@ describe("drafts", () => {
     expect(bodyOf(fetch, "POST", "/api/drafts/rejection")).toEqual([
       {
         people: ["p1", "p2"],
+        plannedHires: [],
         lists: [],
         choices: [],
         orders: [],
@@ -1739,7 +1736,7 @@ describe("columns", () => {
 
     // Built-in columns move too, to the very start.
     act(() => {
-      header("Employee ID").focus();
+      header("ID").focus();
     });
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
     await waitFor(() => {
@@ -1758,11 +1755,11 @@ describe("columns", () => {
       header("Name").focus();
     });
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
-    await userEvent.click(header("Manager?"));
-    // Role on team's menu may still be closing, so its items are looked for only in Manager?'s own
+    await userEvent.click(header("Expected"));
+    // Role on team's menu may still be closing, so its items are looked for only in Expected's own
     // menu.
     const endMenu = await screen.findByRole("menu", {
-      name: /^Manager\? column/,
+      name: /^Expected column/,
     });
     await userEvent.click(
       within(endMenu).getByRole("menuitem", { name: /^Move right/ }),
@@ -1778,9 +1775,9 @@ describe("columns", () => {
     await waitFor(() => {
       expect(moves("f1")).toHaveLength(1);
     });
-    // Moves save one after another, so once Site's has been sent, any from Manager?'s menu has been
+    // Moves save one after another, so once Site's has been sent, any from Expected's menu has been
     // too.
-    expect(moves("isManager")).toEqual([]);
+    expect(moves("expected")).toEqual([]);
     expect(moves("f2")).toHaveLength(1);
   });
 });
@@ -2287,7 +2284,7 @@ describe("searching, sorting, and filtering", () => {
       wholeText("Name from Avery Fictional to Avery Drafted, by Ann Fictional"),
     );
     expect(
-      screen.getByText(wholeText("Employee ID from E1 to E9, by Fathom")),
+      screen.getByText(wholeText("ID from E1 to E9, by Fathom")),
     ).toBeDefined();
     await userEvent.click(line);
     await waitFor(() => {
@@ -2459,7 +2456,7 @@ describe("searching, sorting, and filtering", () => {
       "nobody",
     );
     expect(screen.getByText("No matching people").closest("td")?.colSpan).toBe(
-      8,
+      9,
     );
     expect(
       within(screen.getByRole("grid"))
@@ -2467,13 +2464,14 @@ describe("searching, sorting, and filtering", () => {
         .map((th) => th.textContent),
     ).toEqual([
       "Name",
-      "Employee ID",
+      "ID",
       "Position",
       "Site",
       "Manager",
       "Team",
       "Team name",
       "Manager?",
+      "Expected",
     ]);
   });
 
@@ -2880,6 +2878,7 @@ describe("drafts of columns", () => {
       expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: [],
+          plannedHires: [],
           lists: [],
           choices: [],
           orders: [],
@@ -3150,6 +3149,7 @@ describe("drafts of columns", () => {
       expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: [],
+          plannedHires: [],
           lists: [],
           choices: [],
           orders: [],
@@ -3756,5 +3756,194 @@ describe("unpublished and held changes", () => {
     expect(
       within(menu).getByRole("menuitem", { name: "Discard new order" }),
     ).toBeDefined();
+  });
+});
+
+describe("planned hires", () => {
+  const hiringEditor = session([
+    "configuration:view",
+    "confidential:edit",
+    "confidential:view",
+    "people:edit",
+    "people:view",
+    "plan:view",
+    "restricted:edit",
+    "restricted:view",
+  ]);
+  const states = {
+    ...list("states", "Hiring states", [
+      { ...choice("s-proposed", "Request to hire"), meaning: "proposed" },
+      { ...choice("s-open", "Approved to hire"), meaning: "open" },
+      { ...choice("s-hired", "Hired"), meaning: "hired" },
+    ]),
+    builtIn: "hiring-states",
+  };
+  const rejected = {
+    action: "changed",
+    changed: ["stateId"],
+    live: { stateId: "s-proposed", values: {}, links: {} },
+    state: "rejected",
+    reason: "Not this quarter",
+    madeBy: null,
+    madeAt: null,
+  };
+  const opening = {
+    id: "h1",
+    kind: "planned-hire",
+    preferredName: "",
+    employeeId: "REQ-1",
+    positionId: "position-2",
+    stateId: "s-open",
+    expected: "2027-01",
+    startDate: null,
+    values: {},
+    links: {},
+    draft: rejected,
+  };
+  const drafted = {
+    id: "h2",
+    kind: "planned-hire",
+    preferredName: "Fictional hire",
+    employeeId: "TBD-2",
+    positionId: "position-1",
+    stateId: "s-proposed",
+    expected: "2026-12",
+    startDate: null,
+    values: {},
+    links: {},
+    draft: {
+      ...rejected,
+      action: "created",
+      changed: [],
+      live: { values: {}, links: {} },
+      state: "waiting",
+    },
+  };
+
+  async function openHires(answers: Answers = {}) {
+    const fetch = serverAnswers({
+      "GET /api/session": hiringEditor,
+      "GET /api/people": () =>
+        Response.json({
+          people: [{ ...avery, stateId: "s-hired" }, opening, drafted],
+          fields: [],
+          order: [
+            "preferredName",
+            "employeeId",
+            "positionId",
+            "stateId",
+            "startDate",
+            "expected",
+          ],
+          views: [],
+        }),
+      "GET /api/lists": () =>
+        Response.json({ lists: [sites, roles, positions, states] }),
+      "PATCH /api/planned-hires/h1": savedAs(),
+      "DELETE /api/planned-hires/h1": savedAs(),
+      "DELETE /api/planned-hires/h1/draft": savedAs(),
+      "DELETE /api/planned-hires/h1/draft/rejection": savedAs(),
+      "DELETE /api/planned-hires/h2/draft": savedAs(),
+      "POST /api/planned-hires": () =>
+        Response.json({ ids: ["h3"], changeSetId: s1 }, { status: 201 }),
+      [`POST /api/undo/${s1}`]: savedAs(u1),
+      ...answers,
+    });
+    renderApp("/people");
+    await screen.findByRole("grid", { name: "People" });
+    return fetch;
+  }
+
+  async function fromMenu(row: string, item: string) {
+    focusCell(row, "employeeId");
+    await userEvent.keyboard("{Shift>}{F10}{/Shift}");
+    await userEvent.click(await screen.findByRole("menuitem", { name: item }));
+  }
+
+  it("names an unnamed hire by its position and ID, and changes it through the planned hires' routes", async () => {
+    const fetch = await openHires();
+    expect(cell("h1", "preferredName").textContent).toContain("Tester, REQ-1");
+    await fromMenu("h2", "Discard draft");
+    expect(
+      await screen.findByText(
+        "Discarded the draft adding the planned hire Fictional hire.",
+        {
+          exact: false,
+        },
+      ),
+    ).toBeDefined();
+    expect(cell("p1", "stateId").getAttribute("aria-readonly")).toBe("true");
+    focusCell("h1", "preferredName");
+    await userEvent.keyboard("Fictional opening{Enter}");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PATCH", "/api/planned-hires/h1")).toEqual([
+        { name: "Fictional opening" },
+      ]);
+    });
+    focusCell("h1", "employeeId");
+    await userEvent.keyboard("{Delete}");
+    await waitFor(() => {
+      expect(bodyOf(fetch, "PATCH", "/api/planned-hires/h1")).toContainEqual({
+        requisition: null,
+      });
+    });
+    await fromMenu("h1", "Resubmit");
+    await fromMenu("h1", "Discard draft");
+    await fromMenu("h1", "Remove planned hire");
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls
+          .filter(([url]) => url.startsWith("/api/planned-hires/h1"))
+          .map(([url, init]) => `${String(init?.method)} ${url}`),
+      ).toEqual(
+        expect.arrayContaining([
+          "DELETE /api/planned-hires/h1/draft/rejection",
+          "DELETE /api/planned-hires/h1/draft",
+          "DELETE /api/planned-hires/h1",
+        ]) as string[],
+      );
+    });
+  });
+
+  it("adds planned hires from New planned hire, in Request to hire unless another state is chosen", async () => {
+    const fetch = await openHires({
+      "POST /api/planned-hires": () =>
+        Response.json({ ids: ["h3", "h4"], changeSetId: s1 }, { status: 201 }),
+    });
+    const newHire = screen.getByRole("button", { name: "New planned hire" });
+    await userEvent.click(newHire);
+    await userEvent.click(screen.getByRole("button", { name: "New person" }));
+    expect(screen.getByRole("row", { name: "New person" })).toBeDefined();
+    await userEvent.click(newHire);
+    const newRow = screen.getByRole("row", { name: "New planned hire" });
+    expect(inRow(newRow, "Name").textContent).toBe("");
+    await paste(
+      inRow(newRow, "Name"),
+      "\tREQ-9\tEngineer\nFictional opening\tREQ-10\tTester",
+    );
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/planned-hires")).toEqual([
+        {
+          hires: [
+            {
+              name: null,
+              requisition: "REQ-9",
+              positionId: "position-1",
+              targetDate: null,
+              managerId: null,
+              stateId: "s-proposed",
+            },
+            {
+              name: "Fictional opening",
+              requisition: "REQ-10",
+              positionId: "position-2",
+              targetDate: null,
+              managerId: null,
+              stateId: "s-proposed",
+            },
+          ],
+        },
+      ]);
+    });
   });
 });

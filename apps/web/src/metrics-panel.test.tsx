@@ -276,6 +276,7 @@ describe("the Metrics panel", () => {
       "Manager?",
       "Team",
       "Level",
+      "Expected",
     ]);
     expect((picker as HTMLSelectElement).value).toBe("");
     expect(panel().textContent).toContain("Choose a column to count people");

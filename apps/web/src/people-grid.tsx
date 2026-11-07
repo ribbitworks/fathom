@@ -1,25 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The People table: the table of records record-grid.tsx sets out, with what is particular to
-// people. Its columns are each person's name, Employee ID, and position, their manager, whether they
-// are marked as a manager, whom others can report to, their team, which follows from their manager,
-// and their own team's name, the added columns, and, for those who may see them, start and end dates
-// and the date their manager is theirs from. A person's Employee ID must be one no one else has, and
-// their end date cannot be before their start date.
+// people and planned hires, its two kinds of row. Its columns are each row's name, ID, position,
+// and state, Hired for every person, their manager, whether they are marked as a manager, whom
+// others can report to, their team, which follows from their manager, and their own team's name,
+// the added columns, the month a planned hire is expected, and, for those who may see them, start
+// and end dates and the date their manager is theirs from. A planned hire's name is optional, and
+// while it has none its position and ID stand in for it; it has no end date, mark as a manager,
+// date its manager is its own from, or team name, and its start date is its target date. No two
+// rows have the same ID, a person's end date cannot be before their start date, and an ID typed in
+// cannot look like a temporary one.
 
-import type {
-  Choice,
-  Field,
-  List,
-  Person,
-  PersonChange,
-  PersonRequest,
+import type { Choice, Field, List, Person } from "@fathom/shared";
+import {
+  builtInColumnNames,
+  personLengths,
+  temporaryIdPrefix,
 } from "@fathom/shared";
-import { builtInColumnNames, personLengths } from "@fathom/shared";
 import { VisuallyHidden } from "@mantine/core";
 import { notShown, personDraftFields } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
-import { sameName } from "./lists.ts";
+import { offered, sameName } from "./lists.ts";
 import {
   cellColumn,
   type Column as RecordColumn,
@@ -35,19 +36,35 @@ import {
 } from "./record-grid.tsx";
 import { StatusMark } from "./status-mark.tsx";
 import { flagChoice } from "./cell-kinds.tsx";
+import {
+  isHire,
+  type RowChange,
+  rowName,
+  type RowRequest,
+} from "./people-rows.ts";
 import type { CellValue } from "./table-view.ts";
+import { count } from "./numbers.ts";
 import { today } from "./today.ts";
 
-export type PeopleActions = RecordActions<Person, PersonChange, PersonRequest>;
+export type PeopleActions = RecordActions<Person, RowChange, RowRequest>;
 
 export type PeopleGridHandle = RecordGridHandle;
 
-export type Column = RecordColumn<Person, PersonChange>;
+export type Column = RecordColumn<Person, RowChange>;
+
+const personKind = "person";
+const hireKind = "planned-hire";
+
+// What a planned hire has but a person does not, and the other way round.
+const hiresOnly = (kind: string) => kind === hireKind;
+const peopleOnly = (kind: string) => kind !== hireKind;
 
 // The keys of a person's built-in details held as text.
 export type DetailKey =
   | "preferredName"
   | "employeeId"
+  | "positionId"
+  | "stateId"
   | "startDate"
   | "endDate"
   | "managerFrom"
@@ -57,6 +74,8 @@ export type DetailKey =
 const detailKeys: readonly DetailKey[] = [
   "preferredName",
   "employeeId",
+  "positionId",
+  "stateId",
   "startDate",
   "endDate",
   "managerFrom",
@@ -76,6 +95,7 @@ const markedLive = (person: Person) =>
 // to be added or removed nor still being added, and not gone by today, as far as the reader sees
 // their end date. Fathom checks the rest, such as loops.
 const mayManage = (person: Person, today: string) =>
+  !isHire(person) &&
   person.draft?.action !== "deleted" &&
   person.draft?.action !== "created" &&
   !isPending(person) &&
@@ -111,9 +131,9 @@ function managerChoices(people: readonly Person[], today: string): Choice[] {
   const shown = new Set(people.map(({ id }) => id));
   return byLabel([
     ...people.flatMap((person) => {
-      const offered = mayManage(person, today);
-      return offered || named.has(person.id)
-        ? [choice(person.id, person.preferredName, !offered)]
+      const manages = mayManage(person, today);
+      return !isHire(person) && (manages || named.has(person.id))
+        ? [choice(person.id, person.preferredName, !manages)]
         : [];
     }),
     ...[...named]
@@ -215,11 +235,32 @@ function makeReportingColumns(
   ];
 }
 
-// The People table's columns, in the order given by their keys: each person's name, Employee ID,
-// and position, from the built-in Positions list, for those who may see them, start and end dates,
-// their manager, for those who may see it, the date their manager is theirs from, their team and
-// team name, and the added columns. A column the order does not name yet comes at the end. Managers
-// are picked from the people given.
+const month = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+// The months planned hires are expected, earliest first, as choices named as people read them, such
+// as Mar 2027, so the column sorts and filters by month.
+function monthChoices(people: readonly Person[]): Choice[] {
+  return [...new Set(people.flatMap(({ expected }) => expected ?? []))]
+    .sort()
+    .map((expected) =>
+      choice(
+        expected,
+        month.format(new Date(`${expected}-01T00:00:00Z`)),
+        false,
+      ),
+    );
+}
+
+// The People table's columns, in the order given by their keys: each row's name, optional for a
+// planned hire, its ID, and position, from the built-in Positions list, for those who may see them,
+// its state, Hired for every person, start and end dates, their manager, for those who may see it,
+// the date their manager is theirs from, their team and team name, the added columns, which planned
+// hires do not have yet, and the month a planned hire is expected. A column the order does not name
+// yet comes at the end. Managers are picked from the people given.
 export function columnsFor(
   fields: readonly Field[],
   lists: readonly List[],
@@ -234,7 +275,7 @@ export function columnsFor(
     required = false,
     maxLength?: number,
   ) =>
-    cellColumn<Person, PersonChange>(key, kind, {
+    cellColumn<Person, RowChange>(key, kind, {
       // Every built-in column is named.
       label: builtInColumnNames.get(key) as string,
       required,
@@ -242,6 +283,11 @@ export function columnsFor(
       multiple: false,
       maxLength,
     });
+  // Built-in columns only people have.
+  const personal = (column: Column): Column => ({
+    ...column,
+    offeredOn: peopleOnly,
+  });
   const [manager, team] = reportingColumns(people, today());
   const position: Column = {
     key: "positionId",
@@ -260,45 +306,100 @@ export function columnsFor(
     // A required column is never saved empty, so a change always holds a position.
     change: (value) => ({ positionId: asIds(value)[0] }),
   };
+  // Readers who cannot see the hiring states list are sent none, and see no State column.
+  const statesList = lists.find(({ builtIn }) => builtIn === "hiring-states");
+  const states = (statesList?.choices ?? []).filter(
+    ({ draft }) => draft?.action !== "created",
+  );
+  const firstProposed = states.find(
+    (option) => option.meaning === "proposed" && offered(option),
+  );
+  const state: Column = {
+    key: "stateId",
+    kind: "choice",
+    label: builtInColumnNames.get("stateId") as string,
+    required: false,
+    multiple: false,
+    choices: states,
+    // Hired is every person's state, never picked: a planned hire is hired by filling it.
+    pickable: (option) => option.meaning !== "hired",
+    value: (row) => chosen(row.stateId),
+    live: (draft) => chosen(draft.live.stateId),
+    // Every planned hire has a state, so a change always holds one.
+    change: (value) => ({ stateId: asIds(value)[0] as string }),
+    requiredOn: hiresOnly,
+    readOnlyOn: peopleOnly,
+    // A planned hire added with no state is in the first meaning Proposed.
+    newRowValue: (rowKind) =>
+      hiresOnly(rowKind) && firstProposed !== undefined
+        ? [firstProposed.id]
+        : [],
+  };
+  const expected: Column = {
+    key: "expected",
+    kind: "choice",
+    label: builtInColumnNames.get("expected") as string,
+    required: false,
+    multiple: false,
+    choices: monthChoices(people),
+    readOnly: true,
+    value: (row) => chosen(row.expected),
+    live: () => [],
+    change: () => ({}),
+    offeredOn: hiresOnly,
+  };
   return inOrder(
     [
-      builtIn("preferredName", "text", true, personLengths.preferredName),
-      builtIn("employeeId", "text", true, personLengths.employeeId),
+      {
+        ...builtIn("preferredName", "text", true, personLengths.preferredName),
+        requiredOn: peopleOnly,
+        // A planned hire with no name of its own goes by its position and ID.
+        standIn: (row: Person) => rowName(row, lists),
+      },
+      {
+        ...builtIn("employeeId", "text", true, personLengths.employeeId),
+        // Cleared, a planned hire's ID is a temporary one.
+        requiredOn: peopleOnly,
+      },
       ...(showPosition ? [position] : []),
+      ...(statesList === undefined ? [] : [state]),
       ...(showDates
-        ? [builtIn("startDate", "date"), builtIn("endDate", "date")]
+        ? [builtIn("startDate", "date"), personal(builtIn("endDate", "date"))]
         : []),
       manager,
-      {
+      personal({
         ...builtIn("isManager", "flag"),
         choices: [markedChoice],
         emptyLabel: "No",
-      },
+      }),
       ...(showDates
         ? [
             // Fathom takes today, or a new person's start date, when no date is given.
-            {
+            personal({
               ...builtIn("managerFrom", "date"),
               change: (value: CellValue) =>
                 value === "" ? {} : { managerFrom: value as string },
-            },
+            }),
           ]
         : []),
       team,
-      {
+      personal({
         ...builtIn("teamName", "text", false, personLengths.teamName),
         breaksDown: false,
-      },
+      }),
       // A column's type is the kind of its cells.
       ...fields.map((field) =>
-        cellColumn<Person, PersonChange>(field.id, field.type, {
-          label: field.name,
-          required: field.required,
-          field,
-          choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
-          multiple: field.multiple,
-        }),
+        personal(
+          cellColumn<Person, RowChange>(field.id, field.type, {
+            label: field.name,
+            required: field.required,
+            field,
+            choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
+            multiple: field.multiple,
+          }),
+        ),
       ),
+      expected,
     ],
     order,
   );
@@ -368,9 +469,21 @@ function recordProblem(
   before?: Record<string, CellValue>,
 ): RowProblem | undefined {
   const employeeId = values.employeeId;
+  const checksId = changed === undefined || changed === "employeeId";
   if (
-    (changed === undefined || changed === "employeeId") &&
+    checksId &&
     typeof employeeId === "string" &&
+    employeeId.trim().toLowerCase().startsWith(temporaryIdPrefix.toLowerCase())
+  ) {
+    return {
+      message: `An ID cannot start with ${temporaryIdPrefix}, which temporary IDs use`,
+      column: "employeeId",
+    };
+  }
+  if (
+    checksId &&
+    typeof employeeId === "string" &&
+    employeeId.trim() !== "" &&
     others().some(
       (other) =>
         typeof other.employeeId === "string" &&
@@ -378,7 +491,7 @@ function recordProblem(
     )
   ) {
     return {
-      message: "Someone already has that Employee ID",
+      message: "Someone already has that ID",
       column: "employeeId",
     };
   }
@@ -412,9 +525,9 @@ function recordProblem(
   return undefined;
 }
 
-// The request that adds a person, from each column's value as its kind would save it, with every
-// choice column named and no link left empty.
-function requestFor(parts: readonly PersonChange[]): PersonRequest {
+// The request that adds a person or planned hire, from each column's value as its kind would save
+// it, with every choice column named and no link left empty.
+function requestFor(parts: readonly RowChange[]): RowRequest {
   // Every table that adds people has its name, Employee ID, Position and Manager columns, since
   // those who cannot see positions add none, and its dates together or not at all.
   const {
@@ -427,11 +540,13 @@ function requestFor(parts: readonly PersonChange[]): PersonRequest {
     managerFrom,
     teamName,
     isManager,
-  } = Object.assign({}, ...parts) as PersonRequest;
+    stateId,
+  } = Object.assign({}, ...parts) as RowRequest;
   return {
     preferredName,
     employeeId,
     positionId,
+    ...(stateId === undefined ? {} : { stateId }),
     ...(startDate === undefined ? {} : { startDate, endDate }),
     ...(managerId == null
       ? {}
@@ -456,47 +571,90 @@ function peopleTable(
   showDates: boolean,
   showPosition: boolean,
   people: readonly Person[],
-): RecordTable<Person, PersonChange, PersonRequest> {
+  lists: readonly List[],
+  canEditHires: boolean,
+): RecordTable<Person, RowChange, RowRequest> {
+  const kindOf = (row: Person) => row.kind ?? personKind;
+  const hireIds = new Set(people.filter(isHire).map(({ id }) => id));
   return {
     label: "People",
     one: "person",
     noun: "people",
-    newRowLabel: "New person",
-    removeLabel: "Remove person",
-    nameOf: (person) => person.preferredName,
+    counted: {
+      noun: "people and planned hires",
+      counted: (rows) => {
+        const hires = rows.filter(isHire).length;
+        const people = rows.length - hires;
+        return [
+          ...(people > 0 || hires === 0
+            ? [`${count(people)} ${people === 1 ? "person" : "people"}`]
+            : []),
+          ...(hires > 0
+            ? [
+                `${count(hires)} ${hires === 1 ? "planned hire" : "planned hires"}`,
+              ]
+            : []),
+        ].join(" and ");
+      },
+    },
+    kinds: [personKind, hireKind],
+    kindOf,
+    newRowLabel: (kind) =>
+      kind === hireKind ? "New planned hire" : "New person",
+    removeLabel: (row) =>
+      isHire(row) ? "Remove planned hire" : "Remove person",
+    nameOf: (row) => rowName(row, lists),
+    readOnlyRecord: (row) => isHire(row) && !canEditHires,
     columnsFor: (fields, lists, order, records) =>
       columnsFor(fields, lists, order, showDates, records, showPosition),
     liveRecords: livePeople,
     draftFields: (person, draft, fields, lists) =>
       personDraftFields(person, draft, fields, lists, people),
     recordProblem,
-    request: requestFor,
-    drafts: (ids) => ({ ...noDrafts(), people: ids }),
+    request: (changes, kind) => ({
+      ...requestFor(changes),
+      ...(kind === hireKind ? { kind } : {}),
+    }),
+    drafts: (ids) => ({
+      ...noDrafts(),
+      people: ids.filter((id) => !hireIds.has(id)),
+      plannedHires: ids.filter((id) => hireIds.has(id)),
+    }),
   };
 }
 
 type PeopleGridProps = Omit<
-  RecordGridProps<Person, PersonChange, PersonRequest>,
+  RecordGridProps<Person, RowChange, RowRequest>,
   "records" | "table"
 > & {
-  // Everyone the user may see; the view decides who is shown, and in what order.
+  // Everyone and every planned hire the user may see; the view decides which are shown, and in
+  // what order.
   people: Person[];
   showDates: boolean;
   // Whether the user sees the Positions list's tier; without it they see no Position column and
   // cannot add people, who each need a position.
   showPosition?: boolean;
+  // Whether the user may change planned hires, as well as people.
+  canEditHires?: boolean;
 };
 
 export function PeopleGrid({
   people,
   showDates,
   showPosition = true,
+  canEditHires = false,
   ...props
 }: PeopleGridProps) {
   return (
     <RecordGrid
       records={people}
-      table={peopleTable(showDates, showPosition, people)}
+      table={peopleTable(
+        showDates,
+        showPosition,
+        people,
+        props.lists,
+        canEditHires,
+      )}
       canAdd={showPosition}
       {...props}
     />

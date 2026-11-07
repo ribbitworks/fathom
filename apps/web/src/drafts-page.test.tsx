@@ -141,7 +141,7 @@ describe("the Drafts page", () => {
     await openDrafts();
     expect(await entries()).toEqual([
       "Fictional Editor drafted changes to Avery Fictional: Start set to Nov 2, 2026; Site from Northmere to Harbour; A deleted column changed",
-      "Fictional Editor drafted adding Blake Fictional: Employee ID set to E-p2; Site set to Harbour",
+      "Fictional Editor drafted adding Blake Fictional: ID set to E-p2; Site set to Harbour",
       "Fathom drafted removing Casey Fictional",
       "Fictional Editor drafted changes to Drew Fictional: Name from Drew Before to Drew Fictional Rejected: Fictional reason",
     ]);
@@ -230,6 +230,7 @@ describe("the Drafts page", () => {
       expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
         {
           people: [],
+          plannedHires: [],
           lists: ["l2"],
           choices: ["c3"],
           orders: [],
@@ -310,6 +311,7 @@ describe("the Drafts page", () => {
       expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
         {
           people: ["p6"],
+          plannedHires: [],
           lists: ["l3"],
           choices: ["c4"],
           orders: [],
@@ -391,7 +393,7 @@ describe("the Drafts page", () => {
     expect(
       screen.getByText(
         wholeText(
-          /From Name, Employee ID, Site, Level, Team to Name, Previous site, Employee ID, Site, Grade, Team/,
+          /From Name, ID, Site, Level, Team to Name, Previous site, ID, Site, Grade, Team/,
         ),
       ),
     ).toBeDefined();
@@ -412,6 +414,7 @@ describe("the Drafts page", () => {
       expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
         {
           people: [],
+          plannedHires: [],
           lists: [],
           choices: [],
           orders: [],
@@ -618,6 +621,92 @@ describe("the Drafts page", () => {
     expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
       {
         people: ["p1", "p2"],
+        plannedHires: [],
+        lists: [],
+        choices: [],
+        orders: [],
+        columns: [],
+        columnOrder: false,
+        records: [],
+      },
+    ]);
+  });
+
+  it("names a planned hire's draft by its position and ID, and approves it as a planned hire", async () => {
+    const positions = {
+      ...sites,
+      id: "positions",
+      name: "Positions",
+      builtIn: "positions",
+      choices: [
+        {
+          id: "position-1",
+          label: "Engineer",
+          description: "",
+          retired: false,
+        },
+      ],
+    };
+    const states = {
+      ...sites,
+      id: "states",
+      name: "Hiring states",
+      builtIn: "hiring-states",
+      choices: [
+        {
+          id: "s-proposed",
+          label: "Request to hire",
+          description: "",
+          retired: false,
+          meaning: "proposed",
+        },
+        {
+          id: "s-open",
+          label: "Approved to hire",
+          description: "",
+          retired: false,
+          meaning: "open",
+        },
+      ],
+    };
+    const hire = person("h1", "", {
+      kind: "planned-hire",
+      employeeId: "REQ-7",
+      stateId: "s-open",
+      draft: draft({
+        action: "changed",
+        changed: ["stateId"],
+        live: { stateId: "s-proposed", values: {} },
+      }),
+    });
+    const fetch = await openDrafts({
+      "GET /api/people": peopleWith([hire]),
+      "GET /api/lists": () =>
+        Response.json({ lists: [sites, positions, states] }),
+      "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
+    });
+    expect(await entries()).toEqual([
+      "Fictional Editor drafted changes to the planned hire Engineer, REQ-7: State from Request to hire to Approved to hire",
+    ]);
+    await userEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Select the draft of the planned hire Engineer, REQ-7",
+      }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 1 draft?",
+    });
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Approve" }),
+    );
+    expect(await screen.findByText("Approved 1 draft.")).toBeDefined();
+    expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+      {
+        people: [],
+        plannedHires: ["h1"],
         lists: [],
         choices: [],
         orders: [],
@@ -719,6 +808,7 @@ describe("the Drafts page", () => {
       expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
         {
           people: ["p1"],
+          plannedHires: [],
           lists: [],
           choices: [],
           orders: [],
@@ -758,6 +848,7 @@ describe("the Drafts page", () => {
     expect(bodiesOf(fetch, "/api/drafts/rejection")).toEqual([
       {
         people: ["p3"],
+        plannedHires: [],
         lists: [],
         choices: [],
         orders: [],

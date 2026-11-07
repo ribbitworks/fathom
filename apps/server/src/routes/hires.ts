@@ -7,7 +7,7 @@
 import {
   changeSetIdSchema,
   hireChangeSchema,
-  hireRequestSchema,
+  hiresRequestSchema,
   hiresSchema,
   savedSchema,
 } from "@fathom/shared";
@@ -31,10 +31,10 @@ export function hireRoutes(hires: HireAccess): FastifyPluginCallbackZod {
       "/api/planned-hires",
       {
         schema: {
-          body: hireRequestSchema,
+          body: hiresRequestSchema,
           response: {
             [created]: z.object({
-              id: z.string(),
+              ids: z.array(z.string()),
               changeSetId: changeSetIdSchema,
             }),
           },
@@ -43,9 +43,9 @@ export function hireRoutes(hires: HireAccess): FastifyPluginCallbackZod {
       async (request, reply) => {
         const { result, changeSetId } = await hires.create(
           request.actor,
-          request.body,
+          request.body.hires,
         );
-        return reply.status(created).send({ id: result, changeSetId });
+        return reply.status(created).send({ ids: result, changeSetId });
       },
     );
 

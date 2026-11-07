@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Approving and rejecting drafts through the server's API, several kinds at once: of people,
-// People's columns, lists, choices, and the order of lists' choices and of People's columns.
-// Neither can be undone. Approving a draft approves the drafts it uses too, of any kind, which are
-// counted first: the server says which choices or columns an order uses, and the rest, such as the
-// new choices and columns a person is given and the new lists they belong to, are worked out here,
-// as is what a decision covers, and whether a draft waits for a rejected one it depends on.
+// planned hires, People's columns, lists, choices, and the order of lists' choices and of People's
+// columns. Neither can be undone. Approving a draft approves the drafts it uses too, of any kind,
+// which are counted first: the server says which choices or columns an order uses, and the rest,
+// such as the new choices and columns a person is given and the new lists they belong to, are
+// worked out here, as is what a decision covers, and whether a draft waits for a rejected one it
+// depends on.
 
 import {
   type ColumnOrderDraft,
@@ -16,6 +17,7 @@ import {
   savedSchema,
 } from "@fathom/shared";
 import { sendJsonFor } from "./api.ts";
+import { rowName } from "./people-rows.ts";
 import {
   type RecordNode,
   recordNames,
@@ -29,6 +31,7 @@ import {
 // Drafts chosen to approve or reject, by kind: an order is named by its list.
 export interface DraftSelection {
   people: string[];
+  plannedHires: string[];
   lists: string[];
   choices: string[];
   orders: string[];
@@ -45,6 +48,7 @@ export type ColumnDraftTarget =
 
 export const noDrafts = (): DraftSelection => ({
   people: [],
+  plannedHires: [],
   lists: [],
   choices: [],
   orders: [],
@@ -55,6 +59,7 @@ export const noDrafts = (): DraftSelection => ({
 
 export const draftTotal = (selection: DraftSelection) =>
   selection.people.length +
+  selection.plannedHires.length +
   selection.lists.length +
   selection.choices.length +
   selection.orders.length +
@@ -248,6 +253,9 @@ export const without = (
   other: DraftSelection,
 ): DraftSelection => ({
   people: selection.people.filter((id) => !other.people.includes(id)),
+  plannedHires: selection.plannedHires.filter(
+    (id) => !other.plannedHires.includes(id),
+  ),
   lists: selection.lists.filter((id) => !other.lists.includes(id)),
   choices: selection.choices.filter((id) => !other.choices.includes(id)),
   orders: selection.orders.filter((id) => !other.orders.includes(id)),
@@ -335,6 +343,7 @@ export const joined = (
   second: DraftSelection,
 ): DraftSelection => ({
   people: [...new Set([...first.people, ...second.people])],
+  plannedHires: [...new Set([...first.plannedHires, ...second.plannedHires])],
   lists: [...new Set([...first.lists, ...second.lists])],
   choices: [...new Set([...first.choices, ...second.choices])],
   orders: [...new Set([...first.orders, ...second.orders])],
@@ -351,9 +360,14 @@ export function draftNames(
   people: readonly Person[] = [],
   records: readonly RecordNode[] = [],
 ): string[] {
-  const names: string[] = people
-    .filter(({ id }) => selection.people.includes(id))
-    .map(({ preferredName }) => preferredName);
+  const names: string[] = [
+    ...people
+      .filter(({ id }) => selection.people.includes(id))
+      .map(({ preferredName }) => preferredName),
+    ...people
+      .filter(({ id }) => selection.plannedHires.includes(id))
+      .map((hire) => `the planned hire ${rowName(hire, lists)}`),
+  ];
   names.push(
     ...fields
       .filter(({ id }) => selection.columns.includes(id))

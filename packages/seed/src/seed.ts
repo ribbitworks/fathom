@@ -2,7 +2,8 @@
 
 // Adds the fictional organization from @fathom/fixtures to a development database, and removes it
 // again: its lists, the choices it adds to the built-in Positions list, the columns on people
-// drawing on its lists, about 150 people, and its release streams, from ./releases.ts, each
+// drawing on its lists, about 150 people, its planned hires, from ./hires.ts, and its release
+// streams, from ./releases.ts, each
 // recorded in the change history as made by Fathom itself, and an account for each persona, from
 // ./accounts.ts, recorded in the access history. Seeding twice adds nothing more, and removing
 // takes away only what seeding added, keeping a seeded column, list, or release stream that
@@ -63,6 +64,12 @@ import {
 } from "./list-drafts.ts";
 import { defaultPasswordSettings, passwordLength } from "@fathom/shared";
 import { seedReleases, unseedReleases } from "./releases.ts";
+import {
+  removeSeededHires,
+  seedHireDrafts,
+  seedHires,
+  unseedHireDrafts,
+} from "./hires.ts";
 
 // The development data set's size.
 export const developmentSize = 150;
@@ -288,7 +295,14 @@ export async function unseed(
       .select()
       .from(reportingLines)
       .orderBy(reportingLines.fromDate);
-    const managing = new Set<string>();
+    // The seeded hires go first, since they name people. People whom planned hires added by hand
+    // name are kept like managers, with those above them.
+    made.push(...(await removeSeededHires(transaction, organization)));
+    const managing = new Set<string>(
+      (await transaction.select().from(plannedHires))
+        .flatMap(({ managerId, filledBy }) => [managerId, filledBy])
+        .filter((id): id is string => id !== null && seededIds.includes(id)),
+    );
     for (let grew = true; grew;) {
       grew = false;
       for (const line of lines) {
@@ -318,7 +332,7 @@ export async function unseed(
         .from(people)
         .where(inArray(people.id, [...managing]))) {
         kept.push(
-          `${row.preferredName}, whom people added by hand report to, or have`,
+          `${row.preferredName}, whom people or planned hires added by hand report to, or have`,
         );
       }
     }
@@ -553,6 +567,11 @@ export async function seedCommand(
           ? `Added ${String(organization.people.length)} fictional people, with their lists and columns`
           : "The fictional data is already in the database",
       );
+      if (await seedHires(database, organization)) {
+        console.log(
+          `Added ${String(organization.hires.length)} fictional planned hires`,
+        );
+      }
       if (await seedReleases(database)) {
         console.log(
           "Added fictional release streams, with their cycles and releases",
@@ -562,6 +581,9 @@ export async function seedCommand(
       for (const email of accounts) console.log(`Account ready: ${email}`);
       if (await seedDrafts(database, organization)) {
         console.log("Added drafts made by the personas");
+      }
+      if (await seedHireDrafts(database, organization)) {
+        console.log("Added drafts of planned hires made by the personas");
       }
       if (await seedListDrafts(database, organization)) {
         console.log("Added drafts of lists and columns made by the personas");
@@ -578,8 +600,14 @@ export async function seedCommand(
           `Discarded ${String(unpublished)} unpublished changes made by the personas`,
         );
       }
-      // People first, since the drafts of lists and columns cannot be discarded while theirs use
-      // them.
+      // Planned hires first, since they name people, then people, since the drafts of lists and
+      // columns cannot be discarded while theirs use them.
+      const discardedHires = await unseedHireDrafts(database, organization);
+      if (discardedHires > 0) {
+        console.log(
+          `Discarded ${String(discardedHires)} drafts of planned hires`,
+        );
+      }
       const discarded = await unseedDrafts(database, organization);
       if (discarded > 0) {
         console.log(
