@@ -1,13 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Summarizes a security report folder into summary.md, and fails on critical or high findings
-// or on any scan that did not complete.
+// Summarizes a security report folder into summary.md. A vulnerability fails the report only once
+// its fix is overdue, counted from the fix's release by the Security Plan's fix times; one with no
+// fix released is a warning. Any other critical or high finding fails it, as does any scan that
+// did not complete.
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import {
+  fixKey,
+  vulnerabilitiesIn,
+  vulnerabilityScanFiles,
+} from "./vulnerabilities.mjs";
 
 export const severities = ["critical", "high", "medium", "low"];
+
+// Days from a fix's release to its due date. A low finding is fixed at the next planned update.
+export const fixDays = new Map([
+  ["critical", 14],
+  ["high", 60],
+  ["medium", 180],
+]);
+
+const millisecondsPerDay = 24 * 60 * 60 * 1000;
 
 // Semgrep may skip this many characters of a single line, when it does not know newer syntax such
 // as a variable named after a new keyword, while the rest of the file is still scanned.
@@ -86,10 +102,51 @@ function emptyCounts() {
 }
 
 // Severities a tool reports that are not recognized count as medium, so they are reviewed.
+function normalSeverity(severity) {
+  return severityAliases.get(String(severity).toLowerCase()) ?? "medium";
+}
+
 function addSeverity(counts, severity, amount = 1) {
-  const normalized =
-    severityAliases.get(String(severity).toLowerCase()) ?? "medium";
+  const normalized = normalSeverity(severity);
   counts.set(normalized, counts.get(normalized) + amount);
+}
+
+function day(time) {
+  return new Date(time).toISOString().slice(0, 10);
+}
+
+// When a vulnerability's fix was released and when it is due. The earliest release among the fixed
+// versions that would replace the installed one starts the clock. A fix with no known release date
+// cannot be judged, so it counts as overdue.
+function judge(finding, fixDates, now) {
+  const severity = normalSeverity(finding.severity);
+  const [earliest] = finding.fixedVersions
+    .map((version) =>
+      fixDates.get(fixKey(finding.ecosystem, finding.name, version)),
+    )
+    .map((date) => ({ ...date, time: Date.parse(date?.released) }))
+    .filter((date) => !Number.isNaN(date.time))
+    .sort((a, b) => a.time - b.time);
+  const released = earliest?.time;
+  const days = fixDays.get(severity);
+  if (released === undefined)
+    return {
+      ...finding,
+      severity,
+      released: undefined,
+      due: undefined,
+      overdue: true,
+    };
+  const due =
+    days === undefined ? undefined : day(released + days * millisecondsPerDay);
+  return {
+    ...finding,
+    severity,
+    released: day(released),
+    source: earliest.source,
+    due,
+    overdue: due !== undefined && day(now) > due,
+  };
 }
 
 export const scans = [
@@ -97,17 +154,19 @@ export const scans = [
     name: "Dependency vulnerabilities",
     tool: "pnpm audit",
     file: "dependencies.json",
+    // pnpm audit's totals must be matched by advisories, or findings would pass unread.
     completed: (results) =>
-      typeof results.metadata?.vulnerabilities === "object",
-    count(results) {
-      const counts = emptyCounts();
-      for (const [severity, total] of Object.entries(
-        results.metadata.vulnerabilities,
-      )) {
-        addSeverity(counts, severity, total);
-      }
-      return counts;
-    },
+      typeof results.metadata?.vulnerabilities === "object" &&
+      typeof results.advisories === "object" &&
+      results.advisories !== null &&
+      (Object.keys(results.advisories).length > 0 ||
+        Object.values(results.metadata.vulnerabilities).every(
+          (total) => total === 0,
+        )),
+    whyIncomplete: () => [
+      "pnpm audit counted vulnerabilities but listed no advisories.",
+    ],
+    count: () => emptyCounts(),
   },
   {
     name: "Secrets in files",
@@ -156,9 +215,6 @@ export const scans = [
     count(results) {
       const counts = emptyCounts();
       for (const target of results.Results) {
-        for (const vulnerability of target.Vulnerabilities ?? []) {
-          addSeverity(counts, vulnerability.Severity);
-        }
         // Trivy lists every package's licence; permissive licences are not findings.
         for (const licence of target.Licenses ?? []) {
           if (licence.Severity !== "LOW") addSeverity(counts, licence.Severity);
@@ -180,9 +236,6 @@ export const scans = [
       const counts = emptyCounts();
       for (const scan of results) {
         for (const target of scan.report.Results ?? []) {
-          for (const vulnerability of target.Vulnerabilities ?? []) {
-            addSeverity(counts, vulnerability.Severity);
-          }
           // Any secret built into an image is serious, whatever severity Trivy gives it.
           counts.set(
             "high",
@@ -231,9 +284,37 @@ export function readResults(reportDir, file) {
   return results;
 }
 
-export function summarize(reportDir) {
+function findingRow(finding) {
+  const fix = finding.fixedVersions.join(", ");
+  const due =
+    finding.released === undefined
+      ? "Unknown release date"
+      : (finding.due ?? "Next planned update");
+  return `| ${finding.id} | ${finding.name} ${String(finding.installed ?? "")} | ${finding.severity} | ${fix} | ${finding.released ?? ""} | ${finding.source ?? ""} | ${due}${finding.overdue ? " (overdue)" : ""} |`;
+}
+
+function plural(count, one, many) {
+  return `${String(count)} ${count === 1 ? one : many}`;
+}
+
+const fixTimes = [...fixDays]
+  .map(([severity, days]) => `${severity} ${String(days)} days`)
+  .join(", ");
+
+export function summarize(reportDir, now = new Date()) {
   let failed = false;
   const notes = [];
+  const fixDatesRead = readResults(reportDir, "fix-dates.json");
+  const fixDatesFile =
+    fixDatesRead !== null &&
+    typeof fixDatesRead === "object" &&
+    !Array.isArray(fixDatesRead)
+      ? fixDatesRead
+      : undefined;
+  const fixDates = new Map(Object.entries(fixDatesFile ?? {}));
+  const fixable = new Map();
+  let unfixed = 0;
+  const unfixedSerious = new Set();
   const rows = scans.map((scan) => {
     const results = readResults(reportDir, scan.file);
     if (results === undefined || results === null || !scan.completed(results)) {
@@ -243,13 +324,66 @@ export function summarize(reportDir) {
     }
     const counts = scan.count(results);
     notes.push(...(scan.notes?.(results) ?? []));
-    const blocking = counts.get("critical") + counts.get("high") > 0;
+    let blocking = counts.get("critical") + counts.get("high") > 0;
+    if (vulnerabilityScanFiles.includes(scan.file)) {
+      for (const finding of vulnerabilitiesIn(scan.file, results)) {
+        addSeverity(counts, finding.severity);
+        if (finding.fixedVersions.length === 0) {
+          unfixed += 1;
+          if (["critical", "high"].includes(normalSeverity(finding.severity)))
+            unfixedSerious.add(`${finding.id} in ${finding.name}`);
+          continue;
+        }
+        const judged = judge(finding, fixDates, now);
+        if (judged.overdue) blocking = true;
+        fixable.set(
+          `${judged.id} ${judged.name} ${String(judged.installed)}`,
+          judged,
+        );
+      }
+    }
     if (blocking) failed = true;
     const cells = severities
       .map((severity) => String(counts.get(severity)))
       .join(" | ");
     return `| ${scan.name} | ${scan.tool} | ${blocking ? "Fail" : "Pass"} | ${cells} |`;
   });
+
+  const withFix = [...fixable.values()].sort(
+    (a, b) =>
+      Number(b.overdue) - Number(a.overdue) ||
+      String(a.due ?? "9999").localeCompare(String(b.due ?? "9999")) ||
+      a.id.localeCompare(b.id),
+  );
+  const fixTable = withFix.length
+    ? [
+        "## Vulnerabilities With a Fix",
+        "",
+        "| Finding | Package | Severity | Fixed in | Fix released | Dated by | Due |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+        ...withFix.map(findingRow),
+        "",
+      ]
+    : [];
+  if (unfixed)
+    notes.push(
+      `${plural(unfixed, "vulnerability has", "vulnerabilities have")} no fix released yet, and ${unfixed === 1 ? "is a warning" : "are warnings"} until one is.`,
+    );
+  if (unfixedSerious.size)
+    notes.push(
+      `Critical or high, with no fix released: ${[...unfixedSerious].sort().join(", ")}.`,
+    );
+  const firstSightings = withFix.filter(
+    (finding) => finding.source === "first seen",
+  ).length;
+  if (firstSightings)
+    notes.push(
+      `${plural(firstSightings, "fix is", "fixes are")} dated from the first report that saw ${firstSightings === 1 ? "it" : "them"}, since ${firstSightings === 1 ? "its" : "their"} release could not be looked up.`,
+    );
+  if (withFix.length && fixDatesFile === undefined)
+    notes.push(
+      "The fixes' release dates could not be found, so every fix counts as overdue.",
+    );
 
   const markdown = [
     "# Security Report",
@@ -263,7 +397,8 @@ export function summarize(reportDir) {
     "",
     ...notes.map((note) => `- ${note}`),
     ...(notes.length ? [""] : []),
-    "The report fails if any scan finds a critical or high issue, or does not complete. Each tool's full results are in this folder.",
+    ...fixTable,
+    `The report fails if a vulnerability's fix is overdue, if any other scan finds a critical or high issue, or if a scan does not complete. Fix times, counted from a fix's release: ${fixTimes}, and low at the next planned update. Each tool's full results are in this folder.`,
     "",
   ].join("\n");
 

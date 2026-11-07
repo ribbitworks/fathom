@@ -122,14 +122,12 @@ The aim is to scan every part of Fathom's technology. Coverage of some parts dep
 | Company build environments and developer machines | On IT's existing schedule | IT's existing endpoint scanning |
 | Developer machines not managed by IT, which may run builds until the build process is decided | To be agreed | See the open questions |
 
-**Fix times by severity:** critical within 7 days, high within 30 days, medium within 90 days, and low at the next planned update. Any exception is recorded with a reason and an expiry date, and approved by Fathom's owner.
+**Fix times by severity:** a vulnerability's fix time starts when a fix is released, not when the vulnerability is published, since nothing can be done before then. Critical vulnerabilities are fixed within 14 days, high within 60 days, medium within 180 days, and low at the next planned update. If IT has its own patching standard, it replaces these times.
 
-**Exceptions:**
-
-| Finding | Reason | Approved | Expires |
-| --- | --- | --- | --- |
-| Medium and low findings in the system libraries of the application's distroless base image, such as glibc and zlib, with no fix released by Debian | No fix exists. The image has no shell or package manager, runs as a user other than root with a read-only filesystem, and has no route out. Fixes arrive through base image updates, and the exception ends sooner if one does | 2026-10-30, by Fathom's owner | 2027-01-28 |
-| CVE-2026-76844, rated high, in the zlib of the application's distroless base image, with no fix released by Debian. Its advisory names another package, webpack-dev-middleware, so it may be a database error | No fix exists, and the same protections as above apply. Listed in `.trivyignore.yaml`, which the container image scan reads, and which stops leaving it out on the expiry date. The exception ends sooner if Debian releases a fix or the advisory is corrected | 2026-11-05, by Fathom's owner | 2026-12-05 |
+- **When a fix was released:** The security report looks up the release of the fixed version that would replace the installed one, preferring a fix on the installed major version: npm packages in the npm registry (registry.npmjs.org), and Debian packages in Debian's snapshot archive (snapshot.debian.org), counting the earlier of the security and main archives. A fix it cannot look up counts from the first report that saw it, and the report says which dates are only first sightings. Dates are kept between reports in the git-ignored `output/security/fix-dates.json`, and each report records the dates it used.
+- **No fix released:** A vulnerability with no fix is a warning in the report, not a failure, and is reviewed with the other scan results. Base image vulnerabilities are usually of this kind, fixed when the base image is updated.
+- **Overdue:** A vulnerability fails the report only once its fix is overdue. Any other critical or high finding, such as a secret or a code security flaw, fails it at once.
+- **Exceptions:** Only an overdue finding that cannot be fixed yet, such as one whose fix the packages that depend on it do not accept, may be excepted. Each exception is recorded in this plan with a reason and an expiry date, approved by Fathom's owner, and listed in `.trivyignore.yaml`, which leaves it out of Trivy's dependency and container image scans until it expires. pnpm audit, which finds the same npm vulnerabilities, has no list with expiry dates, so the first approved exception for an npm package also needs a way to leave it out there. None is approved today.
 
 ## Source Code Assurance
 
@@ -147,7 +145,7 @@ How IT and the company can be confident in Fathom's source code:
 The threat model is enforced by making each mitigation verifiable, and by checking regularly that it holds:
 
 - **Every mitigation has a check:** Each row in the threat table names how it is verified.
-- **Builds fail on security problems:** Once the build process is decided, a build fails if a security test fails or a scan finds a critical or high vulnerability without an approved exception.
+- **Builds fail on security problems:** The security report fails on an overdue vulnerability fix without an approved exception, on any other critical or high finding, and on a scan that does not complete. Once the build process is decided, a build fails if a security test or the security report fails, and no release is made while any fix is overdue.
 - **Code review:** Every change is reviewed against this plan, as set out in the Security section of the [Code Review Standards](../standards/code-review.md).
 - **Responsibilities and intervals:**
   - Fathom's operators review scan results weekly and track fixes against the fix times.
@@ -161,7 +159,7 @@ The threat model is enforced by making each mitigation verifiable, and by checki
 ## Open Questions
 
 1. **Host scanning:** Which tool does IT already use for host vulnerability scanning, and can it see inside any virtualization layer and the container runtime?
-1. **Fix times:** Are the proposed fix times by severity acceptable to IT?
+1. **Fix times:** Does IT have its own patching standard that should replace the proposed fix times, and if not, are they acceptable?
 1. **Build process:** Where will builds and scans run, and how will releases reach the server?
 1. **Port scans:** Who runs the external and internal port scans?
 1. **Developer machines not managed by IT:** How should they be protected and scanned while they run builds with fictional data only?

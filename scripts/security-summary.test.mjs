@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for summarizing security reports: counting findings by severity for each tool, and failing
-// when a scan finds a critical or high issue or does not complete.
+// Tests for summarizing security reports: counting findings by severity for each tool, failing when
+// a vulnerability's fix is overdue, another scan finds a critical or high issue, or a scan does not
+// complete, and warning about vulnerabilities with no fix released.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
@@ -18,6 +19,8 @@ import { afterEach, beforeEach, describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 import { summarize } from "./security-summary.mjs";
 
+const now = new Date("2026-11-07T12:00:00Z");
+
 const summaryScript = fileURLToPath(
   new URL("./security-summary.mjs", import.meta.url),
 );
@@ -29,6 +32,7 @@ const cleanResults = {
     metadata: {
       vulnerabilities: { info: 0, low: 0, moderate: 0, high: 0, critical: 0 },
     },
+    advisories: {},
   },
   "secrets-files.json": [],
   "secrets-history.json": [],
@@ -86,37 +90,201 @@ describe("security summary", () => {
     assert.match(markdown, /\*\*Result:\*\* Pass/);
   });
 
-  it("fails on a critical dependency vulnerability", () => {
-    writeResults({
-      "dependencies.json": { metadata: { vulnerabilities: { critical: 1 } } },
-    });
-    const { failed, markdown } = summarize(reportDir);
-    assert.equal(failed, true);
+  const advisory = (severity, patched, ...versions) => ({
+    github_advisory_id: `GHSA-${severity}`,
+    module_name: "example",
+    severity,
+    patched_versions: patched,
+    findings: versions.map((version) => ({ version })),
+  });
+  const audit = (...advisories) => ({
+    "dependencies.json": {
+      metadata: { vulnerabilities: {} },
+      advisories: Object.fromEntries(advisories.map((a, i) => [i, a])),
+    },
+  });
+  const released = (key, date) => ({
+    "fix-dates.json": { [key]: { released: date, source: "npm registry" } },
+  });
+
+  it("warns about dependency vulnerabilities with no fix released, whatever their severity", () => {
+    writeResults(
+      audit(
+        advisory("critical", "<0.0.0", "1.0.0"),
+        advisory("info", "", "1.0.0"),
+      ),
+    );
+    const { failed, markdown } = summarize(reportDir, now);
+    assert.equal(failed, false);
     assert.match(
       rowFor(markdown, "Dependency vulnerabilities"),
-      /\| Fail \| 1 \| 0 \| 0 \| 0 \|$/,
+      /\| Pass \| 1 \| 0 \| 0 \| 1 \|$/,
+    );
+    assert.match(
+      markdown,
+      /2 vulnerabilities have no fix released yet, and are warnings until one is\./,
+    );
+    assert.match(
+      markdown,
+      /Critical or high, with no fix released: GHSA-critical in example\./,
     );
   });
 
-  it("fails on a high dependency vulnerability and maps the other severities", () => {
+  it("fails once a fix is overdue, counted from the fix's release by severity", () => {
+    for (const [severity, releasedOn, overdue] of [
+      ["critical", "2026-10-23T00:00:00Z", true],
+      ["critical", "2026-10-24T00:00:00Z", false],
+      ["high", "2026-09-07T00:00:00Z", true],
+      ["high", "2026-09-08T00:00:00Z", false],
+      ["moderate", "2026-05-10T00:00:00Z", true],
+      ["moderate", "2026-05-11T00:00:00Z", false],
+      ["low", "2020-01-01T00:00:00Z", false],
+    ]) {
+      writeResults({
+        ...audit(advisory(severity, ">=2.0.0", "1.0.0")),
+        ...released("npm:example@2.0.0", releasedOn),
+      });
+      const { failed, markdown } = summarize(reportDir, now);
+      assert.equal(failed, overdue, `${severity} ${releasedOn}`);
+      assert.match(
+        rowFor(markdown, "Dependency vulnerabilities"),
+        overdue ? /\| Fail \|/ : /\| Pass \|/,
+      );
+      assert.equal(markdown.includes("(overdue)"), overdue);
+    }
+  });
+
+  it("lists each vulnerability with a fix, its release and due date, once across scans", () => {
+    writeResults({
+      ...audit(advisory("high", ">=2.0.0", "1.0.0", "1.5.0")),
+      "files.json": {
+        Results: [
+          {
+            ...lockfileTarget,
+            Type: "pnpm",
+            Vulnerabilities: [
+              {
+                VulnerabilityID: "GHSA-high",
+                PkgName: "example",
+                InstalledVersion: "1.0.0",
+                FixedVersion: "2.0.0",
+                Status: "fixed",
+                Severity: "HIGH",
+              },
+            ],
+          },
+        ],
+      },
+      ...released("npm:example@2.0.0", "2026-11-01T10:00:00Z"),
+    });
+    const { failed, markdown } = summarize(reportDir, now);
+    assert.equal(failed, false);
+    assert.match(
+      markdown,
+      /\| GHSA-high \| example 1\.0\.0 \| high \| 2\.0\.0 \| 2026-11-01 \| npm registry \| 2026-12-31 \|/,
+    );
+    assert.match(markdown, /\| GHSA-high \| example 1\.5\.0 \|/);
+    assert.equal(
+      markdown.match(/\| GHSA-high \| example 1\.0\.0 \|/g)?.length,
+      1,
+    );
+    assert.match(
+      rowFor(markdown, "Dependency vulnerabilities and licences"),
+      /\| Pass \| 0 \| 1 \| 0 \| 0 \|$/,
+    );
+  });
+
+  it("shows a low vulnerability's fix as due at the next planned update", () => {
+    writeResults({
+      ...audit(advisory("low", ">=2.0.0", "1.0.0")),
+      ...released("npm:example@2.0.0", "2026-11-01T00:00:00Z"),
+    });
+    assert.match(
+      summarize(reportDir, now).markdown,
+      /\| 2026-11-01 \| npm registry \| Next planned update \|/,
+    );
+  });
+
+  it("fails on a fix whose release date is unknown, since it cannot be judged", () => {
+    writeResults(audit(advisory("moderate", ">=2.0.0", "1.0.0")));
+    const { failed, markdown } = summarize(reportDir, now);
+    assert.equal(failed, true);
+    assert.match(markdown, /\| {2}\| Unknown release date \(overdue\) \|/);
+    assert.match(
+      markdown,
+      /The fixes' release dates could not be found, so every fix counts as overdue\./,
+    );
+  });
+
+  it("counts every fix as overdue when the fix dates are not a list of fixes", () => {
+    for (const fixDates of [["npm:example@2.0.0"], "text", null]) {
+      writeResults({
+        ...audit(advisory("low", ">=2.0.0", "1.0.0")),
+        "fix-dates.json": fixDates,
+      });
+      const { failed, markdown } = summarize(reportDir, now);
+      assert.equal(failed, true);
+      assert.match(markdown, /release dates could not be found/);
+    }
+  });
+
+  it("says which fixes are dated only from the first report that saw them", () => {
+    writeResults({
+      ...audit(advisory("high", ">=2.0.0", "1.0.0")),
+      "fix-dates.json": {
+        "npm:example@2.0.0": {
+          released: "2026-11-01T00:00:00Z",
+          source: "first seen",
+        },
+      },
+    });
+    const { markdown } = summarize(reportDir, now);
+    assert.match(markdown, /\| 2026-11-01 \| first seen \| 2026-12-31 \|/);
+    assert.match(
+      markdown,
+      /1 fix is dated from the first report that saw it, since its release could not be looked up\./,
+    );
+    assert.doesNotMatch(markdown, /could not be found/);
+  });
+
+  it("names a single vulnerability with no fix in the singular", () => {
+    writeResults(audit(advisory("moderate", "", "1.0.0")));
+    const { markdown } = summarize(reportDir, now);
+    assert.match(
+      markdown,
+      /1 vulnerability has no fix released yet, and is a warning until one is\./,
+    );
+    assert.doesNotMatch(markdown, /Critical or high, with no fix/);
+  });
+
+  it("does not complete when pnpm audit counts vulnerabilities but lists no advisories", () => {
     writeResults({
       "dependencies.json": {
-        metadata: {
-          vulnerabilities: {
-            info: 1,
-            low: 1,
-            moderate: 1,
-            high: 1,
-            critical: 0,
-          },
-        },
+        metadata: { vulnerabilities: { critical: 1, high: 0 } },
+        advisories: {},
       },
     });
     const { failed, markdown } = summarize(reportDir);
     assert.equal(failed, true);
     assert.match(
       rowFor(markdown, "Dependency vulnerabilities"),
-      /\| Fail \| 0 \| 1 \| 1 \| 2 \|$/,
+      /Did not complete/,
+    );
+    assert.match(
+      markdown,
+      /pnpm audit counted vulnerabilities but listed no advisories\./,
+    );
+  });
+
+  it("does not complete when pnpm audit lists no advisories", () => {
+    writeResults({
+      "dependencies.json": { metadata: { vulnerabilities: {} } },
+    });
+    const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, true);
+    assert.match(
+      rowFor(markdown, "Dependency vulnerabilities"),
+      /Did not complete/,
     );
   });
 
@@ -352,7 +520,7 @@ describe("security summary", () => {
     );
   });
 
-  it("counts vulnerabilities across every scanned container image and names the images", () => {
+  it("counts vulnerabilities across every scanned container image, warns about those with no fix, and names the images", () => {
     writeResults({
       "container-images.json": [
         {
@@ -366,18 +534,69 @@ describe("security summary", () => {
           image: "example/two:1",
           report: {
             SchemaVersion: 2,
-            Results: [{ Vulnerabilities: [{ Severity: "LOW" }] }],
+            Results: [
+              {
+                Vulnerabilities: [
+                  { Severity: "LOW", Status: "affected", FixedVersion: "" },
+                ],
+              },
+            ],
           },
         },
       ],
     });
     const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, false);
+    assert.match(
+      rowFor(markdown, "Container images"),
+      /\| Pass \| 1 \| 0 \| 0 \| 1 \|$/,
+    );
+    assert.match(markdown, /2 vulnerabilities have no fix released yet/);
+    assert.match(markdown, /Images scanned: example\/one:1, example\/two:1\./);
+  });
+
+  it("fails on an overdue fix in a container image's operating system packages", () => {
+    writeResults({
+      "container-images.json": [
+        {
+          image: "example/image:1",
+          report: {
+            SchemaVersion: 2,
+            Results: [
+              {
+                Type: "debian",
+                Vulnerabilities: [
+                  {
+                    VulnerabilityID: "CVE-2026-1",
+                    PkgName: "zlib1g",
+                    InstalledVersion: "1:1.3-3",
+                    FixedVersion: "1:1.3-4",
+                    Status: "fixed",
+                    Severity: "CRITICAL",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "fix-dates.json": {
+        "debian:zlib1g@1:1.3-4": {
+          released: "2026-10-01T00:00:00Z",
+          source: "Debian snapshot archive",
+        },
+      },
+    });
+    const { failed, markdown } = summarize(reportDir, now);
     assert.equal(failed, true);
     assert.match(
       rowFor(markdown, "Container images"),
-      /\| Fail \| 1 \| 0 \| 0 \| 1 \|$/,
+      /\| Fail \| 1 \| 0 \| 0 \| 0 \|$/,
     );
-    assert.match(markdown, /Images scanned: example\/one:1, example\/two:1\./);
+    assert.match(
+      markdown,
+      /\| 2026-10-01 \| Debian snapshot archive \| 2026-10-15 \(overdue\) \|/,
+    );
   });
 
   it("counts every secret built into a container image as high", () => {

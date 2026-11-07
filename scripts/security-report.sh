@@ -5,7 +5,8 @@
 # summary to output/security/<time>/: dependency vulnerabilities and licences, secrets in files and
 # git history, code security flaws, configuration, and the container images in deploy's Compose
 # files, built for the production server's processor.
-# Fails if any scan finds a critical or high issue, or does not complete. Run by 'pnpm check'.
+# Fails if a vulnerability's fix is overdue under the Security Plan's fix times, if any other scan
+# finds a critical or high issue, or if a scan does not complete. Run by 'pnpm check'.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -55,11 +56,13 @@ docker run --rm --volume "$scan_copy:/src:ro" --workdir /src "$semgrep_image" \
   >"$report_dir/code.json" || info "The scan of code for security flaws did not complete"
 
 info "Scanning dependencies for vulnerabilities and licences"
-# Trivy also reads installed packages, read-only, to find their licences.
+# Trivy also reads installed packages, read-only, to find their licences. Overdue findings the
+# Security Plan excepts, listed in .trivyignore.yaml, are left out until each exception expires.
 docker run --rm --volume "$scan_copy:/src:ro" --volume "$PWD/node_modules:/src/node_modules:ro" \
+  --volume "$PWD/.trivyignore.yaml:/trivyignore.yaml:ro" \
   --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$trivy_image" \
   fs --quiet --skip-version-check --disable-telemetry --include-dev-deps \
-  --scanners vuln,license --format json --exit-code 0 /src \
+  --scanners vuln,license --ignorefile /trivyignore.yaml --format json --exit-code 0 /src \
   >"$report_dir/files.json" || info "The scan of dependencies for vulnerabilities did not complete"
 
 info "Scanning configuration for misconfiguration"
@@ -77,9 +80,9 @@ compose_for_scan() {
   DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_IMAGE_TAG="$(clone_name security-scan)" docker compose "$@"
 }
 # Each image is saved to a file that Trivy reads, so Trivy is never given access to the container
-# runtime. Findings the Security Plan excepts, listed in .trivyignore.yaml, are left out until each
-# exception expires. Every image is passed to the summary, and anything that fails is recorded as
-# not scanned, so the report can never pass on a partial or stale scan.
+# runtime. Overdue findings the Security Plan excepts, listed in .trivyignore.yaml, are left out
+# until each exception expires. Every image is passed to the summary, and anything that fails is
+# recorded as not scanned, so the report can never pass on a partial or stale scan.
 images_dir="$(mktemp -d "$PWD/.tmp/images.XXXXXX")"
 trap 'rm -rf "$scan_copy" "$images_dir"' EXIT
 image_reports=()
@@ -120,5 +123,8 @@ for compose_file in deploy/compose*.yaml deploy/compose*.yml; do
   done <<<"$images"
 done
 node scripts/combine-image-reports.mjs ${image_reports[@]+"${image_reports[@]}"} >"$report_dir/container-images.json"
+
+info "Finding when each fix was released"
+node scripts/fix-dates.mjs "$report_dir" || info "Could not find when the fixes were released"
 
 node scripts/security-summary.mjs "$report_dir"
