@@ -869,6 +869,7 @@ export async function draftsUse(
                 or(
                   holdsChoice(table.fields, use.choice),
                   sql`${table.fields}->>'positionId' = ${use.choice}`,
+                  sql`${table.fields}->>'stateId' = ${use.choice}`,
                 ),
                 table === drafts && editor !== undefined
                   ? notReplacedBy("person", table.recordId, editor)

@@ -45,7 +45,7 @@ import {
   setRejection,
 } from "./drafts.ts";
 import {
-  currentOn,
+  notStarted,
   personChanges,
   personTier,
   readLive,
@@ -107,10 +107,10 @@ async function seenAsked(
   const seen = (field: string) =>
     (fieldOfValue(field) === null || shown.has(field)) &&
     seesTier(actor, tierOf(field));
-  // Those without Restricted details see only current staff, as the live dates say.
+  // Those without Restricted details see everyone who has started, as the live dates say.
   const listed = (id: string, draft: Draft) =>
     seesTier(actor, "restricted") ||
-    currentOn(live.get(id) ?? draft.fields, today);
+    !notStarted(live.get(id) ?? draft.fields, today);
   for (const [id, draft] of found) {
     const fields = draftFields(live.get(id), draft);
     if (!fields.some(seen) || !listed(id, draft)) {
@@ -148,6 +148,7 @@ const detailColumns = (id: string, person: Recorded) => ({
   startDate: (person.startDate as string | null | undefined) ?? null,
   endDate: (person.endDate as string | null | undefined) ?? null,
   isManager: person.isManager === true,
+  stateId: (person.stateId as string | null | undefined) ?? null,
 });
 
 // The values a person is to have in each column a draft sets, by column, as recorded.
@@ -171,6 +172,7 @@ const detailNames = new Set([
   "startDate",
   "endDate",
   "isManager",
+  "stateId",
 ]);
 
 // Makes the live people as their drafts make them, in as few statements as PostgreSQL allows:
@@ -201,6 +203,7 @@ async function apply(
         startDate,
         endDate,
         isManager,
+        stateId,
       } = detailColumns(id, person);
       await transaction
         .update(people)
@@ -211,6 +214,7 @@ async function apply(
           startDate,
           endDate,
           isManager,
+          stateId,
         })
         .where(eq(people.id, id));
     }

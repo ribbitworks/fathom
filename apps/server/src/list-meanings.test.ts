@@ -9,7 +9,13 @@ import { listItems, lists, people, plannedHires } from "@fathom/db";
 import type { Choice, List } from "@fathom/shared";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type Method, startTestApp, type TestApp } from "./test-app.ts";
+import type { Person } from "@fathom/shared";
+import {
+  type Method,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
@@ -108,6 +114,7 @@ describe("a list with meanings", () => {
       ["Request to hire", "proposed"],
       ["Approved to hire", "open"],
       ["Hired", "hired"],
+      ["Left", "left"],
     ]);
     const created = await send("POST", "/api/lists", {
       name: unique("Fictional Sites"),
@@ -127,7 +134,7 @@ describe("a list with meanings", () => {
     });
     expect(without.statusCode).toBe(400);
     expect(refusal(without)).toBe(
-      "Choose what the choice means: Proposed, Open, or Hired",
+      "Choose what the choice means: Proposed, Open, Hired, or Left",
     );
     const unknown = await send("POST", `/api/lists/${states.id}/choices`, {
       choices: [{ label: unique("Fictional Closed"), meaning: "closed" }],
@@ -504,5 +511,234 @@ describe("a list with meanings", () => {
       await send("DELETE", `${url}/draft`);
       await setRetired([String(second), ...others], false);
     }
+  });
+});
+
+describe("people's states", () => {
+  // The first state offered with each meaning a person can have.
+  async function firstOf(meaning: "hired" | "left"): Promise<string> {
+    const list = await readList(states.id);
+    return String(
+      list.choices.find(
+        (choice) => choice.meaning === meaning && !choice.retired,
+      )?.id,
+    );
+  }
+
+  async function addPerson(details: object): Promise<string> {
+    const response = await send("POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: unique("S"),
+          positionId: testPosition,
+          startDate: "2020-01-01",
+          ...details,
+        },
+      ],
+    });
+    expect(response.statusCode, response.body).toBe(201);
+    const [id = ""] = response.json<{ ids: string[] }>().ids;
+    expect((await approve({ people: [id] })).statusCode).toBe(200);
+    return id;
+  }
+
+  async function stateSeen(id: string): Promise<string | undefined> {
+    const response = await send("GET", "/api/people", undefined, approver);
+    return response
+      .json<{ people: Person[] }>()
+      .people.find((person) => person.id === id)?.stateId;
+  }
+
+  it("shows each person a state of the meaning their end date gives them, their own while it has it", async () => {
+    const label = unique("Fictional Resigned");
+    const {
+      choices: [added],
+    } = await addStates([{ label, meaning: "left" }]);
+    const resigned = String(added?.id);
+    expect((await approve({ choices: [resigned] })).statusCode).toBe(200);
+    const current = await addPerson({});
+    const leaver = await addPerson({ endDate: "2021-01-01" });
+    const chosen = await addPerson({
+      endDate: "2021-01-01",
+      stateId: resigned,
+    });
+    expect(await stateSeen(current)).toBe(await firstOf("hired"));
+    expect(await stateSeen(leaver)).toBe(await firstOf("left"));
+    expect(await stateSeen(chosen)).toBe(resigned);
+    // A state of the other meaning stands for the first of the meaning the end date gives.
+    const back = await send("PATCH", `/api/people/${chosen}`, {
+      endDate: null,
+    });
+    expect(back.statusCode, back.body).toBe(200);
+    expect((await approve({ people: [chosen] })).statusCode).toBe(200);
+    expect(await stateSeen(chosen)).toBe(await firstOf("hired"));
+    const changed = await send("PATCH", `/api/people/${leaver}`, {
+      stateId: resigned,
+    });
+    expect(changed.statusCode, changed.body).toBe(200);
+    expect((await approve({ people: [leaver] })).statusCode).toBe(200);
+    expect(await stateSeen(leaver)).toBe(resigned);
+  });
+
+  it("refuses a state of another meaning than the end date gives, or one for planned hires", async () => {
+    const left = await firstOf("left");
+    const hired = await firstOf("hired");
+    const add = (details: object) =>
+      send("POST", "/api/people", {
+        people: [
+          {
+            preferredName: unique("Fictional Person"),
+            employeeId: unique("S"),
+            positionId: testPosition,
+            ...details,
+          },
+        ],
+      });
+    const early = await add({ stateId: left });
+    expect(early.statusCode).toBe(400);
+    expect(refusal(early)).toBe(
+      "A Left state is for someone whose end date has passed",
+    );
+    const late = await add({ endDate: "2021-01-01", stateId: hired });
+    expect(late.statusCode).toBe(400);
+    expect(refusal(late)).toBe(
+      "This person has left, so choose a state meaning Left",
+    );
+    const hiring = await add({ stateId: open });
+    expect(hiring.statusCode).toBe(400);
+    expect(refusal(hiring)).toBe("That state is for planned hires");
+  });
+
+  it("keeps planned hires out of Left, and refuses a state meaning Left while a hire is in it", async () => {
+    const left = await firstOf("left");
+    const refused = await send("POST", "/api/planned-hires", {
+      hires: [{ positionId: testPosition, stateId: left }],
+    });
+    expect(refused.statusCode).toBe(400);
+    const label = unique("Fictional Screening");
+    const {
+      choices: [added],
+    } = await addStates([{ label, meaning: "open" }]);
+    const id = String(added?.id);
+    expect((await approve({ choices: [id] })).statusCode).toBe(200);
+    const hire = await send("POST", "/api/planned-hires", {
+      hires: [{ positionId: testPosition, stateId: id }],
+    });
+    expect(hire.statusCode).toBe(201);
+    const leaving = await send("PUT", choiceUrl(id), {
+      label,
+      meaning: "left",
+    });
+    expect(leaving.statusCode).toBe(409);
+    expect(refusal(leaving)).toBe(
+      "Planned hires are in this state, so it can't mean Left. Move them to another state first.",
+    );
+    await send("POST", "/api/unpublished/discard");
+  });
+
+  async function addLeftState(): Promise<string> {
+    const {
+      choices: [added],
+    } = await addStates([
+      { label: unique("Fictional Laid Off"), meaning: "left" },
+    ]);
+    const id = String(added?.id);
+    expect((await approve({ choices: [id] })).statusCode).toBe(200);
+    return id;
+  }
+
+  const seenBy = async (who: { cookie: string }, id: string) =>
+    (
+      await send("GET", "/api/people", undefined, {
+        id: "",
+        cookie: who.cookie,
+      })
+    )
+      .json<{ people: Person[] }>()
+      .people.find((person) => person.id === id);
+
+  it("checks a state against the end date the editor sees, and shows each reader the state their dates give", async () => {
+    const person = await addPerson({});
+    const drafted = await send("PATCH", `/api/people/${person}`, {
+      endDate: "2021-01-01",
+    });
+    expect(drafted.statusCode, drafted.body).toBe(200);
+    const generalOnly = await test.signedIn(["people:view", "people:edit"]);
+    const planner = await test.signedIn("resource-planner");
+    expect((await seenBy(planner, person))?.stateId).toBe(
+      await firstOf("hired"),
+    );
+    expect((await seenBy(editor, person))?.stateId).toBe(await firstOf("left"));
+    // Offered Hired from the live date, the editor's choice is not refused for the draft's date.
+    const chosen = await send(
+      "PATCH",
+      `/api/people/${person}`,
+      { stateId: await firstOf("hired") },
+      generalOnly,
+    );
+    expect(chosen.statusCode, chosen.body).toBe(200);
+    // Someone only drafted to be added has no live dates, so their drafted ones are used.
+    const added = await send(
+      "POST",
+      "/api/people",
+      {
+        people: [
+          {
+            preferredName: unique("Fictional Person"),
+            employeeId: unique("S"),
+            positionId: testPosition,
+          },
+        ],
+      },
+      generalOnly,
+    );
+    const [newcomer = ""] = added.json<{ ids: string[] }>().ids;
+    const newState = await send(
+      "PATCH",
+      `/api/people/${newcomer}`,
+      { stateId: await firstOf("left") },
+      generalOnly,
+    );
+    expect(newState.statusCode).toBe(400);
+    await send("POST", "/api/unpublished/discard", undefined, generalOnly);
+  });
+
+  it("shows a draft's old state as the row showed it", async () => {
+    const resigned = await addLeftState();
+    const leaver = await addPerson({ endDate: "2021-01-01" });
+    const changed = await send("PATCH", `/api/people/${leaver}`, {
+      stateId: resigned,
+    });
+    expect(changed.statusCode, changed.body).toBe(200);
+    const row = await seenBy(editor, leaver);
+    expect(row?.stateId).toBe(resigned);
+    expect(row?.draft?.changed).toContain("stateId");
+    expect(row?.draft?.live.stateId).toBe(await firstOf("left"));
+    await send("DELETE", `/api/people/${leaver}/draft`);
+  });
+
+  it("keeps a state people have, live or in a draft, from being removed, and keeps it on them once retired", async () => {
+    const kept = await addLeftState();
+    const leaver = await addPerson({ endDate: "2021-01-01", stateId: kept });
+    const live = await send("DELETE", choiceUrl(kept));
+    expect(live.statusCode).toBe(409);
+    expect(refusal(live)).toBe(
+      "This choice cannot be removed while it is in use; retire it instead",
+    );
+    const drafting = await addLeftState();
+    const other = await addPerson({ endDate: "2021-01-01" });
+    expect(
+      (await send("PATCH", `/api/people/${other}`, { stateId: drafting }))
+        .statusCode,
+    ).toBe(200);
+    expect((await send("DELETE", choiceUrl(drafting))).statusCode).toBe(409);
+    await send("DELETE", `/api/people/${other}/draft`);
+    expect((await retire(kept)).statusCode).toBe(200);
+    expect((await approve({ choices: [kept] })).statusCode).toBe(200);
+    const again = await send("PATCH", `/api/people/${leaver}`, {
+      stateId: kept,
+    });
+    expect(again.statusCode, again.body).toBe(200);
   });
 });

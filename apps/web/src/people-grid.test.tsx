@@ -1058,6 +1058,13 @@ describe("planned hires beside people", () => {
         retired: false,
         meaning: "hired",
       },
+      {
+        id: "s-left",
+        label: "Fictional Resigned",
+        description: "",
+        retired: false,
+        meaning: "left",
+      },
     ],
   };
   const rows: Person[] = [
@@ -1127,17 +1134,29 @@ describe("planned hires beside people", () => {
     expect(drafted?.offeredOn?.("planned-hire") ?? true).toBe(true);
   });
 
-  it("shows each person Hired, read only, and never offers Hired for a hire", () => {
+  it("offers a person states of the meaning they show, a new person Hired or Left, and a hire only Proposed or Open", () => {
     const state = columnsFor([], [positions, states], [], true, rows).find(
       ({ key }) => key === "stateId",
     ) as Column;
-    expect(state.readOnlyOn?.("person")).toBe(true);
-    expect(state.readOnlyOn?.("planned-hire")).toBe(false);
+    const offered = (record: Person | undefined, kind: string) =>
+      states.choices
+        .filter((option) => state.pickableOn?.(option, record, kind))
+        .map(({ id }) => id);
+    expect(state.readOnlyOn).toBeUndefined();
+    expect(offered(rows[0], "person")).toEqual(["s-hired"]);
     expect(
-      state.choices.filter((option) => state.pickable?.(option) ?? true),
-    ).toEqual([states.choices[0]]);
+      offered({ ...(rows[0] as Person), stateId: "s-left" }, "person"),
+    ).toEqual(["s-left"]);
+    expect(offered(undefined, "person")).toEqual(["s-hired", "s-left"]);
+    expect(offered(rows[1], "planned-hire")).toEqual(["s-proposed"]);
     expect(state.newRowValue?.("planned-hire")).toEqual(["s-proposed"]);
-    expect(state.newRowValue?.("person")).toEqual([]);
+    expect(state.newRowValue?.("person")).toEqual(["s-hired"]);
+    expect(state.required).toBe(true);
+    const proposedOnly = { ...states, choices: states.choices.slice(0, 1) };
+    const bare = columnsFor([], [positions, proposedOnly], [], true, rows).find(
+      ({ key }) => key === "stateId",
+    ) as Column;
+    expect(bare.newRowValue?.("person")).toEqual([]);
   });
 
   it("shows the month a hire is expected, which nobody changes, and refuses a typed ID that looks temporary", async () => {
@@ -1286,7 +1305,7 @@ describe("planned hires beside people", () => {
     expect(nameCell?.textContent).toBe("Fictional Engineer, TBD-1");
     expect(
       document.getElementById("cell-p1-stateId")?.getAttribute("aria-readonly"),
-    ).toBe("true");
+    ).toBeNull();
     expect(
       document.getElementById("cell-h1-stateId")?.getAttribute("aria-readonly"),
     ).toBeNull();

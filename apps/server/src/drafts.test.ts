@@ -278,15 +278,17 @@ describe("drafts as people see them", () => {
     );
   });
 
-  it("shows only current staff to readers without Restricted details, as live dates say while a draft waits", async () => {
+  it("shows readers without Restricted details everyone who has started, as live dates say while a draft waits", async () => {
     const starting = await draftPerson({ startDate: "2099-01-01" });
+    const future = await livePerson({ startDate: "2099-02-01" });
     const leaving = await livePerson({ startDate: "2020-01-01" });
     await saved("PATCH", `/api/people/${leaving.id}`, {
       endDate: "2021-01-01",
     });
     const planner = await test.signedIn("resource-planner");
     expect(await seen(planner.cookie, starting.id)).toBeUndefined();
-    // A draft changing only Restricted dates neither hides nor shows anyone before it is approved.
+    expect(await seen(planner.cookie, future.id)).toBeUndefined();
+    // A draft changing only Restricted dates shows no draft before it is approved.
     const left = await seen(planner.cookie, leaving.id);
     expect(left).toBeDefined();
     expect(left?.draft).toBeUndefined();
@@ -295,10 +297,12 @@ describe("drafts as people see them", () => {
       endDate: "2011-01-01",
     });
     await saved("PATCH", `/api/people/${former.id}`, { endDate: null });
-    expect(await seen(planner.cookie, former.id)).toBeUndefined();
+    const formerSeen = await seen(planner.cookie, former.id);
+    expect(formerSeen?.draft).toBeUndefined();
+    expect(formerSeen).not.toHaveProperty("endDate");
     expect(await seen(editor.cookie, starting.id)).toBeDefined();
     await approve([leaving.id]);
-    expect(await seen(planner.cookie, leaving.id)).toBeUndefined();
+    expect(await seen(planner.cookie, leaving.id)).toBeDefined();
   });
 
   it("names Fathom as who made a draft the history does not hold", async () => {
@@ -566,8 +570,8 @@ describe("approving and rejecting", () => {
       error:
         "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
     });
-    // Nor is a former employee's draft, of General details only, decided by one who sees only
-    // current staff.
+    // A former employee's draft of General details is decided by one who sees only those who have
+    // started, but a future starter's is not.
     const former = await livePerson({
       startDate: "2010-01-01",
       endDate: "2011-01-01",
@@ -575,8 +579,13 @@ describe("approving and rejecting", () => {
     await saved("PATCH", `/api/people/${former.id}`, {
       preferredName: unique("Fictional"),
     });
-    expect((await approve([former.id], planner.cookie)).statusCode).toBe(404);
-    expect((await approve([former.id])).statusCode).toBe(200);
+    expect((await approve([former.id], planner.cookie)).statusCode).toBe(200);
+    const starter = await livePerson({ startDate: "2099-01-01" });
+    await saved("PATCH", `/api/people/${starter.id}`, {
+      preferredName: unique("Fictional"),
+    });
+    expect((await approve([starter.id], planner.cookie)).statusCode).toBe(404);
+    expect((await approve([starter.id])).statusCode).toBe(200);
     // Someone only drafted to be added is current as their draft says.
     const added = await draftPerson();
     expect((await approve([added.id], planner.cookie)).statusCode).toBe(200);

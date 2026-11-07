@@ -509,7 +509,7 @@ export const choiceInUse =
   "This choice cannot be removed while it is in use; retire it instead";
 
 // Refuses removing a choice that people or planned hires have, live or in a draft, as the editor
-// sees the drafts: as a value in a column, a position, or a hiring state.
+// sees the drafts: as a value in a column, a position, or a state.
 export async function refuseIfChosen(
   transaction: Reader,
   id: string,
@@ -522,7 +522,7 @@ export async function refuseIfChosen(
   const [positioned] = await transaction
     .select({ total: count() })
     .from(people)
-    .where(eq(people.positionId, id));
+    .where(or(eq(people.positionId, id), eq(people.stateId, id)));
   const [hired] = await transaction
     .select({ total: count() })
     .from(plannedHires)
@@ -536,24 +536,38 @@ export async function refuseIfChosen(
   }
 }
 
-// Refuses giving a hiring state the meaning Hired, every person's state, while planned hires not
-// yet filled are in it, live or in a draft, as the editor, if any, sees the drafts. A filled hire's
-// state no longer matters, since its person is shown instead.
-export async function refuseHiredWhileHeld(
+// Whether a meaning is one only people have: Hired, or Left.
+export const peoplesMeaning = (meaning: unknown) =>
+  meaning === "hired" || meaning === "left";
+
+// Refuses giving a hiring state a meaning only people have, Hired or Left, while planned hires not
+// yet filled are in it, live or in a hire's draft, published or not. A filled hire's state no
+// longer matters, since its person is shown instead.
+export async function refusePeoplesMeaningWhileHeld(
   transaction: Reader,
   id: string,
-  editor?: string,
+  meaning: Meaning,
 ): Promise<void> {
   const [held] = await transaction
     .select({ total: count() })
     .from(plannedHires)
     .where(and(eq(plannedHires.stateId, id), isNull(plannedHires.filledBy)));
-  if (
-    Number(held?.total) > 0 ||
-    (await draftsUse(transaction, { choice: id }, editor))
-  ) {
+  let drafted = false;
+  for (const table of [drafts, unpublishedDrafts]) {
+    const [found] = await transaction
+      .select({ total: count() })
+      .from(table)
+      .where(
+        and(
+          eq(table.recordType, "planned-hire"),
+          sql`${table.fields}->>'stateId' = ${id}`,
+        ),
+      );
+    drafted ||= Number(found?.total) > 0;
+  }
+  if (Number(held?.total) > 0 || drafted) {
     throw new ConflictError(
-      "Planned hires are in this state, so it can't mean Hired. Move them to another state first.",
+      `Planned hires are in this state, so it can't mean ${meaningName(meaning)}. Move them to another state first.`,
     );
   }
 }
@@ -1353,8 +1367,8 @@ async function changeChoice(
     const choice = changeableChoice(state, listId, id);
     const after = change(state, choice);
     refuseLastKept(state, listId, id, after);
-    if (after.meaning === "hired" && choice.meaning !== "hired") {
-      await refuseHiredWhileHeld(transaction, id, madeBy);
+    if (peoplesMeaning(after.meaning) && !peoplesMeaning(choice.meaning)) {
+      await refusePeoplesMeaningWhileHeld(transaction, id, after.meaning);
     }
     const changeSetId = await saveDraft(
       transaction,

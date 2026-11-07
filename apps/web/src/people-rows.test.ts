@@ -125,7 +125,7 @@ describe("what a planned hire's row sends", () => {
     });
   });
 
-  it("leaves a person's request without what only a planned hire's holds", () => {
+  it("leaves a person's request without the kind of row it was made in", () => {
     expect(
       personOnly({
         kind: "person",
@@ -137,6 +137,7 @@ describe("what a planned hire's row sends", () => {
         links: {},
       }),
     ).toEqual({
+      stateId: "s1",
       preferredName: "Avery Fictional",
       employeeId: "E1",
       positionId: "position-1",

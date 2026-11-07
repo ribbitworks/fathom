@@ -123,9 +123,9 @@ export const permissionDescriptions: Record<
   },
   "restricted:view": {
     allows:
-      "Sees former employees, and Restricted details of the people the role sees, such as gender, start and end dates, and past managers.",
+      "Sees people who haven't started yet, and Restricted details of the people the role sees, such as gender, start and end dates, and past managers.",
     without:
-      "Restricted details are hidden wherever they appear, and only current staff are listed.",
+      "Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.",
     needs: "people:view",
   },
 

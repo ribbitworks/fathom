@@ -28,7 +28,7 @@ const configDraft = <Live extends z.ZodRawShape>(live: Live) =>
   });
 
 // Every meaning Fathom fixes for the choices of a list with meanings, with its name.
-export const meaningSchema = z.enum(["proposed", "open", "hired"]);
+export const meaningSchema = z.enum(["proposed", "open", "hired", "left"]);
 
 export type Meaning = z.infer<typeof meaningSchema>;
 
@@ -36,6 +36,7 @@ export const meaningNames: Readonly<Record<Meaning, string>> = {
   proposed: "Proposed",
   open: "Open",
   hired: "Hired",
+  left: "Left",
 };
 
 export function meaningName(meaning: Meaning): string {
@@ -100,7 +101,7 @@ export type BuiltInList = z.infer<typeof builtInListSchema>;
 // with none is not a list with meanings.
 export const listMeanings: Readonly<Record<BuiltInList, readonly Meaning[]>> = {
   positions: [],
-  "hiring-states": ["proposed", "open", "hired"],
+  "hiring-states": ["proposed", "open", "hired", "left"],
 };
 
 // The meanings a list's choices are tied to, by its built-in key: none for any other list.

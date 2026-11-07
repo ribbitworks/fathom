@@ -1298,23 +1298,26 @@ describe("each role's view of the hiring plan", () => {
 });
 
 describe("a hire's manager", () => {
-  it.each([
-    ["not yet started", { startDate: "2099-01-01" }],
-    ["who has left", { startDate: "2019-01-01", endDate: "2020-06-30" }],
-  ])(
-    "is shown to readers without Restricted data only while current staff, so not one %s",
-    async (_who, dates) => {
-      const manager = await person(dates);
-      const id = await liveHire({ managerId: manager });
-      expect(await hireSeen(id, planner)).toMatchObject({
-        managerId: null,
-        managerName: null,
-      });
-      const restricted = await test.signedIn("engineering-manager");
-      expect((await hireSeen(id, restricted))?.managerId).toBe(manager);
-      expect((await hireSeen(id))?.managerId).toBe(manager);
-    },
-  );
+  it("is shown to readers without Restricted data once the manager has started, so not one starting later", async () => {
+    const starting = await person({ startDate: "2099-01-01" });
+    const id = await liveHire({ managerId: starting });
+    expect(await hireSeen(id, planner)).toMatchObject({
+      managerId: null,
+      managerName: null,
+    });
+    const restricted = await test.signedIn("engineering-manager");
+    expect((await hireSeen(id, restricted))?.managerId).toBe(starting);
+    expect((await hireSeen(id))?.managerId).toBe(starting);
+  });
+
+  it("is shown to everyone who sees people once the manager has left, as People shows them", async () => {
+    const left = await person({
+      startDate: "2019-01-01",
+      endDate: "2020-06-30",
+    });
+    const id = await liveHire({ managerId: left });
+    expect((await hireSeen(id, planner))?.managerId).toBe(left);
+  });
 
   it("must be marked as a manager while the hire is not yet filled, as people's managers are", async () => {
     const unmarked = await person({ isManager: false });

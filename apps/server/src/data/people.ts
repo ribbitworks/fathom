@@ -5,15 +5,18 @@
 // data access layer, the only server code that queries the database. Every change is a draft, as
 // drafts.ts sets out, which reaches the live people only once approved, as approvals.ts sets out.
 // Every change is recorded in the change history, field by field, with each field's tier: a
-// person's name and Employee ID are General, their start and end dates Restricted, and each
-// column's values as sensitive as its list. Users see and change only the tiers their role allows,
-// and changes to Restricted or Confidential details are also recorded in the access history.
+// person's name and Employee ID are General, their start and end dates Restricted, and their state
+// and each column's values as sensitive as their list. Users see and change only the tiers their
+// role allows, and changes to Restricted or Confidential details are also recorded in the access
+// history.
 
 import {
   type Database,
   drafts,
   fieldOfValue,
   inChunks,
+  listItems,
+  lists,
   people,
 } from "@fathom/db";
 import {
@@ -100,7 +103,6 @@ import {
   shownReporting,
 } from "./reporting.ts";
 import {
-  builtInTier,
   type ColumnInfo,
   type PeopleColumns,
   type FieldValue,
@@ -125,12 +127,13 @@ const detailFields = [
   "startDate",
   "endDate",
   "isManager",
+  "stateId",
 ] as const;
 const personFields = [...detailFields, ...reportingFields];
 
 // The tier of each field of a person: dates are Restricted, and so are changes to their manager,
-// which name past managers, the position and each column's values are as sensitive as their list,
-// and the rest is General. Every value field recorded is for one of the columns given.
+// which name past managers, the position, state, and each column's values are as sensitive as their
+// list, and the rest is General. Every value field recorded is for one of the columns given.
 export const restrictedPersonFields = [
   "startDate",
   "endDate",
@@ -141,6 +144,7 @@ export const restrictedPersonFields = [
 export function personTier(columns: PeopleColumns) {
   const tiers = new Map<string, Tier>([
     ["positionId", columns.positionTier],
+    ["stateId", columns.stateTier],
     ...restrictedPersonFields.map((field): [string, Tier] => [
       field,
       "restricted",
@@ -165,7 +169,67 @@ export function recorded(
     endDate: row.endDate,
     // Recorded only when marked, so adding or removing someone who is not records nothing for it.
     ...(row.isManager ? { isManager: true } : {}),
+    // Recorded only when chosen; with none, a person has the first state of their meaning.
+    ...(row.stateId === null ? {} : { stateId: row.stateId }),
     ...recordedValues(values),
+  };
+}
+
+// The meaning of a person's state: Left once their end date has passed, and Hired until then.
+export const meaningOn = (person: Recorded, today: string): "hired" | "left" =>
+  typeof person.endDate === "string" && person.endDate < today
+    ? "left"
+    : "hired";
+
+// Refuses a state that is not a hiring state with the meaning the person's end date gives them.
+// A state they already have stays valid when retired.
+async function checkState(
+  reader: Pick<Database, "select">,
+  person: Recorded,
+  today: string,
+  had: unknown,
+): Promise<void> {
+  if (typeof person.stateId !== "string") return;
+  const meaning = await checkBuiltInChoice(
+    reader,
+    "hiring-states",
+    person.stateId,
+    had,
+  );
+  if (meaning === "proposed" || meaning === "open") {
+    throw new BadRequestError("That state is for planned hires");
+  }
+  if (meaning !== meaningOn(person, today)) {
+    throw new BadRequestError(
+      meaning === "left"
+        ? "A Left state is for someone whose end date has passed"
+        : "This person has left, so choose a state meaning Left",
+    );
+  }
+}
+
+// Each hiring state's meaning, and the first state offered for each meaning a person can have, so
+// a person shows their own state while it has the meaning their end date gives them, and otherwise
+// the first of that meaning.
+async function readStates(reader: Pick<Database, "select">) {
+  const choices = await reader
+    .select({ id: listItems.id, meaning: listItems.meaning })
+    .from(listItems)
+    .innerJoin(lists, eq(lists.id, listItems.listId))
+    .where(eq(lists.builtIn, "hiring-states"));
+  const meanings = new Map(choices.map(({ id, meaning }) => [id, meaning]));
+  const first = {
+    hired: await firstOffered(reader, "hiring-states", "hired"),
+    left: await firstOffered(reader, "hiring-states", "left"),
+  };
+  return (person: Recorded, today: string): string => {
+    const meaning = meaningOn(person, today);
+    const own = typeof person.stateId === "string" ? person.stateId : null;
+    // Each meaning keeps a choice offered, as lists with meanings require, and the meaning is one
+    // of the two named above.
+    // eslint-disable-next-line security/detect-object-injection
+    const firstOfMeaning = first[meaning] as string;
+    return own !== null && meanings.get(own) === meaning ? own : firstOfMeaning;
   };
 }
 
@@ -515,6 +579,10 @@ export interface PeopleRead {
 
 const byName = new Intl.Collator("en", { sensitivity: "base" });
 
+// Whether a person has a start date still to come on a day.
+export const notStarted = (person: Recorded, today: string): boolean =>
+  typeof person.startDate === "string" && person.startDate > today;
+
 // Whether a person is current on a day: from their start date until their end date passes, or with
 // no start date at all.
 export function currentOn(person: Recorded, today: string): boolean {
@@ -528,8 +596,9 @@ export function currentOn(person: Recorded, today: string): boolean {
 // Everyone the actor may see, by preferred name, as their drafts make them, with the columns whose
 // values they may see, and each draft as they may see it, followed by the planned hires they see,
 // as readHires sets out, by ID. A person a draft removes is shown as they are, with the draft.
-// Users who cannot see Restricted details see only current staff, so the list does not reveal
-// anyone's start or end date before it arrives, and receive no dates.
+// Users who cannot see Restricted details see only those who have started, current staff and those
+// who have left, so the list does not reveal anyone's start date before it arrives, and receive no
+// dates. Each person's state means Hired, or Left once their end date has passed.
 export async function readPeople(
   database: Database,
   actor: Actor,
@@ -557,6 +626,7 @@ async function readPeopleIn(
     "preferredName",
     "employeeId",
     ...(seesTier(actor, allColumns.positionTier) ? ["positionId"] : []),
+    ...(seesTier(actor, allColumns.stateTier) ? ["stateId"] : []),
     "teamName",
     "isManager",
     ...(restricted ? ["startDate", "endDate", "managerId", "managerFrom"] : []),
@@ -584,16 +654,30 @@ async function readPeopleIn(
       drafted(live.get(id), draftsNow.get(id)) ?? live.get(id),
     ]),
   );
+  // Every person's state means Hired or Left, as their end date decides, and as the live dates
+  // decide for those who see no dates.
+  const statesTier = allColumns.stateTier;
+  const seesStates = seesTier(actor, statesTier);
+  const stateOf = seesStates ? await readStates(database) : undefined;
+  // A person's state as a reader sees it: from the end date they see.
+  const shownState = (person: Recorded, before: Recorded | undefined) =>
+    stateOf?.(
+      {
+        ...person,
+        endDate: (restricted ? person : (before ?? person)).endDate,
+      },
+      today,
+    );
   const shown = ids.flatMap((id): Person[] => {
     const before = live.get(id);
     const draft = draftsNow.get(id);
     // A draft that removes someone shows them as they are; one that adds nobody is never kept.
     const person = drafted(before, draft) ?? before;
-    // Who is current comes from the live dates while a draft waits, so a draft changing only
-    // Restricted dates reveals nothing.
+    // Who has started comes from the live dates while a draft waits, so a draft changing only
+    // Restricted dates reveals nothing. Those who have left are no longer kept from anyone.
     if (
       person === undefined ||
-      (!restricted && !currentOn(before ?? person, today))
+      (!restricted && notStarted(before ?? person, today))
     ) {
       return [];
     }
@@ -667,6 +751,9 @@ async function readPeopleIn(
         /* eslint-disable security/detect-object-injection */
         if (field === "isManager") {
           liveValues.isManager = before.isManager === true;
+        } else if (field === "stateId") {
+          // Shown only to those who see the hiring states, as the state the row showed.
+          liveValues.stateId = shownState(before, before);
         } else if (fieldId === null) {
           Object.assign(liveValues, { [field]: before[field] ?? null });
         } else {
@@ -717,16 +804,17 @@ async function readPeopleIn(
   const teamOf = new Map(
     shown.map(({ id, teamName }) => [id, teamName ?? null]),
   );
-  // Every person's state is the hiring states list's first choice meaning Hired.
-  const statesTier = await builtInTier(database, "hiring-states");
-  const hired = seesTier(actor, statesTier)
-    ? await firstOffered(database, "hiring-states", "hired")
-    : undefined;
   return {
     people: [
-      ...(hired === undefined
+      ...(stateOf === undefined
         ? shown
-        : shown.map((person) => ({ ...person, stateId: hired }))),
+        : shown.map((row) => ({
+            ...row,
+            stateId: shownState(
+              everyone.get(row.id) as Recorded,
+              live.get(row.id),
+            ) as string,
+          }))),
       ...hiring.hires.map((hire) => hireRow(hire, teamOf)),
     ],
     columns,
@@ -737,7 +825,7 @@ async function readPeopleIn(
           columns.some(({ tier }) => tier !== "general") ||
           (shownFields.has("positionId") &&
             allColumns.positionTier !== "general") ||
-          (hired !== undefined && statesTier !== "general"))) ||
+          (seesStates && statesTier !== "general"))) ||
       hiring.includedRestricted,
     hiringPlanViewed: hiring.wholePlan && hiring.hires.length > 0,
   };
@@ -796,6 +884,7 @@ export async function createPeople(
         startDate: request.startDate ?? null,
         endDate: request.endDate ?? null,
         isManager: request.isManager ?? false,
+        stateId: request.stateId ?? null,
       };
       // Notes left empty are left out.
       const after = tidy({
@@ -813,6 +902,7 @@ export async function createPeople(
         ...(request.teamName == null ? {} : { teamName: request.teamName }),
       });
       checkComplete(columns, after);
+      await checkState(transaction, after, today, undefined);
       made.push(...personChanges(columns, id, "created", undefined, after));
       added.push({ id, fields: after });
     }
@@ -937,6 +1027,18 @@ export async function updatePerson(
       before,
     );
     checkComplete(columns, after);
+    if (change.stateId !== undefined) {
+      // Those who see no dates are offered states from the live end date, so their choice is
+      // checked against it, and a draft's end date is never revealed by a refusal; a state that
+      // stops fitting once the draft is approved shows the first of the meaning instead.
+      const dates = seesTier(actor, "restricted") ? after : (before ?? after);
+      await checkState(
+        transaction,
+        { ...after, endDate: dates.endDate },
+        today,
+        person.stateId,
+      );
+    }
     const made = personChanges(columns, id, "changed", person, after);
     requireEdits(actor, made);
     if (made.length === 0) return null;

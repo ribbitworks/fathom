@@ -232,6 +232,13 @@
       "when": 1794073326450,
       "tag": "0032_approve_own_drafts",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794079507065,
+      "tag": "0033_left_state",
+      "breakpoints": true
     }
   ]
 }

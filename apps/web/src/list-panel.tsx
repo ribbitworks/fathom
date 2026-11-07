@@ -151,7 +151,7 @@ function builtInNote(key: BuiltInList, mayChange: boolean): string {
     : "";
   switch (key) {
     case "hiring-states":
-      return `${invitation}Proposed: the request to hire is not yet approved.\nOpen: the request to hire is approved.\nHired: everyone in People who isn't a planned hire. A planned hire is hired when someone fills it.\nKeep at least one choice for each.`;
+      return `${invitation}Proposed: the request to hire is not yet approved.\nOpen: the request to hire is approved.\nHired: everyone in People who hasn't left. A planned hire is hired when someone fills it.\nLeft: everyone in People whose end date has passed.\nKeep at least one choice for each.`;
     case "positions":
       return `${invitation}Every person and planned hire has one of these positions.\nKeep at least one.`;
   }

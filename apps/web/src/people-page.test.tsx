@@ -3880,6 +3880,7 @@ describe("planned hires", () => {
       { ...choice("s-proposed", "Request to hire"), meaning: "proposed" },
       { ...choice("s-open", "Approved to hire"), meaning: "open" },
       { ...choice("s-hired", "Hired"), meaning: "hired" },
+      { ...choice("s-left", "Fictional Resigned"), meaning: "left" },
     ]),
     builtIn: "hiring-states",
   };
@@ -3965,6 +3966,20 @@ describe("planned hires", () => {
     await userEvent.click(await screen.findByRole("menuitem", { name: item }));
   }
 
+  it("offers a person the states of their meaning, and a hire only Proposed or Open", async () => {
+    await openHires();
+    focusCell("p1", "stateId");
+    await userEvent.keyboard("{Enter}");
+    expect(await offeredOptions()).toEqual(["Hired"]);
+    await userEvent.keyboard("{Escape}");
+    focusCell("h1", "stateId");
+    await userEvent.keyboard("{Enter}");
+    expect(await offeredOptions()).toEqual([
+      "Request to hire",
+      "Approved to hire",
+    ]);
+  });
+
   it("names an unnamed hire by its position and ID, and changes it through the planned hires' routes", async () => {
     const fetch = await openHires();
     expect(cell("h1", "preferredName").textContent).toContain("Tester, REQ-1");
@@ -3977,7 +3992,7 @@ describe("planned hires", () => {
         },
       ),
     ).toBeDefined();
-    expect(cell("p1", "stateId").getAttribute("aria-readonly")).toBe("true");
+    expect(cell("p1", "stateId").getAttribute("aria-readonly")).toBeNull();
     focusCell("h1", "preferredName");
     await userEvent.keyboard("Fictional opening{Enter}");
     await waitFor(() => {

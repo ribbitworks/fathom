@@ -3473,7 +3473,7 @@ describe("built-in lists and lists with meanings", () => {
     expect(within(panel()).getByText("Built in")).toBeTruthy();
     expect(
       within(panel()).getByText(
-        /Proposed: the request to hire is not yet approved\.\s+Open: the request to hire is approved\.\s+Hired: everyone in People who isn't a planned hire\. A planned hire is hired when someone fills it\.\s+Keep at least one choice for each\./,
+        /Proposed: the request to hire is not yet approved\.\s+Open: the request to hire is approved\.\s+Hired: everyone in People who hasn't left\. A planned hire is hired when someone fills it\.\s+Left: everyone in People whose end date has passed\.\s+Keep at least one choice for each\./,
       ),
     ).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Edit list" }));

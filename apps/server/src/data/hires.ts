@@ -45,6 +45,7 @@ import {
   NotFoundError,
 } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
+import { peoplesMeaning } from "./lists.ts";
 import { checkBuiltInChoice, firstChoiceMeaning } from "./built-in-lists.ts";
 import { type LiveValues, typeOf } from "./column-types.ts";
 import {
@@ -94,7 +95,7 @@ import {
   checkedNotes,
   checkedValues,
   choicesAskedFor,
-  currentOn,
+  notStarted,
   linksOf,
   notesOf,
   recordedValues,
@@ -330,7 +331,7 @@ const byId = new Intl.Collator("en", { sensitivity: "base", numeric: true });
 interface Named {
   name: string;
   startDate: string | null;
-  current: boolean;
+  started: boolean;
 }
 
 async function peopleNamed(
@@ -353,7 +354,7 @@ async function peopleNamed(
       found.set(id, {
         name,
         startDate: dates.startDate,
-        current: currentOn(dates, today),
+        started: !notStarted(dates, today),
       });
     }
   }
@@ -426,8 +427,8 @@ export async function readHiresIn(
     const hire = (drafted(before, draft) ?? before) as Recorded;
     return { id, before, draft, hire };
   });
-  // Readers who cannot see Restricted data see only current staff, so a hire names its manager
-  // to them only while the manager is current, as People shows them.
+  // Readers who cannot see Restricted data see only people who have started, so a hire names its
+  // manager to them only once the manager has started, as People shows them.
   const restricted = seesTier(actor, "restricted");
   const named = await peopleNamed(
     transaction,
@@ -456,7 +457,7 @@ export async function readHiresIn(
       typeof hire.managerId === "string"
         ? named.get(hire.managerId)
         : undefined;
-    const shown = manager !== undefined && (restricted || manager.current);
+    const shown = manager !== undefined && (restricted || manager.started);
     const targetDate = textOrNull(hire.targetDate);
     const expectedOn = filler?.startDate ?? targetDate;
     return [
@@ -588,12 +589,12 @@ function requireHiringEdit(actor: Actor): void {
   requirePermission(actor, "confidential:edit");
 }
 
-// Hired is every person's state, and a hire is hired only by filling it.
+// Hired and Left are people's states, and a hire is hired only by filling it.
 const hiredState =
   "That state is for people. A planned hire is hired when someone fills it.";
 
 function refuseHired(meaning: string | null): void {
-  if (meaning === "hired") throw new BadRequestError(hiredState);
+  if (peoplesMeaning(meaning)) throw new BadRequestError(hiredState);
 }
 
 // Whether a hire may have the manager given: none, or a live person whom no draft removes,
@@ -1191,13 +1192,13 @@ export async function approveHiresIn(
       await transaction.delete(plannedHires).where(eq(plannedHires.id, id));
       continue;
     }
-    // The state may have come to mean Hired since the draft was made.
+    // The state may have come to mean Hired or Left since the draft was made.
     if (unfilled(hire)) {
       const [state] = await transaction
         .select({ meaning: listItems.meaning })
         .from(listItems)
         .where(eq(listItems.id, String(hire.stateId)));
-      if (state?.meaning === "hired") throw new ConflictError(hiredState);
+      if (peoplesMeaning(state?.meaning)) throw new ConflictError(hiredState);
     }
     const row = {
       name: textOrNull(hire.name),

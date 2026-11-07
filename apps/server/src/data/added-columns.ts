@@ -73,7 +73,10 @@ export async function columnsWithAdded(
       };
     }),
   ];
-  return Object.assign(all, { positionTier: live.positionTier });
+  return Object.assign(all, {
+    positionTier: live.positionTier,
+    stateTier: live.stateTier,
+  });
 }
 
 // The choices given that are live, in list order, then those drafted to be added that the editor

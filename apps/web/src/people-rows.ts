@@ -13,22 +13,19 @@ import type {
   RowKind,
 } from "@fathom/shared";
 
-// A change to a row: a person's, or a planned hire's, which may also move it to another state.
-export type RowChange = PersonChange & { stateId?: string };
+// A change to a row: a person's, or a planned hire's.
+export type RowChange = PersonChange;
 
-// A request adding a row: a person, or a planned hire, which may be added in a state of its own.
-export type RowRequest = PersonRequest & {
-  kind?: RowKind;
-  stateId?: string;
-};
+// A request adding a row: a person, or a planned hire, either of which may be given a state.
+export type RowRequest = PersonRequest & { kind?: RowKind };
 
-// A person's change or request, without what only a planned hire's holds.
+// A person's change or request, without the kind of row it was made in.
 export function personOnly<Row extends RowChange | RowRequest>(
   row: Row,
-): Omit<Row, "stateId" | "kind"> {
+): Omit<Row, "kind"> {
   return Object.fromEntries(
-    Object.entries(row).filter(([key]) => key !== "stateId" && key !== "kind"),
-  ) as Omit<Row, "stateId" | "kind">;
+    Object.entries(row).filter(([key]) => key !== "kind"),
+  ) as Omit<Row, "kind">;
 }
 
 export const isHire = (row: Pick<Person, "kind">) =>

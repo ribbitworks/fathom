@@ -18,9 +18,11 @@ const manager = "6f1c2b9e-4d3a-4f8b-9c7e-2a1b3c4d5e6f";
 const state = "7a8b9c0d-1e2f-4a3b-8c4d-5e6f7a8b9c0d";
 
 describe("hiring meanings and temporary IDs", () => {
-  it("are those of the hiring states list but Hired, which is people's", () => {
+  it("are those of the hiring states list but Hired and Left, which are people's", () => {
     expect(hiringMeaningSchema.options).toEqual(
-      meaningsOf("hiring-states").filter((meaning) => meaning !== "hired"),
+      meaningsOf("hiring-states").filter(
+        (meaning) => meaning !== "hired" && meaning !== "left",
+      ),
     );
   });
 

@@ -23,7 +23,7 @@ import {
 } from "./people.ts";
 
 // The meanings a planned hire's state can have: Proposed, the headcount not yet approved, and Open,
-// approved. The hiring states list's third meaning, Hired, is every person's state.
+// approved. The hiring states list's other meanings, Hired and Left, are people's states.
 export const hiringMeaningSchema = meaningSchema.extract(["proposed", "open"]);
 
 export type HiringMeaning = z.infer<typeof hiringMeaningSchema>;
@@ -72,7 +72,7 @@ export const hireSchema = z.object({
   temporaryId: z.string().nullable(),
   // Left out for readers who cannot see the Positions list's tier.
   positionId: z.string().optional(),
-  // None, too, for readers who cannot see Restricted data while the manager is not current staff.
+  // None, too, for readers who cannot see Restricted data while the manager has not yet started.
   managerId: z.string().nullable(),
   managerName: z.string().nullable(),
   // The first month the hire can be allocated: that of its target date, or of its person's start

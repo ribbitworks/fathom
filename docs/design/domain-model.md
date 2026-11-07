@@ -1,7 +1,7 @@
 # Fathom — Domain Model
 
 **Status:** Draft
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 A first sketch of Fathom's core entities and how they relate. It describes structure only: terms are defined in [Domain Concepts](../product/domain.md), and rules and allowed values are in the [Decisions Log](../product/decisions.md). It describes concepts, not database tables. Items marked **proposal** are suggested modeling choices that have not been agreed.
 
@@ -76,7 +76,7 @@ The values of every built-in field are set out in the [Decisions Log](../product
 - **Feature team membership:** Records that a person joins or leaves a feature team from a given date, in force until their next record for that team, so past memberships are kept, as reporting lines are. Future-dated records represent planned changes.
 - **Reporting line:** Links a person to their manager, or records that they have none, from a given date until the person's next line starts. Past lines are kept. Future-dated lines represent planned changes.
 - **Planned hire:** A role to be filled, kept as a record apart from people but shown beside them as a row of the People table, with an optional name, its requisition, or a temporary ID until it has one, a position, a state, and optionally a target date, its manager, whose team it joins, and values for the columns it shares with people. When filled, it links to the person who fills it and leaves People, and a person may fill several over time.
-- **Hiring state:** A choice in the built-in list of hiring states, a list with meanings, each meaning Proposed, Open, or Hired. The organization names its own states, as many as it uses. A planned hire is in one meaning Proposed or Open; every person's state is the first choice meaning Hired, which no planned hire has.
+- **Hiring state:** A choice in the built-in list of hiring states, a list with meanings, each meaning Proposed, Open, Hired, or Left. The organization names its own states, as many as it uses. A planned hire is in one meaning Proposed or Open. A person keeps a state of their own meaning Hired, or Left once their end date has passed, starting on the first choice of that meaning, which no planned hire has.
 - **Composition target:** The range of direct reports each manager is compared with, held in planning configuration.
 
 **Proposal:** Measure team composition from people's positions and their team or feature team membership, and compare it with configurable composition targets.

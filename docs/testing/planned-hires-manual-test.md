@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -131,15 +131,15 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **REQ-2047**. Select the row's **State** cell and press Enter.
-  - **Expected:** A picker opens offering **Request to hire** and **Approved to hire** only. **Hired** is not offered.
+  - **Expected:** A picker opens offering **Request to hire** and **Approved to hire** only. **Hired** and **Left** are not offered.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **State** header, then **Filter…**, and look at the choices.
-  - **Expected:** **Request to hire**, **Approved to hire**, **Hired** and **Empty** are listed together, with no **Retired** heading.
+  - **Expected:** **Request to hire**, **Approved to hire**, **Hired**, **Left** and **Empty** are listed together, with no **Retired** heading.
   - **Notes:**
 
 - [ ] **Step 3.** Tick **Hired** only.
-  - **Expected:** Only people are shown, with no hire rows.
+  - **Expected:** Only people are shown, with no hire rows, and every **State** cell reads **Hired**.
   - **Notes:**
 
 **Afterwards:** R1.
@@ -281,6 +281,26 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 9.** Choose **Light** in the Appearance menu.
   - **Expected:** The page returns to its light colours.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### HIRE-10: A Person Who Has Left Shows Left, to Everyone Who Sees People
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-09. Step 3 signs in as another account.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
+
+- [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Left** only, and press Esc.
+  - **Expected:** Only people are shown, **Viktoria Holmberg** among them. Every **State** cell reads **Left**, and every **End** cell holds a date that has passed.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **State** cell of the first row with no **Draft** mark beside its name, and press Enter.
+  - **Expected:** A picker opens offering **Left** only. Press Esc to close it.
+  - **Notes:**
+
+- [ ] **Step 3.** Sign in (P1) as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People**, and filter **State** to **Left** only, as in Step 1.
+  - **Expected:** The same people are shown, **Viktoria Holmberg** among them, each with **Left** in **State**. There are no **Start** or **End** columns.
   - **Notes:**
 
 **Afterwards:** R1.

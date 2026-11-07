@@ -841,6 +841,7 @@ describe("planned hires", () => {
         { label: "Request to hire", meaning: "proposed" },
         { label: "Approved to hire", meaning: "open" },
         { label: "Hired", meaning: "hired" },
+        { label: "Left", meaning: "left" },
       ]);
       const positions = await client.query(
         "SELECT label, meaning FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'positions' ORDER BY i.position",

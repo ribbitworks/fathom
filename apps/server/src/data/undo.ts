@@ -204,6 +204,7 @@ const columnsOf: Record<
     startDate: textOrNull,
     endDate: textOrNull,
     isManager: flag,
+    stateId: textOrNull,
   },
   "planned-hire": {
     requisition: textOrNull,

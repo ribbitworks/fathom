@@ -322,26 +322,40 @@ export function columnsFor(
   const firstProposed = states.find(
     (option) => option.meaning === "proposed" && offered(option),
   );
+  const firstHired = states.find(
+    (option) => option.meaning === "hired" && offered(option),
+  );
   const state: Column = {
     key: "stateId",
     kind: "choice",
     label: builtInColumnNames.get("stateId") as string,
-    required: false,
+    required: true,
     multiple: false,
     choices: states,
-    // Hired is every person's state, never picked: a planned hire is hired by filling it.
-    pickable: (option) => option.meaning !== "hired",
+    // A planned hire is Proposed or Open, and hired by filling it. A person is Hired, or Left once
+    // their end date has passed, which the state they show already says, so they are offered only
+    // states of its meaning. A new person may be either, as the end date given decides, which the
+    // server checks.
+    pickableOn: (option, row, rowKind) => {
+      if (hiresOnly(rowKind)) {
+        return option.meaning === "proposed" || option.meaning === "open";
+      }
+      if (row === undefined) {
+        return option.meaning === "hired" || option.meaning === "left";
+      }
+      const meaning = states.find(({ id }) => id === row.stateId)?.meaning;
+      return option.meaning === meaning;
+    },
     value: (row) => chosen(row.stateId),
     live: (draft) => chosen(draft.live.stateId),
-    // Every planned hire has a state, so a change always holds one.
-    change: (value) => ({ stateId: asIds(value)[0] as string }),
-    requiredOn: hiresOnly,
-    readOnlyOn: peopleOnly,
-    // A planned hire added with no state is in the first meaning Proposed.
-    newRowValue: (rowKind) =>
-      hiresOnly(rowKind) && firstProposed !== undefined
-        ? [firstProposed.id]
-        : [],
+    // Every row has a state, so a change always holds one.
+    change: (value) => ({ stateId: asIds(value)[0] }),
+    // A new planned hire starts in the first state meaning Proposed, and a new person in the first
+    // meaning Hired.
+    newRowValue: (rowKind) => {
+      const first = hiresOnly(rowKind) ? firstProposed : firstHired;
+      return first === undefined ? [] : [first.id];
+    },
   };
   const expected: Column = {
     key: "expected",

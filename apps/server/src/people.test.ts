@@ -368,7 +368,7 @@ describe("who is listed and what each user sees", () => {
   // Today in Fathom's time zone, which decides who is current.
   const today = () => dayIn(defaultTimeZone);
 
-  it("shows users who cannot see Restricted details only current staff, without dates or Restricted values", async () => {
+  it("shows users who cannot see Restricted details everyone who has started, without dates or Restricted values", async () => {
     const { cookie } = await editor();
     const general = await columnWith(cookie, ["Fictional General"]);
     const restricted = await columnWith(cookie, ["Fictional Restricted"], {
@@ -389,9 +389,12 @@ describe("who is listed and what each user sees", () => {
     const seen = await readPeople(viewer.cookie);
     const listed = seen.people.filter((person) => ids.includes(person.id));
     expect(listed.map((person) => ids.indexOf(person.id)).sort()).toEqual([
-      0, 1, 2,
+      0, 1, 2, 3,
     ]);
     expect(listed[0]).not.toHaveProperty("startDate");
+    expect(listed.find(({ id }) => id === ids[3])).not.toHaveProperty(
+      "endDate",
+    );
     expect(listed.find(({ id }) => id === ids[0])?.values).toEqual({
       [general.field.id]: values[general.field.id],
     });

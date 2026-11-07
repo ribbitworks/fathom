@@ -263,6 +263,9 @@ export const personRequestSchema = z.object({
   positionId: z.uuid(),
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
+  // A hiring state meaning Hired, or Left for someone whose end date has passed; with none, the
+  // first state of their meaning.
+  stateId: z.uuid().optional(),
   ...reporting,
   values: requestedValuesSchema.default({}),
   links: z.record(z.uuid(), linkValueSchema).default({}),
@@ -284,6 +287,7 @@ export const personChangeSchema = z.object({
   positionId: z.uuid().optional(),
   startDate: day.nullable().optional(),
   endDate: day.nullable().optional(),
+  stateId: z.uuid().optional(),
   ...reporting,
   values: requestedValuesSchema.optional(),
   links: requestedLinksSchema.optional(),

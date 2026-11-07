@@ -191,7 +191,7 @@ export const accessHistory = fathomSchema.table(
 const sqlList = (values: readonly string[]) =>
   values.map((value) => `'${value}'`).join(", ");
 const builtInListList = sqlList(["positions", "hiring-states"]);
-const meaningList = sqlList(["proposed", "open", "hired"]);
+const meaningList = sqlList(["proposed", "open", "hired", "left"]);
 
 // Lists of choices, such as locations or skills, for columns elsewhere to draw on. Most are defined
 // by people; a built-in list is known by its key, cannot be removed, and is drawn on by a built-in
@@ -406,9 +406,12 @@ export const changes = fathomSchema.table(
 // Employee IDs are unique, ignoring letter case, among themselves and, checked by the server, with
 // planned hires' requisitions. A person's position is a choice in the built-in Positions list,
 // which the server checks. People who leave are kept, not deleted; deleting is only for a person
-// entered by mistake whom nothing uses. Other details are columns drawing on lists. Only people
-// flagged as managers can be named as a manager, which the server checks rather than the database,
-// since past reporting lines may name people no longer flagged.
+// entered by mistake whom nothing uses. A person's state is a choice in the built-in hiring states
+// list meaning Hired or Left, as their end date decides, which the server checks; none, or one of
+// the other meaning, stands for the first choice offered with the meaning the end date decides.
+// Other details are columns drawing on lists. Only people flagged as managers can be named as a
+// manager, which the server checks rather than the database, since past reporting lines may name
+// people no longer flagged.
 export const people = fathomSchema.table(
   "people",
   {
@@ -421,10 +424,14 @@ export const people = fathomSchema.table(
     startDate: date("start_date"),
     endDate: date("end_date"),
     isManager: boolean("is_manager").notNull().default(false),
+    stateId: uuid("state_id").references(() => listItems.id, {
+      onDelete: "restrict",
+    }),
   },
   (table) => [
     uniqueIndex("people_employee_id_index").on(sql`lower(${table.employeeId})`),
     index("people_position_index").on(table.positionId),
+    index("people_state_index").on(table.stateId),
     check(
       "people_dates_in_order",
       sql`${table.endDate} IS NULL OR ${table.startDate} IS NULL OR ${table.endDate} >= ${table.startDate}`,

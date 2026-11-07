@@ -178,6 +178,13 @@ export interface Column<
   choices: Choice[];
   // Whether a choice may be put in a cell, apart from being offered in its list.
   pickable?: (choice: Choice) => boolean;
+  // Whether a choice may be put in a row's cell, for a column whose choices depend on the row: its
+  // record, or none for a new row, and its kind. It takes the place of pickable for that row.
+  pickableOn?: (
+    choice: Choice,
+    record: Rec | undefined,
+    kind: string,
+  ) => boolean;
   // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
   // Set for a column whose values follow from another's, which is edited instead.
@@ -411,6 +418,22 @@ const kindOf = (column: { kind: Kind }) => cellKinds[column.kind];
 const offered = (column: AnyColumn, kind: string) =>
   column.offeredOn?.(kind) ?? true;
 
+// A column as a row's cell sees it: with the choices the row may be given, when they depend on it.
+function onRow<
+  Rec extends GridRecord,
+  Col extends {
+    pickable?: ((choice: Choice) => boolean) | undefined;
+    pickableOn?:
+      | ((choice: Choice, record: Rec | undefined, kind: string) => boolean)
+      | undefined;
+  },
+>(column: Col, record: Rec | undefined, kind: string): Col {
+  const { pickableOn } = column;
+  return pickableOn === undefined
+    ? column
+    : { ...column, pickable: (choice) => pickableOn(choice, record, kind) };
+}
+
 // Whether a kind of record's cells in a column cannot be changed.
 const readOnlyFor = (column: AnyColumn, kind: string) =>
   column.readOnly === true ||
@@ -638,7 +661,11 @@ export function pastedRows(
         ) {
           continue;
         }
-        const read = kindOf(column).pasted(column, content);
+        // A pasted row has no record yet.
+        const read = kindOf(column).pasted(
+          onRow<never, AnyColumn>(column, undefined, kind),
+          content,
+        );
         if ("problem" in read) problem ??= read.problem;
         else values[column.key] = read.value;
       }
@@ -2532,7 +2559,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                           }}
                         >
                           {editingHere
-                            ? editor(cell, column, valueAt(row, column))
+                            ? editor(
+                                cell,
+                                onRow(column, row.record, rowKind(row)),
+                                valueAt(row, column),
+                              )
                             : has &&
                               (standInAt(row, column) === undefined ? (
                                 cellContent(column, valueAt(row, column))

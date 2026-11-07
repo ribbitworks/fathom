@@ -39,10 +39,11 @@ export interface ColumnInfo extends FieldRow {
   listRetired: boolean;
 }
 
-// The People table's columns, carrying the tier of the built-in Position column with them, so every
-// tier worked out from the columns read has it.
+// The People table's columns, carrying the tiers of the built-in Position and State columns with
+// them, so every tier worked out from the columns read has them.
 export type PeopleColumns = readonly ColumnInfo[] & {
   readonly positionTier: Tier;
+  readonly stateTier: Tier;
 };
 
 // The tier of a built-in list's values: its live visibility, or the most sensitive tier when the
@@ -86,6 +87,7 @@ export async function readColumns(
   }));
   return Object.assign(columns, {
     positionTier: await builtInTier(reader, "positions"),
+    stateTier: await builtInTier(reader, "hiring-states"),
   });
 }
 
