@@ -41,7 +41,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Draft and Approval | Done |
 | Web Link Columns | Done |
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
-| Org Chart Additions | In progress: team colours; next the person detail view, then chart fields, filters, and sort |
+| Org Chart Additions | In progress: team colours; next drafts on the chart, then the person detail view, then chart fields, filters, and sort |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID; lists with meanings edited on the Lists page, which marks built-in lists |
 | Editable Roles | In progress: schema, the server reading roles from the database, and the Roles page; next, the account dialog |
@@ -105,10 +105,11 @@ People managers and their current direct reports: each person's reporting line, 
 The additions to the org chart that the [Decisions Log](../product/decisions.md#workforce) records, built in this order, each step its own pull request:
 
 1. **Team colours:** each team's colour, from the palette releases use, chosen on the org chart and changed at once rather than drafted, with a Team colours permission, which needs a migration; with it, naming teams on the chart as drafts, a Teams panel, and teams in the finder.
-2. **Person detail view:** a page for one person, which the org chart's cards and People's rows open. Restricted details shown there are recorded in the access history, as on People.
-3. **Chart fields, filters, and sort:** cards show fields chosen from People's columns, at the tiers the reader may see, kept apart from the card's own details, with filters and sort saved as People's views are.
+2. **Drafts on the chart:** the Draft menu tables have, on the org chart: people drafted to a new manager drawn under them with a Live copy under their current one, drafted team names, Drafts applied and Live only, as the [Decisions Log](../product/decisions.md#workforce) sets out.
+3. **Person detail view:** a page for one person, which the org chart's cards and People's rows open. Restricted details shown there are recorded in the access history, as on People.
+4. **Chart fields, filters, and sort:** cards show fields chosen from People's columns, at the tiers the reader may see, kept apart from the card's own details, with filters and sort saved as People's views are.
 
-Feature teams join the chart once the [Projects and Feature Teams](#projects-and-feature-teams) slice adds them.
+The [Projects and Feature Teams](#projects-and-feature-teams) slice adds a second chart, of feature teams, with their own colours and dotted lines to members' managers, as the [Decisions Log](../product/decisions.md#workforce) records.
 
 ### Hiring Plan
 
@@ -144,7 +145,7 @@ A test page of the roadmap board proposed in [ADR 0009](../adr/0009-roadmap-and-
 
 ### Projects and Feature Teams
 
-Projects with their customers, from a built-in Customers table, the features they need, edited from either Projects or Features, and their general features. Milestones of projects and features, in a Milestones table of their own, and the release warnings, all as the [Decisions Log](../product/decisions.md#planning) sets out. Feature teams with their names, members and feature leads, owning features, with membership kept from a date as reporting lines are, as the [Decisions Log](../product/decisions.md#workforce) sets out. People Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md). Building feature teams takes their three permissions out of `unbuiltPermissions` in `packages/shared/src/access.ts`, so the Roles page stops marking them Not built yet.
+Projects with their customers, from a built-in Customers table, the features they need, edited from either Projects or Features, and their general features. Milestones of projects and features, in a Milestones table of their own, and the release warnings, all as the [Decisions Log](../product/decisions.md#planning) sets out. Feature teams with their names, members and feature leads, owning features, with membership kept from a date as reporting lines are, and their own org chart, as the [Decisions Log](../product/decisions.md#workforce) sets out. People Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md). Building feature teams takes their three permissions out of `unbuiltPermissions` in `packages/shared/src/access.ts`, so the Roles page stops marking them Not built yet.
 
 ### Proposals
 
