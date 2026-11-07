@@ -4,6 +4,7 @@
 // simulated browser lacks, so the drop is made by calling the handler the panel gives the
 // drag-and-drop library.
 
+import type * as DragAndDrop from "@hello-pangea/dnd";
 import type { DropResult } from "@hello-pangea/dnd";
 import { act, screen, waitFor } from "@testing-library/react";
 import { createElement } from "react";
@@ -15,7 +16,7 @@ const dropped = vi.hoisted(() => ({
 }));
 
 vi.mock("@hello-pangea/dnd", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@hello-pangea/dnd")>();
+  const actual = await importOriginal<typeof DragAndDrop>();
   return {
     ...actual,
     DragDropContext: (props: Parameters<typeof actual.DragDropContext>[0]) => {

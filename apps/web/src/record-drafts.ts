@@ -45,7 +45,7 @@ export function usingRecords(
   nodes: readonly RecordNode[],
 ): RecordRef[] {
   const found = keyed(chosen);
-  const using: RecordRef[] = [];
+  const dependents: RecordRef[] = [];
   let grew = true;
   while (grew) {
     grew = false;
@@ -59,11 +59,11 @@ export function usingRecords(
         continue;
       }
       found.add(recordKey(ref));
-      using.push(ref);
+      dependents.push(ref);
       grew = true;
     }
   }
-  return using;
+  return dependents;
 }
 
 // The records given whose drafts were rejected.

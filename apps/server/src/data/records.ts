@@ -650,7 +650,7 @@ function usingRecords(
   given: readonly RecordRef[],
 ): RecordRef[] {
   const found = new Set(given.map(refKey));
-  const using: RecordRef[] = [];
+  const dependents: RecordRef[] = [];
   let grew = true;
   while (grew) {
     grew = false;
@@ -662,12 +662,12 @@ function usingRecords(
         )
       ) {
         found.add(refKey(ref));
-        using.push(ref);
+        dependents.push(ref);
         grew = true;
       }
     }
   }
-  return using;
+  return dependents;
 }
 
 function requireRecordDrafts(state: RecordsState, asked: readonly RecordRef[]) {

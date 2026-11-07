@@ -19,6 +19,7 @@ import {
 } from "@fathom/shared";
 import { users } from "@fathom/db";
 import { eq } from "drizzle-orm";
+import type * as Fastify from "fastify";
 import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -35,7 +36,7 @@ import { findStartingRole } from "./data/roles.ts";
 const registered = vi.hoisted(() => new Set<string>());
 
 vi.mock("fastify", async (importOriginal) => {
-  const fastify = await importOriginal<typeof import("fastify")>();
+  const fastify = await importOriginal<typeof Fastify>();
   const create = fastify.default as (...options: unknown[]) => FastifyInstance;
   return {
     ...fastify,

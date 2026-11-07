@@ -430,12 +430,12 @@ export function decisionFor(
   const named = (decided: DraftSelection) =>
     naming && draftTotal(decided) > 1 ? { together: names(decided) } : {};
   if (asking === "reject") {
-    const using = usingDrafts(chosen, lists, columns);
+    const dependents = usingDrafts(chosen, lists, columns);
     return {
       asking,
-      selection: joined(chosen, using),
+      selection: joined(chosen, dependents),
       ...named(chosen),
-      ...(draftTotal(using) > 0 ? { included: names(using) } : {}),
+      ...(draftTotal(dependents) > 0 ? { included: names(dependents) } : {}),
     };
   }
   const held = heldBack(chosen, lists, columns);
