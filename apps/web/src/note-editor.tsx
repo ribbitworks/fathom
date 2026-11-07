@@ -392,6 +392,13 @@ function NoteEditorPanel({
   useEffect(() => {
     onWriting?.(!reading);
   }, [reading, onWriting]);
+  // A panel closed by its page, rather than by its buttons, leaves nothing being written.
+  useEffect(
+    () => () => {
+      onWriting?.(false);
+    },
+    [onWriting],
+  );
   const clear = () => {
     editor.commands.clearContent();
     setMarkdown("");

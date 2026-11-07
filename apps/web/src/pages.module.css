@@ -365,6 +365,13 @@ select.cellInput {
   font-weight: 400;
 }
 
+/* A release's name opening its note is underlined, in the text's colour as a stream's name is. */
+.noteLink {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* A web link in a cell reads as a link, and is cut short like any other cell's text. */
 .cellLink {
   color: var(--mantine-color-anchor);

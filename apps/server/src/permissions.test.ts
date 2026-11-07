@@ -555,6 +555,12 @@ const routes: Route[] = [
     pattern: "/api/release-streams/:streamId/releases/:id",
     needs: allOf("plan:edit"),
   },
+  {
+    method: "PUT",
+    pattern: "/api/release-streams/:streamId/releases/:id/note",
+    needs: allOf("plan:edit"),
+    body: () => ({ note: "Fictional **note**" }),
+  },
   ...["/draft", "/draft/rejection"].flatMap((end) =>
     recordKinds.map(({ type, needs }): Route => ({
       method: "DELETE",

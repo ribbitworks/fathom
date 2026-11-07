@@ -6,9 +6,10 @@
 // releases, and its cycles, worked out at least two years ahead, each with its share of the months
 // it spans and a menu to change its length. Those who edit planning configuration add, rename,
 // retire, and restore streams and change their cycles; those who edit the plan make releases from
-// consecutive cycles. Every change is a draft, shown in place with its mark, which its makers
-// discard or resubmit, and Approvers approve or reject, here or on the Drafts page, from each
-// record's menu.
+// consecutive cycles, and write each release's note in a side panel above the stream's, opened from
+// the release's name, a link once it has a note. Every change is a draft, shown in place with its
+// mark, which its makers discard or resubmit, and Approvers approve or reject, here or on the
+// Drafts page, from each record's menu.
 
 import type {
   Cycle,
@@ -20,6 +21,7 @@ import type {
 import {
   ActionIcon,
   Alert,
+  Anchor,
   Button,
   ColorSwatch,
   FocusTrap,
@@ -55,6 +57,7 @@ import {
 } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { Icon } from "./icons.tsx";
+import { NotePanel } from "./note-editor.tsx";
 import { DraftItems, draftRowClass, madeVerb, makers } from "./list-drafts.tsx";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
@@ -78,6 +81,7 @@ import {
   removeFromStream,
   resubmitRecordDraft,
   type SavedStream,
+  saveReleaseNote,
   setStreamRetired,
 } from "./releases.ts";
 import { colourVariable } from "./colours.ts";
@@ -97,6 +101,22 @@ type Dialog =
 const panelId = "release-stream-panel";
 const panelTitleId = "release-stream-panel-title";
 const linkId = (stream: { id: string }) => `release-stream-link-${stream.id}`;
+const noteId = "release-note";
+const noteButtonId = (release: { id: string }) =>
+  `release-note-button-${release.id}`;
+const menuId = (release: { id: string }) => `release-menu-${release.id}`;
+
+// Puts focus on a release's name, when it opens its note, or otherwise its menu.
+function focusRelease(release: { id: string }) {
+  setTimeout(() => {
+    (
+      document.getElementById(noteButtonId(release)) ??
+      document.querySelector<HTMLElement>(
+        `[data-record-menu="${menuId(release)}"]`,
+      )
+    )?.focus();
+  }, 0);
+}
 
 const dialogTitle = (dialog: Dialog): string => {
   if (dialog.kind === "stream") {
@@ -163,6 +183,7 @@ interface Actions {
   canApprove: boolean;
   nodes: readonly RecordNode[];
   open: (dialog: Dialog) => void;
+  openNote: (stream: ReleaseStream, release: Release) => void;
   decide: (asking: Asking, ref: RecordRef) => void;
   run: (work: () => Promise<unknown>, done: string) => void;
 }
@@ -179,12 +200,14 @@ const nodeOf = (
 // A record's menu: what may be done to it, then its draft, with who made it and what may be done
 // with it. An empty space keeps the column when it would offer nothing.
 function RecordMenu({
+  id,
   title,
   node,
   canEditDraft,
   actions,
   children,
 }: {
+  id?: string;
   title: string;
   node: RecordNode;
   // Whether the user may discard or resubmit the record's draft.
@@ -215,6 +238,8 @@ function RecordMenu({
     >
       <Menu.Target>
         <ActionIcon
+          // Menus give their buttons ids of their own, so the button is found by this instead.
+          data-record-menu={id}
           variant="subtle"
           color="gray"
           aria-label={`Menu of ${title}`}
@@ -493,7 +518,23 @@ function Releases({
                 display="inline-block"
                 aria-hidden
               />
-              {release.name}
+              {release.note === null ? (
+                release.name
+              ) : (
+                <Anchor
+                  component="button"
+                  id={noteButtonId(release)}
+                  className={classes.noteLink}
+                  fz="inherit"
+                  c="inherit"
+                  aria-label={`${release.name} note`}
+                  onClick={() => {
+                    actions.openNote(stream, release);
+                  }}
+                >
+                  {release.name}
+                </Anchor>
+              )}
               <Marks node={node} />
             </span>
             <span>
@@ -509,6 +550,7 @@ function Releases({
               </Text>
             </span>
             <RecordMenu
+              id={menuId(release)}
               title={release.name}
               node={node}
               canEditDraft={actions.canEditReleases}
@@ -523,6 +565,15 @@ function Releases({
                   >
                     Change…
                   </Menu.Item>
+                  {release.note === null && (
+                    <Menu.Item
+                      onClick={() => {
+                        actions.openNote(stream, release);
+                      }}
+                    >
+                      Add note…
+                    </Menu.Item>
+                  )}
                   <Menu.Item
                     onClick={() => {
                       actions.run(
@@ -644,11 +695,15 @@ function StreamPanel({
   stream,
   actions,
   narrow,
+  waiting,
   onClose,
 }: {
   stream: ReleaseStream;
   actions: Actions;
   narrow: boolean;
+  // While a release's note is being changed, nothing in the stream changes, so nothing written is
+  // lost.
+  waiting: boolean;
   onClose: () => void;
 }) {
   const node = nodeOf(actions, "release-stream", stream.id);
@@ -664,6 +719,7 @@ function StreamPanel({
     <FocusTrap active={narrow}>
       <section
         id={panelId}
+        inert={waiting}
         className={narrow ? classes.panelNarrow : classes.panel}
         aria-labelledby={panelTitleId}
         // Covering the page on a narrow screen, it holds focus until it is closed.
@@ -850,6 +906,17 @@ export function ReleasesPage({
   const [busy, setBusy] = useState(false);
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
+  // The release whose note is open above the stream's panel, whether it is being changed, and why
+  // the note last saved was refused.
+  // Whether the note may be changed is decided as it opens, so a refresh never takes away what is
+  // being written; the server refuses it if it can no longer be saved.
+  const [noteOf, setNoteOf] = useState<{
+    streamId: string;
+    id: string;
+    canEdit: boolean;
+  }>();
+  const [writingNote, setWriting] = useState(false);
+  const [refused, setRefused] = useState<string>();
 
   const refresh = async () => {
     await Promise.all([
@@ -896,12 +963,30 @@ export function ReleasesPage({
   const { streams, canEditStreams, canEditReleases } = query.data;
   const nodes = recordNodes(streams);
   const open = streams.find(({ id }) => id === streamId);
+  // A note belongs to the stream open beside it, so opening another stream closes it.
+  const noted =
+    noteOf?.streamId === open?.id
+      ? open?.releases.find(({ id }) => id === noteOf?.id)
+      : undefined;
+  const writing = writingNote && noted !== undefined;
   const actions: Actions = {
     canEditStreams,
     canEditReleases,
     canApprove,
     nodes,
     open: setDialog,
+    openNote: (stream, release) => {
+      if (writing) return;
+      setRefused(undefined);
+      setNoteOf({
+        streamId: stream.id,
+        id: release.id,
+        canEdit:
+          canEditReleases &&
+          release.heldBy === undefined &&
+          release.draft?.action !== "deleted",
+      });
+    },
     decide: (asking, ref) => {
       setDecision(
         decisionFor(asking, { ...noDrafts(), records: [ref] }, [], {
@@ -949,12 +1034,68 @@ export function ReleasesPage({
     const target = event.target as HTMLElement;
     if (
       open &&
+      !writing &&
       event.currentTarget.contains(target) &&
       !target.closest("[role=row], [data-side-panel], section, button, a")
     ) {
       closePanel(open);
     }
   };
+
+  const closeNote = () => {
+    setNoteOf(undefined);
+    setWriting(false);
+    setRefused(undefined);
+  };
+  const notePanel =
+    open === undefined || noted === undefined
+      ? []
+      : [
+          {
+            key: "note",
+            id: `${noteId}-panel`,
+            name: "the note",
+            node: (
+              <NotePanel
+                key={noted.id}
+                id={noteId}
+                title={noted.name}
+                note={noted.note ?? ""}
+                refused={refused}
+                canEdit={noteOf?.canEdit === true}
+                onWriting={setWriting}
+                onSave={(note) => {
+                  saveReleaseNote(open.id, noted.id, note)
+                    .then(async () => {
+                      notifySuccess(
+                        note === ""
+                          ? `Drafted removing the note on ${noted.name}.`
+                          : `Drafted the note on ${noted.name}.`,
+                      );
+                      closeNote();
+                      // Focus goes to the release once it is drawn as saved, with its note or
+                      // without one.
+                      await refresh();
+                      focusRelease(noted);
+                    })
+                    .catch((error: unknown) => {
+                      // The panel stays open, with what was written and why it was refused.
+                      setRefused(
+                        describeProblem(
+                          error as Error,
+                          "Fathom could not save the note. Try again in a moment.",
+                        ),
+                      );
+                    });
+                }}
+                onClose={() => {
+                  closeNote();
+                  focusRelease(noted);
+                }}
+              />
+            ),
+          },
+        ];
 
   return (
     <Stack gap="md" className={classes.tablePage} onClick={onPageClick}>
@@ -977,6 +1118,7 @@ export function ReleasesPage({
         panels={
           open
             ? [
+                ...notePanel,
                 {
                   key: "stream",
                   id: panelId,
@@ -987,6 +1129,7 @@ export function ReleasesPage({
                       stream={open}
                       actions={actions}
                       narrow={narrow}
+                      waiting={writing}
                       onClose={() => {
                         closePanel(open);
                       }}
@@ -1002,7 +1145,8 @@ export function ReleasesPage({
             No release streams yet.
           </Text>
         ) : (
-          <Stack gap="lg" className={sidePanelScroll}>
+          // While a note is being changed, the streams wait, as a table waits for a note's panel.
+          <Stack gap="lg" className={sidePanelScroll} inert={writing}>
             <StreamTable
               streams={streams}
               actions={actions}

@@ -70,6 +70,7 @@ const fieldNames = new Map([
   ["firstCycle", "First cycle"],
   ["lastCycle", "Last cycle"],
   ["colour", "Colour"],
+  ["note", "Note"],
   ["meaning", "Meaning"],
   // A planned hire's ID, start date, and the person who filled it.
   ["requisition", "ID"],

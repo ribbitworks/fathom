@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  isNoteField,
   cleanNote,
   colourTag,
   isNoteColour,
@@ -210,6 +211,16 @@ describe("a note's colours", () => {
       isNoteColour("teal"),
       isNoteColour("sea"),
       isNoteColour(1),
+    ]).toEqual([true, false, false]);
+  });
+});
+
+describe("the fields that hold a note", () => {
+  it("are a release's note, and no other field", () => {
+    expect([
+      isNoteField("release", "note"),
+      isNoteField("release", "name"),
+      isNoteField("release-stream", "note"),
     ]).toEqual([true, false, false]);
   });
 });

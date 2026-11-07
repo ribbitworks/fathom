@@ -101,6 +101,19 @@ export function saveRelease(
   );
 }
 
+// Drafts a release's note; an empty one removes it.
+export const saveReleaseNote = (
+  streamId: string,
+  id: string,
+  note: string,
+): Promise<SavedStream> =>
+  sendJsonFor(
+    "PUT",
+    `${memberPath(streamId, "releases", id)}/note`,
+    { note: note === "" ? null : note },
+    streamResponse,
+  );
+
 // Drafts removing a pattern or release; removing one only drafted to be added discards it.
 export async function removeFromStream(
   streamId: string,

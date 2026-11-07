@@ -27,6 +27,7 @@ import {
   isLink,
   linkInWords,
   matchesWords,
+  isNoteField,
   notePlainText,
   recordSearchText,
   recordTypeSchema,
@@ -359,6 +360,9 @@ function shown(
     return value === null ? null : named(strings(value));
   }
   if (row.field === "definition") return null;
+  if (isNoteField(row.recordType, row.field)) {
+    return typeof value === "string" ? notePlainText(value) : null;
+  }
   if (
     referencesOne(row.field) ||
     (row.recordType === "planned-hire" && row.field === "filledBy")

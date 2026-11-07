@@ -14,6 +14,7 @@ import {
   within,
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { focusManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReleasesTimeline } from "./releases-timeline.tsx";
 import {
@@ -74,6 +75,7 @@ const streams: ReleaseStreams = {
           lastCycle: "2027-04-01",
           shipsOn: null,
           colour: null,
+          note: null,
         },
       ],
     },
@@ -1710,5 +1712,233 @@ describe("the timeline", () => {
     renderApp("/releases");
     await screen.findByRole("table", { name: "Release streams" });
     expect(screen.queryByRole("region", { name: "Timeline" })).toBeNull();
+  });
+});
+
+describe("a release's note", () => {
+  const noted = fictionalRelease({ note: "Scope **frozen** for now" });
+  const notePath = `${streamPath}/releases/${release.id}/note`;
+  const saved = () => Response.json({ stream: fictionalStream(), changeSetId });
+  const notePanel = () =>
+    screen.findByRole("region", { name: "Fictional One" });
+  const noteButton = () =>
+    screen.getByRole("button", { name: "Fictional One note" });
+
+  function bodiesOf(fetch: ReturnType<typeof serverAnswers>, url: string) {
+    return fetch.mock.calls
+      .filter(([called, init]) => called === url && init?.method === "PUT")
+      .map(([, init]) => JSON.parse(init?.body as string) as unknown);
+  }
+
+  it("makes the name of a release that has a note a link to it", async () => {
+    await openStream([fictionalStream({ releases: [noted] })]);
+    expect(noteButton()).toBeDefined();
+  });
+
+  it("links no release without a note", async () => {
+    await openStream([fictionalStream({ releases: [release] })]);
+    expect(
+      screen.queryByRole("button", { name: "Fictional One note" }),
+    ).toBeNull();
+  });
+
+  it("opens the note, read only, to those who may not change releases, and closes it, putting focus back on its link", async () => {
+    await openStream([fictionalStream({ releases: [noted] })]);
+    await userEvent.click(noteButton());
+    const opened = await notePanel();
+    expect(within(opened).getByText("frozen").tagName).toBe("STRONG");
+    expect(within(opened).queryByRole("button", { name: "Save" })).toBeNull();
+    await userEvent.click(
+      within(opened).getByRole("button", { name: "Close note" }),
+    );
+    await waitFor(() => {
+      expect(document.activeElement).toBe(noteButton());
+    });
+    expect(screen.queryByRole("region", { name: "Fictional One" })).toBeNull();
+  });
+
+  it("is added from the release's menu, and drafted once saved", async () => {
+    const { fetch } = await openStream(
+      [fictionalStream({ releases: [release] })],
+      {
+        can: editsAll,
+        answers: { [`PUT ${notePath}`]: saved },
+      },
+    );
+    await chooseInMenu("Fictional One", "Add note…");
+    const opened = await notePanel();
+    await userEvent.click(within(opened).getByText("Markdown"));
+    await userEvent.type(
+      within(opened).getByRole("textbox", { name: "Markdown" }),
+      "Ships *late*",
+    );
+    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText("Drafted the note on Fictional One."),
+    ).toBeDefined();
+    expect(bodiesOf(fetch, notePath)).toEqual([{ note: "Ships _late_" }]);
+  });
+
+  it("is offered only by its link once the release has one", async () => {
+    await openStream([fictionalStream({ releases: [noted] })], {
+      can: editsAll,
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Menu of Fictional One" }),
+    );
+    expect(
+      await screen.findByRole("menuitem", { name: "Change…" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("menuitem", { name: "Add note…" })).toBeNull();
+  });
+
+  it("is removed when cleared and saved", async () => {
+    const { fetch } = await openStream(
+      [fictionalStream({ releases: [noted] })],
+      {
+        can: editsAll,
+        answers: { [`PUT ${notePath}`]: saved },
+      },
+    );
+    await userEvent.click(noteButton());
+    const opened = await notePanel();
+    await userEvent.click(within(opened).getByText("Editor"));
+    await userEvent.click(
+      within(opened).getByRole("button", { name: "Clear" }),
+    );
+    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText("Drafted removing the note on Fictional One."),
+    ).toBeDefined();
+    expect(bodiesOf(fetch, notePath)).toEqual([{ note: null }]);
+  });
+
+  it("keeps the panel open, with what was written and why, when the note is refused", async () => {
+    await openStream([fictionalStream({ releases: [release] })], {
+      can: editsAll,
+      answers: {
+        [`PUT ${notePath}`]: () =>
+          Response.json({ message: "Fictional refusal" }, { status: 400 }),
+      },
+    });
+    await chooseInMenu("Fictional One", "Add note…");
+    const opened = await notePanel();
+    await userEvent.click(within(opened).getByText("Markdown"));
+    const markdown = within(opened).getByRole("textbox", { name: "Markdown" });
+    await userEvent.type(markdown, "Kept");
+    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
+    expect(await within(opened).findByRole("alert")).toBeDefined();
+    expect((markdown as HTMLTextAreaElement).value).toBe("Kept");
+  });
+
+  it("leaves the streams and the stream's panel waiting while the note is being changed", async () => {
+    await openStream([fictionalStream({ releases: [noted] })], {
+      can: editsAll,
+    });
+    await userEvent.click(noteButton());
+    const opened = await notePanel();
+    expect([panel().closest("[inert]"), rowTexts().length > 0]).toEqual([
+      null,
+      true,
+    ]);
+    await userEvent.click(within(opened).getByText("Editor"));
+    expect(panel().hasAttribute("inert")).toBe(true);
+    expect(
+      screen
+        .getByRole("table", { name: "Release streams", hidden: true })
+        .closest("[inert]"),
+    ).not.toBeNull();
+    await userEvent.click(
+      within(opened).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(panel().hasAttribute("inert")).toBe(false);
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(noteButton());
+    });
+  });
+
+  it("puts focus on the release's menu when a new note is cancelled", async () => {
+    await openStream([fictionalStream({ releases: [release] })], {
+      can: editsAll,
+    });
+    await chooseInMenu("Fictional One", "Add note…");
+    const opened = await notePanel();
+    await userEvent.click(
+      within(opened).getByRole("button", { name: "Cancel" }),
+    );
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Menu of Fictional One" }),
+      );
+    });
+  });
+
+  it("stays as it is being written when a refresh shows the release held by someone else", async () => {
+    let held = false;
+    const fetch = serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/release-streams": () =>
+        answer(
+          [
+            fictionalStream({
+              releases: [
+                held ? { ...noted, heldBy: "Fictional Colleague" } : noted,
+              ],
+            }),
+          ],
+          editsAll,
+        )(),
+    });
+    const reads = () =>
+      fetch.mock.calls.filter(([url]) => url === "/api/release-streams").length;
+    renderApp(`/releases/${streamId}`);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Fictional One note" }),
+    );
+    const opened = await notePanel();
+    await userEvent.click(within(opened).getByText("Markdown"));
+    await userEvent.type(
+      within(opened).getByRole("textbox", { name: "Markdown" }),
+      " more",
+    );
+    held = true;
+    const before = reads();
+    // Coming back to the window refreshes the streams.
+    act(() => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+    });
+    await waitFor(() => {
+      expect(reads()).toBeGreaterThan(before);
+    });
+    const markdown = await within(opened).findByRole("textbox", {
+      name: "Markdown",
+    });
+    expect((markdown as HTMLTextAreaElement).value).toBe(
+      "Scope **frozen** for now more",
+    );
+  });
+
+  it("opens no other note while one is being changed", async () => {
+    const other = fictionalRelease({
+      id: "30000000-0000-4000-8000-000000000002",
+      name: "Fictional Two",
+      firstCycle: "2027-04-01",
+      lastCycle: "2027-04-01",
+      note: "Fictional",
+    });
+    await openStream([fictionalStream({ releases: [noted, other] })], {
+      can: editsAll,
+    });
+    await userEvent.click(noteButton());
+    const opened = await notePanel();
+    await userEvent.click(within(opened).getByText("Editor"));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Fictional Two note" }),
+    );
+    expect(screen.getByRole("region", { name: "Fictional One" })).toBe(opened);
+    expect(screen.queryByRole("region", { name: "Fictional Two" })).toBeNull();
   });
 });

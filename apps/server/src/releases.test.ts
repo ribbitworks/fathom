@@ -613,6 +613,134 @@ describe("releases", () => {
   });
 });
 
+describe("release notes", () => {
+  // A live release in a live stream, with the note given, if any.
+  async function liveRelease(note?: string) {
+    const stream = await liveStream();
+    const name = unique("Fictional Noted");
+    await draftRelease(stream.id, { name, ...firstHalf });
+    let shown = (await readStream(stream.id)) as ReleaseStream;
+    const release = shown.releases[0] as ReleaseStream["releases"][number];
+    if (note !== undefined) {
+      await writeNote(stream.id, release.id, note);
+    }
+    await approveAll((await readStream(stream.id)) as ReleaseStream);
+    shown = (await readStream(stream.id)) as ReleaseStream;
+    return { stream: shown, release: shown.releases[0] as typeof release };
+  }
+
+  const writeNote = (
+    streamId: string,
+    releaseId: string,
+    note: string | null,
+    cookie = planner.cookie,
+  ) =>
+    test.request(
+      cookie,
+      "PUT",
+      `/api/release-streams/${streamId}/releases/${releaseId}/note`,
+      { note },
+    );
+
+  const noted = "Scope **frozen**, see [the plan](https://example.com/plan).";
+
+  it("are drafted by Project Planners, kept as written, and applied once approved", async () => {
+    const { stream, release } = await liveRelease();
+    expect(release.note).toBeNull();
+    const response = await writeNote(stream.id, release.id, noted);
+    expect(response.statusCode).toBe(200);
+    const [drafted] = response.json<{ stream: ReleaseStream }>().stream
+      .releases;
+    expect([drafted?.note, drafted?.draft?.changed]).toEqual([noted, ["note"]]);
+    await approveAll((await readStream(stream.id)) as ReleaseStream);
+    const [approved] = (await readStream(stream.id))?.releases ?? [];
+    expect([approved?.note, approved?.draft]).toEqual([noted, undefined]);
+  });
+
+  it("are seen by everyone who sees the plan", async () => {
+    const { stream } = await liveRelease(noted);
+    expect(
+      (await readStream(stream.id, viewer.cookie))?.releases[0]?.note,
+    ).toBe(noted);
+  });
+
+  it("are removed by an empty note", async () => {
+    const { stream, release } = await liveRelease(noted);
+    await writeNote(stream.id, release.id, "  ");
+    expect((await readStream(stream.id))?.releases[0]?.note).toBeNull();
+    await approveAll((await readStream(stream.id)) as ReleaseStream);
+    const [row] = await test.connection
+      .select({ note: releases.note })
+      .from(releases)
+      .where(eq(releases.id, release.id));
+    expect(row?.note).toBeNull();
+  });
+
+  it("are kept when the release is changed", async () => {
+    const { stream, release } = await liveRelease(noted);
+    await test.request(
+      planner.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/releases/${release.id}`,
+      { name: release.name, ...firstHalf, colour: "teal" },
+    );
+    const [changed] = (await readStream(stream.id))?.releases ?? [];
+    expect([changed?.colour, changed?.note, changed?.draft?.changed]).toEqual([
+      "teal",
+      noted,
+      ["colour"],
+    ]);
+  });
+
+  it.each([
+    ["HTML", "<script>alert(1)</script>"],
+    ["an image", "![Fictional](https://example.com/a.png)"],
+    ["a link to something but a web address", "[Run](javascript:alert(1))"],
+    ["a numbered list", "1. First"],
+    ["a colour off the palette", '<span data-colour="beige">Beige</span>'],
+    ["more than notes may hold", "a".repeat(10_001)],
+  ])("refuse a note holding %s, drafting nothing", async (_what, note) => {
+    const { stream, release } = await liveRelease();
+    const response = await writeNote(stream.id, release.id, note);
+    expect(response.statusCode).toBe(400);
+    expect((await readStream(stream.id))?.releases[0]?.draft).toBeUndefined();
+  });
+
+  it("are refused to those who do not edit the plan", async () => {
+    const { stream, release } = await liveRelease();
+    const response = await writeNote(
+      stream.id,
+      release.id,
+      noted,
+      configurer.cookie,
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("may not be written through another stream", async () => {
+    const { release } = await liveRelease();
+    const other = await liveStream();
+    const response = await writeNote(other.id, release.id, noted);
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("are shown in the change history as their words without formatting", async () => {
+    const { stream, release } = await liveRelease();
+    await writeNote(stream.id, release.id, noted);
+    const response = await test.request(planner.cookie, "GET", "/api/changes");
+    const fields = response
+      .json<ChangeHistory>()
+      .entries.flatMap(({ records }) => records)
+      .filter((record) => record.name === release.name)
+      .flatMap((record) => record.fields);
+    expect(fields).toContainEqual({
+      field: "note",
+      oldValue: null,
+      newValue: "Scope frozen, see the plan.",
+    });
+  });
+});
+
 describe("changing one cycle's length", () => {
   const changeLength = (
     streamId: string,
@@ -675,6 +803,33 @@ describe("changing one cycle's length", () => {
       "cycle-pattern",
       "release",
     ]);
+  });
+
+  it("keeps the note of a release it moves", async () => {
+    const stream = await withRelease();
+    const release = stream.releases[0] as ReleaseStream["releases"][number];
+    await test.request(
+      planner.cookie,
+      "PUT",
+      `/api/release-streams/${stream.id}/releases/${release.id}/note`,
+      { note: "Fictional *moved*" },
+    );
+    await approveAll((await readStream(stream.id)) as ReleaseStream);
+    const response = await changeLength(stream.id, "2027-04-01", {
+      length: 2,
+      later: "move",
+    });
+    const [moved] = response.json<{ stream: ReleaseStream }>().stream.releases;
+    expect([moved?.firstCycle, moved?.note]).toEqual([
+      "2027-06-01",
+      "Fictional *moved*",
+    ]);
+    await approveAll((await readStream(stream.id)) as ReleaseStream);
+    const [row] = await test.connection
+      .select({ note: releases.note })
+      .from(releases)
+      .where(eq(releases.id, release.id));
+    expect(row?.note).toBe("Fictional *moved*");
   });
 
   it("keeps the next cycle's end date, leaving the releases after it as they are", async () => {

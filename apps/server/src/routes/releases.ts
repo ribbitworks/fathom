@@ -2,10 +2,10 @@
 
 // Release streams, their cycle patterns, and their releases: reading every stream, with its cycles;
 // drafting streams added, renamed, retired, restored, and given the day their cycles are made
-// until, patterns and releases added, changed, and removed, and one cycle given a new length; and
-// discarding the drafts of the plan's records, of any kind, or sending rejected ones for approval
-// again. Every change answers with the change set it was saved in. The data access layer checks
-// the actor's permissions.
+// until, patterns and releases added, changed, and removed, a release's note, and one cycle given a
+// new length; and discarding the drafts of the plan's records, of any kind, or sending rejected
+// ones for approval again. Every change answers with the change set it was saved in. The data
+// access layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
@@ -14,6 +14,7 @@ import {
   cyclesUntilRequestSchema,
   daySchema,
   recordTypeSchema,
+  releaseNoteRequestSchema,
   releaseRequestSchema,
   releaseStreamRequestSchema,
   releaseStreamSchema,
@@ -238,6 +239,26 @@ export function releaseRoutes(
         releases.updateRelease(actor, streamId, id, body as never),
       async (actor, streamId, id) =>
         releases.deleteRelease(actor, streamId, id),
+    );
+
+    app.put(
+      "/api/release-streams/:streamId/releases/:id/note",
+      {
+        schema: {
+          params: memberParams,
+          body: releaseNoteRequestSchema,
+          response: { 200: streamResponse },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await releases.updateReleaseNote(
+          request.actor,
+          request.params.streamId,
+          request.params.id,
+          request.body,
+        );
+        return { stream: result, changeSetId };
+      },
     );
 
     // Discarding a record's draft, and sending a rejected one for approval again unchanged.

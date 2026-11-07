@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies the Releases page: how release streams, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator, a Planner and a Project Manager can do with them, including changing one cycle's length, and how their drafts are published, approved, rejected, resubmitted and discarded.
+Verifies the Releases page: how release streams, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator, a Planner and a Project Manager can do with them, including changing one cycle's length and writing a release's note, and how their drafts are published, approved, rejected, resubmitted and discarded.
 
 ## Test Environment
 
@@ -95,7 +95,7 @@ Use only where a test case says so. This deletes every account and record in the
 
 ## Test Cases
 
-Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-start-from-an-empty-database). Part 1 starts from an empty database; REL-06 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-18 restores the seed data for Part 4, and REL-22 restores it again for Part 5. Check each step whose expected result you see, and write anything else under its notes. To run the test again, start again from [R2](#r2-start-from-an-empty-database).
+Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-start-from-an-empty-database). Part 1 starts from an empty database; REL-06 adds the seed data for Part 2; Part 3 changes what Parts 1 and 2 left; REL-18 restores the seed data for Part 4, and REL-22 restores it again for Part 5, which Part 6 follows. Check each step whose expected result you see, and write anything else under its notes. To run the test again, start again from [R2](#r2-start-from-an-empty-database).
 
 ### Part 1: From an Empty Database
 
@@ -186,7 +186,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 2.** Read the rows under **Releases** in the side panel.
-  - **Expected:** **Harbor 1**, **26.1 to 26.2 · ships 2026-06-30**; **Harbor 2**, **26.3 to 26.4 · ships 2026-12-31**; **Harbor 3**, **27.1 to 27.3 · ships 2027-12-31**. A small square before each name is blue for **Harbor 1** and **Harbor 3**, and purple for **Harbor 2**. No row has a **⋯** button, and there is no **New release…** button.
+  - **Expected:** **Harbor 1**, **26.1 to 26.2 · ships 2026-06-30**; **Harbor 2**, **26.3 to 26.4 · ships 2026-12-31**; **Harbor 3**, **27.1 to 27.3 · ships 2027-12-31**. A small square before each name is blue for **Harbor 1** and **Harbor 3**, and purple for **Harbor 2**. **Harbor 2**'s name is underlined, and the others' are not. No row has a **⋯** button, and there is no **New release…** button.
   - **Notes:**
 
 #### REL-07: Cycles Show the Months They Span
@@ -489,4 +489,18 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **From 2026-12-14** row, then **Discard draft**, and publish ([P3](#p3-publish)).
   - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only the row **From 2026-09-07**, and **P26.4** runs from **2026-11-30** to **2026-12-27** again.
+  - **Notes:**
+
+### Part 6: Release Notes
+
+#### REL-26: A Release's Note Is Read and Written Beside Its Stream
+
+**Preconditions:** Signed in ([P1](#p1-sign-in)) as `product.manager@fathom.test`, shown as **Product Manager**. Run after REL-25. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+
+- [ ] **Step 1.** Select **Harbor 2**'s underlined name, then switch between light and dark mode.
+  - **Expected:** A panel titled **Harbor 2** opens above the stream's panel, showing the note as it reads: two headings, a bullet list with **every** in bold, a checklist with its first box ticked, red text, and a link. Both panels read well in both modes.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Editor**, type a few words at the end, and select **Save**.
+  - **Expected:** A notification says **Drafted the note on Harbor 2.** The note's panel closes, and **Harbor 2** is marked **Draft**.
   - **Notes:**

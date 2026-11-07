@@ -2,9 +2,9 @@
 
 // Release streams, their cycle patterns, and their releases: reading them as the viewer sees them,
 // each stream with its cycles worked out from its patterns, and drafting streams added, renamed,
-// retired, and restored, patterns and releases added, changed, and removed. Part of the data access
-// layer; the caller checks the actor's permissions. Every change is a draft of a plan record, as
-// records.ts sets out, with the rules release-kinds.ts sets.
+// retired, and restored, patterns and releases added, changed, and removed, and a release's note.
+// Part of the data access layer; the caller checks the actor's permissions. Every change is a draft
+// of a plan record, as records.ts sets out, with the rules release-kinds.ts sets.
 
 import type { Database } from "@fathom/db";
 import {
@@ -14,6 +14,7 @@ import {
   longestCycle,
   movedCycles,
   movedReleases,
+  noteProblem,
   patternsForLength,
   type CycleLengthRequest,
   type CyclePattern,
@@ -26,7 +27,7 @@ import {
   type RecordType,
 } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
-import { ConflictError, NotFoundError } from "../errors.ts";
+import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import type { Saved } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
 import {
@@ -113,6 +114,7 @@ function streamOut(
       lastCycle: String(record.lastCycle),
       shipsOn: typeof record.shipsOn === "string" ? record.shipsOn : null,
       colour: knownColour(record.colour),
+      note: typeof record.note === "string" ? record.note : null,
       ...extras(state, makers, "release", releaseId),
     }),
   );
@@ -278,7 +280,8 @@ export async function addToStream(
   });
 }
 
-// Drafts a change to a pattern or release of a stream.
+// Drafts a change to a pattern or release of a stream, keeping what the request does not hold, such
+// as a release's note.
 export async function changeInStream(
   database: Database,
   editor: string,
@@ -289,19 +292,38 @@ export async function changeInStream(
     | { type: "release"; request: ReleaseRequest },
 ): Promise<Saved<ReleaseStream>> {
   return changingStream(database, editor, streamId, (transaction, state) => {
-    inStreamRecord(state, changed.type, streamId, id);
+    const kept = inStreamRecord(state, changed.type, streamId, id);
     const record =
       changed.type === "cycle-pattern"
         ? patternRecord(streamId, changed.request)
         : releaseRecord(streamId, changed.request);
-    return saveRecordDraft(
-      transaction,
-      editor,
-      state,
-      changed.type,
-      id,
-      record,
-    );
+    return saveRecordDraft(transaction, editor, state, changed.type, id, {
+      ...kept,
+      ...record,
+    });
+  });
+}
+
+// Drafts a release's note, kept exactly as sent, or removed when empty. A note holding anything
+// notes do not allow is refused rather than cleaned, so what is kept is what the editor showed.
+export async function changeReleaseNote(
+  database: Database,
+  editor: string,
+  streamId: string,
+  id: string,
+  note: string | null,
+): Promise<Saved<ReleaseStream>> {
+  const kept = note === null || note.trim() === "" ? null : note;
+  if (kept !== null) {
+    const problem = noteProblem(kept);
+    if (problem !== undefined) throw new BadRequestError(problem);
+  }
+  return changingStream(database, editor, streamId, (transaction, state) => {
+    const release = inStreamRecord(state, "release", streamId, id);
+    return saveRecordDraft(transaction, editor, state, "release", id, {
+      ...release,
+      note: kept,
+    });
   });
 }
 

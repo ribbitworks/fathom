@@ -63,6 +63,8 @@ export const releaseSchema = z.object({
   shipsOn: z.string().nullable(),
   // Null when the release is shown in the default colour.
   colour: paletteColourSchema.nullable(),
+  // The release's note, as Markdown, or null when it has none.
+  note: z.string().nullable(),
   draft: recordDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -140,6 +142,13 @@ export const releaseRequestSchema = z
   );
 
 export type ReleaseRequest = z.infer<typeof releaseRequestSchema>;
+
+// A release's note, as Markdown, which the server checks; null or an empty note removes it.
+export const releaseNoteRequestSchema = z.object({
+  note: z.string().nullable(),
+});
+
+export type ReleaseNoteRequest = z.infer<typeof releaseNoteRequestSchema>;
 
 // A new length for one cycle, in the unit of the pattern that makes it, which the server checks
 // against that unit's longest cycle.

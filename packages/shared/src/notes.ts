@@ -26,6 +26,13 @@ import { paletteColours } from "./palette.ts";
 
 export const noteLength = 10_000;
 
+// The fields of the plan's records that hold a note, by kind of record, which drafts and the change
+// history show as the note's words without their formatting.
+const noteFields = new Map<string, readonly string[]>([["release", ["note"]]]);
+
+export const isNoteField = (recordType: string, field: string): boolean =>
+  noteFields.get(recordType)?.includes(field) === true;
+
 export const headingLevels = [1, 2, 3] as const;
 
 const deepestHeading = headingLevels.length;

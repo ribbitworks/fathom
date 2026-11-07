@@ -14,7 +14,9 @@ import {
   type DraftState,
   type Field,
   type List,
+  isNoteField,
   matchesWords,
+  notePlainText,
   type Person,
   type PersonDraft,
   type RecordDraft,
@@ -163,6 +165,17 @@ function credited(text: Phrase, key: string, draft: Credited): Phrase {
   return by.has(key) ? [...text, ` (${by.get(key) ?? "Fathom"})`] : text;
 }
 
+// A plan record's value in a draft, with a note as its words without their formatting, as the change
+// history shows it.
+const draftValue = (
+  kind: RecordType | undefined,
+  field: string,
+  value: unknown,
+): ChangeValue =>
+  kind !== undefined && isNoteField(kind, field) && typeof value === "string"
+    ? notePlainText(value)
+    : ((value ?? null) as ChangeValue);
+
 // What a list's, choice's, or plan record's draft changes, field by field, from its live value.
 function configFields(
   draft: { action: string; changed: string[]; live: object } & Credited,
@@ -177,9 +190,12 @@ function configFields(
           field,
           // The fields are the record's own, as its draft names them.
           /* eslint-disable security/detect-object-injection */
-          oldValue: ((draft.live as Record<string, unknown>)[field] ??
-            null) as ChangeValue,
-          newValue: (now[field] ?? null) as ChangeValue,
+          oldValue: draftValue(
+            kind,
+            field,
+            (draft.live as Record<string, unknown>)[field],
+          ),
+          newValue: draftValue(kind, field, now[field]),
           /* eslint-enable security/detect-object-injection */
         },
         kind,

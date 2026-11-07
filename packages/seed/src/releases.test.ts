@@ -17,6 +17,7 @@ import {
   runMigrations,
 } from "@fathom/db";
 import { actorFor } from "@fathom/server/access";
+import { noteProblem } from "@fathom/shared";
 import { createDataAccess } from "@fathom/server/data";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { eq, inArray, isNull } from "drizzle-orm";
@@ -87,6 +88,21 @@ describe("seeding release streams", () => {
     expect(streams.flatMap(({ releases: found }) => found)).toHaveLength(
       seededStreams.flatMap(({ releases: seeded }) => seeded).length,
     );
+  });
+
+  it("gives notes that notes allow, kept as written", async () => {
+    await seedReleases(connection);
+    const seeded = seededStreams.flatMap(({ releases: found }) =>
+      found.flatMap(({ note }) => (note === undefined ? [] : [note])),
+    );
+    expect(seeded.length).toBeGreaterThan(0);
+    expect(seeded.map(noteProblem)).toEqual(seeded.map(() => undefined));
+    const kept = await connection
+      .select({ note: releases.note })
+      .from(releases);
+    expect(
+      kept.flatMap(({ note }) => (note === null ? [] : [note])).sort(),
+    ).toEqual([...seeded].sort());
   });
 });
 

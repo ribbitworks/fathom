@@ -451,6 +451,34 @@ describe("the Drafts page", () => {
     );
   });
 
+  it("puts a release's changed note in words without its formatting", async () => {
+    serverAnswers({
+      "GET /api/session": session(["drafts:approve", "plan:view"]),
+      "GET /api/release-streams": () =>
+        Response.json({
+          streams: [
+            fictionalStream({
+              releases: [
+                fictionalRelease({
+                  note: "Scope **frozen**",
+                  draft: recordDraft({
+                    changed: ["note"],
+                    live: { note: "Scope *open*" },
+                  }),
+                }),
+              ],
+            }),
+          ],
+          canEditStreams: false,
+          canEditReleases: false,
+        }),
+    });
+    renderApp("/drafts");
+    expect(await entries()).toEqual([
+      "Fictional Editor drafted changes to the release Fictional One in Fictional Majors: Note from Scope open to Scope frozen",
+    ]);
+  });
+
   it("opens for Approvers who see only the plan, putting drafts of streams, cycles, and releases in words, and approves a release with the stream it uses", async () => {
     const stream = fictionalStream({
       draft: recordDraft({ action: "created" }),

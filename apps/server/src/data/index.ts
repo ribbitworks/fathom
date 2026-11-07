@@ -30,6 +30,7 @@ import type {
   PersonChange,
   PersonRequest,
   RecordType,
+  ReleaseNoteRequest,
   ReleaseRequest,
   ReleaseStream,
   ReleaseStreamRequest,
@@ -174,6 +175,12 @@ export interface ReleaseAccess {
     streamId: string,
     id: string,
   ): Promise<ChangeSetId>;
+  updateReleaseNote(
+    actor: Actor,
+    streamId: string,
+    id: string,
+    request: ReleaseNoteRequest,
+  ): Promise<Saved<ReleaseStream>>;
   // Changing one cycle's length changes the stream's patterns, and moves the releases on cycles
   // that move, which those who change cycles may do, as the Decisions Log sets out.
   changeCycleLength(
@@ -512,6 +519,14 @@ function createReleaseAccess(database: Database): ReleaseAccess {
         "release",
         id,
         actor.permissions.includes(recordEditors["cycle-pattern"]),
+      ),
+    updateReleaseNote: async (actor, streamId, id, request) =>
+      releases.changeReleaseNote(
+        database,
+        plan(actor),
+        streamId,
+        id,
+        request.note,
       ),
     changeCycleLength: async (actor, streamId, startsOn, request) =>
       releases.changeCycleLength(

@@ -35,6 +35,8 @@ interface SeededStream {
     firstCycle: string;
     lastCycle: string;
     colour?: PaletteColour;
+    // As Markdown, within what notes allow.
+    note?: string;
   }[];
 }
 
@@ -53,6 +55,19 @@ export const seededStreams: readonly SeededStream[] = [
         firstCycle: "2026-07-01",
         lastCycle: "2026-10-01",
         colour: "grape",
+        note: [
+          "## Goals",
+          "",
+          "- Faster sign-in for **every** team",
+          "- Retire the old *export* format",
+          "",
+          "## Before shipping",
+          "",
+          "- [x] Freeze the scope",
+          "- [ ] Check the upgrade guide",
+          "",
+          '<span data-colour="red">Translations are late</span>; see [the plan](https://example.com/harbor-2).',
+        ].join("\n"),
       },
       { name: "Harbor 3", firstCycle: "2027-01-01", lastCycle: "2027-07-01" },
     ],
@@ -74,6 +89,7 @@ export const seededStreams: readonly SeededStream[] = [
         firstCycle: "2026-11-02",
         lastCycle: "2026-11-30",
         colour: "orange",
+        note: "Holds the fixes found in `Harbor 2` testing. Nothing new ships in it.",
       },
     ],
   },

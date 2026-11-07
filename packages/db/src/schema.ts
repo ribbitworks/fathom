@@ -307,7 +307,8 @@ export const cyclePatterns = fathomSchema.table(
 // end of its last cycle unless it has a ships-on date, earlier or later, but not before its first
 // cycle starts. A release's colour is a palette name checked by the server, not the database, so the
 // palette can change without a migration; a release with none, or with a name the palette no longer
-// has, shows the default colour.
+// has, shows the default colour. A release's note is Markdown checked by the server, as a note
+// column's is; a release without one has none rather than an empty one.
 export const releases = fathomSchema.table(
   "releases",
   {
@@ -320,6 +321,7 @@ export const releases = fathomSchema.table(
     lastCycle: date("last_cycle").notNull(),
     shipsOn: date("ships_on"),
     colour: text("colour"),
+    note: text("note"),
   },
   (table) => [
     uniqueIndex("releases_stream_name_index").on(
@@ -334,6 +336,7 @@ export const releases = fathomSchema.table(
       "releases_ships_after_first_cycle",
       sql`${table.shipsOn} IS NULL OR ${table.shipsOn} >= ${table.firstCycle}`,
     ),
+    check("releases_note_not_empty", sql`${table.note} <> ''`),
   ],
 );
 
