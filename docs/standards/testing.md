@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["docs/standards/shared/testing.md", "docs/standards/shared/typescript/typescript.md"]
-last_updated: "2026-11-05"
+last_updated: "2026-11-07"
 ---
 
 # Testing Standards
@@ -86,3 +86,6 @@ Rules:
 - **Must Not** repeat facts other documents own, such as the contents of the seed data; link to them.
 - **Must** be updated in the same change as the behavior or the seed data it tests, together with [Visual Design](../design/visual-design.md) where that changes too. When a step fails because the behavior is wrong, the behavior is fixed, not the step.
 - **Must Not** depend on data a tester adds by hand, other than through the steps themselves, or on real data.
+- **Must Not** re-check what automated tests prove: each validation message, each refusal of a rule, API responses, permissions by typing addresses, each access-history sentence, or each combination of settings. One case for a rule is enough to confirm the screen shows it.
+- **Must** cover what only a person can judge: how screens look and read in light and dark mode, journeys across pages, accounts and browsers, keyboard and focus, and what tests stub out, such as the clipboard.
+- **Must** keep a feature's manual test short enough to run in about 30 minutes.

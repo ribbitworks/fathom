@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-06"
+last_updated: "2026-11-07"
 ---
 
 # Manual Test: Note Columns on People
@@ -24,7 +24,7 @@ Verifies what only a person can judge of Note columns on the People table: how t
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It adds People's columns and changes people; its changes are drafts, and it cannot approve them.
-- **Approver account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It approves and rejects drafts, and sees people without being able to change them.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It approves and rejects drafts, and sees people without being able to change them.
 
 ## Common Procedures
 
@@ -76,7 +76,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes. What a note may hold, and what the server and the screen refuse, is proven by automated tests; these cases check what only a person can judge. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
+Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
 
 ### NOTE-01: A Note Column Is Added
 

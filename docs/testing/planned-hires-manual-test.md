@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-06"
+last_updated: "2026-11-07"
 ---
 
 # Manual Test: Planned Hires on People
@@ -25,7 +25,7 @@ Verifies planned hires shown as rows of the People table: how their rows look be
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change people and planned hires, and its changes are drafts; it cannot approve them.
-- **Approver account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts.
 - **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people and the planned hires' placeholders, and cannot change them.
 
 ## Common Procedures
@@ -93,15 +93,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** **SDET, REQ-2042** and **Software Engineer, REQ-2047**, in grey italics. The hire rows **Backend engineer 1**, **Backend engineer 2** and **Payments tester** show their names in the usual colour.
   - **Notes:**
 
-- [ ] **Step 4.** Read the **State** cells down the table.
-  - **Expected:** Every person's reads **Hired**. Each hire row's reads **Request to hire** or **Approved to hire**.
-  - **Notes:**
-
-- [ ] **Step 5.** Read a hire row's **End**, **Manager?**, **Manager since** and **Team name** cells, and the **Expected** cell of a person.
+- [ ] **Step 4.** Read a hire row's **End**, **Manager?**, **Manager since** and **Team name** cells, and the **Expected** cell of a person.
   - **Expected:** All are blank. The hire row's **Expected** cell holds a month and year, such as **Jan 2027**.
   - **Notes:**
 
-- [ ] **Step 6.** Switch the operating system to dark appearance, and look over the same rows.
+- [ ] **Step 5.** Switch the operating system to dark appearance, and look over the same rows.
   - **Expected:** The grey names, the yellow draft cells, the red rejected cells and the light green **Live** rows under the drafted hires are all easy to read and tell apart. Switch back to light appearance afterwards.
   - **Notes:**
 
@@ -113,37 +109,25 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The cell reads **Fictional test lead** in the usual colour and turns yellow. The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 2.** Clear the search. Search for **Fictional test lead**.
-  - **Expected:** Only that row is shown.
-  - **Notes:**
-
-- [ ] **Step 3.** Select the row's **Name** cell, press Backspace, and press Enter if an editor opened.
+- [ ] **Step 2.** Clear the search, and search for **Fictional test lead**. Select the row's **Name** cell, press Backspace, and press Enter if an editor opened.
   - **Expected:** The cell reads **SDET, REQ-2042** in grey italics again.
   - **Notes:**
 
 **Afterwards:** R1.
 
-### HIRE-03: State Is Read Only for People, and Hired Is Not Offered for a Hire
+### HIRE-03: Hired Is Not Offered for a Hire, and States Are Filtered Together
 
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
 
-- [ ] **Step 1.** Search for **Max Munk**. Select the row's **State** cell and press Enter, then type a letter.
-  - **Expected:** No editor opens, and the cell still reads **Hired**.
-  - **Notes:**
-
-- [ ] **Step 2.** Clear the search, and search for **REQ-2047**. Select the row's **State** cell and press Enter.
+- [ ] **Step 1.** Search for **REQ-2047**. Select the row's **State** cell and press Enter.
   - **Expected:** A picker opens offering **Request to hire** and **Approved to hire** only. **Hired** is not offered.
   - **Notes:**
 
-- [ ] **Step 3.** Choose **Request to hire** and press Enter.
-  - **Expected:** The cell reads **Request to hire** and turns yellow. The row has a hollow yellow dot and **Draft**.
-  - **Notes:**
-
-- [ ] **Step 4.** Select the funnel beside the **State** header, and look at the choices.
+- [ ] **Step 2.** Select the funnel beside the **State** header, and look at the choices.
   - **Expected:** **Request to hire**, **Approved to hire**, **Hired** and **Empty** are listed together, with no **Retired** heading.
   - **Notes:**
 
-- [ ] **Step 5.** Tick **Hired** only.
+- [ ] **Step 3.** Tick **Hired** only.
   - **Expected:** Only people are shown, with no hire rows.
   - **Notes:**
 
@@ -157,20 +141,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Focus moves to the empty row at the bottom. Its **State** cell reads **Request to hire**, and its other cells are blank.
   - **Notes:**
 
-- [ ] **Step 2.** Using only the keyboard, move to the row's **ID** cell, type **TBD-99**, and press Tab.
-  - **Expected:** A message reads **An ID cannot start with TBD-, which temporary IDs use**.
-  - **Notes:**
-
-- [ ] **Step 3.** Clear the **ID** cell. Move to **Position**, press Enter, choose **SDET**, and press Enter.
+- [ ] **Step 2.** Using only the keyboard, move to the row's **Position** cell, press Enter, choose **SDET**, and press Enter.
   - **Expected:** The row is added with an ID starting with **TBD-**, and a **Name** of **SDET, TBD-** followed by the same number, in grey italics. The row has a hollow yellow dot and **Draft**.
-  - **Notes:**
-
-- [ ] **Step 4.** Open the new row's ⋯ menu.
-  - **Expected:** It offers **Remove planned hire**.
-  - **Notes:**
-
-- [ ] **Step 5.** Select **Remove planned hire**.
-  - **Expected:** The row is gone, and a notice reads **Discarded the draft adding the planned hire SDET, TBD-** followed by its number.
   - **Notes:**
 
 **Afterwards:** R1.

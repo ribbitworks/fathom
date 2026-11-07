@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-06"
+last_updated: "2026-11-07"
 ---
 
 # Manual Test: Metrics on the People Table
 
 ## Scope
 
-Verifies the People table's Metrics panel: breaking people down by one column or two, counts and shares, following the search, filters and Draft menu, resizing the panel, and keeping metrics in saved views.
+Verifies the People table's Metrics panel: breaking people down by one column or two, following the filters and the Draft menu, resizing the panel, and keeping metrics in saved views.
 
 ## Test Environment
 
@@ -93,29 +93,25 @@ Use only where this test says so. This deletes every account and record in the d
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engineering.operations.manager@fathom.test`. Tick each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engineering.operations.manager@fathom.test`. Check each step whose expected result you see, and write anything else under its notes.
 
 ### METRICS-01: The Panel Opens and Closes
 
 **Preconditions:** **People** page open from the left-hand menu.
 
-- [x] **Step 1.** Select **Metrics** above the table.
+- [ ] **Step 1.** Select **Metrics** above the table.
   - **Expected:** The Metrics panel opens on the right, and the table narrows beside it. The panel has **Break down by** set to **Choose a column**, and says **Choose a column to count people and planned hires by its values.**
   - **Notes:**
 
-- [FAIL] **Step 2.** Press Esc.
+- [ ] **Step 2.** Press Esc.
   - **Expected:** The panel closes, and the **Metrics** button has the keyboard focus.
-  - **Notes:** Not relaible. Might close with esc, migh tnot.
+  - **Notes:**
 
-- [x] **Step 3.** Open the **Position** column menu, and select **Break down by**.
+- [ ] **Step 3.** Open the **Position** column menu, and select **Break down by**.
   - **Expected:** The panel opens with **Break down by** set to **Position**, showing a row for each position.
   - **Notes:**
 
-- [x] **Step 4.** Select the **×** button at the top right of the panel.
-  - **Expected:** The panel closes.
-  - **Notes:**
-
-- [x] **Step 5.** Open the **Name** column menu.
+- [ ] **Step 4.** Open the **Name** column menu.
   - **Expected:** The menu has no **Break down by**.
   - **Notes:**
 
@@ -123,35 +119,19 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 
 **Preconditions:** **People** page open. Live only shown (P3).
 
-- [x] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
+- [ ] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
   - **Expected:** The count line says **150 people and 6 planned hires**. The figures are headed **Count**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 72 (46.2%), Test Engineer 36 (23.1%), SDET 31 (19.9%), Engineering Manager 17 (10.9%) and Architect 0 (0%). No row shows **Live**.
   - **Notes:**
-
-- [x] **Step 2.** Set **Break down by** to **Role on team**.
-  - **Expected:** Team Lead shows 23 and Design Authority 6, followed by an **Empty** row for everyone else. A note under the table says **A person may hold several choices of Role on team, so shares can add up to more than 100%.**
-  - **Notes:**
-
-- [x] **Step 3.** Set **Break down by** to **End**.
-  - **Expected:** **Populated** shows 11 and **Empty** 145.
-  - **Notes:**[Comment: we should be able to add a date to compare how many on and before and how many on or after]
 
 ### METRICS-03: Two Columns Are Crossed
 
 **Preconditions:** As METRICS-02, with the panel open.
 
-- [x] **Step 1.** Set **Break down by** to **Position**, then **and by** to **Site**.
+- [ ] **Step 1.** Set **Break down by** to **Position**, then **and by** to **Site**.
   - **Expected:** A table headed **Position by Site** has a column for each site and an **All** column, and a row for each position and an **All** row. An **Empty** column counts the planned hires, which have no site. The **All** row shows Kestrel Bay 31, Northmere 33, Ashgrove 47, Corran Quay 39, Empty 6 and All 156. **Count** is selected above the table.
   - **Notes:**
 
-- [x] **Step 2.** Select **Share** above the table.
-  - **Expected:** Each figure becomes a percentage of the 156 rows counted. The **All** row's **All** figure is 100%.
-  - **Notes:**
-
-- [x] **Step 3.** Set **and by** to **Nothing more**.
-  - **Expected:** The panel shows Position alone again, as in METRICS-02 step 1.
-  - **Notes:**
-
-### METRICS-04: Metrics Follow the Search and Filters
+### METRICS-04: Metrics Follow the Filters
 
 **Preconditions:** As METRICS-02, with **Break down by** set to **Position**.
 
@@ -159,32 +139,16 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Expected:** The bar above the table says **47 of 156**. The count line says **47 people**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 20 (42.6%), Test Engineer 12 (25.5%), SDET 6 (12.8%), Engineering Manager 9 (19.1%) and Architect 0 (0%).
   - **Notes:**
 
-- [ ] **Step 2.** Type `Corran` in the search box.
-  - **Expected:** The table shows no one, and the count line says **0 people**.
+- [ ] **Step 2.** Select **Clear all** in the bar above the table.
+  - **Expected:** The filter is cleared, and the panel stays open.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Clear all** in the bar above the table.
-  - **Expected:** The search and the filter are cleared. The panel stays open, and the count line says **150 people and 6 planned hires** again.
-  - **Notes:**
+### METRICS-05: Metrics Show Live Figures Beside Drafts
 
-### METRICS-05: Metrics Follow the Draft Menu
+**Preconditions:** **People** page open. Metrics panel open.
 
-**Preconditions:** **People** page open, with the Draft menu's **Drafts beside live** chosen, as it is by default. Metrics panel open.
-
-- [ ] **Step 1.** Look at the count line.
-  - **Expected:** It says **151 people and 7 planned hires with drafts, 156 live**.
-  - **Notes:**
-
-- [ ] **Step 2.** Set **Break down by** to **Grade**.
+- [ ] **Step 1.** Open the Draft menu, select **Drafts beside live**, and press Esc. Set **Break down by** to **Grade**, and **and by** to **Nothing more**.
   - **Expected:** The **P1** row shows a count with a dimmed **Live 17** under it. Rows whose count drafts do not change show no **Live** figure.
-  - **Notes:**
-
-- [ ] **Step 3.** Open the Draft menu and select **Drafts applied**. Press Esc.
-  - **Expected:** The count line says **150 people and 7 planned hires**, without **with drafts**. No figure has a **Live** figure under it.
-  - **Notes:**
-
-- [ ] **Step 4.** Open the Draft menu and select **Live only**. Press Esc.
-  - **Expected:** The column is called **Level** again, and **Break down by** still shows it. **P1** shows 17, and no figure has a **Live** figure under it.
   - **Notes:**
 
 ### METRICS-06: The Panel Is Resized
@@ -195,15 +159,11 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Expected:** The panel widens and the table narrows as you drag.
   - **Notes:**
 
-- [ ] **Step 2.** Keep dragging to the left, as far as the window allows.
-  - **Expected:** The panel stops widening while the table still shows its first columns.
-  - **Notes:**
-
-- [ ] **Step 3.** Select the **Metrics** title at the top of the panel, press Shift+Tab once, then press the Right arrow key three times.
+- [ ] **Step 2.** Select the **Metrics** title at the top of the panel, press Shift+Tab once, then press the Right arrow key three times.
   - **Expected:** A blue line shows on the panel edge, and the panel narrows a little with each press.
   - **Notes:**
 
-- [ ] **Step 4.** Reload the page.
+- [ ] **Step 3.** Reload the page.
   - **Expected:** The panel opens again at the width it was left.
   - **Notes:**
 
@@ -237,8 +197,4 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 
 - [ ] **Step 2.** Press Tab repeatedly.
   - **Expected:** The focus moves only among the panel's controls, never to the table behind it.
-  - **Notes:**
-
-- [ ] **Step 3.** Press Esc, then make the window wide again.
-  - **Expected:** The panel closes, and the table fills the page.
   - **Notes:**

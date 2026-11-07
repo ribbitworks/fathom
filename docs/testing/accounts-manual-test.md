@@ -88,7 +88,7 @@ Use only where a test case asks for it. Like R2, it deletes every account and re
 
 ## Test Cases
 
-Run the test cases in order. Start with R2. Tick each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with R2. Check each step whose expected result you see, and write anything else under its notes.
 
 ### ACCT-01: Only Those Who May Manage Accounts See the Accounts Page
 

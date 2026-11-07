@@ -79,7 +79,7 @@ Use before the first test case and after the last, so every role is as Fathom st
 
 ## Test Cases
 
-Run the test cases in order. Start with R2. Tick each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with R2. Check each step whose expected result you see, and write anything else under its notes.
 
 ### ROLE-01: Only Those Who May Edit Roles See the Roles Page
 

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["packages/shared/src/access.ts", "apps/web/src/layout.tsx", "apps/web/src/router.tsx", "apps/web/src/*-page.tsx", "apps/server/src/access.ts", "apps/server/src/data/**", "apps/server/src/routes/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/testing/roles-manual-test.md"]
-last_updated: "2026-11-06"
+last_updated: "2026-11-07"
 ---
 
 # Manual Test: What Each Permission Allows
@@ -109,7 +109,7 @@ Use before the first test case and at the end of the last. This deletes every ac
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R2. Tick each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with R0, then R2. Check each step whose expected result you see, and write anything else under its notes.
 
 ### Plan
 
@@ -135,19 +135,15 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
 
 **Preconditions:** Team Member granted only **Edit** on **Plan** (P4), signed in as `team.member@fathom.test`.
 
-- [ ] **Step 1.** Look at the left-hand menu.
-  - **Expected:** As in PERM-01, step 1.
-  - **Notes:**
-
-- [ ] **Step 2.** Select **Releases**, then **Platform** in the table, then **New release…** under **Releases** in the side panel.
+- [ ] **Step 1.** Select **Releases**, then **Platform** in the table, then **New release…** under **Releases** in the side panel.
   - **Expected:** A dialog titled **New release in Platform** opens. There is no **New release stream** button at the top right of the page.
   - **Notes:**
 
-- [ ] **Step 3.** Type `Harbor 4` in **Name**, choose **28.1 (2028-01-01 to 2028-06-30)** as both the first and the last cycle, and select **Make release**.
+- [ ] **Step 2.** Type `Harbor 4` in **Name**, choose **28.1 (2028-01-01 to 2028-06-30)** as both the first and the last cycle, and select **Make release**.
   - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Harbor 4** with a hollow yellow dot and **Draft: added**. The Publish button reads **Publish 1 change**.
   - **Notes:**
 
-- [ ] **Step 4.** Discard your unpublished changes (P6).
+- [ ] **Step 3.** Discard your unpublished changes (P6).
   - **Expected:** **Harbor 4** is gone from the side panel.
   - **Notes:**
 
@@ -177,8 +173,8 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
 
 **Preconditions:** Team Member granted only **Edit** on **People** (P4), signed in as `team.member@fathom.test`.
 
-- [ ] **Step 1.** Look at the left-hand menu, the column headers, and the top right of the page.
-  - **Expected:** The menu is as in PERM-03, step 1. **New person** is at the top right, and there is no **New column** button. **Start**, **End** and **Manager since** are not shown.
+- [ ] **Step 1.** Look at the column headers and the top right of the page.
+  - **Expected:** **New person** is at the top right, and there is no **New column** button. **Start**, **End** and **Manager since** are not shown.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Team name** cell, press Enter, replace the text with `Mobile apps team`, and press Enter.
@@ -197,8 +193,8 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
 
 **Preconditions:** Team Member granted only **View** on **People** and **View** on **Restricted details** (P4), signed in as `team.member@fathom.test`.
 
-- [ ] **Step 1.** Look at the left-hand menu, the column headers, and the top right of the page.
-  - **Expected:** The menu is as in PERM-03, step 1. **Start**, **End** and **Manager since** are shown. There is no **New person** button.
+- [ ] **Step 1.** Look at the column headers and the top right of the page.
+  - **Expected:** **Start**, **End** and **Manager since** are shown. There is no **New person** button.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Viktoria Holmberg**.
@@ -231,8 +227,8 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
 
 **Preconditions:** R2, then R3, then Team Member granted only **View** on **People** and **View** on **Confidential data** (P4), signed in as `team.member@fathom.test`.
 
-- [ ] **Step 1.** Look at the left-hand menu, the column headers, and the top right of the page.
-  - **Expected:** The menu is as in PERM-03, step 1. An **Offer letter** column is shown. **Start**, **End** and **Manager since** are not shown. There is no **New person** button.
+- [ ] **Step 1.** Look at the column headers and the top right of the page.
+  - **Expected:** An **Offer letter** column is shown. **Start**, **End** and **Manager since** are not shown. There is no **New person** button.
   - **Notes:**
 
 **Afterwards:** P5.
@@ -285,19 +281,15 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
 
 **Preconditions:** Team Member granted only **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
-- [ ] **Step 1.** Look at the left-hand menu.
-  - **Expected:** As in PERM-09, step 1.
-  - **Notes:**
-
-- [ ] **Step 2.** Select **Lists**.
+- [ ] **Step 1.** Select **Lists**.
   - **Expected:** **Skills** has a yellow dot and **Draft: added**. There is no **New list** button.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Releases**.
+- [ ] **Step 2.** Select **Releases**.
   - **Expected:** **Platform** and **Patches** are in the table. There is no **New release stream** button.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Drafts**.
+- [ ] **Step 3.** Select **Drafts**.
   - **Expected:** Drafts are listed, with no checkboxes, and no **Select all waiting** or **Approve** button.
   - **Notes:**
 
@@ -307,19 +299,15 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
 
 **Preconditions:** Team Member granted only **Edit** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
-- [ ] **Step 1.** Look at the left-hand menu, then select **Releases**.
-  - **Expected:** The menu is as in PERM-09, step 1. **New release stream** is at the top right of the page.
+- [ ] **Step 1.** Select **Releases**.
+  - **Expected:** **New release stream** is at the top right of the page.
   - **Notes:**
 
 - [ ] **Step 2.** Select **New release stream**, type `Testing Stream`, and select **Add stream**.
   - **Expected:** A notification says **Drafted the new release stream.** The table has a **Testing Stream** row with a hollow yellow dot and **Draft: added**. The Publish button reads **Publish 1 change**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Drafts**.
-  - **Expected:** There are no checkboxes, and no **Select all waiting** or **Approve** button.
-  - **Notes:**
-
-- [ ] **Step 4.** Discard your unpublished changes (P6), and select **Releases**.
+- [ ] **Step 3.** Discard your unpublished changes (P6), and select **Releases**.
   - **Expected:** **Testing Stream** is gone from the table.
   - **Notes:**
 
@@ -335,10 +323,6 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
   - **Expected:** The **Change history** page is open and says **No changes to data you can see yet.** The menu shows **Change history** under **History**, and the **Help** section, and nothing else.
   - **Notes:**
 
-- [ ] **Step 2.** Change the browser's address to end in `/people`, and press Enter.
-  - **Expected:** The page says **There is no page at this address.**
-  - **Notes:**
-
 **Afterwards:** P5.
 
 ### Access History
@@ -349,14 +333,6 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Access history** page is open. The menu shows **Access history** under **History**, and the **Help** section, and nothing else.
-  - **Notes:**
-
-- [ ] **Step 2.** Read the newest entry.
-  - **Expected:** It says Fathom Administrator **changed the role** Team Member, granting View Access history, withdrawing View Plan, View Allocations, View Change history, and is marked as worth checking.
-  - **Notes:**
-
-- [ ] **Step 3.** Change the browser's address to end in `/accounts`, and press Enter.
-  - **Expected:** The page says **There is no page at this address.**
   - **Notes:**
 
 **Afterwards:** P5.
@@ -383,10 +359,6 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
   - **Expected:** A notice reads **Created the account for Test Account.** **Test Account** is in the table, with **Team Member** in its **Role** column.
   - **Notes:**
 
-- [ ] **Step 5.** Change the browser's address to end in `/roles`, and press Enter.
-  - **Expected:** The page says **There is no page at this address.**
-  - **Notes:**
-
 **Afterwards:** P5.
 
 ### Roles
@@ -403,10 +375,6 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
   - **Expected:** A green banner says **The role has been created.** **Test Role** is in the list, with **0** in the **Accounts** column.
   - **Notes:**
 
-- [ ] **Step 3.** Change the browser's address to end in `/accounts`, and press Enter.
-  - **Expected:** The page says **There is no page at this address.**
-  - **Notes:**
-
 **Afterwards:** P5.
 
 ### Settings
@@ -421,14 +389,6 @@ Run the test cases in order. Start with R0, then R2. Tick each step whose expect
 
 - [ ] **Step 2.** Type `Kolkata` in **Time zone**, choose **Asia/Kolkata** from the list, and select **Save**.
   - **Expected:** A green banner says **Fathom's time zone is now Asia/Kolkata.**
-  - **Notes:**
-
-- [ ] **Step 3.** Choose **America/Vancouver** in **Time zone**, and select **Save**.
-  - **Expected:** A green banner says **Fathom's time zone is now America/Vancouver.**
-  - **Notes:**
-
-- [ ] **Step 4.** Change the browser's address to end in `/accounts`, and press Enter.
-  - **Expected:** The page says **There is no page at this address.**
   - **Notes:**
 
 **Afterwards:** P5.

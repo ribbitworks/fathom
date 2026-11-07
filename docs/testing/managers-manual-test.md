@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-04"
+last_updated: "2026-11-07"
 ---
 
 # Manual Test: Managers and Teams on People
 
 ## Scope
 
-Verifies the People table's **Manager**, **Manager?**, **Manager since**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rules that refuse clearing it, team names, the mark on a manager who has left, filtering and metrics by **Manager?**, metrics by **Manager**, and what a Resource Planner sees.
+Verifies the People table's **Manager**, **Manager?**, **Manager since**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the mark on a manager who has left, filtering and sorting by **Manager?**, and what a Resource Planner sees.
 
 ## Test Environment
 
@@ -24,7 +24,7 @@ Verifies the People table's **Manager**, **Manager?**, **Manager since**, **Team
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change people, and its changes are drafts; it cannot approve them.
-- **Approver account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts; it cannot change people.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts; it cannot change people.
 - **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people without their Restricted details, such as their dates, and cannot change them.
 
 ## Common Procedures
@@ -89,14 +89,6 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The **Manager?** cell shows a checked box. The **Team name** cell reads **Mobile team**.
   - **Notes:**
 
-- [ ] **Step 3.** Search for **Lilian Lang**.
-  - **Expected:** The **Manager?** cell shows an empty box. The **Manager** cell reads **Van Wiza**.
-  - **Notes:**
-
-- [ ] **Step 4.** Search for **Viktoria Holmberg**.
-  - **Expected:** The row has a yellow dot and **Draft**, with a light green **Live** row under it. Both rows show a checked box in the **Manager?** cell. The **End** cell of the **Live** row holds a date in the past.
-  - **Notes:**
-
 ### MGR-02: The Manager Picker Offers Only People Marked as Managers and Still Employed
 
 **Preconditions:** As MGR-01.
@@ -113,11 +105,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** **Lilian Lang** is not offered.
   - **Notes:**
 
-- [ ] **Step 4.** Clear what you typed, and type **Viktoria**.
-  - **Expected:** **Viktoria Holmberg** is not offered.
-  - **Notes:**
-
-- [ ] **Step 5.** Press Esc.
+- [ ] **Step 4.** Press Esc.
   - **Expected:** The picker closes, and the row's **Manager** cell still reads **Atmananda Ganaka**.
   - **Notes:**
 
@@ -129,15 +117,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The box is checked and the cell turns yellow. The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 2.** Look at the Publish button.
-  - **Expected:** It reads **Publish 4 changes**.
-  - **Notes:**
-
-- [ ] **Step 3.** Search for **Samuel Richter**. Select the row's **Manager** cell, press Enter, and type **Lilian**.
-  - **Expected:** **Lilian Lang** is not offered.
-  - **Notes:**
-
-- [ ] **Step 4.** Press Esc. Select the Publish button.
+- [ ] **Step 2.** Select the Publish button.
   - **Expected:** A notice reads **Published 4 changes.** The Publish button is gone from the top bar.
   - **Notes:**
 
@@ -149,49 +129,21 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** One entry is shown: **Engineering Operations Manager drafted changes to Lilian Lang: Manager? from No to Yes**.
   - **Notes:**
 
-- [ ] **Step 2.** Select the entry's checkbox, then **Approve**.
-  - **Expected:** A dialog titled **Approve 1 draft?** opens.
-  - **Notes:**
-
-- [ ] **Step 3.** Select **Approve**.
+- [ ] **Step 2.** Select the entry's checkbox, then **Approve**. In the dialog, select **Approve**.
   - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 4.** Sign in (P1) as `engineering.operations.manager@fathom.test`. Open **People**, search for **Samuel Richter**, select the row's **Manager** cell, press Enter, and type **Lilian**.
+- [ ] **Step 3.** Sign in (P1) as `engineering.operations.manager@fathom.test`. Open **People**, search for **Samuel Richter**, select the row's **Manager** cell, press Enter, and type **Lilian**.
   - **Expected:** **Lilian Lang** is offered.
   - **Notes:**
 
-- [ ] **Step 5.** Press Esc.
+- [ ] **Step 4.** Press Esc.
   - **Expected:** The picker closes, and the row's **Manager** cell still reads **Atmananda Ganaka**.
-  - **Notes:**
-
-### MGR-05: Manager? Can Be Cleared From Someone Nobody Reports To
-
-**Preconditions:** MGR-04 done. Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
-
-- [ ] **Step 1.** Search for **Lilian Lang**. Click once in the row's **Manager?** cell.
-  - **Expected:** The box is empty and the cell turns yellow. The row has a hollow yellow dot and **Draft**.
-  - **Notes:**
-
-- [ ] **Step 2.** Select the Publish button.
-  - **Expected:** A notice reads **Published 1 change.** The Publish button is gone from the top bar.
-  - **Notes:**
-
-- [ ] **Step 3.** Sign in (P1) as `engineering.director@fathom.test`. Open **Drafts**, and type **Lilian Lang** in the search box.
-  - **Expected:** One entry is shown: **Engineering Operations Manager drafted changes to Lilian Lang: Manager? from Yes to No**.
-  - **Notes:**
-
-- [ ] **Step 4.** Select the entry's checkbox, then **Approve**. In the dialog, select **Approve**.
-  - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
-  - **Notes:**
-
-- [ ] **Step 5.** Open **People**, and search for **Lilian Lang**.
-  - **Expected:** The **Manager?** cell shows an empty box, and the row has no **Draft** mark.
   - **Notes:**
 
 **Afterwards:** R1.
 
-### MGR-06: Manager? Cannot Be Cleared While People Report to Someone
+### MGR-05: Manager? Cannot Be Cleared While People Report to Someone
 
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
 
@@ -199,89 +151,57 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A message reads **Manager? stays checked while anyone reports to this person, or is drafted to**. The box stays checked, and the row has no **Draft** mark.
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Silje Holm-Schrøder**. Click once in the row's **Manager?** cell.
-  - **Expected:** The same message is shown, and the box stays checked.
-  - **Notes:**
+### MGR-06: Changing a Manager Moves the Person to Their New Manager's Team
 
-### MGR-07: Changing a Manager Moves the Person to Their New Manager's Team
+**Preconditions:** As MGR-05.
 
-**Preconditions:** As MGR-06.
-
-- [ ] **Step 1.** Search for **Samuel Richter**.
-  - **Expected:** The **Manager** cell reads **Atmananda Ganaka** and the row's **Team** cell reads **Payments team**.
-  - **Notes:**
-
-- [ ] **Step 2.** Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**.
+- [ ] **Step 1.** Search for **Samuel Richter**, whose **Manager** cell reads **Atmananda Ganaka** and **Team** cell **Payments team**. Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**.
   - **Expected:** The **Manager** cell reads **Max Munk** and the row's **Team** cell reads **Mobile team**, both yellow. The **Manager since** cell holds today's date. The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **⋯** button at the end of the row, then **Discard draft**.
+- [ ] **Step 2.** Select the **⋯** button at the end of the row, then **Discard draft**.
   - **Expected:** The **Manager** cell reads **Atmananda Ganaka** again, and the **Team** cell **Payments team**.
   - **Notes:**
 
-### MGR-08: A Team Name Is Edited on Its Manager's Row and Shown for Their Reports
+### MGR-07: A Team Name Is Edited on Its Manager's Row
 
-**Preconditions:** As MGR-06.
+**Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **Lorenza Thiel**. Select the row's **Team name** cell, type **Fictional Crew**, and press Enter.
   - **Expected:** The **Team name** cell reads **Fictional Crew**, in yellow. The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Valéry Caron**.
-  - **Expected:** The **Manager** cell reads **Lorenza Thiel** and the row's **Team** cell reads **Fictional Crew**.
-  - **Notes:**
-
-- [ ] **Step 3.** Search for **Lorenza Thiel**. Select the **⋯** button at the end of the row, then **Discard draft**.
+- [ ] **Step 2.** Select the **⋯** button at the end of the row, then **Discard draft**.
   - **Expected:** The **Team name** cell is empty, and the row has no **Draft** mark.
   - **Notes:**
 
-### MGR-09: A Manager Who Has Left Is Marked
+### MGR-08: A Manager Who Has Left Is Marked
 
-**Preconditions:** As MGR-06.
+**Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **西尾 亮**.
   - **Expected:** The **Manager** cell reads **Viktoria Holmberg**, followed by a red dot and **Left**.
   - **Notes:**
 
-- [ ] **Step 2.** Search for **Samuel Richter**. Select the row's **Manager** cell, press Enter, and type **Viktoria**.
-  - **Expected:** **Viktoria Holmberg** is not offered.
-  - **Notes:**
+### MGR-09: People Are Filtered and Sorted by Manager?
 
-- [ ] **Step 3.** Press Esc.
-  - **Expected:** The picker closes.
-  - **Notes:**
+**Preconditions:** As MGR-05.
 
-### MGR-10: People Are Filtered, Sorted and Counted by Manager?
-
-**Preconditions:** As MGR-06.
-
-- [ ] **Step 1.** Open the **Manager?** column menu, select **Filter…**, and pick only **Yes**. Press Esc.
+- [ ] **Step 1.** Clear the search box. Open the **Manager?** column menu, select **Filter…**, and pick only **Yes**. Press Esc.
   - **Expected:** Every row shown has a checked **Manager?** box, among them **Max Munk** and **Viktoria Holmberg**.
   - **Notes:**
 
-- [ ] **Step 2.** Open the **Manager?** column menu, select **Filter…**, clear **Yes**, and pick only **No**. Press Esc.
-  - **Expected:** Every row shown has an empty **Manager?** box, among them **Lilian Lang**.
-  - **Notes:**
-
-- [ ] **Step 3.** Open the **Manager?** column menu, select **Filter…**, and clear **No**. Press Esc. Open the **Manager?** column menu again.
+- [ ] **Step 2.** Open the **Manager?** column menu, select **Filter…**, and clear **Yes**. Press Esc. Open the **Manager?** column menu again.
   - **Expected:** The menu offers **Checked first** and **Unchecked first**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Checked first**.
+- [ ] **Step 3.** Select **Checked first**.
   - **Expected:** The rows with a checked **Manager?** box come first.
-  - **Notes:**
-
-- [ ] **Step 5.** Open the **Manager?** column menu, and select **Break down by**.
-  - **Expected:** The Metrics panel opens with **Break down by** set to **Manager?**, with a row for **Yes** and a row for **No**. The **Yes** row counts 16 people.
-  - **Notes:**
-
-- [ ] **Step 6.** Open the **Manager** column menu, and select **Break down by**.
-  - **Expected:** The Metrics panel shows **Break down by** set to **Manager**, with a row for each manager and a **No manager** row. The **Max Munk** row counts 9 people.
   - **Notes:**
 
 **Afterwards:** R1.
 
-### MGR-11: A Resource Planner Sees Managers and Teams but Cannot Change Them
+### MGR-10: A Resource Planner Sees Managers and Teams but Cannot Change Them
 
 **Preconditions:** Signed in (P1) as `resource.planner@fathom.test`. **People** page open.
 

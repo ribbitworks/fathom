@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-06"
+last_updated: "2026-11-07"
 ---
 
 # Manual Test: Built-in Lists and Lists with Meanings
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions and Hiring states: their mark, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, the dialog that cannot retire or delete them but can change their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions and Hiring states: their mark, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
 
 ## Test Environment
 
@@ -24,7 +24,7 @@ Verifies the Lists page's built-in lists, Positions and Hiring states: their mar
 R2 creates these accounts, with every other development account. They share one password, which R2 prints when it finishes. Every account holds its role as Fathom starts it.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change lists, and its changes are drafts; it cannot approve them.
-- **Approver account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts.
 - **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people without their Restricted details.
 
 ## Common Procedures
@@ -85,93 +85,53 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** Each name has a grey **Built in** label beside it. No other list has one.
   - **Notes:**
 
-- [ ] **Step 2.** Read the **Choices** column of the **Positions** row.
-  - **Expected:** It starts with **Employee, Manager**.
-  - **Notes:**
-
-- [ ] **Step 3.** Select **Positions**.
+- [ ] **Step 2.** Select **Positions**.
   - **Expected:** The panel opens with **Positions** at the top and **Built in** beside it. Under the choices, in grey, it reads three lines: **Rename these, add your own, or retire any you don't use.**, **Every person and planned hire has one of these positions.** and **Keep at least one.**
   - **Notes:**
 
-- [ ] **Step 4.** Select **Hiring states**.
+- [ ] **Step 3.** Select **Hiring states**.
   - **Expected:** The panel opens with **Hiring states** at the top and **Built in** beside it. No description is shown under the name. Under the choices, in grey, it reads four lines: **Rename these, add your own, or retire any you don't use.**, **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
   - **Notes:**
 
-### LIST-02: A Built-in List Cannot Be Retired or Deleted
+### LIST-02: Each Hiring State Shows Its Meaning
 
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
-
-- [ ] **Step 1.** Select **Edit list** at the top of the panel.
-  - **Expected:** A dialog titled **Edit list** opens. Under **Visible to**, **General** is selected, and every choice can be selected. There is no **Retire list** or **Delete list** button.
-  - **Notes:**
-
-- [ ] **Step 2.** Select **Cancel**.
-  - **Expected:** The dialog closes.
-  - **Notes:**
-
-### LIST-03: Each Hiring State Shows Its Meaning
-
-**Preconditions:** As LIST-02.
 
 - [ ] **Step 1.** Read each choice's row in the panel.
   - **Expected:** **Request to hire** shows **Proposed** at the end of its row. **Approved to hire** shows **Open** at the end of its row.
   - **Notes:**
 
-- [ ] **Step 2.** Read the meaning menu at the end of the empty row.
-  - **Expected:** It reads **Proposed**.
-  - **Notes:**
+### LIST-03: A New Choice Takes the Meaning Chosen
 
-### LIST-04: A New Choice Takes the Meaning Chosen
-
-**Preconditions:** As LIST-02.
+**Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
 - [ ] **Step 1.** In the empty row's meaning menu, choose **Open**. Type **Fictional Interviewing** in the empty row's **Name** box and press Enter.
   - **Expected:** A row **Fictional Interviewing** appears above the empty row, with a hollow yellow dot and **Draft: added**, and **Open** at the end of the row. The empty row is empty again and its meaning menu still reads **Open**.
   - **Notes:**
 
-- [ ] **Step 2.** Type **Fictional Budgeted** in the empty row's **Name** box, then select the heading **Hiring states** at the top of the panel.
-  - **Expected:** A row **Fictional Budgeted** appears, with a hollow yellow dot and **Draft: added**, and **Open** at the end of the row.
-  - **Notes:**
+### LIST-04: The Last Choice for a Meaning Is Kept
 
-- [ ] **Step 3.** Select the **⋯** button at the end of the **Fictional Budgeted** row, then select **Remove**.
-  - **Expected:** The **Fictional Budgeted** row is gone.
-  - **Notes:**
-
-### LIST-05: The Last Choice for a Meaning Is Kept
-
-**Preconditions:** As LIST-04.
+**Preconditions:** As LIST-03.
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **Request to hire** row.
   - **Expected:** **Retire** and **Remove** are greyed out, with **Needed for Proposed** under them.
   - **Notes:**
 
-- [ ] **Step 2.** Press Esc. Select the word **Proposed** at the end of the **Request to hire** row.
-  - **Expected:** The row opens for editing with the cursor in its name. The meaning menu reads **Proposed** and is greyed out, with **Needed for Proposed** under it.
-  - **Notes:**
+### LIST-05: A Choice Can Be Retired When Another Has the Same Meaning
 
-- [ ] **Step 3.** Press Esc.
-  - **Expected:** The row closes, unchanged.
-  - **Notes:**
+**Preconditions:** As LIST-04.
 
-### LIST-06: A Choice Can Be Retired When Another Has the Same Meaning
-
-**Preconditions:** As LIST-05.
-
-- [ ] **Step 1.** Select the **⋯** button at the end of the **Approved to hire** row.
-  - **Expected:** **Retire** and **Remove** can be selected.
-  - **Notes:**
-
-- [ ] **Step 2.** Select **Retire**.
+- [ ] **Step 1.** Press Esc. Select the **⋯** button at the end of the **Approved to hire** row, then select **Retire**.
   - **Expected:** The **Approved to hire** row stays where it is, with a hollow yellow dot and **Draft: retired**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the Publish button.
+- [ ] **Step 2.** Select the Publish button.
   - **Expected:** A notice says the changes were published. The Publish button is gone from the top bar.
   - **Notes:**
 
-### LIST-07: Approving Cannot Leave a Meaning With No Choice
+### LIST-06: Approving Cannot Leave a Meaning With No Choice
 
-**Preconditions:** LIST-06 done. Signed in (P1) as `engineering.director@fathom.test`. **Lists** page open, with the **Hiring states** panel open.
+**Preconditions:** LIST-05 done. Signed in (P1) as `engineering.director@fathom.test`. **Lists** page open, with the **Hiring states** panel open.
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **Approved to hire** row, then select **Approve…**.
   - **Expected:** A dialog titled **Approve 1 draft?** opens.
@@ -185,9 +145,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The dialog closes. The **Approved to hire** row still has a yellow dot and **Draft: retired**.
   - **Notes:**
 
-### LIST-08: Positions' Visibility Sets Who Sees the Position Column
+### LIST-07: Positions' Visibility Sets Who Sees the Position Column
 
-**Preconditions:** LIST-07 done. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open, with the **Positions** panel open.
+**Preconditions:** LIST-06 done. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open, with the **Positions** panel open.
 
 - [ ] **Step 1.** Select **Edit list**. Under **Visible to**, select **Restricted**, then select **Save**.
   - **Expected:** The dialog closes. **Positions** has a hollow yellow dot beside its name.
@@ -213,26 +173,10 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The last line printed gives the shared password, with no error above it.
   - **Notes:**
 
-### LIST-09: The Lists Shown Can Be Narrowed to Built-in or Custom Ones
+### LIST-08: The Lists Shown Can Be Narrowed to Built-in or Custom Ones
 
-**Preconditions:** LIST-08 done, so the database is as R2 leaves it. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open from the left-hand menu, with no list's panel open.
+**Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open from the left-hand menu, with no list's panel open.
 
-- [ ] **Step 1.** Read the count at the end of the bar above the table.
-  - **Expected:** It reads **9 lists**.
-  - **Notes:**
-
-- [ ] **Step 2.** In the switch beside **Search lists**, select **Built in**.
+- [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
   - **Expected:** The table shows only **Hiring states** and **Positions**, and the count reads **2 of 9**.
-  - **Notes:**
-
-- [ ] **Step 3.** Select **Custom**.
-  - **Expected:** The table shows every list except **Hiring states** and **Positions**, with **Languages** under **Show retired (1)**, and the count reads **7 of 9**.
-  - **Notes:**
-
-- [ ] **Step 4.** Select **All**.
-  - **Expected:** The table shows every list again, and the count reads **9 lists**.
-  - **Notes:**
-
-- [ ] **Step 5.** Sign in (P1) as `engineering.director@fathom.test`. Open the **Lists** page and select **Positions**.
-  - **Expected:** Under the choices, in grey, it reads two lines: **Every person and planned hire has one of these positions.** and **Keep at least one.** There is no line starting **Rename these**.
   - **Notes:**

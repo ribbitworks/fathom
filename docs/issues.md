@@ -1,7 +1,7 @@
 # Fathom — Issues
 
 **Status:** Working list
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 Known problems and deferred work that are not yet scheduled in the [Implementation Plan](design/implementation-plan.md). Each item says why it was deferred. When an item is scheduled or resolved, it moves to the document that owns it, or is removed.
 
@@ -72,6 +72,13 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Error Pages
 
 - **Every page error blamed on the server:** The router shows any error while drawing a page as "Fathom could not reach its server", with a way to try again, so a page failing on data it did not expect reads as the server being down and sends the reader looking in the wrong place. Found while testing the Drafts page by hand on 2026-11-03; a plainer page for errors other than failed requests is deferred as outside the fix made then.
+
+## Manual Tests
+
+- **Steps no automated test proves:** These steps stay in the manual tests until an automated test proves them: [Metrics](testing/metrics-manual-test.md) METRICS-01 step 4 and METRICS-06 step 3, [Planned Hires](testing/planned-hires-manual-test.md) HIRE-03 steps 2 and 3, [Managers](testing/managers-manual-test.md) MGR-09 steps 2 and 3, [Org Chart](testing/org-chart-manual-test.md) ORG-04 step 3, and [Drafts](testing/drafts-manual-test.md) DRAFT-02 step 4 and DRAFT-04 step 2. Found while trimming the manual tests on 2026-11-07; deferred until those areas are next changed.
+- **Esc does not always close the Metrics panel:** In [Metrics](testing/metrics-manual-test.md) METRICS-01 step 2, Esc sometimes left the panel open in the browser, though the automated test of Esc passes. Found by the Metrics manual test on 2026-11-07; not yet looked into.
+- **Counting dates before and after a day:** A tester asked for the Metrics panel to count a date column, such as **End**, as on or before a chosen day and after it, not only as **Populated** and **Empty**. Found by the Metrics manual test on 2026-11-07; deferred until the owner decides.
+- **Manual tests longer than 30 minutes:** [Permissions](testing/permissions-manual-test.md) (44 steps, a role change before and after each of 17 cases), [Releases](testing/releases-manual-test.md) (71 steps, four accounts, two data restores) and [Drafts](testing/drafts-manual-test.md) (61 steps, three database resets) may take longer than the 30 minutes the testing standard aims for. Deferred by the owner on 2026-11-07, since 30 minutes is a guideline.
 
 ## Dependencies
 
