@@ -203,7 +203,7 @@ describe("the table of release streams", () => {
     renderApp("/releases");
     await screen.findByRole("table", { name: "Release streams" });
     expect(rowTexts()).toEqual([
-      "NameCycles nowReleases",
+      "StreamCycle scheduleReleases",
       "Fictional NewNo cycles yet(0) ",
       "Retired",
       "Fictional OldEvery 3 months, named {YY}.{N}(0) ",

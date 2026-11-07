@@ -814,8 +814,8 @@ function StreamTable({
         className={classes.listTable}
       >
         <div role="row" className={classes.listHead}>
-          <span role="columnheader">Name</span>
-          <span role="columnheader">Cycles now</span>
+          <span role="columnheader">Stream</span>
+          <span role="columnheader">Cycle schedule</span>
           <span role="columnheader">Releases</span>
         </div>
         {current.map(row)}

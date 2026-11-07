@@ -88,7 +88,7 @@ Use only where a test case says so. This deletes every account and record in the
 ## Terms
 
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a record's name. A hollow dot means the change is still unpublished.
-- **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Name**, **Cycles now** and **Releases**. Selecting a row opens the stream in the side panel.
+- **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Stream**, **Cycle schedule** and **Releases**. Selecting a row opens the stream in the side panel.
 - **Side panel:** the panel beside the streams table for the selected stream, which the table narrows to make room for, headed with its name, with the sections **Cycle schedule**, **Releases** and **Cycles**. Its close button, an **×**, is at its top right, and dragging its left edge resizes it.
 - **Timeline:** the section headed **Timeline** below the streams table, with **Today**, **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right. It has a row for each stream that is not retired, named on the left, with a lane of the stream's cycles above a lane of its releases, under an axis of two rows of dates. Hovering over a cycle or a release shows its name and dates.
 - **⋯ menu:** the menu that opens from a **⋯** button: beside the side panel's close button for the stream itself, when it has a draft, at the end of a row in the side panel for that change of cycles or release, or at the end of a row of the **Cycles** table for that cycle.
@@ -136,7 +136,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 4.** Select **Set up cycles**.
-  - **Expected:** The dialog closes, and a notification says **Drafted the cycles.** Under **Cycle schedule**, a row reads **From 2027-01-04**, then **Every 2 weeks, named Sprint {#}** with a hollow yellow dot and **Draft: added**, and below it **Planned to** and a day two years after today, with a **Change…** button under it. Below **Releases**, a **Cycles** section, its count in brackets, lists the cycles from **Sprint 1** on. In the table, the **Cycles now** column of **Testing Stream** reads **Every 2 weeks, named Sprint {#}**.
+  - **Expected:** The dialog closes, and a notification says **Drafted the cycles.** Under **Cycle schedule**, a row reads **From 2027-01-04**, then **Every 2 weeks, named Sprint {#}** with a hollow yellow dot and **Draft: added**, and below it **Planned to** and a day two years after today, with a **Change…** button under it. Below **Releases**, a **Cycles** section, its count in brackets, lists the cycles from **Sprint 1** on. In the table, the **Cycle schedule** column of **Testing Stream** reads **Every 2 weeks, named Sprint {#}**.
   - **Notes:**
 
 - [ ] **Step 5.** Publish ([P3](#p3-publish)).
