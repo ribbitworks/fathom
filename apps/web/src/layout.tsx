@@ -120,7 +120,7 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Org chart",
         icon: "orgChart",
         to: "/org-chart",
-        permission: "people:view",
+        permission: "org-chart:view",
       },
       {
         label: "Drafts",

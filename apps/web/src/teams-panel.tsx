@@ -17,9 +17,7 @@ const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 // Named teams first, by name, then unnamed ones by their manager's name.
 function teamsOf(tree: OrgTree): OrgChartPerson[] {
   return [...tree.people.values()]
-    .filter(
-      (person) => person.employeeId !== null && tree.reports.has(person.id),
-    )
+    .filter((person) => person.nameOnly !== true && tree.reports.has(person.id))
     .sort((a, b) =>
       a.teamName === null || b.teamName === null
         ? Number(a.teamName === null) - Number(b.teamName === null) ||

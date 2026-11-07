@@ -218,6 +218,13 @@
       "when": 1794066391479,
       "tag": "0030_release_notes",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794068022610,
+      "tag": "0031_org_chart_view",
+      "breakpoints": true
     }
   ]
 }

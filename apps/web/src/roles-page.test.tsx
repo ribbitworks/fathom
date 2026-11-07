@@ -27,8 +27,14 @@ const teamMemberRole = {
   id: "00000000-0000-4000-8000-000000000001",
   key: "team-member",
   name: "Team Member",
-  description: "Sees the plan, including everyone's work assignments.",
-  permissions: ["plan:view", "allocations:view", "changes:view"],
+  description:
+    "Sees the plan, including everyone's work assignments, and the org chart.",
+  permissions: [
+    "plan:view",
+    "allocations:view",
+    "org-chart:view",
+    "changes:view",
+  ],
   accounts: 3,
   updatedAt: "2026-11-01T12:00:00.000Z",
 };
@@ -449,7 +455,6 @@ describe("the summary of what a role allows", () => {
       "Projects, Not built yet",
       "Releases",
       "People",
-      "Org chart",
       "Drafts",
     ]);
     expect(summaryLines(dialog, "Can")).toEqual([
@@ -506,7 +511,6 @@ describe("the summary of what a role allows", () => {
       "Projects, Not built yet",
       "Releases",
       "No longer: People",
-      "No longer: Org chart",
       // Drafts stays, since viewing the plan opens it too.
       "Drafts",
     ]);
@@ -528,7 +532,6 @@ describe("the summary of what a role allows", () => {
       // Releases and Drafts come back, since configuration opens them too.
       "Releases",
       "No longer: People",
-      "No longer: Org chart",
       "Drafts",
       "No longer: None, apart from Help.",
       "Lists",
@@ -952,6 +955,7 @@ describe("restoring a starting role", () => {
     ).toBe(teamMemberRole.description);
     expect(box(dialog, "View Plan").checked).toBe(true);
     expect(box(dialog, "View Allocations, not built yet").checked).toBe(true);
+    expect(box(dialog, "View Org chart").checked).toBe(true);
     expect(box(dialog, "View Change history").checked).toBe(true);
     expect(box(dialog, "View People").checked).toBe(false);
     expect(

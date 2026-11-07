@@ -573,7 +573,7 @@ function createPeopleAccess(database: Database): PeopleAccess {
       };
     },
     readOrgChart: async (actor) => {
-      requirePermission(actor, "people:view");
+      requirePermission(actor, "org-chart:view");
       const { includedRestricted, ...chart } = await readOrgChart(
         database,
         actor,
@@ -588,7 +588,7 @@ function createPeopleAccess(database: Database): PeopleAccess {
       return chart;
     },
     setTeamColour: async (actor, managerId, colour) => {
-      requirePermission(actor, "people:view");
+      requirePermission(actor, "org-chart:view");
       requirePermission(actor, "team-colours:edit");
       await setTeamColour(database, managerId, colour);
     },

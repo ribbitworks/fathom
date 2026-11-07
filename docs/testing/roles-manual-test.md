@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-06"
+last_updated: "2026-11-07"
 ---
 
 # Manual Test: Editing Roles
@@ -114,7 +114,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** As ROLE-02.
 
 - [ ] **Step 1.** Open the **Project Manager** role (P3).
-  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid. The ticked boxes are **View** and **Edit** on **Plan**, with **View** greyed; **View** on **Allocations**; **Approve** on **Feature teams**; **Draft** and **Approve** on **Drafts of every kind**; and **View** on **Configuration** and on **Change history**. Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
+  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid. The ticked boxes are **View** and **Edit** on **Plan**, with **View** greyed; **View** on **Allocations**; **View** on **Org chart**; **Approve** on **Feature teams**; **Draft** and **Approve** on **Drafts of every kind**; and **View** on **Configuration** and on **Change history**. Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Area** column, and the lines under the grid.
@@ -122,7 +122,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 3.** Read the summary.
-  - **Expected:** **Pages its holders see** lists Overview, Projects, Releases, Drafts, Capacity, Lists and Change history, with Projects and Capacity tagged **Not built yet**. **Can** names seeing allocations, approving feature teams, and making drafts of changes to the plan and allocations, each tagged **Not built yet**, and seeing the plan, changing the plan, approving drafts, seeing configuration, and seeing the change history. Under **Cannot**, these lines are tagged **Not built yet**: **Cannot change allocations.**, **Cannot propose feature teams.**, and **Cannot change feature teams.** **Cannot** includes **The People page does not appear.** and **Restricted details are hidden wherever they appear, and only current staff are listed.**, with the tier colours.
+  - **Expected:** **Pages its holders see** lists Overview, Projects, Releases, Org chart, Drafts, Capacity, Lists and Change history, with Projects and Capacity tagged **Not built yet**. **Can** names seeing allocations, approving feature teams, and making drafts of changes to the plan and allocations, each tagged **Not built yet**, and seeing the plan, changing the plan, seeing the org chart, approving drafts, seeing configuration, and seeing the change history. Under **Cannot**, these lines are tagged **Not built yet**: **Cannot change allocations.**, **Cannot propose feature teams.**, and **Cannot change feature teams.** **Cannot** includes **The People page does not appear.** and **Restricted details are hidden wherever they appear, and only current staff are listed.**, with the tier colours.
   - **Notes:**
 
 - [ ] **Step 4.** Look at the foot of the dialog.
@@ -146,11 +146,11 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** The **Project Manager** dialog open, as at the end of ROLE-04.
 
 - [ ] **Step 1.** Tick **View** on the **People** row, and watch the summary.
-  - **Expected:** **People** and **Org chart** appear under **Pages its holders see**, and a sentence about seeing people appears under **Can**, each in bold teal, turning to plain text after about three seconds. Under **Cannot**, **The People page does not appear.** and **The Org chart page does not appear.** are struck through in red and fade away over about three seconds, then go.
+  - **Expected:** **People** appears under **Pages its holders see**, and a sentence about seeing people appears under **Can**, each in bold teal, turning to plain text after about three seconds. Under **Cannot**, **The People page does not appear.** is struck through in red and fades away over about three seconds, then goes.
   - **Notes:**
 
 - [ ] **Step 2.** Untick **View** on the **People** row.
-  - **Expected:** The lines added in Step 1 are struck through in red and fade away; **The People page does not appear.** and **The Org chart page does not appear.** come back in bold teal.
+  - **Expected:** The lines added in Step 1 are struck through in red and fade away; **The People page does not appear.** comes back in bold teal.
   - **Notes:**
 
 - [ ] **Step 3.** Tick **View** on the **Restricted details** row, leaving **People** unticked.
@@ -206,7 +206,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** **Roles** page open, signed in as `fathom.administrator@fathom.test`.
 
 - [ ] **Step 1.** Select **Copy** in the **Team Member** row.
-  - **Expected:** A dialog titled **Copy Team Member**, with the name **Copy of Team Member**, Team Member's description, and the same boxes ticked as Team Member: **View** on **Plan**, **Allocations** and **Change history**. There is no **Restore template** button, and the main button is **Create role**.
+  - **Expected:** A dialog titled **Copy Team Member**, with the name **Copy of Team Member**, Team Member's description, and the same boxes ticked as Team Member: **View** on **Plan**, **Allocations**, **Org chart** and **Change history**. There is no **Restore template** button, and the main button is **Create role**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Create role**.
@@ -218,7 +218,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 4.** Select **Access history** in the left-hand menu.
-  - **Expected:** The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Allocations, View Change history. The latest says **changed the role** Copy of Team Member, granting View People.
+  - **Expected:** The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Allocations, View Org chart, View Change history. The latest says **changed the role** Copy of Team Member, granting View People.
   - **Notes:**
 
 ### ROLE-09: Giving an Account a Role Made Later

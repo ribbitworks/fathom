@@ -1,13 +1,13 @@
 # Fathom — Roles
 
 **Status:** Starting roles, with open points marked **proposal**
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 The roles Fathom starts with, for controlling what each user can see, edit, and approve, built on the access decisions in the [Decisions Log](decisions.md). Roles are editable sets of permissions, as the Decisions Log records, decided by the owner on 2026-11-04, so these are a starting set: they can be edited and copied to make new roles, within the safeguards below, and each keeps what it grants today until it is changed. Each account holds exactly one role, any role, starting or made later, so an account's access reads from that one role. There is one starting role for each persona, granting what that persona's roles granted together when an account could hold several, decided by the owner on 2026-11-06. The owner has confirmed that Engineering Managers and the Executive see Restricted data, that the Engineering Director plans, and the split between planning the plan and planning allocations. Items marked **proposal** are not yet agreed.
 
 ## Starting Roles
 
-- **Team Member:** Sees the plan, including everyone's work assignments.
+- **Team Member:** Sees the plan, including everyone's work assignments, and the org chart.
 - **Planner:** Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan. Held by Product Managers and Feature Leads.
 - **Project Manager:** Edits the plan, and approves or rejects drafts of the data the role sees, including feature teams.
 - **Engineering Manager:** Edits the plan and allocations, sees people, including everyone's Restricted details, because people move between managers over time, colours teams on the org chart, and proposes feature teams.
@@ -24,6 +24,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Plan: projects, proposals, features, milestones, releases and the cycles they include (**proposal**), products and customers (**proposal**), and estimates | View | Edit | Edit | Edit | Edit | View | View | View | None |
 | Allocations | View | View | View | Edit | Edit | View | View | Edit | None |
 | People, teams, and reporting lines (General) | None | None | None | View | View | Edit | View | View | None |
+| The org chart: who reports to whom, with each person's name, position, and team; a card opens the person on People only for those who see people | View | View | View | View | View | View | View | View | None |
 | Teams' colours on the org chart, for every team until accounts are linked to people, then for Engineering Managers only the teams below them | None | None | None | Edit | None | Edit | None | None | None |
 | Feature teams (General), with seeing them coming with seeing the plan (**proposal**) | View | View | Approve | Propose | Approve | Edit | View | View | None |
 | Restricted employee details | None | None | None | View | View | Edit | View | None | None |
@@ -42,7 +43,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 
 The owner has decided that a role letting a user edit some data also lets them view it, so a Planner sees the plan and a Resource Planner sees allocations without being granted to view them as well. Feature teams are seen with the plan, so editing them grants no view of their own. Every starting role but Administrator sees the plan and allocations.
 
-Seeing people is kept to the roles that work with them, so Planners, Project Managers, and Team Members do not see the People table. The choices of a list are seen by everyone who sees data drawn from it, such as People's columns, without seeing the Lists page.
+Seeing people is kept to the roles that work with them, so Planners, Project Managers, and Team Members do not see the People table. They do see the org chart, with each person's name, position, and team, as the [Decisions Log](decisions.md#workforce) sets out. The choices of a list are seen by everyone who sees data drawn from it, such as People's columns, without seeing the Lists page.
 
 ## Custom Fields and Tables
 

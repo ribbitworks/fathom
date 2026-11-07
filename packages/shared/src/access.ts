@@ -28,6 +28,9 @@ export const permissionSchema = z.enum([
   "allocations:edit",
   "people:view",
   "people:edit",
+  // The org chart, apart from People: without people:view, each card shows only a name, position,
+  // and team, and opens nothing.
+  "org-chart:view",
   // A team's colour is how the org chart is drawn, not a detail of anyone, so it has its own
   // permission. Until accounts are linked to people, it reaches every team.
   "team-colours:edit",
@@ -93,11 +96,16 @@ export const permissionDescriptions: Record<
       "Adds, changes, and removes people, with their teams and reporting lines.",
     without: "Cannot change people.",
   },
+  "org-chart:view": {
+    allows:
+      "Sees the org chart: who reports to whom, with each person's name, position, and the team they lead. With View People, a person's card opens them on People.",
+    without: "Does not see the org chart.",
+  },
   "team-colours:edit": {
     allows:
       "Chooses the colour each team is drawn in on the org chart, for every team.",
     without: "Cannot change teams' colours.",
-    needs: "people:view",
+    needs: "org-chart:view",
   },
   "feature-teams:propose": {
     allows: "Proposes feature teams for approval.",
@@ -248,6 +256,7 @@ export const permissionGrid: readonly {
     actions: { view: "allocations:view", edit: "allocations:edit" },
   },
   { area: "People", actions: { view: "people:view", edit: "people:edit" } },
+  { area: "Org chart", actions: { view: "org-chart:view" } },
   { area: "Team colours", actions: { edit: "team-colours:edit" } },
   {
     area: "Restricted details",
@@ -310,8 +319,14 @@ export const startingRoles: Record<
 > = {
   "team-member": {
     name: "Team Member",
-    description: "Sees the plan, including everyone's work assignments.",
-    permissions: ["plan:view", "allocations:view", "changes:view"],
+    description:
+      "Sees the plan, including everyone's work assignments, and the org chart.",
+    permissions: [
+      "plan:view",
+      "allocations:view",
+      "org-chart:view",
+      "changes:view",
+    ],
   },
   planner: {
     name: "Planner",
@@ -320,6 +335,7 @@ export const startingRoles: Record<
     permissions: [
       "plan:edit",
       "allocations:view",
+      "org-chart:view",
       "drafts:submit",
       "changes:view",
     ],
@@ -332,6 +348,7 @@ export const startingRoles: Record<
     permissions: [
       "plan:edit",
       "allocations:view",
+      "org-chart:view",
       "feature-teams:approve",
       "configuration:view",
       "drafts:submit",
@@ -347,6 +364,7 @@ export const startingRoles: Record<
     permissions: [
       "plan:edit",
       "allocations:edit",
+      "org-chart:view",
       "people:view",
       "team-colours:edit",
       "feature-teams:propose",
@@ -363,6 +381,7 @@ export const startingRoles: Record<
     permissions: [
       "plan:edit",
       "allocations:edit",
+      "org-chart:view",
       "people:view",
       "feature-teams:approve",
       "restricted:view",
@@ -380,6 +399,7 @@ export const startingRoles: Record<
     permissions: [
       "plan:view",
       "allocations:view",
+      "org-chart:view",
       "people:edit",
       "team-colours:edit",
       "feature-teams:edit",
@@ -396,6 +416,7 @@ export const startingRoles: Record<
     permissions: [
       "plan:view",
       "allocations:view",
+      "org-chart:view",
       "people:view",
       "restricted:view",
       "confidential:view",
@@ -410,6 +431,7 @@ export const startingRoles: Record<
     permissions: [
       "plan:view",
       "allocations:edit",
+      "org-chart:view",
       "people:view",
       "drafts:submit",
       "changes:view",

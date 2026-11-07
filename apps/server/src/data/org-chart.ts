@@ -5,6 +5,9 @@
 // manager they still report to, up the chain, even one whose end date has passed, as People names
 // them. A reader who does not see Restricted details sees no further up than such a manager, and
 // only their name and team, as People shows them; anything more would tell them who else has left.
+// A reader who does not see people sees each person's name, position, and team, but no Employee ID,
+// which is a detail of People and would let them look people up there. Positions show only as the
+// positions list's tier allows, as on People, except that a General one shows to every reader.
 
 import { type Database, listItems, people, teams } from "@fathom/db";
 import {
@@ -20,6 +23,7 @@ import { inForceOn } from "./in-force.ts";
 import { currentOn } from "./people.ts";
 import { readLines, readTeams } from "./reporting.ts";
 import { readToday } from "./settings.ts";
+import { builtInTier } from "./values.ts";
 
 export interface OrgChartRead extends OrgChart {
   // Whether the chart told anyone that a manager has left, which the access history records.
@@ -32,9 +36,12 @@ export async function readOrgChart(
   asOf?: string,
 ): Promise<OrgChartRead> {
   const today = asOf ?? (await readToday(database));
-  const restricted = seesTier(actor, "restricted");
+  // Restricted and Confidential details are details of people, so they show only with people, as
+  // the Roles page says; a role can be given them without people, but then they do nothing here.
+  const seesPeople = actor.permissions.includes("people:view");
+  const restricted = seesPeople && seesTier(actor, "restricted");
   // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
-  const { rows, lines, teams } = await database.transaction(
+  const { rows, lines, teams, positionTier } = await database.transaction(
     async (transaction) => ({
       rows: await transaction
         .select({
@@ -49,9 +56,12 @@ export async function readOrgChart(
         .innerJoin(listItems, eq(listItems.id, people.positionId)),
       lines: await readLines(transaction),
       teams: await readTeams(transaction),
+      positionTier: await builtInTier(transaction, "positions"),
     }),
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
+  const seesPositions =
+    positionTier === "general" || (seesPeople && seesTier(actor, positionTier));
   const byId = new Map(rows.map((row) => [row.id, row]));
   const managerOf = (id: string) =>
     inForceOn(lines.get(id) ?? [], today)?.managerId ?? null;
@@ -75,11 +85,12 @@ export async function readOrgChart(
     return {
       id,
       preferredName: row.preferredName,
-      employeeId: hidden(id) ? null : row.employeeId,
-      position: hidden(id) ? null : row.position,
+      employeeId: hidden(id) || !seesPeople ? null : row.employeeId,
+      position: hidden(id) || !seesPositions ? null : row.position,
       teamName: teams.get(id)?.name ?? null,
       teamColour: knownColour(teams.get(id)?.colour),
       managerId: hidden(id) ? null : managerOf(id),
+      ...(hidden(id) ? { nameOnly: true } : {}),
       ...(restricted && gone ? { left: true } : {}),
     };
   });

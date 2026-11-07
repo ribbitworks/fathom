@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 ## Purpose of This Document
 
@@ -14,7 +14,7 @@ This document covers the first release only. Later releases are planned to add g
 
 ## Who Fathom Is For
 
-Fathom is used by about 20–30 people in the software organization at first: Project Managers, Product Managers, Engineering Managers, Feature Leads, who may be engineers, the Engineering Director, an Engineering Operations Manager who maintains workforce information, and the Executive. Team members, such as engineers, may be given accounts later, and would then see the plan, including everyone's work assignments, but not the other employee details, such as site and level. It is not available to employees outside the software organization, or to anyone outside the company.
+Fathom is used by about 20–30 people in the software organization at first: Project Managers, Product Managers, Engineering Managers, Feature Leads, who may be engineers, the Engineering Director, an Engineering Operations Manager who maintains workforce information, and the Executive. Team members, such as engineers, may be given accounts later, and would then see the plan, including everyone's work assignments, and the org chart, with each employee's name, position, team, and manager, but not the other employee details, such as site and level. It is not available to employees outside the software organization, or to anyone outside the company.
 
 ## What Personal Information Fathom Holds
 
@@ -63,7 +63,7 @@ The table shows who can see each level under the proposed starting role for each
 
 | Sensitivity | Who can see it by default |
 | --- | --- |
-| General | Engineering Managers, the Engineering Director, the Engineering Operations Manager, and the Executive; work assignments are seen by all Fathom users |
+| General | Engineering Managers, the Engineering Director, the Engineering Operations Manager, and the Executive. Every user apart from the Administrator also sees work assignments, and the org chart, with each employee's name, position, team, and manager |
 | Restricted | Engineering Managers, the Engineering Director, the Engineering Operations Manager, and the Executive |
 | Confidential | The Engineering Director, the Engineering Operations Manager, and the Executive |
 

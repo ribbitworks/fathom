@@ -24,13 +24,17 @@ const user = {
 // Each persona's role grants exactly what that persona's roles granted together before each account
 // held one role, as the owner decided on 2026-11-06.
 const expected: [Role, Permission[]][] = [
-  ["team-member", ["plan:view", "allocations:view", "changes:view"]],
+  [
+    "team-member",
+    ["plan:view", "allocations:view", "org-chart:view", "changes:view"],
+  ],
   [
     "planner",
     [
       "plan:view",
       "plan:edit",
       "allocations:view",
+      "org-chart:view",
       "drafts:submit",
       "changes:view",
     ],
@@ -41,6 +45,7 @@ const expected: [Role, Permission[]][] = [
       "plan:view",
       "plan:edit",
       "allocations:view",
+      "org-chart:view",
       "feature-teams:approve",
       "configuration:view",
       "drafts:submit",
@@ -55,6 +60,7 @@ const expected: [Role, Permission[]][] = [
       "plan:edit",
       "allocations:view",
       "allocations:edit",
+      "org-chart:view",
       "people:view",
       "team-colours:edit",
       "feature-teams:propose",
@@ -71,6 +77,7 @@ const expected: [Role, Permission[]][] = [
       "plan:edit",
       "allocations:view",
       "allocations:edit",
+      "org-chart:view",
       "people:view",
       "feature-teams:approve",
       "restricted:view",
@@ -86,6 +93,7 @@ const expected: [Role, Permission[]][] = [
     [
       "plan:view",
       "allocations:view",
+      "org-chart:view",
       "people:view",
       "people:edit",
       "team-colours:edit",
@@ -104,6 +112,7 @@ const expected: [Role, Permission[]][] = [
     [
       "plan:view",
       "allocations:view",
+      "org-chart:view",
       "people:view",
       "restricted:view",
       "confidential:view",
@@ -116,6 +125,7 @@ const expected: [Role, Permission[]][] = [
       "plan:view",
       "allocations:view",
       "allocations:edit",
+      "org-chart:view",
       "people:view",
       "drafts:submit",
       "changes:view",

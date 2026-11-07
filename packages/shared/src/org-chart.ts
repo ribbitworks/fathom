@@ -13,7 +13,8 @@ import { paletteColourSchema } from "./palette.ts";
 export const orgChartPersonSchema = z.object({
   id: z.string(),
   preferredName: z.string(),
-  // Null for a manager who has left, to readers who do not see Restricted details.
+  // Null for a manager who has left, to readers who do not see Restricted details, and for everyone
+  // to readers who do not see people.
   employeeId: z.string().nullable(),
   position: z.string().nullable(),
   // The name of the team the person leads; null unless they lead one with a name.
@@ -22,6 +23,9 @@ export const orgChartPersonSchema = z.object({
   teamColour: paletteColourSchema.nullable(),
   managerId: z.string().nullable(),
   left: z.boolean().optional(),
+  // A manager who has left, shown by name and team only to readers who do not see Restricted
+  // details, who cannot be kept in the chart's address or have their team changed.
+  nameOnly: z.boolean().optional(),
 });
 
 export type OrgChartPerson = z.infer<typeof orgChartPersonSchema>;

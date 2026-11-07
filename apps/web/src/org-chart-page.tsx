@@ -251,9 +251,18 @@ const nodeTypes = { person: PersonCard };
 // The levels shown when the chart opens, so a large organization starts readable.
 const openLevels = 2;
 
+// How the address names a person, for the team shown alone and the person found. A reader who sees
+// people has each person's Employee ID; one who does not has Fathom's own ID for them, which means
+// nothing outside Fathom. Null for someone shown by name only, who cannot be kept there.
+function addressOf(person: OrgChartPerson, seesPeople: boolean): string | null {
+  if (person.nameOnly === true) return null;
+  return seesPeople ? person.employeeId : person.id;
+}
+
 function Chart({
   tree,
   everyone,
+  seesPeople,
   colours,
   alone,
   teamEdits,
@@ -266,6 +275,9 @@ function Chart({
   colours: ReadonlyMap<string, PaletteColour>;
   // Whether the tree is one manager's team, shown alone.
   alone: boolean;
+  // Whether the reader sees people, so cards open them on People and the address names them by
+  // Employee ID.
+  seesPeople: boolean;
   teamEdits: TeamEdits;
   search: ChartSearch;
   onSearch: (search: ChartSearch, replace: boolean) => void;
@@ -273,21 +285,22 @@ function Chart({
   const flow = useReactFlow();
   const navigate = useNavigate();
   const colorScheme = useComputedColorScheme("light");
-  const byEmployeeId = useMemo(
+  const byAddress = useMemo(
     () =>
       new Map(
-        [...tree.people.values()].flatMap((person) =>
-          person.employeeId === null ? [] : [[person.employeeId, person]],
-        ),
+        [...tree.people.values()].flatMap((person) => {
+          const address = addressOf(person, seesPeople);
+          return address === null ? [] : [[address, person]];
+        }),
       ),
-    [tree],
+    [tree, seesPeople],
   );
-  // Someone shown by name only has no Employee ID to keep in the address, so is found here alone.
+  // Someone shown by name only has nothing to keep in the address, so is found here alone.
   const [foundByName, setFoundByName] = useState<string | null>(null);
   const found =
     search.person === undefined
       ? foundByName
-      : (byEmployeeId.get(search.person)?.id ?? null);
+      : (byAddress.get(search.person)?.id ?? null);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() =>
     collapsedBelow(tree, openLevels),
   );
@@ -322,7 +335,8 @@ function Chart({
         const person = tree.people.get(id) as OrgChartPerson;
         const reports = tree.reports.get(id)?.length ?? 0;
         const { employeeId } = person;
-        const back = { ...search, person: employeeId ?? undefined };
+        const address = addressOf(person, seesPeople);
+        const back = { ...search, person: address ?? undefined };
         return {
           id,
           type: "person",
@@ -340,14 +354,14 @@ function Chart({
             collapsed: collapsed.has(id),
             found: id === found,
             back,
-            teamEdits: employeeId === null ? noTeamEdits : teamEdits,
+            teamEdits: person.nameOnly === true ? noTeamEdits : teamEdits,
             onTeam:
-              employeeId === null ||
+              address === null ||
               reports === 0 ||
               (alone && tree.roots.includes(id))
                 ? undefined
                 : () => {
-                    onSearch({ team: employeeId }, false);
+                    onSearch({ team: address }, false);
                   },
             onToggle: (toggled) => {
               setCollapsed((before) => {
@@ -357,7 +371,7 @@ function Chart({
               });
             },
             onOpen:
-              employeeId === null
+              employeeId === null || !seesPeople
                 ? undefined
                 : () => {
                     onSearch(back, true);
@@ -376,6 +390,7 @@ function Chart({
       collapsed,
       found,
       alone,
+      seesPeople,
       teamEdits,
       search,
       onSearch,
@@ -453,11 +468,12 @@ function Chart({
             setCollapsed(new Set([...collapsed].filter((one) => one !== id)));
           }
           const person = id === null ? undefined : tree.people.get(id);
-          setFoundByName(person?.employeeId === null ? person.id : null);
-          onSearch(
-            { ...search, person: person?.employeeId ?? undefined },
-            true,
+          const address =
+            person === undefined ? null : addressOf(person, seesPeople);
+          setFoundByName(
+            person !== undefined && address === null ? person.id : null,
           );
+          onSearch({ ...search, person: address ?? undefined }, true);
         }}
         onFindAgain={() => {
           // Choosing the person already found, perhaps hidden since, shows and centres them again.
@@ -510,9 +526,11 @@ function Chart({
 export function OrgChartPage({
   search,
   onSearch,
+  seesPeople,
   teamEdits,
 }: {
   search: ChartSearch;
+  seesPeople: boolean;
   teamEdits: TeamEdits;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
@@ -526,7 +544,7 @@ export function OrgChartPage({
       ? undefined
       : [...everyone.people.values()].find(
           (person) =>
-            person.employeeId === search.team &&
+            addressOf(person, seesPeople) === search.team &&
             everyone.reports.has(person.id),
         );
   const tree = useMemo(
@@ -589,6 +607,7 @@ export function OrgChartPage({
             everyone={everyone}
             colours={colours}
             alone={lead !== undefined}
+            seesPeople={seesPeople}
             teamEdits={teamEdits}
             search={search}
             onSearch={onSearch}

@@ -45,9 +45,11 @@ describe("what a role allows", () => {
 
   it("names the pages a role's permissions open, and only those others as not appearing", () => {
     const { pages, cannot } = consequences(["people:view", "roles:edit"]);
-    expect(pages).toEqual(["People", "Org chart", "Drafts", "Roles"]);
+    expect(pages).toEqual(["People", "Drafts", "Roles"]);
     expect(cannot).toContain("The Accounts page does not appear.");
+    expect(cannot).toContain("The Org chart page does not appear.");
     expect(cannot).not.toContain("The People page does not appear.");
+    expect(consequences(["org-chart:view"]).pages).toEqual(["Org chart"]);
   });
 
   it("says what its holders can do, in the grid's order, including what editing brings", () => {
@@ -102,7 +104,6 @@ describe("what a change to an account's permissions does", () => {
     ).toEqual({
       gains: [
         "Sees the People page.",
-        "Sees the Org chart page.",
         "Sees the Drafts page.",
         "Sees the Roles page.",
         allows("people:view"),
@@ -119,7 +120,6 @@ describe("what a change to an account's permissions does", () => {
       gains: [],
       losses: [
         "The People page no longer appears.",
-        "The Org chart page no longer appears.",
         "The Drafts page no longer appears.",
         without("people:view"),
       ],

@@ -3,7 +3,7 @@
 // Tests for the Org chart page, with the server's responses simulated: who sees it, each person's
 // card and its link to People and back, hiding and showing a manager's reports and levels, finding a
 // person, one team shown alone, the chart's controls, and when the chart cannot load or has nobody on
-// it.
+// it, and what those who see the chart but not People see.
 
 import type { OrgChartPerson } from "@fathom/shared";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
@@ -20,7 +20,14 @@ import {
 const viewer = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["people:view", "plan:view"],
+    permissions: ["people:view", "org-chart:view", "plan:view"],
+  });
+
+// Sees the org chart but not People, as a Team Member does.
+const chartOnly = () =>
+  Response.json({
+    ...fictionalUser,
+    permissions: ["org-chart:view", "plan:view"],
   });
 
 const person = (
@@ -114,6 +121,19 @@ describe("who sees the Org chart page", () => {
     expect(history.location.pathname).toBe("/org-chart");
   });
 
+  it("links to it for users who see the org chart but not People", async () => {
+    serverAnswers({
+      "GET /api/session": chartOnly,
+      "GET /api/greeting": greeting,
+      "GET /api/org-chart": chartAnswer,
+    });
+    renderApp("/");
+    expect(
+      await screen.findByRole("link", { name: "Org chart" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("link", { name: "People" })).toBeNull();
+  });
+
   it("is not shown to anyone else", async () => {
     serverAnswers({ "GET /api/session": signedIn });
     renderApp("/org-chart");
@@ -178,7 +198,12 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "people:edit", "team-colours:edit"],
+          permissions: [
+            "people:view",
+            "org-chart:view",
+            "people:edit",
+            "team-colours:edit",
+          ],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
@@ -228,7 +253,12 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "people:edit", "team-colours:edit"],
+          permissions: [
+            "people:view",
+            "org-chart:view",
+            "people:edit",
+            "team-colours:edit",
+          ],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": chartAnswer,
@@ -268,7 +298,12 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "people:edit", "team-colours:edit"],
+          permissions: [
+            "people:view",
+            "org-chart:view",
+            "people:edit",
+            "team-colours:edit",
+          ],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": chartAnswer,
@@ -293,7 +328,7 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "team-colours:edit"],
+          permissions: ["people:view", "org-chart:view", "team-colours:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": chartAnswer,
@@ -316,6 +351,29 @@ describe("the org chart", () => {
     expect(within(panel).queryByText("Led by Robin Fictional")).toBeNull();
   });
 
+  it("lets those who may colour teams but do not see People colour them, from cards and the Teams panel", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["org-chart:view", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        Response.json({
+          people: people.map((one) => ({ ...one, employeeId: null })),
+        }),
+    });
+    renderApp("/org-chart");
+    await screen.findAllByText("Sasha Fictional");
+    expect(
+      screen.getByRole("button", { name: /^Colour of Fictional team:/ }),
+    ).toBeDefined();
+    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    expect(within(panel).getByText("Fictional team")).toBeDefined();
+  });
+
   // The chart for one who may change people and colour teams, with the answers given added.
   function openAsEditor(
     answers: Record<string, () => Response>,
@@ -325,7 +383,12 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "people:edit", "team-colours:edit"],
+          permissions: [
+            "people:view",
+            "org-chart:view",
+            "people:edit",
+            "team-colours:edit",
+          ],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () => Response.json({ people: chart }),
@@ -499,7 +562,7 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "people:edit"],
+          permissions: ["people:view", "org-chart:view", "people:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
@@ -861,6 +924,7 @@ describe("the org chart", () => {
           person("g", "Gale Fictional", null, {
             employeeId: null,
             position: null,
+            nameOnly: true,
           }),
           person("h", "Harper Fictional", "g"),
         ],
@@ -889,6 +953,69 @@ describe("the org chart", () => {
     );
     expect(gale.querySelector("[data-found]")).not.toBeNull();
     expect(history.location.search).toBe("");
+  });
+
+  it("shows those who do not see People each card without opening it, keeping Fathom's own IDs in the address", async () => {
+    serverAnswers({
+      "GET /api/session": chartOnly,
+      "GET /api/org-chart": () =>
+        Response.json({
+          people: people.map((one) => ({ ...one, employeeId: null })),
+        }),
+    });
+    const history = renderApp("/org-chart");
+    await showLevels("All levels");
+    await screen.findAllByText("Uma Fictional");
+    expect(screen.queryByRole("link", { name: "Uma Fictional" })).toBeNull();
+    const uma = screen
+      .getAllByText("Uma Fictional")
+      .map((name) => name.closest("div.react-flow__node"))
+      .find((node) => node !== null) as HTMLElement;
+    expect(within(uma).getByText("Fictional Engineer")).toBeDefined();
+    expect(screen.getAllByText("Fictional team").length).toBeGreaterThan(0);
+    fireEvent.click(uma);
+    expect(history.location.pathname).toBe("/org-chart");
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "Uma",
+    );
+    await userEvent.click(
+      await screen.findByRole("option", { name: /Uma Fictional/ }),
+    );
+    expect(history.location.search).toBe("?person=p4");
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Show only the team of Sasha Fictional",
+      }),
+    );
+    expect(
+      await screen.findByText(
+        "You're seeing only the team of Sasha Fictional.",
+      ),
+    ).toBeDefined();
+    expect(history.location.search).toBe("?team=p2");
+  });
+
+  it("keeps those who do not see People able to show one team when no position may be shown", async () => {
+    serverAnswers({
+      "GET /api/session": chartOnly,
+      "GET /api/org-chart": () =>
+        Response.json({
+          people: people.map((one) => ({
+            ...one,
+            employeeId: null,
+            position: null,
+          })),
+        }),
+    });
+    const history = renderApp("/org-chart");
+    await showLevels("All levels");
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show only the team of Sasha Fictional",
+      }),
+    );
+    expect(history.location.search).toBe("?team=p2");
   });
 
   it("brings back the person found when chosen again after their card was hidden", async () => {

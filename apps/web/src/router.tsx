@@ -55,10 +55,13 @@ const signedIn = getRouteApi("/signed-in");
 const people = getRouteApi("/signed-in/people");
 
 // The org chart's address: the person found on it, and the manager whose team alone is shown, each
-// by Employee ID. People keeps it while opened from the chart, to lead back to it.
+// by Employee ID, or by Fathom's own ID for readers who do not see people. People keeps it while
+// opened from the chart, to lead back to it.
+const fathomIdLength = 36;
+const chartAddressLength = Math.max(personLengths.employeeId, fathomIdLength);
 const chartSearch = z.object({
-  person: z.string().max(personLengths.employeeId).optional().catch(undefined),
-  team: z.string().max(personLengths.employeeId).optional().catch(undefined),
+  person: z.string().max(chartAddressLength).optional().catch(undefined),
+  team: z.string().max(chartAddressLength).optional().catch(undefined),
 });
 
 // Pages only for users with a permission; anyone else is told there is no such page.
@@ -346,7 +349,7 @@ const orgChartRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/org-chart",
   validateSearch: chartSearch,
-  beforeLoad: requiring("people:view"),
+  beforeLoad: requiring("org-chart:view"),
   component: function OrgChart() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = orgChartRoute.useNavigate();
@@ -359,6 +362,7 @@ const orgChartRoute = createRoute({
     );
     return (
       <OrgChartPage
+        seesPeople={permissions.includes("people:view")}
         teamEdits={teamEdits}
         search={orgChartRoute.useSearch()}
         onSearch={(search, replace) => {

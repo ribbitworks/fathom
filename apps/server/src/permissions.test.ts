@@ -451,13 +451,14 @@ const routes: Route[] = [
   {
     method: "GET",
     pattern: "/api/org-chart",
-    // Restricted details are left out for those who do not see them, which the org chart tests check.
-    needs: allOf("people:view"),
+    // Restricted details, and Employee IDs for those who do not see people, are left out, which the
+    // org chart tests check.
+    needs: allOf("org-chart:view"),
   },
   {
     method: "PUT",
     pattern: "/api/org-chart/teams/:personId/colour",
-    needs: allOf("people:view", "team-colours:edit"),
+    needs: allOf("org-chart:view", "team-colours:edit"),
     body: () => ({ colour: "teal" }),
   },
   {

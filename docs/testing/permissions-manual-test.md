@@ -83,7 +83,7 @@ Use before the first test case and at the end of the last. This deletes every ac
 ### P4: Grant Team Member Only Some Permissions
 
 1. Sign in (P1) as `fathom.administrator@fathom.test`, and open the **Team Member** role (P3).
-2. Untick **View** on the **Plan**, **Allocations** and **Change history** rows. Confirm that no box in the grid is ticked, and that **Pages its holders see** says **None, apart from Help.**
+2. Untick **View** on the **Plan**, **Allocations**, **Org chart** and **Change history** rows. Confirm that no box in the grid is ticked, and that **Pages its holders see** says **None, apart from Help.**
 3. Tick the boxes the test case names.
 4. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
 5. Sign in (P1) as `team.member@fathom.test`.
@@ -91,7 +91,7 @@ Use before the first test case and at the end of the last. This deletes every ac
 ### P5: Restore Team Member
 
 1. Sign in (P1) as `fathom.administrator@fathom.test`, and open the **Team Member** role (P3).
-2. Select **Restore template**, and confirm that the ticked boxes are **View** on **Plan**, **Allocations** and **Change history** only.
+2. Select **Restore template**, and confirm that the ticked boxes are **View** on **Plan**, **Allocations**, **Org chart** and **Change history** only.
 3. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
 
 ### P6: Discard Your Unpublished Changes
@@ -187,9 +187,27 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
+#### PERM-05: View Org Chart Shows the Chart Without People
+
+**Preconditions:** Team Member granted only **View** on **Org chart** (P4), signed in as `team.member@fathom.test`.
+
+- [ ] **Step 1.** Look at the left-hand menu, then select **Org chart** under **People**.
+  - **Expected:** The menu shows **Org chart** under **People**, and the **Help** section, and nothing else. The chart shows each person's name, position, and the team they lead.
+  - **Notes:**
+
+- [ ] **Step 2.** Select any person's card.
+  - **Expected:** The card opens nothing, and the page stays on the chart.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the **Show only this team** button on a manager's card.
+  - **Expected:** Only that manager's team is shown.
+  - **Notes:**
+
+**Afterwards:** P5.
+
 ### Restricted Details
 
-#### PERM-05: View Restricted Details Shows Dates and Former Staff
+#### PERM-06: View Restricted Details Shows Dates and Former Staff
 
 **Preconditions:** Team Member granted only **View** on **People** and **View** on **Restricted details** (P4), signed in as `team.member@fathom.test`.
 
@@ -203,7 +221,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
-#### PERM-06: Edit Restricted Details Changes Dates
+#### PERM-07: Edit Restricted Details Changes Dates
 
 **Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Restricted details** (P4), signed in as `team.member@fathom.test`.
 
@@ -223,7 +241,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Confidential Data
 
-#### PERM-07: View Confidential Data Shows Confidential Columns
+#### PERM-08: View Confidential Data Shows Confidential Columns
 
 **Preconditions:** R2, then R3, then Team Member granted only **View** on **People** and **View** on **Confidential data** (P4), signed in as `team.member@fathom.test`.
 
@@ -233,9 +251,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
-#### PERM-08: Edit Confidential Data Changes Confidential Values
+#### PERM-09: Edit Confidential Data Changes Confidential Values
 
-**Preconditions:** R3 done since the last reset, as for PERM-07, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential data** (P4), signed in as `team.member@fathom.test`.
+**Preconditions:** R3 done since the last reset, as for PERM-08, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential data** (P4), signed in as `team.member@fathom.test`.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:** An **Offer letter** column is shown, and **New person** is at the top right. **Start**, **End** and **Manager since** are not shown.
@@ -253,7 +271,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Drafts
 
-#### PERM-09: Approve Drafts Approves What the Account Sees
+#### PERM-10: Approve Drafts Approves What the Account Sees
 
 **Preconditions:** The seed's draft of a new order for **Levels** still waiting, as after R2, then Team Member granted only **Approve** on **Drafts of every kind** and **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -277,7 +295,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Configuration
 
-#### PERM-10: View Configuration Shows Lists and Release Streams Without Changing Them
+#### PERM-11: View Configuration Shows Lists and Release Streams Without Changing Them
 
 **Preconditions:** Team Member granted only **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -295,7 +313,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
-#### PERM-11: Edit Configuration Changes Release Streams
+#### PERM-12: Edit Configuration Changes Release Streams
 
 **Preconditions:** Team Member granted only **Edit** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -315,7 +333,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Change History
 
-#### PERM-12: View Change History Shows Only Changes to Data the Account Sees
+#### PERM-13: View Change History Shows Only Changes to Data the Account Sees
 
 **Preconditions:** Team Member granted only **View** on **Change history** (P4), signed in as `team.member@fathom.test`.
 
@@ -327,7 +345,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Access History
 
-#### PERM-13: View Access History Shows the Access History
+#### PERM-14: View Access History Shows the Access History
 
 **Preconditions:** Team Member granted only **View** on **Access history** (P4), signed in as `team.member@fathom.test`.
 
@@ -339,7 +357,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Accounts
 
-#### PERM-14: Edit Accounts Manages Accounts
+#### PERM-15: Edit Accounts Manages Accounts
 
 **Preconditions:** Team Member granted only **Edit** on **Accounts** (P4), signed in as `team.member@fathom.test`.
 
@@ -363,7 +381,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Roles
 
-#### PERM-15: Edit Roles Creates and Changes Roles
+#### PERM-16: Edit Roles Creates and Changes Roles
 
 **Preconditions:** Team Member granted only **Edit** on **Roles** (P4), signed in as `team.member@fathom.test`.
 
@@ -379,7 +397,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Settings
 
-#### PERM-16: Edit Settings Changes Fathom's Time Zone
+#### PERM-17: Edit Settings Changes Fathom's Time Zone
 
 **Preconditions:** Team Member granted only **Edit** on **Settings** (P4), signed in as `team.member@fathom.test`.
 
@@ -395,7 +413,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Not Built Yet
 
-#### PERM-17: Permissions Not Built Yet Add Only the Capacity Entry
+#### PERM-18: Permissions Not Built Yet Add Only the Capacity Entry
 
 **Preconditions:** Team Member granted only **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts of every kind** (P4), signed in as `team.member@fathom.test`.
 
@@ -407,7 +425,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Putting Everything Back
 
-#### PERM-18: Every Starting Role Is as Fathom Started It
+#### PERM-19: Every Starting Role Is as Fathom Started It
 
 **Preconditions:** All the test cases above run. Signed in (P1) as `fathom.administrator@fathom.test`.
 

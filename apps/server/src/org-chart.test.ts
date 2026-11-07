@@ -4,8 +4,12 @@
 // which details, as the lines approved for today have it, never as drafted; managers whose end date
 // has passed, and what each reader is told of them; and what each role may read.
 
-import { accessHistory, teams } from "@fathom/db";
-import { type OrgChartPerson, roleSchema } from "@fathom/shared";
+import { accessHistory, lists, teams } from "@fathom/db";
+import {
+  type OrgChartPerson,
+  type Permission,
+  roleSchema,
+} from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
@@ -182,6 +186,19 @@ describe("the org chart", () => {
     expect(await restrictedViews(viewer.id)).toHaveLength(1);
   });
 
+  it("gives Restricted details on the chart only to those who also see people", async () => {
+    const { middle } = await leftChain();
+    const viewer = await test.signedIn(["org-chart:view", "restricted:view"]);
+    const shown = await chart(viewer.cookie);
+    expect(shown.get(middle)).toMatchObject({
+      employeeId: null,
+      managerId: null,
+      nameOnly: true,
+    });
+    expect(shown.get(middle)?.left).toBeUndefined();
+    expect(await restrictedViews(viewer.id)).toHaveLength(0);
+  });
+
   it("shows anyone else only a report's own manager who has left, by name, at the top", async () => {
     const { top, middle, report } = await leftChain();
     const planner = await test.signedIn("resource-planner");
@@ -195,6 +212,7 @@ describe("the org chart", () => {
       teamName: expect.stringMatching(/^Fictional Team/) as unknown,
       teamColour: null,
       managerId: null,
+      nameOnly: true,
     });
     expect(shown.has(top)).toBe(false);
     expect(await restrictedViews(planner.id)).toHaveLength(0);
@@ -213,6 +231,44 @@ describe("the org chart", () => {
     expect(shown.has(report)).toBe(false);
   });
 
+  it("shows a position only to those who see the positions list's tier, as People does", async () => {
+    const manager = await person();
+    const positionFor = async (permissions: readonly Permission[]) => {
+      const { cookie: as } = await test.signedIn(permissions);
+      return (await chart(as)).get(manager)?.position;
+    };
+    const marked = (visibility: "general" | "restricted" | "confidential") =>
+      test.connection
+        .update(lists)
+        .set({ visibility })
+        .where(eq(lists.builtIn, "positions"));
+    expect(await positionFor(["org-chart:view"])).not.toBeNull();
+    try {
+      await marked("restricted");
+      expect(await positionFor(["org-chart:view"])).toBeNull();
+      expect(await positionFor(["org-chart:view", "people:view"])).toBeNull();
+      expect(
+        await positionFor(["org-chart:view", "restricted:view"]),
+      ).toBeNull();
+      expect(
+        await positionFor(["org-chart:view", "people:view", "restricted:view"]),
+      ).not.toBeNull();
+      await marked("confidential");
+      expect(
+        await positionFor(["org-chart:view", "confidential:view"]),
+      ).toBeNull();
+      expect(
+        await positionFor([
+          "org-chart:view",
+          "people:view",
+          "confidential:view",
+        ]),
+      ).not.toBeNull();
+    } finally {
+      await marked("general");
+    }
+  });
+
   describe("for each role", () => {
     let middle = "";
 
@@ -225,17 +281,21 @@ describe("the org chart", () => {
       async (role) => {
         const { cookie: as } = await test.signedIn(role);
         const response = await test.request(as, "GET", "/api/org-chart");
-        if (!rolesGranting("people:view").includes(role)) {
+        if (!rolesGranting("org-chart:view").includes(role)) {
           expect(response.statusCode).toBe(403);
           return;
         }
         expect(response.statusCode).toBe(200);
-        const shown = response
-          .json<{ people: OrgChartPerson[] }>()
-          .people.find((one) => one.id === middle);
+        const everyone = response.json<{ people: OrgChartPerson[] }>().people;
+        const shown = everyone.find((one) => one.id === middle);
         const restricted = rolesGranting("restricted:view").includes(role);
         expect(shown?.left).toBe(restricted ? true : undefined);
         expect(shown?.employeeId === null).toBe(!restricted);
+        // Those who do not see people see names, positions, and teams, but no Employee IDs.
+        if (!rolesGranting("people:view").includes(role)) {
+          expect(everyone.every((one) => one.employeeId === null)).toBe(true);
+          expect(everyone.some((one) => one.position !== null)).toBe(true);
+        }
       },
     );
   });
