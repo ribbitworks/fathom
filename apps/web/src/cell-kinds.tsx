@@ -25,7 +25,12 @@ import type { ReactNode } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
 import { FlagCell } from "./flag-field.tsx";
 import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
-import { NoteCell, NotePanel, notePreview } from "./note-editor.tsx";
+import {
+  NoteCell,
+  noteCellChars,
+  NotePanel,
+  notePreview,
+} from "./note-editor.tsx";
 import { offered, sameName } from "./lists.ts";
 import {
   type CellValue,
@@ -315,7 +320,7 @@ const note: CellKind = {
   change: (key, value) => ({
     notes: { [key]: noteOf(value) === "" ? null : noteOf(value) },
   }),
-  width: () => 30,
+  width: () => noteCellChars,
   measured: false,
   breaksDownWhenRequired: false,
   inPanel: true,

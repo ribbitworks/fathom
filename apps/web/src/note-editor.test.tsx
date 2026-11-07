@@ -11,7 +11,13 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { Editor } from "@tiptap/core";
-import { NotePanel, notePreview, NoteView } from "./note-editor.tsx";
+import {
+  NoteCell,
+  noteCellChars,
+  NotePanel,
+  notePreview,
+  NoteView,
+} from "./note-editor.tsx";
 import { noteExtensions } from "./note-format.ts";
 import { docToNote } from "./note-markdown.ts";
 import { testTheme } from "./test-support.tsx";
@@ -148,6 +154,19 @@ describe("a note's preview", () => {
       notePreview("word ".repeat(60)).length,
       notePreview("word ".repeat(60)).at(-1),
     ]).toEqual(["One two", 200, "…"]);
+  });
+
+  it("is cut short at its cell's width, so a long note never widens its column", () => {
+    render(
+      <MantineProvider theme={testTheme}>
+        <NoteCell note={"word ".repeat(60)} />
+      </MantineProvider>,
+    );
+    const words = screen.getByTitle(notePreview("word ".repeat(60)));
+    expect([getComputedStyle(words).display, words.style.maxWidth]).toEqual([
+      "block",
+      `${String(noteCellChars)}ch`,
+    ]);
   });
 });
 

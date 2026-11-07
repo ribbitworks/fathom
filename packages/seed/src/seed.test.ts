@@ -27,8 +27,9 @@ import {
   users,
 } from "@fathom/db";
 import { fictionalOrganization } from "@fathom/fixtures";
+import { noteProblem } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
-import { and, count, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -95,7 +96,7 @@ describe("seeding", () => {
     expect(await totalOf(people)).toBe(20);
     // With the two lists Fathom builds in, Positions holding the seeded positions.
     expect(await totalOf(lists)).toBe(7);
-    expect(await totalOf(fields)).toBe(3);
+    expect(await totalOf(fields)).toBe(4);
     const [order] = await connection.select().from(columnOrders);
     expect(order?.keys.slice(0, 4)).toEqual([
       "preferredName",
@@ -248,6 +249,62 @@ describe("seeding", () => {
       .delete(fields)
       .where(inArray(fields.id, [String(linkId), String(noteId)]));
     expect(await seed(connection, organization)).toBe(true);
+  });
+
+  it("adds the newest starters' onboarding notes, as notes allow, recorded as made by Fathom itself", async () => {
+    await seed(connection, organization);
+    const written = organization.people.flatMap(({ id, notes }) =>
+      Object.entries(notes).map(([fieldId, note]) => ({
+        personId: id,
+        fieldId,
+        note,
+      })),
+    );
+    expect(written.length).toBeGreaterThan(0);
+    expect(written.map(({ note }) => noteProblem(note))).toEqual(
+      written.map(() => undefined),
+    );
+    const kept = await connection
+      .select({
+        personId: fieldValues.personId,
+        fieldId: fieldValues.fieldId,
+        note: fieldValues.note,
+      })
+      .from(fieldValues)
+      .where(isNotNull(fieldValues.note));
+    expect(kept).toEqual(expect.arrayContaining(written));
+    expect(kept).toHaveLength(written.length);
+    const [first] = written;
+    const history = await connection
+      .select({
+        newValue: changes.newValue,
+        tier: changes.tier,
+        madeBy: changeSets.madeBy,
+      })
+      .from(changes)
+      .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+      .where(
+        and(
+          eq(changes.recordId, String(first?.personId)),
+          eq(changes.field, `value:${String(first?.fieldId)}`),
+          eq(changes.action, "created"),
+        ),
+      );
+    expect(history.length).toBeGreaterThan(0);
+    for (const change of history) {
+      expect(change).toEqual({
+        newValue: first?.note,
+        tier: "general",
+        madeBy: null,
+      });
+    }
+    await unseed(connection, organization);
+    const left = await connection
+      .select({ id: fields.id })
+      .from(fields)
+      .where(eq(fields.id, String(first?.fieldId)));
+    expect(left).toEqual([]);
+    await seed(connection, organization);
   });
 
   it("records each note a removed person had", async () => {

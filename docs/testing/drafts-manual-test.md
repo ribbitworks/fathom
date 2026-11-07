@@ -134,7 +134,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Drafts applied**.
-  - **Expected:** The columns are Name, ID, Grade, Position, Site, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name, Skills. No row or column has a green dot and **Live**.
+  - **Expected:** The columns are Name, ID, Grade, Position, Site, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name, Skills. No row or column has a green dot and **Live**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Drafts beside live**.
@@ -146,7 +146,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Live only**.
-  - **Expected:** The columns are Name, ID, Position, Site, Level, Role on team, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name. No column or row has a mark.
+  - **Expected:** The columns are Name, ID, Position, Site, Level, Role on team, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name. No column or row has a mark.
   - **Notes:**
 
 - [ ] **Step 2.** Open the Draft menu.
@@ -286,7 +286,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Discard new order**.
-  - **Expected:** The columns are Name, ID, Position, Site, Grade, Level, Role on team, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name, Previous site, Skills. **Grade** has a yellow dot and **Draft**, without **Draft: moved**.
+  - **Expected:** The columns are Name, ID, Position, Site, Grade, Level, Role on team, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name, Previous site, Skills. **Grade** has a yellow dot and **Draft**, without **Draft: moved**.
   - **Notes:**
 
 ### DRAFT-15: Unpublished Changes Are Seen Only by the Person Who Made Them

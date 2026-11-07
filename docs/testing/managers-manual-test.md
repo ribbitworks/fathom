@@ -180,7 +180,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **西尾 亮**.
-  - **Expected:** The **Manager** cell reads **Viktoria Holmberg**, followed by a red dot and **Left**.
+  - **Expected:** In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**, followed by a red dot and **Left**.
   - **Notes:**
 
 ### MGR-09: People Are Filtered and Sorted by Manager?
@@ -214,5 +214,5 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 3.** Search for **西尾 亮**.
-  - **Expected:** The **Manager** cell reads **Viktoria Holmberg**, with no **Left** mark.
+  - **Expected:** In **西尾 亮**'s row, the **Manager** cell reads **Viktoria Holmberg**, with no **Left** mark.
   - **Notes:**

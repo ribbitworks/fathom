@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the fictional organization: the same records every time, identifiers that are valid and
-// unique, names from several countries and scripts, and people whose details are consistent and
-// drawn from the lists their columns name.
+// unique, names from several countries and scripts, people whose details are consistent and drawn
+// from the lists their columns name, and the newest starters' onboarding notes.
 
 import { en_IN } from "@faker-js/faker";
 import { describe, expect, it } from "vitest";
-import { fictionalId, fictionalOrganization } from "./index.ts";
+import {
+  fictionalId,
+  fictionalOrganization,
+  onboarding,
+  onboardingSteps,
+} from "./index.ts";
 
 const version5 =
   /^[0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -100,6 +105,99 @@ describe("a fictional organization", () => {
         if (!column?.multiple) expect(chosen).toHaveLength(1);
       }
     }
+  });
+
+  describe("onboarding notes", () => {
+    const [column] = organization.columns.filter(({ type }) => type === "note");
+    const noteOf = (person: { notes: Record<string, string> }) =>
+      new Map(Object.entries(person.notes)).get(String(column?.id));
+    const reference = "2026-11-01";
+    const current = organization.people.filter(
+      ({ endDate }) => endDate === null,
+    );
+    const newest = (people: typeof current, count: number) =>
+      people
+        .map(({ startDate }) => String(startDate))
+        .sort()
+        .reverse()
+        .slice(0, count);
+    const noted = organization.people.filter(
+      (person) => noteOf(person) !== undefined,
+    );
+    const starting = noted.filter(
+      ({ startDate }) => String(startDate) > reference,
+    );
+    const started = noted
+      .filter(({ startDate }) => String(startDate) <= reference)
+      .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate)));
+    const ticked = (note: string | undefined) =>
+      (note ?? "").split("- [x]").length - 1;
+
+    it("go to the newest starters still employed, some still to start, and no one else", () => {
+      expect(newest(starting, onboarding.starting)).toEqual(
+        newest(
+          current.filter(({ startDate }) => String(startDate) > reference),
+          onboarding.starting,
+        ),
+      );
+      expect(newest(started, onboarding.started)).toEqual(
+        newest(
+          current.filter(({ startDate }) => String(startDate) <= reference),
+          onboarding.started,
+        ),
+      );
+      expect(noted).toHaveLength(onboarding.starting + onboarding.started);
+    });
+
+    it("have nothing done before day one, and are further along the earlier someone started, the earliest done", () => {
+      for (const person of starting) {
+        expect([
+          ticked(noteOf(person)),
+          noteOf(person)?.split("\n")[0],
+        ]).toEqual([0, "## Before day one"]);
+      }
+      const progress = started.map((person) => ticked(noteOf(person)));
+      expect(progress).toEqual([...progress].sort((a, b) => a - b));
+      expect(progress[0]).toBeGreaterThan(0);
+      expect(progress.at(-1)).toBe(onboardingSteps("").length);
+      expect(new Set(progress).size).toBeGreaterThan(2);
+    });
+
+    it("name a buddy already working, who started before every starter with a note", () => {
+      const earliest = String(started.at(-1)?.startDate);
+      for (const person of noted) {
+        const buddy = current.find(({ preferredName }) =>
+          noteOf(person)?.includes(`**${preferredName}**`),
+        );
+        expect(buddy).toBeDefined();
+        expect(buddy?.id).not.toBe(person.id);
+        expect(String(buddy?.startDate) <= earliest).toBe(true);
+      }
+    });
+
+    it("go to fewer starters when too few people are working to be their buddies, never their own", () => {
+      const small = fictionalOrganization({ size: 16 });
+      const [smallColumn] = small.columns.filter(({ type }) => type === "note");
+      const smallNoted = small.people.filter(({ notes }) =>
+        new Map(Object.entries(notes)).has(String(smallColumn?.id)),
+      );
+      expect(smallNoted.length).toBeGreaterThan(0);
+      expect(smallNoted.length).toBeLessThan(
+        onboarding.starting + onboarding.started,
+      );
+      for (const person of smallNoted) {
+        const note = new Map(Object.entries(person.notes)).get(
+          String(smallColumn?.id),
+        );
+        expect(note).not.toContain(`**${person.preferredName}**`);
+      }
+      const done = smallNoted.filter((person) =>
+        new Map(Object.entries(person.notes))
+          .get(String(smallColumn?.id))
+          ?.includes("Done"),
+      );
+      expect(done.length).toBeGreaterThan(0);
+    });
   });
 
   it("gives each person a position, never Architect, so a choice no one has can be removed", () => {

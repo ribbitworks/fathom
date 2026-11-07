@@ -53,12 +53,25 @@ export interface FictionalList {
   choices: { id: string; label: string }[];
 }
 
-export interface FictionalColumn {
-  id: string;
-  name: string;
-  listId: string;
-  multiple: boolean;
-}
+// A column drawing on a list, which gives its values their visibility, or holding one note for each
+// person, with a visibility of its own.
+export type FictionalColumn =
+  | {
+      id: string;
+      name: string;
+      type: "choice";
+      listId: string;
+      visibility: null;
+      multiple: boolean;
+    }
+  | {
+      id: string;
+      name: string;
+      type: "note";
+      listId: null;
+      visibility: "general";
+      multiple: false;
+    };
 
 export interface FictionalPerson {
   id: string;
@@ -73,6 +86,8 @@ export interface FictionalPerson {
   isManager: boolean;
   // The chosen choices of each column, by column.
   values: Record<string, string[]>;
+  // Each note column's note, as Markdown, by column; a column with no note is left out.
+  notes: Record<string, string>;
 }
 
 // Who a person reports to, from a date, as YYYY-MM-DD.
@@ -182,12 +197,86 @@ function column(
   from: FictionalList,
   multiple = false,
 ): FictionalColumn {
-  return { id: fictionalId(`column:${key}`), name, listId: from.id, multiple };
+  return {
+    id: fictionalId(`column:${key}`),
+    name,
+    type: "choice",
+    listId: from.id,
+    visibility: null,
+    multiple,
+  };
 }
 
 const siteColumn = column("site", "Site", sites);
 const levelColumn = column("level", "Level", levels);
 const teamRoleColumn = column("team-role", "Role on team", teamRoles, true);
+const onboardingColumn: FictionalColumn = {
+  id: fictionalId("column:onboarding"),
+  name: "Onboarding",
+  type: "note",
+  listId: null,
+  visibility: "general",
+  multiple: false,
+};
+
+// Who has an onboarding note: the newest few who start after the reference date, and the newest
+// who have already started.
+export const onboarding = { starting: 2, started: 6 } as const;
+
+// The steps of an onboarding checklist, the second naming the starter's buddy.
+export const onboardingSteps = (buddy: string): string[] => [
+  "Laptop and accounts ready",
+  `Met the team and their buddy, **${buddy}**`,
+  "First change merged",
+  "Shadowed an on-call shift",
+];
+
+const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+// A day, given as YYYY-MM-DD, in words, such as 18 February 2027, the same whatever the computer's
+// language.
+function inWords(day: string): string {
+  const [year, month, date] = day.split("-").map(Number);
+  return `${String(date)} ${String(months.at(Number(month) - 1))} ${String(year)}`;
+}
+
+// An onboarding checklist as a note, with its first steps done and a status in colour: to start on
+// a day, on track, or done once every step is.
+function onboardingNote(
+  buddy: string,
+  done: number,
+  startsOn: string | null,
+): string {
+  const steps = onboardingSteps(buddy);
+  const status =
+    startsOn !== null
+      ? `<span data-colour="orange">Starts on ${inWords(startsOn)}</span>`
+      : done === steps.length
+        ? '<span data-colour="green">Done</span>'
+        : '<span data-colour="teal">On track</span>';
+  return [
+    startsOn === null ? "## First weeks" : "## Before day one",
+    "",
+    ...steps.map((step, index) => `- [${index < done ? "x" : " "}] ${step}`),
+    "",
+    status,
+    "",
+    "Steps from the [onboarding guide](https://example.com/onboarding).",
+  ].join("\n");
+}
 
 // The choice in a list with the given label, which the lists above always have.
 function choice(from: FictionalList, label: string): string {
@@ -478,9 +567,10 @@ function hiresFor(
   return [...open, ...filled];
 }
 
-// A fictional organization of the given size: its lists, the columns on people drawing on them, and
-// its people, current and former, and a few who start after the reference date, with a few
-// newcomers made after them, so making newcomers changes nothing else, and its planned hires.
+// A fictional organization of the given size: its lists, the columns on people drawing on them and
+// a note column, and its people, current and former, and a few who start after the reference date,
+// the newest with onboarding notes, with a few newcomers made after them, so making newcomers
+// changes nothing else, and its planned hires.
 export function fictionalOrganization({
   size,
   seed = 2026,
@@ -564,6 +654,7 @@ export function fictionalOrganization({
               }
             : {}),
         },
+        notes: {},
       };
     },
   );
@@ -578,6 +669,37 @@ export function fictionalOrganization({
     lastToLeave.values[levelColumn.id] = [choice(levels, "M1")];
     lastToLeave.isManager = true;
   }
+  // The newest starters who have not left, each with a buddy who started before all of them: those
+  // still to start have done nothing yet, and those who have started are further along the earlier
+  // they started, the earliest done. A buddy is never the starter, so an organization too small for
+  // every starter to have one gives notes to fewer.
+  const current = people
+    .filter(({ endDate }) => endDate === null)
+    .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate)));
+  const starting = current
+    .filter(({ startDate }) => String(startDate) > referenceDate)
+    .slice(0, onboarding.starting);
+  const started = current
+    .filter(({ startDate }) => String(startDate) <= referenceDate)
+    .slice(0, onboarding.started);
+  const buddies = current.filter(
+    (person) =>
+      String(person.startDate) <= referenceDate && !started.includes(person),
+  );
+  const paired = [...starting, ...started].flatMap((person, index) => {
+    const buddy = buddies.at(index);
+    return buddy === undefined ? [] : [{ person, buddy }];
+  });
+  const begun = paired.filter(({ person }) => started.includes(person));
+  const stepCount = onboardingSteps("").length;
+  for (const { person, buddy } of paired) {
+    const at = begun.findIndex((pair) => pair.person === person);
+    person.notes[onboardingColumn.id] = onboardingNote(
+      buddy.preferredName,
+      at < 0 ? 0 : Math.ceil(((at + 1) * stepCount) / begun.length),
+      at < 0 ? String(person.startDate) : null,
+    );
+  }
   const lines = reporting(
     people,
     (person) => person.positionId,
@@ -588,7 +710,7 @@ export function fictionalOrganization({
   return {
     lists: [sites, levels, teamRoles, certifications, languages],
     positions: positions.choices,
-    columns: [siteColumn, levelColumn, teamRoleColumn],
+    columns: [siteColumn, levelColumn, teamRoleColumn, onboardingColumn],
     people,
     ...lines,
     newcomers: everyone.slice(size),

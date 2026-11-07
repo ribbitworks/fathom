@@ -2,8 +2,8 @@
 
 // Adds the fictional organization from @fathom/fixtures to a development database, and removes it
 // again: its lists, the choices it adds to the built-in Positions list, the columns on people
-// drawing on its lists, about 150 people, its planned hires, from ./hires.ts, and its release
-// streams, from ./releases.ts, each
+// drawing on its lists and its note column, about 150 people, the newest with onboarding notes, its
+// planned hires, from ./hires.ts, and its release streams, from ./releases.ts, each
 // recorded in the change history as made by Fathom itself, and an account for each persona, from
 // ./accounts.ts, recorded in the access history. Seeding twice adds nothing more, and removing
 // takes away only what seeding added, keeping a seeded column, list, or release stream that
@@ -138,6 +138,12 @@ function personFields(
         chosen,
       ]),
     ),
+    ...Object.fromEntries(
+      Object.entries(person.notes).map(([columnId, note]) => [
+        valueField(columnId),
+        note,
+      ]),
+    ),
   };
 }
 
@@ -245,7 +251,7 @@ export async function seed(
       organization.teams.map(({ managerId, name }) => [managerId, name]),
     );
     for (const person of organization.people) {
-      const { values, ...row } = person;
+      const { values, notes, ...row } = person;
       await transaction.insert(people).values(row);
       const chosen = Object.entries(values).flatMap(([fieldId, choiceIds]) =>
         choiceIds.map((choiceId) => ({
@@ -254,8 +260,13 @@ export async function seed(
           choiceId,
         })),
       );
+      const noted = Object.entries(notes).map(([fieldId, note]) => ({
+        fieldId,
+        personId: person.id,
+        note,
+      }));
       // Every fictional person has a site, so there is always something to add.
-      await transaction.insert(fieldValues).values(chosen);
+      await transaction.insert(fieldValues).values([...chosen, ...noted]);
       made.push(
         ...recorded(
           "person",
@@ -383,7 +394,7 @@ export async function unseed(
           "deleted",
           {
             ...personFields(
-              { ...row, values: Object.fromEntries(byColumn) },
+              { ...row, values: Object.fromEntries(byColumn), notes: {} },
               reportingOf(currentLine.get(row.id), teamNames.get(row.id)),
             ),
             ...single,
