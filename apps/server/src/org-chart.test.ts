@@ -323,7 +323,7 @@ describe("the org chart", () => {
     expect((await drafted()).has(addedId)).toBe(false);
   });
 
-  it("keeps a drafted position from those who cannot see the Positions list", async () => {
+  it("keeps positions, drafted or not, from those who cannot see the Positions list", async () => {
     const changing = await person({ isManager: false });
     await changed(changing, { positionId: otherTestPosition });
     const added = await test.request(cookie, "POST", "/api/people", {
@@ -346,7 +346,7 @@ describe("the org chart", () => {
     try {
       const planner = await test.signedIn("resource-planner");
       const shown = await drafted(planner.cookie);
-      expect(shown.get(changing)?.position).toBe("Fictional Engineer");
+      expect(shown.get(changing)?.position).toBeNull();
       expect(shown.get(addedId)?.position).toBeNull();
     } finally {
       await setVisibility("general");
@@ -412,6 +412,28 @@ describe("the org chart", () => {
       nameOnly: true,
     });
     expect(shown.get(middle)?.left).toBeUndefined();
+    expect(await restrictedViews(viewer.id)).toHaveLength(0);
+  });
+
+  it("sends no drafts to those who see the chart but not people", async () => {
+    const first = await person();
+    const second = await person({ teamName: unique("Fictional Team") });
+    const report = await person({ managerId: first, isManager: false });
+    await changed(report, { managerId: second });
+    await changed(second, { teamName: unique("Fictional Team") });
+    const leaving = await person({ isManager: false });
+    await changed(leaving, { endDate: "2026-06-01" });
+    const viewer = await test.signedIn(["org-chart:view", "restricted:view"]);
+    const response = await test.request(viewer.cookie, "GET", "/api/org-chart");
+    const read = response.json<{
+      people: OrgChartPerson[];
+      drafted: OrgChartPerson[];
+    }>();
+    expect(read.people.some((one) => one.draft !== undefined)).toBe(false);
+    expect(read.drafted).toEqual(read.people);
+    expect(read.drafted.every(({ employeeId }) => employeeId === null)).toBe(
+      true,
+    );
     expect(await restrictedViews(viewer.id)).toHaveLength(0);
   });
 

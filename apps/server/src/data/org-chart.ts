@@ -120,11 +120,10 @@ export async function readOrgChart(
   const { rows, lines, teams, drafts, positionTier, labels } =
     await database.transaction(
       async (transaction) => {
-        const drafts = await readPersonDrafts(
-          transaction,
-          undefined,
-          actor.user.id,
-        );
+        // Drafts are details of people, so those who do not see people are sent none.
+        const drafts = seesPeople
+          ? await readPersonDrafts(transaction, undefined, actor.user.id)
+          : new Map<string, Draft>();
         const draftedPositions = [
           ...new Set(
             [...drafts.values()].flatMap(({ fields }) =>

@@ -337,7 +337,12 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "people:edit", "team-colours:edit"],
+          permissions: [
+            "people:view",
+            "org-chart:view",
+            "people:edit",
+            "team-colours:edit",
+          ],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
@@ -412,7 +417,7 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "team-colours:edit"],
+          permissions: ["people:view", "org-chart:view", "team-colours:edit"],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
@@ -477,7 +482,7 @@ describe("the org chart", () => {
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
-        Response.json({
+        chartJson({
           people: people.map((one) => ({ ...one, employeeId: null })),
         }),
     });
@@ -521,7 +526,12 @@ describe("the org chart", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["people:view", "people:edit", "team-colours:edit"],
+          permissions: [
+            "people:view",
+            "org-chart:view",
+            "people:edit",
+            "team-colours:edit",
+          ],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": answer,
@@ -586,6 +596,31 @@ describe("the org chart", () => {
     expect(
       await within(card("Sasha Fictional")).findByRole("button", {
         name: /^Show 1 report/,
+      }),
+    ).toBeDefined();
+  });
+
+  it("shows the reports of a manager who first appears when the Draft menu changes, after All levels", async () => {
+    openEditableAt("/org-chart?show=drafts", () =>
+      chartJson({
+        people,
+        drafted: [
+          person("p1", "Robin Fictional", null),
+          person("p2", "Sasha Fictional", "p1"),
+        ],
+      }),
+    );
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await showLevels("All levels");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Draft, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Drafts beside live" }),
+    );
+    expect(
+      await within(card("Sasha Fictional")).findByRole("button", {
+        name: /^Hide 1 report/,
       }),
     ).toBeDefined();
   });
@@ -1246,11 +1281,25 @@ describe("the org chart", () => {
     expect(history.location.search).toBe("");
   });
 
+  it("offers no Draft menu to those who do not see People, whatever the address says", async () => {
+    serverAnswers({
+      "GET /api/session": chartOnly,
+      "GET /api/org-chart": () =>
+        chartJson({
+          people: people.map((one) => ({ ...one, employeeId: null })),
+          drafted: [],
+        }),
+    });
+    renderApp("/org-chart?show=drafts");
+    await screen.findAllByText("Robin Fictional");
+    expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
+  });
+
   it("shows those who do not see People each card without opening it, keeping Fathom's own IDs in the address", async () => {
     serverAnswers({
       "GET /api/session": chartOnly,
       "GET /api/org-chart": () =>
-        Response.json({
+        chartJson({
           people: people.map((one) => ({ ...one, employeeId: null })),
         }),
     });
@@ -1291,7 +1340,7 @@ describe("the org chart", () => {
     serverAnswers({
       "GET /api/session": chartOnly,
       "GET /api/org-chart": () =>
-        Response.json({
+        chartJson({
           people: people.map((one) => ({
             ...one,
             employeeId: null,

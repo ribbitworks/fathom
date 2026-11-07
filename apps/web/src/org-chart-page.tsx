@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Org chart page, for users who see people: today's reporting lines, each person under their
-// manager. Managers' reports can be hidden and shown again, a number of levels shown at once, the
+// The Org chart page, for users who see the org chart: today's reporting lines, each person under
+// their manager. Managers' reports can be hidden and shown again, a number of levels shown at once, the
 // chart panned, zoomed, and fitted to the screen, and a person found by name, which brings them to
-// the centre. A manager's team can be shown alone. A person opens People, searched for their
-// Employee ID, which leads back to the chart with them found. The person found, and the team shown
+// the centre. A manager's team can be shown alone. For those who see people, a person opens People,
+// searched for their Employee ID, which leads back to the chart with them found. The person found, and the team shown
 // alone, are kept in the page's address. Each team's cards, and the lines to them, are drawn in its
 // colour, which reaches down to the teams below that have none, even when a team is shown alone.
 // The Draft menu, as on tables, draws drafts of managers and team names beside the live chart,
@@ -400,15 +400,20 @@ function Chart({
     collapsedBelow(tree, openLevels),
   );
   // Someone who manages nobody in one choice of what to show may manage someone in another, such as
-  // the manager a person is drafted from, whose reports the reader never chose to show, so they
-  // start hidden the first time they appear.
+  // the manager a person is drafted from, so the first time they appear their reports are shown or
+  // hidden as the levels last chosen have them.
+  const [levelsChosen, setLevelsChosen] = useState<number | "all">(openLevels);
   const [managersSeen, setManagersSeen] = useState<ReadonlySet<string>>(
     () => new Set(tree.reports.keys()),
   );
   const added = [...tree.reports.keys()].filter((id) => !managersSeen.has(id));
   if (added.length > 0) {
     setManagersSeen(new Set([...managersSeen, ...added]));
-    setCollapsed(new Set([...collapsed, ...added]));
+    const below =
+      levelsChosen === "all" ? new Set() : collapsedBelow(tree, levelsChosen);
+    setCollapsed(
+      new Set([...collapsed, ...added.filter((id) => below.has(id))]),
+    );
   }
   // Shows the person found, whether from the finder or the address, by showing the managers above
   // them, once each time someone new is found.
@@ -556,6 +561,7 @@ function Chart({
   const fitNext = useRef(false);
   const showLevels = (levels: number | "all") => {
     fitNext.current = true;
+    setLevelsChosen(levels);
     setCollapsed(levels === "all" ? new Set() : collapsedBelow(tree, levels));
   };
   useEffect(() => {
@@ -570,15 +576,19 @@ function Chart({
         tree={tree}
         outside={outside}
         draft={
-          <DraftMenu
-            show={show}
-            onShow={(next) => {
-              onSearch(
-                { ...search, show: next === "both" ? undefined : next },
-                false,
-              );
-            }}
-          />
+          // Drafts are details of people, so those who do not see people see only the approved
+          // chart.
+          seesPeople && (
+            <DraftMenu
+              show={show}
+              onShow={(next) => {
+                onSearch(
+                  { ...search, show: next === "both" ? undefined : next },
+                  false,
+                );
+              }}
+            />
+          )
         }
         teams={
           (teamEdits.names || teamEdits.colours) && (
@@ -659,7 +669,9 @@ export function OrgChartPage({
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
   const query = useQuery(orgChartQuery);
-  const show = search.show ?? "both";
+  // Those who do not see people are sent no drafts, so every choice draws the approved chart, which
+  // they may still colour teams on.
+  const show = seesPeople ? (search.show ?? "both") : "both";
   const everyone = useMemo(
     () =>
       query.data === undefined
