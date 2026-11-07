@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Fathom's pages and how to reach them. Every page but the sign-in page needs a signed-in user;
-// anyone else is sent to sign in, then brought back. An address that names no page, or a server
-// that cannot be reached, gets a page that says so.
+// anyone else is sent to sign in, then brought back. A user signed in with a password Fathom
+// generated sees only the page that changes it, at the start page's address. An address that names
+// no page, or a server that cannot be reached, gets a page that says so.
 
 import type { QueryClient } from "@tanstack/react-query";
 import {
@@ -25,6 +26,7 @@ import {
 import { useMemo } from "react";
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
+import { FirstPasswordChange } from "./change-password.tsx";
 import { DraftsHelpPage, RolesHelpPage } from "./help-page.tsx";
 import { ChangeHistoryPage } from "./change-history-page.tsx";
 import { DraftsPage } from "./drafts-page.tsx";
@@ -79,28 +81,45 @@ const signedInRoute = createRoute({
       // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
       throw redirect({ to: "/sign-in", search: { redirect: location.href } });
     }
+    if (session.mustChangePassword && location.pathname !== "/") {
+      // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
+      throw redirect({ to: "/", replace: true });
+    }
     // Every page works out today in Fathom's time zone, as the session has it now.
     setTimeZone(session.settings.timeZone);
     return {
       user: session.user,
-      roles: session.roles,
+      role: session.role,
       permissions: session.permissions,
+      mustChangePassword: session.mustChangePassword,
       timeZone: session.settings.timeZone,
+      passwords: session.settings.passwords,
     };
   },
   component: function SignedIn() {
-    const { user, permissions } = signedIn.useRouteContext();
-    return <Layout user={user} permissions={permissions} />;
+    const { user, permissions, mustChangePassword, passwords } =
+      signedIn.useRouteContext();
+    if (mustChangePassword) {
+      return <FirstPasswordChange rules={passwords.rules} owner={user} />;
+    }
+    return (
+      <Layout
+        user={user}
+        permissions={permissions}
+        passwordRules={passwords.rules}
+      />
+    );
   },
 });
 
-// The Overview, for those who may see the plan. Anyone else is sent to the first page their roles
-// let them open, or, with none, to Help's Roles page.
+// The Overview, for those who may see the plan. Anyone else is sent to the first page their role
+// lets them open, or, with none, to Help's Roles page.
 const homeRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/",
   beforeLoad: ({ context }) => {
-    if (context.permissions.includes("plan:view")) return;
+    if (context.mustChangePassword || context.permissions.includes("plan:view"))
+      return;
     // eslint-disable-next-line @typescript-eslint/only-throw-error -- the router's way to redirect
     throw redirect({
       to: firstPage(context.permissions) ?? "/help/roles",
@@ -115,7 +134,13 @@ const accountsRoute = createRoute({
   path: "/accounts",
   beforeLoad: requiring("accounts:manage"),
   component: function Accounts() {
-    return <AccountsPage user={signedIn.useRouteContext().user} />;
+    const { user, permissions } = signedIn.useRouteContext();
+    return (
+      <AccountsPage
+        user={user}
+        canEditRoles={permissions.includes("roles:edit")}
+      />
+    );
   },
 });
 
@@ -133,7 +158,8 @@ const settingsRoute = createRoute({
   path: "/settings",
   beforeLoad: requiring("settings:edit"),
   component: function Settings() {
-    return <SettingsPage timeZone={signedIn.useRouteContext().timeZone} />;
+    const { timeZone, passwords } = signedIn.useRouteContext();
+    return <SettingsPage timeZone={timeZone} passwords={passwords} />;
   },
 });
 
@@ -338,16 +364,16 @@ const orgChartRoute = createRoute({
   },
 });
 
-// What each role allows, open to every signed-in user, whatever their roles.
+// What each role allows, open to every signed-in user, whatever their role.
 const helpRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/help/roles",
   component: function RolesHelp() {
-    return <RolesHelpPage roles={signedIn.useRouteContext().roles} />;
+    return <RolesHelpPage role={signedIn.useRouteContext().role} />;
   },
 });
 
-// Open to every signed-in user, whatever their roles.
+// Open to every signed-in user, whatever their role.
 const draftsHelpRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/help/drafts",

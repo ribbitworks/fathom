@@ -28,7 +28,6 @@ async function fillIn(email: string, password: string) {
 const administratorOnly = () =>
   Response.json({
     ...fictionalUser,
-    roles: ["administrator"],
     permissions: ["accounts:manage", "history:view"],
   });
 
@@ -68,7 +67,7 @@ describe("home page", () => {
     });
     renderApp("/");
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "You do not have permission to do this. Your roles may have changed.",
+      "You do not have permission to do this. Your role may have changed.",
     );
   });
 
@@ -89,7 +88,6 @@ describe("home page", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          roles: [],
           permissions: ["history:view"],
         }),
       "GET /api/access-history": () => Response.json({ entries: [] }),
@@ -122,7 +120,7 @@ describe("home page", () => {
   it("sends someone whose roles open no page to Help's Roles page", async () => {
     serverAnswers({
       "GET /api/session": () =>
-        Response.json({ ...fictionalUser, roles: [], permissions: [] }),
+        Response.json({ ...fictionalUser, role: null, permissions: [] }),
     });
     const history = renderApp("/");
     expect(

@@ -50,7 +50,6 @@ afterAll(async () => {
   await test.close();
 });
 
-const editorRoles = ["workforce-administrator", "viewer"] as const;
 let count = 0;
 
 // A name or Employee ID no other test uses, so tests sharing the database do not collide.
@@ -60,7 +59,7 @@ function unique(prefix: string): string {
 }
 
 async function editor() {
-  return test.signedIn([...editorRoles]);
+  return test.signedIn("workforce-administrator");
 }
 
 async function send(
@@ -94,7 +93,7 @@ async function listWith(
 
 // Approves the drafts of the columns given alone, so other drafts a test makes stay waiting.
 async function approveColumns(...ids: string[]) {
-  const approver = await test.signedIn(["approver", "leadership"]);
+  const approver = await test.signedIn("engineering-director");
   const response = await send(approver.cookie, "POST", "/api/drafts/approval", {
     columns: ids,
   });
@@ -161,7 +160,7 @@ async function addPerson(cookie: string, person: NewPerson = {}) {
 
 // Approves the drafts of the people given, as an Approver who sees every tier.
 async function approve(ids: readonly string[]) {
-  const { cookie } = await test.signedIn(["approver", "leadership"]);
+  const { cookie } = await test.signedIn("engineering-director");
   const response = await send(cookie, "POST", "/api/drafts/approval", {
     people: ids,
   });
@@ -213,7 +212,7 @@ describe("who may read and change people", () => {
   it.each(roleSchema.options)(
     "a %s may read people only if the role lets them see people",
     async (role) => {
-      const { cookie } = await test.signedIn([role]);
+      const { cookie } = await test.signedIn(role);
       const response = await send(cookie, "GET", "/api/people");
       expect(response.statusCode).toBe(
         rolesGranting("people:view").includes(role) ? 200 : 403,
@@ -253,13 +252,13 @@ describe("who may read and change people", () => {
       refused("configuration:edit").map((role) => [role, ...change] as const),
     ),
   ])("refuses a %s %s %s", async (role, method, url, payload) => {
-    const { cookie } = await test.signedIn([role, "viewer"]);
+    const { cookie } = await test.signedIn(role);
     const response = await send(cookie, method, url, payload);
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({ error: "Forbidden" });
   });
 
-  // Approving and rejecting need the Approver role, which each other role is tried without.
+  // Approving and rejecting need drafts:approve, which each other role is tried without.
   const decisions: [Method, string, object][] = [
     ["POST", "/api/drafts/approval", { people: [randomUUID()] }],
     [
@@ -275,7 +274,7 @@ describe("who may read and change people", () => {
         .map((role) => [role, ...decision] as const),
     ),
   )("refuses a %s %s %s", async (role, method, url, payload) => {
-    const { cookie } = await test.signedIn([role, "viewer"]);
+    const { cookie } = await test.signedIn(role);
     const response = await send(cookie, method, url, payload);
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({ error: "Forbidden" });
@@ -295,7 +294,7 @@ describe("who may read and change people", () => {
         .map((role) => [role, ...change] as const),
     ),
   )("refuses a %s %s %s", async (role, method, url, payload) => {
-    const { cookie } = await test.signedIn([role]);
+    const { cookie } = await test.signedIn(role);
     const response = await send(cookie, method, url, payload);
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({ error: "Forbidden" });
@@ -352,10 +351,10 @@ describe("who sees Confidential values", () => {
     ).id;
   });
 
-  it.each(roleSchema.options)(
-    "a %s, with a role that sees people, sees a Confidential column's values only if the role lets them see Confidential data",
+  it.each(rolesGranting("people:view"))(
+    "a %s, a role that sees people, sees a Confidential column's values only if the role lets them see Confidential data",
     async (role) => {
-      const { cookie } = await test.signedIn([role, "resource-planner"]);
+      const { cookie } = await test.signedIn(role);
       const read = await readPeople(cookie);
       const sees = rolesGranting("confidential:view").includes(role);
       expect(read.fields.some(({ id }) => id === fieldId)).toBe(sees);
@@ -386,7 +385,7 @@ describe("who is listed and what each user sees", () => {
       { startDate: "2020-01-01", endDate: "2021-01-01" },
       { startDate: "2999-01-01" },
     ]);
-    const viewer = await test.signedIn(["resource-planner"]);
+    const viewer = await test.signedIn("resource-planner");
     const seen = await readPeople(viewer.cookie);
     const listed = seen.people.filter((person) => ids.includes(person.id));
     expect(listed.map((person) => ids.indexOf(person.id)).sort()).toEqual([
@@ -400,7 +399,7 @@ describe("who is listed and what each user sees", () => {
     expect(seen.fields.map(({ id }) => id)).not.toContain(restricted.field.id);
     expect(await accessOf(viewer.id)).toEqual([]);
 
-    const manager = await test.signedIn(["people-manager", "viewer"]);
+    const manager = await test.signedIn("engineering-manager");
     const all = await readPeople(manager.cookie);
     const managed = all.people.filter((person) => ids.includes(person.id));
     expect(managed).toHaveLength(5);
@@ -415,7 +414,7 @@ describe("who is listed and what each user sees", () => {
   });
 
   it("records a view when the only Restricted details are in a column, and not when there is no one", async () => {
-    const leadership = await test.signedIn(["leadership"]);
+    const leadership = await test.signedIn("executive");
     const { cookie } = await editor();
     await columnWith(cookie, ["Fictional Confidential"], {
       visibility: "confidential",
@@ -894,7 +893,7 @@ describe("columns", () => {
       );
       expect(refused.statusCode).toBe(status);
     }
-    const viewer = await test.signedIn(["resource-planner"]);
+    const viewer = await test.signedIn("resource-planner");
     const seen = (await readPeople(viewer.cookie)).order;
     expect(seen).not.toContain("startDate");
     expect(seen).toContain("employeeId");
@@ -1027,7 +1026,7 @@ describe("columns", () => {
     expect(response.statusCode).toBe(200);
     // A draft until approved, by an Approver who sees the values it deletes.
     expect((await readPerson(cookie, id))?.values).not.toEqual({});
-    const approver = await test.signedIn(["approver", "leadership"]);
+    const approver = await test.signedIn("engineering-director");
     expect(
       (
         await send(approver.cookie, "POST", "/api/drafts/approval", {
@@ -1079,16 +1078,13 @@ describe("access history", () => {
     });
     await readPeople(cookie);
     await readPeople(cookie);
-    const administrator = await test.signedIn(["administrator"]);
+    const administrator = await test.signedIn("administrator");
     expect(await entriesBy(administrator.cookie, editorId)).toEqual([
       ["restricted-viewed", null],
       // A person has no account, so no email address.
       ["restricted-changed", { id, name: null, email: null }],
     ]);
-    const seesPeople = await test.signedIn([
-      "administrator",
-      "resource-planner",
-    ]);
+    const seesPeople = await test.signedIn(["history:view", "people:view"]);
     expect(await entriesBy(seesPeople.cookie, editorId)).toEqual([
       ["restricted-viewed", null],
       ["restricted-changed", { id, name, email: null }],

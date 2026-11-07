@@ -387,10 +387,10 @@ describe("the seed command", () => {
       .from(users)
       .where(eq(users.email, "engineering.director@fathom.test"));
     await createDataAccess(connection).drafts.approve(
-      actorFor(director as { id: string; name: string; email: string }, [
-        "approver",
-        "leadership",
-      ]),
+      actorFor(
+        director as { id: string; name: string; email: string },
+        "engineering-director",
+      ),
       {
         people: waiting.map(({ id }) => id),
         lists: [],

@@ -1,35 +1,37 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Accounts page, for users who may manage accounts: every account with its roles and whether it
-// can sign in, and dialogs to create accounts and to edit them, where their names, email addresses,
-// and roles are changed, and from which their passwords are reset and they are deactivated or
-// reactivated. A user's own account offers all but the password reset, as changing one's own
-// password needs the current one. A dialog cannot be closed while its change is being saved, shows
-// plainly why a change was refused, and keeps no password once it closes. The last active
-// Administrator can neither give up the role nor be deactivated, so those controls are turned off
-// for them, as the server refuses both.
+// The Accounts page, for users who may manage accounts: every account with its one role and whether
+// it can sign in, and dialogs to create accounts and to edit them, where their names, email
+// addresses, and role are changed, choosing from every role, and from which their passwords are
+// reset and they are deactivated or reactivated. Fathom generates the password of a new account and
+// of a reset, which the dialog then shows once, to copy. A user's own account offers all but the
+// password reset, as changing one's own password needs the current one. A dialog cannot be closed
+// while its change is being saved, shows plainly why a change was refused, and keeps no password
+// once it closes. Some active account must keep each of the permissions to manage accounts and to
+// edit roles, so a role or a deactivation that would leave none holding one is turned off, as the
+// server refuses it.
 
 import {
   type Account,
   type AccountChangeRequest,
   newAccountSchema,
   type NewAccountRequest,
-  passwordResetSchema,
-  type Role,
-  roleSchema,
+  type RoleSummary,
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Alert,
+  Anchor,
   Avatar,
   Badge,
   Button,
-  Checkbox,
+  CopyButton,
   Group,
   Loader,
   Modal,
   Paper,
   PasswordInput,
+  Radio,
   SegmentedControl,
   Stack,
   Table,
@@ -38,22 +40,21 @@ import {
   VisuallyHidden,
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useRouter } from "@tanstack/react-router";
-import { useState } from "react";
+import { Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { type ReactNode, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   accountsQuery,
   createAccount,
   nameProblem,
   resetPassword,
-  roleDescription,
-  roleName,
   setActive,
   updateAccount,
 } from "./accounts.ts";
 import { DialogActions } from "./dialog-actions.tsx";
 import { initials } from "./names.ts";
 import { notifySuccess } from "./notices.tsx";
+import { rolesQuery } from "./roles.ts";
 import { Icon } from "./icons.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -62,13 +63,22 @@ import { count } from "./numbers.ts";
 
 type Dialog =
   | { kind: "create" }
-  | { kind: "edit"; account: Account; own: boolean; lastAdministrator: boolean }
+  | {
+      kind: "edit";
+      account: Account;
+      own: boolean;
+      // Every account, as the list showed them, for knowing which changes the server refuses.
+      accounts: readonly Account[];
+    }
   | { kind: "password"; account: Account }
+  | { kind: "generated"; account: Account; password: string; notice: string }
   | { kind: "active"; account: Account; own: boolean };
 
 // What a dialog reports: when it is done, with a notice for the page, when it is busy saving, and
 // when it opens another dialog in its place.
 interface DialogProps {
+  // Whether the user may make roles, so a list of roles can send them to the Roles page.
+  canEditRoles: boolean;
   onDone: (notice?: string) => void;
   onBusy: (busy: boolean) => void;
   onOpen: (dialog: Dialog) => void;
@@ -82,41 +92,105 @@ function dialogTitle(dialog: Dialog): string {
       return `Edit ${dialog.account.name}`;
     case "password":
       return `Reset the password for ${dialog.account.name}`;
+    case "generated":
+      return `Password for ${dialog.account.name}`;
     case "active":
       return `${dialog.account.active ? "Deactivate" : "Reactivate"} ${dialog.account.name}`;
   }
 }
 
-function RoleChoices({
+// What keeps Fathom manageable: some active account's role must grant each of these.
+const keptPermissions = ["accounts:manage", "roles:edit"] as const;
+
+// Whether some active account's role grants each kept permission, as the server checks after
+// changing an account's role or deactivating it.
+function staysManageable(
+  accounts: readonly Pick<Account, "active" | "role">[],
+  roles: readonly RoleSummary[],
+): boolean {
+  return keptPermissions.every((permission) =>
+    accounts.some(
+      ({ active, role }) =>
+        active &&
+        roles
+          .find(({ id }) => id === role?.id)
+          ?.permissions.includes(permission),
+    ),
+  );
+}
+
+// The changes to an account that the server refuses: the roles it cannot be given, and whether it
+// cannot be deactivated.
+interface RefusedChanges {
+  roleIds: ReadonlySet<string>;
+  deactivating: boolean;
+}
+
+function refusedChanges(
+  account: Account,
+  accounts: readonly Account[],
+  roles: readonly RoleSummary[],
+): RefusedChanges {
+  const changed = (change: Partial<Account>) =>
+    accounts.map((other) =>
+      other.id === account.id ? { ...other, ...change } : other,
+    );
+  return {
+    // Keeping its role is no change, so it is never refused.
+    roleIds: new Set(
+      roles
+        .filter(
+          (role) =>
+            role.id !== account.role?.id &&
+            !staysManageable(changed({ role }), roles),
+        )
+        .map(({ id }) => id),
+    ),
+    deactivating:
+      account.active && !staysManageable(changed({ active: false }), roles),
+  };
+}
+
+// One role for the account, from every role, each with what it is for.
+function RoleChoice({
+  roles,
   value,
   onChange,
-  kept,
+  error,
+  refused,
+  canEditRoles,
 }: {
-  value: Role[];
-  onChange: (roles: Role[]) => void;
-  // A role that cannot be taken away.
-  kept?: Role | undefined;
+  roles: readonly RoleSummary[];
+  canEditRoles: boolean;
+  value: string;
+  onChange: (roleId: string) => void;
+  error?: string | undefined;
+  // Roles the server would refuse, turned off.
+  refused?: ReadonlySet<string>;
 }) {
   return (
-    <Checkbox.Group
-      label="Roles"
-      value={value}
-      onChange={(roles) => {
-        onChange(roleSchema.options.filter((role) => roles.includes(role)));
-      }}
-    >
+    <Radio.Group label="Role" value={value} onChange={onChange} error={error}>
       <Stack gap="sm" mt="xs">
-        {roleSchema.options.map((role) => (
-          <Checkbox
-            key={role}
-            value={role}
-            label={roleName(role)}
-            description={roleDescription(role)}
-            disabled={role === kept}
+        {roles.map((role) => (
+          <Radio
+            key={role.id}
+            value={role.id}
+            label={role.name}
+            description={role.description}
+            disabled={refused?.has(role.id)}
           />
         ))}
+        {canEditRoles && (
+          <Text size="sm" c="dimmed">
+            Custom roles are created on the{" "}
+            <Anchor component={Link} to="/roles" inherit>
+              Roles
+            </Anchor>{" "}
+            page.
+          </Text>
+        )}
       </Stack>
-    </Checkbox.Group>
+    </Radio.Group>
   );
 }
 
@@ -137,16 +211,33 @@ function useAccountChange<Input, Output>(
     },
     onSuccess: onSaved,
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: accountsQuery.queryKey });
+      // The Roles page counts the accounts holding each role.
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: accountsQuery.queryKey }),
+        queryClient.invalidateQueries({ queryKey: rolesQuery.queryKey }),
+      ]);
       onBusy(false);
     },
   });
 }
 
-function CreateAccount({ onDone, onBusy }: DialogProps) {
+const roleProblem = "Choose a role.";
+
+function CreateAccount({
+  roles,
+  canEditRoles,
+  onDone,
+  onBusy,
+  onOpen,
+}: DialogProps & { roles: readonly RoleSummary[] }) {
   const form = useForm<NewAccountRequest>({
     resolver: zodResolver(newAccountSchema),
-    defaultValues: { name: "", email: "", password: "", roles: ["viewer"] },
+    defaultValues: {
+      name: "",
+      email: "",
+      // A new account sees the plan unless another role is chosen.
+      roleId: roles.find(({ key }) => key === "team-member")?.id ?? "",
+    },
   });
   const { errors } = form.formState;
   const creating = useAccountChange(createAccount, onBusy);
@@ -156,8 +247,13 @@ function CreateAccount({ onDone, onBusy }: DialogProps) {
       onSubmit={(event) =>
         void form.handleSubmit((values) => {
           creating.mutate(values, {
-            onSuccess: (account) => {
-              onDone(`Created the account for ${account.name}.`);
+            onSuccess: ({ account, password }) => {
+              onOpen({
+                kind: "generated",
+                account,
+                password,
+                notice: `Created the account for ${account.name}.`,
+              });
             },
           });
         })(event)
@@ -175,17 +271,17 @@ function CreateAccount({ onDone, onBusy }: DialogProps) {
           error={errors.email && "Enter a valid email address."}
           {...form.register("email")}
         />
-        <PasswordInput
-          label="Temporary password"
-          autoComplete="new-password"
-          error={errors.password && "Use 12 to 128 characters."}
-          {...form.register("password")}
-        />
         <Controller
           control={form.control}
-          name="roles"
+          name="roleId"
           render={({ field }) => (
-            <RoleChoices value={field.value} onChange={field.onChange} />
+            <RoleChoice
+              roles={roles}
+              canEditRoles={canEditRoles}
+              value={field.value}
+              onChange={field.onChange}
+              error={errors.roleId && roleProblem}
+            />
           )}
         />
         <DialogActions
@@ -202,18 +298,21 @@ function CreateAccount({ onDone, onBusy }: DialogProps) {
 const accountEditSchema = newAccountSchema.pick({
   name: true,
   email: true,
-  roles: true,
+  roleId: true,
 });
 
 // After users change their own account, the rest of Fathom shows them as they now are: their name
-// and email address, and, once they give up the Administrator role, the first page they may open.
-function useOwnAccountRefresh() {
+// and email address, and, once their role no longer lets them manage accounts, the first page they
+// may open.
+function useOwnAccountRefresh(roles: readonly RoleSummary[]) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const navigate = useNavigate();
   return async (saved: Account) => {
     await queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey });
-    if (saved.roles.includes("administrator")) await router.invalidate();
+    const role = roles.find(({ id }) => id === saved.role?.id);
+    if (role?.permissions.includes("accounts:manage"))
+      await router.invalidate();
     else await navigate({ to: "/" });
   };
 }
@@ -221,25 +320,29 @@ function useOwnAccountRefresh() {
 function EditAccount({
   account,
   own,
-  lastAdministrator,
+  accounts,
+  roles,
+  canEditRoles,
   onDone,
   onBusy,
   onOpen,
 }: DialogProps & {
   account: Account;
   own: boolean;
-  lastAdministrator: boolean;
+  accounts: readonly Account[];
+  roles: readonly RoleSummary[];
 }) {
-  const form = useForm<Omit<NewAccountRequest, "password">>({
+  const refused = refusedChanges(account, accounts, roles);
+  const form = useForm<NewAccountRequest>({
     resolver: zodResolver(accountEditSchema),
     defaultValues: {
       name: account.name,
       email: account.email,
-      roles: account.roles,
+      roleId: account.role?.id ?? "",
     },
   });
   const { errors } = form.formState;
-  const refreshOwn = useOwnAccountRefresh();
+  const refreshOwn = useOwnAccountRefresh(roles);
   const saving = useAccountChange(
     (change: AccountChangeRequest) => updateAccount(account.id, change),
     onBusy,
@@ -272,12 +375,15 @@ function EditAccount({
         />
         <Controller
           control={form.control}
-          name="roles"
+          name="roleId"
           render={({ field }) => (
-            <RoleChoices
+            <RoleChoice
+              roles={roles}
+              canEditRoles={canEditRoles}
               value={field.value}
               onChange={field.onChange}
-              kept={lastAdministrator ? "administrator" : undefined}
+              error={errors.roleId && roleProblem}
+              refused={refused.roleIds}
             />
           )}
         />
@@ -302,7 +408,7 @@ function EditAccount({
               <Button
                 variant={account.active ? "outline" : "default"}
                 color="red"
-                disabled={saving.isPending || lastAdministrator}
+                disabled={saving.isPending || refused.deactivating}
                 onClick={() => {
                   onOpen({ kind: "active", account, own });
                 }}
@@ -321,39 +427,31 @@ function ResetPassword({
   account,
   onDone,
   onBusy,
+  onOpen,
 }: DialogProps & { account: Account }) {
-  const form = useForm<{ password: string }>({
-    resolver: zodResolver(passwordResetSchema),
-    defaultValues: { password: "" },
-  });
-  const resetting = useAccountChange(
-    (password: string) => resetPassword(account.id, password),
-    onBusy,
-  );
+  const resetting = useAccountChange(() => resetPassword(account.id), onBusy);
   return (
     <form
-      noValidate
-      onSubmit={(event) =>
-        void form.handleSubmit(({ password }) => {
-          resetting.mutate(password, {
-            onSuccess: () => {
-              onDone(`Reset the password for ${account.name}.`);
-            },
-          });
-        })(event)
-      }
+      onSubmit={(event) => {
+        event.preventDefault();
+        resetting.mutate(undefined, {
+          onSuccess: (password) => {
+            onOpen({
+              kind: "generated",
+              account,
+              password,
+              notice: `Reset the password for ${account.name}.`,
+            });
+          },
+        });
+      }}
     >
       <Stack>
         <Text size="sm">
-          {account.name} will be signed out everywhere, and will sign in with
-          the new password.
+          {account.name} will be signed out of every session. Fathom will
+          generate a new password, which {account.name} must change at the next
+          sign-in.
         </Text>
-        <PasswordInput
-          label="New temporary password"
-          autoComplete="new-password"
-          error={form.formState.errors.password && "Use 12 to 128 characters."}
-          {...form.register("password")}
-        />
         <DialogActions
           error={resetting.error}
           pending={resetting.isPending}
@@ -362,6 +460,55 @@ function ResetPassword({
         />
       </Stack>
     </form>
+  );
+}
+
+// The password Fathom generated, shown this once, hidden until asked for, with a button to copy it
+// either way. It is plain grey text rather than a field, since it cannot be changed.
+function GeneratedPassword({
+  account,
+  password,
+  notice,
+  onDone,
+}: DialogProps & { account: Account; password: string; notice: string }) {
+  return (
+    <Stack>
+      <Text size="sm">
+        This password is shown only once. {account.name} must change it at the
+        next sign-in.
+      </Text>
+      <Group gap="xs" wrap="nowrap">
+        <PasswordInput
+          aria-label="Password"
+          value={password}
+          readOnly
+          variant="filled"
+          flex={1}
+          classNames={{ innerInput: classes.generatedPassword }}
+          visibilityToggleFocusable
+          visibilityToggleButtonProps={{ "aria-label": "Show password" }}
+          onFocus={(event) => {
+            event.currentTarget.select();
+          }}
+        />
+        <CopyButton value={password}>
+          {({ copied, copy }) => (
+            <Button variant="default" onClick={copy}>
+              {copied ? "Copied" : "Copy"}
+            </Button>
+          )}
+        </CopyButton>
+      </Group>
+      <Group justify="flex-end">
+        <Button
+          onClick={() => {
+            onDone(notice);
+          }}
+        >
+          Done
+        </Button>
+      </Group>
+    </Stack>
   );
 }
 
@@ -408,21 +555,57 @@ function ChangeActive({
   );
 }
 
+// The dialogs that choose a role wait for the roles, which they list.
+function RolesFor({
+  children,
+}: {
+  children: (roles: readonly RoleSummary[]) => ReactNode;
+}) {
+  const roles = useQuery(rolesQuery);
+  if (roles.isPending) return <Loader role="status" aria-label="Loading" />;
+  if (roles.isError) {
+    return (
+      <Alert color="red" role="alert">
+        Fathom could not load the roles. Try again in a moment.
+      </Alert>
+    );
+  }
+  return children(roles.data);
+}
+
 function DialogContent({ dialog, ...props }: DialogProps & { dialog: Dialog }) {
   switch (dialog.kind) {
     case "create":
-      return <CreateAccount {...props} />;
+      return (
+        <RolesFor>
+          {(roles) => <CreateAccount roles={roles} {...props} />}
+        </RolesFor>
+      );
     case "edit":
       return (
-        <EditAccount
-          account={dialog.account}
-          own={dialog.own}
-          lastAdministrator={dialog.lastAdministrator}
-          {...props}
-        />
+        <RolesFor>
+          {(roles) => (
+            <EditAccount
+              account={dialog.account}
+              own={dialog.own}
+              accounts={dialog.accounts}
+              roles={roles}
+              {...props}
+            />
+          )}
+        </RolesFor>
       );
     case "password":
       return <ResetPassword account={dialog.account} {...props} />;
+    case "generated":
+      return (
+        <GeneratedPassword
+          account={dialog.account}
+          password={dialog.password}
+          notice={dialog.notice}
+          {...props}
+        />
+      );
     case "active":
       return (
         <ChangeActive account={dialog.account} own={dialog.own} {...props} />
@@ -442,16 +625,6 @@ function matches(account: Account, search: string, filter: Filter): boolean {
     account.email.toLowerCase().includes(term);
   const shown = filter === "all" || (filter === "active") === account.active;
   return found && shown;
-}
-
-const activeAdministrator = (account: Account) =>
-  account.active && account.roles.includes("administrator");
-
-function isLastAdministrator(account: Account, all: Account[]): boolean {
-  return (
-    activeAdministrator(account) &&
-    !all.some((other) => other.id !== account.id && activeAdministrator(other))
-  );
 }
 
 function AccountRow({
@@ -494,13 +667,15 @@ function AccountRow({
         </Group>
       </Table.Td>
       <Table.Td>
-        <Group gap={6}>
-          {account.roles.map((role) => (
-            <Badge key={role} variant="default" radius="sm" tt="none" fw={400}>
-              {roleName(role)}
-            </Badge>
-          ))}
-        </Group>
+        {account.role === null ? (
+          <Text fz="sm" c="dimmed">
+            No role
+          </Text>
+        ) : (
+          <Badge variant="default" radius="sm" tt="none" fw={400}>
+            {account.role.name}
+          </Badge>
+        )}
       </Table.Td>
       <Table.Td>
         <Badge
@@ -532,8 +707,16 @@ function AccountRow({
   );
 }
 
-export function AccountsPage({ user }: { user: SignedInUser }) {
+export function AccountsPage({
+  user,
+  canEditRoles,
+}: {
+  user: SignedInUser;
+  canEditRoles: boolean;
+}) {
   const accounts = useQuery(accountsQuery);
+  // Read now, so the dialogs that choose a role have them on opening.
+  useQuery(rolesQuery);
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
   const [dialog, setDialog] = useState<Dialog>();
   const [opened, setOpened] = useState(false);
@@ -608,7 +791,7 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>Person</Table.Th>
-                    <Table.Th>Roles</Table.Th>
+                    <Table.Th>Role</Table.Th>
                     <Table.Th>Status</Table.Th>
                     <Table.Th>Created</Table.Th>
                     <Table.Th>
@@ -627,7 +810,7 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
                           kind: "edit",
                           account,
                           own: account.id === user.id,
-                          lastAdministrator: isLastAdministrator(account, all),
+                          accounts: all,
                         });
                       }}
                     />
@@ -645,21 +828,27 @@ export function AccountsPage({ user }: { user: SignedInUser }) {
       )}
       <Modal
         opened={opened}
-        // The dialogs that list every role, with what each allows, have room for them.
+        // The dialogs that list every role, with what each is for, have room for them.
         size={
           dialog?.kind === "create" || dialog?.kind === "edit" ? "lg" : "md"
         }
         onClose={() => {
           close();
         }}
+        // A generated password is not lost to a stray click, and is forgotten once its dialog has
+        // closed.
+        onExitTransitionEnd={() => {
+          if (dialog?.kind === "generated") setDialog(undefined);
+        }}
         closeOnEscape={!busy}
-        closeOnClickOutside={!busy}
+        closeOnClickOutside={!busy && dialog?.kind !== "generated"}
         withCloseButton={!busy}
         title={dialog && dialogTitle(dialog)}
       >
         {dialog && (
           <DialogContent
             dialog={dialog}
+            canEditRoles={canEditRoles}
             onDone={close}
             onBusy={setBusy}
             onOpen={open}

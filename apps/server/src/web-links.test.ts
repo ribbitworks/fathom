@@ -11,7 +11,6 @@ import {
   type ChangeHistory,
   type Field,
   type Person,
-  roleSchema,
 } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -47,7 +46,7 @@ const proposal = {
 };
 
 async function editor() {
-  return test.signedIn(["workforce-administrator", "viewer"]);
+  return test.signedIn("workforce-administrator");
 }
 
 async function send(
@@ -96,7 +95,7 @@ async function addedId(cookie: string, links: object = {}) {
 }
 
 async function approve(ids: readonly string[]) {
-  const { cookie } = await test.signedIn(["approver", "leadership"]);
+  const { cookie } = await test.signedIn("engineering-director");
   const response = await send(cookie, "POST", "/api/drafts/approval", {
     people: ids,
   });
@@ -395,10 +394,10 @@ describe("who sees a Confidential web link column", () => {
     expect(changed.statusCode).toBe(200);
   });
 
-  it.each(roleSchema.options)(
-    "a %s, with a role that sees people, sees the column and its links only if the role lets them see Confidential data",
+  it.each(rolesGranting("people:view"))(
+    "a %s, a role that sees people, sees the column and its links only if the role lets them see Confidential data",
     async (role) => {
-      const { cookie } = await test.signedIn([role, "resource-planner"]);
+      const { cookie } = await test.signedIn(role);
       const read = await readPeople(cookie);
       const sees = rolesGranting("confidential:view").includes(role);
       expect(read.fields.some(({ id }) => id === fieldId)).toBe(sees);
@@ -407,10 +406,10 @@ describe("who sees a Confidential web link column", () => {
     },
   );
 
-  it.each(roleSchema.options)(
-    "a %s, with a role that sees the change history, sees changes to the links only if the role lets them see Confidential data",
+  it.each(rolesGranting("changes:view"))(
+    "a %s, a role that sees the change history, sees changes to the links only if the role lets them see Confidential data",
     async (role) => {
-      const { cookie } = await test.signedIn([role, "resource-planner"]);
+      const { cookie } = await test.signedIn(role);
       const history = (
         await send(cookie, "GET", "/api/changes")
       ).json<ChangeHistory>();
@@ -464,8 +463,8 @@ describe("a web link column's settings over time", () => {
         (await send(reader.cookie, "GET", "/api/changes")).json(),
       ).includes(raised.address);
     };
-    expect(await reads(["resource-planner"])).toBe(false);
-    expect(await reads(["leadership"])).toBe(true);
+    expect(await reads("resource-planner")).toBe(false);
+    expect(await reads("executive")).toBe(true);
   });
 
   it("puts a changed visibility back when the change is undone", async () => {
@@ -503,7 +502,7 @@ describe("a web link column's settings over time", () => {
     const { cookie } = await editor();
     const field = await linkColumn(cookie, { visibility: "confidential" });
     await setVisibility(cookie, field, "general");
-    const approver = await test.signedIn(["approver"]);
+    const approver = await test.signedIn("project-manager");
     const response = await send(
       approver.cookie,
       "POST",

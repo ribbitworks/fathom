@@ -21,7 +21,6 @@ import { firstPage } from "./layout.tsx";
 const administrator = () =>
   Response.json({
     ...fictionalUser,
-    roles: ["viewer", "administrator"],
     permissions: ["plan:view", "accounts:manage", "history:view"],
   });
 
@@ -71,7 +70,6 @@ describe("the sidebar", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          roles: ["administrator"],
           permissions: ["accounts:manage", "history:view"],
         }),
       "GET /api/accounts": () => Response.json({ accounts: [] }),

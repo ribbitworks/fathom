@@ -38,7 +38,10 @@ import type {
   SavedView,
   SavedViewChange,
   SavedViewRequest,
+  PasswordOwner,
+  PasswordSettings,
   Settings,
+  TimeZoneSetting,
   Unpublished,
 } from "@fathom/shared";
 import { draftsRequestSchema } from "@fathom/shared";
@@ -68,13 +71,19 @@ import {
   readUnpublished,
 } from "./unpublished.ts";
 import { type ActorAccess, readActorAccess } from "./roles.ts";
-import { changeTimeZone, readSettings, readTimeZone } from "./settings.ts";
+import {
+  changePasswordSettings,
+  changeTimeZone,
+  checkChosenPassword,
+  readSettings,
+  readTimeZone,
+} from "./settings.ts";
 import * as views from "./views.ts";
 
 export interface DataAccess {
   // Fails, with a message naming the settings to check, unless the database can be queried.
   checkConnection(): Promise<void>;
-  // The roles of the signed-in user making a request, and what they grant, or null if their account
+  // The role of the signed-in user making a request, and what it grants, or null if their account
   // is deactivated. The server needs them to know who is asking, so it is the one function that
   // checks no permission.
   readActorAccess(userId: string): Promise<ActorAccess | null>;
@@ -82,7 +91,14 @@ export interface DataAccess {
   // Settings for the whole of Fathom, which every signed-in user's screens follow, so reading them
   // checks no permission.
   readSettings(): Promise<Settings>;
-  changeTimeZone(actor: Actor, timeZone: string): Promise<Settings>;
+  changeTimeZone(actor: Actor, timeZone: string): Promise<TimeZoneSetting>;
+  changePasswordSettings(
+    actor: Actor,
+    passwords: PasswordSettings,
+  ): Promise<PasswordSettings>;
+  // Refuses a password a person chose that the rules in the password settings do not allow, or that
+  // is too common or easy to guess for its owner. Anyone may ask, since the rules are no secret.
+  checkChosenPassword(password: string, owner: PasswordOwner): Promise<void>;
   // The most recent entries in the access history.
   readHistory(actor: Actor): Promise<HistoryEntry[]>;
   // The change sets saved before the one named, or the latest, holding only the changes the actor
@@ -663,5 +679,9 @@ export function createDataAccess(database: Database): DataAccess {
     readSettings: async () => readSettings(database),
     changeTimeZone: async (actor, timeZone) =>
       changeTimeZone(database, actor, timeZone),
+    changePasswordSettings: async (actor, passwords) =>
+      changePasswordSettings(database, actor, passwords),
+    checkChosenPassword: async (password, owner) =>
+      checkChosenPassword(database, password, owner),
   };
 }

@@ -282,7 +282,7 @@ describe("who sees the People page", () => {
     );
     expect(
       screen.getByText(
-        "You can't add people, since your roles don't let you see positions.",
+        "You can't add people, since your role doesn't let you see positions.",
       ),
     ).toBeTruthy();
     expect(screen.queryByRole("row", { name: "New person" })).toBeNull();

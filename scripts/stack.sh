@@ -6,11 +6,13 @@
 # then at https://localhost:9443, or the port of this copy's clone number, so development mode can
 # run alongside it. Run 'pnpm dev:setup' first. Set FATHOM_STACK_PORT to use another port.
 # Usage: scripts/stack.sh up | down | reset | logs | create-account --name <name> --email <email>
-#   up              build and start the containers, and wait until they are ready
-#   down            stop the containers, keeping the database's data
-#   reset           delete the containers and the database's data
-#   logs            follow the containers' logs
-#   create-account  create an account, asking for its password without showing it
+#          | create-administrator --email <email>
+#   up                    build and start the containers, and wait until they are ready
+#   down                  stop the containers, keeping the database's data
+#   reset                 delete the containers and the database's data
+#   logs                  follow the containers' logs
+#   create-account        create an account, printing once the password Fathom generates
+#   create-administrator  create the Fathom Administrator account, unless one holds the role
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -51,11 +53,10 @@ case "${1:-}" in
     "${compose[@]}" down --volumes
     ;;
   logs) "${compose[@]}" logs --follow ;;
-  create-account)
+  create-account | create-administrator)
+    command="$1"
     shift
-    password="$(read_new_password)"
-    printf '%s\n' "$password" |
-      "${compose[@]}" run --rm --no-deps -T app apps/server/src/create-account.ts "$@"
+    "${compose[@]}" run --rm --no-deps -T app "apps/server/src/$command.ts" "$@"
     ;;
-  *) fail "Usage: scripts/stack.sh up | down | reset | logs | create-account --name <name> --email <email>" ;;
+  *) fail "Usage: scripts/stack.sh up | down | reset | logs | create-account --name <name> --email <email> | create-administrator --email <email>" ;;
 esac

@@ -29,7 +29,7 @@ async function fetchSession(): Promise<SessionResponse | null> {
   }
 }
 
-// The signed-in user, with their roles and permissions, and Fathom's settings, or null when no one is
+// The signed-in user, with their role and permissions, and Fathom's settings, or null when no one is
 // signed in.
 export const sessionQuery = queryOptions({
   queryKey: ["session"],

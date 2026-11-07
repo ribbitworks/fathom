@@ -5,12 +5,16 @@
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./guessable-passwords": "./src/guessable-passwords.ts"
   },
   "scripts": {
     "test": "vitest run --coverage"
   },
   "dependencies": {
+    "@zxcvbn-ts/core": "4.2.0",
+    "@zxcvbn-ts/language-common": "4.1.3",
+    "@zxcvbn-ts/language-en": "4.1.1",
     "zod": "4.6.7"
   },
   "devDependencies": {

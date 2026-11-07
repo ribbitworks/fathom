@@ -3,7 +3,7 @@
 // Tests for the Settings page, with the server's responses simulated: who sees it, choosing Fathom's
 // time zone with the day and time it is there, saving it for everyone, and the server's refusals.
 
-import { act, screen } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -19,15 +19,19 @@ const settingsEditor =
   () =>
     Response.json({
       ...fictionalUser,
-      roles: ["administrator"],
       permissions: ["settings:edit", "plan:view"],
-      settings: { timeZone },
+      settings: { ...fictionalUser.settings, timeZone },
     });
 
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });
+
+const timeZoneSave = () =>
+  within(
+    screen.getByRole("region", { name: "Time zone" }),
+  ).getByRole<HTMLButtonElement>("button", { name: "Save" });
 
 const picker = () =>
   screen.getByRole<HTMLInputElement>("combobox", { name: "Time zone" });
@@ -78,9 +82,7 @@ describe("the time zone", () => {
     expect(screen.getByText(/^It is/).textContent).toMatch(
       /November 4, 2026.* PM there\.$/,
     );
-    expect(
-      screen.getByRole<HTMLButtonElement>("button", { name: "Save" }).disabled,
-    ).toBe(true);
+    expect(timeZoneSave().disabled).toBe(true);
     await choose("Asia/Tokyo");
     expect(screen.getByText(/^It is/).textContent).toMatch(
       /November 5, 2026.*12:30\sPM there\.$/,
@@ -132,7 +134,7 @@ describe("the time zone", () => {
     renderApp("/settings");
     await screen.findByRole("combobox", { name: "Time zone" });
     await choose("Asia/Tokyo");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(timeZoneSave());
     expect(
       await screen.findByText("Fathom's time zone is now Asia/Tokyo."),
     ).toBeDefined();
@@ -142,9 +144,7 @@ describe("the time zone", () => {
     expect(JSON.parse(sent?.[1]?.body as string)).toEqual({
       timeZone: "Asia/Tokyo",
     });
-    expect(
-      screen.getByRole<HTMLButtonElement>("button", { name: "Save" }).disabled,
-    ).toBe(true);
+    expect(timeZoneSave().disabled).toBe(true);
   });
 
   it("says why the server refused a change", async () => {
@@ -156,9 +156,162 @@ describe("the time zone", () => {
     renderApp("/settings");
     await screen.findByRole("combobox", { name: "Time zone" });
     await choose("Asia/Tokyo");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(timeZoneSave());
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "You do not have permission to do this. Your roles may have changed.",
+      "You do not have permission to do this. Your role may have changed.",
+    );
+  });
+});
+
+describe("the password settings", () => {
+  const panel = () => screen.getByRole("region", { name: "Passwords" });
+  const save = () =>
+    within(panel()).getByRole<HTMLButtonElement>("button", { name: "Save" });
+  const box = (name: string) =>
+    within(panel()).getByRole<HTMLInputElement>("checkbox", { name });
+  const length = (name: string) =>
+    within(panel()).getByRole<HTMLInputElement>("textbox", { name });
+
+  async function open() {
+    renderApp("/settings");
+    await screen.findByRole("region", { name: "Passwords" });
+  }
+
+  async function retype(name: string, value: string) {
+    await userEvent.clear(length(name));
+    if (value !== "") await userEvent.type(length(name), value);
+  }
+
+  it("shows the ones saved, with Save turned off until something changes", async () => {
+    serverAnswers({ "GET /api/session": settingsEditor() });
+    await open();
+    expect([
+      length("Minimum length").value,
+      box("An uppercase letter").checked,
+      box("A lowercase letter").checked,
+      box("A digit").checked,
+      box("A symbol").checked,
+      length("Length").value,
+      box("Uppercase letters").checked,
+      box("Lowercase letters").checked,
+      box("Digits").checked,
+      box("Symbols: ! # $ % & * + - = ? @ ^ _ ~").checked,
+      box("Leave out characters that look alike: I L O i l o 0 1").checked,
+    ]).toEqual([
+      "12",
+      false,
+      false,
+      false,
+      false,
+      "20",
+      true,
+      true,
+      true,
+      false,
+      true,
+    ]);
+    expect(
+      screen.getByText(
+        "Changes apply the next time each person changes their password.",
+      ),
+    ).toBeDefined();
+    expect(save().disabled).toBe(true);
+    await userEvent.click(box("A digit"));
+    expect(save().disabled).toBe(false);
+    await userEvent.click(box("A digit"));
+    expect(save().disabled).toBe(true);
+  });
+
+  it("saves new rules and recipe for everyone", async () => {
+    const changed = {
+      rules: {
+        uppercase: false,
+        lowercase: false,
+        digits: false,
+        symbols: true,
+        minimumLength: 14,
+      },
+      recipe: {
+        uppercase: true,
+        lowercase: true,
+        digits: true,
+        symbols: true,
+        length: 20,
+        avoidLookAlikes: false,
+      },
+    };
+    const fetch = serverAnswers({
+      "GET /api/session": settingsEditor(),
+      "PUT /api/settings/passwords": () => Response.json(changed),
+    });
+    await open();
+    await retype("Minimum length", "14");
+    await userEvent.click(box("A symbol"));
+    await userEvent.click(box("Symbols: ! # $ % & * + - = ? @ ^ _ ~"));
+    await userEvent.click(
+      box("Leave out characters that look alike: I L O i l o 0 1"),
+    );
+    await userEvent.click(save());
+    expect(
+      await screen.findByText("Saved the password settings."),
+    ).toBeDefined();
+    const sent = fetch.mock.calls.find(
+      ([url]) => url === "/api/settings/passwords",
+    );
+    expect(JSON.parse(sent?.[1]?.body as string)).toEqual(changed);
+  });
+
+  it("says why a recipe would break the rules, and will not save it", async () => {
+    serverAnswers({ "GET /api/session": settingsEditor() });
+    await open();
+    await retype("Minimum length", "24");
+    await userEvent.click(box("A symbol"));
+    expect(
+      within(panel()).getByText(
+        "Generated passwords must have at least 24 characters to meet the minimum length.",
+      ),
+    ).toBeDefined();
+    expect(
+      within(panel()).getByText(
+        "Generated passwords must include symbols, because passwords must contain a symbol.",
+      ),
+    ).toBeDefined();
+    expect(save().disabled).toBe(true);
+    for (const name of ["Uppercase letters", "Lowercase letters", "Digits"]) {
+      await userEvent.click(box(name));
+    }
+    expect(
+      within(panel()).getByText(
+        "Select at least one character type for generated passwords.",
+      ),
+    ).toBeDefined();
+  });
+
+  it("asks for lengths in range", async () => {
+    serverAnswers({ "GET /api/session": settingsEditor() });
+    await open();
+    await retype("Minimum length", "");
+    await retype("Length", "");
+    expect(
+      within(panel()).getByText("Enter a number from 8 to 128."),
+    ).toBeDefined();
+    expect(
+      within(panel()).getByText("Enter a number from 12 to 128."),
+    ).toBeDefined();
+    expect(save().disabled).toBe(true);
+  });
+
+  it("says why the server refused a change", async () => {
+    serverAnswers({
+      "GET /api/session": settingsEditor(),
+      "PUT /api/settings/passwords": () =>
+        Response.json({ error: "Forbidden" }, { status: 403 }),
+    });
+    await open();
+    await userEvent.click(box("A digit"));
+    await userEvent.click(save());
+    expect((await within(panel()).findByRole("alert")).textContent).toBe(
+      "You do not have permission to do this. Your role may have changed.",
     );
   });
 });

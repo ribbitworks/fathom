@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The access history as users who may view it see it: who did what, when, and to whom, with
-// details that hold no sensitive values, only which roles were involved.
+// details that hold no sensitive values, only which roles were involved, by name.
 
 import { z } from "zod";
-import { roleSchema } from "./access.ts";
+import { passwordSettingsSchema } from "./passwords.ts";
 
 export const accessActionSchema = z.enum([
   "account-created",
@@ -34,21 +34,25 @@ export const accessActionSchema = z.enum([
   "role-changed",
   // Someone changed Fathom's time zone, naming the time zones before and after.
   "time-zone-changed",
+  // Someone changed the password settings, naming them before and after.
+  "password-settings-changed",
 ]);
 
 export type AccessAction = z.infer<typeof accessActionSchema>;
 
 export const historyDetailsSchema = z.object({
-  roles: z.array(roleSchema).optional(),
-  previousRoles: z.array(roleSchema).optional(),
-  // For a role created or changed: its name then, any name it had before, and the permissions
-  // granted or withdrawn, as stored, so a permission renamed since is still shown.
+  // For an account created or given another role: the role's name then, and the one it held
+  // before. For a role created or changed: its name then, any name it had before, and the
+  // permissions granted or withdrawn, as stored, so a permission renamed since is still shown.
   role: z.string().optional(),
+  previousRole: z.string().optional(),
   previousName: z.string().optional(),
   granted: z.array(z.string()).optional(),
   withdrawn: z.array(z.string()).optional(),
   timeZone: z.string().optional(),
   previousTimeZone: z.string().optional(),
+  passwords: passwordSettingsSchema.optional(),
+  previousPasswords: passwordSettingsSchema.optional(),
 });
 
 export type HistoryDetails = z.infer<typeof historyDetailsSchema>;

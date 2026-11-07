@@ -19,9 +19,9 @@ let planner: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
-  editor = await test.signedIn(["workforce-administrator", "viewer"]);
-  approver = await test.signedIn(["approver", "leadership"]);
-  planner = await test.signedIn(["resource-planner"]);
+  editor = await test.signedIn("workforce-administrator");
+  approver = await test.signedIn("engineering-director");
+  planner = await test.signedIn("resource-planner");
 });
 
 afterAll(async () => {
@@ -122,7 +122,7 @@ describe("people given what is only drafted to be added", () => {
   it("refuses a choice only someone else is drafting, unpublished", async () => {
     const { list, field } = await addedColumn();
     await test.approveLists();
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     const [secret] = (
       await test.request(
         other.cookie,
@@ -299,7 +299,7 @@ describe("what people's drafts use stays while they use it", () => {
     const { list, choices, field } = await addedColumn();
     const [alpha] = choiceIds(choices);
     await personWith({ [field.id]: [String(alpha)] });
-    const other = await test.signedIn(["workforce-administrator", "viewer"]);
+    const other = await test.signedIn("workforce-administrator");
     for (const url of [
       `/api/people/columns/${field.id}/draft`,
       `/api/lists/${list.id}/draft`,
@@ -318,7 +318,7 @@ describe("what people's drafts use stays while they use it", () => {
   it("refuses using a new list, column, or choice another editor is changing, unpublished", async () => {
     const { list, choices, field } = await addedColumn();
     const [alpha] = choiceIds(choices);
-    const other = await test.signedIn(["workforce-administrator", "viewer"]);
+    const other = await test.signedIn("workforce-administrator");
     const discard = (url: string) =>
       test.request(other.cookie, "DELETE", url, undefined, { publish: false });
     await discard(`/api/lists/${list.id}/choices/${String(alpha)}/draft`);
@@ -409,7 +409,7 @@ describe("approving a draft with the drafts it uses", () => {
     const { list, choices, field } = await addedColumn();
     const [alpha] = choiceIds(choices);
     const id = await personWith({ [field.id]: [String(alpha)] });
-    const other = await test.signedIn(["workforce-administrator", "viewer"]);
+    const other = await test.signedIn("workforce-administrator");
     const change = (method: Method, url: string, body: object) =>
       test.request(other.cookie, method, url, body, { publish: false });
     for (const [url, body] of [
@@ -458,8 +458,8 @@ describe("approving a draft with the drafts it uses", () => {
 
   it("refuses an Approver who may not see a column a person's draft gives a value in, approving nothing", async () => {
     const generalApprover = await test.signedIn([
-      "approver",
-      "resource-planner",
+      "drafts:approve",
+      "people:view",
     ]);
     const { list, choices, field } = await addedColumn("confidential");
     const added = await personWith({

@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The access history, through the server's API, and how each entry is put in words: a sentence
-// naming who did what to whose account, whether it deserves attention, and the roles involved.
+// naming who did what to whose account, whether it deserves attention, and the roles involved, by
+// name.
 
 import {
   type AccessAction,
   accessActionSchema,
+  characterKinds,
   type HistoryEntry,
   historyListSchema,
+  type PasswordSettings,
   permissionLabel,
-  type Role,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
-import { roleName } from "./accounts.ts";
 import { getJson } from "./api.ts";
 
 export const historyQuery = queryOptions({
@@ -30,14 +31,14 @@ interface ActionWords {
 
 // Every action must be described, which the compiler checks.
 const actionWords: Record<AccessAction, ActionWords> = {
-  // Worth checking, since the account's roles give it access, Confidential data included.
+  // Worth checking, since the account's role gives it access, Confidential data included.
   "account-created": {
     verb: "created the account for",
     caution: true,
   },
   // Worth checking, since a new role can give more access, Confidential data included.
   "roles-changed": {
-    verb: "changed the roles of",
+    verb: "changed the role of",
     caution: true,
   },
   "name-changed": {
@@ -99,6 +100,11 @@ const actionWords: Record<AccessAction, ActionWords> = {
     verb: "changed Fathom's time zone",
     caution: false,
   },
+  // Worth checking, since weaker rules or recipes make passwords easier to guess.
+  "password-settings-changed": {
+    verb: "changed Fathom's password settings",
+    caution: true,
+  },
 };
 
 // An action recorded by another version of Fathom, which this one does not know, is shown as it was
@@ -142,10 +148,6 @@ export function subjectName({ action, subject }: HistoryEntry): string | null {
   return nameOf(subject);
 }
 
-function names(roles: readonly Role[]): string {
-  return roles.length === 0 ? "no roles" : roles.map(roleName).join(", ");
-}
-
 function permissionNames(permissions: readonly string[]): string {
   return permissions.map(permissionLabel).join(", ");
 }
@@ -167,18 +169,69 @@ function describeRole(details: HistoryEntry["details"]): string {
   return parts.join("; ");
 }
 
-// The roles or time zones involved in an entry, in words, or an empty string when none were.
-export function describeDetails({ details }: HistoryEntry): string {
-  if (details.role !== undefined) return describeRole(details);
-  if (details.timeZone !== undefined) {
-    return details.previousTimeZone === undefined
-      ? `to ${details.timeZone}`
-      : `from ${details.previousTimeZone} to ${details.timeZone}`;
+// What changed in the password settings, one phrase for each setting.
+function describePasswords(
+  { rules, recipe }: PasswordSettings,
+  previous: PasswordSettings,
+): string {
+  const chosen = "password requirements";
+  const made = "generated passwords";
+  const phrases: string[] = [];
+  if (rules.minimumLength !== previous.rules.minimumLength) {
+    phrases.push(
+      `${chosen} need ${String(rules.minimumLength)} characters, not ${String(previous.rules.minimumLength)}`,
+    );
   }
-  if (details.previousRoles !== undefined && details.roles !== undefined) {
-    return `from ${names(details.previousRoles)} to ${names(details.roles)}`;
+  for (const kind of characterKinds) {
+    if (rules[kind.type] !== previous.rules[kind.type]) {
+      phrases.push(
+        `${chosen} ${rules[kind.type] ? "need" : "no longer need"} ${kind.one}`,
+      );
+    }
   }
-  return details.roles === undefined ? "" : `with ${names(details.roles)}`;
+  if (recipe.length !== previous.recipe.length) {
+    phrases.push(
+      `${made} have ${String(recipe.length)} characters, not ${String(previous.recipe.length)}`,
+    );
+  }
+  for (const kind of characterKinds) {
+    if (recipe[kind.type] !== previous.recipe[kind.type]) {
+      phrases.push(
+        `${made} ${recipe[kind.type] ? "use" : "no longer use"} ${kind.all}`,
+      );
+    }
+  }
+  if (recipe.avoidLookAlikes !== previous.recipe.avoidLookAlikes) {
+    phrases.push(
+      `${made} ${recipe.avoidLookAlikes ? "leave out" : "may use"} characters that look alike`,
+    );
+  }
+  return phrases.join("; ");
+}
+
+// The roles, time zones, or password settings involved in an entry, in words, or an empty string
+// when none were. An account's role is named as it was then.
+export function describeDetails({ action, details }: HistoryEntry): string {
+  const { role, previousRole, timeZone, previousTimeZone } = details;
+  if (action === "account-created" && role !== undefined) return `with ${role}`;
+  if (action === "roles-changed" && role !== undefined) {
+    return previousRole === undefined
+      ? `to ${role}`
+      : `from ${previousRole} to ${role}`;
+  }
+  if (role !== undefined) return describeRole(details);
+  if (timeZone !== undefined) {
+    return previousTimeZone === undefined
+      ? `to ${timeZone}`
+      : `from ${previousTimeZone} to ${timeZone}`;
+  }
+  if (
+    details.passwords !== undefined &&
+    details.previousPasswords !== undefined
+  ) {
+    return describePasswords(details.passwords, details.previousPasswords);
+  }
+  return "";
 }
 
 // The words an entry shows, which a search on the page looks in.

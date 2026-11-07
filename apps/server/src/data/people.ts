@@ -6,7 +6,7 @@
 // drafts.ts sets out, which reaches the live people only once approved, as approvals.ts sets out.
 // Every change is recorded in the change history, field by field, with each field's tier: a
 // person's name and Employee ID are General, their start and end dates Restricted, and each
-// column's values as sensitive as its list. Users see and change only the tiers their roles allow,
+// column's values as sensitive as its list. Users see and change only the tiers their role allows,
 // and changes to Restricted or Confidential details are also recorded in the access history.
 
 import {
@@ -683,7 +683,7 @@ export async function createPeople(
     const columns = await columnsWithAdded(transaction, actor.user.id, true);
     if (!seesTier(actor, columns.positionTier)) {
       throw new ForbiddenError(
-        "Every person needs a position, and your roles don't let you see positions",
+        "Every person needs a position, and your role doesn't let you see positions",
       );
     }
     const known = await choicesAskedFor(transaction, actor.user.id, requests);

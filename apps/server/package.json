@@ -9,7 +9,8 @@
     "./accounts": "./src/data/accounts.ts",
     "./auth": "./src/data/auth.ts",
     "./config": "./src/config.ts",
-    "./data": "./src/data/index.ts"
+    "./data": "./src/data/index.ts",
+    "./roles": "./src/data/roles.ts"
   },
   "scripts": {
     "dev": "node --watch src/main.ts",

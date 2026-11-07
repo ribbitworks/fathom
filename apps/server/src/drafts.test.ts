@@ -12,6 +12,7 @@ import type {
   Choice,
   Field,
   List,
+  Permission,
   Person,
   Role,
 } from "@fathom/shared";
@@ -31,9 +32,9 @@ let approver: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
-  editor = await test.signedIn(["workforce-administrator", "viewer"]);
+  editor = await test.signedIn("workforce-administrator");
   // Sees every tier, as the Engineering Director does.
-  approver = await test.signedIn(["approver", "leadership"]);
+  approver = await test.signedIn("engineering-director");
 });
 
 afterAll(async () => {
@@ -181,7 +182,7 @@ describe("drafts as people see them", () => {
     const removed = await livePerson();
     await saved("DELETE", `/api/people/${removed.id}`);
 
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect((await seen(planner.cookie, added.id))?.draft).toMatchObject({
       action: "created",
       changed: ["preferredName", "employeeId", "positionId", field.id],
@@ -216,8 +217,8 @@ describe("drafts as people see them", () => {
     await saved("PATCH", `/api/people/${person.id}`, {
       endDate: "2031-01-01",
     });
-    const planner = await test.signedIn(["resource-planner"]);
-    const manager = await test.signedIn(["people-manager"]);
+    const planner = await test.signedIn("resource-planner");
+    const manager = await test.signedIn("engineering-manager");
     expect((await seen(planner.cookie, person.id))?.draft).toBeUndefined();
     expect((await seen(manager.cookie, person.id))?.draft).toMatchObject({
       changed: ["endDate"],
@@ -283,7 +284,7 @@ describe("drafts as people see them", () => {
     await saved("PATCH", `/api/people/${leaving.id}`, {
       endDate: "2021-01-01",
     });
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect(await seen(planner.cookie, starting.id)).toBeUndefined();
     // A draft changing only Restricted dates neither hides nor shows anyone before it is approved.
     const left = await seen(planner.cookie, leaving.id);
@@ -326,7 +327,7 @@ describe("changing drafts", () => {
     await saved("PATCH", `/api/people/${person.id}`, {
       preferredName: "Fictional Two",
     });
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     await send(other.cookie, "PATCH", `/api/people/${person.id}`, {
       preferredName: "Fictional Three",
     });
@@ -536,19 +537,20 @@ describe("approving and rejecting", () => {
     await saved("PATCH", `/api/people/${person.id}`, { endDate: "2032-01-01" });
     // Refused without approving or seeing people, and, to those not shown the draft, answered as no
     // draft at all, so asking reveals nothing.
-    const roles: [Role[], number][] = [
-      [["workforce-administrator"], 403],
-      [["approver"], 403],
-      [["approver", "resource-planner"], 404],
+    const roles: [Role | Permission[], number][] = [
+      ["workforce-administrator", 403],
+      ["project-manager", 403],
+      [["drafts:approve", "people:view"], 404],
     ];
     for (const [held, status] of roles) {
       const { cookie } = await test.signedIn(held);
-      expect((await approve([person.id], cookie)).statusCode, held.join()).toBe(
-        status,
-      );
+      expect(
+        (await approve([person.id], cookie)).statusCode,
+        String(held),
+      ).toBe(status);
       expect(
         (await reject([person.id], "Fictional", cookie)).statusCode,
-        held.join(),
+        String(held),
       ).toBe(status);
     }
     // A draft shown only in part is refused.
@@ -557,12 +559,12 @@ describe("approving and rejecting", () => {
       preferredName: unique("Fictional"),
       endDate: "2032-01-01",
     });
-    const planner = await test.signedIn(["approver", "resource-planner"]);
+    const planner = await test.signedIn(["drafts:approve", "people:view"]);
     const refused = await approve([partly.id], planner.cookie);
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toEqual({
       error:
-        "One of these drafts holds details your roles do not let you see, so an Approver who sees them must decide it",
+        "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
     });
     // Nor is a former employee's draft, of General details only, decided by one who sees only
     // current staff.
@@ -579,10 +581,20 @@ describe("approving and rejecting", () => {
     const added = await draftPerson();
     expect((await approve([added.id], planner.cookie)).statusCode).toBe(200);
     expect((await approve([partly.id])).statusCode).toBe(200);
-    const manager = await test.signedIn(["approver", "people-manager"]);
+    const manager = await test.signedIn([
+      "drafts:approve",
+      "people:view",
+      "restricted:view",
+    ]);
     expect((await approve([person.id], manager.cookie)).statusCode).toBe(200);
     // An Approver may approve their own drafts.
-    const own = await test.signedIn(["approver", "workforce-administrator"]);
+    const own = await test.signedIn([
+      "drafts:approve",
+      "people:edit",
+      "restricted:edit",
+      "confidential:edit",
+      "configuration:edit",
+    ]);
     const response = await send(own.cookie, "POST", "/api/people", {
       people: [
         {
@@ -1012,15 +1024,15 @@ describe("who last changed a draft", () => {
     await saved("PATCH", `/api/people/${person.id}`, {
       preferredName: unique("Fictional"),
     });
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     await send(other.cookie, "PATCH", `/api/people/${person.id}`, {
       endDate: "2033-01-01",
     });
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect((await seen(planner.cookie, person.id))?.draft?.madeBy).toBe(
       "Fictional User 1",
     );
-    const manager = await test.signedIn(["people-manager"]);
+    const manager = await test.signedIn("engineering-manager");
     const [otherUser] = await test.connection
       .select({ name: users.name })
       .from(users)

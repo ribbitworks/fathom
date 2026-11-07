@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/product/decisions.md"]
-last_updated: "2026-11-05"
+last_updated: "2026-11-06"
 ---
 
 # Manual Test: Release Streams, Cycles and Releases
 
 ## Scope
 
-Verifies the Releases page: how release streams, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator, a Project Planner and an Approver can do with them, including changing one cycle's length, and how their drafts are published, approved, rejected, resubmitted and discarded.
+Verifies the Releases page: how release streams, their cycles and their releases are shown, in the table, the side panel and the timeline, what a Workforce Administrator, a Planner and a Project Manager can do with them, including changing one cycle's length, and how their drafts are published, approved, rejected, resubmitted and discarded.
 
 ## Test Environment
 
@@ -24,10 +24,10 @@ Verifies the Releases page: how release streams, their cycles and their releases
 
 [R2](#r2-start-from-an-empty-database) creates these accounts, with every other development account, and prints the one password they share. Fathom shows each account by the name in bold, in the top right corner once signed in. Product Manager and Project Manager are different accounts.
 
-- **Engineering Operations Manager:** `engineering.operations.manager@fathom.test`, a Workforce Administrator. It adds, renames and retires release streams and changes their cycles; its changes are drafts. It cannot make releases or approve drafts.
-- **Product Manager:** `product.manager@fathom.test`, a Project Planner. It makes and changes releases; its changes are drafts. It cannot change release streams or approve drafts.
-- **Project Manager:** `project.manager@fathom.test`, a Project Planner and an Approver. In this test it approves and rejects drafts.
-- **Team Member:** `team.member@fathom.test`, a Viewer. It sees release streams, cycles and releases, and cannot change them.
+- **Engineering Operations Manager:** `engineering.operations.manager@fathom.test`, holding the Workforce Administrator role. It adds, renames and retires release streams and changes their cycles; its changes are drafts. It cannot make releases or approve drafts.
+- **Product Manager:** `product.manager@fathom.test`, holding the Planner role. It makes and changes releases; its changes are drafts. It cannot change release streams or approve drafts.
+- **Project Manager:** `project.manager@fathom.test`, holding the Project Manager role, which changes the plan and approves drafts. In this test it approves and rejects drafts.
+- **Team Member:** `team.member@fathom.test`, holding the Team Member role. It sees release streams, cycles and releases, and cannot change them.
 
 ## Common Procedures
 

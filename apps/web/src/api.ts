@@ -124,7 +124,7 @@ const tooManyRequests = 429;
 export function describeProblem(error: Error, fallback: string): string {
   if (!(error instanceof ApiError)) return fallback;
   if (error.status === forbidden) {
-    return "You do not have permission to do this. Your roles may have changed.";
+    return "You do not have permission to do this. Your role may have changed.";
   }
   if (error.status === tooManyRequests) {
     return "Too many requests. Wait a minute, then try again.";

@@ -256,18 +256,20 @@ dev_account_password_file() {
   printf '%s\n' "$file"
 }
 
-# Asks for a new password twice, without showing it, and prints it for the caller to pass on through
-# standard input, never as an argument, so it stays out of process listings. It is called inside
-# $(...), where older bash does not stop on errors, so each step checks its own result.
-read_new_password() {
-  local password confirmation
-  [ -r /dev/tty ] || fail "A password can only be entered at a terminal"
-  printf 'Password: ' >/dev/tty
-  IFS= read -rs password </dev/tty || fail "Could not read the password"
-  printf '\nPassword again: ' >/dev/tty
-  IFS= read -rs confirmation </dev/tty || fail "Could not read the password"
-  printf '\n' >/dev/tty
-  [ -n "$password" ] || fail "The password is empty"
-  [ "$password" = "$confirmation" ] || fail "The passwords do not match"
-  printf '%s\n' "$password"
+# Runs one of the server's account commands, such as apps/server/src/create-account.ts, against the
+# development database, starting and migrating it first.
+run_dev_account_command() {
+  local command="$1"
+  shift
+  [ -s .dev/secrets/fathom_auth_secret ] || fail "Development secrets are missing; run 'pnpm dev:setup' first"
+  bash scripts/dev-db.sh up
+  bash scripts/dev-db.sh migrate
+  FATHOM_PUBLIC_URL="https://localhost:$FATHOM_DEV_PORT" \
+    FATHOM_AUTH_SECRET_FILE="$PWD/.dev/secrets/fathom_auth_secret" \
+    FATHOM_DB_HOST=127.0.0.1 \
+    FATHOM_DB_PORT="$FATHOM_DEV_DB_PORT" \
+    FATHOM_DB_NAME=fathom \
+    FATHOM_DB_USER=fathom_app \
+    FATHOM_DB_PASSWORD_FILE="$PWD/.dev/secrets/fathom_app_password" \
+    node "$command" "$@"
 }

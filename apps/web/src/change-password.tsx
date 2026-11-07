@@ -1,56 +1,171 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The dialog in which users change their own password, giving their current one, opened from their
-// account's menu. Changing it signs out their other sessions, such as on another computer, which
-// the notification says once it is done.
+// Users changing their own password, giving their current one: in a dialog opened from their
+// account's menu, and, while they still sign in with a password Fathom generated, on a page of its
+// own that is all they see until they change it, or sign out. The new password must differ from the
+// current one, meet the rules in the password settings, and not be too common or easy to guess. A
+// checklist under it shows each requirement met or not as they type. Changing it signs out their
+// other sessions, such as on another computer, which the notification says once it is done.
 
-import { passwordChangeSchema } from "@fathom/shared";
+import {
+  guessablePasswordMessage,
+  passwordChangeFields,
+  type PasswordOwner,
+  passwordProblem,
+  passwordRequirements,
+  type PasswordRules,
+  refusingSamePassword,
+  samePasswordMessage,
+} from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Modal, PasswordInput, Stack } from "@mantine/core";
-import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import {
+  Alert,
+  Button,
+  Center,
+  Group,
+  Modal,
+  Paper,
+  PasswordInput,
+  Stack,
+  Text,
+  Title,
+  VisuallyHidden,
+} from "@mantine/core";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import { type ReactNode, useMemo, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
-import { ApiError } from "./api.ts";
+import { ApiError, describeProblem } from "./api.ts";
 import { changePassword } from "./accounts.ts";
+import { Brand } from "./brand.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
+import { type GuessableCheck, useGuessableCheck } from "./guessable.ts";
+import { Icon } from "./icons.tsx";
 import { notifySuccess } from "./notices.tsx";
+import classes from "./pages.module.css";
+import { sessionQuery, signOut } from "./session.ts";
 
-const formSchema = passwordChangeSchema
-  .extend({ repeated: z.string() })
-  .refine((values) => values.newPassword === values.repeated, {
+// The check for guessable passwords is left to the server until it has loaded.
+const formSchemaFor = (
+  rules: PasswordRules,
+  owner: PasswordOwner,
+  isGuessable: GuessableCheck | undefined,
+) =>
+  refusingSamePassword(
+    passwordChangeFields.extend({
+      newPassword: z.string().superRefine((password, context) => {
+        const problem =
+          passwordProblem(rules, password) ??
+          (isGuessable?.(password, owner) === true
+            ? guessablePasswordMessage
+            : undefined);
+        if (problem !== undefined) {
+          context.addIssue({ code: "custom", message: problem });
+        }
+      }),
+      repeated: z.string(),
+    }),
+  ).refine((values) => values.newPassword === values.repeated, {
     path: ["repeated"],
   });
 
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<ReturnType<typeof formSchemaFor>>;
 
 // A wrong current password is named under its field, which takes the focus; other problems are put as
 // every dialog puts them.
 const isWrongPassword = (error: unknown): boolean =>
   error instanceof ApiError && error.code === "INVALID_PASSWORD";
 
+// Each requirement for the new password, with a mark and words for whether it is met, so neither
+// relies on colour. One not met stays neutral while the password is typed, and turns red only once
+// the field is left or the form is sent.
+function PasswordChecklist({
+  rules,
+  owner,
+  password,
+  isGuessable,
+  showUnmet,
+}: {
+  rules: PasswordRules;
+  owner: PasswordOwner;
+  password: string;
+  isGuessable: GuessableCheck | undefined;
+  showUnmet: boolean;
+}) {
+  const items = [
+    ...passwordRequirements(rules).map(({ label, isMet }) => ({
+      label,
+      met: isMet(password),
+    })),
+    {
+      label: "Not a common or easily guessed password",
+      met:
+        isGuessable !== undefined &&
+        password.length > 0 &&
+        !isGuessable(password, owner),
+    },
+  ];
+  return (
+    <span role="list" className={classes.passwordChecklist}>
+      {items.map(({ label, met }) => {
+        const state = met ? "met" : showUnmet ? "unmet" : "pending";
+        return (
+          <span
+            key={label}
+            role="listitem"
+            className={classes.passwordRequirement}
+            data-state={state}
+          >
+            <Icon
+              name={met ? "check" : showUnmet ? "close" : "pending"}
+              size={14}
+            />
+            {label}
+            <VisuallyHidden>{met ? " (met)" : " (not met)"}</VisuallyHidden>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 function PasswordForm({
+  rules,
+  owner,
   onDone,
   onBusy,
+  actions,
 }: {
-  onDone: () => void;
-  onBusy: (busy: boolean) => void;
+  rules: PasswordRules;
+  owner: PasswordOwner;
+  onDone: () => Promise<void> | void;
+  onBusy?: (busy: boolean) => void;
+  // The buttons at the form's foot, with why the change was refused, unless it was a wrong current
+  // password, which is named under its field.
+  actions: (state: { pending: boolean; error: Error | null }) => ReactNode;
 }) {
+  const isGuessable = useGuessableCheck();
+  const formSchema = useMemo(
+    () => formSchemaFor(rules, owner, isGuessable),
+    [rules, owner, isGuessable],
+  );
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: { currentPassword: "", newPassword: "", repeated: "" },
   });
-  const { errors } = form.formState;
+  const { errors, touchedFields, isSubmitted } = form.formState;
+  const newPassword = useWatch({ control: form.control, name: "newPassword" });
   // The passwords sent are not kept once the change is done.
   const changing = useMutation({
     gcTime: 0,
     mutationFn: ({ currentPassword, newPassword }: FormValues) =>
       changePassword({ currentPassword, newPassword }),
     onMutate: () => {
-      onBusy(true);
+      onBusy?.(true);
     },
     onSettled: () => {
-      onBusy(false);
+      onBusy?.(false);
     },
     onError: (error) => {
       if (isWrongPassword(error)) {
@@ -61,11 +176,11 @@ function PasswordForm({
         );
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       notifySuccess(
         "Your password has been changed, and you have been signed out everywhere else.",
       );
-      onDone();
+      await onDone();
     },
   });
   return (
@@ -93,7 +208,21 @@ function PasswordForm({
         <PasswordInput
           label="New password"
           autoComplete="new-password"
-          error={errors.newPassword && "Use 12 to 128 characters."}
+          description={
+            <PasswordChecklist
+              rules={rules}
+              owner={owner}
+              password={newPassword}
+              isGuessable={isGuessable}
+              showUnmet={touchedFields.newPassword === true || isSubmitted}
+            />
+          }
+          inputWrapperOrder={["label", "input", "description", "error"]}
+          error={
+            errors.newPassword?.message === samePasswordMessage
+              ? `${samePasswordMessage}.`
+              : errors.newPassword?.message
+          }
           {...form.register("newPassword")}
         />
         <PasswordInput
@@ -102,21 +231,23 @@ function PasswordForm({
           error={errors.repeated && "The new passwords do not match."}
           {...form.register("repeated")}
         />
-        <DialogActions
-          error={isWrongPassword(changing.error) ? null : changing.error}
-          pending={changing.isPending}
-          label="Change password"
-          onCancel={onDone}
-        />
+        {actions({
+          pending: changing.isPending,
+          error: isWrongPassword(changing.error) ? null : changing.error,
+        })}
       </Stack>
     </form>
   );
 }
 
 export function ChangePasswordDialog({
+  rules,
+  owner,
   opened,
   onClose,
 }: {
+  rules: PasswordRules;
+  owner: PasswordOwner;
   opened: boolean;
   onClose: () => void;
 }) {
@@ -132,7 +263,108 @@ export function ChangePasswordDialog({
       withCloseButton={!busy}
       title="Change password"
     >
-      <PasswordForm onDone={onClose} onBusy={setBusy} />
+      <PasswordForm
+        rules={rules}
+        owner={owner}
+        onDone={onClose}
+        onBusy={setBusy}
+        actions={({ pending, error }) => (
+          <DialogActions
+            error={error}
+            pending={pending}
+            label="Change password"
+            onCancel={onClose}
+          />
+        )}
+      />
     </Modal>
+  );
+}
+
+// The page users see in place of every other while they sign in with a password Fathom generated,
+// with only Fathom's name and mark above it, like the sign-in page. Once the password is changed,
+// Fathom opens as it does after signing in, on the Overview or the first page their role allows.
+export function FirstPasswordChange({
+  rules,
+  owner,
+}: {
+  rules: PasswordRules;
+  owner: PasswordOwner;
+}) {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const navigate = useNavigate();
+  const [signOutFailed, setSignOutFailed] = useState(false);
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+    } catch {
+      setSignOutFailed(true);
+      return;
+    }
+    queryClient.clear();
+    queryClient.setQueryData(sessionQuery.queryKey, null);
+    await navigate({ to: "/sign-in" });
+  }
+
+  return (
+    <Center mih="100vh" p="md" className={classes.canvas}>
+      <Stack w="100%" maw={400} gap="xl">
+        <Center>
+          <Brand size="large" />
+        </Center>
+        <Paper withBorder p="xl">
+          <Stack>
+            <Title order={1} size="h3">
+              Change password
+            </Title>
+            <Text size="sm">
+              Fathom generated this password. A new password is required to
+              continue.
+            </Text>
+            <PasswordForm
+              rules={rules}
+              owner={owner}
+              onDone={async () => {
+                await queryClient.invalidateQueries({
+                  queryKey: sessionQuery.queryKey,
+                });
+                await router.invalidate();
+              }}
+              actions={({ pending, error }) => (
+                <>
+                  {error && (
+                    <Alert color="red" role="alert">
+                      {describeProblem(
+                        error,
+                        "Fathom could not change the password. Try again in a moment.",
+                      )}
+                    </Alert>
+                  )}
+                  {signOutFailed && (
+                    <Alert color="red" role="alert">
+                      Fathom could not sign out. Try again in a moment.
+                    </Alert>
+                  )}
+                  <Group justify="space-between">
+                    <Button
+                      variant="default"
+                      disabled={pending}
+                      onClick={() => void handleSignOut()}
+                    >
+                      Sign out
+                    </Button>
+                    <Button type="submit" loading={pending}>
+                      Change password
+                    </Button>
+                  </Group>
+                </>
+              )}
+            />
+          </Stack>
+        </Paper>
+      </Stack>
+    </Center>
   );
 }

@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Accounts: Administrators list them, create them, and change their names, email addresses, roles,
-// passwords, and whether they can sign in, and every user changes their own name. The data access
+// passwords, and whether they can sign in, and every user changes their own name. Fathom generates
+// the password for a new account and for a reset, and answers with it this once. The data access
 // layer checks the actor may do each.
 
 import {
@@ -9,9 +10,10 @@ import {
   accountChangeSchema,
   accountListSchema,
   accountSchema,
+  createdAccountSchema,
+  generatedPasswordSchema,
   newAccountSchema,
   ownNameSchema,
-  passwordResetSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -40,13 +42,13 @@ export function accountRoutes(
       {
         schema: {
           body: newAccountSchema,
-          response: { [created]: accountResponse },
+          response: { [created]: createdAccountSchema },
         },
       },
       async (request, reply) =>
-        reply.status(created).send({
-          account: await accounts.createAccount(request.actor, request.body),
-        }),
+        reply
+          .status(created)
+          .send(await accounts.createAccount(request.actor, request.body)),
     );
 
     app.patch(
@@ -67,17 +69,15 @@ export function accountRoutes(
       }),
     );
 
-    app.put(
+    app.post(
       "/api/accounts/:id/password",
-      { schema: { params, body: passwordResetSchema } },
-      async (request, reply) => {
-        await accounts.resetPassword(
+      { schema: { params, response: { 200: generatedPasswordSchema } } },
+      async (request) => ({
+        password: await accounts.resetPassword(
           request.actor,
           request.params.id,
-          request.body.password,
-        );
-        return reply.status(noContent).send();
-      },
+        ),
+      }),
     );
 
     app.put(

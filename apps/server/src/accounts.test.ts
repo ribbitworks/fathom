@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for account administration against a migrated PostgreSQL server: which roles may manage
-// accounts; creating accounts and changing their names, email addresses, roles, passwords, and
-// whether they can sign in; administrators changing their own account, except that the last active
-// Administrator keeps the role and stays active; signing users out when their password is reset or
+// accounts; creating accounts and changing their names, email addresses, the one role each holds,
+// passwords, and whether they can sign in; administrators changing their own account, except that
+// the last active Administrator keeps the role and stays active; signing users out when their password is reset or
 // their account deactivated; and users changing their own password, and the access history that
 // records each change.
 
@@ -20,7 +20,7 @@ import {
   userRoles,
   users,
 } from "@fathom/db";
-import { type Role, roleSchema } from "@fathom/shared";
+import { type Role, roleSchema, startingRoles } from "@fathom/shared";
 import {
   createTestCertificate,
   startTestDatabase,
@@ -29,8 +29,8 @@ import {
 } from "@fathom/test-utils";
 import { and, eq, inArray, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { rolesGranting, startingGrants } from "./access.ts";
-import { addRoles } from "./data/roles.ts";
+import { rolesGranting } from "./access.ts";
+import { findStartingRole } from "./data/roles.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
@@ -82,16 +82,44 @@ interface TestAccount {
   email: string;
 }
 
-async function newAccount(roles: Role[]): Promise<TestAccount> {
+// The ID of a starting role, as the Accounts page sends it.
+const roleId = (key: Role) => findStartingRole(connection, key);
+
+async function newAccount(role: Role = "team-member"): Promise<TestAccount> {
   accountCount += 1;
   const email = `person${String(accountCount)}@example.test`;
   const id = await createAccount(auth, connection, {
     name: `Fictional Person ${String(accountCount)}`,
     email,
     password,
-    roles,
+    roleId: await roleId(role),
   });
   return { id, email };
+}
+
+// A role made later, granting just these permissions.
+async function madeRole(name: string, permissions: string[]): Promise<string> {
+  const [made] = await connection
+    .insert(roleTable)
+    .values({ name })
+    .returning({ id: roleTable.id });
+  if (made === undefined) throw new Error("No role was made");
+  if (permissions.length > 0) {
+    await connection
+      .insert(rolePermissions)
+      .values(
+        permissions.map((permission) => ({ roleId: made.id, permission })),
+      );
+  }
+  return made.id;
+}
+
+// Gives an account a role directly, as only a test may, in place of the one it holds.
+async function holdRole(userId: string, id: string): Promise<void> {
+  await connection
+    .update(userRoles)
+    .set({ roleId: id })
+    .where(eq(userRoles.userId, userId));
 }
 
 // Signs in from a fictional address of its own, so sign-in limits never interfere, and returns the
@@ -111,27 +139,31 @@ async function signIn(email: string, withPassword = password): Promise<string> {
   return cookie?.split(";")[0] ?? "";
 }
 
-async function signedIn(roles: Role[]) {
-  const account = await newAccount(roles);
+async function signedIn(role: Role) {
+  const account = await newAccount(role);
   return { ...account, cookie: await signIn(account.email) };
 }
 
+// Each from a fictional address of its own, so Better Auth's limits on changing passwords never
+// interfere.
 function request(
   cookie: string,
   method: "GET" | "POST" | "PUT" | "PATCH",
   url: string,
   payload?: object,
 ) {
+  addressCount += 1;
   return app.inject({
     method,
     url,
+    remoteAddress: `192.0.2.${String(addressCount % 250)}`,
     headers: { cookie, origin: publicUrl },
     ...(payload === undefined ? {} : { payload }),
   });
 }
 
 describe("stored roles", () => {
-  it("start as the roles Fathom has always had, granting exactly what the server first grants each", async () => {
+  it("start as the persona roles, granting exactly what the shared starting roles list", async () => {
     const rows = await connection
       .select({ key: roleTable.key, permission: rolePermissions.permission })
       .from(roleTable)
@@ -148,9 +180,9 @@ describe("stored roles", () => {
       ),
     ).toEqual(
       Object.fromEntries(
-        Object.entries(startingGrants).map(([role, granted]) => [
+        Object.entries(startingRoles).map(([role, { permissions }]) => [
           role,
-          [...granted].sort(),
+          [...permissions].sort(),
         ]),
       ),
     );
@@ -187,34 +219,28 @@ describe("stored roles", () => {
     }
   });
 
-  it("must all exist for an account to be given them", async () => {
-    // Only the migration role can change a key. The change is undone when the transaction fails.
-    const migratorPool = createPool(database.migrator, () => undefined);
-    const migrator = createDatabase(migratorPool);
-    await expect(
-      migrator.transaction(async (transaction) => {
-        await transaction
-          .update(roleTable)
-          .set({ key: null })
-          .where(eq(roleTable.key, "leadership"));
-        await addRoles(transaction, "fictional-nobody", [
-          "viewer",
-          "leadership",
-        ]);
-      }),
-    ).rejects.toThrow("A role to be given is missing from the database");
-    await migratorPool.end();
-    const [leadership] = await connection
-      .select({ id: roleTable.id })
-      .from(roleTable)
-      .where(eq(roleTable.key, "leadership"));
-    expect(leadership).toBeDefined();
+  it("are found by key, refusing a key no starting role has", async () => {
+    await expect(findStartingRole(connection, "viewer")).rejects.toThrow(
+      "The starting role viewer is missing from the database",
+    );
+  });
+
+  it("are held one to an account: the database refuses a second", async () => {
+    const holder = await newAccount("team-member");
+    const refused: unknown = await connection
+      .insert(userRoles)
+      .values({ userId: holder.id, roleId: await roleId("executive") })
+      .then(
+        () => undefined,
+        (error: unknown) => error,
+      );
+    expect(hasDatabaseCode(refused, databaseCodes.uniqueViolation)).toBe(true);
   });
 
   it("have names unique whatever their case", async () => {
     const refused: unknown = await connection
       .insert(roleTable)
-      .values({ name: "VIEWER" })
+      .values({ name: "TEAM MEMBER" })
       .then(
         () => undefined,
         (error: unknown) => error,
@@ -228,7 +254,7 @@ describe("who may manage accounts", () => {
   it.each(roleSchema.options)(
     "a %s may list accounts only if the role lets them manage accounts",
     async (role) => {
-      const { cookie } = await signedIn([role]);
+      const { cookie } = await signedIn(role);
       const response = await request(cookie, "GET", "/api/accounts");
       if (rolesGranting("accounts:manage").includes(role)) {
         expect(response.statusCode).toBe(200);
@@ -246,12 +272,11 @@ describe("who may manage accounts", () => {
       {
         name: "Fictional Person",
         email: "x@example.test",
-        password,
-        roles: [],
+        roleId: "00000000-0000-4000-8000-000000000000",
       },
     ],
-    ["PATCH", "/api/accounts/any", { roles: [] }],
-    ["PUT", "/api/accounts/any/password", { password }],
+    ["PATCH", "/api/accounts/any", { name: "Fictional Person" }],
+    ["POST", "/api/accounts/any/password", {}],
     ["PUT", "/api/accounts/any/active", { active: false }],
   ] as const;
   const refusedRoles = roleSchema.options.filter(
@@ -263,7 +288,7 @@ describe("who may manage accounts", () => {
       refusedRoles.map((role) => [role, ...change] as const),
     ),
   )("refuses a %s %s %s", async (role, method, url, payload) => {
-    const { cookie } = await signedIn([role]);
+    const { cookie } = await signedIn(role);
     const response = await request(cookie, method, url, payload);
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({ error: "Forbidden" });
@@ -284,9 +309,9 @@ describe("who may manage accounts", () => {
 });
 
 describe("administering accounts", () => {
-  it("lists accounts with their roles and whether they can sign in", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const listed = await newAccount(["viewer", "leadership"]);
+  it("lists accounts with their one role and whether they can sign in", async () => {
+    const { cookie } = await signedIn("administrator");
+    const listed = await newAccount("executive");
     const response = await request(cookie, "GET", "/api/accounts");
     expect(
       response
@@ -294,41 +319,118 @@ describe("administering accounts", () => {
         .accounts.find((account) => account.id === listed.id),
     ).toMatchObject({
       email: listed.email,
-      roles: ["viewer", "leadership"],
+      role: { id: await roleId("executive"), name: "Executive" },
       active: true,
     });
   });
 
-  it("creates an account that can sign in, recording when", async () => {
-    const { cookie } = await signedIn(["administrator"]);
+  it("creates an account with a generated password, which must be changed, recording when", async () => {
+    const { cookie } = await signedIn("administrator");
     const before = Date.now();
     const response = await request(cookie, "POST", "/api/accounts", {
       name: "Fictional Newcomer",
       email: "newcomer@example.test",
-      password,
-      roles: ["viewer", "project-planner"],
+      roleId: await roleId("planner"),
     });
     expect(response.statusCode).toBe(201);
     expect(response.json()).toMatchObject({
       account: {
         name: "Fictional Newcomer",
-        roles: ["viewer", "project-planner"],
+        role: { id: await roleId("planner"), name: "Planner" },
         active: true,
       },
+      password: expect.stringMatching(/^[A-Za-z2-9]{20}$/u) as unknown,
     });
-    const { account } = response.json<{ account: { createdAt: string } }>();
-    expect(Date.parse(account.createdAt)).toBeGreaterThanOrEqual(before);
-    expect(await signIn("newcomer@example.test")).not.toBe("");
+    const created = response.json<{
+      account: { createdAt: string };
+      password: string;
+    }>();
+    expect(Date.parse(created.account.createdAt)).toBeGreaterThanOrEqual(
+      before,
+    );
+    const session = await request(
+      await signIn("newcomer@example.test", created.password),
+      "GET",
+      "/api/session",
+    );
+    expect(session.json()).toMatchObject({ mustChangePassword: true });
+  });
+
+  it("ignores a password sent for a new account, generating its own each time", async () => {
+    const { cookie } = await signedIn("administrator");
+    const passwords = [];
+    for (const name of ["First", "Second"]) {
+      const response = await request(cookie, "POST", "/api/accounts", {
+        name: `Fictional ${name} Generated`,
+        email: `${name.toLowerCase()}.generated@example.test`,
+        password,
+        roleId: await roleId("team-member"),
+      });
+      expect(response.statusCode).toBe(201);
+      passwords.push(response.json<{ password: string }>().password);
+    }
+    expect(passwords[0]).not.toBe(password);
+    expect(passwords[0]).not.toBe(passwords[1]);
+    expect(await signIn("first.generated@example.test")).toBe("");
+  });
+
+  it("creates an account holding a role made later", async () => {
+    const { cookie } = await signedIn("administrator");
+    const id = await madeRole("Fictional Made Role", ["history:view"]);
+    const response = await request(cookie, "POST", "/api/accounts", {
+      name: "Fictional Custom Holder",
+      email: "custom.holder@example.test",
+      roleId: id,
+    });
+    expect(response.json()).toMatchObject({
+      account: { role: { id, name: "Fictional Made Role" } },
+    });
+    const session = await request(
+      await signIn(
+        "custom.holder@example.test",
+        response.json<{ password: string }>().password,
+      ),
+      "GET",
+      "/api/session",
+    );
+    expect(session.json()).toMatchObject({
+      role: { id, key: null, name: "Fictional Made Role" },
+      permissions: ["history:view"],
+    });
+  });
+
+  it.each([
+    ["no role", {}],
+    ["a role that is not an ID", { roleId: "team-member" }],
+  ])("refuses an account with %s", async (_case, role) => {
+    const { cookie } = await signedIn("administrator");
+    const response = await request(cookie, "POST", "/api/accounts", {
+      name: "Fictional Roleless",
+      email: "roleless@example.test",
+      ...role,
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("refuses an account with a role that does not exist, keeping no account", async () => {
+    const { cookie } = await signedIn("administrator");
+    const response = await request(cookie, "POST", "/api/accounts", {
+      name: "Fictional Unknown Role",
+      email: "unknown.role@example.test",
+      roleId: "00000000-0000-4000-8000-000000000000",
+    });
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: "There is no such role" });
+    expect(await signIn("unknown.role@example.test")).toBe("");
   });
 
   it("refuses an account whose email address is already used", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const existing = await newAccount([]);
+    const { cookie } = await signedIn("administrator");
+    const existing = await newAccount();
     const response = await request(cookie, "POST", "/api/accounts", {
       name: "Fictional Twin",
       email: existing.email,
-      password,
-      roles: [],
+      roleId: await roleId("team-member"),
     });
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
@@ -336,80 +438,120 @@ describe("administering accounts", () => {
     });
   });
 
-  it("refuses an account with a password that is too short", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const response = await request(cookie, "POST", "/api/accounts", {
-      name: "Fictional Person",
-      email: "short@example.test",
-      password: "short",
-      roles: [],
+  it("changes an account's role, which applies on its next request", async () => {
+    const { cookie } = await signedIn("administrator");
+    const other = await signedIn("team-member");
+    const response = await request(
+      cookie,
+      "PATCH",
+      `/api/accounts/${other.id}`,
+      { roleId: await roleId("resource-planner") },
+    );
+    expect(response.json()).toMatchObject({
+      account: { role: { name: "Resource Planner" } },
     });
-    expect(response.statusCode).toBe(400);
+    const session = await request(other.cookie, "GET", "/api/session");
+    expect(session.json()).toMatchObject({
+      role: { key: "resource-planner", name: "Resource Planner" },
+      permissions: expect.arrayContaining(["people:view"]) as unknown,
+    });
   });
 
-  it("changes an account's roles, which apply on its next request", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await signedIn(["viewer"]);
+  it("gives a role made later in place of the one held, so the account holds exactly one", async () => {
+    const { cookie } = await signedIn("administrator");
+    const other = await signedIn("executive");
+    const made = await madeRole("Fictional Given Role", ["history:view"]);
+    await request(cookie, "PATCH", `/api/accounts/${other.id}`, {
+      roleId: made,
+    });
+    const session = await request(other.cookie, "GET", "/api/session");
+    expect(session.json()).toMatchObject({
+      role: { id: made, key: null, name: "Fictional Given Role" },
+      permissions: ["history:view"],
+    });
+    const held = await connection
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, other.id));
+    expect(held).toEqual([{ roleId: made }]);
+  });
+
+  it("refuses a role that does not exist, changing nothing", async () => {
+    const { cookie } = await signedIn("administrator");
+    const other = await newAccount("executive");
     const response = await request(
       cookie,
       "PATCH",
       `/api/accounts/${other.id}`,
       {
-        roles: ["viewer", "resource-planner"],
+        name: "Fictional Unchanged",
+        roleId: "00000000-0000-4000-8000-000000000000",
       },
     );
-    expect(response.json()).toMatchObject({
-      account: { roles: ["viewer", "resource-planner"] },
-    });
-    const session = await request(other.cookie, "GET", "/api/session");
-    expect(session.json()).toMatchObject({
-      roles: ["viewer", "resource-planner"],
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({ error: "There is no such role" });
+    const listed = await request(cookie, "GET", "/api/accounts");
+    expect(
+      listed
+        .json<{ accounts: { id: string }[] }>()
+        .accounts.find((account) => account.id === other.id),
+    ).toMatchObject({
+      name: expect.stringMatching(/^Fictional Person/u) as unknown,
+      role: { name: "Executive" },
     });
   });
 
-  it("keeps a role made later, which the account dialog cannot give, when changing roles", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await signedIn(["viewer"]);
-    const [copied] = await connection
-      .insert(roleTable)
-      .values({ name: "Fictional Kept Role" })
-      .returning({ id: roleTable.id });
-    if (copied === undefined) throw new Error("No role was made");
-    await connection
-      .insert(rolePermissions)
-      .values({ roleId: copied.id, permission: "history:view" });
-    await connection
-      .insert(userRoles)
-      .values({ userId: other.id, roleId: copied.id });
-    await request(cookie, "PATCH", `/api/accounts/${other.id}`, {
-      roles: ["viewer", "resource-planner"],
+  it("shows an account left without a role as holding none, granting nothing, until it is given one", async () => {
+    const { cookie } = await signedIn("administrator");
+    const other = await signedIn("team-member");
+    await connection.delete(userRoles).where(eq(userRoles.userId, other.id));
+    expect(
+      (await request(other.cookie, "GET", "/api/session")).json(),
+    ).toMatchObject({ role: null, permissions: [] });
+    const listed = await request(cookie, "GET", "/api/accounts");
+    expect(
+      listed
+        .json<{ accounts: { id: string }[] }>()
+        .accounts.find((account) => account.id === other.id),
+    ).toMatchObject({ role: null });
+    const given = await request(cookie, "PATCH", `/api/accounts/${other.id}`, {
+      roleId: await roleId("team-member"),
     });
-    const session = await request(other.cookie, "GET", "/api/session");
-    expect(session.json()).toMatchObject({
-      roles: ["viewer", "resource-planner"],
+    expect(given.json()).toMatchObject({
+      account: { role: { name: "Team Member" } },
     });
-    expect(session.json<{ permissions: string[] }>().permissions).toContain(
-      "history:view",
+    const history = await request(cookie, "GET", "/api/access-history");
+    expect(
+      history
+        .json<{ entries: { subject: { id: string } }[] }>()
+        .entries.find((entry) => entry.subject.id === other.id),
+    ).toEqual(
+      expect.objectContaining({
+        action: "roles-changed",
+        details: { role: "Team Member" },
+      }),
     );
   });
 
   it("lets administrators change their own roles, which apply on their next request", async () => {
-    await signedIn(["administrator"]);
-    const admin = await signedIn(["administrator"]);
+    await signedIn("administrator");
+    const admin = await signedIn("administrator");
     const response = await request(
       admin.cookie,
       "PATCH",
       `/api/accounts/${admin.id}`,
-      { roles: ["viewer"] },
+      { roleId: await roleId("team-member") },
     );
-    expect(response.json()).toMatchObject({ account: { roles: ["viewer"] } });
+    expect(response.json()).toMatchObject({
+      account: { role: { name: "Team Member" } },
+    });
     expect(
       (await request(admin.cookie, "GET", "/api/accounts")).statusCode,
     ).toBe(403);
   });
 
   it("lets administrators change their own name and email address", async () => {
-    const admin = await signedIn(["administrator"]);
+    const admin = await signedIn("administrator");
     const response = await request(
       admin.cookie,
       "PATCH",
@@ -427,8 +569,8 @@ describe("administering accounts", () => {
   });
 
   it("changes an account's name and email address, which it then signs in with", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await newAccount(["viewer"]);
+    const { cookie } = await signedIn("administrator");
+    const other = await newAccount("team-member");
     const response = await request(
       cookie,
       "PATCH",
@@ -440,7 +582,7 @@ describe("administering accounts", () => {
       account: {
         name: "Fictional Renamed",
         email: "renamed@example.test",
-        roles: ["viewer"],
+        role: { name: "Team Member" },
       },
     });
     expect(await signIn(other.email)).toBe("");
@@ -448,9 +590,9 @@ describe("administering accounts", () => {
   });
 
   it("refuses an email address another account uses, but keeps the account's own", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await newAccount([]);
-    const existing = await newAccount([]);
+    const { cookie } = await signedIn("administrator");
+    const other = await newAccount();
+    const existing = await newAccount();
     const taken = await request(cookie, "PATCH", `/api/accounts/${other.id}`, {
       name: "Fictional Person",
       email: existing.email.toUpperCase(),
@@ -472,8 +614,8 @@ describe("administering accounts", () => {
     ["an empty name", { name: "  ", email: "valid@example.test" }],
     ["an email address that is not valid", { name: "Fictional", email: "x" }],
   ])("refuses %s", async (_case, payload) => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await newAccount([]);
+    const { cookie } = await signedIn("administrator");
+    const other = await newAccount();
     const response = await request(
       cookie,
       "PATCH",
@@ -484,45 +626,50 @@ describe("administering accounts", () => {
   });
 
   it.each([
-    ["PATCH", "/api/accounts/no-such-account", { roles: [] }],
-    ["PUT", "/api/accounts/no-such-account/password", { password }],
+    ["PATCH", "/api/accounts/no-such-account", { name: "Fictional Person" }],
+    ["POST", "/api/accounts/no-such-account/password", {}],
     ["PUT", "/api/accounts/no-such-account/active", { active: false }],
   ] as const)(
     "answers %s %s for a missing account with not found",
     async (method, url, payload) => {
-      const { cookie } = await signedIn(["administrator"]);
+      const { cookie } = await signedIn("administrator");
       const response = await request(cookie, method, url, payload);
       expect(response.statusCode).toBe(404);
       expect(response.json()).toEqual({ error: "There is no such account" });
     },
   );
 
-  it("resets a password, signing the user out everywhere", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await signedIn(["viewer"]);
+  it("resets a password to a generated one, which must be changed, signing the user out everywhere", async () => {
+    const { cookie } = await signedIn("administrator");
+    const other = await signedIn("team-member");
     const response = await request(
       cookie,
-      "PUT",
+      "POST",
       `/api/accounts/${other.id}/password`,
-      {
-        password: newPassword,
-      },
+      {},
     );
-    expect(response.statusCode).toBe(204);
+    expect(response.statusCode).toBe(200);
+    const { password: generated } = response.json<{ password: string }>();
+    expect(generated).toMatch(/^[A-Za-z2-9]{20}$/u);
     expect(
       (await request(other.cookie, "GET", "/api/session")).statusCode,
     ).toBe(401);
     expect(await signIn(other.email)).toBe("");
-    expect(await signIn(other.email, newPassword)).not.toBe("");
+    const session = await request(
+      await signIn(other.email, generated),
+      "GET",
+      "/api/session",
+    );
+    expect(session.json()).toMatchObject({ mustChangePassword: true });
   });
 
   it("refuses to reset one's own password, which needs the current one", async () => {
-    const admin = await signedIn(["administrator"]);
+    const admin = await signedIn("administrator");
     const response = await request(
       admin.cookie,
-      "PUT",
+      "POST",
       `/api/accounts/${admin.id}/password`,
-      { password: newPassword },
+      {},
     );
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({
@@ -531,24 +678,9 @@ describe("administering accounts", () => {
     });
   });
 
-  it("refuses a reset password that is too long", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await newAccount([]);
-    const tooLong = "x".repeat(129);
-    const response = await request(
-      cookie,
-      "PUT",
-      `/api/accounts/${other.id}/password`,
-      {
-        password: tooLong,
-      },
-    );
-    expect(response.statusCode).toBe(400);
-  });
-
   it("deactivates an account, signing the user out and refusing sign-in, until it is reactivated", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await signedIn(["viewer"]);
+    const { cookie } = await signedIn("administrator");
+    const other = await signedIn("team-member");
     const deactivated = await request(
       cookie,
       "PUT",
@@ -569,8 +701,8 @@ describe("administering accounts", () => {
   });
 
   it("answers a deactivated account's right password as it answers a wrong one", async () => {
-    const { cookie } = await signedIn(["administrator"]);
-    const other = await newAccount(["viewer"]);
+    const { cookie } = await signedIn("administrator");
+    const other = await newAccount("team-member");
     await request(cookie, "PUT", `/api/accounts/${other.id}/active`, {
       active: false,
     });
@@ -589,7 +721,7 @@ describe("administering accounts", () => {
   });
 
   it("grants nothing to a session that outlives its account's deactivation", async () => {
-    const other = await signedIn(["viewer"]);
+    const other = await signedIn("team-member");
     // As if a sign-in had finished just as the account was deactivated.
     await database.superuserQuery(
       `UPDATE fathom.users SET deactivated_at = now() WHERE id = '${other.id}'`,
@@ -600,8 +732,8 @@ describe("administering accounts", () => {
   });
 
   it("lets administrators deactivate their own account, signing them out and recording it", async () => {
-    const reader = await signedIn(["administrator"]);
-    const admin = await signedIn(["administrator"]);
+    const reader = await signedIn("administrator");
+    const admin = await signedIn("administrator");
     const response = await request(
       admin.cookie,
       "PUT",
@@ -630,8 +762,8 @@ describe("the last active Administrator", () => {
   // Leaves one active Administrator, counting deactivated ones as gone, and a second account with
   // the role that has been deactivated.
   async function lastAdministrator() {
-    const admin = await signedIn(["administrator", "viewer"]);
-    const deactivated = await newAccount(["administrator"]);
+    const admin = await signedIn("administrator");
+    const deactivated = await newAccount("administrator");
     await connection
       .update(users)
       .set({ deactivatedAt: new Date() })
@@ -658,7 +790,7 @@ describe("the last active Administrator", () => {
       admin.cookie,
       "PATCH",
       `/api/accounts/${admin.id}`,
-      { roles: ["viewer"] },
+      { roleId: await roleId("team-member") },
     );
     expect(response.statusCode).toBe(409);
     expect(response.json()).toEqual({
@@ -676,7 +808,11 @@ describe("the last active Administrator", () => {
       admin.cookie,
       "PATCH",
       `/api/accounts/${admin.id}`,
-      { name: "Fictional Unsaved", email: "unsaved@example.test", roles: [] },
+      {
+        name: "Fictional Unsaved",
+        email: "unsaved@example.test",
+        roleId: await roleId("team-member"),
+      },
     );
     expect(response.statusCode).toBe(409);
     expect(
@@ -702,16 +838,16 @@ describe("the last active Administrator", () => {
     ).toBe(200);
   });
 
-  it("can change their other roles, and can give up the role once another account is reactivated with it", async () => {
+  it("may be given the role they hold, which changes nothing, and can give it up once another account is reactivated with it", async () => {
     const admin = await lastAdministrator();
     const kept = await request(
       admin.cookie,
       "PATCH",
       `/api/accounts/${admin.id}`,
-      { roles: ["administrator"] },
+      { roleId: await roleId("administrator") },
     );
     expect(kept.json()).toMatchObject({
-      account: { roles: ["administrator"] },
+      account: { role: { name: "Administrator" } },
     });
     await request(
       admin.cookie,
@@ -723,49 +859,37 @@ describe("the last active Administrator", () => {
       admin.cookie,
       "PATCH",
       `/api/accounts/${admin.id}`,
-      { roles: [] },
+      { roleId: await roleId("team-member") },
     );
     expect(given.statusCode).toBe(200);
   });
 
   it("may give up the role while another active account manages accounts and edits roles through a role of its own", async () => {
     const admin = await lastAdministrator();
-    const holder = await newAccount([]);
-    const [keeper, manager] = await connection
-      .insert(roleTable)
-      .values([
-        { name: "Fictional Keeper of Both" },
-        { name: "Fictional Account Manager Only" },
-      ])
-      .returning({ id: roleTable.id });
-    if (keeper === undefined || manager === undefined) {
-      throw new Error("The roles were not made");
-    }
-    await connection.insert(rolePermissions).values([
-      { roleId: keeper.id, permission: "accounts:manage" },
-      { roleId: keeper.id, permission: "roles:edit" },
-      { roleId: manager.id, permission: "accounts:manage" },
+    const holder = await newAccount();
+    const keeper = await madeRole("Fictional Keeper of Both", [
+      "accounts:manage",
+      "roles:edit",
+    ]);
+    const manager = await madeRole("Fictional Account Manager Only", [
+      "accounts:manage",
     ]);
     try {
       // Managing accounts alone is not enough: nobody else could edit roles.
-      await connection
-        .insert(userRoles)
-        .values({ userId: holder.id, roleId: manager.id });
+      await holdRole(holder.id, manager);
       const refused = await request(
         admin.cookie,
         "PATCH",
         `/api/accounts/${admin.id}`,
-        { roles: ["viewer"] },
+        { roleId: await roleId("team-member") },
       );
       expect(refused.statusCode).toBe(409);
-      await connection
-        .insert(userRoles)
-        .values({ userId: holder.id, roleId: keeper.id });
+      await holdRole(holder.id, keeper);
       const given = await request(
         admin.cookie,
         "PATCH",
         `/api/accounts/${admin.id}`,
-        { roles: ["viewer"] },
+        { roleId: await roleId("team-member") },
       );
       expect(given.statusCode).toBe(200);
     } finally {
@@ -779,7 +903,7 @@ describe("the last active Administrator", () => {
 
   it("is kept when two administrators each remove the other's role at once", async () => {
     const first = await lastAdministrator();
-    const second = await signedIn(["administrator"]);
+    const second = await signedIn("administrator");
     // The first administrator's change to the second, holding the lock until the second's change
     // to the first, already allowed to manage accounts, is waiting for it.
     let release = () => undefined as unknown;
@@ -805,7 +929,7 @@ describe("the last active Administrator", () => {
       second.cookie,
       "PATCH",
       `/api/accounts/${first.id}`,
-      { roles: [] },
+      { roleId: await roleId("team-member") },
     );
     await vi.waitFor(
       async () => {
@@ -827,7 +951,7 @@ describe("the last active Administrator", () => {
 
 describe("changing one's own password", () => {
   it("needs the current password, and signs out every other session", async () => {
-    const user = await signedIn(["viewer"]);
+    const user = await signedIn("team-member");
     const otherSession = await signIn(user.email);
     const response = await request(
       user.cookie,
@@ -848,7 +972,7 @@ describe("changing one's own password", () => {
   });
 
   it("refuses the wrong current password", async () => {
-    const user = await signedIn(["viewer"]);
+    const user = await signedIn("team-member");
     const response = await request(
       user.cookie,
       "POST",
@@ -864,7 +988,7 @@ describe("changing one's own password", () => {
   });
 
   it("refuses a new password that is too short, before asking Better Auth", async () => {
-    const user = await signedIn(["viewer"]);
+    const user = await signedIn("team-member");
     const response = await request(
       user.cookie,
       "POST",
@@ -878,10 +1002,175 @@ describe("changing one's own password", () => {
   });
 });
 
+describe("changing a generated password first", () => {
+  // An Administrator whose password Fathom generated, signed in with it.
+  async function flaggedAdministrator() {
+    accountCount += 1;
+    const email = `flagged${String(accountCount)}@example.test`;
+    const id = await createAccount(auth, connection, {
+      name: `Fictional Flagged ${String(accountCount)}`,
+      email,
+      password,
+      roleId: await roleId("administrator"),
+      mustChangePassword: true,
+    });
+    return { id, email, cookie: await signIn(email) };
+  }
+
+  const refused = { error: "The password must be changed before continuing." };
+
+  it.each([
+    ["GET", "/api/accounts", undefined],
+    ["GET", "/api/access-history", undefined],
+    ["GET", "/api/roles", undefined],
+    ["PUT", "/api/account/name", { name: "Fictional Impatient" }],
+    ["POST", "/api/accounts/any/password", {}],
+  ] as const)(
+    "refuses %s %s until the password is changed",
+    async (method, url, payload) => {
+      const user = await flaggedAdministrator();
+      const response = await request(user.cookie, method, url, payload);
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toEqual(refused);
+    },
+  );
+
+  it("still reads the session, saying the password must be changed, and signs out", async () => {
+    const user = await flaggedAdministrator();
+    const session = await request(user.cookie, "GET", "/api/session");
+    expect(session.statusCode).toBe(200);
+    expect(session.json()).toMatchObject({
+      user: { id: user.id },
+      mustChangePassword: true,
+    });
+    const signedOut = await request(
+      user.cookie,
+      "POST",
+      "/api/auth/sign-out",
+      {},
+    );
+    expect(signedOut.statusCode).toBe(200);
+    expect((await request(user.cookie, "GET", "/api/session")).statusCode).toBe(
+      401,
+    );
+  });
+
+  it("lets the user go on once they change it, recording the change", async () => {
+    const user = await flaggedAdministrator();
+    const changed = await request(
+      user.cookie,
+      "POST",
+      "/api/auth/change-password",
+      { currentPassword: password, newPassword },
+    );
+    expect(changed.statusCode).toBe(200);
+    const cookie = await signIn(user.email, newPassword);
+    expect((await request(cookie, "GET", "/api/session")).json()).toMatchObject(
+      { mustChangePassword: false },
+    );
+    const history = await request(cookie, "GET", "/api/access-history");
+    expect(history.statusCode).toBe(200);
+    expect(
+      history
+        .json<{ entries: { action: string; subject: { id: string } }[] }>()
+        .entries.filter((entry) => entry.subject.id === user.id)
+        .map(({ action }) => action),
+    ).toEqual(["password-changed", "account-created"]);
+  });
+
+  it("keeps asking when an administrator resets the password while it is being changed", async () => {
+    const user = await flaggedAdministrator();
+    // Holds the account's row, so the change saves the new password and then waits to clear the
+    // flag, while a reset saves another password and sets the flag again.
+    let release = () => undefined as unknown;
+    const held = new Promise((resolve) => {
+      release = resolve as () => unknown;
+    });
+    let locked = () => undefined as unknown;
+    const isLocked = new Promise((resolve) => {
+      locked = resolve as () => unknown;
+    });
+    const reset = connection.transaction(async (transaction) => {
+      await transaction
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, user.id))
+        .for("no key update");
+      locked();
+      await held;
+      await transaction
+        .update(accounts)
+        .set({ password: "fictional reset hash" })
+        .where(eq(accounts.userId, user.id));
+      await transaction
+        .update(users)
+        .set({ mustChangePassword: true })
+        .where(eq(users.id, user.id));
+    });
+    await isLocked;
+    const changing = request(user.cookie, "POST", "/api/auth/change-password", {
+      currentPassword: password,
+      newPassword,
+    });
+    await vi.waitFor(
+      async () => {
+        const waiting = await connection.execute<{ total: string }>(
+          sql`SELECT count(*) AS total FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database()`,
+        );
+        expect(Number(waiting.rows[0]?.total)).toBeGreaterThan(0);
+      },
+      { timeout: 10_000 },
+    );
+    release();
+    await reset;
+    expect((await changing).statusCode).toBe(200);
+    const [flag] = await connection
+      .select({ mustChangePassword: users.mustChangePassword })
+      .from(users)
+      .where(eq(users.id, user.id));
+    expect(flag).toEqual({ mustChangePassword: true });
+  });
+
+  it("refuses the generated password as the new one, and keeps asking", async () => {
+    const user = await flaggedAdministrator();
+    const response = await request(
+      user.cookie,
+      "POST",
+      "/api/auth/change-password",
+      { currentPassword: password, newPassword: password },
+    );
+    expect(response.statusCode).toBe(400);
+    expect(
+      (await request(user.cookie, "GET", "/api/session")).json(),
+    ).toMatchObject({ mustChangePassword: true });
+  });
+
+  it("keeps asking when the current password is wrong", async () => {
+    const user = await flaggedAdministrator();
+    await request(user.cookie, "POST", "/api/auth/change-password", {
+      currentPassword: "not the password",
+      newPassword,
+    });
+    expect(
+      (await request(user.cookie, "GET", "/api/session")).json(),
+    ).toMatchObject({ mustChangePassword: true });
+  });
+
+  it("asks nothing of an account given its password directly, as seed and test accounts are", async () => {
+    const user = await signedIn("administrator");
+    expect(
+      (await request(user.cookie, "GET", "/api/session")).json(),
+    ).toMatchObject({ mustChangePassword: false });
+    expect(
+      (await request(user.cookie, "GET", "/api/accounts")).statusCode,
+    ).toBe(200);
+  });
+});
+
 describe("recording one's own password change", () => {
   type Entry = { action: string; subject: { id: string } };
   async function entriesFor(id: string) {
-    const admin = await signedIn(["administrator"]);
+    const admin = await signedIn("administrator");
     const history = await request(admin.cookie, "GET", "/api/access-history");
     return history
       .json<{ entries: Entry[] }>()
@@ -889,7 +1178,7 @@ describe("recording one's own password change", () => {
   }
 
   it("records the change, naming the user as both who and whom, without the passwords", async () => {
-    const user = await signedIn(["viewer"]);
+    const user = await signedIn("team-member");
     await request(user.cookie, "POST", "/api/auth/change-password", {
       currentPassword: password,
       newPassword,
@@ -902,7 +1191,7 @@ describe("recording one's own password change", () => {
   });
 
   it("records nothing when the current password is wrong", async () => {
-    const user = await signedIn(["viewer"]);
+    const user = await signedIn("team-member");
     await request(user.cookie, "POST", "/api/auth/change-password", {
       currentPassword: "not the password",
       newPassword,
@@ -913,7 +1202,7 @@ describe("recording one's own password change", () => {
   });
 
   it("refuses, with an error, a password saved through Better Auth with no one signed in, but not other changes to an account", async () => {
-    const user = await newAccount([]);
+    const user = await newAccount();
     const [account] = await connection
       .select({ id: accounts.id, password: accounts.password })
       .from(accounts)
@@ -938,7 +1227,7 @@ describe("recording one's own password change", () => {
   });
 
   it("keeps the old password when the change cannot be recorded", async () => {
-    const user = await signedIn(["viewer"]);
+    const user = await signedIn("team-member");
     await database.superuserQuery(
       "ALTER TABLE fathom.access_history ADD CONSTRAINT fictional_refusal CHECK (action <> 'password-changed') NOT VALID",
     );
@@ -962,7 +1251,7 @@ describe("recording one's own password change", () => {
 
 describe("changing one's own name", () => {
   it("lets any user change it, recorded with them as both who and whom", async () => {
-    const user = await signedIn([]);
+    const user = await signedIn("team-member");
     const response = await request(user.cookie, "PUT", "/api/account/name", {
       name: " Fictional Self-Renamed ",
     });
@@ -971,7 +1260,7 @@ describe("changing one's own name", () => {
     expect(session.json()).toMatchObject({
       user: { name: "Fictional Self-Renamed", email: user.email },
     });
-    const admin = await signedIn(["administrator"]);
+    const admin = await signedIn("administrator");
     const history = await request(admin.cookie, "GET", "/api/access-history");
     const self = {
       id: user.id,
@@ -989,12 +1278,12 @@ describe("changing one's own name", () => {
   });
 
   it("records nothing when the name is the same", async () => {
-    const user = await signedIn([]);
+    const user = await signedIn("team-member");
     const { name } = (await request(user.cookie, "GET", "/api/session")).json<{
       user: { name: string };
     }>().user;
     await request(user.cookie, "PUT", "/api/account/name", { name });
-    const admin = await signedIn(["administrator"]);
+    const admin = await signedIn("administrator");
     const history = await request(admin.cookie, "GET", "/api/access-history");
     expect(
       history
@@ -1004,30 +1293,30 @@ describe("changing one's own name", () => {
     ).toEqual(["account-created"]);
   });
 
-  it("changes only the name, never the email address or roles sent with it", async () => {
-    const user = await signedIn(["viewer"]);
+  it("changes only the name, never the email address or role sent with it", async () => {
+    const user = await signedIn("team-member");
     await request(user.cookie, "PUT", "/api/account/name", {
       name: "Fictional Climber",
       email: "climber@example.test",
-      roles: ["administrator"],
+      roleId: await roleId("administrator"),
     });
     expect(
       (await request(user.cookie, "GET", "/api/session")).json(),
     ).toMatchObject({
       user: { name: "Fictional Climber", email: user.email },
-      roles: ["viewer"],
+      role: { key: "team-member" },
     });
   });
 
   it("refuses a name another account has, ignoring letter case and extra spaces", async () => {
-    const other = await newAccount([]);
+    const other = await newAccount();
     await request(
-      (await signedIn(["administrator"])).cookie,
+      (await signedIn("administrator")).cookie,
       "PATCH",
       `/api/accounts/${other.id}`,
       { name: "Fictional Director" },
     );
-    const user = await signedIn([]);
+    const user = await signedIn("team-member");
     const response = await request(user.cookie, "PUT", "/api/account/name", {
       name: " fictional   DIRECTOR ",
     });
@@ -1042,7 +1331,7 @@ describe("changing one's own name", () => {
     ["holding a control character", "Fictional\u0007Name"],
     ["holding a zero-width space", "Fictional\u200BName"],
   ])("refuses a name %s", async (_, name) => {
-    const user = await signedIn([]);
+    const user = await signedIn("team-member");
     const response = await request(user.cookie, "PUT", "/api/account/name", {
       name,
     });
@@ -1050,18 +1339,17 @@ describe("changing one's own name", () => {
   });
 
   it("holds an Administrator's new accounts to the same rules for names", async () => {
-    const admin = await signedIn(["administrator"]);
+    const admin = await signedIn("administrator");
     const response = await request(admin.cookie, "POST", "/api/accounts", {
       name: "n".repeat(101),
       email: "long-name@example.test",
-      password,
-      roles: [],
+      roleId: await roleId("team-member"),
     });
     expect(response.statusCode).toBe(400);
   });
 
   it("refuses an empty name", async () => {
-    const user = await signedIn([]);
+    const user = await signedIn("team-member");
     const response = await request(user.cookie, "PUT", "/api/account/name", {
       name: " ",
     });
@@ -1080,7 +1368,7 @@ describe("the access history", () => {
   it.each(roleSchema.options)(
     "is shown to a %s only if the role lets them view it",
     async (role) => {
-      const { cookie } = await signedIn([role]);
+      const { cookie } = await signedIn(role);
       const response = await request(cookie, "GET", "/api/access-history");
       expect(response.statusCode).toBe(
         rolesGranting("history:view").includes(role) ? 200 : 403,
@@ -1088,21 +1376,23 @@ describe("the access history", () => {
     },
   );
 
-  it("records each change to accounts, newest first, with who made it and the roles involved, but no passwords", async () => {
-    const admin = await signedIn(["administrator"]);
+  it("records each change to accounts, newest first, with who made it and the roles involved, by name, but no passwords", async () => {
+    const admin = await signedIn("administrator");
     const created = await request(admin.cookie, "POST", "/api/accounts", {
       name: "Fictional Recorded",
       email: "recorded@example.test",
-      password,
-      roles: ["viewer"],
+      roleId: await roleId("team-member"),
     });
     const { id } = created.json<{ account: { id: string } }>().account;
     await request(admin.cookie, "PATCH", `/api/accounts/${id}`, {
-      roles: ["viewer", "leadership"],
+      roleId: await roleId("executive"),
     });
-    await request(admin.cookie, "PUT", `/api/accounts/${id}/password`, {
-      password: newPassword,
-    });
+    const reset = await request(
+      admin.cookie,
+      "POST",
+      `/api/accounts/${id}/password`,
+      {},
+    );
     await request(admin.cookie, "PUT", `/api/accounts/${id}/active`, {
       active: false,
     });
@@ -1123,22 +1413,26 @@ describe("the access history", () => {
         action: "roles-changed",
         actor,
         subject,
-        details: { previousRoles: ["viewer"], roles: ["viewer", "leadership"] },
+        details: { previousRole: "Team Member", role: "Executive" },
       },
       {
         action: "account-created",
         actor,
         subject,
-        details: { roles: ["viewer"] },
+        details: { role: "Team Member" },
       },
     ]);
-    expect(history.body).not.toContain(newPassword);
-    expect(history.body).not.toContain(password);
+    expect(history.body).not.toContain(
+      created.json<{ password: string }>().password,
+    );
+    expect(history.body).not.toContain(
+      reset.json<{ password: string }>().password,
+    );
   });
 
   it("records each change to an account's name and email address, without the values, and nothing when neither changes", async () => {
-    const admin = await signedIn(["administrator"]);
-    const other = await newAccount([]);
+    const admin = await signedIn("administrator");
+    const other = await newAccount();
     const url = `/api/accounts/${other.id}`;
     await request(admin.cookie, "PATCH", url, {
       name: "Fictional Before",
@@ -1168,15 +1462,19 @@ describe("the access history", () => {
   });
 
   it("records every change administrators make to their own account, naming them as both who and whom", async () => {
-    await signedIn(["administrator"]);
-    const admin = await signedIn(["administrator"]);
+    await signedIn("administrator");
+    const admin = await signedIn("administrator");
     const url = `/api/accounts/${admin.id}`;
     await request(admin.cookie, "PATCH", url, {
       name: "Fictional Myself",
       email: "myself@example.test",
-      roles: ["administrator", "workforce-administrator"],
+      roleId: await roleId("workforce-administrator"),
     });
-    const history = await request(admin.cookie, "GET", "/api/access-history");
+    const history = await request(
+      (await signedIn("administrator")).cookie,
+      "GET",
+      "/api/access-history",
+    );
     const self = { id: admin.id, name: "Fictional Myself" };
     expect(
       history
@@ -1188,8 +1486,8 @@ describe("the access history", () => {
         actor: self,
         subject: self,
         details: {
-          previousRoles: ["administrator"],
-          roles: ["workforce-administrator", "administrator"],
+          previousRole: "Administrator",
+          role: "Workforce Administrator",
         },
       },
       { action: "email-changed", actor: self, subject: self },
@@ -1199,9 +1497,9 @@ describe("the access history", () => {
   });
 
   it("stays readable with entries from another version of Fathom, or naming accounts that no longer exist", async () => {
-    const admin = await signedIn(["administrator"]);
+    const admin = await signedIn("administrator");
     await database.superuserQuery(
-      `INSERT INTO fathom.access_history (actor_id, action, subject_id, details) VALUES ('removed-actor', 'future-action', 'removed-subject', '{"roles": ["viewer", "retired-role"]}')`,
+      `INSERT INTO fathom.access_history (actor_id, action, subject_id, details) VALUES ('removed-actor', 'future-action', 'removed-subject', '{"roles": ["viewer"], "role": 7}')`,
     );
     const history = await request(admin.cookie, "GET", "/api/access-history");
     expect(history.statusCode).toBe(200);
@@ -1213,13 +1511,13 @@ describe("the access history", () => {
       action: "future-action",
       actor: { id: "removed-actor", name: null },
       subject: { id: "removed-subject", name: null },
-      details: { roles: ["viewer"] },
+      details: {},
     });
   });
 
   it("names no one for accounts the server's operators created with the account command", async () => {
-    const admin = await signedIn(["administrator"]);
-    const { id } = await newAccount([]);
+    const admin = await signedIn("administrator");
+    const { id } = await newAccount();
     const history = await request(admin.cookie, "GET", "/api/access-history");
     expect(
       history

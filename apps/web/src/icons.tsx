@@ -121,6 +121,7 @@ const paths = {
   plus: <path d="M8 3v10M3 8h10" />,
   minus: <path d="M3 8h10" />,
   check: <path d="M3 8.5l3.2 3L13 4.5" />,
+  pending: <circle cx="8" cy="8" r="3" />,
   search: (
     <>
       <circle cx="7" cy="7" r="4.5" />

@@ -116,7 +116,7 @@ async function seenAsked(
     }
     if (!fields.every(seen)) {
       throw new ForbiddenError(
-        "One of these drafts holds details your roles do not let you see, so an Approver who sees them must decide it",
+        "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
       );
     }
   }

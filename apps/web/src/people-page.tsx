@@ -635,7 +635,7 @@ export function PeoplePage({
       />
       {canEdit && positionHidden && (
         <Text size="sm" c="dimmed" id={cannotAddId}>
-          You can't add people, since your roles don't let you see positions.
+          You can't add people, since your role doesn't let you see positions.
         </Text>
       )}
       {content}

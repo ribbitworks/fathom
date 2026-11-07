@@ -17,7 +17,7 @@ import {
 import { passwordLength, sessionIdleMinutes } from "@fathom/shared";
 import { betterAuth } from "better-auth";
 import { APIError } from "better-auth/api";
-import { eq } from "drizzle-orm";
+import { and, eq, exists } from "drizzle-orm";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import type { AuthConfig } from "../config.ts";
 import { recordEvent } from "./history.ts";
@@ -117,6 +117,48 @@ export function createAuth(
               actorId: userId,
               action: "password-changed",
               subjectId: userId,
+            });
+          },
+          // Once users have changed their own password, it is no longer one Fathom generated, so
+          // they may go on. Cleared only after the new one is saved, so a failed save leaves them
+          // still to change it. Kept if an administrator's reset has replaced the new password
+          // since: the account's row is locked first, so a reset either saved before is seen, or
+          // waits and sets it again.
+          after: async (account, context) => {
+            const userId = context?.context.session?.user.id;
+            const { password } = account;
+            if (
+              userId === undefined ||
+              context?.path !== "/change-password" ||
+              typeof password !== "string"
+            ) {
+              return;
+            }
+            await database.transaction(async (transaction) => {
+              await transaction
+                .select({ id: users.id })
+                .from(users)
+                .where(eq(users.id, userId))
+                .for("update");
+              await transaction
+                .update(users)
+                .set({ mustChangePassword: false })
+                .where(
+                  and(
+                    eq(users.id, userId),
+                    exists(
+                      transaction
+                        .select({ id: accounts.id })
+                        .from(accounts)
+                        .where(
+                          and(
+                            eq(accounts.id, account.id),
+                            eq(accounts.password, password),
+                          ),
+                        ),
+                    ),
+                  ),
+                );
             });
           },
         },

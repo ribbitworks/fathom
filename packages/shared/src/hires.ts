@@ -3,7 +3,7 @@
 // Planned hires: roles to be filled, kept apart from people but shown beside them, as the Decisions
 // Log sets out. Each hire not yet filled is a placeholder that everyone who sees people sees: its ID,
 // position, manager, and the month it is expected. Its state and target date are Confidential. What
-// a user receives leaves out what their roles do not let them see.
+// a user receives leaves out what their role does not let them see.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";

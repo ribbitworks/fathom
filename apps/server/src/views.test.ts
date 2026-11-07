@@ -13,6 +13,7 @@ import {
   type SavedView,
 } from "@fathom/shared";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { findStartingRole } from "./data/roles.ts";
 import { startTestApp, type TestApp } from "./test-app.ts";
 
 let test: TestApp;
@@ -43,7 +44,7 @@ const undo = (cookie: string, changeSetId: string | null) =>
 
 describe("saved views", () => {
   it("are saved, renamed, updated, and deleted, with names unique regardless of case, and each change undone", async () => {
-    const { cookie } = await test.signedIn(["resource-planner"]);
+    const { cookie } = await test.signedIn("resource-planner");
     const made = await save(cookie, "  By name  ", {
       search: "fictional",
       sort: ["-preferredName"],
@@ -113,12 +114,9 @@ describe("saved views", () => {
   });
 
   it("may be changed only by their maker or by someone who may change planning configuration", async () => {
-    const maker = await test.signedIn(["resource-planner"]);
-    const other = await test.signedIn(["resource-planner"]);
-    const administrator = await test.signedIn([
-      "resource-planner",
-      "workforce-administrator",
-    ]);
+    const maker = await test.signedIn("resource-planner");
+    const other = await test.signedIn("resource-planner");
+    const administrator = await test.signedIn("workforce-administrator");
     const { view } = (
       await save(maker.cookie, "Shared", { search: "a" })
     ).json<Saved>();
@@ -155,14 +153,16 @@ describe("saved views", () => {
 
     // Undoing needs the same right, so one who has since lost it cannot undo.
     const { changeSetId } = renamed.json<Saved>();
-    const accounts = await test.signedIn(["administrator"]);
+    const accounts = await test.signedIn("administrator");
     expect(
       (
         await test.request(
           accounts.cookie,
           "PATCH",
           `/api/accounts/${administrator.id}`,
-          { roles: ["resource-planner"] },
+          {
+            roleId: await findStartingRole(test.connection, "resource-planner"),
+          },
         )
       ).statusCode,
     ).toBe(200);
@@ -184,8 +184,8 @@ describe("saved views", () => {
   });
 
   it("are kept from readers who may not see a column they use, who cannot save such a view either", async () => {
-    const manager = await test.signedIn(["resource-planner", "people-manager"]);
-    const viewer = await test.signedIn(["resource-planner"]);
+    const manager = await test.signedIn("engineering-manager");
+    const viewer = await test.signedIn("resource-planner");
     const { view, changeSetId } = (
       await save(manager.cookie, "Leaving soon", {
         filters: { endDate: { from: "2026-11-01" } },
@@ -222,12 +222,12 @@ describe("saved views", () => {
         filters: { startDate: { from: "2026-11-01" } },
       })
     ).json<Saved>();
-    const accounts = await test.signedIn(["administrator"]);
+    const accounts = await test.signedIn("administrator");
     await test.request(
       accounts.cookie,
       "PATCH",
       `/api/accounts/${manager.id}`,
-      { roles: ["resource-planner"] },
+      { roleId: await findStartingRole(test.connection, "resource-planner") },
     );
     expect((await undo(manager.cookie, starting.changeSetId)).statusCode).toBe(
       403,
@@ -235,8 +235,8 @@ describe("saved views", () => {
   });
 
   it("keep what they show and the columns they break down by, and are kept from readers who may not see those columns", async () => {
-    const manager = await test.signedIn(["resource-planner", "people-manager"]);
-    const viewer = await test.signedIn(["resource-planner"]);
+    const manager = await test.signedIn("engineering-manager");
+    const viewer = await test.signedIn("resource-planner");
     const general = (
       await save(viewer.cookie, "Metrics open", {
         show: "drafts",
@@ -289,7 +289,7 @@ describe("saved views", () => {
   });
 
   it("may filter on drafts, which every reader may see, since each is sent only the drafts they may see", async () => {
-    const viewer = await test.signedIn(["resource-planner"]);
+    const viewer = await test.signedIn("resource-planner");
     const { view } = (
       await save(viewer.cookie, "Drafts waiting", {
         filters: { draft: { any: ["waiting"], empty: true } },
@@ -304,7 +304,7 @@ describe("saved views", () => {
     // Every role that sees people sees the view, however little it sees of them.
     let readers = 0;
     for (const role of roleSchema.options) {
-      const { cookie } = await test.signedIn([role]);
+      const { cookie } = await test.signedIn(role);
       const answer = await test.request(cookie, "GET", "/api/people");
       if (answer.statusCode !== 200) continue;
       readers += 1;
@@ -323,10 +323,7 @@ describe("saved views", () => {
   });
 
   it("ignore columns deleted since they were saved", async () => {
-    const { cookie } = await test.signedIn([
-      "resource-planner",
-      "workforce-administrator",
-    ]);
+    const { cookie } = await test.signedIn("workforce-administrator");
     const list = (
       await test.request(cookie, "POST", "/api/lists", {
         name: "Fictional Levels",
@@ -365,7 +362,7 @@ describe("saved views", () => {
     await test.approveLists();
     // Readers are sent the view without the deleted column, which is not shown to them, though its
     // metrics still show.
-    const viewer = await test.signedIn(["resource-planner"]);
+    const viewer = await test.signedIn("resource-planner");
     expect(
       (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
         ?.definition,
@@ -381,10 +378,7 @@ describe("saved views", () => {
   });
 
   it("are undone only by those who still see the columns they use, as sensitive as they are now", async () => {
-    const administrator = await test.signedIn([
-      "resource-planner",
-      "workforce-administrator",
-    ]);
+    const administrator = await test.signedIn("workforce-administrator");
     const list = (
       await test.request(administrator.cookie, "POST", "/api/lists", {
         name: "Fictional Teams",
@@ -398,7 +392,7 @@ describe("saved views", () => {
       })
     ).json<{ field: Field }>().field;
     await test.approveLists();
-    const viewer = await test.signedIn(["resource-planner"]);
+    const viewer = await test.signedIn("resource-planner");
     const { view, changeSetId } = (
       await save(viewer.cookie, "By team", { sort: [field.id] })
     ).json<Saved>();
@@ -423,7 +417,7 @@ describe("saved views", () => {
   });
 
   it("refuses names and views that do not fit", async () => {
-    const { cookie } = await test.signedIn(["resource-planner"]);
+    const { cookie } = await test.signedIn("resource-planner");
     const refusals = [
       await save(cookie, "   ", {}),
       await save(cookie, "n".repeat(81), {}),

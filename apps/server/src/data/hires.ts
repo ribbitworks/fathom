@@ -564,12 +564,12 @@ export async function createHire(
     const tierOf = await readHireTier(transaction);
     if (!seesTier(actor, tierOf("positionId"))) {
       throw new ForbiddenError(
-        "Every planned hire needs a position, and your roles don't let you see positions",
+        "Every planned hire needs a position, and your role doesn't let you see positions",
       );
     }
     if (!seesTier(actor, tierOf("stateId"))) {
       throw new ForbiddenError(
-        "Every planned hire needs a state, and your roles don't let you see hiring states",
+        "Every planned hire needs a state, and your role doesn't let you see hiring states",
       );
     }
     await lockDrafts(transaction);
@@ -924,7 +924,7 @@ async function seenHires(
     const fields = draftFields(live.get(id), draft);
     if (!fields.every((field) => seesTier(actor, tierOf(field)))) {
       throw new ForbiddenError(
-        "One of these drafts holds details your roles do not let you see, so an Approver who sees them must decide it",
+        "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
       );
     }
   }

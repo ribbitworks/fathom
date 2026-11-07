@@ -2,8 +2,9 @@
 
 // Tests for the persona accounts, against a migrated PostgreSQL server: one for each persona, as the
 // development setup document lists them, and a Superuser holding every permission; seeding creates
-// them with their default roles and the shared password, recorded in the access history, and only
-// once; removing deactivates and signs out only them; and seeding again reactivates them.
+// them with their persona's role, and the Superuser role if it is missing, and the shared password,
+// which they need not change, recorded in the access history, and only once; removing deactivates
+// and signs out only them; and seeding again reactivates them.
 
 import {
   accessHistory,
@@ -11,6 +12,7 @@ import {
   createDatabase,
   createPool,
   type Database,
+  rolePermissions,
   roles as roleTable,
   runMigrations,
   sessions,
@@ -19,7 +21,8 @@ import {
 } from "@fathom/db";
 import { createAccount } from "@fathom/server/accounts";
 import { createAuth } from "@fathom/server/auth";
-import { permissionSchema, startingRoles, withImplied } from "@fathom/shared";
+import { findStartingRole } from "@fathom/server/roles";
+import { permissionSchema, startingRoles } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { asc, eq, inArray } from "drizzle-orm";
 import { readFileSync } from "node:fs";
@@ -27,7 +30,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   accountDomain,
   personaAccounts,
+  personaActor,
   seedAccounts,
+  superuserRole,
   unseedAccounts,
 } from "./accounts.ts";
 
@@ -45,7 +50,6 @@ const handMade = {
   name: "Fictional Hand Account",
   email: "hand.account@example.test",
   password,
-  roles: ["viewer"] as const,
 };
 
 const addresses = personaAccounts.map(({ email }) => email);
@@ -69,7 +73,18 @@ afterAll(async () => {
 // Each test starts with no accounts but the hand-made one.
 beforeEach(async () => {
   await connection.delete(users);
-  await createAccount(auth, connection, handMade, null);
+  await connection
+    .delete(roleTable)
+    .where(eq(roleTable.name, superuserRole.name));
+  await createAccount(
+    auth,
+    connection,
+    {
+      ...handMade,
+      roleId: await findStartingRole(connection, "team-member"),
+    },
+    null,
+  );
 });
 
 async function accountsByEmail() {
@@ -118,20 +133,20 @@ describe("the persona accounts", () => {
     ]);
   });
 
-  it("include a Superuser whose roles together grant every permission", () => {
+  it("include a Superuser whose role grants every permission", () => {
     const superuser = personaAccounts.find(({ name }) => name === "Superuser");
-    const granted = withImplied(
-      (superuser?.roles ?? []).flatMap(
-        // The role is always one of the starting roles.
-        // eslint-disable-next-line security/detect-object-injection
-        (role) => startingRoles[role].permissions,
-      ),
+    const actor = personaActor(
+      { id: "", name: "", email: "" },
+      superuser?.role ?? "team-member",
     );
-    expect(
-      permissionSchema.options.filter(
-        (permission) => !granted.includes(permission),
-      ),
-    ).toEqual([]);
+    expect(actor.permissions).toEqual([...permissionSchema.options].sort());
+  });
+
+  it("act as their persona's starting role", () => {
+    const planner = personaActor({ id: "", name: "", email: "" }, "planner");
+    expect(planner.permissions).toEqual(
+      expect.arrayContaining([...startingRoles.planner.permissions]),
+    );
   });
 
   it("have distinct addresses on the reserved fathom.test domain", () => {
@@ -149,28 +164,28 @@ describe("the persona accounts", () => {
     );
     const rows = [
       ...document.matchAll(/^\| `([^`]+)` \| ([^|]+) \| ([^|]+) \|$/gm),
-    ].map(([, email, name, roles]) => ({
+    ].map(([, email, name, role]) => ({
       email,
       name: name?.trim(),
-      roles: roles?.trim(),
+      role: role?.trim(),
     }));
-    const label = (role: string) =>
-      role
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
     expect(rows).toEqual(
-      personaAccounts.map(({ email, name, roles }) => ({
+      personaAccounts.map(({ email, name, role }) => ({
         email,
         name,
-        roles: roles.map(label).join(", "),
+        role:
+          role === "superuser"
+            ? superuserRole.name
+            : // The role is always one of the starting roles.
+              // eslint-disable-next-line security/detect-object-injection
+              startingRoles[role].name,
       })),
     );
   });
 });
 
 describe("seeding the accounts", () => {
-  it("creates each, named after its persona, with its default roles", async () => {
+  it("creates each, named after its persona, holding its persona's role", async () => {
     expect(await seedAccounts(auth, connection, password)).toEqual(addresses);
     for (const account of personaAccounts) {
       const id = await idOf(account.email);
@@ -180,14 +195,40 @@ describe("seeding the accounts", () => {
         .where(eq(users.id, id));
       expect(row).toEqual({ name: account.name, deactivatedAt: null });
       const roles = await connection
-        .select({ role: roleTable.key })
+        .select({ key: roleTable.key, name: roleTable.name })
         .from(userRoles)
         .innerJoin(roleTable, eq(roleTable.id, userRoles.roleId))
         .where(eq(userRoles.userId, id));
-      expect(roles.map(({ role }) => role).sort()).toEqual(
-        [...account.roles].sort(),
-      );
+      expect(roles).toEqual([
+        account.role === "superuser"
+          ? { key: null, name: superuserRole.name }
+          : { key: account.role, name: expect.any(String) as unknown },
+      ]);
     }
+  });
+
+  it("makes the Superuser role, granting every permission, only when it is missing", async () => {
+    await seedAccounts(auth, connection, password);
+    await unseedAccounts(auth, connection);
+    await seedAccounts(auth, connection, password, [
+      {
+        name: "Fictional Second Superuser",
+        email: "second.superuser@example.test",
+        role: "superuser",
+      },
+    ]);
+    const made = await connection
+      .select({ id: roleTable.id, key: roleTable.key })
+      .from(roleTable)
+      .where(eq(roleTable.name, superuserRole.name));
+    expect(made).toEqual([{ id: expect.any(String) as unknown, key: null }]);
+    const granted = await connection
+      .select({ permission: rolePermissions.permission })
+      .from(rolePermissions)
+      .where(eq(rolePermissions.roleId, String(made[0]?.id)));
+    expect(granted.map(({ permission }) => permission).sort()).toEqual(
+      [...permissionSchema.options].sort(),
+    );
   });
 
   it("gives each the shared password, stored only as a hash", async () => {
@@ -203,6 +244,18 @@ describe("seeding the accounts", () => {
       expect(hash).not.toBe(password);
       expect(await verify({ hash: String(hash), password })).toBe(true);
     }
+  });
+
+  it("asks none of them to change the shared password", async () => {
+    await seedAccounts(auth, connection, password);
+    const flags = await connection
+      .select({ mustChangePassword: users.mustChangePassword })
+      .from(users)
+      .where(inArray(users.email, addresses));
+    expect(flags).toHaveLength(addresses.length);
+    expect(flags.every(({ mustChangePassword }) => !mustChangePassword)).toBe(
+      true,
+    );
   });
 
   it("records each creation in the access history as done by the server's operators", async () => {

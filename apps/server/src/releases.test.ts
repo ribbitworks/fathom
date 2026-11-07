@@ -34,10 +34,10 @@ let approver: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
-  configurer = await test.signedIn(["workforce-administrator"]);
-  planner = await test.signedIn(["project-planner"]);
-  viewer = await test.signedIn(["viewer"]);
-  approver = await test.signedIn(["approver"]);
+  configurer = await test.signedIn("workforce-administrator");
+  planner = await test.signedIn("planner");
+  viewer = await test.signedIn("team-member");
+  approver = await test.signedIn("project-manager");
 });
 
 afterAll(async () => {
@@ -190,7 +190,7 @@ describe("who may change what", () => {
   const path = () => `/api/release-streams/${stream.id}`;
 
   it("refuses reading streams to those who see neither the plan nor planning configuration", async () => {
-    const reader = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("administrator");
     const response = await test.request(
       reader.cookie,
       "GET",
@@ -1180,7 +1180,7 @@ describe("changing streams, patterns, and releases", () => {
   let other: { id: string; cookie: string };
 
   beforeAll(async () => {
-    other = await test.signedIn(["workforce-administrator"]);
+    other = await test.signedIn("workforce-administrator");
   });
 
   const rename = (id: string, name: string, cookie = configurer.cookie) =>
@@ -1579,7 +1579,11 @@ describe("unpublished changes to the plan's records", () => {
   let maker: { id: string; cookie: string };
 
   beforeAll(async () => {
-    maker = await test.signedIn(["workforce-administrator", "project-planner"]);
+    maker = await test.signedIn([
+      "plan:edit",
+      "drafts:submit",
+      "configuration:edit",
+    ]);
   });
 
   afterEach(async () => {

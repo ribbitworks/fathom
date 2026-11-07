@@ -1383,7 +1383,7 @@ describe("roles", () => {
       expect(
         await errorCodeOf(
           client.query(
-            "UPDATE roles SET key = 'fictional-key' WHERE key = 'viewer'",
+            "UPDATE roles SET key = 'fictional-key' WHERE key = 'team-member'",
           ),
         ),
       ).toBe(insufficientPrivilege);

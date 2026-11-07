@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-11-05
+**Last updated:** 2026-11-06
 
 ## Purpose of This Document
 
@@ -57,9 +57,9 @@ Fathom also holds information about its own users: a user account for each perso
 
 ## Who Can See and Change What
 
-Access is controlled by roles. Each user is given one or more roles, and roles grant access by sensitivity level rather than screen by screen. The roles are proposed and will be agreed before Fathom goes live.
+Access is controlled by roles. Each user is given exactly one role, and roles grant access by sensitivity level rather than screen by screen. Fathom starts with one role for each job; roles can be changed, and new ones made, in Fathom. The roles are proposed and will be agreed before Fathom goes live.
 
-The table shows who can see each level under the proposed default roles for each job. What a user can see follows the roles they are actually given.
+The table shows who can see each level under the proposed starting role for each job. What a user can see follows the role they are actually given.
 
 | Sensitivity | Who can see it by default |
 | --- | --- |
@@ -73,16 +73,16 @@ Under the proposed roles:
 
 - **Employee details, teams, reporting lines, and the hiring plan** are maintained by the role that maintains workforce information, held by the Engineering Operations Manager.
 - **Work assignments** are maintained by Engineering Managers and the Engineering Director.
-- **Changes waiting for approval:** Changes to employee details, teams' names, reporting lines, and the hiring plan wait for approval, by someone whose roles let them see that information, such as the Engineering Director, before they take effect. Until then, they are seen by everyone who may see that information. A rejected change is kept, with the approver's reason, until it is changed or discarded. A team's colour on the org chart is not a detail of anyone, so it changes at once, without approval.
+- **Changes waiting for approval:** Changes to employee details, teams' names, reporting lines, and the hiring plan wait for approval, by someone whose role lets them see that information, such as the Engineering Director, before they take effect. Until then, they are seen by everyone who may see that information. A rejected change is kept, with the approver's reason, until it is changed or discarded. A team's colour on the org chart is not a detail of anyone, so it changes at once, without approval.
 - **Feature teams** are proposed by Engineering Managers and approved by those who approve plan changes, such as the Engineering Director.
-- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. Roles can be changed in Fathom, by whoever may edit them, held by the administrator role at first. An administrator could still reach such information by giving their own account another role, by widening a role they hold, or by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. The Engineering Director holds this role at first, so for now the safeguards on granting access rely on the access history. A second person is planned to take on this role later. A change granting Confidential data takes effect at once, without anyone else confirming it, until HR asks for such a check; the access history marks every account created, every change to an account's roles, and every change to a role as worth checking.
+- **User accounts and roles** are managed by an administrator role that does not, by itself, give access to Restricted or Confidential information. Roles can be changed in Fathom, by whoever may edit them, held by the administrator role at first. An administrator, or anyone whose role lets them manage accounts, could still reach such information by giving their own account another role, by widening the role they hold, or by creating another account or resetting another user's password and signing in as them, so every such change is recorded in the access history. At first, only the Fathom Administrator account, made when Fathom is installed, holds this role, so the safeguards on granting access rely on the access history. A person given this role later can take over from it. A change granting Confidential data takes effect at once, without anyone else confirming it, until HR asks for such a check; the access history marks every account created, every change to an account's role, and every change to a role as worth checking.
 
 ## How the Information Is Protected
 
 - **Kept inside the company:** Fathom runs on a company server in Canada, on the internal network. It is not reachable from the internet, and it does not send data to any outside service.
 - **Encrypted connections:** Users connect to Fathom over an encrypted connection (HTTPS).
 - **Individual accounts:** Each user signs in with their own account.
-- **Change history:** Fathom keeps every change to employee information, with its earlier and later values, who made it, and when. Users see only changes to information their roles let them see, and seeing changes to Restricted or Confidential details is recorded in the access history. A change someone has not yet published is seen only by them, in tables and in the change history, until they publish it; others see only that the record is being changed, and by whom.
+- **Change history:** Fathom keeps every change to employee information, with its earlier and later values, who made it, and when. Users see only changes to information their role lets them see, and seeing changes to Restricted or Confidential details is recorded in the access history. A change someone has not yet published is seen only by them, in tables and in the change history, until they publish it; others see only that the record is being changed, and by whom.
 - **Access history:** Fathom records who viewed or changed Restricted or Confidential information, and every change to user accounts and to roles, without recording the information itself. It also records every change to Fathom's settings, such as its time zone, with the setting before and after. No one can change or remove entries through Fathom; they are removed only as the agreed retention period requires. Administrators are proposed to be the ones who can view it.
 - **Logs:** Personal information not needed for planning is kept out of Fathom's technical logs. The one exception is the network address of the computer each request comes from, which is kept to investigate security problems. What a user searches for in a table or a history, such as a name, is kept in the page's address, so it stays in their browser's history and in any link they share, but not in Fathom's logs. A view a user saves, with what they searched for, is shared with everyone who may see the table, except a view filtering on, or counting people by, information someone may not see, which is kept from them.
 - **Encrypted backups:** Backups are made automatically, encrypted, and kept only in approved locations, which are still to be decided. The key needed to read them is held by someone other than the person who runs the backups, and restoring from backup is tested regularly.

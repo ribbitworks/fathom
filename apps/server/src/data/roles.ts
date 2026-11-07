@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Reads and adds the roles users hold, and what their roles grant. Part of the data access layer, the
+// Reads and gives the role each user holds, and what it grants. Part of the data access layer, the
 // only server code that queries the database. Roles are kept in the database with the permissions
-// they grant, read afresh on every request, so a change to a role takes effect at once. A user's
-// roles are also named by the key of the starting role each is, for showing; roles made later have
-// no key and are known only by what they grant.
+// they grant, read afresh on every request, so a change to a role takes effect at once. Each account
+// holds exactly one role, any role, starting or made later.
 
 import {
   type Database,
@@ -13,52 +12,87 @@ import {
   userRoles,
   users,
 } from "@fathom/db";
-import { type Role, roleSchema } from "@fathom/shared";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
-import { ConflictError } from "../errors.ts";
+import type { AccountRole } from "@fathom/shared";
+import { and, eq, isNull, sql } from "drizzle-orm";
+import { BadRequestError, ConflictError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 
-// Takes the database or a transaction, which both read the same way.
-export async function readRoles(
+// The role a user holds, with the key of the starting role it is, if any, and what it is for.
+export interface HeldRole extends AccountRole {
+  key: string | null;
+  description: string;
+}
+
+// Takes the database or a transaction, which both read the same way. Null for an account with no
+// role, which Fathom never makes.
+export async function readRole(
   database: Pick<Database, "select">,
   userId: string,
-): Promise<Role[]> {
-  const rows = await database
-    .select({ role: roleTable.key })
+): Promise<HeldRole | null> {
+  const [held] = await database
+    .select({
+      id: roleTable.id,
+      key: roleTable.key,
+      name: roleTable.name,
+      description: roleTable.description,
+    })
     .from(userRoles)
     .innerJoin(roleTable, eq(roleTable.id, userRoles.roleId))
     .where(eq(userRoles.userId, userId));
-  return rows.flatMap(({ role }) => {
-    const known = roleSchema.safeParse(role);
-    return known.success ? [known.data] : [];
-  });
+  return held ?? null;
 }
 
-// Takes the database or a transaction, which both insert the same way. Every role asked for must
-// exist, so an account never silently gets less than it was given.
-export async function addRoles(
-  database: Pick<Database, "insert" | "select">,
-  userId: string,
-  roles: readonly Role[],
-): Promise<void> {
-  if (roles.length === 0) return;
-  const found = await database
+// The role with this ID, refused if there is none, so an account is never given a role that does not
+// exist. Takes the database or a transaction, which both read the same way.
+export async function findRole(
+  database: Pick<Database, "select">,
+  roleId: string,
+): Promise<AccountRole> {
+  const [found] = await database
+    .select({ id: roleTable.id, name: roleTable.name })
+    .from(roleTable)
+    .where(eq(roleTable.id, roleId));
+  if (found === undefined) throw new BadRequestError("There is no such role");
+  return found;
+}
+
+// The ID of the starting role with this key, such as administrator, however it has been renamed.
+export async function findStartingRole(
+  database: Pick<Database, "select">,
+  key: string,
+): Promise<string> {
+  const [found] = await database
     .select({ id: roleTable.id })
     .from(roleTable)
-    .where(inArray(roleTable.key, [...roles]));
-  if (found.length !== new Set(roles).size)
-    throw new Error("A role to be given is missing from the database");
-  await database
-    .insert(userRoles)
-    .values(found.map(({ id }) => ({ userId, roleId: id })))
-    .onConflictDoNothing();
+    .where(eq(roleTable.key, key));
+  if (found === undefined) {
+    throw new Error(`The starting role ${key} is missing from the database`);
+  }
+  return found.id;
 }
 
-// What a signed-in user making a request holds: their roles' keys, and every permission their roles
-// grant, as stored.
+// Gives an account its one role, in place of any it held. Takes the database or a transaction,
+// which both write the same way.
+export async function giveRole(
+  database: Pick<Database, "insert">,
+  userId: string,
+  roleId: string,
+): Promise<void> {
+  await database
+    .insert(userRoles)
+    .values({ userId, roleId })
+    .onConflictDoUpdate({
+      target: userRoles.userId,
+      set: { roleId, createdAt: new Date() },
+    });
+}
+
+// What a signed-in user making a request holds: their role, and every permission it grants, as
+// stored, and whether they must change their password before anything else.
 export interface ActorAccess {
-  roles: Role[];
+  role: HeldRole | null;
   permissions: string[];
+  mustChangePassword: boolean;
 }
 
 // What a signed-in user making a request holds, or null if their account has been deactivated, so a
@@ -68,19 +102,26 @@ export async function readActorAccess(
   userId: string,
 ): Promise<ActorAccess | null> {
   const [user] = await database
-    .select({ deactivatedAt: users.deactivatedAt })
+    .select({
+      deactivatedAt: users.deactivatedAt,
+      mustChangePassword: users.mustChangePassword,
+    })
     .from(users)
     .where(eq(users.id, userId));
-  if (user?.deactivatedAt !== null) return null;
-  const [roles, granted] = await Promise.all([
-    readRoles(database, userId),
+  if (user === undefined || user.deactivatedAt !== null) return null;
+  const [role, granted] = await Promise.all([
+    readRole(database, userId),
     database
-      .selectDistinct({ permission: rolePermissions.permission })
+      .select({ permission: rolePermissions.permission })
       .from(userRoles)
       .innerJoin(rolePermissions, eq(rolePermissions.roleId, userRoles.roleId))
       .where(eq(userRoles.userId, userId)),
   ]);
-  return { roles, permissions: granted.map(({ permission }) => permission) };
+  return {
+    role,
+    permissions: granted.map(({ permission }) => permission),
+    mustChangePassword: user.mustChangePassword,
+  };
 }
 
 // Changes that could leave nobody able to manage accounts, or to edit roles, wait for each other
@@ -100,8 +141,8 @@ export async function lockAccessManagers(
 // give anyone access again.
 const keptPermissions = ["accounts:manage", "roles:edit"] as const;
 
-// Refuses a change, made earlier in the same transaction, that leaves no active account whose roles
-// grant each of the permissions that keep Fathom manageable. Callers take lockAccessManagers first,
+// Refuses a change, made earlier in the same transaction, that leaves no active account whose role
+// grants each of the permissions that keep Fathom manageable. Callers take lockAccessManagers first,
 // and the refusal undoes the change.
 export async function keepAccessManaged(
   transaction: Transaction,

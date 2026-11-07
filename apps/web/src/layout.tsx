@@ -9,7 +9,7 @@
 
 import { AboutBox, build } from "./about.tsx";
 import { AppMenu } from "./app-menu.tsx";
-import type { Permission } from "@fathom/shared";
+import type { PasswordRules, Permission } from "@fathom/shared";
 import {
   Alert,
   AppShell,
@@ -373,9 +373,12 @@ function Sidebar({
 export function Layout({
   user,
   permissions,
+  passwordRules,
 }: {
   user: SignedInUser;
   permissions: Permission[];
+  // What a new password must meet, which the Change password dialog shows.
+  passwordRules: PasswordRules;
 }) {
   const queryClient = useQueryClient();
   // Those who may make drafts have unpublished changes to publish.
@@ -577,6 +580,8 @@ export function Layout({
         }}
       />
       <ChangePasswordDialog
+        rules={passwordRules}
+        owner={user}
         opened={changingPassword}
         onClose={() => {
           setChangingPassword(false);

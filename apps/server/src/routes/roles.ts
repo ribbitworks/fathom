@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Roles: those who may edit them list them, create them, change them, and see what a change would do
-// to the accounts holding a role before saving it. The data access layer checks the actor may.
+// to the accounts holding a role before saving it; those who manage accounts list them too. The data
+// access layer checks the actor may.
 
 import {
   roleChangeSchema,

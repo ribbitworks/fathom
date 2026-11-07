@@ -1,7 +1,7 @@
 # Fathom — Product Brief
 
 **Status:** Draft
-**Last updated:** 2026-11-03
+**Last updated:** 2026-11-06
 
 ## Problem
 
@@ -78,7 +78,7 @@ Personas are named as they are widely known in the software industry. Each organ
 - **Planning model:** Monthly planning, with allocations as a percentage of a person's month.
 - **Planning level:** Fathom plans features, not their stories or tasks, and is never a clone of a full project management application. See the [Decisions Log](decisions.md#planning).
 - **Planned hires:** Planned hires appear in the plan and can be allocated like current staff.
-- **Access:** Role-based. A user can have one or more roles, and roles grant access to tiers of data by sensitivity.
+- **Access:** Role-based. Each user holds one role, and roles grant access to tiers of data by sensitivity.
 - **Editing:** No live collaboration. Draft changes are approved before they reach the live plan.
 - **Configurability:** A fixed core of built-in tables, extended with custom fields and tables. See the [Decisions Log](decisions.md#configuration).
 - **Employee data:** A manually maintained copy of details held in the company's HR system.
@@ -101,5 +101,5 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 1. **Roles and approval:** Which roles exist, and what can each see, edit, and approve? See the proposal in [Roles](roles.md). Which changes need approval is decided in the [Decisions Log](decisions.md#planning).
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
-1. **Project Manager input:** Project Managers approve feature teams through the Approver role, as [Roles](roles.md) sets out. Is other input needed on whether teams are in place, such as comments or proposals?
+1. **Project Manager input:** Project Managers approve feature teams through their role, as [Roles](roles.md) sets out. Is other input needed on whether teams are in place, such as comments or proposals?
 1. **Timeline changes:** The timeline goal asks for drag and drop to change dates and assignments. [ADR 0009](../adr/0009-roadmap-and-timeline-views.md) proposes moving features between cycles and feature teams first. Is dragging to shift a feature's allocations by months also needed?

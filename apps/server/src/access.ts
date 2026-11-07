@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What a user's roles let them do, and the checks the data access layer makes. A user can do what any
-// of their roles allows. Roles and what they grant are kept in the database, where they can be
-// edited; the starting roles below are what migration 0020 stored, kept here for tests and seed data
-// that act as a starting role without reading the database. Adding a permission changes the shared
-// list in packages/shared, with its plain-English description.
+// What a user's role lets them do, and the checks the data access layer makes. Each account holds one
+// role. Roles and what they grant are kept in the database, where they can be edited; the starting
+// roles below are what the migrations stored, kept here for tests and seed data that act as a
+// starting role without reading the database. Adding a permission changes the shared list in
+// packages/shared, with its plain-English description.
 
 import type { Permission, Role, Tier } from "@fathom/shared";
 import {
@@ -15,59 +15,38 @@ import {
 } from "@fathom/shared";
 import { ForbiddenError } from "./errors.ts";
 
-// What each role Fathom starts with grants, from the shared starting roles.
-export const startingGrants: Record<Role, readonly Permission[]> =
-  Object.fromEntries(
-    roleSchema.options.map((role) => [
-      role,
-      // The role is always one of the fixed roles.
-      // eslint-disable-next-line security/detect-object-injection
-      startingRoles[role].permissions,
-    ]),
-  ) as Record<Role, readonly Permission[]>;
-
 export interface SignedInUser {
   id: string;
   name: string;
   email: string;
 }
 
-// Who is making a request, and what their roles let them do.
+// Who is making a request, and what their role lets them do.
 export interface Actor {
   user: SignedInUser;
-  roles: Role[];
   permissions: Permission[];
 }
 
-// An actor holding roles that grant the permissions given, as read from the database. A permission
-// the server does not know grants nothing, rather than being trusted.
+// An actor whose role grants the permissions given, as read from the database. A permission the
+// server does not know grants nothing, rather than being trusted.
 export function actorWith(
   user: SignedInUser,
-  heldRoles: readonly Role[],
   grantedPermissions: readonly string[],
 ): Actor {
-  const roles = roleSchema.options.filter((role) => heldRoles.includes(role));
-  return { user, roles, permissions: withImplied(grantedPermissions).sort() };
+  return { user, permissions: withImplied(grantedPermissions).sort() };
 }
 
-// An actor holding starting roles as Fathom first grants them, for tests and seed data.
-export function actorFor(
-  user: SignedInUser,
-  heldRoles: readonly Role[],
-): Actor {
-  return actorWith(
-    user,
-    heldRoles,
-    // The role is always one of the fixed roles listed above.
-    // eslint-disable-next-line security/detect-object-injection
-    heldRoles.flatMap((role) => startingGrants[role]),
-  );
+// An actor holding a starting role as Fathom first grants it, for tests and seed data.
+export function actorFor(user: SignedInUser, role: Role): Actor {
+  // The role is always one of the fixed roles.
+  // eslint-disable-next-line security/detect-object-injection
+  return actorWith(user, startingRoles[role].permissions);
 }
 
-// The starting roles that grant a permission on their own.
+// The starting roles that grant a permission.
 export function rolesGranting(permission: Permission): Role[] {
   return roleSchema.options.filter((role) =>
-    actorFor({ id: "", name: "", email: "" }, [role]).permissions.includes(
+    actorFor({ id: "", name: "", email: "" }, role).permissions.includes(
       permission,
     ),
   );

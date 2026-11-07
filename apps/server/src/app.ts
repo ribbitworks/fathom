@@ -164,7 +164,9 @@ export async function buildApp(options: AppOptions) {
     app.log.warn({ authLevel: level }, message);
   });
   // Every API request needs a signed-in user, apart from signing in and asking who is signed in.
-  // Checked before the request is read, so a signed-out client learns nothing from validation.
+  // Checked before the request is read, so a signed-out client learns nothing from validation. A
+  // user still signing in with a password Fathom generated may do nothing else until they change
+  // it, which, like reading the session and signing out, is one of the open requests.
   app.addHook("onRequest", async (request, reply) => {
     const route = request.routeOptions.url ?? "";
     const open =
@@ -175,6 +177,11 @@ export async function buildApp(options: AppOptions) {
     const actor = await readActor(auth, options.data, request, reply);
     if (actor === null) {
       return reply.status(unauthorized).send({ error: "Unauthorized" });
+    }
+    if (actor.mustChangePassword) {
+      return reply
+        .status(forbidden)
+        .send({ error: "The password must be changed before continuing." });
     }
     request.actor = actor;
     return undefined;

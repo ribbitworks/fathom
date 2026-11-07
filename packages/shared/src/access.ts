@@ -8,13 +8,14 @@
 import { z } from "zod";
 
 export const roleSchema = z.enum([
-  "viewer",
-  "project-planner",
-  "resource-planner",
-  "people-manager",
+  "team-member",
+  "planner",
+  "project-manager",
+  "engineering-manager",
+  "engineering-director",
   "workforce-administrator",
-  "leadership",
-  "approver",
+  "executive",
+  "resource-planner",
   "administrator",
 ]);
 
@@ -156,17 +157,17 @@ export const permissionDescriptions: Record<
   },
 
   "drafts:approve": {
-    allows: "Approves or rejects drafts of the data their roles let them see.",
+    allows: "Approves or rejects drafts of the data their role lets them see.",
     without: "Cannot approve drafts.",
   },
   "accounts:manage": {
     allows:
-      "Manages user accounts: creates them, changes their names, email addresses, and roles, resets passwords, and deactivates them.",
+      "Manages user accounts: creates them, changes their names, email addresses, and the role each holds, resets passwords, and deactivates them.",
     without: "Cannot manage user accounts.",
   },
   "roles:edit": {
     allows:
-      "Creates and changes roles: their names, descriptions, and what they grant, including roles the user holds.",
+      "Creates and changes roles: their names, descriptions, and what they grant, including the role the user holds.",
     without: "Cannot change roles.",
   },
   "settings:edit": {
@@ -181,7 +182,7 @@ export const permissionDescriptions: Record<
   },
 
   "changes:view": {
-    allows: "Sees the change history of the data their roles let them see.",
+    allows: "Sees the change history of the data their role lets them see.",
     without: "Does not see the change history.",
   },
 };
@@ -299,55 +300,86 @@ export function permissionLabel(permission: string): string {
   return permission;
 }
 
-// The roles Fathom starts with, as the migrations store them, which a test checks: their names,
-// what each is for, and what each grants. A starting role can be put back to this version from the
-// Roles page. Every role must be listed, which the compiler checks.
+// The roles Fathom starts with, one for each persona, as the migrations store them, which a test
+// checks: their names, what each is for, and what each grants. Each account holds one role. A
+// starting role can be put back to this version from the Roles page. Every role must be listed,
+// which the compiler checks.
 export const startingRoles: Record<
   Role,
   { name: string; description: string; permissions: readonly Permission[] }
 > = {
-  viewer: {
-    name: "Viewer",
+  "team-member": {
+    name: "Team Member",
     description: "Sees the plan, including everyone's work assignments.",
     permissions: ["plan:view", "allocations:view", "changes:view"],
   },
-  "project-planner": {
-    name: "Project Planner",
+  planner: {
+    name: "Planner",
     description:
       "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan.",
-    permissions: ["plan:edit", "drafts:submit", "changes:view"],
-  },
-  // Resource Planners see people, since they allocate them.
-  "resource-planner": {
-    name: "Resource Planner",
-    description:
-      "Sees people's General details, and edits allocations across the whole plan.",
     permissions: [
-      "people:view",
-      "allocations:edit",
+      "plan:edit",
+      "allocations:view",
       "drafts:submit",
       "changes:view",
     ],
   },
-  // People Managers edit feature teams directly until plan approval arrives, as Roles sets out.
-  "people-manager": {
-    name: "People Manager",
+  // Project Managers approve drafts, so they see lists, and can judge drafts of them.
+  "project-manager": {
+    name: "Project Manager",
     description:
-      "Sees people, including everyone's Restricted details, colours teams on the org chart, and proposes feature teams.",
+      "Edits the plan, and approves or rejects drafts of the data the role sees, including feature teams.",
     permissions: [
+      "plan:edit",
+      "allocations:view",
+      "feature-teams:approve",
+      "configuration:view",
+      "drafts:submit",
+      "drafts:approve",
+      "changes:view",
+    ],
+  },
+  // Engineering Managers edit feature teams directly until plan approval arrives, as Roles sets out.
+  "engineering-manager": {
+    name: "Engineering Manager",
+    description:
+      "Edits the plan and allocations, sees people, including everyone's Restricted details, colours teams on the org chart, and proposes feature teams.",
+    permissions: [
+      "plan:edit",
+      "allocations:edit",
       "people:view",
       "team-colours:edit",
       "feature-teams:propose",
       "feature-teams:edit",
       "restricted:view",
+      "drafts:submit",
+      "changes:view",
+    ],
+  },
+  "engineering-director": {
+    name: "Engineering Director",
+    description:
+      "Edits the plan and allocations, sees people, with their Restricted and Confidential data, and approves or rejects drafts of the data the role sees.",
+    permissions: [
+      "plan:edit",
+      "allocations:edit",
+      "people:view",
+      "feature-teams:approve",
+      "restricted:view",
+      "confidential:view",
+      "configuration:view",
+      "drafts:submit",
+      "drafts:approve",
       "changes:view",
     ],
   },
   "workforce-administrator": {
     name: "Workforce Administrator",
     description:
-      "Maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.",
+      "Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.",
     permissions: [
+      "plan:view",
+      "allocations:view",
       "people:edit",
       "team-colours:edit",
       "feature-teams:edit",
@@ -357,33 +389,36 @@ export const startingRoles: Record<
       "changes:view",
     ],
   },
-  leadership: {
-    name: "Leadership",
+  executive: {
+    name: "Executive",
     description:
-      "Sees people, with their Restricted and Confidential data, without editing it.",
+      "Sees the plan, and people, with their Restricted and Confidential data, without editing them.",
     permissions: [
+      "plan:view",
+      "allocations:view",
       "people:view",
       "restricted:view",
       "confidential:view",
       "changes:view",
     ],
   },
-  // Approvers see lists, so every Approver can judge drafts of them.
-  approver: {
-    name: "Approver",
+  // Resource Planners see people, since they allocate them, but not their Restricted details.
+  "resource-planner": {
+    name: "Resource Planner",
     description:
-      "Approves or rejects drafts of the data their roles let them see.",
+      "Sees the plan and people's General details, and edits allocations across the whole plan.",
     permissions: [
-      "drafts:approve",
-      "feature-teams:approve",
-      "configuration:view",
+      "plan:view",
+      "allocations:edit",
+      "people:view",
+      "drafts:submit",
       "changes:view",
     ],
   },
   administrator: {
     name: "Administrator",
     description:
-      "Manages user accounts, role assignments, and system settings, without access to Restricted or Confidential data.",
+      "Manages user accounts, roles, and system settings, without access to the plan or people's data.",
     permissions: [
       "accounts:manage",
       "roles:edit",

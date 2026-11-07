@@ -1,7 +1,7 @@
 # Fathom — Domain Concepts
 
 **Status:** Draft
-**Last updated:** 2026-11-04
+**Last updated:** 2026-11-06
 
 The terms Fathom uses, defined so they fit any software organization, whatever its titles and practices. How an organization works with them, such as who leads what or how often it releases, is its own configuration. See also the [Product Brief](brief.md) and the [Decisions Log](decisions.md).
 
@@ -27,7 +27,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Hiring plan:** The planned hires not yet filled, seen through a saved view of People that shows only them.
 - **List with meanings:** A list whose choices are the organization's own, each tied to one of a fixed set of meanings Fathom acts on, such as a planned hire's states, each meaning Proposed or Open.
 - **Team:** The people who report to a manager.
-- **Manager flag:** Marks a person who can be named as others' manager. Not the People Manager role, which grants users access.
+- **Manager flag:** Marks a person who can be named as others' manager. Not the Engineering Manager role, which grants users access.
 - **Feature team:** The people working on a set of related features. Membership is separate from reporting lines.
 - **Feature lead:** The person who leads a feature team.
 
@@ -38,4 +38,5 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Metrics:** Counts of a table's rows shown, broken down by the values of one column, or of two crossed, each with its share of those rows.
 - **Draft row:** A row to be added, changed, or removed, waiting for an Approver to approve it, which makes it live, or reject it, which marks it Rejected, with a reason, until it is changed or discarded.
 - **Live:** Approved, and so part of the plan everyone works from.
+- **Approver:** Anyone whose role lets them approve drafts of that data. Not a role of its own.
 - **Saved view:** A view saved under a name, shared with everyone who sees the table, and applied again from the table's Views menu.

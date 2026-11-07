@@ -20,7 +20,6 @@ import {
 const viewer = () =>
   Response.json({
     ...fictionalUser,
-    roles: ["resource-planner"],
     permissions: ["people:view", "plan:view"],
   });
 
@@ -289,7 +288,7 @@ describe("the org chart", () => {
     ).toBe("Add a name");
   });
 
-  it("lets those who may only colour teams, such as People Managers, colour them without renaming", async () => {
+  it("lets those who may only colour teams, such as Engineering Managers, colour them without renaming", async () => {
     serverAnswers({
       "GET /api/session": () =>
         Response.json({

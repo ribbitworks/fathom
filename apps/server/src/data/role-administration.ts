@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Roles as those who may edit them see and change them: listing roles with what they grant and how
-// many active accounts hold them, creating roles, such as by copying another, changing a role's name,
+// many active accounts hold them, which those who manage accounts may also do, to choose each
+// account's role, creating roles, such as by copying another, changing a role's name,
 // description, and what it grants, and working out what a change would do to each account before it
 // is saved. Every change is recorded in the access history. A change that would leave no active
 // account able to manage accounts or edit roles is refused.
@@ -26,7 +27,11 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { type Actor, requirePermission } from "../access.ts";
+import {
+  type Actor,
+  requireAnyPermission,
+  requirePermission,
+} from "../access.ts";
 import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
 import { recordEvent } from "./history.ts";
@@ -37,8 +42,8 @@ export interface RoleAdministration {
   createRole(actor: Actor, role: RoleRequest): Promise<RoleSummary>;
   // Refused if the role has changed since the one making the change read it.
   updateRole(actor: Actor, id: string, role: RoleChange): Promise<RoleSummary>;
-  // What giving a role these permissions would change for each active account holding it, taking
-  // the account's other roles into account, without saving anything.
+  // What giving a role these permissions would change for each active account holding it, without
+  // saving anything.
   previewRole(
     actor: Actor,
     id: string,
@@ -158,7 +163,8 @@ export function createRoleAdministration(
 
   return {
     async listRoles(actor) {
-      requirePermission(actor, "roles:edit");
+      // Those who manage accounts choose from every role, so they read them too.
+      requireAnyPermission(actor, ["roles:edit", "accounts:manage"]);
       return readRoles(database);
     },
 
@@ -246,47 +252,23 @@ export function createRoleAdministration(
 
     async previewRole(actor, id, permissions) {
       requirePermission(actor, "roles:edit");
-      await readRole(database, id);
+      const role = await readRole(database, id);
+      const before = withImplied(role.permissions);
+      const after = withImplied(permissions);
+      const same =
+        before.length === after.length &&
+        before.every((permission) => after.includes(permission));
+      if (same) return { effects: [] };
+      // Each account holds one role, so a change to it changes every active holder alike.
       const holders = await database
         .select({ id: users.id, name: users.name, email: users.email })
         .from(userRoles)
         .innerJoin(users, eq(users.id, userRoles.userId))
         .where(and(eq(userRoles.roleId, id), isNull(users.deactivatedAt)))
         .orderBy(asc(users.name), asc(users.email));
-      if (holders.length === 0) return { effects: [] };
-      // What each holder's other roles grant, which a change to this one leaves as it is.
-      const grants = await database
-        .select({
-          userId: userRoles.userId,
-          roleId: userRoles.roleId,
-          permission: rolePermissions.permission,
-        })
-        .from(userRoles)
-        .innerJoin(
-          rolePermissions,
-          eq(rolePermissions.roleId, userRoles.roleId),
-        )
-        .where(
-          inArray(
-            userRoles.userId,
-            holders.map((holder) => holder.id),
-          ),
-        );
-      const effects = holders.flatMap((account) => {
-        const held = grants.filter((row) => row.userId === account.id);
-        const before = withImplied(held.map((row) => row.permission));
-        const after = withImplied([
-          ...held
-            .filter((row) => row.roleId !== id)
-            .map((row) => row.permission),
-          ...permissions,
-        ]);
-        const same =
-          before.length === after.length &&
-          before.every((permission) => after.includes(permission));
-        return same ? [] : [{ account, before, after }];
-      });
-      return { effects };
+      return {
+        effects: holders.map((account) => ({ account, before, after })),
+      };
     },
   };
 }

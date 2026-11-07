@@ -23,10 +23,10 @@ import {
   valueField,
 } from "@fathom/db";
 import type { FictionalOrganization, FictionalPerson } from "@fathom/fixtures";
-import { type Actor, actorFor } from "@fathom/server/access";
+import type { Actor } from "@fathom/server/access";
 import { createDataAccess } from "@fathom/server/data";
 import { and, eq, gt, inArray, isNull, max, ne, or, sql } from "drizzle-orm";
-import { accountDomain, personaAccounts } from "./accounts.ts";
+import { accountDomain, personaAccounts, personaActor } from "./accounts.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
 const secondEditorEmail = `engineering.operations.manager.2@${accountDomain}`;
@@ -48,7 +48,7 @@ export async function actorOf(
   if (user === undefined || persona === undefined) {
     throw new Error(`The account ${email} is missing; seed the accounts first`);
   }
-  return actorFor(user, persona.roles);
+  return personaActor(user, persona.role);
 }
 
 // A choice in a column's list other than the one a person has.
@@ -444,10 +444,10 @@ export async function unseedUnpublished(
   let discarded = 0;
   for (const account of accounts) {
     // Every persona account read has its persona.
-    const { roles } = personaAccounts.find(
+    const { role } = personaAccounts.find(
       ({ email }) => email === account.email,
     ) as (typeof personaAccounts)[number];
-    const persona = actorFor(account, roles);
+    const persona = personaActor(account, role);
     if (
       persona.permissions.includes("people:edit") ||
       persona.permissions.includes("configuration:edit")

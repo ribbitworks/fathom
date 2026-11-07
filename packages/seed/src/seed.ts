@@ -61,7 +61,7 @@ import {
   seedUnpublishedList,
   unseedListDrafts,
 } from "./list-drafts.ts";
-import { passwordLength } from "@fathom/shared";
+import { defaultPasswordSettings, passwordLength } from "@fathom/shared";
 import { seedReleases, unseedReleases } from "./releases.ts";
 
 // The development data set's size.
@@ -513,12 +513,11 @@ function readPassword(environment: NodeJS.ProcessEnv): string {
   // The path comes from the development scripts, not from users of the application.
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   const password = readFileSync(file, "utf8").trim();
-  if (
-    password.length < passwordLength.minimum ||
-    password.length > passwordLength.maximum
-  ) {
+  // As long as a new database's password rules ask for, though the accounts need not meet them.
+  const minimum = defaultPasswordSettings.rules.minimumLength;
+  if (password.length < minimum || password.length > passwordLength.maximum) {
     throw new Error(
-      `The file FATHOM_SEED_PASSWORD_FILE names must hold a password of ${String(passwordLength.minimum)} to ${String(passwordLength.maximum)} characters`,
+      `The file FATHOM_SEED_PASSWORD_FILE names must hold a password of ${String(minimum)} to ${String(passwordLength.maximum)} characters`,
     );
   }
   return password;

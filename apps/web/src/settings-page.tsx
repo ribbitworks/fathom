@@ -2,14 +2,15 @@
 
 // The Settings page, for users who may change settings for the whole of Fathom: its time zone, which
 // decides which day is today for everyone, such as the Today line on the Releases timeline and the
-// date a change takes effect when none is given. The change is saved at once, for everyone, and
-// recorded in the access history.
+// date a change takes effect when none is given, and the password settings. Each change is saved at
+// once, for everyone, and recorded in the access history.
 
 import {
   knowsTimeZone,
-  settingsSchema,
+  type PasswordSettings,
   type TimeZoneRequest,
   timeZoneChoices,
+  timeZoneSettingSchema,
 } from "@fathom/shared";
 import {
   Alert,
@@ -26,10 +27,11 @@ import { useEffect, useMemo, useState } from "react";
 import { describeProblem, sendJsonFor } from "./api.ts";
 import { notifySuccess } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
+import { PasswordSettingsPanel } from "./password-settings.tsx";
 import { sessionQuery } from "./session.ts";
 
 const changeTimeZone = (request: TimeZoneRequest) =>
-  sendJsonFor("PUT", "/api/settings/time-zone", request, settingsSchema);
+  sendJsonFor("PUT", "/api/settings/time-zone", request, timeZoneSettingSchema);
 
 // The day and time in a time zone, by the reader's own clock, 12-hour or 24-hour as their language
 // settings have it.
@@ -61,7 +63,13 @@ function useNow(): Date {
   return now;
 }
 
-export function SettingsPage({ timeZone }: { timeZone: string }) {
+export function SettingsPage({
+  timeZone,
+  passwords,
+}: {
+  timeZone: string;
+  passwords: PasswordSettings;
+}) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const choices = useMemo(() => {
@@ -82,7 +90,7 @@ export function SettingsPage({ timeZone }: { timeZone: string }) {
   return (
     <Stack gap="md" maw={560}>
       <PageHeader title="Settings" />
-      <Paper withBorder p="md">
+      <Paper withBorder p="md" component="section" aria-label="Time zone">
         <form
           noValidate
           onSubmit={(event) => {
@@ -126,6 +134,7 @@ export function SettingsPage({ timeZone }: { timeZone: string }) {
           </Stack>
         </form>
       </Paper>
+      <PasswordSettingsPanel passwords={passwords} />
     </Stack>
   );
 }

@@ -2,11 +2,12 @@
 
 // Tests for the Accounts page and the Change name and Change password dialogs, with the server's
 // responses simulated: who sees the Accounts page, the list of accounts, creating accounts, editing
-// their names, email addresses, and roles, resetting passwords, deactivating and reactivating, the
-// server's refusals, and changing one's own name and password.
+// their names, email addresses, and their one role, chosen from every role, resetting passwords,
+// with the password Fathom generates shown once, deactivating and reactivating, the server's
+// refusals, changing one's own name and password, with the checklist of what a new password must
+// meet, and changing a generated password before anything else.
 
-import { roleSchema } from "@fathom/shared";
-import { screen, waitFor, within } from "@testing-library/react";
+import { act, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -15,13 +16,73 @@ import {
   renderApp,
   serverAnswers,
   signedIn,
+  signedOut,
 } from "./test-support.tsx";
-import { roleDescription, roleName } from "./accounts.ts";
+
+// Every role, as the server lists them by name: starting roles and one made later.
+function role(
+  id: number,
+  key: string | null,
+  name: string,
+  description: string,
+  permissions: string[],
+) {
+  return {
+    id: `00000000-0000-4000-8000-00000000000${String(id)}`,
+    key,
+    name,
+    description,
+    permissions,
+    accounts: 1,
+    updatedAt: "2026-11-01T12:00:00.000Z",
+  };
+}
+const administratorRole = role(
+  1,
+  "administrator",
+  "Administrator",
+  "Manages user accounts, roles, and system settings.",
+  ["accounts:manage", "roles:edit", "settings:edit", "history:view"],
+);
+const auditorsRole = role(
+  2,
+  null,
+  "Fictional Auditors",
+  "Checks Restricted data for audits.",
+  ["people:view", "restricted:view"],
+);
+const plannerRole = role(3, "planner", "Planner", "Edits the plan.", [
+  "plan:edit",
+]);
+const teamMemberRole = role(4, "team-member", "Team Member", "Sees the plan.", [
+  "plan:view",
+]);
+// Manages accounts and edits roles, as Administrator does, though made later.
+const keepersRole = role(
+  5,
+  null,
+  "Fictional Keepers",
+  "Keeps Fathom manageable.",
+  ["accounts:manage", "roles:edit"],
+);
+const roles = [
+  administratorRole,
+  auditorsRole,
+  keepersRole,
+  plannerRole,
+  teamMemberRole,
+];
+const roleList = () => Response.json({ roles });
+const holding = ({ id, name }: { id: string; name: string }) => ({ id, name });
 
 const manager = () =>
   Response.json({
     ...fictionalUser,
-    roles: ["viewer", "administrator"],
+    role: {
+      ...holding(administratorRole),
+      key: "administrator",
+      description: "",
+    },
     permissions: ["accounts:manage", "plan:view"],
   });
 
@@ -29,7 +90,7 @@ const own = {
   id: "user-1",
   name: "Fictional Person",
   email: "person@example.test",
-  roles: ["viewer", "administrator"],
+  role: holding(administratorRole),
   active: true,
   createdAt: "2026-10-12T09:00:00.000Z",
 };
@@ -37,7 +98,7 @@ const planner = {
   id: "user-2",
   name: "Fictional Planner",
   email: "planner@example.test",
-  roles: ["viewer", "project-planner"],
+  role: holding(plannerRole),
   active: true,
   createdAt: "2026-10-14T09:00:00.000Z",
 };
@@ -45,7 +106,7 @@ const former = {
   id: "user-3",
   name: "Fictional Former",
   email: "former@example.test",
-  roles: ["viewer"],
+  role: holding(teamMemberRole),
   active: false,
   createdAt: "2026-10-16T09:00:00.000Z",
 };
@@ -69,11 +130,59 @@ async function openAction(name: string, action: string) {
   );
 }
 
+// A password as Fathom generates one.
+const generated = "Fict2ionalGenerated9";
+
+// Checks the dialog that shows a generated password once: what it says, the password, and its Copy
+// button, then closes it with Done.
+async function showsGeneratedPassword(name: string) {
+  const dialog = await screen.findByRole("dialog", {
+    name: `Password for ${name}`,
+  });
+  expect(
+    within(dialog).getByText(
+      `This password is shown only once. ${name} must change it at the next sign-in.`,
+    ),
+  ).toBeDefined();
+  const field = within(dialog).getByLabelText<HTMLInputElement>("Password");
+  // Hidden until asked for, and read-only.
+  expect([field.value, field.type, field.readOnly]).toEqual([
+    generated,
+    "password",
+    true,
+  ]);
+  // Set up for this test, so the simulated browser has a clipboard to copy to. Copied while
+  // hidden, it is still the password itself.
+  const user = userEvent.setup();
+  await user.click(within(dialog).getByRole("button", { name: "Copy" }));
+  expect(await navigator.clipboard.readText()).toBe(generated);
+  expect(within(dialog).getByRole("button", { name: "Copied" })).toBeDefined();
+  const show = within(dialog).getByRole("button", { name: "Show password" });
+  await user.click(show);
+  expect([field.type, show.getAttribute("aria-pressed")]).toEqual([
+    "text",
+    "true",
+  ]);
+  // Selected whole on reaching it, ready to copy by hand.
+  act(() => {
+    field.focus();
+  });
+  expect([field.selectionStart, field.selectionEnd]).toEqual([
+    0,
+    generated.length,
+  ]);
+  await userEvent.click(within(dialog).getByRole("button", { name: "Done" }));
+  await waitFor(() => {
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+}
+
 describe("who sees the Accounts page", () => {
   it("links to it for users who may manage accounts", async () => {
     serverAnswers({
       "GET /api/session": manager,
       "GET /api/greeting": greeting,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/");
@@ -105,16 +214,15 @@ describe("who sees the Accounts page", () => {
 });
 
 describe("the list of accounts", () => {
-  it("shows each account's roles and status, and marks one's own", async () => {
+  it("shows each account's role and status, and marks one's own", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
     const row = (await screen.findByText("Fictional Planner")).closest("tr");
-    expect(
-      within(row as HTMLElement).getByText("Project Planner"),
-    ).toBeDefined();
+    expect(within(row as HTMLElement).getByText("Planner")).toBeDefined();
     expect(within(row as HTMLElement).getByText("Active")).toBeDefined();
     expect(screen.getByText("Deactivated")).toBeDefined();
     const ownRow = within(screen.getByRole("table"))
@@ -127,6 +235,7 @@ describe("the list of accounts", () => {
   it("offers every change to one's own account but resetting its password, which needs the current one", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -139,9 +248,34 @@ describe("the list of accounts", () => {
     ).toBeNull();
   });
 
+  it("shows an account left without a role as holding none, and asks for one before saving it", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": () =>
+        Response.json({ accounts: [own, { ...planner, role: null }] }),
+    });
+    renderApp("/accounts");
+    const row = (await screen.findByText("Fictional Planner")).closest("tr");
+    expect(within(row as HTMLElement).getByText("No role")).toBeDefined();
+    const dialog = await openEditFor("Fictional Planner");
+    expect(
+      within(dialog)
+        .getAllByRole<HTMLInputElement>("radio")
+        .some(({ checked }) => checked),
+    ).toBe(false);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(await within(dialog).findByText("Choose a role.")).toBeDefined();
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/accounts/user-2",
+      expect.anything(),
+    );
+  });
+
   it("shows the day each account was created", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -163,6 +297,7 @@ describe("the list of accounts", () => {
   it("shows a loading indicator until the accounts arrive", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": () => new Promise<Response>(() => undefined),
     });
     renderApp("/accounts");
@@ -172,6 +307,7 @@ describe("the list of accounts", () => {
   it("shows a message when the accounts cannot be loaded", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": () =>
         Response.json({ error: "Internal Server Error" }, { status: 500 }),
     });
@@ -187,13 +323,13 @@ describe("changing one's own account", () => {
     let session = manager;
     serverAnswers({
       "GET /api/session": () => session(),
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
       "PATCH /api/accounts/user-1": () => {
         session = () =>
           Response.json({
             ...fictionalUser,
             user: { ...fictionalUser.user, name: "Fictional Self" },
-            roles: own.roles,
             permissions: ["accounts:manage", "plan:view"],
           });
         return Response.json({ account: { ...own, name: "Fictional Self" } });
@@ -212,30 +348,33 @@ describe("changing one's own account", () => {
     ).toBeDefined();
   });
 
-  it("leaves Accounts for the first page the user may still open once they give up the Administrator role", async () => {
+  it("leaves Accounts for the first page the user may still open once their role no longer manages accounts", async () => {
     let session = manager;
     let refusedLists = 0;
     serverAnswers({
       "GET /api/session": () => session(),
       "GET /api/greeting": greeting,
+      "GET /api/roles": roleList,
       "GET /api/accounts": () => {
         if (session === signedIn) {
           refusedLists += 1;
           return Response.json({ error: "Forbidden" }, { status: 403 });
         }
         return Response.json({
-          accounts: [own, { ...planner, roles: ["administrator"] }],
+          accounts: [own, { ...planner, role: holding(administratorRole) }],
         });
       },
       "PATCH /api/accounts/user-1": () => {
         session = signedIn;
-        return Response.json({ account: { ...own, roles: ["viewer"] } });
+        return Response.json({
+          account: { ...own, role: holding(teamMemberRole) },
+        });
       },
     });
     const history = renderApp("/accounts");
     const dialog = await openEditFor("Fictional Person");
     await userEvent.click(
-      within(dialog).getByRole("checkbox", { name: "Administrator" }),
+      within(dialog).getByRole("radio", { name: "Team Member" }),
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     await waitFor(() => {
@@ -249,9 +388,10 @@ describe("changing one's own account", () => {
   it("says what deactivating their own account does to them", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": () =>
         Response.json({
-          accounts: [own, { ...planner, roles: ["administrator"] }],
+          accounts: [own, { ...planner, role: holding(administratorRole) }],
         }),
     });
     renderApp("/accounts");
@@ -267,45 +407,91 @@ describe("changing one's own account", () => {
   });
 });
 
-describe("the last active Administrator", () => {
-  async function controlsFor(accounts: object[]) {
+describe("the last active account that manages accounts and edits roles", () => {
+  // Roles made later that each grant only one of the permissions that keep Fathom manageable.
+  const accountKeepersRole = role(
+    6,
+    null,
+    "Fictional Account Keepers",
+    "Manages accounts.",
+    ["accounts:manage"],
+  );
+  const roleEditorsRole = role(
+    7,
+    null,
+    "Fictional Role Editors",
+    "Edits roles.",
+    ["roles:edit"],
+  );
+
+  async function controlsFor(accounts: object[], name = "Fictional Person") {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": () =>
+        Response.json({
+          roles: [...roles, accountKeepersRole, roleEditorsRole],
+        }),
       "GET /api/accounts": () => Response.json({ accounts }),
     });
     renderApp("/accounts");
-    const dialog = await openEditFor("Fictional Person");
+    const dialog = await openEditFor(name);
     const deactivate = within(dialog).getByRole("button", {
       name: "Deactivate",
     });
-    const role = within(dialog).getByRole("checkbox", {
-      name: "Administrator",
-    });
-    return { deactivate, role };
+    const choice = (name: string) =>
+      within(dialog).getByRole<HTMLInputElement>("radio", { name });
+    return { deactivate, choice };
   }
 
-  it("can neither give up the role nor be deactivated", async () => {
-    const { deactivate, role } = await controlsFor([own, planner, former]);
+  it("can neither be given a role without both nor be deactivated", async () => {
+    const { deactivate, choice } = await controlsFor([own, planner, former]);
     expect((deactivate as HTMLButtonElement).disabled).toBe(true);
-    expect((role as HTMLInputElement).disabled).toBe(true);
-    expect((role as HTMLInputElement).checked).toBe(true);
+    expect(choice("Administrator").checked).toBe(true);
+    expect(choice("Team Member").disabled).toBe(true);
+    expect(choice("Fictional Keepers").disabled).toBe(false);
   });
 
-  it("can do both once another active account holds the role", async () => {
-    const { deactivate, role } = await controlsFor([
+  it("can do both once another active account's role grants both, even a role made later", async () => {
+    const { deactivate, choice } = await controlsFor([
       own,
-      { ...planner, roles: ["administrator"] },
+      { ...planner, role: holding(keepersRole) },
     ]);
     expect((deactivate as HTMLButtonElement).disabled).toBe(false);
-    expect((role as HTMLInputElement).disabled).toBe(false);
+    expect(choice("Team Member").disabled).toBe(false);
   });
 
-  it("counts a deactivated Administrator as gone", async () => {
-    const { role } = await controlsFor([
+  it("can be given a role that keeps the one permission no other active account's role grants", async () => {
+    const { deactivate, choice } = await controlsFor([
       own,
-      { ...former, roles: ["administrator"] },
+      { ...planner, role: holding(accountKeepersRole) },
     ]);
-    expect((role as HTMLInputElement).disabled).toBe(true);
+    expect(choice("Fictional Role Editors").disabled).toBe(false);
+    expect(choice("Fictional Account Keepers").disabled).toBe(true);
+    expect(choice("Team Member").disabled).toBe(true);
+    expect((deactivate as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it("keeps each permission apart, when no account's role grants both", async () => {
+    const { deactivate, choice } = await controlsFor(
+      [
+        { ...own, role: holding(roleEditorsRole) },
+        { ...planner, role: holding(accountKeepersRole) },
+      ],
+      "Fictional Planner",
+    );
+    expect((deactivate as HTMLButtonElement).disabled).toBe(true);
+    expect(choice("Fictional Account Keepers").checked).toBe(true);
+    expect(choice("Fictional Account Keepers").disabled).toBe(false);
+    expect(choice("Fictional Role Editors").disabled).toBe(true);
+    expect(choice("Administrator").disabled).toBe(false);
+  });
+
+  it("counts a deactivated account as gone", async () => {
+    const { choice } = await controlsFor([
+      own,
+      { ...former, role: holding(administratorRole) },
+    ]);
+    expect(choice("Team Member").disabled).toBe(true);
   });
 });
 
@@ -313,6 +499,7 @@ describe("finding accounts", () => {
   it("narrows the list by name or email address as you type", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -329,6 +516,7 @@ describe("finding accounts", () => {
   it("shows only active or only deactivated accounts, with how many of each", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -345,6 +533,7 @@ describe("finding accounts", () => {
   it("says when no account matches", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -357,13 +546,17 @@ describe("finding accounts", () => {
 });
 
 describe("creating an account", () => {
-  it("sends the new account, with Viewer chosen unless taken off, and closes the dialog", async () => {
+  it("sends the new account with the one role chosen, any role, then shows its password once, to copy", async () => {
     const fetch = serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
       "POST /api/accounts": () =>
         Response.json(
-          { account: { ...planner, id: "user-4" } },
+          {
+            account: { ...planner, id: "user-4", name: "Fictional Newcomer" },
+            password: generated,
+          },
           { status: 201 },
         ),
     });
@@ -380,17 +573,17 @@ describe("creating an account", () => {
       within(dialog).getByLabelText("Email address"),
       "newcomer@example.test",
     );
-    await userEvent.type(
-      within(dialog).getByLabelText(/Temporary password/),
-      "fictional password 1",
+    expect(within(dialog).queryByLabelText(/password/iu)).toBeNull();
+    await userEvent.click(
+      within(dialog).getByRole("radio", { name: "Fictional Auditors" }),
     );
-    await userEvent.click(within(dialog).getByLabelText("Resource Planner"));
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create account" }),
     );
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog")).toBeNull();
-    });
+    await showsGeneratedPassword("Fictional Newcomer");
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Created the account for Fictional Newcomer.",
+    );
     expect(fetch).toHaveBeenCalledWith(
       "/api/accounts",
       expect.objectContaining({
@@ -398,16 +591,161 @@ describe("creating an account", () => {
         body: JSON.stringify({
           name: "Fictional Newcomer",
           email: "newcomer@example.test",
-          password: "fictional password 1",
-          roles: ["viewer", "resource-planner"],
+          roleId: auditorsRole.id,
         }),
       }),
     );
   });
 
-  it("asks for a name, a valid email address, and a long enough password", async () => {
+  it("keeps the password shown when the page behind it is clicked, and forgets it once closed", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+      "POST /api/accounts/user-2/password": () =>
+        Response.json({ password: generated }),
+    });
+    renderApp("/accounts");
+    await openAction("Fictional Planner", "Reset password");
+    const reset = await screen.findByRole("dialog");
+    await userEvent.click(
+      within(reset).getByRole("button", { name: "Reset password" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Password for Fictional Planner",
+    });
+    await userEvent.click(document.body);
+    expect(screen.getByRole("dialog")).toBe(dialog);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(screen.queryByDisplayValue(generated)).toBeNull();
+  });
+
+  it("chooses Team Member until another role is chosen", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New account" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(
+      within(dialog).getByRole<HTMLInputElement>("radio", {
+        name: "Team Member",
+      }).checked,
+    ).toBe(true);
+  });
+
+  it("points those who may edit roles to the Roles page, in New account and Edit", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["accounts:manage", "roles:edit"],
+        }),
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    const history = renderApp("/accounts");
+    const edit = await openEditFor("Fictional Planner");
+    expect(
+      within(edit).getByText(/^Custom roles are created on the/u),
+    ).toBeDefined();
+    await userEvent.click(within(edit).getByRole("button", { name: "Cancel" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    await userEvent.click(screen.getByRole("button", { name: "New account" }));
+    const dialog = await screen.findByRole("dialog", { name: "New account" });
+    await userEvent.click(within(dialog).getByRole("link", { name: "Roles" }));
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/roles");
+    });
+  });
+
+  it("does not point to the Roles page those who may not edit roles", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    const edit = await openEditFor("Fictional Planner");
+    expect(within(edit).getByRole("radio", { name: "Planner" })).toBeDefined();
+    expect(within(edit).queryByText(/Custom roles are created/u)).toBeNull();
+    expect(within(edit).queryByRole("link", { name: "Roles" })).toBeNull();
+  });
+
+  it("asks for a role when there is none to start from", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": () =>
+        Response.json({ roles: [administratorRole, auditorsRole] }),
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New account" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.type(
+      within(dialog).getByLabelText("Name"),
+      "Fictional Newcomer",
+    );
+    await userEvent.type(
+      within(dialog).getByLabelText("Email address"),
+      "newcomer@example.test",
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Create account" }),
+    );
+    expect(await within(dialog).findByText("Choose a role.")).toBeDefined();
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/accounts",
+      expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("waits for the roles", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": () => new Promise<Response>(() => undefined),
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New account" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByLabelText("Loading")).toBeDefined();
+  });
+
+  it("says when the roles cannot be loaded", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": () =>
+        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Edit Fictional Planner" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    expect((await within(dialog).findByRole("alert")).textContent).toBe(
+      "Fathom could not load the roles. Try again in a moment.",
+    );
+  });
+
+  it("asks for a name and a valid email address", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -419,10 +757,6 @@ describe("creating an account", () => {
       within(dialog).getByLabelText("Email address"),
       "nope",
     );
-    await userEvent.type(
-      within(dialog).getByLabelText(/Temporary password/),
-      "short",
-    );
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create account" }),
     );
@@ -432,12 +766,12 @@ describe("creating an account", () => {
     expect(
       within(dialog).getByText("Enter a valid email address."),
     ).toBeDefined();
-    expect(within(dialog).getByText("Use 12 to 128 characters.")).toBeDefined();
   });
 
   it("shows the server's message when it refuses, and stays open", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
       "POST /api/accounts": () =>
         Response.json(
@@ -458,10 +792,6 @@ describe("creating an account", () => {
       within(dialog).getByLabelText("Email address"),
       "planner@example.test",
     );
-    await userEvent.type(
-      within(dialog).getByLabelText(/Temporary password/),
-      "fictional password 1",
-    );
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create account" }),
     );
@@ -478,16 +808,17 @@ describe("creating an account", () => {
 });
 
 describe("changing an account", () => {
-  it("changes its name, email address, and roles together", async () => {
+  it("changes its name, email address, and role together", async () => {
     const fetch = serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
       "PATCH /api/accounts/user-2": () =>
         Response.json({
           account: {
             ...planner,
             name: "Fictional Planning",
-            roles: ["viewer"],
+            role: holding(teamMemberRole),
           },
         }),
     });
@@ -504,7 +835,9 @@ describe("changing an account", () => {
     const email = within(dialog).getByLabelText("Email address");
     await userEvent.clear(email);
     await userEvent.type(email, "planning@example.test");
-    await userEvent.click(within(dialog).getByLabelText("Project Planner"));
+    await userEvent.click(
+      within(dialog).getByRole("radio", { name: "Team Member" }),
+    );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect((await screen.findByRole("status")).textContent).toBe(
       "Saved the account for Fictional Planning.",
@@ -516,7 +849,7 @@ describe("changing an account", () => {
         body: JSON.stringify({
           name: "Fictional Planning",
           email: "planning@example.test",
-          roles: ["viewer"],
+          roleId: teamMemberRole.id,
         }),
       }),
     );
@@ -525,6 +858,7 @@ describe("changing an account", () => {
   it("asks for a name and a valid email address when editing", async () => {
     const fetch = serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -549,36 +883,52 @@ describe("changing an account", () => {
     );
   });
 
-  it("resets its password, asking for one long enough", async () => {
+  it("resets its password, then shows the new one once, to copy", async () => {
     const fetch = serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "PUT /api/accounts/user-2/password": () =>
-        new Response(null, { status: 204 }),
+      "POST /api/accounts/user-2/password": () =>
+        Response.json({ password: generated }),
     });
     renderApp("/accounts");
     await openAction("Fictional Planner", "Reset password");
     const dialog = await screen.findByRole("dialog");
-    const button = within(dialog).getByRole("button", {
-      name: "Reset password",
-    });
-    await userEvent.click(button);
     expect(
-      await within(dialog).findByText("Use 12 to 128 characters."),
+      within(dialog).getByText(
+        "Fictional Planner will be signed out of every session. Fathom will generate a new password, which Fictional Planner must change at the next sign-in.",
+      ),
     ).toBeDefined();
-    await userEvent.type(
-      within(dialog).getByLabelText("New temporary password"),
-      "fictional password 2",
+    expect(within(dialog).queryByLabelText(/password/iu)).toBeNull();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Reset password" }),
     );
-    await userEvent.click(button);
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog")).toBeNull();
-    });
+    await showsGeneratedPassword("Fictional Planner");
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Reset the password for Fictional Planner.",
+    );
     expect(fetch).toHaveBeenCalledWith(
       "/api/accounts/user-2/password",
-      expect.objectContaining({
-        body: JSON.stringify({ password: "fictional password 2" }),
-      }),
+      expect.objectContaining({ method: "POST", body: "{}" }),
+    );
+  });
+
+  it("says why a reset was refused, and stays open", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+      "POST /api/accounts/user-2/password": () =>
+        Response.json({ error: "There is no such account" }, { status: 404 }),
+    });
+    renderApp("/accounts");
+    await openAction("Fictional Planner", "Reset password");
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Reset password" }),
+    );
+    expect((await within(dialog).findByRole("alert")).textContent).toBe(
+      "There is no such account",
     );
   });
 
@@ -600,6 +950,7 @@ describe("changing an account", () => {
   ] as const)("%s", async (_case, name, id, action, active) => {
     const fetch = serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
       [`PUT /api/accounts/${id}/active`]: () =>
         Response.json({ account: { ...planner, id, active } }),
@@ -617,6 +968,13 @@ describe("changing an account", () => {
     );
   });
 });
+
+// Each requirement in the checklist under New password, as a screen reader reads it, with its
+// state: met, pending (not met, while typing), or unmet (not met, shown in red).
+const checklist = (container: HTMLElement) =>
+  within(container)
+    .getAllByRole("listitem")
+    .map((item) => [item.textContent, item.dataset.state]);
 
 describe("changing one's own password", () => {
   async function openDialog(): Promise<HTMLElement> {
@@ -702,20 +1060,118 @@ describe("changing one's own password", () => {
     ).toBeDefined();
   });
 
-  it("asks for the current password and a long enough new one", async () => {
+  it("shows the rules from the start, and asks for the current password and a long enough new one", async () => {
     serverAnswers({
       "GET /api/session": signedIn,
       "GET /api/greeting": greeting,
     });
     renderApp("/");
     const dialog = await openDialog();
+    expect(checklist(dialog)).toEqual([
+      ["12 to 128 characters (not met)", "pending"],
+      ["Not a common or easily guessed password (not met)", "pending"],
+    ]);
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Change password" }),
     );
     expect(
       await within(dialog).findByText("Enter your current password."),
     ).toBeDefined();
-    expect(within(dialog).getByText("Use 12 to 128 characters.")).toBeDefined();
+    expect(
+      within(dialog).getByText(
+        "The password must have at least 12 characters.",
+      ),
+    ).toBeDefined();
+  });
+
+  it("follows the rules in the password settings, saying what a new password lacks", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          settings: {
+            ...fictionalUser.settings,
+            passwords: {
+              ...fictionalUser.settings.passwords,
+              rules: {
+                minimumLength: 14,
+                uppercase: true,
+                lowercase: false,
+                digits: false,
+                symbols: true,
+              },
+            },
+          },
+        }),
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    expect(checklist(dialog).map(([text]) => text)).toEqual([
+      "14 to 128 characters (not met)",
+      "An uppercase letter (not met)",
+      "A symbol (not met)",
+      "Not a common or easily guessed password (not met)",
+    ]);
+    await changePassword(
+      dialog,
+      "fictional password 1",
+      "fictional password 2",
+    );
+    expect(
+      await within(dialog).findByText(
+        "The password must include an uppercase letter and a symbol.",
+      ),
+    ).toBeDefined();
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/auth/change-password",
+      expect.anything(),
+    );
+  });
+
+  it("puts the server's refusal of a new password plainly", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+      "POST /api/auth/change-password": () =>
+        Response.json(
+          { error: "The password must include a symbol." },
+          { status: 400 },
+        ),
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await changePassword(
+      dialog,
+      "fictional password 1",
+      "fictional password 2",
+    );
+    expect(
+      await within(dialog).findByText("The password must include a symbol."),
+    ).toBeDefined();
+  });
+
+  it("asks for a new password that differs from the current one", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await changePassword(
+      dialog,
+      "fictional password 1",
+      "fictional password 1",
+    );
+    expect(
+      await within(dialog).findByText(
+        "The new password must differ from the current password.",
+      ),
+    ).toBeDefined();
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/auth/change-password",
+      expect.anything(),
+    );
   });
 
   it("names a wrong current password beside it, keeping the dialog open", async () => {
@@ -817,6 +1273,160 @@ describe("changing one's own password", () => {
     );
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
       "Fathom could not make this change. Try again in a moment.",
+    );
+  });
+});
+
+describe("the checklist for a new password", () => {
+  async function openDialog(): Promise<HTMLElement> {
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Your account, Fictional Person",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Change password" }),
+    );
+    return screen.findByRole("dialog", { name: "Change password" });
+  }
+
+  const withAllRules = () =>
+    Response.json({
+      ...fictionalUser,
+      settings: {
+        ...fictionalUser.settings,
+        passwords: {
+          ...fictionalUser.settings.passwords,
+          rules: {
+            minimumLength: 14,
+            uppercase: true,
+            lowercase: true,
+            digits: true,
+            symbols: true,
+          },
+        },
+      },
+    });
+
+  it("marks each requirement met as it is typed, and leaves the others neutral", async () => {
+    serverAnswers({ "GET /api/session": withAllRules });
+    renderApp("/");
+    const dialog = await openDialog();
+    const field = within(dialog).getByLabelText("New password");
+    await userEvent.type(field, "a1");
+    expect(checklist(dialog)).toEqual([
+      ["14 to 128 characters (not met)", "pending"],
+      ["An uppercase letter (not met)", "pending"],
+      ["A lowercase letter (met)", "met"],
+      ["A digit (met)", "met"],
+      ["A symbol (not met)", "pending"],
+      ["Not a common or easily guessed password (not met)", "pending"],
+    ]);
+    await userEvent.clear(field);
+    await userEvent.type(field, "Correct-horse-91");
+    await waitFor(() => {
+      expect(checklist(dialog).every(([, state]) => state === "met")).toBe(
+        true,
+      );
+    });
+    expect(checklist(dialog).map(([text]) => text)).toEqual([
+      "14 to 128 characters (met)",
+      "An uppercase letter (met)",
+      "A lowercase letter (met)",
+      "A digit (met)",
+      "A symbol (met)",
+      "Not a common or easily guessed password (met)",
+    ]);
+  });
+
+  it("is read with the field, and turns what is not met red only once the field is left", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    const field = within(dialog).getByLabelText("New password");
+    const list = within(dialog).getByRole("list");
+    expect(field.getAttribute("aria-describedby")).toContain(
+      list.parentElement?.id,
+    );
+    await userEvent.type(field, "test1234");
+    expect(checklist(dialog)).toEqual([
+      ["12 to 128 characters (not met)", "pending"],
+      ["Not a common or easily guessed password (not met)", "pending"],
+    ]);
+    await userEvent.tab();
+    expect(checklist(dialog)).toEqual([
+      ["12 to 128 characters (not met)", "unmet"],
+      ["Not a common or easily guessed password (not met)", "unmet"],
+    ]);
+  });
+
+  it("turns what is not met red once the form is sent, though the field is not left", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await userEvent.type(
+      within(dialog).getByLabelText("New password"),
+      "short{Enter}",
+    );
+    await waitFor(() => {
+      expect(checklist(dialog)).toEqual([
+        ["12 to 128 characters (not met)", "unmet"],
+        ["Not a common or easily guessed password (not met)", "unmet"],
+      ]);
+    });
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/auth/change-password",
+      expect.anything(),
+    );
+  });
+
+  it.each([
+    ["a common password", "test12345678"],
+    ["a password built from the person's own name", "Fictional2026!"],
+  ])("refuses %s before sending it", async (_, password) => {
+    const fetch = serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    const dialog = await openDialog();
+    await userEvent.type(
+      within(dialog).getByLabelText("Current password"),
+      "fictional password 1",
+    );
+    const field = within(dialog).getByLabelText("New password");
+    // A strong password first, so the check has loaded before the one tried is sent.
+    await userEvent.type(field, "Correct-horse-91");
+    await waitFor(() => {
+      expect(checklist(dialog).at(-1)?.[1]).toBe("met");
+    });
+    await userEvent.clear(field);
+    await userEvent.type(field, password);
+    expect(checklist(dialog).at(-1)).toEqual([
+      "Not a common or easily guessed password (not met)",
+      "pending",
+    ]);
+    await userEvent.type(
+      within(dialog).getByLabelText("New password again"),
+      password,
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Change password" }),
+    );
+    expect(
+      await within(dialog).findByText(
+        "This password is too common or easy to guess.",
+      ),
+    ).toBeDefined();
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/auth/change-password",
+      expect.anything(),
     );
   });
 });
@@ -967,6 +1577,7 @@ describe("after a change", () => {
     let accounts = [own, planner, former];
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": () => Response.json({ accounts }),
       "PUT /api/accounts/user-2/active": () => {
         accounts = [own, { ...planner, active: false }, former];
@@ -989,9 +1600,10 @@ describe("after a change", () => {
     });
   });
 
-  it("says under each role what it allows", async () => {
+  it("lists every role, each with its description under its name", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -999,21 +1611,22 @@ describe("after a change", () => {
       await screen.findByRole("button", { name: "New account" }),
     );
     const dialog = await screen.findByRole("dialog", { name: "New account" });
-    for (const role of roleSchema.options) {
-      const box = within(dialog).getByRole("checkbox", {
-        name: roleName(role),
-      });
-      expect(box.getAttribute("aria-describedby")).toBeTruthy();
-      expect(
-        document.getElementById(String(box.getAttribute("aria-describedby")))
-          ?.textContent,
-      ).toBe(roleDescription(role));
-    }
+    expect(
+      within(dialog)
+        .getAllByRole("radio")
+        .map((choice) => [
+          (choice as HTMLInputElement).labels?.[0]?.textContent,
+          document.getElementById(
+            String(choice.getAttribute("aria-describedby")),
+          )?.textContent,
+        ]),
+    ).toEqual(roles.map(({ name, description }) => [name, description]));
   });
 
   it("closes a dialog with Escape when nothing is being saved", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
     });
     renderApp("/accounts");
@@ -1027,9 +1640,10 @@ describe("after a change", () => {
     });
   });
 
-  it("puts a refusal plainly, such as when the user's own roles have changed", async () => {
+  it("puts a refusal plainly, such as when the user's own role has changed", async () => {
     serverAnswers({
       "GET /api/session": manager,
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
       "PATCH /api/accounts/user-2": () =>
         Response.json({ error: "Forbidden" }, { status: 403 }),
@@ -1043,7 +1657,7 @@ describe("after a change", () => {
     });
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
-      "You do not have permission to do this. Your roles may have changed.",
+      "You do not have permission to do this. Your role may have changed.",
     );
   });
 
@@ -1051,8 +1665,9 @@ describe("after a change", () => {
     let session = manager;
     serverAnswers({
       "GET /api/session": () => session(),
+      "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
-      "PUT /api/accounts/user-2/password": () => {
+      "POST /api/accounts/user-2/password": () => {
         session = () =>
           Response.json({ error: "Unauthorized" }, { status: 401 });
         return session();
@@ -1061,15 +1676,187 @@ describe("after a change", () => {
     renderApp("/accounts");
     await openAction("Fictional Planner", "Reset password");
     const dialog = await screen.findByRole("dialog");
-    await userEvent.type(
-      within(dialog).getByLabelText("New temporary password"),
-      "fictional password 2",
-    );
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Reset password" }),
     );
     expect(
       await screen.findByRole("heading", { name: "Sign in" }),
     ).toBeDefined();
+  });
+});
+
+describe("changing a generated password first", () => {
+  const mustChange = () =>
+    Response.json({ ...fictionalUser, mustChangePassword: true });
+
+  async function change(current: string, next: string) {
+    await userEvent.type(
+      await screen.findByLabelText("Current password"),
+      current,
+    );
+    await userEvent.type(screen.getByLabelText("New password"), next);
+    await userEvent.type(screen.getByLabelText("New password again"), next);
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change password" }),
+    );
+  }
+
+  it("shows only the page that changes it, at the start page's address, whatever page was asked for", async () => {
+    serverAnswers({ "GET /api/session": mustChange });
+    const history = renderApp("/people");
+    expect(
+      await screen.findByRole("heading", { name: "Change password" }),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Fathom generated this password. A new password is required to continue.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Your account, Fictional Person" }),
+    ).toBeNull();
+    expect(history.location.pathname).toBe("/");
+  });
+
+  it("shows the rules in the password settings from the start", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          mustChangePassword: true,
+          settings: {
+            ...fictionalUser.settings,
+            passwords: {
+              ...fictionalUser.settings.passwords,
+              rules: {
+                minimumLength: 16,
+                uppercase: false,
+                lowercase: false,
+                digits: true,
+                symbols: false,
+              },
+            },
+          },
+        }),
+    });
+    renderApp("/");
+    await screen.findByLabelText("New password");
+    expect(checklist(document.body).map(([text]) => text)).toEqual([
+      "16 to 128 characters (not met)",
+      "A digit (not met)",
+      "Not a common or easily guessed password (not met)",
+    ]);
+    await change(generated, "fictional 2");
+    expect(
+      await screen.findByText("The password must have at least 16 characters."),
+    ).toBeDefined();
+  });
+
+  it("opens Fathom once the password is changed", async () => {
+    let session = mustChange;
+    const fetch = serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/greeting": greeting,
+      "POST /api/auth/change-password": () => {
+        session = signedIn;
+        return Response.json({});
+      },
+    });
+    renderApp("/");
+    await change(generated, "fictional password 2");
+    expect(
+      await screen.findByRole("button", {
+        name: "Your account, Fictional Person",
+      }),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "Your password has been changed, and you have been signed out everywhere else.",
+      ),
+    ).toBeDefined();
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/auth/change-password",
+      expect.objectContaining({
+        body: JSON.stringify({
+          currentPassword: generated,
+          newPassword: "fictional password 2",
+        }),
+      }),
+    );
+  });
+
+  it("refuses the same password again, and names a wrong current one", async () => {
+    serverAnswers({
+      "GET /api/session": mustChange,
+      "POST /api/auth/change-password": () =>
+        Response.json({ code: "INVALID_PASSWORD" }, { status: 400 }),
+    });
+    renderApp("/");
+    await change(generated, generated);
+    expect(
+      await screen.findByText(
+        "The new password must differ from the current password.",
+      ),
+    ).toBeDefined();
+    await userEvent.clear(screen.getByLabelText("Current password"));
+    await userEvent.type(
+      screen.getByLabelText("Current password"),
+      "not the password",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change password" }),
+    );
+    expect(
+      await screen.findByText("Your current password is not right."),
+    ).toBeDefined();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("says when the change fails", async () => {
+    serverAnswers({
+      "GET /api/session": mustChange,
+      "POST /api/auth/change-password": () =>
+        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+    });
+    renderApp("/");
+    await change(generated, "fictional password 2");
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Fathom could not change the password. Try again in a moment.",
+    );
+  });
+
+  it("signs out", async () => {
+    let session = mustChange;
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "POST /api/auth/sign-out": () => {
+        session = signedOut;
+        return Response.json({ success: true });
+      },
+    });
+    const history = renderApp("/");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Sign out" }),
+    );
+    expect(
+      await screen.findByRole("heading", { name: "Sign in" }),
+    ).toBeDefined();
+    expect(history.location.pathname).toBe("/sign-in");
+  });
+
+  it("says when signing out fails", async () => {
+    serverAnswers({
+      "GET /api/session": mustChange,
+      "POST /api/auth/sign-out": () =>
+        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+    });
+    renderApp("/");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Sign out" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Fathom could not sign out. Try again in a moment.",
+    );
   });
 });

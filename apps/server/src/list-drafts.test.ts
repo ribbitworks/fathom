@@ -19,8 +19,14 @@ let approver: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
-  editor = await test.signedIn(["workforce-administrator", "viewer"]);
-  approver = await test.signedIn(["approver", "workforce-administrator"]);
+  editor = await test.signedIn("workforce-administrator");
+  approver = await test.signedIn([
+    "drafts:approve",
+    "people:edit",
+    "restricted:edit",
+    "confidential:edit",
+    "configuration:edit",
+  ]);
 });
 
 afterAll(async () => {

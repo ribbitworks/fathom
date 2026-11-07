@@ -83,7 +83,7 @@ describe("putting failures plainly", () => {
     [
       "a missing permission",
       new ApiError(403, "Forbidden"),
-      "You do not have permission to do this. Your roles may have changed.",
+      "You do not have permission to do this. Your role may have changed.",
     ],
     [
       "too many requests",

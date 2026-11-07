@@ -1,7 +1,7 @@
 # Fathom — Domain Model
 
 **Status:** Draft
-**Last updated:** 2026-11-04
+**Last updated:** 2026-11-06
 
 A first sketch of Fathom's core entities and how they relate. It describes structure only: terms are defined in [Domain Concepts](../product/domain.md), and rules and allowed values are in the [Decisions Log](../product/decisions.md). It describes concepts, not database tables. Items marked **proposal** are suggested modeling choices that have not been agreed.
 
@@ -36,7 +36,7 @@ erDiagram
     PLANNED_HIRE |o--o{ ALLOCATION : "is allocated"
     PLANNED_HIRE }o--o| PERSON : "reports to"
     PLANNED_HIRE |o--o| PERSON : "is filled by"
-    USER }o--|{ ROLE : has
+    USER }o--|| ROLE : holds
     ROLE ||--o{ PERMISSION : grants
     USER |o..o| PERSON : "may be"
     CHANGE_SET ||--|{ CHANGE : groups
@@ -100,7 +100,7 @@ flowchart LR
 
 ## Access Entities
 
-- **User:** A local account with one or more roles, identified by its name and email address, which is also its user name, and signing in with a password.
+- **User:** A local account holding exactly one role, identified by its name and email address, which is also its user name, and signing in with a password. It is marked while its password is one Fathom generated, which its user must change before doing anything else.
 - **Session:** A signed-in user's visit, which records the network address and browser it started from, for investigating security problems, and ends as set in [ADR 0002](../adr/0002-libraries.md).
 - **Role:** A named set of permissions, kept in the database so it can be edited and copied, which grants view or edit access to data tiers, and permissions such as approving plan changes. The roles Fathom starts with keep a key, so setup and seed data find them whatever they are renamed, and a role held by any account cannot be deleted.
 - **Access record:** Records who did what, when, and to whom, without the values: a change to a user account, or a view or change of sensitive data. Records can only be added, never changed or removed.

@@ -3,7 +3,7 @@
 - **ADR:** 0002
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own
+- **Revised:** 2026-10-27, to add Faker for fictional data, to point to the roadmap's After Hello Fathom section, to add the development and scanning tools, to choose the PostgreSQL driver, and to choose the database image; 2026-10-28, to adopt the REUSE specification for copyright and licence information, and to keep client addresses in request logs for security investigations; 2026-10-29, to add React's rules of hooks to linting; 2026-10-30, to reflect the proxy chosen in ADR 0003, to point to the UI components chosen in ADR 0004, to record session length and how sign-in limits find each client's address, to let users change their own password, and to record that Better Auth and its password hashing were confirmed in use; 2026-11-01, to shorten sessions from 12 hours to 30 minutes without use, with the browser signing out on its own; 2026-11-06, to add zxcvbn-ts for refusing passwords that are easy to guess
 
 ## Context
 
@@ -32,6 +32,7 @@ What matters most in these choices:
 | Migrations | drizzle-kit, generating SQL migration files | Hand-written SQL | Migrations are plain SQL files reviewed like any other change |
 | Authentication and sessions | Better Auth, with sessions stored in the database | A small in-house implementation | A maintained library for local accounts, password hashing, sessions, and sign-in rate limiting, rather than writing security-critical code ourselves |
 | Password hashing | Better Auth's default, scrypt | Argon2id through Better Auth's custom hashing hooks | scrypt is an accepted password hashing algorithm and needs no native module; confirmed in use when accounts were built |
+| Password strength | zxcvbn-ts, with its common and English dictionaries (MIT) | A list of common passwords alone | Estimates how easily a password is guessed from common passwords, words, names, keyboard patterns, and the person's own details, and runs the same in the browser and on the server; the browser loads its dictionaries only when a form for a new password opens |
 | Logging | Pino, Fastify's built-in logger | Winston | Structured logs, with redaction of known fields |
 | Front-end routing and data fetching | TanStack Router and TanStack Query | React Router | Type-safe routes and consistent loading, caching, and error handling |
 | Tables | TanStack Table | A component library's table | The first stage is mostly tables; headless, so styling stays separate |

@@ -6,7 +6,7 @@
 // changes to them.
 
 import { accessHistory, people, reportingLines, teams } from "@fathom/db";
-import { type ChangeHistory, type Person, roleSchema } from "@fathom/shared";
+import type { ChangeHistory, Person } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
@@ -23,7 +23,7 @@ let editorId = "";
 
 beforeAll(async () => {
   test = await startTestApp();
-  ({ cookie, id: editorId } = await test.signedIn(["workforce-administrator"]));
+  ({ cookie, id: editorId } = await test.signedIn("workforce-administrator"));
 });
 
 afterAll(async () => {
@@ -47,7 +47,7 @@ const day = (offset: number) => {
 const today = day(0);
 
 async function approve(ids: readonly string[]) {
-  const approver = await test.signedIn(["approver", "leadership"]);
+  const approver = await test.signedIn("engineering-director");
   return test.request(approver.cookie, "POST", "/api/drafts/approval", {
     people: ids,
   });
@@ -291,7 +291,7 @@ describe("a reporting line", () => {
   it("refuses approving drafts that together make a loop, drafted unseen by each other", async () => {
     const first = await person();
     const second = await person();
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     const unpublished = await test.request(
       cookie,
       "PATCH",
@@ -497,7 +497,7 @@ describe("a reporting line", () => {
     const report = await person();
     await changed(manager, { endDate: "2026-05-01" });
     // Drafted while the manager's end date is still only a draft, under another editor.
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     expect(
       (await change(report, { managerId: manager }, other.cookie)).statusCode,
     ).toBe(200);
@@ -528,7 +528,7 @@ describe("a reporting line", () => {
     expect(removed.statusCode, removed.body).toBe(200);
     expect((await change(report, { managerId: leaving })).statusCode).toBe(400);
     const manager = await person();
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     const unpublished = await test.request(
       other.cookie,
       "PATCH",
@@ -547,7 +547,7 @@ describe("a reporting line", () => {
     const manager = await person();
     const report = await person();
     await changed(report, { managerId: manager });
-    const approver = await test.signedIn(["approver", "leadership"]);
+    const approver = await test.signedIn("engineering-director");
     const response = await test.request(
       approver.cookie,
       "POST",
@@ -584,7 +584,7 @@ describe("a reporting line", () => {
     await changed(manager, { endDate: day(-1) });
     await approved([manager]);
     expect((await readPerson(report))?.managerLeft).toBe(true);
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     const seen = await readPerson(report, planner.cookie);
     expect(seen?.manager?.id).toBe(manager);
     expect(seen?.managerLeft).toBeUndefined();
@@ -616,7 +616,7 @@ describe("the Manager? mark", () => {
 
   it("is General, and recorded only when it changes", async () => {
     const id = await person({ isManager: false });
-    const general = await test.signedIn(["resource-planner"]);
+    const general = await test.signedIn("resource-planner");
     expect((await readPerson(id, general.cookie))?.isManager).toBe(false);
     await changed(id, { isManager: true });
     expect(await readPerson(id)).toMatchObject({
@@ -784,7 +784,7 @@ describe("a team's name", () => {
     const first = await person();
     const second = await person();
     const name = unique("Fictional Unpublished Team");
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     const unpublished = await test.request(
       other.cookie,
       "PATCH",
@@ -820,7 +820,7 @@ describe("a team's name", () => {
     await reportsTo(report, manager);
     const name = unique("Fictional Drafted Team");
     await changed(manager, { teamName: name });
-    const reader = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("resource-planner");
     expect((await readPerson(manager, reader.cookie))?.teamName).toBe(name);
     expect((await readPerson(report, reader.cookie))?.team).toBe(name);
   });
@@ -852,13 +852,10 @@ describe("who sees reporting lines", () => {
     await changed(report, { managerId: newManager });
   });
 
-  it.each(roleSchema.options)(
-    "a %s, with a role that sees people, sees the live manager, and the draft's manager and the date only if the role lets them see Restricted data",
+  it.each(rolesGranting("people:view"))(
+    "a %s, a role that sees people, sees the live manager, and the draft's manager and the date only if the role lets them see Restricted data",
     async (role) => {
-      const { cookie: reader } = await test.signedIn([
-        role,
-        "resource-planner",
-      ]);
+      const { cookie: reader } = await test.signedIn(role);
       const seen = await readPerson(report, reader);
       const sees = rolesGranting("restricted:view").includes(role);
       expect(seen?.manager?.id).toBe(sees ? newManager : manager);
@@ -869,13 +866,10 @@ describe("who sees reporting lines", () => {
     },
   );
 
-  it.each(roleSchema.options)(
-    "a %s, with a role that sees the change history, sees changes of manager only if the role lets them see Restricted data",
+  it.each(rolesGranting("changes:view"))(
+    "a %s, a role that sees the change history, sees changes of manager only if the role lets them see Restricted data",
     async (role) => {
-      const { cookie: reader } = await test.signedIn([
-        role,
-        "resource-planner",
-      ]);
+      const { cookie: reader } = await test.signedIn(role);
       const history = (
         await test.request(reader, "GET", "/api/changes")
       ).json<ChangeHistory>();

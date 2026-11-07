@@ -1,71 +1,39 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Creates an account that signs in with a password, such as the first administrator's. Takes the
-// name, email address, and roles as arguments, and reads the password from standard input, so it
-// never appears on a command line. Every account is a Viewer unless --no-viewer is given, as for a
-// person who runs Fathom without seeing people data. scripts/create-account.sh prompts for the
-// password in development.
+// Creates an account that signs in with a password. Takes the name, email address, and one starting
+// role as arguments; the account holds the Team Member role unless --role names another. Fathom
+// generates the password, which the command prints once, and its user changes it at first sign-in.
+// scripts/create-account.sh runs it in development.
 
 import {
   createDatabase,
   createPool,
+  type Database,
   describeError,
   loadDatabaseConfig,
 } from "@fathom/db";
 import { roleSchema } from "@fathom/shared";
-import { text } from "node:stream/consumers";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { loadAuthConfig } from "./config.ts";
-import { createAccount } from "./data/accounts.ts";
-import { createAuth } from "./data/auth.ts";
+import { createAccountWithGeneratedPassword } from "./data/accounts.ts";
+import { type Auth, createAuth } from "./data/auth.ts";
+import { findStartingRole } from "./data/roles.ts";
 
-const usage = `Usage: create-account --name <name> --email <email address> [--role <role>]... [--no-viewer]
+const usage = `Usage: create-account --name <name> --email <email address> [--role <role>]
 Roles: ${roleSchema.options.join(", ")}`;
 
-// Returns a failing exit code after reporting what went wrong.
-export async function createAccountCommand(
-  args: string[],
-  password: Promise<string>,
-  environment: NodeJS.ProcessEnv = process.env,
+// Runs a command against Fathom's database, and returns a failing exit code after reporting what
+// went wrong.
+export async function runAccountCommand(
+  environment: NodeJS.ProcessEnv,
+  work: (auth: Auth, database: Database) => Promise<void>,
 ): Promise<number> {
   let pool: ReturnType<typeof createPool> | undefined;
   try {
-    const { values } = parseArgs({
-      args,
-      allowNegative: true,
-      options: {
-        name: { type: "string" },
-        email: { type: "string" },
-        role: { type: "string", multiple: true, default: [] },
-        viewer: { type: "boolean", default: true },
-      },
-    });
-    if (!values.name?.trim() || !values.email?.trim()) throw new Error(usage);
-    const roles = [...(values.viewer ? ["viewer"] : []), ...values.role].map(
-      (role) => {
-        const known = roleSchema.safeParse(role);
-        if (!known.success) throw new Error(`Unknown role ${role}\n${usage}`);
-        return known.data;
-      },
-    );
     pool = createPool(loadDatabaseConfig(environment));
     const database = createDatabase(pool);
-    const auth = createAuth(database, loadAuthConfig(environment));
-    // Recorded in the access history as created by the server's operators.
-    await createAccount(
-      auth,
-      database,
-      {
-        roles,
-        name: values.name,
-        email: values.email,
-        // A single line, as typed or piped in.
-        password: (await password).replace(/\r?\n$/, ""),
-      },
-      null,
-    );
-    console.log(`Created the account for ${values.email.trim().toLowerCase()}`);
+    await work(createAuth(database, loadAuthConfig(environment)), database);
     return 0;
   } catch (error) {
     console.error(`error: ${describeError(error)}`);
@@ -75,14 +43,50 @@ export async function createAccountCommand(
   }
 }
 
+// Prints a generated password, which is shown nowhere else.
+export function printPassword(password: string): void {
+  console.log(`Password: ${password}`);
+  console.log(
+    "Fathom shows this password only once, and asks for a new one at first sign-in.",
+  );
+}
+
+// Creates the account, recorded in the access history as created by the server's operators, and
+// prints its password.
+export function createAccountCommand(
+  args: string[],
+  environment: NodeJS.ProcessEnv = process.env,
+): Promise<number> {
+  return runAccountCommand(environment, async (auth, database) => {
+    const { values } = parseArgs({
+      args,
+      options: {
+        name: { type: "string" },
+        email: { type: "string" },
+        role: { type: "string", default: "team-member" },
+      },
+    });
+    const { name, email } = values;
+    if (!name?.trim() || !email?.trim()) throw new Error(usage);
+    const role = roleSchema.safeParse(values.role);
+    if (!role.success) {
+      throw new Error(`Unknown role ${values.role}\n${usage}`);
+    }
+    const { password } = await createAccountWithGeneratedPassword(
+      auth,
+      database,
+      { roleId: await findStartingRole(database, role.data), name, email },
+    );
+    console.log(`Created the account for ${email.trim().toLowerCase()}.`);
+    printPassword(password);
+  });
+}
+
 /* v8 ignore start -- Only runs as a separate process; the tests call createAccountCommand. */
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  process.exitCode = await createAccountCommand(
-    process.argv.slice(2),
-    text(process.stdin),
-  );
+  process.exitCode = await createAccountCommand(process.argv.slice(2));
 }
 /* v8 ignore stop */

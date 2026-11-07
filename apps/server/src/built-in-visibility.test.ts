@@ -4,18 +4,12 @@
 // be changed like any list's, and the Position and State columns take it, so those who cannot see
 // a list's tier do not see the column's values, and cannot add people without a position.
 
-import {
-  accessHistory,
-  listItems,
-  lists,
-  rolePermissions,
-  roles,
-  userRoles,
-} from "@fathom/db";
+import { accessHistory, listItems, lists } from "@fathom/db";
 import type {
   ChangeEntry,
   Hire,
   Hires,
+  Permission,
   Person,
   Unpublished,
 } from "@fathom/shared";
@@ -40,12 +34,8 @@ let approver: User;
 
 beforeAll(async () => {
   test = await startTestApp();
-  editor = await test.signedIn(["workforce-administrator"]);
-  approver = await test.signedIn([
-    "approver",
-    "workforce-administrator",
-    "leadership",
-  ]);
+  editor = await test.signedIn("workforce-administrator");
+  approver = await test.signedIn("engineering-director");
 });
 
 afterAll(async () => {
@@ -85,18 +75,8 @@ async function builtInList(key: string) {
 }
 
 // An account holding only the permissions given, through a role of its own.
-async function grantedOnly(permissions: string[]): Promise<User> {
-  const user = await test.signedIn([]);
-  const [role] = await test.connection
-    .insert(roles)
-    .values({ name: unique("Fictional Role") })
-    .returning({ id: roles.id });
-  const roleId = String(role?.id);
-  await test.connection
-    .insert(rolePermissions)
-    .values(permissions.map((permission) => ({ roleId, permission })));
-  await test.connection.insert(userRoles).values({ userId: user.id, roleId });
-  return user;
+async function grantedOnly(permissions: Permission[]): Promise<User> {
+  return test.signedIn(permissions);
 }
 
 async function livePerson(): Promise<string> {
@@ -253,7 +233,7 @@ describe("the Position column", () => {
     const response = await add();
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "Every person needs a position, and your roles don't let you see positions",
+      "Every person needs a position, and your role doesn't let you see positions",
     );
   });
 
@@ -273,7 +253,7 @@ describe("the Position column", () => {
 
   it("shows a placeholder's position only to those who see the Positions list's tier", async () => {
     const id = await liveHire();
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect((await hireSeen(planner, id))?.positionId).toBe(testPosition);
     await setVisibility("positions", "restricted");
     const unseen = await hireSeen(planner, id);
@@ -285,7 +265,7 @@ describe("the Position column", () => {
 describe("the State column", () => {
   it("shows a placeholder's state to those who see the Hiring states list's tier", async () => {
     const id = await liveHire();
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect((await hireSeen(planner, id))?.stateId).toBeDefined();
     await setVisibility("hiring-states", "restricted");
     expect((await hireSeen(planner, id))?.stateId).toBeUndefined();
@@ -413,7 +393,7 @@ describe("changes to positions and states", () => {
     const unseenState = await add();
     expect(unseenState.statusCode).toBe(403);
     expect(refusal(unseenState)).toBe(
-      "Every planned hire needs a state, and your roles don't let you see hiring states",
+      "Every planned hire needs a state, and your role doesn't let you see hiring states",
     );
     await setVisibility("hiring-states", "general");
     // A hire added while its state could be seen can still be taken back.
@@ -425,7 +405,7 @@ describe("changes to positions and states", () => {
     await setVisibility("positions", "restricted");
     const unseenPosition = await add();
     expect(refusal(unseenPosition)).toBe(
-      "Every planned hire needs a position, and your roles don't let you see positions",
+      "Every planned hire needs a position, and your role doesn't let you see positions",
     );
     const moved = await send(hireEditor, "PATCH", `/api/planned-hires/${id}`, {
       positionId: otherTestPosition,
@@ -474,7 +454,7 @@ describe("changes to positions and states", () => {
     });
     expect(refused.statusCode).toBe(403);
     expect(refusal(refused)).toBe(
-      "One of these drafts holds details your roles do not let you see, so an Approver who sees them must decide it",
+      "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
     );
     const approved = await send(approver, "POST", "/api/drafts/approval", {
       plannedHires: [id],

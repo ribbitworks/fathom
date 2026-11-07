@@ -32,7 +32,6 @@ const viewer = () =>
 const editor = () =>
   Response.json({
     ...fictionalUser,
-    roles: ["viewer", "workforce-administrator"],
     permissions: ["configuration:edit", "configuration:view", "plan:view"],
   });
 
@@ -206,7 +205,6 @@ describe("who sees the Lists page", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          roles: ["viewer", "workforce-administrator"],
           permissions: [
             "configuration:edit",
             "configuration:view",
@@ -2019,14 +2017,12 @@ describe("drafts on the Lists page", () => {
   const approverOnly = () =>
     Response.json({
       ...fictionalUser,
-      roles: ["viewer", "approver"],
       permissions: ["configuration:view", "drafts:approve", "plan:view"],
     });
 
   const approver = () =>
     Response.json({
       ...fictionalUser,
-      roles: ["approver", "workforce-administrator"],
       permissions: [
         "configuration:edit",
         "configuration:view",
@@ -2555,7 +2551,6 @@ describe("drafts on the Lists page", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          roles: ["viewer", "approver", "leadership"],
           permissions: [
             "configuration:view",
             "drafts:approve",
@@ -3217,7 +3212,6 @@ describe("unpublished and held changes on the Lists page", () => {
   const approver = () =>
     Response.json({
       ...fictionalUser,
-      roles: ["approver", "workforce-administrator"],
       permissions: [
         "configuration:edit",
         "configuration:view",

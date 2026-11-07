@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-04"
+last_updated: "2026-11-06"
 ---
 
 # Manual Test: Metrics on the People Table
@@ -21,7 +21,7 @@ Verifies the People table's Metrics panel: breaking people down by one column or
 
 ## Test Accounts
 
-R1 creates this account, with every other development account, so it exists once R1 has run. The accounts share one password, which R1 prints when it finishes. The accounts must hold their roles as Fathom starts them: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
+R1 creates this account, with every other development account, so it exists once R1 has run. The accounts share one password, which R1 prints when it finishes. Each account must hold its role as Fathom starts it: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It sees every column on People, including Start and End, and can save views.
 

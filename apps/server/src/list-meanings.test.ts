@@ -20,12 +20,8 @@ let open: string;
 
 beforeAll(async () => {
   test = await startTestApp();
-  editor = await test.signedIn(["workforce-administrator", "leadership"]);
-  approver = await test.signedIn([
-    "approver",
-    "workforce-administrator",
-    "leadership",
-  ]);
+  editor = await test.signedIn("workforce-administrator");
+  approver = await test.signedIn("engineering-director");
   const [list] = await test.connection
     .select({ id: lists.id })
     .from(lists)
@@ -220,10 +216,7 @@ describe("a list with meanings", () => {
   });
 
   it("refuses publishing a discard once another editor's published retirement relies on the choice discarded", async () => {
-    const other = await test.signedIn([
-      "workforce-administrator",
-      "leadership",
-    ]);
+    const other = await test.signedIn("workforce-administrator");
     const label = unique("Fictional Interviewing");
     const {
       choices: [added],
@@ -337,10 +330,7 @@ describe("a list with meanings", () => {
   });
 
   it("refuses publishing a retirement once another editor's published one leaves no other choice for the meaning", async () => {
-    const other = await test.signedIn([
-      "workforce-administrator",
-      "leadership",
-    ]);
+    const other = await test.signedIn("workforce-administrator");
     const label = unique("Fictional Accepted");
     const {
       choices: [accepted],

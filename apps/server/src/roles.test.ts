@@ -15,6 +15,7 @@ import {
 import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { giveRole } from "./data/roles.ts";
 import { startTestApp, type TestApp } from "./test-app.ts";
 
 let test: TestApp;
@@ -23,7 +24,7 @@ let editorId: string;
 
 beforeAll(async () => {
   test = await startTestApp();
-  ({ cookie, id: editorId } = await test.signedIn(["administrator"]));
+  ({ cookie, id: editorId } = await test.signedIn("administrator"));
 });
 
 afterAll(async () => {
@@ -75,7 +76,7 @@ async function newRole(permissions: Permission[]): Promise<RoleSummary> {
 }
 
 async function give(userId: string, roleId: string): Promise<void> {
-  await test.connection.insert(userRoles).values({ userId, roleId });
+  await giveRole(test.connection, userId, roleId);
 }
 
 async function permissionsOf(as: string): Promise<string[]> {
@@ -96,7 +97,7 @@ describe("who may edit roles", () => {
   it.each(roleSchema.options.filter((role) => role !== "administrator"))(
     "refuses %s, which cannot edit roles",
     async (role) => {
-      const other = await test.signedIn([role]);
+      const other = await test.signedIn(role);
       const id = randomUUID();
       for (const [method, url, payload] of [
         ["GET", "/api/roles", undefined],
@@ -124,6 +125,28 @@ describe("who may edit roles", () => {
     },
   );
 
+  it("lets those who manage accounts list roles, to choose each account's, but not change them", async () => {
+    const manager = await test.signedIn(["accounts:manage"]);
+    expect(
+      (await send("GET", "/api/roles", undefined, manager.cookie)).statusCode,
+    ).toBe(200);
+    expect(
+      (
+        await send(
+          "POST",
+          "/api/roles",
+          { name: "Fictional Unmade", description: "", permissions: [] },
+          manager.cookie,
+        )
+      ).statusCode,
+    ).toBe(403);
+    // Later tests count on nobody else managing accounts.
+    await test.connection
+      .update(users)
+      .set({ deactivatedAt: new Date() })
+      .where(eq(users.id, manager.id));
+  });
+
   it("refuses anyone signed out", async () => {
     expect((await send("GET", "/api/roles", undefined, "")).statusCode).toBe(
       401,
@@ -147,14 +170,14 @@ describe("the roles Fathom starts with", () => {
   });
 
   it("count the active accounts holding each", async () => {
-    const before = (await roleNamed("Leadership")).accounts;
-    const held = await test.signedIn(["leadership"]);
-    expect((await roleNamed("Leadership")).accounts).toBe(before + 1);
+    const before = (await roleNamed("Executive")).accounts;
+    const held = await test.signedIn("executive");
+    expect((await roleNamed("Executive")).accounts).toBe(before + 1);
     await test.connection
       .update(users)
       .set({ deactivatedAt: new Date() })
       .where(eq(users.id, held.id));
-    expect((await roleNamed("Leadership")).accounts).toBe(before);
+    expect((await roleNamed("Executive")).accounts).toBe(before);
   });
 });
 
@@ -192,7 +215,7 @@ describe("creating a role", () => {
 
   it("refuses a name another role has, whatever its case", async () => {
     const response = await send("POST", "/api/roles", {
-      name: "VIEWER",
+      name: "TEAM MEMBER",
       description: "",
       permissions: [],
     });
@@ -345,7 +368,7 @@ describe("changing a role", () => {
   it("refuses a name another role has", async () => {
     const role = await newRole([]);
     const response = await change(role.id, {
-      name: "approver",
+      name: "planner",
       description: "",
       permissions: [],
     });
@@ -531,12 +554,12 @@ describe("a change to a role and a deactivation at once", () => {
 });
 
 describe("what a change to a role would do", () => {
-  it("lists each active account whose permissions it changes, with what they could do before and after", async () => {
+  it("lists each active account holding the role, with what they could do before and after", async () => {
     const role = await newRole(["plan:view"]);
-    const changed = await test.signedIn([]);
-    const alsoViewer = await test.signedIn(["viewer"]);
+    const first = await test.signedIn([]);
+    const second = await test.signedIn("team-member");
     const gone = await test.signedIn([]);
-    for (const holder of [changed, alsoViewer, gone]) {
+    for (const holder of [first, second, gone]) {
       await give(holder.id, role.id);
     }
     await test.connection
@@ -550,29 +573,29 @@ describe("what a change to a role would do", () => {
     const { effects } = response.json<{
       effects: { account: { id: string }; before: string[]; after: string[] }[];
     }>();
-    const changedEffect = effects.find(
-      (effect) => effect.account.id === changed.id,
-    );
-    expect(changedEffect).toMatchObject({
-      before: ["plan:view"],
-      after: ["people:view", "people:edit"],
-    });
     expect(
-      effects.find((effect) => effect.account.id === alsoViewer.id),
-    ).toMatchObject({
-      before: ["plan:view", "allocations:view", "changes:view"],
-    });
-    expect(effects.some((effect) => effect.account.id === gone.id)).toBe(false);
+      effects.filter((effect) =>
+        [first.id, second.id, gone.id].includes(effect.account.id),
+      ),
+    ).toEqual(
+      [first, second].map((holder): unknown =>
+        expect.objectContaining({
+          account: expect.objectContaining({ id: holder.id }) as unknown,
+          before: ["plan:view"],
+          after: ["people:view", "people:edit"],
+        }),
+      ),
+    );
     // Nothing is saved.
     expect((await roleNamed(role.name)).permissions).toEqual(["plan:view"]);
   });
 
-  it("leaves out an account whose other roles already grant the same", async () => {
-    const role = await newRole(["plan:view"]);
-    const holder = await test.signedIn(["viewer"]);
+  it("lists nobody when the change grants what the role already does", async () => {
+    const role = await newRole(["plan:edit"]);
+    const holder = await test.signedIn([]);
     await give(holder.id, role.id);
     const response = await send("POST", `/api/roles/${role.id}/effects`, {
-      permissions: [],
+      permissions: ["plan:view", "plan:edit"],
     });
     expect(response.json()).toEqual({ effects: [] });
   });

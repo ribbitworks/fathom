@@ -18,6 +18,7 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
+import { findStartingRole } from "./data/roles.ts";
 import { createAuth } from "./data/auth.ts";
 import { readGreeting } from "./data/greeting.ts";
 import { createDataAccess, type DataAccess } from "./data/index.ts";
@@ -100,7 +101,7 @@ async function signedIn(app: App): Promise<string> {
       name: `Fictional Person ${String(accounts)}`,
       email,
       password: "fictional password 1",
-      roles: ["viewer"],
+      roleId: await findStartingRole(connection, "team-member"),
     },
   );
   const response = await app.inject({
@@ -132,7 +133,7 @@ describe("greeting", () => {
     "is read by a %s only if the role lets them view the plan",
     async (role) => {
       const data = createDataAccess(createDatabase(poolFor()));
-      const reading = data.readGreeting(actorFor(fictionalUser, [role]));
+      const reading = data.readGreeting(actorFor(fictionalUser, role));
       if (rolesGranting("plan:view").includes(role)) {
         await expect(reading).resolves.toBe("Hello, Fathom");
       } else {

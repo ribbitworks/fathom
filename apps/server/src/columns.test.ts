@@ -21,7 +21,7 @@ afterAll(async () => {
 
 // Approves the drafts of the people given, as an Approver who sees every tier.
 async function approve(ids: readonly string[]) {
-  const { cookie } = await test.signedIn(["approver", "leadership"]);
+  const { cookie } = await test.signedIn("engineering-director");
   const response = await test.request(cookie, "POST", "/api/drafts/approval", {
     people: ids,
   });
@@ -30,10 +30,7 @@ async function approve(ids: readonly string[]) {
 
 describe("required columns", () => {
   it("can be added while there is no one, made required once everyone has a value, and then must be filled in", async () => {
-    const { cookie } = await test.signedIn([
-      "workforce-administrator",
-      "viewer",
-    ]);
+    const { cookie } = await test.signedIn("workforce-administrator");
     const list = (
       await test.request(cookie, "POST", "/api/lists", {
         name: "Fictional Sites",

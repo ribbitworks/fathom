@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-05
+**Last updated:** 2026-11-06
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -44,7 +44,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Org Chart Additions | In progress: team colours; next drafts on the chart, then the person detail view, then chart fields, filters, and sort |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID; lists with meanings edited on the Lists page, which marks built-in lists |
-| Editable Roles | In progress: schema, the server reading roles from the database, and the Roles page; next, the account dialog |
+| Editable Roles | In progress: schema, the server reading roles from the database, the Roles page, and one role for each account, chosen from every role on the Accounts page |
 
 ### Hello Fathom
 
@@ -76,7 +76,7 @@ It is built in two steps: user-defined lists of choices, as set out in the [Deci
 
 ### Seed Accounts
 
-Fictional accounts for development, one for each persona in the [Product Brief](../product/brief.md#users), with addresses on the reserved `fathom.test` domain, named after their persona, and that persona's default roles from [Roles](../product/roles.md#default-roles-by-persona), so each role can be tried by signing in as it.
+Fictional accounts for development, one for each persona in the [Product Brief](../product/brief.md#users), with addresses on the reserved `fathom.test` domain, named after their persona, and holding that persona's role from [Roles](../product/roles.md#roles-by-persona), so each role can be tried by signing in as it.
 
 - **Password:** They share a random password in the git-ignored `.dev/secrets/dev_account_password`, made if missing and printed when the accounts are seeded. `pnpm dev:reset` seeds them, replacing the single account it made before.
 - **Adding and removing:** They are added and removed with the rest of the seed data. Accounts are never deleted, since the change history refers to them and can only be added to, so removing the seed data deactivates them, and seeding again reactivates them.
@@ -120,9 +120,9 @@ Planned hires as rows of the People table beside people, as the [Decisions Log](
 Roles kept in the database as sets of permissions, as the [Decisions Log](../product/decisions.md#people-and-privacy) sets out, built in this order, each step its own pull request:
 
 1. **Schema:** roles, and the permissions each grants. Accounts hold roles by reference, and the migration makes today's eight roles with exactly what they grant now, so nobody's access changes. The application cannot change a starting role's key, and a role it adds cannot take one.
-2. **Server:** what a user may do is read from their roles in the database, on every request. Each permission gains its plain-English descriptions, naming any permission it does nothing without.
-3. **Roles page:** an Administrator who may edit roles sees each role's permissions as a grid of areas and actions, with the plain-English result beside it, copies and edits roles, and sees which accounts a change affects before saving it. The account dialog shows the result of the roles it gives. Roles' names and descriptions are then read from the database, replacing the copies in the web app and [Roles](../product/roles.md), which already differ slightly. Which pages a role does not open is worked out from the permission each sidebar page names. Before roles can be edited, the last-Administrator guard moves from the Administrator role to the permissions to manage accounts and to edit roles. The Roles page comes first; then the account dialog gives roles made later as well as starting roles and shows the result of the roles it gives, Help and the Accounts page read roles' names and descriptions from the database, and the Accounts page's controls follow the permissions rather than the Administrator role. The access history marks every change to a role as worth checking; a second person confirming Confidential grants is deferred in [Issues](../issues.md#roles) until HR asks for it.
-4. **Finer permissions:** split by area, one area at a time, starting with approving, so Approvers approve only the kinds of drafts their roles name. Planned hires become an area of their own, with viewing, drafting, approving, and editing directly, replacing the Confidential tier's hold on them, as the [Decisions Log](../product/decisions.md#people-and-privacy) sets out. Releases are an area of their own, apart from the rest of the plan, so approving draft releases, which Project Managers and the Engineering Director generally do, can be granted on its own, decided by the owner on 2026-11-04.
+2. **Server:** what a user may do is read from their role in the database, on every request. Each permission gains its plain-English descriptions, naming any permission it does nothing without.
+3. **Roles page:** an Administrator who may edit roles sees each role's permissions as a grid of areas and actions, with the plain-English result beside it, copies and edits roles, and sees which accounts a change affects before saving it. Roles' names and descriptions are then read from the database, replacing the copies in the web app and [Roles](../product/roles.md), which already differ slightly. Which pages a role does not open is worked out from the permission each sidebar page names. Before roles can be edited, the last-Administrator guard moves from the Administrator role to the permissions to manage accounts and to edit roles. The Roles page comes first; then each account holds exactly one role, as the [Decisions Log](../product/decisions.md#people-and-privacy) sets out: one starting role for each persona replaces the eight, granting what each persona's roles granted together, and the account dialog chooses one role from every role, made later or starting, by its ID, with each role's description, so no combined result is needed. The Accounts page reads roles' names and descriptions from the database, and its controls follow the permissions rather than the Administrator role. Help lists the starting roles as Fathom gives them, with the user's own role, read from the database. The access history marks every change to a role as worth checking; a second person confirming Confidential grants is deferred in [Issues](../issues.md#roles) until HR asks for it.
+4. **Finer permissions:** split by area, one area at a time, starting with approving, so Approvers approve only the kinds of drafts their role names. Planned hires become an area of their own, with viewing, drafting, approving, and editing directly, replacing the Confidential tier's hold on them, as the [Decisions Log](../product/decisions.md#people-and-privacy) sets out. Releases are an area of their own, apart from the rest of the plan, so approving draft releases, which Project Managers and the Engineering Director generally do, can be granted on its own, decided by the owner on 2026-11-04.
 
 Scope, such as one's own reporting line, follows later, as [Issues](../issues.md#roles) records.
 
@@ -145,7 +145,7 @@ A test page of the roadmap board proposed in [ADR 0009](../adr/0009-roadmap-and-
 
 ### Projects and Feature Teams
 
-Projects with their customers, from a built-in Customers table, the features they need, edited from either Projects or Features, and their general features. Milestones of projects and features, in a Milestones table of their own, and the release warnings, all as the [Decisions Log](../product/decisions.md#planning) sets out. Feature teams with their names, members and feature leads, owning features, with membership kept from a date as reporting lines are, and their own org chart, as the [Decisions Log](../product/decisions.md#workforce) sets out. People Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md). Building feature teams takes their three permissions out of `unbuiltPermissions` in `packages/shared/src/access.ts`, so the Roles page stops marking them Not built yet.
+Projects with their customers, from a built-in Customers table, the features they need, edited from either Projects or Features, and their general features. Milestones of projects and features, in a Milestones table of their own, and the release warnings, all as the [Decisions Log](../product/decisions.md#planning) sets out. Feature teams with their names, members and feature leads, owning features, with membership kept from a date as reporting lines are, and their own org chart, as the [Decisions Log](../product/decisions.md#workforce) sets out. Engineering Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md). Building feature teams takes their three permissions out of `unbuiltPermissions` in `packages/shared/src/access.ts`, so the Roles page stops marking them Not built yet.
 
 ### Proposals
 
@@ -189,7 +189,7 @@ Testing on the server platforms in [Supported Platforms](../operations/supported
 
 ## Host Setup
 
-The scripts that set up the production host are written once the first stage works on macOS, close to deployment. For the first deployment's Windows Server with WSL 2, they cover the [setup it needs](../operations/supported-platforms.md#windows-server-with-wsl-2), the host firewall, where possible blocking the proxy's outbound traffic, and creating the first administrator's account. They wait until then because they depend on IT's answers to the requests in the [IT Overview](../operations/it-overview.md) and [Deployment](../operations/deployment.md), and need a Windows machine to test on.
+The scripts that set up the production host are written once the first stage works on macOS, close to deployment. For the first deployment's Windows Server with WSL 2, they cover the [setup it needs](../operations/supported-platforms.md#windows-server-with-wsl-2), the host firewall, where possible blocking the proxy's outbound traffic, and creating the first Administrator, the Fathom Administrator account, by running `apps/server/src/create-administrator.ts` in the application's container, as `pnpm stack:create-administrator` does. They wait until then because they depend on IT's answers to the requests in the [IT Overview](../operations/it-overview.md) and [Deployment](../operations/deployment.md), and need a Windows machine to test on.
 
 ## Going Live
 

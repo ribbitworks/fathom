@@ -23,7 +23,7 @@ let admin: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
-  admin = await test.signedIn(["workforce-administrator"]);
+  admin = await test.signedIn("workforce-administrator");
 });
 
 afterAll(async () => {
@@ -99,7 +99,7 @@ async function makePersonWithColumn(name: string, visibility = "general") {
 
 // Approves a person's draft, as an Approver who sees every tier.
 async function approve(personId: string) {
-  const { cookie } = await test.signedIn(["approver", "leadership"]);
+  const { cookie } = await test.signedIn("engineering-director");
   const response = await test.request(cookie, "POST", "/api/drafts/approval", {
     people: [personId],
   });
@@ -282,16 +282,17 @@ describe("the change history", () => {
     const sets = [name, date, choice, list];
     // Whether each role sees the General, Restricted, and Confidential changes, and the configuration.
     const expected: [Role, boolean[]][] = [
-      ["viewer", [false, false, false, false]],
-      ["project-planner", [false, false, false, false]],
-      ["resource-planner", [true, false, false, false]],
-      ["people-manager", [true, true, false, false]],
+      ["team-member", [false, false, false, false]],
+      ["planner", [false, false, false, false]],
+      ["project-manager", [false, false, false, false]],
+      ["engineering-manager", [true, true, false, false]],
+      ["engineering-director", [true, true, true, true]],
       ["workforce-administrator", [true, true, true, true]],
-      ["leadership", [true, true, true, false]],
-      ["approver", [false, false, false, false]],
+      ["executive", [true, true, true, false]],
+      ["resource-planner", [true, false, false, false]],
     ];
     for (const [role, sees] of expected) {
-      const { cookie } = await test.signedIn([role]);
+      const { cookie } = await test.signedIn(role);
       const ids = (await history(cookie)).entries.map(({ id }) => id);
       expect(
         sets.map(({ changeSetId }) => ids.includes(String(changeSetId))),
@@ -312,9 +313,9 @@ describe("the change history", () => {
     await test.approveLists();
     await approve(made.personId);
     await send("DELETE", `/api/people/columns/${made.field.id}`);
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeUndefined();
-    const leader = await test.signedIn(["leadership"]);
+    const leader = await test.signedIn("executive");
     expect(
       (await entryFor(leader.cookie, chosen.changeSetId))?.records[0]?.fields,
     ).toEqual([
@@ -339,9 +340,9 @@ describe("the change history", () => {
       employeeId: "E-Gamma-2",
       values: { [made.field.id]: [made.south.id] },
     });
-    const planner = await test.signedIn(["resource-planner"]);
-    const manager = await test.signedIn(["people-manager"]);
-    const project = await test.signedIn(["project-planner"]);
+    const planner = await test.signedIn("resource-planner");
+    const manager = await test.signedIn("engineering-manager");
+    const project = await test.signedIn("planner");
 
     expect(await entryFor(planner.cookie, general.changeSetId)).toBeDefined();
     // Only Restricted changes: the change set is left out altogether.
@@ -366,7 +367,7 @@ describe("the change history", () => {
     ).toHaveLength(2);
 
     expect((await history(project.cookie)).entries).toEqual([]);
-    const administrator = await test.signedIn(["administrator"]);
+    const administrator = await test.signedIn("administrator");
     expect(
       (await test.request(administrator.cookie, "GET", "/api/changes"))
         .statusCode,
@@ -378,7 +379,7 @@ describe("the change history", () => {
     const chosen = await send("PATCH", `/api/people/${made.personId}`, {
       values: { [made.field.id]: [made.south.id] },
     });
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeDefined();
     await send("PUT", `/api/lists/${made.list.id}`, {
       name: "Delta sites",
@@ -386,12 +387,12 @@ describe("the change history", () => {
     });
     await test.approveLists();
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeUndefined();
-    const leader = await test.signedIn(["leadership"]);
+    const leader = await test.signedIn("executive");
     expect(await entryFor(leader.cookie, chosen.changeSetId)).toBeDefined();
   });
 
   it("hides changes to saved views on columns a reader may not see", async () => {
-    const manager = await test.signedIn(["people-manager"]);
+    const manager = await test.signedIn("engineering-manager");
     const saved = await test.request(
       manager.cookie,
       "POST",
@@ -405,7 +406,7 @@ describe("the change history", () => {
     expect(
       (await entryFor(manager.cookie, changeSetId))?.records[0],
     ).toMatchObject({ kind: "saved-view", name: "Leaving soon" });
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect(await entryFor(planner.cookie, changeSetId)).toBeUndefined();
     const { view } = saved.json<{ view: { id: string } }>();
     const renamed = await test.request(
@@ -430,7 +431,7 @@ describe("the change history", () => {
 
   it("hides even a rename of a view on a column whose list has become more sensitive since", async () => {
     const made = await makePersonWithColumn("Eta");
-    const manager = await test.signedIn(["leadership"]);
+    const manager = await test.signedIn("executive");
     const saved = await test.request(
       manager.cookie,
       "POST",
@@ -451,7 +452,7 @@ describe("the change history", () => {
         },
       )
     ).json<{ changeSetId: string }>();
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     expect(await entryFor(planner.cookie, renamed.changeSetId)).toBeDefined();
     await send("PUT", `/api/lists/${made.list.id}`, {
       name: "Eta sites",
@@ -540,20 +541,20 @@ describe("the change history", () => {
             eq(accessHistory.action, "restricted-viewed"),
           ),
         );
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     await history(planner.cookie);
     expect(await viewed(planner.id)).toHaveLength(0);
-    const manager = await test.signedIn(["people-manager"]);
+    const manager = await test.signedIn("engineering-manager");
     await history(manager.cookie);
     await history(manager.cookie);
     expect(await viewed(manager.id)).toHaveLength(1);
-    const leader = await test.signedIn(["leadership"]);
+    const leader = await test.signedIn("executive");
     await history(leader.cookie);
     expect(await viewed(leader.id)).toHaveLength(1);
   });
 
   it("shows the latest change sets, then older ones on request", async () => {
-    const reader = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("resource-planner");
     const personId = randomUUID();
     // More change sets than are shown at once, made directly for speed.
     for (let index = 0; index < 205; index += 1) {
@@ -659,7 +660,7 @@ describe("the change history", () => {
             eq(accessHistory.action, "restricted-viewed"),
           ),
         );
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     // The planner's searches work, finding what they may see.
     expect(
       (await search(planner.cookie, "Omicron Person")).entries.length,
@@ -677,7 +678,7 @@ describe("the change history", () => {
         },
       ],
     });
-    const manager = await test.signedIn(["people-manager"]);
+    const manager = await test.signedIn("engineering-manager");
     expect(
       (await search(manager.cookie, "Omicron Other")).entries,
     ).toHaveLength(1);
@@ -708,7 +709,7 @@ describe("the change history", () => {
       visibility: "confidential",
     });
     await test.approveLists();
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     const { entries } = await history(planner.cookie);
     expect(entries.length).toBeGreaterThan(0);
     // Only adding the person, whose General details the planner sees, and none of the hidden changes.
@@ -721,7 +722,7 @@ describe("the change history", () => {
         records: [expect.objectContaining({ action: "created" })],
       }),
     ]);
-    const leader = await test.signedIn(["leadership"]);
+    const leader = await test.signedIn("executive");
     expect((await history(leader.cookie)).entries[0]?.records[0]).toMatchObject(
       { name: "Pi Person" },
     );
@@ -741,7 +742,7 @@ describe("the change history", () => {
 
   // Kept last but for the refusals, since the change sets it adds fill every page after it.
   it("stops a search after reading as many change sets as one request may, to read on from there", async () => {
-    const reader = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("resource-planner");
     // Enough change sets, made in one statement for speed, that none of them match.
     await test.connection.execute(sql`
       WITH made AS (
@@ -766,7 +767,7 @@ describe("the change history", () => {
   });
 
   it("refuses a search longer than a table's", async () => {
-    const reader = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("resource-planner");
     const response = await test.request(
       reader.cookie,
       "GET",
@@ -776,7 +777,7 @@ describe("the change history", () => {
   });
 
   it("refuses a page named by something other than a change set", async () => {
-    const reader = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("resource-planner");
     const response = await test.request(
       reader.cookie,
       "GET",

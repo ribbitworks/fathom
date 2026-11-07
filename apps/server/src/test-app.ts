@@ -2,7 +2,7 @@
 
 // A Fathom server for tests, against a migrated PostgreSQL server of its own, whose built-in
 // Positions list offers two fictional positions, with helpers to sign in fictional accounts holding
-// given roles, to send requests as them, and to approve the drafts of lists that tests set up.
+// a given role, to send requests as them, and to approve the drafts of lists that tests set up.
 // Unless asked not to, each change sent is published straight after, as its maker would, so tests
 // of drafts see them as everyone does. Used only by tests.
 
@@ -18,7 +18,6 @@ import {
   rolePermissions,
   roles as roleTable,
   runMigrations,
-  userRoles,
 } from "@fathom/db";
 import type { Permission, Role } from "@fathom/shared";
 import {
@@ -34,6 +33,7 @@ import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
 import { createDataAccess } from "./data/index.ts";
+import { findStartingRole, giveRole } from "./data/roles.ts";
 
 // A fictional address for Fathom, and a session secret used only by tests.
 const publicUrl = "https://fathom.example.test";
@@ -49,10 +49,13 @@ export const otherTestPosition = "00000000-0000-4000-8000-00000000f002";
 export interface TestApp {
   app: App;
   connection: Database;
-  // Signs in a new account holding the given roles, and returns its identifier and session cookie.
-  signedIn(roles: Role[]): Promise<{ id: string; cookie: string }>;
-  // Gives the account one role, made for the test, granting just these permissions, in place of the
-  // roles it held.
+  // Signs in a new account holding a starting role, or a role made for the test granting just these
+  // permissions, and returns its identifier and session cookie.
+  signedIn(
+    role: Role | readonly Permission[],
+  ): Promise<{ id: string; cookie: string }>;
+  // Gives the account a role, made for the test, granting just these permissions, in place of the
+  // role it held.
   holdOnly(userId: string, permissions: readonly Permission[]): Promise<void>;
   // Publishes the change straight after unless asked not to, or the app was started not to.
   request(
@@ -135,32 +138,40 @@ export async function startTestApp({
   let accountCount = 0;
   let approverId: string | undefined;
 
+  async function holdOnly(
+    userId: string,
+    permissions: readonly Permission[],
+  ): Promise<void> {
+    const [role] = await connection
+      .insert(roleTable)
+      .values({ name: `Fictional Test Role ${randomUUID()}` })
+      .returning({ id: roleTable.id });
+    const roleId = String(role?.id);
+    if (permissions.length > 0) {
+      await connection
+        .insert(rolePermissions)
+        .values(permissions.map((permission) => ({ roleId, permission })));
+    }
+    await giveRole(connection, userId, roleId);
+  }
+
   return {
     app,
     connection,
-    async holdOnly(userId, permissions) {
-      const [role] = await connection
-        .insert(roleTable)
-        .values({ name: `Fictional Test Role ${randomUUID()}` })
-        .returning({ id: roleTable.id });
-      const roleId = String(role?.id);
-      if (permissions.length > 0) {
-        await connection
-          .insert(rolePermissions)
-          .values(permissions.map((permission) => ({ roleId, permission })));
-      }
-      await connection.delete(userRoles).where(eq(userRoles.userId, userId));
-      await connection.insert(userRoles).values({ userId, roleId });
-    },
-    async signedIn(roles) {
+    holdOnly,
+    async signedIn(role) {
       accountCount += 1;
       const email = `person${String(accountCount)}@example.test`;
       const id = await createAccount(auth, connection, {
         name: `Fictional User ${String(accountCount)}`,
         email,
         password,
-        roles,
+        roleId: await findStartingRole(
+          connection,
+          typeof role === "string" ? role : "team-member",
+        ),
       });
+      if (typeof role !== "string") await holdOnly(id, role);
       // Each from a fictional address of its own, so sign-in limits never interfere.
       const response = await app.inject({
         method: "POST",
@@ -207,7 +218,7 @@ export async function startTestApp({
         name: "Fictional Approver of Lists",
         email: "list.approver@example.test",
         password,
-        roles: ["approver", "workforce-administrator", "leadership"],
+        roleId: await findStartingRole(connection, "engineering-director"),
       });
       const waiting = await connection
         .select({ recordType: drafts.recordType, recordId: drafts.recordId })
@@ -229,7 +240,7 @@ export async function startTestApp({
       await data.drafts.approve(
         actorFor(
           { id: approverId, name: "Fictional Approver of Lists", email: "" },
-          ["approver", "workforce-administrator", "leadership"],
+          "engineering-director",
         ),
         {
           people: [],

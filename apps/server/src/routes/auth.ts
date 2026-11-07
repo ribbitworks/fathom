@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Sign-in, sign-out, changing one's own password, and the signed-in user, with their roles and what
-// those roles let them do. Only the Better Auth requests Fathom uses are passed on, so its other
+// Sign-in, sign-out, changing one's own password, and the signed-in user, with their role and what
+// it lets them do. Only the Better Auth requests Fathom uses are passed on, so its other
 // features, such as users changing their own name, stay closed, including any a later version adds.
 // Each is passed with the client's address the server already knows, in place of any a client
 // sends, so sign-in limits cannot be dodged by forging an address, and sign-in is passed only an
@@ -19,6 +19,7 @@ import { z } from "zod";
 import { type Actor, actorWith, type SignedInUser } from "../access.ts";
 import { type Auth, clientAddressHeader } from "../data/auth.ts";
 import type { DataAccess } from "../data/index.ts";
+import type { HeldRole } from "../data/roles.ts";
 
 const ok = 200;
 const unauthorized = 401;
@@ -57,21 +58,27 @@ export async function readSession(
   return { id, name, email };
 }
 
-// Returns who is making the request, with what their roles let them do, or null when no one is
-// signed in.
+// Returns who is making the request, with their role and what it lets them do, and whether they must
+// change their password first, or null when no one is signed in.
 export async function readActor(
   auth: Auth,
   data: DataAccess,
   request: FastifyRequest,
   reply: FastifyReply,
-): Promise<Actor | null> {
+): Promise<
+  (Actor & { role: HeldRole | null; mustChangePassword: boolean }) | null
+> {
   const user = await readSession(auth, request, reply);
   if (user === null) return null;
   // A deactivated account grants nothing, even while a session of its own lasts.
   const access = await data.readActorAccess(user.id);
   return access === null
     ? null
-    : actorWith(user, access.roles, access.permissions);
+    : {
+        ...actorWith(user, access.permissions),
+        role: access.role,
+        mustChangePassword: access.mustChangePassword,
+      };
 }
 
 // Replaces what Better Auth answers, for a status, when its answer would say too much.
@@ -126,17 +133,25 @@ export function authRoutes(
         pass(request, reply, request.body, { [unauthorized]: refusedSignIn }),
     );
     // Changing one's own password signs out every other session, so a stolen one ends. The answer
-    // leaves out the new session's token, which the browser receives as a cookie.
+    // leaves out the new session's token, which the browser receives as a cookie. A signed-in
+    // user's new password must meet the rules in the password settings, which Better Auth does not
+    // know, and must not be too common or easy to guess.
     app.post(
       "/api/auth/change-password",
       { schema: { body: passwordChangeSchema } },
-      (request, reply) =>
-        pass(
+      async (request, reply) => {
+        // Only a signed-in user learns the rules; anyone else gets Better Auth's refusal.
+        const user = await readSession(auth, request, reply);
+        if (user !== null) {
+          await data.checkChosenPassword(request.body.newPassword, user);
+        }
+        return pass(
           request,
           reply,
           { ...request.body, revokeOtherSessions: true },
           { [ok]: {} },
-        ),
+        );
+      },
     );
     app.post("/api/auth/sign-out", (request, reply) =>
       pass(request, reply, {}),

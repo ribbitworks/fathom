@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Local accounts that sign in with a password: creating them, with the roles they hold, and the
+// Local accounts that sign in with a password: creating them, with the one role each holds, the
+// passwords Fathom generates for them, which their users must change at first sign-in, and the
 // administration that needs the accounts:manage permission, which lists accounts, changes their
-// names, email addresses, and roles, resets their passwords, and deactivates them. Administrators
+// names, email addresses, and role, resets their passwords, and deactivates them. Administrators
 // manage their own account like any other, except that some active account must keep the
 // permissions to manage accounts and to edit roles, so no one can lock everyone out, and nobody
 // resets their own password here.
@@ -16,8 +17,14 @@ import {
   userRoles,
   users,
 } from "@fathom/db";
-import { type Account, type Role, roleSchema } from "@fathom/shared";
-import { and, asc, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
+import {
+  type Account,
+  kindsIn,
+  type PasswordRecipe,
+  recipeCharacters,
+} from "@fathom/shared";
+import { and, asc, eq, ne, sql } from "drizzle-orm";
+import { randomInt } from "node:crypto";
 import { z } from "zod";
 import { type Actor, requirePermission } from "../access.ts";
 import {
@@ -29,19 +36,59 @@ import {
 import type { Auth } from "./auth.ts";
 import type { Transaction } from "./changes.ts";
 import { type HistoryEvent, recordEvent, recordEvents } from "./history.ts";
+import { readPasswordSettings } from "./settings.ts";
 import {
-  addRoles,
+  findRole,
+  findStartingRole,
+  giveRole,
   keepAccessManaged,
   lockAccessManagers,
-  readRoles,
 } from "./roles.ts";
 
 export interface NewAccount {
   name: string;
   email: string;
   password: string;
-  roles?: readonly Role[];
+  // Any role, starting or made later; it must exist.
+  roleId: string;
+  // Whether its user must change the password before doing anything else.
+  mustChangePassword?: boolean;
 }
+
+export type AccountDetails = Omit<
+  NewAccount,
+  "password" | "mustChangePassword"
+>;
+
+// A whole number from 0 up to, but not including, the bound, each equally likely.
+export type RandomInt = (bound: number) => number;
+
+// A password for a new account or a reset, following the recipe in the password settings: each
+// character drawn evenly from the characters the recipe uses, with at least one of each type it
+// uses, at a random place, so it meets every rule, since the settings refuse a recipe without each
+// type the rules need. The random source must be cryptographically secure.
+export function generatePassword(
+  recipe: PasswordRecipe,
+  random: RandomInt = randomInt,
+): string {
+  const pick = (characters: string) =>
+    characters.charAt(random(characters.length));
+  const sets = kindsIn(recipe).map((kind) =>
+    recipeCharacters(kind, recipe.avoidLookAlikes),
+  );
+  const all = sets.join("");
+  const characters = sets.map((set) => pick(set));
+  while (characters.length < recipe.length) characters.push(pick(all));
+  // Drawn out in a random order, so the guaranteed characters may fall anywhere.
+  const shuffled: string[] = [];
+  while (characters.length > 0) {
+    shuffled.push(...characters.splice(random(characters.length), 1));
+  }
+  return shuffled.join("");
+}
+
+const generatePasswordFor = async (database: Pick<Database, "select">) =>
+  generatePassword((await readPasswordSettings(database)).recipe);
 
 async function checkPassword(auth: Auth, password: string): Promise<void> {
   const { minPasswordLength, maxPasswordLength } = (await auth.$context)
@@ -85,12 +132,13 @@ async function checkEmail(
 export async function createAccount(
   auth: Auth,
   database: Database,
-  { name, email, password, roles = [] }: NewAccount,
+  { name, email, password, roleId, mustChangePassword = false }: NewAccount,
   createdBy: string | null = null,
 ): Promise<string> {
   const context = await auth.$context;
   await checkPassword(auth, password);
   const normalizedEmail = await checkEmail(auth, email);
+  await findRole(database, roleId);
   const user = await context.internalAdapter.createUser(
     { name: name.trim(), email: normalizedEmail, emailVerified: true },
     { method: "admin" },
@@ -103,21 +151,76 @@ export async function createAccount(
       password: await context.password.hash(password),
     });
     await database.transaction(async (transaction) => {
-      await addRoles(transaction, user.id, roles);
+      // Read again, so a role deleted meanwhile is refused rather than named wrongly.
+      const role = await findRole(transaction, roleId);
+      await giveRole(transaction, user.id, role.id);
+      if (mustChangePassword) {
+        await transaction
+          .update(users)
+          .set({ mustChangePassword })
+          .where(eq(users.id, user.id));
+      }
       await recordEvent(transaction, {
         actorId: createdBy,
         action: "account-created",
         subjectId: user.id,
-        details: { roles: [...roles] },
+        details: { role: role.name },
       });
     });
   } catch (error) {
-    // An account without its password, roles, or history entry is not what was asked for, so it is
+    // An account without its password, role, or history entry is not what was asked for, so it is
     // not kept.
     await context.internalAdapter.deleteUser(user.id);
     throw error;
   }
   return user.id;
+}
+
+// Creates an account with a password Fathom generates, which its user must change at first sign-in,
+// and returns its identifier and the password, for showing once.
+export async function createAccountWithGeneratedPassword(
+  auth: Auth,
+  database: Database,
+  account: AccountDetails,
+  createdBy: string | null = null,
+): Promise<{ id: string; password: string }> {
+  const password = await generatePasswordFor(database);
+  const id = await createAccount(
+    auth,
+    database,
+    { ...account, password, mustChangePassword: true },
+    createdBy,
+  );
+  return { id, password };
+}
+
+export const administratorName = "Fathom Administrator";
+
+// Creates the Fathom Administrator account, holding the Administrator starting role, with a
+// generated password, unless an account already holds that role, when it returns null and changes
+// nothing. Recorded as created by the server's operators. Two runs at once wait for each other, so
+// only one creates it: the lock is held until the account and its role are saved, and the check
+// after it sees them.
+export async function createFirstAdministrator(
+  auth: Auth,
+  database: Database,
+  email: string,
+): Promise<{ id: string; password: string } | null> {
+  return database.transaction(async (transaction) => {
+    await lockAccessManagers(transaction);
+    const [holder] = await transaction
+      .select({ userId: userRoles.userId })
+      .from(userRoles)
+      .innerJoin(roleTable, eq(roleTable.id, userRoles.roleId))
+      .where(eq(roleTable.key, "administrator"))
+      .limit(1);
+    if (holder !== undefined) return null;
+    return createAccountWithGeneratedPassword(auth, database, {
+      name: administratorName,
+      email,
+      roleId: await findStartingRole(transaction, "administrator"),
+    });
+  });
 }
 
 // Deactivates or reactivates an account, recording who did it in the access history, and signs it
@@ -160,21 +263,26 @@ export async function setAccountActive(
 export interface AccountChange {
   name?: string | undefined;
   email?: string | undefined;
-  roles?: readonly Role[] | undefined;
+  roleId?: string | undefined;
 }
 
 export interface AccountAdministration {
   listAccounts(actor: Actor): Promise<Account[]>;
-  createAccount(actor: Actor, account: NewAccount): Promise<Account>;
-  // Changes any of an account's name, email address, and roles together, recording each that
+  // Returns the account with the password Fathom generated for it.
+  createAccount(
+    actor: Actor,
+    account: AccountDetails,
+  ): Promise<{ account: Account; password: string }>;
+  // Changes any of an account's name, email address, and role together, recording each that
   // changes in the access history.
   updateAccount(
     actor: Actor,
     userId: string,
     change: AccountChange,
   ): Promise<Account>;
-  // Signs the user out everywhere, so only the new password works.
-  resetPassword(actor: Actor, userId: string, password: string): Promise<void>;
+  // Gives the account a password Fathom generates, which its user must change at next sign-in, and
+  // returns it. Signs the user out everywhere, so only the new password works.
+  resetPassword(actor: Actor, userId: string): Promise<string>;
   // Deactivating signs the user out everywhere.
   setActive(actor: Actor, userId: string, active: boolean): Promise<Account>;
   // Changes the signed-in user's own name, which needs no role, recording it in the access history.
@@ -191,23 +299,32 @@ export function createAccountAdministration(
     userId: string,
     transaction?: Transaction,
   ): Promise<Account> {
-    const query = (transaction ?? database)
+    const reader = transaction ?? database;
+    if (transaction) {
+      await transaction
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, userId))
+        .for("update");
+    }
+    const [user] = await reader
       .select({
         id: users.id,
         name: users.name,
         email: users.email,
+        role: { id: roleTable.id, name: roleTable.name },
         deactivatedAt: users.deactivatedAt,
         createdAt: users.createdAt,
       })
       .from(users)
+      .leftJoin(userRoles, eq(userRoles.userId, users.id))
+      .leftJoin(roleTable, eq(roleTable.id, userRoles.roleId))
       .where(eq(users.id, userId));
-    const [user] = await (transaction ? query.for("update") : query);
     if (user === undefined) throw new NotFoundError("There is no such account");
     const { deactivatedAt, createdAt, ...details } = user;
     return {
       ...details,
       createdAt: createdAt.toISOString(),
-      roles: await readRoles(transaction ?? database, userId),
       active: deactivatedAt === null,
     };
   }
@@ -228,9 +345,13 @@ export function createAccountAdministration(
 
     async createAccount(actor, account) {
       requirePermission(actor, "accounts:manage");
-      return readAccount(
-        await createAccount(auth, database, account, actor.user.id),
+      const { id, password } = await createAccountWithGeneratedPassword(
+        auth,
+        database,
+        account,
+        actor.user.id,
       );
+      return { account: await readAccount(id), password };
     },
 
     async updateAccount(actor, userId, change) {
@@ -245,12 +366,10 @@ export function createAccountAdministration(
         const previous = await readAccount(userId, transaction);
         const name = change.name?.trim() ?? previous.name;
         const email = changedEmail ?? previous.email;
-        const roles = roleSchema.options.filter((role) =>
-          (change.roles ?? previous.roles).includes(role),
-        );
-        const rolesChanged =
-          roles.length !== previous.roles.length ||
-          roles.some((role) => !previous.roles.includes(role));
+        const role =
+          change.roleId === undefined || change.roleId === previous.role?.id
+            ? undefined
+            : await findRole(transaction, change.roleId);
         const events: HistoryEvent[] = [
           ...(name === previous.name ? [] : ["name-changed" as const]),
           ...(email === previous.email ? [] : ["email-changed" as const]),
@@ -259,12 +378,17 @@ export function createAccountAdministration(
           action,
           subjectId: userId,
         }));
-        if (rolesChanged) {
+        if (role !== undefined) {
           events.push({
             actorId: actor.user.id,
             action: "roles-changed",
             subjectId: userId,
-            details: { previousRoles: previous.roles, roles },
+            details: {
+              role: role.name,
+              ...(previous.role === null
+                ? {}
+                : { previousRole: previous.role.name }),
+            },
           });
         }
         if (events.length === 0) return;
@@ -272,23 +396,8 @@ export function createAccountAdministration(
           .update(users)
           .set({ name, email, updatedAt: new Date() })
           .where(eq(users.id, userId));
-        if (rolesChanged) {
-          // Only the starting roles are given here, so roles made later, which have no key, stay.
-          await transaction
-            .delete(userRoles)
-            .where(
-              and(
-                eq(userRoles.userId, userId),
-                inArray(
-                  userRoles.roleId,
-                  transaction
-                    .select({ id: roleTable.id })
-                    .from(roleTable)
-                    .where(isNotNull(roleTable.key)),
-                ),
-              ),
-            );
-          await addRoles(transaction, userId, roles);
+        if (role !== undefined) {
+          await giveRole(transaction, userId, role.id);
           await keepAccessManaged(
             transaction,
             "The last active account that can manage accounts or edit roles keeps that access",
@@ -299,7 +408,7 @@ export function createAccountAdministration(
       return readAccount(userId);
     },
 
-    async resetPassword(actor, userId, password) {
+    async resetPassword(actor, userId) {
       requirePermission(actor, "accounts:manage");
       // Changing one's own password needs the current one, so a session left open cannot be used
       // to take the account over.
@@ -309,7 +418,7 @@ export function createAccountAdministration(
         );
       }
       await readAccount(userId);
-      await checkPassword(auth, password);
+      const password = await generatePasswordFor(database);
       const hash = await (await auth.$context).password.hash(password);
       // The new password and its history entry are saved together, so no reset goes unrecorded.
       await database.transaction(async (transaction) => {
@@ -322,6 +431,10 @@ export function createAccountAdministration(
               eq(accounts.providerId, "credential"),
             ),
           );
+        await transaction
+          .update(users)
+          .set({ mustChangePassword: true })
+          .where(eq(users.id, userId));
         await recordEvent(transaction, {
           actorId: actor.user.id,
           action: "password-reset",
@@ -329,6 +442,7 @@ export function createAccountAdministration(
         });
       });
       await signOutEverywhere(userId);
+      return password;
     },
 
     async renameSelf(actor, name) {

@@ -20,14 +20,13 @@ import {
 const roleEditor = () =>
   Response.json({
     ...fictionalUser,
-    roles: ["administrator"],
     permissions: ["roles:edit", "plan:view"],
   });
 
-const viewerRole = {
+const teamMemberRole = {
   id: "00000000-0000-4000-8000-000000000001",
-  key: "viewer",
-  name: "Viewer",
+  key: "team-member",
+  name: "Team Member",
   description: "Sees the plan, including everyone's work assignments.",
   permissions: ["plan:view", "allocations:view", "changes:view"],
   accounts: 3,
@@ -42,7 +41,7 @@ const auditors = {
   accounts: 1,
   updatedAt: "2026-11-02T12:00:00.000Z",
 };
-const roleList = () => Response.json({ roles: [viewerRole, auditors] });
+const roleList = () => Response.json({ roles: [teamMemberRole, auditors] });
 
 const planner = {
   id: "user-2",
@@ -144,9 +143,9 @@ describe("the list of roles", () => {
       "EditCopy",
     ]);
     expect(
-      within(screen.getByText("Viewer").closest("tr") as HTMLElement).getByText(
-        "3",
-      ),
+      within(
+        screen.getByText("Team Member").closest("tr") as HTMLElement,
+      ).getByText("3"),
     ).toBeDefined();
   });
 
@@ -320,7 +319,7 @@ describe("creating a role", () => {
     });
     renderApp("/roles");
     const dialog = await openDialog("New role", "New role");
-    await userEvent.type(within(dialog).getByLabelText("Name"), "Viewer");
+    await userEvent.type(within(dialog).getByLabelText("Name"), "Team Member");
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create role" }),
     );
@@ -756,7 +755,7 @@ describe("changing a role", () => {
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect((await within(dialog).findByRole("alert")).textContent).toBe(
-      "You do not have permission to do this. Your roles may have changed.",
+      "You do not have permission to do this. Your role may have changed.",
     );
     expect(within(dialog).getByLabelText("Name")).toBeDefined();
   });
@@ -803,7 +802,7 @@ describe("changing a role", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    await openDialog("Edit Viewer", "Edit Viewer");
+    await openDialog("Edit Team Member", "Edit Team Member");
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("dialog")).toBeNull();
@@ -897,7 +896,7 @@ describe("restoring a starting role", () => {
       "GET /api/roles": roleList,
     });
     renderApp("/roles");
-    const dialog = await openDialog("Edit Viewer", "Edit Viewer");
+    const dialog = await openDialog("Edit Team Member", "Edit Team Member");
     const restore = within(dialog).getByRole<HTMLButtonElement>("button", {
       name: "Restore template",
     });
@@ -926,7 +925,7 @@ describe("restoring a starting role", () => {
         Response.json({
           roles: [
             {
-              ...viewerRole,
+              ...teamMemberRole,
               name: "Fictional Watchers",
               description: "Watches.",
               permissions: ["people:view"],
@@ -945,12 +944,12 @@ describe("restoring a starting role", () => {
     );
     // Then
     expect(within(dialog).getByLabelText<HTMLInputElement>("Name").value).toBe(
-      viewerRole.name,
+      teamMemberRole.name,
     );
     expect(
       within(dialog).getByLabelText<HTMLTextAreaElement>("What it is for")
         .value,
-    ).toBe(viewerRole.description);
+    ).toBe(teamMemberRole.description);
     expect(box(dialog, "View Plan").checked).toBe(true);
     expect(box(dialog, "View Allocations, not built yet").checked).toBe(true);
     expect(box(dialog, "View Change history").checked).toBe(true);

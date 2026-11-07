@@ -176,10 +176,10 @@ async function liveList(labels: string[]): Promise<{
 
 beforeAll(async () => {
   test = await startTestApp({ publishEachChange: false });
-  alice = await user(["workforce-administrator", "viewer"]);
-  bob = await user(["workforce-administrator", "viewer"]);
-  approver = await user(["approver", "leadership"]);
-  reader = await user(["viewer"]);
+  alice = await user("workforce-administrator");
+  bob = await user("workforce-administrator");
+  approver = await user("engineering-director");
+  reader = await user("team-member");
   const sites = await liveList(["North", "South"]);
   siteList = sites.list;
   [north, south] = sites.choices as [Choice, Choice];

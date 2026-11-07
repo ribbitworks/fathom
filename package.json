@@ -39,7 +39,9 @@
     "stack:reset": "bash scripts/stack.sh reset",
     "stack:logs": "bash scripts/stack.sh logs",
     "stack:create-account": "bash scripts/stack.sh create-account",
+    "stack:create-administrator": "bash scripts/stack.sh create-administrator",
     "account:create": "bash scripts/create-account.sh",
+    "admin:create": "bash scripts/create-administrator.sh",
     "test:containers": "node --test --test-timeout=1800000 \"scripts/container-tests/*.test.mjs\"",
     "typecheck": "tsc --build",
     "build": "pnpm --filter @fathom/web build"

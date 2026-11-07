@@ -26,7 +26,7 @@ let cookie = "";
 
 beforeAll(async () => {
   test = await startTestApp();
-  ({ cookie } = await test.signedIn(["workforce-administrator"]));
+  ({ cookie } = await test.signedIn("workforce-administrator"));
 });
 
 afterAll(async () => {
@@ -43,7 +43,7 @@ function unique(prefix: string): string {
 }
 
 async function approved(ids: readonly string[]) {
-  const approver = await test.signedIn(["approver", "leadership"]);
+  const approver = await test.signedIn("engineering-director");
   const response = await test.request(
     approver.cookie,
     "POST",
@@ -169,7 +169,7 @@ describe("the org chart", () => {
 
   it("shows managers who have left, up the chain, to those who see Restricted details, and records it", async () => {
     const { top, middle, report } = await leftChain();
-    const viewer = await test.signedIn(["leadership"]);
+    const viewer = await test.signedIn("executive");
     const shown = await chart(viewer.cookie);
     expect(shown.get(report)?.managerId).toBe(middle);
     expect(shown.get(middle)).toMatchObject({
@@ -184,7 +184,7 @@ describe("the org chart", () => {
 
   it("shows anyone else only a report's own manager who has left, by name, at the top", async () => {
     const { top, middle, report } = await leftChain();
-    const planner = await test.signedIn(["resource-planner"]);
+    const planner = await test.signedIn("resource-planner");
     const shown = await chart(planner.cookie);
     expect(shown.get(report)?.managerId).toBe(middle);
     expect(shown.get(middle)).toEqual({
@@ -223,7 +223,7 @@ describe("the org chart", () => {
     it.each(roleSchema.options)(
       "answers a %s as its access allows",
       async (role) => {
-        const { cookie: as } = await test.signedIn([role]);
+        const { cookie: as } = await test.signedIn(role);
         const response = await test.request(as, "GET", "/api/org-chart");
         if (!rolesGranting("people:view").includes(role)) {
           expect(response.statusCode).toBe(403);
@@ -296,16 +296,16 @@ describe("a team's colour", () => {
     expect((await teamRow(manager))[0]?.colour).toBeNull();
   });
 
-  it("is changed only by those whose roles let them colour teams, such as People Managers", async () => {
+  it("is changed only by those whose roles let them colour teams, such as Engineering Managers", async () => {
     const manager = await person({ teamName: unique("Fictional Team") });
-    const reader = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("resource-planner");
     expect(
       (await colour(manager, { colour: "teal" }, reader.cookie)).statusCode,
     ).toBe(403);
     expect((await teamRow(manager))[0]?.colour).toBeNull();
-    const peopleManager = await test.signedIn(["people-manager"]);
+    const engineeringManager = await test.signedIn("engineering-manager");
     expect(
-      (await colour(manager, { colour: "teal" }, peopleManager.cookie))
+      (await colour(manager, { colour: "teal" }, engineeringManager.cookie))
         .statusCode,
     ).toBe(204);
     expect((await teamRow(manager))[0]?.colour).toBe("teal");

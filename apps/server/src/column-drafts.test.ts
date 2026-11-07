@@ -30,8 +30,8 @@ let approver: { id: string; cookie: string };
 
 beforeAll(async () => {
   test = await startTestApp();
-  editor = await test.signedIn(["workforce-administrator", "viewer"]);
-  approver = await test.signedIn(["approver", "leadership"]);
+  editor = await test.signedIn("workforce-administrator");
+  approver = await test.signedIn("engineering-director");
 });
 
 afterAll(async () => {
@@ -308,14 +308,13 @@ describe("drafting columns", () => {
     // An actor who may change configuration but not people, as no role grants today.
     const configurationOnly: Actor = {
       user: { id: editor.id, name: "Fictional Editor", email: "" },
-      roles: ["workforce-administrator"],
       permissions: ["configuration:edit", "configuration:view"],
     };
     const refusal = createDataAccess(test.connection).people.deleteField(
       configurationOnly,
       field.id,
     );
-    await expect(refusal).rejects.toThrow(/your roles do not let you change/);
+    await expect(refusal).rejects.toThrow(/your role does not let you change/);
     await expect(refusal).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -323,7 +322,6 @@ describe("drafting columns", () => {
   // grants today. It is the editor's own user, so it sees the editor's unpublished drafts.
   const generalOnly = (): Actor => ({
     user: { id: editor.id, name: "Fictional Editor", email: "" },
-    roles: ["workforce-administrator"],
     permissions: ["configuration:edit", "configuration:view", "people:view"],
   });
   const choice = (listId: string, name = unique("Fictional Column")) =>
@@ -366,7 +364,7 @@ describe("drafting columns", () => {
     for (const list of [draftedOnly, raised]) {
       await expect(
         people.createField(generalOnly(), choice(list.id)),
-      ).rejects.toThrow(/whose details your roles let you see/);
+      ).rejects.toThrow(/whose details your role lets you see/);
     }
     await send("DELETE", `/api/lists/${draftedOnly.id}/draft`);
     await send("DELETE", `/api/lists/${raised.id}/draft`);
@@ -396,7 +394,7 @@ describe("drafting columns", () => {
         hidden.id,
         choice(general.id, hidden.name),
       ),
-    ).rejects.toThrow(/your roles do not let you see/);
+    ).rejects.toThrow(/your role does not let you see/);
     await send("DELETE", `/api/people/columns/${hidden.id}/draft`);
   });
 
@@ -419,7 +417,7 @@ describe("drafting columns", () => {
         description: "",
         visibility: "restricted",
       }),
-    ).rejects.toThrow(/a visibility your roles let you see/);
+    ).rejects.toThrow(/a visibility your role lets you see/);
     const restricted = (await liveList(["B"], "restricted")).list;
     await expect(
       lists.update(generalOnly(), restricted.id, {
@@ -427,7 +425,7 @@ describe("drafting columns", () => {
         description: "",
         visibility: "general",
       }),
-    ).rejects.toThrow(/your roles do not let you see/);
+    ).rejects.toThrow(/your role does not let you see/);
     expect(await draftCount()).toBe(before);
 
     const renamed = unique("Fictional List");
@@ -445,7 +443,7 @@ describe("drafting columns", () => {
     const field = await liveColumn(list.id);
     await livePerson({ [field.id]: [String(choices[0]?.id)] });
     await send("DELETE", `/api/people/columns/${field.id}`);
-    const listsOnly = await test.signedIn(["approver"]);
+    const listsOnly = await test.signedIn("project-manager");
     expect(
       (await decide("approval", { columns: [field.id] }, listsOnly.cookie))
         .statusCode,
@@ -673,7 +671,7 @@ describe("reading columns", () => {
   it("leaves out a column whose values the reader may not see, with its draft", async () => {
     const { list } = await liveList(["A"], "confidential");
     const { field } = await draftColumn(list.id);
-    const reader = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("resource-planner");
     expect(
       (await readPeople(reader.cookie)).fields.some(
         ({ id }) => id === field.id,
@@ -719,7 +717,7 @@ describe("orders stored before the reporting columns", () => {
         ...added,
       ];
       expect((await readPeople()).order).toEqual(shown);
-      const general = await test.signedIn(["resource-planner"]);
+      const general = await test.signedIn("resource-planner");
       const seen = await readPeople(general.cookie);
       expect(seen.order).toEqual([
         "preferredName",
@@ -1065,12 +1063,12 @@ describe("what decides and keeps column drafts safe", () => {
   it("needs an Approver who sees people, and the column's values", async () => {
     const { list } = await liveList(["A"], "confidential");
     const { field } = await draftColumn(list.id);
-    const listsOnly = await test.signedIn(["approver"]);
+    const listsOnly = await test.signedIn("project-manager");
     expect(
       (await decide("approval", { columns: [field.id] }, listsOnly.cookie))
         .statusCode,
     ).toBe(403);
-    const generalOnly = await test.signedIn(["approver", "resource-planner"]);
+    const generalOnly = await test.signedIn(["drafts:approve", "people:view"]);
     expect(
       (
         await decide(
@@ -1162,7 +1160,7 @@ describe("undoing changes to column drafts", () => {
   });
 
   it("refuses to put back a removal once its maker may no longer change people", async () => {
-    const remover = await test.signedIn(["workforce-administrator", "viewer"]);
+    const remover = await test.signedIn("workforce-administrator");
     const { list } = await liveList(["A"]);
     const column = await liveColumn(list.id);
     await test.request(
@@ -1189,7 +1187,7 @@ describe("undoing changes to column drafts", () => {
   });
 
   it("refuses to put back a removal of a column whose values its maker can no longer see", async () => {
-    const remover = await test.signedIn(["workforce-administrator", "viewer"]);
+    const remover = await test.signedIn("workforce-administrator");
     const { list } = await liveList(["A"], "confidential");
     const column = await liveColumn(list.id);
     await test.request(

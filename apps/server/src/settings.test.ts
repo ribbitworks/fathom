@@ -29,7 +29,7 @@ let editorId: string;
 
 beforeAll(async () => {
   test = await startTestApp();
-  ({ cookie, id: editorId } = await test.signedIn(["administrator"]));
+  ({ cookie, id: editorId } = await test.signedIn("administrator"));
 });
 
 afterAll(async () => {
@@ -61,21 +61,21 @@ async function latestEntry() {
 
 describe("the time zone", () => {
   it("is America/Vancouver until changed, for everyone signed in", async () => {
-    const viewer = await test.signedIn(["viewer"]);
+    const viewer = await test.signedIn("team-member");
     expect(await sessionTimeZone(viewer.cookie)).toBe("America/Vancouver");
   });
 
   it.each(roleSchema.options.filter((role) => role !== "administrator"))(
     "refuses a change from %s, which cannot edit settings",
     async (role) => {
-      const other = await test.signedIn([role]);
+      const other = await test.signedIn(role);
       expect((await changeTo("Asia/Tokyo", other.cookie)).statusCode).toBe(403);
       expect(await sessionTimeZone()).toBe("America/Vancouver");
     },
   );
 
   it("is changed for everyone by an Administrator, in its own spelling, and recorded", async () => {
-    const viewer = await test.signedIn(["viewer"]);
+    const viewer = await test.signedIn("team-member");
     const response = await changeTo("asia/tokyo");
     expect([response.statusCode, response.json()]).toEqual([
       200,
@@ -124,7 +124,7 @@ describe("the time zone", () => {
     await expect(
       changeTimeZone(
         test.connection,
-        actorFor({ id: editorId, name: "", email: "" }, ["administrator"]),
+        actorFor({ id: editorId, name: "", email: "" }, "administrator"),
         "Fictional/Nowhere",
       ),
     ).rejects.toThrow("Fathom does not know that time zone.");

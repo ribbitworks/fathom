@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for Help's pages, with the server's responses simulated: every signed-in user reaches them
-// from the sidebar, whatever their roles. The Roles page says what each role lets a user do, marking
-// the roles the user holds, and what each sensitivity covers; the Drafts page says what each mark
+// from the sidebar, whatever their role. The Roles page says what each starting role lets a user do,
+// marking the user's own role, and what each sensitivity covers; the Drafts page says what each mark
 // beside a person with a draft means, and what happens to a draft.
 
-import { type Role, roleSchema } from "@fathom/shared";
+import { type Role, roleSchema, startingRoles } from "@fathom/shared";
 import { screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { roleDescription, roleName } from "./accounts.ts";
 import {
   fictionalUser,
   greeting,
@@ -46,10 +45,10 @@ describe("Help's Roles page", () => {
     ).toBeDefined();
   });
 
-  it("opens for a user with no roles, marking none as theirs", async () => {
+  it("opens for a user with no role, marking none as theirs", async () => {
     serverAnswers({
       "GET /api/session": () =>
-        Response.json({ ...fictionalUser, roles: [], permissions: [] }),
+        Response.json({ ...fictionalUser, role: null, permissions: [] }),
     });
     renderApp("/help/roles");
     const [roles] = await tables();
@@ -57,15 +56,22 @@ describe("Help's Roles page", () => {
     expect(screen.queryByText(/Your role/)).toBeNull();
   });
 
-  it("says what each role lets a user do, marking the user's own, and what each sensitivity covers", async () => {
-    const held: Role[] = ["viewer", "leadership"];
+  it("says what each starting role lets a user do, marking the user's own, and what each sensitivity covers", async () => {
+    const held: Role = "executive";
     const headerName = (role: Role) =>
-      `${held.includes(role) ? "Your role: " : ""}${roleName(role)}`;
+      // The role is always one of the starting roles.
+      // eslint-disable-next-line security/detect-object-injection
+      `${role === held ? "Your role: " : ""}${startingRoles[role].name}`;
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          roles: held,
+          role: {
+            id: "00000000-0000-4000-8000-0000000000a2",
+            key: held,
+            name: "Executive",
+            description: "Fictional description.",
+          },
           permissions: ["plan:view", "people:view"],
         }),
     });
@@ -74,18 +80,43 @@ describe("Help's Roles page", () => {
     expect(roles).toEqual(
       roleSchema.options.map((role) => [
         headerName(role),
-        roleDescription(role),
+        // eslint-disable-next-line security/detect-object-injection
+        startingRoles[role].description,
       ]),
     );
     for (const role of roleSchema.options) {
       const header = screen.getByRole("rowheader", { name: headerName(role) });
-      expect(header.querySelector("svg") !== null).toBe(held.includes(role));
+      expect(header.querySelector("svg") !== null).toBe(role === held);
     }
     expect(sensitivities?.map(([name]) => name)).toEqual([
       "General",
       "Restricted",
       "Confidential",
     ]);
+  });
+
+  it("puts a role made later first, as the user's own, with its description", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          role: {
+            id: "00000000-0000-4000-8000-0000000000a3",
+            key: null,
+            name: "Fictional Auditors",
+            description: "Checks Restricted data for audits.",
+          },
+          permissions: ["people:view"],
+        }),
+    });
+    renderApp("/help/roles");
+    const [roles] = await tables();
+    expect(roles).toHaveLength(roleSchema.options.length + 1);
+    expect(roles?.[0]).toEqual([
+      "Your role: Fictional Auditors",
+      "Checks Restricted data for audits.",
+    ]);
+    expect(screen.getAllByText(/Your role/)).toHaveLength(1);
   });
 });
 
@@ -95,7 +126,6 @@ describe("Help's Drafts page", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          roles: ["viewer"],
           permissions: ["people:view"],
         }),
     });

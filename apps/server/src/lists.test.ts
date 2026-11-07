@@ -27,6 +27,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
 import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
+import { findStartingRole } from "./data/roles.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
 import { createDataAccess } from "./data/index.ts";
 import { publishingAfter } from "./test-app.ts";
@@ -69,16 +70,16 @@ afterAll(async () => {
 
 let accountCount = 0;
 
-// Signs in a new account holding the given roles, from a fictional address of its own, so sign-in
+// Signs in a new account holding a starting role, from a fictional address of its own, so sign-in
 // limits never interfere, and returns its identifier and session cookie.
-async function signedIn(roles: Role[]) {
+async function signedIn(role: Role) {
   accountCount += 1;
   const email = `editor${String(accountCount)}@example.test`;
   const id = await createAccount(auth, connection, {
     name: `Fictional Editor ${String(accountCount)}`,
     email,
     password,
-    roles,
+    roleId: await findStartingRole(connection, role),
   });
   const response = await app.inject({
     method: "POST",
@@ -177,14 +178,14 @@ async function historyOf(id: string) {
     .orderBy(asc(changes.id));
 }
 
-const editorRoles: Role[] = ["workforce-administrator", "viewer"];
+const editorRole: Role = "workforce-administrator";
 
 describe("who may read and change lists", () => {
   // The access control pattern: every role on its own, allowed exactly when it grants the permission.
   it.each(roleSchema.options)(
     "a %s may read lists only if the role lets them see planning configuration or people",
     async (role) => {
-      const { cookie } = await signedIn([role]);
+      const { cookie } = await signedIn(role);
       const response = await request(cookie, "GET", "/api/lists");
       if (
         rolesGranting("configuration:view").includes(role) ||
@@ -224,7 +225,7 @@ describe("who may read and change lists", () => {
       refusedRoles.map((role) => [role, ...change] as const),
     ),
   )("refuses a %s %s %s", async (role, method, url, payload) => {
-    const { cookie } = await signedIn([role, "viewer"]);
+    const { cookie } = await signedIn(role);
     const response = await request(cookie, method, url, payload);
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({ error: "Forbidden" });
@@ -233,7 +234,7 @@ describe("who may read and change lists", () => {
   it.each(rolesGranting("configuration:edit"))(
     "lets a %s make every change",
     async (role) => {
-      const { cookie } = await signedIn([role, "viewer"]);
+      const { cookie } = await signedIn(role);
       const created = await createList(cookie);
       const [first] = await addChoices(cookie, created.id, ["Fictional A"]);
       const choiceUrl = `/api/lists/${created.id}/choices/${String(first?.id)}`;
@@ -269,7 +270,7 @@ describe("who may read and change lists", () => {
 
 describe("lists", () => {
   it("creates a list, trimmed, visible to everyone unless chosen otherwise, and records it", async () => {
-    const { cookie, id } = await signedIn(editorRoles);
+    const { cookie, id } = await signedIn(editorRole);
     const name = uniqueName();
     const created = await createList(cookie, { name: `  ${name}  ` });
     expect(created).toEqual({
@@ -311,7 +312,7 @@ describe("lists", () => {
   });
 
   it("keeps a chosen visibility and description", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const created = await createList(cookie, {
       description: " A fictional list ",
       visibility: "confidential",
@@ -323,7 +324,7 @@ describe("lists", () => {
   });
 
   it("lists every list by name, ignoring letter case", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const prefix = uniqueName("Fictional Order");
     for (const name of [`${prefix} b`, `${prefix} A`, `${prefix} C`]) {
       await createList(cookie, { name });
@@ -336,7 +337,7 @@ describe("lists", () => {
   });
 
   it("refuses a name another list has, ignoring letter case", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const first = await createList(cookie);
     const second = await createList(cookie);
     for (const [method, url] of [
@@ -365,19 +366,19 @@ describe("lists", () => {
       { name: "Fictional", visibility: "secret" },
     ],
   ])("refuses %s", async (_case, payload) => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const response = await request(cookie, "POST", "/api/lists", payload);
     expect(response.statusCode).toBe(400);
   });
 
   it("accepts a name of 40 characters", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const name = `${uniqueName()} `.padEnd(40, "x");
     expect((await createList(cookie, { name })).name).toBe(name);
   });
 
   it("edits a list, recording only what changed", async () => {
-    const { cookie, id } = await signedIn(editorRoles);
+    const { cookie, id } = await signedIn(editorRole);
     const created = await createList(cookie);
     const response = await request(cookie, "PUT", `/api/lists/${created.id}`, {
       name: created.name,
@@ -404,7 +405,7 @@ describe("lists", () => {
   });
 
   it("records nothing when a list is saved unchanged", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const created = await createList(cookie);
     await request(cookie, "PUT", `/api/lists/${created.id}`, {
       name: created.name,
@@ -413,7 +414,7 @@ describe("lists", () => {
   });
 
   it("retires and restores a list, recording each", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const created = await createList(cookie);
     const url = `/api/lists/${created.id}/retired`;
     await request(cookie, "PUT", url, { retired: true });
@@ -427,7 +428,7 @@ describe("lists", () => {
   });
 
   it("discards a list only drafted to be added, with its choices, recording both", async () => {
-    const { cookie, id } = await signedIn(editorRoles);
+    const { cookie, id } = await signedIn(editorRole);
     const created = await createList(cookie);
     const [choice] = await addChoices(cookie, created.id, ["Fictional"]);
     const response = await request(
@@ -471,7 +472,7 @@ describe("lists", () => {
   ] as [Method, string, object | undefined][])(
     "refuses %s%s for a list that does not exist",
     async (method, path, payload) => {
-      const { cookie } = await signedIn(editorRoles);
+      const { cookie } = await signedIn(editorRole);
       const response = await request(
         cookie,
         method,
@@ -484,7 +485,7 @@ describe("lists", () => {
   );
 
   it("refuses an identifier that is not one Fathom makes", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const response = await request(cookie, "PUT", "/api/lists/not-an-id", {
       name: "Fictional",
     });
@@ -492,7 +493,7 @@ describe("lists", () => {
   });
 
   it("treats a stored visibility Fathom no longer knows as General", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const created = await createList(cookie);
     await connection
       .update(listTable)
@@ -504,7 +505,7 @@ describe("lists", () => {
 
 describe("adding choices", () => {
   it("adds a choice to the end, trimmed, and records it", async () => {
-    const { cookie, id } = await signedIn(editorRoles);
+    const { cookie, id } = await signedIn(editorRole);
     const created = await createList(cookie);
     const response = await request(
       cookie,
@@ -535,7 +536,7 @@ describe("adding choices", () => {
   });
 
   it("adds several choices at once, in order after those already there, as one change", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const created = await createList(cookie);
     await addChoices(cookie, created.id, ["Northmere"]);
     const added = await addChoices(cookie, created.id, [
@@ -565,7 +566,7 @@ describe("adding choices", () => {
     ["one the list already has, ignoring letter case", ["northmere"]],
     ["two with the same name", ["Ashgrove", "ASHGROVE"]],
   ])("refuses all of them when adding %s", async (_case, labels) => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const created = await createList(cookie);
     await addChoices(cookie, created.id, ["Northmere"]);
     const response = await request(
@@ -587,7 +588,7 @@ describe("adding choices", () => {
   });
 
   it("allows a name another list has", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const first = await createList(cookie);
     const second = await createList(cookie);
     await addChoices(cookie, first.id, ["Northmere"]);
@@ -603,7 +604,7 @@ describe("adding choices", () => {
       { choices: [{ label: "Fictional", description: "x".repeat(501) }] },
     ],
   ])("refuses %s", async (_case, payload) => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const created = await createList(cookie);
     const response = await request(
       cookie,
@@ -615,7 +616,7 @@ describe("adding choices", () => {
   });
 
   it("accepts a name of 60 characters, and treats SQL as plain text", async () => {
-    const { cookie } = await signedIn(editorRoles);
+    const { cookie } = await signedIn(editorRole);
     const created = await createList(cookie);
     const labels = ["x".repeat(60), "'); DROP TABLE list_items; --"];
     await addChoices(cookie, created.id, labels);
@@ -625,7 +626,7 @@ describe("adding choices", () => {
 
 describe("changing choices", () => {
   async function listWith(labels: string[]) {
-    const editor = await signedIn(editorRoles);
+    const editor = await signedIn(editorRole);
     const created = await createList(editor.cookie);
     const choices = await addChoices(editor.cookie, created.id, labels);
     const url = (choice: Choice | undefined) =>
@@ -681,7 +682,7 @@ describe("changing choices", () => {
   ] as [Method, string, object | undefined][])(
     "refuses %s%s for a choice that is not in the list",
     async (method, path, payload) => {
-      const { cookie } = await signedIn(editorRoles);
+      const { cookie } = await signedIn(editorRole);
       const created = await createList(cookie);
       const other = await createList(cookie);
       const [elsewhere] = await addChoices(cookie, other.id, ["Fictional"]);
@@ -721,7 +722,7 @@ describe("changing choices", () => {
 
 describe("ordering choices", () => {
   async function threeChoices() {
-    const editor = await signedIn(editorRoles);
+    const editor = await signedIn(editorRole);
     const created = await createList(editor.cookie);
     const [first, second, third] = await addChoices(editor.cookie, created.id, [
       "A",
@@ -782,7 +783,7 @@ describe("ordering choices", () => {
 
 describe("retiring and restoring choices", () => {
   async function retiredSetUp() {
-    const editor = await signedIn(editorRoles);
+    const editor = await signedIn(editorRole);
     const created = await createList(editor.cookie);
     const [first] = await addChoices(editor.cookie, created.id, ["A", "B"]);
     const set = (payload: object) =>

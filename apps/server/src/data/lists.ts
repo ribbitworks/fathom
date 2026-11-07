@@ -1033,7 +1033,7 @@ function refuseUnseenVisibility(actor: Actor, tier: Tier, message: string) {
   if (!seesTier(actor, tier)) throw new ForbiddenError(message);
 }
 
-const unseenVisibility = "Give the list a visibility your roles let you see";
+const unseenVisibility = "Give the list a visibility your role lets you see";
 
 export async function createList(
   database: Database,
@@ -1100,7 +1100,7 @@ export async function updateList(
     refuseUnseenVisibility(
       actor,
       listTier(state, id),
-      `${String(list.name)} holds people's details your roles do not let you see, so someone who may must change it`,
+      `${String(list.name)} holds people's details your role does not let you see, so someone who may must change it`,
     );
     refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
     if (listNameTaken(state, request.name, id)) {

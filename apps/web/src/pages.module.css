@@ -1112,3 +1112,36 @@ th.liveColumn {
   font-size: var(--mantine-font-size-xs);
   font-weight: 600;
 }
+
+/* A password Fathom made, shown as text that cannot be changed, though it can be selected. */
+.generatedPassword {
+  font-family: var(--mantine-font-family-monospace);
+  color: var(--mantine-color-dimmed);
+}
+
+/* What a new password must meet, one requirement to a line, each with a mark: dimmed until met,
+   or red once a requirement still not met should be fixed. */
+.passwordChecklist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.passwordRequirement {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--mantine-color-dimmed);
+}
+
+.passwordRequirement svg {
+  flex-shrink: 0;
+}
+
+.passwordRequirement[data-state="met"] {
+  color: var(--mantine-color-green-text);
+}
+
+.passwordRequirement[data-state="unmet"] {
+  color: var(--mantine-color-error);
+}

@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Help's pages, reference rather than instruction, as Visual Design allows. Roles: what each role
-// lets a user do, with the roles the signed-in user holds marked, and what each sensitivity of
-// people's details covers; each role's description is the one shown wherever roles are chosen.
+// Fathom starts with lets a user do, with the signed-in user's own role marked, first if it is one
+// made later, and what each sensitivity of people's details covers; each starting role's description
+// is the one Fathom gives it, as shown wherever roles are chosen until it is changed.
 // Drafts: the marks the People table and the Lists page show beside records with drafts, what
 // happens to a draft, and what the Draft menu shows.
 
-import { type Role, roleSchema } from "@fathom/shared";
+import {
+  roleSchema,
+  type SessionResponse,
+  startingRoles,
+} from "@fathom/shared";
 import {
   Group,
   Paper,
@@ -16,7 +21,6 @@ import {
   VisuallyHidden,
 } from "@mantine/core";
 import type { ReactNode } from "react";
-import { roleDescription, roleName } from "./accounts.ts";
 import { Icon } from "./icons.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -133,29 +137,50 @@ function Rows({ rows }: { rows: [string, ReactNode, string][] }) {
   );
 }
 
-export function RolesHelpPage({ roles }: { roles: readonly Role[] }) {
+// A role's name, with a check before it, read aloud as "Your role", when it is the user's own.
+function RoleName({ name, own }: { name: string; own: boolean }) {
+  return (
+    <Group gap="xs" wrap="nowrap" align="flex-start">
+      <span className={classes.roleMark}>{own && <Icon name="check" />}</span>
+      <span>
+        {own && (
+          <>
+            <VisuallyHidden>Your role:</VisuallyHidden>{" "}
+          </>
+        )}
+        {name}
+      </span>
+    </Group>
+  );
+}
+
+export function RolesHelpPage({ role }: { role: SessionResponse["role"] }) {
+  const madeLater =
+    role === null || roleSchema.safeParse(role.key).success ? [] : [role];
   return (
     <Stack gap="xl" maw={960}>
       <Stack gap={0}>
         <PageHeader title="Roles" />
         <Rows
-          rows={roleSchema.options.map((role) => [
-            role,
-            <Group gap="xs" wrap="nowrap" align="flex-start">
-              <span className={classes.roleMark}>
-                {roles.includes(role) && <Icon name="check" />}
-              </span>
-              <span>
-                {roles.includes(role) && (
-                  <>
-                    <VisuallyHidden>Your role:</VisuallyHidden>{" "}
-                  </>
-                )}
-                {roleName(role)}
-              </span>
-            </Group>,
-            roleDescription(role),
-          ])}
+          rows={[
+            ...madeLater.map(
+              ({ id, name, description }): [string, ReactNode, string] => [
+                id,
+                <RoleName name={name} own />,
+                description,
+              ],
+            ),
+            ...roleSchema.options.map((key): [string, ReactNode, string] => {
+              // The key is always one of the starting roles.
+              // eslint-disable-next-line security/detect-object-injection
+              const { name, description } = startingRoles[key];
+              return [
+                key,
+                <RoleName name={name} own={role?.key === key} />,
+                description,
+              ];
+            }),
+          ]}
         />
       </Stack>
       <Stack gap="xs">

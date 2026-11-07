@@ -1,7 +1,7 @@
 # Fathom — Use Cases
 
 **Status:** Draft
-**Last updated:** 2026-11-03
+**Last updated:** 2026-11-06
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md) and the [Decisions Log](decisions.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
@@ -120,9 +120,9 @@ flowchart TD
 
 ### See the Organization
 
-- **Actors:** Users, according to their roles
+- **Actors:** Users, according to their role
 - **Goal:** Understand who works for the organization, who is planned to be hired, who reports to whom, and what everyone is working on.
-- **Outcome:** The user sees current staff and planned hires in the people view and the org chart, limited to what their roles allow.
+- **Outcome:** The user sees current staff and planned hires in the people view and the org chart, limited to what their role allows.
 
 ### Review the Roadmap
 
@@ -132,13 +132,13 @@ flowchart TD
 
 ### Export the Plan
 
-- **Actors:** Users, according to their roles
+- **Actors:** Users, according to their role
 - **Goal:** Share the plan or roadmap outside Fathom.
 - **Outcome:** The export contains only what the user's roles allow, in one of the formats in the Decisions Log.
 
 ### View an Earlier Snapshot
 
-- **Actors:** Users, according to their roles (to be confirmed)
+- **Actors:** Users, according to their role (to be confirmed)
 - **Goal:** See what the plan looked like at an earlier point in time, from a snapshot taken manually or on a schedule.
 - **Outcome:** The user can view the plan as it was when the snapshot was taken.
 
@@ -147,8 +147,8 @@ flowchart TD
 ### Manage Users and Roles
 
 - **Actor:** Fathom Administrator, a persona in the [Product Brief](brief.md#users), with the Administrator role in [Roles](roles.md)
-- **Goal:** Create local accounts and assign each user one or more roles.
-- **Outcome:** Each user sees and changes only what their roles allow.
+- **Goal:** Create local accounts and give each user one role.
+- **Outcome:** Each user sees and changes only what their role allows.
 
 ### Back Up and Restore
 

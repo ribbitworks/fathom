@@ -11,6 +11,7 @@ import type {
   Release,
   ReleaseStream,
 } from "@fathom/shared";
+import { defaultPasswordSettings } from "@fathom/shared";
 import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
@@ -40,9 +41,18 @@ export const fictionalUser = {
     name: "Fictional Person",
     email: "person@example.test",
   },
-  roles: ["viewer"],
+  role: {
+    id: "00000000-0000-4000-8000-0000000000a1",
+    key: "team-member",
+    name: "Team Member",
+    description: "Sees the plan, including everyone's work assignments.",
+  },
   permissions: ["plan:view"],
-  settings: { timeZone: "America/Vancouver" },
+  mustChangePassword: false,
+  settings: {
+    timeZone: "America/Vancouver",
+    passwords: defaultPasswordSettings,
+  },
 };
 export const signedIn = () => Response.json(fictionalUser);
 export const signedOut = () =>

@@ -7,22 +7,24 @@ import { describe, expect, it } from "vitest";
 import {
   accountChangeSchema,
   accountListSchema,
+  createdAccountSchema,
   newAccountSchema,
   passwordChangeSchema,
   passwordLength,
 } from "./accounts.ts";
 import { greetingResponseSchema } from "./greeting.ts";
 import { historyListSchema } from "./history.ts";
+import { defaultPasswordSettings } from "./passwords.ts";
 import { sessionResponseSchema, signInRequestSchema } from "./session.ts";
 
 const password = "p".repeat(passwordLength.minimum);
+const roleId = "00000000-0000-4000-8000-0000000000a1";
 
 describe("account requests", () => {
   const account = {
     name: " Fictional User ",
     email: "user@example.test",
-    password,
-    roles: ["viewer"],
+    roleId,
   };
 
   it("creates an account with a trimmed name", () => {
@@ -39,12 +41,8 @@ describe("account requests", () => {
   it.each([
     ["an empty name", { name: " " }],
     ["an address that is not an email", { email: "not an email" }],
-    ["a password too short", { password: password.slice(1) }],
-    [
-      "a password too long",
-      { password: "p".repeat(passwordLength.maximum + 1) },
-    ],
-    ["a role Fathom does not have", { roles: ["owner"] }],
+    ["a role that is not an ID", { roleId: "team-member" }],
+    ["no role", { roleId: undefined }],
     ["a name longer than 100 characters", { name: "n".repeat(101) }],
     ["a name holding a control character", { name: "A\u0007B" }],
     ["a name holding a zero-width space", { name: "A\u200BB" }],
@@ -56,10 +54,14 @@ describe("account requests", () => {
     );
   });
 
-  it("changes any of an account's name, email, and roles, but not its password", () => {
-    expect(accountChangeSchema.parse({ roles: ["approver"] })).toEqual({
-      roles: ["approver"],
-    });
+  it("creates an account without a password, which Fathom generates", () => {
+    expect(newAccountSchema.parse({ ...account, password })).not.toHaveProperty(
+      "password",
+    );
+  });
+
+  it("changes any of an account's name, email, and role, but not its password", () => {
+    expect(accountChangeSchema.parse({ roleId })).toEqual({ roleId });
     expect(accountChangeSchema.parse({ password })).toEqual({});
   });
 
@@ -76,6 +78,29 @@ describe("account requests", () => {
         newPassword: password,
       }).success,
     ).toBe(false);
+  });
+
+  it.each([
+    ["too short", password.slice(1)],
+    ["too long", "p".repeat(passwordLength.maximum + 1)],
+  ])("refuses a new password %s", (_, newPassword) => {
+    expect(
+      passwordChangeSchema.safeParse({ currentPassword: "x", newPassword })
+        .success,
+    ).toBe(false);
+  });
+
+  it("refuses a new password that is the current one, naming the new password", () => {
+    const result = passwordChangeSchema.safeParse({
+      currentPassword: password,
+      newPassword: password,
+    });
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["newPassword"],
+        message: "The new password must differ from the current password",
+      }),
+    ]);
   });
 
   it("signs in with an email address and a password", () => {
@@ -99,9 +124,34 @@ describe("responses", () => {
     expect(
       sessionResponseSchema.safeParse({
         user: { id: "1", name: "Fictional User", email: "user@example.test" },
-        roles: ["administrator"],
+        role: {
+          id: roleId,
+          key: "administrator",
+          name: "Administrator",
+          description: "Fictional description.",
+        },
         permissions: ["accounts:manage"],
-        settings: { timeZone: "America/Vancouver" },
+        mustChangePassword: true,
+        settings: {
+          timeZone: "America/Vancouver",
+          passwords: defaultPasswordSettings,
+        },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("reads a new account with the password Fathom generated for it", () => {
+    expect(
+      createdAccountSchema.safeParse({
+        account: {
+          id: "1",
+          name: "Fictional User",
+          email: "user@example.test",
+          role: { id: roleId, name: "Fictional Role" },
+          active: true,
+          createdAt: "2026-11-03T12:00:00+00:00",
+        },
+        password: "fictionalGeneratedPw",
       }).success,
     ).toBe(true);
   });
@@ -114,7 +164,7 @@ describe("responses", () => {
             id: "1",
             name: "Fictional User",
             email: "user@example.test",
-            roles: [],
+            role: { id: roleId, name: "Fictional Role" },
             active: true,
             createdAt: "2026-11-03T12:00:00+00:00",
           },
@@ -133,7 +183,7 @@ describe("responses", () => {
             actor: null,
             action: "roles-changed",
             subject: { id: "1", name: null },
-            details: { roles: ["viewer"], previousRoles: [] },
+            details: { role: "Team Member", previousRole: "Planner" },
           },
         ],
       }).success,

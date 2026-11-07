@@ -17,7 +17,6 @@ import {
 const historyViewer = () =>
   Response.json({
     ...fictionalUser,
-    roles: ["administrator"],
     permissions: ["accounts:manage", "history:view"],
   });
 
@@ -30,7 +29,7 @@ const entries = [
     actor: admin,
     action: "roles-changed",
     subject,
-    details: { previousRoles: ["viewer"], roles: [] },
+    details: { previousRole: "Team Member", role: "Planner" },
   },
   {
     id: 3,
@@ -54,7 +53,7 @@ const entries = [
     actor: null,
     action: "account-created",
     subject,
-    details: { roles: ["viewer", "project-planner"] },
+    details: { role: "Team Member" },
   },
 ];
 
@@ -216,10 +215,10 @@ describe("the entries", () => {
       ),
     );
     expect(lines).toEqual([
-      "Worth checking: Fictional Person changed the roles of Fictional Planner: from Viewer to no roles",
+      "Worth checking: Fictional Person changed the role of Fictional Planner: from Team Member to Planner",
       "Worth checking: Fictional Person reset the password for A removed account",
       "A removed account future-action: Fictional Planner",
-      "Worth checking: Fathom's operators created the account for Fictional Planner: with Viewer, Project Planner",
+      "Worth checking: Fathom's operators created the account for Fictional Planner: with Team Member",
     ]);
   });
 
@@ -373,7 +372,7 @@ describe("the entries", () => {
       "GET /api/session": historyViewer,
       "GET /api/access-history": () => Response.json({ entries }),
     });
-    const history = renderApp("/history?search=planner%20viewer");
+    const history = renderApp("/history?search=planner%20team");
     expect(
       (await screen.findAllByRole("listitem")).map((item) =>
         item.textContent.slice(
@@ -381,8 +380,8 @@ describe("the entries", () => {
         ),
       ),
     ).toEqual([
-      "Worth checking: Fictional Person changed the roles of Fictional Planner: from Viewer to no roles",
-      "Worth checking: Fathom's operators created the account for Fictional Planner: with Viewer, Project Planner",
+      "Worth checking: Fictional Person changed the role of Fictional Planner: from Team Member to Planner",
+      "Worth checking: Fathom's operators created the account for Fictional Planner: with Team Member",
     ]);
     const field = screen.getByRole("textbox", {
       name: "Search access history",

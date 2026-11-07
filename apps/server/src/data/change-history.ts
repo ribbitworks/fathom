@@ -361,7 +361,7 @@ function shown(
   return null;
 }
 
-// Leaves out the changes the actor may not see: those to kinds of record their roles do not cover,
+// Leaves out the changes the actor may not see: those to kinds of record their role does not cover,
 // and those in tiers they do not see, as sensitive as they were when made or are now, whichever is
 // more: a person's choices in a column whose list has since become more sensitive, or a saved view
 // on such a column.

@@ -45,6 +45,9 @@ export const users = fathomSchema.table("users", {
   image: text("image"),
   // Set when an administrator deactivates the account, which then cannot sign in.
   deactivatedAt: timestamp("deactivated_at", { withTimezone: true }),
+  // Set while the account's password is one Fathom generated, which its user must change before
+  // doing anything else.
+  mustChangePassword: boolean("must_change_password").notNull().default(false),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
 });
@@ -147,23 +150,21 @@ export const rolePermissions = fathomSchema.table(
   (table) => [primaryKey({ columns: [table.roleId, table.permission] })],
 );
 
-// The roles each user holds. A role held by any account cannot be deleted, so nobody's access
-// vanishes unseen.
+// The role each user holds: exactly one, as the Decisions Log sets out, which the server checks; the
+// user's ID is the key, so the database refuses a second. A role held by any account cannot be
+// deleted, so nobody's access vanishes unseen.
 export const userRoles = fathomSchema.table(
   "user_roles",
   {
     userId: text("user_id")
-      .notNull()
+      .primaryKey()
       .references(() => users.id, { onDelete: "cascade" }),
     roleId: uuid("role_id")
       .notNull()
       .references(() => roles.id, { onDelete: "restrict" }),
     createdAt: createdAt(),
   },
-  (table) => [
-    primaryKey({ columns: [table.userId, table.roleId] }),
-    index("user_roles_role_id_index").on(table.roleId),
-  ],
+  (table) => [index("user_roles_role_id_index").on(table.roleId)],
 );
 
 // Who did what, and when, to accounts and to protected data, without the values. It can only be

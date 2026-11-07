@@ -69,9 +69,10 @@ describe("seeding release streams", () => {
 
   it("gives releases that start and end with cycles of their streams", async () => {
     await seedReleases(connection);
-    const viewer = actorFor({ id: randomUUID(), name: "", email: "" }, [
-      "viewer",
-    ]);
+    const viewer = actorFor(
+      { id: randomUUID(), name: "", email: "" },
+      "team-member",
+    );
     const { streams } =
       await createDataAccess(connection).releases.read(viewer);
     for (const stream of streams) {

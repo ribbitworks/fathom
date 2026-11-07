@@ -15,8 +15,7 @@ import {
   type AccessAction,
   type HistoryDetails,
   type HistoryEntry,
-  type Role,
-  roleSchema,
+  passwordSettingsSchema,
 } from "@fathom/shared";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
@@ -84,39 +83,25 @@ export async function recordRestrictedView(
   await recordEvent(database, { actorId, action, subjectId: null });
 }
 
-// Details as stored, read leniently: entries can never be changed, so a role renamed since one was
-// recorded is left out rather than making the whole history unreadable.
+// Details as stored, read leniently: entries can never be changed, so details another version of
+// Fathom stored in another shape are left out rather than making the whole history unreadable. Roles
+// are named as they were then, so a role renamed since still reads.
 const storedDetailsSchema = z
   .object({
-    roles: z.array(z.string()).optional(),
-    previousRoles: z.array(z.string()).optional(),
     role: z.string().optional(),
+    previousRole: z.string().optional(),
     previousName: z.string().optional(),
     granted: z.array(z.string()).optional(),
     withdrawn: z.array(z.string()).optional(),
     timeZone: z.string().optional(),
     previousTimeZone: z.string().optional(),
+    passwords: passwordSettingsSchema.optional(),
+    previousPasswords: passwordSettingsSchema.optional(),
   })
   .catch({});
 
-function knownRoles(roles: string[] | undefined): Role[] | undefined {
-  return roles?.flatMap((role) => {
-    const known = roleSchema.safeParse(role);
-    return known.success ? [known.data] : [];
-  });
-}
-
-function knownDetails(details: unknown): HistoryDetails {
-  const { roles, previousRoles, ...role } = storedDetailsSchema.parse(details);
-  return {
-    // A role's name and permissions are shown as stored, so one renamed since still reads.
-    ...role,
-    ...(roles === undefined ? {} : { roles: knownRoles(roles) }),
-    ...(previousRoles === undefined
-      ? {}
-      : { previousRoles: knownRoles(previousRoles) }),
-  };
-}
+const knownDetails = (details: unknown): HistoryDetails =>
+  storedDetailsSchema.parse(details);
 
 // People whose Restricted details changed are named only to readers who may see people; others see
 // that a change happened, and who made it, but not whose details changed.

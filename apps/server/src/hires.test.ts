@@ -57,9 +57,9 @@ const retiredPosition = "00000000-0000-4000-8000-00000000f003";
 
 beforeAll(async () => {
   test = await startTestApp();
-  editor = await test.signedIn(["workforce-administrator"]);
-  approver = await test.signedIn(["approver", "leadership"]);
-  planner = await test.signedIn(["resource-planner"]);
+  editor = await test.signedIn("workforce-administrator");
+  approver = await test.signedIn("engineering-director");
+  planner = await test.signedIn("resource-planner");
   const states = await test.connection
     .select({ id: listItems.id, label: listItems.label, listId: lists.id })
     .from(listItems)
@@ -301,7 +301,7 @@ describe("the hiring plan", () => {
     expect(forPlanner).toContain(waiting);
     expect(forPlanner).not.toContain(done);
     expect((await hireSeen(waiting, planner))?.expected).toBe("2099-01");
-    const restricted = await test.signedIn(["people-manager"]);
+    const restricted = await test.signedIn("engineering-manager");
     expect(await hireSeen(waiting, restricted)).toBeUndefined();
     expect(await hireSeen(waiting)).toBeUndefined();
   });
@@ -368,7 +368,7 @@ describe("the hiring plan", () => {
   });
 
   it("is refused to those who see neither", async () => {
-    const viewer = await test.signedIn(["viewer"]);
+    const viewer = await test.signedIn("team-member");
     expect((await send(viewer, "GET", "/api/planned-hires")).statusCode).toBe(
       403,
     );
@@ -376,8 +376,8 @@ describe("the hiring plan", () => {
 
   it("records reading the whole plan once a day, apart from viewing people's details, but not reading placeholders", async () => {
     await liveHire();
-    const reader = await test.signedIn(["leadership"]);
-    const placeholders = await test.signedIn(["resource-planner"]);
+    const reader = await test.signedIn("executive");
+    const placeholders = await test.signedIn("resource-planner");
     await ok(await send(reader, "GET", "/api/people"));
     await hiresSeen(reader);
     await hiresSeen(reader);
@@ -644,7 +644,7 @@ describe("changing a hire", () => {
 
   it("is refused while someone else holds the hire with unpublished changes", async () => {
     const id = await liveHire();
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     await ok(
       await send(
         other,
@@ -760,7 +760,7 @@ describe("a hire's draft", () => {
   it("is decided only by Approvers who see people and Confidential data, and only when there", async () => {
     const id = await liveHire();
     await changed(id, { stateId: open });
-    const unseeing = await test.signedIn(["approver", "resource-planner"]);
+    const unseeing = await test.signedIn(["drafts:approve", "people:view"]);
     expect(
       (
         await send(unseeing, "POST", "/api/drafts/approval", {
@@ -933,8 +933,8 @@ describe("changes to the hiring plan in the change history", () => {
 });
 
 describe("each role's view of the hiring plan", () => {
-  it("shows a People Manager, who sees Restricted but not Confidential data, only placeholders and none of the plan's history", async () => {
-    const manager = await test.signedIn(["people-manager"]);
+  it("shows an Engineering Manager, who sees Restricted but not Confidential data, only placeholders and none of the plan's history", async () => {
+    const manager = await test.signedIn("engineering-manager");
     const requisition = unique("Fictional-Managed");
     const id = await liveHire({ requisition });
     await changed(id, { stateId: open });
@@ -952,7 +952,7 @@ describe("each role's view of the hiring plan", () => {
   });
 
   it("shows Leadership the whole plan, without letting it change the plan", async () => {
-    const leader = await test.signedIn(["leadership"]);
+    const leader = await test.signedIn("executive");
     const id = await liveHire({ stateId: open });
     expect((await hireSeen(id, leader))?.stateId).toBe(open);
     expect(
@@ -964,18 +964,20 @@ describe("each role's view of the hiring plan", () => {
     );
   });
 
-  it.each([["administrator"], ["project-planner"], ["approver"]] as const)(
-    "refuses the plan to the %s role alone",
-    async (role) => {
-      const user = await test.signedIn([role]);
-      expect((await send(user, "GET", "/api/planned-hires")).statusCode).toBe(
-        403,
-      );
-    },
-  );
+  it.each([
+    ["administrator"],
+    ["team-member"],
+    ["planner"],
+    ["project-manager"],
+  ] as const)("refuses the plan to the %s role alone", async (role) => {
+    const user = await test.signedIn(role);
+    expect((await send(user, "GET", "/api/planned-hires")).statusCode).toBe(
+      403,
+    );
+  });
 
   it("shows Administrators that the hiring plan changed, without naming the hire", async () => {
-    const administrator = await test.signedIn(["administrator"]);
+    const administrator = await test.signedIn("administrator");
     const requisition = unique("Fictional-Unnamed");
     await draftHire({ requisition });
     const { entries } = await ok<{
@@ -990,7 +992,11 @@ describe("each role's view of the hiring plan", () => {
   });
 
   it("answers an Approver who does not see Confidential data as if a hire had no draft", async () => {
-    const approving = await test.signedIn(["approver", "people-manager"]);
+    const approving = await test.signedIn([
+      "drafts:approve",
+      "people:view",
+      "restricted:view",
+    ]);
     const id = await liveHire();
     await changed(id, { stateId: open });
     expect(
@@ -1012,7 +1018,7 @@ describe("each role's view of the hiring plan", () => {
         reason: "Fictional reason",
       }),
     );
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     await ok(
       await send(
         other,
@@ -1043,7 +1049,7 @@ describe("a hire's manager", () => {
         managerId: null,
         managerName: null,
       });
-      const restricted = await test.signedIn(["people-manager"]);
+      const restricted = await test.signedIn("engineering-manager");
       expect((await hireSeen(id, restricted))?.managerId).toBe(manager);
       expect((await hireSeen(id))?.managerId).toBe(manager);
     },
@@ -1134,7 +1140,7 @@ describe("a hire's manager", () => {
 
   it("is refused while someone's unpublished change removes them", async () => {
     const leaving = await person();
-    const other = await test.signedIn(["workforce-administrator"]);
+    const other = await test.signedIn("workforce-administrator");
     await ok(
       await send(other, "DELETE", `/api/people/${leaving}`, undefined, {
         publish: false,
@@ -1178,7 +1184,7 @@ describe("the built-in lists", () => {
   };
 
   it("cannot be removed, retired, or given another visibility", async () => {
-    const who = await test.signedIn(["workforce-administrator", "leadership"]);
+    const who = await test.signedIn("workforce-administrator");
     const positions = await builtIn("positions");
     const states = await builtIn("hiring-states");
     const removed = await send(who, "DELETE", `/api/lists/${positions.id}`);
@@ -1325,7 +1331,7 @@ describe("who may change the hiring plan", () => {
     async (role) => {
       const live = await liveHire();
       const { id } = await draftHire();
-      const who = await test.signedIn([role]);
+      const who = await test.signedIn(role);
       const may =
         rolesGranting("people:edit").includes(role) &&
         rolesGranting("confidential:edit").includes(role);
@@ -1354,7 +1360,7 @@ describe("who may change the hiring plan", () => {
 
 describe("undoing changes to the hiring plan", () => {
   it("needs the rights to change hires when undoing, not only when the change was made", async () => {
-    const maker = await test.signedIn(["workforce-administrator"]);
+    const maker = await test.signedIn("workforce-administrator");
     const { changeSetId } = await draftHire({}, maker);
     await test.holdOnly(maker.id, ["people:edit", "confidential:view"]);
     const response = await send(maker, "POST", `/api/undo/${changeSetId}`);

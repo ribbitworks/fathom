@@ -1430,7 +1430,7 @@ describe("the timeline", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          settings: { timeZone: "Asia/Tokyo" },
+          settings: { ...fictionalUser.settings, timeZone: "Asia/Tokyo" },
         }),
       "GET /api/release-streams": answer([fictionalStream()]),
     });

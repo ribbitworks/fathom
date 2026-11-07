@@ -4,17 +4,21 @@
 // of every route, with whether it is open, open to any signed-in account, or needs some
 // permissions, checked against the routes the server registers, so a new route fails until it is
 // listed; and, for each route, that a signed-out request is refused, that an account holding every
-// permission but those needed is refused, and that one holding only those needed is not. A route
+// permission but those needed is refused, that one holding every permission is refused while it
+// must change a password Fathom generated, and that one holding only those needed is not. A route
 // on a record is sent a random ID, so its allowed request is not found: it proves the checks made
 // before the record is read, and checks that depend on the record, such as its tier, are left to
 // each feature's own tests.
 
 import {
+  defaultPasswordSettings,
   defaultTimeZone,
   impliedPermissions,
   type Permission,
   permissionSchema,
 } from "@fathom/shared";
+import { users } from "@fathom/db";
+import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -24,6 +28,7 @@ import {
   type TestApp,
   testPosition,
 } from "./test-app.ts";
+import { findStartingRole } from "./data/roles.ts";
 
 // Every method and URL pattern the server registers, recorded by each Fastify instance the server
 // creates, since Fastify offers no list of its routes but a printed tree.
@@ -79,6 +84,8 @@ const anyOf = (...any: Permission[]): Needs => ({
 });
 
 let count = 0;
+// The role a new account is given, which must exist, read once the server has started.
+let teamMember = "";
 
 // A name no other request uses, so requests that create something never collide.
 function unique(prefix: string): string {
@@ -185,8 +192,7 @@ const routes: Route[] = [
     body: () => ({
       ...named(),
       email: `${unique("fictional").replace(" ", ".")}@example.test`,
-      password: "fictional password 2",
-      roles: [],
+      roleId: teamMember,
     }),
   },
   {
@@ -196,10 +202,10 @@ const routes: Route[] = [
     body: named,
   },
   {
-    method: "PUT",
+    method: "POST",
     pattern: "/api/accounts/:id/password",
     needs: allOf("accounts:manage"),
-    body: () => ({ password: "fictional password 2" }),
+    body: () => ({}),
   },
   {
     method: "PUT",
@@ -215,7 +221,12 @@ const routes: Route[] = [
     body: named,
   },
 
-  { method: "GET", pattern: "/api/roles", needs: allOf("roles:edit") },
+  // Those who manage accounts choose each account's role from every role.
+  {
+    method: "GET",
+    pattern: "/api/roles",
+    needs: anyOf("roles:edit", "accounts:manage"),
+  },
   {
     method: "POST",
     pattern: "/api/roles",
@@ -240,6 +251,12 @@ const routes: Route[] = [
     pattern: "/api/settings/time-zone",
     needs: allOf("settings:edit"),
     body: () => ({ timeZone: defaultTimeZone }),
+  },
+  {
+    method: "PUT",
+    pattern: "/api/settings/passwords",
+    needs: allOf("settings:edit"),
+    body: () => defaultPasswordSettings,
   },
   { method: "GET", pattern: "/api/greeting", needs: allOf("plan:view") },
 
@@ -631,6 +648,7 @@ let test: TestApp;
 
 beforeAll(async () => {
   test = await startTestApp();
+  teamMember = await findStartingRole(test.connection, "team-member");
 });
 
 afterAll(async () => {
@@ -639,15 +657,14 @@ afterAll(async () => {
 
 // The session cookies of accounts holding exactly some permissions, each made once and shared by
 // the tests needing the same permissions. Sharing is safe, since no request sent changes an
-// account's roles or session: those routes are sent random IDs, and are refused or not found.
+// account's role or session: those routes are sent random IDs, and are refused or not found.
 const holders = new Map<string, string>();
 
 async function holding(permissions: readonly Permission[]): Promise<string> {
   const key = [...permissions].sort().join(" ");
   const known = holders.get(key);
   if (known !== undefined) return known;
-  const who = await test.signedIn([]);
-  if (permissions.length > 0) await test.holdOnly(who.id, permissions);
+  const who = await test.signedIn(permissions);
   holders.set(key, who.cookie);
   return who.cookie;
 }
@@ -683,6 +700,30 @@ describe("refusing requests", () => {
   it.each(refusals)("$name", async ({ route, holds }) => {
     const response = await send(await holding(holds), route);
     expect(response.statusCode, response.body).toBe(403);
+  });
+
+  describe("while a generated password is still to be changed", () => {
+    let cookie: string;
+
+    beforeAll(async () => {
+      const who = await test.signedIn(permissionSchema.options);
+      await test.connection
+        .update(users)
+        .set({ mustChangePassword: true })
+        .where(eq(users.id, who.id));
+      cookie = who.cookie;
+    });
+
+    it.each(signedOut.map((route) => ({ name: nameOf(route), route })))(
+      "refuses $name",
+      async ({ route }) => {
+        const response = await send(cookie, route);
+        expect(response.statusCode, response.body).toBe(403);
+        expect(response.json()).toEqual({
+          error: "The password must be changed before continuing.",
+        });
+      },
+    );
   });
 });
 

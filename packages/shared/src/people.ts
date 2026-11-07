@@ -4,7 +4,7 @@
 // Employee ID, and a position, which are General, and may have start and end dates, which are
 // Restricted. A choice column draws on a list, and its values are choices from that list, as
 // sensitive as the list's visibility; a web link column holds one link for each person, as sensitive
-// as the column's own visibility. What a user receives leaves out what their roles do not let them
+// as the column's own visibility. What a user receives leaves out what their role does not let them
 // see.
 
 import { z } from "zod";
