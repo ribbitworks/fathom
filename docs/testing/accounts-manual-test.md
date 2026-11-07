@@ -83,7 +83,7 @@ Use only where a test case asks for it. Like R2, it deletes every account and re
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
-- **Search box:** the box above the table with a magnifying glass at its left and the hint **Search**.
+- **Search box:** the box above the table with a magnifying glass at its left and the hint **Search**, and, once something is typed in it, a **×** at its right end.
 - **Filter:** the three buttons beside the search box: **All**, **Active** and **Deactivated**, each followed by a count.
 - **Role list:** the **Role** choices in the **New account** and **Edit** dialogs, one round button for each role, with its description under its name.
 
@@ -124,18 +124,26 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 5.** Type `director` in the search box.
-  - **Expected:** Only the **Engineering Director** row shows.
+  - **Expected:** Only the **Engineering Director** row shows, and a **×** appears at the right end of the search box.
   - **Notes:**
 
-- [ ] **Step 6.** Clear the search box.
-  - **Expected:** Every account's row shows again.
+- [ ] **Step 6.** Choose **Dark** in the Appearance menu.
+  - **Expected:** The page has a dark ground and every word is easy to read. The **×** in the search box is easy to see. The **You** badge is lighter than it was in light mode, and **Active** is green.
   - **Notes:**
 
-- [ ] **Step 7.** Choose **Dark** in the Appearance menu.
-  - **Expected:** The page has a dark ground and every word is easy to read. The **You** badge is lighter than it was in light mode, and **Active** is green.
+- [ ] **Step 7.** Select the **×** in the search box.
+  - **Expected:** The search box is empty, every account shows again, and the **×** is gone.
   - **Notes:**
 
-- [ ] **Step 8.** Choose **Light** in the Appearance menu.
+- [ ] **Step 8.** Type `planner`.
+  - **Expected:** The letters go straight into the search box, and only the **Resource Planner** row shows.
+  - **Notes:**
+
+- [ ] **Step 9.** Press Esc.
+  - **Expected:** The search box empties, and every account shows again.
+  - **Notes:**
+
+- [ ] **Step 10.** Choose **Light** in the Appearance menu.
   - **Expected:** The page returns to its light colours.
   - **Notes:**
 

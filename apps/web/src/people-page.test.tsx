@@ -1894,6 +1894,32 @@ describe("searching, sorting, and filtering", () => {
     expect(document.activeElement).toBe(cell("p1", "employeeId"));
   });
 
+  it("clears the search with its clear button, which Back undoes, leaving the field focused", async () => {
+    const { history } = await openAt("/people");
+    const search = screen.getByRole("textbox", { name: "Search people" });
+    expect(screen.queryByRole("button", { name: "Clear search" })).toBeNull();
+    await userEvent.type(search, "team lead");
+    expect(shownNames()).toEqual(["Avery Fictional"]);
+    await userEvent.click(screen.getByRole("button", { name: "Clear search" }));
+    expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
+    expect(history.location.search).toBe("");
+    expect(document.activeElement).toBe(search);
+    expect(screen.queryByRole("button", { name: "Clear search" })).toBeNull();
+    history.back();
+    await waitFor(() => {
+      expect(history.location.search).toBe("?search=team+lead");
+    });
+    expect((search as HTMLInputElement).value).toBe("team lead");
+    await userEvent.click(search);
+    await userEvent.tab();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Clear search" }),
+    );
+    await userEvent.keyboard("{Enter}");
+    expect((search as HTMLInputElement).value).toBe("");
+    expect(document.activeElement).toBe(search);
+  });
+
   it("takes Cmd+F on a Mac, and leaves it alone in a dialog", async () => {
     const agent = vi
       .spyOn(navigator, "userAgent", "get")

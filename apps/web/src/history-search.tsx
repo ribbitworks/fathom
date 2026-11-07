@@ -20,14 +20,7 @@ export function HistorySearch({
 }) {
   return (
     <Group>
-      <TableSearch
-        label={label}
-        value={search}
-        onChange={onSearch}
-        onLeave={() => {
-          (document.activeElement as HTMLElement | null)?.blur();
-        }}
-      />
+      <TableSearch label={label} value={search} onChange={onSearch} />
       {busy && <Loader size="xs" role="status" aria-label="Searching" />}
     </Group>
   );

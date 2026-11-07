@@ -55,7 +55,7 @@ import { DialogActions } from "./dialog-actions.tsx";
 import { initials } from "./names.ts";
 import { notifySuccess } from "./notices.tsx";
 import { rolesQuery } from "./roles.ts";
-import { Icon } from "./icons.tsx";
+import { TableSearch } from "./table-controls.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { type SignedInUser, sessionQuery } from "./session.ts";
@@ -759,15 +759,10 @@ export function AccountsPage({
       {accounts.isSuccess && (
         <>
           <Group gap="sm">
-            <TextInput
-              aria-label="Search by name or email"
-              placeholder="Search"
-              leftSection={<Icon name="search" />}
+            <TableSearch
+              label="Search by name or email"
               value={search}
-              onChange={(event) => {
-                setSearch(event.currentTarget.value);
-              }}
-              w={{ base: "100%", xs: 280 }}
+              onChange={setSearch}
             />
             <SegmentedControl
               aria-label="Show"

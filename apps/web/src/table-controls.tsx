@@ -13,6 +13,7 @@ import {
   Checkbox,
   CloseButton,
   Group,
+  Input,
   Menu,
   Pill,
   Popover,
@@ -224,9 +225,10 @@ function isFind(event: globalThis.KeyboardEvent, mac: boolean): boolean {
 }
 
 // The search field. Cmd+F on a Mac, or Ctrl+F elsewhere, focuses it from anywhere on the page
-// except a dialog; Esc clears it, or, once it is empty, goes back to the table. The first change
-// after it is focused adds to the address's history, and the rest replace it, so Back undoes a
-// whole search.
+// except a dialog; Esc clears it, or, once it is empty, leaves it, for the table where the page
+// says where to go, and its clear button clears it and leaves it focused. The first change after it
+// is focused adds to the address's history, and the rest replace it, so Back undoes a whole search;
+// clearing with the button adds to it too, so Back brings the search back.
 export function TableSearch({
   label,
   value,
@@ -236,7 +238,7 @@ export function TableSearch({
   label: string;
   value: string;
   onChange: (text: string, replace: boolean) => void;
-  onLeave: () => void;
+  onLeave?: () => void;
 }) {
   const input = useRef<HTMLInputElement>(null);
   // What is typed is kept here as well as in the address, so typing never waits on the address.
@@ -275,10 +277,10 @@ export function TableSearch({
     };
   }, []);
 
-  const change = (next: string) => {
+  const change = (next: string, replace = changed) => {
     setText(next);
     setPending((sent) => [...sent, next]);
-    onChange(next, changed);
+    onChange(next, replace);
     setChanged(true);
   };
 
@@ -289,6 +291,18 @@ export function TableSearch({
       aria-label={label}
       placeholder="Search"
       leftSection={<Icon name="search" />}
+      rightSection={
+        text === "" ? undefined : (
+          <Input.ClearButton
+            aria-label="Clear search"
+            onClick={() => {
+              change("", false);
+              input.current?.focus();
+            }}
+          />
+        )
+      }
+      rightSectionPointerEvents="all"
       value={text}
       autoComplete="off"
       onFocus={() => {
@@ -301,7 +315,8 @@ export function TableSearch({
         if (event.key !== "Escape") return;
         event.preventDefault();
         if (text === "") {
-          onLeave();
+          if (onLeave === undefined) input.current?.blur();
+          else onLeave();
         } else {
           change("");
         }

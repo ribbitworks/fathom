@@ -511,6 +511,11 @@ describe("finding accounts", () => {
     await userEvent.type(search, "former");
     expect(screen.getByText("Fictional Former")).toBeDefined();
     expect(screen.queryByText("Fictional Planner")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Clear search" }));
+    expect(screen.getByText("Fictional Planner")).toBeDefined();
+    expect(document.activeElement).toBe(search);
+    await userEvent.keyboard("{Escape}");
+    expect(document.activeElement).not.toBe(search);
   });
 
   it("shows only active or only deactivated accounts, with how many of each", async () => {
