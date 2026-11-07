@@ -48,6 +48,35 @@
   content: "";
 }
 
+/* A card with a draft is tinted as a row with one is on tables. */
+.card[data-draft] {
+  background: var(--mantine-color-sea-0);
+}
+
+:global([data-mantine-color-scheme="dark"]) .card[data-draft] {
+  background: var(--mantine-color-sea-light);
+}
+
+/* The copy of a person drafted to another manager, under the one they report to now: light green,
+   dimmed, and drawn with a dashed edge, as a moved choice's live place is, and faded further, with
+   its band, so it reads as a trace of where the person was rather than a card of its own. */
+.liveCopy {
+  border-style: dashed;
+  background: var(--mantine-color-green-0);
+  box-shadow: none;
+  color: var(--mantine-color-dimmed);
+  opacity: 0.7;
+}
+
+:global([data-mantine-color-scheme="dark"]) .liveCopy {
+  background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
+}
+
+/* A team's live name, under its drafted one, lined up with the name rather than the colour's dot. */
+.liveName {
+  padding-left: 14px;
+}
+
 .card[data-found] {
   border-color: var(--mantine-primary-color-filled);
   box-shadow: 0 0 0 2px var(--mantine-primary-color-filled);
@@ -126,13 +155,11 @@
   border-radius: 50%;
 }
 
+/* A team's name that opens its editor is underlined, as anything that opens something is. */
 .teamName {
   min-width: 0;
-}
-
-.teamName:hover,
-.teamName:focus-visible {
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .teamDot {

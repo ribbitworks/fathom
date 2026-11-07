@@ -7,8 +7,10 @@
 // Employee ID, which leads back to the chart with them found. The person found, and the team shown
 // alone, are kept in the page's address. Each team's cards, and the lines to them, are drawn in its
 // colour, which reaches down to the teams below that have none, even when a team is shown alone.
+// The Draft menu, as on tables, draws drafts of managers and team names beside the live chart,
+// applied to it, or not at all, which leaves the chart read only; its choice is kept in the address.
 
-import type { OrgChartPerson, PaletteColour } from "@fathom/shared";
+import type { PaletteColour, Show } from "@fathom/shared";
 import {
   ActionIcon,
   Alert,
@@ -52,9 +54,13 @@ import { colourVariable } from "./colours.ts";
 import { Icon } from "./icons.tsx";
 import { ChartControls } from "./org-chart-controls.tsx";
 import {
-  cardHeight,
+  hasApprovedName,
   cardWidth,
+  changeOf,
+  chartPeople,
+  type ChartPerson,
   fitOptions,
+  heightOf,
   stackIndent,
   type ChartSearch,
   collapsedBelow,
@@ -72,10 +78,11 @@ import {
 } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
 import { PageHeader } from "./page-header.tsx";
-import { StatusMark } from "./status-mark.tsx";
+import { DraftMark, StatusMark } from "./status-mark.tsx";
+import { DraftMenu } from "./table-controls.tsx";
 
 interface CardData extends Record<string, unknown> {
-  person: OrgChartPerson;
+  person: ChartPerson;
   // The colour of the team the person is on, if it has one.
   colour: PaletteColour | undefined;
   reports: number;
@@ -104,7 +111,111 @@ const plainClick = (event: MouseEvent) =>
   !event.shiftKey &&
   !event.altKey;
 
+// The name of the team a person leads, or its draft: renamed from their card by those who may, with
+// the colour's dot before it, chosen there by those who may once the name is approved. A drafted
+// name is marked, with the live one, if any, under it, dimmed and marked Live.
+function TeamRow({
+  person,
+  teamEdits,
+}: {
+  person: ChartPerson;
+  teamEdits: TeamEdits;
+}) {
+  const { renamed } = person;
+  if (person.teamName === null && renamed === undefined) return null;
+  return (
+    <>
+      <Group gap={6} wrap="nowrap">
+        {teamEdits.colours &&
+        person.teamName !== null &&
+        hasApprovedName(person) ? (
+          <TeamColourMenu
+            managerId={person.id}
+            current={person.teamColour}
+            team={person.teamName}
+          />
+        ) : (
+          person.teamColour !== null && (
+            <Swatch colour={person.teamColour} size={8} />
+          )
+        )}
+        {teamEdits.names ? (
+          <TeamNameEditor
+            managerId={person.id}
+            managerName={person.preferredName}
+            name={person.teamName}
+          />
+        ) : (
+          <Text
+            size="xs"
+            c="dimmed"
+            fs={person.teamName === null ? "italic" : undefined}
+            truncate
+          >
+            {person.teamName ?? "No name"}
+          </Text>
+        )}
+        {renamed !== undefined && <DraftMark draft={changeOf(renamed.draft)} />}
+      </Group>
+      {renamed !== undefined && renamed.live !== null && (
+        <Group gap={6} wrap="nowrap" className={classes.liveName}>
+          <Text size="xs" c="dimmed" truncate>
+            {renamed.live}
+          </Text>
+          <StatusMark tone="live">Live</StatusMark>
+        </Group>
+      )}
+    </>
+  );
+}
+
+// The dimmed copy of a person drafted to another manager, under the manager they report to now:
+// their name and position, marked Live, opening nothing.
+function LiveCopyCard({ data }: { data: CardData }) {
+  const { person, colour } = data;
+  return (
+    <div
+      className={[classes.card, classes.liveCopy].join(" ")}
+      data-coloured={colour === undefined ? undefined : true}
+      style={
+        colour === undefined
+          ? undefined
+          : ({
+              "--team-colour": colourVariable(colour, "filled"),
+            } as CSSProperties)
+      }
+    >
+      <Handle
+        id="row"
+        type="target"
+        position={Position.Top}
+        isConnectable={false}
+        className={classes.handle}
+      />
+      <Handle
+        id="stack"
+        type="target"
+        position={Position.Left}
+        isConnectable={false}
+        className={classes.handle}
+      />
+      <div className={classes.name}>
+        <span className={classes.label}>{person.preferredName}</span>
+        <StatusMark tone="live" spaced>
+          Live
+        </StatusMark>
+      </div>
+      {person.position !== null && (
+        <Text size="sm" c="dimmed" truncate>
+          {person.position}
+        </Text>
+      )}
+    </div>
+  );
+}
+
 function PersonCard({ data }: NodeProps<CardNode>) {
+  if (data.person.liveCopyOf !== undefined) return <LiveCopyCard data={data} />;
   const {
     person,
     colour,
@@ -121,6 +232,9 @@ function PersonCard({ data }: NodeProps<CardNode>) {
     <div
       className={classes.card}
       data-found={found || undefined}
+      data-draft={
+        person.moved !== undefined || person.renamed !== undefined || undefined
+      }
       data-coloured={colour === undefined ? undefined : true}
       style={
         colour === undefined
@@ -163,6 +277,9 @@ function PersonCard({ data }: NodeProps<CardNode>) {
             {person.preferredName}
           </Link>
         )}
+        {person.moved !== undefined && (
+          <DraftMark draft={changeOf(person.moved)} />
+        )}
         {person.left === true && (
           <StatusMark tone="warning" spaced>
             Left<VisuallyHidden>: their end date has passed</VisuallyHidden>
@@ -188,32 +305,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
           {person.position}
         </Text>
       )}
-      {person.teamName !== null && (
-        <Group gap={6} wrap="nowrap">
-          {teamEdits.colours ? (
-            <TeamColourMenu
-              managerId={person.id}
-              current={person.teamColour}
-              team={person.teamName}
-            />
-          ) : (
-            person.teamColour !== null && (
-              <Swatch colour={person.teamColour} size={8} />
-            )
-          )}
-          {teamEdits.names ? (
-            <TeamNameEditor
-              managerId={person.id}
-              managerName={person.preferredName}
-              name={person.teamName}
-            />
-          ) : (
-            <Text size="xs" c="dimmed" truncate>
-              {person.teamName}
-            </Text>
-          )}
-        </Group>
-      )}
+      <TeamRow person={person} teamEdits={teamEdits} />
       {reports > 0 && (
         <UnstyledButton
           className={[classes.toggle, "nodrag", "nopan"].join(" ")}
@@ -253,9 +345,10 @@ const openLevels = 2;
 
 // How the address names a person, for the team shown alone and the person found. A reader who sees
 // people has each person's Employee ID; one who does not has Fathom's own ID for them, which means
-// nothing outside Fathom. Null for someone shown by name only, who cannot be kept there.
-function addressOf(person: OrgChartPerson, seesPeople: boolean): string | null {
-  if (person.nameOnly === true) return null;
+// nothing outside Fathom. Null for someone shown by name only, who cannot be kept there, and for a
+// Live copy, which the person themselves stands for.
+function addressOf(person: ChartPerson, seesPeople: boolean): string | null {
+  if (person.nameOnly === true || person.liveCopyOf !== undefined) return null;
   return seesPeople ? person.employeeId : person.id;
 }
 
@@ -266,6 +359,7 @@ function Chart({
   colours,
   alone,
   teamEdits,
+  show,
   search,
   onSearch,
 }: {
@@ -279,6 +373,7 @@ function Chart({
   // Employee ID.
   seesPeople: boolean;
   teamEdits: TeamEdits;
+  show: Show;
   search: ChartSearch;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
@@ -304,6 +399,17 @@ function Chart({
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() =>
     collapsedBelow(tree, openLevels),
   );
+  // Someone who manages nobody in one choice of what to show may manage someone in another, such as
+  // the manager a person is drafted from, whose reports the reader never chose to show, so they
+  // start hidden the first time they appear.
+  const [managersSeen, setManagersSeen] = useState<ReadonlySet<string>>(
+    () => new Set(tree.reports.keys()),
+  );
+  const added = [...tree.reports.keys()].filter((id) => !managersSeen.has(id));
+  if (added.length > 0) {
+    setManagersSeen(new Set([...managersSeen, ...added]));
+    setCollapsed(new Set([...collapsed, ...added]));
+  }
   // Shows the person found, whether from the finder or the address, by showing the managers above
   // them, once each time someone new is found.
   const [shownFor, setShownFor] = useState<string | null>(null);
@@ -321,7 +427,8 @@ function Chart({
     () =>
       alone
         ? [...everyone.people.values()].filter(
-            (person) => !tree.people.has(person.id),
+            (person) =>
+              !tree.people.has(person.id) && person.liveCopyOf === undefined,
           )
         : [],
     [alone, everyone, tree],
@@ -332,7 +439,7 @@ function Chart({
     () =>
       layout.cards.map(({ id, x, y }): CardNode => {
         // Every card placed is someone in the tree.
-        const person = tree.people.get(id) as OrgChartPerson;
+        const person = tree.people.get(id) as ChartPerson;
         const reports = tree.reports.get(id)?.length ?? 0;
         const { employeeId } = person;
         const address = addressOf(person, seesPeople);
@@ -342,7 +449,7 @@ function Chart({
           type: "person",
           position: { x, y },
           width: cardWidth,
-          height: cardHeight,
+          height: heightOf(person),
           data: {
             person,
             // The top of a team shown alone is drawn without the team above, so without its colour.
@@ -361,7 +468,7 @@ function Chart({
               (alone && tree.roots.includes(id))
                 ? undefined
                 : () => {
-                    onSearch({ team: address }, false);
+                    onSearch({ team: address, show: search.show }, false);
                   },
             onToggle: (toggled) => {
               setCollapsed((before) => {
@@ -401,6 +508,7 @@ function Chart({
     () =>
       layout.lines.map(({ from, to, stacked }): Edge => {
         const colour = colours.get(from);
+        const toLiveCopy = tree.people.get(to)?.liveCopyOf !== undefined;
         return {
           id: `${from}-${to}`,
           source: from,
@@ -411,12 +519,16 @@ function Chart({
           // The lines only draw what each card's place already says, and would otherwise be read out
           // by the identifiers of the people they join.
           domAttributes: { "aria-hidden": true },
-          ...(colour === undefined
-            ? {}
-            : { style: { stroke: colourVariable(colour, "filled") } }),
+          style: {
+            ...(colour === undefined
+              ? {}
+              : { stroke: colourVariable(colour, "filled") }),
+            // The line to a Live copy is dashed, as the copy's edge is, and faded as the copy is.
+            ...(toLiveCopy ? { strokeDasharray: "4 4", opacity: 0.7 } : {}),
+          },
         };
       }),
-    [layout, colours],
+    [layout, colours, tree],
   );
 
   // Brings the person found to the centre once the managers above them are shown, and only then,
@@ -432,11 +544,12 @@ function Chart({
     // The managers above the person found are shown, so their card is placed.
     const card = layout.cards.find(({ id }) => id === found) as Placed;
     centred.current = found;
-    void flow.setCenter(card.x + cardWidth / 2, card.y + cardHeight / 2, {
+    const height = heightOf(tree.people.get(card.id));
+    void flow.setCenter(card.x + cardWidth / 2, card.y + height / 2, {
       zoom: Math.max(flow.getZoom(), 1),
       duration: 300,
     });
-  }, [layout, found, flow, ready, reveals]);
+  }, [layout, found, flow, ready, reveals, tree]);
 
   // Showing a number of levels changes the chart's whole shape, so it is fitted to the screen again
   // once laid out; showing or hiding one manager's reports leaves it where it is.
@@ -456,6 +569,17 @@ function Chart({
       <ChartControls
         tree={tree}
         outside={outside}
+        draft={
+          <DraftMenu
+            show={show}
+            onShow={(next) => {
+              onSearch(
+                { ...search, show: next === "both" ? undefined : next },
+                false,
+              );
+            }}
+          />
+        }
         teams={
           (teamEdits.names || teamEdits.colours) && (
             <TeamsPanel tree={everyone} edits={teamEdits} />
@@ -535,10 +659,16 @@ export function OrgChartPage({
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
   const query = useQuery(orgChartQuery);
+  const show = search.show ?? "both";
   const everyone = useMemo(
-    () => (query.data === undefined ? undefined : treeOf(query.data.people)),
-    [query.data],
+    () =>
+      query.data === undefined
+        ? undefined
+        : treeOf(chartPeople(query.data, show)),
+    [query.data, show],
   );
+  // Live only is read only, as on tables.
+  const edits = show === "live" ? noTeamEdits : teamEdits;
   const lead =
     everyone === undefined
       ? undefined
@@ -571,7 +701,7 @@ export function OrgChartPage({
               <Button
                 variant="default"
                 onClick={() => {
-                  onSearch({ person: search.person }, false);
+                  onSearch({ person: search.person, show: search.show }, false);
                 }}
               >
                 Show everyone
@@ -608,7 +738,8 @@ export function OrgChartPage({
             colours={colours}
             alone={lead !== undefined}
             seesPeople={seesPeople}
-            teamEdits={teamEdits}
+            teamEdits={edits}
+            show={show}
             search={search}
             onSearch={onSearch}
           />

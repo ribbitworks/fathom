@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the org chart's tree: who sits under whom, the managers above someone, whose reports
-// are hidden when it opens, and where the people shown are placed when managers are collapsed.
+// are hidden when it opens, where the people shown are placed when managers are collapsed, and the
+// people the Draft menu's choice draws.
 
 import type { OrgChartPerson } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
+  cardHeight,
   cardWidth,
+  chartPeople,
+  heightOf,
   collapsedBelow,
   levelsOf,
   managersAbove,
@@ -200,5 +204,51 @@ describe("the finder's message when nobody on the chart has the name", () => {
   it("says nobody has it when nobody outside the team has it either", () => {
     expect(nothingFound(outside, "Zz")).toBe("Nobody has that name");
     expect(nothingFound([], "Avery")).toBe("Nobody has that name");
+  });
+});
+
+describe("the people the Draft menu draws", () => {
+  const draft = { state: "waiting", unpublished: false } as const;
+  const chart = {
+    people: [
+      person("head", null, "Quinn"),
+      person("m1", "head", "Blake"),
+      person("m2", "head", "Avery"),
+      { ...person("r1", "m1", "Drew"), draft: { ...draft, managerId: "m2" } },
+      {
+        ...person("m3", "head", "Casey"),
+        teamName: "Fictional team",
+        draft: { ...draft, teamName: "Fictional crew" },
+      },
+    ],
+    drafted: [person("head", null, "Quinn"), person("new", "head", "Ellis")],
+  };
+
+  it("draws a moved person under their new manager, with a Live copy under their current one", () => {
+    const tree = treeOf(chartPeople(chart, "both"));
+    expect(tree.reports.get("m2")).toEqual(["r1"]);
+    expect(tree.reports.get("m1")).toEqual(["r1 live"]);
+    expect(tree.people.get("r1")?.moved).toEqual({ ...draft, managerId: "m2" });
+    expect(tree.people.get("r1 live")).toMatchObject({
+      liveCopyOf: "r1",
+      employeeId: null,
+    });
+  });
+
+  it("draws a drafted team name, with the live one, on a taller card", () => {
+    const shown = chartPeople(chart, "both").find(({ id }) => id === "m3");
+    expect(shown?.teamName).toBe("Fictional crew");
+    expect(shown?.renamed?.live).toBe("Fictional team");
+    expect(heightOf(shown)).toBeGreaterThan(cardHeight);
+  });
+
+  it("draws the chart as drafts make it, and the live chart alone", () => {
+    expect(chartPeople(chart, "drafts").map(({ id }) => id)).toEqual([
+      "head",
+      "new",
+    ]);
+    const live = chartPeople(chart, "live");
+    expect(live.find(({ id }) => id === "r1")?.managerId).toBe("m1");
+    expect(live.some(({ id }) => id === "r1 live")).toBe(false);
   });
 });

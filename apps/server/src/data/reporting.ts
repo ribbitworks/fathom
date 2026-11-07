@@ -40,7 +40,8 @@ export const reportingFields = [
 
 const lineFields = new Set(["managerId", "managerFrom"]);
 
-const text = (value: unknown) => (typeof value === "string" ? value : null);
+export const text = (value: unknown) =>
+  typeof value === "string" ? value : null;
 
 // The lines of the people given, or of everyone, by person, earliest first.
 export async function readLines(

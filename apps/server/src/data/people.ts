@@ -130,13 +130,20 @@ const personFields = [...detailFields, ...reportingFields];
 // The tier of each field of a person: dates are Restricted, and so are changes to their manager,
 // which name past managers, the position and each column's values are as sensitive as their list,
 // and the rest is General. Every value field recorded is for one of the columns given.
+export const restrictedPersonFields = [
+  "startDate",
+  "endDate",
+  "managerId",
+  "managerFrom",
+] as const;
+
 export function personTier(columns: PeopleColumns) {
   const tiers = new Map<string, Tier>([
     ["positionId", columns.positionTier],
-    ["startDate", "restricted"],
-    ["endDate", "restricted"],
-    ["managerId", "restricted"],
-    ["managerFrom", "restricted"],
+    ...restrictedPersonFields.map((field): [string, Tier] => [
+      field,
+      "restricted",
+    ]),
     ...columns.map((column): [string, Tier] => [
       valueField(column.id),
       column.tier,

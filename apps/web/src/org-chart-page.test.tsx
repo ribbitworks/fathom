@@ -53,7 +53,16 @@ const people = [
   person("p4", "Uma Fictional", "p3"),
 ];
 
-const chartAnswer = () => Response.json({ people });
+// The chart's answer, drawn the same with drafts applied unless given otherwise.
+const chartJson = ({
+  people: shown,
+  drafted = shown,
+}: {
+  people: readonly object[];
+  drafted?: readonly object[];
+}) => Response.json({ people: shown, drafted });
+
+const chartAnswer = () => chartJson({ people });
 
 // People's answers, with one of the chart's people on it.
 const peopleAnswers = {
@@ -172,7 +181,7 @@ describe("the org chart", () => {
       card(name)
         .querySelector<HTMLElement>("[data-coloured]")
         ?.style.getPropertyValue("--team-colour") ?? null;
-    await openChart(() => Response.json({ people: coloured }));
+    await openChart(() => chartJson({ people: coloured }));
     await screen.findByRole("link", { name: "Robin Fictional" });
     expect(colourOf("Robin Fictional")).toBeNull();
     expect(colourOf("Sasha Fictional")).toBe(
@@ -207,7 +216,7 @@ describe("the org chart", () => {
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
-        Response.json({
+        chartJson({
           people: people.map((one) =>
             one.id === "p2" ? { ...one, teamColour: colour } : one,
           ),
@@ -282,7 +291,7 @@ describe("the org chart", () => {
     await userEvent.type(field, "Harbour Crew{Enter}");
     expect(
       await screen.findByText(
-        "Draft saved. Harbour Crew shows on the chart once approved.",
+        "Draft saved. The team's name becomes Harbour Crew once approved.",
       ),
     ).toBeDefined();
     const patch = fetch.mock.calls.find(
@@ -321,6 +330,114 @@ describe("the org chart", () => {
         name: "Add a name for the team of Robin Fictional",
       }).textContent,
     ).toBe("Add a name");
+  });
+
+  it("marks a drafted team name in the Teams panel, with the live one under it", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "people:edit", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        chartJson({
+          people: people.map((one) =>
+            one.id === "p2"
+              ? {
+                  ...one,
+                  draft: {
+                    teamName: "Fictional crew",
+                    state: "waiting",
+                    unpublished: false,
+                  },
+                }
+              : one,
+          ),
+        }),
+    });
+    renderApp("/org-chart");
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    expect(within(panel).getByText("Fictional crew")).toBeDefined();
+    expect(within(panel).getByText("Draft")).toBeDefined();
+    expect(within(panel).getByText("Fictional team")).toBeDefined();
+    expect(within(panel).getByText("Live")).toBeDefined();
+  });
+
+  it("shows those who may only colour teams a name drafted to come off, and a Live copy in its team's colour, and goes back to drafts beside live", async () => {
+    const history = await openChart(() =>
+      chartJson({
+        people: people.map((one) =>
+          one.id === "p2"
+            ? {
+                ...one,
+                teamColour: "teal",
+                draft: { teamName: null, state: "waiting", unpublished: false },
+              }
+            : one.id === "p4"
+              ? {
+                  ...one,
+                  draft: {
+                    managerId: "p2",
+                    state: "waiting",
+                    unpublished: false,
+                  },
+                }
+              : one,
+        ),
+      }),
+    );
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    expect(within(card("Sasha Fictional")).getByText("No name")).toBeDefined();
+    const copy = screen
+      .getAllByText("Uma Fictional")
+      .find((name) => name.tagName === "SPAN")
+      ?.closest("[data-coloured]");
+    expect(copy).not.toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Draft" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Drafts applied" }),
+    );
+    expect(history.location.search).toContain("show=drafts");
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Drafts beside live" }),
+    );
+    expect(history.location.search).not.toContain("show=");
+  });
+
+  it("lists a team whose name a draft takes off, for those who may only colour teams", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        chartJson({
+          people: people.map((one) =>
+            one.id === "p2"
+              ? {
+                  ...one,
+                  draft: {
+                    teamName: null,
+                    state: "waiting",
+                    unpublished: false,
+                  },
+                }
+              : one,
+          ),
+        }),
+    });
+    renderApp("/org-chart");
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    expect(within(panel).getByText("No name")).toBeDefined();
+    expect(within(panel).getByText("Fictional team")).toBeDefined();
+    expect(within(panel).getByText("Live")).toBeDefined();
   });
 
   it("lets those who may only colour teams, such as Engineering Managers, colour them without renaming", async () => {
@@ -391,12 +508,113 @@ describe("the org chart", () => {
           ],
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
-      "GET /api/org-chart": () => Response.json({ people: chart }),
+      "GET /api/org-chart": () => chartJson({ people: chart }),
       ...answers,
     });
     renderApp("/org-chart");
     return fetch;
   }
+
+  // The chart for one who may change people and colour teams, at the address given.
+  function openEditableAt(path: string, answer: () => Response) {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "people:edit", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": answer,
+    });
+    return renderApp(path);
+  }
+
+  it("offers no renaming, colouring or Teams panel with Live only", async () => {
+    openEditableAt("/org-chart?show=live", chartAnswer);
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    expect(
+      screen.getByRole("button", { name: "Draft, changed" }),
+    ).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Teams" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Rename Fictional team" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Colour of Fictional team/ }),
+    ).toBeNull();
+  });
+
+  it("draws no team name where drafts take it off, with Drafts applied", async () => {
+    openEditableAt("/org-chart?show=drafts", () =>
+      chartJson({
+        people,
+        drafted: people.map((one) =>
+          one.id === "p2" ? { ...one, teamName: null } : one,
+        ),
+      }),
+    );
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    const team = card("Sasha Fictional");
+    expect(
+      within(team).queryByRole("button", { name: "Rename Fictional team" }),
+    ).toBeNull();
+    expect(
+      within(team).queryByRole("button", {
+        name: "Add a name for the team of Sasha Fictional",
+      }),
+    ).toBeNull();
+    expect(within(team).queryByText("No name")).toBeNull();
+  });
+
+  it("starts with the reports hidden of a manager who first appears when the Draft menu changes", async () => {
+    openEditableAt("/org-chart?show=drafts", () =>
+      chartJson({
+        people,
+        drafted: [
+          person("p1", "Robin Fictional", null),
+          person("p2", "Sasha Fictional", "p1"),
+        ],
+      }),
+    );
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Draft, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Drafts beside live" }),
+    );
+    expect(
+      await within(card("Sasha Fictional")).findByRole("button", {
+        name: /^Show 1 report/,
+      }),
+    ).toBeDefined();
+  });
+
+  it("names someone moved between managers outside a team shown alone once", async () => {
+    await openChart(
+      () =>
+        chartJson({
+          people: [
+            ...people,
+            person("p5", "Wren Fictional", "p1"),
+            {
+              ...person("p6", "Vic Fictional", "p1"),
+              draft: { managerId: "p5", state: "waiting", unpublished: false },
+            },
+          ],
+        }),
+      false,
+      "/org-chart?team=FX-p2",
+    );
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "Vic",
+    );
+    expect(
+      await screen.findByText("Vic Fictional is not in this team"),
+    ).toBeDefined();
+  });
 
   it("takes a team's colour away with No colour", async () => {
     const fetch = openAsEditor(
@@ -522,7 +740,7 @@ describe("the org chart", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(
       await screen.findByText(
-        "Draft saved. The name comes off the chart once approved.",
+        "Draft saved. The team's name comes off once approved.",
       ),
     ).toBeDefined();
     const patch = fetch.mock.calls.find(([, init]) => init?.method === "PATCH");
@@ -548,7 +766,7 @@ describe("the org chart", () => {
     await userEvent.type(field, "Fictional top team{Enter}");
     expect(
       await screen.findByText(
-        "Draft saved. Fictional top team shows on the chart once approved.",
+        "Draft saved. The team's name becomes Fictional top team once approved.",
       ),
     ).toBeDefined();
     const patch = fetch.mock.calls.find(([, init]) => init?.method === "PATCH");
@@ -566,7 +784,7 @@ describe("the org chart", () => {
         }),
       "GET /api/unpublished": () => Response.json({ changes: [] }),
       "GET /api/org-chart": () =>
-        Response.json({
+        chartJson({
           people: [
             person("p1", "Robin Fictional", null, {
               teamName: "Fictional top team",
@@ -603,6 +821,67 @@ describe("the org chart", () => {
     ).toBeNull();
   });
 
+  it("draws drafts beside live, as drafts make the chart, or not at all, from the Draft menu, kept in the address", async () => {
+    const history = await openChart(() =>
+      chartJson({
+        people: people.map((one) =>
+          one.id === "p4"
+            ? {
+                ...one,
+                draft: {
+                  managerId: "p2",
+                  state: "waiting",
+                  unpublished: false,
+                },
+              }
+            : one.id === "p2"
+              ? {
+                  ...one,
+                  draft: {
+                    teamName: "Fictional crew",
+                    state: "rejected",
+                    unpublished: false,
+                  },
+                }
+              : one,
+        ),
+        drafted: [
+          person("p1", "Robin Fictional", null),
+          person("p5", "Vic Fictional", "p1"),
+        ],
+      }),
+    );
+    await screen.findByRole("link", { name: "Uma Fictional" });
+    expect(within(card("Uma Fictional")).getByText("Draft")).toBeDefined();
+    const copy = screen
+      .getAllByText("Uma Fictional")
+      .find((name) => name.tagName === "SPAN")
+      ?.closest("div.react-flow__node") as HTMLElement;
+    expect(within(copy).getByText("Live")).toBeDefined();
+    const team = card("Sasha Fictional");
+    expect(within(team).getByText("Fictional crew")).toBeDefined();
+    expect(within(team).getByText("Rejected")).toBeDefined();
+    expect(within(team).getByText("Fictional team")).toBeDefined();
+
+    await userEvent.click(screen.getByRole("button", { name: "Draft" }));
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Drafts applied" }),
+    );
+    expect(
+      await screen.findByRole("link", { name: "Vic Fictional" }),
+    ).toBeDefined();
+    expect(screen.queryByText("Uma Fictional")).toBeNull();
+    expect(history.location.search).toContain("show=drafts");
+
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Live only" }),
+    );
+    await screen.findByRole("link", { name: "Uma Fictional" });
+    expect(within(card("Uma Fictional")).queryByText("Draft")).toBeNull();
+    expect(screen.queryByText("Fictional crew")).toBeNull();
+    expect(screen.queryByText("Live")).toBeNull();
+  });
+
   it("opens with the top two levels shown, and shows the levels chosen", async () => {
     await openChart(chartAnswer, false);
     await screen.findByRole("link", { name: "Sasha Fictional" });
@@ -623,7 +902,7 @@ describe("the org chart", () => {
 
   it("offers no levels when everyone is on one", async () => {
     await openChart(
-      () => Response.json({ people: [person("a", "Avery Fictional", null)] }),
+      () => chartJson({ people: [person("a", "Avery Fictional", null)] }),
       false,
     );
     await screen.findByRole("link", { name: "Avery Fictional" });
@@ -675,6 +954,18 @@ describe("the org chart", () => {
         .getByRole("link", { name: "Back to org chart" })
         .getAttribute("href"),
     ).toBe("/org-chart?person=FX-p4");
+  });
+
+  it("keeps the Draft menu's choice in the link back", async () => {
+    serverAnswers({ "GET /api/session": viewer, ...peopleAnswers });
+    renderApp(
+      `/people?search=FX-p4&chart=${encodeURIComponent(JSON.stringify({ person: "FX-p4", show: "live" }))}`,
+    );
+    expect(
+      (
+        await screen.findByRole("link", { name: "Back to org chart" })
+      ).getAttribute("href"),
+    ).toBe("/org-chart?person=FX-p4&show=live");
   });
 
   it("shows no link back when People is opened another way", async () => {
@@ -752,7 +1043,7 @@ describe("the org chart", () => {
 
   it("counts several reports, shown or hidden", async () => {
     await openChart(() =>
-      Response.json({
+      chartJson({
         people: [
           person("a", "Avery Fictional", null),
           person("b", "Blake Fictional", "a"),
@@ -919,7 +1210,7 @@ describe("the org chart", () => {
 
   it("shows a manager People does not show the reader by name alone, opening nothing, and finds them without keeping them in the address", async () => {
     const history = await openChart(() =>
-      Response.json({
+      chartJson({
         people: [
           person("g", "Gale Fictional", null, {
             employeeId: null,
@@ -1083,7 +1374,7 @@ describe("the org chart", () => {
     const tooLong = "X".repeat(41);
     await openChart(
       () =>
-        Response.json({
+        chartJson({
           people: [
             person("p1", "Robin Fictional", null, {
               employeeId: `${tooLong}1`,
@@ -1113,7 +1404,7 @@ describe("the org chart", () => {
   });
 
   it("says so when nobody is on it", async () => {
-    await openChart(() => Response.json({ people: [] }), false);
+    await openChart(() => chartJson({ people: [] }), false);
     expect(
       await screen.findByText("Nobody is on the org chart yet."),
     ).toBeDefined();
@@ -1125,7 +1416,7 @@ describe("the org chart", () => {
       () =>
         fail
           ? Response.json({ error: "Down" }, { status: 500 })
-          : Response.json({ people }),
+          : chartJson({ people }),
       false,
     );
     const alert = await screen.findByRole("alert");

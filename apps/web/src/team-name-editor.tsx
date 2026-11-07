@@ -2,7 +2,7 @@
 
 // Naming, renaming, or removing the name of a manager's team from their card on the org chart, for
 // those who can change people. A team's name is a person's detail, so the change is a draft, as on
-// People, and the chart, which draws only approved data, shows it once published and approved.
+// People, and the chart shows it as a draft until it is approved.
 
 import { personLengths } from "@fathom/shared";
 import {
@@ -43,7 +43,7 @@ export function TeamNameEditor({
     onSuccess: (_, teamName) => {
       setOpened(false);
       notifySuccess(
-        `Draft saved. ${teamName === "" ? "The name comes off" : `${teamName} shows on`} the chart once approved.`,
+        `Draft saved. The team's name ${teamName === "" ? "comes off" : `becomes ${teamName}`} once approved.`,
       );
     },
     onError: (error) => {

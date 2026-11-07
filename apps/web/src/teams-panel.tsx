@@ -1,21 +1,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Every manager's team in one list, for those who can name teams or colour them: where an unnamed
-// team is named, and where colours are found by those who never notice the dot on a card.
+// team is named, and where colours are found by those who never notice the dot on a card. A drafted
+// name is marked as on the cards, with the live one, if any, under it, marked Live.
 
-import type { OrgChartPerson } from "@fathom/shared";
 import { Button, Drawer, Group, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import { Swatch } from "./colour-swatch.tsx";
-import type { OrgTree, TeamEdits } from "./org-chart.ts";
+import {
+  hasApprovedName,
+  type ChartPerson,
+  changeOf,
+  type OrgTree,
+  type TeamEdits,
+} from "./org-chart.ts";
 import classes from "./org-chart.module.css";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { TeamNameEditor } from "./team-name-editor.tsx";
+import { DraftMark, StatusMark } from "./status-mark.tsx";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
 // Named teams first, by name, then unnamed ones by their manager's name.
-function teamsOf(tree: OrgTree): OrgChartPerson[] {
+function teamsOf(tree: OrgTree): ChartPerson[] {
   return [...tree.people.values()]
     .filter((person) => person.nameOnly !== true && tree.reports.has(person.id))
     .sort((a, b) =>
@@ -35,7 +42,8 @@ export function TeamsPanel({
 }) {
   // Those who may only colour teams have nothing to do with a team that has no name.
   const teams = teamsOf(tree).filter(
-    (person) => edits.names || person.teamName !== null,
+    (person) =>
+      edits.names || person.teamName !== null || hasApprovedName(person),
   );
   const [opened, setOpened] = useState(false);
   return (
@@ -61,7 +69,8 @@ export function TeamsPanel({
           {teams.map((person) => (
             <Group key={person.id} gap="sm" wrap="nowrap">
               <span className={classes.teamDot}>
-                {person.teamName === null ? null : edits.colours ? (
+                {person.teamName === null ? null : edits.colours &&
+                  hasApprovedName(person) ? (
                   <TeamColourMenu
                     managerId={person.id}
                     current={person.teamColour}
@@ -75,18 +84,36 @@ export function TeamsPanel({
                 )}
               </span>
               <Stack gap={0} miw={0}>
-                {edits.names ? (
-                  <TeamNameEditor
-                    managerId={person.id}
-                    managerName={person.preferredName}
-                    name={person.teamName}
-                    size="sm"
-                  />
-                ) : (
-                  <Text size="sm" truncate>
-                    {person.teamName}
-                  </Text>
-                )}
+                <Group gap={6} wrap="nowrap">
+                  {edits.names ? (
+                    <TeamNameEditor
+                      managerId={person.id}
+                      managerName={person.preferredName}
+                      name={person.teamName}
+                      size="sm"
+                    />
+                  ) : (
+                    <Text
+                      size="sm"
+                      fs={person.teamName === null ? "italic" : undefined}
+                      truncate
+                    >
+                      {person.teamName ?? "No name"}
+                    </Text>
+                  )}
+                  {person.renamed !== undefined && (
+                    <DraftMark draft={changeOf(person.renamed.draft)} />
+                  )}
+                </Group>
+                {person.renamed !== undefined &&
+                  person.renamed.live !== null && (
+                    <Group gap={6} wrap="nowrap">
+                      <Text size="xs" c="dimmed" truncate>
+                        {person.renamed.live}
+                      </Text>
+                      <StatusMark tone="live">Live</StatusMark>
+                    </Group>
+                  )}
                 <Text size="xs" c="dimmed" truncate>
                   Led by {person.preferredName}
                 </Text>

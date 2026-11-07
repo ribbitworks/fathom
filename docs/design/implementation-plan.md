@@ -42,7 +42,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Web Link Columns | Done |
 | Note Columns | Done |
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
-| Org Chart Additions | In progress: team colours; next drafts on the chart, then the person detail view, then chart fields, filters, and sort |
+| Org Chart Additions | In progress: team colours, and drafts on the chart; next the person detail view, then chart fields, filters, and sort |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID; lists with meanings edited on the Lists page, which marks built-in lists; planned hires as rows of People, with optional names, the Hired state for people, the seed's planned hires, and a manual test; planned hires' values in People's added columns, each offered on them unless switched off |
 | Editable Roles | In progress: schema, the server reading roles from the database, the Roles page, and one role for each account, chosen from every role on the Accounts page |

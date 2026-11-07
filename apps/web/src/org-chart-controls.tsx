@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The controls above the org chart: on the left the finder and, for those who can name or colour
-// teams, the Teams panel; on the right the levels to show, zooming, and fitting the chart to the screen. The chart
-// decides what each choice does to it.
+// The controls above the org chart: on the left the finder, the Draft menu and, for those who can
+// name or colour teams, the Teams panel; on the right the levels to show, zooming, and fitting the
+// chart to the screen. The chart decides what each choice does to it.
 
 import {
   ActionIcon,
@@ -29,6 +29,7 @@ const teamPrefix = "team:";
 export function ChartControls({
   tree,
   outside,
+  draft,
   teams,
   found,
   levels,
@@ -39,6 +40,7 @@ export function ChartControls({
   tree: OrgTree;
   // Everyone not on the chart while one team is shown alone.
   outside: readonly OrgChartPerson[];
+  draft: ReactNode;
   teams: ReactNode;
   found: string | null;
   levels: number;
@@ -51,7 +53,10 @@ export function ChartControls({
   const flow = useReactFlow();
   const [search, setSearch] = useState("");
   const choices = useMemo(() => {
-    const everyone = [...tree.people.values()];
+    // A Live copy of someone drafted to another manager is found as the person themselves.
+    const everyone = [...tree.people.values()].filter(
+      (person) => person.liveCopyOf === undefined,
+    );
     const named = (
       people: typeof everyone,
       name: (one: OrgChartPerson) => string,
@@ -129,6 +134,7 @@ export function ChartControls({
           onOptionSubmit={onFindAgain}
           w={280}
         />
+        {draft}
         {teams}
       </Group>
       <Group gap="xs">

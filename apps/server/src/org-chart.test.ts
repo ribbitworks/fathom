@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the org chart, against a migrated PostgreSQL server: who appears, under whom, with
-// which details, as the lines approved for today have it, never as drafted; managers whose end date
-// has passed, and what each reader is told of them; and what each role may read.
+// which details, as the lines approved for today have it, with drafts of managers and team names
+// beside, as each reader may see them; managers whose end date has passed, and what each reader is
+// told of them; and what each role may read.
 
 import { accessHistory, lists, teams } from "@fathom/db";
 import {
@@ -88,17 +89,35 @@ async function changed(id: string, body: object) {
   expect(response.statusCode, response.body).toBe(200);
 }
 
-async function chart(as = cookie): Promise<Map<string, OrgChartPerson>> {
+// The approved chart, or, when asked, the chart as drafts make it, by person.
+async function chart(
+  as = cookie,
+  part: "people" | "drafted" = "people",
+): Promise<Map<string, OrgChartPerson>> {
   const response = await test.request(as, "GET", "/api/org-chart");
   expect(response.statusCode, response.body).toBe(200);
-  return new Map(
-    response
-      .json<{ people: OrgChartPerson[] }>()
-      .people.map((one) => [one.id, one]),
-  );
+  const read = response.json<{
+    people: OrgChartPerson[];
+    drafted: OrgChartPerson[];
+  }>();
+  const shown = part === "people" ? read.people : read.drafted;
+  return new Map(shown.map((one) => [one.id, one]));
 }
 
+const drafted = (as = cookie) => chart(as, "drafted");
+
 describe("the org chart", () => {
+  const restrictedViews = (actorId: string) =>
+    test.connection
+      .select({ id: accessHistory.id })
+      .from(accessHistory)
+      .where(
+        and(
+          eq(accessHistory.actorId, actorId),
+          eq(accessHistory.action, "restricted-viewed"),
+        ),
+      );
+
   it("shows each person under their manager, with their position and the team they lead", async () => {
     const manager = await person({
       positionId: otherTestPosition,
@@ -119,12 +138,18 @@ describe("the org chart", () => {
     expect(reportShown).not.toHaveProperty("left");
   });
 
-  it("shows the lines approved for today, never a draft's", async () => {
+  it("shows the lines approved for today, with a drafted manager beside", async () => {
     const first = await person();
     const second = await person();
     const report = await person({ managerId: first, isManager: false });
     await changed(report, { managerId: second });
-    expect((await chart()).get(report)?.managerId).toBe(first);
+    expect((await chart()).get(report)).toMatchObject({
+      managerId: first,
+      draft: { managerId: second, state: "waiting", unpublished: false },
+    });
+  });
+
+  it("leaves out people only drafted to be added", async () => {
     const added = await test.request(cookie, "POST", "/api/people", {
       people: [
         {
@@ -136,6 +161,72 @@ describe("the org chart", () => {
     });
     const draftedId = String(added.json<{ ids: string[] }>().ids[0]);
     expect((await chart()).has(draftedId)).toBe(false);
+  });
+
+  it("leaves out a draft that keeps the manager, such as one moving only the line's date", async () => {
+    const manager = await person();
+    const report = await person({ isManager: false });
+    await changed(report, { managerId: manager, managerFrom: "2024-03-01" });
+    await approved([report]);
+    await changed(report, { managerFrom: "2024-04-01" });
+    expect((await chart()).get(report)).not.toHaveProperty("draft");
+  });
+
+  it("shows a drafted manager, which is Restricted, only to those who see Restricted details, and records it", async () => {
+    const first = await person();
+    const second = await person();
+    const report = await person({ managerId: first, isManager: false });
+    await changed(report, { managerId: second });
+    const executive = await test.signedIn("executive");
+    expect((await chart(executive.cookie)).get(report)?.draft).toEqual({
+      managerId: second,
+      state: "waiting",
+      unpublished: false,
+    });
+    expect(await restrictedViews(executive.id)).toHaveLength(1);
+    const planner = await test.signedIn("resource-planner");
+    const shown = (await chart(planner.cookie)).get(report);
+    expect(shown?.managerId).toBe(first);
+    expect(shown).not.toHaveProperty("draft");
+    expect(await restrictedViews(planner.id)).toHaveLength(0);
+  });
+
+  it("shows a drafted team name, or its removal, to everyone who sees people", async () => {
+    const named = await person({ teamName: unique("Fictional Team") });
+    const unnamed = await person();
+    const renamed = unique("Fictional Team");
+    await changed(named, { teamName: null });
+    await changed(unnamed, { teamName: renamed });
+    const planner = await test.signedIn("resource-planner");
+    const shown = await chart(planner.cookie);
+    expect(shown.get(named)?.draft).toEqual({
+      teamName: null,
+      state: "waiting",
+      unpublished: false,
+    });
+    expect(shown.get(unnamed)).toMatchObject({
+      teamName: null,
+      draft: { teamName: renamed, state: "waiting", unpublished: false },
+    });
+  });
+
+  it("marks a rejected draft", async () => {
+    const manager = await person();
+    const name = unique("Fictional Team");
+    await changed(manager, { teamName: name });
+    const approver = await test.signedIn("engineering-director");
+    const response = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      { people: [manager], reason: "Fictional reason" },
+    );
+    expect(response.statusCode, response.body).toBe(200);
+    expect((await chart()).get(manager)?.draft).toEqual({
+      teamName: name,
+      state: "rejected",
+      unpublished: false,
+    });
   });
 
   it("leaves out people who have not started or have gone", async () => {
@@ -160,16 +251,141 @@ describe("the org chart", () => {
     return { top, middle, report };
   }
 
-  const restrictedViews = (actorId: string) =>
-    test.connection
-      .select({ id: accessHistory.id })
-      .from(accessHistory)
-      .where(
-        and(
-          eq(accessHistory.actorId, actorId),
-          eq(accessHistory.action, "restricted-viewed"),
-        ),
-      );
+  it("draws the chart as drafts make it: managers, names, positions and team names changed", async () => {
+    const first = await person();
+    const second = await person({ teamName: unique("Fictional Team") });
+    const report = await person({ managerId: first, isManager: false });
+    const renamed = unique("Fictional Person");
+    await changed(report, {
+      managerId: second,
+      preferredName: renamed,
+      positionId: otherTestPosition,
+    });
+    await changed(second, { teamName: null });
+    const shown = await drafted();
+    expect(shown.get(report)).toMatchObject({
+      managerId: second,
+      preferredName: renamed,
+      position: "Fictional Lead",
+    });
+    expect(shown.get(report)).not.toHaveProperty("draft");
+    expect(shown.get(second)?.teamName).toBeNull();
+  });
+
+  it("draws people drafted to be added, and leaves out those drafted to be removed", async () => {
+    const manager = await person();
+    const leaving = await person({ isManager: false });
+    const added = await test.request(cookie, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: unique("OC"),
+          positionId: testPosition,
+          startDate: "2026-06-01",
+          managerId: manager,
+        },
+      ],
+    });
+    expect(added.statusCode, added.body).toBe(201);
+    const addedId = String(added.json<{ ids: string[] }>().ids[0]);
+    const removed = await test.request(
+      cookie,
+      "DELETE",
+      `/api/people/${leaving}`,
+    );
+    expect(removed.statusCode, removed.body).toBe(200);
+    const shown = await drafted();
+    expect(shown.get(addedId)?.managerId).toBe(manager);
+    expect(shown.has(leaving)).toBe(false);
+    expect((await chart()).has(leaving)).toBe(true);
+  });
+
+  it("leaves out someone whose draft adding them was rejected", async () => {
+    const added = await test.request(cookie, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: unique("OC"),
+          positionId: testPosition,
+          startDate: "2026-06-01",
+        },
+      ],
+    });
+    const addedId = String(added.json<{ ids: string[] }>().ids[0]);
+    const approver = await test.signedIn("engineering-director");
+    const response = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      { people: [addedId], reason: "Fictional reason" },
+    );
+    expect(response.statusCode, response.body).toBe(200);
+    expect((await drafted()).has(addedId)).toBe(false);
+  });
+
+  it("keeps a drafted position from those who cannot see the Positions list", async () => {
+    const changing = await person({ isManager: false });
+    await changed(changing, { positionId: otherTestPosition });
+    const added = await test.request(cookie, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: unique("OC"),
+          positionId: otherTestPosition,
+          startDate: "2026-06-01",
+        },
+      ],
+    });
+    const addedId = String(added.json<{ ids: string[] }>().ids[0]);
+    const setVisibility = (visibility: string) =>
+      test.connection
+        .update(lists)
+        .set({ visibility })
+        .where(eq(lists.builtIn, "positions"));
+    await setVisibility("restricted");
+    try {
+      const planner = await test.signedIn("resource-planner");
+      const shown = await drafted(planner.cookie);
+      expect(shown.get(changing)?.position).toBe("Fictional Engineer");
+      expect(shown.get(addedId)?.position).toBeNull();
+    } finally {
+      await setVisibility("general");
+    }
+  });
+
+  it("takes rejected drafts back", async () => {
+    const first = await person();
+    const second = await person();
+    const report = await person({ managerId: first, isManager: false });
+    await changed(report, { managerId: second });
+    const approver = await test.signedIn("engineering-director");
+    const response = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      { people: [report], reason: "Fictional reason" },
+    );
+    expect(response.statusCode, response.body).toBe(200);
+    expect((await drafted()).get(report)?.managerId).toBe(first);
+  });
+
+  it("applies drafts' managers and dates only for those who see Restricted details", async () => {
+    const first = await person();
+    const second = await person();
+    const report = await person({ managerId: first, isManager: false });
+    const ending = await person({ isManager: false });
+    await changed(report, { managerId: second });
+    await changed(ending, { endDate: "2026-06-01" });
+    const executive = await test.signedIn("executive");
+    const forExecutive = await drafted(executive.cookie);
+    expect(forExecutive.get(report)?.managerId).toBe(second);
+    expect(forExecutive.has(ending)).toBe(false);
+    const planner = await test.signedIn("resource-planner");
+    const forPlanner = await drafted(planner.cookie);
+    expect(forPlanner.get(report)?.managerId).toBe(first);
+    expect(forPlanner.has(ending)).toBe(true);
+    expect(await restrictedViews(planner.id)).toHaveLength(0);
+  });
 
   it("shows managers who have left, up the chain, to those who see Restricted details, and records it", async () => {
     const { top, middle, report } = await leftChain();

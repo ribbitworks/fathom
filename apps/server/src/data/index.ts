@@ -286,8 +286,9 @@ export interface PeopleAccess {
     positionHidden?: true;
     views: SavedView[];
   }>;
-  // Today's reporting lines as approved, with General details only. Telling anyone that a manager
-  // has left is recorded in the access history.
+  // Today's reporting lines as approved, with General details only, and each person's draft of
+  // their manager and team name as the reader may see it. Telling anyone that a manager has left,
+  // or showing them a draft's manager, is recorded in the access history.
   readOrgChart(actor: Actor): Promise<OrgChart>;
   // Sets the colour of a manager's named team, or removes it, at once rather than as a draft.
   setTeamColour(

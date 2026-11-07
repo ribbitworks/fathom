@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, opening People from a card and coming back, and the mark on a manager who has left.
+Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, opening People from a card and coming back, the mark on a manager who has left, and drafts drawn beside the chart, applied to it, or left out with the Draft menu.
 
 ## Test Environment
 
@@ -71,6 +71,7 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 - **Chart:** the large panel under the **Org chart** heading that holds the cards.
 - **Finder:** the box reading **Find a person or team** at the top left of the page, above the chart.
 - **Mark:** a coloured dot followed by a word, such as a red dot and **Left**, shown beside a person's name.
+- **Draft menu:** the menu opened by the **Draft** button just right of the finder.
 - **Publish button:** the button in the top bar, beside your name, that reads **Publish** followed by a number of changes.
 
 ## Test Cases
@@ -82,7 +83,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in (P1) as `engineering.manager@fathom.test`.
 
 - [ ] **Step 1.** Select **Org chart** in the **People** section of the left-hand menu.
-  - **Expected:** The page's heading reads **Org chart**. The top bar reads **People / Org chart**. Above the chart are the finder and **Teams** on the left, and **Show levels**, **+**, **−** and **Fit to screen** on the right.
+  - **Expected:** The page's heading reads **Org chart**. The top bar reads **People / Org chart**. Above the chart are the finder, **Draft** and **Teams** on the left, and **Show levels**, **+**, **−** and **Fit to screen** on the right.
   - **Notes:**
 
 ### ORG-02: The Chart Opens on the Top Two Levels
@@ -90,11 +91,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in (P1) as `engineering.manager@fathom.test`. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the card at the top of the chart.
-  - **Expected:** It reads **Silje Holm-Schrøder**, with **Manager** under the name and **Platform team** under that, and ends with **Hide 7 reports**.
+  - **Expected:** It reads **Silje Holm-Schrøder**, with **Manager** under the name and **Platform team** under that, and ends with **Hide 8 reports**.
   - **Notes:**
 
 - [ ] **Step 2.** Read the cards under it.
-  - **Expected:** Seven cards, each joined to **Silje Holm-Schrøder** by a line. Four are in a column under her card's left edge, from the top: **Blaise Gislason**, **Cleora Jerde**, **Jedidiah Funk** and **Tanushree Patel-Singh**. The other three are in a row to the right of that column: **Lorenza Thiel**, **Viktoria Holmberg** and **武井 聡**. There is nothing below the row.
+  - **Expected:** Eight cards, each joined to **Silje Holm-Schrøder** by a line. Five are in a column under her card's left edge, from the top: **Blaise Gislason**, **Cleora Jerde**, **Jedidiah Funk**, **Simone Jean** and **Tanushree Patel-Singh**. The other three are in a row to the right of that column: **Lorenza Thiel**, **Viktoria Holmberg** and **武井 聡**. There is nothing below the row.
   - **Notes:**
 
 - [ ] **Step 3.** Read the card for **Viktoria Holmberg**.
@@ -197,7 +198,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A small teal dot comes before **Platform team**. The card has no band.
   - **Notes:**
 
-- [ ] **Step 2.** Read the seven cards under her, and the lines to them.
+- [ ] **Step 2.** Read the eight cards under her, and the lines to them.
   - **Expected:** Each card has a teal band, and each line from her card is teal.
   - **Notes:**
 
@@ -226,7 +227,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Select **Grape**.
-  - **Expected:** The menu closes. The dot before **Platform team** is grape (purple), and so are the bands of the seven cards under her and the lines to them. A notification reads **Platform team is now drawn in Grape.**, with **Undo**. The Publish button does not appear.
+  - **Expected:** The menu closes. The dot before **Platform team** is grape (purple), and so are the bands of the eight cards under her and the lines to them. A notification reads **Platform team is now drawn in Grape.**, with **Undo**. The Publish button does not appear.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Undo**.
@@ -243,16 +244,88 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** On the card for **Silje Holm-Schrøder**, select **Platform team**.
+- [ ] **Step 1.** Read **Platform team** on the card for **Silje Holm-Schrøder**.
+  - **Expected:** **Platform team** is underlined.
+  - **Notes:**
+
+- [ ] **Step 2.** On the card for **Silje Holm-Schrøder**, select **Platform team**.
   - **Expected:** A box opens under it with a field holding **Platform team** with an **×** at its end, and **Cancel** and **Save**.
   - **Notes:**
 
-- [ ] **Step 2.** Replace the name with **Platform crew**, and select **Save**.
-  - **Expected:** The box closes. A notification reads **Draft saved. Platform crew shows on the chart once approved.** The card still reads **Platform team**, and the Publish button reads **Publish 1**.
+- [ ] **Step 3.** Replace the name with **Platform crew**, and select **Save**.
+  - **Expected:** The box closes. A notification reads **Draft saved. The team's name becomes Platform crew once approved.** The Publish button reads **Publish 1**. The card is tinted blue and is taller. It reads **Platform crew** followed by a hollow yellow dot and **Draft**, and under that **Platform team**, in grey, followed by a green dot and **Live**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Teams** beside the finder.
-  - **Expected:** A **Teams** panel opens on the right, listing the named teams by name, each with a square button holding its colour dot, or a dashed circle where it has none, then **Led by** and its manager's name, then the unnamed ones, with no square button, each reading **Add a name**, among them the team led by **Lorenza Thiel**. The card for **Lorenza Thiel** shows no team.
+- [ ] **Step 4.** Select **Teams** beside the finder.
+  - **Expected:** A **Teams** panel opens on the right, listing the named teams by name, each with a square button holding its colour dot, or a dashed circle where it has none, then **Led by** and its manager's name, then the unnamed ones, with no square button, each reading **Add a name**, among them the team led by **Lorenza Thiel**. **Platform crew** is followed by a hollow yellow dot and **Draft**, with **Platform team** under it, in grey, followed by a green dot and **Live**. **Observability team** has no square button and is followed by a yellow dot and **Draft**. The card for **Lorenza Thiel** shows no team.
   - **Notes:**
 
 **Afterwards:** R1.
+
+### ORG-12: A Person Drafted to Another Manager Is Drawn in Both Places
+
+**Preconditions:** As ORG-02.
+
+- [ ] **Step 1.** Read the card for **Simone Jean**, in the column under **Silje Holm-Schrøder**.
+  - **Expected:** The card is tinted blue. A yellow dot and **Draft** follow the name, and **Software Engineer** is under it.
+  - **Notes:**
+
+- [ ] **Step 2.** On the card for **Viktoria Holmberg**, select **Show 3 reports**.
+  - **Expected:** Three cards appear in a column under her: **Simone Jean**, **우아현** and **西尾 亮**. The card for **Simone Jean** is faded and light green, with a dashed edge, its name in grey and followed by a green dot and **Live**, and the line to it is dashed and faded.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the name on the light green card for **Simone Jean**.
+  - **Expected:** Nothing opens, and the **Org chart** page stays as it was.
+  - **Notes:**
+
+- [ ] **Step 4.** Switch the computer's appearance setting between light and dark.
+  - **Expected:** In both, the tinted card under **Silje Holm-Schrøder** and the light green card under **Viktoria Holmberg** are easy to tell apart from the other cards, and every word on them is easy to read.
+  - **Notes:**
+
+### ORG-13: A Team Named in a Draft Is Marked
+
+**Preconditions:** As ORG-02.
+
+- [ ] **Step 1.** In the finder, type **本間**, and select **本間 稔**.
+  - **Expected:** The card for **本間 稔** is in the middle of the panel and tinted blue. **Observability team** is under the position, followed by a yellow dot and **Draft**, with no line under it.
+  - **Notes:**
+
+### ORG-14: The Draft Menu Applies Drafts or Leaves Them Out
+
+**Preconditions:** As ORG-02.
+
+- [ ] **Step 1.** Select **Draft**.
+  - **Expected:** A menu opens under **Show** with **Drafts beside live**, which has a tick, **Drafts applied** and **Live only**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Drafts applied**, then press Esc.
+  - **Expected:** A dot follows **Draft** on its button. The address bar ends with **show=drafts**. The card for **Simone Jean** under **Silje Holm-Schrøder** is no longer tinted and has no mark, and no card on the chart is light green.
+  - **Notes:**
+
+- [ ] **Step 3.** In the finder, type **Vianney**, and select **Vianney Rousseau**.
+  - **Expected:** The card for **Vianney Rousseau**, with **Engineering Manager** under the name, is in the middle of the panel, with a blue ring around it and no line above it.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the **×** at the right of the finder, and type **Ophélie**.
+  - **Expected:** The list reads **Nobody has that name**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Draft**, then **Live only**, then press Esc.
+  - **Expected:** The card for **Silje Holm-Schrøder** ends with **Hide 7 reports**, and **Simone Jean** is not under her. No card is tinted, and no card shows **Draft** or **Live**.
+  - **Notes:**
+
+- [ ] **Step 6.** Read the buttons just right of the finder.
+  - **Expected:** **Draft** is there, and **Teams** is not.
+  - **Notes:**
+
+- [ ] **Step 7.** On the card for **Silje Holm-Schrøder**, select the name, then select **Back to org chart** on the **People** page.
+  - **Expected:** The **Org chart** page opens with a dot after **Draft**, and the card for **Silje Holm-Schrøder** ends with **Hide 7 reports**.
+  - **Notes:**
+
+### ORG-15: Readers Who Do Not See Restricted Details See No Drafted Manager
+
+**Preconditions:** Signed in (P1) as `resource.planner@fathom.test`, with **Resource Planner** on the account button at the top right. **Org chart** page open from the left-hand menu.
+
+- [ ] **Step 1.** On the card for **Viktoria Holmberg**, read the column under it.
+  - **Expected:** **Simone Jean**, **우아현** and **西尾 亮**, each on an untinted card with no mark. No card on the chart is light green.
+  - **Notes:**

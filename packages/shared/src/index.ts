@@ -240,6 +240,8 @@ export {
 } from "./releases.ts";
 export {
   type OrgChart,
+  type OrgChartDraft,
+  orgChartDraftSchema,
   type OrgChartPerson,
   orgChartPersonSchema,
   orgChartSchema,
