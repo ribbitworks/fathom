@@ -20,6 +20,8 @@ import {
   isLink,
   type Link,
   type Links,
+  noteProblem,
+  type Notes,
   type Person,
   type PersonChange,
   type PersonDraft,
@@ -71,7 +73,7 @@ import {
   refuseHeldColumns,
 } from "./added-columns.ts";
 import { checkBuiltInChoice, firstOffered } from "./built-in-lists.ts";
-import { typeOf } from "./column-types.ts";
+import { isNote, type LiveValues, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { readToday } from "./settings.ts";
 import {
@@ -158,6 +160,7 @@ export function recorded(
   };
   for (const [fieldId, value] of values) {
     if (isLink(value)) record[valueField(fieldId)] = { ...value };
+    else if (isNote(value)) record[valueField(fieldId)] = value;
     else if (value.length > 0) record[valueField(fieldId)] = [...value];
   }
   return record;
@@ -195,6 +198,16 @@ function linksOf(person: Recorded): Links {
       return fieldId === null || !isLink(value)
         ? []
         : [[fieldId, { address: value.address, text: value.text }]];
+    }),
+  );
+}
+
+// A person's notes, by column, as recorded.
+function notesOf(person: Recorded): Notes {
+  return Object.fromEntries(
+    Object.entries(person).flatMap(([field, value]) => {
+      const fieldId = fieldOfValue(field);
+      return fieldId === null || !isNote(value) ? [] : [[fieldId, value]];
     }),
   );
 }
@@ -268,6 +281,7 @@ async function choicesAskedFor(
   requests: readonly {
     values?: Readonly<Record<string, readonly string[]>> | undefined;
     links?: Readonly<Record<string, Link | null>> | undefined;
+    notes?: Readonly<Record<string, string | null>> | undefined;
   }[],
 ): Promise<ChoiceRow[]> {
   await refuseHeldColumns(
@@ -276,6 +290,7 @@ async function choicesAskedFor(
     requests.flatMap((request) => [
       ...Object.keys(request.values ?? {}),
       ...Object.keys(request.links ?? {}),
+      ...Object.keys(request.notes ?? {}),
     ]),
   );
   return choicesWithAdded(
@@ -343,6 +358,27 @@ function checkedLinks(
   );
 }
 
+// The notes asked for each column, as recorded: a note kept exactly as sent, or no choices for a
+// note removed, as an empty note also is. A note holding anything notes do not allow is refused
+// rather than cleaned, so what is kept is what the editor showed.
+function checkedNotes(
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, string | null>>,
+): Recorded {
+  return Object.fromEntries(
+    Object.entries(requested).map(([fieldId, note]): [string, unknown] => {
+      const column = columns.find(({ id }) => id === fieldId);
+      if (column?.type !== "note") {
+        throw new BadRequestError("There is no such column");
+      }
+      if (note === null || note.trim() === "") return [valueField(fieldId), []];
+      const problem = noteProblem(note);
+      if (problem !== undefined) throw new BadRequestError(problem);
+      return [valueField(fieldId), note];
+    }),
+  );
+}
+
 // Whether the live people given, as they are now, fit their columns, as fitsColumns sets out. Used
 // after an undo or an approval puts people's values in place, since the columns may have changed
 // since.
@@ -364,7 +400,9 @@ export async function peopleFitColumns(
   const choices = await inListOrder(
     transaction,
     [...values.values()].flatMap((byColumn) =>
-      [...byColumn.values()].flatMap((value) => (isLink(value) ? [] : value)),
+      [...byColumn.values()].flatMap((value) =>
+        Array.isArray(value) ? value : [],
+      ),
     ),
   );
   const listOf = new Map(choices.map(({ id, listId }) => [id, listId]));
@@ -572,6 +610,11 @@ async function readPeopleIn(
             shownFields.has(valueField(fieldId)),
           ),
         ),
+        notes: Object.fromEntries(
+          Object.entries(notesOf(person)).filter(([fieldId]) =>
+            shownFields.has(valueField(fieldId)),
+          ),
+        ),
         ...(seen ? { draft: seen } : {}),
         ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
       },
@@ -593,7 +636,11 @@ async function readPeopleIn(
       .filter((field) => shownFields.has(field))
       .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
     if (fields.length === 0) return undefined;
-    const liveValues: PersonDraft["live"] = { values: {}, links: {} };
+    const liveValues: PersonDraft["live"] & LiveValues = {
+      values: {},
+      links: {},
+      notes: {},
+    };
     if (before !== undefined) {
       for (const field of fields) {
         const fieldId = fieldOfValue(field);
@@ -720,6 +767,7 @@ export async function createPeople(
       const id = randomUUID();
       const values = checkedValues(columns, known, request.values, undefined);
       const links = checkedLinks(columns, request.links);
+      const notes = checkedNotes(columns, request.notes ?? {});
       const row: PersonRow = {
         id,
         preferredName: request.preferredName,
@@ -729,9 +777,11 @@ export async function createPeople(
         endDate: request.endDate ?? null,
         isManager: request.isManager ?? false,
       };
-      const after = {
+      // Notes left empty are left out.
+      const after = tidy({
         ...recorded(row, values),
         ...links,
+        ...notes,
         ...(request.managerId == null
           ? {}
           : {
@@ -741,7 +791,7 @@ export async function createPeople(
                 defaultFrom({ startDate: row.startDate }, today),
             }),
         ...(request.teamName == null ? {} : { teamName: request.teamName }),
-      };
+      });
       checkComplete(columns, after);
       made.push(...personChanges(columns, id, "created", undefined, after));
       added.push({ id, fields: after });
@@ -861,6 +911,7 @@ export async function updatePerson(
           ]),
         ),
         ...checkedLinks(columns, change.links ?? {}),
+        ...checkedNotes(columns, change.notes ?? {}),
         ...changedReporting(person, change, today),
       }),
       before,

@@ -653,3 +653,42 @@ describe("web link columns", () => {
     ]);
   });
 });
+
+describe("note columns", () => {
+  interface Noted {
+    id: string;
+    note: string;
+  }
+  const noteColumns: TableColumn<Noted>[] = [
+    {
+      key: "background",
+      label: "Background",
+      kind: "note",
+      choices: [],
+      multiple: false,
+      value: (row) => row.note,
+    },
+  ];
+  const noted: Noted[] = [
+    { id: "a", note: "**Zoned** in" },
+    { id: "b", note: '<span data-colour="teal">Alpha</span> team' },
+    { id: "c", note: "" },
+  ];
+  const shown = (changes: Partial<View>) =>
+    applyView(noted, noteColumns, view(changes)).map((row) => row.id);
+
+  it("are searched and filtered by their words, not their formatting", () => {
+    expect(shown({ search: "alpha" })).toEqual(["b"]);
+    expect(shown({ search: "teal" })).toEqual([]);
+    expect(
+      shown({ filters: { background: { contains: "zoned in" } } }),
+    ).toEqual(["a"]);
+    expect(shown({ filters: { background: { empty: true } } })).toEqual(["c"]);
+  });
+
+  it("are sorted by their words, with empty ones last", () => {
+    expect(shown({ sort: [{ key: "background", descending: false }] })).toEqual(
+      ["b", "a", "c"],
+    );
+  });
+});

@@ -32,6 +32,24 @@ export const shortAddress = (address: string): string =>
 export const linkLabel = (link: Link): string =>
   link.text || shortAddress(link.address);
 
+// An address without its scheme or a trailing slash, its host in lower case as hosts are named
+// alike in any case, and the rest as it is.
+const bareAddress = (address: string) => {
+  const bare = address
+    .trim()
+    .replace(/^https?:\/\//iu, "")
+    .replace(/\/$/u, "");
+  const hostEnds = bare.search(/[/?#]/u);
+  return hostEnds === -1
+    ? bare.toLowerCase()
+    : bare.slice(0, hostEnds).toLowerCase() + bare.slice(hostEnds);
+};
+
+// A link's text as shown: text that only repeats the address, as an address typed or pasted becomes,
+// shows its host, as a link without text does.
+export const shownLinkText = (address: string, text: string): string =>
+  bareAddress(text) === bareAddress(address) ? shortAddress(address) : text;
+
 // A link in words, as a draft's and the change history's values show it: its text with its address,
 // or the address alone.
 export const linkInWords = (link: Link): string =>

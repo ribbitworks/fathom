@@ -9,7 +9,7 @@ import { MantineProvider } from "@mantine/core";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { share } from "./metrics.ts";
 import { panelWidth, panelWidths } from "./side-panel.tsx";
 import { PeopleGrid } from "./people-grid.tsx";
@@ -136,6 +136,10 @@ const figures = (group: string) =>
   )
     .getAllByRole("cell")
     .map((cell) => cell.textContent);
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("the Metrics panel", () => {
   it("opens from the bar above the table and closes with Esc, giving focus back", async () => {
@@ -397,7 +401,7 @@ describe("the Metrics panel", () => {
       render(<Table start={{ ...emptyView, breakdown: [] }} />);
       const dialog = screen.getByRole("dialog", { name: "Metrics" });
       expect(dialog.getAttribute("aria-modal")).toBe("true");
-      expect(dialog.className).toMatch(/panelNarrow/);
+      expect(dialog.className).toMatch(/frameNarrow/);
       expect(screen.queryByRole("separator")).toBeNull();
     } finally {
       matchMedia.mockRestore();
@@ -512,14 +516,14 @@ describe("the Metrics panel", () => {
   it("is resized by its edge, from the keyboard or by dragging, never past the table's least width", async () => {
     const user = userEvent.setup();
     localStorage.clear();
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      width: 1200,
+      right: 1200,
+    } as DOMRect);
     render(<Table start={{ ...emptyView, breakdown: [] }} />);
     const edge = screen.getByRole("separator", { name: "Resize metrics" });
     expect(edge.getAttribute("aria-valuenow")).toBe(String(panelWidths.start));
     const layout = edge.closest("div[style]") as HTMLElement;
-    vi.spyOn(layout, "getBoundingClientRect").mockReturnValue({
-      width: 1200,
-      right: 1200,
-    } as DOMRect);
     await user.click(within(panel()).getByRole("heading", { name: "Metrics" }));
     await user.tab({ shift: true });
     expect(document.activeElement).toBe(edge);
@@ -531,7 +535,7 @@ describe("the Metrics panel", () => {
     expect(edge.getAttribute("aria-valuenow")).toBe(
       String(panelWidths.start - panelWidths.step),
     );
-    expect(layout.style.getPropertyValue("--side-panel-width")).toBe(
+    expect(layout.style.getPropertyValue("--side-panel-column")).toBe(
       `${String(panelWidths.start - panelWidths.step)}px`,
     );
     edge.setPointerCapture = vi.fn();

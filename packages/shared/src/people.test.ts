@@ -4,7 +4,12 @@
 
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { fieldRequestSchema, personChangeSchema } from "./people.ts";
+import {
+  fieldRequestSchema,
+  personChangeSchema,
+  personRequestSchema,
+  personSchema,
+} from "./people.ts";
 
 const messages = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues.map((issue) => issue.message) ?? [];
@@ -59,6 +64,74 @@ describe("fieldRequestSchema", () => {
       "A web link column has no list",
       "A web link column holds one link",
     ]);
+  });
+
+  it("keeps a note column's visibility", () => {
+    expect(
+      fieldRequestSchema.parse({
+        name: "Review notes",
+        type: "note",
+        visibility: "confidential",
+      }).visibility,
+    ).toBe("confidential");
+  });
+
+  it("refuses a note column without a visibility, with a list, or with several notes", () => {
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Review notes",
+          type: "note",
+          listId: randomUUID(),
+          multiple: true,
+        }),
+      ),
+    ).toEqual([
+      "Choose a visibility",
+      "A note column has no list",
+      "A note column holds one note",
+    ]);
+  });
+});
+
+describe("notes", () => {
+  it("are asked for by column, with null removing one", () => {
+    const column = randomUUID();
+    expect(
+      personChangeSchema.parse({ notes: { [column]: "*Kind*" } }).notes,
+    ).toEqual({ [column]: "*Kind*" });
+    expect(
+      personChangeSchema.parse({ notes: { [column]: null } }).notes,
+    ).toEqual({ [column]: null });
+    expect(
+      personChangeSchema.safeParse({ notes: { column: "Kind" } }).success,
+    ).toBe(false);
+  });
+
+  it("may be left out of a person, their draft, and a request to add them", () => {
+    const person = personSchema.parse({
+      id: "p1",
+      preferredName: "Fictional Person",
+      employeeId: "E-1",
+      values: {},
+      draft: {
+        action: "changed",
+        changed: [],
+        live: { values: {} },
+        state: "waiting",
+        madeBy: null,
+        madeAt: null,
+      },
+    });
+    expect(person.notes).toBeUndefined();
+    expect(person.draft?.live.notes).toBeUndefined();
+    expect(
+      personRequestSchema.parse({
+        preferredName: "Fictional Person",
+        employeeId: "E-1",
+        positionId: randomUUID(),
+      }).notes,
+    ).toBeUndefined();
   });
 });
 

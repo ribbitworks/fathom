@@ -4,20 +4,10 @@
 // column, or of two columns crossed, and what share of those rows each is. Only the columns the
 // table has are offered, which are those the user may see. With drafts shown beside live, each
 // figure counts the rows as their drafts show them, with the live figure beside it where it
-// differs. Esc, from anywhere in the panel, or its close button closes it. Its edge beside the
-// table is dragged, or moved with the arrow keys, to resize it, and the width is kept for next
-// time.
+// differs. Esc, from anywhere in the panel, or its close button closes it.
 
-import {
-  ActionIcon,
-  FocusTrap,
-  NativeSelect,
-  SegmentedControl,
-  Table,
-  Text,
-} from "@mantine/core";
-import { type ReactNode, useState } from "react";
-import { Icon } from "./icons.tsx";
+import { NativeSelect, SegmentedControl, Table, Text } from "@mantine/core";
+import { useState } from "react";
 import classes from "./metrics.module.css";
 import {
   type Counts,
@@ -29,28 +19,8 @@ import {
   share,
 } from "./metrics.ts";
 import { count } from "./numbers.ts";
-import { useNarrow, WithSidePanel } from "./side-panel.tsx";
+import { SidePanelFrame, useNarrow } from "./side-panel.tsx";
 import type { TableColumn } from "./table-view.ts";
-
-// A table and the bar above it, with the Metrics panel beside them while it is open.
-export function WithMetrics({
-  panel,
-  children,
-}: {
-  panel: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <WithSidePanel
-      panel={panel}
-      label="Resize metrics"
-      controls={metricsPanelId}
-      storageKey="fathom-metrics-width"
-    >
-      {children}
-    </WithSidePanel>
-  );
-}
 
 // Some rows and the columns to read them by.
 export interface CountedRows<Row> {
@@ -270,73 +240,43 @@ export function MetricsPanel<Row>({
   }
 
   return (
-    <FocusTrap active={narrow}>
-      <section
-        id={metricsPanelId}
-        className={narrow ? classes.panelNarrow : classes.panel}
-        aria-labelledby={metricsTitleId}
-        // Covering the table on a narrow screen, it holds focus until it is closed.
-        {...(narrow ? { role: "dialog", "aria-modal": true } : {})}
-        onKeyDown={(event) => {
-          if (event.key !== "Escape" || event.defaultPrevented) return;
-          event.preventDefault();
-          onClose();
-        }}
-      >
-        <div className={classes.head}>
-          <h2 id={metricsTitleId} className={classes.title} tabIndex={-1}>
-            Metrics
-          </h2>
-          <ActionIcon
-            variant="subtle"
-            color="gray"
-            aria-label="Close metrics"
-            onClick={onClose}
-          >
-            <Icon name="close" />
-          </ActionIcon>
-        </div>
-        <div className={classes.body}>
-          {/* The bar above the table announces how many rows are shown as they change. */}
-          <Text fz="sm" c="dimmed" mb="sm">
-            {rowsLabel(rows)}
-            {live !== undefined && " with drafts"}
-            {live !== undefined &&
-              live.rows.length !== rows.length &&
-              `, ${count(live.rows.length)} live`}
-          </Text>
-          <div className={classes.pickers}>
-            {picker(
-              "Break down by",
-              "Choose a column",
-              first,
-              offered,
-              (key) => {
-                onBreakdown(
-                  key === undefined
-                    ? []
-                    : [key, ...by.slice(1).map((column) => column.key)].filter(
-                        (picked, at, keys) => keys.indexOf(picked) === at,
-                      ),
-                );
-              },
-            )}
-            {first !== undefined &&
-              picker(
-                "and by",
-                "Nothing more",
-                second,
-                offered.filter((column) => column.key !== first.key),
-                (key) => {
-                  onBreakdown(
-                    key === undefined ? [first.key] : [first.key, key],
-                  );
-                },
-              )}
-          </div>
-          {body}
-        </div>
-      </section>
-    </FocusTrap>
+    <SidePanelFrame
+      id={metricsPanelId}
+      titleId={metricsTitleId}
+      title="Metrics"
+      narrow={narrow}
+      close={{ label: "Close metrics", onClose }}
+    >
+      {/* The bar above the table announces how many rows are shown as they change. */}
+      <Text fz="sm" c="dimmed" mb="sm">
+        {rowsLabel(rows)}
+        {live !== undefined && " with drafts"}
+        {live !== undefined &&
+          live.rows.length !== rows.length &&
+          `, ${count(live.rows.length)} live`}
+      </Text>
+      <div className={classes.pickers}>
+        {picker("Break down by", "Choose a column", first, offered, (key) => {
+          onBreakdown(
+            key === undefined
+              ? []
+              : [key, ...by.slice(1).map((column) => column.key)].filter(
+                  (picked, at, keys) => keys.indexOf(picked) === at,
+                ),
+          );
+        })}
+        {first !== undefined &&
+          picker(
+            "and by",
+            "Nothing more",
+            second,
+            offered.filter((column) => column.key !== first.key),
+            (key) => {
+              onBreakdown(key === undefined ? [first.key] : [first.key, key]);
+            },
+          )}
+      </div>
+      {body}
+    </SidePanelFrame>
   );
 }

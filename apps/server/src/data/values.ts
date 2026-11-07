@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The values of columns on people: one row for each person, column, and chosen choice, or for each
-// person and web link column, as ADR 0005 sets out. Part of the data access layer. In the change
-// history, a person's values for a column are one field of the person, named after the column,
-// holding the chosen choices in the list's order, or the link, as sensitive as the column's list,
-// or a web link column's own visibility.
+// person and web link or note column, as ADR 0005 sets out. Part of the data access layer. In the
+// change history, a person's values for a column are one field of the person, named after the
+// column, holding the chosen choices in the list's order, the link, or the note, as sensitive as the
+// column's list, or a web link or note column's own visibility.
 
 import { storedTier } from "../access.ts";
-import { typeOf } from "./column-types.ts";
+import { isNote, typeOf } from "./column-types.ts";
 import {
   type Database,
   fields,
@@ -89,11 +89,12 @@ export const valuesTier = (
   return type.tier(type.settings(field), () => storedTier(listVisibility));
 };
 
-// A column's value for one person, as the change history records it: the chosen choices, or a link.
-export type FieldValue = string[] | Link;
+// A column's value for one person, as the change history records it: the chosen choices, a link, or
+// a note.
+export type FieldValue = string[] | Link | string;
 
 // Each person's values, by person and column, for the people and columns given: chosen choices in
-// their list's order, and links.
+// their list's order, links, and notes.
 export async function readValues(
   reader: Reader,
   personIds: readonly string[],
@@ -107,14 +108,12 @@ export async function readValues(
   )) {
     values.set(personId, new Map(byField));
   }
-  for (const [personId, byField] of await readLinks(
-    reader,
-    personIds,
-    fieldIds,
-  )) {
-    const held = values.get(personId) ?? new Map<string, FieldValue>();
-    for (const [fieldId, link] of byField) held.set(fieldId, link);
-    values.set(personId, held);
+  for (const read of [readLinks, readNotes]) {
+    for (const [personId, byField] of await read(reader, personIds, fieldIds)) {
+      const held = values.get(personId) ?? new Map<string, FieldValue>();
+      for (const [fieldId, value] of byField) held.set(fieldId, value);
+      values.set(personId, held);
+    }
   }
   return values;
 }
@@ -186,8 +185,39 @@ async function readLinks(
   return links;
 }
 
+// Each person's notes, by person and column.
+async function readNotes(
+  reader: Reader,
+  personIds: readonly string[],
+  fieldIds: readonly string[],
+): Promise<Map<string, Map<string, string>>> {
+  const notes = new Map<string, Map<string, string>>();
+  if (personIds.length === 0 || fieldIds.length === 0) return notes;
+  const rows = await reader
+    .select({
+      personId: fieldValues.personId,
+      fieldId: fieldValues.fieldId,
+      note: fieldValues.note,
+    })
+    .from(fieldValues)
+    .where(
+      and(
+        inArray(fieldValues.personId, [...personIds]),
+        inArray(fieldValues.fieldId, [...fieldIds]),
+        isNotNull(fieldValues.note),
+      ),
+    );
+  for (const { fieldId, note, ...row } of rows) {
+    const personId = String(row.personId);
+    const byField = notes.get(personId) ?? new Map<string, string>();
+    byField.set(fieldId, String(note));
+    notes.set(personId, byField);
+  }
+  return notes;
+}
+
 // The rows that hold a value as the change history records it: one for each choice, or one for a
-// link. Anything else holds nothing.
+// link or a note. Anything else holds nothing.
 export function valueRows(
   personId: string,
   fieldId: string,
@@ -205,6 +235,7 @@ export function valueRows(
       { fieldId, personId, linkAddress: value.address, linkText: value.text },
     ];
   }
+  if (isNote(value)) return [{ fieldId, personId, note: value }];
   return [];
 }
 

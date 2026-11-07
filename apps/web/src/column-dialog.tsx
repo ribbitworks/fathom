@@ -38,6 +38,7 @@ const duplicate = "Already a column";
 const typeNames: Record<FieldType, string> = {
   choice: "Choice from a list",
   link: "Web link",
+  note: "Note",
 };
 
 export function ColumnDialog({
@@ -118,7 +119,7 @@ export function ColumnDialog({
         if (problem !== undefined || needsList) return;
         setSentName(name);
         saving.mutate(
-          type === "link"
+          type !== "choice"
             ? { name: name.trim(), type, visibility, multiple: false, required }
             : {
                 name: name.trim(),
@@ -162,7 +163,7 @@ export function ColumnDialog({
             setType(fieldTypeSchema.parse(event.currentTarget.value));
           }}
         />
-        {type === "link" ? (
+        {type !== "choice" ? (
           <VisibleTo
             id="column-visibility"
             value={visibility}

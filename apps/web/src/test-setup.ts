@@ -14,9 +14,11 @@ import { afterEach } from "vitest";
 configure({ asyncUtilTimeout: 10_000 });
 
 if (typeof window !== "undefined") {
+  // Tests run as people who ask for less motion, since the simulated browser runs no animations,
+  // so a side panel goes as soon as it closes rather than waiting for its slide to end.
   window.matchMedia = (query: string) =>
     ({
-      matches: false,
+      matches: query === "(prefers-reduced-motion: reduce)",
       media: query,
       onchange: null,
       addEventListener: () => undefined,

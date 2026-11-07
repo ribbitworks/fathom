@@ -1,0 +1,330 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for side panels: the slide, for people whose computer allows motion, where the panels'
+// column widens as they open and narrows as they close, and a closed panel stays, out of reach,
+// until its slide ends, or until a panel opens again (the other tests run with less motion, where a
+// panel goes as soon as it closes); and panels stacked, sharing one width and the height between
+// them.
+
+import { MantineProvider } from "@mantine/core";
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  motionLasts,
+  type SidePanel,
+  stackShares,
+  WithSidePanel,
+} from "./side-panel.tsx";
+import { testTheme } from "./test-support.tsx";
+
+// The window's width, narrow or not, told to whatever listens for it to change.
+let narrow = false;
+const listeners = new Set<(event: { matches: boolean }) => void>();
+const narrowQuery = "(max-width: 48em)";
+
+beforeEach(() => {
+  narrow = false;
+  listeners.clear();
+  vi.spyOn(window, "matchMedia").mockImplementation(
+    (query) =>
+      ({
+        get matches() {
+          return query === narrowQuery && narrow;
+        },
+        media: query,
+        onchange: null,
+        addEventListener: (
+          _type: string,
+          listener: (event: { matches: boolean }) => void,
+        ) => {
+          if (query === narrowQuery) listeners.add(listener);
+        },
+        removeEventListener: (
+          _type: string,
+          listener: (event: { matches: boolean }) => void,
+        ) => {
+          listeners.delete(listener);
+        },
+        dispatchEvent: () => false,
+      }) as unknown as MediaQueryList,
+  );
+});
+
+const narrowTo = (narrowed: boolean) => {
+  narrow = narrowed;
+  act(() => {
+    for (const listener of listeners) listener({ matches: narrowed });
+  });
+};
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+const layout = (panels: SidePanel[]) => (
+  <MantineProvider theme={testTheme}>
+    <WithSidePanel panels={panels} storageKey="fathom-test-panel-width">
+      <p>Content</p>
+    </WithSidePanel>
+  </MantineProvider>
+);
+
+const one = (text: string, key = "one"): SidePanel => ({
+  key,
+  id: key,
+  name: key,
+  node: <p id={key}>{text}</p>,
+});
+
+// The simulated browser has no animation events, so React listens for the older, prefixed name.
+const slideEnds = (element: Element) =>
+  fireEvent(element, new Event("webkitAnimationEnd", { bubbles: true }));
+
+const layoutOf = (element: Element) =>
+  element.closest("[data-side-panel]")?.parentElement as HTMLElement;
+
+const sliding = (element: Element) =>
+  /sliding/u.test(
+    (element.closest("[data-side-panel]") as HTMLElement).className,
+  );
+
+const place = () =>
+  screen.getByText("Panel").closest("[data-side-panel]") as HTMLElement;
+
+describe("a side panel", () => {
+  it("stays out of reach while it slides out, and goes once its slide ends", () => {
+    const { rerender } = render(layout([]));
+    rerender(layout([one("Panel")]));
+    expect(sliding(place())).toBe(true);
+    expect(
+      layoutOf(place()).style.getPropertyValue("--side-panel-column"),
+    ).toBe("0px");
+    slideEnds(place());
+    expect(sliding(place())).toBe(false);
+    expect(
+      layoutOf(place()).style.getPropertyValue("--side-panel-column"),
+    ).not.toBe("0px");
+    expect(place().hasAttribute("inert")).toBe(false);
+    rerender(layout([]));
+    expect(place().hasAttribute("inert")).toBe(true);
+    expect(sliding(place())).toBe(true);
+    slideEnds(screen.getByText("Panel"));
+    expect(screen.getByText("Panel")).toBeDefined();
+    slideEnds(place());
+    expect(screen.queryByText("Panel")).toBeNull();
+  });
+
+  it("opens again at once while it slides out", () => {
+    const { rerender } = render(layout([one("Panel")]));
+    rerender(layout([]));
+    rerender(layout([one("Panel again")]));
+    expect(screen.queryByText("Panel")).toBeNull();
+    const shown = screen
+      .getByText("Panel again")
+      .closest("[data-side-panel]") as HTMLElement;
+    expect(shown.hasAttribute("inert")).toBe(false);
+    slideEnds(shown);
+    expect(screen.getByText("Panel again")).toBeDefined();
+  });
+
+  it("keeps its width, and what each panel holds, as another opens above or below it and closes", () => {
+    const { rerender } = render(layout([one("Below", "below")]));
+    const below = screen.getByText("Below");
+    const width = () =>
+      layoutOf(below).style.getPropertyValue("--side-panel-column");
+    const before = width();
+    rerender(layout([one("Above", "above"), one("Below", "below")]));
+    expect([width(), sliding(below), screen.getByText("Below")]).toEqual([
+      before,
+      false,
+      below,
+    ]);
+    expect(
+      screen
+        .getByRole("separator", { name: "Resize above and below" })
+        .getAttribute("aria-controls"),
+    ).toBe("above below");
+    rerender(layout([one("Below", "below")]));
+    expect([width(), screen.getByText("Below")]).toEqual([before, below]);
+  });
+});
+
+describe("stacked panels", () => {
+  const stacked = () =>
+    render(layout([one("Above", "above"), one("Below", "below")]));
+  const edge = () =>
+    screen.getByRole("separator", {
+      name: "Resize heights of above and below",
+    });
+  const grows = (text: string) =>
+    (
+      screen.getByText(text).parentElement as HTMLElement
+    ).style.getPropertyValue("--stack-share");
+
+  it("share the height by the edge between them, from the keyboard, and keep it for next time", async () => {
+    localStorage.clear();
+    const { unmount } = stacked();
+    expect(edge().getAttribute("aria-controls")).toBe("above below");
+    expect(edge().getAttribute("aria-valuenow")).toBe("50");
+    act(() => {
+      edge().focus();
+    });
+    await userEvent.keyboard("{ArrowDown}{ArrowDown}{Enter}");
+    expect(edge().getAttribute("aria-valuenow")).toBe(
+      String(50 + 2 * stackShares.step),
+    );
+    await userEvent.keyboard("{ArrowUp}");
+    expect(edge().getAttribute("aria-valuenow")).toBe(
+      String(50 + stackShares.step),
+    );
+    unmount();
+    stacked();
+    expect(edge().getAttribute("aria-valuenow")).toBe(
+      String(50 + stackShares.step),
+    );
+    expect(Number(grows("Above")) + Number(grows("Below"))).toBeCloseTo(2);
+  });
+
+  it("share the height by dragging the edge, leaving each its least", () => {
+    localStorage.clear();
+    stacked();
+    const box = (top: number, bottom: number) => ({ top, bottom }) as DOMRect;
+    vi.spyOn(
+      screen.getByText("Above").parentElement as HTMLElement,
+      "getBoundingClientRect",
+    ).mockReturnValue(box(0, 200));
+    vi.spyOn(
+      screen.getByText("Below").parentElement as HTMLElement,
+      "getBoundingClientRect",
+    ).mockReturnValue(box(200, 400));
+    const separator = edge();
+    separator.setPointerCapture = vi.fn();
+    let captured = false;
+    separator.hasPointerCapture = () => captured;
+    fireEvent.pointerMove(separator, { clientY: 100 });
+    expect(separator.getAttribute("aria-valuenow")).toBe("50");
+    fireEvent.pointerDown(separator, { pointerId: 1 });
+    captured = true;
+    fireEvent.pointerMove(separator, { clientY: 280 });
+    expect(separator.getAttribute("aria-valuenow")).toBe("70");
+    fireEvent.pointerMove(separator, { clientY: 10 });
+    expect(separator.getAttribute("aria-valuenow")).toBe(
+      String(stackShares.least),
+    );
+  });
+
+  it("shrink away a panel closed, out of reach, and grow one opened into its place", () => {
+    const { rerender } = render(
+      layout([one("Above", "above"), one("Below", "below")]),
+    );
+    const item = (text: string) =>
+      screen.getByText(text).parentElement as HTMLElement;
+    const above = screen.getByText("Above");
+    rerender(layout([one("Below", "below")]));
+    expect(item("Above").hasAttribute("inert")).toBe(true);
+    expect(item("Above").className).toMatch(/stackItemLeaving/u);
+    fireEvent.transitionEnd(above);
+    expect(screen.getByText("Above")).toBe(above);
+    fireEvent.transitionEnd(item("Above"));
+    expect(screen.queryByText("Above")).toBeNull();
+    rerender(layout([one("Above", "above"), one("Below", "below")]));
+    expect(item("Above").className).toMatch(/stackItemArriving/u);
+    expect(
+      screen.getAllByRole("separator")[1]?.parentElement?.className,
+    ).toMatch(/stackEdgeMoving/u);
+    fireEvent.transitionEnd(item("Above"));
+    expect(item("Above").className).not.toMatch(/stackItemArriving/u);
+  });
+
+  it("keeps a panel closed while it shrinks away, if it opens again", () => {
+    const { rerender } = render(
+      layout([one("Above", "above"), one("Below", "below")]),
+    );
+    const above = screen.getByText("Above");
+    rerender(layout([one("Below", "below")]));
+    rerender(layout([one("Above", "above"), one("Below", "below")]));
+    expect(screen.getByText("Above")).toBe(above);
+    expect((above.parentElement as HTMLElement).hasAttribute("inert")).toBe(
+      false,
+    );
+  });
+
+  it("keep what they hold as the window narrows and widens, with no edge to widen them while narrow", async () => {
+    render(
+      layout([
+        {
+          key: "above",
+          id: "above",
+          name: "above",
+          node: <input aria-label="Written" />,
+        },
+        one("Below", "below"),
+      ]),
+    );
+    const written = screen.getByRole("textbox", { name: "Written" });
+    await userEvent.type(written, "Kept");
+    narrowTo(true);
+    expect(
+      screen.queryByRole("separator", { name: "Resize above and below" }),
+    ).toBeNull();
+    expect(screen.getByRole("textbox", { name: "Written" })).toBe(written);
+    narrowTo(false);
+    expect(screen.getAllByRole("separator")).toHaveLength(2);
+    expect((written as HTMLInputElement).value).toBe("Kept");
+  });
+
+  it("settle a panel's motion that the browser never ends, once it has had its time", () => {
+    vi.useFakeTimers();
+    try {
+      const { rerender } = render(
+        layout([one("Above", "above"), one("Below", "below")]),
+      );
+      rerender(layout([one("Below", "below")]));
+      expect(screen.getByText("Above")).toBeDefined();
+      act(() => {
+        vi.advanceTimersByTime(motionLasts);
+      });
+      expect(screen.queryByText("Above")).toBeNull();
+      rerender(layout([]));
+      expect(screen.getByText("Below")).toBeDefined();
+      act(() => {
+        vi.advanceTimersByTime(motionLasts);
+      });
+      expect(screen.queryByText("Below")).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("stop sliding at once as the window narrows mid-slide", () => {
+    const { rerender } = render(layout([]));
+    rerender(layout([one("Panel")]));
+    expect(sliding(place())).toBe(true);
+    narrowTo(true);
+    expect(sliding(place())).toBe(false);
+  });
+
+  it("settle at once as the window narrows mid-motion", () => {
+    const { rerender } = render(
+      layout([one("Above", "above"), one("Below", "below")]),
+    );
+    rerender(layout([one("Below", "below")]));
+    expect(screen.getByText("Above")).toBeDefined();
+    narrowTo(true);
+    expect(screen.queryByText("Above")).toBeNull();
+  });
+
+  it("settle a panel whose growing the browser cancels", () => {
+    const { rerender } = render(layout([one("Below", "below")]));
+    rerender(layout([one("Above", "above"), one("Below", "below")]));
+    const item = screen.getByText("Above").parentElement as HTMLElement;
+    fireEvent(
+      screen.getByText("Above"),
+      new Event("transitioncancel", { bubbles: true }),
+    );
+    expect(item.className).toMatch(/stackItemArriving/u);
+    fireEvent(item, new Event("transitioncancel", { bubbles: true }));
+    expect(item.className).not.toMatch(/stackItemArriving/u);
+  });
+});

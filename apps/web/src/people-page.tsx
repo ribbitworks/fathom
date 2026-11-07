@@ -98,12 +98,23 @@ function withView(views: readonly SavedView[], saved: SavedView): SavedView[] {
     : [...views, saved];
 }
 
+// Values asked for, by column, without those removed.
+const kept = <Value,>(
+  asked: Readonly<Record<string, Value | null>>,
+): Record<string, Value> =>
+  Object.fromEntries(
+    Object.entries(asked).flatMap(([key, value]) =>
+      value === null ? [] : [[key, value]],
+    ),
+  );
+
 // A row with a change applied, as the table shows it before it is saved. A planned hire's ID
 // cleared shows empty until the server gives it a temporary one.
 function changed(person: Person, change: RowChange): Person {
   const {
     values,
     links,
+    notes,
     preferredName,
     employeeId,
     positionId,
@@ -118,22 +129,23 @@ function changed(person: Person, change: RowChange): Person {
     positionId: positionId ?? person.positionId,
     stateId: stateId ?? person.stateId,
     values: { ...person.values, ...values },
-    links: Object.fromEntries(
-      Object.entries({ ...person.links, ...links }).flatMap(([key, link]) =>
-        link === null ? [] : [[key, link]],
-      ),
-    ),
+    links: kept({ ...person.links, ...links }),
+    ...(person.notes === undefined && notes === undefined
+      ? {}
+      : { notes: kept({ ...person.notes, ...notes }) }),
   };
 }
 
 // Someone or a planned hire being added, as the table shows them before they are saved: a draft
 // adding them.
 function adding(id: string, request: RowRequest): Person {
-  const { values, ...details } = request;
+  const { values, links, notes, ...details } = request;
   return {
     id,
     ...details,
     values,
+    links: kept(links),
+    ...(notes === undefined ? {} : { notes: kept(notes) }),
     draft: {
       action: "created",
       // A draft adding someone changes everything, so names nothing in particular.
@@ -149,7 +161,7 @@ function adding(id: string, request: RowRequest): Person {
 // A person as they are live, without their draft. A web link column the draft changes that is not
 // in the live links had no link.
 function asLive(person: Person, draft: PersonDraft): Person {
-  const { values, links, ...details } = draft.live;
+  const { values, links, notes, ...details } = draft.live;
   const live: Person = {
     ...person,
     ...(details as Partial<Person>),
@@ -161,6 +173,14 @@ function asLive(person: Person, draft: PersonDraft): Person {
         ),
       ),
       ...links,
+    },
+    notes: {
+      ...Object.fromEntries(
+        Object.entries(person.notes ?? {}).filter(
+          ([key]) => !draft.changed.includes(key),
+        ),
+      ),
+      ...notes,
     },
   };
   delete live.draft;

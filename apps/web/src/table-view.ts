@@ -11,6 +11,7 @@ import {
   folded,
   type Link,
   linkLabel,
+  notePlainText,
   searchWords,
   type Show,
   type ViewDefinition,
@@ -20,10 +21,11 @@ import { useState } from "react";
 import { z } from "zod";
 
 // What a cell holds: text, a date as YYYY-MM-DD or empty, the identifiers of chosen choices, a web
-// link, or null for no link, or, for a checkbox, its one choice when checked and nothing when not.
+// link, or null for no link, a note's Markdown, or, for a checkbox, its one choice when checked and
+// nothing when not.
 export type CellValue = string | string[] | Link | null;
 
-export type Kind = "text" | "date" | "choice" | "link" | "flag";
+export type Kind = "text" | "date" | "choice" | "link" | "note" | "flag";
 
 export interface ColumnChoice {
   id: string;
@@ -287,6 +289,16 @@ const textRules: Rules = {
   },
 };
 
+// A note is searched, sorted, and filtered by its words, without their formatting.
+const noteRules: Rules = {
+  isEmpty: (value) => asText(value).trim() === "",
+  words: (_column, value) => notePlainText(asText(value)),
+  compare: (_column, a, b) =>
+    collator.compare(notePlainText(asText(a)), notePlainText(asText(b))),
+  matches: (value, filter) =>
+    textRules.matches(notePlainText(asText(value)), filter),
+};
+
 const dateRules: Rules = {
   isEmpty: (value) => asText(value) === "",
   words: (_column, value) =>
@@ -368,6 +380,7 @@ const rules: Record<Kind, Rules> = {
   date: dateRules,
   choice: choiceRules,
   link: linkRules,
+  note: noteRules,
   flag: flagRules,
 };
 

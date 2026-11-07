@@ -115,6 +115,22 @@ export {
   yearsAhead,
 } from "./cycles.ts";
 export { daySchema, isDay, typedDay } from "./days.ts";
+export {
+  cleanNote,
+  colourClosing,
+  colourOpened,
+  colourTag,
+  headingLevels,
+  isNoteColour,
+  type NoteColour,
+  noteColours,
+  noteLength,
+  notePlainText,
+  noteProblem,
+  parseNote,
+  toggleCheckbox,
+  writeNote,
+} from "./notes.ts";
 export { folded, matchesWords, searchWords } from "./search.ts";
 export {
   type AccessAction,
@@ -188,6 +204,7 @@ export {
   type LinkProblems,
   linkProblems,
   linkValueSchema,
+  shownLinkText,
   webAddress,
 } from "./links.ts";
 export {
@@ -241,6 +258,7 @@ export {
   type FieldType,
   fieldTypeSchema,
   type Links,
+  type Notes,
   type Person,
   type PersonChange,
   type PersonRequest,

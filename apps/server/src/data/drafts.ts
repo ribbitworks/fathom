@@ -41,7 +41,7 @@ import {
 import { mostSensitive, storedTier } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import { type Change, stableJson, type Transaction } from "./changes.ts";
-import { typeOf } from "./column-types.ts";
+import { isNote, typeOf } from "./column-types.ts";
 import type { ColumnInfo } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
@@ -795,11 +795,11 @@ export function clearedRejection(
 export const asDraft = (made: readonly Change[]): Change[] =>
   made.map((change) => ({ ...change, draft: true }));
 
-// How many values a recorded value holds: its choices, or one link, or undefined when none is
-// recorded.
+// How many values a recorded value holds: its choices, or one link or note, or undefined when none
+// is recorded.
 export function valueCount(value: unknown): number | undefined {
   if (Array.isArray(value)) return value.length;
-  if (isLink(value)) return 1;
+  if (isLink(value) || isNote(value)) return 1;
   return undefined;
 }
 

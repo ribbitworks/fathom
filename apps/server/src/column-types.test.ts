@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what each type of column on People keeps and holds, apart from the database: the
-// settings, tier, values, and live values of choice and web link columns.
+// settings, tier, values, and live values of choice, web link, and note columns.
 
 import { describe, expect, it } from "vitest";
 import { columnTypes, type LiveValues, typeOf } from "./data/column-types.ts";
@@ -14,10 +14,18 @@ const listOf = new Map([
 ]);
 
 describe("a column's type", () => {
-  it("is a choice column unless recorded as a web link column", () => {
+  it("is a choice column unless recorded as another type", () => {
     expect(typeOf({}).type).toBe("choice");
+    expect(typeOf({ type: null }).type).toBe("choice");
     expect(typeOf({ type: "choice" }).type).toBe("choice");
     expect(typeOf({ type: "link" }).type).toBe("link");
+    expect(typeOf({ type: "note" }).type).toBe("note");
+  });
+
+  it("is refused when Fathom does not know it", () => {
+    expect(() => typeOf({ type: "table" })).toThrow(
+      "A column has a type Fathom does not know",
+    );
   });
 });
 
@@ -65,10 +73,14 @@ describe("choice columns", () => {
   });
 
   it("show their live choices beside a draft, or none", () => {
-    const live: LiveValues = { values: {}, links: {} };
+    const live: LiveValues = { values: {}, links: {}, notes: {} };
     choice.showLive(live, "f1", ["c1"]);
     choice.showLive(live, "f2", undefined);
-    expect(live).toEqual({ values: { f1: ["c1"], f2: [] }, links: {} });
+    expect(live).toEqual({
+      values: { f1: ["c1"], f2: [] },
+      links: {},
+      notes: {},
+    });
   });
 });
 
@@ -116,9 +128,55 @@ describe("web link columns", () => {
   });
 
   it("show their live link beside a draft, or nothing when there is none", () => {
-    const live: LiveValues = { values: {}, links: {} };
+    const live: LiveValues = { values: {}, links: {}, notes: {} };
     linkType.showLive(live, "f1", link);
     linkType.showLive(live, "f2", []);
-    expect(live).toEqual({ values: {}, links: { f1: link } });
+    expect(live).toEqual({ values: {}, links: { f1: link }, notes: {} });
+  });
+});
+
+describe("note columns", () => {
+  const { note } = columnTypes;
+  const settings = note.settings({ visibility: "restricted", listId: "l1" });
+
+  it("keep a visibility of their own, and no list", () => {
+    expect(settings).toEqual({
+      type: "note",
+      listId: null,
+      visibility: "restricted",
+      multiple: false,
+    });
+  });
+
+  it("take their tier from their visibility, or the most sensitive for one not known", () => {
+    expect(note.tier(settings, () => "general")).toBe("restricted");
+    expect(
+      note.tier(note.settings({ visibility: "secret" }), () => "general"),
+    ).toBe("confidential");
+  });
+
+  it.each([
+    ["*Kind*", true],
+    [undefined, true],
+    [[], true],
+    [null, true],
+    ["", false],
+    [["c1"], false],
+    [link, false],
+  ])("hold %j: %s", (value, fits) => {
+    expect(note.fits(settings, value, listOf)).toBe(fits);
+  });
+
+  it("count one note, and nothing else", () => {
+    expect(note.count("*Kind*")).toBe(1);
+    expect(note.count("")).toBe(0);
+    expect(note.count([])).toBe(0);
+  });
+
+  it("show their live note beside a draft, or nothing when there is none", () => {
+    const live: LiveValues = { values: {}, links: {}, notes: {} };
+    note.showLive(live, "f1", "*Kind*");
+    note.showLive(live, "f2", []);
+    expect(live).toEqual({ values: {}, links: {}, notes: { f1: "*Kind*" } });
   });
 });

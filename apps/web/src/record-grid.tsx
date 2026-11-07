@@ -24,6 +24,10 @@
 // menu also chooses what to show and decides every draft waiting among those shown. What is
 // particular to a kind of record, such as its built-in columns and what adding one asks for, comes
 // from its table, as people-grid.tsx sets out for People.
+//
+// A cell whose kind is edited in the side panel, such as a note, opens there on a click, Enter, or
+// F2, read only where the cell may not change. While it is being changed, only the panel's own
+// buttons close it, and the table changes nothing else until then.
 
 import type {
   Choice,
@@ -53,7 +57,12 @@ import {
   useState,
 } from "react";
 import type { Finish } from "./choice-picker.tsx";
-import { type CellChange, cellKinds, type CellSource } from "./cell-kinds.tsx";
+import {
+  type CellChange,
+  cellKinds,
+  type CellSource,
+  type EditorProps,
+} from "./cell-kinds.tsx";
 import {
   configDraftFields,
   type Credited,
@@ -101,14 +110,11 @@ import {
   type View,
 } from "./table-view.ts";
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
-import { metricsButtonId } from "./metrics.ts";
-import {
-  type CountedRows,
-  MetricsPanel,
-  WithMetrics,
-} from "./metrics-panel.tsx";
+import { metricsButtonId, metricsPanelId } from "./metrics.ts";
+import { type CountedRows, MetricsPanel } from "./metrics-panel.tsx";
 import classes from "./pages.module.css";
 import type { Phrase } from "./phrase.tsx";
+import { type SidePanel, WithSidePanel } from "./side-panel.tsx";
 import {
   type DraftLike,
   DraftMark,
@@ -325,6 +331,14 @@ export function liveRecordsOf<Rec extends CellRecord>(
       ),
       ...draft.live.links,
     };
+    const notes = {
+      ...Object.fromEntries(
+        Object.entries(record.notes ?? {}).filter(
+          ([key]) => !columns.includes(key),
+        ),
+      ),
+      ...draft.live.notes,
+    };
     const details = Object.fromEntries(
       draft.changed
         .filter((key) => detailKeys.includes(key))
@@ -332,7 +346,15 @@ export function liveRecordsOf<Rec extends CellRecord>(
         // eslint-disable-next-line security/detect-object-injection
         .map((key) => [key, draft.live[key] ?? null]),
     );
-    return [{ ...rest, ...details, values, links } as Rec];
+    return [
+      {
+        ...rest,
+        ...details,
+        values,
+        links,
+        ...(Object.keys(notes).length === 0 ? {} : { notes }),
+      } as Rec,
+    ];
   });
 }
 
@@ -1074,6 +1096,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // stay with their record when a save puts the rows in a new order.
   const [activeAt, setActiveAt] = useState<Place>();
   const [editingAt, setEditingAt] = useState<Place>();
+  // The record and column edited in the side panel, such as a note's, as they were when it opened,
+  // so a note being written stays open, and is saved to its record, if its row leaves the view.
+  const [panelOpen, setPanelOpen] = useState<{
+    row: Row<Rec>;
+    column: Column<Rec, Change>;
+    readOnly: boolean;
+  }>();
+  // Whether something is being changed in the side panel, rather than only read there.
+  const [panelWriting, setPanelWriting] = useState(false);
   // What is typed in the cell being edited: its text, or what narrows its choices.
   const [text, setText] = useState("");
   const [problem, setProblem] = useState<ShownProblem>();
@@ -1135,11 +1166,27 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     found && found.row !== -1 && found.column !== -1
       ? found
       : { row: 0, column: 0 };
-  const editing = editingAt === undefined ? undefined : cellAt(editingAt);
+  const placed = editingAt === undefined ? undefined : cellAt(editingAt);
+  // The cell being edited, while its row and column are shown.
+  const editing =
+    placed && placed.row !== -1 && placed.column !== -1 ? placed : undefined;
+  // What the side panel edits, if anything: a note only shown closes once its row is not.
+  const inPanel =
+    panelOpen && (editing !== undefined || !panelOpen.readOnly)
+      ? panelOpen
+      : undefined;
+  // A note being written closes only by its panel's own buttons, and keeps the table from changing
+  // values until then.
+  const writingInPanel =
+    inPanel !== undefined && !inPanel.readOnly && panelWriting;
   const setActive = (cell: Cell) => {
     setActiveAt(placeOf(cell));
   };
   const setEditing = (cell: Cell | undefined) => {
+    if (cell === undefined) {
+      setPanelOpen(undefined);
+      setPanelWriting(false);
+    }
     setEditingAt(cell === undefined ? undefined : placeOf(cell));
   };
   // A new row's value in a column: what is put in it, or what the column shows on a new row of its
@@ -1186,24 +1233,36 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     focusSoon(cellId(target.row, target.column));
   };
 
+  // Whether a cell's value may not change, as in a record nobody may change yet, or a column whose
+  // values follow from another's or that its kind of row does not have.
+  const readOnlyAt = (cell: Cell) => {
+    const { row, column } = at(cell);
+    return (
+      Boolean(row.record && locked(row.record)) ||
+      readOnlyFor(column, rowKind(row))
+    );
+  };
+
   // Starts editing a cell, or, for a kind edited in one step, such as a checkbox, saves the value
   // editing gives, unless what started it was typing.
   const startEdit = (cell: Cell, typed?: string) => {
     const { row, column } = at(cell);
-    if (
-      (row.record && locked(row.record)) ||
-      readOnlyFor(column, rowKind(row))
-    ) {
-      return;
-    }
+    const { toggled, inPanel: opensPanel } = kindOf(column);
+    if (readOnlyAt(cell) && opensPanel !== true) return;
+    // Typing does nothing in a cell edited in the side panel, as in a checkbox.
+    if (writingInPanel || (opensPanel === true && typed !== undefined)) return;
     const value = valueAt(row, column);
     setActive(cell);
-    const { toggled } = kindOf(column);
     if (toggled !== undefined) {
       if (typed === undefined) save(cell, toggled(value));
       return;
     }
     setEditing(cell);
+    setPanelOpen(
+      opensPanel === true
+        ? { row, column, readOnly: readOnlyAt(cell) }
+        : undefined,
+    );
     setMenuFor(undefined);
     setText(typed ?? (typeof value === "string" ? value : ""));
     focusSoon(`${cellId(cell.row, cell.column)}-editor`);
@@ -1271,6 +1330,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // would do, showing the problem on the row when it would not.
   const save = (cell: Cell, value: CellValue): boolean => {
     const { row, column } = at(cell);
+    return saveTo(row, column, value);
+  };
+
+  const saveTo = (
+    row: Row<Rec>,
+    column: Column<Rec, Change>,
+    value: CellValue,
+  ): boolean => {
     const key = rowKey(row);
     if (row.newRow) {
       const values = { ...row.newRow.values, [column.key]: value };
@@ -1529,7 +1596,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       if (row.newRow && clearable(row.newRow)) setMenuFor(rowKey(row));
       return;
     }
-    if (!plain || (row.record && locked(row.record))) return;
+    if (!plain) return;
+    if (row.record && locked(row.record)) {
+      if (
+        kindOf(column).inPanel === true &&
+        (event.key === "Enter" || event.key === "F2")
+      ) {
+        event.preventDefault();
+        startEdit(cell);
+      }
+      return;
+    }
     if (event.key === "Enter" && row.newRow && !emptyNewRow(row.newRow)) {
       event.preventDefault();
       submitNewRows();
@@ -1542,7 +1619,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       startEdit(cell);
     } else if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
-      if (readOnlyFor(column, rowKind(row))) return;
+      if (readOnlyFor(column, rowKind(row)) || writingInPanel) return;
       if (!save(cell, emptyValue(column))) putBack();
     } else if (event.key.length === 1) {
       event.preventDefault();
@@ -1554,7 +1631,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const onPaste = (event: ClipboardEvent, cell: Cell) => {
     const { row } = at(cell);
     const pasted = event.clipboardData.getData("text/plain");
-    if (!row.newRow || editing !== undefined || pasted.trim() === "") return;
+    if (
+      !row.newRow ||
+      editing !== undefined ||
+      writingInPanel ||
+      pasted.trim() === ""
+    ) {
+      return;
+    }
     event.preventDefault();
     const made = pastedRows(
       pasted,
@@ -1920,6 +2004,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           typed={text}
           invalid={invalid}
           describedBy={describedBy}
+          readOnly={readOnlyAt(cell)}
           onDone={(edited, how) => {
             finish(cell, edited, how);
           }}
@@ -2122,10 +2207,71 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     />
   );
 
+  const cellPanel = ((): SidePanel[] => {
+    if (inPanel === undefined) return [];
+    const { column, readOnly } = inPanel;
+    // A kind edited in the side panel has an editor.
+    const Editor = kindOf(column).Editor as (props: EditorProps) => ReactNode;
+    // The record as it is now while its row is shown, or as it was when the panel opened.
+    const row = editing === undefined ? inPanel.row : at(editing).row;
+    const key = rowKey(row);
+    const id = `cell-${key}-${column.key}-editor`;
+    const refused =
+      problem?.row === key && problem.column === column.key
+        ? problem.message
+        : undefined;
+    // The panel closes, and the cell it opened from, if shown, has focus again.
+    const close = () => {
+      setEditing(undefined);
+      if (editing !== undefined) moveTo(editing.row, editing.column);
+    };
+    return [
+      {
+        key: "cell",
+        id: `${id}-panel`,
+        name: column.label,
+        node: (
+          <Editor
+            key={id}
+            id={id}
+            column={column}
+            value={valueAt(row, column)}
+            typed=""
+            invalid={refused !== undefined}
+            problem={refused}
+            readOnly={readOnly}
+            onWriting={setPanelWriting}
+            onDone={(edited) => {
+              // A refused value keeps the panel open, with what was written and why.
+              if (saveTo(row, column, edited)) close();
+            }}
+            onCancel={() => {
+              setProblem(undefined);
+              close();
+            }}
+          />
+        ),
+      },
+    ];
+  })();
+  const sidePanels: SidePanel[] = [
+    ...cellPanel,
+    ...(metrics === false
+      ? []
+      : [
+          {
+            key: "metrics",
+            id: metricsPanelId,
+            name: "metrics",
+            node: metrics,
+          },
+        ]),
+  ];
+
   // Menus and choices stay shown beside their cell however the table scrolls, so they are not hidden
   // when the cell is partly out of view.
   return (
-    <WithMetrics panel={metrics}>
+    <WithSidePanel panels={sidePanels} storageKey="fathom-table-panel-width">
       <ViewBar
         one={table.one}
         noun={table.noun}
@@ -2293,7 +2439,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                       const has = offered(column, rowKind(row));
                       const editingHere =
                         editing?.row === rowIndex &&
-                        editing.column === columnIndex;
+                        editing.column === columnIndex &&
+                        inPanel === undefined;
                       const isActive =
                         active.row === rowIndex &&
                         active.column === columnIndex;
@@ -2350,7 +2497,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             }
                           }}
                           onClick={() => {
-                            if (kindOf(column).toggled !== undefined) {
+                            const kind = kindOf(column);
+                            if (
+                              kind.toggled !== undefined ||
+                              kind.inPanel === true
+                            ) {
                               startEdit(cell);
                             }
                           }}
@@ -2472,6 +2623,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           </Table>
         </div>
       </Paper>
-    </WithMetrics>
+    </WithSidePanel>
   );
 }

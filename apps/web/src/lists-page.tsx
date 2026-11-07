@@ -836,33 +836,44 @@ export function ListsPage({
         }
       />
       <WithSidePanel
-        label="Resize the list's panel"
-        controls={listPanelId}
         storageKey="fathom-record-panel-width"
-        panel={
-          open && (
-            <div data-list-panel id={listPanelId} className={classes.panelSlot}>
-              <ListPanel
-                key={open.id}
-                list={open}
-                canEdit={canEdit}
-                canApprove={canApprove}
-                showLive={show === "both"}
-                waits={(selection) =>
-                  waitsForRejected(selection, all, people.data)
-                }
-                draftActions={draftActions}
-                narrow={narrow}
-                actions={choiceActions(open)}
-                onClose={() => {
-                  closePanel(open);
-                }}
-                onEditList={() => {
-                  openDialog({ kind: "edit", list: open });
-                }}
-              />
-            </div>
-          )
+        panels={
+          open
+            ? [
+                {
+                  key: "list",
+                  id: listPanelId,
+                  name: "the list's panel",
+                  node: (
+                    <div
+                      data-list-panel
+                      id={listPanelId}
+                      className={classes.panelSlot}
+                    >
+                      <ListPanel
+                        key={open.id}
+                        list={open}
+                        canEdit={canEdit}
+                        canApprove={canApprove}
+                        showLive={show === "both"}
+                        waits={(selection) =>
+                          waitsForRejected(selection, all, people.data)
+                        }
+                        draftActions={draftActions}
+                        narrow={narrow}
+                        actions={choiceActions(open)}
+                        onClose={() => {
+                          closePanel(open);
+                        }}
+                        onEditList={() => {
+                          openDialog({ kind: "edit", list: open });
+                        }}
+                      />
+                    </div>
+                  ),
+                },
+              ]
+            : []
         }
       >
         {content}

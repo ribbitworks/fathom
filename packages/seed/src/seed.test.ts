@@ -174,6 +174,36 @@ describe("seeding", () => {
     expect(await seed(connection, organization)).toBe(true);
   });
 
+  it("records each note a removed person had", async () => {
+    const [person] = organization.people;
+    const personId = String(person?.id);
+    const note = "*Fictional* note";
+    const [column] = await connection
+      .insert(fields)
+      .values({
+        tableName: "people",
+        name: "Fictional Hand Note",
+        type: "note",
+        visibility: "general",
+      })
+      .returning({ id: fields.id });
+    const fieldId = String(column?.id);
+    await connection.insert(fieldValues).values({ fieldId, personId, note });
+    await unseed(connection, organization);
+    const [removed] = await connection
+      .select({ oldValue: changes.oldValue })
+      .from(changes)
+      .where(
+        and(
+          eq(changes.recordId, personId),
+          eq(changes.field, `value:${fieldId}`),
+        ),
+      );
+    expect(removed?.oldValue).toBe(note);
+    await connection.delete(fields).where(eq(fields.id, fieldId));
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
   it("keeps the seeded managers whom people added by hand report to, and those above them", async () => {
     const [line] = organization.reportingLines;
     const managerId = String(line?.managerId);

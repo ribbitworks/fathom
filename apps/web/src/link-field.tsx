@@ -76,8 +76,10 @@ export function LinkMenuItem({ name, link }: { name: string; link: Link }) {
   );
 }
 
-// Edits a cell's link, finishing with the link, or with null when both fields are emptied.
-export function LinkEditor({
+// A link's form, with the address, checked once it is left, and the text to show, which may be left
+// empty to show the address. Enter saves, Esc cancels, and Tab past the last field, or Shift+Tab
+// before the first, saves and moves on. What it gives back saves it as clicking away does.
+export function useLinkForm({
   id,
   name,
   initial,
@@ -138,6 +140,71 @@ export function LinkEditor({
     }
   };
 
+  const form = (
+    <form
+      noValidate
+      aria-label={name}
+      // The field describes itself; why the table refused the link is named under the row.
+      aria-describedby={describedBy}
+      onKeyDown={onKeyDown}
+      onSubmit={(event) => {
+        event.preventDefault();
+        finish("enter");
+      }}
+    >
+      <Stack gap="sm">
+        <Text fz="sm" fw={600}>
+          {name}
+        </Text>
+        <TextInput
+          id={id}
+          label="Address"
+          placeholder="example.com or http://wiki/"
+          data-autofocus
+          autoComplete="off"
+          value={address}
+          // A link the table refused marks its address, and is named under the row.
+          error={shownAddress ?? invalid}
+          onChange={(event) => {
+            setAddress(event.currentTarget.value);
+          }}
+          onBlur={() => {
+            setLeftAddress(address.trim() !== "");
+          }}
+        />
+        <TextInput
+          id={textId}
+          label="Text to show"
+          description="Leave empty to show the address."
+          autoComplete="off"
+          value={text}
+          error={problems.text}
+          rightSection={
+            <Count length={link.text.length} maximum={linkLengths.text} />
+          }
+          rightSectionWidth={56}
+          onChange={(event) => {
+            setText(event.currentTarget.value);
+          }}
+        />
+        <Group gap="xs" justify="flex-end">
+          <Button variant="default" size="compact-sm" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" size="compact-sm">
+            Save
+          </Button>
+        </Group>
+      </Stack>
+    </form>
+  );
+  return { form, finish };
+}
+
+// Edits a cell's link, finishing with the link, or with null when both fields are emptied.
+export function LinkEditor(props: Parameters<typeof useLinkForm>[0]) {
+  const { form, finish } = useLinkForm(props);
+  const { initial } = props;
   return (
     <Popover
       opened
@@ -157,64 +224,7 @@ export function LinkEditor({
           {initial ? linkLabel(initial) : ""}
         </span>
       </Popover.Target>
-      <Popover.Dropdown>
-        <form
-          noValidate
-          aria-label={name}
-          // The field describes itself; why the table refused the link is named under the row.
-          aria-describedby={describedBy}
-          onKeyDown={onKeyDown}
-          onSubmit={(event) => {
-            event.preventDefault();
-            finish("enter");
-          }}
-        >
-          <Stack gap="sm">
-            <Text fz="sm" fw={600}>
-              {name}
-            </Text>
-            <TextInput
-              id={id}
-              label="Address"
-              placeholder="example.com or http://wiki/"
-              data-autofocus
-              autoComplete="off"
-              value={address}
-              // A link the table refused marks its address, and is named under the row.
-              error={shownAddress ?? invalid}
-              onChange={(event) => {
-                setAddress(event.currentTarget.value);
-              }}
-              onBlur={() => {
-                setLeftAddress(address.trim() !== "");
-              }}
-            />
-            <TextInput
-              id={textId}
-              label="Text to show"
-              description="Leave empty to show the address."
-              autoComplete="off"
-              value={text}
-              error={problems.text}
-              rightSection={
-                <Count length={link.text.length} maximum={linkLengths.text} />
-              }
-              rightSectionWidth={56}
-              onChange={(event) => {
-                setText(event.currentTarget.value);
-              }}
-            />
-            <Group gap="xs" justify="flex-end">
-              <Button variant="default" size="compact-sm" onClick={onCancel}>
-                Cancel
-              </Button>
-              <Button type="submit" size="compact-sm">
-                Save
-              </Button>
-            </Group>
-          </Stack>
-        </form>
-      </Popover.Dropdown>
+      <Popover.Dropdown>{form}</Popover.Dropdown>
     </Popover>
   );
 }

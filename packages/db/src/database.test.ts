@@ -973,10 +973,20 @@ describe("planned hires", () => {
       expect(await errorCodeOf(link("https://wiki.example.test/other"))).toBe(
         uniqueViolation,
       );
+      const noteField = await client.query<{ id: string }>(
+        "INSERT INTO fields (table_name, name, type, visibility) VALUES ('people', 'Fictional Hire Notes', 'note', 'general') RETURNING id",
+      );
+      const note = (value: string) =>
+        client.query(
+          "INSERT INTO field_values (field_id, planned_hire_id, note) VALUES ($1, $2, $3)",
+          [noteField.rows[0]?.id, hire, value],
+        );
+      await note("Hiring soon");
+      expect(await errorCodeOf(note("Later"))).toBe(uniqueViolation);
       await client.query("DELETE FROM planned_hires WHERE id = $1", [hire]);
       const left = await client.query(
         "SELECT person_id FROM field_values WHERE field_id = ANY($1)",
-        [[fieldId, linkField.rows[0]?.id]],
+        [[fieldId, linkField.rows[0]?.id, noteField.rows[0]?.id]],
       );
       expect(left.rows).toEqual([{ person_id: person }]);
     });
@@ -1143,6 +1153,42 @@ describe("people and columns", () => {
         [other.personId],
       );
       expect(byField.rows).toHaveLength(0);
+    });
+  });
+
+  it("keeps one note for each person and note column, never empty, and never beside a choice or link", async () => {
+    await withClient(database.app, async (client) => {
+      const { fieldId, personId, choiceId } = await personWithChoice(
+        client,
+        "Fictional Noted",
+      );
+      const column = (settings: string) =>
+        client.query<{ id: string }>(
+          `INSERT INTO fields (table_name, name, type, visibility, list_id, multiple) VALUES ('people', 'Fictional Notes', 'note', ${settings}) RETURNING id`,
+        );
+      expect(await errorCodeOf(column("NULL, NULL, false"))).toBe(
+        checkViolation,
+      );
+      expect(
+        await errorCodeOf(
+          column(
+            `'general', (SELECT list_id FROM fields WHERE id = '${fieldId}'), false`,
+          ),
+        ),
+      ).toBe(checkViolation);
+      expect(await errorCodeOf(column("'general', NULL, true"))).toBe(
+        checkViolation,
+      );
+      const noteField = (await column("'general', NULL, false")).rows[0]?.id;
+      const note = (value: string, choice: string | null = null) =>
+        client.query(
+          "INSERT INTO field_values (field_id, person_id, note, choice_id) VALUES ($1, $2, $3, $4)",
+          [noteField, personId, value, choice],
+        );
+      expect(await errorCodeOf(note(""))).toBe(checkViolation);
+      expect(await errorCodeOf(note("*Kind*", choiceId))).toBe(checkViolation);
+      await note("*Kind*");
+      expect(await errorCodeOf(note("Another"))).toBe(uniqueViolation);
     });
   });
 });

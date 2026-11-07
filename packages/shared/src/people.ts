@@ -3,9 +3,9 @@
 // People and the columns people add to the People table. Every person has a preferred name, an
 // Employee ID, and a position, which are General, and may have start and end dates, which are
 // Restricted. A choice column draws on a list, and its values are choices from that list, as
-// sensitive as the list's visibility; a web link column holds one link for each person, as sensitive
-// as the column's own visibility. What a user receives leaves out what their role does not let them
-// see.
+// sensitive as the list's visibility; a web link column holds one link for each person, and a note
+// column one note, as sensitive as the column's own visibility. What a user receives leaves out what
+// their role does not let them see.
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
@@ -25,8 +25,8 @@ export const personLengths = {
 // A date without a time, such as 2026-10-31.
 const day = daySchema;
 
-// A column chooses from a list, or holds a web link. A column's type never changes.
-export const fieldTypeSchema = z.enum(["choice", "link"]);
+// A column chooses from a list, holds a web link, or holds a note. A column's type never changes.
+export const fieldTypeSchema = z.enum(["choice", "link", "note"]);
 
 export type FieldType = z.infer<typeof fieldTypeSchema>;
 
@@ -51,13 +51,13 @@ export type FieldDraft = z.infer<typeof fieldDraftSchema>;
 
 // A column on the People table. The column decides what it is called and whether a value is
 // required; a choice column also decides its list and whether one choice or several can be picked,
-// and a web link column the visibility of its links. It is as its draft, if any, makes it, with the
-// draft beside, or, for a draft that removes it, as it is.
+// and a web link or note column the visibility of its values. It is as its draft, if any, makes it,
+// with the draft beside, or, for a draft that removes it, as it is.
 export const fieldSchema = z.object({
   id: z.string(),
   name: z.string(),
   type: fieldTypeSchema.default("choice"),
-  // Null for a web link column.
+  // Null for a web link or note column.
   listId: z.string().nullable(),
   // Null for a choice column, whose list's visibility is its own.
   visibility: tierSchema.nullable().default(null),
@@ -86,6 +86,16 @@ export type Links = Record<string, Link>;
 
 // Links asked for, by column; null removes a column's link.
 const requestedLinksSchema = z.record(z.uuid(), linkValueSchema.nullable());
+
+// Each note column's note, as Markdown, by column. A column with no note is left out. The server
+// always names them, if only as none.
+const notesSchema = z.record(z.string(), z.string());
+
+export type Notes = Record<string, string>;
+
+// Notes asked for, by column, as Markdown, which the server checks; null or an empty note removes a
+// column's note.
+const requestedNotesSchema = z.record(z.uuid(), z.string().nullable());
 
 // Choices asked for, by column: each a choice's identifier, at most once.
 const requestedValuesSchema = z.record(
@@ -117,6 +127,7 @@ export const personDraftSchema = z.object({
     stateId: z.string().optional(),
     values: valuesSchema,
     links: linksSchema.default({}),
+    notes: notesSchema.optional(),
   }),
   ...draftShape,
 });
@@ -170,6 +181,7 @@ export const personSchema = z.object({
   isManager: z.boolean().optional(),
   values: valuesSchema,
   links: linksSchema.default({}),
+  notes: notesSchema.optional(),
   draft: personDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -248,6 +260,7 @@ export const personRequestSchema = z.object({
   ...reporting,
   values: requestedValuesSchema.default({}),
   links: z.record(z.uuid(), linkValueSchema).default({}),
+  notes: requestedNotesSchema.optional(),
 });
 
 export type PersonRequest = z.infer<typeof personRequestSchema>;
@@ -257,8 +270,8 @@ export const peopleRequestSchema = z.object({
   people: z.array(personRequestSchema).min(1).max(1000),
 });
 
-// Changes some of a person's details; columns named in values have their choices replaced, and
-// those named in links their link.
+// Changes some of a person's details; columns named in values have their choices replaced, those
+// named in links their link, and those named in notes their note.
 export const personChangeSchema = z.object({
   preferredName: preferredName.optional(),
   employeeId: employeeId.optional(),
@@ -268,12 +281,16 @@ export const personChangeSchema = z.object({
   ...reporting,
   values: requestedValuesSchema.optional(),
   links: requestedLinksSchema.optional(),
+  notes: requestedNotesSchema.optional(),
 });
 
 export type PersonChange = z.infer<typeof personChangeSchema>;
 
-// A choice column names its list, and takes its visibility from it; a web link column names its
-// visibility, no list, and takes one link.
+const webLink = { kind: "web link", value: "link" };
+const note = { kind: "note", value: "note" };
+
+// A choice column names its list, and takes its visibility from it; a web link or note column names
+// its visibility, no list, and takes one link or one note.
 export const fieldRequestSchema = z
   .object({
     name: z.string().trim().min(1).max(personLengths.column),
@@ -290,9 +307,10 @@ export const fieldRequestSchema = z
     if (request.type === "choice") {
       if (request.listId === undefined) issue("Choose a list");
     } else {
+      const { kind, value } = request.type === "link" ? webLink : note;
       if (request.visibility === undefined) issue("Choose a visibility");
-      if (request.listId !== undefined) issue("A web link column has no list");
-      if (request.multiple) issue("A web link column holds one link");
+      if (request.listId !== undefined) issue(`A ${kind} column has no list`);
+      if (request.multiple) issue(`A ${kind} column holds one ${value}`);
     }
   })
   .transform((request) =>

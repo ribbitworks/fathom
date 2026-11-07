@@ -2,56 +2,6 @@
 
 /* Styles for the Metrics panel and the table it sits beside. */
 
-.panel,
-.panelNarrow {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  background: var(--mantine-color-body);
-  border: 1px solid var(--mantine-color-default-border);
-  border-radius: var(--mantine-radius-default);
-}
-
-.panel {
-  flex: 1;
-  min-width: 0;
-}
-
-/* On a narrow screen the panel covers the screen below the top bar. */
-.panelNarrow {
-  position: fixed;
-  top: var(--app-shell-header-offset, 56px);
-  right: 0;
-  bottom: 0;
-  left: 0;
-  /* The same layer as the Lists page's side panel, above the table's header row. */
-  z-index: 150;
-  border: 0;
-  border-radius: 0;
-}
-
-.head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 12px 4px 16px;
-}
-
-.title {
-  flex: 1;
-  margin: 0;
-  font-size: 18px;
-  line-height: 28px;
-  font-weight: 600;
-}
-
-.body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0 16px 16px;
-}
-
 .pickers {
   display: grid;
   /* One picker alone takes the whole width, so its choices are not cut short. */

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // What each kind of cell in a table of records holds and how it behaves, so a new kind of column is
-// added in one place: text, such as a name; a date; choices from a list; a web link; and a
-// checkbox. Each kind says how a record's value is read, live or as drafted, what clears it, how it
+// added in one place: text, such as a name; a date; choices from a list; a web link; a note; and
+// a checkbox. Each kind says how a record's value is read, live or as drafted, what clears it, how it
 // reads in words, what a pasted cell gives, the change that saves it, how wide its column is, and
 // whether its column is worth breaking down by. A kind with an editor, cell, or menu item of its
 // own names it; the rest are edited as text and shown in words.
@@ -14,7 +14,10 @@ import {
   isLink,
   type Link,
   linkInWords,
+  cleanNote,
   linkLabel,
+  notePlainText,
+  noteProblem,
   typedDay,
   webAddress,
 } from "@fathom/shared";
@@ -22,6 +25,7 @@ import type { ReactNode } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
 import { FlagCell } from "./flag-field.tsx";
 import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
+import { NoteCell, NotePanel, notePreview } from "./note-editor.tsx";
 import { offered, sameName } from "./lists.ts";
 import {
   type CellValue,
@@ -48,6 +52,7 @@ export interface CellSource {
   [detail: string]: unknown;
   values: Readonly<Record<string, string[]>>;
   links: Readonly<Record<string, Link>>;
+  notes?: Readonly<Record<string, string>> | undefined;
 }
 
 // The change that saves a value: a detail by its key, or an added column's choices or link.
@@ -55,6 +60,7 @@ export interface CellChange {
   [detail: string]: unknown;
   values?: Record<string, string[]> | undefined;
   links?: Record<string, Link | null> | undefined;
+  notes?: Record<string, string | null> | undefined;
 }
 
 export interface EditorProps {
@@ -66,6 +72,13 @@ export interface EditorProps {
   // Whether the value was refused or is wrong, and what names why, when it is shown.
   invalid: boolean;
   describedBy?: string | undefined;
+  // For an editor that shows its own problem, such as a note's panel: why its value was refused.
+  problem?: string | undefined;
+  // Whether the cell may only be read, for a kind whose editor also shows its value whole.
+  readOnly: boolean;
+  // For an editor in the side panel: whether a value is being changed there, so the table waits for
+  // it, rather than only read.
+  onWriting?: (writing: boolean) => void;
   onDone: (value: CellValue, how: Finish) => void;
   onCancel: () => void;
 }
@@ -99,6 +112,9 @@ export interface CellKind {
   // For a kind edited in one step, such as a checkbox: the value editing gives, in place of an
   // editor.
   toggled?: (value: CellValue) => CellValue;
+  // For a kind edited in the side panel beside the table, such as a note: a click opens it too,
+  // read only where the cell may not change.
+  inPanel?: boolean;
   Cell?: (props: { value: CellValue }) => ReactNode;
   MenuItem?: (props: { name: string; value: CellValue }) => ReactNode;
 }
@@ -284,6 +300,51 @@ const link: CellKind = {
   },
 };
 
+// A note column's cells always hold a note's Markdown, empty for none.
+const noteOf = (value: CellValue): string => value as string;
+
+const note: CellKind = {
+  empty: "",
+  // The key is a column's own.
+  // eslint-disable-next-line security/detect-object-injection
+  read: (source, key) => source.notes?.[key] ?? "",
+  inWords: (_column, value) => notePreview(noteOf(value)),
+  inDetail: (_column, value) => notePlainText(noteOf(value)),
+  problem: (_column, value) => noteProblem(noteOf(value)),
+  pasted: (_column, content) => ({ value: cleanNote(content) }),
+  change: (key, value) => ({
+    notes: { [key]: noteOf(value) === "" ? null : noteOf(value) },
+  }),
+  width: () => 30,
+  measured: false,
+  breaksDownWhenRequired: false,
+  inPanel: true,
+  Editor: ({
+    id,
+    column,
+    value,
+    problem,
+    readOnly,
+    onWriting,
+    onDone,
+    onCancel,
+  }) => (
+    <NotePanel
+      id={id}
+      title={column.label}
+      note={noteOf(value)}
+      refused={problem}
+      canEdit={!readOnly}
+      onWriting={onWriting}
+      onSave={(saved) => {
+        onDone(saved, "leave");
+      }}
+      onClose={onCancel}
+    />
+  ),
+  Cell: ({ value }) => <NoteCell note={noteOf(value)} />,
+};
+
 // A checkbox, read from a detail held as true or false, checked when it holds its one choice.
 export const flagChoice = "yes";
 
@@ -315,5 +376,6 @@ export const cellKinds: Readonly<Record<Kind, CellKind>> = {
   date,
   choice,
   link,
+  note,
   flag,
 };

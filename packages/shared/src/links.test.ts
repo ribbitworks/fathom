@@ -12,6 +12,7 @@ import {
   linkProblems,
   linkValueSchema,
   shortAddress,
+  shownLinkText,
   webAddress,
 } from "./links.ts";
 
@@ -199,5 +200,29 @@ describe("a link's host and shape", () => {
   it("shortens an address to its host, without www.", () => {
     expect(shortAddress("https://www.example.com/a?b#c")).toBe("example.com");
     expect(shortAddress("HTTP://wiki")).toBe("wiki");
+  });
+
+  it("shows text that only repeats its address as the host, and other text as it is", () => {
+    expect(
+      [
+        ["https://www.example.com/news", "https://www.example.com/news"],
+        ["http://example.com", "Example.com/"],
+        ["https://example.com/news", "example.com/other"],
+        ["https://example.com/", "Site"],
+        ["https://example.com/Plan", "EXAMPLE.com/Plan"],
+        ["https://example.com/Plan", "example.com/plan"],
+        ["https://example.com/?a", "example.com?a"],
+      ].map(([address, text]) =>
+        shownLinkText(address as string, text as string),
+      ),
+    ).toEqual([
+      "example.com",
+      "example.com",
+      "example.com/other",
+      "Site",
+      "example.com",
+      "example.com/plan",
+      "example.com?a",
+    ]);
   });
 });

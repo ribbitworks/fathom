@@ -564,8 +564,13 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
         ),
       ),
     ),
+    ...withNotes(parts.flatMap((part) => Object.entries(part.notes ?? {}))),
   };
 }
+
+// A new person's notes, left out when they have none, as for those added before notes were.
+const withNotes = (notes: [string, string | null][]) =>
+  notes.length === 0 ? {} : { notes: Object.fromEntries(notes) };
 
 function peopleTable(
   showDates: boolean,

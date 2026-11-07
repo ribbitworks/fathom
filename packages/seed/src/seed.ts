@@ -350,21 +350,25 @@ export async function unseed(
         choiceId: fieldValues.choiceId,
         linkAddress: fieldValues.linkAddress,
         linkText: fieldValues.linkText,
+        note: fieldValues.note,
       })
       .from(fieldValues)
       .where(inArray(fieldValues.personId, presentIds));
     for (const row of present) {
       const byColumn = new Map<string, string[]>();
-      const links: Record<string, { address: string; text: string }> = {};
-      for (const { personId, fieldId, choiceId, ...link } of held) {
+      const single: Record<string, { address: string; text: string } | string> =
+        {};
+      for (const { personId, fieldId, choiceId, note, ...link } of held) {
         if (personId !== row.id) continue;
-        if (choiceId === null) {
-          links[valueField(fieldId)] = {
+        if (choiceId !== null) {
+          byColumn.set(fieldId, [...(byColumn.get(fieldId) ?? []), choiceId]);
+        } else if (note !== null) {
+          single[valueField(fieldId)] = note;
+        } else {
+          single[valueField(fieldId)] = {
             address: String(link.linkAddress),
             text: String(link.linkText),
           };
-        } else {
-          byColumn.set(fieldId, [...(byColumn.get(fieldId) ?? []), choiceId]);
         }
       }
       made.push(
@@ -377,7 +381,7 @@ export async function unseed(
               { ...row, values: Object.fromEntries(byColumn) },
               reportingOf(currentLine.get(row.id), teamNames.get(row.id)),
             ),
-            ...links,
+            ...single,
           },
           restrictedFields,
         ),

@@ -973,21 +973,28 @@ export function ReleasesPage({
         }
       />
       <WithSidePanel
-        label="Resize the stream's panel"
-        controls={panelId}
         storageKey="fathom-record-panel-width"
-        panel={
-          open && (
-            <StreamPanel
-              key={open.id}
-              stream={open}
-              actions={actions}
-              narrow={narrow}
-              onClose={() => {
-                closePanel(open);
-              }}
-            />
-          )
+        panels={
+          open
+            ? [
+                {
+                  key: "stream",
+                  id: panelId,
+                  name: "the stream's panel",
+                  node: (
+                    <StreamPanel
+                      key={open.id}
+                      stream={open}
+                      actions={actions}
+                      narrow={narrow}
+                      onClose={() => {
+                        closePanel(open);
+                      }}
+                    />
+                  ),
+                },
+              ]
+            : []
         }
       >
         {streams.length === 0 ? (

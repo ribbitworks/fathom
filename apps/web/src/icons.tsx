@@ -86,6 +86,9 @@ const paths = {
     </>
   ),
   close: <path d="M4 4l8 8M12 4l-8 8" />,
+  link: (
+    <path d="M6.5 9.5l3-3M7 4.5l1-1a2.5 2.5 0 0 1 3.5 3.5l-1 1M9 11.5l-1 1A2.5 2.5 0 0 1 4.5 9l1-1" />
+  ),
   rolesHelp: <path d="M8 2l5 2v4c0 3-2.2 5-5 6-2.8-1-5-3-5-6V4z" />,
   draftsHelp: (
     <>

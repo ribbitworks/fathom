@@ -40,6 +40,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Change History | Done |
 | Draft and Approval | Done |
 | Web Link Columns | Done |
+| Note Columns | In progress: the shared note format and a Note column on People; next, notes on releases |
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
 | Org Chart Additions | In progress: team colours; next drafts on the chart, then the person detail view, then chart fields, filters, and sort |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
@@ -95,6 +96,10 @@ It is built in two steps. The first gives people drafts: shown in place on the P
 ### Web Link Columns
 
 A second type of column on People, Web link: each person's value is one web address, http or https only, intranet hosts included, never a file or folder, with an optional name shown in its place. A Web link column sets its own visibility, since it has no list to take one from.
+
+### Note Columns
+
+A third type of column on People, Note: each person's value is one rich-text note, kept as Markdown holding only the formats the [Decisions Log](../product/decisions.md#configuration) allows, and written in a side panel in an editor or as Markdown. A Note column sets its own visibility, as a Web link column does. The note format is shared, so releases gain notes next, in the same way.
 
 ### Teams and Reporting Lines
 
