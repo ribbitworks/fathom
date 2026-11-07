@@ -42,6 +42,7 @@ export const fieldDraftSchema = z.object({
       visibility: tierSchema.nullable(),
       multiple: z.boolean(),
       required: z.boolean(),
+      onPlannedHires: z.boolean(),
     })
     .partial(),
   ...draftShape,
@@ -52,7 +53,8 @@ export type FieldDraft = z.infer<typeof fieldDraftSchema>;
 // A column on the People table. The column decides what it is called and whether a value is
 // required; a choice column also decides its list and whether one choice or several can be picked,
 // and a web link or note column the visibility of its values. It is as its draft, if any, makes it,
-// with the draft beside, or, for a draft that removes it, as it is.
+// with the draft beside, or, for a draft that removes it, as it is. A column is offered on planned
+// hires too unless it is switched off for them, and is never required on them.
 export const fieldSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -63,6 +65,7 @@ export const fieldSchema = z.object({
   visibility: tierSchema.nullable().default(null),
   multiple: z.boolean(),
   required: z.boolean(),
+  onPlannedHires: z.boolean().default(true),
   draft: fieldDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -74,10 +77,10 @@ const choicesLimit = 100;
 
 // The chosen choices of each column, by column, in the list's order. A column with nothing chosen
 // is left out.
-const valuesSchema = z.record(z.string(), z.array(z.string()));
+export const valuesSchema = z.record(z.string(), z.array(z.string()));
 
 // Each web link column's link, by column. A column with no link is left out.
-const linksSchema = z.record(
+export const linksSchema = z.record(
   z.string(),
   z.object({ address: z.string(), text: z.string() }),
 );
@@ -85,20 +88,23 @@ const linksSchema = z.record(
 export type Links = Record<string, Link>;
 
 // Links asked for, by column; null removes a column's link.
-const requestedLinksSchema = z.record(z.uuid(), linkValueSchema.nullable());
+export const requestedLinksSchema = z.record(
+  z.uuid(),
+  linkValueSchema.nullable(),
+);
 
 // Each note column's note, as Markdown, by column. A column with no note is left out. The server
 // always names them, if only as none.
-const notesSchema = z.record(z.string(), z.string());
+export const notesSchema = z.record(z.string(), z.string());
 
 export type Notes = Record<string, string>;
 
 // Notes asked for, by column, as Markdown, which the server checks; null or an empty note removes a
 // column's note.
-const requestedNotesSchema = z.record(z.uuid(), z.string().nullable());
+export const requestedNotesSchema = z.record(z.uuid(), z.string().nullable());
 
 // Choices asked for, by column: each a choice's identifier, at most once.
-const requestedValuesSchema = z.record(
+export const requestedValuesSchema = z.record(
   z.uuid(),
   z
     .array(z.uuid())
@@ -299,6 +305,7 @@ export const fieldRequestSchema = z
     visibility: tierSchema.optional(),
     multiple: z.boolean().default(false),
     required: z.boolean().default(false),
+    onPlannedHires: z.boolean().default(true),
   })
   .superRefine((request, context) => {
     const issue = (message: string) => {

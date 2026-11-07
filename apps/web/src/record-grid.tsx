@@ -1203,6 +1203,16 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       ? undefined
       : column.standIn(row.record);
 
+  // What an empty cell of a record's Live row shows in grey, worked out from the record as it is
+  // live, so a stand-in made from other cells uses their live values too.
+  const liveStandIn = (record: Rec, column: Column<Rec, Change>) => {
+    if (column.standIn === undefined) return undefined;
+    const [live] = table.liveRecords([record]);
+    return live === undefined || column.value(live) !== ""
+      ? undefined
+      : column.standIn(live);
+  };
+
   // Focuses a cell of a new row by its key, since the row may not be drawn yet.
   const focusNew = (newKey: number) => {
     const place = { row: `new-${String(newKey)}`, column: String(keys[0]) };
@@ -2593,25 +2603,39 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         className={classes.recordLiveRow}
                         aria-hidden="true"
                       >
-                        {columns.flatMap((column, columnIndex) => [
-                          <Table.Td
-                            key={column.key}
-                            className={classes.recordCell}
-                          >
-                            {liveContent(
-                              liveColumn(column),
-                              changedIn(draft, column)
-                                ? column.live(draft)
-                                : column.value(record),
-                            )}
-                            {columnIndex === 0 && (
-                              <StatusMark tone="live" spaced>
-                                Live
-                              </StatusMark>
-                            )}
-                          </Table.Td>,
-                          liveCellBeside(row.record, column),
-                        ])}
+                        {columns.flatMap((column, columnIndex) => {
+                          const standIn = liveStandIn(record, column);
+                          return [
+                            <Table.Td
+                              key={column.key}
+                              className={classes.recordCell}
+                            >
+                              {standIn === undefined ? (
+                                liveContent(
+                                  liveColumn(column),
+                                  changedIn(draft, column)
+                                    ? column.live(draft)
+                                    : column.value(record),
+                                )
+                              ) : (
+                                <Text
+                                  component="span"
+                                  inherit
+                                  c="dimmed"
+                                  fs="italic"
+                                >
+                                  {standIn}
+                                </Text>
+                              )}
+                              {columnIndex === 0 && (
+                                <StatusMark tone="live" spaced>
+                                  Live
+                                </StatusMark>
+                              )}
+                            </Table.Td>,
+                            liveCellBeside(row.record, column),
+                          ];
+                        })}
                         {withActions && (
                           <Table.Td className={classes.recordCell} />
                         )}

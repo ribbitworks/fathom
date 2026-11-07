@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The fictional organization's planned hires, from @fathom/fixtures: added live, as made by Fathom
-// itself, each in the first hiring state with its meaning, and those without a requisition given a
-// temporary ID; then drafts the Engineering Operations Manager makes and publishes, moving a
-// proposed hire to an open state, adding a hire, and changing a target date, which the Engineering
-// Director rejects. Removing the seed data discards the drafts of seeded hires, and of hires
-// drafted under seeded people, and then removes the seeded hires with the rest. A development-only
-// package, never included in the runtime image.
+// itself, each in the first hiring state with its meaning, with its values in the columns it shares
+// with people, and those without a requisition given a temporary ID; then drafts the Engineering
+// Operations Manager makes and publishes, moving a proposed hire to an open state, adding a hire,
+// and changing a target date, which the Engineering Director rejects. Removing the seed data
+// discards the drafts of seeded hires, and of hires drafted under seeded people, and then removes
+// the seeded hires with the rest. A development-only package, never included in the runtime image.
 
 import {
   type ChangeRecord,
   type Database,
   drafts,
+  fieldOfValue,
+  fieldValues,
   listItems,
   lists,
   plannedHires,
   plannedHireTemporaryNumbers,
   recordChanges,
+  valueField,
 } from "@fathom/db";
 import type { FictionalHire, FictionalOrganization } from "@fathom/fixtures";
 import { createDataAccess } from "@fathom/server/data";
@@ -35,7 +38,8 @@ type Reader = Pick<Database, "select">;
 type HireRow = typeof plannedHires.$inferSelect;
 
 // The first choice of the hiring states list with each meaning, and the tier of the Positions and
-// hiring states lists, which a hire's position and state are recorded at.
+// hiring states lists, which a hire's position and state are recorded at. Its values are as the
+// seeded lists, which are General.
 async function hiringSettings(reader: Reader) {
   const states = await reader
     .select({ id: listItems.id, meaning: listItems.meaning })
@@ -59,6 +63,7 @@ async function hiringSettings(reader: Reader) {
     tierOf: (field: string) => {
       if (field === "positionId") return String(tiers.get("positions"));
       if (field === "stateId") return String(tiers.get("hiring-states"));
+      if (fieldOfValue(field) !== null) return "general";
       return "confidential";
     },
   };
@@ -67,11 +72,20 @@ async function hiringSettings(reader: Reader) {
 // The changes that record a hire's fields being created or deleted, each at its tier.
 function recorded(
   row: HireRow,
+  values: Readonly<Record<string, unknown>>,
   action: Change["action"],
   tierOf: (field: string) => string,
 ): Change[] {
   const { id, ...details } = row;
-  return Object.entries(details)
+  return Object.entries({
+    ...details,
+    ...Object.fromEntries(
+      Object.entries(values).map(([columnId, chosen]) => [
+        valueField(columnId),
+        chosen,
+      ]),
+    ),
+  })
     .filter(([, value]) => value !== null)
     .map(([field, value]) => ({
       recordType: "planned-hire",
@@ -102,7 +116,12 @@ export async function seedHires(
     if (present.length > 0 || organization.hires.length === 0) return false;
     const { stateOf, tierOf } = await hiringSettings(transaction);
     const made: Change[] = [];
-    for (const { meaning, requisition, ...hire } of organization.hires) {
+    for (const {
+      meaning,
+      requisition,
+      values,
+      ...hire
+    } of organization.hires) {
       const temporaryNumber =
         requisition === null
           ? Number(
@@ -120,7 +139,16 @@ export async function seedHires(
         stateId: stateOf(meaning),
       };
       await transaction.insert(plannedHires).values(row);
-      made.push(...recorded(row, "created", tierOf));
+      const chosen = Object.entries(values).flatMap(([fieldId, choiceIds]) =>
+        choiceIds.map((choiceId) => ({
+          fieldId,
+          plannedHireId: row.id,
+          choiceId,
+        })),
+      );
+      if (chosen.length > 0)
+        await transaction.insert(fieldValues).values(chosen);
+      made.push(...recorded(row, values, "created", tierOf));
     }
     // Made by Fathom itself.
     await recordChanges(transaction, null, made);
@@ -189,6 +217,8 @@ export async function seedHireDrafts(
       positionId: open.positionId,
       targetDate: open.targetDate,
       managerId: open.managerId,
+      values: {},
+      links: {},
     },
   ]);
   await data.hires.update(editor, open.id, { targetDate: null });
@@ -239,11 +269,34 @@ export async function removeSeededHires(
       ),
     );
   if (seeded.length === 0) return [];
-  await transaction.delete(plannedHires).where(
-    inArray(
-      plannedHires.id,
-      seeded.map(({ id }) => id),
-    ),
+  const ids = seeded.map(({ id }) => id);
+  // Each hire's values as the change history records them: its choices, in list order, a link, or
+  // a note, by column.
+  const held = await transaction
+    .select()
+    .from(fieldValues)
+    .leftJoin(listItems, eq(listItems.id, fieldValues.choiceId))
+    .where(inArray(fieldValues.plannedHireId, ids))
+    .orderBy(asc(listItems.position));
+  const valuesOf = new Map<string, Record<string, unknown>>();
+  for (const { field_values: value } of held) {
+    const hire = valuesOf.get(String(value.plannedHireId)) ?? {};
+    if (value.choiceId !== null) {
+      const chosen = hire[value.fieldId];
+      hire[value.fieldId] = [
+        ...(Array.isArray(chosen) ? (chosen as unknown[]) : []),
+        value.choiceId,
+      ];
+    } else if (value.linkAddress !== null) {
+      hire[value.fieldId] = {
+        address: value.linkAddress,
+        text: String(value.linkText),
+      };
+    } else hire[value.fieldId] = value.note;
+    valuesOf.set(String(value.plannedHireId), hire);
+  }
+  await transaction.delete(plannedHires).where(inArray(plannedHires.id, ids));
+  return seeded.flatMap((row) =>
+    recorded(row, valuesOf.get(row.id) ?? {}, "deleted", tierOf),
   );
-  return seeded.flatMap((row) => recorded(row, "deleted", tierOf));
 }

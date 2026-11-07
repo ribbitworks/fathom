@@ -88,6 +88,7 @@ export const fieldRecord = (row: FieldRow): Recorded => ({
   visibility: row.visibility,
   multiple: row.multiple,
   required: row.required,
+  onPlannedHires: row.onPlannedHires,
 });
 
 // The People table's columns, live and in drafts, the live order of every column, and the draft of
@@ -356,6 +357,7 @@ export const toFieldOut = (id: string, field: Recorded): Field => {
     visibility,
     multiple,
     required: field.required === true,
+    onPlannedHires: field.onPlannedHires === true,
   };
 };
 
@@ -368,6 +370,7 @@ const requested = (request: FieldRequest): Recorded => ({
   visibility: request.visibility ?? null,
   multiple: request.multiple,
   required: request.required,
+  onPlannedHires: request.onPlannedHires,
 });
 
 const sameType = "A column's type cannot change";

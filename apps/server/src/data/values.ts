@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The values of columns on people: one row for each person, column, and chosen choice, or for each
-// person and web link or note column, as ADR 0005 sets out. Part of the data access layer. In the
-// change history, a person's values for a column are one field of the person, named after the
-// column, holding the chosen choices in the list's order, the link, or the note, as sensitive as the
-// column's list, or a web link or note column's own visibility.
+// The values of columns on people and planned hires: one row for each record, column, and chosen
+// choice, or for each record and web link or note column, as ADR 0005 sets out. Part of the data
+// access layer. In the change history, a record's values for a column are one field of the record,
+// named after the column, holding the chosen choices in the list's order, the link, or the note, as
+// sensitive as the column's list, or a web link or note column's own visibility.
 
 import { storedTier } from "../access.ts";
 import { isNote, typeOf } from "./column-types.ts";
@@ -22,6 +22,15 @@ type Reader = Pick<Database, "select">;
 export type FieldRow = typeof fields.$inferSelect;
 
 export { fieldOfValue, valueField } from "@fathom/db";
+
+// The kinds of record that hold values in People's columns, each in its own owner column.
+export type ValueOwner = "person" | "planned-hire";
+
+const ownerColumn = (owner: ValueOwner) =>
+  owner === "person" ? fieldValues.personId : fieldValues.plannedHireId;
+
+const ownerKey = (owner: ValueOwner) =>
+  owner === "person" ? "personId" : "plannedHireId";
 
 // A column with the tier of its values, which is its list's visibility, or a web link column's own,
 // and whether its list is retired.
@@ -93,42 +102,50 @@ export const valuesTier = (
 // a note.
 export type FieldValue = string[] | Link | string;
 
-// Each person's values, by person and column, for the people and columns given: chosen choices in
-// their list's order, links, and notes.
+// Each record's values, by record and column, for the people, or planned hires, and columns given:
+// chosen choices in their list's order, links, and notes.
 export async function readValues(
   reader: Reader,
-  personIds: readonly string[],
+  recordIds: readonly string[],
   fieldIds: readonly string[],
+  owner: ValueOwner,
 ): Promise<Map<string, Map<string, FieldValue>>> {
   const values = new Map<string, Map<string, FieldValue>>();
-  for (const [personId, byField] of await readChoices(
+  for (const [recordId, byField] of await readChoices(
     reader,
-    personIds,
+    recordIds,
     fieldIds,
+    owner,
   )) {
-    values.set(personId, new Map(byField));
+    values.set(recordId, new Map(byField));
   }
   for (const read of [readLinks, readNotes]) {
-    for (const [personId, byField] of await read(reader, personIds, fieldIds)) {
-      const held = values.get(personId) ?? new Map<string, FieldValue>();
+    for (const [recordId, byField] of await read(
+      reader,
+      recordIds,
+      fieldIds,
+      owner,
+    )) {
+      const held = values.get(recordId) ?? new Map<string, FieldValue>();
       for (const [fieldId, value] of byField) held.set(fieldId, value);
-      values.set(personId, held);
+      values.set(recordId, held);
     }
   }
   return values;
 }
 
-// Each person's chosen choices, by person and column, in their list's order.
+// Each record's chosen choices, by record and column, in their list's order.
 async function readChoices(
   reader: Reader,
-  personIds: readonly string[],
+  recordIds: readonly string[],
   fieldIds: readonly string[],
+  owner: ValueOwner,
 ): Promise<Map<string, Map<string, string[]>>> {
   const values = new Map<string, Map<string, string[]>>();
-  if (personIds.length === 0 || fieldIds.length === 0) return values;
+  if (recordIds.length === 0 || fieldIds.length === 0) return values;
   const rows = await reader
     .select({
-      personId: fieldValues.personId,
+      recordId: ownerColumn(owner),
       fieldId: fieldValues.fieldId,
       choiceId: fieldValues.choiceId,
     })
@@ -136,33 +153,34 @@ async function readChoices(
     .innerJoin(listItems, eq(listItems.id, fieldValues.choiceId))
     .where(
       and(
-        inArray(fieldValues.personId, [...personIds]),
+        inArray(ownerColumn(owner), [...recordIds]),
         inArray(fieldValues.fieldId, [...fieldIds]),
       ),
     )
     .orderBy(asc(listItems.position), asc(listItems.id));
   for (const { fieldId, choiceId, ...row } of rows) {
-    // Values found by person always have one.
-    const personId = String(row.personId);
-    const byField = values.get(personId) ?? new Map<string, string[]>();
+    // Values found by their record always have one.
+    const recordId = String(row.recordId);
+    const byField = values.get(recordId) ?? new Map<string, string[]>();
     // Joined to their choice, so never null.
     byField.set(fieldId, [...(byField.get(fieldId) ?? []), String(choiceId)]);
-    values.set(personId, byField);
+    values.set(recordId, byField);
   }
   return values;
 }
 
-// Each person's links, by person and column.
+// Each record's links, by record and column.
 async function readLinks(
   reader: Reader,
-  personIds: readonly string[],
+  recordIds: readonly string[],
   fieldIds: readonly string[],
+  owner: ValueOwner,
 ): Promise<Map<string, Map<string, Link>>> {
   const links = new Map<string, Map<string, Link>>();
-  if (personIds.length === 0 || fieldIds.length === 0) return links;
+  if (recordIds.length === 0 || fieldIds.length === 0) return links;
   const rows = await reader
     .select({
-      personId: fieldValues.personId,
+      recordId: ownerColumn(owner),
       fieldId: fieldValues.fieldId,
       address: fieldValues.linkAddress,
       text: fieldValues.linkText,
@@ -170,48 +188,49 @@ async function readLinks(
     .from(fieldValues)
     .where(
       and(
-        inArray(fieldValues.personId, [...personIds]),
+        inArray(ownerColumn(owner), [...recordIds]),
         inArray(fieldValues.fieldId, [...fieldIds]),
         isNotNull(fieldValues.linkAddress),
       ),
     );
   for (const { fieldId, address, text, ...row } of rows) {
-    const personId = String(row.personId);
-    const byField = links.get(personId) ?? new Map<string, Link>();
+    const recordId = String(row.recordId);
+    const byField = links.get(recordId) ?? new Map<string, Link>();
     // The database sets the text with the address.
     byField.set(fieldId, { address: String(address), text: String(text) });
-    links.set(personId, byField);
+    links.set(recordId, byField);
   }
   return links;
 }
 
-// Each person's notes, by person and column.
+// Each record's notes, by record and column.
 async function readNotes(
   reader: Reader,
-  personIds: readonly string[],
+  recordIds: readonly string[],
   fieldIds: readonly string[],
+  owner: ValueOwner,
 ): Promise<Map<string, Map<string, string>>> {
   const notes = new Map<string, Map<string, string>>();
-  if (personIds.length === 0 || fieldIds.length === 0) return notes;
+  if (recordIds.length === 0 || fieldIds.length === 0) return notes;
   const rows = await reader
     .select({
-      personId: fieldValues.personId,
+      recordId: ownerColumn(owner),
       fieldId: fieldValues.fieldId,
       note: fieldValues.note,
     })
     .from(fieldValues)
     .where(
       and(
-        inArray(fieldValues.personId, [...personIds]),
+        inArray(ownerColumn(owner), [...recordIds]),
         inArray(fieldValues.fieldId, [...fieldIds]),
         isNotNull(fieldValues.note),
       ),
     );
   for (const { fieldId, note, ...row } of rows) {
-    const personId = String(row.personId);
-    const byField = notes.get(personId) ?? new Map<string, string>();
+    const recordId = String(row.recordId);
+    const byField = notes.get(recordId) ?? new Map<string, string>();
     byField.set(fieldId, String(note));
-    notes.set(personId, byField);
+    notes.set(recordId, byField);
   }
   return notes;
 }
@@ -219,39 +238,36 @@ async function readNotes(
 // The rows that hold a value as the change history records it: one for each choice, or one for a
 // link or a note. Anything else holds nothing.
 export function valueRows(
-  personId: string,
+  recordId: string,
   fieldId: string,
   value: unknown,
+  owner: ValueOwner,
 ): (typeof fieldValues.$inferInsert)[] {
+  const held = { fieldId, [ownerKey(owner)]: recordId };
   if (Array.isArray(value)) {
-    return value.map((choiceId) => ({
-      fieldId,
-      personId,
-      choiceId: String(choiceId),
-    }));
+    return value.map((choiceId) => ({ ...held, choiceId: String(choiceId) }));
   }
   if (isLink(value)) {
-    return [
-      { fieldId, personId, linkAddress: value.address, linkText: value.text },
-    ];
+    return [{ ...held, linkAddress: value.address, linkText: value.text }];
   }
-  if (isNote(value)) return [{ fieldId, personId, note: value }];
+  if (isNote(value)) return [{ ...held, note: value }];
   return [];
 }
 
-// Replaces a person's value for a column, as the change history records it.
+// Replaces a person's or planned hire's value for a column, as the change history records it.
 export async function writeValues(
   transaction: Pick<Database, "delete" | "insert">,
-  personId: string,
+  recordId: string,
   fieldId: string,
   value: unknown,
+  owner: ValueOwner,
 ): Promise<void> {
   await transaction
     .delete(fieldValues)
     .where(
-      and(eq(fieldValues.personId, personId), eq(fieldValues.fieldId, fieldId)),
+      and(eq(ownerColumn(owner), recordId), eq(fieldValues.fieldId, fieldId)),
     );
-  const rows = valueRows(personId, fieldId, value);
+  const rows = valueRows(recordId, fieldId, value, owner);
   if (rows.length > 0) await transaction.insert(fieldValues).values(rows);
 }
 

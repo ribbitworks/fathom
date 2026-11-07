@@ -9,7 +9,18 @@ import { z } from "zod";
 import { daySchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { meaningSchema } from "./lists.ts";
-import { hireNameSchema, recordIdSchema, temporaryIdPrefix } from "./people.ts";
+import { linkValueSchema } from "./links.ts";
+import {
+  hireNameSchema,
+  linksSchema,
+  notesSchema,
+  recordIdSchema,
+  requestedLinksSchema,
+  requestedNotesSchema,
+  requestedValuesSchema,
+  temporaryIdPrefix,
+  valuesSchema,
+} from "./people.ts";
 
 // The meanings a planned hire's state can have: Proposed, the headcount not yet approved, and Open,
 // approved. The hiring states list's third meaning, Hired, is every person's state.
@@ -40,6 +51,10 @@ export const hireDraftSchema = z.object({
     targetDate: day.nullable().optional(),
     stateId: z.string().optional(),
     managerId: z.string().nullable().optional(),
+    // The live values of the added columns the draft changes, as a person's draft has them.
+    values: valuesSchema.default({}),
+    links: linksSchema.default({}),
+    notes: notesSchema.default({}),
   }),
   ...draftShape,
 });
@@ -65,6 +80,11 @@ export const hireSchema = z.object({
   expected: month,
   targetDate: day.nullable().optional(),
   stateId: z.string().optional(),
+  // Its values in the added columns offered on planned hires, each at its column's visibility, as a
+  // person's are.
+  values: valuesSchema.default({}),
+  links: linksSchema.default({}),
+  notes: notesSchema.default({}),
   draft: hireDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -92,6 +112,9 @@ export const hireRequestSchema = z.object({
   targetDate: day.nullable().default(null),
   stateId: z.uuid().optional(),
   managerId: z.uuid().nullable().default(null),
+  values: requestedValuesSchema.default({}),
+  links: z.record(z.uuid(), linkValueSchema).default({}),
+  notes: requestedNotesSchema.optional(),
 });
 
 export type HireRequest = z.infer<typeof hireRequestSchema>;
@@ -102,7 +125,8 @@ export const hiresRequestSchema = z.object({
 });
 
 // Changes some of a hire's details, or moves it to another state. Clearing the requisition gives
-// the hire a new temporary ID.
+// the hire a new temporary ID. Columns named in values have their choices replaced, those named in
+// links their link, and those named in notes their note, as for a person.
 export const hireChangeSchema = z.object({
   name: hireNameSchema.optional(),
   requisition: requisition.optional(),
@@ -110,6 +134,9 @@ export const hireChangeSchema = z.object({
   targetDate: day.nullable().optional(),
   stateId: z.uuid().optional(),
   managerId: z.uuid().nullable().optional(),
+  values: requestedValuesSchema.optional(),
+  links: requestedLinksSchema.optional(),
+  notes: requestedNotesSchema.optional(),
 });
 
 export type HireChange = z.infer<typeof hireChangeSchema>;

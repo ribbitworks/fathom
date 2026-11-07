@@ -29,6 +29,7 @@ const site: Field = {
   visibility: null,
   multiple: false,
   required: false,
+  onPlannedHires: true,
 };
 // The built-in Positions list, with the one position the people below have.
 const positions: List = {
@@ -1082,6 +1083,50 @@ describe("planned hires beside people", () => {
     },
   ];
 
+  it("offers a hire the added columns switched on for planned hires, never required of it", () => {
+    const required = { ...site, required: true };
+    const off = { ...site, id: "f2", name: "Office", onPlannedHires: false };
+    const [offered, notOffered] = ["f1", "f2"].map(
+      (key) =>
+        columnsFor([required, off], [positions], [], true, rows).find(
+          (column) => column.key === key,
+        ) as Column,
+    );
+    expect(offered?.offeredOn?.("planned-hire") ?? true).toBe(true);
+    expect(offered?.requiredOn?.("planned-hire")).toBe(false);
+    expect(offered?.requiredOn?.("person")).toBe(true);
+    expect(notOffered?.offeredOn?.("planned-hire")).toBe(false);
+    expect(notOffered?.offeredOn?.("person")).toBe(true);
+  });
+
+  it("offers a hire a column by its live setting while a draft switches it", () => {
+    const draft = {
+      action: "changed" as const,
+      changed: ["onPlannedHires"],
+      state: "waiting" as const,
+      madeBy: null,
+      madeAt: null,
+    };
+    const switchingOn = {
+      ...site,
+      draft: { ...draft, live: { onPlannedHires: false } },
+    };
+    const added = {
+      ...site,
+      id: "f2",
+      name: "Office",
+      draft: { ...draft, action: "created" as const, changed: [], live: {} },
+    };
+    const [live, drafted] = ["f1", "f2"].map(
+      (key) =>
+        columnsFor([switchingOn, added], [positions], [], true, rows).find(
+          (column) => column.key === key,
+        ) as Column,
+    );
+    expect(live?.offeredOn?.("planned-hire")).toBe(false);
+    expect(drafted?.offeredOn?.("planned-hire") ?? true).toBe(true);
+  });
+
   it("shows each person Hired, read only, and never offers Hired for a hire", () => {
     const state = columnsFor([], [positions, states], [], true, rows).find(
       ({ key }) => key === "stateId",
@@ -1176,6 +1221,45 @@ describe("planned hires beside people", () => {
       ).toContain("Count");
     },
   );
+
+  it("names a hire by its live position and ID on its Live row while a draft names it", () => {
+    const named: Person = {
+      ...(rows[1] as Person),
+      preferredName: "Fictional test lead",
+      draft: {
+        action: "changed",
+        changed: ["preferredName"],
+        live: { preferredName: "", values: {}, links: {} },
+        state: "waiting",
+        madeBy: null,
+        madeAt: null,
+      },
+    };
+    render(
+      <MantineProvider theme={testTheme}>
+        <PeopleGrid
+          people={[named]}
+          fields={[]}
+          order={[]}
+          lists={[positions, states]}
+          canEdit
+          canEditColumns={false}
+          canEditHires
+          showDates
+          view={emptyView}
+          onView={noop}
+          actions={actions}
+        />
+      </MantineProvider>,
+    );
+    expect(
+      document.getElementById("cell-h1-preferredName")?.textContent,
+    ).toContain("Fictional test lead");
+    const liveRow = document.querySelector("tr[aria-hidden='true']");
+    expect(liveRow?.querySelector("td")?.textContent).toBe(
+      "Fictional Engineer, TBD-1 Live",
+    );
+  });
 
   it("names a hire with no name by its position and ID, which sorts it", () => {
     render(

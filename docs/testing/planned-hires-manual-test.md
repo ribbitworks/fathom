@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -79,7 +79,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### HIRE-01: Hire Rows Sit Under the People and Read Well in Light and Dark Mode
 
-**Preconditions:** Operating system in light appearance. Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open from the left-hand menu.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
+
+**Preconditions:** Operating system in light appearance. Signed in (P1) with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
   - **Expected:** **Name**, **ID**, **Position** and **State** come first, in that order, and **Expected** comes after **Start**. There is no **Kind** column.
@@ -103,6 +105,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### HIRE-02: A Hire's Name Can Be Typed and Cleared
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-01.
+
 **Preconditions:** As HIRE-01, in light appearance.
 
 - [ ] **Step 1.** Search for **SDET, REQ-2042**. Select the row's **Name** cell, type **Fictional test lead**, and press Enter.
@@ -117,13 +121,15 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### HIRE-03: Hired Is Not Offered for a Hire, and States Are Filtered Together
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-02.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **REQ-2047**. Select the row's **State** cell and press Enter.
   - **Expected:** A picker opens offering **Request to hire** and **Approved to hire** only. **Hired** is not offered.
   - **Notes:**
 
-- [ ] **Step 2.** Select the funnel beside the **State** header, and look at the choices.
+- [ ] **Step 2.** Select the **State** header, then **Filter…**, and look at the choices.
   - **Expected:** **Request to hire**, **Approved to hire**, **Hired** and **Empty** are listed together, with no **Retired** heading.
   - **Notes:**
 
@@ -135,7 +141,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### HIRE-04: A Planned Hire Is Added With the Keyboard Alone
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-03.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Select **New planned hire** above the table.
   - **Expected:** Focus moves to the empty row at the bottom. Its **State** cell reads **Request to hire**, and its other cells are blank.
@@ -149,7 +157,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### HIRE-05: Planned Hires Are Pasted From a Text Editor
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open. In the text editor, two lines, typed with the Tab key where shown:
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-04.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open. In the text editor, two lines, typed with the Tab key where shown:
 
 - First line: **Fictional pasted hire**, Tab, **REQ-3001**, Tab, **SDET**.
 - Second line: Tab, **REQ-3002**, Tab, **Software Engineer**.
@@ -162,7 +172,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### HIRE-06: A Planned Hire Is Added, Approved, and Seen by a Resource Planner
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-05. Steps 3 and 5 sign in as other accounts.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Select **New planned hire**. In the new row, type **Fictional platform hire** in **Name**, press Tab, type **REQ-3100** in **ID**, press Tab, choose **Software Engineer** in **Position**, and press Enter.
   - **Expected:** The row is added with a hollow yellow dot and **Draft**, and **Request to hire** in **State**.
@@ -172,7 +184,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A notice reads **Published 1 change.**
   - **Notes:**
 
-- [ ] **Step 3.** Sign in (P1) as `engineering.director@fathom.test`. Open **Drafts** and type **REQ-3100** in the search box.
+- [ ] **Step 3.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`, changing account. Open **Drafts** and type **REQ-3100** in the search box.
   - **Expected:** One entry is shown, adding the planned hire **Fictional platform hire**.
   - **Notes:**
 
@@ -180,7 +192,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 5.** Sign in (P1) as `resource.planner@fathom.test`. Open **People** and search for **Fictional platform hire**.
+- [ ] **Step 5.** Sign in (P1) as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People** and search for **Fictional platform hire**.
   - **Expected:** One hire row, with no **Draft** mark, reading **REQ-3100** in **ID**, **Software Engineer** in **Position**, and **Request to hire** in **State**.
   - **Notes:**
 
@@ -188,20 +200,66 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### HIRE-07: A Resource Planner Sees Placeholders Only
 
-**Preconditions:** Signed in (P1) as `resource.planner@fathom.test`. **People** page open.
+**Account:** Resource Planner, `resource.planner@fathom.test`, the same as the account HIRE-06 ended with.
 
-- [ ] **Step 1.** Scroll to the hire rows.
-  - **Expected:** They have no **Draft** marks and no **Start** column. **REQ-2036** is among them, and **REQ-2050** is not.
+**Preconditions:** Signed in (P1) with this account. **People** page open.
+
+- [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
+  - **Expected:** Only hire rows are shown. None has a **Draft** mark, and there is no **Start** column. **REQ-2036** is among them, and **REQ-2050** is not.
   - **Notes:**
 
-- [ ] **Step 2.** Read the **Name** cells of **Backend engineer 1** and **REQ-2042**.
-  - **Expected:** **Backend engineer 1** in the usual colour, and **SDET, REQ-2042** in grey italics.
+- [ ] **Step 2.** Read the **Name** cells of **Backend engineer 1** and **REQ-2042**, and the **Site** cell of **Backend engineer 1**.
+  - **Expected:** **Backend engineer 1** in the usual colour, and **SDET, REQ-2042** in grey italics. The **Site** cell reads **Kestrel Bay**.
   - **Notes:**
 
 - [ ] **Step 3.** Select a hire row's **Name** cell and type a letter.
   - **Expected:** No editor opens.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Metrics** above the table, and choose **Expected** in **Break down by**.
+- [ ] **Step 4.** Select **Clear all** above the table, so every row is shown again. Then select **Metrics** above the table, and choose **Expected** in **Break down by**.
   - **Expected:** A row for each month a hire is expected, such as **Jan 2027**, in month order, and an **Empty** row counting the people.
   - **Notes:**
+
+### HIRE-08: A Hire's Values in Added Columns Are Shown and Changed
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-07.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
+
+- [ ] **Step 1.** Search for **Payments tester**, and read the row's **Site** and **Level** cells.
+  - **Expected:** **Northmere** and **P2**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the row's **Site** cell, press Enter, choose **Ashgrove**, and press Enter.
+  - **Expected:** The cell reads **Ashgrove** and turns yellow, and the row has a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### HIRE-09: A Column Switched Off for Planned Hires Leaves Their Cells Blank
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-08.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
+
+- [ ] **Step 1.** Select the **Skills** header, then **Edit column**.
+  - **Expected:** A dialog titled **Edit column** shows **Offered on planned hires** ticked, and **Planned hires can leave it empty** under **Must be filled in**.
+  - **Notes:**
+
+- [ ] **Step 2.** Untick **Offered on planned hires**.
+  - **Expected:** **Planned hires can leave it empty** is no longer shown.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Save**. Search for **Payments tester**, select the row's **Skills** cell, and type a letter.
+  - **Expected:** The dialog has closed. The cell is blank, and no editor opens.
+  - **Notes:**
+
+- [ ] **Step 4.** Clear the search. Select the **Site** header, then **Edit column**. Untick **Offered on planned hires**, and select **Save**.
+  - **Expected:** The dialog stays open, with this message in red under the checkboxes: **3 planned hires have values in Site, so it cannot be switched off for planned hires yet. Clear them first.**
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Cancel**. Switch the operating system to dark appearance, and open **Edit column** from the **Site** header again.
+  - **Expected:** The checkboxes, their labels and **Planned hires can leave it empty** are easy to read. Select **Cancel**, and switch back to light appearance afterwards.
+  - **Notes:**
+
+**Afterwards:** R1.

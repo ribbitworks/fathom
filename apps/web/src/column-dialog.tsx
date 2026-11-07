@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The dialog for adding a column to the People table or changing one: its name, its type, which is
-// set once, whether it must be filled in, and, for a choice column, the list it draws on and whether
-// several choices can be picked, or, for a web link column, who may see its links. Changing a column
+// set once, whether it must be filled in, which planned hires never must, whether planned hires are
+// offered it too, and, for a choice column, the list it draws on and whether several choices can be
+// picked, or, for a web link column, who may see its links. Changing a column
 // also offers deleting it. The name is checked against the other columns as it is typed. The dialog
 // cannot be closed while a change is being saved.
 
@@ -68,6 +69,9 @@ export function ColumnDialog({
   const [listId, setListId] = useState<string | null>(field?.listId ?? null);
   const [multiple, setMultiple] = useState(field?.multiple ?? false);
   const [required, setRequired] = useState(field?.required ?? false);
+  const [onPlannedHires, setOnPlannedHires] = useState(
+    field?.onPlannedHires ?? true,
+  );
   const [tried, setTried] = useState(false);
   // The name last sent, so a refusal of it as taken no longer applies once the name changes.
   const [sentName, setSentName] = useState("");
@@ -120,7 +124,14 @@ export function ColumnDialog({
         setSentName(name);
         saving.mutate(
           type !== "choice"
-            ? { name: name.trim(), type, visibility, multiple: false, required }
+            ? {
+                name: name.trim(),
+                type,
+                visibility,
+                multiple: false,
+                required,
+                onPlannedHires,
+              }
             : {
                 name: name.trim(),
                 type,
@@ -128,6 +139,7 @@ export function ColumnDialog({
                 listId: listId as string,
                 multiple,
                 required,
+                onPlannedHires,
               },
         );
       }}
@@ -210,9 +222,19 @@ export function ColumnDialog({
         )}
         <Checkbox
           label="Must be filled in"
+          description={
+            onPlannedHires ? "Planned hires can leave it empty" : undefined
+          }
           checked={required}
           onChange={(event) => {
             setRequired(event.currentTarget.checked);
+          }}
+        />
+        <Checkbox
+          label="Offered on planned hires"
+          checked={onPlannedHires}
+          onChange={(event) => {
+            setOnPlannedHires(event.currentTarget.checked);
           }}
         />
         {saving.error && !refusedAsTaken && (

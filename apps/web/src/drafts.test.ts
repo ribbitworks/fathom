@@ -152,6 +152,7 @@ describe("drafts of columns an approval or rejection includes", () => {
         visibility: null,
         multiple: false,
         required: false,
+        onPlannedHires: true,
       },
     ],
     orderDraft: {
@@ -225,6 +226,7 @@ describe("drafts that wait on rejected ones", () => {
         visibility: null,
         multiple: false,
         required: false,
+        onPlannedHires: true,
         draft: {
           ...rejected,
           action: "created" as const,
@@ -292,6 +294,7 @@ describe("drafts of people and columns that use drafts of another kind", () => {
     visibility: null,
     multiple: false,
     required: false,
+    onPlannedHires: true,
     draft: { ...waiting, action: "created", changed: [], live: {} },
   };
   // A live column on the live list Sites.
@@ -303,6 +306,7 @@ describe("drafts of people and columns that use drafts of another kind", () => {
     visibility: null,
     multiple: false,
     required: false,
+    onPlannedHires: true,
   };
   const person = (
     id: string,

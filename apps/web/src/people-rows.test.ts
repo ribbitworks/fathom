@@ -59,6 +59,8 @@ describe("what a planned hire's row sends", () => {
       positionId: "position-1",
       targetDate: null,
       managerId: null,
+      values: {},
+      links: {},
     });
     expect(
       hireRequest({
@@ -76,7 +78,30 @@ describe("what a planned hire's row sends", () => {
       targetDate: "2027-03-01",
       managerId: "p1",
       stateId: "s1",
+      values: {},
+      links: {},
     });
+  });
+
+  it("keeps a hire's values in added columns, as a person's are", () => {
+    const values = { f1: ["c1"] };
+    const links = { f2: { address: "https://example.test/", text: "" } };
+    const notes = { f3: "Fictional note" };
+    expect(hireChange({ values, links, notes })).toEqual({
+      values,
+      links,
+      notes,
+    });
+    expect(
+      hireRequest({
+        preferredName: "",
+        employeeId: "",
+        positionId: "position-1",
+        values,
+        links,
+        notes,
+      }).notes,
+    ).toEqual(notes);
   });
 
   it("changes only what a change to the row holds, a start date being the target date", () => {

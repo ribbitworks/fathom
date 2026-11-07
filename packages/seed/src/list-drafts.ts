@@ -230,6 +230,7 @@ async function seedColumnDrafts(
     listId: sites.id,
     multiple: false,
     required: false,
+    onPlannedHires: true,
   });
   await data.people.updateField(editor, level, {
     type: "choice",
@@ -237,6 +238,7 @@ async function seedColumnDrafts(
     listId: levels.id,
     multiple: false,
     required: false,
+    onPlannedHires: true,
   });
   await data.unpublished.publish(editor);
   const second = await actorOf(database, secondEditorEmail);
@@ -246,6 +248,7 @@ async function seedColumnDrafts(
     listId: levels.id,
     multiple: false,
     required: true,
+    onPlannedHires: true,
   });
   await data.unpublished.publish(second);
   await data.people.deleteField(
@@ -278,6 +281,7 @@ async function seedSkills(
     listId,
     multiple: true,
     required: false,
+    onPlannedHires: true,
   });
   await data.people.update(editor, skilledFor(organization).id, {
     values: { [column.id]: [rustId] },

@@ -400,6 +400,7 @@ describe("a web link column", () => {
           visibility: "confidential",
           multiple: false,
           required: false,
+          onPlannedHires: true,
         },
       ]);
     });

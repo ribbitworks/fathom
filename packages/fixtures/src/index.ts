@@ -91,7 +91,8 @@ export interface FictionalTeam {
 
 // A planned hire: named, if it has a name, and known by its requisition, or by a temporary ID the
 // seed data gives it while it has none, in the first hiring state with its meaning, due on its
-// target date, as YYYY-MM-DD, if it has one, and filled by a person, when it is.
+// target date, as YYYY-MM-DD, if it has one, filled by a person, when it is, and with choices in
+// some of the columns it shares with people, by column.
 export interface FictionalHire {
   id: string;
   name: string | null;
@@ -101,6 +102,7 @@ export interface FictionalHire {
   targetDate: string | null;
   managerId: string | null;
   filledBy: string | null;
+  values: Record<string, string[]>;
 }
 
 export interface FictionalOrganization {
@@ -322,7 +324,8 @@ function reporting(
 }
 
 // The planned hires not yet filled, each due some months after the reference date, or with no
-// target date, under the current managers in turn, but for those with none. Invented requisitions.
+// target date, under the current managers in turn, but for those with none, and with a site and
+// level where decided. Invented requisitions.
 const openings: readonly {
   name: string | null;
   requisition: string | null;
@@ -330,6 +333,8 @@ const openings: readonly {
   meaning: FictionalHire["meaning"];
   months: number | null;
   managed: boolean;
+  site?: string;
+  level?: string;
 }[] = [
   {
     name: "Backend engineer 1",
@@ -338,6 +343,7 @@ const openings: readonly {
     meaning: "proposed",
     months: 5,
     managed: true,
+    site: "Kestrel Bay",
   },
   {
     name: "Payments tester",
@@ -346,6 +352,8 @@ const openings: readonly {
     meaning: "open",
     months: 3,
     managed: true,
+    site: "Northmere",
+    level: "P2",
   },
   {
     name: null,
@@ -354,6 +362,7 @@ const openings: readonly {
     meaning: "open",
     months: 2,
     managed: true,
+    level: "P3",
   },
   {
     name: "Backend engineer 2",
@@ -362,6 +371,8 @@ const openings: readonly {
     meaning: "open",
     months: 1,
     managed: true,
+    site: "Ashgrove",
+    level: "P1",
   },
   {
     name: null,
@@ -406,7 +417,10 @@ function hiresFor(
   };
   let next = 0;
   const open = openings.map(
-    ({ position, months, managed, ...hire }, index): FictionalHire => ({
+    (
+      { position, months, managed, site, level, ...hire },
+      index,
+    ): FictionalHire => ({
       id: fictionalId(`planned-hire:${String(index)}`),
       ...hire,
       positionId: choice(positions, position),
@@ -415,6 +429,14 @@ function hiresFor(
         ? String(managers.at(next++ % managers.length)?.id)
         : null,
       filledBy: null,
+      values: {
+        ...(site === undefined
+          ? {}
+          : { [siteColumn.id]: [choice(sites, site)] }),
+        ...(level === undefined
+          ? {}
+          : { [levelColumn.id]: [choice(levels, level)] }),
+      },
     }),
   );
   // Someone who has not started yet, and someone current who manages no one, as an internal
@@ -449,6 +471,7 @@ function hiresFor(
             // Both were found among those with a manager.
             managerId: String(managerOf.get(person.id)),
             filledBy: person.id,
+            values: { ...person.values },
           },
         ],
   );

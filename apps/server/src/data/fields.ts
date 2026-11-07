@@ -5,14 +5,15 @@
 // are drafts, as column-drafts.ts sets out, and their order is kept with the built-in columns', in
 // column-order.ts. Part of the data access layer. A column's settings are General data, recorded in
 // the change history field by field. Deleting a column deletes its values, which are recorded as
-// changes to each person who had one.
+// changes to each person and planned hire who had one.
 
-import { fields, fieldValues, lists, people } from "@fathom/db";
+import { fields, fieldValues, lists, people, plannedHires } from "@fathom/db";
 import type { FieldRequest } from "@fathom/shared";
-import { asc, count, countDistinct, eq, gt } from "drizzle-orm";
+import { and, asc, count, countDistinct, eq, gt, isNull } from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftedValues } from "./drafts.ts";
+import { hireChanges, readHireTier } from "./hires.ts";
 import { personChanges } from "./people.ts";
 import {
   type FieldRow,
@@ -29,6 +30,7 @@ export const fieldFields = [
   "visibility",
   "multiple",
   "required",
+  "onPlannedHires",
 ] as const;
 
 export const fieldChanges = (
@@ -72,24 +74,33 @@ async function totalOf(query: Promise<{ total: number }[]>): Promise<number> {
 export const peopleHave = (total: number) =>
   total === 1 ? "1 person has" : `${String(total)} people have`;
 
-// Refuses settings that the people already in Fathom, live or in drafts, do not meet: a required
-// column that someone has no value for, or one choice where someone has several. A draft that
-// changes someone without changing the column keeps their live value. The caller checks the list,
-// which a draft may draw from before it is approved.
+// A number of planned hires in words, with the verb that follows.
+export const hiresHave = (total: number) =>
+  total === 1 ? "1 planned hire has" : `${String(total)} planned hires have`;
+
+// Refuses settings that the people and planned hires already in Fathom, live or in drafts, do not
+// meet: a required column that someone has no value for, one choice where anyone has several, or a
+// column switched off for planned hires while any has a value in it. A value is never required of a
+// planned hire, and a filled hire, which has left People and cannot be changed, keeps its values as
+// they were without holding back any change. A draft that changes someone without changing the
+// column keeps their live value. The caller checks the list, which a draft may draw from before it
+// is approved.
 export async function checkValuesFit(
   transaction: Transaction,
   field: FieldRow,
   request: Pick<FieldRequest, "multiple" | "required"> & {
     listId?: string | null | undefined;
+    onPlannedHires?: boolean | undefined;
   },
 ): Promise<void> {
   const inDrafts = await draftedValues(transaction, field.id);
   const listChanges = (request.listId ?? null) !== field.listId;
   if (
     request.required &&
-    inDrafts.some(({ adds, held }) =>
-      // A draft adding someone holds only the columns with values.
-      adds ? held === undefined : held === 0,
+    inDrafts.some(
+      ({ hire, adds, held }) =>
+        // A draft adding someone holds only the columns with values.
+        !hire && (adds ? held === undefined : held === 0),
     )
   ) {
     throw new ConflictError(
@@ -104,6 +115,15 @@ export async function checkValuesFit(
   if (listChanges && inDrafts.some(({ held }) => (held ?? 0) > 0)) {
     throw new ConflictError(
       `Drafts have values from the list of ${field.name}, so its list cannot change`,
+    );
+  }
+  const switchedOff = request.onPlannedHires === false && field.onPlannedHires;
+  if (
+    switchedOff &&
+    inDrafts.some(({ hire, held }) => hire && (held ?? 0) > 0)
+  ) {
+    throw new ConflictError(
+      `Drafts give planned hires values in ${field.name}, so it cannot be switched off for planned hires yet`,
     );
   }
   if (request.required && !field.required) {
@@ -127,12 +147,21 @@ export async function checkValuesFit(
     const several = await transaction
       .select({ personId: fieldValues.personId })
       .from(fieldValues)
-      .where(eq(fieldValues.fieldId, field.id))
-      .groupBy(fieldValues.personId)
+      .leftJoin(plannedHires, eq(plannedHires.id, fieldValues.plannedHireId))
+      .where(
+        and(eq(fieldValues.fieldId, field.id), isNull(plannedHires.filledBy)),
+      )
+      .groupBy(fieldValues.personId, fieldValues.plannedHireId)
       .having(gt(count(), 1));
+    const people = several.filter(({ personId }) => personId !== null).length;
+    if (people > 0) {
+      throw new ConflictError(
+        `${peopleHave(people)} several choices for ${field.name}, so it cannot take only one yet`,
+      );
+    }
     if (several.length > 0) {
       throw new ConflictError(
-        `${peopleHave(several.length)} several choices for ${field.name}, so it cannot take only one yet`,
+        `${hiresHave(several.length)} several choices for ${field.name}, so it cannot take only one yet`,
       );
     }
   }
@@ -141,7 +170,10 @@ export async function checkValuesFit(
       transaction
         .select({ total: count() })
         .from(fieldValues)
-        .where(eq(fieldValues.fieldId, field.id)),
+        .leftJoin(plannedHires, eq(plannedHires.id, fieldValues.plannedHireId))
+        .where(
+          and(eq(fieldValues.fieldId, field.id), isNull(plannedHires.filledBy)),
+        ),
     );
     if (used > 0) {
       throw new ConflictError(
@@ -149,11 +181,27 @@ export async function checkValuesFit(
       );
     }
   }
+  if (switchedOff) {
+    const holding = await totalOf(
+      transaction
+        .select({ total: countDistinct(fieldValues.plannedHireId) })
+        .from(fieldValues)
+        .innerJoin(plannedHires, eq(plannedHires.id, fieldValues.plannedHireId))
+        .where(
+          and(eq(fieldValues.fieldId, field.id), isNull(plannedHires.filledBy)),
+        ),
+    );
+    if (holding > 0) {
+      throw new ConflictError(
+        `${hiresHave(holding)} values in ${field.name}, so it cannot be switched off for planned hires yet. Clear them first.`,
+      );
+    }
+  }
 }
 
 // Deletes a live column and its values, as approving its removal does, and returns the changes to
-// record: the column's, and each person's values in it, with their tiers, which the caller checks
-// the actor may see.
+// record: the column's, and each person's and planned hire's values in it, with their tiers, which
+// the caller checks the actor may see.
 export async function deleteLiveField(
   transaction: Transaction,
   id: string,
@@ -164,21 +212,46 @@ export async function deleteLiveField(
   ) as FieldRow;
   const columns = await readColumns(transaction);
   const holders = await transaction
-    .selectDistinct({ personId: fieldValues.personId })
+    .selectDistinct({
+      personId: fieldValues.personId,
+      plannedHireId: fieldValues.plannedHireId,
+    })
     .from(fieldValues)
     .where(eq(fieldValues.fieldId, id));
-  // Values found by their column always belong to a person, for now the only owner.
-  const personIds = holders.map(({ personId }) => String(personId));
-  const values = await readValues(transaction, personIds, [id]);
-  const valueChanges = personIds.flatMap((personId) =>
-    personChanges(
-      columns,
-      personId,
-      "changed",
-      { [valueField(id)]: values.get(personId)?.get(id) },
-      {},
-    ),
+  const personIds = holders.flatMap(({ personId }) =>
+    personId === null ? [] : [personId],
   );
+  const hireIds = holders.flatMap(({ plannedHireId }) =>
+    plannedHireId === null ? [] : [plannedHireId],
+  );
+  const values = await readValues(transaction, personIds, [id], "person");
+  const hireValues = await readValues(
+    transaction,
+    hireIds,
+    [id],
+    "planned-hire",
+  );
+  const hireTier = await readHireTier(transaction, columns);
+  const valueChanges = [
+    ...personIds.flatMap((personId) =>
+      personChanges(
+        columns,
+        personId,
+        "changed",
+        { [valueField(id)]: values.get(personId)?.get(id) },
+        {},
+      ),
+    ),
+    ...hireIds.flatMap((hireId) =>
+      hireChanges(
+        hireId,
+        "changed",
+        { [valueField(id)]: hireValues.get(hireId)?.get(id) },
+        {},
+        hireTier,
+      ),
+    ),
+  ];
   await transaction.delete(fields).where(eq(fields.id, id));
   // The column's key stays in the order, so it would come back in its place.
   return [...fieldChanges(id, "deleted", before, undefined), ...valueChanges];

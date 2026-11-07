@@ -149,7 +149,7 @@ export function recorded(
   row: PersonRow,
   values: ReadonlyMap<string, FieldValue>,
 ): Recorded {
-  const record: Recorded = {
+  return {
     preferredName: row.preferredName,
     employeeId: row.employeeId,
     positionId: row.positionId,
@@ -157,7 +157,16 @@ export function recorded(
     endDate: row.endDate,
     // Recorded only when marked, so adding or removing someone who is not records nothing for it.
     ...(row.isManager ? { isManager: true } : {}),
+    ...recordedValues(values),
   };
+}
+
+// A person's or planned hire's values, by column, as recorded: a column with no choices is left
+// out.
+export function recordedValues(
+  values: ReadonlyMap<string, FieldValue>,
+): Recorded {
+  const record: Recorded = {};
   for (const [fieldId, value] of values) {
     if (isLink(value)) record[valueField(fieldId)] = { ...value };
     else if (isNote(value)) record[valueField(fieldId)] = value;
@@ -178,8 +187,8 @@ export function withMark(
   );
 }
 
-// A person's choices, by column, as recorded.
-function valuesOf(person: Recorded): Map<string, string[]> {
+// A person's or planned hire's choices, by column, as recorded.
+export function valuesOf(person: Recorded): Map<string, string[]> {
   return new Map(
     Object.entries(person).flatMap(([field, value]) => {
       const fieldId = fieldOfValue(field);
@@ -190,8 +199,8 @@ function valuesOf(person: Recorded): Map<string, string[]> {
   );
 }
 
-// A person's links, by column, as recorded.
-function linksOf(person: Recorded): Links {
+// A person's or planned hire's links, by column, as recorded.
+export function linksOf(person: Recorded): Links {
   return Object.fromEntries(
     Object.entries(person).flatMap(([field, value]) => {
       const fieldId = fieldOfValue(field);
@@ -202,8 +211,8 @@ function linksOf(person: Recorded): Links {
   );
 }
 
-// A person's notes, by column, as recorded.
-function notesOf(person: Recorded): Notes {
+// A person's or planned hire's notes, by column, as recorded.
+export function notesOf(person: Recorded): Notes {
   return Object.fromEntries(
     Object.entries(person).flatMap(([field, value]) => {
       const fieldId = fieldOfValue(field);
@@ -275,7 +284,7 @@ type ChoiceRow = Awaited<ReturnType<typeof inListOrder>>[number];
 // Every choice asked for in the requests, live or drafted to be added as the editor sees it, in
 // list order, read at once. The drafts lock keeps them from being deleted, or their drafts
 // discarded, until the drafts holding them are saved.
-async function choicesAskedFor(
+export async function choicesAskedFor(
   transaction: Transaction,
   editor: string,
   requests: readonly {
@@ -302,7 +311,7 @@ async function choicesAskedFor(
 
 // Checks the choices asked for each column, and returns them in list order. Choices a person
 // already has stay valid when retired; new ones must be offered.
-function checkedValues(
+export function checkedValues(
   columns: readonly ColumnInfo[],
   known: readonly ChoiceRow[],
   requested: Readonly<Record<string, readonly string[]>>,
@@ -343,7 +352,7 @@ function checkedValues(
 
 // The links asked for each column, as recorded: a link, or no choices for a link removed. The
 // shared schema has already checked and normalized each link.
-function checkedLinks(
+export function checkedLinks(
   columns: readonly ColumnInfo[],
   requested: Readonly<Record<string, Link | null>>,
 ): Recorded {
@@ -361,7 +370,7 @@ function checkedLinks(
 // The notes asked for each column, as recorded: a note kept exactly as sent, or no choices for a
 // note removed, as an empty note also is. A note holding anything notes do not allow is refused
 // rather than cleaned, so what is kept is what the editor showed.
-function checkedNotes(
+export function checkedNotes(
   columns: readonly ColumnInfo[],
   requested: Readonly<Record<string, string | null>>,
 ): Recorded {
@@ -396,6 +405,7 @@ export async function peopleFitColumns(
     transaction,
     present.map(({ id }) => id),
     columns.map(({ id }) => id),
+    "person",
   );
   const choices = await inListOrder(
     transaction,
@@ -468,6 +478,7 @@ export async function readLive(
     reader,
     rows.map(({ id }) => id),
     columns.map(({ id }) => id),
+    "person",
   );
   const lines = await readLines(reader, ids);
   const teams = await readTeams(reader, ids);

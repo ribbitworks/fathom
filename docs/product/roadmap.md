@@ -47,6 +47,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Resource assignment** and **Capacity visibility**
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
+- **Planned managers:** Added by the owner on 2026-11-07. A planned hire can be marked as a manager in People's Manager? column, as a person is, so other planned hires can report to it, and the org chart shows it heading its planned team. People keep reporting to people until planned reporting changes come in The Organization stage. Filling a planned manager moves the hires that report to it to the person who fills it. It follows the Left state.
 - **Demand forecasting:** One estimate per feature.
 - **Roles:** A fixed set of roles, with access tiers and access history for start and end dates, and the hiring plan. Project Managers see feature teams with the plan, approve them, and may give other input, still to be confirmed in the [Product Brief](brief.md)'s open questions.
 

@@ -255,12 +255,20 @@ function monthChoices(people: readonly Person[]): Choice[] {
     );
 }
 
+// Whether a column is offered on planned hires as the server takes it: as live, since a hire's
+// value cannot wait on a draft switching the column on, or, for a column only drafted to be added,
+// as drafted, since the column's draft is approved with the hire's.
+const offeredOnHires = (field: Field) =>
+  field.draft?.action === "created"
+    ? field.onPlannedHires
+    : (field.draft?.live.onPlannedHires ?? field.onPlannedHires);
+
 // The People table's columns, in the order given by their keys: each row's name, optional for a
 // planned hire, its ID, and position, from the built-in Positions list, for those who may see them,
 // its state, Hired for every person, start and end dates, their manager, for those who may see it,
 // the date their manager is theirs from, their team and team name, the added columns, which planned
-// hires do not have yet, and the month a planned hire is expected. A column the order does not name
-// yet comes at the end. Managers are picked from the people given.
+// hires have only where offered on them, and the month a planned hire is expected. A column the
+// order does not name yet comes at the end. Managers are picked from the people given.
 export function columnsFor(
   fields: readonly Field[],
   lists: readonly List[],
@@ -387,18 +395,20 @@ export function columnsFor(
         ...builtIn("teamName", "text", false, personLengths.teamName),
         breaksDown: false,
       }),
-      // A column's type is the kind of its cells.
-      ...fields.map((field) =>
-        personal(
-          cellColumn<Person, RowChange>(field.id, field.type, {
-            label: field.name,
-            required: field.required,
-            field,
-            choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
-            multiple: field.multiple,
-          }),
-        ),
-      ),
+      // A column's type is the kind of its cells. Planned hires have the columns offered on them,
+      // where nothing is required.
+      ...fields.map((field): Column => ({
+        ...cellColumn<Person, RowChange>(field.id, field.type, {
+          label: field.name,
+          required: field.required,
+          field,
+          choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
+          multiple: field.multiple,
+        }),
+        ...(offeredOnHires(field)
+          ? { requiredOn: (kind: string) => field.required && peopleOnly(kind) }
+          : { offeredOn: peopleOnly }),
+      })),
       expected,
     ],
     order,

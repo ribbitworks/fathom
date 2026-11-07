@@ -30,6 +30,7 @@ describe("fieldRequestSchema", () => {
       visibility: undefined,
       multiple: false,
       required: false,
+      onPlannedHires: true,
     });
   });
 

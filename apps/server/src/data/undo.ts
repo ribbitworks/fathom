@@ -195,6 +195,7 @@ const columnsOf: Record<
     visibility: sensitiveTier,
     multiple: flag,
     required: flag,
+    onPlannedHires: flag,
   },
   person: {
     preferredName: text,
@@ -344,7 +345,8 @@ async function putBackPlaceAndValues(
   for (const [field, value] of old) {
     const fieldId = fieldOfValue(field);
     if (fieldId !== null) {
-      await writeValues(transaction, id, fieldId, value);
+      // Only people's values change live outside approving; a hire's change only in its draft.
+      await writeValues(transaction, id, fieldId, value, "person");
     }
   }
 }

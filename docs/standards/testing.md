@@ -74,12 +74,13 @@ A manual test is a test specification a test engineer, including one new to Fath
 - **Test Accounts:** each account the test uses, named by its role in Fathom, with its email address, its name as Fathom shows it, what it can do, which procedure creates it, and where its password comes from.
 - **Common Procedures:** numbered procedures the test cases refer to: starting Fathom, each way of restoring or resetting the data, with the exact commands, which terminal runs them, how to confirm they worked, and what each deletes, and signing in and out.
 - **Terms:** where on screen any menu or control the steps name is found, when its label alone does not say.
-- **Test Cases:** each with an ID, such as `DRAFT-01`, a title saying what it verifies, its preconditions (the account's email address, the page and view, and any procedure to run first), its steps, and any procedure to run afterwards. Each step is an unticked checkbox with the step's number and one action, followed by an **Expected:** line and an empty **Notes:** line for the tester. Steps are never laid out as tables.
+- **Test Cases:** each with an ID, such as `DRAFT-01`, a title saying what it verifies, an **Account:** line naming the account it starts with, its preconditions (the page and view, and any procedure to run first), its steps, and any procedure to run afterwards. Each step is an unticked checkbox with the step's number and one action, followed by an **Expected:** line and an empty **Notes:** line for the tester. Steps are never laid out as tables.
 
 Rules:
 
 - **Must** give every action and expected result precisely enough for a junior test engineer to run and judge without knowing Fathom: what to select, where, and the exact text shown, in bold. Every fact a step relies on, such as a URL or a supported browser, comes from the document that owns it, never from assumption.
 - **Must** keep each test case to one behavior, and make its preconditions enough to start it.
+- **Must** name, in every test case's **Account:** line, the account by its role and email address, and say whether it is the account the previous test case ended with or a change from it, such as "Resource Planner, `resource.planner@fathom.test`, changed from HIRE-06". A step that signs in as another account says so, naming the account the same way.
 - **Must** say exactly where to act and what to look for: which row when a record shows a draft row and a live row, which heading a button sits beside, what to type in a search box to find an entry on a long page, and each column of a table to check, in order.
 - **Must** describe what is on screen as the tester sees it, such as "a yellow dot and **Draft**", not by the names the code or design documents use.
 - **Must** say only what to do and what to see: no explanations of why, design rationale, or history of fixes.

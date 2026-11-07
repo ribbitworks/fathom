@@ -23,6 +23,7 @@ const level: Field = {
   visibility: null,
   multiple: false,
   required: false,
+  onPlannedHires: true,
 };
 const role: Field = {
   id: "f2",
@@ -32,6 +33,7 @@ const role: Field = {
   visibility: null,
   multiple: false,
   required: false,
+  onPlannedHires: true,
 };
 const choice = (id: string, label: string) => ({
   id,

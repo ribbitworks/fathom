@@ -214,7 +214,7 @@ async function apply(
     }
     for (const [fieldId, value] of valuesSet(draft, person)) {
       replaced.push({ personId: id, fieldId });
-      chosen.push(...valueRows(id, fieldId, value));
+      chosen.push(...valueRows(id, fieldId, value, "person"));
     }
   }
   for (const chunk of inChunks(removed)) {

@@ -206,7 +206,12 @@ export async function seed(
       );
     }
     for (const column of organization.columns) {
-      const row = { ...column, tableName: "people", required: false };
+      const row = {
+        ...column,
+        tableName: "people",
+        required: false,
+        onPlannedHires: true,
+      };
       await transaction.insert(fields).values(row);
       const { id, ...settings } = row;
       made.push(...recorded("field", id, "created", settings));

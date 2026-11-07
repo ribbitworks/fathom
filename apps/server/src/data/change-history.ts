@@ -389,9 +389,9 @@ async function visibleRows(
   const listTier = await listTiersNow(database, facts);
   const hireTierNow = await readHireTier(database);
   // A person's details are as sensitive as they are now, such as a position as its list, their
-  // choices as the lists they come from, and as their column's list, even once the column is
-  // deleted or draws on another list, and their links as the web link column's visibility last
-  // recorded, even once the column is deleted.
+  // choices, and a planned hire's, as the lists they come from, and as their column's list, even
+  // once the column is deleted or draws on another list, and their links as the web link column's
+  // visibility last recorded, even once the column is deleted.
   const valueTiers = (row: StoredChange): Tier[] => {
     const columnId = fieldOfValue(row.field);
     if (columnId === null) return [tierNow(row.field)];
@@ -446,7 +446,12 @@ async function visibleRows(
     const tiers = [
       recorded,
       ...(row.recordType === "person" ? valueTiers(row) : []),
-      ...(row.recordType === "planned-hire" ? [hireTierNow(row.field)] : []),
+      ...(row.recordType === "planned-hire"
+        ? [
+            hireTierNow(row.field),
+            ...(fieldOfValue(row.field) === null ? [] : valueTiers(row)),
+          ]
+        : []),
       ...(row.recordType === "saved-view"
         ? // Every view in the rows has its tier, found just above.
           [viewTiers.get(row.recordId) as Tier]

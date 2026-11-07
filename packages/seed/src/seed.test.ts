@@ -45,6 +45,7 @@ import {
   seedDrafts,
   unseedDrafts,
 } from "./drafts.ts";
+import { seedHires } from "./hires.ts";
 import { seed, seedCommand, unseed } from "./seed.ts";
 
 let database: TestDatabase;
@@ -171,6 +172,81 @@ describe("seeding", () => {
       );
     expect(removed?.oldValue).toEqual(link);
     await connection.delete(fields).where(eq(fields.id, fieldId));
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
+  it("records each value a removed planned hire had: its choices, a link, and a note", async () => {
+    const hire = organization.hires.find(
+      ({ values }) => Object.keys(values).length > 0,
+    );
+    const plannedHireId = String(hire?.id);
+    expect(await seedHires(connection, organization)).toBe(true);
+    const link = { address: "https://example.test/hire", text: "" };
+    const note = "*Fictional* hire note";
+    const added = await connection
+      .insert(fields)
+      .values([
+        {
+          tableName: "people",
+          name: "Fictional Hire Link",
+          type: "link",
+          visibility: "general",
+        },
+        {
+          tableName: "people",
+          name: "Fictional Hire Note",
+          type: "note",
+          visibility: "general",
+        },
+      ])
+      .returning({ id: fields.id });
+    const [linkId, noteId] = added.map(({ id }) => id);
+    await connection.insert(fieldValues).values([
+      {
+        fieldId: String(linkId),
+        plannedHireId,
+        linkAddress: link.address,
+        linkText: link.text,
+      },
+      { fieldId: String(noteId), plannedHireId, note },
+    ]);
+    // Several choices in one column, as a column taking several holds them.
+    const roles = organization.columns.find(({ multiple }) => multiple);
+    const roleChoices =
+      organization.lists
+        .find(({ id }) => id === roles?.listId)
+        ?.choices.map(({ id }) => id) ?? [];
+    await connection.insert(fieldValues).values(
+      roleChoices.map((choiceId) => ({
+        fieldId: String(roles?.id),
+        plannedHireId,
+        choiceId,
+      })),
+    );
+    await unseed(connection, organization);
+    const removed = new Map(
+      (
+        await connection
+          .select({ field: changes.field, oldValue: changes.oldValue })
+          .from(changes)
+          .where(
+            and(
+              eq(changes.recordType, "planned-hire"),
+              eq(changes.recordId, plannedHireId),
+              eq(changes.action, "deleted"),
+            ),
+          )
+      ).map(({ field, oldValue }) => [field, oldValue]),
+    );
+    expect(removed.get(`value:${String(linkId)}`)).toEqual(link);
+    expect(removed.get(`value:${String(noteId)}`)).toEqual(note);
+    expect(removed.get(`value:${String(roles?.id)}`)).toEqual(roleChoices);
+    for (const [columnId, chosen] of Object.entries(hire?.values ?? {})) {
+      expect(removed.get(`value:${columnId}`)).toEqual(chosen);
+    }
+    await connection
+      .delete(fields)
+      .where(inArray(fields.id, [String(linkId), String(noteId)]));
     expect(await seed(connection, organization)).toBe(true);
   });
 

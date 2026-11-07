@@ -37,6 +37,8 @@ describe("adding a hire", () => {
       positionId: position,
       targetDate: null,
       managerId: null,
+      values: {},
+      links: {},
     });
   });
 
@@ -57,6 +59,8 @@ describe("adding a hire", () => {
       targetDate: "2027-03-01",
       stateId: state,
       managerId: manager,
+      values: {},
+      links: {},
     });
   });
 

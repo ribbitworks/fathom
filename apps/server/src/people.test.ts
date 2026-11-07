@@ -28,7 +28,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
-import { peopleHave } from "./data/fields.ts";
+import { hiresHave, peopleHave } from "./data/fields.ts";
 import {
   type Method,
   startTestApp,
@@ -971,6 +971,10 @@ describe("columns", () => {
 
   it("counts people in words", () => {
     expect([1, 2].map(peopleHave)).toEqual(["1 person has", "2 people have"]);
+    expect([1, 2].map(hiresHave)).toEqual([
+      "1 planned hire has",
+      "2 planned hires have",
+    ]);
   });
 
   it("lets a column without values change its list, and refuses ones that do not exist", async () => {

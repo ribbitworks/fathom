@@ -4,13 +4,15 @@
 // to a hire is recorded at that tier, and only those who see Confidential data see hires' drafts
 // and their history. Everyone who sees people sees each placeholder: a hire not yet filled, or, for
 // readers who do not see the person who filled it, one whose person has not started, with its ID,
-// manager, expected month, and its position and state to those who see their list's tier. Every
+// manager, expected month, its position and state to those who see their list's tier, and its
+// values in the columns it shares with people, each to those who see its column's tier. Every
 // change is a draft, as drafts.ts sets out, and changing the hiring plan is recorded in the access
 // history, without naming the hire.
 
 import {
   type Database,
   drafts,
+  fieldValues,
   inChunks,
   listItems,
   people,
@@ -42,8 +44,20 @@ import {
   ForbiddenError,
   NotFoundError,
 } from "../errors.ts";
+import { columnsWithAdded } from "./added-columns.ts";
 import { checkBuiltInChoice, firstChoiceMeaning } from "./built-in-lists.ts";
-import { builtInTier } from "./values.ts";
+import { type LiveValues, typeOf } from "./column-types.ts";
+import {
+  builtInTier,
+  type ColumnInfo,
+  type FieldValue,
+  fieldOfValue,
+  inListOrder,
+  readColumns,
+  readValues,
+  valueField,
+  valueRows,
+} from "./values.ts";
 import {
   type Change,
   changesBetween,
@@ -58,6 +72,7 @@ import {
   drafted,
   draftFields,
   draftMakers,
+  fitsColumns,
   lockDrafts,
   readDrafts,
   readHeld,
@@ -68,11 +83,22 @@ import {
   rejectedField,
   setRejection,
   takenEmployeeIds,
+  tidy,
   type Viewer,
   writeDraft,
 } from "./drafts.ts";
 import { recordEvent } from "./history.ts";
-import { currentOn } from "./people.ts";
+import {
+  checkedLinks,
+  checkedNotes,
+  checkedValues,
+  choicesAskedFor,
+  currentOn,
+  linksOf,
+  notesOf,
+  recordedValues,
+  valuesOf,
+} from "./people.ts";
 import { notMarked } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
@@ -105,17 +131,79 @@ export const hireTier = () => "confidential" as const;
 export type HireTier = (field: string) => Tier;
 
 // The tier of each field of a hire: its name is General, as a person's is; its position and state
-// are as sensitive as their lists, like any column drawing on a list; and the rest of the hiring
-// plan is Confidential.
-export async function readHireTier(reader: Reader): Promise<HireTier> {
+// are as sensitive as their lists, and its values in a column as the column's, as a person's are;
+// and the rest of the hiring plan is Confidential, as are values in a column not among those given,
+// the live columns unless others are.
+export async function readHireTier(
+  reader: Reader,
+  columns?: readonly ColumnInfo[],
+): Promise<HireTier> {
   const positions = await builtInTier(reader, "positions");
   const states = await builtInTier(reader, "hiring-states");
+  const valueTiers = new Map(
+    (columns ?? (await readColumns(reader))).map((column) => [
+      valueField(column.id),
+      column.tier,
+    ]),
+  );
   return (field) => {
     if (field === "name") return "general";
     if (field === "positionId") return positions;
     if (field === "stateId") return states;
-    return "confidential";
+    return valueTiers.get(field) ?? "confidential";
   };
+}
+
+// The columns a hire may have values in: People's columns offered on planned hires.
+const offeredOn = (columns: readonly ColumnInfo[]) =>
+  columns.filter((column) => column.onPlannedHires);
+
+// Whether hires' values fit the columns offered on planned hires, where none is required: each in
+// such a column, and one its column's type holds.
+async function fitOffered(
+  reader: Reader,
+  columns: readonly ColumnInfo[],
+  hires: readonly Recorded[],
+): Promise<boolean> {
+  const chosen = hires.flatMap((hire) =>
+    Object.entries(hire).flatMap(([field, value]) =>
+      fieldOfValue(field) !== null && Array.isArray(value)
+        ? value.map(String)
+        : [],
+    ),
+  );
+  const listOf = new Map(
+    (await inListOrder(reader, chosen)).map(({ id, listId }) => [id, listId]),
+  );
+  const offered = offeredOn(columns).map((column) => ({
+    ...column,
+    required: false,
+  }));
+  return hires.every((hire) => fitsColumns(offered, listOf, hire));
+}
+
+// Refuses values asked for in a column not offered on planned hires; any other column unknown is
+// refused as people's are.
+function refuseNotOffered(
+  columns: readonly ColumnInfo[],
+  asked: {
+    values?: Readonly<Record<string, unknown>> | undefined;
+    links?: Readonly<Record<string, unknown>> | undefined;
+    notes?: Readonly<Record<string, unknown>> | undefined;
+  },
+): void {
+  for (const fieldId of [
+    ...Object.keys(asked.values ?? {}),
+    ...Object.keys(asked.links ?? {}),
+    ...Object.keys(asked.notes ?? {}),
+  ]) {
+    const column = columns.find(({ id }) => id === fieldId);
+    if (column !== undefined && !column.onPlannedHires) {
+      throw new BadRequestError(
+        `${column.name} is switched off for planned hires`,
+      );
+    }
+  }
 }
 
 // Refuses changes to fields of a tier the actor may not change.
@@ -125,7 +213,10 @@ function requireHireEdits(actor: Actor, made: readonly Change[]): void {
   }
 }
 
-export function recordedHire(row: HireRow): Recorded {
+export function recordedHire(
+  row: HireRow,
+  values: ReadonlyMap<string, FieldValue> = new Map(),
+): Recorded {
   return {
     name: row.name,
     requisition: row.requisition,
@@ -135,6 +226,7 @@ export function recordedHire(row: HireRow): Recorded {
     stateId: row.stateId,
     managerId: row.managerId,
     filledBy: row.filledBy,
+    ...recordedValues(values),
   };
 }
 
@@ -163,13 +255,18 @@ export function hireChanges(
   after: Recorded | undefined,
   tierOf: HireTier,
 ): Change[] {
+  const valueFields = new Set(
+    [...Object.keys(before ?? {}), ...Object.keys(after ?? {})].filter(
+      (field) => fieldOfValue(field) !== null,
+    ),
+  );
   return changesBetween(
     recordType,
     id,
     action,
     before,
     after,
-    hireFields,
+    [...hireFields, ...valueFields],
     tierOf,
   );
 }
@@ -190,7 +287,8 @@ export async function recordHiringChanges(
   }
 }
 
-// The live hires given, or every hire, as recorded, by hire, locked for a change when asked.
+// The live hires given, or every hire, as recorded, with their values in People's live columns, by
+// hire, locked for a change when asked.
 export async function readLiveHires(
   reader: Reader,
   ids?: readonly string[],
@@ -209,7 +307,15 @@ export async function readLiveHires(
   };
   if (ids === undefined) await read();
   else for (const chunk of inChunks([...ids])) await read(chunk);
-  return new Map(rows.map((row) => [row.id, recordedHire(row)]));
+  const values = await readValues(
+    reader,
+    rows.map(({ id }) => id),
+    (await readColumns(reader)).map(({ id }) => id),
+    "planned-hire",
+  );
+  return new Map(
+    rows.map((row) => [row.id, recordedHire(row, values.get(row.id))]),
+  );
 }
 
 export const readHireDrafts = (
@@ -283,9 +389,22 @@ export async function readHiresIn(
     ? await readHireDrafts(transaction, undefined, actor.user.id)
     : new Map<string, Draft>();
   const held = await readHeld(transaction, recordType, actor.user.id);
-  const tierOf = await readHireTier(transaction);
+  // Columns drafted to be added are seen only by those who see the whole plan's drafts.
+  const columns = wholePlan
+    ? await columnsWithAdded(transaction, actor.user.id)
+    : await readColumns(transaction);
+  const tierOf = await readHireTier(transaction, columns);
   const seesPositions = seesTier(actor, tierOf("positionId"));
   const seesStates = seesTier(actor, tierOf("stateId"));
+  // The columns whose values the reader sees on hires.
+  const shownColumns = offeredOn(columns).filter((column) =>
+    seesTier(actor, column.tier),
+  );
+  const shownValue = new Set(shownColumns.map(({ id }) => id));
+  const shownValues = <Value>(byColumn: Iterable<[string, Value]>) =>
+    Object.fromEntries(
+      [...byColumn].filter(([fieldId]) => shownValue.has(fieldId)),
+    );
   // A draft's makers are named only for the changes the reader sees.
   const makers = await draftMakers(
     transaction,
@@ -349,6 +468,9 @@ export async function readHiresIn(
         managerName: shown ? manager.name : null,
         expected: expectedOn === null ? thisMonth : expectedOn.slice(0, 7),
         ...(seesStates ? { stateId: String(hire.stateId) } : {}),
+        values: shownValues(valuesOf(hire)),
+        links: shownValues(Object.entries(linksOf(hire))),
+        notes: shownValues(Object.entries(notesOf(hire))),
         ...(wholePlan
           ? {
               targetDate,
@@ -368,7 +490,12 @@ export async function readHiresIn(
   ): { draft?: HireDraft } {
     if (draft === undefined) return {};
     const drafted = draftFields(before, draft);
-    const seen = (field: string) => seesTier(actor, tierOf(field));
+    const seen = (field: string) => {
+      const fieldId = fieldOfValue(field);
+      return fieldId === null
+        ? seesTier(actor, tierOf(field))
+        : shownValue.has(fieldId);
+    };
     if (!drafted.some(seen)) return {};
     // A hire's ID is one field to the reader, whichever of the two a draft changes.
     const fields = [
@@ -380,9 +507,23 @@ export async function readHiresIn(
           ),
       ),
     ];
-    const liveValues: HireDraft["live"] = {};
+    const liveValues: HireDraft["live"] & LiveValues = {
+      values: {},
+      links: {},
+      notes: {},
+    };
     if (before !== undefined) {
       for (const field of fields) {
+        const fieldId = fieldOfValue(field);
+        if (fieldId !== null) {
+          // Only the fields of the columns shown are kept above.
+          const column = shownColumns.find(
+            ({ id }) => id === fieldId,
+          ) as ColumnInfo;
+          // The field is the hire's own, named by its draft.
+          // eslint-disable-next-line security/detect-object-injection
+          typeOf(column).showLive(liveValues, fieldId, before[field]);
+        }
         if (field === "name") liveValues.name = textOrNull(before.name);
         if (field === "requisition") {
           Object.assign(liveValues, hireIdOf(before));
@@ -400,9 +541,9 @@ export async function readHiresIn(
       }
     }
     const maker = makers.get(id);
-    const shown: HireDraft = {
+    const seenDraft: HireDraft = {
       action: draft.action,
-      changed: fields,
+      changed: fields.map((field) => fieldOfValue(field) ?? field),
       live: liveValues,
       state: draft.state,
       // The reason covers the whole draft, so it is shown only to those who see all of it.
@@ -416,20 +557,25 @@ export async function readHiresIn(
       madeAt: maker?.madeAt.toISOString() ?? null,
       editors: maker?.editors ?? [],
       changedBy: Object.fromEntries(
-        fields.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
+        fields.map((field) => [
+          fieldOfValue(field) ?? field,
+          maker?.fieldEditors.get(field) ?? null,
+        ]),
       ),
     };
-    return { draft: shown };
+    return { draft: seenDraft };
   }
 
   // No two hires have the same ID, ignoring letter case, so the order is always the same.
   const shownId = (hire: Hire) => String(hire.requisition ?? hire.temporaryId);
   hires.sort((a, b) => byId.compare(shownId(a), shownId(b)));
-  // Whether the placeholders shown hold a position or state more sensitive than General.
+  // Whether the placeholders shown hold a position, state, or column's values more sensitive than
+  // General.
   const includedRestricted =
     hires.length > 0 &&
     ((seesPositions && tierOf("positionId") !== "general") ||
-      (seesStates && tierOf("stateId") !== "general"));
+      (seesStates && tierOf("stateId") !== "general") ||
+      shownColumns.some(({ tier }) => tier !== "general"));
   return { hires, wholePlan, includedRestricted };
 }
 
@@ -579,7 +725,8 @@ export async function createHires(
   requireHiringEdit(actor);
   return database.transaction(async (transaction) => {
     // Every hire needs a position and a state, so one who cannot see either cannot add hires.
-    const tierOf = await readHireTier(transaction);
+    const columns = await columnsWithAdded(transaction, actor.user.id, true);
+    const tierOf = await readHireTier(transaction, columns);
     if (!seesTier(actor, tierOf("positionId"))) {
       throw new ForbiddenError(
         "Every planned hire needs a position, and your role doesn't let you see positions",
@@ -591,6 +738,9 @@ export async function createHires(
       );
     }
     await lockDrafts(transaction);
+    for (const request of requests) refuseNotOffered(columns, request);
+    const offered = offeredOn(columns);
+    const known = await choicesAskedFor(transaction, actor.user.id, requests);
     const ids: string[] = [];
     const made: Change[] = [];
     for (const request of requests) {
@@ -605,7 +755,8 @@ export async function createHires(
       const id = randomUUID();
       // Each hire is drafted before the next is checked, so two asked for cannot share an ID.
       await checkRequisition(transaction, request.requisition, id);
-      const after: Recorded = {
+      // Notes left empty are left out.
+      const after: Recorded = tidy({
         name: request.name,
         requisition: request.requisition,
         temporaryNumber:
@@ -617,7 +768,12 @@ export async function createHires(
         stateId,
         managerId: request.managerId,
         filledBy: null,
-      };
+        ...recordedValues(
+          checkedValues(offered, known, request.values, undefined),
+        ),
+        ...checkedLinks(offered, request.links),
+        ...checkedNotes(offered, request.notes ?? {}),
+      });
       if (newlyManaged(undefined, after)) {
         await refuseUnmarked(
           transaction,
@@ -680,6 +836,15 @@ export async function updateHire(
       id,
     );
     if (hire === undefined) throw new ConflictError(toBeRemoved);
+    const columns = await columnsWithAdded(transaction, actor.user.id, true);
+    refuseNotOffered(columns, change);
+    const offered = offeredOn(columns);
+    const changedValues = checkedValues(
+      offered,
+      await choicesAskedFor(transaction, actor.user.id, [change]),
+      change.values ?? {},
+      valuesOf(hire),
+    );
     if (change.managerId !== undefined) {
       await checkManager(transaction, change.managerId);
     }
@@ -704,7 +869,8 @@ export async function updateHire(
     if (typeof change.requisition === "string") {
       await checkRequisition(transaction, change.requisition, id);
     }
-    const after: Recorded = {
+    // Columns left with nothing chosen are left out.
+    const after: Recorded = tidy({
       ...hire,
       ...(change.name === undefined ? {} : { name: change.name }),
       ...(await idAsChanged(transaction, hire, change.requisition)),
@@ -718,7 +884,15 @@ export async function updateHire(
       ...(change.managerId === undefined
         ? {}
         : { managerId: change.managerId }),
-    };
+      ...Object.fromEntries(
+        [...changedValues].map(([fieldId, choiceIds]) => [
+          valueField(fieldId),
+          choiceIds,
+        ]),
+      ),
+      ...checkedLinks(offered, change.links ?? {}),
+      ...checkedNotes(offered, change.notes ?? {}),
+    });
     if (newlyManaged(hire, after)) {
       await refuseUnmarked(
         transaction,
@@ -726,7 +900,7 @@ export async function updateHire(
         (message) => new BadRequestError(message),
       );
     }
-    const tierOf = await readHireTier(transaction);
+    const tierOf = await readHireTier(transaction, columns);
     const made = hireChanges(id, "changed", hire, after, tierOf);
     requireHireEdits(actor, made);
     if (made.length === 0) return null;
@@ -983,11 +1157,26 @@ export async function approveHiresIn(
   if (ids.length === 0) return [];
   const { found, live, tierOf } = await seenHires(transaction, actor, ids);
   refuseRejected(found.values());
-  const made: Change[] = [];
-  for (const id of ids) {
-    const draft = found.get(id) as Draft;
+  const wanted = ids.map((id) => {
     const before = live.get(id);
-    const hire = drafted(before, draft);
+    const draft = found.get(id) as Draft;
+    return { id, before, draft, hire: drafted(before, draft) };
+  });
+  // Columns approved with the hires are live by now.
+  if (
+    !(await fitOffered(
+      transaction,
+      await readColumns(transaction, true),
+      wanted.flatMap(({ hire }) => (hire === undefined ? [] : [hire])),
+    ))
+  ) {
+    throw new ConflictError(
+      "A planned hire's draft no longer fits the columns; change it, then approve it",
+    );
+  }
+  const made: Change[] = [];
+  const heldValues: (typeof fieldValues.$inferInsert)[] = [];
+  for (const { id, before, draft, hire } of wanted) {
     made.push(...hireChanges(id, draft.action, before, hire, tierOf));
     if (hire !== undefined && newlyManaged(before, hire)) {
       await refuseUnmarked(
@@ -1027,6 +1216,21 @@ export async function approveHiresIn(
         .set(row)
         .where(eq(plannedHires.id, id));
     }
+    for (const [field, value] of Object.entries(hire)) {
+      const fieldId = fieldOfValue(field);
+      if (fieldId !== null) {
+        heldValues.push(...valueRows(id, fieldId, value, "planned-hire"));
+      }
+    }
+  }
+  // Each hire approved holds the values its draft makes, replacing those it had.
+  for (const chunk of inChunks([...ids])) {
+    await transaction
+      .delete(fieldValues)
+      .where(inArray(fieldValues.plannedHireId, chunk));
+  }
+  for (const chunk of inChunks(heldValues)) {
+    await transaction.insert(fieldValues).values(chunk);
   }
   for (const chunk of inChunks([...ids])) {
     await transaction
@@ -1086,6 +1290,7 @@ export async function undoHireDrafts(
   const ids = records.map(({ id }) => id);
   const live = await readLiveHires(transaction, ids, true);
   const draftsNow = await readHireDrafts(transaction, ids, editor);
+  const columns = await columnsWithAdded(transaction, editor);
   for (const record of records) {
     const old = new Map(record.old);
     old.delete(rejectedField);
@@ -1111,6 +1316,8 @@ export async function undoHireDrafts(
       hire = { ...(now as Recorded), ...Object.fromEntries(old) };
     }
     if (
+      (hire !== undefined &&
+        !(await fitOffered(transaction, columns, [hire]))) ||
       !(await managerAllowed(transaction, hire?.managerId)) ||
       (typeof hire?.requisition === "string" &&
         (await takenEmployeeIds(transaction, [hire.requisition], [record.id]))
@@ -1169,8 +1376,9 @@ export function hireRow(
     ...(hire.managerId === null
       ? {}
       : { team: teamOf.get(hire.managerId) ?? null }),
-    values: {},
-    links: {},
+    values: hire.values,
+    links: hire.links,
+    notes: hire.notes,
     ...(draft === undefined || live === undefined
       ? {}
       : {
@@ -1194,8 +1402,9 @@ export function hireRow(
               ...(live.managerId === undefined
                 ? {}
                 : { managerId: live.managerId }),
-              values: {},
-              links: {},
+              values: live.values,
+              links: live.links,
+              notes: live.notes,
             },
           },
         }),

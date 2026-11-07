@@ -707,8 +707,8 @@ async function draftedTexts(
   return found;
 }
 
-// Whether any person's draft, published or not, changes the column, even to clear it, or whether a
-// draft of a person or a planned hire has the choice, given, as a value or a position or state. The
+// Whether any person's or planned hire's draft, published or not, changes the column, even to clear
+// it, or whether a draft of either has the choice given, as a value, or as a position or state. The
 // editor's unpublished drafts stand in for the published drafts of the same records, so a draft
 // they have changed or discarded but not yet published no longer counts.
 export async function draftsUse(
@@ -722,18 +722,22 @@ export async function draftsUse(
       .from(table)
       .where(
         "column" in use
-          ? and(
-              eq(table.recordType, "person"),
-              sql`${table.fields} ? ${`value:${use.column}`}::text`,
-              table === drafts && editor !== undefined
-                ? notReplacedBy("person", table.recordId, editor)
-                : undefined,
+          ? or(
+              ...valueOwners.map((recordType) =>
+                and(
+                  eq(table.recordType, recordType),
+                  sql`${table.fields} ? ${`value:${use.column}`}::text`,
+                  table === drafts && editor !== undefined
+                    ? notReplacedBy(recordType, table.recordId, editor)
+                    : undefined,
+                ),
+              ),
             )
           : or(
               and(
                 eq(table.recordType, "person"),
                 or(
-                  sql`EXISTS (SELECT 1 FROM jsonb_each(${table.fields}) AS held(field, value) WHERE jsonb_typeof(held.value) = 'array' AND held.value @> ${JSON.stringify([use.choice])}::jsonb)`,
+                  holdsChoice(table.fields, use.choice),
                   sql`${table.fields}->>'positionId' = ${use.choice}`,
                 ),
                 table === drafts && editor !== undefined
@@ -743,6 +747,7 @@ export async function draftsUse(
               and(
                 eq(table.recordType, "planned-hire"),
                 or(
+                  holdsChoice(table.fields, use.choice),
                   sql`${table.fields}->>'positionId' = ${use.choice}`,
                   sql`${table.fields}->>'stateId' = ${use.choice}`,
                 ),
@@ -757,6 +762,13 @@ export async function draftsUse(
   }
   return false;
 }
+
+// The kinds of record whose drafts give values in People's columns.
+const valueOwners = ["person", "planned-hire"] as const;
+
+// Whether a draft's fields give a column's value holding the choice.
+const holdsChoice = (fields: AnyColumn, choiceId: string) =>
+  sql`EXISTS (SELECT 1 FROM jsonb_each(${fields}) AS held(field, value) WHERE jsonb_typeof(held.value) = 'array' AND held.value @> ${JSON.stringify([choiceId])}::jsonb)`;
 
 // Whether the editor holds no unpublished draft of the record whose published draft is given.
 const notReplacedBy = (
@@ -804,30 +816,33 @@ export function valueCount(value: unknown): number | undefined {
 }
 
 // A column's values as drafts hold them, for checking that the column's settings fit the drafts
-// too: for each draft, published or not, that adds or changes a person, how many values it gives
-// the column, or undefined when it leaves the column as it is.
+// too: for each draft, published or not, that adds or changes a person or planned hire, whether it
+// is a hire's, how many values it gives the column, or undefined when it leaves the column as it
+// is.
 export async function draftedValues(
   reader: Reader,
   columnId: string,
-): Promise<{ adds: boolean; held: number | undefined }[]> {
+): Promise<{ hire: boolean; adds: boolean; held: number | undefined }[]> {
   const rows = [];
   for (const table of [drafts, unpublishedDrafts]) {
     rows.push(
       ...(await reader
         .select({
+          recordType: table.recordType,
           action: table.action,
           value: sql<unknown>`${table.fields} -> ${`value:${columnId}`}::text`,
         })
         .from(table)
         .where(
           and(
-            eq(table.recordType, "person"),
+            inArray(table.recordType, ["person", "planned-hire"]),
             inArray(table.action, ["created", "changed"]),
           ),
         )),
     );
   }
-  return rows.map(({ action, value }) => ({
+  return rows.map(({ recordType, action, value }) => ({
+    hire: recordType === "planned-hire",
     adds: action === "created",
     held: valueCount(value),
   }));

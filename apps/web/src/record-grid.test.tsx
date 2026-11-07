@@ -48,6 +48,7 @@ const colour: Field = {
   visibility: null,
   multiple: false,
   required: false,
+  onPlannedHires: true,
 };
 const colours: List = {
   id: "l1",
@@ -440,6 +441,7 @@ describe("the live columns", () => {
     visibility: null,
     multiple: false,
     required: true,
+    onPlannedHires: true,
   };
   const draft = {
     state: "waiting" as const,
@@ -725,6 +727,7 @@ describe("a refused value", () => {
       visibility: "general",
       multiple: false,
       required: false,
+      onPlannedHires: true,
     };
     renderGadgets({
       gadgets: [gadget("g1")],

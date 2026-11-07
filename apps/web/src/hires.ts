@@ -2,8 +2,9 @@
 
 // Planned hires, drafted through the server's API from the People table, where each is a row: its
 // name is its preferred name, its ID its requisition, cleared to give it a temporary ID, and its
-// start date its target date. Each change returns the change set it was saved in, which undoing it
-// names, or null when nothing changed.
+// start date its target date, and its values in the added columns are kept as a person's are. Each
+// change returns the change set it was saved in, which undoing it names, or null when nothing
+// changed.
 
 import {
   changeSetIdSchema,
@@ -32,6 +33,9 @@ export function hireRequest(row: RowRequest): HireRequest {
     targetDate: row.startDate ?? null,
     managerId: row.managerId ?? null,
     ...(row.stateId === undefined ? {} : { stateId: row.stateId }),
+    values: row.values,
+    links: row.links,
+    ...(row.notes === undefined ? {} : { notes: row.notes }),
   };
 }
 
@@ -50,6 +54,9 @@ export function hireChange(change: RowChange): HireChange {
     ...(change.startDate === undefined ? {} : { targetDate: change.startDate }),
     ...(change.stateId === undefined ? {} : { stateId: change.stateId }),
     ...(change.managerId === undefined ? {} : { managerId: change.managerId }),
+    ...(change.values === undefined ? {} : { values: change.values }),
+    ...(change.links === undefined ? {} : { links: change.links }),
+    ...(change.notes === undefined ? {} : { notes: change.notes }),
   };
 }
 

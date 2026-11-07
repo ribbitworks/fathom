@@ -1,11 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for drafts that use other drafts of another kind, against a PostgreSQL server of their own:
-// people given values in columns, and choices, drafted to be added, read with the tier of their
+// people and planned hires given values in columns, and choices, drafted to be added, read with the tier of their
 // column, and kept from losing what they use by discarding or undoing; approving a draft with those
 // it uses, and rejecting a draft only with those that use it.
 
-import { fields, fieldValues, listItems, lists, people } from "@fathom/db";
+import {
+  fields,
+  fieldValues,
+  listItems,
+  lists,
+  people,
+  plannedHires,
+} from "@fathom/db";
 import type { Choice, Field, List, Person } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -374,7 +381,12 @@ const decide = (
 ) => test.request(cookie, "POST", `/api/drafts/${asking}`, body);
 
 const isLive = async (
-  table: typeof lists | typeof listItems | typeof fields | typeof people,
+  table:
+    | typeof lists
+    | typeof listItems
+    | typeof fields
+    | typeof people
+    | typeof plannedHires,
   id: string,
 ) =>
   (await test.connection.select().from(table).where(eq(table.id, id))).length >
@@ -518,6 +530,76 @@ describe("rejecting a draft only with the drafts that use it", () => {
       (
         await decide("rejection", {
           people: [id],
+          choices: [alpha],
+          reason: "No",
+        })
+      ).statusCode,
+    ).toBe(200);
+  });
+});
+
+describe("planned hires given what is only drafted to be added", () => {
+  async function hireWith(values: Record<string, string[]>) {
+    const response = await send("POST", "/api/planned-hires", {
+      hires: [{ positionId: testPosition, values }],
+    });
+    expect(response.statusCode, response.body).toBe(201);
+    const [id = ""] = response.json<{ ids: string[] }>().ids;
+    return id;
+  }
+
+  it("keeps a choice, a list, or a column a hire's draft uses until it no longer does", async () => {
+    const { list, choices, field } = await addedColumn();
+    const [alpha] = choiceIds(choices);
+    const id = await hireWith({ [field.id]: [String(alpha)] });
+    for (const url of [
+      `/api/lists/${list.id}/choices/${String(alpha)}`,
+      `/api/people/columns/${field.id}/draft`,
+      `/api/lists/${list.id}/draft`,
+    ]) {
+      expect((await send("DELETE", url)).statusCode, url).toBe(409);
+    }
+    expect(
+      (await send("DELETE", `/api/planned-hires/${id}/draft`)).statusCode,
+    ).toBe(200);
+    expect(
+      (await send("DELETE", `/api/people/columns/${field.id}/draft`))
+        .statusCode,
+    ).toBe(200);
+  });
+
+  it("approves the list, column, and choice a hire's draft uses with the hire", async () => {
+    const { list, choices, field } = await addedColumn();
+    const [alpha] = choiceIds(choices).map(String);
+    const id = await hireWith({ [field.id]: [alpha as string] });
+    const approved = await decide("approval", { plannedHires: [id] });
+    expect(approved.statusCode, approved.body).toBe(200);
+    expect(await isLive(lists, list.id)).toBe(true);
+    expect(await isLive(fields, field.id)).toBe(true);
+    expect(await isLive(listItems, alpha as string)).toBe(true);
+    expect(await isLive(plannedHires, id)).toBe(true);
+    expect(
+      await test.connection
+        .select({ choiceId: fieldValues.choiceId })
+        .from(fieldValues)
+        .where(eq(fieldValues.plannedHireId, id)),
+    ).toEqual([{ choiceId: alpha }]);
+  });
+
+  it("refuses rejecting a column a hire's draft uses without the hire", async () => {
+    const { choices, field } = await addedColumn();
+    const [alpha] = choiceIds(choices);
+    const id = await hireWith({ [field.id]: [String(alpha)] });
+    const refused = await decide("rejection", {
+      columns: [field.id],
+      reason: "No",
+    });
+    expect(refused.statusCode).toBe(409);
+    expect(
+      (
+        await decide("rejection", {
+          plannedHires: [id],
+          columns: [field.id],
           choices: [alpha],
           reason: "No",
         })
