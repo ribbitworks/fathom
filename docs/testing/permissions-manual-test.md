@@ -293,9 +293,27 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
+#### PERM-11: Approve Their Own Drafts Lets the Account Approve What It Changed
+
+**Preconditions:** Team Member granted only **Edit** on **Plan**, **Approve** on **Drafts of every kind** and **Approve** on **Their own drafts** (P4), signed in as `team.member@fathom.test`. **Releases** page open, with **Platform** selected in the streams table.
+
+- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**. Replace the name with `Harbor Three`, and select **Save**.
+  - **Expected:** **Harbor Three** is followed by a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Publish 1 change** in the top bar, then **Drafts** under **People** in the left-hand menu, and select the **Harbor Three** entry's checkbox.
+  - **Expected:** **Approve 1 draft** can be selected, and no line says another approver is needed.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Approve 1 draft**, then **Approve** in the dialog.
+  - **Expected:** A notice reads **Approved 1 draft.**
+  - **Notes:**
+
+**Afterwards:** P5, then R2.
+
 ### Configuration
 
-#### PERM-11: View Configuration Shows Lists and Release Streams Without Changing Them
+#### PERM-12: View Configuration Shows Lists and Release Streams Without Changing Them
 
 **Preconditions:** Team Member granted only **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -313,7 +331,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
-#### PERM-12: Edit Configuration Changes Release Streams
+#### PERM-13: Edit Configuration Changes Release Streams
 
 **Preconditions:** Team Member granted only **Edit** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -333,7 +351,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Change History
 
-#### PERM-13: View Change History Shows Only Changes to Data the Account Sees
+#### PERM-14: View Change History Shows Only Changes to Data the Account Sees
 
 **Preconditions:** Team Member granted only **View** on **Change history** (P4), signed in as `team.member@fathom.test`.
 
@@ -345,7 +363,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Access History
 
-#### PERM-14: View Access History Shows the Access History
+#### PERM-15: View Access History Shows the Access History
 
 **Preconditions:** Team Member granted only **View** on **Access history** (P4), signed in as `team.member@fathom.test`.
 
@@ -357,7 +375,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Accounts
 
-#### PERM-15: Edit Accounts Manages Accounts
+#### PERM-16: Edit Accounts Manages Accounts
 
 **Preconditions:** Team Member granted only **Edit** on **Accounts** (P4), signed in as `team.member@fathom.test`.
 
@@ -381,7 +399,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Roles
 
-#### PERM-16: Edit Roles Creates and Changes Roles
+#### PERM-17: Edit Roles Creates and Changes Roles
 
 **Preconditions:** Team Member granted only **Edit** on **Roles** (P4), signed in as `team.member@fathom.test`.
 
@@ -397,7 +415,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Settings
 
-#### PERM-17: Edit Settings Changes Fathom's Time Zone
+#### PERM-18: Edit Settings Changes Fathom's Time Zone
 
 **Preconditions:** Team Member granted only **Edit** on **Settings** (P4), signed in as `team.member@fathom.test`.
 
@@ -413,7 +431,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Not Built Yet
 
-#### PERM-18: Permissions Not Built Yet Add Only the Capacity Entry
+#### PERM-19: Permissions Not Built Yet Add Only the Capacity Entry
 
 **Preconditions:** Team Member granted only **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts of every kind** (P4), signed in as `team.member@fathom.test`.
 
@@ -425,7 +443,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Putting Everything Back
 
-#### PERM-19: Every Starting Role Is as Fathom Started It
+#### PERM-20: Every Starting Role Is as Fathom Started It
 
 **Preconditions:** All the test cases above run. Signed in (P1) as `fathom.administrator@fathom.test`.
 

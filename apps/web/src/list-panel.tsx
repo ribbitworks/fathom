@@ -66,6 +66,7 @@ import {
   MenuDraftLines,
   MenuTitle,
   UnpublishedNote,
+  OtherApproverNote,
   WaitingNote,
 } from "./draft-details.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
@@ -845,7 +846,9 @@ export function ListPanel({
               {canApprove && decidable(choice) && (
                 <>
                   <Menu.Item
-                    disabled={choiceWaits}
+                    disabled={
+                      choiceWaits || choice.draft?.needsOtherApprover === true
+                    }
                     onClick={act(() => {
                       draftActions.decide("approve", on);
                     })}
@@ -853,6 +856,10 @@ export function ListPanel({
                     Approve…
                   </Menu.Item>
                   {choiceWaits && <WaitingNote />}
+                  {!choiceWaits &&
+                    choice.draft?.needsOtherApprover === true && (
+                      <OtherApproverNote />
+                    )}
                   <Menu.Item
                     onClick={act(() => {
                       draftActions.decide("reject", on);

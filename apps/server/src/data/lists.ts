@@ -75,6 +75,7 @@ import {
   heldMessage,
   lockDrafts,
   type Maker,
+  otherApprover,
   readDrafts,
   readHeld,
   type Recorded,
@@ -783,6 +784,7 @@ function draftOut<Live extends Record<string, unknown>>(
     madeBy: maker?.madeBy ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
+    ...otherApprover(maker),
     changedBy: Object.fromEntries(
       changed.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
     ),
@@ -880,6 +882,7 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
             madeBy: makers.order.get(id)?.madeBy ?? null,
             madeAt: makers.order.get(id)?.madeAt.toISOString() ?? null,
             editors: makers.order.get(id)?.editors ?? [],
+            ...otherApprover(makers.order.get(id)),
           };
     return [
       {

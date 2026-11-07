@@ -614,6 +614,56 @@ describe("the Drafts page", () => {
     ]);
   });
 
+  it("offers no approval of drafts this account changed, which it may still reject", async () => {
+    await openDrafts({
+      "GET /api/people": peopleWith([
+        person("p1", "Avery Fictional", {
+          draft: draft({
+            action: "changed",
+            changed: ["preferredName"],
+            live: { preferredName: "Avery Before", values: {} },
+            needsOtherApprover: true,
+          }),
+        }),
+        person("p2", "Blake Fictional", {
+          draft: draft({
+            action: "created",
+            changed: ["preferredName", "employeeId"],
+            needsOtherApprover: true,
+          }),
+        }),
+        live,
+      ]),
+    });
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the draft of Avery Fictional",
+      }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    ).toHaveProperty("disabled", true);
+    expect(screen.getByRole("button", { name: "Reject…" })).toHaveProperty(
+      "disabled",
+      false,
+    );
+    expect(
+      screen.getByText(
+        "1 chosen draft was changed by this account, so another approver must approve it.",
+      ),
+    ).toBeDefined();
+    await userEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Select the draft of Blake Fictional",
+      }),
+    );
+    expect(
+      screen.getByText(
+        "2 chosen drafts were changed by this account, so another approver must approve them.",
+      ),
+    ).toBeDefined();
+  });
+
   it("approves the drafts selected, after asking", async () => {
     const fetch = await openDrafts({
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),

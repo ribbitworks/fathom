@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies how drafts of people, columns, lists, choices, and column and choice orders are shown on the People, Lists and Drafts pages, and what a Workforce Administrator and an Engineering Director can do with them, including drafts that use drafts of another kind.
+Verifies how drafts of people, columns, lists, choices, and column and choice orders are shown on the People, Lists and Drafts pages, and what a Workforce Administrator, an Engineering Director and a Project Manager can do with them, including drafts that use drafts of another kind, and that nobody but the Engineering Director approves drafts they changed, shown here with a release's draft.
 
 ## Test Environment
 
@@ -25,6 +25,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change people, lists and columns, and its changes are drafts; it cannot approve them.
 - **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts; it cannot change people, lists or columns.
+- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It can change releases, as drafts, and approve and reject drafts, but not those it changed.
 
 ## Common Procedures
 
@@ -431,6 +432,44 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 3.** Select **Approve**.
   - **Expected:** The dialog closes, and a notice reads **Approved 4 drafts.** The page says **No drafts match the search.**
+  - **Notes:**
+
+**Afterwards:** R2.
+
+### DRAFT-25: Drafts This Account Changed Need Another Approver
+
+**Preconditions:** R2. Signed in (P1) as `project.manager@fathom.test`. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
+
+- [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**.
+  - **Expected:** A dialog titled **Change Harbor 3** opens, with **Harbor 3** in **Name**.
+  - **Notes:**
+
+- [ ] **Step 2.** Replace the name with `Harbor Three`, and select **Save**.
+  - **Expected:** The dialog closes. **Harbor Three** is followed by a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Publish 1 change** in the top bar.
+  - **Expected:** The top bar no longer offers to publish.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the **⋯** button at the end of the **Harbor Three** row.
+  - **Expected:** **Approve…** is greyed out, with **Changed by this account, so another approver must approve it** under it, easy to read. **Reject…** is not greyed out.
+  - **Notes:**
+
+- [ ] **Step 5.** Press Escape, then select **Drafts** under **People** in the left-hand menu.
+  - **Expected:** An entry names **Harbor Three**, drafted by **Project Manager**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select that entry's checkbox.
+  - **Expected:** **Approve 1 draft** is greyed out, and **Reject…** is not, with a line under them saying another approver must approve it.
+  - **Notes:**
+
+- [ ] **Step 7.** Sign out (P2), and sign in (P1) as `engineering.director@fathom.test`.
+  - **Expected:** Fathom opens.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Drafts** under **People** in the left-hand menu, select the **Harbor Three** entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog.
+  - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
 **Afterwards:** R2.

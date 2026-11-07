@@ -50,6 +50,7 @@ import {
   heldMessage,
   lockDrafts,
   type Maker,
+  otherApprover,
   readDrafts,
   readHeld,
   type Recorded,
@@ -743,6 +744,7 @@ function draftOut(
     madeBy: maker?.madeBy ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
+    ...otherApprover(maker),
     changedBy: Object.fromEntries(
       changed.map((field) => [field, maker?.fieldEditors.get(field) ?? null]),
     ),
@@ -835,6 +837,7 @@ export async function readColumnsOut(
             madeBy: orderMaker?.madeBy ?? null,
             madeAt: orderMaker?.madeAt.toISOString() ?? null,
             editors: orderMaker?.editors ?? [],
+            ...otherApprover(orderMaker),
           },
         }
       : {}),

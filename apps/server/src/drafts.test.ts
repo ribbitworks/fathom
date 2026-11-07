@@ -587,25 +587,182 @@ describe("approving and rejecting", () => {
       "restricted:view",
     ]);
     expect((await approve([person.id], manager.cookie)).statusCode).toBe(200);
-    // An Approver may approve their own drafts.
-    const own = await test.signedIn([
+  });
+
+  describe("drafts the approver changed", () => {
+    const maker = [
       "drafts:approve",
       "people:edit",
       "restricted:edit",
       "confidential:edit",
       "configuration:edit",
-    ]);
-    const response = await send(own.cookie, "POST", "/api/people", {
-      people: [
-        {
-          preferredName: "Fictional Own",
-          employeeId: unique("E"),
-          positionId: testPosition,
-        },
-      ],
+    ] as const;
+    const refusal = {
+      error: "Drafts changed by the approver need another approver",
+    };
+
+    async function draftedBy(cookie: string): Promise<string> {
+      const response = await send(cookie, "POST", "/api/people", {
+        people: [
+          {
+            preferredName: unique("Fictional Own"),
+            employeeId: unique("E"),
+            positionId: testPosition,
+          },
+        ],
+      });
+      expect(response.statusCode, response.body).toBe(201);
+      return response.json<{ ids: string[] }>().ids[0] ?? "";
+    }
+
+    const needsOther = async (cookie: string, id: string) =>
+      (await send(cookie, "GET", "/api/people"))
+        .json<{
+          people: { id: string; draft?: { needsOtherApprover?: boolean } }[];
+        }>()
+        .people.find((one) => one.id === id)?.draft?.needsOtherApprover;
+
+    it("are not approved by the approver, who may still reject them", async () => {
+      const own = await test.signedIn([...maker]);
+      const id = await draftedBy(own.cookie);
+      expect(await needsOther(own.cookie, id)).toBe(true);
+      expect(await needsOther(approver.cookie, id)).toBeUndefined();
+      const refused = await approve([id], own.cookie);
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toEqual(refusal);
+      expect(await draftRow(id)).toBeDefined();
+      expect(
+        (await reject([id], "Fictional reason", own.cookie)).statusCode,
+      ).toBe(200);
     });
-    const [ownId = ""] = response.json<{ ids: string[] }>().ids;
-    expect((await approve([ownId], own.cookie)).statusCode).toBe(200);
+
+    it("count as the approver's when they changed someone else's draft", async () => {
+      const own = await test.signedIn([...maker]);
+      const person = await livePerson();
+      await saved("PATCH", `/api/people/${person.id}`, {
+        preferredName: unique("Fictional"),
+      });
+      const changed = await send(
+        own.cookie,
+        "PATCH",
+        `/api/people/${person.id}`,
+        {
+          preferredName: unique("Fictional"),
+        },
+      );
+      expect(changed.statusCode, changed.body).toBe(200);
+      expect((await approve([person.id], own.cookie)).json()).toEqual(refusal);
+      expect((await approve([person.id])).statusCode).toBe(200);
+    });
+
+    it("are the approver's only until approved, so a later draft by others is theirs to approve", async () => {
+      const own = await test.signedIn([...maker]);
+      const id = await draftedBy(own.cookie);
+      expect((await approve([id])).statusCode).toBe(200);
+      await saved("PATCH", `/api/people/${id}`, {
+        preferredName: unique("Fictional"),
+      });
+      expect(await needsOther(own.cookie, id)).toBeUndefined();
+      expect((await approve([id], own.cookie)).statusCode).toBe(200);
+    });
+
+    it("include drafts of other kinds, and those an approval takes with the drafts chosen", async () => {
+      const own = await test.signedIn([...maker]);
+      const list = (
+        await send(own.cookie, "POST", "/api/lists", {
+          name: unique("Fictional List"),
+          visibility: "general",
+        })
+      ).json<{ list: List }>().list;
+      const refused = await send(own.cookie, "POST", "/api/drafts/approval", {
+        lists: [list.id],
+      });
+      expect(refused.json()).toEqual(refusal);
+      const field = (
+        await send(editor.cookie, "POST", "/api/people/columns", {
+          name: unique("Fictional Column"),
+          listId: list.id,
+          multiple: true,
+        })
+      ).json<{ field: Field }>().field;
+      // Approving the column approves the new list it draws on, which this approver drafted.
+      const taken = await send(own.cookie, "POST", "/api/drafts/approval", {
+        columns: [field.id],
+      });
+      expect(taken.json()).toEqual(refusal);
+      expect(
+        (
+          await send(approver.cookie, "POST", "/api/drafts/approval", {
+            columns: [field.id],
+          })
+        ).statusCode,
+      ).toBe(200);
+    });
+
+    it("stop counting once discarded, but not once rejected or resubmitted", async () => {
+      const own = await test.signedIn([...maker]);
+      const discarded = await livePerson();
+      await send(own.cookie, "PATCH", `/api/people/${discarded.id}`, {
+        preferredName: unique("Fictional"),
+      });
+      const gone = await send(
+        own.cookie,
+        "DELETE",
+        `/api/people/${discarded.id}/draft`,
+      );
+      expect(gone.statusCode, gone.body).toBe(200);
+      await saved("PATCH", `/api/people/${discarded.id}`, {
+        preferredName: unique("Fictional"),
+      });
+      expect((await approve([discarded.id], own.cookie)).statusCode).toBe(200);
+
+      const rejected = await livePerson();
+      await send(own.cookie, "PATCH", `/api/people/${rejected.id}`, {
+        preferredName: unique("Fictional"),
+      });
+      expect(
+        (await reject([rejected.id], "Fictional reason", own.cookie))
+          .statusCode,
+      ).toBe(200);
+      const resent = await send(
+        own.cookie,
+        "DELETE",
+        `/api/people/${rejected.id}/draft/rejection`,
+      );
+      expect(resent.statusCode, resent.body).toBe(200);
+      expect((await approve([rejected.id], own.cookie)).json()).toEqual(
+        refusal,
+      );
+    });
+
+    it("do not block deciding other drafts that touch the same people", async () => {
+      const own = await test.signedIn([...maker]);
+      const { choices, field } = await columnWith(["North"]);
+      const person = await livePerson({
+        values: { [field.id]: [choices[0]?.id ?? ""] },
+      });
+      await send(own.cookie, "PATCH", `/api/people/${person.id}`, {
+        preferredName: unique("Fictional"),
+      });
+      const removal = await send(
+        editor.cookie,
+        "DELETE",
+        `/api/people/columns/${field.id}`,
+      );
+      expect(removal.statusCode, removal.body).toBe(200);
+      const decided = await send(own.cookie, "POST", "/api/drafts/approval", {
+        columns: [field.id],
+      });
+      expect(decided.statusCode, decided.body).toBe(200);
+      expect(await draftRow(person.id)).toBeDefined();
+    });
+
+    it("are approved by an approver whose role lets them approve their own", async () => {
+      const own = await test.signedIn([...maker, "drafts:approve-own"]);
+      const id = await draftedBy(own.cookie);
+      expect(await needsOther(own.cookie, id)).toBeUndefined();
+      expect((await approve([id], own.cookie)).statusCode).toBe(200);
+    });
   });
 
   it("refuses drafts that are gone, rejected, or no longer fit", async () => {

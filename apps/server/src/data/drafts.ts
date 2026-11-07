@@ -20,6 +20,8 @@ import {
   people,
   plannedHires,
   unpublishedDrafts,
+  rolePermissions,
+  userRoles,
   users,
 } from "@fathom/db";
 import {
@@ -38,8 +40,8 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { mostSensitive, storedTier } from "../access.ts";
-import { ConflictError } from "../errors.ts";
+import { type Actor, mostSensitive, storedTier } from "../access.ts";
+import { ConflictError, ForbiddenError } from "../errors.ts";
 import { type Change, stableJson, type Transaction } from "./changes.ts";
 import { isNote, typeOf } from "./column-types.ts";
 import type { ColumnInfo } from "./values.ts";
@@ -489,6 +491,9 @@ export interface Maker {
   editors: (string | null)[];
   // Who last changed each field of the draft, by field as the change history names it.
   fieldEditors: Map<string, string | null>;
+  // Whether the viewer changed the draft since it was last approved or discarded, and their role
+  // does not let them approve their own, so another approver must approve it.
+  needsOtherApprover: boolean;
 }
 
 // For readers who see every field of a draft, such as those of lists and columns, which are
@@ -505,6 +510,29 @@ export function openChangeSets(userId: string): SQL {
   ) as SQL;
 }
 
+// Whether a user's role lets them approve drafts they changed themselves.
+async function mayApproveOwn(
+  reader: Pick<Database, "select">,
+  userId: string,
+): Promise<boolean> {
+  const [granted] = await reader
+    .select({ permission: rolePermissions.permission })
+    .from(userRoles)
+    .innerJoin(rolePermissions, eq(rolePermissions.roleId, userRoles.roleId))
+    .where(
+      and(
+        eq(userRoles.userId, userId),
+        eq(rolePermissions.permission, "drafts:approve-own"),
+      ),
+    )
+    .limit(1);
+  return granted !== undefined;
+}
+
+// The marker a draft carries when the reader changed it and may not approve their own.
+export const otherApprover = (maker: Maker | undefined) =>
+  maker?.needsOtherApprover === true ? { needsOtherApprover: true } : {};
+
 // Who changed each record's draft, and when, from the changes to it the reader may see, so a hidden
 // change reveals nothing: the latest, and everyone since the record's last draft was approved or
 // discarded. Rejecting a draft, or sending it for approval again unchanged, does not change it.
@@ -517,6 +545,7 @@ export async function draftMakers(
   viewer: string,
 ): Promise<Map<string, Maker>> {
   const makers = new Map<string, Maker>();
+  const approvesOwn = await mayApproveOwn(reader, viewer);
   for (const chunk of inChunks([...ids])) {
     const ownRows = await reader
       .select({ id: unpublishedDrafts.recordId })
@@ -538,6 +567,7 @@ export async function draftMakers(
         kind: changeSets.kind,
         unpublished: changeSets.unpublished,
         madeBy: users.name,
+        makerId: changeSets.madeBy,
         madeAt: changeSets.madeAt,
       })
       .from(changes)
@@ -555,8 +585,12 @@ export async function draftMakers(
         ),
       )
       .orderBy(changes.id);
-    for (const row of rows) {
-      if (row.unpublished && !own.has(row.recordId)) continue;
+    const counted = rows.filter(
+      (row) => !row.unpublished || own.has(row.recordId),
+    );
+    // The viewer's changes count whatever their tier, since they made them.
+    const mine = approvesOwn ? new Set<string>() : changedBy(counted, viewer);
+    for (const row of counted) {
       if (row.kind === "approval" || row.kind === "discard") {
         makers.delete(row.recordId);
         continue;
@@ -579,10 +613,106 @@ export async function draftMakers(
           row.madeBy,
         ],
         fieldEditors: new Map(maker?.fieldEditors).set(row.field, row.madeBy),
+        needsOtherApprover: mine.has(row.recordId),
       });
     }
   }
   return makers;
+}
+
+// Refuses an approval that would apply drafts the approver changed since each was last approved or
+// discarded, of any kind, those approved with the drafts asked for included, unless their role lets
+// them approve their own, as the Decisions Log sets out. Called with every change the approval
+// The records whose drafts a user changed since each was last approved or discarded, from their
+// history in order: rejecting or resubmitting a draft does not change it, so neither counts nor
+// resets. One rule for the drafts marked on screen and the approvals refused.
+export function changedBy(
+  rows: readonly {
+    recordId: string;
+    draft: boolean;
+    kind: string;
+    makerId: string | null;
+  }[],
+  userId: string,
+): Set<string> {
+  const changed = new Set<string>();
+  for (const row of rows) {
+    if (row.kind === "approval" || row.kind === "discard") {
+      changed.delete(row.recordId);
+    } else if (
+      row.draft &&
+      row.makerId === userId &&
+      row.kind !== "rejection" &&
+      row.kind !== "resubmission"
+    ) {
+      changed.add(row.recordId);
+    }
+  }
+  return changed;
+}
+
+// Every draft waiting or rejected, by kind and record, so an approval can tell which it decided.
+export async function draftKeys(
+  reader: Pick<Database, "select">,
+): Promise<Set<string>> {
+  const rows = await reader
+    .select({ recordType: drafts.recordType, recordId: drafts.recordId })
+    .from(drafts);
+  return new Set(rows.map((row) => `${row.recordType} ${row.recordId}`));
+}
+
+// Refuses an approval that applied drafts the approver changed since each was last approved or
+// discarded, of any kind, those approved with the drafts asked for included, unless their role
+// lets them approve their own, as the Decisions Log sets out. Given the drafts the approval
+// removed, before it is saved, so its own change set is not yet in the history.
+export async function refuseOwnDrafts(
+  reader: Pick<Database, "select">,
+  actor: Actor,
+  decided: readonly string[],
+): Promise<void> {
+  if (actor.permissions.includes("drafts:approve-own")) return;
+  const byType = new Map<string, Set<string>>();
+  for (const key of decided) {
+    const space = key.indexOf(" ");
+    const recordType = key.slice(0, space);
+    byType.set(
+      recordType,
+      (byType.get(recordType) ?? new Set()).add(key.slice(space + 1)),
+    );
+  }
+  for (const [recordType, ids] of byType) {
+    for (const chunk of inChunks([...ids])) {
+      const rows = await reader
+        .select({
+          recordId: changes.recordId,
+          draft: changes.draft,
+          kind: changeSets.kind,
+          makerId: changeSets.madeBy,
+        })
+        .from(changes)
+        .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+        .where(
+          and(
+            eq(changes.recordType, recordType),
+            inArray(changes.recordId, chunk),
+            eq(changeSets.unpublished, false),
+            or(
+              and(
+                eq(changes.draft, true),
+                eq(changeSets.madeBy, actor.user.id),
+              ),
+              inArray(changeSets.kind, ["approval", "discard"]),
+            ),
+          ),
+        )
+        .orderBy(changes.id);
+      if (changedBy(rows, actor.user.id).size > 0) {
+        throw new ForbiddenError(
+          "Drafts changed by the approver need another approver",
+        );
+      }
+    }
+  }
 }
 
 // Adds the editor's unpublished drafts of records of one kind drafted to be added together, such

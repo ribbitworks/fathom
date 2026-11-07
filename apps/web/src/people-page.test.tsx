@@ -3142,6 +3142,74 @@ describe("drafts of columns", () => {
     ).toBe(true);
   });
 
+  it("offers no approval of a person's, a column's, or the order's draft this account changed", async () => {
+    const note = "Changed by this account, so another approver must approve it";
+    const disabled = (menu: HTMLElement, name: string) =>
+      within(menu)
+        .getByRole("menuitem", { name })
+        .hasAttribute("data-disabled");
+    await openPeople({
+      "GET /api/session": approverEditor,
+      "GET /api/people": () =>
+        Response.json({
+          people: [
+            {
+              ...avery,
+              draft: {
+                ...waiting,
+                action: "changed",
+                changed: ["preferredName"],
+                live: { preferredName: "Avery Before", values: {} },
+                needsOtherApprover: true,
+              },
+            },
+            blake,
+          ],
+          fields: [
+            site,
+            {
+              ...renamed,
+              draft: {
+                ...renamed.draft,
+                state: "waiting",
+                needsOtherApprover: true,
+              },
+            },
+          ],
+          order: draftedOrder.filter((key) => key !== "f3"),
+          orderDraft: { ...waiting, live: order, needsOtherApprover: true },
+          views: [],
+        }),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Actions for Avery Fictional",
+      }),
+    );
+    const row = await screen.findByRole("menu");
+    expect(disabled(row, "Approve draft")).toBe(true);
+    expect(within(row).getByText(note)).toBeDefined();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: (shown) => shown.startsWith("Team roles column"),
+      }),
+    );
+    const column = await screen.findByRole("menu");
+    expect(disabled(column, "Approve…")).toBe(true);
+    expect(within(column).getAllByText(note).length).toBeGreaterThan(0);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    const draftMenu = await openDraftMenu();
+    expect(disabled(draftMenu, "Approve new order…")).toBe(true);
+    expect(within(draftMenu).getByText(note)).toBeDefined();
+  });
+
   it("skips, when approving all shown, a column order that places a column whose addition was rejected", async () => {
     const fetch = await openPeople({
       "GET /api/session": approverEditor,

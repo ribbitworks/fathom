@@ -7,6 +7,7 @@ import type { Choice, Field, List, Person } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   type Columns,
+  decisionFor,
   draftNames,
   draftTotal,
   heldBack,
@@ -429,5 +430,116 @@ describe("drafts of people and columns that use drafts of another kind", () => {
         columns.people,
       ),
     ).toEqual(["ADA", "the column Squad", "the list Teams"]);
+  });
+});
+
+describe("drafts the approver changed", () => {
+  const person = (id: string, needsOtherApprover?: true): Person => ({
+    id,
+    kind: "person",
+    preferredName: `Fictional ${id}`,
+    employeeId: `E-${id}`,
+    values: {},
+    links: {},
+    draft: {
+      ...waiting,
+      action: "changed",
+      changed: ["preferredName"],
+      live: { values: {}, links: {} },
+      ...(needsOtherApprover ? { needsOtherApprover } : {}),
+    },
+  });
+
+  it("are named, and no approval is offered, when the approver may not approve their own", () => {
+    const people = [person("p1", true), person("p2")];
+    const chosen = { ...noDrafts(), people: ["p1", "p2"] };
+    expect(
+      decisionFor("approve", chosen, lists, { fields: [], people }),
+    ).toMatchObject({ othersApprove: ["Fictional p1"] });
+    expect(
+      decisionFor("reject", chosen, lists, { fields: [], people })
+        .othersApprove,
+    ).toBeUndefined();
+    expect(
+      decisionFor("approve", { ...noDrafts(), people: ["p2"] }, lists, {
+        fields: [],
+        people,
+      }).othersApprove,
+    ).toBeUndefined();
+  });
+
+  it("are found among every kind of draft an approval takes", () => {
+    const marked = { ...waiting, needsOtherApprover: true as const };
+    const ownList: List = {
+      id: "l9",
+      name: "Own",
+      description: "",
+      visibility: "general",
+      retired: false,
+      choices: [
+        {
+          ...live("z"),
+          draft: { ...marked, action: "changed", changed: ["label"], live: {} },
+        },
+      ],
+      draft: { ...marked, action: "changed", changed: ["name"], live: {} },
+      orderDraft: { ...marked, live: ["z"], uses: [] },
+    };
+    const field = {
+      id: "f9",
+      name: "Own column",
+      listId: "l9",
+      multiple: false,
+      required: false,
+      draft: { ...marked, action: "changed", changed: ["name"], live: {} },
+    } as unknown as Field;
+    const hire = {
+      ...person("h9", true),
+      kind: "planned-hire",
+    } as unknown as Person;
+    const ref = {
+      type: "release" as const,
+      id: "00000000-0000-4000-8000-000000000009",
+    };
+    const columns: Columns = {
+      fields: [field],
+      orderDraft: { ...marked, live: ["f9"], uses: [] },
+      people: [hire],
+      records: [
+        {
+          ref,
+          subject: "the release Own",
+          draft: {
+            ...marked,
+            action: "changed",
+            changed: ["name"],
+            live: {},
+            uses: [],
+          },
+          heldBy: undefined,
+        },
+      ],
+    };
+    const chosen = {
+      ...noDrafts(),
+      plannedHires: ["h9"],
+      lists: ["l9"],
+      choices: ["z"],
+      orders: ["l9"],
+      columns: ["f9"],
+      columnOrder: true,
+      records: [ref],
+    };
+    expect(
+      decisionFor("approve", chosen, [ownList], columns).othersApprove,
+    ).toEqual([
+      "the planned hire Fictional h9",
+      "the column Own column",
+      "the new order for People's columns",
+      "the list Own",
+      "the choice Z in Own",
+      "the new order for Own",
+      "the release Own",
+    ]);
   });
 });

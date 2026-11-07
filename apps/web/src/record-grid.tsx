@@ -72,6 +72,7 @@ import {
   MenuDraftLines,
   MenuTitle,
   UnpublishedNote,
+  OtherApproverNote,
   WaitingNote,
 } from "./draft-details.tsx";
 import {
@@ -127,6 +128,8 @@ import {
 export interface GridDraft extends DraftLike, Credited {
   action: "created" | "changed" | "deleted";
   changed: string[];
+  // Changed by this account, whose role does not let it approve its own drafts.
+  needsOtherApprover?: boolean | undefined;
 }
 
 // A record the table shows: as its draft, if any, makes it, with the draft beside, and who else
@@ -808,7 +811,7 @@ function OrderItems({
         <>
           <Menu.Item
             closeMenuOnClick
-            disabled={waits}
+            disabled={waits || draft.needsOtherApprover === true}
             onClick={() => {
               actions.decide("approve", order);
             }}
@@ -816,6 +819,7 @@ function OrderItems({
             Approve new order…
           </Menu.Item>
           {waits && <WaitingNote />}
+          {!waits && draft.needsOtherApprover === true && <OtherApproverNote />}
           <Menu.Item
             closeMenuOnClick
             onClick={() => {
@@ -1804,12 +1808,16 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   {canApprove && ownWaiting && (
                     <>
                       <Menu.Item
+                        disabled={field.draft.needsOtherApprover === true}
                         onClick={() => {
                           actions.decide("approve", deciding, true);
                         }}
                       >
                         Approve…
                       </Menu.Item>
+                      {field.draft.needsOtherApprover === true && (
+                        <OtherApproverNote />
+                      )}
                       <Menu.Item
                         onClick={() => {
                           actions.decide("reject", deciding, true);
@@ -2113,12 +2121,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         {canApprove && decidable(record) && (
           <>
             <Menu.Item
+              disabled={record.draft?.needsOtherApprover === true}
               onClick={() => {
                 actions.decide("approve", table.drafts([record.id]));
               }}
             >
               Approve draft
             </Menu.Item>
+            {record.draft?.needsOtherApprover === true && <OtherApproverNote />}
             <Menu.Item
               onClick={() => {
                 actions.decide("reject", table.drafts([record.id]));

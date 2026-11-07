@@ -47,6 +47,8 @@ export const permissionSchema = z.enum([
   "configuration:edit",
   "drafts:submit",
   "drafts:approve",
+  // Approving drafts the approver changed themselves, which nobody may do without it.
+  "drafts:approve-own",
   "accounts:manage",
   // Changing what roles grant, apart from managing accounts, as the Decisions Log sets out.
   "roles:edit",
@@ -168,6 +170,12 @@ export const permissionDescriptions: Record<
     allows: "Approves or rejects drafts of the data their role lets them see.",
     without: "Cannot approve drafts.",
   },
+  "drafts:approve-own": {
+    allows:
+      "Approves drafts they changed themselves, which otherwise need another approver.",
+    without: "Drafts they changed need someone else to approve them.",
+    needs: "drafts:approve",
+  },
   "accounts:manage": {
     allows:
       "Manages user accounts: creates them, changes their names, email addresses, and the role each holds, resets passwords, and deactivates them.",
@@ -278,6 +286,7 @@ export const permissionGrid: readonly {
     area: "Drafts of every kind",
     actions: { draft: "drafts:submit", approve: "drafts:approve" },
   },
+  { area: "Their own drafts", actions: { approve: "drafts:approve-own" } },
   {
     area: "Configuration",
     actions: { view: "configuration:view", edit: "configuration:edit" },
@@ -389,6 +398,7 @@ export const startingRoles: Record<
       "configuration:view",
       "drafts:submit",
       "drafts:approve",
+      "drafts:approve-own",
       "changes:view",
     ],
   },

@@ -13,6 +13,7 @@ import {
   MenuDraftLines,
   MenuTitle,
   UnpublishedNote,
+  OtherApproverNote,
   WaitingNote,
 } from "./draft-details.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
@@ -249,6 +250,7 @@ export function ListDraftMenu({
             <DraftItems
               canEdit={canEdit && list.heldBy === undefined}
               canApprove={canApprove && decidable(list)}
+              othersApprove={draft.needsOtherApprover === true}
               rejected={draft.state === "rejected"}
               onApprove={act(() => {
                 actions.decide("approve", on);
@@ -283,6 +285,7 @@ export function ListDraftMenu({
                 canApprove &&
                 decidable({ draft: orderDraft, heldBy: list.orderHeldBy })
               }
+              othersApprove={orderDraft.needsOtherApprover === true}
               rejected={orderDraft.state === "rejected"}
               waits={orderWaits}
               discard="Discard new order"
@@ -332,6 +335,7 @@ export function DraftItems({
   canApprove,
   rejected,
   waits = false,
+  othersApprove = false,
   discard = "Discard draft",
   onApprove,
   onReject,
@@ -342,6 +346,8 @@ export function DraftItems({
   canApprove: boolean;
   rejected: boolean;
   waits?: boolean;
+  // Changed by this account, whose role does not let it approve its own drafts.
+  othersApprove?: boolean;
   discard?: string;
   onApprove: () => void;
   onReject: () => void;
@@ -355,10 +361,11 @@ export function DraftItems({
       {/* A rejected draft is back with its makers, until they resubmit it. */}
       {canApprove && !rejected && (
         <>
-          <Menu.Item disabled={waits} onClick={onApprove}>
+          <Menu.Item disabled={waits || othersApprove} onClick={onApprove}>
             Approve…
           </Menu.Item>
           {waits && <WaitingNote />}
+          {othersApprove && !waits && <OtherApproverNote />}
           <Menu.Item onClick={onReject}>Reject…</Menu.Item>
         </>
       )}

@@ -2,9 +2,9 @@
 
 // Approving or rejecting drafts, from the Drafts page, the People table, or the Lists page: a dialog
 // that asks first, since neither can be undone, showing the decision drafts.ts works out: how many
-// related drafts it includes, how many it skips because they depend on a rejected draft, or that
-// none can be approved yet. It asks for a reason for rejecting, saves the decision itself, and cannot
-// be closed while it saves.
+// related drafts it includes, how many it skips because they depend on a rejected draft, that none
+// can be approved yet, or which drafts this account changed and so needs another approver for. It
+// asks for a reason for rejecting, saves the decision itself, and cannot be closed while it saves.
 
 import { reasonLength } from "@fathom/shared";
 import {
@@ -191,11 +191,29 @@ export function DecisionModal({
       closeOnClickOutside={!busy}
       withCloseButton={!busy}
       title={
-        decision?.waiting
-          ? "Can't approve yet"
-          : `${decision?.asking === "reject" ? "Reject" : "Approve"} ${drafts(total)}?`
+        decision?.othersApprove
+          ? "Another approver needed"
+          : decision?.waiting
+            ? "Can't approve yet"
+            : `${decision?.asking === "reject" ? "Reject" : "Approve"} ${drafts(total)}?`
       }
     >
+      {decision?.othersApprove && (
+        <Stack gap="md">
+          <Text fz="sm">
+            This account changed these drafts, so another approver must approve
+            them:
+          </Text>
+          <List size="sm">
+            {decision.othersApprove.map((name) => (
+              <List.Item key={name}>{name}</List.Item>
+            ))}
+          </List>
+          <Group justify="flex-end">
+            <Button onClick={onClose}>Close</Button>
+          </Group>
+        </Stack>
+      )}
       {decision?.waiting && (
         <Stack gap="md">
           <Text fz="sm">Waiting for a rejected draft to be resubmitted.</Text>
@@ -204,7 +222,7 @@ export function DecisionModal({
           </Group>
         </Stack>
       )}
-      {decision && !decision.waiting && (
+      {decision && !decision.waiting && !decision.othersApprove && (
         <DecisionDialog
           asking={decision.asking}
           selection={decision.selection}

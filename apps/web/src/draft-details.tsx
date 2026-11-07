@@ -202,6 +202,16 @@ export function draftLines(
   ]);
 }
 
+// Under Approve, greyed out, for a draft this account changed when its role does not let it approve
+// its own.
+export function OtherApproverNote() {
+  return (
+    <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
+      Changed by this account, so another approver must approve it
+    </Text>
+  );
+}
+
 // Under an Approve item that is disabled because the draft depends on a rejected one.
 export function WaitingNote() {
   return (

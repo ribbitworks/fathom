@@ -225,6 +225,13 @@
       "when": 1794068022610,
       "tag": "0031_org_chart_view",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1794073326450,
+      "tag": "0032_approve_own_drafts",
+      "breakpoints": true
     }
   ]
 }

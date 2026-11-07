@@ -32,6 +32,9 @@ export const draftShape = {
   changedBy: z.record(z.string(), z.string().nullable()).optional(),
   // True when the draft holds the user's own changes, not yet published, which only they see.
   unpublished: z.boolean().optional(),
+  // True when the user changed the draft since it was last approved or discarded and their role
+  // does not let them approve their own, so another approver must approve it.
+  needsOtherApprover: z.boolean().optional(),
 };
 
 // Who holds a record by having unpublished changes to it, by name, when it is someone other than

@@ -106,6 +106,8 @@ interface Entry {
   unpublished: boolean;
   // Who else has unpublished changes to the record, which hold it.
   heldBy: string | undefined;
+  // Changed by this user, whose role does not let them approve their own drafts.
+  needsOtherApprover: boolean;
   text: string;
   selects: DraftSelection;
 }
@@ -120,6 +122,7 @@ function entry(
     madeAt: string | null;
     editors?: (string | null)[] | undefined;
     unpublished?: boolean | undefined;
+    needsOtherApprover?: boolean | undefined;
   },
   subject: string,
   details: Phrase[],
@@ -145,6 +148,7 @@ function entry(
     rejected,
     unpublished: draft.unpublished === true,
     heldBy,
+    needsOtherApprover: draft.needsOtherApprover === true,
     text: [who, did, subject, ...details.map(phraseText), rejected].join(" "),
     selects: { ...noDrafts(), ...selects },
   };
@@ -566,6 +570,9 @@ export function DraftsPage({
     );
     // Only drafts still shown, and still waiting, stay selected.
     const chosen = waiting.filter(({ key }) => selected.has(key));
+    const othersApprove = chosen.filter(
+      ({ needsOtherApprover }) => needsOtherApprover,
+    ).length;
     const ask = (asking: Asking) => {
       const selection = chosen.reduce(
         (all, { selects }) => joined(all, selects),
@@ -613,7 +620,7 @@ export function DraftsPage({
                 Reject…
               </Button>
               <Button
-                disabled={chosen.length === 0}
+                disabled={chosen.length === 0 || othersApprove > 0}
                 onClick={() => {
                   ask("approve");
                 }}
@@ -624,6 +631,13 @@ export function DraftsPage({
               </Button>
             </Group>
           </Group>
+        )}
+        {othersApprove > 0 && (
+          <Text fz="sm" c="dimmed" role="status">
+            {othersApprove === 1
+              ? "1 chosen draft was changed by this account, so another approver must approve it."
+              : `${String(othersApprove)} chosen drafts were changed by this account, so another approver must approve them.`}
+          </Text>
         )}
         <Paper withBorder className={classes.tablePanel}>
           {shown.length === 0 && (

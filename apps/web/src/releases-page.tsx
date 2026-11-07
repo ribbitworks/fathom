@@ -279,6 +279,7 @@ function RecordMenu({
             <DraftItems
               canEdit={canEditDraft && heldBy === undefined}
               canApprove={actions.canApprove && decidable(node)}
+              othersApprove={draft.needsOtherApprover === true}
               rejected={draft.state === "rejected"}
               waits={waits}
               onApprove={act(() => {

@@ -1180,6 +1180,36 @@ describe("drafts in a stream's panel", () => {
     ]).toEqual([expect.anything(), expect.anything()]);
   });
 
+  it("offers no approval of a release's draft this account changed, but still rejecting it", async () => {
+    const stream = fictionalStream({
+      releases: [
+        fictionalRelease({
+          draft: recordDraft({ action: "created", needsOtherApprover: true }),
+        }),
+      ],
+    });
+    await openStream([stream], { answers: { "GET /api/session": approver } });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Menu of Fictional One" }),
+    );
+    const menu = await screen.findByRole("menu");
+    const approve = within(menu).getByRole("menuitem", { name: "Approve…" });
+    expect(
+      approve.hasAttribute("disabled") ||
+        approve.getAttribute("data-disabled") === "true",
+    ).toBe(true);
+    expect(
+      within(menu).getByText(
+        "Changed by this account, so another approver must approve it",
+      ),
+    ).toBeDefined();
+    expect(
+      within(menu)
+        .getByRole("menuitem", { name: "Reject…" })
+        .hasAttribute("data-disabled"),
+    ).toBe(false);
+  });
+
   it("closes only a menu in the panel with Escape, keeping the panel open", async () => {
     const { history } = await openStream([
       fictionalStream({

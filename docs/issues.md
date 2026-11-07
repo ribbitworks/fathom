@@ -64,6 +64,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **An order draft that moves only Restricted columns:** A draft of the column order that moves only columns a reader may not see, such as Start or Manager since, is still sent to that reader as a draft of the order whose live and drafted orders are the same. Found in review on 2026-11-04.
 - **A reason's tier in the change history:** A rejection's reason is recorded with the tier of its draft when rejected, so, unlike the draft's values, it does not become more sensitive in the change history if a column's list later does.
 - **Publishing drafts after losing a permission:** Publishing your unpublished drafts checks only that you may make some kind of draft, not each draft's own permission, so someone whose role no longer lets them change planned hires, people, or configuration can still send drafts they made earlier for approval. Found in review on 2026-11-05, and deferred by the owner as an edge case.
+- **A draft's changer counted after it ends unapproved:** whoever changed a draft counts as its changer until the record's draft is approved or discarded. A draft can also end without either, such as one published back to the live value, approved with no change left, or an emptied order. Then someone who changed it earlier still counts as having changed the record's next draft, so another approver must approve it. This errs on the safe side. Found in review on 2026-11-07, while building no self-approval.
 
 ## Error Pages
 

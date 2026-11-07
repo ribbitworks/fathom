@@ -32,6 +32,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | View | View | None |
 | Lists of choices, and People's columns and their order | None | None | View lists, and approve drafts of them, decided by the owner on 2026-11-01 | None | View lists, and approve drafts of them | Edit | None | None | None |
 | Draft rows of the data the role sees, made by editing it | View | Edit | Edit, and approve | Edit | Edit, and approve | Edit | View (**proposal**: none) | Edit | None |
+| Approving drafts they changed themselves, which otherwise need another approver (decided by the owner on 2026-11-07) | None | None | None | None | Approve | None | None | None | None |
 | Change history, for the data the role sees (**proposal**) | View | View | View | View | View | View | View | View | None |
 | Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |
 | User accounts, the role each holds, and system settings | None | None | None | None | None | None | None | None | Edit |

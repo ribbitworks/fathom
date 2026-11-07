@@ -59,6 +59,7 @@ import {
   draftMakers,
   fitsColumns,
   lockDrafts,
+  otherApprover,
   readHeld,
   readPersonDrafts,
   type Recorded,
@@ -697,6 +698,7 @@ async function readPeopleIn(
       madeBy: maker?.madeBy ?? null,
       madeAt: maker?.madeAt.toISOString() ?? null,
       editors: maker?.editors ?? [],
+      ...otherApprover(maker),
       changedBy: Object.fromEntries(
         fields.map((field) => [
           fieldOfValue(field) ?? field,

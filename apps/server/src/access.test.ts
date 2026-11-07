@@ -85,6 +85,7 @@ const expected: [Role, Permission[]][] = [
       "configuration:view",
       "drafts:submit",
       "drafts:approve",
+      "drafts:approve-own",
       "changes:view",
     ],
   ],

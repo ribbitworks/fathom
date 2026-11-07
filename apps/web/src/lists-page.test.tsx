@@ -2704,6 +2704,78 @@ describe("drafts on the Lists page", () => {
     ).toBeDefined();
   });
 
+  it("offers no approval of drafts this account changed, from a choice's menu or the Draft menu", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": approverOnly,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...added,
+              draft: { ...added.draft, needsOtherApprover: true },
+              choices: added.choices.map((one) => ({
+                ...one,
+                draft: { ...one.draft, needsOtherApprover: true },
+              })),
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l5");
+    await screen.findByRole("heading", { name: "Teams", level: 2 });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Drafts of Teams" }),
+    );
+    const own = await screen.findByRole("menu");
+    expect(
+      within(own)
+        .getByRole("menuitem", { name: "Approve…" })
+        .hasAttribute("data-disabled"),
+    ).toBe(true);
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Actions for Platform" }),
+    );
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu)
+        .getByRole("menuitem", { name: "Approve…" })
+        .hasAttribute("data-disabled"),
+    ).toBe(true);
+    expect(
+      within(menu).getByText(
+        "Changed by this account, so another approver must approve it",
+      ),
+    ).toBeDefined();
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+    await userEvent.click(
+      within(await openDraftMenu()).getByRole("menuitem", {
+        name: "Approve 2 drafts…",
+      }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Another approver needed",
+    });
+    expect(
+      within(dialog)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["the list Teams", "the choice Platform in Teams"]);
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Close" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(sent(fetch, "POST", "/api/drafts/approval")).toBe(false);
+  });
+
   it("disables approving a choice added to a list whose own addition was rejected", async () => {
     const fetch = serverAnswers({
       "GET /api/session": approverOnly,

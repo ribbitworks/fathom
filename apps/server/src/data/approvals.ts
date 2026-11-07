@@ -4,9 +4,9 @@
 // of people here, of lists, choices, and the order of lists' choices in list-approvals.ts, and of
 // the plan's records, such as release streams, in records.ts. Part of the data access layer.
 // Approving applies the drafts to the live records, all in one change set or none of them, and
-// rejecting keeps them, marked Rejected with the Approver's reason. An Approver may approve their
-// own drafts, and needs roles that see every value in the drafts they approve or reject. Neither
-// can be undone.
+// rejecting keeps them, marked Rejected with the Approver's reason. An Approver may not approve
+// drafts they changed, unless their role lets them approve their own, but may reject them, and
+// needs roles that see every value in the drafts they approve or reject. Neither can be undone.
 
 import {
   type Database,
@@ -38,6 +38,8 @@ import {
   readPersonDrafts,
   type Recorded,
   refuseHeldDecision,
+  refuseOwnDrafts,
+  draftKeys,
   refuseRejected,
   rejectedField,
   setRejection,
@@ -353,6 +355,7 @@ export async function approveDrafts(
   try {
     return await database.transaction(async (transaction) => {
       await deciding(transaction, actor, requested);
+      const waiting = await draftKeys(transaction);
       if (requested.people.length > 0) {
         await seenAsked(transaction, actor, requested.people, today);
       }
@@ -372,6 +375,12 @@ export async function approveDrafts(
       }
       made.push(
         ...(await approveHiresIn(transaction, actor, asked.plannedHires)),
+      );
+      const left = await draftKeys(transaction);
+      await refuseOwnDrafts(
+        transaction,
+        actor,
+        [...waiting].filter((key) => !left.has(key)),
       );
       await recordSensitiveChanges(transaction, actor.user.id, made);
       await recordHiringChanges(transaction, actor.user.id, made);

@@ -412,6 +412,63 @@ export interface Decision {
   leftOut?: number;
   // When every draft chosen depends on a rejected draft, so none can be approved yet.
   waiting?: true;
+  // The drafts the approval would apply that this user changed, named, when their role does not let
+  // them approve their own: another approver must approve them, so nothing is approved.
+  othersApprove?: string[];
+}
+
+// The drafts in a selection that this user changed and may not approve themselves.
+function needingOthers(
+  selection: DraftSelection,
+  lists: readonly List[],
+  columns?: Columns,
+): DraftSelection {
+  const flagged = (draft?: { needsOtherApprover?: boolean | undefined }) =>
+    draft?.needsOtherApprover === true;
+  const people = columns?.people ?? [];
+  return {
+    ...noDrafts(),
+    people: people
+      .filter(
+        ({ id, draft }) => selection.people.includes(id) && flagged(draft),
+      )
+      .map(({ id }) => id),
+    plannedHires: people
+      .filter(
+        ({ id, draft }) =>
+          selection.plannedHires.includes(id) && flagged(draft),
+      )
+      .map(({ id }) => id),
+    lists: lists
+      .filter(({ id, draft }) => selection.lists.includes(id) && flagged(draft))
+      .map(({ id }) => id),
+    choices: choicesOf(lists)
+      .filter(
+        ({ choice }) =>
+          selection.choices.includes(choice.id) && flagged(choice.draft),
+      )
+      .map(({ choice }) => choice.id),
+    orders: lists
+      .filter(
+        ({ id, orderDraft }) =>
+          selection.orders.includes(id) && flagged(orderDraft),
+      )
+      .map(({ id }) => id),
+    columns: (columns?.fields ?? [])
+      .filter(
+        ({ id, draft }) => selection.columns.includes(id) && flagged(draft),
+      )
+      .map(({ id }) => id),
+    columnOrder: selection.columnOrder && flagged(columns?.orderDraft),
+    records: (columns?.records ?? [])
+      .filter(
+        ({ ref, draft }) =>
+          selection.records.some(
+            (one) => one.type === ref.type && one.id === ref.id,
+          ) && flagged(draft),
+      )
+      .map(({ ref }) => ref),
+  };
 }
 
 // A decision on the drafts chosen: approving includes the drafts they depend on, and skips any that
@@ -443,6 +500,14 @@ export function decisionFor(
   if (draftTotal(ready) === 0)
     return { asking, selection: chosen, waiting: true };
   const used = usedDrafts(ready, lists, columns);
+  const mine = needingOthers(joined(ready, used), lists, columns);
+  if (draftTotal(mine) > 0) {
+    return {
+      asking,
+      selection: joined(ready, used),
+      othersApprove: names(mine),
+    };
+  }
   return {
     asking,
     selection: joined(ready, used),
