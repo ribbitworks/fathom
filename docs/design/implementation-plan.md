@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -114,7 +114,7 @@ The additions to the org chart that the [Decisions Log](../product/decisions.md#
 3. **Person detail view:** a page for one person, which the org chart's cards and People's rows open. Restricted details shown there are recorded in the access history, as on People.
 4. **Chart fields, filters, and sort:** cards show fields chosen from People's columns, at the tiers the reader may see, kept apart from the card's own details, with filters and sort saved as People's views are.
 
-The [Projects and Feature Teams](#projects-and-feature-teams) slice adds a second chart, of feature teams, with their own colours and dotted lines to members' managers, as the [Decisions Log](../product/decisions.md#workforce) records.
+The [Features and the Roadmap](#features-and-the-roadmap) slice adds a second chart, of feature teams, with their own colours and dotted lines to members' managers, as the [Decisions Log](../product/decisions.md#workforce) records.
 
 ### Hiring Plan
 
@@ -139,22 +139,24 @@ Importing people from a CSV or TSV file, as the [Decisions Log](../product/decis
 
 Release streams, as many as an organization uses, each with a configurable cycle length and cycle names that can change from a chosen date, and releases with typed names that include consecutive cycles, as set out in the [Decisions Log](../product/decisions.md#planning). Each cycle knows its share of the months it spans, as the Decisions Log sets out, which capacity and the timeline use.
 
+### Projects and Feature Teams
+
+Projects with their customers, from a built-in Customers table. Milestones of projects, in a Milestones table of their own, as the [Decisions Log](../product/decisions.md#planning) sets out. Feature teams with their names, members and feature leads, with membership kept from a date as reporting lines are, as the [Decisions Log](../product/decisions.md#workforce) sets out. Engineering Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md). Building feature teams takes their three permissions out of `unbuiltPermissions` in `packages/shared/src/access.ts`, so the Roles page stops marking them Not built yet. The seed data gains fictional projects with customers and milestones, and fictional feature teams, which the roadmap's test page later draws.
+
+This slice and Proposals come before Features and the Roadmap, as the [Decisions Log](../product/decisions.md#planning) sets out, so what links them to features is built with that slice.
+
+### Proposals
+
+Proposals, which may become projects, with their statuses, and making a won proposal a project, as the [Decisions Log](../product/decisions.md#planning) sets out. They reuse the patterns Projects and Feature Teams sets, so they come straight after it.
+
 ### Features and the Roadmap
 
-The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind, priority, and product, which the owner will judge once seen. Features have a built-in description, and their increments are not linked, as the [Decisions Log](../product/decisions.md#planning) sets out, which also says where a feature's effort falls in time, for the Demand Forecasting slice. The seed data gains fictional features across the cycles of a release stream, with some in Later, for the test page below.
+The Product Manager's roadmap: features with the built-in columns in the Decisions Log, each targeting a cycle, shown as a table that can be grouped by cycle, with Later for features that target none. Products become a built-in table, and lists drawn from a table let a Product column on Features pick from it. Fathom offers to add suggested columns, such as kind, priority, and product, which the owner will judge once seen. Features have a built-in description, and their increments are not linked, as the [Decisions Log](../product/decisions.md#planning) sets out, which also says where a feature's effort falls in time, for the Demand Forecasting slice. The seed data gains fictional features across the cycles of a release stream, with some in Later, for the test page below. The slice also links features to what was built before them: the features a project needs, edited from either Projects or Features, and its general features; milestones of features and the release warnings; the features a feature team owns; and the features a proposal proposes, as the [Decisions Log](../product/decisions.md#planning) sets out. Once features exist, it adds the feature teams' own org chart, as the [Decisions Log](../product/decisions.md#workforce) sets out.
 
 A test page of the roadmap board proposed in [ADR 0009](../adr/0009-roadmap-and-timeline-views.md) comes with the slice, so the owner can judge the board before The Organization stage. It is labelled as a test and left off the main navigation:
 
 - **Roadmap board:** The real features of one release stream, with a column for each cycle and Later, and cards moved by mouse, by Alt and the arrow keys, and from their menu. Moves are real drafts of the target cycle, marked as on tables.
-- **Timeline sketch:** Read only, with rows for feature teams and bars across cycles drawn from fixed fictional data in the page, since feature teams and allocations do not exist yet, to judge lanes and row height.
-
-### Projects and Feature Teams
-
-Projects with their customers, from a built-in Customers table, the features they need, edited from either Projects or Features, and their general features. Milestones of projects and features, in a Milestones table of their own, and the release warnings, all as the [Decisions Log](../product/decisions.md#planning) sets out. Feature teams with their names, members and feature leads, owning features, with membership kept from a date as reporting lines are, and their own org chart, as the [Decisions Log](../product/decisions.md#workforce) sets out. Engineering Managers propose them as drafts, which an Approver approves, as set out in [Roles](../product/roles.md). Building feature teams takes their three permissions out of `unbuiltPermissions` in `packages/shared/src/access.ts`, so the Roles page stops marking them Not built yet.
-
-### Proposals
-
-Proposals, which may become projects, with their statuses, the features they propose, and making a won proposal a project, as the [Decisions Log](../product/decisions.md#planning) sets out. They reuse the patterns Projects and Feature Teams sets, so they come straight after it.
+- **Timeline sketch:** Read only, with rows for the real feature teams and bars across cycles drawn from fixed fictional data in the page, since allocations do not exist yet, to judge lanes and row height.
 
 ### Allocations and Capacity
 

@@ -1,7 +1,7 @@
-# Fathom — Roadmap
+# Fathom: Roadmap
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 A proposed order for delivering Fathom's goals. Goals are defined in the [Product Brief](brief.md), and this document only sequences them, noting where a stage delivers a cut-down version. The principles, stage contents, and order are not yet agreed. The privacy approval gate is agreed.
 
@@ -37,13 +37,13 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Org structure:** People managers and their current direct reports, and the org chart of today's reporting lines, without planned changes. The owner brought the org chart forward from The Organization stage, as the [Decisions Log](decisions.md#workforce) records.
 - **Change history:** Who changed what, and when, for the data each user may see.
 - **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which Engineering Managers' proposals are approved by an Approver.
+- **Projects, proposals, and feature teams:** Projects with their milestones, proposals, and feature teams, built before the roadmap's features, as the [Decisions Log](decisions.md#planning) sets out. Their links to features come with the roadmap view.
 - **Roadmap view:** First built as the Product Manager's working roadmap, an input to the rest of the plan: features in a table grouped by cycle. The visual roadmap comes in a later stage.
 - **Release planning:** Cycles, releases, and release streams.
 - **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
 - **Web link columns:** Added by the owner. A column on People holding one web link for each person, ahead of the other column types.
 - **Note columns:** Added by the owner. A column on People holding one rich-text note for each person, and notes on releases, built on one shared note format.
 - **Importing people:** Added by the owner. Adding and updating people from a CSV or TSV file.
-- **Projects, features, and milestones:** Projects, proposals, and milestones, building on the roadmap's features.
 - **Resource assignment** and **Capacity visibility**
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
