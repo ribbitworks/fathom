@@ -1,7 +1,7 @@
 # Fathom — Issues
 
 **Status:** Working list
-**Last updated:** 2026-11-05
+**Last updated:** 2026-11-06
 
 Known problems and deferred work that are not yet scheduled in the [Implementation Plan](design/implementation-plan.md). Each item says why it was deferred. When an item is scheduled or resolved, it moves to the document that owns it, or is removed.
 
@@ -50,6 +50,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Kinds of cell in two places:** Each kind of People cell, such as a web link, is described once in `apps/web/src/cell-kinds.tsx`, but how each kind is searched, sorted, and filtered is described in the table model every table shares, `apps/web/src/table-view.ts`, and the metrics in `apps/web/src/metrics.ts` tell choices and checkboxes from other kinds, so a new kind of column is added in all three. Left as it is, since the table model serves tables besides People. Found in review on 2026-11-03.
 - **People with the same name as managers:** The Manager column names each person by their preferred name, so two people with the same name look alike in its picker, and pasting a manager's name picks the first of them. Found in review on 2026-11-04.
 - **A team's drafted name on its members' rows:** Drafting a team's name marks the manager's Team name cell, but the Team cells of the people on that team change without a mark. Found in review on 2026-11-04. The org chart shows a team's name once, on its manager's card, as the [Decisions Log](product/decisions.md#workforce) records; how People shows it is still to be decided.
+- **Accents in the org chart's finder:** Visual Design asks searches to match names whatever their accents, but the org chart's finder matches the letters typed exactly, so typing Schroder does not find Silje Holm-Schrøder. Deferred as it predates team colours and needs the same matching as People's search.
 - **Opening a person by Employee ID:** The org chart opens a person on People searched for their Employee ID, and People's search matches any part of any cell, so an Employee ID that is part of another, such as 123 and 1234, shows both rows. The person detail view, next in the [Org Chart Additions](design/implementation-plan.md#org-chart-additions) slice, opens one person instead. Found in review on 2026-11-05.
 - **No answer when a reader tries to edit:** A user whose roles cannot change a table gets no response when they click, double-click, or press Enter in a cell, such as clicking a Manager? checkbox. The owner wants feedback, given in every table at once rather than for one column, such as a short note that their roles cannot change the table. Found in the manual test of Manager? on 2026-11-04.
 - **Checkbox columns not yet scheduled:** The [Decisions Log](product/decisions.md#configuration) records that People will take Checkbox columns the Workforce Administrator adds. Their values need a place in the database, so they come as a slice of their own, which the Implementation Plan does not have yet.

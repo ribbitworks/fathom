@@ -10,7 +10,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 - **Viewer:** Sees the plan, including everyone's work assignments. Every account gets this role unless it is left off, as for a person who runs Fathom without seeing people data.
 - **Project Planner:** Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan.
 - **Resource Planner:** Sees people's General details, and edits allocations across the whole plan.
-- **People Manager:** Sees people, including everyone's Restricted details, because people move between managers over time, and proposes feature teams.
+- **People Manager:** Sees people, including everyone's Restricted details, because people move between managers over time, colours teams on the org chart, and proposes feature teams.
 - **Workforce Administrator:** Maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.
 - **Leadership:** Sees people, with their Restricted and Confidential data, without editing it.
 - **Approver:** Approves or rejects draft rows, including feature teams and their own drafts.
@@ -23,6 +23,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Plan: projects, proposals, features, milestones, releases and the cycles they include (**proposal**), products and customers (**proposal**), and estimates | View | Edit | View | View | View | View | View | None |
 | Allocations | View | View | Edit | View | View | View | View | None |
 | People, teams, and reporting lines (General) | None | None | View | View | Edit | View | None | None |
+| Teams' colours on the org chart, for every team until accounts are linked to people, then for People Managers only the teams below them | None | None | None | Edit | Edit | None | None | None |
 | Feature teams (General), with seeing them coming with seeing the plan (**proposal**) | View | View | View | Propose | Edit | View | Approve | None |
 | Restricted employee details | None | None | None | View | Edit | View | None | None |
 | Confidential data | None | None | None | None | Edit | View | None | None |

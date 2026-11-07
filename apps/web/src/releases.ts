@@ -18,7 +18,7 @@ import {
   type RecordRef,
   type RecordType,
   knownColour,
-  type ReleaseColour,
+  type PaletteColour,
   type ReleaseRequest,
   type ReleaseStream,
   releaseStreamSchema,
@@ -29,6 +29,7 @@ import { queryOptions } from "@tanstack/react-query";
 import type { CSSProperties } from "react";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import { colourVariable, colourWords } from "./colours.ts";
 import type { RecordNode } from "./record-drafts.ts";
 
 export const releaseStreamsQuery = queryOptions({
@@ -244,22 +245,16 @@ export function shipsOffCycle(
 export const defaultColour = "sea";
 
 // A release's colour as the theme names it.
-export const shownColour = (colour: ReleaseColour | null): string =>
+export const shownColour = (colour: PaletteColour | null): string =>
   colour ?? defaultColour;
 
-// A shade of a theme colour, as a CSS value.
-export const colourVariable = (colour: string, shade: "filled" | "light") =>
-  `var(--mantine-color-${colour}-${shade})`;
-
 // A colour's name in words, such as "Grape", or "Sea" for a release with none.
-export function colourName(colour: unknown): string {
-  const shown = shownColour(knownColour(colour));
-  return `${shown.charAt(0).toUpperCase()}${shown.slice(1)}`;
-}
+export const colourName = (colour: unknown): string =>
+  colourWords(shownColour(knownColour(colour)));
 
 // The style that draws a release, and its Ships on marker, in its colour.
 export const releaseColourStyle = (
-  colour: ReleaseColour | null,
+  colour: PaletteColour | null,
 ): CSSProperties =>
   ({
     "--release-filled": colourVariable(shownColour(colour), "filled"),

@@ -41,7 +41,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Draft and Approval | Done |
 | Web Link Columns | Done |
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
-| Org Chart Additions | Next: team colours, then the person detail view, then chart fields, filters, and sort |
+| Org Chart Additions | In progress: team colours; next the person detail view, then chart fields, filters, and sort |
 | Cycles and Releases | In progress: schema, server, seed, the Releases page and its timeline, a colour for each release, and changing one cycle's length |
 | Hiring Plan | In progress: schema and server, with Position and the hiring states built in and hires known by requisition or temporary ID; lists with meanings edited on the Lists page, which marks built-in lists |
 | Editable Roles | In progress: schema, the server reading roles from the database, and the Roles page; next, the account dialog |
@@ -104,7 +104,7 @@ People managers and their current direct reports: each person's reporting line, 
 
 The additions to the org chart that the [Decisions Log](../product/decisions.md#workforce) records, built in this order, each step its own pull request:
 
-1. **Team colours:** a column for each team's colour, from the palette releases use, which needs a migration.
+1. **Team colours:** each team's colour, from the palette releases use, chosen on the org chart and changed at once rather than drafted, with a Team colours permission, which needs a migration; with it, naming teams on the chart as drafts, a Teams panel, and teams in the finder.
 2. **Person detail view:** a page for one person, which the org chart's cards and People's rows open. Restricted details shown there are recorded in the access history, as on People.
 3. **Chart fields, filters, and sort:** cards show fields chosen from People's columns, at the tiers the reader may see, kept apart from the card's own details, with filters and sort saved as People's views are.
 

@@ -12,6 +12,7 @@ const person = {
   employeeId: "FX-1",
   position: "Fictional Lead",
   teamName: "Fictional team",
+  teamColour: "teal",
   managerId: null,
 };
 
@@ -39,5 +40,11 @@ describe("the org chart", () => {
       people: [{ ...person, startDate: "2020-01-01" }],
     });
     expect(chart.people[0]).not.toHaveProperty("startDate");
+  });
+
+  it("holds a team's colour only from the palette", () => {
+    expect(() =>
+      orgChartSchema.parse({ people: [{ ...person, teamColour: "beige" }] }),
+    ).toThrow();
   });
 });

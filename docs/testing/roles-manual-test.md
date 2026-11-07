@@ -105,7 +105,7 @@ Run the test cases in order. Start with R2. Tick each step whose expected result
   - **Notes:**
 
 - [ ] **Step 2.** Read the **What it is for** column.
-  - **Expected:** People Manager reads **Sees people, including everyone's Restricted details, and proposes feature teams.** Wherever **Restricted** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
+  - **Expected:** People Manager reads **Sees people, including everyone's Restricted details, colours teams on the org chart, and proposes feature teams.** Wherever **Restricted** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
   - **Notes:**
 
 ### ROLE-03: The Dialog Shows What a Role Grants

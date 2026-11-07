@@ -41,6 +41,7 @@ const expected: [Role, Permission[]][] = [
     "people-manager",
     [
       "people:view",
+      "team-colours:edit",
       "feature-teams:propose",
       "feature-teams:edit",
       "restricted:view",
@@ -52,6 +53,7 @@ const expected: [Role, Permission[]][] = [
     [
       "people:view",
       "people:edit",
+      "team-colours:edit",
       "feature-teams:edit",
       "restricted:view",
       "restricted:edit",

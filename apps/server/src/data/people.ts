@@ -84,7 +84,7 @@ import {
   defaultFrom,
   readLines,
   readManagers,
-  readTeamNames,
+  readTeams,
   refuseLoop,
   refuseRemovingManagers,
   refuseReportsOutside,
@@ -429,13 +429,13 @@ export async function readLive(
     columns.map(({ id }) => id),
   );
   const lines = await readLines(reader, ids);
-  const teamNames = await readTeamNames(reader, ids);
+  const teams = await readTeams(reader, ids);
   return new Map(
     rows.map((row) => [
       row.id,
       {
         ...recorded(row, values.get(row.id) ?? new Map()),
-        ...reportingOf(lines.get(row.id), teamNames.get(row.id), today),
+        ...reportingOf(lines.get(row.id), teams.get(row.id), today),
       },
     ]),
   );

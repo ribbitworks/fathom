@@ -4,7 +4,9 @@
 // layer. A person's current line and their own team's name are held as fields of the person, so
 // changing them is a person's draft, approved, undone, and recorded like any other: managerId and
 // managerFrom, Restricted in drafts and in the change history since they name past managers, and
-// teamName, General. Approving writes the line, in force from its date until the person's next.
+// teamName, General. Approving writes the line, in force from its date until the person's next. A
+// team renamed keeps its colour, which is not part of any draft, and one whose name is removed
+// loses it.
 
 import {
   type Database,
@@ -63,12 +65,17 @@ export async function readLines(
   return bySubject(rows, (row) => row.personId);
 }
 
-// The names of the teams of the managers given, or of every named team, by manager.
-export async function readTeamNames(
+export interface Team {
+  name: string;
+  colour: string | null;
+}
+
+// The teams of the managers given, or every named team, by manager.
+export async function readTeams(
   reader: Reader,
   managerIds?: readonly string[],
-): Promise<Map<string, string>> {
-  const rows: { managerId: string; name: string }[] = [];
+): Promise<Map<string, Team>> {
+  const rows: (Team & { managerId: string })[] = [];
   const read = async (chunk?: readonly string[]) => {
     rows.push(
       ...(await reader
@@ -83,14 +90,16 @@ export async function readTeamNames(
   };
   if (managerIds === undefined) await read();
   else for (const chunk of inChunks([...managerIds])) await read(chunk);
-  return new Map(rows.map(({ managerId, name }) => [managerId, name]));
+  return new Map(
+    rows.map(({ managerId, name, colour }) => [managerId, { name, colour }]),
+  );
 }
 
 // A person's reporting fields, as recorded: their current line, if they have one, and their own
 // team's name, if it has one.
 export function reportingOf(
   lines: readonly LineRow[] | undefined,
-  teamName: string | undefined,
+  team: Team | undefined,
   today: string,
 ): Recorded {
   const line = currentRecordOn(lines ?? [], today);
@@ -98,7 +107,7 @@ export function reportingOf(
     ...(line === undefined
       ? {}
       : { managerId: line.managerId, managerFrom: line.fromDate }),
-    ...(teamName === undefined ? {} : { teamName }),
+    ...(team === undefined ? {} : { teamName: team.name }),
   };
 }
 
@@ -708,12 +717,20 @@ export async function applyReporting(
       ? [{ managerId: id, name: text(person.teamName) }]
       : [],
   );
+  const colours = new Map<string, string | null>();
   for (const chunk of inChunks(named.map(({ managerId }) => managerId))) {
-    await transaction.delete(teams).where(inArray(teams.managerId, chunk));
+    for (const { managerId, colour } of await transaction
+      .delete(teams)
+      .where(inArray(teams.managerId, chunk))
+      .returning({ managerId: teams.managerId, colour: teams.colour })) {
+      colours.set(managerId, colour);
+    }
   }
   for (const chunk of inChunks(
     named.flatMap(({ managerId, name }) =>
-      name === null ? [] : [{ managerId, name }],
+      name === null
+        ? []
+        : [{ managerId, name, colour: colours.get(managerId) ?? null }],
     ),
   )) {
     await transaction.insert(teams).values(chunk);

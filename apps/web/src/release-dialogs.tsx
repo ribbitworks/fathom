@@ -21,13 +21,12 @@ import {
   type CycleUnit,
   type LaterCycles,
   type Release,
-  type ReleaseColour,
-  releaseColours,
+  type PaletteColour,
+  paletteColours,
   type ReleaseStream,
   shipsBeforeStart,
 } from "@fathom/shared";
 import {
-  ColorSwatch,
   Group,
   NumberInput,
   Radio,
@@ -40,6 +39,7 @@ import {
 } from "@mantine/core";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { Swatch } from "./colour-swatch.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
 import { DayInput } from "./day-input.tsx";
 import { Count } from "./list-dialog.tsx";
@@ -47,7 +47,6 @@ import classes from "./pages.module.css";
 import {
   changeCycleLength,
   colourName,
-  colourVariable,
   createStream,
   defaultColour,
   lastCycleEnd,
@@ -598,20 +597,11 @@ function freeCycles(stream: ReleaseStream, release: Release | undefined) {
 
 const colourChoices = [
   { value: defaultColour, label: `${colourName(null)} (default)` },
-  ...releaseColours.map((colour) => ({
+  ...paletteColours.map((colour) => ({
     value: colour,
     label: colourName(colour),
   })),
 ];
-
-const Swatch = ({ colour }: { colour: string }) => (
-  <ColorSwatch
-    color={colourVariable(colour, "filled")}
-    size={14}
-    withShadow={false}
-    aria-hidden
-  />
-);
 
 export function ReleaseDialog({
   stream,
@@ -627,7 +617,7 @@ export function ReleaseDialog({
   const [firstCycle, setFirst] = useState(release?.firstCycle ?? "");
   const [lastCycle, setLast] = useState(release?.lastCycle ?? "");
   const [shipsOn, setShipsOn] = useState(release?.shipsOn ?? null);
-  const [colour, setColour] = useState<ReleaseColour | null>(
+  const [colour, setColour] = useState<PaletteColour | null>(
     release?.colour ?? null,
   );
   // Whether something typed in Ships on is not yet a day.
@@ -756,7 +746,7 @@ export function ReleaseDialog({
           )}
           onChange={(value) => {
             setColour(
-              releaseColours.find((choice) => choice === value) ?? null,
+              paletteColours.find((choice) => choice === value) ?? null,
             );
           }}
         />

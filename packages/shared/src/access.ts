@@ -27,6 +27,9 @@ export const permissionSchema = z.enum([
   "allocations:edit",
   "people:view",
   "people:edit",
+  // A team's colour is how the org chart is drawn, not a detail of anyone, so it has its own
+  // permission. Until accounts are linked to people, it reaches every team.
+  "team-colours:edit",
   // Feature teams are General data. Roles proposes that seeing them comes with seeing the plan.
   "feature-teams:propose",
   "feature-teams:edit",
@@ -88,6 +91,12 @@ export const permissionDescriptions: Record<
     allows:
       "Adds, changes, and removes people, with their teams and reporting lines.",
     without: "Cannot change people.",
+  },
+  "team-colours:edit": {
+    allows:
+      "Chooses the colour each team is drawn in on the org chart, for every team.",
+    without: "Cannot change teams' colours.",
+    needs: "people:view",
   },
   "feature-teams:propose": {
     allows: "Proposes feature teams for approval.",
@@ -238,6 +247,7 @@ export const permissionGrid: readonly {
     actions: { view: "allocations:view", edit: "allocations:edit" },
   },
   { area: "People", actions: { view: "people:view", edit: "people:edit" } },
+  { area: "Team colours", actions: { edit: "team-colours:edit" } },
   {
     area: "Restricted details",
     actions: { view: "restricted:view", edit: "restricted:edit" },
@@ -323,9 +333,10 @@ export const startingRoles: Record<
   "people-manager": {
     name: "People Manager",
     description:
-      "Sees people, including everyone's Restricted details, and proposes feature teams.",
+      "Sees people, including everyone's Restricted details, colours teams on the org chart, and proposes feature teams.",
     permissions: [
       "people:view",
+      "team-colours:edit",
       "feature-teams:propose",
       "feature-teams:edit",
       "restricted:view",
@@ -338,6 +349,7 @@ export const startingRoles: Record<
       "Maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data.",
     permissions: [
       "people:edit",
+      "team-colours:edit",
       "feature-teams:edit",
       "restricted:edit",
       "confidential:edit",

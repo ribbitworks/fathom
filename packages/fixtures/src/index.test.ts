@@ -139,7 +139,7 @@ describe("a fictional organization", () => {
     }
   });
 
-  it("has a person with no manager, a manager who has left with reports, and named and unnamed teams", () => {
+  it("has a person with no manager, a manager who has left with reports, named and unnamed teams, and teams with and without colours", () => {
     const { people, reportingLines, teams } = organization;
     const current = people.filter(({ endDate }) => endDate === null);
     expect(
@@ -163,6 +163,8 @@ describe("a fictional organization", () => {
     expect([...managers].some((id) => !named.has(id))).toBe(true);
     const names = teams.map(({ name }) => name.toLowerCase());
     expect(new Set(names).size).toBe(names.length);
+    expect(teams.some(({ colour }) => colour !== null)).toBe(true);
+    expect(teams.some(({ colour }) => colour === null)).toBe(true);
   });
 
   it("marks as managers everyone whose position is Engineering Manager, and so everyone a line names", () => {

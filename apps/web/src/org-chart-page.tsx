@@ -5,9 +5,10 @@
 // chart panned, zoomed, and fitted to the screen, and a person found by name, which brings them to
 // the centre. A manager's team can be shown alone. A person opens People, searched for their
 // Employee ID, which leads back to the chart with them found. The person found, and the team shown
-// alone, are kept in the page's address.
+// alone, are kept in the page's address. Each team's cards, and the lines to them, are drawn in its
+// colour, which reaches down to the teams below that have none, even when a team is shown alone.
 
-import type { OrgChartPerson } from "@fathom/shared";
+import type { OrgChartPerson, PaletteColour } from "@fathom/shared";
 import {
   ActionIcon,
   Alert,
@@ -35,7 +36,19 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { type MouseEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type MouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Swatch } from "./colour-swatch.tsx";
+import { TeamColourMenu } from "./team-colour-menu.tsx";
+import { TeamNameEditor } from "./team-name-editor.tsx";
+import { TeamsPanel } from "./teams-panel.tsx";
+import { colourVariable } from "./colours.ts";
 import { Icon } from "./icons.tsx";
 import { ChartControls } from "./org-chart-controls.tsx";
 import {
@@ -49,8 +62,11 @@ import {
   managersAbove,
   type OrgTree,
   orgChartQuery,
+  noTeamEdits,
   type Placed,
+  type TeamEdits,
   placed,
+  reportColours,
   teamOf,
   treeOf,
 } from "./org-chart.ts";
@@ -60,6 +76,8 @@ import { StatusMark } from "./status-mark.tsx";
 
 interface CardData extends Record<string, unknown> {
   person: OrgChartPerson;
+  // The colour of the team the person is on, if it has one.
+  colour: PaletteColour | undefined;
   reports: number;
   collapsed: boolean;
   found: boolean;
@@ -68,6 +86,8 @@ interface CardData extends Record<string, unknown> {
   // Shows only the person's team; absent unless they manage someone, are known by more than their
   // name, and are not already shown alone.
   onTeam: (() => void) | undefined;
+  // Whether the reader may change the name and colour of the team the person leads.
+  teamEdits: TeamEdits;
   onToggle: (id: string) => void;
   // Opens the person on People; absent for someone People does not show the reader.
   onOpen: (() => void) | undefined;
@@ -85,10 +105,31 @@ const plainClick = (event: MouseEvent) =>
   !event.altKey;
 
 function PersonCard({ data }: NodeProps<CardNode>) {
-  const { person, reports, collapsed, found, back, onTeam, onToggle, onOpen } =
-    data;
+  const {
+    person,
+    colour,
+    reports,
+    collapsed,
+    found,
+    back,
+    onTeam,
+    teamEdits,
+    onToggle,
+    onOpen,
+  } = data;
   return (
-    <div className={classes.card} data-found={found || undefined}>
+    <div
+      className={classes.card}
+      data-found={found || undefined}
+      data-coloured={colour === undefined ? undefined : true}
+      style={
+        colour === undefined
+          ? undefined
+          : ({
+              "--team-colour": colourVariable(colour, "filled"),
+            } as CSSProperties)
+      }
+    >
       <Handle
         id="row"
         type="target"
@@ -148,9 +189,30 @@ function PersonCard({ data }: NodeProps<CardNode>) {
         </Text>
       )}
       {person.teamName !== null && (
-        <Text size="xs" c="dimmed" truncate>
-          {person.teamName}
-        </Text>
+        <Group gap={6} wrap="nowrap">
+          {teamEdits.colours ? (
+            <TeamColourMenu
+              managerId={person.id}
+              current={person.teamColour}
+              team={person.teamName}
+            />
+          ) : (
+            person.teamColour !== null && (
+              <Swatch colour={person.teamColour} size={8} />
+            )
+          )}
+          {teamEdits.names ? (
+            <TeamNameEditor
+              managerId={person.id}
+              managerName={person.preferredName}
+              name={person.teamName}
+            />
+          ) : (
+            <Text size="xs" c="dimmed" truncate>
+              {person.teamName}
+            </Text>
+          )}
+        </Group>
       )}
       {reports > 0 && (
         <UnstyledButton
@@ -160,9 +222,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
             onToggle(person.id);
           }}
         >
-          {collapsed
-            ? `Show ${String(reports)} ${reports === 1 ? "report" : "reports"}`
-            : "Hide reports"}{" "}
+          {`${collapsed ? "Show" : "Hide"} ${String(reports)} ${reports === 1 ? "report" : "reports"}`}{" "}
           <VisuallyHidden>of {person.preferredName}</VisuallyHidden>
         </UnstyledButton>
       )}
@@ -193,13 +253,20 @@ const openLevels = 2;
 
 function Chart({
   tree,
+  everyone,
+  colours,
   alone,
+  teamEdits,
   search,
   onSearch,
 }: {
   tree: OrgTree;
+  everyone: OrgTree;
+  // The colour each manager's reports are drawn in, worked out from the whole chart.
+  colours: ReadonlyMap<string, PaletteColour>;
   // Whether the tree is one manager's team, shown alone.
   alone: boolean;
+  teamEdits: TeamEdits;
   search: ChartSearch;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
@@ -215,7 +282,12 @@ function Chart({
       ),
     [tree],
   );
-  const found = byEmployeeId.get(search.person ?? "")?.id ?? null;
+  // Someone shown by name only has no Employee ID to keep in the address, so is found here alone.
+  const [foundByName, setFoundByName] = useState<string | null>(null);
+  const found =
+    search.person === undefined
+      ? foundByName
+      : (byEmployeeId.get(search.person)?.id ?? null);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() =>
     collapsedBelow(tree, openLevels),
   );
@@ -232,6 +304,15 @@ function Chart({
     }
   }
   const levels = useMemo(() => levelsOf(tree), [tree]);
+  const outside = useMemo(
+    () =>
+      alone
+        ? [...everyone.people.values()].filter(
+            (person) => !tree.people.has(person.id),
+          )
+        : [],
+    [alone, everyone, tree],
+  );
 
   const layout = useMemo(() => placed(tree, collapsed), [tree, collapsed]);
   const nodes = useMemo(
@@ -250,10 +331,16 @@ function Chart({
           height: cardHeight,
           data: {
             person,
+            // The top of a team shown alone is drawn without the team above, so without its colour.
+            colour:
+              person.managerId === null || (alone && tree.roots.includes(id))
+                ? undefined
+                : colours.get(person.managerId),
             reports,
             collapsed: collapsed.has(id),
             found: id === found,
             back,
+            teamEdits: employeeId === null ? noTeamEdits : teamEdits,
             onTeam:
               employeeId === null ||
               reports === 0 ||
@@ -282,22 +369,39 @@ function Chart({
           },
         };
       }),
-    [layout, tree, collapsed, found, alone, search, onSearch, navigate],
+    [
+      layout,
+      tree,
+      colours,
+      collapsed,
+      found,
+      alone,
+      teamEdits,
+      search,
+      onSearch,
+      navigate,
+    ],
   );
   const edges = useMemo(
     () =>
-      layout.lines.map(({ from, to, stacked }): Edge => ({
-        id: `${from}-${to}`,
-        source: from,
-        target: to,
-        type: "smoothstep",
-        sourceHandle: stacked ? "stack" : "row",
-        targetHandle: stacked ? "stack" : "row",
-        // The lines only draw what each card's place already says, and would otherwise be read out
-        // by the identifiers of the people they join.
-        domAttributes: { "aria-hidden": true },
-      })),
-    [layout],
+      layout.lines.map(({ from, to, stacked }): Edge => {
+        const colour = colours.get(from);
+        return {
+          id: `${from}-${to}`,
+          source: from,
+          target: to,
+          type: "smoothstep",
+          sourceHandle: stacked ? "stack" : "row",
+          targetHandle: stacked ? "stack" : "row",
+          // The lines only draw what each card's place already says, and would otherwise be read out
+          // by the identifiers of the people they join.
+          domAttributes: { "aria-hidden": true },
+          ...(colour === undefined
+            ? {}
+            : { style: { stroke: colourVariable(colour, "filled") } }),
+        };
+      }),
+    [layout, colours],
   );
 
   // Brings the person found to the centre once the managers above them are shown, and only then,
@@ -336,10 +440,20 @@ function Chart({
     <Stack gap="sm">
       <ChartControls
         tree={tree}
+        outside={outside}
+        teams={
+          (teamEdits.names || teamEdits.colours) && (
+            <TeamsPanel tree={everyone} edits={teamEdits} />
+          )
+        }
         found={found}
         levels={levels}
-        onFind={(id) => {
+        onFind={(id, team) => {
+          if (team && id !== null && collapsed.has(id)) {
+            setCollapsed(new Set([...collapsed].filter((one) => one !== id)));
+          }
           const person = id === null ? undefined : tree.people.get(id);
+          setFoundByName(person?.employeeId === null ? person.id : null);
           onSearch(
             { ...search, person: person?.employeeId ?? undefined },
             true,
@@ -367,8 +481,15 @@ function Chart({
           edgesFocusable={false}
           disableKeyboardA11y
           onNodeClick={(event, node) => {
-            // The name, and each button, do their own.
-            if ((event.target as Element).closest("a, button") !== null) return;
+            const target = event.target as Element;
+            // The name, and each button, do their own, and a menu or popover opened from a card is
+            // drawn outside it but still passes its clicks to it.
+            if (
+              target.closest("a, button") !== null ||
+              !event.currentTarget.contains(target)
+            ) {
+              return;
+            }
             node.data.onOpen?.();
           }}
           minZoom={0.1}
@@ -389,8 +510,10 @@ function Chart({
 export function OrgChartPage({
   search,
   onSearch,
+  teamEdits,
 }: {
   search: ChartSearch;
+  teamEdits: TeamEdits;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
   const query = useQuery(orgChartQuery);
@@ -412,6 +535,10 @@ export function OrgChartPage({
         ? everyone
         : teamOf(everyone, lead.id),
     [everyone, lead],
+  );
+  const colours = useMemo(
+    () => (everyone === undefined ? new Map() : reportColours(everyone)),
+    [everyone],
   );
   return (
     <>
@@ -437,7 +564,7 @@ export function OrgChartPage({
       />
       {query.isPending ? (
         <Loader role="status" aria-label="Loading" />
-      ) : query.isError || tree === undefined ? (
+      ) : query.isError || tree === undefined || everyone === undefined ? (
         <Alert color="red" role="alert">
           <Group justify="space-between">
             Fathom could not load the org chart.
@@ -459,7 +586,10 @@ export function OrgChartPage({
         <ReactFlowProvider key={lead?.id ?? ""}>
           <Chart
             tree={tree}
+            everyone={everyone}
+            colours={colours}
             alone={lead !== undefined}
+            teamEdits={teamEdits}
             search={search}
             onSearch={onSearch}
           />

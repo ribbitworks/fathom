@@ -20,12 +20,14 @@ import {
   savedViewChangeSchema,
   savedViewRequestSchema,
   savedViewSchema,
+  teamColourRequestSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
 import type { ColumnDraftTarget, PeopleAccess } from "../data/index.ts";
 
 const created = 201;
+const noContent = 204;
 
 const personParams = z.object({ personId: z.uuid() });
 const fieldParams = z.object({ fieldId: z.uuid() });
@@ -52,6 +54,22 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
       "/api/org-chart",
       { schema: { response: { 200: orgChartSchema } } },
       async (request) => people.readOrgChart(request.actor),
+    );
+
+    // A team is its manager's, so it is named by them.
+    app.put(
+      "/api/org-chart/teams/:personId/colour",
+      {
+        schema: { params: personParams, body: teamColourRequestSchema },
+      },
+      async (request, reply) => {
+        await people.setTeamColour(
+          request.actor,
+          request.params.personId,
+          request.body.colour,
+        );
+        return reply.status(noContent).send();
+      },
     );
 
     app.post(

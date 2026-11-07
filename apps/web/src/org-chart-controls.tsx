@@ -1,27 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The controls above the org chart: the finder on the left, and on the right the levels to show,
-// zooming, and fitting the chart to the screen. The chart decides what each choice does to it.
+// The controls above the org chart: on the left the finder and, for those who can name or colour
+// teams, the Teams panel; on the right the levels to show, zooming, and fitting the chart to the screen. The chart
+// decides what each choice does to it.
 
 import {
   ActionIcon,
   Button,
+  Combobox,
   Group,
   Menu,
   Select,
   Text,
   Tooltip,
 } from "@mantine/core";
+import type { OrgChartPerson } from "@fathom/shared";
 import { useReactFlow } from "@xyflow/react";
-import { useMemo } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import { AppMenu } from "./app-menu.tsx";
 import { Icon } from "./icons.tsx";
-import { fitOptions, type OrgTree } from "./org-chart.ts";
+import { fitOptions, nothingFound, type OrgTree } from "./org-chart.ts";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
+// A team in the finder is its manager's identifier after this, so it is never taken for a person.
+const teamPrefix = "team:";
+
 export function ChartControls({
   tree,
+  outside,
+  teams,
   found,
   levels,
   onFind,
@@ -29,47 +37,100 @@ export function ChartControls({
   onLevels,
 }: {
   tree: OrgTree;
+  // Everyone not on the chart while one team is shown alone.
+  outside: readonly OrgChartPerson[];
+  teams: ReactNode;
   found: string | null;
   levels: number;
-  onFind: (id: string | null) => void;
+  // A team chosen finds the manager who leads it, with their reports shown.
+  onFind: (id: string | null, team: boolean) => void;
   // Someone was chosen in the finder, even the person already found.
   onFindAgain: () => void;
   onLevels: (levels: number | "all") => void;
 }) {
   const flow = useReactFlow();
-  const choices = useMemo(
-    () =>
-      // Someone shown by name only cannot be kept in the address, so is not offered.
-      [...tree.people.values()]
-        .filter((person) => person.employeeId !== null)
-        .sort((a, b) => byName.compare(a.preferredName, b.preferredName))
-        .map((person) => ({ value: person.id, label: person.preferredName })),
-    [tree],
-  );
+  const [search, setSearch] = useState("");
+  const choices = useMemo(() => {
+    const everyone = [...tree.people.values()];
+    const named = (
+      people: typeof everyone,
+      name: (one: OrgChartPerson) => string,
+    ) =>
+      people
+        .map((person) => ({ person, label: name(person) }))
+        .sort((a, b) => byName.compare(a.label, b.label));
+    return [
+      {
+        group: "People",
+        items: named(everyone, (person) => person.preferredName).map(
+          ({ person, label }) => ({ value: person.id, label }),
+        ),
+      },
+      {
+        group: "Teams",
+        items: named(
+          everyone.filter((person) => person.teamName !== null),
+          (person) => person.teamName as string,
+        ).map(({ person, label }) => ({
+          value: `${teamPrefix}${person.id}`,
+          label,
+        })),
+      },
+    ];
+  }, [tree]);
   return (
     <Group justify="space-between" gap="sm">
-      <Select
-        aria-label="Find a person"
-        placeholder="Find a person"
-        leftSection={<Icon name="search" />}
-        data={choices}
-        value={found}
-        searchable
-        clearable
-        allowDeselect={false}
-        nothingFoundMessage="Nobody has that name"
-        renderOption={({ option }) => (
-          <div>
-            <Text size="sm">{option.label}</Text>
-            <Text size="xs" c="dimmed">
-              {tree.people.get(option.value)?.position}
-            </Text>
-          </div>
-        )}
-        onChange={onFind}
-        onOptionSubmit={onFindAgain}
-        w={280}
-      />
+      <Group gap="xs">
+        <Select
+          aria-label="Find a person or team"
+          placeholder="Find a person or team"
+          leftSection={<Icon name="search" />}
+          data={choices}
+          value={found}
+          searchable
+          clearable
+          allowDeselect={false}
+          searchValue={search}
+          onSearchChange={setSearch}
+          // The select offers its own clear button only once someone is chosen.
+          {...(found === null && search !== ""
+            ? {
+                rightSection: (
+                  <TextClear
+                    onClear={() => {
+                      setSearch("");
+                    }}
+                  />
+                ),
+                rightSectionPointerEvents: "all" as const,
+              }
+            : {})}
+          nothingFoundMessage={nothingFound(outside, search)}
+          renderOption={({ option }) => {
+            const lead = option.value.startsWith(teamPrefix)
+              ? tree.people.get(option.value.slice(teamPrefix.length))
+              : undefined;
+            return (
+              <div>
+                <Text size="sm">{option.label}</Text>
+                <Text size="xs" c="dimmed">
+                  {lead === undefined
+                    ? tree.people.get(option.value)?.position
+                    : `Led by ${lead.preferredName}`}
+                </Text>
+              </div>
+            );
+          }}
+          onChange={(value) => {
+            if (value?.startsWith(teamPrefix) === true) {
+              onFind(value.slice(teamPrefix.length), true);
+            } else onFind(value, false);
+          }}
+          onOptionSubmit={onFindAgain}
+          w={280}
+        />
+        {teams}
+      </Group>
       <Group gap="xs">
         {levels > 1 && (
           <AppMenu position="bottom-end">
@@ -133,5 +194,23 @@ export function ChartControls({
         </Button>
       </Group>
     </Group>
+  );
+}
+
+// Laid out as the select lays out its own clear button beside the chevron, so the two look alike.
+function TextClear({ onClear }: { onClear: () => void }) {
+  return (
+    <div
+      data-combined-clear-section
+      style={{
+        display: "flex",
+        gap: 2,
+        alignItems: "center",
+        paddingInlineEnd: 8,
+      }}
+    >
+      <Combobox.ClearButton onClear={onClear} />
+      <Combobox.Chevron />
+    </div>
   );
 }

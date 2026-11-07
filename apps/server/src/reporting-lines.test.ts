@@ -746,7 +746,7 @@ describe("a team's name", () => {
     await approved([manager]);
     expect(
       await test.connection.select().from(teams).where(eq(teams.name, name)),
-    ).toEqual([{ managerId: manager, name }]);
+    ).toEqual([{ managerId: manager, name, colour: null }]);
     expect((await readPerson(report))?.team).toBe(name);
     expect((await readPerson(manager))?.teamName).toBe(name);
     await reportsTo(report, other, today);

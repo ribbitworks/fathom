@@ -24,6 +24,7 @@ import type {
   List,
   ListRequest,
   OrgChart,
+  PaletteColour,
   Permission,
   Person,
   PersonChange,
@@ -54,7 +55,7 @@ import { type ColumnDraftTarget, readColumnsOut } from "./column-drafts.ts";
 import { readChangeHistory } from "./change-history.ts";
 import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
-import { readOrgChart } from "./org-chart.ts";
+import { readOrgChart, setTeamColour } from "./org-chart.ts";
 import * as hireData from "./hires.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
@@ -265,6 +266,12 @@ export interface PeopleAccess {
   // Today's reporting lines as approved, with General details only. Telling anyone that a manager
   // has left is recorded in the access history.
   readOrgChart(actor: Actor): Promise<OrgChart>;
+  // Sets the colour of a manager's named team, or removes it, at once rather than as a draft.
+  setTeamColour(
+    actor: Actor,
+    managerId: string,
+    colour: PaletteColour | null,
+  ): Promise<void>;
   // Changes to people are drafts, which reach the live people once approved.
   create(
     actor: Actor,
@@ -537,6 +544,11 @@ function createPeopleAccess(database: Database): PeopleAccess {
         );
       }
       return chart;
+    },
+    setTeamColour: async (actor, managerId, colour) => {
+      requirePermission(actor, "people:view");
+      requirePermission(actor, "team-colours:edit");
+      await setTeamColour(database, managerId, colour);
     },
     create: async (actor, requests) => {
       const { ids, changeSetId } = await peopleData.createPeople(

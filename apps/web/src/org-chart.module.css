@@ -29,8 +29,32 @@
   box-shadow: var(--mantine-shadow-xs);
 }
 
+/* A card on a team with a colour is topped with it. The band stands up into the gap above the
+   card rather than inside it, so the text sits where it does on a card with no band. */
+.card[data-coloured] {
+  position: relative;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.card[data-coloured]::before {
+  position: absolute;
+  top: -7px;
+  right: -1px;
+  left: -1px;
+  height: 8px;
+  border-radius: var(--mantine-radius-md) var(--mantine-radius-md) 0 0;
+  background: var(--team-colour);
+  content: "";
+}
+
 .card[data-found] {
   border-color: var(--mantine-primary-color-filled);
+  box-shadow: 0 0 0 2px var(--mantine-primary-color-filled);
+}
+
+.card[data-found][data-coloured]::before {
+  background: var(--mantine-primary-color-filled);
   box-shadow: 0 0 0 2px var(--mantine-primary-color-filled);
 }
 
@@ -76,4 +100,44 @@
 .team {
   margin-left: auto;
   flex-shrink: 0;
+}
+
+.colourButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  margin: -4px;
+  border-radius: 50%;
+}
+
+.colourButton:hover,
+.colourButton:focus-visible {
+  background: var(--mantine-color-default-hover);
+}
+
+/* A named team with no colour yet, whose colour can be chosen. */
+.noColour {
+  box-sizing: border-box;
+  width: 8px;
+  height: 8px;
+  border: 1px dashed var(--mantine-color-dimmed);
+  border-radius: 50%;
+}
+
+.teamName {
+  min-width: 0;
+}
+
+.teamName:hover,
+.teamName:focus-visible {
+  text-decoration: underline;
+}
+
+.teamDot {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  width: 28px;
 }

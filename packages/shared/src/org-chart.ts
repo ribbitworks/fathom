@@ -8,6 +8,7 @@
 // part of the chart.
 
 import { z } from "zod";
+import { paletteColourSchema } from "./palette.ts";
 
 export const orgChartPersonSchema = z.object({
   id: z.string(),
@@ -17,6 +18,8 @@ export const orgChartPersonSchema = z.object({
   position: z.string().nullable(),
   // The name of the team the person leads; null unless they lead one with a name.
   teamName: z.string().nullable(),
+  // The colour of the team the person leads; null unless it has one the palette still has.
+  teamColour: paletteColourSchema.nullable(),
   managerId: z.string().nullable(),
   left: z.boolean().optional(),
 });
@@ -28,3 +31,11 @@ export const orgChartSchema = z.object({
 });
 
 export type OrgChart = z.infer<typeof orgChartSchema>;
+
+// A team's colour, chosen on the chart, or null for none. It is not part of any draft, so it
+// changes at once.
+export const teamColourRequestSchema = z.object({
+  colour: paletteColourSchema.nullable(),
+});
+
+export type TeamColourRequest = z.infer<typeof teamColourRequestSchema>;

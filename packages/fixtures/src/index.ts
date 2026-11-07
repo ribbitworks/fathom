@@ -85,6 +85,8 @@ export interface FictionalLine {
 export interface FictionalTeam {
   managerId: string;
   name: string;
+  // A colour from the palette, as the theme names it, or null for none.
+  colour: string | null;
 }
 
 export interface FictionalOrganization {
@@ -225,6 +227,9 @@ const teamNames = [
   "Infrastructure",
 ];
 
+// The colours the first named teams are given, from the palette; the rest have none.
+const teamColours = ["teal", "grape", "orange", "indigo", "yellow", "pink"];
+
 // Who reports to whom: the earliest current manager at the top, with no manager; other managers
 // under someone who started before them, so there are no loops; and everyone else under a manager.
 // Each line starts when both have started, so the manager is employed that day, and a new
@@ -294,6 +299,7 @@ function reporting(
   const teams = teamNames.slice(0, named.length).map((name, index) => ({
     managerId: String(named.at(index)?.id),
     name: `${name} team`,
+    colour: teamColours.at(index) ?? null,
   }));
   return { reportingLines, teams };
 }

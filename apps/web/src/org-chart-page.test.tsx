@@ -6,7 +6,7 @@
 // it.
 
 import type { OrgChartPerson } from "@fathom/shared";
-import { fireEvent, screen, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -35,6 +35,7 @@ const person = (
   employeeId: `FX-${id}`,
   position: "Fictional Engineer",
   teamName: null,
+  teamColour: null,
   managerId,
   ...details,
 });
@@ -133,6 +134,411 @@ describe("the org chart", () => {
     expect(within(sasha).getByText("Fictional team")).toBeDefined();
     expect(within(card("Tatum Fictional")).getByText("Left")).toBeDefined();
     expect(within(sasha).queryByText("Left")).toBeNull();
+  });
+
+  it("draws each team in its colour, reaching down to teams with none, even when a team is shown alone, whose top has no band", async () => {
+    const coloured = [
+      person("p1", "Robin Fictional", null, {
+        teamName: "Fictional top team",
+        teamColour: "teal",
+      }),
+      person("p2", "Sasha Fictional", "p1", {
+        teamName: "Fictional team",
+        teamColour: "grape",
+      }),
+      person("p3", "Tatum Fictional", "p2"),
+      person("p4", "Uma Fictional", "p3"),
+    ];
+    const colourOf = (name: string) =>
+      card(name)
+        .querySelector<HTMLElement>("[data-coloured]")
+        ?.style.getPropertyValue("--team-colour") ?? null;
+    await openChart(() => Response.json({ people: coloured }));
+    await screen.findByRole("link", { name: "Robin Fictional" });
+    expect(colourOf("Robin Fictional")).toBeNull();
+    expect(colourOf("Sasha Fictional")).toBe(
+      "var(--mantine-color-teal-filled)",
+    );
+    expect(colourOf("Tatum Fictional")).toBe(
+      "var(--mantine-color-grape-filled)",
+    );
+    expect(colourOf("Uma Fictional")).toBe("var(--mantine-color-grape-filled)");
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Show only the team of Tatum Fictional",
+      }),
+    );
+    await screen.findByText("You're seeing only the team of Tatum Fictional.");
+    expect(colourOf("Uma Fictional")).toBe("var(--mantine-color-grape-filled)");
+    expect(colourOf("Tatum Fictional")).toBeNull();
+  });
+
+  it("lets those who may colour teams choose a named team's colour from its manager's card, and undo it", async () => {
+    let colour: string | null = null;
+    const fetch = serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "people:edit", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        Response.json({
+          people: people.map((one) =>
+            one.id === "p2" ? { ...one, teamColour: colour } : one,
+          ),
+        }),
+      "PUT /api/org-chart/teams/p2/colour": () =>
+        new Response(null, {
+          status: 204,
+        }),
+    });
+    renderApp("/org-chart");
+    await showLevels("All levels");
+    await screen.findByRole("link", { name: "Tatum Fictional" });
+    expect(
+      screen.queryByRole("button", { name: /^Colour of Robin Fictional/ }),
+    ).toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: /^Colour of Fictional team:/ }),
+    );
+    colour = "grape";
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Grape" }),
+    );
+    const sent = () =>
+      fetch.mock.calls
+        .filter(([, init]) => init?.method === "PUT")
+        .map(([, init]) => JSON.parse(init?.body as string) as unknown);
+    expect(sent()).toEqual([{ colour: "grape" }]);
+    expect(
+      await screen.findByText("Fictional team is now drawn in Grape."),
+    ).toBeDefined();
+    expect(
+      card("Tatum Fictional")
+        .querySelector<HTMLElement>("[data-coloured]")
+        ?.style.getPropertyValue("--team-colour"),
+    ).toBe("var(--mantine-color-grape-filled)");
+    colour = null;
+    await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(sent()).toEqual([{ colour: "grape" }, { colour: null }]);
+  });
+
+  it("lets those who change people rename a team from its manager's card, as a draft", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "people:edit", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": chartAnswer,
+      "PATCH /api/people/p2": () =>
+        Response.json({ changeSetId: "00000000-0000-4000-8000-000000000002" }),
+    });
+    renderApp("/org-chart");
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    expect(
+      screen.queryByRole("button", {
+        name: "Add a name for the team of Robin Fictional",
+      }),
+    ).toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Rename Fictional team" }),
+    );
+    const field = await screen.findByRole("textbox", {
+      name: /Team name/,
+    });
+    await userEvent.clear(field);
+    await userEvent.type(field, "Harbour Crew{Enter}");
+    expect(
+      await screen.findByText(
+        "Draft saved. Harbour Crew shows on the chart once approved.",
+      ),
+    ).toBeDefined();
+    const patch = fetch.mock.calls.find(
+      ([url, init]) => url === "/api/people/p2" && init?.method === "PATCH",
+    );
+    expect(JSON.parse(patch?.[1]?.body as string)).toEqual({
+      teamName: "Harbour Crew",
+    });
+  });
+
+  it("lists every manager's team in the Teams panel, where an unnamed one can be named", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "people:edit", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": chartAnswer,
+    });
+    renderApp("/org-chart");
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    expect(
+      within(panel).getByRole("button", { name: /^Colour of Fictional team:/ }),
+    ).toBeDefined();
+    expect(within(panel).getByText("Led by Sasha Fictional")).toBeDefined();
+    expect(
+      within(panel).getByRole("button", {
+        name: "Add a name for the team of Robin Fictional",
+      }).textContent,
+    ).toBe("Add a name");
+  });
+
+  it("lets those who may only colour teams, such as People Managers, colour them without renaming", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": chartAnswer,
+    });
+    renderApp("/org-chart");
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    expect(
+      screen.getByRole("button", { name: /^Colour of Fictional team:/ }),
+    ).toBeDefined();
+    expect(
+      screen.queryByRole("button", { name: "Rename Fictional team" }),
+    ).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    expect(
+      within(panel).getByRole("button", { name: /^Colour of Fictional team:/ }),
+    ).toBeDefined();
+    expect(within(panel).getByText("Fictional team")).toBeDefined();
+    expect(within(panel).queryByText("Add a name")).toBeNull();
+    expect(within(panel).queryByText("Led by Robin Fictional")).toBeNull();
+  });
+
+  // The chart for one who may change people and colour teams, with the answers given added.
+  function openAsEditor(
+    answers: Record<string, () => Response>,
+    chart: readonly OrgChartPerson[] = people,
+  ) {
+    const fetch = serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "people:edit", "team-colours:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () => Response.json({ people: chart }),
+      ...answers,
+    });
+    renderApp("/org-chart");
+    return fetch;
+  }
+
+  it("takes a team's colour away with No colour", async () => {
+    const fetch = openAsEditor(
+      {
+        "PUT /api/org-chart/teams/p2/colour": () =>
+          new Response(null, { status: 204 }),
+      },
+      people.map((one) =>
+        one.id === "p2" ? { ...one, teamColour: "teal" as const } : one,
+      ),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Colour of Fictional team: Teal",
+      }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "No colour" }),
+    );
+    expect(
+      await screen.findByText("Fictional team no longer has a colour."),
+    ).toBeDefined();
+    const put = fetch.mock.calls.find(([, init]) => init?.method === "PUT");
+    expect(JSON.parse(put?.[1]?.body as string)).toEqual({ colour: null });
+  });
+
+  it("says so, and keeps the colour, when it cannot be changed", async () => {
+    openAsEditor({
+      "PUT /api/org-chart/teams/p2/colour": () =>
+        new Response(null, { status: 500 }),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Colour of Fictional team:/ }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Lime" }),
+    );
+    expect(
+      await screen.findByText(/could not change the colour of Fictional team/),
+    ).toBeDefined();
+    expect(card("Sasha Fictional").querySelector("[data-coloured]")).toBeNull();
+  });
+
+  it("empties the name with the ×, and changes nothing on Cancel", async () => {
+    const fetch = openAsEditor({});
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Rename Fictional team" }),
+    );
+    const field = await screen.findByRole<HTMLInputElement>("textbox", {
+      name: "Team name",
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Clear the name" }),
+    );
+    expect(field.value).toBe("");
+    expect(screen.queryByRole("button", { name: "Clear the name" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(fetch.mock.calls.some(([, init]) => init?.method === "PATCH")).toBe(
+      false,
+    );
+  });
+
+  it("says so when a team's name cannot be changed", async () => {
+    openAsEditor({
+      "PATCH /api/people/p2": () => new Response(null, { status: 500 }),
+    });
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Rename Fictional team" }),
+    );
+    const field = await screen.findByRole("textbox", { name: "Team name" });
+    await userEvent.clear(field);
+    await userEvent.type(field, "Harbour Crew{Enter}");
+    expect(
+      await screen.findByText(/could not change the name of Fictional team/),
+    ).toBeDefined();
+  });
+
+  it("closes the Teams panel", async () => {
+    openAsEditor({});
+    await userEvent.click(await screen.findByRole("button", { name: "Teams" }));
+    await screen.findByRole("dialog", { name: "Teams" });
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Teams" })).toBeNull();
+    });
+  });
+
+  it("does nothing when the colour chosen is the team's already", async () => {
+    const fetch = openAsEditor(
+      {},
+      people.map((one) =>
+        one.id === "p2" ? { ...one, teamColour: "teal" as const } : one,
+      ),
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: /^Colour of Fictional team:/ }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: /Teal/ }),
+    );
+    expect(fetch.mock.calls.some(([, init]) => init?.method === "PUT")).toBe(
+      false,
+    );
+  });
+
+  it("removes a team's name as a draft when the field is emptied, and saves nothing unchanged", async () => {
+    const fetch = openAsEditor({
+      "PATCH /api/people/p2": () =>
+        Response.json({ changeSetId: "00000000-0000-4000-8000-000000000002" }),
+    });
+    const rename = await screen.findByRole("button", {
+      name: "Rename Fictional team",
+    });
+    await userEvent.click(rename);
+    await userEvent.click(await screen.findByRole("button", { name: "Save" }));
+    expect(fetch.mock.calls.some(([, init]) => init?.method === "PATCH")).toBe(
+      false,
+    );
+    await userEvent.click(rename);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Clear the name" }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(
+      await screen.findByText(
+        "Draft saved. The name comes off the chart once approved.",
+      ),
+    ).toBeDefined();
+    const patch = fetch.mock.calls.find(([, init]) => init?.method === "PATCH");
+    expect(JSON.parse(patch?.[1]?.body as string)).toEqual({ teamName: "" });
+  });
+
+  it("names an unnamed team from the Teams panel, as a draft", async () => {
+    const fetch = openAsEditor({
+      "PATCH /api/people/p1": () =>
+        Response.json({ changeSetId: "00000000-0000-4000-8000-000000000002" }),
+    });
+    await userEvent.click(await screen.findByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    await userEvent.click(
+      within(panel).getByRole("button", {
+        name: "Add a name for the team of Robin Fictional",
+      }),
+    );
+    const field = await screen.findByRole<HTMLInputElement>("textbox", {
+      name: "Team name",
+    });
+    expect(field.value).toBe("");
+    await userEvent.type(field, "Fictional top team{Enter}");
+    expect(
+      await screen.findByText(
+        "Draft saved. Fictional top team shows on the chart once approved.",
+      ),
+    ).toBeDefined();
+    const patch = fetch.mock.calls.find(([, init]) => init?.method === "PATCH");
+    expect(JSON.parse(patch?.[1]?.body as string)).toEqual({
+      teamName: "Fictional top team",
+    });
+  });
+
+  it("shows those who may name teams but not colour them each team's colour, without a menu", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "people:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        Response.json({
+          people: [
+            person("p1", "Robin Fictional", null, {
+              teamName: "Fictional top team",
+            }),
+            person("p2", "Sasha Fictional", "p1", {
+              teamName: "Fictional team",
+              teamColour: "teal",
+            }),
+            person("p3", "Tatum Fictional", "p2"),
+          ],
+        }),
+    });
+    renderApp("/org-chart");
+    await userEvent.click(await screen.findByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    expect(
+      within(panel).queryByRole("button", { name: /^Colour of/ }),
+    ).toBeNull();
+    const names = within(panel)
+      .getAllByRole("button", { name: /^Rename/ })
+      .map((button) => button.textContent);
+    expect(names).toEqual(["Fictional team", "Fictional top team"]);
+  });
+
+  it("offers no colour menu, renaming or Teams panel to those who cannot change people", async () => {
+    await openChart();
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    expect(screen.queryByRole("button", { name: "Teams" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^Colour of Fictional team:/ }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Rename Fictional team" }),
+    ).toBeNull();
   });
 
   it("opens with the top two levels shown, and shows the levels chosen", async () => {
@@ -266,7 +672,7 @@ describe("the org chart", () => {
     await openChart();
     await screen.findByRole("link", { name: "Uma Fictional" });
     const hide = screen.getByRole("button", {
-      name: "Hide reports of Sasha Fictional",
+      name: "Hide 1 report of Sasha Fictional",
     });
     expect(hide.getAttribute("aria-expanded")).toBe("true");
     await userEvent.click(hide);
@@ -282,7 +688,7 @@ describe("the org chart", () => {
     ).toBeDefined();
   });
 
-  it("counts several reports when hidden", async () => {
+  it("counts several reports, shown or hidden", async () => {
     await openChart(() =>
       Response.json({
         people: [
@@ -294,7 +700,7 @@ describe("the org chart", () => {
     );
     await userEvent.click(
       await screen.findByRole("button", {
-        name: "Hide reports of Avery Fictional",
+        name: "Hide 2 reports of Avery Fictional",
       }),
     );
     expect(
@@ -307,11 +713,13 @@ describe("the org chart", () => {
     await screen.findByRole("link", { name: "Uma Fictional" });
     await userEvent.click(
       screen.getByRole("button", {
-        name: "Hide reports of Robin Fictional",
+        name: "Hide 1 report of Robin Fictional",
       }),
     );
     expect(screen.queryByRole("link", { name: "Uma Fictional" })).toBeNull();
-    const finder = screen.getByRole("combobox", { name: "Find a person" });
+    const finder = screen.getByRole("combobox", {
+      name: "Find a person or team",
+    });
     await userEvent.type(finder, "Uma");
     await userEvent.click(
       await screen.findByRole("option", { name: /Uma Fictional/ }),
@@ -323,7 +731,9 @@ describe("the org chart", () => {
   it("finds someone already shown, and clears the search", async () => {
     await openChart();
     await screen.findByRole("link", { name: "Uma Fictional" });
-    const finder = screen.getByRole("combobox", { name: "Find a person" });
+    const finder = screen.getByRole("combobox", {
+      name: "Find a person or team",
+    });
     await userEvent.type(finder, "Robin");
     await userEvent.click(
       await screen.findByRole("option", { name: /Robin Fictional/ }),
@@ -338,6 +748,43 @@ describe("the org chart", () => {
       }),
     );
     expect(card("Robin Fictional").querySelector("[data-found]")).toBeNull();
+  });
+
+  it("finds a team by its name, centring the manager who leads it", async () => {
+    await openChart(chartAnswer, false);
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "Fictional team",
+    );
+    await userEvent.click(
+      await screen.findByRole("option", {
+        name: /Fictional team\s*Led by Sasha Fictional/,
+      }),
+    );
+    expect(
+      card("Sasha Fictional").querySelector("[data-found]"),
+    ).not.toBeNull();
+    expect(
+      await screen.findByRole("link", { name: "Tatum Fictional" }),
+    ).toBeDefined();
+  });
+
+  it("clears what is typed in the finder before anyone is chosen", async () => {
+    await openChart();
+    await screen.findByRole("link", { name: "Uma Fictional" });
+    const finder = screen.getByRole("combobox", {
+      name: "Find a person or team",
+    });
+    const clear = () =>
+      within(finder.parentElement as HTMLElement).queryByRole("button", {
+        hidden: true,
+      });
+    expect(clear()).toBeNull();
+    await userEvent.type(finder, "Zz");
+    await userEvent.click(clear() as HTMLElement);
+    expect((finder as HTMLInputElement).value).toBe("");
+    expect(clear()).toBeNull();
   });
 
   it("shows one manager's team alone, and everyone again", async () => {
@@ -360,6 +807,13 @@ describe("the org chart", () => {
       }),
     ).toBeNull();
     expect(history.location.search).toBe("?team=FX-p2");
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "Robin",
+    );
+    expect(
+      await screen.findByText("Robin Fictional is not in this team"),
+    ).toBeDefined();
     await userEvent.click(
       screen.getByRole("button", { name: "Show everyone" }),
     );
@@ -401,7 +855,7 @@ describe("the org chart", () => {
     expect(screen.getByRole("link", { name: "Uma Fictional" })).toBeDefined();
   });
 
-  it("shows a manager People does not show the reader by name alone, opening nothing", async () => {
+  it("shows a manager People does not show the reader by name alone, opening nothing, and finds them without keeping them in the address", async () => {
     const history = await openChart(() =>
       Response.json({
         people: [
@@ -416,8 +870,9 @@ describe("the org chart", () => {
     await screen.findByRole("link", { name: "Harper Fictional" });
     expect(screen.queryByRole("link", { name: "Gale Fictional" })).toBeNull();
     const gale = screen
-      .getByText("Gale Fictional")
-      .closest("div.react-flow__node") as HTMLElement;
+      .getAllByText("Gale Fictional")
+      .map((name) => name.closest("div.react-flow__node"))
+      .find((node) => node !== null) as HTMLElement;
     expect(within(gale).queryByText("Fictional Engineer")).toBeNull();
     expect(
       screen.queryByRole("button", {
@@ -426,16 +881,21 @@ describe("the org chart", () => {
     ).toBeNull();
     fireEvent.click(gale);
     expect(history.location.pathname).toBe("/org-chart");
-    await userEvent.click(
-      screen.getByRole("combobox", { name: "Find a person" }),
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "Gale",
     );
-    expect(screen.queryByRole("option", { name: /Gale Fictional/ })).toBeNull();
+    await userEvent.click(
+      await screen.findByRole("option", { name: /Gale Fictional/ }),
+    );
+    expect(gale.querySelector("[data-found]")).not.toBeNull();
+    expect(history.location.search).toBe("");
   });
 
   it("brings back the person found when chosen again after their card was hidden", async () => {
     await openChart();
     const finder = await screen.findByRole("combobox", {
-      name: "Find a person",
+      name: "Find a person or team",
     });
     await userEvent.type(finder, "Uma");
     await userEvent.click(
@@ -515,9 +975,15 @@ describe("the org chart", () => {
     expect(screen.queryByText(/You're seeing only/)).toBeNull();
     expect(
       screen.getByRole<HTMLInputElement>("combobox", {
-        name: "Find a person",
+        name: "Find a person or team",
       }).value,
     ).toBe("");
+  });
+
+  it("finds nobody when the person in the address is not on the chart", async () => {
+    await openChart(chartAnswer, false, "/org-chart?person=FX-nobody");
+    await screen.findByRole("link", { name: "Sasha Fictional" });
+    expect(document.querySelector("[data-found]")).toBeNull();
   });
 
   it("says so when nobody is on it", async () => {

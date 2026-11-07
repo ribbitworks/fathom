@@ -4,7 +4,7 @@
 // which details, as the lines approved for today have it, never as drafted; managers whose end date
 // has passed, and what each reader is told of them; and what each role may read.
 
-import { accessHistory } from "@fathom/db";
+import { accessHistory, teams } from "@fathom/db";
 import { type OrgChartPerson, roleSchema } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -193,6 +193,7 @@ describe("the org chart", () => {
       employeeId: null,
       position: null,
       teamName: expect.stringMatching(/^Fictional Team/) as unknown,
+      teamColour: null,
       managerId: null,
     });
     expect(shown.has(top)).toBe(false);
@@ -237,5 +238,85 @@ describe("the org chart", () => {
         expect(shown?.employeeId === null).toBe(!restricted);
       },
     );
+  });
+});
+
+describe("a team's colour", () => {
+  const colour = (managerId: string, body: object, as = cookie) =>
+    test.request(as, "PUT", `/api/org-chart/teams/${managerId}/colour`, body);
+  const teamRow = async (managerId: string) =>
+    test.connection.select().from(teams).where(eq(teams.managerId, managerId));
+
+  it("is set at once, with no draft, and drawn on the chart", async () => {
+    const manager = await person({ teamName: unique("Fictional Team") });
+    expect((await colour(manager, { colour: "teal" })).statusCode).toBe(204);
+    expect((await chart()).get(manager)?.teamColour).toBe("teal");
+    const listed = await test.request(cookie, "GET", "/api/people");
+    const shown = listed
+      .json<{ people: { id: string; draft?: unknown }[] }>()
+      .people.find((one) => one.id === manager);
+    expect(shown?.draft).toBeUndefined();
+    const unpublished = await test.request(cookie, "GET", "/api/unpublished");
+    expect(unpublished.json<{ changes: unknown[] }>().changes).toEqual([]);
+  });
+
+  it("is removed with none, keeping the team's name", async () => {
+    const name = unique("Fictional Team");
+    const manager = await person({ teamName: name });
+    await colour(manager, { colour: "lime" });
+    expect((await colour(manager, { colour: null })).statusCode).toBe(204);
+    expect(await teamRow(manager)).toEqual([
+      { managerId: manager, name, colour: null },
+    ]);
+  });
+
+  it("may not be one the palette does not have", async () => {
+    const manager = await person({ teamName: unique("Fictional Team") });
+    expect((await colour(manager, { colour: "beige" })).statusCode).toBe(400);
+  });
+
+  it("needs the team's name to be approved", async () => {
+    const unnamed = await person();
+    expect((await colour(unnamed, { colour: "teal" })).statusCode).toBe(404);
+    await changed(unnamed, { teamName: unique("Fictional Team") });
+    expect((await colour(unnamed, { colour: "teal" })).statusCode).toBe(404);
+  });
+
+  it("is kept when the team is renamed, and goes with its name", async () => {
+    const manager = await person({ teamName: unique("Fictional Team") });
+    await colour(manager, { colour: "orange" });
+    await changed(manager, { teamName: unique("Fictional Team") });
+    await approved([manager]);
+    expect((await teamRow(manager))[0]?.colour).toBe("orange");
+    await changed(manager, { teamName: "" });
+    await approved([manager]);
+    expect(await teamRow(manager)).toEqual([]);
+    await changed(manager, { teamName: unique("Fictional Team") });
+    await approved([manager]);
+    expect((await teamRow(manager))[0]?.colour).toBeNull();
+  });
+
+  it("is changed only by those whose roles let them colour teams, such as People Managers", async () => {
+    const manager = await person({ teamName: unique("Fictional Team") });
+    const reader = await test.signedIn(["resource-planner"]);
+    expect(
+      (await colour(manager, { colour: "teal" }, reader.cookie)).statusCode,
+    ).toBe(403);
+    expect((await teamRow(manager))[0]?.colour).toBeNull();
+    const peopleManager = await test.signedIn(["people-manager"]);
+    expect(
+      (await colour(manager, { colour: "teal" }, peopleManager.cookie))
+        .statusCode,
+    ).toBe(204);
+    expect((await teamRow(manager))[0]?.colour).toBe("teal");
+  });
+
+  it("shows as none once the palette no longer has it", async () => {
+    const manager = await person({ teamName: unique("Fictional Team") });
+    await test.connection
+      .update(teams)
+      .set({ colour: "beige" })
+      .where(eq(teams.managerId, manager));
+    expect((await chart()).get(manager)?.teamColour).toBeNull();
   });
 });

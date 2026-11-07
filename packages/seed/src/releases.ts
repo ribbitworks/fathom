@@ -18,7 +18,7 @@ import {
   unpublishedDrafts,
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
-import type { ReleaseColour } from "@fathom/shared";
+import type { PaletteColour } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 
 interface SeededStream {
@@ -34,7 +34,7 @@ interface SeededStream {
     name: string;
     firstCycle: string;
     lastCycle: string;
-    colour?: ReleaseColour;
+    colour?: PaletteColour;
   }[];
 }
 

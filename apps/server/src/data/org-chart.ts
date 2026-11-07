@@ -6,13 +6,19 @@
 // them. A reader who does not see Restricted details sees no further up than such a manager, and
 // only their name and team, as People shows them; anything more would tell them who else has left.
 
-import { type Database, listItems, people } from "@fathom/db";
-import type { OrgChart, OrgChartPerson } from "@fathom/shared";
+import { type Database, listItems, people, teams } from "@fathom/db";
+import {
+  knownColour,
+  type OrgChart,
+  type OrgChartPerson,
+  type PaletteColour,
+} from "@fathom/shared";
 import { eq } from "drizzle-orm";
+import { NotFoundError } from "../errors.ts";
 import { type Actor, seesTier } from "../access.ts";
 import { inForceOn } from "./in-force.ts";
 import { currentOn } from "./people.ts";
-import { readLines, readTeamNames } from "./reporting.ts";
+import { readLines, readTeams } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
 export interface OrgChartRead extends OrgChart {
@@ -28,7 +34,7 @@ export async function readOrgChart(
   const today = asOf ?? (await readToday(database));
   const restricted = seesTier(actor, "restricted");
   // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
-  const { rows, lines, teamNames } = await database.transaction(
+  const { rows, lines, teams } = await database.transaction(
     async (transaction) => ({
       rows: await transaction
         .select({
@@ -42,7 +48,7 @@ export async function readOrgChart(
         .from(people)
         .innerJoin(listItems, eq(listItems.id, people.positionId)),
       lines: await readLines(transaction),
-      teamNames: await readTeamNames(transaction),
+      teams: await readTeams(transaction),
     }),
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -71,7 +77,8 @@ export async function readOrgChart(
       preferredName: row.preferredName,
       employeeId: hidden(id) ? null : row.employeeId,
       position: hidden(id) ? null : row.position,
-      teamName: teamNames.get(id) ?? null,
+      teamName: teams.get(id)?.name ?? null,
+      teamColour: knownColour(teams.get(id)?.colour),
       managerId: hidden(id) ? null : managerOf(id),
       ...(restricted && gone ? { left: true } : {}),
     };
@@ -80,4 +87,24 @@ export async function readOrgChart(
     people: chart,
     includedRestricted: chart.some((person) => person.left === true),
   };
+}
+
+// Sets the colour of a manager's named team, or removes it. A colour is how the chart is drawn, not
+// a detail of anyone, so it is no draft: it changes at once, for everyone. Only a team with an
+// approved name has one.
+export async function setTeamColour(
+  database: Database,
+  managerId: string,
+  colour: PaletteColour | null,
+): Promise<void> {
+  const changed = await database
+    .update(teams)
+    .set({ colour })
+    .where(eq(teams.managerId, managerId))
+    .returning({ managerId: teams.managerId });
+  if (changed.length === 0) {
+    throw new NotFoundError(
+      "This team has no name yet, so it cannot have a colour",
+    );
+  }
 }

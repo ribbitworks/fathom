@@ -74,13 +74,13 @@ import {
   releaseDate,
   shipsOffCycle,
   shownColour,
-  colourVariable,
   releaseStreamsQuery,
   removeFromStream,
   resubmitRecordDraft,
   type SavedStream,
   setStreamRetired,
 } from "./releases.ts";
+import { colourVariable } from "./colours.ts";
 import { ReleasesTimeline } from "./releases-timeline.tsx";
 import { sidePanelScroll, useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { DraftMark, HoldMarks } from "./status-mark.tsx";

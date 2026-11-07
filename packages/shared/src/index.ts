@@ -195,11 +195,7 @@ export {
   longestCycle,
   movedReleases,
   type Release,
-  knownColour,
-  type ReleaseColour,
   type ReleaseCycles,
-  releaseColours,
-  releaseColourSchema,
   releaseLengths,
   type ReleaseMove,
   type ReleaseRequest,
@@ -219,6 +215,8 @@ export {
   type OrgChartPerson,
   orgChartPersonSchema,
   orgChartSchema,
+  type TeamColourRequest,
+  teamColourRequestSchema,
 } from "./org-chart.ts";
 export {
   changeSetIdSchema,
@@ -288,3 +286,9 @@ export {
   type SignInRequest,
   signInRequestSchema,
 } from "./session.ts";
+export {
+  knownColour,
+  type PaletteColour,
+  paletteColours,
+  paletteColourSchema,
+} from "./palette.ts";

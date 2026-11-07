@@ -11,6 +11,8 @@ import {
   levelsOf,
   managersAbove,
   placed,
+  nothingFound,
+  reportColours,
   teamOf,
   treeOf,
 } from "./org-chart.ts";
@@ -25,6 +27,7 @@ const person = (
   employeeId: `E-${id}`,
   position: "Fictional Engineer",
   teamName: null,
+  teamColour: null,
   managerId,
 });
 
@@ -100,6 +103,28 @@ describe("one team alone", () => {
   });
 });
 
+describe("the colours of the org chart's teams", () => {
+  it("draws each manager's reports in their team's colour, reaching down until a team below has its own", () => {
+    const tree = treeOf([
+      { ...person("head", null), teamColour: "teal" },
+      person("m1", "head"),
+      { ...person("m2", "head"), teamColour: "grape" },
+      person("r1", "m1"),
+      person("r2", "m2"),
+      person("solo", null),
+    ]);
+    const colours = reportColours(tree);
+    expect(Object.fromEntries(colours)).toEqual({
+      head: "teal",
+      m1: "teal",
+      m2: "grape",
+      r1: "teal",
+      r2: "grape",
+    });
+    expect(colours.has("solo")).toBe(false);
+  });
+});
+
 describe("placing the org chart", () => {
   it("stacks reports who manage nobody under their manager, with the managers among them to the right", () => {
     const { cards, lines } = placed(treeOf(people), new Set());
@@ -143,5 +168,37 @@ describe("placing the org chart", () => {
     expect(cards.map(({ id }) => id)).not.toContain("r1");
     expect(cards.map(({ id }) => id)).toContain("m1");
     expect(lines.map(({ to }) => to)).not.toContain("r1");
+  });
+});
+
+describe("the finder's message when nobody on the chart has the name", () => {
+  const outside = [
+    person("a", null, "Avery Fictional"),
+    person("b", null, "Blake Fictional"),
+    person("c", null, "Casey Fictional"),
+    person("d", null, "Drew Fictional"),
+  ];
+
+  it("names one person outside the team who has it", () => {
+    expect(nothingFound(outside, " avery ")).toBe(
+      "Avery Fictional is not in this team",
+    );
+  });
+
+  it("names a few, in order of name", () => {
+    expect(nothingFound(outside.slice(0, 3).reverse(), "fictional")).toBe(
+      "Avery Fictional, Blake Fictional, and Casey Fictional are not in this team",
+    );
+  });
+
+  it("counts more than three", () => {
+    expect(nothingFound(outside, "fictional")).toBe(
+      "4 people with that name are not in this team",
+    );
+  });
+
+  it("says nobody has it when nobody outside the team has it either", () => {
+    expect(nothingFound(outside, "Zz")).toBe("Nobody has that name");
+    expect(nothingFound([], "Avery")).toBe("Nobody has that name");
   });
 });

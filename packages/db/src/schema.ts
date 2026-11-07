@@ -713,7 +713,8 @@ export const reportingLines = fathomSchema.table(
 );
 
 // A team is the people who report directly to one manager, so its name is kept with the manager and
-// stays with them when reports move. Only named teams have a row.
+// stays with them when reports move. Only named teams have a row. A team may name a colour from the
+// palette, which the server checks, so the palette can change without a migration.
 export const teams = fathomSchema.table(
   "teams",
   {
@@ -721,6 +722,7 @@ export const teams = fathomSchema.table(
       .primaryKey()
       .references(() => people.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
+    colour: text("colour"),
   },
   (table) => [uniqueIndex("teams_name_index").on(sql`lower(${table.name})`)],
 );

@@ -437,6 +437,12 @@ const routes: Route[] = [
     needs: allOf("people:view"),
   },
   {
+    method: "PUT",
+    pattern: "/api/org-chart/teams/:personId/colour",
+    needs: allOf("people:view", "team-colours:edit"),
+    body: () => ({ colour: "teal" }),
+  },
+  {
     method: "GET",
     pattern: "/api/planned-hires",
     // Seeing Confidential data does nothing without seeing people.

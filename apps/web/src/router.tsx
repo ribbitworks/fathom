@@ -22,6 +22,7 @@ import {
   type RouterHistory,
   redirect,
 } from "@tanstack/react-router";
+import { useMemo } from "react";
 import { z } from "zod";
 import { AccountsPage } from "./accounts-page.tsx";
 import { DraftsHelpPage, RolesHelpPage } from "./help-page.tsx";
@@ -316,9 +317,18 @@ const orgChartRoute = createRoute({
   validateSearch: chartSearch,
   beforeLoad: requiring("people:view"),
   component: function OrgChart() {
+    const { permissions } = signedIn.useRouteContext();
     const navigate = orgChartRoute.useNavigate();
+    const teamEdits = useMemo(
+      () => ({
+        names: permissions.includes("people:edit"),
+        colours: permissions.includes("team-colours:edit"),
+      }),
+      [permissions],
+    );
     return (
       <OrgChartPage
+        teamEdits={teamEdits}
         search={orgChartRoute.useSearch()}
         onSearch={(search, replace) => {
           void navigate({ search, replace });

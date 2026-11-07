@@ -4,10 +4,15 @@
 // manager, reports by name, and those with no manager at the top. Collapsing a manager hides
 // everyone below them. The people shown are laid out top to bottom, with reports who manage nobody
 // stacked in a column under their manager, so a large organization grows down rather than across.
+// Each team is drawn in its colour, which reaches down to the teams below that have none.
 
-import { type OrgChartPerson, orgChartSchema } from "@fathom/shared";
+import {
+  type OrgChartPerson,
+  orgChartSchema,
+  type PaletteColour,
+} from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
-import { getJson } from "./api.ts";
+import { getJson, sendJson } from "./api.ts";
 
 export const orgChartQuery = queryOptions({
   queryKey: ["org-chart"],
@@ -211,12 +216,67 @@ export function placed(
 export const teamOf = (tree: OrgTree, managerId: string): OrgTree =>
   subtree(tree, [managerId]);
 
+// The colour each manager's reports are drawn in, by manager: their team's own, or, for a team with
+// none, the colour their own manager's reports are drawn in, so a colour reaches down until a team
+// below has its own. Managers whose reports have no colour are left out.
+export function reportColours(tree: OrgTree): Map<string, PaletteColour> {
+  const colours = new Map<string, PaletteColour>();
+  const visit = (id: string, above: PaletteColour | null) => {
+    const colour = tree.people.get(id)?.teamColour ?? above;
+    if (colour !== null) colours.set(id, colour);
+    for (const report of tree.reports.get(id) ?? []) visit(report, colour);
+  };
+  for (const root of tree.roots) visit(root, null);
+  return colours;
+}
+
+// What the finder says when nobody on the chart has the name typed. While one team is shown alone,
+// it names those outside the team who have it, so nobody takes them for missing.
+export function nothingFound(
+  outside: readonly OrgChartPerson[],
+  typed: string,
+): string {
+  const wanted = typed.trim().toLowerCase();
+  const names = outside
+    .map((person) => person.preferredName)
+    .filter((name) => name.toLowerCase().includes(wanted))
+    .sort(byName.compare);
+  if (names.length === 0) return "Nobody has that name";
+  if (names.length > 3) {
+    return `${String(names.length)} people with that name are not in this team`;
+  }
+  const listed = new Intl.ListFormat("en", { type: "conjunction" }).format(
+    names,
+  );
+  return `${listed} ${names.length === 1 ? "is" : "are"} not in this team`;
+}
+
+// Sets the colour of a manager's named team, or removes it, at once.
+export async function setTeamColour(
+  managerId: string,
+  colour: PaletteColour | null,
+): Promise<void> {
+  await sendJson(
+    "PUT",
+    `/api/org-chart/teams/${encodeURIComponent(managerId)}/colour`,
+    { colour },
+  );
+}
+
 // How many levels the chart has, counting the people at the top as the first.
 export function levelsOf(tree: OrgTree): number {
   const below = (id: string): number =>
     1 + Math.max(0, ...(tree.reports.get(id) ?? []).map(below));
   return Math.max(0, ...tree.roots.map(below));
 }
+
+// What the reader may change of teams on the chart: their names, as drafts, and their colours.
+export interface TeamEdits {
+  names: boolean;
+  colours: boolean;
+}
+
+export const noTeamEdits: TeamEdits = { names: false, colours: false };
 
 // The chart's address: the person found, and the manager whose team alone is shown, each by
 // Employee ID.

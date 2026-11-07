@@ -9,6 +9,7 @@ import { z } from "zod";
 import { type Cycle, cycleUnitSchema, laterCyclesSchema } from "./cycles.ts";
 import { daySchema } from "./days.ts";
 import { heldBySchema, recordDraftSchema } from "./drafts.ts";
+import { paletteColourSchema } from "./palette.ts";
 
 export const releaseLengths = {
   name: 40,
@@ -30,29 +31,6 @@ export const shipsBeforeStart =
 
 // The longest cycle in each unit: two years.
 export const longestCycle = { weeks: 104, months: 24 } as const;
-
-// The colours a release can be shown in, named as the theme names them. A release with none is
-// shown in the accent colour, sea, which is left out so that no two choices look alike.
-export const releaseColours = [
-  "indigo",
-  "violet",
-  "grape",
-  "pink",
-  "red",
-  "orange",
-  "yellow",
-  "lime",
-  "green",
-  "teal",
-] as const;
-
-export const releaseColourSchema = z.enum(releaseColours);
-
-export type ReleaseColour = z.infer<typeof releaseColourSchema>;
-
-// A stored colour, or null for one the palette no longer has, which shows as the default.
-export const knownColour = (value: unknown): ReleaseColour | null =>
-  releaseColourSchema.nullable().catch(null).parse(value);
 
 const day = daySchema;
 
@@ -84,7 +62,7 @@ export const releaseSchema = z.object({
   // Null when the release ships at the end of its last cycle.
   shipsOn: z.string().nullable(),
   // Null when the release is shown in the default colour.
-  colour: releaseColourSchema.nullable(),
+  colour: paletteColourSchema.nullable(),
   draft: recordDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -150,7 +128,7 @@ export const releaseRequestSchema = z
     firstCycle: day,
     lastCycle: day,
     shipsOn: day.nullable().default(null),
-    colour: releaseColourSchema.nullable().default(null),
+    colour: paletteColourSchema.nullable().default(null),
   })
   .refine(
     ({ firstCycle, lastCycle }) => lastCycle >= firstCycle,

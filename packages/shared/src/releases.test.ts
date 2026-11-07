@@ -6,12 +6,12 @@
 import { describe, expect, it } from "vitest";
 import {
   cyclePatternRequestSchema,
-  knownColour,
   movedReleases,
   planSubjects,
   releaseRequestSchema,
   shipsBeforeStart,
 } from "./releases.ts";
+import { knownColour } from "./palette.ts";
 
 const message = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues[0]?.message;

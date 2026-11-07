@@ -71,7 +71,7 @@ The values of every built-in field are set out in the [Decisions Log](../product
 ## Workforce Entities
 
 - **Person:** An employee, current or former, with their preferred name, Employee ID, position, start and end dates, whether they are flagged as a manager, whom others can report to, values for the columns added to People, and their work email address if the link to user accounts proposed below is adopted. Whether they are active follows from their start and end dates.
-- **Team:** One manager's direct reports, with an optional name. Its members follow from their reporting lines. A team is known by its manager, and stored only once named, so a link to a team points to its manager.
+- **Team:** One manager's direct reports, with an optional name, and, once its name is approved, an optional colour from the palette, held by name so the palette can change without a migration. The colour is set directly, never drafted. Its members follow from their reporting lines. A team is known by its manager, and stored only once named, so a link to a team points to its manager.
 - **Feature team:** Has a name, and optionally a feature lead, who is one of its current members. Links a set of features to its members. Membership is separate from reporting lines.
 - **Feature team membership:** Records that a person joins or leaves a feature team from a given date, in force until their next record for that team, so past memberships are kept, as reporting lines are. Future-dated records represent planned changes.
 - **Reporting line:** Links a person to their manager, or records that they have none, from a given date until the person's next line starts. Past lines are kept. Future-dated lines represent planned changes.
