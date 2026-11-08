@@ -79,7 +79,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### MGR-01: Manager? Shows Who Is Marked as a Manager
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open from the left-hand menu.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
   - **Expected:** **Manager?** comes straight after **Manager**, followed by **Manager since**, **Team** and **Team name**.
@@ -90,6 +92,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### MGR-02: The Manager Picker Offers Only People Marked as Managers and Still Employed
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as MGR-01.
 
 **Preconditions:** As MGR-01.
 
@@ -111,6 +115,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### MGR-03: One Click Ticks Manager? as a Draft
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as MGR-02.
+
 **Preconditions:** As MGR-01.
 
 - [ ] **Step 1.** Search for **Lilian Lang**. Click once in the row's **Manager?** cell.
@@ -123,7 +129,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### MGR-04: An Approved Check Makes Someone a Manager Who Can Be Picked
 
-**Preconditions:** MGR-03 done. Signed in (P1) as `engineering.director@fathom.test`. **Drafts** page open from the left-hand menu.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from MGR-03. Step 3 signs in as another account.
+
+**Preconditions:** MGR-03 done. Signed in (P1) with this account. **Drafts** page open from the left-hand menu.
 
 - [ ] **Step 1.** Type **Lilian Lang** in the search box.
   - **Expected:** One entry is shown: **Engineering Operations Manager drafted changes to Lilian Lang: Manager? from No to Yes**.
@@ -133,7 +141,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 3.** Sign in (P1) as `engineering.operations.manager@fathom.test`. Open **People**, search for **Samuel Richter**, select the row's **Manager** cell, press Enter, and type **Lilian**.
+- [ ] **Step 3.** Sign in (P1) as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open **People**, search for **Samuel Richter**, select the row's **Manager** cell, press Enter, and type **Lilian**.
   - **Expected:** **Lilian Lang** is offered.
   - **Notes:**
 
@@ -145,13 +153,17 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### MGR-05: Manager? Cannot Be Cleared While People Report to Someone
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as the account MGR-04 ended with.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **Max Munk**. Click once in the row's **Manager?** cell.
   - **Expected:** A message reads **Reassign direct reports first**. The box stays checked, and the row has no **Draft** mark.
   - **Notes:**
 
 ### MGR-06: Changing a Manager Moves the Person to Their New Manager's Team
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as MGR-05.
 
 **Preconditions:** As MGR-05.
 
@@ -165,6 +177,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### MGR-07: A Team Name Is Edited on Its Manager's Row
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as MGR-06.
+
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **Lorenza Thiel**. Select the row's **Team name** cell, type **Fictional Crew**, and press Enter.
@@ -177,6 +191,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### MGR-08: A Manager Who Has Left Is Marked
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as MGR-07.
+
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **西尾 亮**.
@@ -184,6 +200,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### MGR-09: People Are Filtered and Sorted by Manager?
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as MGR-08.
 
 **Preconditions:** As MGR-05.
 
@@ -203,7 +221,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### MGR-10: A Resource Planner Sees Managers and Teams but Cannot Change Them
 
-**Preconditions:** Signed in (P1) as `resource.planner@fathom.test`. **People** page open.
+**Account:** Resource Planner, `resource.planner@fathom.test`, changed from MGR-09.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Read the column headers from left to right.
   - **Expected:** **Manager**, **Manager?**, **Team** and **Team name** are shown. **Manager since**, **Start** and **End** are not.

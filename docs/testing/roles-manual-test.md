@@ -83,7 +83,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-01: Only Those Who May See Roles See the Roles Page
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 3 signs in as another account.
+
+**Preconditions:** Signed in (P1) with this account.
 
 - [ ] **Step 1.** Look at the left-hand menu.
   - **Expected:** There is no **Administration** section and no **Roles** page.
@@ -93,13 +95,15 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The page says **There is no page at this address.**
   - **Notes:**
 
-- [ ] **Step 3.** Sign out (P2), and sign in (P1) as `fathom.administrator@fathom.test`.
+- [ ] **Step 3.** Sign out (P2), and sign in (P1) as the Administrator, `fathom.administrator@fathom.test`.
   - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings** under **Administration**.
   - **Notes:**
 
 ### ROLE-02: The Roles Page Lists Every Role
 
-**Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`. **Roles** page open from the left-hand menu.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account ROLE-01 ended with.
+
+**Preconditions:** Signed in (P1) with this account. **Roles** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the **Role** and **Accounts** columns from top to bottom.
   - **Expected:** Administrator 1, Engineering Director 1, Engineering Manager 1, Executive 1, Feature Lead 1, Product Manager 1, Project Manager 1, Resource Planner 1, Superuser 1, Team Member 1, Workforce Administrator 2. Each row ends with **Edit** and **Copy** buttons, and **New role** is at the top right.
@@ -110,6 +114,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 ### ROLE-03: The Dialog Shows What a Role Grants
+
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-02.
 
 **Preconditions:** As ROLE-02.
 
@@ -131,6 +137,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-04: Editing an Area Brings Viewing It
 
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-03.
+
 **Preconditions:** The **Project Manager** dialog open, as at the end of ROLE-03.
 
 - [ ] **Step 1.** Tick **Edit** on the **Configuration** row.
@@ -142,6 +150,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 ### ROLE-05: The Summary Shows Each Change
+
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-04.
 
 **Preconditions:** The **Project Manager** dialog open, as at the end of ROLE-04.
 
@@ -163,6 +173,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-06: A Change Is Confirmed Before It Is Saved
 
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-05. Steps 4 and 5 sign in as other accounts.
+
 **Preconditions:** The **Project Manager** dialog open, as at the end of ROLE-05.
 
 - [ ] **Step 1.** Tick **View** on the **Access history** row, and select **Save**.
@@ -177,17 +189,19 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The dialog closes and a green banner says **The role has been changed.** The **Project Manager** row is unchanged in the list.
   - **Notes:**
 
-- [ ] **Step 4.** Sign out (P2), and sign in (P1) as `project.manager@fathom.test`.
+- [ ] **Step 4.** Sign out (P2), and sign in (P1) as the Project Manager, `project.manager@fathom.test`.
   - **Expected:** The left-hand menu shows **Access history** under **History**.
   - **Notes:**
 
-- [ ] **Step 5.** Sign out (P2), and sign in (P1) as `fathom.administrator@fathom.test`. Select **Access history** in the left-hand menu.
+- [ ] **Step 5.** Sign out (P2), and sign in (P1) as the Administrator, `fathom.administrator@fathom.test`. Select **Access history** in the left-hand menu.
   - **Expected:** The latest entry says Fathom Administrator **changed the role** Project Manager, granting View Access history, and is marked as worth checking.
   - **Notes:**
 
 ### ROLE-07: Restoring a Starting Role's Template
 
-**Preconditions:** Signed in as `fathom.administrator@fathom.test`, after ROLE-06.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account ROLE-06 ended with.
+
+**Preconditions:** Signed in with this account, after ROLE-06.
 
 - [ ] **Step 1.** Open the **Project Manager** role (P3).
   - **Expected:** **Restore template** is turned on, since the role no longer matches its template.
@@ -203,7 +217,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-08: A Starting Role's Summary Goes When What It Grants Changes
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-07. **Roles** page open.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-07.
+
+**Preconditions:** **Roles** page open.
 
 - [ ] **Step 1.** Open the **Executive** role (P3), and tick **Edit** on the **Plan** row.
   - **Expected:** **What it is for** is empty, with a line under it reading **What the role grants changed, so its old summary is gone.** **Restore template** is turned on.
@@ -223,7 +239,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-09: Copying a Role
 
-**Preconditions:** **Roles** page open, signed in as `fathom.administrator@fathom.test`.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-08.
+
+**Preconditions:** **Roles** page open, signed in with this account.
 
 - [ ] **Step 1.** Select **Copy** in the **Team Member** row.
   - **Expected:** A dialog titled **Copy Team Member**, with the name **Copy of Team Member**, Team Member's description, and the same boxes ticked as Team Member: **View** on **Plan**, **Allocations** and **Org chart**. There is no **Restore template** button, and the main button is **Create role**.
@@ -243,7 +261,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-10: Giving an Account a Role Made Later
 
-**Preconditions:** Signed in as `fathom.administrator@fathom.test`, after ROLE-09.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-09. Step 7 signs in as another account.
+
+**Preconditions:** Signed in with this account, after ROLE-09.
 
 - [ ] **Step 1.** Select **Accounts** under **Administration** in the left-hand menu, and read the **Role** column.
   - **Expected:** Each account shows one role: **Team Member** in the **Team Member** row, **Product Manager** in the **Product Manager** row, **Feature Lead** in the **Feature Lead** row, and **Administrator** in the **Fathom Administrator** row.
@@ -269,7 +289,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The latest entry says Fathom Administrator **changed the role of** Team Member: from Team Member to Copy of Team Member, and is marked as worth checking.
   - **Notes:**
 
-- [ ] **Step 7.** Sign out (P2), and sign in (P1) as `team.member@fathom.test`.
+- [ ] **Step 7.** Sign out (P2), and sign in (P1) as the Team Member, `team.member@fathom.test`.
   - **Expected:** The left-hand menu shows **People** and **Org chart** under **People**.
   - **Notes:**
 
@@ -279,7 +299,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-11: Names Must Differ
 
-**Preconditions:** **Roles** page open, signed in (P1) as `fathom.administrator@fathom.test`.
+**Account:** Administrator, `fathom.administrator@fathom.test`, changed from ROLE-10.
+
+**Preconditions:** **Roles** page open, signed in (P1) with this account.
 
 - [ ] **Step 1.** Select **New role**.
   - **Expected:** A dialog titled **New role**, with an empty name, no description, and nothing ticked. **Pages its holders see** says **None, apart from Help.**
@@ -299,7 +321,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-12: Nobody Can Lock Everyone Out
 
-**Preconditions:** **Roles** page open, signed in as `fathom.administrator@fathom.test`.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-11.
+
+**Preconditions:** **Roles** page open, signed in with this account.
 
 - [ ] **Step 1.** Open the **Superuser** role (P3), untick **Edit** on **Roles**, and select **Save**.
   - **Expected:** The confirmation says **This change affects 1 account.** It lists **Superuser**, under **Loses** with **The Roles page no longer appears.**
@@ -323,7 +347,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### ROLE-13: Changing Fathom's Time Zone
 
-**Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-12. Step 6 signs in as another account.
+
+**Preconditions:** Signed in (P1) with this account.
 
 - [ ] **Step 1.** Select **Settings** under **Administration** in the left-hand menu.
   - **Expected:** The **Settings** page shows **Time zone** set to **America/Vancouver**, with the day and time there under it, such as **It is Thursday, November 5, 2026 at 6:06 AM there.**, matching a clock in Vancouver. **Save** is turned off.
@@ -345,14 +371,16 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** A green banner says **Fathom's time zone is now America/Vancouver.**
   - **Notes:**
 
-- [ ] **Step 6.** Sign out (P2), sign in (P1) as `engineering.operations.manager@fathom.test`, and change the browser's address to end in `/settings`.
+- [ ] **Step 6.** Sign out (P2), sign in (P1) as the Workforce Administrator, `engineering.operations.manager@fathom.test`, and change the browser's address to end in `/settings`.
   - **Expected:** The left-hand menu has no **Settings** page, and the page says **There is no page at this address.**
   - **Notes:**
 
-### ROLE-13: Put Every Role Back
+### ROLE-14: Put Every Role Back
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as the account ROLE-13 ended with. Step 1 signs in as another account.
 
 **Preconditions:** All the test cases above run.
 
-- [ ] **Step 1.** Reset the database (R2).
+- [ ] **Step 1.** Reset the database (R2), sign in (P1) as the Administrator, `fathom.administrator@fathom.test`, and select **Roles** under **Administration** in the left-hand menu.
   - **Expected:** The **Roles** page lists the roles as in ROLE-02, with no **Copy of Team Member**.
   - **Notes:**

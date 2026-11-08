@@ -81,7 +81,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-01: The Org Chart Page Opens
 
-**Preconditions:** Signed in (P1) as `engineering.manager@fathom.test`.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`; the first test case.
+
+**Preconditions:** Signed in (P1) with this account.
 
 - [ ] **Step 1.** Select **Org chart** in the **People** section of the left-hand menu.
   - **Expected:** The page's heading reads **Org chart**. The top bar reads **People / Org chart**. Above the chart are the finder, **Draft** and **Teams** on the left, and **Show levels**, **+**, **−** and **Fit to screen** on the right.
@@ -89,7 +91,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-02: The Chart Opens on the Top Two Levels
 
-**Preconditions:** Signed in (P1) as `engineering.manager@fathom.test`. **Org chart** page open from the left-hand menu.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-01.
+
+**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the card at the top left of the chart.
   - **Expected:** It reads **Silje Holm-Schrøder**, with **Manager** under the name and **Platform team** under that, and ends with **Hide 8 reports**. Two cards with dashed edges are beside it at the top: **TBD-3**, with **Engineering Manager** under it, and **REQ-2047**, with **Software Engineer** under it.
@@ -105,6 +109,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-03: A Manager's Reports and All Levels Are Shown
 
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-02.
+
 **Preconditions:** As ORG-02.
 
 - [ ] **Step 1.** On the card for **Lorenza Thiel**, select **Show 8 reports**.
@@ -116,6 +122,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### ORG-04: Finding a Person Brings Them to the Centre
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-03.
 
 **Preconditions:** As ORG-02. Select **Show levels**, then **1 level**, first.
 
@@ -137,6 +145,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-05: The Chart Pans and Zooms
 
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-04.
+
 **Preconditions:** As ORG-02.
 
 - [ ] **Step 1.** Hold the mouse button down on an empty part of the chart and drag to the left.
@@ -149,6 +159,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-06: A Card Shows the Person's Details Beside the Chart
 
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-05.
+
 **Preconditions:** As ORG-02.
 
 - [ ] **Step 1.** On the card for **Lorenza Thiel**, select the name.
@@ -160,6 +172,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### ORG-07: One Team Is Shown Alone
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-06.
 
 **Preconditions:** As ORG-02.
 
@@ -181,7 +195,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-08: Only Readers Who See Restricted Details Are Told a Manager Has Left
 
-**Preconditions:** Signed in (P1) as `resource.planner@fathom.test`. **Org chart** page open from the left-hand menu.
+**Account:** Resource Planner, `resource.planner@fathom.test`, changed from ORG-07.
+
+**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the top of the chart.
   - **Expected:** Four cards are at the top, side by side, with no line between them: **Silje Holm-Schrøder**, ending with **Hide 6 reports**, **Viktoria Holmberg**, and, with dashed edges, **TBD-3** and **REQ-2047**.
@@ -192,6 +208,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### ORG-09: Each Team Is Drawn in Its Colour, Reaching Down to Teams With None
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-08.
 
 **Preconditions:** As ORG-02. **Light** chosen in the Appearance menu.
 
@@ -225,7 +243,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-10: A Team's Colour Is Chosen on the Chart, at Once
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **Org chart** page open from the left-hand menu.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ORG-09.
+
+**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** On the card for **Silje Holm-Schrøder**, select the small teal dot before **Platform team**.
   - **Expected:** A menu opens headed **Colour of Platform team**, listing **Indigo**, **Violet**, **Grape**, **Pink**, **Red**, **Orange**, **Yellow**, **Lime**, **Green** and **Teal**, each after a small dot of its colour, then **No colour**. **Teal** has a tick.
@@ -247,7 +267,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-11: A Team Is Named on the Chart as a Draft
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **Org chart** page open from the left-hand menu.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as ORG-10.
+
+**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read **Platform team** on the card for **Silje Holm-Schrøder**.
   - **Expected:** **Platform team** is underlined.
@@ -268,6 +290,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Afterwards:** R1.
 
 ### ORG-12: A Person Drafted to Another Manager Is Drawn in Both Places
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-11.
 
 **Preconditions:** As ORG-02. **Light** chosen in the Appearance menu.
 
@@ -297,6 +321,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-13: A Team Named in a Draft Is Marked
 
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-12.
+
 **Preconditions:** As ORG-02.
 
 - [ ] **Step 1.** In the finder, type **本間**, and select **本間 稔**.
@@ -304,6 +330,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### ORG-14: The Draft Menu Applies Drafts or Leaves Them Out
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-13.
 
 **Preconditions:** As ORG-02.
 
@@ -337,7 +365,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### ORG-15: Readers Who Do Not See Restricted Details See No Drafted Manager
 
-**Preconditions:** Signed in (P1) as `resource.planner@fathom.test`, with **Resource Planner** on the account button at the top right. **Org chart** page open from the left-hand menu.
+**Account:** Resource Planner, `resource.planner@fathom.test`, changed from ORG-14.
+
+**Preconditions:** Signed in (P1) with this account, with **Resource Planner** on the account button at the top right. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** On the card for **Viktoria Holmberg**, read the column under it.
   - **Expected:** **Simone Jean**, **우아현** and **西尾 亮**, each on an untinted card with no mark. No card on the chart is light green.
@@ -347,7 +377,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-15.
 
-**Preconditions:** Signed in (P1) as `engineering.manager@fathom.test`. **Org chart** page open from the left-hand menu. **Light** chosen in the Appearance menu.
+**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Read the card for **TBD-3**, at the top of the chart.
   - **Expected:** The card has a grey dashed edge and no shadow. **TBD-3** is grey and in italics, with **Engineering Manager** under it. Under that, a hollow grey dot is followed by **Planned, expected** and this month, such as **Nov 2026**. It ends with **Hide 2 reports**.

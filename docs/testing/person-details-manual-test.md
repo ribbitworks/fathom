@@ -25,7 +25,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 - **Engineering Manager account:** `engineering.manager@fathom.test`, shown in Fathom as **Engineering Manager**. It holds the Engineering Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Operations Manager account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 
@@ -80,7 +80,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`; the first test case.
 
-**Preconditions:** Signed in (P1). **Light** chosen in the Appearance menu. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in (P1) with this account. **Light** chosen in the Appearance menu. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** On the card at the top of the chart, select the name **Silje Holm-Schrøder**.
   - **Expected:** The details panel slides out on the right, headed **Silje Holm-Schrøder**, with **Engineering Manager** under the heading and the link **Show in People** under that. The chart narrows to make room, and her card, with a blue ring around it, stays in the middle of the space left beside the panel.
@@ -156,7 +156,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from DETAILS-04.
 
-**Preconditions:** Signed in (P1). **People** page open from the left-hand menu.
+**Preconditions:** Signed in (P1) with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** In the search box above the table, type **E10026**.
   - **Expected:** Only the row for **Lorenza Thiel** shows.
@@ -224,9 +224,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DETAILS-08: Changing a Person's Details Beside People
 
-**Account:** Engineering Operations Manager, `engineering.operations.manager@fathom.test`, changed from DETAILS-07.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DETAILS-07.
 
-**Preconditions:** Signed in (P1). **Light** chosen in the Appearance menu. **People** page open from the left-hand menu, searched for **E10026**, with **Lorenza Thiel**'s details open beside the table.
+**Preconditions:** Signed in (P1) with this account. **Light** chosen in the Appearance menu. **People** page open from the left-hand menu, searched for **E10026**, with **Lorenza Thiel**'s details open beside the table.
 
 - [ ] **Step 1.** Read the panel.
   - **Expected:** Every value under **Reporting**, **Details** and **Columns** has a change button at its right, except **Team** and **Direct reports**. **Details** starts with **Name** **Lorenza Thiel**. **Manager?** shows a ticked checkbox and **Yes** instead of a change button.
@@ -278,7 +278,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DETAILS-09: Changing a Person's Details Beside the Org Chart
 
-**Account:** Engineering Operations Manager, `engineering.operations.manager@fathom.test`, the same as DETAILS-08.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DETAILS-08.
 
 **Preconditions:** **Org chart** page open from the left-hand menu.
 

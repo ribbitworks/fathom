@@ -24,9 +24,9 @@ Verifies, for each permission a role can grant, that an account holding only tha
 R2 creates these accounts, with every other development account. They share one password, which R2 prints when it finishes.
 
 - **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds the Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. R3 uses it to add a column.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. R3 uses it to approve that column.
+- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out, with the permissions each test case grants it through P4.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out. R3 uses it to add a column.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out. R3 uses it to approve that column.
 
 ## Common Procedures
 
@@ -57,10 +57,10 @@ Use before the first test case and at the end of the last. This deletes every ac
 
 ### R3: Add a Confidential Column
 
-1. Sign in (P1) as `engineering.operations.manager@fathom.test`, and select **People** in the left-hand menu.
+1. Sign in (P1) as the Workforce Administrator, `engineering.operations.manager@fathom.test`, and select **People** in the left-hand menu.
 2. Select **New column**. Type `Offer letter` in **Name**, choose **Web link** in **Type**, select **Confidential** under **Visible to**, and select **Add column**.
 3. Select the Publish button, which reads **Publish 4 changes**, and confirm that a notice reads **Published 4 changes.**
-4. Sign in (P1) as `engineering.director@fathom.test`, select **Drafts** in the left-hand menu, and type `Offer letter` in the search box.
+4. Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`, select **Drafts** in the left-hand menu, and type `Offer letter` in the search box.
 5. Select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog titled **Approve 1 draft?**.
 6. Confirm that a notice reads **Approved 1 draft.**
 
@@ -82,15 +82,15 @@ Use before the first test case and at the end of the last. This deletes every ac
 
 ### P4: Grant Team Member Only Some Permissions
 
-1. Sign in (P1) as `fathom.administrator@fathom.test`, and open the **Team Member** role (P3).
+1. Sign in (P1) as the Administrator, `fathom.administrator@fathom.test`, and open the **Team Member** role (P3).
 2. Untick **View** on the **Plan**, **Allocations** and **Org chart** rows. Confirm that no box in the grid is ticked, and that **Pages its holders see** says **None, apart from Help.**
 3. Tick the boxes the test case names.
 4. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
-5. Sign in (P1) as `team.member@fathom.test`.
+5. Sign in (P1) as the Team Member, `team.member@fathom.test`.
 
 ### P5: Restore Team Member
 
-1. Sign in (P1) as `fathom.administrator@fathom.test`, and open the **Team Member** role (P3).
+1. Sign in (P1) as the Administrator, `fathom.administrator@fathom.test`, and open the **Team Member** role (P3).
 2. Select **Restore template**, and confirm that the ticked boxes are **View** on **Plan**, **Allocations** and **Org chart** only.
 3. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
 
@@ -115,7 +115,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-01: View Plan Shows the Plan Without Changing It
 
-**Preconditions:** Team Member granted only **View** on **Plan** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`; the first test case.
+
+**Preconditions:** Team Member granted only **View** on **Plan** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Overview** page is open. The menu shows **Overview**, **Projects** tagged **Later**, and **Releases** under **Plan**, **Drafts** under **People**, and the **Help** section, and nothing else.
@@ -133,7 +135,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-02: Edit Plan Makes Releases
 
-**Preconditions:** Team Member granted only **Edit** on **Plan** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-01 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Plan** (P4), signed in with this account.
 
 - [ ] **Step 1.** Select **Releases**, then **Platform** in the table, then **New release…** under **Releases** in the side panel.
   - **Expected:** A dialog titled **New release in Platform** opens. There is no **New release stream** button at the top right of the page.
@@ -151,7 +155,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-03: Edit Features Is Not Built Yet
 
-**Preconditions:** Team Member granted only **Edit** on **Features** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-02 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Features** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The menu shows the same pages as in PERM-01 Step 1, since editing features brings seeing the plan. On **Releases**, **Platform** has no **New release…** button.
@@ -163,7 +169,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-04: View People Shows People Without Their Restricted Details
 
-**Preconditions:** Team Member granted only **View** on **People** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-03 ended with.
+
+**Preconditions:** Team Member granted only **View** on **People** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **People** page is open. The menu shows **People** and **Drafts** under **People**, and the **Help** section, and nothing else.
@@ -181,7 +189,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-05: Edit People Changes People
 
-**Preconditions:** Team Member granted only **Edit** on **People** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-04 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **People** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:** **New person** is at the top right, and there is no **New column** button. **Start**, **End** and **Manager since** are not shown.
@@ -199,7 +209,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-06: View Org Chart Shows the Chart Without People
 
-**Preconditions:** Team Member granted only **View** on **Org chart** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-05 ended with.
+
+**Preconditions:** Team Member granted only **View** on **Org chart** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the left-hand menu, then select **Org chart** under **People**.
   - **Expected:** The menu shows **Org chart** under **People**, and the **Help** section, and nothing else. The chart shows each person's name, position, and the team they lead.
@@ -219,7 +231,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-07: View Restricted Details Shows Dates and Former Staff
 
-**Preconditions:** Team Member granted only **View** on **People** and **View** on **Restricted details** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-06 ended with.
+
+**Preconditions:** Team Member granted only **View** on **People** and **View** on **Restricted details** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:** **Start**, **End** and **Manager since** are shown. There is no **New person** button.
@@ -233,7 +247,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-08: Edit Restricted Details Changes Dates
 
-**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Restricted details** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-07 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Restricted details** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:** **Start**, **End** and **Manager since** are shown. **New person** is at the top right, and there is no **New column** button.
@@ -253,7 +269,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-09: View Confidential Data Shows Confidential Columns
 
-**Preconditions:** R2, then R3, then Team Member granted only **View** on **People** and **View** on **Confidential data** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-08 ended with.
+
+**Preconditions:** R2, then R3, then Team Member granted only **View** on **People** and **View** on **Confidential data** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:** An **Offer letter** column is shown. **Start**, **End** and **Manager since** are not shown. There is no **New person** button.
@@ -267,7 +285,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-10: Edit Confidential Data Changes Confidential Values
 
-**Preconditions:** R3 done since the last reset, as for PERM-09, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential data** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-09 ended with.
+
+**Preconditions:** R3 done since the last reset, as for PERM-09, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential data** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
   - **Expected:** An **Offer letter** column is shown, and **New person** is at the top right. **Start**, **End** and **Manager since** are not shown.
@@ -287,7 +307,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-11: View Hiring Plan Shows Planned Hires' Drafts
 
-**Preconditions:** Team Member granted only **View** on **People** and **View** on **Hiring plan** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-10 ended with.
+
+**Preconditions:** Team Member granted only **View** on **People** and **View** on **Hiring plan** (P4), signed in with this account.
 
 - [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
   - **Expected:** Only hire rows are shown. **REQ-2050** is among them, and it and **Backend engineer 1** have a **Draft** mark. There is no **New planned hire** button.
@@ -309,7 +331,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-12: Edit Hiring Plan Changes Planned Hires
 
-**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Hiring plan** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-11 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Hiring plan** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the top right of the page.
   - **Expected:** **New person** and **New planned hire** are shown.
@@ -329,7 +353,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-13: Approve Configuration Approves Drafts of Lists
 
-**Preconditions:** The seed's draft of a new order for **Levels** still waiting, as after R2, then Team Member granted only **View** and **Approve** on **Configuration** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-12 ended with.
+
+**Preconditions:** The seed's draft of a new order for **Levels** still waiting, as after R2, then Team Member granted only **View** and **Approve** on **Configuration** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the left-hand menu.
   - **Expected:** The menu shows **Releases** under **Plan**, **Drafts** and **Lists** under **People**, and the **Help** section, and nothing else.
@@ -351,7 +377,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-14: Approve People Leaves Drafts of Other Areas to Another Approver
 
-**Preconditions:** Team Member granted only **View** and **Approve** on **People** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-13 ended with.
+
+**Preconditions:** Team Member granted only **View** and **Approve** on **People** (P4), signed in with this account.
 
 - [ ] **Step 1.** Select **Drafts** under **People** in the left-hand menu, and type `Skills` in the search box.
   - **Expected:** The entry **Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust** has a checkbox. The entries for the list **Skills**, the column **Skills** and its choices have none.
@@ -369,7 +397,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-15: Approve Their Own Drafts Lets the Account Approve What It Changed
 
-**Preconditions:** Team Member granted only **Edit** on **Plan**, **Approve** on **Releases** and **Approve** on **Their own drafts** (P4), signed in as `team.member@fathom.test`. **Releases** page open, with **Platform** selected in the streams table.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-14 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Plan**, **Approve** on **Releases** and **Approve** on **Their own drafts** (P4), signed in with this account. **Releases** page open, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**. Replace the name with `Harbor Three`, and select **Save**.
   - **Expected:** **Harbor Three** is followed by a hollow yellow dot and **Draft**.
@@ -389,7 +419,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-16: View Configuration Shows Lists and Release Streams Without Changing Them
 
-**Preconditions:** Team Member granted only **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-15 ended with.
+
+**Preconditions:** Team Member granted only **View** on **Configuration** (P4), signed in with this account.
 
 - [ ] **Step 1.** Select **Lists**.
   - **Expected:** **Skills** has a yellow dot and **Draft: added**. There is no **New list** button.
@@ -407,7 +439,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-17: Edit Configuration Changes Release Streams
 
-**Preconditions:** Team Member granted only **Edit** on **Configuration** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-16 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Configuration** (P4), signed in with this account.
 
 - [ ] **Step 1.** Select **Releases**.
   - **Expected:** **New release stream** is at the top right of the page.
@@ -427,7 +461,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-18: View Change History Shows Only Changes to Data the Account Sees
 
-**Preconditions:** Team Member granted only **View** on **Change history** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-17 ended with.
+
+**Preconditions:** Team Member granted only **View** on **Change history** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Change history** page is open and says **No changes to data you can see yet.** The menu shows **Change history** under **History**, and the **Help** section, and nothing else.
@@ -439,7 +475,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-19: View Access History Shows the Access History
 
-**Preconditions:** Team Member granted only **View** on **Access history** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-18 ended with.
+
+**Preconditions:** Team Member granted only **View** on **Access history** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Access history** page is open. The menu shows **Access history** under **History**, and the **Help** section, and nothing else.
@@ -451,7 +489,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-20: View Accounts Shows Accounts Without Changing Them
 
-**Preconditions:** Team Member granted only **View** on **Accounts** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-19 ended with.
+
+**Preconditions:** Team Member granted only **View** on **Accounts** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Accounts** page is open. The menu shows **Accounts** under **Administration**, and the **Help** section, and nothing else.
@@ -465,7 +505,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-21: Edit Accounts Manages Accounts
 
-**Preconditions:** Team Member granted only **Edit** on **Accounts** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-20 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Accounts** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Accounts** page is open. The menu shows **Accounts** under **Administration**, and the **Help** section, and nothing else.
@@ -489,7 +531,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-22: View Roles Shows Roles Without Changing Them
 
-**Preconditions:** Team Member granted only **View** on **Roles** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-21 ended with.
+
+**Preconditions:** Team Member granted only **View** on **Roles** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Roles** page is open. The menu shows **Roles** under **Administration**, and the **Help** section, and nothing else.
@@ -503,7 +547,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-23: Edit Roles Creates and Changes Roles
 
-**Preconditions:** Team Member granted only **Edit** on **Roles** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-22 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Roles** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Roles** page is open. The menu shows **Roles** under **Administration**, and the **Help** section, and nothing else.
@@ -519,7 +565,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-24: View Settings Shows Settings Without Changing Them
 
-**Preconditions:** Team Member granted only **View** on **Settings** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-23 ended with.
+
+**Preconditions:** Team Member granted only **View** on **Settings** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Settings** page is open. The menu shows **Settings** under **Administration**, and the **Help** section, and nothing else.
@@ -533,7 +581,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-25: Edit Settings Changes Fathom's Time Zone
 
-**Preconditions:** Team Member granted only **Edit** on **Settings** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-24 ended with.
+
+**Preconditions:** Team Member granted only **Edit** on **Settings** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Settings** page is open. The menu shows **Settings** under **Administration**, and the **Help** section, and nothing else.
@@ -549,7 +599,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-26: Permissions Not Built Yet Add Only the Capacity Entry
 
-**Preconditions:** Team Member granted only **Approve** on **Plan**, **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts** (P4), signed in as `team.member@fathom.test`.
+**Account:** Team Member, `team.member@fathom.test`, changed by P4 from the Administrator, the account PERM-25 ended with.
+
+**Preconditions:** Team Member granted only **Approve** on **Plan**, **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts** (P4), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The Help **Roles** page is open. The menu shows **Capacity** tagged **Later** under **People**, and the **Help** section, and nothing else. There is no Publish button.
@@ -561,12 +613,14 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 #### PERM-27: Every Starting Role Is as Fathom Started It
 
-**Preconditions:** All the test cases above run. Signed in (P1) as `fathom.administrator@fathom.test`.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account PERM-26 ended with. Step 2 signs in again with this account.
+
+**Preconditions:** All the test cases above run. Signed in (P1) with this account.
 
 - [ ] **Step 1.** Open each role in turn (P3), except **Test Role**, and select **Cancel** after each.
   - **Expected:** In every role's dialog, **Restore template** is turned off.
   - **Notes:**
 
-- [ ] **Step 2.** Reset the database (R2), sign in (P1) as `fathom.administrator@fathom.test`, and select **Roles** under **Administration** in the left-hand menu.
+- [ ] **Step 2.** Reset the database (R2), sign in (P1) as the Administrator, `fathom.administrator@fathom.test`, and select **Roles** under **Administration** in the left-hand menu.
   - **Expected:** The **Roles** page lists the roles as [Roles](../product/roles.md#starting-roles) sets out, and the Superuser role, with no **Test Role**.
   - **Notes:**

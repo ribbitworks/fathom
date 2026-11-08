@@ -66,7 +66,7 @@ Use only where a test case says so. This deletes every account and record in the
 
 3. Confirm that the last line printed gives the shared password, with no error above it.
 4. Start Fathom again (R0).
-5. Sign in again (P1).
+5. Sign in again (P1) with the account the test case names.
 
 ### P1: Sign In
 
@@ -92,7 +92,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-01: Column Drafts Are Marked in the People Table
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open from the left-hand menu.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Look at the **Grade** column header.
   - **Expected:** The column is tinted blue. Under its name are two marks: a yellow dot and **Draft**, and a yellow dot and **Draft: moved**.
@@ -111,6 +113,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### DRAFT-02: A Workforce Administrator Can Discard Column Drafts but Not Approve Them
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-01.
 
 **Preconditions:** As DRAFT-01.
 
@@ -132,6 +136,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-03: Drafts Applied Shows the People Table as It Will Be
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-02.
+
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Drafts applied**.
@@ -143,6 +149,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### DRAFT-04: Live Only Shows the People Table as It Is Now
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-03.
 
 **Preconditions:** As DRAFT-01.
 
@@ -160,13 +168,17 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-05: A Rejected Column Draft Offers Nothing to Decide
 
-**Preconditions:** Signed in (P1) as `engineering.director@fathom.test`. **People** page open.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from DRAFT-04.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **Previous site** column name to open its column menu.
   - **Expected:** Under a red dot and **Rejected**, it shows **Reason: Fictional reason: a previous site is not needed yet.** It has no **Approve…** or **Reject…**.
   - **Notes:**
 
 ### DRAFT-06: A Moved Column Is Decided Together With Its New Order
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-05.
 
 **Preconditions:** As DRAFT-05.
 
@@ -184,6 +196,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-07: A Rejected Person's Draft Offers Nothing to Decide
 
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-06.
+
 **Preconditions:** As DRAFT-05.
 
 - [ ] **Step 1.** Open the Draft menu, and under **Filter** select **Rejected**.
@@ -196,7 +210,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-08: List Drafts Are Marked on the Lists Page
 
-**Preconditions:** Signed in (P1) as `engineering.director@fathom.test`. **Lists** page open from the left-hand menu.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-07.
+
+**Preconditions:** Signed in (P1) with this account. **Lists** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the mark beside each list's name.
   - **Expected:** Certifications: **Draft: removed**, with the name struck through. Languages: **Draft: retired**. Levels: **Draft: reordered**. Positions: **Draft**. Roles on teams: **Draft**. Sites: **Draft**. Skills: **Draft: added**. Each has a yellow dot. Hiring states has no mark.
@@ -211,6 +227,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### DRAFT-09: A New Order That Depends on a Rejected Choice Cannot Be Approved
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-08.
 
 **Preconditions:** As DRAFT-08.
 
@@ -228,6 +246,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-10: Rejected List Drafts Offer Nothing to Decide
 
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-09.
+
 **Preconditions:** As DRAFT-08.
 
 - [ ] **Step 1.** Select **Positions** in the row with the yellow dot.
@@ -239,6 +259,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### DRAFT-11: Drafts Applied Shows the Lists as They Will Be
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-10.
 
 **Preconditions:** As DRAFT-08.
 
@@ -252,7 +274,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-12: The Drafts Page Describes New Orders
 
-**Preconditions:** Signed in (P1) as `engineering.director@fathom.test`. **Drafts** page open from the left-hand menu.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-11.
+
+**Preconditions:** Signed in (P1) with this account. **Drafts** page open from the left-hand menu.
 
 - [ ] **Step 1.** Type **new order** in the search box.
   - **Expected:** Four entries are shown, ending **drafted a new order for People's columns**, **drafted a new order for Levels**, **drafted a new order for Positions** and **drafted a new order for Sites**.
@@ -267,6 +291,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### DRAFT-13: Rejected Drafts Cannot Be Selected on the Drafts Page
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-12.
 
 **Preconditions:** As DRAFT-12.
 
@@ -284,7 +310,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-14: A Workforce Administrator Can Discard the New Column Order
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-13.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Discard new order**.
   - **Expected:** The columns are Name, ID, Position, Site, Grade, Level, Role on team, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name, Previous site, Skills. **Grade** has a yellow dot and **Draft**, without **Draft: moved**.
@@ -292,7 +320,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-15: Unpublished Changes Are Seen Only by the Person Who Made Them
 
-**Preconditions:** R1. Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-14. Step 4 signs in as another account.
+
+**Preconditions:** R1. Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Look at the top bar, beside your name.
   - **Expected:** It shows **Publish 3 changes**, with a **⋯** button beside it.
@@ -306,13 +336,15 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Her row has a hollow yellow dot and **Draft**, with no **Unpublished** mark. Her **Site** cell is yellow.
   - **Notes:**
 
-- [ ] **Step 4.** Sign in (P1) as `engineering.director@fathom.test`, open **People**, and type **Mariana Metz** in the search box.
+- [ ] **Step 4.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`, open **People**, and type **Mariana Metz** in the search box.
   - **Expected:** Her row has a grey dot and **Being changed**, and no **Draft** mark, and her **Site** cell is not yellow. The top bar shows no **Publish** button.
   - **Notes:**
 
 ### DRAFT-16: A Record Someone Else Is Changing Is Held
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-15.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Type **Viktoria Holmberg** in the search box above the table.
   - **Expected:** Her row has a yellow dot and **Draft**, and a grey dot and **Being changed**.
@@ -324,19 +356,23 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-17: Changing a Published Draft Keeps Others Seeing It as Published
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-16. Step 2 signs in as another account.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Type **E10002** in the search box. Select that person's **ID** cell, type **E20002**, and press Enter.
   - **Expected:** The cell reads **E20002** and is yellow. The row has a hollow yellow dot and **Draft**, with no **Unpublished** mark. The top bar shows **Publish 4 changes**.
   - **Notes:**
 
-- [ ] **Step 2.** Sign in (P1) as `engineering.director@fathom.test`, open **People**, and type **E10002** in the search box.
+- [ ] **Step 2.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`, open **People**, and type **E10002** in the search box.
   - **Expected:** The row still reads **E10002**, with a yellow dot and **Draft**, and a grey dot and **Being changed**.
   - **Notes:**
 
 ### DRAFT-18: Publishing Shows the Changes to Everyone
 
-**Preconditions:** DRAFT-17 done. Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-17. Step 3 signs in as another account.
+
+**Preconditions:** DRAFT-17 done. Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Select **Publish 4 changes** in the top bar: the three changes the seed data holds, and the one from DRAFT-17.
   - **Expected:** A notice reads **Published 4 changes.** The **Publish** button is gone from the top bar.
@@ -346,7 +382,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Her row has a solid yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 3.** Sign in (P1) as `engineering.director@fathom.test`, open **People**, and type **Mariana Metz** in the search box.
+- [ ] **Step 3.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`, open **People**, and type **Mariana Metz** in the search box.
   - **Expected:** Her row has a yellow dot and **Draft**, and her **Site** cell is yellow.
   - **Notes:**
 
@@ -354,7 +390,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-19: Discard All Removes Every Unpublished Change
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-18.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **⋯** button beside **Publish 3 changes**, then **Discard all…**.
   - **Expected:** A dialog titled **Discard 3 changes?** says **Your unpublished changes are deleted. This cannot be undone.**
@@ -366,7 +404,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-20: All Waiting Drafts Can Be Approved From the Drafts Page
 
-**Preconditions:** R2. Signed in (P1) as `engineering.director@fathom.test`. **Drafts** page open.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from DRAFT-19.
+
+**Preconditions:** R2. Signed in (P1) with this account. **Drafts** page open.
 
 - [ ] **Step 1.** Select **Select all waiting**.
   - **Expected:** The button at the top right reads **Approve 20 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
@@ -378,13 +418,15 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-21: A Resubmitted Choice Is Approved With the New Order That Depends on It
 
-**Preconditions:** R2. Signed out (P2).
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-20. Step 2 signs in as another account.
 
-- [ ] **Step 1.** Sign in (P1) as `engineering.operations.manager@fathom.test`. Open **Lists**, then **Sites**. Select the **⋯** button at the end of the **Harbourside** row, then **Resubmit**.
+**Preconditions:** R2. Signed in (P1) with this account.
+
+- [ ] **Step 1.** Open **Lists**, then **Sites**. Select the **⋯** button at the end of the **Harbourside** row, then **Resubmit**.
   - **Expected:** **Harbourside** has a yellow dot and **Draft: added**.
   - **Notes:**
 
-- [ ] **Step 2.** Sign in (P1) as `engineering.director@fathom.test`. Open **Lists**, then **Sites**. Select the **⋯** button beside **Sites** at the top of the panel, then **Approve…**.
+- [ ] **Step 2.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`. Open **Lists**, then **Sites**. Select the **⋯** button beside **Sites** at the top of the panel, then **Approve…**.
   - **Expected:** A dialog titled **Approve 2 drafts?** opens. Under **Also approves the drafts these depend on:** it lists *the choice Harbourside in Sites*.
   - **Notes:**
 
@@ -396,7 +438,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-22: Drafts That Others Use Cannot Be Discarded
 
-**Preconditions:** R2 done after DRAFT-21. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-21.
+
+**Preconditions:** R2 done after DRAFT-21. Signed in (P1) with this account. **Lists** page open.
 
 - [ ] **Step 1.** Select **Skills** in the row with the yellow dot.
   - **Expected:** A panel opens. **Rust** and **TypeScript** each have a yellow dot and **Draft: added**.
@@ -408,7 +452,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-23: A New List Is Rejected Only With the Drafts That Use It
 
-**Preconditions:** As DRAFT-22, signed in (P1) as `engineering.director@fathom.test` instead. **Lists** page open.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from DRAFT-22.
+
+**Preconditions:** As DRAFT-22, signed in (P1) with this account instead. **Lists** page open.
 
 - [ ] **Step 1.** Select **Skills** in the row with the yellow dot, then the **⋯** button beside **Skills** at the top of the panel, then **Reject…**.
   - **Expected:** A dialog titled **Reject 5 drafts?** opens. Under **Also rejects the drafts that use these:** it lists *Silje Holm-Schrøder*, *the column Skills*, *the choice Rust in Skills* and *the choice TypeScript in Skills*. It has a **Reason** box.
@@ -419,6 +465,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 ### DRAFT-24: A Person's Draft Is Approved With the New List, Column and Choice It Uses
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-23.
 
 **Preconditions:** As DRAFT-23. **Drafts** page open.
 
@@ -438,7 +486,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 ### DRAFT-25: Drafts This Account Changed Need Another Approver
 
-**Preconditions:** R2. Signed in (P1) as `project.manager@fathom.test`. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
+**Account:** Project Manager, `project.manager@fathom.test`, changed from DRAFT-24. Step 7 signs in as another account.
+
+**Preconditions:** R2. Signed in (P1) with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 3** opens, with **Harbor 3** in **Name**.
@@ -464,7 +514,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** **Approve 1 draft** is greyed out, and **Reject…** is not, with a line under them saying another approver must approve it.
   - **Notes:**
 
-- [ ] **Step 7.** Sign out (P2), and sign in (P1) as `engineering.director@fathom.test`.
+- [ ] **Step 7.** Sign out (P2), and sign in (P1) as the Engineering Director, `engineering.director@fathom.test`.
   - **Expected:** Fathom opens.
   - **Notes:**
 

@@ -96,9 +96,11 @@ Use only where this test says so. This deletes every account and record in the d
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engineering.operations.manager@fathom.test`. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with R0, then R1, then sign in (P1) as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Check each step whose expected result you see, and write anything else under its notes.
 
 ### METRICS-01: The Panel Opens and Closes
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
 **Preconditions:** **People** page open from the left-hand menu.
 
@@ -120,6 +122,8 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 
 ### METRICS-02: One Column Is Counted With Shares
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-01.
+
 **Preconditions:** **People** page open. Live only shown (P3).
 
 - [ ] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
@@ -128,6 +132,8 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 
 ### METRICS-03: Two Columns Are Crossed
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-02.
+
 **Preconditions:** As METRICS-02, with the panel open.
 
 - [ ] **Step 1.** Set **Break down by** to **Position**, then **and by** to **Site**.
@@ -135,6 +141,8 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 ### METRICS-04: Metrics Follow the Filters
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-03.
 
 **Preconditions:** As METRICS-02, with **Break down by** set to **Position**.
 
@@ -148,6 +156,8 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 
 ### METRICS-05: Metrics Show Live Figures Beside Drafts
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-04.
+
 **Preconditions:** **People** page open. Metrics panel open.
 
 - [ ] **Step 1.** Open the Draft menu, select **Drafts beside live**, and press Esc. Set **Break down by** to **Grade**, and **and by** to **Nothing more**.
@@ -155,6 +165,8 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 ### METRICS-06: The Panel Is Resized
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-05.
 
 **Preconditions:** **People** page open, with the Metrics panel open.
 
@@ -171,6 +183,8 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 ### METRICS-07: Metrics Are Kept in Saved Views
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-06.
 
 **Preconditions:** **People** page open. Live only shown (P3). Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
 
@@ -191,6 +205,8 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 ### METRICS-08: The Panel Covers a Narrow Screen
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-07.
 
 **Preconditions:** **People** page open, with the Metrics panel open.
 

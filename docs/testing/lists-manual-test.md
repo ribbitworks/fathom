@@ -79,7 +79,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### LIST-01: Built-in Lists Are Marked
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open from the left-hand menu.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
+
+**Preconditions:** Signed in (P1) with this account. **Lists** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the **Name** column of the **Hiring states** and **Positions** rows.
   - **Expected:** Each name has a grey **Built in** label beside it. No other list has one.
@@ -95,6 +97,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### LIST-02: Each Hiring State Shows Its Meaning
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-01.
+
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
 - [ ] **Step 1.** Read each choice's row in the panel.
@@ -102,6 +106,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 ### LIST-03: A New Choice Takes the Meaning Chosen
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-02.
 
 **Preconditions:** As LIST-01, with the **Hiring states** panel open.
 
@@ -111,6 +117,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### LIST-04: The Last Choice for a Meaning Is Kept
 
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-03.
+
 **Preconditions:** As LIST-03.
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **Request to hire** row.
@@ -118,6 +126,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 ### LIST-05: A Choice Can Be Retired When Another Has the Same Meaning
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as LIST-04.
 
 **Preconditions:** As LIST-04.
 
@@ -131,7 +141,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### LIST-06: Approving Cannot Leave a Meaning With No Choice
 
-**Preconditions:** LIST-05 done. Signed in (P1) as `engineering.director@fathom.test`. **Lists** page open, with the **Hiring states** panel open.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from LIST-05.
+
+**Preconditions:** LIST-05 done. Signed in (P1) with this account. **Lists** page open, with the **Hiring states** panel open.
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **Approved to hire** row, then select **Approve…**.
   - **Expected:** A dialog titled **Approve 1 draft?** opens.
@@ -147,7 +159,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### LIST-07: Positions' Visibility Sets Who Sees the Position Column
 
-**Preconditions:** LIST-06 done. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open, with the **Positions** panel open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps 3, 4 and 5 sign in as other accounts.
+
+**Preconditions:** LIST-06 done. Signed in (P1) with this account. **Lists** page open, with the **Positions** panel open.
 
 - [ ] **Step 1.** Select **Edit list**. Under **Visible to**, select **Restricted**, then select **Save**.
   - **Expected:** The dialog closes. **Positions** has a hollow yellow dot beside its name.
@@ -157,15 +171,15 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** A notice says the changes were published.
   - **Notes:**
 
-- [ ] **Step 3.** Sign in (P1) as `engineering.director@fathom.test`. Open the **Lists** page and select **Positions**. Select the **⋯** button beside **Edit list**, then select **Approve…**, then **Approve**.
+- [ ] **Step 3.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`. Open the **Lists** page and select **Positions**. Select the **⋯** button beside **Edit list**, then select **Approve…**, then **Approve**.
   - **Expected:** The dialog closes, and the dot beside **Positions** is gone.
   - **Notes:**
 
-- [ ] **Step 4.** Sign in (P1) as `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**, which does not see Restricted details. Open the **People** page.
+- [ ] **Step 4.** Sign in (P1) as the Resource Planner, `resource.planner@fathom.test`. Open the **People** page.
   - **Expected:** The table has no **Position** column.
   - **Notes:**
 
-- [ ] **Step 5.** Sign in (P1) as `engineering.operations.manager@fathom.test`. Open the **People** page.
+- [ ] **Step 5.** Sign in (P1) as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open the **People** page.
   - **Expected:** The table has a **Position** column, and **New person** can be selected.
   - **Notes:**
 
@@ -175,7 +189,9 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 ### LIST-08: The Lists Shown Can Be Narrowed to Built-in or Custom Ones
 
-**Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in (P1) as `engineering.operations.manager@fathom.test`. **Lists** page open from the left-hand menu, with no list's panel open.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as the account LIST-07 ended with.
+
+**Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in (P1) with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
 - [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
   - **Expected:** The table shows only **Hiring states** and **Positions**, and the count reads **2 of 9**.

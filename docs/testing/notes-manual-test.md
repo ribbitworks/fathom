@@ -25,7 +25,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Executive account:** `executive@fathom.test`, shown in Fathom as **Executive**. It holds the Executive role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 
@@ -82,19 +82,23 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 ### NOTE-01: A Note Column Is Added
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open from the left-hand menu.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 2 signs in as another account.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select **New column**. Type `Background` in **Name**, choose **Note** in **Type**, leave **General** chosen, select **Add column**, then publish (P3).
   - **Expected:** A **Background** column is at the end of the table, its name marked **Draft: added**.
   - **Notes:**
 
-- [ ] **Step 2.** Sign in (P1) as `engineering.director@fathom.test`. Open **Drafts** from the left-hand menu and approve the **Background** column.
+- [ ] **Step 2.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`. Open **Drafts** from the left-hand menu and approve the **Background** column.
   - **Expected:** A notification says the draft is approved.
   - **Notes:**
 
 ### NOTE-02: A Note Is Written in Its Panel
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. Run after NOTE-01. **People** page open, with **Max Munk** searched for.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from NOTE-01.
+
+**Preconditions:** Signed in (P1) with this account. Run after NOTE-01. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
   - **Expected:** The panel slides in smoothly from the right over the table, which then has room beside it, with no jump. It is headed **Background**, with **Note**, **Editor** and **Markdown** at the top, **Editor** chosen, the note's text under them, the toolbar under the text, and **Clear**, **Cancel** and **Save** at the bottom. It looks like the Metrics panel.
@@ -122,7 +126,9 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 ### NOTE-03: Text Is Pasted From Another App
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. Run after NOTE-02. **People** page open, with **Lilian Lang** searched for.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as NOTE-02.
+
+**Preconditions:** Signed in (P1) with this account. Run after NOTE-02. **People** page open, with **Lilian Lang** searched for.
 
 - [ ] **Step 1.** In a word processor or web page, copy a passage holding a heading, bold text, highlighted text, a numbered list, a table, and an image. Select Lilian Lang's **Background** cell and paste it into the editor.
   - **Expected:** The heading and bold stay, highlighting and the image are gone, and the numbered list becomes a bullet list. What is left reads sensibly.
@@ -134,7 +140,9 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 ### NOTE-04: Notes Read Well and Work From the Keyboard
 
-**Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. Run after NOTE-03. **Light** chosen in the Appearance menu. **People** page open, with **Max Munk** searched for.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as NOTE-03.
+
+**Preconditions:** Signed in (P1) with this account. Run after NOTE-03. **Light** chosen in the Appearance menu. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Using only the keyboard, move to Max Munk's **Background** cell and press Enter.
   - **Expected:** The panel opens on **Note**. Tab reaches **Note**, **Editor** and **Markdown**, the arrow keys choose **Editor**, and Tab then puts the cursor in the note, ready to type.
@@ -174,12 +182,14 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 ### NOTE-05: A Note Is Read, Approved, and Recorded
 
-**Preconditions:** Run after NOTE-04. Publish (P3) as `engineering.operations.manager@fathom.test`, then sign in (P1) as `executive@fathom.test`. **People** page open, with **Max Munk** searched for.
+**Account:** Resource Planner, `resource.planner@fathom.test`, changed from NOTE-04. Step 2 signs in as another account.
+
+**Preconditions:** Run after NOTE-04. Publish (P3) as the Workforce Administrator, then sign in (P1) with this account. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
   - **Expected:** The panel shows the note as it reads, with a close button, and nothing to change it with.
   - **Notes:**
 
-- [ ] **Step 2.** Press Esc. Sign in (P1) as `engineering.director@fathom.test`, open **Drafts** from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
+- [ ] **Step 2.** Press Esc. Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`, open **Drafts** from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
   - **Expected:** The draft and the history show the note's words without formatting, and read clearly.
   - **Notes:**
