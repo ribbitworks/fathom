@@ -89,9 +89,37 @@ export function mayChange(actor: Actor, createdBy: string): boolean {
   );
 }
 
-// The view without filters, sorts, and breakdowns on columns deleted since it was saved, which
-// readers need not be sent.
-function withoutDeleted(
+// Whether the actor may see a column, which they may unless it is one of the table's they may not;
+// a column the table no longer has hides nothing.
+function seesColumn(
+  actor: Actor,
+  tiers: ReadonlyMap<string, Tier>,
+  key: string,
+): boolean {
+  const tier = tiers.get(key);
+  return tier === undefined || seesSensitivity(actor, tier);
+}
+
+// The widths a view sets for columns the actor may see, or, given `seen` false, for those they may
+// not.
+function widthsSeen(
+  actor: Actor,
+  tiers: ReadonlyMap<string, Tier>,
+  widths: Record<string, number> | undefined,
+  seen: boolean,
+): Record<string, number> {
+  return Object.fromEntries(
+    Object.entries(widths ?? {}).filter(
+      ([key]) => seesColumn(actor, tiers, key) === seen,
+    ),
+  );
+}
+
+// The view as a reader is sent it: without filters, sorts, and breakdowns on columns deleted since
+// it was saved, nor widths of columns the reader may not see. A width reveals no value, so a view
+// keeps widths of columns others may not see, and of any the table no longer has.
+function sentTo(
+  actor: Actor,
   tiers: ReadonlyMap<string, Tier>,
   definition: ViewDefinition,
 ): ViewDefinition {
@@ -108,6 +136,8 @@ function withoutDeleted(
     sort: sort.length === 0 ? undefined : sort,
     breakdown: definition.breakdown?.filter((key) => tiers.has(key)),
     frozen: definition.frozen,
+    widths:
+      definition.widths && widthsSeen(actor, tiers, definition.widths, true),
   });
 }
 
@@ -119,7 +149,7 @@ function toSavedView(
   return {
     id: row.id,
     name: row.name,
-    definition: withoutDeleted(tiers, definitionOf(row)),
+    definition: sentTo(actor, tiers, definitionOf(row)),
     canChange: mayChange(actor, row.createdBy),
   };
 }
@@ -242,12 +272,23 @@ export async function updateView(
   return refusingDuplicates(duplicateView, () =>
     database.transaction(async (transaction) => {
       const { row: before, tiers } = await lockView(transaction, actor, id);
+      // The actor was not sent the widths of columns they may not see, so keeps those already set.
+      const keepingHidden = (row: ViewRow, definition: ViewDefinition) => {
+        const widths = {
+          ...widthsSeen(actor, tiers, definitionOf(row).widths, false),
+          ...definition.widths,
+        };
+        return {
+          ...definition,
+          widths: Object.keys(widths).length === 0 ? undefined : widths,
+        };
+      };
       const after: ViewRow = {
         ...before,
         ...(change.name === undefined ? {} : { name: change.name }),
         ...(change.definition === undefined
           ? {}
-          : { definition: stored(change.definition) }),
+          : { definition: stored(keepingHidden(before, change.definition)) }),
       };
       const tier = mostSensitive([
         mostSensitive(usedTiers(tiers, definitionOf(before))),

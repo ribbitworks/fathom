@@ -4,26 +4,28 @@
 // End, and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last. On a
 // record, Enter, F2, or typing edits the cell, and Delete clears it. While editing, Enter saves and
 // moves down, Tab saves and moves across, and Esc cancels. A column drawing on a list is edited by
-// typing to narrow its choices and picking one, as choice-picker.tsx sets out. Empty rows at the end
-// take new records: Tab moves straight on to editing the next cell, and Enter, in a cell or on the
-// row, adds the record and starts the next. Pasting rows copied from a spreadsheet into a new row
-// adds a record for each, all saved together; rows that will not do stay as new rows with their
+// typing to narrow its choices and picking one, as choice-picker.tsx sets out. Empty rows at the
+// end take new records: Tab moves straight on to editing the next cell, and Enter, in a cell or on
+// the row, adds the record and starts the next. Pasting rows copied from a spreadsheet into a new
+// row adds a record for each, all saved together; rows that will not do stay as new rows with their
 // problems shown. A new row with something in it has a menu, also opened with Shift+F10, that
 // clears it. A row's problem is named under it, in its first cell, and the value it is about is
 // marked red: a value its column cannot take first, then a problem with the record taken whole,
 // such as an Employee ID someone else has, then a value still needed. A new row's mark names what
-// is wrong as it is filled in, and a refused value keeps its editor open, marked. Every change to a record is a draft, shown in place and marked, until an Approver
-// approves it; a cell a draft changes is marked, and names its live value. Each record's menu, also
-// opened with Shift+F10, drafts removing it or discards its draft. Every column can be dragged by
-// its header, moved with Alt and the arrow keys, or moved from its menu, and columns drawing on
-// lists are changed from there too. Everyone, viewers included, can search the table and sort and
-// filter it by any column they see, as table-controls.tsx sets out; rows keep their place while
-// they are edited, until the view next changes. Viewers see the same table, read only. Changes to
-// columns and their order are drafts too, marked under the columns' names, with each column's draft
-// in its menu, and the order's in the Draft menu and the menu of each column it moves; the Draft
-// menu also chooses what to show and decides every draft waiting among those shown. What is
-// particular to a kind of record, such as its built-in columns and what adding one asks for, comes
-// from its table, as people-grid.tsx sets out for People.
+// is wrong as it is filled in, and a refused value keeps its editor open, marked. Every change to a
+// record is a draft, shown in place and marked, until an Approver approves it; a cell a draft
+// changes is marked, and names its live value. Each record's menu, also opened with Shift+F10,
+// drafts removing it or discards its draft. Every column can be dragged by its header, moved with
+// Alt and the arrow keys, or moved from its menu, and columns drawing on lists are changed from
+// there too. Everyone can change a column's width, kept in the view, by dragging its header's right
+// edge, with Shift, Alt and the arrow keys, or from its menu. Everyone, viewers included, can
+// search the table and sort and filter it by any column they see, as table-controls.tsx sets out;
+// rows keep their place while they are edited, until the view next changes. Viewers see the same
+// table, read only. Changes to columns and their order are drafts too, marked under the columns'
+// names, with each column's draft in its menu, and the order's in the Draft menu and the menu of
+// each column it moves; the Draft menu also chooses what to show and decides every draft waiting
+// among those shown. What is particular to a kind of record, such as its built-in columns and what
+// adding one asks for, comes from its table, as people-grid.tsx sets out for People.
 //
 // A cell whose kind is edited in the side panel, such as a note, opens there on a click, Enter, or
 // F2, read only where the cell may not change. While it is being changed, only the panel's own
@@ -56,6 +58,7 @@ import {
   type ReactNode,
   type Ref,
   useImperativeHandle,
+  useRef,
   useState,
 } from "react";
 import type { Finish } from "./choice-picker.tsx";
@@ -86,11 +89,16 @@ import {
   noDrafts,
   waitsForRejected,
 } from "./drafts.ts";
+import { useColumnWidths } from "./column-widths.ts";
 import { focusSoon } from "./focus.ts";
+import { ResizeEdge } from "./resize-edge.tsx";
 import {
+  cellKey,
   frozenByDefault,
   frozenLayout,
   useFrozenMoves,
+  frozenLeft,
+  frozenVariables,
   useMeasured,
 } from "./frozen-columns.ts";
 import { shortcutsFor } from "./list-panel.tsx";
@@ -414,6 +422,13 @@ const headerId = (column: { key: string }) => `column-${column.key}`;
 
 const shortcuts = shortcutsFor(navigator.userAgent);
 
+// How Shift, Alt and an arrow key change a column's width from its header: a step wider or
+// narrower.
+const widthSteps: Readonly<Record<string, number>> = {
+  ArrowRight: 1,
+  ArrowLeft: -1,
+};
+
 // A line of a column's header, its name or a mark under it, and the room above and below them, for
 // how tall a header with marks grows.
 const headerLineHeight = "1.125rem";
@@ -597,16 +612,22 @@ export function columnWidth(
   };
 }
 
-function widthStyle({
-  cells,
-  header,
-}: {
-  cells: number;
-  header: number;
-}): CSSProperties {
+// A column's width as CSS sets it: to fit its cells' characters and its header's, or, when set, in
+// pixels.
+function widthStyle(
+  {
+    cells,
+    header,
+  }: {
+    cells: number;
+    header: number;
+  },
+  set: number | undefined,
+): CSSProperties {
   return {
     "--cell-chars": cells,
     "--header-chars": header,
+    ...(set === undefined ? {} : { "--set-width": `${String(set)}px` }),
   } as CSSProperties;
 }
 
@@ -1210,8 +1231,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     new Map(),
   );
   const stableId = (record: Rec) => shownAs.get(record.id) ?? record.id;
-  // Freezing columns moves no rows.
-  const rowView = { ...view, frozen: undefined };
+  // Freezing columns and setting their widths move no rows.
+  const rowView = { ...view, frozen: undefined, widths: undefined };
   const shownRecords = useSteadyOrder(
     records,
     rowView,
@@ -1277,7 +1298,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const keys = columns.map((column) => column.key);
   // Each column's header cells: its own, and any live copy beside it.
   const headerCells = columns.map((column) => (liveBeside(column) ? 2 : 1));
-  const [scrollRef, measured] = useMeasured(
+  const [scrollRef, measured, holdMeasuring] = useMeasured(
     columns
       .map((column) => `${column.key}${liveBeside(column) ? "+" : ""}`)
       .join(" "),
@@ -1289,7 +1310,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     index < frozen.frozen
       ? {
           className: classes.frozen,
-          style: { left: frozen.lefts.get(`${String(index)}-${String(copy)}`) },
+          style: { left: `var(${frozenLeft(cellKey(index, copy))})` },
         }
       : { className: "", style: undefined };
   const freeze = (count: number) => {
@@ -1299,6 +1320,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     });
   };
   const refreeze = useFrozenMoves(keys, freeze);
+  // The table's panel, holding its columns and where its frozen columns sit.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const widths = useColumnWidths({
+    panelRef,
+    view,
+    onView,
+    measured,
+    headerCells,
+    frozen,
+    holdMeasuring,
+  });
   const cellId = (row: number, column: number) =>
     `cell-${String(rowKeys.at(row))}-${String(keys.at(column))}`;
   // The row and column of a cell, which is always within the table.
@@ -1869,7 +1901,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const dragProps = movesColumns
       ? {
           draggable: true,
-          onDragStart: () => {
+          // A press on the column's edge resizes it, which the browser would otherwise take as
+          // dragging the whole header.
+          onDragStart: (event: DragEvent) => {
+            if (widths.resizing()) {
+              event.preventDefault();
+              return;
+            }
             setDragging(column.key);
           },
           onDragOver: (event: DragEvent) => {
@@ -1909,6 +1947,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 className={classes.recordHeadButton}
                 aria-label={`${column.label} column${headerState(column, view)}`}
                 onKeyDown={(event) => {
+                  const step = widthSteps[event.key];
+                  if (event.altKey && event.shiftKey && step !== undefined) {
+                    event.preventDefault();
+                    widths.step(column.key, index, step);
+                    return;
+                  }
                   if (!movesColumns || !event.altKey) return;
                   if (event.key === "ArrowLeft") {
                     event.preventDefault();
@@ -2034,6 +2078,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 }}
                 breaksDown={breaksDown(column)}
               />
+              <Menu.Divider />
               {index + 1 !== frozenAsked && (
                 <Menu.Item
                   leftSection={<Icon name="freeze" />}
@@ -2052,6 +2097,33 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   }}
                 >
                   Unfreeze columns
+                </Menu.Item>
+              )}
+              <Menu.Item
+                rightSection={<kbd>{shortcuts.wider}</kbd>}
+                disabled={!widths.canWiden(column.key, index)}
+                onClick={() => {
+                  widths.step(column.key, index, 1);
+                }}
+              >
+                Wider
+              </Menu.Item>
+              <Menu.Item
+                rightSection={<kbd>{shortcuts.narrower}</kbd>}
+                disabled={!widths.canNarrow(column.key, index)}
+                onClick={() => {
+                  widths.step(column.key, index, -1);
+                }}
+              >
+                Narrower
+              </Menu.Item>
+              {widths.setWidthOf(column.key) !== undefined && (
+                <Menu.Item
+                  onClick={() => {
+                    widths.reset(column.key);
+                  }}
+                >
+                  Reset width
                 </Menu.Item>
               )}
               {canEditColumns && (changesColumn || movesColumns) && (
@@ -2104,6 +2176,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             </AppMenu.Dropdown>
           </AppMenu>
         </FilterPopover>
+        <ResizeEdge
+          className={classes.columnEdge}
+          {...widths.edge(column.key, index)}
+        />
       </Table.Th>
     );
   };
@@ -2531,20 +2607,22 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           </>
         }
       />
-      <Paper withBorder className={classes.tableScrollPanel}>
+      <Paper
+        ref={panelRef}
+        withBorder
+        className={classes.tableScrollPanel}
+        style={frozenVariables(frozen)}
+      >
         <div
           ref={scrollRef}
           className={classes.tableScroll}
           // Cells reached from the keyboard scroll clear of the header, however many lines of marks
           // it has under the columns' names, and of the frozen columns.
-          style={
-            {
-              scrollPaddingTop: `max(var(--fathom-table-head-height), ${String(
-                markLines + 1,
-              )} * ${headerLineHeight} + ${headerPadding})`,
-              "--frozen-width": `${String(frozen.width)}px`,
-            } as CSSProperties
-          }
+          style={{
+            scrollPaddingTop: `max(var(--fathom-table-head-height), ${String(
+              markLines + 1,
+            )} * ${headerLineHeight} + ${headerPadding})`,
+          }}
           onScroll={(event) => {
             setScrolled(event.currentTarget.scrollLeft > 0);
           }}
@@ -2562,18 +2640,26 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 return [
                   <col
                     key={column.key}
+                    data-column={column.key}
                     className={
                       columnIndex === 0
                         ? classes.recordColFirst
                         : classes.recordCol
                     }
-                    style={widthStyle(columnWidth(column, longestText))}
+                    style={widthStyle(
+                      columnWidth(column, longestText),
+                      widths.setWidthOf(column.key),
+                    )}
                   />,
                   live && (
                     <col
                       key={`${column.key}-live`}
+                      data-column={column.key}
                       className={classes.recordCol}
-                      style={widthStyle(columnWidth(live, longestText))}
+                      style={widthStyle(
+                        columnWidth(live, longestText),
+                        widths.setWidthOf(column.key),
+                      )}
                     />
                   ),
                 ];
@@ -2877,7 +2963,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             aria-hidden="true"
             className={classes.frozenEdge}
             data-scrolled={scrolled || undefined}
-            style={{ left: frozen.width, height: measured.height }}
+            style={{ height: measured.height }}
           />
         )}
       </Paper>

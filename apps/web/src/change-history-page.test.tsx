@@ -344,7 +344,7 @@ describe("the entries", () => {
       "Fictional Person moved the column Site after Level",
       "Fictional Person changed the order of People's columns",
       "Fictional Person changed the order of People's columns",
-      "Fictional Person changed the view Leaving: Filters and sort changed",
+      "Fictional Person changed the view Leaving: View settings changed",
       "Fictional Person added the view without a name",
       "Fictional Person added a record",
     ]);

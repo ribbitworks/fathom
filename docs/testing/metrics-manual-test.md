@@ -1,5 +1,5 @@
 ---
-title: "Manual Test: Metrics and Frozen Columns on the People Table"
+title: "Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
@@ -7,11 +7,11 @@ dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", 
 last_updated: "2026-11-07"
 ---
 
-# Manual Test: Metrics and Frozen Columns on the People Table
+# Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table
 
 ## Scope
 
-Verifies the People table's Metrics panel: breaking people down by one column or two, following the filters and the Draft menu, resizing the panel, and keeping metrics in saved views. Also verifies that frozen columns stay in view while the table scrolls sideways, in light and dark mode.
+Verifies the People table's Metrics panel: breaking people down by one column or two, following the filters and the Draft menu, resizing the panel, and keeping metrics in saved views. Also verifies that frozen columns stay in view while the table scrolls sideways, and that columns are made wider and narrower, in light and dark mode.
 
 ## Test Environment
 
@@ -90,6 +90,8 @@ Use only where this test says so. This deletes every account and record in the d
 - **Views menu:** the menu that opens from the **Views** button, next to the search box.
 - **Column menu:** the menu that opens when you select a column's name in the People table's header.
 - **Panel edge:** the strip between the table and the Metrics panel. A blue line shows on it when the pointer is over it.
+- **Column edge:** the right edge of a column's name in the People table's header. A short blue line shows on it when the pointer is over it.
+- **Details button:** the small button with an arrow out of a box at the right end of a person's **Name** cell, shown while the pointer is over their row.
 - **Appearance menu:** the **Appearance** items in the account menu, which opens from the account button at the top right, showing the account's name.
 
 ## Test Cases
@@ -239,3 +241,45 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 **Afterwards:** Run R1, which puts the column order back.
+
+### METRICS-10: Columns Are Made Wider and Narrower
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-09.
+
+**Preconditions:** Browser window at least 1,440 pixels wide. **People** page open, with the Metrics panel closed. In the Appearance menu, **Light** selected.
+
+- [ ] **Step 1.** Point at the column edge of **Name**, then drag it to the left as far as it goes.
+  - **Expected:** A short blue line shows on the edge. **Name** narrows smoothly with the pointer and stops at about five characters wide. Names that no longer fit end in **…**, and every row stays one line tall.
+  - **Notes:**
+
+- [ ] **Step 2.** Point at a person's row.
+  - **Expected:** The details button shows at the right end of their **Name** cell, and the name stops short of it, ending in **…**. The row stays one line tall.
+  - **Notes:**
+
+- [ ] **Step 3.** Drag the column edge of **Name** to the right as far as it goes.
+  - **Expected:** **Name** widens with the pointer and stops when it takes about half the table's width.
+  - **Notes:**
+
+- [ ] **Step 4.** Look at the **Onboarding** column, then drag its column edge to the right by about the width of the column.
+  - **Expected:** Before the drag, **Onboarding** is about 15 characters wide, each note cut short with **…**. After it, more of each note shows.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the **ID** column's name, press Esc, then press Shift+Alt+Right arrow three times (Shift+Option+Right arrow on a Mac).
+  - **Expected:** **ID** widens a little with each press and stays where it is.
+  - **Notes:**
+
+- [ ] **Step 6.** Open the **Site** column menu.
+  - **Expected:** Lines split the menu into groups: the two sorts; **Filter…** and **Break down by**; **Freeze up to this column**, **Wider**, and **Narrower**; then **Edit column**, **Move left**, and **Move right**.
+  - **Notes:**
+
+- [ ] **Step 7.** Press Esc. In the Appearance menu, select **Dark**, then point at the column edge of **Site**.
+  - **Expected:** The blue line shows clearly on the edge.
+  - **Notes:**
+
+- [ ] **Step 8.** Open the Views menu.
+  - **Expected:** The menu shows **Widths: Name, ID, Onboarding** with an **×**, set apart from the items around it.
+  - **Notes:**
+
+- [ ] **Step 9.** Select **Widths: Name, ID, Onboarding**. In the Appearance menu, select **Light**.
+  - **Expected:** **Name**, **ID**, and **Onboarding** go back to the widths they had at the start of this test case.
+  - **Notes:**

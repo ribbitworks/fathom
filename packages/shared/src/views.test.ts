@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  columnWidths,
   savedViewRequestSchema,
   textLimit,
   viewColumnKeys,
@@ -29,6 +30,7 @@ describe("viewDefinitionSchema", () => {
         sort: ["name", "-level", "bad level!", 7],
         breakdown: ["site", "site", "level", "team", "bad key!"],
         frozen: 1.5,
+        widths: { name: 200, note: 12, "bad key!": 200, site: "200" },
       }),
     ).toEqual({
       search: undefined,
@@ -37,7 +39,19 @@ describe("viewDefinitionSchema", () => {
       sort: ["name", "-level"],
       breakdown: ["site", "level"],
       frozen: undefined,
+      widths: { name: 200 },
     });
+  });
+
+  it("reads widths whole and within their limits, and drops those that are not", () => {
+    const widths = (set: unknown) =>
+      viewDefinitionSchema.parse({ widths: { note: set } }).widths;
+    expect(widths(columnWidths.least)).toEqual({ note: columnWidths.least });
+    expect(widths(columnWidths.most)).toEqual({ note: columnWidths.most });
+    expect(widths(columnWidths.least - 1)).toEqual({});
+    expect(widths(columnWidths.most + 1)).toEqual({});
+    expect(widths(200.5)).toEqual({});
+    expect(viewDefinitionSchema.parse({ widths: "x" }).widths).toBe(undefined);
   });
 
   it("reads how many columns are frozen, none included, but never fewer or too many", () => {
@@ -75,8 +89,25 @@ describe("savedViewRequestSchema", () => {
         filters: { site: {} },
         breakdown: ["site", "level"],
         frozen: 2,
+        widths: { name: 240 },
       }).success,
     ).toBe(true);
+  });
+
+  it("refuses a width that is not whole, too narrow, or too wide, and too many widths", () => {
+    expect(request({ widths: { name: 240.5 } }).success).toBe(false);
+    expect(request({ widths: { name: columnWidths.least - 1 } }).success).toBe(
+      false,
+    );
+    expect(request({ widths: { name: columnWidths.most + 1 } }).success).toBe(
+      false,
+    );
+    const widths = Object.fromEntries(
+      Array.from({ length: 101 }, (_, index) => [`c${String(index)}`, 200]),
+    );
+    expect(request({ widths }).error?.issues[0]?.message).toBe(
+      "Too many widths",
+    );
   });
 
   it("refuses a number of frozen columns that is not whole or is negative", () => {

@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for how many columns stay frozen as a column moves, and where frozen columns sit, measured
-// from the header's cells. The frozen columns themselves are tested in record-grid.test.tsx.
+// from the header's cells, and how wide a frozen column may be made. The frozen columns themselves
+// are tested in record-grid.test.tsx.
 
 import { describe, expect, it } from "vitest";
-import { frozenAfterMove, frozenLayout } from "./frozen-columns.ts";
+import {
+  frozenAfterMove,
+  frozenLayout,
+  frozenVariables,
+  frozenWidened,
+  widestFrozen,
+} from "./frozen-columns.ts";
 
 describe("frozen columns after a move", () => {
   it.each([
@@ -54,5 +61,68 @@ describe("where frozen columns sit", () => {
     const layout = frozenLayout({ widths: [], room: 0, height: 0 }, [1, 1], 5);
     expect(layout.frozen).toBe(2);
     expect(layout.width).toBe(0);
+  });
+});
+
+describe("how wide a frozen column may be made", () => {
+  const measured = { widths: [80, 120, 100, 100, 60], room: 1000, height: 0 };
+  const headerCells = [1, 2, 1, 1];
+  const layout = frozenLayout(measured, headerCells, 3);
+
+  it("leaves the frozen columns half the room, sharing it with a live copy", () => {
+    expect(widestFrozen(measured, headerCells, layout, 0)).toBe(180);
+    expect(widestFrozen(measured, headerCells, layout, 1)).toBe(160);
+    expect(widestFrozen(measured, headerCells, layout, 2)).toBe(200);
+  });
+
+  it("does not limit a column not frozen, or any before the table is measured", () => {
+    expect(widestFrozen(measured, headerCells, layout, 3)).toBe(Infinity);
+    const unmeasured = { widths: [], room: 0, height: 0 };
+    expect(
+      widestFrozen(
+        unmeasured,
+        headerCells,
+        frozenLayout(unmeasured, headerCells, 3),
+        0,
+      ),
+    ).toBe(Infinity);
+  });
+});
+
+describe("frozen columns while one is made wider", () => {
+  const measured = { widths: [80, 120, 100, 100, 60], room: 1000, height: 0 };
+  const headerCells = [1, 2, 1, 1];
+  const layout = frozenLayout(measured, headerCells, 3);
+  const leftsOf = (widened: ReturnType<typeof frozenWidened>) => [
+    ...widened.lefts.values(),
+  ];
+
+  it("moves the cells after it, a live copy beside it by its own change, and where they end", () => {
+    const widened = frozenWidened(layout, headerCells, 1, 10);
+    expect(leftsOf(widened)).toEqual([0, 80, 210, 320, 420]);
+    expect(widened.width).toBe(420);
+    expect(leftsOf(frozenWidened(layout, headerCells, 0, -20))).toEqual([
+      0, 60, 180, 280, 380,
+    ]);
+  });
+
+  it("moves nothing for a column not frozen", () => {
+    expect(frozenWidened(layout, headerCells, 3, 50)).toBe(layout);
+  });
+
+  it("names each place and where the frozen columns end as CSS variables", () => {
+    expect(
+      frozenVariables({
+        lefts: new Map([
+          ["0-0", 0],
+          ["1-1", 80],
+        ]),
+        width: 160,
+      }),
+    ).toEqual({
+      "--frozen-width": "160px",
+      "--frozen-left-0-0": "0px",
+      "--frozen-left-1-1": "80px",
+    });
   });
 });

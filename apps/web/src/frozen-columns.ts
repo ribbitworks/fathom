@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A table's first columns frozen on the left while the rest scroll sideways under them: how many
-// fit, where each frozen cell sits, measured from the header's cells, and how many stay frozen once
-// a column moves, a column moved into the frozen ones joining them and one moved out leaving.
+// fit, where each frozen cell sits, measured from the header's cells, how wide a frozen column may
+// be made, and how many stay frozen once a column moves, a column moved into the frozen ones
+// joining them and one moved out leaving.
 
 import {
   type RefObject,
@@ -56,21 +57,31 @@ const sameMeasure = (first: Measured, second: Measured) =>
   first.widths.every((width, index) => width === second.widths.at(index));
 
 // The table in its scrolling box, measured whenever its header's cells change, named by `cells`,
-// and whenever it or its box is resized, such as when rows are added or the window narrows. The
-// table, and so its box, is always shown.
+// and whenever it or its box is resized, such as when rows are added or the window narrows, except
+// while held, as while a column's edge is dragged, and once more as it is let go. The table, and so
+// its box, is always shown.
 export function useMeasured(
   cells: string,
-): [RefObject<HTMLDivElement | null>, Measured] {
+): [RefObject<HTMLDivElement | null>, Measured, (held: boolean) => void] {
   const scroll = useRef<HTMLDivElement>(null);
+  const held = useRef(false);
   const [measured, setMeasured] = useState<Measured>({
     widths: [],
     room: 0,
     height: 0,
   });
   const update = useCallback(() => {
+    if (held.current) return;
     const next = measure(scroll.current as HTMLDivElement);
     setMeasured((current) => (sameMeasure(current, next) ? current : next));
   }, []);
+  const hold = useCallback(
+    (holding: boolean) => {
+      held.current = holding;
+      update();
+    },
+    [update],
+  );
   useLayoutEffect(update, [update, cells]);
   useEffect(() => {
     const box = scroll.current as HTMLDivElement;
@@ -81,7 +92,7 @@ export function useMeasured(
       observer.disconnect();
     };
   }, [update]);
-  return [scroll, measured];
+  return [scroll, measured, hold];
 }
 
 export interface FrozenLayout {
@@ -96,6 +107,11 @@ export interface FrozenLayout {
   lefts: Map<string, number>;
 }
 
+// How a header cell is named among those of the table: by its column, and 0 for the column's own
+// cell or 1 for a live copy beside it.
+export const cellKey = (column: number, copy: number) =>
+  `${String(column)}-${String(copy)}`;
+
 // Where frozen columns sit, given how many header cells each column has, one or, with a live copy
 // beside it, two. Before the table is measured, any number may be frozen.
 export function frozenLayout(
@@ -109,7 +125,7 @@ export function frozenLayout(
   let cell = 0;
   for (const [column, cells] of headerCells.entries()) {
     for (let copy = 0; copy < cells; copy += 1) {
-      lefts.set(`${String(column)}-${String(copy)}`, edge);
+      lefts.set(cellKey(column, copy), edge);
       edge += measured.widths.at(cell) ?? 0;
       cell += 1;
     }
@@ -126,6 +142,63 @@ export function frozenLayout(
     fits,
     lefts,
   };
+}
+
+// Where frozen cells sit and the frozen columns end, as CSS variables for the cells and the frozen
+// columns' edge to take, so a drag can move them without drawing the table again.
+export function frozenVariables(
+  layout: Pick<FrozenLayout, "lefts" | "width">,
+): Record<string, string> {
+  const variables: [string, string][] = [
+    ["--frozen-width", `${String(layout.width)}px`],
+    ...[...layout.lefts].map(([cell, left]): [string, string] => [
+      frozenLeft(cell),
+      `${String(left)}px`,
+    ]),
+  ];
+  return Object.fromEntries(variables);
+}
+
+// The CSS variable for where a header cell's column, by `${column}-${cell}`, sits when frozen.
+export const frozenLeft = (cell: string) => `--frozen-left-${cell}`;
+
+// Where frozen cells sit and the frozen columns end once a frozen column, with any live copy beside
+// it, is made `change` pixels wider, or narrower when less than none.
+export function frozenWidened(
+  layout: FrozenLayout,
+  headerCells: readonly number[],
+  column: number,
+  change: number,
+): Pick<FrozenLayout, "lefts" | "width"> {
+  if (column >= layout.frozen) return layout;
+  const cells = headerCells.at(column) as number;
+  const lefts = new Map(layout.lefts);
+  for (const [at, count] of headerCells.entries()) {
+    for (let copy = 0; copy < count; copy += 1) {
+      const moved = at === column ? copy : at > column ? cells : 0;
+      const key = cellKey(at, copy);
+      lefts.set(key, (layout.lefts.get(key) as number) + change * moved);
+    }
+  }
+  return { lefts, width: layout.width + change * cells };
+}
+
+// The widest a frozen column, with any live copy beside it as wide, may be made so the frozen
+// columns stay within their share of the table's width: unlimited for a column not frozen, or
+// before the table is measured.
+export function widestFrozen(
+  measured: Measured,
+  headerCells: readonly number[],
+  layout: FrozenLayout,
+  column: number,
+): number {
+  if (column >= layout.frozen || measured.room === 0) return Infinity;
+  const sum = (values: readonly number[]) =>
+    values.reduce((total, value) => total + value, 0);
+  const first = sum(headerCells.slice(0, column));
+  const cells = headerCells.at(column) as number;
+  const own = sum(measured.widths.slice(first, first + cells));
+  return (measured.room * frozenShare - (layout.width - own)) / cells;
 }
 
 interface Move {

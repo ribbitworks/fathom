@@ -616,22 +616,14 @@ export function notePreview(note: string): string {
     : words;
 }
 
-// How many characters wide a note's cell is.
-export const noteCellChars = 30;
+// How many characters wide a note's column is, until its width is set.
+export const noteCellChars = 15;
 
-// A note's words on one line, as a cell previews it, cut short at the cell's width, since a table
-// otherwise widens a column to fit a line it cannot wrap.
+// A note's words on one line, as a cell previews it, cut short at the cell's width.
 export function NoteCell({ note }: { note: string }) {
   const words = notePreview(note);
   return words === "" ? null : (
-    <Text
-      span
-      inherit
-      display="block"
-      maw={`${String(noteCellChars)}ch`}
-      truncate="end"
-      title={words}
-    >
+    <Text span inherit display="block" truncate="end" title={words}>
       {words}
     </Text>
   );

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A table's view, its search, filters, sort, breakdown, and frozen columns, as the page address
-// holds it and as a saved view keeps it, and the saved views themselves. Saved views are shared:
-// everyone who sees a table sees its saved views, except those that filter, sort, or break down by
-// a column they may not see. Their maker, and those who may change planning configuration, may
-// change them.
+// A table's view, its search, filters, sort, breakdown, frozen columns, and the widths set for its
+// columns, as the page address holds it and as a saved view keeps it, and the saved views
+// themselves. Saved views are shared: everyone who sees a table sees its saved views, except those
+// that filter, sort, or break down by a column they may not see. Their maker, and those who may
+// change planning configuration, may change them.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -21,9 +21,13 @@ const levelsLimit = 10;
 export const breakdownLimit = 2;
 // More frozen columns than any table has, as only a hand-made address reaches.
 const frozenLimit = 100;
+// The least and most a column's width may be set to, in pixels: room for its header's marks, and
+// several screens across.
+export const columnWidths = { least: 64, most: 1600 } as const;
 
 const key = z.string().min(1).max(keyLimit);
 const frozen = z.number().int().min(0).max(frozenLimit);
+const width = z.number().int().min(columnWidths.least).max(columnWidths.most);
 
 // A column's filter. A row matches when its value matches any part that is set: for text, when it
 // contains the text; for dates, when it falls between from and to, either of which may be left
@@ -40,6 +44,8 @@ export type Filter = z.infer<typeof filterSchema>;
 
 const sortLevel = z.string().regex(/^-?[\w-]{1,64}$/);
 const columnKey = z.string().regex(/^[\w-]{1,64}$/);
+// More widths than any table has columns, as only a hand-made address reaches.
+const widthsLimit = 100;
 
 // Which version of each record a table shows: its draft beside its live row, the draft alone, as
 // everything will be once approved, or the live record alone, as everything is now.
@@ -47,12 +53,13 @@ export const showSchema = z.enum(["both", "drafts", "live"]);
 
 export type Show = z.infer<typeof showSchema>;
 
-// The view: the search, each column's filter by key, the sort as keys, each with a leading "-"
-// when descending, the keys of the columns the rows are broken down by, which is set, even when
-// empty, while the metrics show, and how many columns, from the first, stay in view while the
-// table scrolls sideways, when not the table's own default. Each filter, sort level, and breakdown
-// column that does not fit is dropped on its own, keeping the others, as is anything else that
-// does not fit.
+// The view: the search, each column's filter by key, the sort as keys, each with a leading "-" when
+// descending, the keys of the columns the rows are broken down by, which is set, even when empty,
+// while the metrics show, and how many columns, from the first, stay in view while the table
+// scrolls sideways, when not the table's own default, and the width set for each column, in pixels,
+// by key, for those not left to fit what they hold. Each filter, sort level, breakdown column, and
+// width that does not fit is dropped on its own, keeping the others, as is anything else that does
+// not fit.
 export const viewDefinitionSchema = z.object({
   search: z.string().max(textLimit).optional().catch(undefined),
   show: showSchema.optional().catch(undefined),
@@ -99,6 +106,24 @@ export const viewDefinitionSchema = z.object({
           ].slice(0, breakdownLimit),
     ),
   frozen: frozen.optional().catch(undefined),
+  widths: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .catch(undefined)
+    .transform((raw) =>
+      raw === undefined
+        ? undefined
+        : Object.fromEntries(
+            Object.entries(raw)
+              .flatMap(([name, value]) => {
+                const set = width.safeParse(value);
+                return columnKey.safeParse(name).success && set.success
+                  ? [[name, set.data] as const]
+                  : [];
+              })
+              .slice(0, widthsLimit),
+          ),
+    ),
 });
 
 // The view as read from the address or a saved view, and as written to them.
@@ -109,6 +134,7 @@ export interface ViewDefinition {
   sort?: string[] | undefined;
   breakdown?: string[] | undefined;
   frozen?: number | undefined;
+  widths?: Record<string, number> | undefined;
 }
 
 // A view as a request sends it, which must fit as a whole, since a page sends only views it made.
@@ -129,6 +155,13 @@ const strictDefinitionSchema = z.object({
     .refine((keys) => new Set(keys).size === keys.length, "Repeated column")
     .optional(),
   frozen: frozen.optional(),
+  widths: z
+    .record(columnKey, width)
+    .refine(
+      (widths) => Object.keys(widths).length <= widthsLimit,
+      "Too many widths",
+    )
+    .optional(),
 });
 
 // The key of the People table's filter on drafts, which filters people by whether they have a

@@ -3,10 +3,12 @@
 // Filtering, searching, and sorting any table, in the browser, over the rows the user has been
 // sent, as ADR 0006 sets out. A table describes its columns, each of a kind, and how to read a
 // row's value in each; each kind says how its values are searched, sorted, and filtered, so a new
-// kind is added in one place. The view a table shows, its search, filters, sort, metrics, and
-// frozen columns, is kept in the page address, with the saved view it started from, if any.
+// kind is added in one place. The view a table shows, its search, filters, sort, metrics, frozen
+// columns, and columns' widths, is kept in the page address, with the saved view it started from,
+// if any.
 
 import {
+  columnWidths,
   type Filter,
   folded,
   type Link,
@@ -77,6 +79,8 @@ export interface View {
   // How many columns, from the first, stay in view while the table scrolls sideways, when not the
   // table's own default.
   frozen?: number | undefined;
+  // The width set for each column, in pixels, by key, for those not left to fit what they hold.
+  widths?: Record<string, number> | undefined;
 }
 
 export const emptyView: View = {
@@ -111,7 +115,37 @@ export function viewFrom(search: ViewDefinition): View {
     ),
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
+    ...(hasWidths(search.widths) ? { widths: search.widths } : {}),
   };
+}
+
+const hasWidths = (
+  widths: Record<string, number> | undefined,
+): widths is Record<string, number> =>
+  widths !== undefined && Object.keys(widths).length > 0;
+
+// How far one step from the keyboard or a column's menu widens or narrows a column, in pixels.
+export const widthStep = 16;
+
+// A width for a column, in whole pixels, between the least and most a width may be, and no wider
+// than `widest`, such as the most a frozen column may take.
+export function widthWithin(wanted: number, widest = Infinity): number {
+  return Math.round(
+    Math.max(columnWidths.least, Math.min(wanted, columnWidths.most, widest)),
+  );
+}
+
+// The view with a column's width set, or, given none, left to fit what the column holds.
+export function withWidth(
+  view: View,
+  key: string,
+  width: number | undefined,
+): View {
+  const widths = Object.fromEntries([
+    ...Object.entries(view.widths ?? {}).filter(([other]) => other !== key),
+    ...(width === undefined ? [] : [[key, width] as const]),
+  ]);
+  return { ...view, widths: hasWidths(widths) ? widths : undefined };
 }
 
 // A table's view as its page's address holds it, the saved view it started from, and how to change
@@ -163,6 +197,7 @@ export function searchFor(view: View): ViewDefinition {
         }),
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
+    ...(hasWidths(view.widths) ? { widths: view.widths } : {}),
   };
 }
 
@@ -208,6 +243,16 @@ export function isActive(filter: Filter | undefined): boolean {
   );
 }
 
+// Whether the view sorts the rows, or sets which columns are frozen or how wide they are, which the
+// Views menu names and Clear all clears with the filters.
+export function setsApart(view: View): boolean {
+  return (
+    view.sort.length > 0 ||
+    view.frozen !== undefined ||
+    view.widths !== undefined
+  );
+}
+
 // Whether the view hides any rows, rather than only sorting them.
 export function narrows(view: View): boolean {
   return (
@@ -218,8 +263,8 @@ export function narrows(view: View): boolean {
 
 // The view with only the filters, sorts, and breakdown on columns the table has, and the filters it
 // offers that are not columns, leaving out those on columns the user may not see, such as in a link
-// from someone who may, and with its frozen columns. The breakdown keeps only the columns the
-// metrics offer, when given.
+// from someone who may, and with its frozen columns and the widths of the columns the table has.
+// The breakdown keeps only the columns the metrics offer, when given.
 export function knownView(
   view: View,
   columns: readonly { key: string }[],
@@ -247,7 +292,18 @@ export function knownView(
           ),
         }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
+    ...widthsOf(view.widths, known),
   };
+}
+
+function widthsOf(
+  widths: Record<string, number> | undefined,
+  known: ReadonlySet<string>,
+): { widths?: Record<string, number> } {
+  const kept = Object.fromEntries(
+    Object.entries(widths ?? {}).filter(([key]) => known.has(key)),
+  );
+  return hasWidths(kept) ? { widths: kept } : {};
 }
 
 // Text folded for matching, shared with the server so searches match alike everywhere.

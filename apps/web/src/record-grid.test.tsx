@@ -483,6 +483,14 @@ describe("where a dragged column goes", () => {
   });
 });
 
+// Where a frozen cell sits, by the CSS variable its style names, as the table's panel sets it.
+function placed(cell: HTMLElement | null | undefined): string {
+  const variable = /^var\((.+)\)$/.exec(cell?.style.left ?? "")?.[1];
+  if (variable === undefined) return "";
+  const panel = cell?.closest("table")?.parentElement?.parentElement;
+  return panel?.style.getPropertyValue(variable) ?? "";
+}
+
 describe("frozen columns", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -503,7 +511,9 @@ describe("frozen columns", () => {
     screen.getByRole("button", {
       name: (name) => name.startsWith(`${label} column`),
     });
-  const leftOf = (label: string) => headerOf(label).closest("th")?.style.left;
+  // Where a header cell sits, from the CSS variable its column's frozen place is kept in, or
+  // nothing for a column not frozen.
+  const leftOf = (label: string) => placed(headerOf(label).closest("th"));
 
   const changedColour: Field = {
     ...colour,
@@ -530,7 +540,7 @@ describe("frozen columns", () => {
     const live = screen
       .getAllByRole("columnheader", { hidden: true })
       .find((cell) => cell.textContent.startsWith("Hue"));
-    expect(live?.style.left).toBe("300px");
+    expect(placed(live)).toBe("300px");
   });
 
   it("freezes no more than half the room the table has, and fewer once it has less", async () => {
@@ -658,7 +668,7 @@ describe("frozen columns", () => {
     expect(onView).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps the rows where they are when the columns frozen change", () => {
+  it("keeps the rows where they are when the columns frozen or their widths change", () => {
     const sorted: View = {
       ...emptyView,
       sort: [{ key: "name", descending: false }],
@@ -689,9 +699,279 @@ describe("frozen columns", () => {
     const second = gadget("b", { name: "Bravo" });
     const { rerender } = render(table([first, second], sorted));
     rerender(
-      table([{ ...first, name: "Zulu" }, second], { ...sorted, frozen: 2 }),
+      table([{ ...first, name: "Zulu" }, second], {
+        ...sorted,
+        frozen: 2,
+        widths: { name: 200 },
+      }),
     );
     expect(names()).toEqual(["Zulu", "Bravo"]);
+  });
+});
+
+describe("column widths", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  // Every header cell 100 pixels wide, starting at the page's left edge, in a table with `room`
+  // pixels to show them.
+  function measuredAs(room: number) {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      width: 100,
+      left: 0,
+    } as DOMRect);
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(room);
+  }
+
+  const headerOf = (label: string) =>
+    screen.getByRole("button", {
+      name: (name) => name.startsWith(`${label} column`),
+    });
+  const edgeOf = (label: string) =>
+    headerOf(label).closest("th")?.lastElementChild as HTMLElement;
+  const setWidths = () =>
+    [...document.querySelectorAll("col")].map((col) =>
+      col.style.getPropertyValue("--set-width"),
+    );
+  const menuItem = async (label: string, name: string) => {
+    await userEvent.click(headerOf(label));
+    const menu = await screen.findByRole("menu", {
+      name: (shown) => shown.startsWith(`${label} column`),
+    });
+    return within(menu).getByRole("menuitem", {
+      name: (shown) => shown.startsWith(name),
+    });
+  };
+
+  it("sets each column's width, and its live copy's, from the view, leaving the others to fit", () => {
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, widths: { f1: 240 } },
+      fields: [
+        {
+          ...colour,
+          draft: {
+            state: "waiting",
+            madeBy: null,
+            madeAt: null,
+            action: "changed",
+            changed: ["name"],
+            live: { name: "Hue" },
+          },
+        },
+      ],
+    });
+    expect(setWidths()).toEqual(["", "", "240px", "240px", ""]);
+  });
+
+  it("widens and narrows a column a step at a time with Shift, Alt and the arrow keys, without moving it", async () => {
+    measuredAs(1000);
+    const onView = vi.fn();
+    const moveColumn = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, widths: { name: 200 } },
+      onView,
+      given: actions({ moveColumn }),
+      canEditColumns: true,
+    });
+    headerOf("Code").focus();
+    await userEvent.keyboard("{Shift>}{Alt>}{ArrowRight}{/Alt}{/Shift}");
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: { name: 200, code: 116 } }),
+    );
+    headerOf("Name").focus();
+    await userEvent.keyboard("{Shift>}{Alt>}{ArrowLeft}{/Alt}{/Shift}");
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: { name: 184 } }),
+    );
+    await userEvent.keyboard("{Shift>}{ArrowLeft}{/Shift}");
+    expect(onView).toHaveBeenCalledTimes(2);
+    expect(moveColumn).not.toHaveBeenCalled();
+  });
+
+  it("offers Wider, Narrower, and, once set, Reset width in a column's menu", async () => {
+    measuredAs(1000);
+    const onView = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, widths: { code: 64 } },
+      onView,
+    });
+    await userEvent.click(await menuItem("Code", "Wider"));
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: { code: 80 } }),
+    );
+    expect((await menuItem("Code", "Narrower")).hasAttribute("disabled")).toBe(
+      true,
+    );
+    await userEvent.click(await menuItem("Code", "Reset width"));
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: undefined }),
+    );
+    await userEvent.click(await menuItem("Colour", "Narrower"));
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: { code: 64, f1: 84 } }),
+    );
+    expect(
+      within(
+        screen.getByRole("menu", {
+          name: (shown) => shown.startsWith("Colour column"),
+        }),
+      ).queryByRole("menuitem", { name: "Reset width" }),
+    ).toBe(null);
+  });
+
+  it("widens a frozen column only as far as keeps the frozen columns within half the table", async () => {
+    measuredAs(200);
+    const onView = vi.fn();
+    renderGadgets({ gadgets: [gadget("g1")], onView });
+    expect((await menuItem("Name", "Wider")).hasAttribute("disabled")).toBe(
+      true,
+    );
+    await userEvent.keyboard("{Escape}");
+    headerOf("Name").focus();
+    await userEvent.keyboard("{Shift>}{Alt>}{ArrowRight}{/Alt}{/Shift}");
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: { name: 100 } }),
+    );
+  });
+
+  // The edge as a browser holds it: captured from a press until it is let go.
+  function grabbable(edge: HTMLElement) {
+    let captured = false;
+    edge.setPointerCapture = () => {
+      captured = true;
+    };
+    edge.hasPointerCapture = () => captured;
+    return edge;
+  }
+
+  it("follows a drag of the header's edge, the view taking the width once it ends", () => {
+    measuredAs(1000);
+    const onView = vi.fn();
+    renderGadgets({ gadgets: [gadget("g1")], onView });
+    const edge = grabbable(edgeOf("Code"));
+    fireEvent.pointerDown(edge, { pointerId: 1, clientX: 100 });
+    fireEvent.pointerMove(edge, { pointerId: 1, clientX: 160 });
+    expect(setWidths()).toEqual(["", "160px", "", ""]);
+    expect(onView).not.toHaveBeenCalled();
+    fireEvent.pointerUp(edge, { pointerId: 1 });
+    expect(onView).toHaveBeenCalledTimes(1);
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: { code: 160 } }),
+    );
+  });
+
+  it("keeps the width reached when the browser cancels a drag", () => {
+    measuredAs(1000);
+    const onView = vi.fn();
+    renderGadgets({ gadgets: [gadget("g1")], onView });
+    const edge = grabbable(edgeOf("Code"));
+    fireEvent.pointerDown(edge, { pointerId: 1, clientX: 100 });
+    fireEvent.pointerMove(edge, { pointerId: 1, clientX: 180 });
+    fireEvent.pointerCancel(edge, { pointerId: 1 });
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: { code: 180 } }),
+    );
+  });
+
+  it("changes nothing for a pointer moved before a press, a press with another button, or a press let go without moving", () => {
+    measuredAs(1000);
+    const onView = vi.fn();
+    renderGadgets({ gadgets: [gadget("g1")], onView });
+    const edge = grabbable(edgeOf("Code"));
+    fireEvent.pointerMove(edge, { pointerId: 1, clientX: 500 });
+    fireEvent.pointerDown(edge, { pointerId: 1, button: 2 });
+    fireEvent.pointerMove(edge, { pointerId: 1, clientX: 500 });
+    expect(setWidths()).toEqual(["", "", "", ""]);
+    fireEvent.pointerDown(edge, { pointerId: 1, clientX: 100 });
+    fireEvent.pointerUp(edge, { pointerId: 1 });
+    expect(onView).not.toHaveBeenCalled();
+  });
+
+  it("refuses to drag the header whose edge is pressed, so the column never moves", () => {
+    const moveColumn = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      given: actions({ moveColumn }),
+      canEditColumns: true,
+    });
+    const header = headerOf("Code").closest("th") as HTMLElement;
+    fireEvent.pointerDown(grabbable(edgeOf("Code")), { pointerId: 1 });
+    expect(fireEvent.dragStart(header)).toBe(false);
+    fireEvent.drop(headerOf("Name").closest("th") as HTMLElement);
+    expect(moveColumn).not.toHaveBeenCalled();
+  });
+
+  it("moves the frozen columns after a frozen one as its edge is dragged", () => {
+    measuredAs(1000);
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, frozen: 2 },
+    });
+    const edge = grabbable(edgeOf("Name"));
+    fireEvent.pointerDown(edge, { pointerId: 1, clientX: 100 });
+    fireEvent.pointerMove(edge, { pointerId: 1, clientX: 140 });
+    expect(placed(headerOf("Code").closest("th"))).toBe("140px");
+    const panel = screen.getByRole("grid").parentElement?.parentElement;
+    expect(panel?.style.getPropertyValue("--frozen-width")).toBe("240px");
+  });
+
+  it("lets a column fit what it holds again once its edge is double-clicked", () => {
+    const onView = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, widths: { code: 300 } },
+      onView,
+    });
+    fireEvent.click(edgeOf("Code"));
+    fireEvent.doubleClick(edgeOf("Code"));
+    expect(onView).toHaveBeenCalledTimes(1);
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: undefined }),
+    );
+  });
+
+  it("puts the widths back with Clear all, shown for a view that sets only widths, and with Clear view", async () => {
+    const onView = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, widths: { code: 300 } },
+      onView,
+    });
+    await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.not.objectContaining({ widths: expect.anything() as unknown }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Clear view" }),
+    );
+    expect(onView).toHaveBeenLastCalledWith(emptyView);
+  });
+
+  it("names the columns whose widths are set in the Views menu, putting them back", async () => {
+    const onView = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, widths: { code: 300, name: 200 } },
+      onView,
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("menuitem", {
+        name: "Widths: Name, Code, reset",
+      }),
+    );
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ widths: undefined }),
+    );
   });
 });
 

@@ -293,6 +293,7 @@ export {
   temporaryIdPrefix,
 } from "./people.ts";
 export {
+  columnWidths,
   type Filter,
   filterSchema,
   type SavedView,

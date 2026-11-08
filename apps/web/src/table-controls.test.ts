@@ -57,6 +57,15 @@ describe("what saving a view keeps", () => {
     ]);
   });
 
+  it("names the columns whose widths are set, in the table's order, leaving out those it lacks", () => {
+    expect(
+      viewParts({ ...emptyView, widths: { site: 200, gone: 120, level: 90 } }, [
+        level,
+        site,
+      ]),
+    ).toEqual([{ name: "Widths", value: "Level, Site" }]);
+  });
+
   it("leaves out what is not set, and metrics that break down by nothing yet", () => {
     expect(viewParts(emptyView, [level])).toEqual([]);
     expect(

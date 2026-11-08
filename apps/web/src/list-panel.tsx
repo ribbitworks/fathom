@@ -96,6 +96,8 @@ export function shortcutsFor(userAgent: string) {
     down: mac ? "⌥↓" : "Alt+↓",
     left: mac ? "⌥←" : "Alt+←",
     right: mac ? "⌥→" : "Alt+→",
+    wider: mac ? "⇧⌥→" : "Shift+Alt+→",
+    narrower: mac ? "⇧⌥←" : "Shift+Alt+←",
     retire: "R",
     remove: mac ? "⌫" : "Del",
   };

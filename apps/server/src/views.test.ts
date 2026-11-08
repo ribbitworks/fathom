@@ -235,6 +235,50 @@ describe("saved views", () => {
     );
   });
 
+  it("keep their columns' widths, sending each reader only those of columns they may see", async () => {
+    const manager = await test.signedIn("engineering-manager");
+    const viewer = await test.signedIn("resource-planner");
+    const widths = { preferredName: 240, startDate: 120, gone: 300 };
+    const { view } = (
+      await save(manager.cookie, "Wide names", { widths })
+    ).json<Saved>();
+    expect(view.definition).toEqual({ widths });
+    expect(
+      (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
+        ?.definition,
+    ).toEqual({ widths: { preferredName: 240, gone: 300 } });
+  });
+
+  it("keep the widths of columns a reader may not see when that reader updates them", async () => {
+    const maker = await test.signedIn("engineering-manager");
+    const { view } = (
+      await save(maker.cookie, "Wide start", {
+        widths: { preferredName: 240, startDate: 120 },
+      })
+    ).json<Saved>();
+    const accounts = await test.signedIn("administrator");
+    await test.request(accounts.cookie, "PATCH", `/api/accounts/${maker.id}`, {
+      roleId: await findStartingRole(test.connection, "resource-planner"),
+    });
+    expect(
+      (
+        await test.request(
+          maker.cookie,
+          "PUT",
+          `/api/people/views/${view.id}`,
+          {
+            definition: { widths: { preferredName: 300 } },
+          },
+        )
+      ).statusCode,
+    ).toBe(200);
+    const other = await test.signedIn("engineering-manager");
+    expect(
+      (await viewsOf(other.cookie)).find(({ id }) => id === view.id)
+        ?.definition,
+    ).toEqual({ widths: { preferredName: 300, startDate: 120 } });
+  });
+
   it("keep what they show and the columns they break down by, and are kept from readers who may not see those columns", async () => {
     const manager = await test.signedIn("engineering-manager");
     const viewer = await test.signedIn("resource-planner");

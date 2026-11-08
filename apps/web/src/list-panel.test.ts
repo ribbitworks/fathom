@@ -86,6 +86,8 @@ describe("shortcuts shown in menus", () => {
       down: "⌥↓",
       left: "⌥←",
       right: "⌥→",
+      wider: "⇧⌥→",
+      narrower: "⇧⌥←",
       retire: "R",
       remove: "⌫",
     });
@@ -98,6 +100,8 @@ describe("shortcuts shown in menus", () => {
       down: "Alt+↓",
       left: "Alt+←",
       right: "Alt+→",
+      wider: "Shift+Alt+→",
+      narrower: "Shift+Alt+←",
       retire: "R",
       remove: "Del",
     });

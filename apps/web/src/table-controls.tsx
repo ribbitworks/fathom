@@ -5,9 +5,9 @@
 // its menu, each sort added as the next level; each column's filter, edited in a popover beside its
 // header; the bar naming each filter, which removes them one at a time or all at once; the menu of
 // the table's saved views, which applies, saves, renames, updates, and deletes them, and names each
-// level of the sort and the frozen columns, removing them one at a time; and the Metrics button,
-// and each column's Break down by, which open the Metrics panel. What they change is the table's
-// view, as table-view.ts sets out.
+// level of the sort, the frozen columns, and the columns' widths, removing them one at a time; and
+// the Metrics button, and each column's Break down by, which open the Metrics panel. What they
+// change is the table's view, as table-view.ts sets out.
 
 import {
   Button,
@@ -25,7 +25,14 @@ import {
   VisuallyHidden,
 } from "@mantine/core";
 import type { SavedView, Show } from "@fathom/shared";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import {
+  Fragment,
+  type ReactNode,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { DayInput } from "./day-input.tsx";
 import { drafts as draftCount } from "./decision-dialog.tsx";
 import { Icon } from "./icons.tsx";
@@ -42,6 +49,7 @@ import {
   knownView,
   narrows,
   sameView,
+  setsApart,
   type TableColumn,
   type View,
   viewFrom,
@@ -149,6 +157,7 @@ export function viewParts(
     (option) => option.value === view.show && option.value !== "both",
   );
   const breakdown = (view.breakdown ?? []).flatMap(labelOf);
+  const widths = widened(view, columns);
   return [
     ...(view.search.trim() === ""
       ? []
@@ -167,7 +176,17 @@ export function viewParts(
             value: frozenUpTo(view.frozen, columns, "Up to", "None"),
           },
         ]),
+    ...(widths.length === 0
+      ? []
+      : [{ name: "Widths", value: widths.join(", ") }]),
   ];
+}
+
+// The names of the columns whose widths the view sets, in the table's order.
+function widened(view: View, columns: readonly AnyColumn[]): string[] {
+  return columns
+    .filter((column) => view.widths?.[column.key] !== undefined)
+    .map(({ label }) => label);
 }
 
 // The frozen columns in words: the last one frozen, after `upTo`, or `none`.
@@ -361,9 +380,10 @@ const byName = (first: SavedView, second: SavedView) =>
 
 // The menu of a table's saved views, named after the one the view started from, marked when the
 // view has changed since, or, with none applied, from the table's default view. Choosing a view
-// applies it. The menu names each level of the sort and the frozen columns, which the table itself
-// already marks, each item removing what it names. It clears the view, saves it as a new one, and
-// updates, renames, or deletes the one applied when the user may change it.
+// applies it. The menu names each level of the sort, the frozen columns, and the columns whose
+// widths are set, which the table itself already shows, each item removing what it names. It clears
+// the view, saves it as a new one, and updates, renames, or deletes the one applied when the user
+// may change it.
 export function ViewsMenu({
   saved,
   columns,
@@ -394,7 +414,60 @@ export function ViewsMenu({
   const current = views.find((each) => each.id === saved?.applied);
   const empty = sameView(view, emptyView);
   const changed = current ? !sameView(shownAs(current), view) : !empty;
-  const parts = sorts.length > 0 || view.frozen !== undefined;
+  const widths = widened(view, columns);
+  // What the view sets beyond the rows it shows, each part set apart, removing what it names.
+  const sections = [
+    {
+      key: "sort",
+      items: sorts.length > 0 && (
+        <>
+          <Menu.Label>Sort</Menu.Label>
+          {sorts.map(({ column, descending }) => (
+            <Menu.Item
+              key={column.key}
+              rightSection={<Icon name="close" size={12} />}
+              onClick={() => {
+                onView(unsorted(view, column.key));
+              }}
+            >
+              {column.label} <span aria-hidden>{descending ? "↓" : "↑"}</span>
+              <VisuallyHidden>
+                {descending ? "descending" : "ascending"}, remove sort
+              </VisuallyHidden>
+            </Menu.Item>
+          ))}
+        </>
+      ),
+    },
+    {
+      key: "frozen",
+      items: view.frozen !== undefined && (
+        <Menu.Item
+          rightSection={<Icon name="close" size={12} />}
+          onClick={() => {
+            onView({ ...view, frozen: undefined });
+          }}
+        >
+          {frozenUpTo(view.frozen, columns, "Frozen to", "Unfrozen")}
+          <VisuallyHidden>, reset</VisuallyHidden>
+        </Menu.Item>
+      ),
+    },
+    {
+      key: "widths",
+      items: widths.length > 0 && (
+        <Menu.Item
+          rightSection={<Icon name="close" size={12} />}
+          onClick={() => {
+            onView({ ...view, widths: undefined });
+          }}
+        >
+          Widths: {widths.join(", ")}
+          <VisuallyHidden>, reset</VisuallyHidden>
+        </Menu.Item>
+      ),
+    },
+  ].filter(({ items }) => items !== false);
   const actions = !empty || current?.canChange === true;
   if (views.length === 0 && empty) return null;
   return (
@@ -436,39 +509,16 @@ export function ViewsMenu({
               )}
             </Menu.Item>
           ))}
-        {parts && (
-          <>
-            {views.length > 0 && <Menu.Divider />}
-            {sorts.length > 0 && <Menu.Label>Sort</Menu.Label>}
-            {sorts.map(({ column, descending }) => (
-              <Menu.Item
-                key={column.key}
-                rightSection={<Icon name="close" size={12} />}
-                onClick={() => {
-                  onView(unsorted(view, column.key));
-                }}
-              >
-                {column.label} <span aria-hidden>{descending ? "↓" : "↑"}</span>
-                <VisuallyHidden>
-                  {descending ? "descending" : "ascending"}, remove sort
-                </VisuallyHidden>
-              </Menu.Item>
-            ))}
-            {sorts.length > 0 && view.frozen !== undefined && <Menu.Divider />}
-            {view.frozen !== undefined && (
-              <Menu.Item
-                rightSection={<Icon name="close" size={12} />}
-                onClick={() => {
-                  onView({ ...view, frozen: undefined });
-                }}
-              >
-                {frozenUpTo(view.frozen, columns, "Frozen to", "Unfrozen")}
-                <VisuallyHidden>, reset</VisuallyHidden>
-              </Menu.Item>
-            )}
-          </>
+        {sections.length > 0 && views.length > 0 && <Menu.Divider />}
+        {sections.map((section, at) => (
+          <Fragment key={section.key}>
+            {at > 0 && <Menu.Divider />}
+            {section.items}
+          </Fragment>
+        ))}
+        {actions && (views.length > 0 || sections.length > 0) && (
+          <Menu.Divider />
         )}
-        {actions && (views.length > 0 || parts) && <Menu.Divider />}
         {!empty && <Menu.Item onClick={onClear}>Clear view</Menu.Item>}
         {saved && !empty && (
           <Menu.Item
@@ -831,7 +881,7 @@ export function ViewBar({
           ? `${count(shown)} of ${count(total)}`
           : (counted ?? `${count(total)} ${total === 1 ? one : noun}`)}
       </Text>
-      {(narrows(view) || view.sort.length > 0 || view.frozen !== undefined) && (
+      {(narrows(view) || setsApart(view)) && (
         <Button
           size="compact-sm"
           variant="default"
@@ -917,6 +967,7 @@ export function ColumnViewItems({
           Clear sort
         </Menu.Item>
       )}
+      <Menu.Divider />
       <Menu.Item leftSection={<Icon name="filter" />} onClick={onFilter}>
         Filter…
       </Menu.Item>

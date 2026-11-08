@@ -62,7 +62,7 @@ const fieldNames = new Map([
   ["required", "Required"],
   ["onPlannedHires", "Offered on planned hires"],
   ["order", "Place"],
-  ["definition", "Filters and sort"],
+  ["definition", "View settings"],
   ["rejected", "Reason"],
   ["startsOn", "From"],
   ["length", "Length"],

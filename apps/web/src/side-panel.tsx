@@ -26,6 +26,7 @@ import {
   useState,
 } from "react";
 import { Icon } from "./icons.tsx";
+import { ResizeEdge } from "./resize-edge.tsx";
 import classes from "./side-panel.module.css";
 
 // The panel's width in pixels: at first, and the least it and the content beside it may have.
@@ -85,62 +86,6 @@ function useMotionEnds(moving: boolean, ended: () => void) {
       clearTimeout(timer);
     };
   }, [moving]);
-}
-
-// An edge that resizes what is beside it: dragged, or moved by the arrow keys along it once focused.
-function ResizeEdge({
-  vertical,
-  label,
-  controls,
-  value,
-  least,
-  most,
-  className,
-  onDrag,
-  onStep,
-}: {
-  // Whether the edge stands between things side by side, rather than one above the other.
-  vertical: boolean;
-  label: string;
-  controls: string;
-  value: number;
-  least: number;
-  most?: number;
-  className: string | undefined;
-  // Where the pointer has dragged the edge to, across or down the page.
-  onDrag: (at: { x: number; y: number }) => void;
-  // A key moved the edge one step: 1 toward the end of the page, across or down, or -1 back.
-  onStep: (step: number) => void;
-}) {
-  const steps: Record<string, number> = vertical
-    ? { ArrowLeft: -1, ArrowRight: 1 }
-    : { ArrowUp: -1, ArrowDown: 1 };
-  return (
-    <div
-      role="separator"
-      aria-orientation={vertical ? "vertical" : "horizontal"}
-      aria-label={label}
-      aria-controls={controls}
-      aria-valuenow={value}
-      aria-valuemin={least}
-      aria-valuemax={most}
-      tabIndex={0}
-      className={className}
-      onPointerDown={(event) => {
-        event.currentTarget.setPointerCapture(event.pointerId);
-      }}
-      onPointerMove={(event) => {
-        if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-        onDrag({ x: event.clientX, y: event.clientY });
-      }}
-      onKeyDown={(event) => {
-        const step = steps[event.key];
-        if (step === undefined) return;
-        event.preventDefault();
-        onStep(step);
-      }}
-    />
-  );
 }
 
 // The panels a stack shows: those open, and those just closed while others stay, which stay where
@@ -262,12 +207,21 @@ function PanelStack({
                 inert={gone || isLeaving(above)}
               >
                 <ResizeEdge
-                  vertical={false}
-                  label={`Resize heights of ${namesOf([above, panel])}`}
-                  controls={`${above.id} ${panel.id}`}
-                  value={shareOf(above, panel)}
-                  least={stackShares.least}
-                  most={100 - stackShares.least}
+                  separator={{
+                    vertical: false,
+                    label: `Resize heights of ${namesOf([above, panel])}`,
+                    controls: `${above.id} ${panel.id}`,
+                    value: shareOf(above, panel),
+                    least: stackShares.least,
+                    most: 100 - stackShares.least,
+                    onStep: (step) => {
+                      share(
+                        above,
+                        panel,
+                        shareOf(above, panel) + step * stackShares.step,
+                      );
+                    },
+                  }}
                   className={classes.stackResizer}
                   onDrag={({ y }) => {
                     const top = box(above).top;
@@ -275,13 +229,6 @@ function PanelStack({
                       above,
                       panel,
                       (100 * (y - top)) / (box(panel).bottom - top),
-                    );
-                  }}
-                  onStep={(step) => {
-                    share(
-                      above,
-                      panel,
-                      shareOf(above, panel) + step * stackShares.step,
                     );
                   }}
                 />
@@ -432,21 +379,23 @@ export function WithSidePanel({
         >
           {!narrow && (
             <ResizeEdge
-              vertical
-              label={`Resize ${namesOf(panels)}`}
-              controls={panels.map(({ id }) => id).join(" ")}
-              value={width}
-              least={panelWidths.least}
+              separator={{
+                vertical: true,
+                label: `Resize ${namesOf(panels)}`,
+                controls: panels.map(({ id }) => id).join(" "),
+                value: width,
+                least: panelWidths.least,
+                onStep: (step) => {
+                  // Moving the edge left widens the panel.
+                  resize(width - step * panelWidths.step);
+                },
+              }}
               className={classes.resizer}
               onDrag={({ x }) => {
                 const right = (
                   layout.current as HTMLDivElement
                 ).getBoundingClientRect().right;
                 resize(right - x);
-              }}
-              onStep={(step) => {
-                // Moving the edge left widens the panel.
-                resize(width - step * panelWidths.step);
               }}
             />
           )}

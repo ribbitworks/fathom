@@ -18,12 +18,15 @@ import {
   sameView,
   savedFor,
   searchFor,
+  setsApart,
   type TableColumn,
   useSteadyOrder,
   type View,
   viewFrom,
   viewProps,
   viewSearchSchema,
+  widthWithin,
+  withWidth,
 } from "./table-view.ts";
 
 interface Row {
@@ -406,6 +409,55 @@ describe("the view in the page address", () => {
     expect(sameView(view({ frozen: 2 }), view({ frozen: 2 }))).toBe(true);
   });
 
+  it("reads, writes, and saves the widths set for columns, leaving out none set", () => {
+    expect(viewFrom({ widths: { name: 240 } })).toEqual(
+      view({ widths: { name: 240 } }),
+    );
+    expect(viewFrom({ widths: {} })).toEqual(view({}));
+    expect(searchFor(view({ widths: { name: 240 } }))).toEqual({
+      widths: { name: 240 },
+    });
+    expect(searchFor(view({ widths: {} }))).toEqual({});
+    expect(savedFor(view({ widths: { name: 240 } }))).toEqual({
+      widths: { name: 240 },
+    });
+    expect(sameView(view({ widths: { name: 240 } }), emptyView)).toBe(false);
+  });
+
+  it("sets a column's width, keeping the others, and leaves it to fit its cells again", () => {
+    const wide = withWidth(view({ widths: { name: 240 } }), "level", 120);
+    expect(wide.widths).toEqual({ name: 240, level: 120 });
+    expect(withWidth(wide, "level", 160).widths).toEqual({
+      name: 240,
+      level: 160,
+    });
+    expect(withWidth(wide, "level", undefined).widths).toEqual({ name: 240 });
+    expect(
+      sameView(
+        withWidth(view({ widths: { name: 240 } }), "name", undefined),
+        emptyView,
+      ),
+    ).toBe(true);
+  });
+
+  it("sets things apart from the rows it shows when it sorts, freezes, or sets widths", () => {
+    expect(setsApart(emptyView)).toBe(false);
+    expect(setsApart(view({ search: "a" }))).toBe(false);
+    expect(
+      setsApart(view({ sort: [{ key: "name", descending: false }] })),
+    ).toBe(true);
+    expect(setsApart(view({ frozen: 0 }))).toBe(true);
+    expect(setsApart(view({ widths: { name: 200 } }))).toBe(true);
+  });
+
+  it("keeps a width whole, within its limits, and no wider than asked", () => {
+    expect(widthWithin(200.4)).toBe(200);
+    expect(widthWithin(1)).toBe(64);
+    expect(widthWithin(5000)).toBe(1600);
+    expect(widthWithin(400, 250.6)).toBe(251);
+    expect(widthWithin(400, 10)).toBe(64);
+  });
+
   it("names the saved view the view started from, until it is cleared", () => {
     const id = "00000000-0000-4000-8000-0000000000a1";
     expect(viewSearchSchema.parse({ view: id }).view).toBe(id);
@@ -556,6 +608,7 @@ describe("columns the user may not see", () => {
           ],
           breakdown: ["hidden", "level"],
           frozen: 2,
+          widths: { hidden: 200, name: 240 },
         }),
         columns,
       ),
@@ -566,7 +619,11 @@ describe("columns the user may not see", () => {
         sort: [{ key: "start", descending: true }],
         breakdown: ["level"],
         frozen: 2,
+        widths: { name: 240 },
       }),
+    );
+    expect(knownView(view({ widths: { hidden: 200 } }), columns)).toEqual(
+      view({}),
     );
     expect(knownView(view({ breakdown: ["hidden"] }), columns)).toEqual(
       view({ breakdown: [] }),

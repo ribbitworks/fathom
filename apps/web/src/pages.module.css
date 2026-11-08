@@ -473,7 +473,10 @@ select.cellInput {
   /* Room beside the first column's value for the widest mark, "Draft: removed". */
   --record-mark-room: 7rem;
 
-  width: max-content;
+  /* As wide as its columns say, never as wide as what their cells hold, as a width of max-content
+     would make it, so no column is held wider than it is set to; and at least as wide as its
+     panel. */
+  width: 0;
   min-width: 100%;
 }
 
@@ -836,9 +839,9 @@ th.liveColumn {
   display: inline-block;
 }
 
-/* A column fits its cells' characters or its header's, whichever is wider. A header's label is
-   smaller than a cell's text, so each of its characters is 0.9 of one, and has room beside it for
-   its sort and filter marks. */
+/* A column fits its cells' characters or its header's, whichever is wider, unless its width is set.
+   A header's label is smaller than a cell's text, so each of its characters is 0.9 of one, and has
+   room beside it for its sort and filter marks. */
 .recordCol,
 .recordColFirst {
   --record-col-width: max(
@@ -846,18 +849,52 @@ th.liveColumn {
     var(--header-chars) * 0.9ch + 1.5rem
   );
 
-  width: calc(
-    var(--record-col-width) + 2 *
-      var(--table-horizontal-spacing, var(--mantine-spacing-sm))
+  width: var(
+    --set-width,
+    calc(
+      var(--record-col-width) + 2 *
+        var(--table-horizontal-spacing, var(--mantine-spacing-sm))
+    )
   );
 }
 
 .recordColFirst {
-  width: calc(
-    var(--record-col-width) + 2 *
-      var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +
-      var(--record-mark-room)
+  width: var(
+    --set-width,
+    calc(
+      var(--record-col-width) + 2 *
+        var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +
+        var(--record-mark-room)
+    )
   );
+}
+
+/* The edge dragged to change a column's width, at the right of its header, marked by a line while
+   pointed at or dragged. */
+.columnEdge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.columnEdge::after {
+  position: absolute;
+  top: 20%;
+  right: 0;
+  bottom: 20%;
+  width: 2px;
+  border-radius: 1px;
+  content: "";
+}
+
+.columnEdge:hover::after,
+.columnEdge:active::after {
+  background: var(--mantine-primary-color-filled);
 }
 
 .recordColActions {
@@ -895,6 +932,7 @@ th.liveColumn {
 .frozenEdge {
   position: absolute;
   top: 0;
+  left: var(--frozen-width);
   width: 8px;
   border-left: 1px solid var(--mantine-color-default-border);
   pointer-events: none;

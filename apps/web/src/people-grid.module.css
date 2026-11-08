@@ -1,16 +1,35 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
 /* The People table's button showing a person's details, at the right of their Name cell, shown while
-   the row is pointed at or one of its cells has focus. */
+   the row is pointed at or one of its cells has focus. It sits over the cell rather than beside its
+   text, so a narrow column cuts the name short instead of moving the button under it, and the text
+   makes room for it while it shows. A frozen cell is placed already. */
 
 .showDetails {
-  float: right;
-  margin-left: 4px;
+  position: absolute;
+  top: 50%;
+  right: 4px;
   opacity: 0;
+  transform: translateY(-50%);
+}
+
+td:has(> .showDetails) {
+  /* The button's own size, which the cell does not inherit from it, and a little room beside it. */
+  --show-details-room: calc(1.375rem * var(--mantine-scale) + 4px);
+
+  position: relative;
 }
 
 tr:hover .showDetails,
 tr:focus-within .showDetails,
 .showDetails:focus-visible {
   opacity: 1;
+}
+
+tr:hover td:has(> .showDetails),
+tr:focus-within td:has(> .showDetails) {
+  padding-right: calc(
+    var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +
+      var(--show-details-room)
+  );
 }
