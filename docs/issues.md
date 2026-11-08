@@ -89,6 +89,10 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 - **Advisories in minimatch and glob:** Two medium advisories, published by 2026-10-30, affect minimatch before 11.0.1 (denial of service from crafted patterns) and glob 9 to 14.0.1 (a cancelled search can keep reading files). They reach the server through @fastify/static, and development tools such as ESLint, markdownlint, and Testcontainers. In Fathom, the patterns come from code, never from users. The fixed versions are new major versions that the packages depending on them do not accept yet, so they wait for those packages' updates. Both fixes were released on 2026-10-27, so the Security Plan's 180 days for medium findings runs to 2027-04-25.
 
+## Releases
+
+- **Images are not repeatable byte for byte:** Building one release tag twice gives images with the same labels and dates but different digests, since each build applies the security fixes released by that day, and installed files keep the times they were built. Writing every file's time from the commit (BuildKit's `rewrite-timestamp`) did not make two builds of the proxy image match on 2026-11-07. Until images are repeatable, a running image is matched to its source by its labels rather than by rebuilding it. Found in review on 2026-11-07.
+
 ## Development
 
 - **Dashes in document titles:** The titles of several documents join Fathom's name to theirs with an em dash, which [Documentation Standards](standards/shared/documentation.md#style-and-tone) rule out: `docs/design/architecture.md`, `docs/design/development-setup.md`, `docs/design/domain-model.md`, `docs/issues.md`, `docs/operations/deployment.md`, `docs/operations/it-overview.md`, `docs/operations/supported-platforms.md`, `docs/privacy/data-protection.md`, `docs/product/brief.md`, `docs/product/roles.md`, and `docs/product/use-cases.md`. Visual Design's was fixed on 2026-11-07. Found in review on 2026-11-07.

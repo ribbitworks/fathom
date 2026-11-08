@@ -9,7 +9,8 @@ name: fathom-dev
 services:
   postgres:
     build:
-      context: ./docker/postgres
+      context: ..
+      dockerfile: deploy/docker/postgres/Dockerfile
       args:
         SECURITY_FIXES_DATE: ${FATHOM_SECURITY_FIXES_DATE:-unset}
     # Development builds for this machine's processor. The security report sets the tag and platform

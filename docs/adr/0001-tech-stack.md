@@ -3,7 +3,7 @@
 - **ADR:** 0001
 - **Status:** Accepted
 - **Date:** 2026-10-26
-- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md)
+- **Revised:** 2026-10-26, to reflect that the server has internet access but Fathom must not be reachable from the internet, and to describe hosting generically, with platforms listed in Supported Platforms; 2026-10-27, to time the component evaluation after Hello Fathom; 2026-10-30, to add the proxy container chosen in [ADR 0003](0003-edge-proxy.md); 2026-11-07, to point to releases in [ADR 0011](0011-releases-and-images.md)
 
 ## Context
 
@@ -75,6 +75,6 @@ Specific libraries (API framework, ORM, Gantt and org chart components, test too
 - **Gantt and timeline components** are the biggest technical risk. Free and commercial options vary widely in features and licensing. Some are GPL-licensed, which would require Fathom, if distributed, to be released under the GPL instead of Apache 2.0. A short evaluation should come before UI work beyond Hello Fathom starts.
 - **Access control** depends on discipline: all data access must go through the shared layer, which the code review standards should check.
 - **Each supported platform** has its own setup needs, which the team operating Fathom will own, as recorded in [Supported Platforms](../operations/supported-platforms.md).
-- **Internet exposure:** The host may have internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Where builds run and how releases reach the server is an open question in the [Security Plan](../security/security-plan.md).
+- **Internet exposure:** The host may have internet access, so Fathom's port must not be exposed to the internet, and its containers must not reach the internet at runtime. Releases are built and published by project scripts, as [ADR 0011](0011-releases-and-images.md) sets out; which machine runs them and how images reach the server is an open question in the [Security Plan](../security/security-plan.md).
 - **Several containers** instead of one, a small operational cost in exchange for PostgreSQL and network isolation.
 - **Python** remains a reasonable alternative if the department's maintainers are much more comfortable with it than with TypeScript.

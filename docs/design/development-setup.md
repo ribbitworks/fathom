@@ -25,7 +25,8 @@ deploy/
   compose.env.example     The host settings compose.yaml reads
   fathom.env.example      The application's settings
   docker/                 Container image definitions and database initialization
-scripts/                  Development and check scripts
+scripts/                  Development, check, and release scripts
+.github/workflows/        The workflow that publishes a release's images on GitHub
 docs/                     Documentation
 LICENSES/                 Licence texts, as the REUSE specification requires
 ```
@@ -108,6 +109,18 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm stack:create-account --name <name> --email <email> [--role <role>]` and `pnpm stack:create-administrator --email <email>` | Create an account, or the Fathom Administrator account, in production-like mode while it runs, as `pnpm account:create` and `pnpm admin:create` do |
 | `pnpm test:containers` | Container tests, in a separate copy of production-like mode: users reach Fathom only through the proxy, and the application and database cannot reach the internet |
 | `pnpm test:ui` | UI tests |
+| `pnpm release`, `pnpm release:tag`, and `pnpm publish:images <tag>` | Make a release, tag it once merged, and publish its container images, as [Releases](#releases) describes |
+
+## Releases
+
+A release is made by hand, wherever the repository is hosted, as [ADR 0011](../adr/0011-releases-and-images.md) sets out. Its version is the release tag, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out, and Help's About box shows it once the release's images run.
+
+To release, run `pnpm release` on an up-to-date, clean default branch. It picks the version, adds the changelog on a `release/vX.Y.Z` branch and pushes it. Open a pull request from that branch and merge it. Then, on the updated default branch, run `pnpm release:tag` to tag the merge. Push the tag with `git push origin vX.Y.Z`, then run `pnpm publish:images vX.Y.Z`. Both commands take `--dry-run`.
+
+- **Publishing the images:** `pnpm publish:images` builds the application, database, and proxy images for linux/amd64 from a clean copy of exactly the tag, scans them as the security report does, and fails if a fix is overdue or has no known release date, as the [Security Plan](../security/security-plan.md#vulnerability-scanning) sets out; otherwise it pushes each, tagged with the version, such as `ghcr.io/jlarue26/fathom-app:0.1.0`. The scan's summary is written to a dated folder under `output/security/`. With `--dry-run` it builds and scans but only prints what it would push.
+- **Where images go:** `FATHOM_REGISTRY` sets the registry and owner, `ghcr.io/jlarue26` unless set. Sign in to it first, such as with `docker login ghcr.io`; no registry password is kept in the repository.
+- **What each image says:** Every image holds Fathom's `LICENSE` and `NOTICE` in `/usr/share/doc/fathom/`, and is labelled with its source, licence, version, and full commit, under the Open Container Initiative's `org.opencontainers.image` names. The source is `FATHOM_SOURCE_URL`, or the `origin` remote's web address without any credentials when it is not set. Each image is dated by the tagged commit's time rather than the build's. That fixes the image's labels and dates, not its digest: each build takes the security fixes released by that day, and installed files keep the times they were built, so building a tag again gives a different digest, as [Issues](../issues.md#releases) records.
+- **On GitHub:** Instead of running `pnpm publish:images` by hand, the Publish release images workflow, run by hand from the Actions tab with the tag, runs `pnpm publish:images` and signs in with the workflow's own token, publishing to the repository owner's registry. It makes no tags or releases itself.
 
 ## Fictional Seed Data
 

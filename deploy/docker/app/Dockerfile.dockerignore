@@ -4,6 +4,8 @@
 # private .dev/ and private/ folders, is never sent to the image build.
 
 *
+!LICENSE
+!NOTICE
 !package.json
 !pnpm-lock.yaml
 !pnpm-workspace.yaml

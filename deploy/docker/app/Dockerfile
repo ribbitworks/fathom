@@ -4,7 +4,8 @@
 # distroless Node.js image with no shell or package manager, running as a user other than root.
 # Packages are installed and the front end is built on the build machine's own processor, since the
 # result is the same JavaScript for every processor and none of the runtime packages is native.
-# Built from the repository root; Dockerfile.dockerignore lists the only files it reads.
+# Built from the repository root; Dockerfile.dockerignore lists the only files it reads. Fathom's
+# licence and notice travel with every copy of the image, as the Apache License asks.
 
 FROM --platform=$BUILDPLATFORM node:24.22.1-trixie-slim@sha256:89c5244bc22a9bc3287d89ebc7e49b9cb5bb84cd40e6175ac3421d5a9f68b95a AS base
 WORKDIR /app
@@ -57,6 +58,7 @@ COPY --from=server /app/node_modules node_modules
 COPY --from=server /app/packages packages
 COPY --from=server /app/apps/server apps/server
 COPY --from=web /app/apps/web/dist web
+COPY LICENSE NOTICE /usr/share/doc/fathom/
 ENV NODE_ENV=production
 USER nonroot
 EXPOSE 8443

@@ -31,7 +31,8 @@ services:
   proxy:
     <<: *hardening
     build:
-      context: ./docker/proxy
+      context: ..
+      dockerfile: deploy/docker/proxy/Dockerfile
       args:
         SECURITY_FIXES_DATE: ${FATHOM_SECURITY_FIXES_DATE:-unset}
     image: fathom-proxy:${FATHOM_IMAGE_TAG:-latest}
@@ -111,7 +112,8 @@ services:
   postgres:
     <<: *hardening
     build:
-      context: ./docker/postgres
+      context: ..
+      dockerfile: deploy/docker/postgres/Dockerfile
       args:
         SECURITY_FIXES_DATE: ${FATHOM_SECURITY_FIXES_DATE:-unset}
     image: fathom-postgres:${FATHOM_IMAGE_TAG:-latest}

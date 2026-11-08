@@ -15,7 +15,6 @@ source scripts/lib.sh
 
 gitleaks_image="zricethezav/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f"
 semgrep_image="semgrep/semgrep:1.182.1@sha256:451b3d875c00dac7ed5db5293e584a07de11449a409c10b3c2d2652f429630b6"
-trivy_image="aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
 
 require_git_repository
 require_container_runtime
@@ -60,7 +59,7 @@ info "Scanning dependencies for vulnerabilities and licences"
 # Security Plan excepts, listed in .trivyignore.yaml, are left out until each exception expires.
 docker run --rm --volume "$scan_copy:/src:ro" --volume "$PWD/node_modules:/src/node_modules:ro" \
   --volume "$PWD/.trivyignore.yaml:/trivyignore.yaml:ro" \
-  --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$trivy_image" \
+  --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$fathom_trivy_image" \
   fs --quiet --skip-version-check --disable-telemetry --include-dev-deps \
   --scanners vuln,license --ignorefile /trivyignore.yaml --format json --exit-code 0 /src \
   >"$report_dir/files.json" || info "The scan of dependencies for vulnerabilities did not complete"
@@ -68,7 +67,7 @@ docker run --rm --volume "$scan_copy:/src:ro" --volume "$PWD/node_modules:/src/n
 info "Scanning configuration for misconfiguration"
 # Only the project's own files are scanned; configuration files inside dependencies are not ours.
 docker run --rm --volume "$scan_copy:/src:ro" \
-  --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$trivy_image" \
+  --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$fathom_trivy_image" \
   fs --quiet --skip-version-check --disable-telemetry \
   --scanners misconfig --format json --exit-code 0 /src \
   >"$report_dir/configuration.json" || info "The scan of configuration did not complete"
@@ -79,10 +78,8 @@ info "Building and scanning container images for the production server's process
 compose_for_scan() {
   DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_IMAGE_TAG="$(clone_name security-scan)" docker compose "$@"
 }
-# Each image is saved to a file that Trivy reads, so Trivy is never given access to the container
-# runtime. Overdue findings the Security Plan excepts, listed in .trivyignore.yaml, are left out
-# until each exception expires. Every image is passed to the summary, and anything that fails is
-# recorded as not scanned, so the report can never pass on a partial or stale scan.
+# Every image is passed to the summary, and anything that fails is recorded as not scanned, so the
+# report can never pass on a partial or stale scan.
 images_dir="$(mktemp -d "$PWD/.tmp/images.XXXXXX")"
 trap 'rm -rf "$scan_copy" "$images_dir"' EXIT
 image_reports=()
@@ -109,13 +106,7 @@ for compose_file in deploy/compose*.yaml deploy/compose*.yml; do
     [ -n "$image" ] || continue
     index=$((index + 1))
     report="$images_dir/$index.json"
-    # Saving fails if the image has no linux/amd64 build, so only what production runs is scanned.
-    if ! docker save --platform linux/amd64 --output "$images_dir/$index.tar" "$image" ||
-      ! docker run --rm --volume "$images_dir/$index.tar:/image.tar:ro" \
-        --volume "$PWD/.trivyignore.yaml:/trivyignore.yaml:ro" \
-        --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$trivy_image" \
-        image --quiet --skip-version-check --disable-telemetry --scanners vuln,secret \
-        --ignorefile /trivyignore.yaml --format json --exit-code 0 --input /image.tar >"$report"; then
+    if ! scan_image "$image" "$images_dir" >"$report"; then
       info "The scan of $image did not complete"
       rm -f "$report"
     fi

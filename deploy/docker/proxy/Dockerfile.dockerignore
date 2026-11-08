@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# The only files the proxy image reads from the repository.
+
+*
+!LICENSE
+!NOTICE
+!deploy/docker/proxy/haproxy.cfg

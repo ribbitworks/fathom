@@ -48,9 +48,14 @@ apps/       Applications (front end and server)
 packages/   Shared packages
 deploy/     Deployment configuration
 scripts/    Automation scripts
+.github/    GitHub workflow for publishing images
 docs/       Documentation, standards, and decision records
 LICENSES/   Licence texts, as the REUSE specification requires
 ```
+
+## Releases
+
+Releases are made by hand with the project's scripts, which prepare the changelog and tag, and build, scan, and publish the container images, so they work wherever the repository is hosted. See [Development Setup](docs/design/development-setup.md#releases) for the steps.
 
 ## Supported Platforms
 

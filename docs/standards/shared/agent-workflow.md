@@ -78,9 +78,11 @@ test command", use the one they name.
   `vMAJOR.MINOR.PATCH`. A change that breaks something that uses the release
   bumps MAJOR; a new feature or option, even a small one, bumps MINOR and
   resets PATCH; a release with no new feature or breaking change (fixes,
-  documentation, refactors, tests, chores) bumps PATCH. Decide the bump from
-  the commits since the last tag, not from the size of the change. Only the
-  owner tags a release, or an agent the owner asks to.
+  documentation, refactors, tests, chores) bumps PATCH. Before 1.0.0, a
+  breaking change bumps MINOR instead, as semantic versioning allows for
+  initial development. Decide the bump from the commits since the last tag,
+  not from the size of the change. Only the owner tags a release, or an agent
+  the owner asks to.
 - **Code reviews:** follow [code-review.md](code-review.md). A review only
   writes its review file; it **Must Not** stage or commit.
 - **Commit messages and pull requests:** follow

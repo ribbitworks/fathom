@@ -214,6 +214,55 @@ stop_dev_servers() {
   info "Stopped this copy's development servers that were still running"
 }
 
+# Trivy, which the security report and the release's image scan share.
+fathom_trivy_image="aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+
+# Scans the linux/amd64 build of an image for vulnerable packages and built-in secrets, writing
+# Trivy's JSON report to standard output. The image is saved to a file in the folder given, which
+# must be inside the repository, so Trivy is never given access to the container runtime. Overdue
+# findings the Security Plan excepts, listed in .trivyignore.yaml, are left out until each
+# exception expires. Saving fails if the image has no linux/amd64 build, so only what production
+# runs is scanned. Run from the repository root.
+scan_image() {
+  local image="$1" folder="$2" saved status=0
+  saved="$(mktemp "$folder/image.XXXXXX")" || return 1
+  docker save --platform linux/amd64 --output "$saved" "$image" &&
+    docker run --rm --volume "$saved:/image.tar:ro" \
+      --volume "$PWD/.trivyignore.yaml:/trivyignore.yaml:ro" \
+      --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$fathom_trivy_image" \
+      image --quiet --skip-version-check --disable-telemetry --scanners vuln,secret \
+      --ignorefile /trivyignore.yaml --format json --exit-code 0 --input /image.tar ||
+    status=$?
+  rm -f "$saved"
+  return "$status"
+}
+
+# Prints a repository's address as an https web address without credentials, such as
+# https://example.com/owner/fathom for git@example.com:owner/fathom.git, so it can be published:
+# any user name, password, query or fragment is left out.
+# Fails for a folder on this machine, which has no web address.
+fathom_https_url() {
+  local url="$1" scheme="" host
+  url="${url%%[?#]*}"
+  url="${url%/}"
+  url="${url%.git}"
+  case "$url" in
+    /* | file://* | "") return 1 ;;
+    *://*)
+      scheme="${url%%://*}"
+      url="${url#*://}"
+      ;;
+    *:*) url="${url/://}" ;;
+  esac
+  host="${url%%/*}"
+  url="${host##*@}${url#"$host"}"
+  # An ssh address's port, such as host:2222, is not the web address's.
+  case "$scheme" in
+    ssh | git+ssh) url="${url%%[:/]*}/${url#*/}" ;;
+  esac
+  printf 'https://%s\n' "$url"
+}
+
 require_container_runtime() {
   command -v docker >/dev/null 2>&1 || fail "A container runtime is required; see docs/operations/supported-platforms.md"
   docker info >/dev/null 2>&1 || fail "The container runtime is installed but not running"

@@ -599,6 +599,49 @@ describe("security summary", () => {
     );
   });
 
+  it("counts a fix first seen from the time given as having no known release date", () => {
+    const sightedOn = (released) => ({
+      "container-images.json": [
+        {
+          image: "example/image:1",
+          report: {
+            SchemaVersion: 2,
+            Results: [
+              {
+                Type: "alpine",
+                Vulnerabilities: [
+                  {
+                    VulnerabilityID: "CVE-2026-2",
+                    PkgName: "busybox",
+                    InstalledVersion: "1.37.0-r1",
+                    FixedVersion: "1.37.0-r2",
+                    Status: "fixed",
+                    Severity: "LOW",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "fix-dates.json": {
+        "alpine:busybox@1.37.0-r2": { released, source: "first seen" },
+      },
+    });
+    const options = {
+      files: ["container-images.json"],
+      firstSeenUnknownFrom: new Date("2026-11-07T11:00:00Z"),
+    };
+    writeResults(sightedOn("2026-11-07T11:30:00Z"));
+    const fresh = summarize(reportDir, now, options);
+    assert.equal(fresh.failed, true);
+    assert.match(fresh.markdown, /Unknown release date \(overdue\)/);
+    writeResults(sightedOn("2026-11-01T00:00:00Z"));
+    assert.equal(summarize(reportDir, now, options).failed, false);
+    writeResults(sightedOn("2026-11-07T11:30:00Z"));
+    assert.equal(summarize(reportDir, now).failed, false);
+  });
+
   it("counts every secret built into a container image as high", () => {
     writeResults({
       "container-images.json": [
@@ -714,6 +757,26 @@ describe("security summary command", () => {
       readFileSync(join(reportDir, "summary.md"), "utf8"),
       /\*\*Result:\*\* Pass/,
     );
+  });
+
+  it("summarizes only the scan files named, so a folder of image scans alone can pass or fail", () => {
+    writeFileSync(
+      join(reportDir, "container-images.json"),
+      JSON.stringify(cleanResults["container-images.json"]),
+    );
+    const passed = runSummaryScript(reportDir, "container-images.json");
+    assert.equal(passed.status, 0);
+    const summary = readFileSync(join(reportDir, "summary.md"), "utf8");
+    assert.match(summary, /\*\*Result:\*\* Pass/);
+    assert.equal(rowFor(summary, "Secrets in files"), undefined);
+    assert.equal(runSummaryScript(reportDir).status, 1);
+  });
+
+  it("refuses a name that is no scan's file, rather than judging nothing", () => {
+    const result = runSummaryScript(reportDir, "container-image.json");
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /Not a scan's file: container-image\.json/);
+    assert.equal(existsSync(join(reportDir, "summary.md")), false);
   });
 
   it("writes summary.md and exits with 1 when the report fails", () => {

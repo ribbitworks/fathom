@@ -62,7 +62,8 @@ not here. The standards they point to are in `docs/standards/shared/`.
   project's documents are built into the product. Commit hooks always run.
 - Tag releases with semantic versioning: MAJOR for breaking changes, MINOR for
   any new feature or option, and PATCH for anything else (fixes,
-  documentation, refactors, tests, chores). Tag only when the owner asks.
+  documentation, refactors, tests, chores). Before 1.0.0, a breaking change
+  raises MINOR instead. Tag only when the owner asks.
 
 ### Staging and Commits
 

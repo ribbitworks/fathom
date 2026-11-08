@@ -3,11 +3,16 @@
 // Summarizes a security report folder into summary.md. A vulnerability fails the report only once
 // its fix is overdue, counted from the fix's release by the Security Plan's fix times; one with no
 // fix released is a warning. Any other critical or high finding fails it, as does any scan that
-// did not complete.
+// did not complete. Naming scan files after the report folder summarizes only those scans, as the
+// release's image scan does with container-images.json. With --first-seen-unknown-from, a fix
+// dated only by a sighting at or after that time counts as having no known release date, so a
+// scan on a machine with no earlier reports cannot pass a fix whose release it could not look up.
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
+import { parseArgs } from "node:util";
+import { firstSeen } from "./fix-dates.mjs";
 import {
   fixKey,
   vulnerabilitiesIn,
@@ -118,7 +123,7 @@ function day(time) {
 // When a vulnerability's fix was released and when it is due. The earliest release among the fixed
 // versions that would replace the installed one starts the clock. A fix with no known release date
 // cannot be judged, so it counts as overdue.
-function judge(finding, fixDates, now) {
+function judge(finding, fixDates, now, firstSeenUnknownFrom) {
   const severity = normalSeverity(finding.severity);
   const [earliest] = finding.fixedVersions
     .map((version) =>
@@ -126,6 +131,12 @@ function judge(finding, fixDates, now) {
     )
     .map((date) => ({ ...date, time: Date.parse(date?.released) }))
     .filter((date) => !Number.isNaN(date.time))
+    .filter(
+      (date) =>
+        date.source !== firstSeen ||
+        firstSeenUnknownFrom === undefined ||
+        date.time < firstSeenUnknownFrom.getTime(),
+    )
     .sort((a, b) => a.time - b.time);
   const released = earliest?.time;
   const days = fixDays.get(severity);
@@ -301,7 +312,21 @@ const fixTimes = [...fixDays]
   .map(([severity, days]) => `${severity} ${String(days)} days`)
   .join(", ");
 
-export function summarize(reportDir, now = new Date()) {
+// A name that is no scan's file is refused, so a mistyped name cannot leave nothing to judge.
+export function checkScanFiles(files = []) {
+  const unknown = files.filter(
+    (file) => !scans.some((scan) => scan.file === file),
+  );
+  if (unknown.length)
+    throw new Error(`Not a scan's file: ${unknown.join(", ")}`);
+}
+
+export function summarize(
+  reportDir,
+  now = new Date(),
+  { files, firstSeenUnknownFrom } = {},
+) {
+  checkScanFiles(files);
   let failed = false;
   const notes = [];
   const fixDatesRead = readResults(reportDir, "fix-dates.json");
@@ -315,7 +340,10 @@ export function summarize(reportDir, now = new Date()) {
   const fixable = new Map();
   let unfixed = 0;
   const unfixedSerious = new Set();
-  const rows = scans.map((scan) => {
+  const chosen = files
+    ? scans.filter((scan) => files.includes(scan.file))
+    : scans;
+  const rows = chosen.map((scan) => {
     const results = readResults(reportDir, scan.file);
     if (results === undefined || results === null || !scan.completed(results)) {
       failed = true;
@@ -334,7 +362,7 @@ export function summarize(reportDir, now = new Date()) {
             unfixedSerious.add(`${finding.id} in ${finding.name}`);
           continue;
         }
-        const judged = judge(finding, fixDates, now);
+        const judged = judge(finding, fixDates, now, firstSeenUnknownFrom);
         if (judged.overdue) blocking = true;
         fixable.set(
           `${judged.id} ${judged.name} ${String(judged.installed)}`,
@@ -409,12 +437,35 @@ if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
 ) {
-  const reportDir = process.argv[2];
-  if (!reportDir) {
-    console.error("Usage: node scripts/security-summary.mjs <report folder>");
+  let reportDir;
+  let options;
+  try {
+    const { values, positionals } = parseArgs({
+      allowPositionals: true,
+      options: { "first-seen-unknown-from": { type: "string" } },
+    });
+    const from = values["first-seen-unknown-from"];
+    if (
+      !positionals[0] ||
+      (from !== undefined && Number.isNaN(Date.parse(from)))
+    )
+      throw new Error("bad arguments");
+    reportDir = positionals[0];
+    const files = positionals.slice(1);
+    options = {
+      files: files.length ? files : undefined,
+      firstSeenUnknownFrom: from === undefined ? undefined : new Date(from),
+    };
+    checkScanFiles(options.files);
+  } catch (error) {
+    console.error(
+      error.message.startsWith("Not a scan")
+        ? `error: ${error.message}`
+        : "Usage: node scripts/security-summary.mjs <report folder> [--first-seen-unknown-from <time>] [scan file ...]",
+    );
     process.exit(2);
   }
-  const { failed, markdown } = summarize(reportDir);
+  const { failed, markdown } = summarize(reportDir, new Date(), options);
   writeFileSync(join(reportDir, "summary.md"), markdown);
   console.log(markdown);
   process.exit(failed ? 1 : 0);

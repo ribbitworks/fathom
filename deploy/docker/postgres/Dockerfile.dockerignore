@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# The only files the postgres image reads from the repository.
+
+*
+!LICENSE
+!NOTICE
+!deploy/docker/postgres/init/
