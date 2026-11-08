@@ -85,6 +85,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Development
 
+- **Two day fields:** Days are entered with `DayInput` in forms and table filters, and with the grid's own text editor in People's date cells, which share only the day's checks. One day field with a calendar, used everywhere a day is entered, is queued as its own task (owner, 2026-11-07). Found on 2026-11-07.
 - **Checks started at once in several clones can time out:** When `pnpm check` runs in several clones at the same time, Testcontainers can time out while it waits for a test database's port bindings. The cause is the machine's load, not the code. Capping how many test databases a suite starts at once may fix it. Found on 2026-11-05.
 - **Database tests to tidy:** In `packages/db/src/database.test.ts`, each group of tests declares its own copies of PostgreSQL's error codes, which one shared set would replace, and the lists test checks several behaviours in one test. Found in review on 2026-11-03.
 - **Reseeding after a seed draft of a list is approved:** Once an Approver approves the seed's draft adding the Skills list, the list is no longer seed data, so removing the seed data keeps it, and seeding again then stops with "There is already a list with that name" while making the drafts of lists. `pnpm dev:reset` recovers. Found in a manual check on 2026-11-03.

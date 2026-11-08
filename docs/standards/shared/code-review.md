@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*"]
 dependencies: ["core-principles.md", "testing.md", "documentation.md", "markdown-style-guidelines.md", "agent-workflow.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-07"
 ---
 
 # Code Review Standards
@@ -44,7 +44,8 @@ after it was written is debt, not a finding against an unrelated change:
 - Lines a change adds or edits follow the current rules. A change may fix
   nearby debt when that stays within its scope.
 - The review lists newly noticed debt under a "Debt to record" note, and the
-  implementing agent adds it once to the project's issues document.
+  implementing agent adds it once to the project's issues document in the same
+  change. The next review checks that it is there.
 - Security flaws, real data, and documents the change makes untrue are always
   findings, wherever they are.
 - The Autonomous warnings step in [agent-workflow.md](agent-workflow.md) still
@@ -119,6 +120,12 @@ are 24-hour.
   from below.
 - Dependencies are passed in, not created inside the code that uses them.
 - The simplest design that meets the need is preferred.
+- **Reuse across the codebase:** a diff does not show what already exists, so
+  for each component, hook, helper or type a change adds, the reviewer searches
+  the code for one that already does the same job, starting with the project's
+  list of shared building blocks where it has one. A second one doing the same
+  job is HIGH unless the change unifies them; a deferral follows the
+  [Approval Criteria](#approval-criteria) and is debt to record.
 
 ### SOLID Principles
 
@@ -157,8 +164,8 @@ reasoning, paths and lines. Do not collapse them into one score. See
   `activeIdx`; `account`, not `acct`).
 - **No magic values:** numbers and strings with meaning are named constants,
   except `0`, `1` and `-1` in calculations.
-- **Reuse:** existing helpers are used before writing new ones; no copy-pasted
-  logic.
+- **No copy-pasted logic:** repeated code is shared; for whole components and
+  helpers, see [Reuse across the codebase](#architecture-and-design).
 - **Comments:** follow
   [core-principles.md § Comments](core-principles.md#comments).
 - **File headers:** follow the project's header rule where it has one.

@@ -56,7 +56,7 @@ frontmatter:
 title: "Service Layer Architecture"
 category: "Architecture"
 audience: "AI Coding Assistant"
-applies_to: ["Sources/Domain/**/*Service.swift"]
+applies_to: ["src/domain/**"]
 dependencies: ["docs/design/architecture.md"]
 last_updated: "2026-11-01"
 ---
@@ -118,8 +118,7 @@ frontmatter.
 - **Plain punctuation:** no emoji, and no em dashes; use a comma, colon,
   semicolon, parentheses or a new sentence instead.
 - **Full paths:** refer to files by their full path from the repository root,
-  such as `Sources/Domain/Accounts/AccountService.swift`, not a bare file
-  name.
+  such as `docs/design/data-model.md`, not a bare file name.
 - **Descriptive links:** link text says what the target is, such as
   `[Architecture](docs/design/architecture.md) for layer rules`, never "this"
   or "here".

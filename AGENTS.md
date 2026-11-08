@@ -8,6 +8,16 @@ Guidance for AI coding agents working in this repository.
 These rules come from `ai-toolkit/agent-rules/shared-rules.md`. Edit them there,
 not here. The standards they point to are in `docs/standards/shared/`.
 
+### Reading the Standards
+
+- Linked files are not loaded on their own. At the start of every session,
+  including after the context is cleared, read in full every standard linked
+  from these rules or the project's `AGENTS.md`, language standards included.
+- Just before each step a standard governs, re-read its section rather than
+  working from memory: for example, the commit message rules before proposing a
+  commit message or pull request text, the review standards before a review,
+  and the documentation standards before editing documents.
+
 ### Working Mode
 
 - Before making any change in a session, ask the owner which mode to use, and

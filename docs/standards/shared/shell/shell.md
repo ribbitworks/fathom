@@ -31,8 +31,7 @@ The baseline reference is the
 - **Shebang:** `#!/usr/bin/env bash` for Bash; `#!/bin/sh` only for scripts
   that are POSIX-only and tested as such.
 - **Header:** a short comment after the shebang says what the script is for,
-  how it is used, and its assumptions (macOS only, needs `git`, Python 3.11 or
-  later).
+  how it is used, and its assumptions (macOS only, needs `git` and `jq`).
 - **Strict mode:** `set -euo pipefail`. Where strictness must be relaxed, such
   as in a script that is sourced into an interactive shell, say why in one
   line.

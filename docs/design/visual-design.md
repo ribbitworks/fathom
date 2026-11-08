@@ -103,3 +103,21 @@ The rest follow from them:
 - **Empty and failed states:** An empty table says so in a few words. A table that cannot be loaded says so and offers Try again.
 - **Messages:** Problems are shown in plain words saying what to do next, never as raw errors.
 - **Styles:** Mantine's components, theme, and style props, such as a one-off size or margin, come first. Anything more goes in a CSS Module, never in a `style` attribute.
+
+## Shared Building Blocks
+
+One component does each job, in `apps/web/src/`. A new screen uses or extends the one listed rather than making another, and a review rates a second one doing the same job as HIGH, as [Reuse across the codebase](../standards/shared/code-review.md#architecture-and-design) sets out.
+
+- **Tables of records:** `RecordGrid` in `record-grid.tsx`, with each kind of cell, its display and its editor, in `cellKinds` in `cell-kinds.tsx`.
+- **Search, views, and the bar above a table:** `TableSearch`, `ViewBar`, and `ViewsMenu` in `table-controls.tsx`.
+- **Side panels:** `WithSidePanel` and `SidePanelFrame` in `side-panel.tsx`.
+- **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`.
+- **Entering a day:** `DayInput` in `day-input.tsx`. People's date cells still have their own field, as [Issues](../issues.md#development) records.
+- **Notes:** `NotePanel`, `NoteView`, and `NoteCell` in `note-editor.tsx`.
+- **Links:** `LinkEditor`, `LinkCell`, and `LinkMenuItem` in `link-field.tsx`.
+- **A draft's menu items and deciding drafts:** `DraftItems` in `list-drafts.tsx`, `DecisionModal` in `decision-dialog.tsx`, and `OtherApproverNote` in `draft-details.tsx`.
+- **Draft and status marks:** `DraftMark` and `StatusMark` in `status-mark.tsx`.
+- **A page's title row:** `PageHeader` in `page-header.tsx`.
+- **A dialog's buttons:** `DialogActions` in `dialog-actions.tsx`.
+- **A column's filter:** `FilterPopover` in `table-controls.tsx`.
+- **Icons and colour swatches:** `Icon` in `icons.tsx` and `Swatch` in `colour-swatch.tsx`.
