@@ -1384,7 +1384,7 @@ describe("the button showing a person's details", () => {
   // The simulated browser neither lays out the page nor applies :active, so the stylesheet is read.
   it("is not placed with a transform, which Mantine replaces while a button is pressed", () => {
     const stylesheet = readFileSync(
-      join(import.meta.dirname, "people-grid.module.css"),
+      join(import.meta.dirname, "show-details-button.module.css"),
       "utf8",
     );
     const rule = /\.showDetails\s*\{([^}]*)\}/.exec(stylesheet)?.[1];

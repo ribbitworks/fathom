@@ -27,6 +27,12 @@ export default defineConfig(
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    rules: {
+      "@typescript-eslint/switch-exhaustiveness-check": [
+        "error",
+        { considerDefaultExhaustiveForUnions: true },
+      ],
+    },
   },
   {
     ignores: ["apps/web/src/**"],

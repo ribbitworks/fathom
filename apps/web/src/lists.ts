@@ -297,3 +297,14 @@ export function withRetiring<D extends { action: string; changed: string[] }>(
     ? { ...record.draft, retiring: record.retired }
     : record.draft;
 }
+
+export const choice = (
+  id: string,
+  label: string,
+  retired: boolean,
+): Choice => ({
+  id,
+  label,
+  description: "",
+  retired,
+});

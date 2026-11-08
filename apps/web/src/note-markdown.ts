@@ -47,6 +47,8 @@ function inline(
     const shown = inOrder([...marks, ...colours.slice(-1)]);
     const within = (mark: Mark, children: readonly Nodes[]) =>
       content.push(...inline(children, [...marks, mark], colours));
+    // Markdown has node types inline text never holds, and those are left out.
+    // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
     switch (node.type) {
       case "text":
         content.push({

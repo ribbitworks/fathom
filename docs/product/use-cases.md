@@ -16,29 +16,18 @@ The core scenarios Fathom must support in v1, derived from the [Product Brief](b
 ### Track a Proposal
 
 - **Actor:** Project Manager
-- **Goal:** Record a bid or customer request with the features it proposes, and make it a project once it is won.
-- **Outcome:** Its features count toward the forecast while it is open. Once won, the project it becomes needs them; once lost or withdrawn, Fathom warns about features nothing else needs.
+- **Goal:** Record a bid or customer request with the features it proposes, and keep its status up to date.
+- **Outcome:** Its features count toward the forecast by their own status. Once it is Lost or Withdrawn, Fathom warns about features that no project and no open proposal needs.
 
-A proposal starts Open, and becomes Won when it is made a project, or Lost or Withdrawn, as the [Decisions Log](decisions.md#planning) sets out, each change a draft that needs [approval](decisions.md#planning). Whether a Lost or Withdrawn proposal can be opened again is not decided.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Open
-    Open --> Won: made a project
-    Open --> Lost
-    Open --> Withdrawn
-    note right of Withdrawn: Opening a Lost or Withdrawn proposal again is not decided
-```
-
-Once approved, making it a project links the project to it and makes its features needed by the project; ending it any other way leaves its features as they are, with a warning for those nothing else needs.
+A proposal starts Open, and its status is one of the built-in Proposal statuses, whose choices can be changed, with no rules tied to them, so any status may follow any other, as the [Decisions Log](decisions.md#planning) sets out. Each change is a draft that needs [approval](decisions.md#planning). A project links to one or more proposals. No project is made from a proposal, and nothing marks a proposal Won.
 
 ```mermaid
 flowchart TD
-    open[Open proposal] -->|made a project| draft[Drafts, waiting for approval]
-    draft -->|approved| won[Won, linked to the project, which needs its features]
+    open[Proposal, status Open] -->|status changed| draft[Draft, waiting for approval]
+    draft -->|approved| status[New status: Open, Won, Lost, Withdrawn, or the organization's own]
     draft -->|rejected| rejected[Rejected, back with its makers]
-    open -->|lost or withdrawn, once approved| ended[Lost or Withdrawn]
-    ended --> warn[Warning on features nothing else needs]
+    status -->|status changed| draft
+    status -->|Lost or Withdrawn| warn[Warning on features nothing else needs]
 ```
 
 ### Shape the Roadmap

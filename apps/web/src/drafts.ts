@@ -560,3 +560,26 @@ export const decidable = (record: {
   record.draft?.state === "waiting" &&
   record.draft.unpublished !== true &&
   record.heldBy === undefined;
+
+// A draft as it is shown until the server has saved it, holding its live values.
+export const pendingDraft = <Live>(
+  action: "created" | "changed" | "deleted",
+  live: Live,
+) => ({
+  action,
+  changed: [] as string[],
+  live,
+  state: "waiting" as const,
+  madeBy: null,
+  madeAt: new Date().toISOString(),
+});
+
+// A record whose rejected draft has been sent for approval again, as it is shown until saved.
+export function draftSentAgain<
+  Rec extends { draft?: { reason?: string | undefined } | undefined },
+>(record: Rec): Rec {
+  if (record.draft === undefined) return record;
+  const draft = { ...record.draft, state: "waiting" };
+  delete draft.reason;
+  return { ...record, draft };
+}

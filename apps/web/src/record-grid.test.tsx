@@ -38,7 +38,7 @@ import {
   RecordGrid,
   type RecordTable,
 } from "./record-grid.tsx";
-import { emptyView, type View } from "./table-view.ts";
+import { emptyView, formatDay, type View } from "./table-view.ts";
 import { testTheme } from "./test-support.tsx";
 
 interface Gadget extends CellRecord {
@@ -202,6 +202,80 @@ function renderGadgets({
     </MantineProvider>,
   );
 }
+
+describe("Tab across a new row", () => {
+  const nameThen = (next: Column<Gadget, GadgetChange>) => ({
+    ...gadgetTable(),
+    columnsFor: () => [...gadgetColumns([], [], []).slice(0, 1), next],
+  });
+  const nextColumn = (kind: "date" | "flag" | "text") =>
+    cellColumn<Gadget, GadgetChange>("next", kind, {
+      label: "Next",
+      required: false,
+      choices: [],
+      multiple: false,
+    });
+  const typeNameAndTab = async () => {
+    act(() => {
+      document.getElementById("cell-new-0-name")?.focus();
+    });
+    await userEvent.keyboard("Widget{Tab}");
+  };
+  const focusMovesToNext = () =>
+    waitFor(() => {
+      expect(document.activeElement?.id).toBe("cell-new-0-next");
+    });
+
+  it("moves onto a checkbox without changing it, closing the cell it left", async () => {
+    const add =
+      vi.fn<RecordActions<Gadget, GadgetChange, GadgetChange>["add"]>();
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen(nextColumn("flag")),
+      given: actions({ add }),
+    });
+    await typeNameAndTab();
+    await focusMovesToNext();
+    expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
+    await userEvent.keyboard("{Enter}");
+    expect(add.mock.calls.at(0)?.[0].map(({ request }) => request)).toEqual([
+      { name: "Widget", next: false },
+    ]);
+  });
+
+  it("lays out a date's digits as they are typed, and shows a date once left", async () => {
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen(nextColumn("date")),
+    });
+    act(() => {
+      document.getElementById("cell-new-0-next")?.focus();
+    });
+    await userEvent.keyboard("203009");
+    const editor = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "Next",
+    });
+    expect(editor.value).toBe("2030-09");
+    await userEvent.keyboard("01{Tab}");
+    expect(document.getElementById("cell-new-0-next")?.textContent).toContain(
+      formatDay("2030-09-01"),
+    );
+  });
+
+  it("moves onto a read-only cell, closing the cell it left", async () => {
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen({ ...nextColumn("text"), readOnly: true }),
+    });
+    await typeNameAndTab();
+    await focusMovesToNext();
+    expect(screen.queryByRole("textbox", { name: "Name" })).toBeNull();
+    expect(screen.getByText("Widget")).toBeTruthy();
+  });
+});
 
 describe("a table of another kind of record", () => {
   it("names the table, its rows, and what none matching are by the table's own words", () => {

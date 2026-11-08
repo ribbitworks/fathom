@@ -62,7 +62,7 @@ export const newRecord = (): NewRecord => ({
 });
 
 // Whether anything has been entered, so discarding it asks first.
-export const entered = ({ values }: NewRecord) =>
+export const entered = ({ values }: Pick<NewRecord, "values">) =>
   Object.values(values).some(
     (value) =>
       value !== null &&

@@ -11,6 +11,7 @@
 // its search, filters, and sort, is kept in the page address, and can be saved as a view shared
 // with everyone who sees people.
 
+import { LoadProblem } from "./load-problem.tsx";
 import type {
   DraftKind,
   Field,
@@ -20,7 +21,6 @@ import type {
   SavedView,
 } from "@fathom/shared";
 import {
-  Alert,
   Anchor,
   Button,
   Group,
@@ -55,7 +55,12 @@ import {
 } from "./person-editing.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
-import { type Decision, decisionFor } from "./drafts.ts";
+import {
+  draftSentAgain,
+  pendingDraft,
+  type Decision,
+  decisionFor,
+} from "./drafts.ts";
 import classes from "./pages.module.css";
 import { columnsFor, type PeopleActions, PeopleGrid } from "./people-grid.tsx";
 import { draftColumn, isPending, pendingId } from "./record-grid.tsx";
@@ -121,15 +126,8 @@ function adding(id: string, request: RowRequest): Person {
     values,
     links: kept(links),
     ...(notes === undefined ? {} : { notes: kept(notes) }),
-    draft: {
-      action: "created",
-      // A draft adding someone changes everything, so names nothing in particular.
-      changed: [],
-      live: { values: {}, links: {} },
-      state: "waiting",
-      madeBy: null,
-      madeAt: new Date().toISOString(),
-    },
+    // A draft adding someone changes everything, so names nothing in particular.
+    draft: pendingDraft("created", { values: {}, links: {} }),
   };
 }
 
@@ -166,14 +164,7 @@ function asLive(person: Person, draft: PersonDraft): Person {
 function drafted(person: Person): Person {
   return {
     ...person,
-    draft: {
-      action: "deleted",
-      changed: [],
-      live: { values: {}, links: {} },
-      state: "waiting",
-      madeBy: null,
-      madeAt: new Date().toISOString(),
-    },
+    draft: pendingDraft("deleted", { values: {}, links: {} }),
   };
 }
 
@@ -413,14 +404,9 @@ export function PeoplePage({
       save({
         next: (data) => ({
           ...data,
-          people: data.people.map((other) => {
-            if (other.id !== person.id || other.draft === undefined) {
-              return other;
-            }
-            const draft = { ...other.draft, state: "waiting" as const };
-            delete draft.reason;
-            return { ...other, draft };
-          }),
+          people: data.people.map((other) =>
+            other.id === person.id ? draftSentAgain(other) : other,
+          ),
         }),
         save: () =>
           isHire(person)
@@ -576,22 +562,13 @@ export function PeoplePage({
     content = <Loader role="status" aria-label="Loading" />;
   } else if (query.isError || lists.isError) {
     content = (
-      <Alert color="red" role="alert">
-        <Group justify="space-between">
-          <Text fz="sm">Fathom could not load the people.</Text>
-          <Button
-            size="compact-sm"
-            variant="light"
-            color="red"
-            onClick={() => {
-              void query.refetch();
-              void lists.refetch();
-            }}
-          >
-            Try again
-          </Button>
-        </Group>
-      </Alert>
+      <LoadProblem
+        what="the people"
+        onRetry={() => {
+          void query.refetch();
+          void lists.refetch();
+        }}
+      />
     );
   } else if (query.data.people.length === 0 && !canEdit) {
     content = (

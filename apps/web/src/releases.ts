@@ -16,7 +16,6 @@ import {
   patternsForLength,
   planSubjects,
   type RecordRef,
-  type RecordType,
   knownColour,
   type PaletteColour,
   type ReleaseRequest,
@@ -30,7 +29,7 @@ import type { CSSProperties } from "react";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 import { colourVariable, colourWords } from "./colours.ts";
-import type { RecordNode } from "./record-drafts.ts";
+import { type RecordNode, recordNode } from "./record-drafts.ts";
 
 export const releaseStreamsQuery = queryOptions({
   queryKey: ["release-streams"],
@@ -284,21 +283,6 @@ export function releaseCycles(
   return first === last ? first : `${first} to ${last}`;
 }
 
-const node = (
-  type: RecordType,
-  record: {
-    id: string;
-    draft?: RecordNode["draft"] | undefined;
-    heldBy?: string | undefined;
-  },
-  subject: string,
-): RecordNode => ({
-  ref: { type, id: record.id },
-  subject,
-  draft: record.draft,
-  heldBy: record.heldBy,
-});
-
 // How the Drafts page and decisions name a stream, a change of its cycles, and a release.
 export const recordSubjects = {
   stream: (stream: ReleaseStream) => planSubjects.stream(stream.name),
@@ -311,12 +295,16 @@ export const recordSubjects = {
 // Every stream, pattern, and release, named as the Drafts page names them.
 export function recordNodes(streams: readonly ReleaseStream[]): RecordNode[] {
   return streams.flatMap((stream) => [
-    node("release-stream", stream, recordSubjects.stream(stream)),
+    recordNode("release-stream", stream, recordSubjects.stream(stream)),
     ...stream.patterns.map((pattern) =>
-      node("cycle-pattern", pattern, recordSubjects.pattern(stream, pattern)),
+      recordNode(
+        "cycle-pattern",
+        pattern,
+        recordSubjects.pattern(stream, pattern),
+      ),
     ),
     ...stream.releases.map((release) =>
-      node("release", release, recordSubjects.release(stream, release)),
+      recordNode("release", release, recordSubjects.release(stream, release)),
     ),
   ]);
 }

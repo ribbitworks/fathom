@@ -23,6 +23,7 @@ import {
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
+import { dayAsTyped } from "./day-input.tsx";
 import { FlagCell } from "./flag-field.tsx";
 import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
 import {
@@ -100,6 +101,12 @@ export interface CellKind {
   inDetail?: (column: Choices, value: CellValue) => ChangeValue;
   // What is wrong with a value besides its being needed, if anything.
   problem: (column: AnyColumn, value: CellValue) => string | undefined;
+  // For a kind that saves apart from a record's own fields: how it reads and saves when it is held
+  // as a field of the record itself, as the plan's records hold theirs.
+  ownField?: {
+    read: (held: unknown) => CellValue;
+    save: (value: CellValue, multiple: boolean) => unknown;
+  };
   // What a cell's pasted text gives, or what is wrong with it.
   pasted: (
     column: AnyColumn,
@@ -119,6 +126,8 @@ export interface CellKind {
   // For a kind edited in one step, such as a checkbox: the value editing gives, in place of an
   // editor.
   toggled?: (value: CellValue) => CellValue;
+  // For a kind edited as text and laid out as it is typed, such as a date: the text to show.
+  asTyped?: (text: string) => string;
   // For a kind edited in the side panel beside the table, such as a note: a click opens it too,
   // read only where the cell may not change.
   inPanel?: boolean;
@@ -179,6 +188,8 @@ const date: CellKind = {
   width: () => longestDay,
   measured: false,
   breaksDownWhenRequired: false,
+  asTyped: dayAsTyped,
+  pasted: (_column, content) => ({ value: typedDay(content) }),
 };
 
 // Whether a cell may be given a choice: one offered in its list that the column lets be picked.
@@ -207,6 +218,14 @@ const choice: CellKind = {
   read: (source, key) => source.values[key] ?? [],
   inWords: (column, value) => labels(column, value).join(", "),
   inDetail: labels,
+  ownField: {
+    read: (held) => {
+      if (Array.isArray(held)) return held as string[];
+      return typeof held === "string" ? [held] : [];
+    },
+    save: (value, multiple) =>
+      multiple ? value : (chosen(value).at(0) ?? null),
+  },
   problem: () => undefined,
   pasted: (column, content) => {
     const found = column.choices.find(
@@ -264,6 +283,13 @@ const link: CellKind = {
   inDetail: (_column, value) => {
     const held = linkOf(value);
     return held === null ? "" : linkInWords(held);
+  },
+  ownField: {
+    read: (held) =>
+      typeof held === "string" && held !== ""
+        ? { address: held, text: "" }
+        : null,
+    save: (value) => linkOf(value)?.address ?? null,
   },
   problem: () => undefined,
   pasted: (column, content) => {
@@ -357,6 +383,9 @@ const note: CellKind = {
 // A checkbox, read from a detail held as true or false, checked when it holds its one choice.
 export const flagChoice = "yes";
 
+export const toggledFlag = (value: CellValue): CellValue =>
+  chosen(value).length > 0 ? [] : [flagChoice];
+
 const flag: CellKind = {
   empty: [],
   problem: () => undefined,
@@ -365,6 +394,7 @@ const flag: CellKind = {
     // eslint-disable-next-line security/detect-object-injection
     source[key] === true ? [flagChoice] : [],
   inWords: (_column, value) => (chosen(value).length > 0 ? "Yes" : "No"),
+  inDetail: (_column, value) => (chosen(value).length > 0 ? "Yes" : "No"),
   pasted: (column, content) => {
     const word = content.trim().toLowerCase();
     if (["yes", "y", "true", "x", "1"].includes(word)) {
@@ -376,7 +406,7 @@ const flag: CellKind = {
   change: (key, value) => ({ [key]: chosen(value).length > 0 }),
   width: () => 3,
   breaksDownWhenRequired: true,
-  toggled: (value) => (chosen(value).length > 0 ? [] : [flagChoice]),
+  toggled: toggledFlag,
   Cell: ({ value }) => <FlagCell checked={chosen(value).length > 0} />,
 };
 

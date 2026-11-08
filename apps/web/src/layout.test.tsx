@@ -25,6 +25,7 @@ const administrator = () =>
     ...fictionalUser,
     permissions: [
       "plan:view",
+      "allocations:view",
       "accounts:view",
       "accounts:manage",
       "history:view",
@@ -39,7 +40,7 @@ afterEach(() => {
 
 describe("the first page a user may open", () => {
   it("is never the Overview, so someone sent there from it cannot be sent back", () => {
-    expect(firstPage(permissionSchema.options)).toBe("/releases/{-$streamId}");
+    expect(firstPage(permissionSchema.options)).toBe("/projects");
     expect(firstPage(["people:view"])).toBe("/people");
     expect(firstPage(["allocations:view"])).toBeUndefined();
   });
@@ -173,10 +174,10 @@ describe("the sidebar", () => {
         .getAttribute("aria-current"),
     ).toBeNull();
     expect(
-      within(sidebar()).getByText("Projects").parentElement?.textContent,
-    ).toBe("Projects, Later");
+      within(sidebar()).getByText("Capacity").parentElement?.textContent,
+    ).toBe("Capacity, Later");
     expect(
-      within(sidebar()).queryByRole("link", { name: /Projects/ }),
+      within(sidebar()).queryByRole("link", { name: /Capacity/ }),
     ).toBeNull();
   });
 });
@@ -204,7 +205,7 @@ describe("the collapsed sidebar", () => {
     expect(
       within(sidebar()).getByRole("link", { name: "Accounts" }),
     ).toBeDefined();
-    expect(within(sidebar()).getByText("Projects, Later")).toBeDefined();
+    expect(within(sidebar()).getByText("Capacity, Later")).toBeDefined();
     await userEvent.hover(
       within(sidebar()).getByRole("link", { name: "Accounts" }),
     );

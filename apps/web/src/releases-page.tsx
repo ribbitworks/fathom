@@ -11,8 +11,8 @@
 // mark, which its makers discard or resubmit, and Approvers approve or reject, here or on the
 // Drafts page, from each record's menu.
 
+import { RecordMenu, type RecordMenuActions } from "./record-menu.tsx";
 import type {
-  Asking,
   Cycle,
   CyclePattern,
   DraftKind,
@@ -41,25 +41,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
 import { describeProblem } from "./api.ts";
-import { closesOnBlankClick } from "./app-menu.tsx";
 import { DecisionModal } from "./decision-dialog.tsx";
-import {
-  HeldNote,
-  MenuDraftLines,
-  MenuTitle,
-  UnpublishedNote,
-} from "./draft-details.tsx";
-import {
-  decidable,
-  type Decision,
-  decisionFor,
-  noDrafts,
-  waitsForRejected,
-} from "./drafts.ts";
+import { type Decision, decisionFor, noDrafts } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
 import { Icon } from "./icons.tsx";
 import { NotePanel } from "./note-editor.tsx";
-import { DraftItems, draftRowClass, madeVerb, makers } from "./list-drafts.tsx";
+import { draftRowClass } from "./list-drafts.tsx";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -178,15 +165,11 @@ function patternNow(stream: ReleaseStream): CyclePattern | undefined {
 }
 
 // What can be done on the page, for the menus to offer.
-interface Actions {
+interface Actions extends RecordMenuActions {
   canEditStreams: boolean;
   canEditReleases: boolean;
-  // The kinds of draft the user's role approves and rejects.
-  approves: readonly DraftKind[];
-  nodes: readonly RecordNode[];
   open: (dialog: Dialog) => void;
   openNote: (stream: ReleaseStream, release: Release) => void;
-  decide: (asking: Asking, ref: RecordRef) => void;
   run: (work: () => Promise<unknown>, done: string) => void;
 }
 
@@ -198,119 +181,6 @@ const nodeOf = (
   actions.nodes.find(
     ({ ref }) => ref.type === type && ref.id === id,
   ) as RecordNode;
-
-// A record's menu: what may be done to it, then its draft, with who made it and what may be done
-// with it. An empty space keeps the column when it would offer nothing.
-function RecordMenu({
-  id,
-  title,
-  node,
-  canEditDraft,
-  actions,
-  children,
-}: {
-  id?: string;
-  title: string;
-  node: RecordNode;
-  // Whether the user may discard or resubmit the record's draft.
-  canEditDraft: boolean;
-  actions: Actions;
-  children?: ReactNode;
-}) {
-  const [opened, setOpened] = useState(false);
-  const { draft, heldBy, ref } = node;
-  const act = (run: () => void) => () => {
-    setOpened(false);
-    run();
-  };
-  const waits =
-    draft?.state === "waiting" &&
-    waitsForRejected({ ...noDrafts(), records: [ref] }, [], {
-      fields: [],
-      records: actions.nodes,
-    });
-  if (children === undefined && draft === undefined) return <span />;
-  return (
-    <Menu
-      opened={opened}
-      onChange={setOpened}
-      closeOnItemClick={false}
-      position="bottom-end"
-      width={260}
-    >
-      <Menu.Target>
-        <ActionIcon
-          // Menus give their buttons ids of their own, so the button is found by this instead.
-          data-record-menu={id}
-          variant="subtle"
-          color="gray"
-          aria-label={`Menu of ${title}`}
-        >
-          <Icon name="more" />
-        </ActionIcon>
-      </Menu.Target>
-      <Menu.Dropdown
-        onClick={closesOnBlankClick(() => {
-          setOpened(false);
-        })}
-        // Esc closes the menu alone, not the panel around it too.
-        onKeyDown={(event) => {
-          if (event.key === "Escape") event.preventDefault();
-        }}
-      >
-        <MenuTitle>{title}</MenuTitle>
-        {children !== undefined && (
-          <div
-            onClickCapture={() => {
-              setOpened(false);
-            }}
-          >
-            {children}
-          </div>
-        )}
-        {draft && (
-          <>
-            {children !== undefined && <Menu.Divider />}
-            <MenuDraftLines
-              draft={draft}
-              lines={[[`${madeVerb(draft.action)} by ${makers(draft)}`]]}
-              divider={false}
-            />
-            {heldBy !== undefined && <HeldNote by={heldBy} />}
-            {draft.unpublished === true && <UnpublishedNote />}
-            <DraftItems
-              canEdit={canEditDraft && heldBy === undefined}
-              canApprove={
-                actions.approves.includes(ref.type) && decidable(node)
-              }
-              othersApprove={draft.needsOtherApprover === true}
-              rejected={draft.state === "rejected"}
-              waits={waits}
-              onApprove={act(() => {
-                actions.decide("approve", ref);
-              })}
-              onReject={act(() => {
-                actions.decide("reject", ref);
-              })}
-              onResubmit={act(() => {
-                actions.run(
-                  () => resubmitRecordDraft(ref),
-                  "Resubmitted the draft.",
-                );
-              })}
-              onDiscard={act(() => {
-                actions.run(
-                  () => discardRecordDraft(ref),
-                  "Discarded the draft.",
-                );
-              })}
-            />
-          </>
-        )}
-      </Menu.Dropdown>
-    </Menu>
-  );
-}
 
 // A record's draft and hold marks, beside its name, saying when a stream's draft retires or
 // restores it.
@@ -992,6 +862,12 @@ export function ReleasesPage({
           release.heldBy === undefined &&
           release.draft?.action !== "deleted",
       });
+    },
+    resubmit: (ref) => {
+      actions.run(() => resubmitRecordDraft(ref), "Resubmitted the draft.");
+    },
+    discard: (ref) => {
+      actions.run(() => discardRecordDraft(ref), "Discarded the draft.");
     },
     decide: (asking, ref) => {
       setDecision(

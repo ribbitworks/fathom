@@ -8,6 +8,7 @@
 // a time in the order made. The latest change can be undone with Cmd+Z or Ctrl+Z, or from its
 // notification when it took something out of view.
 
+import { LoadProblem } from "./load-problem.tsx";
 import {
   type Choice,
   type ChoiceRequest,
@@ -18,7 +19,6 @@ import {
   type Show,
 } from "@fathom/shared";
 import {
-  Alert,
   Button,
   Group,
   Loader,
@@ -738,19 +738,7 @@ export function ListsPage({
     content = <Loader role="status" aria-label="Loading" />;
   } else if (query.isError) {
     content = (
-      <Alert color="red" role="alert">
-        <Group justify="space-between">
-          <Text fz="sm">Fathom could not load the lists.</Text>
-          <Button
-            size="compact-sm"
-            variant="light"
-            color="red"
-            onClick={() => void query.refetch()}
-          >
-            Try again
-          </Button>
-        </Group>
-      </Alert>
+      <LoadProblem what="the lists" onRetry={() => void query.refetch()} />
     );
   } else if (lists.length === 0) {
     content = (

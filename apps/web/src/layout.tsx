@@ -70,6 +70,7 @@ type Page =
   | "/people"
   | "/org-chart"
   | "/releases/{-$streamId}"
+  | "/projects"
   | "/help/roles"
   | "/help/drafts";
 
@@ -105,7 +106,12 @@ const sections: { label: string; items: Item[] }[] = [
         to: "/",
         permission: "plan:view",
       },
-      { label: "Projects", icon: "projects", permission: "plan:view" },
+      {
+        label: "Projects",
+        icon: "projects",
+        to: "/projects",
+        permission: "plan:view",
+      },
       {
         label: "Releases",
         icon: "releases",

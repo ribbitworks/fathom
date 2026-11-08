@@ -4,7 +4,7 @@ category: "Standards"
 audience: "AI Coding Assistant"
 applies_to: ["**/*.ts", "**/*.tsx"]
 dependencies: ["../core-principles.md", "../code-review.md", "../testing.md"]
-last_updated: "2026-11-01"
+last_updated: "2026-11-08"
 ---
 
 # TypeScript Standards
@@ -18,8 +18,11 @@ manager commands and its decision records.
 - **Strict mode** is on in every `tsconfig`.
 - **No `any`:** use precise types, generics or `unknown` with narrowing.
 - **No non-null assertions** (`!`) outside tests.
-- **Exhaustive unions:** every `switch` over a union handles each case, with a
-  `never` check in the default branch so a new case fails to compile.
+- **Exhaustive unions:** a new case of a union must fail to compile or lint.
+  Prefer a `Record<Union, ...>` table where a choice only picks a value. A
+  `switch` handles each case and has a declared return type or assigns every
+  path, with `@typescript-eslint/switch-exhaustiveness-check` on. No unreachable
+  `default` branch only to hold a `never` check, as coverage cannot reach it.
 - **Validated boundaries:** data from outside the program (requests,
   environment, files, storage) is parsed against a schema before use, and the
   type comes from that schema.

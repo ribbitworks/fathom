@@ -14,6 +14,21 @@ export interface RecordNode {
   heldBy: string | undefined;
 }
 
+export const recordNode = (
+  type: RecordRef["type"],
+  record: {
+    id: string;
+    draft?: RecordDraft | undefined;
+    heldBy?: string | undefined;
+  },
+  subject: string,
+): RecordNode => ({
+  ref: { type, id: record.id },
+  subject,
+  draft: record.draft,
+  heldBy: record.heldBy,
+});
+
 export const recordKey = ({ type, id }: RecordRef): string => `${type} ${id}`;
 
 const keyed = (refs: readonly RecordRef[]) => new Set(refs.map(recordKey));

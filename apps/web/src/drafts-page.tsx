@@ -7,6 +7,7 @@
 // select drafts, one or several at once, and approve or reject them, as they can on the People
 // table and the Lists page too. Approving or rejecting names any other drafts it includes.
 
+import { LoadProblem } from "./load-problem.tsx";
 import {
   type Asking,
   builtInColumnNames,
@@ -26,13 +27,14 @@ import {
   type OrgChartPerson,
   type Person,
   type PersonDraft,
+  type PlanChoices,
+  type ProjectPlan,
   type RecordDraft,
   type RecordType,
   type ReleaseStream,
   searchWords,
 } from "@fathom/shared";
 import {
-  Alert,
   Button,
   Checkbox,
   Group,
@@ -66,6 +68,15 @@ import {
   releaseStreamsQuery,
 } from "./releases.ts";
 import { makerNames } from "./names.ts";
+import { planDraftFields } from "./project-grids.tsx";
+import { recordKey } from "./record-drafts.ts";
+import {
+  listedPlanRecords,
+  planChoicesQuery,
+  planNodes,
+  projectPlanQuery,
+  tableChoices,
+} from "./projects.ts";
 import { PageHeader } from "./page-header.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import { isHire, rowName } from "./people-rows.ts";
@@ -487,6 +498,28 @@ function teamEntries(
   });
 }
 
+// Every draft of a customer, proposal, project, or milestone, as entries.
+function planEntries(plan: ProjectPlan, picks: PlanChoices): Entry[] {
+  const offered = tableChoices(plan, picks);
+  return listedPlanRecords(plan).flatMap(({ kind, record, subject }) => {
+    const { draft, heldBy } = record;
+    if (draft === undefined) return [];
+    const ref = { type: kind, id: record.id };
+    return [
+      entry(
+        recordKey(ref),
+        draft,
+        subject,
+        planDraftFields(kind, record, offered).map(({ key, field }) =>
+          credited(describeField(field), key, draft),
+        ),
+        { records: [ref] },
+        heldBy,
+      ),
+    ];
+  });
+}
+
 function DraftEntry({
   shown,
   waits,
@@ -560,6 +593,7 @@ export function DraftsPage({
   seesLists = true,
   seesPlan = true,
   seesTeams = false,
+  seesProjects = seesPlan,
   search,
   onSearch,
 }: {
@@ -573,6 +607,8 @@ export function DraftsPage({
   seesPlan?: boolean;
   // Whether the user sees feature teams, on the org chart.
   seesTeams?: boolean;
+  // Whether the user sees the plan itself, so its customers, proposals, projects, and milestones.
+  seesProjects?: boolean;
   search: string;
   onSearch: (search: string, replace: boolean) => void;
 }) {
@@ -584,6 +620,8 @@ export function DraftsPage({
   const releases = useQuery({ ...releaseStreamsQuery, enabled: seesPlan });
   const featureTeams = useQuery({ ...featureTeamsQuery, enabled: seesTeams });
   const chart = useQuery({ ...orgChartQuery, enabled: seesTeams });
+  const plan = useQuery({ ...projectPlanQuery, enabled: seesProjects });
+  const choices = useQuery({ ...planChoicesQuery, enabled: seesProjects });
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [decision, setDecision] = useState<Decision>();
   const [opened, setOpened] = useState(false);
@@ -597,7 +635,8 @@ export function DraftsPage({
     (seesPeople && people.isPending) ||
     lists.isPending ||
     (seesPlan && releases.isPending) ||
-    (seesTeams && (featureTeams.isPending || chart.isPending))
+    (seesTeams && (featureTeams.isPending || chart.isPending)) ||
+    (seesProjects && (plan.isPending || choices.isPending))
   ) {
     content = <Loader role="status" aria-label="Loading" />;
   } else if (
@@ -605,30 +644,27 @@ export function DraftsPage({
     lists.isError ||
     releases.isError ||
     featureTeams.isError ||
-    chart.isError
+    chart.isError ||
+    plan.isError ||
+    choices.isError
   ) {
     content = (
-      <Alert color="red" role="alert">
-        <Group justify="space-between">
-          Fathom could not load the drafts.
-          <Button
-            variant="light"
-            color="red"
-            size="xs"
-            onClick={() => {
-              void people.refetch();
-              void lists.refetch();
-              void releases.refetch();
-              if (seesTeams) {
-                void featureTeams.refetch();
-                void chart.refetch();
-              }
-            }}
-          >
-            Try again
-          </Button>
-        </Group>
-      </Alert>
+      <LoadProblem
+        what="the drafts"
+        onRetry={() => {
+          void people.refetch();
+          void lists.refetch();
+          void releases.refetch();
+          if (seesTeams) {
+            void featureTeams.refetch();
+            void chart.refetch();
+          }
+          if (seesProjects) {
+            void plan.refetch();
+            void choices.refetch();
+          }
+        }}
+      />
     );
   } else {
     const words = searchWords(search);
@@ -643,11 +679,18 @@ export function DraftsPage({
             (chart.data as OrgChart).people,
           )
         : []),
+      ...(seesProjects && plan.data !== undefined
+        ? // The page shows its entries once both have loaded.
+          planEntries(plan.data, choices.data as PlanChoices)
+        : []),
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
     // Loaded, or empty for those who see only lists.
     const { fields, orderDraft, people } = peopleData as PeopleData;
-    const records = recordNodes(streams as ReleaseStream[]);
+    const records = [
+      ...recordNodes(streams as ReleaseStream[]),
+      ...(seesProjects && plan.data !== undefined ? planNodes(plan.data) : []),
+    ];
     // A draft that depends on a rejected draft cannot be approved until that one is resubmitted.
     const waits = ({ state, selects }: Entry) =>
       state === "waiting" &&

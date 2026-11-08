@@ -11,16 +11,17 @@
 // rows have the same ID, a person's end date cannot be before their start date, and an ID typed in
 // cannot look like a temporary one.
 
+import { ShowDetailsButton } from "./show-details-button.tsx";
 import type { Choice, Field, List, Person, Show } from "@fathom/shared";
 import {
   builtInColumnNames,
   personLengths,
   temporaryIdPrefix,
 } from "@fathom/shared";
-import { ActionIcon, Menu, VisuallyHidden } from "@mantine/core";
+import { Menu, VisuallyHidden } from "@mantine/core";
 import { notShown, personDraftFields } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
-import { offered, sameName } from "./lists.ts";
+import { choice, offered, sameName } from "./lists.ts";
 import {
   cellColumn,
   type Column as RecordColumn,
@@ -46,8 +47,6 @@ import {
 import { type CellValue, formatMonth } from "./table-view.ts";
 import { count } from "./numbers.ts";
 import { today } from "./today.ts";
-import { Icon } from "./icons.tsx";
-import classes from "./people-grid.module.css";
 
 export type PeopleActions = RecordActions<Person, RowChange, RowRequest>;
 
@@ -113,13 +112,6 @@ function managersNamed(people: readonly Person[]): Map<string, string> {
   }
   return named;
 }
-
-const choice = (id: string, label: string, retired: boolean): Choice => ({
-  id,
-  label,
-  description: "",
-  retired,
-});
 
 const byLabel = (choices: Choice[]) =>
   choices.sort((a, b) => collator.compare(a.label, b.label));
@@ -647,38 +639,6 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
 const withNotes = (notes: [string, string | null][]) =>
   notes.length === 0 ? {} : { notes: Object.fromEntries(notes) };
 
-// The button at the end of a person's Name cell that shows their details beside the table, shown
-// while the row is pointed at or one of its cells has focus, so they show without the row's menu.
-// From the keyboard, the row's menu offers the same.
-function ShowDetailsButton({
-  row,
-  onOpen,
-}: {
-  row: Person;
-  onOpen: (person: Person) => void;
-}) {
-  return (
-    <ActionIcon
-      variant="subtle"
-      color="gray"
-      size="sm"
-      tabIndex={-1}
-      className={classes.showDetails}
-      aria-label={`Show details of ${row.preferredName}`}
-      // The cell would otherwise take the click as choosing or editing it.
-      onMouseDown={(event) => {
-        event.stopPropagation();
-      }}
-      onClick={(event) => {
-        event.stopPropagation();
-        onOpen(row);
-      }}
-    >
-      <Icon name="open" />
-    </ActionIcon>
-  );
-}
-
 function peopleTable(
   showDates: boolean,
   showHireDates: boolean,
@@ -735,7 +695,12 @@ function peopleTable(
               ...column,
               mark: (row: Person) =>
                 !isPending(row) && (
-                  <ShowDetailsButton row={row} onOpen={onOpen} />
+                  <ShowDetailsButton
+                    name={row.preferredName}
+                    onOpen={() => {
+                      onOpen(row);
+                    }}
+                  />
                 ),
             }
           : column,

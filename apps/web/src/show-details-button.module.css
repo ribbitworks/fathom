@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* The People table's button showing a person's details, at the right of their Name cell, shown while
-   the row is pointed at or one of its cells has focus. It sits over the cell rather than beside its
-   text, so a narrow column cuts the name short instead of moving the button under it, and the text
-   makes room for it while it shows. A frozen cell is placed already. */
+/* The button at the end of a record's Name cell, shown while the row is pointed at or one of its
+   cells has focus. It sits over the cell rather than beside its text, so a narrow column cuts the
+   name short instead of moving the button under it, and the text makes room for it while it shows.
+   A frozen cell is placed already. */
 
 .showDetails {
   position: absolute;

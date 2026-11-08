@@ -17,6 +17,7 @@ import {
   Textarea,
 } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { projectPlanQuery } from "./projects.ts";
 import { useState } from "react";
 import { DialogActions } from "./dialog-actions.tsx";
 import {
@@ -89,6 +90,9 @@ function DecisionDialog({
       onDone();
       await queryClient.invalidateQueries({ queryKey: peopleQuery.queryKey });
       await queryClient.invalidateQueries({ queryKey: listsQuery.queryKey });
+      await queryClient.invalidateQueries({
+        queryKey: projectPlanQuery.queryKey,
+      });
       await queryClient.invalidateQueries({ queryKey: ["changes"] });
     },
   });

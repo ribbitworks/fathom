@@ -11,9 +11,11 @@ import {
   type Person,
 } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
+import { recordDraft } from "./test-support.tsx";
 import {
   type Columns,
   decisionFor,
+  draftSentAgain,
   draftNames,
   draftTotal,
   heldBack,
@@ -597,5 +599,15 @@ describe("drafts the approver changed", () => {
       "the new order for Own",
       "the release Own",
     ]);
+  });
+});
+
+describe("a draft sent for approval again", () => {
+  it("is waiting again, without its reason, and a record with no draft stays as it is", () => {
+    const rejected = recordDraft({ state: "rejected", reason: "No" });
+    expect(draftSentAgain({ draft: rejected }).draft).toEqual(
+      recordDraft({ state: "waiting" }),
+    );
+    expect(draftSentAgain({})).toEqual({});
   });
 });

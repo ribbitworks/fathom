@@ -12,7 +12,11 @@ import { useState } from "react";
 
 export const dayProblem = "Use a date such as 2026-10-31";
 
+export const dayAsTyped = (text: string): string =>
+  typedDay(text.replace(/[^\d-]/g, ""));
+
 export function DayInput({
+  id,
   label,
   value,
   description,
@@ -24,6 +28,7 @@ export function DayInput({
   shown = false,
   onChange,
 }: {
+  id?: string;
   label: string;
   value: string | undefined;
   description?: string | undefined;
@@ -44,6 +49,7 @@ export function DayInput({
   const wrong = unfinished && (shown || text.length >= "2026-10-31".length);
   return (
     <TextInput
+      {...(id === undefined ? {} : { id })}
       label={label}
       {...(size === undefined ? {} : { size })}
       {...(placeholder === undefined ? {} : { placeholder })}
@@ -55,7 +61,7 @@ export function DayInput({
       value={text}
       error={wrong || (shown && required && text === "") ? dayProblem : problem}
       onChange={(event) => {
-        const next = typedDay(event.currentTarget.value.replace(/[^\d-]/g, ""));
+        const next = dayAsTyped(event.currentTarget.value);
         setText(next);
         onChange(isDay(next) ? next : undefined, next !== "");
       }}

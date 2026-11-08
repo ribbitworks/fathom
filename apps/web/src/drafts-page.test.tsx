@@ -118,6 +118,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const noPlan = () =>
+  Response.json({
+    customers: [],
+    projects: [],
+    proposals: [],
+    features: [],
+    canEdit: false,
+    canEditFeatures: false,
+  });
+const noPlanChoices = () => Response.json({ owners: [], statuses: [] });
+
 type Answers = Parameters<typeof serverAnswers>[0];
 
 async function openDrafts(answers: Answers = {}) {
@@ -560,6 +571,95 @@ describe("the Drafts page", () => {
     );
   });
 
+  it("lists drafts of customers, proposals, projects, and milestones in words", async () => {
+    const projectId = "a0000000-0000-4000-8000-000000000001";
+    serverAnswers({
+      "GET /api/session": session(["plan:approve", "plan:view"]),
+      "GET /api/release-streams": noStreams,
+      "GET /api/projects/choices": noPlanChoices,
+      "GET /api/projects": () =>
+        Response.json({
+          customers: [
+            {
+              id: "c0000000-0000-4000-8000-000000000001",
+              name: "Fictional Customer",
+              draft: recordDraft({ action: "created" }),
+            },
+            { id: "c0000000-0000-4000-8000-000000000002", name: "Settled" },
+          ],
+          proposals: [
+            {
+              id: "b0000000-0000-4000-8000-000000000001",
+              name: "Fictional Proposal",
+              externalId: null,
+              link: null,
+              ownerId: null,
+              customerIds: [],
+              statusId: "f0000000-0000-4000-8000-000000000001",
+              draft: recordDraft({ action: "deleted" }),
+            },
+          ],
+          projects: [
+            {
+              id: projectId,
+              name: "Fictional Project",
+              externalId: null,
+              ownerId: null,
+              customerIds: [],
+              proposalIds: [],
+              dates: { first: null, last: null, nextDelivery: null },
+              draft: recordDraft({ action: "created" }),
+              milestones: [
+                {
+                  id: "d0000000-0000-4000-8000-000000000001",
+                  projectId,
+                  name: "Fictional Kickoff",
+                  date: "2030-03-15",
+                  customerDelivery: false,
+                  draft: recordDraft({
+                    changed: ["name"],
+                    live: { name: "Before" },
+                  }),
+                },
+              ],
+            },
+          ],
+          features: [],
+          canEdit: false,
+          canEditFeatures: false,
+        }),
+    });
+    renderApp("/drafts");
+    const listed = (await entries()).join(" ");
+    expect(listed).toContain("the customer Fictional Customer");
+    expect(listed).toContain("the proposal Fictional Proposal");
+    expect(listed).toContain("the project Fictional Project");
+    expect(listed).toContain(
+      "the milestone Fictional Kickoff of Fictional Project",
+    );
+    expect(listed).not.toContain("Settled");
+  });
+
+  it("tries the plan's records again when they could not be loaded", async () => {
+    let healthy = false;
+    serverAnswers({
+      "GET /api/session": session(["plan:approve", "plan:view"]),
+      "GET /api/release-streams": noStreams,
+      "GET /api/people": peopleWith([]),
+      "GET /api/lists": () => Response.json({ lists: [] }),
+      "GET /api/projects/choices": noPlanChoices,
+      "GET /api/projects": () =>
+        healthy ? noPlan() : Response.json({ error: "Down" }, { status: 500 }),
+    });
+    renderApp("/drafts");
+    const again = await screen.findByRole("button", { name: "Try again" });
+    healthy = true;
+    await userEvent.click(again);
+    await waitFor(() => {
+      expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+    });
+  });
+
   it("puts a release's changed note in words without its formatting", async () => {
     serverAnswers({
       "GET /api/session": session([
@@ -570,6 +670,8 @@ describe("the Drafts page", () => {
         "configuration:approve",
         "plan:view",
       ]),
+      "GET /api/projects": noPlan,
+      "GET /api/projects/choices": noPlanChoices,
       "GET /api/release-streams": () =>
         Response.json({
           streams: [
@@ -621,6 +723,8 @@ describe("the Drafts page", () => {
         "configuration:approve",
         "plan:view",
       ]),
+      "GET /api/projects": noPlan,
+      "GET /api/projects/choices": noPlanChoices,
       "GET /api/release-streams": () =>
         Response.json({
           streams: [

@@ -39,6 +39,7 @@ import { SettingsPage } from "./settings-page.tsx";
 import { setTimeZone } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
+import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { RolesPage } from "./roles-page.tsx";
 import { sessionQuery } from "./session.ts";
@@ -234,6 +235,7 @@ const draftsRoute = createRoute({
           permissions.includes("org-chart:view") &&
           permissions.includes("people:view")
         }
+        seesProjects={permissions.includes("plan:view")}
         search={draftsRoute.useSearch().search ?? ""}
         onSearch={(search, replace) => {
           void navigate({ search: { search: search || undefined }, replace });
@@ -320,6 +322,54 @@ const releasesRoute = createRoute({
       <ReleasesPage
         streamId={releasesRoute.useParams().streamId}
         approves={approvableKinds(permissions)}
+      />
+    );
+  },
+});
+
+// The Projects page's address: its tab, the tab's view, and the record whose details are shown
+// beside it. Changing the tab starts its view afresh.
+const projectsSearch = viewSearchSchema.extend({
+  tab: projectTabSchema.optional().catch(undefined),
+  open: z.uuid().optional().catch(undefined),
+});
+
+const projectsRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/projects",
+  validateSearch: projectsSearch,
+  beforeLoad: requiring("plan:view"),
+  component: function Projects() {
+    const { permissions } = signedIn.useRouteContext();
+    const navigate = projectsRoute.useNavigate();
+    const { tab, open, ...search } = projectsRoute.useSearch();
+    return (
+      <ProjectsPage
+        tab={tab ?? "projects"}
+        onTab={(next, record) => {
+          void navigate({
+            search: {
+              ...(next === "projects" ? {} : { tab: next }),
+              ...(record === undefined ? {} : { open: record }),
+            },
+          });
+        }}
+        approves={approvableKinds(permissions)}
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, tab, open }, replace });
+        })}
+        open={open}
+        onOpen={(next) => {
+          void navigate({ search: { ...search, tab, open: next } });
+        }}
+        onMilestonesOf={(project) => {
+          void navigate({
+            search: {
+              tab: "milestones",
+              filters: { projectId: { any: [project.id] } },
+            },
+          });
+        }}
       />
     );
   },
@@ -448,6 +498,7 @@ const routeTree = rootRoute.addChildren([
     changesRoute,
     listsRoute,
     releasesRoute,
+    projectsRoute,
     peopleRoute,
     orgChartRoute,
     draftsRoute,

@@ -317,6 +317,37 @@ export function cellColumn<Rec extends CellRecord, Change extends CellChange>(
   };
 }
 
+// A column whose values are held as fields of the record itself, each named by the column's key.
+export function fieldColumn<
+  Rec extends GridRecord & { draft?: { live: object } | undefined },
+  Change,
+>(
+  key: string,
+  kind: Kind,
+  rest: Pick<Column<Rec>, "label" | "required" | "choices" | "multiple"> &
+    Partial<Pick<Column<Rec>, "maxLength" | "readOnly" | "emptyLabel">>,
+): Column<Rec, Change> {
+  // The kind is always one of the fixed kinds.
+  // eslint-disable-next-line security/detect-object-injection
+  const cellKind = cellKinds[kind];
+  const { ownField } = cellKind;
+  const read = (holder: object): CellValue =>
+    ownField === undefined
+      ? cellKind.read(holder as CellSource, key)
+      : ownField.read(new Map(Object.entries(holder)).get(key));
+  return {
+    key,
+    kind,
+    ...rest,
+    value: read,
+    live: (draft) => read(draft.live),
+    change: (value) =>
+      (ownField === undefined
+        ? cellKind.change(key, value)
+        : { [key]: ownField.save(value, rest.multiple) }) as Change,
+  };
+}
+
 // Columns in the order given by their keys; a column the order does not name yet comes at the end,
 // in the order given.
 export function inOrder<Col extends { key: string }>(
@@ -335,15 +366,28 @@ export function inOrder<Col extends { key: string }>(
 
 // Records as they are live, without drafts: those only drafted to be added are left out, and each
 // built-in detail, by the keys given, and each added column a draft changes has its live value back.
-export function liveRecordsOf<Rec extends CellRecord>(
+export function liveRecordsBy<Rec extends GridRecord>(
   records: readonly Rec[],
-  detailKeys: readonly string[],
+  whenChanged: (
+    record: Rec,
+    draft: NonNullable<Rec["draft"]>,
+    withoutDraft: Rec,
+  ) => Rec,
 ): Rec[] {
   return records.flatMap((record): Rec[] => {
     const { draft, ...rest } = record;
     if (draft === undefined) return [record];
     if (draft.action === "created") return [];
     if (draft.action === "deleted") return [rest as Rec];
+    return [whenChanged(record, draft, rest as Rec)];
+  });
+}
+
+export function liveRecordsOf<Rec extends CellRecord>(
+  records: readonly Rec[],
+  detailKeys: readonly string[],
+): Rec[] {
+  return liveRecordsBy(records, (record, draft, rest) => {
     const columns = draft.changed.filter((key) => !detailKeys.includes(key));
     const liveValues = new Map(Object.entries(draft.live.values));
     const values = Object.fromEntries([
@@ -376,15 +420,13 @@ export function liveRecordsOf<Rec extends CellRecord>(
         // eslint-disable-next-line security/detect-object-injection
         .map((key) => [key, draft.live[key] ?? null]),
     );
-    return [
-      {
-        ...rest,
-        ...details,
-        values,
-        links,
-        ...(Object.keys(notes).length === 0 ? {} : { notes }),
-      } as Rec,
-    ];
+    return {
+      ...rest,
+      ...details,
+      values,
+      links,
+      ...(Object.keys(notes).length === 0 ? {} : { notes }),
+    };
   });
 }
 
@@ -1470,11 +1512,16 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     );
   };
 
+  const opensEditor = (cell: Cell) => {
+    const { toggled, inPanel } = kindOf(at(cell).column);
+    return toggled === undefined && (!readOnlyAt(cell) || inPanel === true);
+  };
+
   // Starts editing a cell, or, for a kind edited in one step, such as a checkbox, saves the value
   // editing gives, unless what started it was typing.
   const startEdit = (cell: Cell, typed?: string) => {
     const { row, column } = at(cell);
-    const { toggled, inPanel: opensPanel } = kindOf(column);
+    const { toggled, inPanel: opensPanel, asTyped } = kindOf(column);
     if (readOnlyAt(cell) && opensPanel !== true) return;
     // Typing does nothing in a cell edited in the side panel, as in a checkbox.
     if (writingInPanel || (opensPanel === true && typed !== undefined)) return;
@@ -1491,7 +1538,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         : undefined,
     );
     setMenuFor(undefined);
-    setText(typed ?? (typeof value === "string" ? value : ""));
+    const startingText = typed ?? (typeof value === "string" ? value : "");
+    setText(asTyped?.(startingText) ?? startingText);
     focusSoon(`${cellId(cell.row, cell.column)}-editor`);
   };
 
@@ -1725,7 +1773,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   };
 
   // Saves the cell being edited and goes on as the key that finished it asks: Enter adds a new row's
-  // record or, on a record, moves down; Tab moves across, straight on to editing in a new row; and
+  // record or, on a record, moves down; Tab moves across, straight on to editing in a new row where
+  // the next cell opens an editor; and
   // leaving the cell stays put. A refused value keeps the cell open, with the problem named; once
   // the cell is left, the cell shows its own value again.
   const finish = (cell: Cell, value: CellValue, how: Finish) => {
@@ -1767,7 +1816,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       column: cell.column + (how === "next" ? 1 : -1),
     };
     const within = across.column >= 0 && across.column < columns.length;
-    if (row.newRow && within) {
+    if (row.newRow && within && opensEditor(across)) {
       startEdit(across);
     } else {
       stopEdit(within ? across : cell);
@@ -2313,7 +2362,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     value: CellValue,
   ) => {
     const id = `${cellId(cell.row, cell.column)}-editor`;
-    const { Editor } = kindOf(column);
+    const { Editor, asTyped } = kindOf(column);
     const invalid = problemIn(cell) !== undefined;
     const describedBy = problemTarget(cell);
     if (Editor !== undefined) {
@@ -2348,7 +2397,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         value={text}
         autoComplete="off"
         onChange={(event) => {
-          setText(event.currentTarget.value);
+          const typedText = event.currentTarget.value;
+          setText(asTyped?.(typedText) ?? typedText);
         }}
         onKeyDown={(event) => {
           onEditorKey(event, cell);
@@ -2363,6 +2413,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const rowMenu = (
     record: Rec,
     draft = record.draft as DraftOf<Rec> | undefined,
+    ownItems = table.menuItems?.(record),
   ) => (
     <Menu
       opened={menuFor === record.id}
@@ -2409,7 +2460,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             divider={
               (mayChange(record) && record.heldBy === undefined) ||
               (decidable(record) && approvesRecord(record)) ||
-              Boolean(table.menuItems?.(record))
+              Boolean(ownItems)
             }
           />
         )}
@@ -2425,10 +2476,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             )
           );
         })}
-        {table.menuItems?.(record)}
+        {ownItems}
         {/* A rejected draft is back with its makers, until they send it again. */}
         {decidable(record) && approvesRecord(record) && (
           <>
+            {Boolean(ownItems) && <Menu.Divider />}
             <Menu.Item
               disabled={record.draft?.needsOtherApprover === true}
               onClick={() => {
@@ -2449,6 +2501,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         )}
         {mayChange(record) && record.heldBy === undefined && (
           <>
+            {((decidable(record) && approvesRecord(record)) ||
+              Boolean(ownItems)) && <Menu.Divider />}
             {draft?.state === "rejected" && (
               <Menu.Item
                 onClick={() => {

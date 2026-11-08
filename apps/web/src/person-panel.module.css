@@ -23,6 +23,12 @@
   border-bottom: 1px solid var(--mantine-color-default-border);
 }
 
+/* A row with no label: its text takes the width, and its menu sits at the end. */
+.itemRow {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
 .label {
   color: var(--mantine-color-dimmed);
 }
