@@ -48,7 +48,7 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 1. In the second terminal, run:
 
    ```sh
-   pnpm db:unseed && pnpm db:seed
+   pnpm db:reseed
    ```
 
 2. Confirm that the last line printed gives the shared password, with no error above it.

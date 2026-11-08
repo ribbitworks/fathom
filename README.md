@@ -31,7 +31,7 @@ To start again from a fresh database with the fictional data and accounts, delet
 pnpm dev:reset
 ```
 
-`pnpm db:seed` and `pnpm db:unseed` add the fictional data to the development database and take it away again, deactivating the accounts; see [Development Setup](docs/design/development-setup.md#common-commands) for these and other commands.
+`pnpm db:reseed` removes the fictional data from the development database and adds it again. `pnpm db:seed` and `pnpm db:unseed` do each half; removing deactivates the accounts. See [Development Setup](docs/design/development-setup.md#common-commands) for these and other commands.
 
 Check everything, including the tests and the security report:
 

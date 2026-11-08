@@ -3,7 +3,7 @@
 
 # Manages the development database, a PostgreSQL container built from Fathom's own image and
 # reachable only from this machine. Run 'pnpm dev:setup' first to create its secrets.
-# Usage: scripts/dev-db.sh up | down | migrate | reset | seed | unseed | seed-accounts
+# Usage: scripts/dev-db.sh up | down | migrate | reset | seed | unseed | reseed | seed-accounts
 #   up       build and start the database, and wait until it is ready
 #   down     stop the database, keeping its data
 #   migrate  apply the reviewed migrations as the migration role
@@ -11,6 +11,7 @@
 #   seed     start the database, apply the migrations, and add the fictional data, unless it is there,
 #            with an account for each persona, sharing the password it prints
 #   unseed   remove the fictional data, keeping anything added by hand, and deactivate the accounts
+#   reseed   unseed, then seed
 #   seed-accounts  add only the account for each persona, with no fictional data, sharing the
 #            password it prints
 
@@ -75,6 +76,10 @@ case "${1:-}" in
     apply_migrations
     ;;
   seed | unseed) run_seed "$1" ;;
+  reseed)
+    run_seed unseed
+    run_seed seed
+    ;;
   seed-accounts) run_seed accounts ;;
-  *) fail "Usage: scripts/dev-db.sh up | down | migrate | reset | seed | unseed | seed-accounts" ;;
+  *) fail "Usage: scripts/dev-db.sh up | down | migrate | reset | seed | unseed | reseed | seed-accounts" ;;
 esac
