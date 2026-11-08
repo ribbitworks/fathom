@@ -51,9 +51,13 @@ const auditorsRole = role(
   "Checks Restricted data for audits.",
   ["people:view", "restricted:view"],
 );
-const plannerRole = role(3, "planner", "Planner", "Edits the plan.", [
-  "plan:edit",
-]);
+const productManagerRole = role(
+  3,
+  "product-manager",
+  "Product Manager",
+  "Edits the plan.",
+  ["plan:edit"],
+);
 const teamMemberRole = role(4, "team-member", "Team Member", "Sees the plan.", [
   "plan:view",
 ]);
@@ -69,7 +73,7 @@ const roles = [
   administratorRole,
   auditorsRole,
   keepersRole,
-  plannerRole,
+  productManagerRole,
   teamMemberRole,
 ];
 const roleList = () => Response.json({ roles });
@@ -83,7 +87,7 @@ const manager = () =>
       key: "administrator",
       description: "",
     },
-    permissions: ["accounts:manage", "plan:view"],
+    permissions: ["accounts:view", "accounts:manage", "plan:view"],
   });
 
 const own = {
@@ -98,7 +102,7 @@ const planner = {
   id: "user-2",
   name: "Fictional Planner",
   email: "planner@example.test",
-  role: holding(plannerRole),
+  role: holding(productManagerRole),
   active: true,
   createdAt: "2026-10-14T09:00:00.000Z",
 };
@@ -204,6 +208,27 @@ describe("who sees the Accounts page", () => {
     expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
   });
 
+  it("shows every account, without changing any, to users who may only see accounts", async () => {
+    // Given
+    const fetch = serverAnswers({
+      "GET /api/session": () =>
+        Response.json({ ...fictionalUser, permissions: ["accounts:view"] }),
+      "GET /api/accounts": accountList,
+    });
+    // When
+    const history = renderApp("/");
+    // Then
+    expect(await screen.findByText("Fictional Planner")).toBeDefined();
+    expect(history.location.pathname).toBe("/accounts");
+    expect(screen.getByRole("link", { name: "Accounts" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "New account" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Edit Fictional Planner" }),
+    ).toBeNull();
+    expect(screen.getAllByRole("columnheader")).toHaveLength(4);
+    expect(fetch).not.toHaveBeenCalledWith("/api/roles", expect.anything());
+  });
+
   it("is not shown to anyone else", async () => {
     serverAnswers({ "GET /api/session": signedIn });
     renderApp("/accounts");
@@ -222,7 +247,9 @@ describe("the list of accounts", () => {
     });
     renderApp("/accounts");
     const row = (await screen.findByText("Fictional Planner")).closest("tr");
-    expect(within(row as HTMLElement).getByText("Planner")).toBeDefined();
+    expect(
+      within(row as HTMLElement).getByText("Product Manager"),
+    ).toBeDefined();
     expect(within(row as HTMLElement).getByText("Active")).toBeDefined();
     expect(screen.getByText("Deactivated")).toBeDefined();
     const ownRow = within(screen.getByRole("table"))
@@ -330,7 +357,7 @@ describe("changing one's own account", () => {
           Response.json({
             ...fictionalUser,
             user: { ...fictionalUser.user, name: "Fictional Self" },
-            permissions: ["accounts:manage", "plan:view"],
+            permissions: ["accounts:view", "accounts:manage", "plan:view"],
           });
         return Response.json({ account: { ...own, name: "Fictional Self" } });
       },
@@ -651,7 +678,12 @@ describe("creating an account", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["accounts:manage", "roles:edit"],
+          permissions: [
+            "accounts:view",
+            "accounts:manage",
+            "roles:view",
+            "roles:edit",
+          ],
         }),
       "GET /api/roles": roleList,
       "GET /api/accounts": accountList,
@@ -681,7 +713,9 @@ describe("creating an account", () => {
     });
     renderApp("/accounts");
     const edit = await openEditFor("Fictional Planner");
-    expect(within(edit).getByRole("radio", { name: "Planner" })).toBeDefined();
+    expect(
+      within(edit).getByRole("radio", { name: "Product Manager" }),
+    ).toBeDefined();
     expect(within(edit).queryByText(/Custom roles are created/u)).toBeNull();
     expect(within(edit).queryByRole("link", { name: "Roles" })).toBeNull();
   });

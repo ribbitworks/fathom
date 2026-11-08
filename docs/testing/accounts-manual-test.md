@@ -247,8 +247,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** ACCT-05 run. The first browser is signed in as `fathom.administrator@fathom.test`, with the **Accounts** page open.
 
-- [ ] **Step 1.** Select **Edit** in the **Test Newcomer** row. Type `Test Arrival` in **Name** and `test.arrival@fathom.test` in **Email address**, choose **Planner**, and select **Save**.
-  - **Expected:** The dialog, titled **Edit Test Newcomer**, shows the account's name, email address, and role, with **Team Member** chosen and the buttons **Reset password**, **Deactivate**, **Cancel** and **Save**. After **Save** is selected, the dialog closes, a green banner says **Saved the account for Test Arrival.**, and the table has a **Test Arrival** row with `test.arrival@fathom.test` and **Planner**, and no **Test Newcomer** row.
+- [ ] **Step 1.** Select **Edit** in the **Test Newcomer** row. Type `Test Arrival` in **Name** and `test.arrival@fathom.test` in **Email address**, choose **Product Manager**, and select **Save**.
+  - **Expected:** The dialog, titled **Edit Test Newcomer**, shows the account's name, email address, and role, with **Team Member** chosen and the buttons **Reset password**, **Deactivate**, **Cancel** and **Save**. After **Save** is selected, the dialog closes, a green banner says **Saved the account for Test Arrival.**, and the table has a **Test Arrival** row with `test.arrival@fathom.test` and **Product Manager**, and no **Test Newcomer** row.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Edit** in the **Test Arrival** row, then **Deactivate**.

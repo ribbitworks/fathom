@@ -9,7 +9,8 @@ import { z } from "zod";
 
 export const roleSchema = z.enum([
   "team-member",
-  "planner",
+  "product-manager",
+  "feature-lead",
   "project-manager",
   "engineering-manager",
   "engineering-director",
@@ -25,6 +26,8 @@ export const permissionSchema = z.enum([
   "plan:view",
   "plan:edit",
   "plan:approve",
+  // Features and their estimates, apart from the rest of the plan, which Edit Plan changes.
+  "features:edit",
   // Releases are an area of their own, apart from the plan, for approving.
   "releases:approve",
   "allocations:view",
@@ -59,9 +62,12 @@ export const permissionSchema = z.enum([
   // Approving drafts the approver changed themselves, in the areas they approve, which nobody may
   // do without it.
   "drafts:approve-own",
+  "accounts:view",
   "accounts:manage",
+  "roles:view",
   // Changing what roles grant, apart from managing accounts, as the Decisions Log sets out.
   "roles:edit",
+  "settings:view",
   // Changing settings for the whole of Fathom, such as its time zone.
   "settings:edit",
   "history:view",
@@ -86,7 +92,8 @@ export const permissionDescriptions: Record<
   },
 
   "plan:edit": {
-    allows: "Changes the plan across every project.",
+    allows:
+      "Changes the plan across every project, apart from features and estimates.",
     without: "Cannot change the plan.",
   },
   "plan:approve": {
@@ -94,6 +101,11 @@ export const permissionDescriptions: Record<
       "Approves or rejects drafts of the plan: features, projects, proposals, and the roadmap.",
     without: "Cannot approve drafts of the plan.",
     needs: ["plan:view"],
+  },
+  "features:edit": {
+    allows:
+      "Adds, changes, and removes features and their estimates, without changing the rest of the plan.",
+    without: "Cannot change features or estimates.",
   },
   "releases:approve": {
     allows:
@@ -231,15 +243,28 @@ export const permissionDescriptions: Record<
       "configuration:approve",
     ],
   },
+  "accounts:view": {
+    allows:
+      "Sees user accounts: their names, email addresses, the role each holds, and whether each is active.",
+    without: "Does not see user accounts.",
+  },
   "accounts:manage": {
     allows:
       "Manages user accounts: creates them, changes their names, email addresses, and the role each holds, resets passwords, and deactivates them.",
     without: "Cannot manage user accounts.",
   },
+  "roles:view": {
+    allows: "Sees roles: their names, descriptions, and what they grant.",
+    without: "Does not see roles.",
+  },
   "roles:edit": {
     allows:
       "Creates and changes roles: their names, descriptions, and what they grant, including the role the user holds.",
     without: "Cannot change roles.",
+  },
+  "settings:view": {
+    allows: "Sees settings for the whole of Fathom, such as its time zone.",
+    without: "Does not see Fathom's settings.",
   },
   "settings:edit": {
     allows:
@@ -263,6 +288,7 @@ export const permissionDescriptions: Record<
 // features. Building a feature takes its permissions out of this list.
 export const unbuiltPermissions: readonly Permission[] = [
   "plan:approve",
+  "features:edit",
   "allocations:view",
   "allocations:edit",
   "feature-teams:propose",
@@ -280,12 +306,16 @@ export type Tier = z.infer<typeof tierSchema>;
 // second, whether or not it is stored.
 export const impliedPermissions: Partial<Record<Permission, Permission>> = {
   "plan:edit": "plan:view",
+  "features:edit": "plan:view",
   "allocations:edit": "allocations:view",
   "people:edit": "people:view",
   "restricted:edit": "restricted:view",
   "confidential:edit": "confidential:view",
   "hiring-plan:edit": "hiring-plan:view",
   "configuration:edit": "configuration:view",
+  "accounts:manage": "accounts:view",
+  "roles:edit": "roles:view",
+  "settings:edit": "settings:view",
 };
 
 // Everything some granted permissions let a user do, in the order of the shared list. A permission
@@ -304,6 +334,17 @@ export function withImplied(granted: readonly string[]): Permission[] {
   );
 }
 
+// Whether two lists of permissions hold the same ones, whatever their order.
+export function sameGrants(
+  one: readonly Permission[],
+  other: readonly Permission[],
+): boolean {
+  return (
+    one.length === other.length &&
+    one.every((permission) => other.includes(permission))
+  );
+}
+
 // The actions a role can be given on an area, as the columns of the grid that sets them.
 export const gridActions = ["view", "draft", "approve", "edit"] as const;
 
@@ -319,6 +360,7 @@ export const permissionGrid: readonly {
     area: "Plan",
     actions: { view: "plan:view", approve: "plan:approve", edit: "plan:edit" },
   },
+  { area: "Features", actions: { edit: "features:edit" } },
   { area: "Releases", actions: { approve: "releases:approve" } },
   {
     area: "Allocations",
@@ -373,9 +415,15 @@ export const permissionGrid: readonly {
   },
   { area: "Change history", actions: { view: "changes:view" } },
   { area: "Access history", actions: { view: "history:view" } },
-  { area: "Accounts", actions: { edit: "accounts:manage" } },
-  { area: "Roles", actions: { edit: "roles:edit" } },
-  { area: "Settings", actions: { edit: "settings:edit" } },
+  {
+    area: "Accounts",
+    actions: { view: "accounts:view", edit: "accounts:manage" },
+  },
+  { area: "Roles", actions: { view: "roles:view", edit: "roles:edit" } },
+  {
+    area: "Settings",
+    actions: { view: "settings:view", edit: "settings:edit" },
+  },
 ];
 
 const actionNames: Record<GridAction, string> = {
@@ -410,21 +458,33 @@ export const startingRoles: Record<
     name: "Team Member",
     description:
       "Sees the plan, including everyone's work assignments, and the org chart.",
+    permissions: ["plan:view", "allocations:view", "org-chart:view"],
+  },
+  "product-manager": {
+    name: "Product Manager",
+    description:
+      "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, and approves or rejects drafts of the plan.",
     permissions: [
-      "plan:view",
+      "plan:edit",
+      "plan:approve",
+      "features:edit",
       "allocations:view",
       "org-chart:view",
+      "drafts:submit",
       "changes:view",
     ],
   },
-  planner: {
-    name: "Planner",
+  "feature-lead": {
+    name: "Feature Lead",
     description:
-      "Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan.",
+      "Sees the plan and people's General details, edits features, estimates, and allocations, and proposes feature teams.",
     permissions: [
-      "plan:edit",
-      "allocations:view",
+      "plan:view",
+      "features:edit",
+      "allocations:edit",
       "org-chart:view",
+      "people:view",
+      "feature-teams:propose",
       "drafts:submit",
       "changes:view",
     ],
@@ -438,6 +498,7 @@ export const startingRoles: Record<
     permissions: [
       "plan:edit",
       "plan:approve",
+      "features:edit",
       "releases:approve",
       "allocations:view",
       "org-chart:view",
@@ -459,6 +520,7 @@ export const startingRoles: Record<
       "Edits the plan and allocations, sees people, with everyone's Restricted details and the hiring plan, colours teams on the org chart, and proposes feature teams.",
     permissions: [
       "plan:edit",
+      "features:edit",
       "allocations:edit",
       "org-chart:view",
       "people:view",
@@ -474,24 +536,32 @@ export const startingRoles: Record<
   "engineering-director": {
     name: "Engineering Director",
     description:
-      "Edits the plan and allocations, sees people, with their Restricted and Confidential data and the hiring plan, and approves or rejects drafts of the data the role sees.",
+      "Edits and approves the plan, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Restricted and Confidential data, and sees accounts, roles, settings, and the access history without changing them.",
     permissions: [
       "plan:edit",
       "plan:approve",
+      "features:edit",
       "releases:approve",
       "allocations:edit",
-      "org-chart:view",
-      "people:view",
+      "people:edit",
       "people:approve",
+      "org-chart:view",
+      "team-colours:edit",
+      "feature-teams:propose",
+      "feature-teams:edit",
       "feature-teams:approve",
-      "restricted:view",
-      "confidential:view",
-      "hiring-plan:view",
+      "restricted:edit",
+      "confidential:edit",
+      "hiring-plan:edit",
       "hiring-plan:approve",
-      "configuration:view",
+      "configuration:edit",
       "configuration:approve",
       "drafts:submit",
       "drafts:approve-own",
+      "accounts:view",
+      "roles:view",
+      "settings:view",
+      "history:view",
       "changes:view",
     ],
   },
@@ -516,15 +586,20 @@ export const startingRoles: Record<
   executive: {
     name: "Executive",
     description:
-      "Sees the plan, and people, with their Restricted and Confidential data and the hiring plan, without editing them.",
+      "Sees the plan, people, with their Restricted and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.",
     permissions: [
       "plan:view",
       "allocations:view",
-      "org-chart:view",
       "people:view",
+      "org-chart:view",
       "restricted:view",
       "confidential:view",
       "hiring-plan:view",
+      "configuration:view",
+      "accounts:view",
+      "roles:view",
+      "settings:view",
+      "history:view",
       "changes:view",
     ],
   },

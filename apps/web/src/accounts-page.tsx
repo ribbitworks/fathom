@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Accounts page, for users who may manage accounts: every account with its one role and whether
-// it can sign in, and dialogs to create accounts and to edit them, where their names, email
-// addresses, and role are changed, choosing from every role, and from which their passwords are
-// reset and they are deactivated or reactivated. Fathom generates the password of a new account and
-// of a reset, which the dialog then shows once, to copy. A user's own account offers all but the
-// password reset, as changing one's own password needs the current one. A dialog cannot be closed
-// while its change is being saved, shows plainly why a change was refused, and keeps no password
-// once it closes. Some active account must keep each of the permissions to manage accounts and to
-// edit roles, so a role or a deactivation that would leave none holding one is turned off, as the
-// server refuses it.
+// The Accounts page, for users who may see accounts: every account with its one role and whether it
+// can sign in, and, for those who may manage accounts, dialogs to create accounts and to edit them,
+// where their names, email addresses, and role are changed, choosing from every role, and from
+// which their passwords are reset and they are deactivated or reactivated. Fathom generates the
+// password of a new account and of a reset, which the dialog then shows once, to copy. A user's own
+// account offers all but the password reset, as changing one's own password needs the current one.
+// A dialog cannot be closed while its change is being saved, shows plainly why a change was
+// refused, and keeps no password once it closes. Some active account must keep each of the
+// permissions to manage accounts and to edit roles, so a role or a deactivation that would leave
+// none holding one is turned off, as the server refuses it.
 
 import {
   type Account,
@@ -634,7 +634,8 @@ function AccountRow({
 }: {
   account: Account;
   own: boolean;
-  onEdit: () => void;
+  // Editing the account, for those who may manage accounts.
+  onEdit: (() => void) | undefined;
 }) {
   return (
     <Table.Tr>
@@ -693,30 +694,34 @@ function AccountRow({
           {createdDate.format(new Date(account.createdAt))}
         </time>
       </Table.Td>
-      <Table.Td ta="right">
-        <Button
-          variant="default"
-          size="xs"
-          aria-label={`Edit ${account.name}`}
-          onClick={onEdit}
-        >
-          Edit
-        </Button>
-      </Table.Td>
+      {onEdit && (
+        <Table.Td ta="right">
+          <Button
+            variant="default"
+            size="xs"
+            aria-label={`Edit ${account.name}`}
+            onClick={onEdit}
+          >
+            Edit
+          </Button>
+        </Table.Td>
+      )}
     </Table.Tr>
   );
 }
 
 export function AccountsPage({
   user,
+  canManage,
   canEditRoles,
 }: {
   user: SignedInUser;
+  canManage: boolean;
   canEditRoles: boolean;
 }) {
   const accounts = useQuery(accountsQuery);
   // Read now, so the dialogs that choose a role have them on opening.
-  useQuery(rolesQuery);
+  useQuery({ ...rolesQuery, enabled: canManage });
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
   const [dialog, setDialog] = useState<Dialog>();
   const [opened, setOpened] = useState(false);
@@ -741,13 +746,15 @@ export function AccountsPage({
       <PageHeader
         title="Accounts"
         action={
-          <Button
-            onClick={() => {
-              open({ kind: "create" });
-            }}
-          >
-            New account
-          </Button>
+          canManage && (
+            <Button
+              onClick={() => {
+                open({ kind: "create" });
+              }}
+            >
+              New account
+            </Button>
+          )
         }
       />
       {accounts.isPending && <Loader role="status" aria-label="Loading" />}
@@ -789,9 +796,11 @@ export function AccountsPage({
                     <Table.Th>Role</Table.Th>
                     <Table.Th>Status</Table.Th>
                     <Table.Th>Created</Table.Th>
-                    <Table.Th>
-                      <VisuallyHidden>Actions</VisuallyHidden>
-                    </Table.Th>
+                    {canManage && (
+                      <Table.Th>
+                        <VisuallyHidden>Actions</VisuallyHidden>
+                      </Table.Th>
+                    )}
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -800,14 +809,18 @@ export function AccountsPage({
                       key={account.id}
                       account={account}
                       own={account.id === user.id}
-                      onEdit={() => {
-                        open({
-                          kind: "edit",
-                          account,
-                          own: account.id === user.id,
-                          accounts: all,
-                        });
-                      }}
+                      onEdit={
+                        canManage
+                          ? () => {
+                              open({
+                                kind: "edit",
+                                account,
+                                own: account.id === user.id,
+                                accounts: all,
+                              });
+                            }
+                          : undefined
+                      }
                     />
                   ))}
                 </Table.Tbody>

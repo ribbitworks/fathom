@@ -136,12 +136,13 @@ const homeRoute = createRoute({
 const accountsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/accounts",
-  beforeLoad: requiring("accounts:manage"),
+  beforeLoad: requiring("accounts:view"),
   component: function Accounts() {
     const { user, permissions } = signedIn.useRouteContext();
     return (
       <AccountsPage
         user={user}
+        canManage={permissions.includes("accounts:manage")}
         canEditRoles={permissions.includes("roles:edit")}
       />
     );
@@ -151,19 +152,28 @@ const accountsRoute = createRoute({
 const rolesRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/roles",
-  beforeLoad: requiring("roles:edit"),
+  beforeLoad: requiring("roles:view"),
   component: function Roles() {
-    return <RolesPage user={signedIn.useRouteContext().user} />;
+    const { user, permissions } = signedIn.useRouteContext();
+    return (
+      <RolesPage user={user} canEdit={permissions.includes("roles:edit")} />
+    );
   },
 });
 
 const settingsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/settings",
-  beforeLoad: requiring("settings:edit"),
+  beforeLoad: requiring("settings:view"),
   component: function Settings() {
-    const { timeZone, passwords } = signedIn.useRouteContext();
-    return <SettingsPage timeZone={timeZone} passwords={passwords} />;
+    const { timeZone, passwords, permissions } = signedIn.useRouteContext();
+    return (
+      <SettingsPage
+        timeZone={timeZone}
+        passwords={passwords}
+        canEdit={permissions.includes("settings:edit")}
+      />
+    );
   },
 });
 

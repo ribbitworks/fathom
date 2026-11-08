@@ -6,16 +6,18 @@
 // the access history. Resource Planners stand for readers who see people's General details only.
 
 import { accessHistory, recordChanges } from "@fathom/db";
-import type {
-  ChangeEntry,
-  ChangeHistory,
-  Field,
-  List,
-  Role,
+import {
+  type ChangeEntry,
+  type ChangeHistory,
+  type Field,
+  type List,
+  type Role,
+  roleSchema,
 } from "@fathom/shared";
 import { and, eq, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { rolesGranting } from "./access.ts";
 import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 let test: TestApp;
@@ -108,6 +110,17 @@ async function approve(personId: string) {
 }
 
 describe("the change history", () => {
+  it.each(
+    roleSchema.options.filter(
+      (role) => !rolesGranting("changes:view").includes(role),
+    ),
+  )("is refused to a %s, whose role does not let them see it", async (role) => {
+    const { cookie } = await test.signedIn(role);
+    expect((await test.request(cookie, "GET", "/api/changes")).statusCode).toBe(
+      403,
+    );
+  });
+
   it("names who changed what, and the records and values involved, newest first", async () => {
     const made = await makePersonWithColumn("Alpha");
     const changed = await send("PATCH", `/api/people/${made.personId}`, {
@@ -276,13 +289,13 @@ describe("the change history", () => {
     const sets = [name, date, choice, list];
     // Whether each role sees the General, Restricted, and Confidential changes, and the configuration.
     const expected: [Role, boolean[]][] = [
-      ["team-member", [false, false, false, false]],
-      ["planner", [false, false, false, false]],
+      ["product-manager", [false, false, false, false]],
+      ["feature-lead", [true, false, false, false]],
       ["project-manager", [true, false, false, true]],
       ["engineering-manager", [true, true, false, false]],
       ["engineering-director", [true, true, true, true]],
       ["workforce-administrator", [true, true, true, true]],
-      ["executive", [true, true, true, false]],
+      ["executive", [true, true, true, true]],
       ["resource-planner", [true, false, false, false]],
     ];
     for (const [role, sees] of expected) {
@@ -336,7 +349,7 @@ describe("the change history", () => {
     });
     const planner = await test.signedIn("resource-planner");
     const manager = await test.signedIn("engineering-manager");
-    const project = await test.signedIn("planner");
+    const project = await test.signedIn("product-manager");
 
     expect(await entryFor(planner.cookie, general.changeSetId)).toBeDefined();
     // Only Restricted changes: the change set is left out altogether.
@@ -716,7 +729,13 @@ describe("the change history", () => {
         records: [expect.objectContaining({ action: "created" })],
       }),
     ]);
-    const leader = await test.signedIn("executive");
+    // Not seeing configuration, so the change to the list is not the latest entry.
+    const leader = await test.signedIn([
+      "people:view",
+      "restricted:view",
+      "confidential:view",
+      "changes:view",
+    ]);
     expect((await history(leader.cookie)).entries[0]?.records[0]).toMatchObject(
       { name: "Pi Person" },
     );

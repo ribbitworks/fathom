@@ -283,7 +283,7 @@ describe("signing in", () => {
       name: "Fictional Planner",
       email: "planner@example.test",
       password,
-      roleId: await findStartingRole(connection, "planner"),
+      roleId: await findStartingRole(connection, "product-manager"),
     });
     const cookie = sessionCookie(
       (await signIn("planner@example.test")).headers["set-cookie"],
@@ -294,15 +294,17 @@ describe("signing in", () => {
     });
     expect(session.json()).toMatchObject({
       role: {
-        key: "planner",
-        name: "Planner",
+        key: "product-manager",
+        name: "Product Manager",
         description: expect.stringMatching(/^Edits projects/u) as unknown,
       },
       permissions: [
         "allocations:view",
         "changes:view",
         "drafts:submit",
+        "features:edit",
         "org-chart:view",
+        "plan:approve",
         "plan:edit",
         "plan:view",
       ],
@@ -577,7 +579,7 @@ describe("account command", () => {
       "--email",
       "Command.Planner@example.test",
       "--role",
-      "planner",
+      "product-manager",
     ]);
     expect(status).toBe(0);
     expect(printed).toEqual([
@@ -588,7 +590,7 @@ describe("account command", () => {
     expect(
       await sessionOf("command.planner@example.test", printedPassword(printed)),
     ).toMatchObject({
-      role: { key: "planner", name: "Planner" },
+      role: { key: "product-manager", name: "Product Manager" },
       mustChangePassword: true,
     });
   });
@@ -605,12 +607,7 @@ describe("account command", () => {
       await sessionOf("operator@example.test", printedPassword(printed)),
     ).toMatchObject({
       role: { key: "team-member", name: "Team Member" },
-      permissions: [
-        "allocations:view",
-        "changes:view",
-        "org-chart:view",
-        "plan:view",
-      ],
+      permissions: ["allocations:view", "org-chart:view", "plan:view"],
     });
   });
 

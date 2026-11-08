@@ -24,7 +24,7 @@ Verifies how drafts of people, columns, lists, choices, and column and choice or
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes. Each account must hold its role as Fathom starts it: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change people, lists and columns, and its changes are drafts; it cannot approve them.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts; it cannot change people, lists or columns.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can change people, lists and columns, and approve and reject drafts, including those it changed itself.
 - **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It can change releases, as drafts, and approve and reject drafts, but not those it changed.
 
 ## Common Procedures
@@ -171,7 +171,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** As DRAFT-05.
 
 - [ ] **Step 1.** Open the **Grade** column menu.
-  - **Expected:** It has the three lines from DRAFT-02, step 1, then one **Approve…** and one **Reject…**.
+  - **Expected:** It has the three lines from DRAFT-02, step 1, and among its actions one **Approve…** and one **Reject…**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Approve…**.

@@ -15,6 +15,7 @@ import {
 import { and, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { rolesGranting } from "./access.ts";
 import { giveRole } from "./data/roles.ts";
 import { startTestApp, type TestApp } from "./test-app.ts";
 
@@ -94,13 +95,24 @@ async function latestEntries(count: number) {
 }
 
 describe("who may edit roles", () => {
+  // Every other test lists roles as an Administrator, whose account must be the only one managing
+  // accounts.
   it.each(roleSchema.options.filter((role) => role !== "administrator"))(
-    "refuses %s, which cannot edit roles",
+    "lets a %s list roles only if the role lets them see roles",
+    async (role) => {
+      const other = await test.signedIn(role);
+      expect(
+        (await send("GET", "/api/roles", undefined, other.cookie)).statusCode,
+      ).toBe(rolesGranting("roles:view").includes(role) ? 200 : 403);
+    },
+  );
+
+  it.each(roleSchema.options.filter((role) => role !== "administrator"))(
+    "refuses %s, which cannot edit roles, any change",
     async (role) => {
       const other = await test.signedIn(role);
       const id = randomUUID();
       for (const [method, url, payload] of [
-        ["GET", "/api/roles", undefined],
         [
           "POST",
           "/api/roles",
@@ -368,7 +380,7 @@ describe("changing a role", () => {
   it("refuses a name another role has", async () => {
     const role = await newRole([]);
     const response = await change(role.id, {
-      name: "planner",
+      name: "product manager",
       description: "",
       permissions: [],
     });
@@ -427,6 +439,27 @@ describe("a role's description", () => {
     expect(response.json<{ role: RoleSummary }>().role.description).toBe(
       "Sees the plan. Nothing more.",
     );
+  });
+
+  it("of a starting role is stored emptied with a change to what it grants, and comes back with its template", async () => {
+    const { name, description, permissions } =
+      startingRoles["resource-planner"];
+    const role = await roleNamed(name);
+    const changed = await change(role.id, {
+      name,
+      description: "",
+      permissions: [...permissions, "people:edit"],
+    });
+    expect(changed.json<{ role: RoleSummary }>().role.description).toBe("");
+    expect((await roleNamed(name)).description).toBe("");
+    const restored = await change(role.id, {
+      name,
+      description,
+      permissions,
+    });
+    const back = restored.json<{ role: RoleSummary }>().role;
+    expect(back.description).toBe(description);
+    expect([...back.permissions].sort()).toEqual([...permissions].sort());
   });
 });
 

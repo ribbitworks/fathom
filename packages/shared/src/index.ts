@@ -42,6 +42,7 @@ export {
   type Tier,
   tierSchema,
   unbuiltPermissions,
+  sameGrants,
   withImplied,
 } from "./access.ts";
 export {

@@ -1292,7 +1292,7 @@ describe("each role's view of the hiring plan", () => {
     expect((await hireSeen(id))?.stateId).toBe(open);
   });
 
-  it.each([["administrator"], ["team-member"], ["planner"]] as const)(
+  it.each([["administrator"], ["team-member"], ["product-manager"]] as const)(
     "refuses the plan to the %s role alone",
     async (role) => {
       const user = await test.signedIn(role);

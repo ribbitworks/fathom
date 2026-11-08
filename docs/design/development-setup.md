@@ -120,14 +120,14 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 
 ### Development Accounts
 
-Seeding adds these accounts: one for each persona in the [Product Brief](../product/brief.md#users), holding its persona's role from [Roles](../product/roles.md#starting-roles); a second Engineering Operations Manager, so the seed data has drafts that two people changed; a Resource Planner, which sees people without their Restricted details, as [Roles](../product/roles.md#what-each-role-can-do) sets out; and a Superuser, for trying a feature without changing accounts. The Superuser holds a Superuser role that grants every permission, which seeding makes if it is missing; it is not a starting role, so a Fathom set up without the seed data does not have it. They share a random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets, which `pnpm db:seed` prints, and, unlike accounts given a password Fathom generates, they need not change it at first sign-in. An account already there keeps its password, so if that file is replaced, run `pnpm dev:reset` to give every account the new one. A test checks that this table matches the accounts seeded.
+Seeding adds these accounts: one for each persona in the [Product Brief](../product/brief.md#users), holding its persona's role from [Roles](../product/roles.md#starting-roles); a second Engineering Operations Manager, so the seed data has drafts that two people changed; a Resource Planner, which sees people without their Restricted details, as [Roles](../product/roles.md#what-each-role-can-do) sets out; and a Superuser, for trying a feature without changing accounts. The Superuser holds a Superuser role that grants every permission, which seeding makes if it is missing; it is not a starting role, so a Fathom set up without the seed data does not have it. They share a random password, kept in `.dev/secrets/dev_account_password` so it stays the same between resets, which `pnpm db:seed` prints, and, unlike accounts given a password Fathom generates, they need not change it at first sign-in. An account already there keeps its password, so if that file is replaced, run `pnpm dev:reset` to give every account the new one.
 
 | Account | Name | Role |
 | --- | --- | --- |
-| `product.manager@fathom.test` | Product Manager | Planner |
+| `product.manager@fathom.test` | Product Manager | Product Manager |
 | `project.manager@fathom.test` | Project Manager | Project Manager |
 | `engineering.manager@fathom.test` | Engineering Manager | Engineering Manager |
-| `feature.lead@fathom.test` | Feature Lead | Planner |
+| `feature.lead@fathom.test` | Feature Lead | Feature Lead |
 | `engineering.director@fathom.test` | Engineering Director | Engineering Director |
 | `engineering.operations.manager@fathom.test` | Engineering Operations Manager | Workforce Administrator |
 | `engineering.operations.manager.2@fathom.test` | Second Engineering Operations Manager | Workforce Administrator |

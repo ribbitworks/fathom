@@ -24,20 +24,32 @@ const user = {
   name: "Fictional Person",
   email: "person@example.test",
 };
-// Each persona's role grants exactly what that persona's roles granted together before each account
-// held one role, as the owner decided on 2026-11-06.
+// What each starting role lets a user do, as the owner decided on 2026-11-07.
 const expected: [Role, Permission[]][] = [
+  ["team-member", ["plan:view", "allocations:view", "org-chart:view"]],
   [
-    "team-member",
-    ["plan:view", "allocations:view", "org-chart:view", "changes:view"],
-  ],
-  [
-    "planner",
+    "product-manager",
     [
       "plan:view",
       "plan:edit",
+      "plan:approve",
+      "features:edit",
       "allocations:view",
       "org-chart:view",
+      "drafts:submit",
+      "changes:view",
+    ],
+  ],
+  [
+    "feature-lead",
+    [
+      "plan:view",
+      "features:edit",
+      "allocations:view",
+      "allocations:edit",
+      "people:view",
+      "org-chart:view",
+      "feature-teams:propose",
       "drafts:submit",
       "changes:view",
     ],
@@ -48,6 +60,7 @@ const expected: [Role, Permission[]][] = [
       "plan:view",
       "plan:edit",
       "plan:approve",
+      "features:edit",
       "releases:approve",
       "allocations:view",
       "org-chart:view",
@@ -67,6 +80,7 @@ const expected: [Role, Permission[]][] = [
     [
       "plan:view",
       "plan:edit",
+      "features:edit",
       "allocations:view",
       "allocations:edit",
       "org-chart:view",
@@ -80,27 +94,41 @@ const expected: [Role, Permission[]][] = [
       "changes:view",
     ],
   ],
+  // Everything but managing accounts, editing roles, and changing settings.
   [
     "engineering-director",
     [
       "plan:view",
       "plan:edit",
       "plan:approve",
+      "features:edit",
       "releases:approve",
       "allocations:view",
       "allocations:edit",
-      "org-chart:view",
       "people:view",
+      "people:edit",
       "people:approve",
+      "org-chart:view",
+      "team-colours:edit",
+      "feature-teams:propose",
+      "feature-teams:edit",
       "feature-teams:approve",
       "restricted:view",
+      "restricted:edit",
       "confidential:view",
+      "confidential:edit",
       "hiring-plan:view",
+      "hiring-plan:edit",
       "hiring-plan:approve",
       "configuration:view",
+      "configuration:edit",
       "configuration:approve",
       "drafts:submit",
       "drafts:approve-own",
+      "accounts:view",
+      "roles:view",
+      "settings:view",
+      "history:view",
       "changes:view",
     ],
   ],
@@ -125,16 +153,22 @@ const expected: [Role, Permission[]][] = [
       "changes:view",
     ],
   ],
+  // Every view, and nothing that changes or approves.
   [
     "executive",
     [
       "plan:view",
       "allocations:view",
-      "org-chart:view",
       "people:view",
+      "org-chart:view",
       "restricted:view",
       "confidential:view",
       "hiring-plan:view",
+      "configuration:view",
+      "accounts:view",
+      "roles:view",
+      "settings:view",
+      "history:view",
       "changes:view",
     ],
   ],
@@ -153,7 +187,15 @@ const expected: [Role, Permission[]][] = [
   // Running Fathom needs no access to people data or the plan.
   [
     "administrator",
-    ["accounts:manage", "roles:edit", "settings:edit", "history:view"],
+    [
+      "accounts:view",
+      "accounts:manage",
+      "roles:view",
+      "roles:edit",
+      "settings:view",
+      "settings:edit",
+      "history:view",
+    ],
   ],
 ];
 

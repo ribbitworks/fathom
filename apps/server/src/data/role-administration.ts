@@ -23,6 +23,7 @@ import {
   type RoleChange,
   type RoleRequest,
   type RoleSummary,
+  sameGrants,
   withImplied,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, isNull, ne, sql } from "drizzle-orm";
@@ -164,7 +165,7 @@ export function createRoleAdministration(
   return {
     async listRoles(actor) {
       // Those who manage accounts choose from every role, so they read them too.
-      requireAnyPermission(actor, ["roles:edit", "accounts:manage"]);
+      requireAnyPermission(actor, ["roles:view", "accounts:manage"]);
       return readRoles(database);
     },
 
@@ -255,10 +256,7 @@ export function createRoleAdministration(
       const role = await readRole(database, id);
       const before = withImplied(role.permissions);
       const after = withImplied(permissions);
-      const same =
-        before.length === after.length &&
-        before.every((permission) => after.includes(permission));
-      if (same) return { effects: [] };
+      if (sameGrants(before, after)) return { effects: [] };
       // Each account holds one role, so a change to it changes every active holder alike.
       const holders = await database
         .select({ id: users.id, name: users.name, email: users.email })

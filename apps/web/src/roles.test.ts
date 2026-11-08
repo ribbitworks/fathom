@@ -115,7 +115,7 @@ describe("what a change to an account's permissions does", () => {
     expect(
       difference(
         ["changes:view"],
-        ["changes:view", "people:view", "roles:edit"],
+        ["changes:view", "people:view", "roles:view", "roles:edit"],
       ),
     ).toEqual({
       gains: [
@@ -123,6 +123,7 @@ describe("what a change to an account's permissions does", () => {
         "Sees the Drafts page.",
         "Sees the Roles page.",
         allows("people:view"),
+        allows("roles:view"),
         allows("roles:edit"),
       ],
       losses: [],

@@ -28,7 +28,7 @@ async function fillIn(email: string, password: string) {
 const administratorOnly = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["accounts:manage", "history:view"],
+    permissions: ["accounts:view", "accounts:manage", "history:view"],
   });
 
 afterEach(() => {

@@ -4,7 +4,7 @@
 // and the recipe for the passwords Fathom makes for new accounts and resets. A recipe whose
 // passwords would break the rules, or that uses no characters at all, cannot be saved, and says
 // why. Saved at once, for everyone, and recorded in the access history; a tighter rule applies
-// from each person's next change of password.
+// from each person's next change of password. Those who may not change settings see them read only.
 
 import {
   type CharacterKind,
@@ -109,8 +109,10 @@ const rangeProblem = ({ minimum, maximum }: Range) =>
 
 export function PasswordSettingsPanel({
   passwords,
+  canEdit,
 }: {
   passwords: PasswordSettings;
+  canEdit: boolean;
 }) {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -151,6 +153,7 @@ export function PasswordSettingsPanel({
             max={passwordLength.maximum}
             allowDecimal={false}
             allowNegative={false}
+            readOnly={!canEdit}
             value={draft.minimumLength}
             onChange={(minimumLength) => {
               change({ minimumLength });
@@ -162,6 +165,7 @@ export function PasswordSettingsPanel({
           />
           <Checkbox.Group
             label="Must have"
+            readOnly={!canEdit}
             value={draft.required}
             onChange={(required) => {
               change({ required });
@@ -189,6 +193,7 @@ export function PasswordSettingsPanel({
             max={generatedPasswordLength.maximum}
             allowDecimal={false}
             allowNegative={false}
+            readOnly={!canEdit}
             value={draft.length}
             onChange={(length) => {
               change({ length });
@@ -200,6 +205,7 @@ export function PasswordSettingsPanel({
           />
           <Checkbox.Group
             label="Use"
+            readOnly={!canEdit}
             value={draft.used}
             onChange={(used) => {
               change({ used });
@@ -217,6 +223,7 @@ export function PasswordSettingsPanel({
           </Checkbox.Group>
           <Checkbox
             label={`Leave out characters that look alike: ${spaced(lookAlikeCharacters)}`}
+            readOnly={!canEdit}
             checked={draft.avoidLookAlikes}
             onChange={(event) => {
               change({ avoidLookAlikes: event.currentTarget.checked });
@@ -241,15 +248,17 @@ export function PasswordSettingsPanel({
               )}
             </Alert>
           )}
-          <Group justify="flex-end">
-            <Button
-              type="submit"
-              loading={saving.isPending}
-              disabled={!settings.success || unchanged || problems.length > 0}
-            >
-              Save
-            </Button>
-          </Group>
+          {canEdit && (
+            <Group justify="flex-end">
+              <Button
+                type="submit"
+                loading={saving.isPending}
+                disabled={!settings.success || unchanged || problems.length > 0}
+              >
+                Save
+              </Button>
+            </Group>
+          )}
         </Stack>
       </form>
     </Paper>

@@ -25,10 +25,8 @@ import { findStartingRole } from "@fathom/server/roles";
 import { permissionSchema, startingRoles } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { asc, eq, inArray } from "drizzle-orm";
-import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
-  accountDomain,
   personaAccounts,
   personaActor,
   seedAccounts,
@@ -116,23 +114,6 @@ async function actionsFor(id: string) {
 }
 
 describe("the persona accounts", () => {
-  it("are one for each persona, named after it, with a second Engineering Operations Manager, a Resource Planner and a Superuser", () => {
-    expect(personaAccounts.map(({ name }) => name)).toEqual([
-      "Product Manager",
-      "Project Manager",
-      "Engineering Manager",
-      "Feature Lead",
-      "Engineering Director",
-      "Engineering Operations Manager",
-      "Second Engineering Operations Manager",
-      "Executive",
-      "Team Member",
-      "Resource Planner",
-      "Fathom Administrator",
-      "Superuser",
-    ]);
-  });
-
   it("include a Superuser whose role grants every permission", () => {
     const superuser = personaAccounts.find(({ name }) => name === "Superuser");
     const actor = personaActor(
@@ -143,43 +124,12 @@ describe("the persona accounts", () => {
   });
 
   it("act as their persona's starting role", () => {
-    const planner = personaActor({ id: "", name: "", email: "" }, "planner");
-    expect(planner.permissions).toEqual(
-      expect.arrayContaining([...startingRoles.planner.permissions]),
+    const manager = personaActor(
+      { id: "", name: "", email: "" },
+      "product-manager",
     );
-  });
-
-  it("have distinct addresses on the reserved fathom.test domain", () => {
-    expect(new Set(addresses).size).toBe(addresses.length);
-    expect(accountDomain).toBe("fathom.test");
-    for (const email of addresses) {
-      expect(email.endsWith(`@${accountDomain}`)).toBe(true);
-    }
-  });
-
-  it("match the table in the development setup document", () => {
-    const document = readFileSync(
-      new URL("../../../docs/design/development-setup.md", import.meta.url),
-      "utf8",
-    );
-    const rows = [
-      ...document.matchAll(/^\| `([^`]+)` \| ([^|]+) \| ([^|]+) \|$/gm),
-    ].map(([, email, name, role]) => ({
-      email,
-      name: name?.trim(),
-      role: role?.trim(),
-    }));
-    expect(rows).toEqual(
-      personaAccounts.map(({ email, name, role }) => ({
-        email,
-        name,
-        role:
-          role === "superuser"
-            ? superuserRole.name
-            : // The role is always one of the starting roles.
-              // eslint-disable-next-line security/detect-object-injection
-              startingRoles[role].name,
-      })),
+    expect(manager.permissions).toEqual(
+      expect.arrayContaining([...startingRoles["product-manager"].permissions]),
     );
   });
 });

@@ -186,7 +186,7 @@ const routes: Route[] = [
   // Answers who is signed in, or that no one is.
   { method: "GET", pattern: "/api/session", needs: open },
 
-  { method: "GET", pattern: "/api/accounts", needs: allOf("accounts:manage") },
+  { method: "GET", pattern: "/api/accounts", needs: allOf("accounts:view") },
   {
     method: "POST",
     pattern: "/api/accounts",
@@ -227,7 +227,7 @@ const routes: Route[] = [
   {
     method: "GET",
     pattern: "/api/roles",
-    needs: anyOf("roles:edit", "accounts:manage"),
+    needs: anyOf("roles:view", "accounts:manage"),
   },
   {
     method: "POST",

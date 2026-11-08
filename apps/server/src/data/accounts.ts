@@ -2,8 +2,8 @@
 
 // Local accounts that sign in with a password: creating them, with the one role each holds, the
 // passwords Fathom generates for them, which their users must change at first sign-in, and the
-// administration that needs the accounts:manage permission, which lists accounts, changes their
-// names, email addresses, and role, resets their passwords, and deactivates them. Administrators
+// administration of them: those who see accounts list them, and those who manage them change their
+// names, email addresses, and role, reset their passwords, and deactivate them. Administrators
 // manage their own account like any other, except that some active account must keep the
 // permissions to manage accounts and to edit roles, so no one can lock everyone out, and nobody
 // resets their own password here.
@@ -335,7 +335,7 @@ export function createAccountAdministration(
 
   return {
     async listAccounts(actor) {
-      requirePermission(actor, "accounts:manage");
+      requirePermission(actor, "accounts:view");
       const rows = await database
         .select({ id: users.id })
         .from(users)

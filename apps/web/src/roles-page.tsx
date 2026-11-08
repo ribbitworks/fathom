@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Roles page, for users who may edit roles: every role with what it is for and how many active
-// accounts hold it, and a dialog to create a role, from nothing or as a copy of another, or to
-// change one, or to put a starting role back to Fathom's own version. The dialog sets what a role
-// grants in a grid of areas and actions, beside the result in plain English: the pages its holders
-// see, what they can and cannot do, and any permission that does nothing without another. Before a
-// change to a role held by accounts is saved, the dialog lists what each account would gain and
-// lose, to be confirmed. A dialog cannot be closed while its change is being saved, and shows
-// plainly why a change was refused, such as when someone else changed the role after it was opened.
+// The Roles page, for users who may see roles: every role with what it is for and how many active
+// accounts hold it, and a dialog showing what each grants, read only for those who may not edit
+// roles. Those who may edit roles create a role, from nothing or as a copy of another, change one,
+// or put a starting role back to Fathom's own version. The dialog sets what a role grants in a grid
+// of areas and actions, beside the result in plain English: the pages its holders see, what they
+// can and cannot do, and any permission that does nothing without another. A starting role's
+// summary of what it grants is emptied once what it grants changes, to be written again or left
+// empty, and comes back with the rest of Fathom's version. Before a change to a role held by
+// accounts is saved, the dialog lists what each account would gain and lose, to be confirmed. A
+// dialog cannot be closed while its change is being saved, and shows plainly why a change was
+// refused, such as when someone else changed the role after it was opened.
 
 import {
   gridActions,
@@ -19,6 +22,7 @@ import {
   roleRequestSchema,
   roleSchema,
   type RoleSummary,
+  sameGrants,
   startingRoles,
   unbuiltPermissions,
 } from "@fathom/shared";
@@ -65,7 +69,9 @@ import {
 import { type SignedInUser, sessionQuery } from "./session.ts";
 
 type Dialog =
-  { kind: "create"; from?: RoleSummary } | { kind: "edit"; role: RoleSummary };
+  | { kind: "create"; from?: RoleSummary }
+  | { kind: "edit"; role: RoleSummary }
+  | { kind: "view"; role: RoleSummary };
 
 const detailsSchema = roleRequestSchema.pick({ name: true, description: true });
 
@@ -229,6 +235,8 @@ function useChangingLines(items: readonly string[]): Line[] {
   return lines;
 }
 
+// Whether two lists grant the same permissions, whatever their order.
+// The grid of what a role grants, read only without a way to change it.
 function PermissionGrid({
   granted,
   disabled,
@@ -236,7 +244,7 @@ function PermissionGrid({
 }: {
   granted: readonly Permission[];
   disabled: boolean;
-  onChange: (granted: Permission[]) => void;
+  onChange?: (granted: Permission[]) => void;
 }) {
   // The notes under the grid, which screen readers hear with it.
   const notes = useId();
@@ -297,14 +305,20 @@ function PermissionGrid({
                           comesWith !== undefined
                         }
                         disabled={disabled || comesWith !== undefined}
-                        onChange={(event) => {
-                          const on = event.currentTarget.checked;
-                          onChange(
-                            on
-                              ? [...granted, permission]
-                              : granted.filter((other) => other !== permission),
-                          );
-                        }}
+                        readOnly={onChange === undefined}
+                        onChange={
+                          onChange &&
+                          ((event) => {
+                            const on = event.currentTarget.checked;
+                            onChange(
+                              on
+                                ? [...granted, permission]
+                                : granted.filter(
+                                    (other) => other !== permission,
+                                  ),
+                            );
+                          })
+                        }
                       />
                     </Table.Td>
                   );
@@ -459,13 +473,40 @@ function Effects({
   );
 }
 
+// What a role grants, for those who may see roles but not edit them.
+function RoleView({ role, onDone }: { role: RoleSummary; onDone: () => void }) {
+  return (
+    <Stack>
+      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+        <Stack>
+          <TextInput label="Name" value={role.name} readOnly />
+          <Textarea
+            label="What it is for"
+            autosize
+            minRows={2}
+            value={role.description}
+            readOnly
+          />
+          <PermissionGrid granted={role.permissions} disabled={false} />
+        </Stack>
+        <Summary granted={role.permissions} />
+      </SimpleGrid>
+      <Group justify="flex-end">
+        <Button variant="default" data-autofocus onClick={onDone}>
+          Close
+        </Button>
+      </Group>
+    </Stack>
+  );
+}
+
 function RoleForm({
   dialog,
   userId,
   onDone,
   onBusy,
 }: {
-  dialog: Dialog;
+  dialog: Exclude<Dialog, { kind: "view" }>;
   userId: string;
   onDone: () => void;
   onBusy: (busy: boolean) => void;
@@ -538,10 +579,33 @@ function RoleForm({
   });
   const asStarted =
     starting !== undefined &&
-    name === starting.name &&
-    description === starting.description &&
-    granted.length === starting.permissions.length &&
-    granted.every((permission) => starting.permissions.includes(permission));
+    name === starting.template.name &&
+    description === starting.template.description &&
+    sameGrants(granted, starting.template.permissions);
+  // Whether a starting role's summary was emptied because what it grants changed.
+  const [summaryGone, setSummaryGone] = useState(false);
+
+  // A starting role's summary fits only what it granted when the summary was written: as saved, or
+  // as Fathom's version. Once what it grants changes, a summary nobody has rewritten is emptied,
+  // and comes back if what it grants is put back.
+  const changeGranted = (next: Permission[]) => {
+    if (starting !== undefined) {
+      const { saved, template } = starting;
+      const summaryFor = (grants: readonly Permission[]) =>
+        sameGrants(grants, template.permissions)
+          ? template.description
+          : sameGrants(grants, saved.permissions)
+            ? saved.description
+            : "";
+      const current = form.getValues("description");
+      const fitting = summaryFor(next);
+      if (current === summaryFor(granted) && fitting !== current) {
+        form.setValue("description", fitting, { shouldDirty: true });
+        setSummaryGone(fitting === "");
+      }
+    }
+    setGranted(next);
+  };
 
   // A change to a role that changes what some account may do is confirmed first.
   const submit = form.handleSubmit(async (details) => {
@@ -609,6 +673,11 @@ function RoleForm({
               autosize
               minRows={2}
               disabled={busy}
+              description={
+                summaryGone &&
+                description === "" &&
+                "What the role grants changed, so its old summary is gone."
+              }
               error={
                 errors.description && `${String(errors.description.message)}.`
               }
@@ -617,7 +686,7 @@ function RoleForm({
             <PermissionGrid
               granted={granted}
               disabled={busy}
-              onChange={setGranted}
+              onChange={changeGranted}
             />
           </Stack>
           <Summary granted={granted} />
@@ -633,11 +702,13 @@ function RoleForm({
                 variant="default"
                 disabled={busy || asStarted}
                 onClick={() => {
-                  form.setValue("name", starting.name, { shouldDirty: true });
-                  form.setValue("description", starting.description, {
+                  const { template } = starting;
+                  form.setValue("name", template.name, { shouldDirty: true });
+                  form.setValue("description", template.description, {
                     shouldDirty: true,
                   });
-                  setGranted([...starting.permissions]);
+                  setGranted([...template.permissions]);
+                  setSummaryGone(false);
                 }}
               >
                 Restore template
@@ -650,19 +721,28 @@ function RoleForm({
   );
 }
 
-// Fathom's own version of the starting role a dialog edits, if it edits one.
+// The starting role a dialog edits, if it edits one, as saved, with Fathom's own version of it.
 function startingVersion(dialog: Dialog) {
   if (dialog.kind !== "edit") return undefined;
   const key = roleSchema.safeParse(dialog.role.key);
-  return key.success ? startingRoles[key.data] : undefined;
+  return key.success
+    ? { saved: dialog.role, template: startingRoles[key.data] }
+    : undefined;
 }
 
 function dialogTitle(dialog: Dialog): string {
+  if (dialog.kind === "view") return dialog.role.name;
   if (dialog.kind === "edit") return `Edit ${dialog.role.name}`;
   return dialog.from === undefined ? "New role" : `Copy ${dialog.from.name}`;
 }
 
-export function RolesPage({ user }: { user: SignedInUser }) {
+export function RolesPage({
+  user,
+  canEdit,
+}: {
+  user: SignedInUser;
+  canEdit: boolean;
+}) {
   const roles = useQuery(rolesQuery);
   // The dialog stays set while it closes, so its content does not vanish mid-animation.
   const [dialog, setDialog] = useState<Dialog>();
@@ -681,13 +761,15 @@ export function RolesPage({ user }: { user: SignedInUser }) {
       <PageHeader
         title="Roles"
         action={
-          <Button
-            onClick={() => {
-              open({ kind: "create" });
-            }}
-          >
-            New role
-          </Button>
+          canEdit && (
+            <Button
+              onClick={() => {
+                open({ kind: "create" });
+              }}
+            >
+              New role
+            </Button>
+          )
         }
       />
       {roles.isPending && <Loader role="status" aria-label="Loading" />}
@@ -721,28 +803,43 @@ export function RolesPage({ user }: { user: SignedInUser }) {
                     </Table.Td>
                     <Table.Td>{count(role.accounts)}</Table.Td>
                     <Table.Td>
-                      <Group gap="xs" wrap="nowrap" justify="flex-end">
-                        <Button
-                          variant="default"
-                          size="xs"
-                          aria-label={`Edit ${role.name}`}
-                          onClick={() => {
-                            open({ kind: "edit", role });
-                          }}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="xs"
-                          aria-label={`Copy ${role.name}`}
-                          onClick={() => {
-                            open({ kind: "create", from: role });
-                          }}
-                        >
-                          Copy
-                        </Button>
-                      </Group>
+                      {canEdit ? (
+                        <Group gap="xs" wrap="nowrap" justify="flex-end">
+                          <Button
+                            variant="default"
+                            size="xs"
+                            aria-label={`Edit ${role.name}`}
+                            onClick={() => {
+                              open({ kind: "edit", role });
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="xs"
+                            aria-label={`Copy ${role.name}`}
+                            onClick={() => {
+                              open({ kind: "create", from: role });
+                            }}
+                          >
+                            Copy
+                          </Button>
+                        </Group>
+                      ) : (
+                        <Group justify="flex-end">
+                          <Button
+                            variant="default"
+                            size="xs"
+                            aria-label={`View ${role.name}`}
+                            onClick={() => {
+                              open({ kind: "view", role });
+                            }}
+                          >
+                            View
+                          </Button>
+                        </Group>
+                      )}
                     </Table.Td>
                   </Table.Tr>
                 ))}
@@ -760,7 +857,10 @@ export function RolesPage({ user }: { user: SignedInUser }) {
         withCloseButton={!busy}
         title={dialog && dialogTitle(dialog)}
       >
-        {dialog && (
+        {dialog?.kind === "view" && (
+          <RoleView role={dialog.role} onDone={close} />
+        )}
+        {dialog !== undefined && dialog.kind !== "view" && (
           <RoleForm
             key={JSON.stringify(dialog)}
             dialog={dialog}

@@ -685,7 +685,7 @@ describe("the seed command", () => {
       "Added unpublished changes made by the personas",
       "The fictional data is already in the database",
       "The fictional data is already in the database",
-      "Discarded 4 unpublished changes made by the personas",
+      "Discarded 5 unpublished changes made by the personas",
       "Discarded 3 drafts of planned hires",
       "Discarded 5 drafts made by the personas",
       "Discarded 17 drafts of lists and columns made by the personas",

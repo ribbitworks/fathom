@@ -20,7 +20,7 @@ import {
 const roleEditor = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["roles:edit", "plan:view"],
+    permissions: ["roles:view", "roles:edit", "plan:view"],
   });
 
 const teamMemberRole = {
@@ -29,12 +29,7 @@ const teamMemberRole = {
   name: "Team Member",
   description:
     "Sees the plan, including everyone's work assignments, and the org chart.",
-  permissions: [
-    "plan:view",
-    "allocations:view",
-    "org-chart:view",
-    "changes:view",
-  ],
+  permissions: ["plan:view", "allocations:view", "org-chart:view"],
   accounts: 3,
   updatedAt: "2026-11-01T12:00:00.000Z",
 };
@@ -956,7 +951,7 @@ describe("restoring a starting role", () => {
     expect(box(dialog, "View Plan").checked).toBe(true);
     expect(box(dialog, "View Allocations, not built yet").checked).toBe(true);
     expect(box(dialog, "View Org chart").checked).toBe(true);
-    expect(box(dialog, "View Change history").checked).toBe(true);
+    expect(box(dialog, "View Change history").checked).toBe(false);
     expect(box(dialog, "View People").checked).toBe(false);
     expect(
       within(dialog).getByRole<HTMLButtonElement>("button", {
@@ -966,5 +961,197 @@ describe("restoring a starting role", () => {
     expect(
       fetch.mock.calls.filter(([, init]) => init?.method !== undefined),
     ).toEqual([]);
+  });
+});
+
+describe("seeing roles without editing them", () => {
+  const roleViewer = () =>
+    Response.json({ ...fictionalUser, permissions: ["roles:view"] });
+
+  it("starts on the page, which offers each role only to view", async () => {
+    // Given
+    serverAnswers({
+      "GET /api/session": roleViewer,
+      "GET /api/roles": roleList,
+    });
+    // When
+    const history = renderApp("/");
+    // Then
+    await screen.findByText("Fictional Auditors");
+    expect(history.location.pathname).toBe("/roles");
+    expect(
+      screen
+        .getAllByRole("link", { name: "Roles" })
+        .map((link) => link.getAttribute("href")),
+    ).toContain("/roles");
+    expect(screen.queryByRole("button", { name: "New role" })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Edit Fictional Auditors" }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: "Copy Fictional Auditors" }),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "View Team Member" }),
+    ).toBeDefined();
+  });
+
+  it("shows what a role grants read only, and closes", async () => {
+    // Given
+    const fetch = serverAnswers({
+      "GET /api/session": roleViewer,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    // When
+    const dialog = await openDialog(
+      "View Fictional Auditors",
+      "Fictional Auditors",
+    );
+    // Then
+    const name = within(dialog).getByLabelText<HTMLInputElement>("Name");
+    expect([name.value, name.readOnly]).toEqual(["Fictional Auditors", true]);
+    const purpose =
+      within(dialog).getByLabelText<HTMLTextAreaElement>("What it is for");
+    expect([purpose.value, purpose.readOnly]).toEqual([
+      auditors.description,
+      true,
+    ]);
+    await userEvent.click(box(dialog, "View People"));
+    await userEvent.click(box(dialog, "View Change history"));
+    expect(box(dialog, "View People").checked).toBe(true);
+    expect(box(dialog, "View Change history").checked).toBe(false);
+    expect(summaryLines(dialog, "Pages its holders see")).toContain("People");
+    expect(within(dialog).queryByRole("button", { name: "Save" })).toBeNull();
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Close" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(
+      fetch.mock.calls.filter(([, init]) => init?.method !== undefined),
+    ).toEqual([]);
+  });
+});
+
+describe("a starting role's summary", () => {
+  const purpose = (dialog: HTMLElement) =>
+    within(dialog).getByLabelText<HTMLTextAreaElement>("What it is for");
+  const gone = "What the role grants changed, so its old summary is gone.";
+
+  it("is emptied once what the role grants changes, and saved empty", async () => {
+    // Given
+    const fetch = serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+      "POST /api/roles/00000000-0000-4000-8000-000000000001/effects": () =>
+        Response.json({ effects: [] }),
+      "PUT /api/roles/00000000-0000-4000-8000-000000000001": () =>
+        Response.json({ role: teamMemberRole }),
+    });
+    renderApp("/roles");
+    const dialog = await openDialog("Edit Team Member", "Edit Team Member");
+    // When
+    await userEvent.click(box(dialog, "View People"));
+    await userEvent.click(box(dialog, "View Change history"));
+    // Then
+    expect(purpose(dialog).value).toBe("");
+    expect(within(dialog).getByText(gone)).toBeDefined();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(await screen.findByText("The role has been changed.")).toBeDefined();
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/roles/00000000-0000-4000-8000-000000000001",
+      expect.objectContaining({
+        body: JSON.stringify({
+          name: "Team Member",
+          description: "",
+          permissions: [
+            ...teamMemberRole.permissions,
+            "people:view",
+            "changes:view",
+          ],
+          updatedAt: teamMemberRole.updatedAt,
+        }),
+      }),
+    );
+  });
+
+  it("takes a new summary, which a further change keeps", async () => {
+    // Given
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    const dialog = await openDialog("Edit Team Member", "Edit Team Member");
+    await userEvent.click(box(dialog, "View People"));
+    // When
+    await userEvent.type(purpose(dialog), "Sees people.");
+    await userEvent.click(box(dialog, "View People"));
+    // Then
+    expect(purpose(dialog).value).toBe("Sees people.");
+    expect(within(dialog).queryByText(gone)).toBeNull();
+  });
+
+  it("comes back once what the role grants is put back as saved", async () => {
+    // Given a starting role changed since Fathom made it
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": () =>
+        Response.json({
+          roles: [
+            {
+              ...teamMemberRole,
+              description: "Watches.",
+              permissions: ["people:view"],
+            },
+          ],
+        }),
+    });
+    renderApp("/roles");
+    const dialog = await openDialog("Edit Team Member", "Edit Team Member");
+    // When
+    await userEvent.click(box(dialog, "View People"));
+    expect(purpose(dialog).value).toBe("");
+    await userEvent.click(box(dialog, "View People"));
+    // Then
+    expect(purpose(dialog).value).toBe("Watches.");
+    expect(within(dialog).queryByText(gone)).toBeNull();
+  });
+
+  it("comes back with the rest of Fathom's version", async () => {
+    // Given
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    const dialog = await openDialog("Edit Team Member", "Edit Team Member");
+    await userEvent.click(box(dialog, "View People"));
+    // When
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "Restore template" }),
+    );
+    // Then
+    expect(purpose(dialog).value).toBe(teamMemberRole.description);
+    expect(within(dialog).queryByText(gone)).toBeNull();
+  });
+
+  it("is not emptied for a role made later", async () => {
+    // Given
+    serverAnswers({
+      "GET /api/session": roleEditor,
+      "GET /api/roles": roleList,
+    });
+    renderApp("/roles");
+    const dialog = await openDialog(
+      "Edit Fictional Auditors",
+      "Edit Fictional Auditors",
+    );
+    // When
+    await userEvent.click(box(dialog, "View Change history"));
+    // Then
+    expect(purpose(dialog).value).toBe(auditors.description);
   });
 });

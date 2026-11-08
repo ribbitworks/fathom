@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Settings page, for users who may change settings for the whole of Fathom: its time zone, which
+// The Settings page, for users who may see settings for the whole of Fathom: its time zone, which
 // decides which day is today for everyone, such as the Today line on the Releases timeline and the
-// date a change takes effect when none is given, and the password settings. Each change is saved at
-// once, for everyone, and recorded in the access history.
+// date a change takes effect when none is given, and the password settings. Those who may change
+// settings save each change at once, for everyone, and it is recorded in the access history; anyone
+// else sees them read only.
 
 import {
   knowsTimeZone,
@@ -66,9 +67,11 @@ function useNow(): Date {
 export function SettingsPage({
   timeZone,
   passwords,
+  canEdit,
 }: {
   timeZone: string;
   passwords: PasswordSettings;
+  canEdit: boolean;
 }) {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -105,6 +108,7 @@ export function SettingsPage({
               data={choices}
               value={chosen}
               searchable
+              readOnly={!canEdit}
               allowDeselect={false}
               nothingFoundMessage="No time zone has that name"
               onOptionSubmit={setChosen}
@@ -122,19 +126,21 @@ export function SettingsPage({
                 )}
               </Alert>
             )}
-            <Group justify="flex-end">
-              <Button
-                type="submit"
-                loading={changing.isPending}
-                disabled={chosen === timeZone}
-              >
-                Save
-              </Button>
-            </Group>
+            {canEdit && (
+              <Group justify="flex-end">
+                <Button
+                  type="submit"
+                  loading={changing.isPending}
+                  disabled={chosen === timeZone}
+                >
+                  Save
+                </Button>
+              </Group>
+            )}
           </Stack>
         </form>
       </Paper>
-      <PasswordSettingsPanel passwords={passwords} />
+      <PasswordSettingsPanel passwords={passwords} canEdit={canEdit} />
     </Stack>
   );
 }

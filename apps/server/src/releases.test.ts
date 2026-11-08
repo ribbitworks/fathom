@@ -35,7 +35,7 @@ let approver: { id: string; cookie: string };
 beforeAll(async () => {
   test = await startTestApp();
   configurer = await test.signedIn("workforce-administrator");
-  planner = await test.signedIn("planner");
+  planner = await test.signedIn("product-manager");
   viewer = await test.signedIn("team-member");
   approver = await test.signedIn("project-manager");
 });
@@ -1239,7 +1239,8 @@ describe("drafts of streams, patterns, and releases", () => {
       name: "Fictional Named Release",
       ...firstHalf,
     });
-    const response = await test.request(viewer.cookie, "GET", "/api/changes");
+    const reader = await test.signedIn(["plan:view", "changes:view"]);
+    const response = await test.request(reader.cookie, "GET", "/api/changes");
     const { entries } = response.json<ChangeHistory>();
     expect(
       entries

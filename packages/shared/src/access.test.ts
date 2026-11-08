@@ -9,6 +9,7 @@ import {
   permissionGrid,
   permissionLabel,
   permissionSchema,
+  sameGrants,
   startingRoles,
   withImplied,
 } from "./access.ts";
@@ -71,6 +72,19 @@ describe("withImplied", () => {
   });
 });
 
+describe("sameGrants", () => {
+  it("holds lists of the same permissions alike, whatever their order", () => {
+    expect(
+      sameGrants(["plan:view", "plan:edit"], ["plan:edit", "plan:view"]),
+    ).toBe(true);
+  });
+
+  it("tells apart lists that differ in a permission or in length", () => {
+    expect(sameGrants(["plan:view"], ["plan:edit"])).toBe(false);
+    expect(sameGrants(["plan:view"], ["plan:view", "plan:edit"])).toBe(false);
+  });
+});
+
 describe("startingRoles", () => {
   it("name every starting role once, each granting known permissions", () => {
     const names = Object.values(startingRoles).map(({ name }) => name);
@@ -79,6 +93,34 @@ describe("startingRoles", () => {
       expect(withImplied(permissions)).toEqual(
         expect.arrayContaining([...permissions]),
       );
+    }
+  });
+  it("give the Engineering Director everything but managing accounts, editing roles, and changing settings", () => {
+    expect(
+      withImplied(startingRoles["engineering-director"].permissions),
+    ).toEqual(
+      permissionSchema.options.filter(
+        (permission) =>
+          !["accounts:manage", "roles:edit", "settings:edit"].includes(
+            permission,
+          ),
+      ),
+    );
+  });
+
+  it("give the Executive every view, and nothing that changes or approves", () => {
+    expect(withImplied(startingRoles.executive.permissions)).toEqual(
+      permissionSchema.options.filter((permission) =>
+        permission.endsWith(":view"),
+      ),
+    );
+  });
+
+  it("let every role that edits the plan edit features too, as editing the plan did before", () => {
+    for (const { permissions } of Object.values(startingRoles)) {
+      if (permissions.includes("plan:edit")) {
+        expect(permissions).toContain("features:edit");
+      }
     }
   });
 });

@@ -24,7 +24,8 @@ Verifies what only a person can judge of Note columns on the People table: how t
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It adds People's columns and changes people; its changes are drafts, and it cannot approve them.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It approves and rejects drafts, and sees people without being able to change them.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It changes people, and approves and rejects drafts.
+- **Executive account:** `executive@fathom.test`, shown in Fathom as **Executive**. It sees people, with all their details, without being able to change them.
 
 ## Common Procedures
 
@@ -173,12 +174,12 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 ### NOTE-05: A Note Is Read, Approved, and Recorded
 
-**Preconditions:** Run after NOTE-04. Publish (P3) as `engineering.operations.manager@fathom.test`, then sign in (P1) as `engineering.director@fathom.test`. **People** page open, with **Max Munk** searched for.
+**Preconditions:** Run after NOTE-04. Publish (P3) as `engineering.operations.manager@fathom.test`, then sign in (P1) as `executive@fathom.test`. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
   - **Expected:** The panel shows the note as it reads, with a close button, and nothing to change it with.
   - **Notes:**
 
-- [ ] **Step 2.** Press Esc, open **Drafts** from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
+- [ ] **Step 2.** Press Esc. Sign in (P1) as `engineering.director@fathom.test`, open **Drafts** from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
   - **Expected:** The draft and the history show the note's words without formatting, and read clearly.
   - **Notes:**

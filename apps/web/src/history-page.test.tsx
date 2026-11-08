@@ -17,7 +17,7 @@ import {
 const historyViewer = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["accounts:manage", "history:view"],
+    permissions: ["accounts:view", "accounts:manage", "history:view"],
   });
 
 const admin = { id: "user-1", name: "Fictional Person" };

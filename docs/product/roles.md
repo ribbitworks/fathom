@@ -8,49 +8,53 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 ## Starting Roles
 
 - **Team Member:** Sees the plan, including everyone's work assignments, and the org chart.
-- **Planner:** Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan. Held by Product Managers and Feature Leads.
+- **Product Manager:** Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, and approves or rejects drafts of the plan.
+- **Feature Lead:** Sees the plan and people's General details, edits features, estimates, and allocations, and proposes feature teams.
 - **Project Manager:** Edits the plan, sees people and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.
 - **Engineering Manager:** Edits the plan and allocations, sees people, with everyone's Restricted details, because people move between managers over time, and the hiring plan, colours teams on the org chart, and proposes feature teams.
-- **Engineering Director:** Edits the plan and allocations, sees people, with their Restricted and Confidential data and the hiring plan, and approves or rejects drafts of the data the role sees.
+- **Engineering Director:** Edits and approves the plan, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Restricted and Confidential data, and sees accounts, roles, settings, and the access history without changing them.
 - **Workforce Administrator:** Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Restricted and Confidential data. Held by Engineering Operations Managers.
-- **Executive:** Sees the plan, and people, with their Restricted and Confidential data and the hiring plan, without editing them.
+- **Executive:** Sees the plan, people, with their Restricted and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.
 - **Resource Planner:** Sees the plan and people's General details, and edits allocations across the whole plan. No persona holds it by default; it shows what a reader who sees people without their Restricted details sees.
-- **Administrator:** Manages user accounts, roles, and system settings, without access to the plan or people's data.
+- **Administrator:** Manages user accounts, roles, and system settings, and sees the access history, without access to the plan or people's data.
 
 ## What Each Role Can Do
 
-| Area | Team Member | Planner | Project Manager | Engineering Manager | Engineering Director | Workforce Administrator | Executive | Resource Planner | Administrator |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Plan: projects, proposals, features, milestones, releases and the cycles they include (**proposal**), products and customers (**proposal**), and estimates | View | Edit | Edit | Edit | Edit | View | View | View | None |
-| Allocations | View | View | View | Edit | Edit | View | View | Edit | None |
-| People, teams, and reporting lines (General) | None | None | View | View | View | Edit | View | View | None |
-| The org chart: who reports to whom, with each person's name, position, and team; a card shows the person's details beside it only for those who see people | View | View | View | View | View | View | View | View | None |
-| Teams' colours on the org chart, for every team until accounts are linked to people, then for Engineering Managers only the teams below them | None | None | None | Edit | None | Edit | None | None | None |
-| Feature teams (General), with seeing them coming with seeing the plan (**proposal**) | View | View | Approve | Propose | Approve | Edit | View | View | None |
-| Restricted employee details | None | None | None | View | View | Edit | View | None | None |
-| Confidential data | None | None | None | None | View | Edit | View | None | None |
-| The hiring plan: every planned hire, with its target date, drafts, and history (decided by the owner on 2026-11-07) | None | None | View | View | View | Edit | View | None | None |
-| Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | View | View | None |
-| Lists of choices, and People's columns and their order | None | None | View lists, decided by the owner on 2026-11-01 | None | View lists | Edit | None | None | None |
-| Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | Edit | None |
-| Approving drafts of the plan: features, projects, proposals, and the roadmap (not built yet) | None | None | Approve | None | Approve | None | None | None | None |
-| Approving drafts of releases, release streams, and cycle patterns | None | None | Approve | None | Approve | None | None | None | None |
-| Approving drafts of people, teams, and reporting lines | None | None | Approve | None | Approve | None | None | None | None |
-| Approving drafts of planned hires | None | None | Approve | None | Approve | None | None | None | None |
-| Approving drafts of lists of choices, and of People's columns and their order | None | None | Approve | None | Approve | None | None | None | None |
-| Approving drafts they changed themselves, in the areas they approve, which otherwise need another approver (decided by the owner on 2026-11-07) | None | None | None | None | Approve | None | None | None | None |
-| Change history, for the data the role sees (**proposal**) | View | View | View | View | View | View | View | View | None |
-| Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |
-| User accounts, the role each holds, and system settings | None | None | None | None | None | None | None | None | Edit |
-| Access history | None | None | None | None | None | None | None | None | View (**proposal**) |
+| Area | Team Member | Product Manager | Feature Lead | Project Manager | Engineering Manager | Engineering Director | Workforce Administrator | Executive | Resource Planner | Administrator |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Plan: projects, proposals, milestones, releases and the cycles they include (**proposal**), and products and customers (**proposal**) | View | Edit | View | Edit | Edit | Edit | View | View | View | None |
+| Features and their estimates, with Edit Features apart from Edit Plan, decided by the owner on 2026-11-07 (not built yet) | View | Edit | Edit | Edit | Edit | Edit | View | View | View | None |
+| Allocations | View | View | Edit | View | Edit | Edit | View | View | Edit | None |
+| People, teams, and reporting lines (General) | None | None | View | View | View | Edit | Edit | View | View | None |
+| The org chart: who reports to whom, with each person's name, position, and team; a card shows the person's details beside it only for those who see people | View | View | View | View | View | View | View | View | View | None |
+| Teams' colours on the org chart, for every team until accounts are linked to people, then for Engineering Managers only the teams below them | None | None | None | None | Edit | Edit | Edit | None | None | None |
+| Feature teams (General), with seeing them coming with seeing the plan (**proposal**) | View | View | Propose | Approve | Propose | Approve | Edit | View | View | None |
+| Restricted employee details | None | None | None | None | View | Edit | Edit | View | None | None |
+| Confidential data | None | None | None | None | None | Edit | Edit | View | None | None |
+| The hiring plan: every planned hire, with its target date, drafts, and history (decided by the owner on 2026-11-07) | None | None | None | View | View | Edit | Edit | View | None | None |
+| Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | View | None |
+| Lists of choices, and People's columns and their order | None | None | None | View lists, decided by the owner on 2026-11-01 | None | Edit | Edit | View lists | None | None |
+| Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | Edit | None |
+| Approving drafts of the plan: features, projects, proposals, and the roadmap (not built yet) | None | Approve | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts of releases, release streams, and cycle patterns | None | None | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts of people, teams, and reporting lines | None | None | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts of planned hires | None | None | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts of lists of choices, and of People's columns and their order | None | None | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts they changed themselves, in the areas they approve, which otherwise need another approver (decided by the owner on 2026-11-07) | None | None | None | None | None | Approve | None | None | None | None |
+| Change history, for the data the role sees (**proposal**) | None | View | View | View | View | View | View | View | View | None |
+| Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |
+| User accounts and the role each holds | None | None | None | None | None | View | None | View | None | Edit |
+| Roles, and what each grants | None | None | None | None | None | View | None | View | None | Edit |
+| System settings | None | None | None | None | None | View | None | View | None | Edit |
+| Access history | None | None | None | None | None | View | None | View | None | View (**proposal**) |
 
 Approving is granted area by area, and rejecting with it, as [Approving by area](decisions.md#people-and-privacy) records. Seeing data comes only from viewing permissions, never from approving. A user can approve only drafts whose values their role lets them see, so a draft holding a Restricted detail, such as an end date, needs an Approver whose role also sees Restricted data, such as the Engineering Director, and drafts of People's columns, and the values in them, need an Approver whose role sees people. Project Managers, who see people and the hiring plan, approve drafts of people's General details, of People's columns, and of planned hires, decided by the owner on 2026-11-07, and can approve feature teams too, which the owner accepted on 2026-10-31.
 
 **Proposal:** Seeing drafts is a permission of its own, like seeing the change history, so the Executive sees only approved data. Still open: whether the change history then leaves out edits to drafts for those who may not see drafts. Until it is agreed, the Executive sees drafts, as every role that sees the data does.
 
-The owner has decided that a role letting a user edit some data also lets them view it, so a Planner sees the plan and a Resource Planner sees allocations without being granted to view them as well. Feature teams are seen with the plan, so editing them grants no view of their own. Every starting role but Administrator sees the plan and allocations.
+The owner has decided that a role letting a user edit some data also lets them view it, so a Product Manager sees the plan and a Resource Planner sees allocations without being granted to view them as well. Feature teams are seen with the plan, so editing them grants no view of their own. Every starting role but Administrator sees the plan and allocations.
 
-Seeing people is kept to the roles that work with them, so Planners and Team Members do not see the People table; Project Managers see it, with the hiring plan, decided by the owner on 2026-11-07. They do see the org chart, with each person's name, position, and team, as the [Decisions Log](decisions.md#workforce) sets out. The choices of a list are seen by everyone who sees data drawn from it, such as People's columns, without seeing the Lists page.
+Seeing people is kept to the roles that work with them, so Product Managers and Team Members do not see the People table; Project Managers see it, with the hiring plan, decided by the owner on 2026-11-07. They do see the org chart, with each person's name, position, and team, as the [Decisions Log](decisions.md#workforce) sets out. The choices of a list are seen by everyone who sees data drawn from it, such as People's columns, without seeing the Lists page.
 
 ## Custom Fields and Tables
 
@@ -80,10 +84,10 @@ Seeing people is kept to the roles that work with them, so Planners and Team Mem
 
 | Persona | Role |
 | --- | --- |
-| Product Manager | Planner |
+| Product Manager | Product Manager |
 | Project Manager | Project Manager |
 | Engineering Manager | Engineering Manager |
-| Feature Lead | Planner |
+| Feature Lead | Feature Lead |
 | Engineering Director | Engineering Director |
 | Engineering Operations Manager | Workforce Administrator |
 | Executive | Executive |
@@ -96,4 +100,4 @@ How Project Managers give input on whether teams are in place is an open questio
 
 ## First Stage
 
-The first stage of the [Roadmap](roadmap.md) uses every starting role: Team Member, Planner, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive, Resource Planner, and Administrator.
+The first stage of the [Roadmap](roadmap.md) uses every starting role: Team Member, Product Manager, Feature Lead, Project Manager, Engineering Manager, Engineering Director, Workforce Administrator, Executive, Resource Planner, and Administrator.

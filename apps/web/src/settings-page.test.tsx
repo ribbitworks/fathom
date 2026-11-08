@@ -19,7 +19,7 @@ const settingsEditor =
   () =>
     Response.json({
       ...fictionalUser,
-      permissions: ["settings:edit", "plan:view"],
+      permissions: ["settings:view", "settings:edit", "plan:view"],
       settings: { ...fictionalUser.settings, timeZone },
     });
 
@@ -55,6 +55,41 @@ describe("who sees the Settings page", () => {
       await screen.findByRole("heading", { name: "Settings" }),
     ).toBeDefined();
     expect(history.location.pathname).toBe("/settings");
+  });
+
+  it("shows the settings read only to users who may only see them", async () => {
+    // Given
+    const fetch = serverAnswers({
+      "GET /api/session": () =>
+        Response.json({ ...fictionalUser, permissions: ["settings:view"] }),
+    });
+    // When
+    const history = renderApp("/");
+    // Then
+    const passwords = await screen.findByRole("region", { name: "Passwords" });
+    expect(history.location.pathname).toBe("/settings");
+    expect(screen.getByRole("link", { name: "Settings" })).toBeDefined();
+    expect(screen.queryByRole("button", { name: "Save" })).toBeNull();
+    expect(picker().readOnly).toBe(true);
+    await userEvent.type(picker(), "{Enter}");
+    const minimum = within(passwords).getByRole<HTMLInputElement>("textbox", {
+      name: "Minimum length",
+    });
+    expect(minimum.readOnly).toBe(true);
+    for (const name of [
+      "A digit",
+      "Leave out characters that look alike: I L O i l o 0 1",
+    ]) {
+      const box = within(passwords).getByRole<HTMLInputElement>("checkbox", {
+        name,
+      });
+      const before = box.checked;
+      await userEvent.click(box);
+      expect(box.checked).toBe(before);
+    }
+    expect(
+      fetch.mock.calls.filter(([, init]) => init?.method !== undefined),
+    ).toEqual([]);
   });
 
   it("is not shown to anyone else", async () => {

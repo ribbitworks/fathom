@@ -253,6 +253,13 @@
       "when": 1794101454732,
       "tag": "0035_approve_by_area",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794104736666,
+      "tag": "0036_starting_roles",
+      "breakpoints": true
     }
   ]
 }

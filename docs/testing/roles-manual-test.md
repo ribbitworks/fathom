@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English and its marks on what is not built yet, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, copying and creating roles, giving an account a role made later, the refusals, and the access history entries that changes leave. It also verifies the Settings page, where the Administrator changes Fathom's time zone.
+Verifies the Roles page: who sees it, the list of roles, the dialog that sets what a role grants with its summary in plain English and its marks on what is not built yet, the confirmation of what a change does to the accounts holding a role, restoring a starting role's template, the note when a starting role's grants change, copying and creating roles, giving an account a role made later, the refusals, and the access history entries that changes leave. It also verifies the Settings page, where the Administrator changes Fathom's time zone.
 
 ## Test Environment
 
@@ -81,7 +81,7 @@ Use before the first test case and after the last, so every role is as Fathom st
 
 Run the test cases in order. Start with R2. Check each step whose expected result you see, and write anything else under its notes.
 
-### ROLE-01: Only Those Who May Edit Roles See the Roles Page
+### ROLE-01: Only Those Who May See Roles See the Roles Page
 
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`.
 
@@ -102,7 +102,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`. **Roles** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the **Role** and **Accounts** columns from top to bottom.
-  - **Expected:** Administrator 1, Engineering Director 1, Engineering Manager 1, Executive 1, Planner 2, Project Manager 1, Resource Planner 1, Superuser 1, Team Member 1, Workforce Administrator 2. Each row ends with **Edit** and **Copy** buttons, and **New role** is at the top right.
+  - **Expected:** Administrator 1, Engineering Director 1, Engineering Manager 1, Executive 1, Feature Lead 1, Product Manager 1, Project Manager 1, Resource Planner 1, Superuser 1, Team Member 1, Workforce Administrator 2. Each row ends with **Edit** and **Copy** buttons, and **New role** is at the top right.
   - **Notes:**
 
 - [ ] **Step 2.** Read the **What it is for** column.
@@ -114,15 +114,15 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** As ROLE-02.
 
 - [ ] **Step 1.** Open the **Project Manager** role (P3).
-  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid. The ticked boxes are **View**, **Approve** and **Edit** on **Plan**, with **View** greyed; **Approve** on **Releases**; **View** on **Allocations**; **View** and **Approve** on **People**; **View** on **Org chart**; **View** and **Approve** on **Hiring plan**; **Approve** on **Feature teams**; **Draft** on **Drafts**; **View** and **Approve** on **Configuration**; and **View** on **Change history**. Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
+  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid. The ticked boxes are **View**, **Approve** and **Edit** on **Plan**, with **View** greyed; **Edit** on **Features**; **Approve** on **Releases**; **View** on **Allocations**; **View** and **Approve** on **People**; **View** on **Org chart**; **View** and **Approve** on **Hiring plan**; **Approve** on **Feature teams**; **Draft** on **Drafts**; **View** and **Approve** on **Configuration**; and **View** on **Change history**. Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Area** column, and the lines under the grid.
-  - **Expected:** **Allocations**, **Feature teams** and **Drafts** each carry a small grey **Not built yet** tag, and **Plan** carries **Approve not built yet**. No other area is tagged. A line under the grid reads **Fathom doesn't have what is marked Not built yet. A role can grant it now, and it works once it is built.**
+  - **Expected:** **Allocations**, **Features**, **Feature teams** and **Drafts** each carry a small grey **Not built yet** tag, and **Plan** carries **Approve not built yet**. No other area is tagged. A line under the grid reads **Fathom doesn't have what is marked Not built yet. A role can grant it now, and it works once it is built.**
   - **Notes:**
 
 - [ ] **Step 3.** Read the summary.
-  - **Expected:** **Pages its holders see** lists Overview, Projects, Releases, People, Org chart, Drafts, Capacity, Lists and Change history, with Projects and Capacity tagged **Not built yet**. **Can** names approving drafts of the plan, seeing allocations, approving feature teams, and making drafts of changes to the plan and allocations, each tagged **Not built yet**, and seeing the plan, changing the plan, approving drafts of releases, seeing people, approving drafts of people, seeing the org chart, seeing the hiring plan, approving drafts of planned hires, seeing configuration, approving drafts of configuration, and seeing the change history. Under **Cannot**, these lines are tagged **Not built yet**: **Cannot change allocations.**, **Cannot propose feature teams.**, and **Cannot change feature teams.** **Cannot** includes **Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**, with the tier colours, and not **The People page does not appear.**
+  - **Expected:** **Pages its holders see** lists Overview, Projects, Releases, People, Org chart, Drafts, Capacity, Lists and Change history, with Projects and Capacity tagged **Not built yet**. **Can** names approving drafts of the plan, seeing allocations, approving feature teams, and making drafts of changes to the plan and allocations, each tagged **Not built yet**, with changing features and estimates tagged too, and seeing the plan, changing the plan, approving drafts of releases, seeing people, approving drafts of people, seeing the org chart, seeing the hiring plan, approving drafts of planned hires, seeing configuration, approving drafts of configuration, and seeing the change history. Under **Cannot**, these lines are tagged **Not built yet**: **Cannot change allocations.**, **Cannot propose feature teams.**, and **Cannot change feature teams.** **Cannot** includes **Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**, with the tier colours, and not **The People page does not appear.**
   - **Notes:**
 
 - [ ] **Step 4.** Look at the foot of the dialog.
@@ -201,12 +201,32 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The confirmation lists the same account, under **Loses** with **The Access history page no longer appears.**; once saved, the green banner says **The role has been changed.**
   - **Notes:**
 
-### ROLE-08: Copying a Role
+### ROLE-08: A Starting Role's Summary Goes When What It Grants Changes
+
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-07. **Roles** page open.
+
+- [ ] **Step 1.** Open the **Executive** role (P3), and tick **Edit** on the **Plan** row.
+  - **Expected:** **What it is for** is empty, with a line under it reading **What the role grants changed, so its old summary is gone.** **Restore template** is turned on.
+  - **Notes:**
+
+- [ ] **Step 2.** Untick **Edit** on the **Plan** row.
+  - **Expected:** **What it is for** reads as it did before, and the line under it is gone.
+  - **Notes:**
+
+- [ ] **Step 3.** Tick **Edit** on the **Plan** row, then select **Restore template**.
+  - **Expected:** **What it is for** reads **Sees the plan, people, with their Restricted and Confidential data and the hiring plan, configuration, accounts, roles, settings, and both histories, without changing them.**, **Edit** on **Plan** is unticked, and **Restore template** is turned off.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Cancel**.
+  - **Expected:** The dialog closes, and the **Executive** row's **What it is for** is unchanged.
+  - **Notes:**
+
+### ROLE-09: Copying a Role
 
 **Preconditions:** **Roles** page open, signed in as `fathom.administrator@fathom.test`.
 
 - [ ] **Step 1.** Select **Copy** in the **Team Member** row.
-  - **Expected:** A dialog titled **Copy Team Member**, with the name **Copy of Team Member**, Team Member's description, and the same boxes ticked as Team Member: **View** on **Plan**, **Allocations**, **Org chart** and **Change history**. There is no **Restore template** button, and the main button is **Create role**.
+  - **Expected:** A dialog titled **Copy Team Member**, with the name **Copy of Team Member**, Team Member's description, and the same boxes ticked as Team Member: **View** on **Plan**, **Allocations** and **Org chart**. There is no **Restore template** button, and the main button is **Create role**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Create role**.
@@ -218,15 +238,15 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 4.** Select **Access history** in the left-hand menu.
-  - **Expected:** The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Allocations, View Org chart, View Change history. The latest says **changed the role** Copy of Team Member, granting View People.
+  - **Expected:** The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Allocations, View Org chart. The latest says **changed the role** Copy of Team Member, granting View People.
   - **Notes:**
 
-### ROLE-09: Giving an Account a Role Made Later
+### ROLE-10: Giving an Account a Role Made Later
 
-**Preconditions:** Signed in as `fathom.administrator@fathom.test`, after ROLE-08.
+**Preconditions:** Signed in as `fathom.administrator@fathom.test`, after ROLE-09.
 
 - [ ] **Step 1.** Select **Accounts** under **Administration** in the left-hand menu, and read the **Role** column.
-  - **Expected:** Each account shows one role: **Team Member** in the **Team Member** row, **Planner** in the **Product Manager** and **Feature Lead** rows, and **Administrator** in the **Fathom Administrator** row.
+  - **Expected:** Each account shows one role: **Team Member** in the **Team Member** row, **Product Manager** in the **Product Manager** row, **Feature Lead** in the **Feature Lead** row, and **Administrator** in the **Fathom Administrator** row.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Edit** in the **Team Member** row.
@@ -257,7 +277,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The first row is **Copy of Team Member**, with a sea-blue check before its name, and its description beside it. No other row has a check.
   - **Notes:**
 
-### ROLE-10: Names Must Differ
+### ROLE-11: Names Must Differ
 
 **Preconditions:** **Roles** page open, signed in (P1) as `fathom.administrator@fathom.test`.
 
@@ -277,7 +297,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The dialog closes, and no new role is in the list.
   - **Notes:**
 
-### ROLE-11: Nobody Can Lock Everyone Out
+### ROLE-12: Nobody Can Lock Everyone Out
 
 **Preconditions:** **Roles** page open, signed in as `fathom.administrator@fathom.test`.
 
@@ -301,7 +321,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** **Edit** on **Roles** is still ticked; nothing changed.
   - **Notes:**
 
-### ROLE-12: Changing Fathom's Time Zone
+### ROLE-13: Changing Fathom's Time Zone
 
 **Preconditions:** Signed in (P1) as `fathom.administrator@fathom.test`.
 

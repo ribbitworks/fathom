@@ -252,11 +252,11 @@ describe("stored roles", () => {
 describe("who may manage accounts", () => {
   // The access control pattern: every role on its own, allowed exactly when it grants the permission.
   it.each(roleSchema.options)(
-    "a %s may list accounts only if the role lets them manage accounts",
+    "a %s may list accounts only if the role lets them see accounts",
     async (role) => {
       const { cookie } = await signedIn(role);
       const response = await request(cookie, "GET", "/api/accounts");
-      if (rolesGranting("accounts:manage").includes(role)) {
+      if (rolesGranting("accounts:view").includes(role)) {
         expect(response.statusCode).toBe(200);
       } else {
         expect(response.statusCode).toBe(403);
@@ -330,13 +330,13 @@ describe("administering accounts", () => {
     const response = await request(cookie, "POST", "/api/accounts", {
       name: "Fictional Newcomer",
       email: "newcomer@example.test",
-      roleId: await roleId("planner"),
+      roleId: await roleId("product-manager"),
     });
     expect(response.statusCode).toBe(201);
     expect(response.json()).toMatchObject({
       account: {
         name: "Fictional Newcomer",
-        role: { id: await roleId("planner"), name: "Planner" },
+        role: { id: await roleId("product-manager"), name: "Product Manager" },
         active: true,
       },
       password: expect.stringMatching(/^[A-Za-z2-9]{20}$/u) as unknown,

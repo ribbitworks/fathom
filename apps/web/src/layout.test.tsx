@@ -23,7 +23,12 @@ import { firstPage } from "./layout.tsx";
 const administrator = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["plan:view", "accounts:manage", "history:view"],
+    permissions: [
+      "plan:view",
+      "accounts:view",
+      "accounts:manage",
+      "history:view",
+    ],
   });
 
 const sidebar = () => screen.getByRole("navigation", { name: "Sections" });
@@ -72,7 +77,7 @@ describe("the sidebar", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["accounts:manage", "history:view"],
+          permissions: ["accounts:view", "accounts:manage", "history:view"],
         }),
       "GET /api/accounts": () => Response.json({ accounts: [] }),
     });
@@ -110,7 +115,7 @@ describe("the sidebar", () => {
       "GET /api/session": () =>
         Response.json({
           ...fictionalUser,
-          permissions: ["plan:view", "roles:edit"],
+          permissions: ["plan:view", "roles:view", "roles:edit"],
         }),
       "GET /api/roles": () => Response.json({ roles: [] }),
     });
