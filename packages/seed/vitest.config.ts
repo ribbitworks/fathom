@@ -10,6 +10,8 @@ export default defineConfig({
     // The tests start a PostgreSQL container, which takes a few seconds.
     testTimeout: 60_000,
     hookTimeout: 120_000,
+    // Puts back what a test spied on, such as console.log, even when the test fails part way.
+    restoreMocks: true,
     coverage: {
       provider: "v8",
       include: ["src/**/*.ts"],

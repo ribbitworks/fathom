@@ -3,8 +3,8 @@
 
 # Runs everything 'pnpm check' covers side by side: ESLint without its cache, the formatting check,
 # type checking, Markdown, shell, PowerShell and licence linting, the script and package tests, and
-# the security report. Prints each job's output once it ends, then each job's result and time.
-# Fails if any job fails.
+# the security report. Prints each job's output once it ends, and at once any wait for another copy
+# of the repository, then each job's result and time. Fails if any job fails.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -30,6 +30,8 @@ jobs=(
 logs=""
 # The process of each job still running, emptied once it ends.
 pids=()
+# Whether each job's wait for another copy of the repository has been shown, as it waits.
+waits_shown=()
 results=()
 seconds=()
 
@@ -59,6 +61,7 @@ main() {
       if [ -s "$logs/$index.status" ]; then
         status="$(cat "$logs/$index.status")"
       elif kill -0 "${pids[index]}" 2>/dev/null; then
+        show_wait "$index"
         continue
       elif [ -s "$logs/$index.status" ]; then
         status="$(cat "$logs/$index.status")"
@@ -81,6 +84,16 @@ main() {
   done
 
   print_results "$(($(date +%s) - started))"
+}
+
+# Shows at once that a running job waits for another copy of the repository, such as for its turn to
+# run package tests, rather than only with the job's output once it ends.
+show_wait() {
+  local index="$1" waiting
+  [ -z "${waits_shown[index]:-}" ] || return 0
+  waiting="$(grep -m 1 '^Waiting to ' "$logs/$index.log" 2>/dev/null)" || return 0
+  waits_shown[index]=1
+  printf '==> %s: %s\n' "$(job_name "$index")" "$waiting"
 }
 
 job_name() { printf '%s\n' "${jobs[$1]%%|*}"; }

@@ -21,7 +21,7 @@
     "scan:images": "bash scripts/scan-images.sh",
     "test": "pnpm test:scripts && pnpm test:packages",
     "test:scripts": "node --test \"scripts/*.test.mjs\"",
-    "test:packages": "pnpm --recursive --parallel --no-bail --if-present test",
+    "test:packages": "node scripts/package-tests.mjs --recursive --parallel --no-bail --if-present test",
     "test:changed": "node scripts/test-changed.mjs",
     "updates": "bash scripts/check-updates.sh",
     "update:analyzer": "bash scripts/update-script-analyzer.sh",

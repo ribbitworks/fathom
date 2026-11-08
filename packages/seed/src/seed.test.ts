@@ -513,6 +513,13 @@ describe("the seed command", () => {
     };
   };
 
+  // Removes any fictional data an earlier test left, as one that stopped part way does.
+  async function withoutFictionalData() {
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    expect(await seedCommand(["unseed"], environment())).toBe(0);
+    vi.restoreAllMocks();
+  }
+
   it("seeds, says when it already has, and unseeds", async () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
     expect(await seedCommand(["seed"], environment())).toBe(0);
@@ -713,11 +720,10 @@ describe("the seed command", () => {
     expect(log.mock.calls.map(([line]) => line as string)).not.toContainEqual(
       expect.stringMatching(/^Discarded/),
     );
-    log.mockRestore();
   });
 
   it("makes every draft anew when the seed data is removed and added again", async () => {
-    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
     const ofLists = () =>
       connection
         .select()
@@ -751,10 +757,10 @@ describe("the seed command", () => {
     expect(await ofLists()).toHaveLength(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await seedCommand(["unseed"], environment())).toBe(0);
-    log.mockRestore();
   });
 
   it("stops before adding anything when sign-in settings or the accounts' password are missing or unusable", async () => {
+    await withoutFictionalData();
     const problems = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
@@ -772,10 +778,10 @@ describe("the seed command", () => {
       expect.stringMatching(/^error: Invalid server configuration: /),
       "error: The file FATHOM_SEED_PASSWORD_FILE names must hold a password of 12 to 128 characters",
     ]);
-    vi.restoreAllMocks();
   });
 
   it("says what went wrong: a wrong command, missing settings, or data in the way", async () => {
+    await withoutFictionalData();
     const problems = vi
       .spyOn(console, "error")
       .mockImplementation(() => undefined);
@@ -796,7 +802,6 @@ describe("the seed command", () => {
       "error: FATHOM_SEED_PASSWORD_FILE is not set",
       "error: A list, column, release stream, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
     ]);
-    vi.restoreAllMocks();
   });
 
   it("adds only the personas' accounts when asked, with no fictional data", async () => {
@@ -807,6 +812,5 @@ describe("the seed command", () => {
       personaAccounts.map(({ email }) => `Account ready: ${email}`),
     );
     expect(await totalOf(people)).toBe(before);
-    log.mockRestore();
   });
 });

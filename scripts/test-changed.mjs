@@ -7,9 +7,9 @@
 // lockfile, scripts/ or deploy/, so it runs every test.
 // Usage: node scripts/test-changed.mjs
 
-import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { changedPaths } from "./changed-paths.mjs";
+import { runPackageTests, runPnpm } from "./package-tests.mjs";
 
 function isDocumentation(path) {
   return path.endsWith(".md") || path.startsWith("docs/");
@@ -32,11 +32,6 @@ export function testsFor(paths) {
     : { kind: "none" };
 }
 
-function run(args) {
-  console.log(`==> pnpm ${args.join(" ")}`);
-  return spawnSync("pnpm", args, { stdio: "inherit" }).status === 0;
-}
-
 if (
   process.argv[1] &&
   import.meta.url === pathToFileURL(process.argv[1]).href
@@ -55,19 +50,20 @@ if (
     console.log("==> Only documentation changed, so no tests run");
   } else if (tests.kind === "everything") {
     console.log("==> Files outside the packages changed, so every test runs");
-    passed = run(["test"]);
+    passed = runPnpm(["test"]);
   } else {
     console.log(
       `==> Testing the scripts, ${tests.packages.join(", ")}, and the packages depending on them`,
     );
-    const scriptsPassed = run(["test:scripts"]);
-    const packagesPassed = run([
+    const scriptsPassed = runPnpm(["test:scripts"]);
+    const packageArgs = [
       ...tests.packages.flatMap((folder) => ["--filter", `...{./${folder}}`]),
       "--parallel",
       "--no-bail",
       "--if-present",
       "test",
-    ]);
+    ];
+    const packagesPassed = await runPackageTests(packageArgs);
     passed = scriptsPassed && packagesPassed;
   }
   process.exit(passed ? 0 : 1);

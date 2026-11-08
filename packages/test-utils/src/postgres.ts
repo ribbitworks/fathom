@@ -13,13 +13,22 @@ import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { cloneName } from "./clone.ts";
-import { inStartSlot } from "./start-slots.ts";
+import { inSlot, machineSlots } from "./slots.ts";
 
 const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 // Each copy of the repository builds its own image, so copies changing it at once never test each
 // other's build.
 const imageTag = cloneName("dev", repositoryRoot);
 const imageName = `fathom-postgres:${imageTag}`;
+
+// Chosen by measurement: 4 at once made test files queue in a full check, and starting every test
+// database at once can make Testcontainers time out waiting for a container's ports.
+const databaseStarts = machineSlots("test-database-starts", {
+  atOnce: 8,
+  retryMilliseconds: 250,
+  reportAfterMilliseconds: 30_000,
+  waitingTo: "start a test database",
+});
 
 // Reads a setting from the development database's Compose file, so tests use the same server
 // settings as development, with one place to change them.
@@ -141,7 +150,10 @@ export async function startTestDatabase(): Promise<TestDatabase> {
   );
   // The build waits for no slot: on the first run of a day it fetches security fixes, which would
   // hold up every other start.
-  const container = await inStartSlot(() => startContainer(passwords));
+  const container = await inSlot(
+    () => startContainer(passwords),
+    databaseStarts,
+  );
 
   const configFor = (
     user: string,
