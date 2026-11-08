@@ -42,6 +42,20 @@ const password = "fictional password 1";
 
 export type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+// An identifier no record has.
+export const missingRecord = "00000000-0000-4000-8000-000000000000";
+
+let uniqueNames = 0;
+
+// A name no other in the run has, so tests never collide on a name that must be unique.
+export const unique = (prefix: string) => {
+  uniqueNames += 1;
+  return `${prefix} ${String(uniqueNames)}`;
+};
+
+export const errorOf = (response: { json: () => unknown }) =>
+  (response.json() as { error: string }).error;
+
 // The positions every test app's Positions list offers, for the people and planned hires tests add.
 export const testPosition = "00000000-0000-4000-8000-00000000f001";
 export const otherTestPosition = "00000000-0000-4000-8000-00000000f002";

@@ -36,6 +36,7 @@ import { type App, buildApp } from "./app.ts";
 import { createAccount } from "./data/accounts.ts";
 import { type Auth, createAuth } from "./data/auth.ts";
 import { createDataAccess } from "./data/index.ts";
+import { missingRecord } from "./test-app.ts";
 
 let database: TestDatabase;
 let certificate: TestCertificate;
@@ -283,7 +284,7 @@ describe("who may manage accounts", () => {
       {
         name: "Fictional Person",
         email: "x@example.test",
-        roleId: "00000000-0000-4000-8000-000000000000",
+        roleId: missingRecord,
       },
     ],
     ["PATCH", "/api/accounts/any", { name: "Fictional Person" }],
@@ -428,7 +429,7 @@ describe("administering accounts", () => {
     const response = await request(cookie, "POST", "/api/accounts", {
       name: "Fictional Unknown Role",
       email: "unknown.role@example.test",
-      roleId: "00000000-0000-4000-8000-000000000000",
+      roleId: missingRecord,
     });
     expect(response.statusCode).toBe(400);
     expect(response.json()).toEqual({ error: "There is no such role" });
@@ -496,7 +497,7 @@ describe("administering accounts", () => {
       `/api/accounts/${other.id}`,
       {
         name: "Fictional Unchanged",
-        roleId: "00000000-0000-4000-8000-000000000000",
+        roleId: missingRecord,
       },
     );
     expect(response.statusCode).toBe(400);

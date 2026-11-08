@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Release streams, their cycle patterns, and their releases, as kinds of the plan's records, with
-// the rules the Decisions Log sets for them: a stream's later patterns start on the start of one of
-// its cycles, so the cycles before keep their names and dates; a release includes consecutive
-// cycles of its stream, from its first to its last, which no other release in the stream includes,
-// and none starting after the stream's cycles-until date. Part of the data access layer; records.ts
+// Release streams, their cycle patterns, their releases, and the features that target their cycles,
+// as kinds of the plan's records, with the rules the Decisions Log sets for them: a stream's later
+// patterns start on the start of one of its cycles, so the cycles before keep their names and dates;
+// a release includes consecutive cycles of its stream, from its first to its last, which no other
+// release in the stream includes, and none starting after the stream's cycles-until date; and a
+// feature targets one of its stream's cycles. Part of the data access layer; records.ts
 // checks the rules when a change is drafted or published, against the records as the editor sees
 // them, and when drafts are approved, against the live records.
 
-import { cyclePatterns, releases, releaseStreams } from "@fathom/db";
+import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
   type Cycle,
   type CyclePatternLike,
@@ -16,6 +17,7 @@ import {
   cyclesOf,
   patternStartFits,
   planSubjects,
+  projectSubjects,
   type RecordRef,
 } from "@fathom/shared";
 import type { Recorded } from "./drafts.ts";
@@ -32,6 +34,37 @@ import {
 const nameIn = (state: RecordsState, id: string): string =>
   // A stream is never removed, so what belongs to it always has one.
   String(shownVersion(state, "release-stream", id)?.name);
+
+// A feature's target as a release on that one cycle, so a release's rules for cycles hold for it.
+const targetAsCycles = (feature: Recorded): Recorded => ({
+  streamId: feature.targetStreamId,
+  firstCycle: feature.targetCycle,
+  lastCycle: feature.targetCycle,
+});
+
+// The kinds of record on a stream's cycles, each as a release's cycles, with how each is refused:
+// when it is past the stream's plan, when a change of the stream's cycles leaves it off them, and
+// when the cycles asked for are not the stream's.
+const onCycles = [
+  {
+    type: "release",
+    cycles: (release: Recorded) => release,
+    afterPlan: (name: string) =>
+      `The release ${name} includes cycles after that day; change it first`,
+    offCycles: (name: string) =>
+      `The release ${name} would no longer start and end with cycles of its stream; change it first`,
+    notOfStream: "Choose a first and last cycle of the release's stream",
+  },
+  {
+    type: "feature",
+    cycles: targetAsCycles,
+    afterPlan: (name: string) =>
+      `The feature ${name} targets a cycle after that day; change it first`,
+    offCycles: (name: string) =>
+      `The feature ${name} would no longer target a cycle of its stream; change it first`,
+    notOfStream: "Choose a cycle of the feature's stream",
+  },
+] as const;
 
 // Planning configuration is seen with the plan, as Roles proposes.
 const planOrConfiguration = ["plan:view", "configuration:view"] as const;
@@ -82,23 +115,29 @@ export const patternKind: RecordKind = {
   },
   // A stream's drafts of its cycles, and of its releases' cycles, are decided together, as the
   // Decisions Log sets out, so a pattern's draft uses the others' in its stream, and the drafts
-  // that move its live releases to other cycles, or remove one its drafted cycles no longer make.
+  // that move its live releases and features to other cycles, or remove one its drafted cycles no
+  // longer make.
   alsoUses: (state, id) => {
     const streamId = String(shownVersion(state, "cycle-pattern", id)?.streamId);
     const drafted = streamPatterns(state, streamId).map(
       ({ pattern }) => pattern,
     );
-    const moved = [...stateOf(state, "release").drafts.keys()].flatMap(
-      (releaseId): RecordRef[] => {
-        const live = stateOf(state, "release").live.get(releaseId);
-        if (live?.streamId !== streamId) return [];
-        const version = versionOf(state, "release", releaseId);
-        const bound =
-          version === undefined
-            ? !releaseFits(cyclesOf(drafted, String(live.lastCycle)), live)
-            : cyclesChanged(version, live);
-        return bound ? [{ type: "release", id: releaseId }] : [];
-      },
+    const moved = onCycles.flatMap(({ type, cycles }) =>
+      [...stateOf(state, type).drafts.keys()].flatMap(
+        (recordId): RecordRef[] => {
+          const liveRecord = stateOf(state, type).live.get(recordId);
+          if (liveRecord === undefined) return [];
+          const live = cycles(liveRecord);
+          const version = versionOf(state, type, recordId);
+          const staying =
+            version !== undefined && cycles(version).streamId === streamId;
+          const bound = staying
+            ? cyclesChanged(cycles(version), live)
+            : live.streamId === streamId &&
+              !releaseFits(cyclesOf(drafted, String(live.lastCycle)), live);
+          return bound ? [{ type, id: recordId }] : [];
+        },
+      ),
     );
     return [
       ...patternDrafts(state, streamId).filter((pattern) => pattern.id !== id),
@@ -141,20 +180,55 @@ export const releaseKind: RecordKind = {
   alsoUses: (state, id) => {
     const release = versionOf(state, "release", id);
     if (release === undefined) return [];
-    const streamId = String(release.streamId);
-    const live = stateOf(state, "release").live.get(id);
-    const bound =
-      live === undefined
-        ? !releaseFits(
-            cyclesOf(livePatterns(state, streamId), String(release.lastCycle)),
-            release,
-          )
-        : cyclesChanged(release, live);
-    return bound ? patternDrafts(state, streamId) : [];
+    return draftsOfCycles(
+      state,
+      release,
+      stateOf(state, "release").live.get(id),
+    );
   },
 };
 
-export const releaseKinds = [streamKind, patternKind, releaseKind] as const;
+// A feature's stream is the one it targets, so a target cycle's stream cannot be removed.
+export const featureKind: RecordKind = {
+  type: "feature",
+  table: features,
+  fields: [
+    "name",
+    "status",
+    "targetStreamId",
+    "targetCycle",
+    "estimateHours",
+    "featureTeamId",
+    "description",
+  ],
+  links: { targetStreamId: "release-stream" },
+  refers: { featureTeamId: "feature-team" },
+  unique: [
+    { field: "name", message: "There is already a feature with that name" },
+  ],
+  readWith: ["plan:view"],
+  subject: (state, id) =>
+    projectSubjects.feature(String(shownVersion(state, "feature", id)?.name)),
+  // A feature drafted onto another cycle, or onto one only the stream's drafted patterns make, uses
+  // those patterns' drafts, as a release does.
+  alsoUses: (state, id) => {
+    const feature = versionOf(state, "feature", id);
+    if (feature === undefined || feature.targetStreamId === null) return [];
+    const live = stateOf(state, "feature").live.get(id);
+    return draftsOfCycles(
+      state,
+      targetAsCycles(feature),
+      live === undefined ? undefined : targetAsCycles(live),
+    );
+  },
+};
+
+export const releaseKinds = [
+  streamKind,
+  patternKind,
+  releaseKind,
+  featureKind,
+] as const;
 
 // A pattern as the cycles are worked out from it.
 const asPattern = (record: Recorded): CyclePatternLike => ({
@@ -194,17 +268,33 @@ function livePatterns(
     .map(asPattern);
 }
 
+// The records of a kind on a stream's cycles as their drafts make them, those drafted to be removed
+// left out.
+const onStream = (
+  state: RecordsState,
+  type: (typeof onCycles)[number]["type"],
+  streamId: string,
+  cycles: (record: Recorded) => Recorded,
+): { id: string; record: Recorded }[] =>
+  shownIds(state, type).flatMap((id) => {
+    const record = versionOf(state, type, id);
+    return record !== undefined && cycles(record).streamId === streamId
+      ? [{ id, record }]
+      : [];
+  });
+
+// The features that target a stream's cycles, as their drafts make them.
+export const streamFeatures = (state: RecordsState, streamId: string) =>
+  onStream(state, "feature", streamId, targetAsCycles);
+
 // A stream's releases as their drafts make them, in the order of their cycles, those drafted to be
 // removed left out.
 export function streamReleases(
   state: RecordsState,
   streamId: string,
 ): { id: string; release: Recorded }[] {
-  return shownIds(state, "release")
-    .flatMap((id) => {
-      const release = versionOf(state, "release", id);
-      return release?.streamId === streamId ? [{ id, release }] : [];
-    })
+  return onStream(state, "release", streamId, (release) => release)
+    .map(({ id, record }) => ({ id, release: record }))
     .sort((a, b) =>
       String(a.release.firstCycle).localeCompare(String(b.release.firstCycle)),
     );
@@ -226,8 +316,27 @@ function releaseFits(cycles: readonly Cycle[], release: Recorded): boolean {
 }
 
 const cyclesChanged = (version: Recorded, live: Recorded) =>
+  version.streamId !== live.streamId ||
   version.firstCycle !== live.firstCycle ||
   version.lastCycle !== live.lastCycle;
+
+// The drafts of a stream's cycles that a record's draft uses: those of its stream when it moves to
+// other cycles, or, when added, is on a cycle only those drafts make.
+function draftsOfCycles(
+  state: RecordsState,
+  version: Recorded,
+  live: Recorded | undefined,
+): RecordRef[] {
+  const streamId = String(version.streamId);
+  const bound =
+    live === undefined
+      ? !releaseFits(
+          cyclesOf(livePatterns(state, streamId), String(version.lastCycle)),
+          version,
+        )
+      : cyclesChanged(version, live);
+  return bound ? patternDrafts(state, streamId) : [];
+}
 
 const overlaps = (first: Recorded, second: Recorded) =>
   String(first.firstCycle) <= String(second.lastCycle) &&
@@ -235,7 +344,9 @@ const overlaps = (first: Recorded, second: Recorded) =>
 
 // The stream a touched record belongs to, or is.
 const streamOf = ({ type, id, record }: Touched): string =>
-  type === "release-stream" ? id : String(record.streamId);
+  type === "release-stream"
+    ? id
+    : String(record.streamId ?? record.targetStreamId);
 
 // The first way the records break the rules for streams' cycles and releases, in the streams the
 // touched records belong to, or undefined when they keep them. A release breaks them only if it is
@@ -270,26 +381,29 @@ export function releaseProblem(
       patterns.map(({ pattern }) => pattern),
       until,
     );
-    const checked = found.filter(
-      ({ id }) =>
-        patternTouched ||
-        streamTouched ||
-        touched.some((ref) => ref.type === "release" && ref.id === id),
-    );
-    for (const { id, release } of checked) {
-      if (streamTouched && String(release.lastCycle) > until) {
-        return `The release ${String(release.name)} includes cycles after that day; change it first`;
-      }
-      if (!releaseFits(cycles, release)) {
-        return patternTouched
-          ? `The release ${String(release.name)} would no longer start and end with cycles of its stream; change it first`
-          : "Choose a first and last cycle of the release's stream";
-      }
-      const clash = found.find(
-        (other) => other.id !== id && overlaps(release, other.release),
-      );
-      if (clash !== undefined) {
-        return `The release ${String(clash.release.name)} already includes some of those cycles`;
+    for (const { type, cycles: asCycles, ...refusals } of onCycles) {
+      for (const { id, record } of onStream(state, type, streamId, asCycles)) {
+        const recordTouched = touched.some(
+          (ref) => ref.type === type && ref.id === id,
+        );
+        if (!patternTouched && !streamTouched && !recordTouched) continue;
+        const name = String(record.name);
+        const own = asCycles(record);
+        if (streamTouched && String(own.lastCycle) > until) {
+          return refusals.afterPlan(name);
+        }
+        if (!releaseFits(cycles, own)) {
+          return patternTouched
+            ? refusals.offCycles(name)
+            : refusals.notOfStream;
+        }
+        if (type !== "release") continue;
+        const clash = found.find(
+          (other) => other.id !== id && overlaps(record, other.release),
+        );
+        if (clash !== undefined) {
+          return `The release ${String(clash.release.name)} already includes some of those cycles`;
+        }
       }
     }
   }

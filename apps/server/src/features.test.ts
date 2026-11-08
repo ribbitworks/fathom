@@ -1,0 +1,647 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for features, against a PostgreSQL server of their own: who may change them, what each must
+// hold, their target cycles, kept to cycles of their stream and following those cycles when they
+// move, their feature teams, and their drafts, approved like the plan's other records and named in
+// the change history.
+
+import {
+  cyclePatterns,
+  features,
+  featureTeams,
+  recordChanges,
+  releaseStreams,
+} from "@fathom/db";
+import type {
+  ChangeHistory,
+  Feature,
+  ProjectPlan,
+  ReleaseStream,
+} from "@fathom/shared";
+import { eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import {
+  errorOf,
+  missingRecord,
+  startTestApp,
+  type TestApp,
+  unique,
+} from "./test-app.ts";
+
+let test: TestApp;
+let planner: { id: string; cookie: string };
+let approver: { id: string; cookie: string };
+let viewer: { id: string; cookie: string };
+let featureLead: { id: string; cookie: string };
+let configurer: { id: string; cookie: string };
+
+beforeAll(async () => {
+  test = await startTestApp();
+  planner = await test.signedIn("product-manager");
+  approver = await test.signedIn("project-manager");
+  viewer = await test.signedIn("team-member");
+  featureLead = await test.signedIn("feature-lead");
+  configurer = await test.signedIn("workforce-administrator");
+});
+
+afterAll(async () => {
+  await test.close();
+});
+
+type Saved = { plan: ProjectPlan; changeSetId: string | null };
+
+const cycle = {
+  first: "2027-01-01",
+  second: "2027-04-01",
+  third: "2027-07-01",
+  fourth: "2027-10-01",
+};
+
+// A live stream of quarters from the start of 2027, made until the day given.
+async function liveStream(cyclesUntil = "2029-01-01"): Promise<string> {
+  const id = randomUUID();
+  await test.connection
+    .insert(releaseStreams)
+    .values({ id, name: unique("Fictional Stream"), cyclesUntil });
+  await test.connection.insert(cyclePatterns).values({
+    streamId: id,
+    startsOn: cycle.first,
+    length: 3,
+    unit: "months",
+    naming: "{YY}.{N}",
+  });
+  return id;
+}
+
+async function liveTeam(): Promise<string> {
+  const id = randomUUID();
+  await test.connection
+    .insert(featureTeams)
+    .values({ id, name: unique("Fictional Team") });
+  return id;
+}
+
+async function readPlan(cookie = planner.cookie): Promise<ProjectPlan> {
+  const response = await test.request(cookie, "GET", "/api/projects");
+  expect(response.statusCode).toBe(200);
+  return response.json<ProjectPlan>();
+}
+
+const post = (body: object, cookie = planner.cookie) =>
+  test.request(cookie, "POST", "/api/features", body);
+
+const put = (id: string, body: object, cookie = planner.cookie) =>
+  test.request(cookie, "PUT", `/api/features/${id}`, body);
+
+const removal = (id: string) =>
+  test.request(planner.cookie, "DELETE", `/api/features/${id}`);
+
+const decide = (asking: "approval" | "rejection", body: object) =>
+  test.request(approver.cookie, "POST", `/api/drafts/${asking}`, body);
+
+const featureRecords = (...ids: string[]) =>
+  ids.map((id) => ({ type: "feature", id }));
+
+async function approved(...ids: string[]): Promise<void> {
+  const response = await decide("approval", {
+    records: featureRecords(...ids),
+  });
+  expect(response.statusCode).toBe(200);
+}
+
+const featureNamed = (features: readonly Feature[], name: string): Feature =>
+  features.find((feature) => feature.name === name) as Feature;
+
+async function draftFeature(
+  body: Record<string, unknown> = {},
+): Promise<Feature> {
+  const name =
+    typeof body.name === "string" ? body.name : unique("Fictional Feature");
+  const response = await post({ ...body, name });
+  expect(response.statusCode).toBe(201);
+  return featureNamed(response.json<Saved>().plan.features, name);
+}
+
+async function liveFeature(
+  body: Record<string, unknown> = {},
+): Promise<Feature> {
+  const feature = await draftFeature(body);
+  await approved(feature.id);
+  return shown(feature.id);
+}
+
+const shown = async (id: string): Promise<Feature> =>
+  (await readPlan()).features.find((feature) => feature.id === id) as Feature;
+
+const target = (streamId: string, day = cycle.third) => ({
+  target: { streamId, cycle: day },
+});
+
+describe("reading", () => {
+  it("tells those who see the plan they may not change features", async () => {
+    const plan = await readPlan(viewer.cookie);
+    expect(plan.canEditFeatures).toBe(false);
+    expect(plan.canEdit).toBe(false);
+  });
+
+  it("tells a role that edits features but not the plan which it may change", async () => {
+    const plan = await readPlan(featureLead.cookie);
+    expect(plan.canEditFeatures).toBe(true);
+    expect(plan.canEdit).toBe(false);
+  });
+
+  it("answers a change with what the editor may change", async () => {
+    const response = await post(
+      { name: unique("Fictional Feature") },
+      featureLead.cookie,
+    );
+    const { plan } = response.json<Saved>();
+    expect(plan.canEditFeatures).toBe(true);
+    expect(plan.canEdit).toBe(false);
+  });
+
+  it("lists live features by name, then those drafted to be added", async () => {
+    const later = await liveFeature({ name: "Fictional Zebra" });
+    const earlier = await liveFeature({ name: "Fictional Aardvark" });
+    const drafted = await draftFeature({ name: "Fictional Middle" });
+    const ids = (await readPlan()).features.map(({ id }) => id);
+    expect(ids.indexOf(earlier.id)).toBeLessThan(ids.indexOf(later.id));
+    expect(ids.indexOf(later.id)).toBeLessThan(ids.indexOf(drafted.id));
+  });
+});
+
+describe("adding and changing", () => {
+  it("starts a feature as Possible, in Later, with nothing else filled in", async () => {
+    expect(await draftFeature()).toMatchObject({
+      status: "possible",
+      targetStreamId: null,
+      targetCycle: null,
+      estimateHours: null,
+      featureTeamId: null,
+      description: null,
+    });
+  });
+
+  it("keeps a feature's status when a change does not name one", async () => {
+    const feature = await liveFeature({ status: "planned" });
+    await put(feature.id, { name: feature.name });
+    expect((await shown(feature.id)).status).toBe("planned");
+  });
+
+  it("moves a feature to any status", async () => {
+    const feature = await liveFeature({ status: "done" });
+    await put(feature.id, { name: feature.name, status: "possible" });
+    expect((await shown(feature.id)).status).toBe("possible");
+  });
+
+  it("refuses a status outside the fixed set", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      status: "paused",
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("refuses a name another feature has, ignoring letter case", async () => {
+    const feature = await liveFeature();
+    const response = await post({ name: feature.name.toUpperCase() });
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe("There is already a feature with that name");
+  });
+
+  it("rounds an estimate to two decimal places", async () => {
+    expect((await draftFeature({ estimateHours: 12.345 })).estimateHours).toBe(
+      12.35,
+    );
+  });
+
+  it.each([-1, 10_000_000_000])("refuses the estimate %d", async (hours) => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      estimateHours: hours,
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("makes no draft when saving a live estimate unchanged", async () => {
+    const feature = await liveFeature({ estimateHours: 40.5 });
+    const response = await put(feature.id, {
+      name: feature.name,
+      estimateHours: 40.5,
+    });
+    expect(response.json<Saved>().changeSetId).toBeNull();
+    expect((await shown(feature.id)).draft).toBeUndefined();
+  });
+
+  it("keeps a description without the spaces around it", async () => {
+    expect(
+      (await draftFeature({ description: "  Fictional words " })).description,
+    ).toBe("Fictional words");
+  });
+
+  it("holds no empty description", async () => {
+    expect((await draftFeature({ description: "   " })).description).toBeNull();
+  });
+
+  it("refuses changing a feature that does not exist", async () => {
+    const response = await put(missingRecord, { name: "Fictional" });
+    expect(response.statusCode).toBe(404);
+  });
+});
+
+describe("target cycles", () => {
+  it("targets one of its stream's cycles", async () => {
+    const streamId = await liveStream();
+    expect(await draftFeature(target(streamId))).toMatchObject({
+      targetStreamId: streamId,
+      targetCycle: cycle.third,
+    });
+  });
+
+  it("refuses a day that starts none of the stream's cycles", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      ...target(await liveStream(), "2027-02-01"),
+    });
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe("Choose a cycle of the feature's stream");
+  });
+
+  it("refuses a stream that does not exist", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      ...target(missingRecord),
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("does not judge a feature when another on its stream changes", async () => {
+    const streamId = await liveStream();
+    const other = await liveFeature(target(streamId));
+    await test.connection
+      .update(features)
+      .set({ targetCycle: "2027-02-01" })
+      .where(eq(features.id, other.id));
+    expect(
+      (await draftFeature(target(streamId, cycle.second))).targetCycle,
+    ).toBe(cycle.second);
+  });
+
+  it("goes back to Later when its target is cleared", async () => {
+    const feature = await liveFeature(target(await liveStream()));
+    await put(feature.id, { name: feature.name, target: null });
+    expect(await shown(feature.id)).toMatchObject({
+      targetStreamId: null,
+      targetCycle: null,
+    });
+  });
+});
+
+describe("feature teams", () => {
+  it("are given to a feature", async () => {
+    const featureTeamId = await liveTeam();
+    expect((await draftFeature({ featureTeamId })).featureTeamId).toBe(
+      featureTeamId,
+    );
+  });
+
+  it("refuse one that is not live", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      featureTeamId: missingRecord,
+    });
+    expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe(
+      "Choose a feature team that has been approved",
+    );
+  });
+
+  const removeTeam = (
+    id: string,
+    options?: { publish?: boolean },
+    cookie = configurer.cookie,
+  ) =>
+    test.request(
+      cookie,
+      "DELETE",
+      `/api/feature-teams/${id}`,
+      undefined,
+      options,
+    );
+
+  it.each([
+    ["published", true],
+    ["not yet published", false],
+  ])("refuse one with a removal %s", async (_kind, publish) => {
+    const featureTeamId = await liveTeam();
+    expect((await removeTeam(featureTeamId, { publish })).statusCode).toBe(200);
+    const response = await post({
+      name: unique("Fictional Feature"),
+      featureTeamId,
+    });
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      "This feature team is drafted to be removed; choose another",
+    );
+  });
+
+  it("cannot be removed while a feature names them", async () => {
+    const featureTeamId = await liveTeam();
+    const feature = await draftFeature({ featureTeamId });
+    const response = await removeTeam(featureTeamId);
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      `This feature team is named by the feature ${feature.name}; change that first`,
+    );
+  });
+});
+
+describe("drafts", () => {
+  it("reach the live features only once approved", async () => {
+    const feature = await liveFeature({ estimateHours: 8 });
+    const renamed = unique("Fictional Feature");
+    await put(feature.id, { name: renamed, estimateHours: 16 });
+    expect(await shown(feature.id)).toMatchObject({
+      name: renamed,
+      estimateHours: 16,
+      draft: { action: "changed", live: { estimateHours: 8 } },
+    });
+    await approved(feature.id);
+    const after = await shown(feature.id);
+    expect(after.estimateHours).toBe(16);
+    expect(after.draft).toBeUndefined();
+  });
+
+  it("need Approve Plan", async () => {
+    const feature = await draftFeature();
+    const response = await test.request(
+      featureLead.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { records: featureRecords(feature.id) },
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("remove a feature once approved", async () => {
+    const feature = await liveFeature();
+    expect((await removal(feature.id)).statusCode).toBe(200);
+    expect((await shown(feature.id)).draft?.action).toBe("deleted");
+    await approved(feature.id);
+    expect(await shown(feature.id)).toBeUndefined();
+  });
+
+  it("removing one only drafted to be added discards its draft", async () => {
+    const feature = await draftFeature();
+    await removal(feature.id);
+    expect(await shown(feature.id)).toBeUndefined();
+  });
+
+  it("are named in the change history, with the team they pick", async () => {
+    const featureTeamId = await liveTeam();
+    const teamName = unique("Fictional Named Team");
+    await recordChanges(test.connection, null, [
+      {
+        recordType: "feature-team",
+        recordId: featureTeamId,
+        action: "created",
+        field: "name",
+        tier: "general",
+        oldValue: null,
+        newValue: teamName,
+      },
+    ]);
+    const feature = await liveFeature();
+    await put(feature.id, { name: feature.name, featureTeamId });
+    const response = await test.request(planner.cookie, "GET", "/api/changes");
+    const fields = response
+      .json<ChangeHistory>()
+      .entries.flatMap((entry) => entry.records)
+      .filter(({ name }) => name === feature.name)
+      .flatMap((record) => record.fields);
+    expect(fields).toContainEqual({
+      field: "featureTeamId",
+      oldValue: null,
+      newValue: teamName,
+    });
+  });
+});
+
+describe("when a stream's cycles change", () => {
+  const changeLength = (streamId: string, startsOn: string, length: number) =>
+    test.request(
+      configurer.cookie,
+      "PUT",
+      `/api/release-streams/${streamId}/cycles/${startsOn}/length`,
+      { length, later: "move" },
+    );
+
+  const patternDrafts = async (streamId: string) =>
+    (
+      (await test.request(configurer.cookie, "GET", "/api/release-streams"))
+        .json<{ streams: ReleaseStream[] }>()
+        .streams.find(({ id }) => id === streamId) as ReleaseStream
+    ).patterns.flatMap(({ id, draft }) =>
+      draft === undefined ? [] : [{ type: "cycle-pattern", id }],
+    );
+
+  it("moves features on the cycles that move, in the same drafts", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId));
+    expect((await changeLength(streamId, cycle.second, 2)).statusCode).toBe(
+      200,
+    );
+    expect((await shown(feature.id)).targetCycle).toBe("2027-06-01");
+    expect((await shown(feature.id)).draft?.uses).toEqual(
+      await patternDrafts(streamId),
+    );
+  });
+
+  it("leaves features on cycles before the change alone", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId, cycle.first));
+    await changeLength(streamId, cycle.second, 2);
+    expect((await shown(feature.id)).draft).toBeUndefined();
+  });
+
+  it("approves the moved features with the cycles' drafts", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId));
+    await changeLength(streamId, cycle.second, 2);
+    const response = await decide("approval", {
+      records: await patternDrafts(streamId),
+    });
+    expect(response.statusCode).toBe(200);
+    const after = await shown(feature.id);
+    expect(after.targetCycle).toBe("2027-06-01");
+    expect(after.draft).toBeUndefined();
+  });
+
+  it("refuses rejecting a moved feature's cycles without the feature", async () => {
+    const streamId = await liveStream();
+    await liveFeature(target(streamId));
+    await changeLength(streamId, cycle.second, 2);
+    const response = await decide("rejection", {
+      records: await patternDrafts(streamId),
+      reason: "Fictional reason",
+    });
+    expect(response.statusCode).toBe(409);
+  });
+
+  it("refuses a change that would push a feature past the stream's plan", async () => {
+    const streamId = await liveStream("2027-10-15");
+    const feature = await liveFeature(target(streamId, cycle.fourth));
+    const response = await changeLength(streamId, cycle.second, 6);
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toContain(`${feature.name} would move past`);
+  });
+
+  it("refuses moving Planned to earlier than a cycle a feature targets", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId, cycle.fourth));
+    const response = await test.request(
+      configurer.cookie,
+      "PUT",
+      `/api/release-streams/${streamId}/cycles-until`,
+      { cyclesUntil: "2027-08-01" },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      `The feature ${feature.name} targets a cycle after that day; change it first`,
+    );
+  });
+
+  it("refuses a new pattern that would leave a feature off a cycle", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId, cycle.third));
+    const response = await test.request(
+      configurer.cookie,
+      "POST",
+      `/api/release-streams/${streamId}/patterns`,
+      { startsOn: cycle.second, length: 2, unit: "months", naming: "{YY}.{N}" },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toBe(
+      `The feature ${feature.name} would no longer target a cycle of its stream; change it first`,
+    );
+  });
+
+  it("uses the drafts of cycles only they make", async () => {
+    const streamId = await liveStream();
+    await changeLength(streamId, cycle.second, 2);
+    const feature = await draftFeature(target(streamId, "2027-06-01"));
+    expect(feature.draft?.uses).toEqual(await patternDrafts(streamId));
+  });
+
+  it("uses the cycles' drafts when moved onto another cycle while they wait", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId, cycle.first));
+    await changeLength(streamId, cycle.second, 2);
+    await put(feature.id, {
+      name: feature.name,
+      ...target(streamId, "2027-06-01"),
+    });
+    expect((await shown(feature.id)).draft?.uses).toEqual(
+      await patternDrafts(streamId),
+    );
+  });
+
+  it("binds a feature moved to Later to the cycles' drafts that drop its cycle", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId));
+    await put(feature.id, { name: feature.name, target: null });
+    await changeLength(streamId, cycle.second, 2);
+    const response = await decide("approval", {
+      records: await patternDrafts(streamId),
+    });
+    expect(response.statusCode).toBe(200);
+    expect((await shown(feature.id)).targetCycle).toBeNull();
+  });
+
+  it("uses the cycles' drafts when moved onto the same day of another stream", async () => {
+    const before = await liveStream();
+    const streamId = await liveStream();
+    await changeLength(streamId, cycle.second, 2);
+    const feature = await liveFeature(target(before, cycle.first));
+    await put(feature.id, {
+      name: feature.name,
+      ...target(streamId, cycle.first),
+    });
+    expect((await shown(feature.id)).draft?.uses).toEqual(
+      await patternDrafts(streamId),
+    );
+  });
+
+  const movedFeature = async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId));
+    await changeLength(streamId, cycle.second, 2);
+    return { streamId, feature };
+  };
+
+  const discardDraft = (id: string, cookie: string) =>
+    test.request(cookie, "DELETE", `/api/records/feature/${id}/draft`);
+
+  it("refuses discarding a moved feature to one who cannot change cycles", async () => {
+    const { feature } = await movedFeature();
+    const response = await discardDraft(feature.id, featureLead.cookie);
+    expect(response.statusCode).toBe(403);
+    expect((await shown(feature.id)).draft).toBeDefined();
+  });
+
+  it("discards a moved feature together with the cycles' drafts", async () => {
+    const { streamId, feature } = await movedFeature();
+    const editor = await test.signedIn("engineering-director");
+    expect((await discardDraft(feature.id, editor.cookie)).statusCode).toBe(
+      200,
+    );
+    expect((await shown(feature.id)).draft).toBeUndefined();
+    expect(await patternDrafts(streamId)).toEqual([]);
+  });
+
+  it("refuses approving a moved feature without Approve Releases", async () => {
+    const { feature } = await movedFeature();
+    const planOnly = await test.signedIn(["plan:approve", "plan:view"]);
+    const response = await test.request(
+      planOnly.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { records: featureRecords(feature.id) },
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("refuses approving the cycles' drafts without Approve Plan when a feature moves", async () => {
+    const { streamId } = await movedFeature();
+    const releasesOnly = await test.signedIn(["releases:approve", "plan:view"]);
+    const response = await test.request(
+      releasesOnly.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { records: await patternDrafts(streamId) },
+    );
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("uses none when moved to Later while they wait", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId, cycle.first));
+    await changeLength(streamId, cycle.second, 2);
+    await put(feature.id, { name: feature.name, target: null });
+    expect((await shown(feature.id)).draft?.uses).toEqual([]);
+  });
+
+  it("uses none when drafted to be removed", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId, cycle.first));
+    await changeLength(streamId, cycle.second, 2);
+    await removal(feature.id);
+    expect((await shown(feature.id)).draft?.uses).toEqual([]);
+  });
+
+  it("uses none when added on a cycle that is live", async () => {
+    const feature = await draftFeature(target(await liveStream()));
+    expect(feature.draft?.uses).toEqual([]);
+  });
+});

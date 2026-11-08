@@ -103,6 +103,11 @@ describe("the plan's records in the change history", () => {
       planRecord("feature-team", "Fictional Harbour", null),
       "drafted adding the feature team Fictional Harbour",
     ],
+    [
+      "a feature",
+      planRecord("feature", "Fictional Offline Sync", null),
+      "drafted adding the feature Fictional Offline Sync",
+    ],
   ])("names %s", (_case, record, sentence) => {
     expect(describeRecord(record).sentence).toBe(sentence);
   });

@@ -9,7 +9,6 @@
 // package, never included in the runtime image.
 
 import {
-  type ChangeRecord,
   customers,
   type Database,
   drafts,
@@ -25,6 +24,7 @@ import {
 import { fictionalId } from "@fathom/fixtures";
 import { addDays } from "@fathom/shared";
 import { and, asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
+import { recorded, type SeededChange } from "./recorded.ts";
 
 // Each record has a key of its own, which its identifier is made from.
 export const seededCustomers = [
@@ -192,24 +192,6 @@ export const milestoneId = (project: string, key: string) =>
 
 const customerIds = (keys: readonly string[]) => keys.map(customerId).sort();
 
-type Change = ChangeRecord & { action: "created" | "deleted" };
-
-const recorded = (
-  recordType: string,
-  recordId: string,
-  action: Change["action"],
-  values: Record<string, unknown>,
-): Change[] =>
-  Object.entries(values).map(([field, value]) => ({
-    recordType,
-    recordId,
-    action,
-    field,
-    tier: "general",
-    oldValue: action === "deleted" ? value : null,
-    newValue: action === "created" ? value : null,
-  }));
-
 type Reader = Pick<Database, "select">;
 
 // The built-in proposal statuses' choices by label, in lower case, and the first in the list's
@@ -266,7 +248,7 @@ export async function seedProjects(
     if (present !== undefined) return false;
     const status = await readStatuses(transaction);
     const owner = await readOwners(transaction, managerIds);
-    const made: Change[] = [];
+    const made: SeededChange[] = [];
     for (const { key, name } of seededCustomers) {
       const id = customerId(key);
       await transaction.insert(customers).values({ id, name });
@@ -440,7 +422,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
           ),
         );
     }
-    const made: Change[] = [];
+    const made: SeededChange[] = [];
     for (const [type, rows] of [
       ["milestone", milestoneRows],
       ["project", removingProjects],

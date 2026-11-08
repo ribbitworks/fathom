@@ -15,6 +15,7 @@ import {
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
 
 let test: TestApp;
@@ -45,12 +46,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await test.close();
 });
-
-let names = 0;
-const unique = (prefix: string) => {
-  names += 1;
-  return `${prefix} ${String(names)}`;
-};
 
 const send = (
   method: Method,

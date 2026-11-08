@@ -501,11 +501,11 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 **Preconditions:** Signed in with this account. Run after REL-22. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
-  - **Expected:** A dialog titled **Approve 4 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Platform from** each of the three days in REL-22 Step 3, such as **the cycles of Platform from 2027-01-01**, **the cycles of Platform from 2027-03-01** and **the cycles of Platform from 2027-06-01**.
+  - **Expected:** A dialog titled **Approve 6 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Platform from** each of the three days in REL-22 Step 3, such as **the cycles of Platform from 2027-01-01**, **the cycles of Platform from 2027-03-01** and **the cycles of Platform from 2027-06-01**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Approve**.
-  - **Expected:** A notification says **Approved 4 drafts.** No row under **Cycle schedule** or **Releases** has a mark, and **Harbor 3** still reads as in REL-22 Step 3.
+  - **Expected:** A notification says **Approved 6 drafts.** No row under **Cycle schedule** or **Releases** has a mark, and **Harbor 3** still reads as in REL-22 Step 3.
   - **Notes:**
 
 #### REL-24: Later Cycles Can Keep Their Dates

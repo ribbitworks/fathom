@@ -18,7 +18,14 @@ import type {
 import { and, asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  startTestApp,
+  type TestApp,
+  testPosition,
+  missingRecord as missing,
+  unique,
+  errorOf,
+} from "./test-app.ts";
 
 let test: TestApp;
 let planner: { id: string; cookie: string };
@@ -36,14 +43,6 @@ afterAll(async () => {
   await test.close();
 });
 
-let names = 0;
-const unique = (prefix: string) => {
-  names += 1;
-  return `${prefix} ${String(names)}`;
-};
-
-const missing = "00000000-0000-4000-8000-000000000000";
-
 type Saved = { plan: ProjectPlan; changeSetId: string | null };
 
 async function readPlan(cookie = planner.cookie): Promise<ProjectPlan> {
@@ -58,9 +57,6 @@ const send = (
   body?: object,
   options?: { publish?: boolean },
 ) => test.request(planner.cookie, method, url, body, options);
-
-const errorOf = (response: { json: () => unknown }) =>
-  (response.json() as { error: string }).error;
 
 async function added(path: string, body: object): Promise<ProjectPlan> {
   const response = await send("POST", `/api/${path}`, body);

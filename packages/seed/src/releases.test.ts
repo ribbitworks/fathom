@@ -243,7 +243,7 @@ describe("removing release streams", () => {
       lastCycle: "2027-07-01",
     });
     expect(await unseedReleases(connection)).toEqual([
-      "The Platform release stream, which has releases or cycles added by hand",
+      "The Platform release stream, which has releases, cycles, or features added by hand",
     ]);
     expect(await streamNames()).toEqual(["Platform"]);
   });

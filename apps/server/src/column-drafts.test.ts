@@ -22,7 +22,12 @@ import { type Actor, actorWith } from "./access.ts";
 import { recordChanges } from "./data/changes.ts";
 import { createDataAccess } from "./data/index.ts";
 import { ConflictError, ForbiddenError } from "./errors.ts";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  startTestApp,
+  type TestApp,
+  testPosition,
+  unique,
+} from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
@@ -39,12 +44,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await test.close();
 });
-
-let names = 0;
-const unique = (prefix: string) => {
-  names += 1;
-  return `${prefix} ${String(names)}`;
-};
 
 type Method = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 const send = (method: Method, url: string, body?: object) =>

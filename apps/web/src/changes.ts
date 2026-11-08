@@ -185,6 +185,8 @@ function thing({ kind, name, list }: ChangedRecord): string {
       return list === null
         ? `the release ${called}`
         : `the release ${called} in ${list}`;
+    case "feature":
+      return `the feature ${called}`;
     case "planned-hire":
       return name === null ? "a planned hire" : `the planned hire ${name}`;
     case "feature-team":
@@ -233,6 +235,7 @@ const plurals = new Map([
   ["saved-view", "views"],
   ["release-stream", "release streams"],
   ["cycle-pattern", "changes of cycles"],
+  ["feature", "features"],
   ["release", "releases"],
 ]);
 

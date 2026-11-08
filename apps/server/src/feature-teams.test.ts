@@ -12,6 +12,7 @@
 import {
   accessHistory,
   drafts,
+  features,
   featureTeamMemberships,
   featureTeams,
 } from "@fathom/db";
@@ -1529,6 +1530,21 @@ describe("a draft rejected for changing someone who has not started", () => {
       ({ field }) => field === "rejected",
     );
     expect(rejection?.tier).toBe("restricted");
+  });
+});
+
+describe("a team a feature names", () => {
+  it("is not drafted to be removed again by undoing the discard of its removal", async () => {
+    const team = await liveTeam();
+    await ok(await remove(team));
+    const { changeSetId } = await ok<{ changeSetId: string }>(
+      await send(editor, "DELETE", `/api/feature-teams/${team}/draft`),
+    );
+    await test.connection
+      .insert(features)
+      .values({ name: unique("Fictional Feature"), featureTeamId: team });
+    const undone = await send(editor, "POST", `/api/undo/${changeSetId}`);
+    expect(undone.statusCode).toBe(409);
   });
 });
 

@@ -21,6 +21,7 @@ import {
   startTestApp,
   type TestApp,
   testPosition,
+  missingRecord,
 } from "./test-app.ts";
 
 let test: TestApp;
@@ -190,7 +191,7 @@ describe("adding note columns", () => {
 
   it.each([
     [{ visibility: undefined }, "Choose a visibility"],
-    [{ listId: "00000000-0000-4000-8000-000000000000" }, "has no list"],
+    [{ listId: missingRecord }, "has no list"],
     [{ multiple: true }, "holds one note"],
   ])("refuses a note column with %j", async (settings, message) => {
     const { cookie } = await editor();

@@ -23,6 +23,7 @@ import {
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
 
 interface User {
@@ -48,12 +49,6 @@ let siteList: List;
 let north: Choice;
 let south: Choice;
 let siteColumn: Field;
-
-let count = 0;
-const unique = (prefix: string) => {
-  count += 1;
-  return `${prefix} ${String(count)}`;
-};
 
 async function user(roles: Parameters<TestApp["signedIn"]>[0]): Promise<User> {
   const signed = await test.signedIn(roles);

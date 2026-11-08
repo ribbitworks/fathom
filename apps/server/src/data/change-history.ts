@@ -148,7 +148,7 @@ const namesMembers = (row: { recordType: string; field: string }) =>
   row.recordType === "feature-team" && row.field === "members";
 
 // The fields of each kind of the plan's records that hold one record's identifier or a list of
-// them: its links, and the people and choices it names.
+// them: its links, and the people, choices, and feature teams it names.
 const planReferences = new Map(
   recordKinds.map((kind) => [
     kind.type as string,

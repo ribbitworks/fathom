@@ -9,7 +9,6 @@
 // the seeded hires with the rest. A development-only package, never included in the runtime image.
 
 import {
-  type ChangeRecord,
   type Database,
   drafts,
   fieldOfValue,
@@ -26,6 +25,11 @@ import { createDataAccess } from "@fathom/server/data";
 import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { accountDomain } from "./accounts.ts";
 import { actorOf, rejection } from "./drafts.ts";
+import {
+  filledIn,
+  recorded as recordedFields,
+  type SeededChange,
+} from "./recorded.ts";
 
 const editorEmail = `engineering.operations.manager@${accountDomain}`;
 const approverEmail = `engineering.director@${accountDomain}`;
@@ -33,7 +37,6 @@ const approverEmail = `engineering.director@${accountDomain}`;
 // The requisition of the hire the Engineering Operations Manager drafts adding.
 export const draftedRequisition = "REQ-2050";
 
-type Change = ChangeRecord & { action: "created" | "deleted" };
 type Reader = Pick<Database, "select">;
 type HireRow = typeof plannedHires.$inferSelect;
 
@@ -74,32 +77,28 @@ async function hiringSettings(reader: Reader) {
 function recorded(
   row: HireRow,
   values: Readonly<Record<string, unknown>>,
-  action: Change["action"],
+  action: SeededChange["action"],
   tierOf: (field: string) => string,
-): Change[] {
+): SeededChange[] {
   // The server records a hire's manager, a person or a planned hire, as one field.
   const { id, managerHireId, isManager, ...details } = row;
-  return Object.entries({
-    ...details,
-    managerId: details.managerId ?? managerHireId,
-    isManager: isManager ? true : null,
-    ...Object.fromEntries(
-      Object.entries(values).map(([columnId, chosen]) => [
-        valueField(columnId),
-        chosen,
-      ]),
-    ),
-  })
-    .filter(([, value]) => value !== null)
-    .map(([field, value]) => ({
-      recordType: "planned-hire",
-      recordId: id,
-      action,
-      field,
-      tier: tierOf(field),
-      oldValue: action === "deleted" ? value : null,
-      newValue: action === "created" ? value : null,
-    }));
+  return recordedFields(
+    "planned-hire",
+    id,
+    action,
+    filledIn({
+      ...details,
+      managerId: details.managerId ?? managerHireId,
+      isManager: isManager ? true : null,
+      ...Object.fromEntries(
+        Object.entries(values).map(([columnId, chosen]) => [
+          valueField(columnId),
+          chosen,
+        ]),
+      ),
+    }),
+    tierOf,
+  );
 }
 
 // Adds the planned hires, unless any of them is already there. Returns whether it added them.
@@ -119,7 +118,7 @@ export async function seedHires(
       );
     if (present.length > 0 || organization.hires.length === 0) return false;
     const { stateOf, tierOf } = await hiringSettings(transaction);
-    const made: Change[] = [];
+    const made: SeededChange[] = [];
     const hireIds = new Set(organization.hires.map(({ id }) => id));
     // A planned manager comes before the hires under it.
     for (const {
@@ -268,7 +267,7 @@ export async function unseedHireDrafts(
 export async function removeSeededHires(
   transaction: Pick<Database, "select" | "delete">,
   organization: FictionalOrganization,
-): Promise<Change[]> {
+): Promise<SeededChange[]> {
   const { tierOf } = await hiringSettings(transaction);
   const seeded = await transaction
     .select()

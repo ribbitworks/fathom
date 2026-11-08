@@ -283,6 +283,17 @@ export {
   sameDates,
 } from "./projects.ts";
 export {
+  type Feature,
+  type FeatureRequest,
+  featureLengths,
+  featureRequestSchema,
+  featureSchema,
+  type FeatureStatus,
+  featureStatusSchema,
+  firstFeatureStatus,
+  largestEstimateHours,
+} from "./features.ts";
+export {
   type OrgChart,
   type OrgChartDraft,
   orgChartDraftSchema,

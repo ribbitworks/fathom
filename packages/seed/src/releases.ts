@@ -8,9 +8,9 @@
 // package, never included in the runtime image.
 
 import {
-  type ChangeRecord,
   cyclePatterns,
   type Database,
+  features,
   drafts,
   recordChanges,
   releases,
@@ -25,8 +25,9 @@ import {
   type PaletteColour,
 } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
+import { recorded, type SeededChange } from "./recorded.ts";
 
-interface SeededStream {
+export interface SeededStream {
   name: string;
   cyclesUntil: string;
   // Each pattern and release has a key of its own, which its identifier is made from, so the seed
@@ -198,30 +199,12 @@ export function seededStreams(today: string): readonly SeededStream[] {
   ];
 }
 
-const streamId = (stream: { name: string }) =>
+export const streamId = (stream: { name: string }) =>
   fictionalId(`release-stream:${stream.name}`);
 const patternId = (stream: { name: string }, key: string) =>
   fictionalId(`cycle-pattern:${stream.name}:${key}`);
 const releaseId = (stream: { name: string }, key: string) =>
   fictionalId(`release:${stream.name}:${key}`);
-
-type Change = ChangeRecord & { action: "created" | "deleted" };
-
-const recorded = (
-  recordType: string,
-  recordId: string,
-  action: Change["action"],
-  values: Record<string, unknown>,
-): Change[] =>
-  Object.entries(values).map(([field, value]) => ({
-    recordType,
-    recordId,
-    action,
-    field,
-    tier: "general",
-    oldValue: action === "deleted" ? value : null,
-    newValue: action === "created" ? value : null,
-  }));
 
 // Adds each stream that is not already there, as one seeded before or one of the same name added by
 // hand. Returns whether it added any.
@@ -247,7 +230,7 @@ export async function seedReleases(
         position: sql<number>`coalesce(max(${releaseStreams.position}), 0)`,
       })
       .from(releaseStreams);
-    const made: Change[] = [];
+    const made: SeededChange[] = [];
     for (const [index, stream] of missing.entries()) {
       const id = streamId(stream);
       await transaction.insert(releaseStreams).values({
@@ -300,6 +283,10 @@ async function discardDraftsOf(
             inArray(table.recordType, ["cycle-pattern", "release"]),
             inArray(sql`${table.fields}->>'streamId'`, [...streamIds]),
           ),
+          and(
+            eq(table.recordType, "feature"),
+            inArray(sql`${table.fields}->>'targetStreamId'`, [...streamIds]),
+          ),
         ),
       );
   }
@@ -310,7 +297,7 @@ async function discardDraftsOf(
 export async function unseedReleases(database: Database): Promise<string[]> {
   return database.transaction(async (transaction) => {
     const kept: string[] = [];
-    const made: Change[] = [];
+    const made: SeededChange[] = [];
     for (const stream of seededKeys) {
       const id = streamId(stream);
       const [row] = await transaction
@@ -331,10 +318,18 @@ export async function unseedReleases(database: Database): Promise<string[]> {
         ...stream.releases.map((key) => releaseId(stream, key)),
       ]);
       const own = [...patternRows, ...releaseRows].map((record) => record.id);
+      const targeting = await transaction
+        .select({ id: features.id })
+        .from(features)
+        .where(eq(features.targetStreamId, id))
+        .limit(1);
       // A stream kept keeps every draft of it and its records, which may be people's own.
-      if (own.some((recordId) => !seeded.has(recordId))) {
+      if (
+        own.some((recordId) => !seeded.has(recordId)) ||
+        targeting.length > 0
+      ) {
         kept.push(
-          `The ${row.name} release stream, which has releases or cycles added by hand`,
+          `The ${row.name} release stream, which has releases, cycles, or features added by hand`,
         );
         continue;
       }

@@ -6,11 +6,17 @@
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
-import { heldBySchema, recordDraftSchema } from "./drafts.ts";
+import { featureSchema } from "./features.ts";
 import { addressProblem, linkLengths, webAddress } from "./links.ts";
+import {
+  optionalText,
+  recordName,
+  recordNameLength,
+  recordShape,
+} from "./record-fields.ts";
 
 export const projectLengths = {
-  name: 100,
+  name: recordNameLength,
   externalId: 40,
 } as const;
 
@@ -21,6 +27,7 @@ export const projectSubjects = {
   milestone: (milestone: string, project: string) =>
     `the milestone ${milestone} of ${project}`,
   proposal: (proposal: string) => `the proposal ${proposal}`,
+  feature: (feature: string) => `the feature ${feature}`,
 };
 
 // The first and last days of a project's milestones, and the day of its next customer delivery
@@ -59,12 +66,6 @@ export const sameDates = (first: ProjectDates, second: ProjectDates) =>
   first.first === second.first &&
   first.last === second.last &&
   first.nextDelivery === second.nextDelivery;
-
-const recordShape = {
-  id: z.string(),
-  draft: recordDraftSchema.optional(),
-  heldBy: heldBySchema,
-};
 
 export const customerSchema = z.object({
   ...recordShape,
@@ -116,13 +117,16 @@ export const proposalSchema = z.object({
 
 export type Proposal = z.infer<typeof proposalSchema>;
 
-// Every customer, project, and proposal, the live ones by name, then those drafted to be added, in
-// the order drafted, with whether the user may change them.
+// Every customer, project, proposal, and feature, the live ones by name, then those drafted to be
+// added, in the order drafted, with whether the user may change them: features apart from the rest,
+// since Edit Features is a permission of its own.
 export const projectPlanSchema = z.object({
   customers: z.array(customerSchema),
   projects: z.array(projectSchema),
   proposals: z.array(proposalSchema),
+  features: z.array(featureSchema),
   canEdit: z.boolean(),
+  canEditFeatures: z.boolean(),
 });
 
 export type ProjectPlan = z.infer<typeof projectPlanSchema>;
@@ -145,16 +149,7 @@ export const planChoicesSchema = z.object({
 
 export type PlanChoices = z.infer<typeof planChoicesSchema>;
 
-const name = z.string().trim().min(1).max(projectLengths.name);
-
-// An optional ID, kept as typed without spaces around it, or null when empty.
-const externalId = z
-  .string()
-  .trim()
-  .max(projectLengths.externalId)
-  .nullable()
-  .default(null)
-  .transform((value) => (value === "" ? null : value));
+const externalId = optionalText(projectLengths.externalId);
 
 // The records picked, each once, in a stable order, so the same set is the same value.
 const picked = z
@@ -162,12 +157,12 @@ const picked = z
   .default([])
   .transform((ids) => [...new Set(ids)].sort());
 
-export const customerRequestSchema = z.object({ name });
+export const customerRequestSchema = z.object({ name: recordName });
 
 export type CustomerRequest = z.infer<typeof customerRequestSchema>;
 
 export const projectRequestSchema = z.object({
-  name,
+  name: recordName,
   externalId,
   ownerId: z.uuid().nullable().default(null),
   customerIds: picked,
@@ -177,7 +172,7 @@ export const projectRequestSchema = z.object({
 export type ProjectRequest = z.infer<typeof projectRequestSchema>;
 
 export const milestoneRequestSchema = z.object({
-  name,
+  name: recordName,
   date: daySchema,
   customerDelivery: z.boolean().default(false),
 });
@@ -202,7 +197,7 @@ const webLink = z
 
 // A proposal added without a status starts in the first status offered.
 export const proposalRequestSchema = z.object({
-  name,
+  name: recordName,
   externalId,
   link: webLink,
   ownerId: z.uuid().nullable().default(null),

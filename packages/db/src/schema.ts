@@ -488,7 +488,11 @@ export const features = fathomSchema.table(
       { onDelete: "restrict" },
     ),
     targetCycle: date("target_cycle"),
-    estimateHours: numeric("estimate_hours", { precision: 12, scale: 2 }),
+    estimateHours: numeric("estimate_hours", {
+      mode: "number",
+      precision: 12,
+      scale: 2,
+    }),
     featureTeamId: uuid("feature_team_id").references(() => featureTeams.id, {
       onDelete: "restrict",
     }),

@@ -55,6 +55,7 @@ import {
 import {
   cyclesUntilOf,
   streamPatterns,
+  streamFeatures,
   streamReleases,
 } from "./release-kinds.ts";
 import { readToday } from "./settings.ts";
@@ -395,21 +396,34 @@ function patternDrafts(
   return drafts;
 }
 
-// The drafts that move a stream's releases with their cycles, refusing a release that would include
-// a cycle no longer made or start after its Ships on day.
-function releaseDrafts(
+// The drafts that move a stream's releases and features with their cycles, a feature as a release
+// on its one cycle, refusing one that would be on a cycle no longer made, or a release that would
+// start after its Ships on day.
+function movingDrafts(
   state: RecordsState,
   streamId: string,
   moved: ReadonlyMap<string, string | undefined>,
 ): Wanted[] {
-  const found = streamReleases(state, streamId).map(({ id, release }) => ({
-    id,
-    record: release,
-    name: String(release.name),
-    firstCycle: String(release.firstCycle),
-    lastCycle: String(release.lastCycle),
-    shipsOn: typeof release.shipsOn === "string" ? release.shipsOn : null,
-  }));
+  const found = [
+    ...streamReleases(state, streamId).map(({ id, release }) => ({
+      type: "release" as const,
+      id,
+      record: release,
+      name: String(release.name),
+      firstCycle: String(release.firstCycle),
+      lastCycle: String(release.lastCycle),
+      shipsOn: typeof release.shipsOn === "string" ? release.shipsOn : null,
+    })),
+    ...streamFeatures(state, streamId).map(({ id, record }) => ({
+      type: "feature" as const,
+      id,
+      record,
+      name: String(record.name),
+      firstCycle: String(record.targetCycle),
+      lastCycle: String(record.targetCycle),
+      shipsOn: null,
+    })),
+  ];
   const moving = movedReleases(
     found,
     moved,
@@ -417,12 +431,15 @@ function releaseDrafts(
     nameOf(state, streamId),
   );
   if ("problem" in moving) throw new ConflictError(moving.problem);
-  return moving.moves.map(({ release, firstCycle, lastCycle }) => {
-    changeableRecord(state, "release", release.id);
+  return moving.moves.map(({ release: { type, id, record }, ...to }) => {
+    changeableRecord(state, type, id);
     return {
-      type: "release",
-      id: release.id,
-      record: { ...release.record, firstCycle, lastCycle },
+      type,
+      id,
+      record:
+        type === "release"
+          ? { ...record, ...to }
+          : { ...record, targetCycle: to.firstCycle },
     };
   });
 }
@@ -430,8 +447,8 @@ function releaseDrafts(
 const nameOf = (state: RecordsState, streamId: string): string =>
   String(shownVersion(state, "release-stream", streamId)?.name);
 
-// Drafts one cycle's new length, with the patterns that give it, and the releases on cycles that
-// move, moved with them, all in one change set, as the Decisions Log sets out.
+// Drafts one cycle's new length, with the patterns that give it, and the releases and features on
+// cycles that move, moved with them, all in one change set, as the Decisions Log sets out.
 export async function changeCycleLength(
   database: Database,
   maker: Actor,
@@ -458,13 +475,10 @@ export async function changeCycleLength(
     }
     const made = patternsForLength(patterns, { startsOn, ...request });
     if ("problem" in made) throw new ConflictError(made.problem);
+    const moved = movedCycles(before, cyclesOf(made.patterns, until));
     return saveRecordDrafts(transaction, maker, state, [
       ...patternDrafts(state, streamId, kept, made.patterns),
-      ...releaseDrafts(
-        state,
-        streamId,
-        movedCycles(before, cyclesOf(made.patterns, until)),
-      ),
+      ...movingDrafts(state, streamId, moved),
     ]);
   });
 }

@@ -21,6 +21,7 @@ import {
   startTestApp,
   type TestApp,
   testPosition,
+  unique,
 } from "./test-app.ts";
 
 interface User {
@@ -46,12 +47,6 @@ afterEach(async () => {
   await setVisibility("positions", "general");
   await setVisibility("hiring-states", "general");
 });
-
-let names = 0;
-const unique = (prefix: string) => {
-  names += 1;
-  return `${prefix} ${String(names)}`;
-};
 
 const send = (who: User, method: Method, url: string, body?: object) =>
   test.request(who.cookie, method, url, body);

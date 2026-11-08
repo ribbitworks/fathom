@@ -7,7 +7,7 @@
 
 ## Context
 
-Each release stream has its own cycles, made ahead to a date of the stream's own, two years from the day the stream is added by default, from a configurable length and naming pattern, which can change from a chosen date while the cycles before keep their names and dates, as the [Decisions Log](../product/decisions.md#planning) sets out. Releases include consecutive cycles of their stream, features will target a cycle, and each cycle's share of the months it spans counts allocations, capacity, and demand. The [Domain Model](../design/domain-model.md#release-entities) gives each stream cycle patterns, each in force from its start until the next, agreed by the owner on 2026-11-03.
+Each release stream has its own cycles, made ahead to a date of the stream's own, two years from the day the stream is added by default, from a configurable length and naming pattern, which can change from a chosen date while the cycles before keep their names and dates, as the [Decisions Log](../product/decisions.md#planning) sets out. Releases include consecutive cycles of their stream, features target a cycle, and each cycle's share of the months it spans counts allocations, capacity, and demand. The [Domain Model](../design/domain-model.md#release-entities) gives each stream cycle patterns, each in force from its start until the next, agreed by the owner on 2026-11-03.
 
 ## Options
 
@@ -33,6 +33,6 @@ Each release stream has its own cycles, made ahead to a date of the stream's own
 ## Consequences
 
 - **No job to run:** Cycles reach the stream's Cycles until date whenever they are read, and moving the date later needs no rows to be added.
-- **References without foreign keys:** A release, and later a feature, refers to a cycle by a day the database cannot check, so the server's rules above are what keep those references whole. Features targeting cycles must add their own check to the rules on pattern changes and on the Cycles until date.
+- **References without foreign keys:** A release or a feature refers to a cycle by a day the database cannot check, so the server's rules above are what keep those references whole.
 - **Past cycles can change:** Nothing yet stops a pattern whose cycles have begun from being changed, if no release depends on it; whether to refuse it waits until the owner has seen cycles in use, as the owner decided on 2026-11-03.
 - **Cheap to work out:** A stream's cycles, even of a week each over years, are a few thousand at most, worked out in memory.

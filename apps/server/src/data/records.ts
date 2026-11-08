@@ -64,6 +64,7 @@ import {
   type RecordKind,
   recordExists,
   type RecordsState,
+  type Referred,
   refKey,
   shownIds,
   stateOf,
@@ -142,10 +143,10 @@ const ownFields = (kind: RecordKind, from: Recorded): Recorded =>
   );
 
 // How the Drafts page names the first record, live, in a draft, or in anyone's unpublished
-// changes, as the editor sees them, that names any of the people or choices given.
+// changes, as the editor sees them, that names any of the people, choices, or feature teams given.
 export async function recordNaming(
   reader: Reader,
-  named: "person" | "choice",
+  named: Referred,
   ids: readonly string[],
   editor?: Viewer,
 ): Promise<string | undefined> {

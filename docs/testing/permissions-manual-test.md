@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies, for each permission a role can grant, that an account holding only that permission, and any permission it needs, sees the pages and can take the actions the permission allows, and is not offered the next thing beyond it. The permissions Fathom has not built yet are checked together, one of them on its own.
+Verifies, for each permission a role can grant, that an account holding only that permission, and any permission it needs, sees the pages and can take the actions the permission allows, and is not offered the next thing beyond it. The permissions Fathom has not built yet are checked together.
 
 ## Test Environment
 
@@ -142,7 +142,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P3.
 
-#### PERM-03: Edit Features Is Not Built Yet
+#### PERM-03: Edit Features Opens No Further Pages
 
 **Account:** Team Member, `team.member@fathom.test`, changed by P2 from the Administrator, the account PERM-02 ended with.
 

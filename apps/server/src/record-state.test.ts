@@ -41,6 +41,7 @@ const recordsState = (parts: Partial<RecordsState>): RecordsState => ({
   "release-stream": kindState(),
   "cycle-pattern": kindState(),
   release: kindState(),
+  feature: kindState(),
   customer: kindState(),
   proposal: kindState(),
   project: kindState(),

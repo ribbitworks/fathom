@@ -112,6 +112,7 @@ describe("approving by area", () => {
       ...(
         [
           "cycle-pattern",
+          "feature",
           "customer",
           "proposal",
           "project",
@@ -166,6 +167,7 @@ describe("approving by area", () => {
       "release",
     ]);
     expect(approvableKinds(["plan:approve", "people:view"])).toEqual([
+      "feature",
       "customer",
       "proposal",
       "project",

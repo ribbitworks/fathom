@@ -17,7 +17,6 @@
 // FATHOM_SEED_PASSWORD_FILE, naming the file that holds the accounts' shared password.
 
 import {
-  type ChangeRecord,
   columnOrders,
   createDatabase,
   createPool,
@@ -69,7 +68,13 @@ import {
   unseedListDrafts,
 } from "./list-drafts.ts";
 import { defaultPasswordSettings, passwordLength } from "@fathom/shared";
+import { seedFeatures, unseedFeatures } from "./features.ts";
 import { seedProjects, unseedProjects } from "./projects.ts";
+import {
+  filledIn,
+  recorded as recordedFields,
+  type SeededChange,
+} from "./recorded.ts";
 import { seedReleases, unseedReleases } from "./releases.ts";
 import {
   removeSeededHires,
@@ -81,27 +86,21 @@ import {
 // The development data set's size.
 export const developmentSize = 150;
 
-type Change = ChangeRecord & { action: "created" | "deleted" };
-
 // The changes that record a record's fields being created or deleted.
 function recorded(
   recordType: string,
   recordId: string,
-  action: Change["action"],
+  action: SeededChange["action"],
   values: Record<string, unknown>,
   restricted: readonly string[] = [],
-): Change[] {
-  return Object.entries(values)
-    .filter(([, value]) => value !== null)
-    .map(([field, value]) => ({
-      recordType,
-      recordId,
-      action,
-      field,
-      tier: restricted.includes(field) ? "restricted" : "general",
-      oldValue: action === "deleted" ? value : null,
-      newValue: action === "created" ? value : null,
-    }));
+): SeededChange[] {
+  return recordedFields(
+    recordType,
+    recordId,
+    action,
+    filledIn(values),
+    (field) => (restricted.includes(field) ? "restricted" : "general"),
+  );
 }
 
 // The fields of a person that are Restricted: their dates, and their manager, as the server records
@@ -166,7 +165,7 @@ export async function seed(
       .from(lists)
       .where(eq(lists.id, String(first?.id)));
     if (present.length > 0) return false;
-    const made: Change[] = [];
+    const made: SeededChange[] = [];
     for (const list of organization.lists) {
       const row = {
         id: list.id,
@@ -305,8 +304,8 @@ export async function seed(
 async function addFeatureTeams(
   transaction: Pick<Database, "insert">,
   organization: FictionalOrganization,
-): Promise<Change[]> {
-  const made: Change[] = [];
+): Promise<SeededChange[]> {
+  const made: SeededChange[] = [];
   for (const team of organization.featureTeams) {
     const { memberships, ...row } = team;
     await transaction.insert(featureTeams).values(row);
@@ -339,7 +338,7 @@ async function addFeatureTeams(
 async function removeFeatureTeams(
   transaction: Pick<Database, "delete">,
   organization: FictionalOrganization,
-): Promise<Change[]> {
+): Promise<SeededChange[]> {
   const ids = organization.featureTeams.map(({ id }) => id);
   for (const table of [drafts, unpublishedDrafts]) {
     await transaction.delete(table).where(eq(table.recordType, "feature-team"));
@@ -367,7 +366,7 @@ export async function unseed(
 ): Promise<string[]> {
   return database.transaction(async (transaction) => {
     const kept: string[] = [];
-    const made: Change[] = [];
+    const made: SeededChange[] = [];
     // The seeded people still there, and all their values, read at once, but for those whom people
     // added by hand report to, or have, and the managers above them.
     const seededIds = organization.people.map(({ id }) => id);
@@ -707,6 +706,15 @@ export async function seedCommand(
         );
       }
       if (
+        await seedFeatures(
+          database,
+          organization.referenceDate,
+          organization.featureTeams.map(({ id }) => id),
+        )
+      ) {
+        console.log("Added fictional features");
+      }
+      if (
         await seedProjects(
           database,
           organization.referenceDate,
@@ -762,7 +770,12 @@ export async function seedCommand(
           `Discarded ${String(discardedLists)} drafts of lists and columns made by the personas`,
         );
       }
-      // Projects and proposals before people, whom they name as owners.
+      // Features before the release streams and feature teams they name, and projects and proposals
+      // before people, whom they name as owners.
+      await unseedFeatures(
+        database,
+        organization.featureTeams.map(({ id }) => id),
+      );
       const kept = [
         ...(await unseedProjects(database)),
         ...(await unseedReleases(database)),
@@ -779,7 +792,7 @@ export async function seedCommand(
     console.error(
       `error: ${
         hasDatabaseCode(error, databaseCodes.uniqueViolation)
-          ? "A list, column, release stream, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
+          ? "A list, column, release stream, feature, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
           : describeError(error)
       }`,
     );

@@ -23,7 +23,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Area | Team Member | Product Manager | Feature Lead | Project Manager | Engineering Manager | Engineering Director | Workforce Administrator | Executive | Resource Planner | Administrator |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Plan: projects, proposals, milestones, releases and the cycles they include (**proposal**), and products and customers (**proposal**) | View | Edit | View | Edit | Edit | Edit | View | View | View | None |
-| Features and their estimates, with Edit Features apart from Edit Plan, decided by the owner on 2026-11-07 (not built yet) | View | Edit | Edit | Edit | Edit | Edit | View | View | View | None |
+| Features and their estimates, with Edit Features apart from Edit Plan, decided by the owner on 2026-11-07 | View | Edit | Edit | Edit | Edit | Edit | View | View | View | None |
 | Allocations | View | View | Edit | View | Edit | Edit | View | View | Edit | None |
 | People, teams, and reporting lines (General) | None | None | View | View | View | Edit | Edit | View | View | None |
 | The org chart: who reports to whom, with each person's name, position, and team; a card shows the person's details beside it only for those who see people | View | View | View | View | View | View | View | View | View | None |

@@ -199,6 +199,7 @@ const recordKinds: { type: string; needs: Needs }[] = [
   { type: "release-stream", needs: allOf("configuration:edit") },
   { type: "cycle-pattern", needs: allOf("configuration:edit") },
   { type: "release", needs: allOf("plan:edit") },
+  { type: "feature", needs: allOf("features:edit") },
   { type: "customer", needs: allOf("plan:edit") },
   { type: "proposal", needs: allOf("plan:edit") },
   { type: "project", needs: allOf("plan:edit") },
@@ -655,23 +656,30 @@ const routes: Route[] = [
     pattern: "/api/projects/choices",
     needs: allOf("plan:view"),
   },
-  ...["customers", "projects", "proposals"].flatMap((path): Route[] => [
+  ...(
+    [
+      ["customers", "plan:edit"],
+      ["projects", "plan:edit"],
+      ["proposals", "plan:edit"],
+      ["features", "features:edit"],
+    ] as const
+  ).flatMap(([path, permission]): Route[] => [
     {
       method: "POST",
       pattern: `/api/${path}`,
-      needs: allOf("plan:edit"),
+      needs: allOf(permission),
       body: named,
     },
     {
       method: "PUT",
       pattern: `/api/${path}/:id`,
-      needs: allOf("plan:edit"),
+      needs: allOf(permission),
       body: named,
     },
     {
       method: "DELETE",
       pattern: `/api/${path}/:id`,
-      needs: allOf("plan:edit"),
+      needs: allOf(permission),
     },
   ]),
   {

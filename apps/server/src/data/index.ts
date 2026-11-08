@@ -154,8 +154,8 @@ export interface DataAccess {
   // Release streams, their cycle patterns, and their releases, which everyone who sees the plan or
   // planning configuration may read.
   releases: ReleaseAccess;
-  // Customers, projects with their milestones, and proposals, which everyone who sees the plan may
-  // read.
+  // Customers, projects with their milestones, proposals, and features, which everyone who sees the
+  // plan may read.
   projects: ProjectAccess;
   // Discarding and resubmitting drafts of the plan's records, whatever their kind.
   records: RecordAccess;
@@ -226,8 +226,9 @@ export interface ReleaseAccess {
 
 export type { PlanKind, PlanRecordRequest } from "./projects.ts";
 
-// Every change to customers, projects, milestones, and proposals is a draft, made by those who edit
-// the plan. Each answers with every record as the editor now sees them.
+// Every change to customers, projects, milestones, proposals, and features is a draft, made by those
+// who edit the plan, or, for features, those who edit features. Each answers with every record as
+// the editor now sees them.
 export interface ProjectAccess {
   read(actor: Actor): Promise<ProjectPlan>;
   // What the plan's records can be given, which everyone who sees the plan may read, though they
@@ -583,6 +584,7 @@ const recordEditors: Record<RecordType, Permission> = {
   "release-stream": "configuration:edit",
   "cycle-pattern": "configuration:edit",
   release: "plan:edit",
+  feature: "features:edit",
   customer: "plan:edit",
   proposal: "plan:edit",
   project: "plan:edit",
@@ -670,12 +672,18 @@ function createReleaseAccess(database: Database): ReleaseAccess {
   };
 }
 
-// What an editor's change answers with: they edit the plan, so may change what they see.
+// Which of the plan's records the actor may change.
+const planAbilities = (actor: Actor) => ({
+  canEdit: actor.permissions.includes("plan:edit"),
+  canEditFeatures: actor.permissions.includes("features:edit"),
+});
+
 const edited = async (
+  actor: Actor,
   saved: Promise<Saved<projectData.PlanRecords>>,
 ): Promise<Saved<ProjectPlan>> => {
   const { result, changeSetId } = await saved;
-  return { result: { ...result, canEdit: true }, changeSetId };
+  return { result: { ...result, ...planAbilities(actor) }, changeSetId };
 };
 
 // How each kind of record is added and changed.
@@ -689,6 +697,7 @@ const planChanges = {
     add: projectData.addProposal,
     change: projectData.changeProposal,
   },
+  feature: { add: projectData.addFeature, change: projectData.changeFeature },
 } as const;
 
 function createProjectAccess(database: Database): ProjectAccess {
@@ -697,7 +706,7 @@ function createProjectAccess(database: Database): ProjectAccess {
       requirePermission(actor, "plan:view");
       return {
         ...(await projectData.readPlanRecords(database, actor)),
-        canEdit: actor.permissions.includes("plan:edit"),
+        ...planAbilities(actor),
       };
     },
     readChoices: async (actor) => {
@@ -708,6 +717,7 @@ function createProjectAccess(database: Database): ProjectAccess {
     // PlanRecordRequest pairs them.
     add: async (actor, { type, request }) =>
       edited(
+        actor,
         // eslint-disable-next-line security/detect-object-injection
         planChanges[type].add(
           database,
@@ -717,6 +727,7 @@ function createProjectAccess(database: Database): ProjectAccess {
       ),
     change: async (actor, id, { type, request }) =>
       edited(
+        actor,
         // eslint-disable-next-line security/detect-object-injection
         planChanges[type].change(
           database,
@@ -729,6 +740,7 @@ function createProjectAccess(database: Database): ProjectAccess {
       projectData.removeRecord(database, recordEditor(actor, type), type, id),
     addMilestone: async (actor, projectId, request) =>
       edited(
+        actor,
         projectData.addMilestone(
           database,
           recordEditor(actor, "milestone"),
@@ -738,6 +750,7 @@ function createProjectAccess(database: Database): ProjectAccess {
       ),
     changeMilestone: async (actor, projectId, id, request) =>
       edited(
+        actor,
         projectData.changeMilestone(
           database,
           recordEditor(actor, "milestone"),

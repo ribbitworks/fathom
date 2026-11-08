@@ -24,7 +24,13 @@ import {
 import { eq, inArray } from "drizzle-orm";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { readChangeHistory } from "./data/change-history.ts";
-import { type Method, startTestApp, type TestApp } from "./test-app.ts";
+import {
+  type Method,
+  startTestApp,
+  type TestApp,
+  missingRecord as missing,
+  unique,
+} from "./test-app.ts";
 
 let test: TestApp;
 let configurer: { id: string; cookie: string };
@@ -43,12 +49,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await test.close();
 });
-
-let names = 0;
-const unique = (prefix: string) => {
-  names += 1;
-  return `${prefix} ${String(names)}`;
-};
 
 const quarters = {
   startsOn: "2027-01-01",
@@ -136,8 +136,6 @@ const changeCyclesUntil = (streamId: string, cyclesUntil: string) =>
     `/api/release-streams/${streamId}/cycles-until`,
     { cyclesUntil },
   );
-
-const missing = "00000000-0000-4000-8000-000000000000";
 
 describe("reading release streams", () => {
   it("is open to those who see the plan, without changing anything", async () => {

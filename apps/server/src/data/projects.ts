@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, and proposals: reading them as the viewer sees them,
-// each project with its dates from its milestones, and drafting each added, changed, and removed.
+// Customers, projects with their milestones, proposals, and features: reading them as the viewer
+// sees them, each project with its dates from its milestones, and drafting each added, changed, and
+// removed.
 // Part of the data access layer; the caller checks the actor's permissions. Every change is a
 // draft of a plan record, as records.ts sets out, with the kinds project-kinds.ts describes.
 
@@ -9,6 +10,10 @@ import { type Database, listItems, lists, people } from "@fathom/db";
 import {
   type CustomerRequest,
   type Customer,
+  type Feature,
+  type FeatureRequest,
+  featureStatusSchema,
+  firstFeatureStatus,
   type Milestone,
   type MilestoneRequest,
   type PlanChoices,
@@ -28,6 +33,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { checkBuiltInChoice, firstOffered } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
+import { checkTeamForFeature } from "./feature-teams.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import {
   addedOnly,
@@ -54,7 +60,7 @@ import {
 } from "./records.ts";
 import { readToday } from "./settings.ts";
 
-export type PlanRecords = Omit<ProjectPlan, "canEdit">;
+export type PlanRecords = Omit<ProjectPlan, "canEdit" | "canEditFeatures">;
 
 const extras = (
   state: RecordsState,
@@ -158,6 +164,22 @@ function proposalOut(
   };
 }
 
+function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
+  const feature = shownVersion(state, "feature", id) as Recorded;
+  return {
+    id,
+    name: String(feature.name),
+    status: featureStatusSchema.parse(feature.status),
+    targetStreamId: text(feature.targetStreamId),
+    targetCycle: text(feature.targetCycle),
+    estimateHours:
+      typeof feature.estimateHours === "number" ? feature.estimateHours : null,
+    featureTeamId: text(feature.featureTeamId),
+    description: text(feature.description),
+    ...extras(state, makers, "feature", id),
+  };
+}
+
 export function planOut(
   state: RecordsState,
   makers: Makers,
@@ -175,10 +197,13 @@ export function planOut(
     proposals: inOrder(state, "proposal").map((id) =>
       proposalOut(state, makers, id),
     ),
+    features: inOrder(state, "feature").map((id) =>
+      featureOut(state, makers, id),
+    ),
   };
 }
 
-// Every customer, project, and proposal as the viewer sees them.
+// Every customer, project, proposal, and feature as the viewer sees them.
 export async function readPlanRecords(
   database: Database,
   viewer: Actor,
@@ -239,11 +264,12 @@ async function checkOwner(
   }
 }
 
-// A customer, project, or proposal, as a request adds or changes it.
+// A customer, project, proposal, or feature, as a request adds or changes it.
 export type PlanRecordRequest =
   | { type: "customer"; request: CustomerRequest }
   | { type: "project"; request: ProjectRequest }
-  | { type: "proposal"; request: ProposalRequest };
+  | { type: "proposal"; request: ProposalRequest }
+  | { type: "feature"; request: FeatureRequest };
 
 export type PlanKind = PlanRecordRequest["type"];
 
@@ -388,6 +414,59 @@ export async function changeProposal(
       "proposal",
       id,
       await proposalRecord(transaction, request, proposal.statusId),
+    );
+  });
+}
+
+async function featureRecord(
+  transaction: Transaction,
+  request: FeatureRequest,
+  status: unknown,
+) {
+  await checkTeamForFeature(transaction, request.featureTeamId);
+  return {
+    name: request.name,
+    status: request.status ?? status,
+    targetStreamId: request.target?.streamId ?? null,
+    targetCycle: request.target?.cycle ?? null,
+    estimateHours: request.estimateHours,
+    featureTeamId: request.featureTeamId,
+    description: request.description,
+  };
+}
+
+export async function addFeature(
+  database: Database,
+  maker: Actor,
+  request: FeatureRequest,
+): Promise<Saved<PlanRecords>> {
+  return changingPlan(database, maker, async (transaction, state) =>
+    saveRecordDraft(
+      transaction,
+      maker,
+      state,
+      "feature",
+      randomUUID(),
+      await featureRecord(transaction, request, firstFeatureStatus),
+    ),
+  );
+}
+
+export async function changeFeature(
+  database: Database,
+  maker: Actor,
+  id: string,
+  request: FeatureRequest,
+): Promise<Saved<PlanRecords>> {
+  return changingPlan(database, maker, async (transaction, state) => {
+    const feature = changeableRecord(state, "feature", id);
+    return saveRecordDraft(
+      transaction,
+      maker,
+      state,
+      "feature",
+      id,
+      await featureRecord(transaction, request, feature.status),
     );
   });
 }

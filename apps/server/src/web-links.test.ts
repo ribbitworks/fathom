@@ -20,6 +20,7 @@ import {
   startTestApp,
   type TestApp,
   testPosition,
+  missingRecord,
 } from "./test-app.ts";
 
 let test: TestApp;
@@ -137,7 +138,7 @@ describe("adding web link columns", () => {
 
   it.each([
     [{ visibility: undefined }, "Choose a visibility"],
-    [{ listId: "00000000-0000-4000-8000-000000000000" }, "has no list"],
+    [{ listId: missingRecord }, "has no list"],
     [{ multiple: true }, "holds one link"],
   ])("refuses a web link column with %j", async (settings, message) => {
     const { cookie } = await editor();
@@ -161,7 +162,7 @@ describe("adding web link columns", () => {
       {
         name: field.name,
         type: "choice",
-        listId: "00000000-0000-4000-8000-000000000000",
+        listId: missingRecord,
       },
     );
     expect(response.statusCode).toBe(400);

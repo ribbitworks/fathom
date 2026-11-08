@@ -22,7 +22,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { actorWith } from "./access.ts";
 import { recordChanges } from "./data/changes.ts";
 import { findStartingRole } from "./data/roles.ts";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  startTestApp,
+  type TestApp,
+  testPosition,
+  unique,
+} from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
@@ -46,12 +51,6 @@ beforeAll(async () => {
 afterAll(async () => {
   await test.close();
 });
-
-let names = 0;
-const unique = (prefix: string) => {
-  names += 1;
-  return `${prefix} ${String(names)}`;
-};
 
 async function readList(id: string): Promise<List | undefined> {
   const response = await test.request(editor.cookie, "GET", "/api/lists");

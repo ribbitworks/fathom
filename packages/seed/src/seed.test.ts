@@ -783,6 +783,7 @@ describe("the seed command", () => {
       "Added 150 fictional people, with their lists and columns",
       "Added 10 fictional planned hires",
       "Added fictional release streams, with their cycles and releases",
+      "Added fictional features",
       "Added fictional customers, proposals, and projects with their milestones",
       ...addresses.map((email) => `Account ready: ${email}`),
       "Added drafts made by the personas",
@@ -895,7 +896,7 @@ describe("the seed command", () => {
       "error: Usage: seed.ts seed | unseed | accounts",
       expect.stringMatching(/^error: /),
       "error: FATHOM_SEED_PASSWORD_FILE is not set",
-      "error: A list, column, release stream, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
+      "error: A list, column, release stream, feature, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
     ]);
   });
 

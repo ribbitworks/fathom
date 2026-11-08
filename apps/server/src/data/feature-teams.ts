@@ -74,6 +74,7 @@ import {
 } from "./drafts.ts";
 import { recordEvents } from "./history.ts";
 import { currentOn, notStarted } from "./people.ts";
+import { recordNaming } from "./records.ts";
 import { readToday } from "./settings.ts";
 
 type Reader = Pick<Database, "select">;
@@ -917,6 +918,7 @@ export async function deleteFeatureTeam(
       today,
     );
     if (team === undefined) return null;
+    await refuseRemovingNamedTeams(transaction, [id]);
     const cleared = await clearedTeamRejection(
       transaction,
       id,
@@ -1271,6 +1273,12 @@ export async function undoTeamDrafts(
     }
     return { id: record.id, team, now };
   });
+  await refuseRemovingNamedTeams(
+    transaction,
+    undone
+      .filter(({ id, team }) => team === undefined && live.has(id))
+      .map(({ id }) => id),
+  );
   const names = await readTeamNames(transaction);
   const everyone = await peopleOf(
     transaction,
@@ -1304,6 +1312,43 @@ export async function undoTeamDrafts(
       id,
       live.get(id),
       wanted,
+    );
+  }
+}
+
+// Refuses removing feature teams a record names, live or in a draft, published or not.
+async function refuseRemovingNamedTeams(
+  reader: Reader,
+  ids: readonly string[],
+): Promise<void> {
+  const naming = await recordNaming(reader, "feature-team", ids);
+  if (naming !== undefined) {
+    throw new ConflictError(
+      `This feature team is named by ${naming}; change that first`,
+    );
+  }
+}
+
+// Refuses a feature team for a feature unless it is live and no draft, published or not, removes it.
+export async function checkTeamForFeature(
+  reader: Reader,
+  id: string | null,
+): Promise<void> {
+  if (id === null) return;
+  const [team] = await reader
+    .select({ id: featureTeams.id })
+    .from(featureTeams)
+    .where(eq(featureTeams.id, id));
+  if (team === undefined) {
+    throw new BadRequestError("Choose a feature team that has been approved");
+  }
+  const removals = [
+    (await readTeamDrafts(reader, [id])).get(id),
+    (await readHeld(reader, recordType, undefined, [id])).get(id)?.draft,
+  ];
+  if (removals.some((draft) => draft?.action === "deleted")) {
+    throw new ConflictError(
+      "This feature team is drafted to be removed; choose another",
     );
   }
 }

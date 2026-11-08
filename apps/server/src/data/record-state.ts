@@ -32,8 +32,9 @@ export interface RecordKind {
   // Fields whose value no other record has, ignoring letter case, among the records with the same
   // value in another field, if one is named. A record with no value in such a field takes none.
   unique?: readonly UniqueValue[];
-  // Fields naming something other than the plan's records: a person, or a choice in a list.
-  refers?: Readonly<Record<string, "person" | "choice">>;
+  // Fields naming something other than the plan's records: a person, a choice in a list, or a
+  // feature team.
+  refers?: Readonly<Record<string, Referred>>;
   // The permissions any of which lets someone read records of the kind, and their history.
   readWith: readonly Permission[];
   // The record as the Drafts page names it, such as "the release stream Major".
@@ -45,6 +46,8 @@ export interface RecordKind {
   // from the kind's rows, including those added before it in the same approval.
   added?: (rows: ReadonlyMap<string, Recorded>) => Recorded;
 }
+
+export type Referred = "person" | "choice" | "feature-team";
 
 export interface UniqueValue {
   field: string;
