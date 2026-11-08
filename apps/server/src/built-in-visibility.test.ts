@@ -262,6 +262,20 @@ describe("the Position column", () => {
 });
 
 describe("the State column", () => {
+  it("refuses a saved view using State to those who cannot see the Hiring states list's tier", async () => {
+    const saver = await grantedOnly(["people:view"]);
+    const save = () =>
+      send(saver, "POST", "/api/people/views", {
+        name: unique("Fictional View"),
+        definition: { filters: { stateId: { empty: true } } },
+      });
+    expect((await save()).statusCode).toBe(201);
+    await setVisibility("hiring-states", "restricted");
+    const response = await save();
+    expect(response.statusCode).toBe(400);
+    expect(refusal(response)).toBe("Choose only columns you can see");
+  });
+
   it("shows a placeholder's state to those who see the Hiring states list's tier", async () => {
     const id = await liveHire();
     const planner = await test.signedIn("resource-planner");

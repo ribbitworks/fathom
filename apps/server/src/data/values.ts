@@ -46,6 +46,27 @@ export type PeopleColumns = readonly ColumnInfo[] & {
   readonly stateTier: Tier;
 };
 
+// The tier of each of the People table's built-in columns, by key, as readers are sent them: the
+// manager is General, though a drafted one is Restricted, since everyone is sent each live manager.
+export function builtInColumnTiers(
+  columns: Pick<PeopleColumns, "positionTier" | "stateTier">,
+): Map<string, Tier> {
+  return new Map<string, Tier>([
+    ["preferredName", "general"],
+    ["employeeId", "general"],
+    ["positionId", columns.positionTier],
+    ["stateId", columns.stateTier],
+    ["startDate", "restricted"],
+    ["expected", "general"],
+    ["endDate", "restricted"],
+    ["managerId", "general"],
+    ["isManager", "general"],
+    ["managerFrom", "restricted"],
+    ["team", "general"],
+    ["teamName", "general"],
+  ]);
+}
+
 // The tier of a built-in list's values: its live visibility, or the most sensitive tier when the
 // list cannot be read, rather than trusted.
 export async function builtInTier(reader: Reader, key: string): Promise<Tier> {

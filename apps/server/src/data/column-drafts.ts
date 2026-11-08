@@ -69,7 +69,7 @@ import {
   readState,
   unpublishedMark,
 } from "./lists.ts";
-import { builtInTier, type FieldRow } from "./values.ts";
+import { builtInColumnTiers, builtInTier, type FieldRow } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 
@@ -794,24 +794,14 @@ export async function readColumnsOut(
       },
     ];
   });
-  const seesPositions = seesTier(actor, await builtInTier(reader, "positions"));
-  const seesStates = seesTier(
-    actor,
-    await builtInTier(reader, "hiring-states"),
-  );
+  const builtIn = builtInColumnTiers({
+    positionTier: await builtInTier(reader, "positions"),
+    stateTier: await builtInTier(reader, "hiring-states"),
+  });
   const visible = new Set([
-    "preferredName",
-    "employeeId",
-    ...(seesPositions ? ["positionId"] : []),
-    ...(seesStates ? ["stateId"] : []),
-    "expected",
-    "managerId",
-    "team",
-    "teamName",
-    "isManager",
-    ...(seesTier(actor, "restricted")
-      ? ["startDate", "endDate", "managerFrom"]
-      : []),
+    ...[...builtIn]
+      .filter(([, tier]) => seesTier(actor, tier))
+      .map(([key]) => key),
     ...shown.map(({ id }) => id),
   ]);
   const orderMaker = (

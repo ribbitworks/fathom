@@ -31,7 +31,7 @@ import {
   type Saved,
   type Transaction,
 } from "./changes.ts";
-import { readColumns } from "./values.ts";
+import { builtInColumnTiers, readColumns } from "./values.ts";
 
 const table = "people";
 const noView = "There is no such view";
@@ -45,16 +45,11 @@ type ViewRow = typeof savedViews.$inferSelect;
 
 const viewFields = ["tableName", "name", "definition", "createdBy"] as const;
 
-// The tier of each of the People table's columns, by key: dates are Restricted, the position and
-// each added column are as sensitive as their list, and the rest is General.
+// The tier of each of the People table's columns, by key.
 async function columnTiers(reader: Reader): Promise<Map<string, Tier>> {
   const columns = await readColumns(reader);
   return new Map<string, Tier>([
-    ["preferredName", "general"],
-    ["employeeId", "general"],
-    ["positionId", columns.positionTier],
-    ["startDate", "restricted"],
-    ["endDate", "restricted"],
+    ...builtInColumnTiers(columns),
     ...columns.map((column): [string, Tier] => [column.id, column.tier]),
   ]);
 }

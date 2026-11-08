@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -304,3 +304,33 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 **Afterwards:** R1.
+
+### HIRE-11: A View of Planned Hires Alone Is Saved and Applied
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, the same as the account HIRE-10 ended with.
+
+**Preconditions:** R1 run after HIRE-10. Signed in (P1) with this account. **People** page open, with no filters.
+
+- [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire** only, and press Esc.
+  - **Expected:** Only hire rows are shown.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **Expected** header, then **List order**.
+  - **Expected:** The same hire rows are shown, earliest **Expected** month first.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the **Views** button after the search box, then **Save view…**. Type **Hiring plan** in **Name**, and select **Save view**.
+  - **Expected:** The dialog closes with no error, and the button now reads **Hiring plan**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Hiring plan**, then **Clear view**.
+  - **Expected:** Every row is shown again, people and planned hires.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Views**, then **Hiring plan**.
+  - **Expected:** The same hire rows as in Step 2 are shown, in the same order.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Hiring plan**, then **Delete view**.
+  - **Expected:** A notice reads **Deleted the Hiring plan view.**, with **Undo**. The hire rows stay as they are, and the button now reads **Views**, marked with a dot.
+  - **Notes:**

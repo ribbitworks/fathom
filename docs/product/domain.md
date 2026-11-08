@@ -1,4 +1,4 @@
-# Fathom — Domain Concepts
+# Fathom: Domain Concepts
 
 **Status:** Draft
 **Last updated:** 2026-11-07
@@ -24,7 +24,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Resource:** Anything that can be allocated to work, currently people and planned hires.
 - **Planned hire:** A role to be filled, planned before anyone is hired for it, which is filled by a new or existing employee.
 - **Requisition:** The ID an organization's HR system gives an opening to be filled. A planned hire's ID is its requisition, or a temporary ID until it has one.
-- **Hiring plan:** The planned hires not yet filled, seen through a saved view of People that shows only them.
+- **Hiring plan:** The planned hires not yet filled, seen on People as [Hiring entries](decisions.md#workforce) sets out.
 - **List with meanings:** A list whose choices are the organization's own, each tied to one of a fixed set of meanings Fathom acts on, such as the hiring states, each meaning Proposed, Open, Hired, or Left.
 - **Team:** The people who report to a manager.
 - **Manager flag:** Marks a person who can be named as others' manager. Not the Engineering Manager role, which grants users access.

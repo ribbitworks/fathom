@@ -57,6 +57,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Names in the person details panel are not links:** A manager's or report's name in the panel shows them in the same panel, as a button, so it cannot be opened in a new tab or have its address copied. Deferred as the panel is read only and swapped within the page; worth making a link if readers want to open several people at once. Found in review on 2026-11-07.
 - **Show on org chart for people the chart does not draw:** The person details panel on People offers Show on org chart for anyone, but the chart does not draw people who have not started, so it opens without finding them, as its finder does for the same people. Found in review on 2026-11-07.
 - **Pasting several choices:** Pasting into a column that takes several choices reads each cell as one choice name. How several are pasted into one cell was left for later by the owner.
+- **A planned hire's Start in saved views:** A planned hire's Start value is its target date, which is part of the hiring plan, recorded as Confidential, while saved views treat the Start column as Restricted, so a view on Start saved by someone who sees Confidential data is recorded in the change history as Restricted. No value is revealed, since each reader filters only the rows they are sent. Found in review on 2026-11-07.
 
 ## Drafts
 

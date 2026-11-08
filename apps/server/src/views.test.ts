@@ -6,6 +6,7 @@
 // people's General details and no more.
 
 import {
+  builtInColumnNames,
   type Choice,
   type Field,
   type List,
@@ -438,5 +439,78 @@ describe("saved views", () => {
     expect(refusals.map(({ statusCode }) => statusCode)).toEqual([
       400, 400, 400, 400, 400, 400,
     ]);
+  });
+});
+
+describe("built-in columns in saved views", () => {
+  it("are each kept in a saved view and read back", async () => {
+    const { cookie } = await test.signedIn("workforce-administrator");
+    const definition = {
+      filters: Object.fromEntries(
+        [...builtInColumnNames.keys()].map((key) => [key, { empty: true }]),
+      ),
+    };
+    const { view } = (
+      await save(cookie, "Every built-in column", definition)
+    ).json<Saved>();
+    expect(view.definition).toEqual(definition);
+    expect(
+      (await viewsOf(cookie)).find(({ id }) => id === view.id)?.definition,
+    ).toEqual(definition);
+  });
+
+  it("on State and Expected are saved and read back by readers who see only General details", async () => {
+    const administrator = await test.signedIn("workforce-administrator");
+    const states = (
+      await test.request(administrator.cookie, "GET", "/api/lists")
+    )
+      .json<{ lists: List[] }>()
+      .lists.find(({ builtIn }) => builtIn === "hiring-states")
+      ?.choices.filter(
+        ({ meaning }) => meaning === "proposed" || meaning === "open",
+      );
+    const hiringPlan = {
+      filters: { stateId: { any: (states ?? []).map(({ id }) => id) } },
+      sort: ["expected"],
+    };
+    expect(hiringPlan.filters.stateId.any).not.toHaveLength(0);
+    const viewer = await test.signedIn("resource-planner");
+    const { view } = (
+      await save(viewer.cookie, "Hiring plan", hiringPlan)
+    ).json<Saved>();
+    expect(await viewsOf(viewer.cookie)).toContainEqual({
+      ...view,
+      definition: hiringPlan,
+    });
+  });
+
+  it("on managers and teams are saved by readers who see only General details", async () => {
+    const viewer = await test.signedIn("resource-planner");
+    const response = await save(viewer.cookie, "By manager", {
+      filters: { isManager: { empty: true } },
+      sort: ["managerId", "teamName"],
+      breakdown: ["team"],
+    });
+    expect(response.statusCode).toBe(201);
+  });
+
+  it("on Manager since are kept from readers who do not see Restricted details", async () => {
+    const administrator = await test.signedIn("workforce-administrator");
+    const { view } = (
+      await save(administrator.cookie, "Manager since", {
+        sort: ["managerFrom"],
+      })
+    ).json<Saved>();
+    const viewer = await test.signedIn("resource-planner");
+    expect(
+      (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
+    ).toBe(false);
+  });
+
+  it("on Manager since are refused to readers who do not see Restricted details", async () => {
+    const viewer = await test.signedIn("resource-planner");
+    expect(
+      (await save(viewer.cookie, "Since", { sort: ["managerFrom"] })).json(),
+    ).toEqual({ error: "Choose only columns you can see" });
   });
 });
