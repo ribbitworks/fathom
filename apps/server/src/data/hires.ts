@@ -30,6 +30,7 @@ import {
   type Person,
   temporaryId,
   type Tier,
+  monthOf,
 } from "@fathom/shared";
 import { and, eq, inArray, isNull, lt, notInArray, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -517,7 +518,7 @@ export async function readHiresIn(
       ];
     }),
   );
-  const thisMonth = today.slice(0, 7);
+  const thisMonth = monthOf(today);
   const hires = versions.flatMap(({ id, before, draft, hire }): Hire[] => {
     const filledBy = textOrNull(before?.filledBy);
     const filler = filledBy === null ? undefined : named.get(filledBy);
@@ -550,7 +551,7 @@ export async function readHiresIn(
         managerId: shown ? managerId : null,
         managerName: managingHire ?? (shownPerson ? manager.name : null),
         isManager: hire.isManager === true,
-        expected: expectedOn === null ? thisMonth : expectedOn.slice(0, 7),
+        expected: expectedOn === null ? thisMonth : monthOf(expectedOn),
         ...(seesStates ? { stateId: String(hire.stateId) } : {}),
         values: shownValues(valuesOf(hire)),
         links: shownValues(Object.entries(linksOf(hire))),

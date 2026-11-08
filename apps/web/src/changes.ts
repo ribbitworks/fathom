@@ -84,6 +84,7 @@ const fieldNames = new Map([
   ["leadId", "Feature lead"],
   ["members", "Members"],
   ["memberFrom", "Joining and leaving dates"],
+  ["leadFrom", "Date the feature lead changes"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {

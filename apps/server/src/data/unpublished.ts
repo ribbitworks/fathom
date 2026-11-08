@@ -184,8 +184,9 @@ async function readVersions(
       tierOf: await readHireTier(reader),
     },
     teams: {
-      live: (await readLiveTeams(reader, await readToday(reader), teamIds))
-        .teams,
+      live: (
+        await readLiveTeams(reader, await readToday(reader), { ids: teamIds })
+      ).teams,
       mine: await readTeamDrafts(reader, teamIds, userId),
       theirs: await readTeamDrafts(reader, teamIds),
     },

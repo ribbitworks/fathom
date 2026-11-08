@@ -14,6 +14,13 @@ export const monthSchema = z.string().regex(/^\d{4}-\d{2}$/);
 export const isDay = (text: string): boolean =>
   daySchema.safeParse(text).success;
 
+export const isFirstOfMonth = (day: string): boolean => day.endsWith("-01");
+
+const monthLength = "YYYY-MM".length;
+
+// The month a day is in, such as 2026-10 for 2026-10-31.
+export const monthOf = (day: string): string => day.slice(0, monthLength);
+
 // Text typed as a day, with digits alone, or digits and dashes, laid out as the digits fill a day:
 // 2026, 2026-10 and 2026-10-31 as they are typed. Anything else is left as typed.
 export function typedDay(text: string): string {

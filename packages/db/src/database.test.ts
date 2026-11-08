@@ -123,6 +123,7 @@ describe("schema", () => {
     ["a", "no action"],
     ["c", "cascade"],
     ["r", "restrict"],
+    ["n", "set null"],
   ]);
   // Every table the schema module defines, alongside the schema object itself.
   const tables = Object.values(schema as Record<string, unknown>).filter(

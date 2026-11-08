@@ -58,6 +58,7 @@ import {
   type Actor,
   requireAnyPermission,
   requirePermission,
+  seesRestrictedDetails,
 } from "../access.ts";
 import { approveDrafts, rejectDrafts } from "./approvals.ts";
 import { readGreeting } from "./greeting.ts";
@@ -429,7 +430,7 @@ export interface HireAccess {
 }
 
 export interface FeatureTeamAccess {
-  read(actor: Actor): Promise<FeatureTeams>;
+  read(actor: Actor, on?: string): Promise<FeatureTeams>;
   create(actor: Actor, request: FeatureTeamRequest): Promise<Saved<string>>;
   update(
     actor: Actor,
@@ -448,10 +449,24 @@ export interface FeatureTeamAccess {
 
 function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
   return {
-    read: async (actor) => {
-      const read = await featureTeamData.readFeatureTeams(database, actor);
-      // The days a draft gives members joining or leaving are Restricted, so seeing them is recorded.
-      if (read.teams.some(({ draft }) => draft?.days !== undefined)) {
+    read: async (actor, on) => {
+      const read =
+        on === undefined
+          ? await featureTeamData.readFeatureTeams(database, actor)
+          : await featureTeamData.readFeatureTeamsOn(database, actor, on);
+      // The days members join or leave are Restricted, so seeing them is recorded: those a draft
+      // gives, and those a reader who sees Restricted details can tell from teams on a chosen day,
+      // which come without drafts, or from the month a team disbands, which may draw on end dates.
+      const sawDays =
+        on === undefined
+          ? read.teams.some(
+              ({ draft, disbandedFrom }) =>
+                draft?.days !== undefined ||
+                draft?.leadDay !== undefined ||
+                (disbandedFrom !== undefined && seesRestrictedDetails(actor)),
+            )
+          : seesRestrictedDetails(actor);
+      if (sawDays) {
         await recordRestrictedView(
           database,
           actor.user.id,

@@ -3,7 +3,12 @@
 // Where release streams' cycles and releases fall on the Releases page's timeline, by days from
 // its first day, and how its axis is cut and named at each scale.
 
-import { addDays, addMonths, type ReleaseStream } from "@fathom/shared";
+import {
+  addDays,
+  addMonths,
+  monthOf,
+  type ReleaseStream,
+} from "@fathom/shared";
 import {
   daysBetween,
   lastCycleEnd,
@@ -36,7 +41,7 @@ export interface TimelineLayout {
   today: number | undefined;
 }
 
-const monthStart = (day: string) => `${day.slice(0, 7)}-01`;
+const monthStart = (day: string) => `${monthOf(day)}-01`;
 
 // Where everything falls on a timeline of whole months, from the month the first cycle starts in
 // to the month the last ends in, or undefined when no stream has cycles. Retired streams, and

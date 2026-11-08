@@ -24,6 +24,7 @@ import {
   databaseCodes,
   describeError,
   drafts,
+  featureTeamLeads,
   featureTeamMemberships,
   featureTeams,
   fields,
@@ -307,11 +308,21 @@ async function addFeatureTeams(
 ): Promise<SeededChange[]> {
   const made: SeededChange[] = [];
   for (const team of organization.featureTeams) {
-    const { memberships, ...row } = team;
+    const { memberships, leadId, ...row } = team;
     await transaction.insert(featureTeams).values(row);
     await transaction
       .insert(featureTeamMemberships)
       .values(memberships.map((one) => ({ teamId: team.id, ...one })));
+    // A team's lead has led it since they first joined it.
+    const ledFrom = memberships
+      .filter((one) => one.member && one.personId === leadId)
+      .map(({ fromDate }) => fromDate)
+      .sort()[0];
+    if (ledFrom !== undefined) {
+      await transaction
+        .insert(featureTeamLeads)
+        .values({ teamId: team.id, leadId, fromDate: ledFrom });
+    }
     const latest = new Map(
       [...memberships]
         .filter(({ fromDate }) => fromDate <= organization.referenceDate)
@@ -350,7 +361,9 @@ async function removeFeatureTeams(
   return removed.flatMap((team) =>
     recorded("feature-team", team.id, "deleted", {
       name: team.name,
-      leadId: team.leadId,
+      leadId:
+        organization.featureTeams.find(({ id }) => id === team.id)?.leadId ??
+        null,
     }),
   );
 }
@@ -416,8 +429,8 @@ export async function unseed(
     const leads = new Set(
       (
         await transaction
-          .select({ leadId: featureTeams.leadId })
-          .from(featureTeams)
+          .select({ leadId: featureTeamLeads.leadId })
+          .from(featureTeamLeads)
       )
         .map(({ leadId }) => leadId)
         .filter((id): id is string => id !== null && seededIds.includes(id)),

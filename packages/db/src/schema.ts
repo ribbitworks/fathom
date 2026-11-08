@@ -958,22 +958,42 @@ export const teams = fathomSchema.table(
 );
 
 // Feature teams: the people working on a set of related features, apart from reporting lines, as
-// the Decisions Log sets out. A team's name is required and unique, ignoring letter case; its
-// feature lead, if any, is one of its current members, which the server checks. A team may name a
-// colour from the palette, for the feature team chart, as a manager's team does.
+// the Decisions Log sets out. A team's name is required and unique, ignoring letter case. A team may
+// name a colour from the palette, for the feature team chart, as a manager's team does.
 export const featureTeams = fathomSchema.table(
   "feature_teams",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
-    leadId: uuid("lead_id").references(() => people.id, {
-      onDelete: "restrict",
-    }),
     colour: text("colour"),
   },
   (table) => [
     uniqueIndex("feature_teams_name_index").on(sql`lower(${table.name})`),
-    index("feature_teams_lead_index").on(table.leadId),
+  ],
+);
+
+// Who leads a feature team: each record names its lead, or none, from a date, in force until the
+// team's next record, so past and planned leads are kept. The server checks a new lead is one of the
+// team's members on that date, and refuses removing someone who leads a team today or later, so
+// removing a person only clears them from past records, leaving those periods with no lead.
+export const featureTeamLeads = fathomSchema.table(
+  "feature_team_leads",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => featureTeams.id, { onDelete: "cascade" }),
+    leadId: uuid("lead_id").references(() => people.id, {
+      onDelete: "set null",
+    }),
+    fromDate: date("from_date").notNull(),
+  },
+  (table) => [
+    uniqueIndex("feature_team_leads_from_index").on(
+      table.teamId,
+      table.fromDate,
+    ),
+    index("feature_team_leads_lead_index").on(table.leadId),
   ],
 );
 

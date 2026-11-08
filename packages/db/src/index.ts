@@ -28,6 +28,7 @@ export {
   cyclePatterns,
   drafts,
   fields,
+  featureTeamLeads,
   featureTeamMemberships,
   featureTeams,
   fieldValues,

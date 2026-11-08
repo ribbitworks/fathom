@@ -460,6 +460,9 @@ function teamEntries(
       }
       if (key === "members") return (source.members ?? []).map(nameOf);
       if (key === "memberFrom" && from === "now") return dayText(draft.days);
+      if (key === "leadFrom" && from === "now" && draft.leadDay !== undefined) {
+        return formatDay(draft.leadDay);
+      }
       return null;
     };
     const changeLine = (key: string): Phrase =>
@@ -484,6 +487,7 @@ function teamEntries(
               return line === undefined ? [] : [credited(line, key, draft)];
             }),
             ...(dayText(draft.days) === null ? [] : [changeLine("memberFrom")]),
+            ...(draft.leadDay === undefined ? [] : [changeLine("leadFrom")]),
           ];
     return [
       entry(

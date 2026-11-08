@@ -4,7 +4,28 @@
 // laid out as it fills.
 
 import { describe, expect, it } from "vitest";
-import { defaultLineFrom, isDay, typedDay } from "./days.ts";
+import {
+  defaultLineFrom,
+  isDay,
+  isFirstOfMonth,
+  monthOf,
+  typedDay,
+} from "./days.ts";
+
+describe("monthOf", () => {
+  it("is the year and month of a day", () => {
+    expect(monthOf("2027-02-11")).toBe("2027-02");
+  });
+});
+
+describe("isFirstOfMonth", () => {
+  it("is true only of a month's first day", () => {
+    expect([
+      isFirstOfMonth("2027-02-01"),
+      isFirstOfMonth("2027-02-11"),
+    ]).toEqual([true, false]);
+  });
+});
 
 describe("isDay", () => {
   it("accepts only ISO dates that exist", () => {

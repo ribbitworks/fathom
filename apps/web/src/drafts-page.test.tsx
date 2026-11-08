@@ -1510,6 +1510,53 @@ describe("drafts of feature teams on the Drafts page", () => {
     ]);
   });
 
+  it("says the day a change of lead takes effect", async () => {
+    await open([
+      featureTeam("Fictional Pier", {
+        leadId: "m1",
+        members: ["m1", "m2"],
+        draft: draft({
+          action: "changed",
+          changed: ["leadId", "leadFrom"],
+          live: { leadId: "m2" },
+          leadDay: "2026-01-05",
+        }),
+      }),
+    ]);
+    expect(await entries()).toEqual([
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Feature lead from Blake Fictional to Avery Fictional; Date the feature lead changes set to Jan 5, 2026",
+    ]);
+  });
+
+  it("says a change of lead's day changed without naming it for a reader not sent it", async () => {
+    await open([
+      featureTeam("Fictional Pier", {
+        draft: draft({ action: "changed", changed: ["leadFrom"], live: {} }),
+      }),
+    ]);
+    expect(await entries()).toEqual([
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Date the feature lead changes changed",
+    ]);
+  });
+
+  it("says the day the lead of a team added starts", async () => {
+    await open([
+      featureTeam("Fictional Pier", {
+        leadId: "m1",
+        members: ["m1"],
+        draft: draft({
+          action: "created",
+          changed: ["leadId", "members", "leadFrom"],
+          live: {},
+          leadDay: "2026-01-05",
+        }),
+      }),
+    ]);
+    expect((await entries())[0]).toContain(
+      "Date the feature lead changes set to Jan 5, 2026",
+    );
+  });
+
   it("says when nothing is left to change in a draft", async () => {
     await open([
       featureTeam("Fictional Pier", {

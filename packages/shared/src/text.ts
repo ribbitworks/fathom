@@ -7,3 +7,10 @@
 const notPlain = /[\p{Cc}\u200E\u200F\u202A-\u202E\u2066-\u2069]/u;
 
 export const isPlainText = (text: string): boolean => !notPlain.test(text);
+
+// Orders records by their names, ignoring letter case.
+export const byName = (
+  first: { name: string },
+  second: { name: string },
+): number =>
+  first.name.localeCompare(second.name, undefined, { sensitivity: "base" });

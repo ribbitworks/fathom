@@ -10,6 +10,7 @@ import {
   featureTeamChangeSchema,
   featureTeamColourSchema,
   featureTeamRequestSchema,
+  featureTeamsQuerySchema,
   featureTeamsSchema,
   savedSchema,
 } from "@fathom/shared";
@@ -28,8 +29,13 @@ export function featureTeamRoutes(
   return (app, _options, done) => {
     app.get(
       "/api/feature-teams",
-      { schema: { response: { 200: featureTeamsSchema } } },
-      async (request) => teams.read(request.actor),
+      {
+        schema: {
+          querystring: featureTeamsQuerySchema,
+          response: { 200: featureTeamsSchema },
+        },
+      },
+      async (request) => teams.read(request.actor, request.query.on),
     );
 
     app.post(

@@ -11,6 +11,7 @@ import {
   columnOrders,
   createDatabase,
   drafts,
+  featureTeamLeads,
   featureTeams,
   createPool,
   type Database,
@@ -460,8 +461,13 @@ describe("seeding", () => {
     });
     const [team] = await connection
       .insert(featureTeams)
-      .values({ name: "Fictional Hand Team", leadId: lead?.id })
+      .values({ name: "Fictional Hand Team" })
       .returning({ id: featureTeams.id });
+    await connection.insert(featureTeamLeads).values({
+      teamId: String(team?.id),
+      leadId: lead?.id,
+      fromDate: "2020-01-01",
+    });
     const handDraft = "00000000-0000-4000-8000-0000000000e1";
     await connection.insert(drafts).values({
       recordType: "feature-team",

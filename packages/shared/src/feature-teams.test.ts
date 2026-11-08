@@ -5,12 +5,68 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  disbandedMonth,
   featureTeamChangeSchema,
   featureTeamColourSchema,
   featureTeamDraftSchema,
   featureTeamLengths,
   featureTeamRequestSchema,
 } from "./feature-teams.ts";
+
+describe("the month a team disbands", () => {
+  const joined = {
+    member: true,
+    fromDate: "2025-01-15",
+    endDate: null,
+  } as const;
+  const left = (fromDate: string, endDate: string | null = null) => ({
+    member: false,
+    fromDate,
+    endDate,
+  });
+
+  it("is none for a team that has had no members", () => {
+    expect(disbandedMonth([])).toBeUndefined();
+    expect(disbandedMonth([[]])).toBeUndefined();
+  });
+
+  it("is none while someone stays", () => {
+    expect(
+      disbandedMonth([[joined, left("2025-03-15")], [joined]]),
+    ).toBeUndefined();
+  });
+
+  it("is the next month when the last member leaves during a month", () => {
+    expect(disbandedMonth([[joined, left("2025-03-15")]])).toBe("2025-04");
+  });
+
+  it("is that month when the last member leaves on its first day", () => {
+    expect(disbandedMonth([[joined, left("2025-04-01")]])).toBe("2025-04");
+  });
+
+  it("goes by whoever leaves last, whatever order they come in", () => {
+    const earlier = [joined, left("2025-03-15")];
+    const later = [joined, left("2025-07-15")];
+
+    expect(disbandedMonth([later, earlier])).toBe("2025-08");
+    expect(disbandedMonth([earlier, later])).toBe("2025-08");
+  });
+
+  it("counts the day after a member's end date", () => {
+    expect(disbandedMonth([[{ ...joined, endDate: "2025-03-31" }]])).toBe(
+      "2025-04",
+    );
+  });
+
+  it("takes the earlier of a planned leaving day and the end date", () => {
+    expect(disbandedMonth([[joined, left("2025-09-15", "2025-03-31")]])).toBe(
+      "2025-04",
+    );
+    expect(disbandedMonth([[joined, left("2025-03-15", "2025-09-30")]])).toBe(
+      "2025-04",
+    );
+  });
+});
 
 const person = "018f4f6e-7b1a-4c3d-8e2f-000000000001";
 const other = "018f4f6e-7b1a-4c3d-8e2f-000000000002";

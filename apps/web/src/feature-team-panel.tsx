@@ -406,7 +406,7 @@ export function FeatureTeamPanel({
           <DayInput
             label="Takes effect from"
             required={false}
-            description="When members added or removed join or leave: today, or an earlier day"
+            description="Your changes take effect on this date. Use today or an earlier date."
             value={from ?? today()}
             problem={
               from !== undefined && from > today() ? laterDayProblem : undefined

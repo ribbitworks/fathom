@@ -25,6 +25,7 @@ import {
   type OrgChartDraft,
   type OrgChartPerson,
   type PaletteColour,
+  monthOf,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { NotFoundError } from "../errors.ts";
@@ -396,7 +397,7 @@ function placeholderOf(
       positionId,
       position,
       managerId: managerShown(text(hire.managerId)),
-      expected: (expectedOn ?? today).slice(0, 7),
+      expected: monthOf(expectedOn ?? today),
     };
   };
 }

@@ -3,7 +3,17 @@
 // Tests for plain text, as Fathom keeps names and a link's text.
 
 import { describe, expect, it } from "vitest";
-import { isPlainText } from "./text.ts";
+import { byName, isPlainText } from "./text.ts";
+
+describe("byName", () => {
+  it("orders by name, ignoring letter case", () => {
+    expect([{ name: "b" }, { name: "C" }, { name: "A" }].sort(byName)).toEqual([
+      { name: "A" },
+      { name: "b" },
+      { name: "C" },
+    ]);
+  });
+});
 
 // Built from their code points, so the test's own source holds no marks that change direction.
 const mark = (codePoint: number) => `a${String.fromCodePoint(codePoint)}b`;

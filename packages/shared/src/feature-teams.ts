@@ -8,7 +8,8 @@
 // member changes making one draft; its colour is how the chart is drawn, so it changes at once.
 
 import { z } from "zod";
-import { daySchema } from "./days.ts";
+import { addDays, addMonths } from "./cycles.ts";
+import { daySchema, isFirstOfMonth, monthOf, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
 
@@ -35,6 +36,8 @@ export const featureTeamDraftSchema = z.object({
   // The days the draft gives members joining or leaving, by person, for readers who see Restricted
   // details.
   days: z.record(z.string(), daySchema).optional(),
+  // The day the draft's change of lead takes effect, for readers who see Restricted details.
+  leadDay: daySchema.optional(),
   ...draftShape,
 });
 
@@ -51,6 +54,8 @@ export const featureTeamSchema = z.object({
   members: z.array(z.string()),
   // The name of each person on the team, drafted or live, whom the reader sees, by person.
   names: z.record(z.string(), z.string()),
+  // The month from which it has no members, past or planned, if there is one.
+  disbandedFrom: monthSchema.optional(),
   draft: featureTeamDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -63,8 +68,48 @@ export const featureTeamsSchema = z.object({
 
 export type FeatureTeams = z.infer<typeof featureTeamsSchema>;
 
+// A record of someone joining or leaving a team, with their end date, if it counts.
+export interface MembershipRecord {
+  member: boolean;
+  fromDate: string;
+  endDate: string | null;
+}
+
+// The first day someone is off a team, from their records, earliest first: the day they leave or
+// the day after their end date, whichever comes first; undefined while nothing takes them off it.
+function firstDayOff(records: readonly MembershipRecord[]): string | undefined {
+  const latest = records.at(-1);
+  if (latest === undefined) return undefined;
+  const afterEnd =
+    latest.endDate === null ? undefined : addDays(latest.endDate, 1);
+  if (latest.member) return afterEnd;
+  return afterEnd !== undefined && afterEnd < latest.fromDate
+    ? afterEnd
+    : latest.fromDate;
+}
+
+// The month a team disbands from, given each member's records: the first whole month with none of
+// them on it from then on, past or planned; undefined if someone stays, or it has had no members.
+export function disbandedMonth(
+  people: readonly (readonly MembershipRecord[])[],
+): string | undefined {
+  let lastOff: string | undefined;
+  for (const records of people) {
+    const off = firstDayOff(records);
+    if (off === undefined) return undefined;
+    if (lastOff === undefined || off > lastOff) lastOff = off;
+  }
+  if (lastOff === undefined) return undefined;
+  return monthOf(isFirstOfMonth(lastOff) ? lastOff : addMonths(lastOff, 1));
+}
+
+// Asks for the teams as of a day, or as they are today with their drafts when none is given.
+export const featureTeamsQuerySchema = z.object({
+  on: daySchema.optional(),
+});
+
 // Adds a feature team, with its members and lead, who is one of them; members join from the day
-// given, for those who may change Restricted details, or from today.
+// given, today or later, or earlier for those who may change Restricted details, or from today.
 export const featureTeamRequestSchema = z.object({
   name,
   leadId: z.uuid().nullable().default(null),
@@ -75,7 +120,8 @@ export const featureTeamRequestSchema = z.object({
 export type FeatureTeamRequest = z.infer<typeof featureTeamRequestSchema>;
 
 // Changes a feature team: renames it, chooses its lead or none, and adds and removes members, who
-// join or leave from the day given, for those who may change Restricted details, or from today.
+// join or leave, and the lead changes, from the day given, today or later, or earlier for those who
+// may change Restricted details, or from today.
 export const featureTeamChangeSchema = z.object({
   name: name.optional(),
   leadId: z.uuid().nullable().optional(),

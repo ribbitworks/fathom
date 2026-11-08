@@ -7,6 +7,7 @@
 // allocations, capacity, and demand. Days are ISO dates, such as 2027-01-01, worked out in UTC.
 
 import { z } from "zod";
+import { monthOf } from "./days.ts";
 
 export const cycleUnitSchema = z.enum(["weeks", "months"]);
 
@@ -121,7 +122,7 @@ export function monthShares(startsOn: string, endsOn: string): MonthShare[] {
     const monthEnd = formatDay(new Date(Date.UTC(year, month, days)));
     const last = monthEnd < endsOn ? monthEnd : endsOn;
     const covered = parseDay(last).getUTCDate() - date.getUTCDate() + 1;
-    shares.push({ month: first.slice(0, 7), share: covered / days });
+    shares.push({ month: monthOf(first), share: covered / days });
     first = addDays(last, 1);
   }
   return shares;

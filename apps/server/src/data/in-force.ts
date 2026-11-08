@@ -32,6 +32,13 @@ export function inForceOn<Row extends Dated>(
   return records.findLast((record) => record.fromDate <= day);
 }
 
+// Whether a record, one of records earliest first, is in force on a day or starts after it.
+export const inForceOrLater = <Row extends Dated>(
+  record: Row,
+  records: readonly Row[],
+  day: string,
+): boolean => record.fromDate > day || record === inForceOn(records, day);
+
 // The record that is current on a day: the one in force, or, before any has started, the first,
 // such as a new employee's first line, which starts on their start date.
 export function currentRecordOn<Row extends Dated>(

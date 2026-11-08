@@ -30,6 +30,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Manager flag:** Marks a person who can be named as others' manager. Not the Engineering Manager role, which grants users access.
 - **Feature team:** The people working on a set of related features. Membership is separate from reporting lines.
 - **Feature lead:** The person who leads a feature team.
+- **Disbanded:** Said of a feature team from the first month in which none of its members are on it, then or later.
 
 ## Table Terms
 

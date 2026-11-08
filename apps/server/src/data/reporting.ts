@@ -27,7 +27,12 @@ import {
   readPersonDrafts,
   type Recorded,
 } from "./drafts.ts";
-import { bySubject, currentRecordOn, inForceOn } from "./in-force.ts";
+import {
+  bySubject,
+  currentRecordOn,
+  inForceOn,
+  inForceOrLater,
+} from "./in-force.ts";
 
 type Reader = Pick<Database, "select">;
 
@@ -289,7 +294,7 @@ export async function refuseUnmarkingManagers(
           (line) =>
             line.managerId !== null &&
             chunk.includes(line.managerId) &&
-            (line.fromDate > today || line === inForceOn(own, today)),
+            inForceOrLater(line, own, today),
         ),
     );
     if (

@@ -123,9 +123,12 @@ export {
   daySchema,
   defaultLineFrom,
   isDay,
+  isFirstOfMonth,
+  monthOf,
   monthSchema,
   typedDay,
 } from "./days.ts";
+export { byName } from "./text.ts";
 export {
   cleanNote,
   colourClosing,
@@ -430,5 +433,7 @@ export {
   featureTeamRequestSchema,
   type FeatureTeams,
   featureTeamSchema,
+  disbandedMonth,
+  featureTeamsQuerySchema,
   featureTeamsSchema,
 } from "./feature-teams.ts";

@@ -24,7 +24,7 @@ import {
   TextInput,
   VisuallyHidden,
 } from "@mantine/core";
-import type { SavedView, Show } from "@fathom/shared";
+import { byName, type SavedView, type Show } from "@fathom/shared";
 import {
   Fragment,
   type ReactNode,
@@ -374,9 +374,6 @@ export interface SavedViews {
   onUpdate: (saved: SavedView, view: View) => void;
   onDelete: (saved: SavedView) => void;
 }
-
-const byName = (first: SavedView, second: SavedView) =>
-  first.name.localeCompare(second.name, undefined, { sensitivity: "base" });
 
 // The menu of a table's saved views, named after the one the view started from, marked when the
 // view has changed since, or, with none applied, from the table's default view. Choosing a view
