@@ -5,7 +5,7 @@
 // another kind's keeps the values both kinds have and clears the rest, naming them. Each value is
 // checked as a new row's cell checks it.
 
-import { hireCalled, type List, type Person } from "@fathom/shared";
+import { allOf, hireCalled, type List, type Person } from "@fathom/shared";
 import { Text } from "@mantine/core";
 import {
   type Column,
@@ -57,8 +57,6 @@ export const recordQuestion = (kind: string) => ({
       : "Discard the person you're adding?",
   keep: "Keep adding",
 });
-
-const listFormat = new Intl.ListFormat("en", { type: "conjunction" });
 
 export function NewPersonPanel({
   record,
@@ -184,7 +182,7 @@ export function NewPersonPanel({
         )}
         <Text size="sm" c="dimmed" role="status" mt={4}>
           {record.cleared.length > 0 &&
-            `${listFormat.format(record.cleared)} ${record.cleared.length === 1 ? "was" : "were"} cleared, since a ${kind === hireKind ? "planned hire" : "person"} doesn't have ${record.cleared.length === 1 ? "it" : "them"}.`}
+            `${allOf(record.cleared)} ${record.cleared.length === 1 ? "was" : "were"} cleared, since a ${kind === hireKind ? "planned hire" : "person"} doesn't have ${record.cleared.length === 1 ? "it" : "them"}.`}
         </Text>
       </div>
       <section aria-labelledby="new-record-details">

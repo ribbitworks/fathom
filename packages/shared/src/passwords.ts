@@ -8,6 +8,7 @@
 
 import { z } from "zod";
 import { passwordLength } from "./accounts.ts";
+import { allOf } from "./words.ts";
 
 export const characterTypes = [
   "uppercase",
@@ -127,12 +128,6 @@ export const defaultPasswordSettings: PasswordSettings = {
   },
 };
 
-// Words in a list, as people say them: "a, b, and c".
-function inWords(words: readonly string[]): string {
-  if (words.length <= 2) return words.join(" and ");
-  return `${words.slice(0, -1).join(", ")}, and ${String(words.at(-1))}`;
-}
-
 // The kinds a rule or recipe asks for.
 export const kindsIn = (
   flags: Record<CharacterType, boolean>,
@@ -180,7 +175,7 @@ export function passwordProblem(
   );
   return missing.length === 0
     ? undefined
-    : `The password must include ${inWords(missing.map(({ one }) => one))}.`;
+    : `The password must include ${allOf(missing.map(({ one }) => one))}.`;
 }
 
 // Why the recipe cannot be saved with the rules, one reason for each problem, or none.

@@ -40,6 +40,7 @@ import {
   meaningName,
   meaningSchema,
   meaningsOf,
+  eitherOf,
   type Tier,
   tierSchema,
 } from "@fathom/shared";
@@ -590,8 +591,6 @@ const builtInKey = (key: unknown) =>
 export const meaningsIn = (state: ListsState, listId: string) =>
   meaningsOf(builtInKey(state.builtIn.get(listId)));
 
-const eitherOf = new Intl.ListFormat("en", { type: "disjunction" });
-
 // Refuses a choice's meaning that does not fit its list: a list with meanings needs one of its
 // own for each choice, and any other list takes none.
 function refuseMeaningMisfit(
@@ -606,7 +605,7 @@ function refuseMeaningMisfit(
     }
   } else if (meaning === null || !meanings.includes(meaning)) {
     throw new BadRequestError(
-      `Choose what the choice means: ${eitherOf.format(meanings.map(meaningName))}`,
+      `Choose what the choice means: ${eitherOf(meanings.map(meaningName))}`,
     );
   }
 }

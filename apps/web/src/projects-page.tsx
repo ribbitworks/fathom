@@ -23,6 +23,7 @@ import type {
   RecordRef,
   Show,
 } from "@fathom/shared";
+import { allOf } from "@fathom/shared";
 import {
   Button,
   Group,
@@ -139,8 +140,6 @@ import type { ChangeView } from "./table-controls.tsx";
 import { type CellValue, formatDay, type View } from "./table-view.ts";
 
 export const projectTabSchema = z.enum(projectTabs);
-
-const listFormat = new Intl.ListFormat("en", { type: "conjunction" });
 
 const newButtonId = "projects-new";
 const panelId = "project-record-panel";
@@ -378,7 +377,7 @@ export function ProjectsPage({
             onAdded(ids);
             return changeSetId;
           },
-          failure: `Fathom could not add ${listFormat.format(
+          failure: `Fathom could not add ${allOf(
             added.map(({ request }) => (request as { name: string }).name),
           )}. Try again in a moment.`,
           onFailed,

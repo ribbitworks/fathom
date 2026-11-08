@@ -18,6 +18,7 @@ import {
   type RoleSummary,
   unbuiltPermissions,
   withImplied,
+  eitherOf,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson, sendJsonFor } from "./api.ts";
@@ -86,8 +87,6 @@ const linesNotBuilt = new Set([
 // Whether a line of the summary or the confirmation is about something Fathom does not have yet.
 export const notBuiltYet = (line: string): boolean => linesNotBuilt.has(line);
 
-const eitherOf = new Intl.ListFormat("en", { type: "disjunction" });
-
 export interface Consequences {
   pages: string[];
   can: string[];
@@ -131,7 +130,7 @@ export function consequences(granted: readonly Permission[]): Consequences {
     return needs.length === 0 || needs.some((one) => held.includes(one))
       ? []
       : [
-          `${permissionLabel(permission)} does nothing without ${eitherOf.format(needs.map(permissionLabel))}.`,
+          `${permissionLabel(permission)} does nothing without ${eitherOf(needs.map(permissionLabel))}.`,
         ];
   });
   return { pages, can, cannot, ineffective };

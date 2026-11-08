@@ -17,6 +17,7 @@ import {
   orgChartSchema,
   type PaletteColour,
   type Show,
+  allOf,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson, sendJson } from "./api.ts";
@@ -352,9 +353,7 @@ export function nothingFound(
   if (names.length > 3) {
     return `${String(names.length)} people with that name are not in this team`;
   }
-  const listed = new Intl.ListFormat("en", { type: "conjunction" }).format(
-    names,
-  );
+  const listed = allOf(names);
   return `${listed} ${names.length === 1 ? "is" : "are"} not in this team`;
 }
 

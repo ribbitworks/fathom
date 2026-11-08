@@ -14,6 +14,7 @@ import {
   type Person,
   typedDay,
   defaultLineFrom,
+  allOf,
 } from "@fathom/shared";
 import { Button, Group, SegmentedControl, Stack, Text } from "@mantine/core";
 import { useEffect, useEffectEvent } from "react";
@@ -66,8 +67,6 @@ const reportsColumn = cellColumn<Person, RowChange>("fillReports", "text", {
   multiple: false,
   choices: [],
 });
-
-const listFormat = new Intl.ListFormat("en", { type: "conjunction" });
 
 const personKey = "fillPerson";
 const fromKey = "fillFrom";
@@ -386,7 +385,7 @@ export function HireFillForm({
             />
           ))}
           {reports.length > 0 && (
-            <Row column={reportsColumn} value={listFormat.format(reports)} />
+            <Row column={reportsColumn} value={allOf(reports)} />
           )}
         </dl>
         <Group justify="flex-end" gap="xs">

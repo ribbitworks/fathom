@@ -362,6 +362,7 @@ export {
   viewDefinitionSchema,
   viewLengths,
 } from "./views.ts";
+export { allOf, eitherOf } from "./words.ts";
 export {
   dayIn,
   defaultTimeZone,

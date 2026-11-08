@@ -5,6 +5,7 @@
 // be done with each: discarding it or resubmitting it, for those who may edit lists, and approving
 // or rejecting it, for Approvers.
 
+import { allOf } from "@fathom/shared";
 import type { Choice, List } from "@fathom/shared";
 import { ActionIcon, Menu } from "@mantine/core";
 import { useState } from "react";
@@ -315,11 +316,9 @@ export const madeVerb = (action: "created" | "changed" | "deleted") => {
   return action === "deleted" ? "Removed" : "Changed";
 };
 
-const listed = new Intl.ListFormat("en", { type: "conjunction" });
-
 // Everyone who changed a draft, since several people's changes to one record make one draft.
 export const makers = (draft: Parameters<typeof makerNames>[0]) =>
-  listed.format(makerNames(draft));
+  allOf(makerNames(draft));
 
 // What may be done with one draft, in a menu: deciding it, for Approvers, unless it waits for a
 // rejected draft it depends on, and resubmitting it once rejected, or discarding it, for those who

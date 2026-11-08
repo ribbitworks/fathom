@@ -8,6 +8,7 @@
 // computer asks for less motion. On a narrow screen a panel covers the screen instead, by its own
 // styles.
 
+import { allOf } from "@fathom/shared";
 import { ActionIcon, FocusTrap } from "@mantine/core";
 import {
   useLocalStorage,
@@ -63,9 +64,7 @@ const joined = (...names: (string | false | undefined)[]) =>
 
 // The panels' names in words, such as "Background and metrics", for the edges that resize them.
 const namesOf = (panels: readonly SidePanel[]) =>
-  new Intl.ListFormat("en", { type: "conjunction" }).format(
-    panels.map(({ name }) => name),
-  );
+  allOf(panels.map(({ name }) => name));
 
 // How long a panel's motion may take before it is taken as ended, for a browser that never says it
 // has, such as one that skips it.

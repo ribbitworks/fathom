@@ -25,6 +25,7 @@ import {
   paletteColours,
   type ReleaseStream,
   shipsBeforeStart,
+  allOf,
 } from "@fathom/shared";
 import {
   Group,
@@ -465,10 +466,8 @@ export function PatternDialog({
 const unitWords = (length: number, unit: CycleUnit) =>
   `${unit === "weeks" ? "week" : "month"}${length === 1 ? "" : "s"}`;
 
-const listed = new Intl.ListFormat("en", { type: "conjunction" });
-
 const movedWords = (moved: readonly string[]) =>
-  `${listed.format(moved)} ${moved.length === 1 ? "moves with its" : "move with their"} cycles.`;
+  `${allOf(moved)} ${moved.length === 1 ? "moves with its" : "move with their"} cycles.`;
 
 export function CycleLengthDialog({
   stream,
