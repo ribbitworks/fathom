@@ -22,6 +22,7 @@ import { Icon } from "./icons.tsx";
 import {
   findFieldId,
   fitOptions,
+  livePosition,
   nothingFound,
   type OrgTree,
 } from "./org-chart.ts";
@@ -129,7 +130,7 @@ export function ChartControls({
                 <Text size="sm">{option.label}</Text>
                 <Text size="xs" c="dimmed">
                   {lead === undefined
-                    ? tree.people.get(option.value)?.position
+                    ? livePosition(tree.people.get(option.value))
                     : `Led by ${lead.preferredName}`}
                 </Text>
               </div>

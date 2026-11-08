@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the org chart, against a migrated PostgreSQL server: who appears, under whom, with
-// which details, as the lines approved for today have it, with drafts of managers and team names
-// beside, as each reader may see them; managers whose end date has passed, and what each reader is
-// told of them; planned hires as placeholders, and their drafts; and what each role may read.
+// which details, as the lines approved for today have it, with drafts of managers, positions and
+// team names beside, as each reader may see them; managers whose end date has passed, and what each
+// reader is told of them; planned hires as placeholders, and their drafts; and what each role may
+// read.
 
 import {
   accessHistory,
@@ -217,6 +218,58 @@ describe("the org chart", () => {
     });
   });
 
+  it("shows a drafted position beside only to those who see the Positions list's tier, and records one above General", async () => {
+    const changing = await person({ isManager: false });
+    await changed(changing, { positionId: otherTestPosition });
+    const draftFor = async (permissions: readonly Permission[]) => {
+      const reader = await test.signedIn(permissions);
+      return {
+        draft: (await chart(reader.cookie)).get(changing)?.draft,
+        recorded: (await restrictedViews(reader.id)).length > 0,
+      };
+    };
+    expect(await draftFor(["org-chart:view", "people:view"])).toEqual({
+      draft: {
+        position: "Fictional Lead",
+        state: "waiting",
+        unpublished: false,
+      },
+      recorded: false,
+    });
+    const marked = (visibility: "general" | "confidential") =>
+      test.connection
+        .update(lists)
+        .set({ visibility })
+        .where(eq(lists.builtIn, "positions"));
+    await marked("confidential");
+    try {
+      expect(await draftFor(["org-chart:view", "people:view"])).toEqual({
+        draft: undefined,
+        recorded: false,
+      });
+      // A reader without Restricted details, so only the position can be what is recorded.
+      expect(
+        await draftFor(["org-chart:view", "people:view", "confidential:view"]),
+      ).toEqual({
+        draft: {
+          position: "Fictional Lead",
+          state: "waiting",
+          unpublished: false,
+        },
+        recorded: true,
+      });
+    } finally {
+      await marked("general");
+    }
+  });
+
+  it("leaves out a drafted position that keeps the live one", async () => {
+    const keeping = await person({ isManager: false });
+    await changed(keeping, { positionId: otherTestPosition });
+    await changed(keeping, { positionId: testPosition });
+    expect((await chart()).get(keeping)).not.toHaveProperty("draft");
+  });
+
   it("marks a rejected draft", async () => {
     const manager = await person();
     const name = unique("Fictional Team");
@@ -428,6 +481,7 @@ describe("the org chart", () => {
     const report = await person({ managerId: first, isManager: false });
     await changed(report, { managerId: second });
     await changed(second, { teamName: unique("Fictional Team") });
+    await changed(first, { positionId: otherTestPosition });
     const leaving = await person({ isManager: false });
     await changed(leaving, { endDate: "2026-06-01" });
     const viewer = await test.signedIn(["org-chart:view", "restricted:view"]);
@@ -461,6 +515,19 @@ describe("the org chart", () => {
     });
     expect(shown.has(top)).toBe(false);
     expect(await restrictedViews(planner.id)).toHaveLength(0);
+  });
+
+  it("sends no drafted position for a manager shown by name alone", async () => {
+    const { middle } = await leftChain();
+    await changed(middle, { positionId: otherTestPosition });
+    const planner = await test.signedIn("resource-planner");
+    expect((await chart(planner.cookie)).get(middle)).not.toHaveProperty(
+      "draft",
+    );
+    const executive = await test.signedIn("executive");
+    expect((await chart(executive.cookie)).get(middle)?.draft).toMatchObject({
+      position: "Fictional Lead",
+    });
   });
 
   it("leaves out a manager who has left once nobody current reports to them", async () => {
@@ -714,6 +781,36 @@ describe("planned hires on the chart", () => {
     const plannerDrafted = await drafted(planner.cookie);
     expect(plannerDrafted.get(moving)?.managerId).toBe(first);
     expect(plannerDrafted.has(added)).toBe(false);
+  });
+
+  it("shows a hire's drafted position beside only to those who see the Positions list's tier", async () => {
+    const id = await hire();
+    await changeHire(id, { positionId: otherTestPosition });
+    expect((await chart()).get(id)?.draft).toEqual({
+      position: "Fictional Lead",
+      state: "waiting",
+      unpublished: false,
+    });
+    await test.connection
+      .update(lists)
+      .set({ visibility: "confidential" })
+      .where(eq(lists.builtIn, "positions"));
+    try {
+      const planReader = await test.signedIn([
+        "org-chart:view",
+        "people:view",
+        "hiring-plan:view",
+      ]);
+      expect((await chart(planReader.cookie)).get(id)).toMatchObject({
+        position: null,
+      });
+      expect((await chart(planReader.cookie)).get(id)?.draft).toBeUndefined();
+    } finally {
+      await test.connection
+        .update(lists)
+        .set({ visibility: "general" })
+        .where(eq(lists.builtIn, "positions"));
+    }
   });
 
   it("sends hires' drafts only to those who see people and the hiring plan, and records their view of the hiring plan", async () => {

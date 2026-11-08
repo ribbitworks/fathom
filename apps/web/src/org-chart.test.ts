@@ -232,6 +232,24 @@ describe("the people the Draft menu draws", () => {
         teamName: "Fictional team",
         draft: { ...draft, teamName: "Fictional crew" },
       },
+      {
+        ...person("r2", "m3", "Finley"),
+        draft: { ...draft, position: "Fictional Lead" },
+      },
+      {
+        ...person("r3", "m3", "Harper"),
+        position: null,
+        draft: { ...draft, position: "Fictional Lead" },
+      },
+      {
+        ...person("m4", "head", "Gray"),
+        teamName: "Fictional band",
+        draft: {
+          ...draft,
+          position: "Fictional Lead",
+          teamName: "Fictional troupe",
+        },
+      },
     ],
     drafted: [person("head", null, "Quinn"), person("new", "head", "Ellis")],
   };
@@ -252,6 +270,29 @@ describe("the people the Draft menu draws", () => {
     expect(shown?.teamName).toBe("Fictional crew");
     expect(shown?.renamed?.live).toBe("Fictional team");
     expect(heightOf(shown)).toBeGreaterThan(cardHeight);
+  });
+
+  it("draws a drafted position, with the live one, on a taller card", () => {
+    const shown = chartPeople(chart, "both").find(({ id }) => id === "r2");
+    expect(shown?.position).toBe("Fictional Lead");
+    expect(shown?.repositioned?.live).toBe("Fictional Engineer");
+    expect(shown?.renamed).toBeUndefined();
+    expect(heightOf(shown)).toBe(
+      heightOf(chartPeople(chart, "both").find(({ id }) => id === "m3")),
+    );
+  });
+
+  it("draws no drafted position beside a position not shown", () => {
+    const shown = chartPeople(chart, "both").find(({ id }) => id === "r3");
+    expect(shown?.position).toBeNull();
+    expect(shown?.repositioned).toBeUndefined();
+    expect(heightOf(shown)).toBe(cardHeight);
+  });
+
+  it("makes a card taller still for both a drafted position and a drafted team name", () => {
+    const shown = chartPeople(chart, "both");
+    const height = (id: string) => heightOf(shown.find((one) => one.id === id));
+    expect(height("m4") - height("r2")).toBe(height("r2") - cardHeight);
   });
 
   it("draws the chart as drafts make it, and the live chart alone", () => {

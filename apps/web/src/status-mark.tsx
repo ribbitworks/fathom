@@ -2,11 +2,11 @@
 
 // The mark beside a record with a draft, in words after a dot: yellow for a draft, red once
 // rejected, and green for the live row under a draft, with red too for a warning about a value. The
-// People table, the Lists page, the Drafts page, and Help's Drafts page all draw it here, so they
-// show the same mark.
+// People table, the Lists page, the Drafts page, Help's Drafts page, and the org chart all draw it
+// here, so they show the same mark.
 
 import type { DraftState } from "@fathom/shared";
-import { VisuallyHidden } from "@mantine/core";
+import { Group, Text, VisuallyHidden } from "@mantine/core";
 import type { ReactNode } from "react";
 import classes from "./pages.module.css";
 
@@ -131,5 +131,23 @@ export function StatusMark({
     >
       <span className={classes.statusDot} aria-hidden="true" /> {children}
     </span>
+  );
+}
+
+// A live value on a line of its own under its draft, small, dimmed and marked Live.
+export function LiveLine({
+  className,
+  children,
+}: {
+  className?: string | undefined;
+  children: ReactNode;
+}) {
+  return (
+    <Group gap={6} wrap="nowrap" className={className}>
+      <Text size="xs" c="dimmed" truncate>
+        {children}
+      </Text>
+      <StatusMark tone="live">Live</StatusMark>
+    </Group>
   );
 }

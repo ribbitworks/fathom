@@ -7,8 +7,8 @@
 // Planned hires are drawn as placeholders under their managers, after the people there, and a
 // planned manager heads its planned team.
 // Each team is drawn in its colour, which reaches down to the teams below that have none. The
-// Draft menu chooses whether drafts of managers and team names are drawn beside the live chart, the
-// chart is drawn as drafts make it, or drafts are left out.
+// Draft menu chooses whether drafts of managers, positions and team names are drawn beside the live
+// chart, the chart is drawn as drafts make it, or drafts are left out.
 
 import {
   type OrgChart,
@@ -33,18 +33,22 @@ export const findFieldId = "org-chart-find";
 
 export const cardWidth = 240;
 export const cardHeight = 104;
-// A card whose team's name is drafted shows the live name, if any, under the drafted one.
-const renamedHeight = cardHeight + 18;
+// A card whose position or team's name is drafted shows the live one, if any, under the drafted
+// one, on a line of its own.
+const liveLineHeight = 18;
 
 // A person as the chart draws them, for the Draft menu's choice: with drafts beside live, a person
 // drafted to another manager is drawn there, marked, with a copy of them, marked Live, under the
-// manager they report to now, and a drafted team name is drawn with the live one under it.
+// manager they report to now, and a drafted position or team name is drawn with the live one under
+// it.
 export interface ChartPerson extends OrgChartPerson {
   // On the copy under the live manager: the person it is a copy of. A copy has no Employee ID, so
   // it opens nothing, and leads no team.
   liveCopyOf?: string;
   // The draft moving the person to the manager they are drawn under.
   moved?: OrgChartDraft;
+  // The person's live position, with the draft giving them another.
+  repositioned?: { live: string; draft: OrgChartDraft };
   // The team's live name, with the draft naming it otherwise.
   renamed?: { live: string | null; draft: OrgChartDraft };
   // The team's approved name, which only a team with one can be coloured by, as the chart shows the
@@ -54,8 +58,8 @@ export interface ChartPerson extends OrgChartPerson {
 
 // The people as the Draft menu's choice draws them: the approved chart, with each person's draft,
 // which it draws nowhere else, aside; the chart as drafts make it, as the server applies them; or
-// the approved chart with drafts of managers and team names beside, rejected ones included,
-// marked.
+// the approved chart with drafts of managers, positions and team names beside, rejected ones
+// included, marked.
 export function chartPeople(chart: OrgChart, show: Show): ChartPerson[] {
   if (show === "live") return [...chart.people];
   if (show === "drafts") {
@@ -69,6 +73,10 @@ export function chartPeople(chart: OrgChart, show: Show): ChartPerson[] {
     const { draft } = person;
     const shown: ChartPerson = { ...person, approvedTeamName: person.teamName };
     if (draft === undefined) return [shown];
+    if (draft.position !== undefined && person.position !== null) {
+      shown.position = draft.position;
+      shown.repositioned = { live: person.position, draft };
+    }
     if (draft.teamName !== undefined) {
       shown.teamName = draft.teamName;
       shown.renamed = { live: person.teamName, draft };
@@ -97,9 +105,17 @@ export const changeOf = (draft: OrgChartDraft) => ({
 });
 
 export const heightOf = (person: ChartPerson | undefined): number =>
-  person?.renamed === undefined || person.renamed.live === null
-    ? cardHeight
-    : renamedHeight;
+  cardHeight +
+  [person?.repositioned?.live, person?.renamed?.live].filter(
+    (live) => typeof live === "string",
+  ).length *
+    liveLineHeight;
+
+// The position a person is listed with in the finder, which has no room for a draft's mark: the
+// live one, while a drafted one is drawn beside it.
+export const livePosition = (
+  person: ChartPerson | undefined,
+): string | null | undefined => person?.repositioned?.live ?? person?.position;
 
 // A team can be coloured only once it has an approved name, whatever its draft names it.
 export const hasApprovedName = (person: ChartPerson): boolean =>

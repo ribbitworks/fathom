@@ -17,7 +17,7 @@ import {
 import classes from "./org-chart.module.css";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { TeamNameEditor } from "./team-name-editor.tsx";
-import { DraftMark, StatusMark } from "./status-mark.tsx";
+import { DraftMark, LiveLine } from "./status-mark.tsx";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
@@ -113,12 +113,7 @@ export function TeamsPanel({
                 </Group>
                 {person.renamed !== undefined &&
                   person.renamed.live !== null && (
-                    <Group gap={6} wrap="nowrap">
-                      <Text size="xs" c="dimmed" truncate>
-                        {person.renamed.live}
-                      </Text>
-                      <StatusMark tone="live">Live</StatusMark>
-                    </Group>
+                    <LiveLine>{person.renamed.live}</LiveLine>
                   )}
                 <Text size="xs" c="dimmed" truncate>
                   Led by {person.preferredName}

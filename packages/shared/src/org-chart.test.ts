@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the org chart's shape: what a person on it holds, that the mark of a manager who has
-// left is sent only when set, a person's draft beside the approved chart, and the chart as drafts
-// make it.
+// left is sent only when set, a person's draft of their manager, position and team name beside the
+// approved chart, and the chart as drafts make it.
 
 import { describe, expect, it } from "vitest";
 import { orgChartSchema } from "./org-chart.ts";
@@ -56,7 +56,7 @@ describe("the org chart", () => {
     ).toThrow();
   });
 
-  it("holds a person's draft of their manager and team name, and the chart as drafts make it", () => {
+  it("holds a person's draft of their manager, position and team name, and the chart as drafts make it", () => {
     const drafted = { ...person, id: "p3", managerId: "p1" };
     const chart = orgChartSchema.parse({
       people: [
@@ -65,6 +65,7 @@ describe("the org chart", () => {
           id: "p2",
           draft: {
             managerId: "p1",
+            position: "Fictional Engineer",
             teamName: null,
             state: "rejected",
             unpublished: false,
@@ -75,6 +76,7 @@ describe("the org chart", () => {
     });
     expect(chart.people[0]?.draft).toEqual({
       managerId: "p1",
+      position: "Fictional Engineer",
       teamName: null,
       state: "rejected",
       unpublished: false,

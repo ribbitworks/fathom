@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, showing a person's details beside the chart from a card, the mark on a manager who has left, and drafts drawn beside the chart, applied to it, or left out with the Draft menu.
+Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, showing a person's details beside the chart from a card, the mark on a manager who has left, and drafts of managers, positions and team names drawn beside the chart, applied to it, or left out with the Draft menu.
 
 ## Test Environment
 
@@ -308,18 +308,18 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 4.** Look at the tinted card under **Silje Holm-Schrøder** and the light green card under **Viktoria Holmberg**.
-  - **Expected:** Both are easy to tell apart from the other cards, and every word on them is easy to read.
+  - **Expected:** Both are easy to tell apart from the untinted cards, and every word on them is easy to read.
   - **Notes:**
 
 - [ ] **Step 5.** Choose **Dark** in the Appearance menu.
-  - **Expected:** The two cards are still easy to tell apart from the other cards, and every word on them is easy to read.
+  - **Expected:** The two cards are still easy to tell apart from the untinted cards, and every word on them is easy to read.
   - **Notes:**
 
 - [ ] **Step 6.** Choose **Light** in the Appearance menu.
   - **Expected:** The chart returns to its light colours.
   - **Notes:**
 
-### ORG-13: A Team Named in a Draft Is Marked
+### ORG-13: A Drafted Team Name or Position Is Marked
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-12.
 
@@ -327,6 +327,18 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 1.** In the finder, type **本間**, and select **本間 稔**.
   - **Expected:** The card for **本間 稔** is in the middle of the panel and tinted blue. **Observability team** is under the position, followed by a yellow dot and **Draft**, with no line under it.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **×** at the right of the finder, type **우아**, and select **우아현**.
+  - **Expected:** The card for **우아현** is in the middle of the panel and tinted blue. **Test Engineer** is under the name, followed by a red dot and **Rejected**, and under that **Software Engineer**, in grey, followed by a green dot and **Live**. The card is taller than the card for **西尾 亮** under it, and nothing on it is cut off.
+  - **Notes:**
+
+- [ ] **Step 3.** Choose **Dark** in the Appearance menu.
+  - **Expected:** Every word on the card for **우아현** is easy to read.
+  - **Notes:**
+
+- [ ] **Step 4.** Choose **Light** in the Appearance menu.
+  - **Expected:** The chart returns to its light colours.
   - **Notes:**
 
 ### ORG-14: The Draft Menu Applies Drafts or Leaves Them Out
@@ -370,7 +382,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in (P1) with this account, with **Resource Planner** on the account button at the top right. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** On the card for **Viktoria Holmberg**, read the column under it.
-  - **Expected:** **Simone Jean**, **우아현** and **西尾 亮**, each on an untinted card with no mark. No card on the chart is light green.
+  - **Expected:** **Simone Jean**, **우아현** and **西尾 亮**. The card for **Simone Jean** is untinted and has no mark. No card on the chart is light green.
   - **Notes:**
 
 ### ORG-16: Planned Hires Are Placeholders, and a Planned Manager Heads Its Team

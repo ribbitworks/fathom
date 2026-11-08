@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The org chart: today's reporting lines as approved, with each person's draft of their manager and
-// of their team's name beside, and the whole chart as drafts make it. It holds everyone current
+// The org chart: today's reporting lines as approved, with each person's draft of their manager,
+// position and team's name beside, and the whole chart as drafts make it. It holds everyone current
 // today, and any manager they still report to whose end date has passed. Each person comes with
 // General details only, and a draft's manager and dates, which are Restricted, only to readers who
 // see Restricted details, and a drafted position only to readers who see the Positions list.
@@ -16,10 +16,12 @@ import { monthSchema } from "./days.ts";
 import { draftStateSchema } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
 
-// What a person's draft changes on the chart, as the reader may see it: their manager, or none, and
-// the name of the team they lead, or none, each left out when the draft keeps it as it is.
+// What a person's draft changes on the chart, as the reader may see it: their manager, or none,
+// their position, by its label, and the name of the team they lead, or none, each left out when the
+// draft keeps it as it is.
 export const orgChartDraftSchema = z.object({
   managerId: z.string().nullable().optional(),
+  position: z.string().optional(),
   teamName: z.string().nullable().optional(),
   state: draftStateSchema,
   // Whether the draft holds the reader's own changes, not yet published.

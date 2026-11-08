@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The org chart: today's reporting lines as approved, and the chart as drafts make it. Part of the
-// data access layer. Each person's draft of their manager and of their team's name comes beside
-// the approved chart, as People shows them: a draft's manager only to readers who see Restricted
-// details, since it is Restricted until approved, and the reader's own unpublished drafts in place
-// of the published ones. Everyone current today appears, with each manager they still report to,
-// up the chain, even one whose end date has passed, as People names them. A reader who does not
-// see Restricted details sees no further up than such a manager, and only their name and team, as
-// People shows them; anything more would tell them who else has left. A reader who does not see
-// people sees each person's name, position, and team, but no Employee ID, which is a detail of
-// People and would let them look people up there. Positions show only as the positions list's tier
-// allows, as on People, except that a General one shows to every reader. Both charts follow these
-// rules alike. Planned hires join the chart as placeholders, to every reader, as People shows them:
-// each hire not yet filled, and, to readers who do not see Restricted details, each filled one whose
-// person has not started; named by its name, or by its position and ID, under its manager, a
-// person or a planned manager, and with the month it is expected. Readers who see the hiring plan
-// see its drafts too.
+// data access layer. Each person's draft of their manager, their position and their team's name
+// comes beside the approved chart, as People shows them: a draft's manager only to readers who see
+// Restricted details, since it is Restricted until approved, its position only beside a position
+// the reader is shown, and the reader's own unpublished drafts in place of the published ones.
+// Everyone current today appears, with each manager they still report to, up the chain, even one
+// whose end date has passed, as People names them. A reader who does not see Restricted details
+// sees no further up than such a manager, and only their name and team, as People shows them;
+// anything more would tell them who else has left. A reader who does not see people sees each
+// person's name, position, and team, but no Employee ID, which is a detail of People and would let
+// them look people up there. Positions show only as the positions list's tier allows, as on People,
+// except that a General one shows to every reader. Both charts follow these rules alike. Planned
+// hires join the chart as placeholders, to every reader, as People shows them: each hire not yet
+// filled, and, to readers who do not see Restricted details, each filled one whose person has not
+// started; named by its name, or by its position and ID, under its manager, a person or a planned
+// manager, and with the month it is expected. Readers who see the hiring plan see its drafts too.
 
 import { type Database, listItems, people, teams } from "@fathom/db";
 import {
@@ -44,8 +44,7 @@ import { builtInTier, choiceLabels } from "./values.ts";
 
 export interface OrgChartRead extends OrgChart {
   // Whether the chart told anyone that a manager has left, showed them Restricted details of a
-  // draft, or showed placeholders' positions more sensitive than General, which the access history
-  // records.
+  // draft, or showed positions more sensitive than General, which the access history records.
   includedRestricted: boolean;
   // Whether the chart showed anyone hires' drafts, part of the hiring plan, which the access history
   // records as a view of the hiring plan.
@@ -73,6 +72,7 @@ interface HireRecord {
   kind: "planned-hire";
   preferredName: string;
   shownId?: string;
+  positionId: string;
   position: string;
   managerId: string | null;
   expected: string;
@@ -284,18 +284,19 @@ export async function readOrgChart(
     colours,
     reader,
   );
-  const chart = chartOf(
-    new Map<string, ChartRecord>([...live, ...liveHires]),
-    colours,
-    reader,
-  ).map((person): OrgChartPerson => {
-    const before = live.get(person.id);
-    const draft =
-      before === undefined
-        ? hireDraftBeside(person, hireDrafts.get(person.id), managerShown)
-        : draftBeside(before, drafts.get(person.id), { restricted });
-    return draft === undefined ? person : { ...person, draft };
-  });
+  const approved = new Map<string, ChartRecord>([...live, ...liveHires]);
+  const chart = chartOf(approved, colours, reader).map(
+    (person): OrgChartPerson => {
+      const draft = draftBeside(
+        // Everyone on the approved chart is among its records.
+        approved.get(person.id) as ChartRecord,
+        person,
+        drafts.get(person.id) ?? hireDrafts.get(person.id),
+        { restricted, labelOf, managerShown },
+      );
+      return draft === undefined ? person : { ...person, draft };
+    },
+  );
   const hireDraftsShown = chart.some(
     (person) => person.planned !== undefined && person.draft !== undefined,
   );
@@ -309,10 +310,9 @@ export async function readOrgChart(
           (person.planned === undefined &&
             person.draft?.managerId !== undefined),
       ) ||
-      (reader.seesPositions &&
-        positionTier !== "general" &&
+      (positionTier !== "general" &&
         [...chart, ...draftedChart].some(
-          (person) => person.planned !== undefined,
+          ({ position }) => position !== null,
         )) ||
       (restricted &&
         (draftedChart.some((person) => person.left === true) ||
@@ -366,8 +366,9 @@ function placeholderOf(
     ) {
       return undefined;
     }
+    const positionId = String(hire.positionId);
     // Every hire's position is read with the chart.
-    const position = labelOf.get(String(hire.positionId)) as string;
+    const position = labelOf.get(positionId) as string;
     const { requisition, temporaryId } = hireIdOf(hire);
     const shownId = String(requisition ?? temporaryId);
     const name = text(hire.name);
@@ -380,6 +381,7 @@ function placeholderOf(
         seesPositions ? position : undefined,
       ),
       ...(name === null ? { shownId } : {}),
+      positionId,
       position,
       managerId: managerShown(text(hire.managerId)),
       expected: (expectedOn ?? today).slice(0, 7),
@@ -397,26 +399,6 @@ function hireRecords(
       return record === undefined ? [] : [[id, record]];
     }),
   );
-}
-
-// What a planned hire's draft changes of its manager, drawn beside the approved chart, rejected or
-// not, under the manager the chart would draw it under. Only readers who see the hiring plan are sent
-// hires' drafts.
-function hireDraftBeside(
-  hire: OrgChartPerson,
-  draft: Draft | undefined,
-  managerShown: ManagerShown,
-): OrgChartDraft | undefined {
-  if (draft?.action !== "changed" || !("managerId" in draft.fields)) {
-    return undefined;
-  }
-  const managerId = managerShown(text(draft.fields.managerId));
-  if (managerId === hire.managerId) return undefined;
-  return {
-    managerId,
-    state: draft.state,
-    unpublished: draft.unpublished === true,
-  };
 }
 
 // Everyone as their drafts make them, as the reader may see them, with rejected drafts taken back:
@@ -468,31 +450,77 @@ function draftedRecords(
   return records;
 }
 
-// What a person's draft changes of their manager and team name, drawn beside the approved chart,
-// rejected or not: a drafted manager only to readers who see Restricted details. A draft adding or
+// What a draft is shown beside the approved chart with: a person's drafted manager only to readers
+// who see Restricted details, a drafted position, by its label, only beside a position shown, so
+// never for a manager shown by name alone, and a hire under the manager the chart would draw it
+// under.
+interface BesideRules {
+  restricted: boolean;
+  labelOf: ReadonlyMap<string, string>;
+  managerShown: ManagerShown;
+}
+
+// What a draft changes, drawn beside the approved chart, rejected or not. A draft adding or
 // removing someone is drawn only on the chart as drafts make it.
 function draftBeside(
-  before: PersonRecord,
+  before: ChartRecord,
+  shown: OrgChartPerson,
   draft: Draft | undefined,
-  { restricted }: { restricted: boolean },
+  rules: BesideRules,
 ): OrgChartDraft | undefined {
   if (draft?.action !== "changed") return undefined;
-  const managerId = draft.fields.managerId as string | null | undefined;
-  const teamName = draft.fields.teamName as string | null | undefined;
-  const changes = {
-    ...(restricted && managerId !== undefined && managerId !== before.managerId
-      ? { managerId }
-      : {}),
-    ...(teamName !== undefined && teamName !== before.teamName
-      ? { teamName }
-      : {}),
-  };
+  const changes = changesBeside(before, shown, draft.fields, rules);
   if (Object.keys(changes).length === 0) return undefined;
   return {
     ...changes,
     state: draft.state,
     unpublished: draft.unpublished === true,
   };
+}
+
+// A person's drafted manager, position and team name, and a planned hire's drafted manager and
+// position, each left out when the draft keeps it as it is or the reader may not see it.
+function changesBeside(
+  before: ChartRecord,
+  shown: OrgChartPerson,
+  fields: Recorded,
+  { restricted, labelOf, managerShown }: BesideRules,
+): Pick<OrgChartDraft, "managerId" | "position" | "teamName"> {
+  const positionId = fields.positionId as string | undefined;
+  const position =
+    shown.position !== null &&
+    positionId !== undefined &&
+    positionId !== before.positionId
+      ? labelOf.get(positionId)
+      : undefined;
+  const positionChange = position === undefined ? {} : { position };
+  switch (before.kind) {
+    case "person": {
+      const managerId = fields.managerId as string | null | undefined;
+      const teamName = fields.teamName as string | null | undefined;
+      return {
+        ...(restricted &&
+        managerId !== undefined &&
+        managerId !== before.managerId
+          ? { managerId }
+          : {}),
+        ...positionChange,
+        ...(teamName !== undefined && teamName !== before.teamName
+          ? { teamName }
+          : {}),
+      };
+    }
+    case "planned-hire": {
+      const managerId =
+        "managerId" in fields
+          ? managerShown(text(fields.managerId))
+          : before.managerId;
+      return {
+        ...(managerId === before.managerId ? {} : { managerId }),
+        ...positionChange,
+      };
+    }
+  }
 }
 
 // The minimal record a draft is applied to, as the change history records a person.

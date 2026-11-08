@@ -973,7 +973,16 @@ describe("the org chart", () => {
                     unpublished: false,
                   },
                 }
-              : one,
+              : one.id === "p1"
+                ? {
+                    ...one,
+                    draft: {
+                      position: "Fictional Chief",
+                      state: "waiting",
+                      unpublished: false,
+                    },
+                  }
+                : one,
         ),
         drafted: [
           person("p1", "Robin Fictional", null),
@@ -992,6 +1001,21 @@ describe("the org chart", () => {
     expect(within(team).getByText("Fictional crew")).toBeDefined();
     expect(within(team).getByText("Rejected")).toBeDefined();
     expect(within(team).getByText("Fictional team")).toBeDefined();
+    const top = card("Robin Fictional");
+    expect(within(top).getByText("Fictional Chief")).toBeDefined();
+    expect(within(top).getByText("Draft")).toBeDefined();
+    expect(within(top).getByText("Fictional Director")).toBeDefined();
+    expect(within(top).getByText("Live")).toBeDefined();
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Find a person or team" }),
+      "Robin",
+    );
+    expect(
+      await screen.findByRole("option", {
+        name: /Robin Fictional\s*Fictional Director/,
+      }),
+    ).toBeDefined();
+    await userEvent.keyboard("{Escape}");
 
     await userEvent.click(screen.getByRole("button", { name: "Draft" }));
     await userEvent.click(
@@ -1009,6 +1033,7 @@ describe("the org chart", () => {
     await screen.findByRole("link", { name: "Uma Fictional" });
     expect(within(card("Uma Fictional")).queryByText("Draft")).toBeNull();
     expect(screen.queryByText("Fictional crew")).toBeNull();
+    expect(screen.queryByText("Fictional Chief")).toBeNull();
     expect(screen.queryByText("Live")).toBeNull();
   });
 

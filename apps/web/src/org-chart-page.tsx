@@ -8,8 +8,8 @@
 // shown alone, and the person whose details are shown, are kept in the page's address. Each team's
 // cards, and the lines to them, are drawn in its colour, which reaches down to the teams below that
 // have none, even when a team is shown alone. The Draft menu, as on tables, draws drafts of
-// managers and team names beside the live chart, applied to it, or not at all, which leaves the
-// chart read only; its choice is kept in the address.
+// managers, positions and team names beside the live chart, applied to it, or not at all, which
+// leaves the chart read only; its choice is kept in the address.
 
 import type { PaletteColour, Show } from "@fathom/shared";
 import {
@@ -88,7 +88,7 @@ import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import { useSaving } from "./saving.ts";
 import { motionLasts, useNarrow, WithSidePanel } from "./side-panel.tsx";
-import { DraftMark, StatusMark } from "./status-mark.tsx";
+import { DraftMark, LiveLine, StatusMark } from "./status-mark.tsx";
 import { formatMonth } from "./table-view.ts";
 import { DraftMenu } from "./table-controls.tsx";
 
@@ -169,12 +169,7 @@ function TeamRow({
         {renamed !== undefined && <DraftMark draft={changeOf(renamed.draft)} />}
       </Group>
       {renamed !== undefined && renamed.live !== null && (
-        <Group gap={6} wrap="nowrap" className={classes.liveName}>
-          <Text size="xs" c="dimmed" truncate>
-            {renamed.live}
-          </Text>
-          <StatusMark tone="live">Live</StatusMark>
-        </Group>
+        <LiveLine className={classes.liveName}>{renamed.live}</LiveLine>
       )}
     </>
   );
@@ -225,6 +220,25 @@ function LiveCopyCard({ data }: { data: CardData }) {
   );
 }
 
+// A person's position, or its draft, marked, with the live one under it, dimmed and marked Live.
+function PositionRow({ person }: { person: ChartPerson }) {
+  const { repositioned } = person;
+  if (person.position === null) return null;
+  return (
+    <>
+      <Group gap={6} wrap="nowrap">
+        <Text size="sm" c="dimmed" truncate>
+          {person.position}
+        </Text>
+        {repositioned !== undefined && (
+          <DraftMark draft={changeOf(repositioned.draft)} />
+        )}
+      </Group>
+      {repositioned !== undefined && <LiveLine>{repositioned.live}</LiveLine>}
+    </>
+  );
+}
+
 function PersonCard({ data }: NodeProps<CardNode>) {
   if (data.person.liveCopyOf !== undefined) return <LiveCopyCard data={data} />;
   const {
@@ -251,7 +265,10 @@ function PersonCard({ data }: NodeProps<CardNode>) {
       data-found={found || undefined}
       data-planned={planned === undefined ? undefined : true}
       data-draft={
-        person.moved !== undefined || person.renamed !== undefined || undefined
+        person.moved !== undefined ||
+        person.repositioned !== undefined ||
+        person.renamed !== undefined ||
+        undefined
       }
       data-coloured={colour === undefined ? undefined : true}
       style={
@@ -325,11 +342,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
           </Tooltip>
         )}
       </div>
-      {person.position !== null && (
-        <Text size="sm" c="dimmed" truncate>
-          {person.position}
-        </Text>
-      )}
+      <PositionRow person={person} />
       {planned !== undefined && (
         <StatusMark tone="planned">
           Planned, expected {formatMonth(planned.expected)}
