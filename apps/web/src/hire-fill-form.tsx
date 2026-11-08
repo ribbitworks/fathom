@@ -48,7 +48,7 @@ import {
   usePersonEditing,
 } from "./person-editing.tsx";
 import classes from "./person-panel.module.css";
-import { PersonLink, Row } from "./person-panel.tsx";
+import { RecordLink, Row } from "./record-details.tsx";
 import {
   cellColumn,
   columnsOn,
@@ -108,10 +108,11 @@ export function HireFillAction({
                   column={column}
                   value={column.value(filler)}
                 >
-                  <PersonLink
-                    person={filler}
+                  <RecordLink
                     name={column.value(filler) as string}
-                    onPerson={onPerson}
+                    onShow={() => {
+                      onPerson(filler.employeeId);
+                    }}
                   />
                 </Row>
               ))}

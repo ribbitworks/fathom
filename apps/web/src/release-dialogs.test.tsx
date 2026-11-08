@@ -12,7 +12,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { dayProblem } from "./day-input.tsx";
+import { dayNeeded, dayProblem } from "./day-input.tsx";
 import {
   CycleLengthDialog,
   CyclesUntilDialog,
@@ -224,7 +224,7 @@ describe("the dialog of the day a stream's cycles are made until", () => {
     show((handlers) => <CyclesUntilDialog stream={stream} {...handlers} />);
     await userEvent.clear(box("Planned to"));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect([screen.getByText(dayProblem), fetch.mock.calls]).toEqual([
+    expect([screen.getByText(dayNeeded), fetch.mock.calls]).toEqual([
       expect.anything(),
       [],
     ]);
@@ -332,7 +332,7 @@ describe("the dialog changing a stream's cycles", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Set up cycles" }),
     );
-    expect([screen.getByText(dayProblem), fetch.mock.calls]).toEqual([
+    expect([screen.getByText(dayNeeded), fetch.mock.calls]).toEqual([
       expect.anything(),
       [],
     ]);

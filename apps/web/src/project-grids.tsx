@@ -281,6 +281,20 @@ export const projectDateColumns: readonly [keyof Project["dates"], string][] = [
   ["nextDelivery", "Next delivery"],
 ];
 
+export const dayOrEmpty = (day: string | null) => day ?? "";
+
+export const projectDateColumn = (
+  key: keyof Project["dates"],
+  label: string,
+): Column<Project, PlanChange> => ({
+  ...field<Project>(key, label, "date", { readOnly: true }),
+  // The key is always one of the fixed dates.
+  // eslint-disable-next-line security/detect-object-injection
+  value: (project) => dayOrEmpty(project.dates[key]),
+  live: () => "",
+  change: () => ({}),
+});
+
 export function projectColumns(
   choices: TableChoices,
   onOpen?: (project: Project) => void,
@@ -294,14 +308,7 @@ export function projectColumns(
       choices: named(choices.proposals),
       multiple: true,
     }),
-    ...projectDateColumns.map(([key, label]): Column<Project, PlanChange> => ({
-      ...field<Project>(key, label, "date", { readOnly: true }),
-      // The key is always one of the fixed dates.
-      // eslint-disable-next-line security/detect-object-injection
-      value: (project) => project.dates[key] ?? "",
-      live: () => "",
-      change: () => ({}),
-    })),
+    ...projectDateColumns.map(([key, label]) => projectDateColumn(key, label)),
   ];
 }
 

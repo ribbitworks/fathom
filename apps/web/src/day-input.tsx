@@ -11,6 +11,7 @@ import { TextInput } from "@mantine/core";
 import { useState } from "react";
 
 export const dayProblem = "Use a date such as 2026-10-31";
+export const dayNeeded = "Date needed";
 
 export const dayAsTyped = (text: string): string =>
   typedDay(text.replace(/[^\d-]/g, ""));
@@ -59,7 +60,13 @@ export function DayInput({
       inputMode="numeric"
       {...(autoFocus ? { "data-autofocus": true } : {})}
       value={text}
-      error={wrong || (shown && required && text === "") ? dayProblem : problem}
+      error={
+        wrong
+          ? dayProblem
+          : shown && required && text === ""
+            ? dayNeeded
+            : problem
+      }
       onChange={(event) => {
         const next = dayAsTyped(event.currentTarget.value);
         setText(next);

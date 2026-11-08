@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Adding a customer, proposal, project, or milestone in the panel beside its table: a form field for
-// each column a new record has, with any problem Add finds named under its field.
+// each column a new record has, with any problem Add finds named under its field. The Projects
+// page's milestone dialog draws the same fields.
 
 import { Checkbox, MultiSelect, Select } from "@mantine/core";
 import { isLink } from "@fathom/shared";
@@ -21,21 +22,27 @@ import type { CellValue } from "./table-view.ts";
 
 type FieldColumn = Pick<
   Column<GridRecord, PlanChange>,
-  "key" | "label" | "kind" | "required" | "multiple" | "choices"
+  "key" | "label" | "kind" | "required" | "multiple" | "choices" | "maxLength"
 >;
 
 const fieldId = (column: Pick<FieldColumn, "key">) =>
   `new-plan-record-${column.key}`;
 
-function Field({
+// The plan's records are checked on their own, not beside each other.
+export const noOthers = () => [];
+
+export function PlanField({
   column,
   value,
   problem,
+  firstInDialog = false,
   onChange,
 }: {
   column: FieldColumn;
   value: CellValue;
   problem: string | undefined;
+  // Set for a text field first in a dialog: it takes focus, and stops at its column's length.
+  firstInDialog?: boolean | undefined;
   onChange: (value: CellValue) => void;
 }): ReactElement | null {
   const id = fieldId(column);
@@ -48,6 +55,9 @@ function Field({
       return (
         <ClearableInput
           {...common}
+          {...(firstInDialog
+            ? { "data-autofocus": true, maxLength: column.maxLength }
+            : {})}
           clearLabel={`Clear ${column.label}`}
           onClear={() => {
             onChange("");
@@ -174,7 +184,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
       columns={columns}
       kind={kind}
       values={shown}
-      others={() => []}
+      others={noOthers}
       onRefused={(found) => {
         setProblems(
           new Map(found.map(({ column, message }) => [column, message])),
@@ -192,7 +202,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
       onCancel={onCancel}
     >
       {columns.map((column) => (
-        <Field
+        <PlanField
           key={column.key}
           column={column}
           value={valueOf(column)}

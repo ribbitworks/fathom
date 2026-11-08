@@ -120,6 +120,7 @@ One component does each job, in `apps/web/src/`. A new screen uses or extends th
 - **Choosing from a list:** `ChoicePicker` in `choice-picker.tsx`.
 - **Entering a day:** `DayInput` in `day-input.tsx`. People's date cells and the Person details panel still have their own fields, as [Issues](../issues.md#development) records.
 - **Adding a record in a side panel:** `NewRecordPanel` in `new-record-panel.tsx`, driven by a table's columns, with each page drawing its own fields in it: `NewPersonPanel` in `new-person-panel.tsx` for People and `NewPlanRecordPanel` in `new-plan-record-panel.tsx` for the plan's records.
+- **A record's details in a side panel:** `Row` for each value and `RecordLink` for a link to another record, in `record-details.tsx`.
 - **A record's menu outside a table:** `RecordMenu` in `record-menu.tsx`.
 - **Something that could not be loaded:** `LoadProblem` in `load-problem.tsx`, with what remains to move over in [Issues](../issues.md#development).
 - **The details button in a Name cell:** `ShowDetailsButton` in `show-details-button.tsx`.

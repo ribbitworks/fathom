@@ -23,11 +23,8 @@ import type {
   RecordRef,
   Show,
 } from "@fathom/shared";
-import { projectLengths } from "@fathom/shared";
 import {
-  Anchor,
   Button,
-  Checkbox,
   Group,
   Loader,
   Menu,
@@ -50,8 +47,6 @@ import { z } from "zod";
 import { cellKinds } from "./cell-kinds.tsx";
 import { DecisionModal } from "./decision-dialog.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
-import { ClearableInput } from "./clearable-input.tsx";
-import { DayInput } from "./day-input.tsx";
 import {
   type Decision,
   decisionFor,
@@ -67,13 +62,16 @@ import classes from "./pages.module.css";
 import details from "./person-panel.module.css";
 import {
   customerTable,
+  dayOrEmpty,
   featureTable,
   livePlanRecords,
+  milestoneColumns,
   milestoneTable,
   noColumnActions,
   type PlanChange,
   PlanGrid,
   projectColumns,
+  projectDateColumn,
   projectDateColumns,
   projectTable,
   proposalColumns,
@@ -99,15 +97,21 @@ import {
   type TableChoices,
   tableChoices,
 } from "./projects.ts";
+import { RecordLink, Row } from "./record-details.tsx";
 import {
   type Column,
+  newRecordProblems,
   pendingId,
   type RecordActions,
   type RecordTable,
 } from "./record-grid.tsx";
 import { useDiscardQuestion } from "./person-editing.tsx";
 import { entered, type FormValues } from "./new-record-panel.tsx";
-import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
+import {
+  NewPlanRecordPanel,
+  noOthers,
+  PlanField,
+} from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { RecordMenu } from "./record-menu.tsx";
@@ -123,9 +127,9 @@ import {
   sidePanelScroll,
   useNarrow,
 } from "./side-panel.tsx";
-import { DraftMark, HoldMarks, LiveLine } from "./status-mark.tsx";
+import { DraftMark, HoldMarks } from "./status-mark.tsx";
 import type { ChangeView } from "./table-controls.tsx";
-import { formatDay, type View } from "./table-view.ts";
+import { type CellValue, formatDay, type View } from "./table-view.ts";
 
 export const projectTabSchema = z.enum(projectTabs);
 
@@ -714,6 +718,10 @@ const newestId = (
       .find(({ id }) => !taken.includes(id)) as PlanRecord
   ).id;
 
+const milestoneFields = milestoneColumns([]).filter(
+  ({ key }) => key !== "projectId",
+);
+
 // A milestone's name, date, and whether it is a delivery to customers, added to a project or
 // changed, saved as a draft.
 function MilestoneForm({
@@ -727,10 +735,15 @@ function MilestoneForm({
   onCancel: () => void;
   onSaved: (changeSetId: string | null) => void;
 }) {
-  const [name, setName] = useState(milestone?.name ?? "");
-  const [date, setDate] = useState<string | undefined>(milestone?.date);
-  const [delivery, setDelivery] = useState(
-    milestone?.customerDelivery ?? false,
+  const [values, setValues] = useState<Record<string, CellValue>>(() =>
+    Object.fromEntries(
+      milestoneFields.map((column) => [
+        column.key,
+        milestone === undefined
+          ? cellKinds[column.kind].empty
+          : column.value(milestone),
+      ]),
+    ),
   );
   const [submitted, setSubmitted] = useState(false);
   const mutation = useMutation({
@@ -741,45 +754,42 @@ function MilestoneForm({
       ).changeSetId,
     onSuccess: onSaved,
   });
+  const problems = newRecordProblems(
+    milestoneFields,
+    "",
+    values,
+    () => undefined,
+    noOthers,
+  );
   const submit = (event: SubmitEvent) => {
     event.preventDefault();
     setSubmitted(true);
-    if (name.trim() === "" || date === undefined) return;
-    mutation.mutate({ name, date, customerDelivery: delivery });
+    if (problems.length > 0) return;
+    mutation.mutate({
+      name: values.name as string,
+      date: values.date as string,
+      customerDelivery: (values.customerDelivery as string[]).length > 0,
+    });
   };
   return (
     <form onSubmit={submit} noValidate>
       <Stack gap="md">
-        <ClearableInput
-          label="Name"
-          data-autofocus
-          required
-          maxLength={projectLengths.name}
-          clearLabel="Clear Name"
-          onClear={() => {
-            setName("");
-          }}
-          value={name}
-          error={submitted && name.trim() === "" ? "Name needed" : undefined}
-          onChange={(event) => {
-            setName(event.currentTarget.value);
-          }}
-        />
-        <DayInput
-          label="Date"
-          value={date}
-          shown={submitted}
-          onChange={(day) => {
-            setDate(day);
-          }}
-        />
-        <Checkbox
-          label="Customer delivery"
-          checked={delivery}
-          onChange={(event) => {
-            setDelivery(event.currentTarget.checked);
-          }}
-        />
+        {milestoneFields.map((column) => (
+          <PlanField
+            key={column.key}
+            column={column}
+            value={values[column.key] as CellValue}
+            problem={
+              submitted
+                ? problems.find((one) => one.column === column.key)?.message
+                : undefined
+            }
+            firstInDialog={column.key === "name"}
+            onChange={(value) => {
+              setValues({ ...values, [column.key]: value });
+            }}
+          />
+        ))}
         <DialogActions
           error={mutation.error}
           pending={mutation.isPending}
@@ -920,11 +930,6 @@ function recordPanel({
   };
 }
 
-// A value in words, as its table's cell reads it.
-function inWords(column: Column<never, PlanChange>, value: unknown) {
-  return cellKinds[column.kind].inWords(column, value as never);
-}
-
 // The tab whose records a column's values name, for those that can be followed.
 const linkedTabs = new Map<string, ProjectTab>([
   ["customerIds", "customers"],
@@ -948,16 +953,12 @@ function RecordLinks({
     <Group gap={4}>
       {named.map(({ id, label }, index) => (
         <span key={id}>
-          <Anchor
-            component="button"
-            type="button"
-            ta="start"
-            onClick={() => {
+          <RecordLink
+            name={label}
+            onShow={() => {
               onShow(id);
             }}
-          >
-            {label}
-          </Anchor>
+          />
           {index < named.length - 1 && ","}
         </span>
       ))}
@@ -982,36 +983,23 @@ function DetailRow({
   const value = column.value(record as never);
   const linkedTab = linkedTabs.get(column.key);
   return (
-    <div className={details.row}>
-      <dt className={details.label}>{column.label}</dt>
-      <dd className={details.value}>
-        {linkedTab !== undefined && Array.isArray(value) && value.length > 0 ? (
-          <RecordLinks
-            column={column}
-            ids={value}
-            onShow={(id) => {
-              showRecord(linkedTab, id);
-            }}
-          />
-        ) : (
-          inWords(column, value) || (
-            <Text span c="dimmed" fz="sm">
-              None
-            </Text>
-          )
-        )}
-        {changed && (
-          <LiveLine className={details.live}>
-            {inWords(column, column.live(draft as never)) || "None"}
-          </LiveLine>
-        )}
-      </dd>
-    </div>
+    <Row
+      column={column}
+      value={value}
+      changed={changed ? { live: column.live(draft as never) } : undefined}
+    >
+      {linkedTab !== undefined && Array.isArray(value) && value.length > 0 ? (
+        <RecordLinks
+          column={column}
+          ids={value}
+          onShow={(id) => {
+            showRecord(linkedTab, id);
+          }}
+        />
+      ) : undefined}
+    </Row>
   );
 }
-
-const dayOrNone = (day: string | null) =>
-  day === null ? "None" : formatDay(day);
 
 // A project's dates, from its milestones, with the live ones under any its milestones' drafts
 // change, and its milestones, each with its menu.
@@ -1038,26 +1026,28 @@ function ProjectExtras({
   return (
     <>
       <dl className={details.list}>
-        {projectDateColumns.map(([key, label]) => (
-          <div key={key} className={details.row}>
-            <dt className={details.label}>{label}</dt>
-            <dd className={details.value}>
-              {/* The key is always one of the fixed dates. */}
-              {/* eslint-disable-next-line security/detect-object-injection */}
-              {dayOrNone(project.dates[key])}
-              {show === "both" &&
-                project.liveDates !== undefined &&
-                project.draft?.action !== "created" &&
+        {projectDateColumns.map(([key, label]) => {
+          const column = projectDateColumn(key, label);
+          const live =
+            show === "both" && project.draft?.action !== "created"
+              ? // The key is always one of the fixed dates.
                 // eslint-disable-next-line security/detect-object-injection
-                project.liveDates[key] !== project.dates[key] && (
-                  <LiveLine className={details.live}>
-                    {/* eslint-disable-next-line security/detect-object-injection */}
-                    {dayOrNone(project.liveDates[key])}
-                  </LiveLine>
-                )}
-            </dd>
-          </div>
-        ))}
+                project.liveDates?.[key]
+              : undefined;
+          return (
+            <Row
+              key={key}
+              column={column}
+              value={column.value(project)}
+              changed={
+                // eslint-disable-next-line security/detect-object-injection
+                live === undefined || live === project.dates[key]
+                  ? undefined
+                  : { live: dayOrEmpty(live) }
+              }
+            />
+          );
+        })}
       </dl>
       <section aria-labelledby="project-milestones">
         <Group justify="space-between" mb={4}>

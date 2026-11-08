@@ -5,6 +5,7 @@
 // to a record's draft, from its row's menu and a milestone's menu.
 
 import type { ProjectPlan } from "@fathom/shared";
+import { projectLengths } from "@fathom/shared";
 import { screen, waitFor, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { act } from "react";
@@ -474,6 +475,34 @@ describe("the side panel", () => {
     expect(await screen.findByText("Sep 1, 2030")).toBeTruthy();
   });
 
+  it("says None for a date a project does not have", async () => {
+    await openPage(`/projects?open=${projectId}`, plan());
+    await screen.findByRole("heading", { name: /Fictional Project/ });
+    expect(
+      within(sidePanel()).getByText("First milestone").closest("div")
+        ?.textContent,
+    ).toBe("First milestoneNone");
+  });
+
+  it("shows None as the live date of one only its drafts give", async () => {
+    await openPage(
+      `/projects?open=${projectId}`,
+      plan({
+        projects: [
+          project({
+            milestones: [milestone()],
+            dates: { first: "2030-03-15", last: null, nextDelivery: null },
+            liveDates: { first: null, last: null, nextDelivery: null },
+          }),
+        ],
+      }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Project/ });
+    const row = within(sidePanel()).getByText("First milestone").closest("div");
+    expect(row?.textContent).toContain("Mar 15, 2030");
+    expect(row?.textContent).toMatch(/None\s*Live/);
+  });
+
   it("shows no live dates for a project only drafted to be added", async () => {
     await openPage(
       `/projects?open=${projectId}`,
@@ -571,6 +600,63 @@ describe("a project's milestones in its panel", () => {
     expect(sent(fetch, `POST ${path}`)).toEqual([
       { name: "Pilot", date: "2030-03-15", customerDelivery: true },
     ]);
+  });
+
+  describe("the dialog's checks", () => {
+    const openDialog = async () => {
+      await openPage(atProject, plan());
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Add milestone" }),
+      );
+      const dialog = await screen.findByRole("dialog", {
+        name: "New milestone",
+      });
+      return {
+        dialog: within(dialog),
+        name: within(dialog).getByRole<HTMLInputElement>("textbox", {
+          name: /^Name/,
+        }),
+        date: within(dialog).getByRole<HTMLInputElement>("textbox", {
+          name: /^Date/,
+        }),
+        submit: () =>
+          userEvent.click(
+            within(dialog).getByRole("button", { name: "Add milestone" }),
+          ),
+      };
+    };
+
+    it("starts in Name, which stops at the longest name", async () => {
+      const { name } = await openDialog();
+      await waitFor(() => {
+        expect(document.activeElement).toBe(name);
+      });
+      expect(name.maxLength).toBe(projectLengths.name);
+    });
+
+    it("says a date is needed, and takes it back once one is given", async () => {
+      const { dialog, date, submit } = await openDialog();
+      await submit();
+      expect(dialog.getByText("Date needed")).toBeTruthy();
+      await userEvent.type(date, "20300315");
+      expect(dialog.queryByText("Date needed")).toBeNull();
+    });
+
+    it("says an unfinished date is not a date", async () => {
+      const { dialog, date, submit } = await openDialog();
+      await userEvent.type(date, "2030");
+      await submit();
+      expect(dialog.getByText("Use a date such as 2026-10-31")).toBeTruthy();
+    });
+
+    it("needs more than spaces in a name, and takes that back once given one", async () => {
+      const { dialog, name, submit } = await openDialog();
+      await userEvent.type(name, "   ");
+      await submit();
+      expect(dialog.getByText("Name needed")).toBeTruthy();
+      await userEvent.type(name, "Pilot");
+      expect(dialog.queryByText("Name needed")).toBeNull();
+    });
   });
 
   it("closes the dialog on Cancel", async () => {
@@ -951,6 +1037,34 @@ describe("the page around its tables", () => {
         "Fathom could not add Lost. Try again in a moment.",
       ),
     ).toBeTruthy();
+  });
+
+  it("says who owns a record by the table's words when nobody does", async () => {
+    await openPage(
+      `/projects?tab=proposals&open=${proposalId}`,
+      plan({ proposals: [proposal({ ownerId: null })] }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Proposal/ });
+    expect(within(sidePanel()).getByText("No owner")).toBeTruthy();
+  });
+
+  it("shows a proposal's web link as a link", async () => {
+    await openPage(
+      `/projects?tab=proposals&open=${proposalId}`,
+      plan({
+        proposals: [
+          proposal({
+            link: "https://example.test/rfp",
+          }),
+        ],
+      }),
+    );
+    await screen.findByRole("heading", { name: /Fictional Proposal/ });
+    expect(
+      within(sidePanel())
+        .getByRole("link", { name: /example\.test/ })
+        .getAttribute("href"),
+    ).toBe("https://example.test/rfp");
   });
 
   it("shows a value a draft filled in as having been None", async () => {

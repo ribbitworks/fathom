@@ -231,6 +231,19 @@ describe("a person's details", () => {
     expect(within(reports).getByText(/^Starts .*2099/)).toBeDefined();
   });
 
+  it("shows a direct report when their name is chosen", async () => {
+    answers();
+    const history = renderApp("/people?open=E1");
+    await panel("Robin Fictional");
+    await userEvent.click(
+      within(row("Direct reports")).getByRole("button", {
+        name: "Sasha Fictional",
+      }),
+    );
+    expect(await panel("Sasha Fictional")).toBeDefined();
+    expect(history.location.search).toContain("open=E2");
+  });
+
   it("shows someone else when their name is chosen", async () => {
     answers();
     const history = renderApp("/people?open=E2");

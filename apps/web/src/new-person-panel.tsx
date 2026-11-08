@@ -22,9 +22,10 @@ import {
   type NoteEditing,
   usePersonEditing,
 } from "./person-editing.tsx";
-import { detailKeys, reportingKeys, Row } from "./person-panel.tsx";
+import { detailKeys, reportingKeys } from "./person-panel.tsx";
 import classes from "./person-panel.module.css";
 import { newRecordFields, NewRecordPanel } from "./new-record-panel.tsx";
+import { Row } from "./record-details.tsx";
 import { keptForKind } from "./record-grid.tsx";
 import type { CellValue } from "./table-view.ts";
 

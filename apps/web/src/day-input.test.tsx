@@ -8,7 +8,7 @@ import { MantineProvider } from "@mantine/core";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-import { DayInput, dayProblem } from "./day-input.tsx";
+import { DayInput, dayNeeded, dayProblem } from "./day-input.tsx";
 import { testTheme } from "./test-support.tsx";
 
 describe("a day typed", () => {
@@ -81,14 +81,14 @@ describe("the day box", () => {
     ]);
   });
 
-  it("says a day is missing once the form asks for one", () => {
+  it("says a day is needed once the form asks for one", () => {
     box(vi.fn(), true);
-    expect(screen.getByText(dayProblem)).toBeDefined();
+    expect(screen.getByText(dayNeeded)).toBeDefined();
   });
 
   it("may be left empty when a day is not needed", () => {
     box(vi.fn(), true, false);
-    expect(screen.queryByText(dayProblem)).toBeNull();
+    expect(screen.queryByText(dayNeeded)).toBeNull();
   });
 
   it("tells assistive technology whether a day is needed", () => {

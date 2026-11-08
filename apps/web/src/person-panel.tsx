@@ -11,37 +11,14 @@
 // draft; the live values alone, and a record drafted to be removed or held by another's changes, are
 // only read.
 
-import {
-  type Link as WebLink,
-  type PaletteColour,
-  type Person,
-  type PersonDraft,
-  type Show,
-} from "@fathom/shared";
-import {
-  ActionIcon,
-  Alert,
-  Anchor,
-  Button,
-  Group,
-  Loader,
-  Stack,
-  Text,
-} from "@mantine/core";
+import { type PaletteColour, type Person, type Show } from "@fathom/shared";
+import { Alert, Button, Group, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import {
-  type MouseEvent,
-  type ReactNode,
-  useEffect,
-  useEffectEvent,
-} from "react";
+import { type ReactNode, useEffect, useEffectEvent } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { Swatch } from "./colour-swatch.tsx";
 import { focusSoon } from "./focus.ts";
-import { Icon } from "./icons.tsx";
-import { LinkCell } from "./link-field.tsx";
 import { listsQuery } from "./lists.ts";
-import { NoteView } from "./note-editor.tsx";
 import { PersonFeatureTeams } from "./person-feature-teams.tsx";
 import { orgChartQuery } from "./org-chart.ts";
 import {
@@ -54,17 +31,14 @@ import {
 import { isHire, rowName, type RowChange } from "./people-rows.ts";
 import { peopleQuery } from "./people.ts";
 import {
-  changeId,
   personPanelId,
-  type Editing,
   type EditingContext,
-  labelId,
-  problemId,
   type NoteEditing,
   usePersonEditing,
   useShownId,
 } from "./person-editing.tsx";
 import classes from "./person-panel.module.css";
+import { RecordLink, Row } from "./record-details.tsx";
 import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { DraftMark, StatusMark } from "./status-mark.tsx";
@@ -103,152 +77,6 @@ export const detailKeys = [
 
 const sameId = (person: Person, employeeId: string) =>
   person.employeeId.toLowerCase() === employeeId.toLowerCase();
-
-// A value as the panel shows it: a note formatted, a web link as a link, and anything else in
-// words, or what its column calls having none.
-function Value({ column, value }: { column: Column; value: unknown }) {
-  const kind = cellKinds[column.kind];
-  if (column.kind === "note") {
-    return value === "" ? (
-      <Text c="dimmed">None</Text>
-    ) : (
-      <NoteView note={value as string} />
-    );
-  }
-  if (column.kind === "link") {
-    return value === null ? (
-      <Text c="dimmed">None</Text>
-    ) : (
-      <LinkCell link={value as WebLink} inTable={false} />
-    );
-  }
-  const words = kind.inWords(
-    column,
-    value as Parameters<typeof kind.inWords>[1],
-  );
-  return words === "" ? (
-    <Text c="dimmed">{column.emptyLabel ?? "None"}</Text>
-  ) : (
-    <Text>{words}</Text>
-  );
-}
-
-// Another person or planned hire, which choosing shows in the panel instead.
-export function PersonLink({
-  person,
-  name,
-  onPerson,
-}: {
-  person: Person;
-  name: string;
-  onPerson: (employeeId: string) => void;
-}) {
-  return (
-    <Anchor
-      component="button"
-      type="button"
-      ta="start"
-      onClick={() => {
-        onPerson(person.employeeId);
-      }}
-    >
-      {name}
-    </Anchor>
-  );
-}
-
-// A value in its row, under its label: changed from its button or by a click on it, for those who
-// may, and, beside live, a value a draft changes marked, with the live value under it.
-export function Row({
-  column,
-  value,
-  draft,
-  editing,
-  children,
-}: {
-  column: Column;
-  value: CellValue;
-  // The draft changing the value, when it is shown beside live.
-  draft?: PersonDraft | undefined;
-  editing?: Editing | undefined;
-  children?: ReactNode;
-}) {
-  const drafted = draft !== undefined;
-  const start = editing?.open === true ? undefined : editing?.onStart;
-  // A click on the value, but not on a link in it, opens its editor, as the button beside it does.
-  const onClick =
-    start === undefined
-      ? undefined
-      : (event: MouseEvent) => {
-          if ((event.target as HTMLElement).closest("a, button") === null) {
-            start();
-          }
-        };
-  const checkbox = editing !== undefined && editing.onStart === undefined;
-  return (
-    <div
-      className={classes.row}
-      data-field={editing?.open === true || undefined}
-    >
-      <dt id={labelId(column)} className={classes.label}>
-        {column.label}
-      </dt>
-      <dd
-        className={[
-          classes.value,
-          onClick === undefined ? "" : classes.editable,
-        ].join(" ")}
-        onClick={onClick}
-      >
-        {editing?.open === true ? (
-          editing.editor
-        ) : (
-          <Group
-            gap={6}
-            wrap="nowrap"
-            justify="space-between"
-            align="flex-start"
-          >
-            <Group gap={6} wrap="nowrap" align="baseline">
-              {checkbox
-                ? editing.editor
-                : (children ?? <Value column={column} value={value} />)}
-              {drafted && <DraftMark draft={draft} />}
-            </Group>
-            {start !== undefined && (
-              <ActionIcon
-                id={changeId(column)}
-                variant="subtle"
-                color="gray"
-                size="sm"
-                aria-label={`Change ${column.label}`}
-                onClick={start}
-              >
-                <Icon name="edit" />
-              </ActionIcon>
-            )}
-          </Group>
-        )}
-        {editing?.problem !== undefined && (
-          <Text id={problemId(column)} c="red" size="sm" mt={4}>
-            {editing.problem}
-          </Text>
-        )}
-        {drafted && (
-          <Group
-            gap={6}
-            wrap="nowrap"
-            align="baseline"
-            className={classes.live}
-          >
-            <Value column={column} value={column.live(draft)} />
-            <StatusMark tone="live">Live</StatusMark>
-          </Group>
-        )}
-      </dd>
-    </div>
-  );
-}
 
 export function PersonPanel({
   employeeId,
@@ -456,10 +284,11 @@ export function PersonPanel({
     const special =
       column.key === "managerId" && manager !== undefined ? (
         <>
-          <PersonLink
-            person={manager}
+          <RecordLink
             name={nameOf(manager)}
-            onPerson={onPerson}
+            onShow={() => {
+              onPerson(manager.employeeId);
+            }}
           />
           {person.managerLeft === true && (
             <StatusMark tone="warning" spaced>
@@ -475,17 +304,19 @@ export function PersonPanel({
           <Text>{person.teamName}</Text>
         </Group>
       ) : undefined;
+    const draft =
+      show === "both" &&
+      person.draft?.action === "changed" &&
+      person.draft.changed.includes(column.changesWith ?? column.key)
+        ? person.draft
+        : undefined;
     return (
       <Row
         key={column.key}
         column={column}
         value={column.value(person)}
-        draft={
-          show === "both" &&
-          person.draft?.action === "changed" &&
-          person.draft.changed.includes(column.changesWith ?? column.key)
-            ? person.draft
-            : undefined
+        changed={
+          draft === undefined ? undefined : { live: column.live(draft), draft }
         }
         editing={editing(column)}
       >
@@ -558,10 +389,11 @@ export function PersonPanel({
                               shownIds.has(report.id) ? undefined : classes.live
                             }
                           >
-                            <PersonLink
-                              person={report}
+                            <RecordLink
                               name={nameOf(report)}
-                              onPerson={onPerson}
+                              onShow={() => {
+                                onPerson(report.employeeId);
+                              }}
                             />
                             {typeof report.startDate === "string" &&
                               report.startDate > day && (

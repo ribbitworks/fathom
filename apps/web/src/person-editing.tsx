@@ -24,13 +24,15 @@ import type { CellValue } from "./table-view.ts";
 
 export const personPanelId = "person-panel";
 
-const idOf = (column: Column, part: string) =>
+type Keyed = Pick<Column, "key">;
+
+const idOf = (column: Keyed, part: string) =>
   `${personPanelId}-${column.key}-${part}`;
-export const labelId = (column: Column) => idOf(column, "label");
-export const changeId = (column: Column) => idOf(column, "change");
-export const problemId = (column: Column) => idOf(column, "problem");
-export const editorId = (column: Column) => idOf(column, "editor");
-const wordsId = (column: Column) => idOf(column, "words");
+export const labelId = (column: Keyed) => idOf(column, "label");
+export const changeId = (column: Keyed) => idOf(column, "change");
+export const problemId = (column: Keyed) => idOf(column, "problem");
+export const editorId = (column: Keyed) => idOf(column, "editor");
+const wordsId = (column: Keyed) => idOf(column, "words");
 
 // Puts focus on a value being entered: a text or date is a field always open, and any other value
 // opens from its change button.
