@@ -1,7 +1,7 @@
 # Fathom — Development Setup
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-08
 
 How Fathom's repository is organized, how developers run it locally, and how fictional data is generated. It applies the libraries in [ADR 0002](../adr/0002-libraries.md) and the platforms in [Supported Platforms](../operations/supported-platforms.md).
 
@@ -56,7 +56,7 @@ Developers may use any machine and container runtime listed for development in S
 - **Production-like mode:** The containers in the [Architecture](architecture.md) run with Docker Compose, over HTTPS, with the same network isolation as production, at `https://localhost:9443`, or the port of the copy's clone number below, so development mode can run alongside. Images are built for linux/amd64, so on machines with a different processor they run under emulation, more slowly. Tests of the running containers run in this mode, with throwaway secrets.
 - **Tests and the database:** Development mode and the database tests build images for the machine's own processor, so they run at full speed. The security report scans separate linux/amd64 builds, so what is scanned is what production runs.
 - **Version and build:** The scripts read the release, the commit and the commit's date from git in `scripts/lib.sh`, for Help's About box, and pass them to the image build as build arguments, since the build cannot see `.git`. The commit is marked as modified, and the date taken, as the [Decisions Log](../product/decisions.md#platform-and-operations) sets out. Development mode reads them when `pnpm dev` starts, so it names that commit even once the code changes. Setting `FATHOM_VERSION`, `FATHOM_COMMIT` or `FATHOM_COMMIT_DATE` overrides them, as when building from a copy without `.git`.
-- **Several copies at once:** Each copy of the repository on one machine can run both modes and their tests alongside the others when it is given its own clone number, from 1 to 9, with `pnpm dev:setup <number>`. The number is kept in the git-ignored `.dev/clone`, and clone 1 is the default. In development mode, the top bar and the browser tab's title show the clone number, and the top bar the branch, read when `pnpm dev` starts. Each copy gets its own database and database image, containers, production-like and scanned images, and scanner cache, and these ports, where n is the clone number:
+- **Several copies at once:** Each copy of the repository on one machine can run both modes and their tests alongside the others when it is given its own clone number, from 1 to 9, with `pnpm dev:setup <number>`. The number is kept in the git-ignored `.dev/clone`. A copy with a number, 1 included, carries it in its names, such as `fathom-dev-1` and `fathom-stack-1`. A single copy, with no number, keeps the plain names `fathom-dev` and `fathom-stack` and clone 1's ports. In development mode, the top bar and the browser tab's title show the clone number, and the top bar the branch, read when `pnpm dev` starts. Each copy gets its own database and database image, containers, production-like and scanned images, and scanner cache, and these ports, where n is the clone number:
 
   | Port | Clone 1 | Clone n |
   | --- | --- | --- |
@@ -68,6 +68,8 @@ Developers may use any machine and container runtime listed for development in S
   Browsers keep cookies apart by host but not by port, so Fathom names its sign-in cookie after the port when its address has one. Each copy and mode then keeps its own sign-in, and one browser can stay signed in to all of them at once.
 
   Copying `.dev/` from another copy keeps the same development accounts' password in every copy, but also copies its clone number, so run `pnpm dev:setup <number>` straight after with the new copy's own number. Until then, the new copy uses the other's database, and `pnpm dev:reset` there would delete it.
+
+  A copy that had the plain names and now carries a number, because it was given one or because its `.dev/clone` already held 1, has new names and so a new database volume. Run `pnpm dev:reset` to create and seed its new database; nothing carries over from the old one. The old database and scanner cache stay on the machine, and the old containers keep clone 1's ports while they run. To remove the old containers and database, run `docker compose --project-name fathom-dev --file deploy/compose.dev.yaml down --volumes`, and to remove the old cache, `docker volume rm fathom-trivy-cache`.
 
 ### HTTPS
 
@@ -83,7 +85,7 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 
 | Command | Purpose |
 | --- | --- |
-| `pnpm dev:setup [clone number]` | Create development secrets, such as random database passwords and the session secret, and the locally trusted HTTPS certificate in the private `.dev/` folder. A clone number from 1 to 9 lets this copy run alongside others, as [Ways to Run Fathom](#ways-to-run-fathom) describes |
+| `pnpm dev:setup [clone number]` | Create development secrets, such as random database passwords and the session secret, and the locally trusted HTTPS certificate in the private `.dev/` folder. A clone number from 1 to 9 lets this copy run alongside others and adds the number to its container, volume and image names, so a copy that had no number gets a new database, as [Ways to Run Fathom](#ways-to-run-fathom) describes |
 | `pnpm account:create --name <name> --email <email> [--role <role>]` | Create an account in the development database, printing once the password Fathom generates for it, which its user changes at first sign-in. It holds the Team Member role unless `--role` names another starting role, named as in [Roles](../product/roles.md) in lowercase with hyphens, such as `workforce-administrator` |
 | `pnpm admin:create --email <email>` | Create the Fathom Administrator account in the development database, holding the Administrator role, printing once the password Fathom generates for it, which is changed at first sign-in. It changes nothing once any account holds the Administrator role |
 | `pnpm db:up` and `pnpm db:down` | Start and stop the development database, whose port is published only on this machine |

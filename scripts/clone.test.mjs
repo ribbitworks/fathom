@@ -71,10 +71,18 @@ describe("scripts/lib.sh", () => {
     const single = ["1", "8443", "8444", "5432", "9443", "fathom-dev"];
     assert.deepEqual(settingsOf(copy(undefined)), single);
     assert.deepEqual(settingsOf(copy("")), single);
-    assert.deepEqual(settingsOf(copy("1\n")), single);
+    assert.deepEqual(settingsOf(copy(" \n")), single);
   });
 
   it("gives each clone number its own ports and names", () => {
+    assert.deepEqual(settingsOf(copy("1\n")), [
+      "1",
+      "8443",
+      "8444",
+      "5432",
+      "9443",
+      "fathom-dev-1",
+    ]);
     assert.deepEqual(settingsOf(copy("3\n")), [
       "3",
       "8463",
@@ -150,8 +158,9 @@ describe("scripts/dev-setup.sh", () => {
 describe("packages/test-utils/src/clone.ts", () => {
   it("names things as scripts/lib.sh does", () => {
     assert.equal(cloneName("latest", copy(undefined)), "latest");
-    assert.equal(cloneName("latest", copy("1\n")), "latest");
     assert.equal(cloneName("latest", copy("")), "latest");
+    assert.equal(cloneName("latest", copy(" \n")), "latest");
+    assert.equal(cloneName("latest", copy("1\n")), "latest-1");
     assert.equal(cloneName("latest", copy("3\n")), "latest-3");
   });
 

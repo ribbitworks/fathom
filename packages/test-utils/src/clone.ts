@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// The name given, followed by the copy's clone number unless it is clone 1.
+// The name given, followed by the copy's clone number if it has one.
 export function cloneName(name: string, repositoryRoot: string): string {
   let clone = "";
   try {
@@ -14,7 +14,7 @@ export function cloneName(name: string, repositoryRoot: string): string {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   }
-  if (clone === "" || clone === "1") return name;
+  if (clone === "") return name;
   if (!/^[1-9]$/.test(clone))
     throw new Error(".dev/clone must hold a clone number from 1 to 9");
   return `${name}-${clone}`;

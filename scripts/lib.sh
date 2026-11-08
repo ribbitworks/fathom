@@ -133,15 +133,21 @@ export FATHOM_VERSION FATHOM_COMMIT FATHOM_COMMIT_DATE
 # Several copies of the repository can run on one machine at once, each with its own clone number,
 # from 1 to 9, in the git-ignored .dev/clone. The number picks the ports and the names of the
 # containers, volumes and images, so the copies never share a database or replace each other's
-# containers. Clone 1, the default, uses the ports and names a single copy always has.
+# containers. A single copy, with no number, has clone 1's ports and names without a number.
 FATHOM_CLONE=1
+fathom_clone_suffix=""
 fathom_clone_file="$(dirname "${BASH_SOURCE[0]}")/../.dev/clone"
 if [ -s "$fathom_clone_file" ]; then
-  FATHOM_CLONE="$(tr -d '[:space:]' <"$fathom_clone_file")"
-  case "$FATHOM_CLONE" in
-    [1-9]) ;;
+  fathom_clone_number="$(tr -d '[:space:]' <"$fathom_clone_file")"
+  case "$fathom_clone_number" in
+    '') ;;
+    [1-9])
+      FATHOM_CLONE="$fathom_clone_number"
+      fathom_clone_suffix="-$FATHOM_CLONE"
+      ;;
     *) fail ".dev/clone must hold a clone number from 1 to 9; run 'pnpm dev:setup <number>'" ;;
   esac
+  unset fathom_clone_number
 fi
 unset fathom_clone_file
 fathom_clone_offset=$((FATHOM_CLONE - 1))
@@ -151,9 +157,9 @@ export FATHOM_DEV_DB_PORT="${FATHOM_DEV_DB_PORT:-$((5432 + fathom_clone_offset))
 export FATHOM_STACK_PORT="${FATHOM_STACK_PORT:-$((9443 + 10 * fathom_clone_offset))}"
 unset fathom_clone_offset
 
-# Prints the name given, followed by this copy's clone number unless it is clone 1.
+# Prints the name given, followed by this copy's clone number if it has one.
 clone_name() {
-  if [ "$FATHOM_CLONE" = 1 ]; then printf '%s\n' "$1"; else printf '%s-%s\n' "$1" "$FATHOM_CLONE"; fi
+  printf '%s%s\n' "$1" "$fathom_clone_suffix"
 }
 
 # Whether any of the processes given is still running, whoever owns it.
