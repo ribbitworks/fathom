@@ -1021,7 +1021,10 @@ describe("a hire's draft", () => {
   it("is decided only by Approvers who see people and Confidential data, and only when there", async () => {
     const id = await liveHire();
     await changed(id, { stateId: open });
-    const unseeing = await test.signedIn(["drafts:approve", "people:view"]);
+    const unseeing = await test.signedIn([
+      "hiring-plan:approve",
+      "people:view",
+    ]);
     expect(
       (
         await send(unseeing, "POST", "/api/drafts/approval", {
@@ -1316,7 +1319,7 @@ describe("each role's view of the hiring plan", () => {
 
   it("answers an Approver who does not see the hiring plan as if a hire had no draft", async () => {
     const approving = await test.signedIn([
-      "drafts:approve",
+      "hiring-plan:approve",
       "people:view",
       "restricted:view",
       "confidential:view",
@@ -1886,7 +1889,7 @@ describe("values in People's columns", () => {
 
   it("lets an Approver who sees the hiring plan, but not Confidential data, decide a hire's draft only when it changes nothing in a Confidential column", async () => {
     const deciding = await test.signedIn([
-      "drafts:approve",
+      "hiring-plan:approve",
       "people:view",
       "hiring-plan:view",
       "changes:view",

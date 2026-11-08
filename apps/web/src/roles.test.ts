@@ -92,6 +92,22 @@ describe("what a role allows", () => {
       consequences(["confidential:edit", "people:edit"]).ineffective,
     ).toEqual([]);
   });
+
+  it("warns that approving planned hires does nothing without seeing the hiring plan", () => {
+    expect(
+      consequences(["hiring-plan:approve", "people:view"]).ineffective,
+    ).toEqual(["Approve Hiring plan does nothing without View Hiring plan."]);
+  });
+
+  it("names every permission one could do something with, and is content with any of them", () => {
+    expect(consequences(["drafts:approve-own"]).ineffective).toEqual([
+      "Approve Their own drafts does nothing without Approve Plan, Approve Releases, Approve People, Approve Hiring plan, Approve Feature teams, or Approve Configuration.",
+    ]);
+    expect(
+      consequences(["drafts:approve-own", "releases:approve", "plan:view"])
+        .ineffective,
+    ).toEqual([]);
+  });
 });
 
 describe("what a change to an account's permissions does", () => {

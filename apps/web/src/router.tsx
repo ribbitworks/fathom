@@ -7,6 +7,7 @@
 
 import type { QueryClient } from "@tanstack/react-query";
 import {
+  approvableKinds,
   historySearchLength,
   type Permission,
   personLengths,
@@ -191,7 +192,7 @@ const changesRoute = createRoute({
 });
 
 // Drafts, for those who see the data they change, with their search in the address; Approvers
-// approve and reject them here.
+// approve and reject here those of the areas their role approves.
 const draftsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/drafts",
@@ -202,7 +203,7 @@ const draftsRoute = createRoute({
     const navigate = draftsRoute.useNavigate();
     return (
       <DraftsPage
-        canApprove={permissions.includes("drafts:approve")}
+        approves={approvableKinds(permissions)}
         seesPeople={permissions.includes("people:view")}
         seesLists={
           permissions.includes("people:view") ||
@@ -258,7 +259,7 @@ const listsRoute = createRoute({
       <ListsPage
         listId={listsRoute.useParams().listId}
         canEdit={permissions.includes("configuration:edit")}
-        canApprove={permissions.includes("drafts:approve")}
+        approves={approvableKinds(permissions)}
         seesPeople={permissions.includes("people:view")}
         show={show ?? "both"}
         search={search ?? ""}
@@ -297,7 +298,7 @@ const releasesRoute = createRoute({
     return (
       <ReleasesPage
         streamId={releasesRoute.useParams().streamId}
-        canApprove={permissions.includes("drafts:approve")}
+        approves={approvableKinds(permissions)}
       />
     );
   },
@@ -324,7 +325,7 @@ const peopleRoute = createRoute({
           permissions.includes("people:edit") &&
           permissions.includes("hiring-plan:edit")
         }
-        canApprove={permissions.includes("drafts:approve")}
+        approves={approvableKinds(permissions)}
         canEditColumns={permissions.includes("configuration:edit")}
         showDates={permissions.includes("restricted:view")}
         showHireDates={permissions.includes("hiring-plan:view")}

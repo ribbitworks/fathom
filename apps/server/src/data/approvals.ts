@@ -6,7 +6,8 @@
 // Approving applies the drafts to the live records, all in one change set or none of them, and
 // rejecting keeps them, marked Rejected with the Approver's reason. An Approver may not approve
 // drafts they changed, unless their role lets them approve their own, but may reject them, and
-// needs roles that see every value in the drafts they approve or reject. Neither can be undone.
+// needs roles that see every value in the drafts they approve or reject, and that approve drafts of
+// every area those drafts, and those approved with them, belong to. Neither can be undone.
 
 import {
   type Database,
@@ -18,7 +19,15 @@ import {
   inChunks,
   people,
 } from "@fathom/db";
-import type { DraftsRequest } from "@fathom/shared";
+import {
+  approvedAreaNames,
+  approvePermissions,
+  type Asking,
+  type DraftKind,
+  draftKinds,
+  type DraftsRequest,
+  kindsAsked,
+} from "@fathom/shared";
 import { and, eq, inArray, or } from "drizzle-orm";
 import {
   type Actor,
@@ -322,13 +331,34 @@ async function approvePeopleIn(
   return made;
 }
 
+// Refuses deciding drafts of a kind whose area the actor's role does not approve.
+function refuseBeyondRole(
+  actor: Actor,
+  kinds: readonly DraftKind[],
+  asking: Asking,
+): void {
+  for (const kind of kinds) {
+    // The kind is always one of the fixed list.
+    // eslint-disable-next-line security/detect-object-injection
+    const permission = approvePermissions[kind];
+    if (!actor.permissions.includes(permission)) {
+      throw new ForbiddenError(
+        // The permission is always one of the fixed list above.
+        // eslint-disable-next-line security/detect-object-injection
+        `Your role doesn't let you ${asking} drafts of ${approvedAreaNames[permission]}`,
+      );
+    }
+  }
+}
+
 // Checks the actor may approve or reject the drafts asked for, after every other change to drafts.
 async function deciding(
   transaction: Transaction,
   actor: Actor,
   asked: DraftsRequest,
+  asking: Asking,
 ): Promise<void> {
-  requirePermission(actor, "drafts:approve");
+  refuseBeyondRole(actor, kindsAsked(asked), asking);
   // Lists are seen by those who see configuration, and by those who see people, whose columns
   // draw on them.
   if (asksForLists(asked)) {
@@ -358,7 +388,7 @@ export async function approveDrafts(
   const today = asOf ?? (await readToday(database));
   try {
     return await database.transaction(async (transaction) => {
-      await deciding(transaction, actor, requested);
+      await deciding(transaction, actor, requested, "approve");
       const waiting = await draftKeys(transaction);
       if (requested.people.length > 0) {
         await seenAsked(transaction, actor, requested.people, today);
@@ -381,11 +411,16 @@ export async function approveDrafts(
         ...(await approveHiresIn(transaction, actor, asked.plannedHires)),
       );
       const left = await draftKeys(transaction);
-      await refuseOwnDrafts(
-        transaction,
+      const decided = [...waiting].filter((key) => !left.has(key));
+      // The drafts approved with those asked for may belong to other areas.
+      refuseBeyondRole(
         actor,
-        [...waiting].filter((key) => !left.has(key)),
+        draftKinds.filter((kind) =>
+          decided.some((key) => key.startsWith(`${kind} `)),
+        ),
+        "approve",
       );
+      await refuseOwnDrafts(transaction, actor, decided);
       await recordSensitiveChanges(transaction, actor.user.id, made);
       await recordHiringChanges(transaction, actor.user.id, made);
       return recordChanges(transaction, actor.user.id, made, "approval");
@@ -420,7 +455,7 @@ export async function rejectDrafts(
 ): Promise<string | null> {
   const today = asOf ?? (await readToday(database));
   return database.transaction(async (transaction) => {
-    await deciding(transaction, actor, asked);
+    await deciding(transaction, actor, asked, "reject");
     const seen =
       asked.people.length > 0
         ? await seenAsked(transaction, actor, asked.people, today)

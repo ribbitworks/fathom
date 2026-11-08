@@ -12,8 +12,10 @@
 // Drafts page, from each record's menu.
 
 import type {
+  Asking,
   Cycle,
   CyclePattern,
+  DraftKind,
   RecordRef,
   Release,
   ReleaseStream,
@@ -48,7 +50,6 @@ import {
   UnpublishedNote,
 } from "./draft-details.tsx";
 import {
-  type Asking,
   decidable,
   type Decision,
   decisionFor,
@@ -180,7 +181,8 @@ function patternNow(stream: ReleaseStream): CyclePattern | undefined {
 interface Actions {
   canEditStreams: boolean;
   canEditReleases: boolean;
-  canApprove: boolean;
+  // The kinds of draft the user's role approves and rejects.
+  approves: readonly DraftKind[];
   nodes: readonly RecordNode[];
   open: (dialog: Dialog) => void;
   openNote: (stream: ReleaseStream, release: Release) => void;
@@ -278,7 +280,9 @@ function RecordMenu({
             {draft.unpublished === true && <UnpublishedNote />}
             <DraftItems
               canEdit={canEditDraft && heldBy === undefined}
-              canApprove={actions.canApprove && decidable(node)}
+              canApprove={
+                actions.approves.includes(ref.type) && decidable(node)
+              }
               othersApprove={draft.needsOtherApprover === true}
               rejected={draft.state === "rejected"}
               waits={waits}
@@ -893,11 +897,12 @@ function StreamTable({
 
 export function ReleasesPage({
   streamId,
-  canApprove,
+  approves,
 }: {
   // The stream open in the side panel, if any.
   streamId?: string | undefined;
-  canApprove: boolean;
+  // The kinds of draft the user's role approves and rejects.
+  approves: readonly DraftKind[];
 }) {
   const queryClient = useQueryClient();
   const query = useQuery(releaseStreamsQuery);
@@ -973,7 +978,7 @@ export function ReleasesPage({
   const actions: Actions = {
     canEditStreams,
     canEditReleases,
-    canApprove,
+    approves,
     nodes,
     open: setDialog,
     openNote: (stream, release) => {
@@ -990,7 +995,7 @@ export function ReleasesPage({
     },
     decide: (asking, ref) => {
       setDecision(
-        decisionFor(asking, { ...noDrafts(), records: [ref] }, [], {
+        decisionFor(asking, { ...noDrafts(), records: [ref] }, approves, [], {
           fields: [],
           records: nodes,
         }),

@@ -6,7 +6,7 @@
 // can be approved yet, or which drafts this account changed and so needs another approver for. It
 // asks for a reason for rejecting, saves the decision itself, and cannot be closed while it saves.
 
-import { reasonLength } from "@fathom/shared";
+import { type Asking, reasonLength } from "@fathom/shared";
 import {
   Button,
   Group,
@@ -21,7 +21,6 @@ import { useState } from "react";
 import { DialogActions } from "./dialog-actions.tsx";
 import {
   approveDrafts,
-  type Asking,
   type Decision,
   type DraftSelection,
   draftTotal,
@@ -170,6 +169,31 @@ function DecisionDialog({
   );
 }
 
+// Drafts the user cannot decide, named under a sentence saying why.
+function Undecided({
+  why,
+  names,
+  onClose,
+}: {
+  why: string;
+  names: readonly string[];
+  onClose: () => void;
+}) {
+  return (
+    <Stack gap="md">
+      <Text fz="sm">{why}</Text>
+      <List size="sm">
+        {names.map((name) => (
+          <List.Item key={name}>{name}</List.Item>
+        ))}
+      </List>
+      <Group justify="flex-end">
+        <Button onClick={onClose}>Close</Button>
+      </Group>
+    </Stack>
+  );
+}
+
 export function DecisionModal({
   decision,
   opened,
@@ -183,6 +207,7 @@ export function DecisionModal({
 }) {
   const [busy, setBusy] = useState(false);
   const total = decision === undefined ? 0 : draftTotal(decision.selection);
+  const verb = decision?.asking === "reject" ? "reject" : "approve";
   return (
     <Modal
       opened={opened}
@@ -191,28 +216,26 @@ export function DecisionModal({
       closeOnClickOutside={!busy}
       withCloseButton={!busy}
       title={
-        decision?.othersApprove
+        decision?.beyondRole || decision?.othersApprove
           ? "Another approver needed"
           : decision?.waiting
             ? "Can't approve yet"
             : `${decision?.asking === "reject" ? "Reject" : "Approve"} ${drafts(total)}?`
       }
     >
+      {decision?.beyondRole && (
+        <Undecided
+          why={`Your role doesn't let you ${verb} these drafts:`}
+          names={decision.beyondRole}
+          onClose={onClose}
+        />
+      )}
       {decision?.othersApprove && (
-        <Stack gap="md">
-          <Text fz="sm">
-            This account changed these drafts, so another approver must approve
-            them:
-          </Text>
-          <List size="sm">
-            {decision.othersApprove.map((name) => (
-              <List.Item key={name}>{name}</List.Item>
-            ))}
-          </List>
-          <Group justify="flex-end">
-            <Button onClick={onClose}>Close</Button>
-          </Group>
-        </Stack>
+        <Undecided
+          why="This account changed these drafts, so another approver must approve them:"
+          names={decision.othersApprove}
+          onClose={onClose}
+        />
       )}
       {decision?.waiting && (
         <Stack gap="md">
@@ -222,18 +245,21 @@ export function DecisionModal({
           </Group>
         </Stack>
       )}
-      {decision && !decision.waiting && !decision.othersApprove && (
-        <DecisionDialog
-          asking={decision.asking}
-          selection={decision.selection}
-          together={decision.together ?? []}
-          included={decision.included ?? []}
-          leftOut={decision.leftOut ?? 0}
-          onDone={onDone}
-          onCancel={onClose}
-          onBusy={setBusy}
-        />
-      )}
+      {decision &&
+        !decision.waiting &&
+        !decision.othersApprove &&
+        !decision.beyondRole && (
+          <DecisionDialog
+            asking={decision.asking}
+            selection={decision.selection}
+            together={decision.together ?? []}
+            included={decision.included ?? []}
+            leftOut={decision.leftOut ?? 0}
+            onDone={onDone}
+            onCancel={onClose}
+            onBusy={setBusy}
+          />
+        )}
     </Modal>
   );
 }

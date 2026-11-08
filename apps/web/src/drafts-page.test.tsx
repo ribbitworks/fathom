@@ -29,7 +29,15 @@ const s1 = "00000000-0000-4000-8000-000000000001";
 
 const session = (permissions: string[]) => () =>
   Response.json({ ...fictionalUser, permissions });
-const approver = session(["drafts:approve", "people:view", "restricted:view"]);
+const approver = session([
+  "plan:approve",
+  "releases:approve",
+  "people:approve",
+  "hiring-plan:approve",
+  "configuration:approve",
+  "people:view",
+  "restricted:view",
+]);
 const reader = session(["people:view"]);
 
 const sites = {
@@ -323,6 +331,97 @@ describe("the Drafts page", () => {
     });
   });
 
+  it("offers only drafts of the areas the role approves, and names those of other areas a decision would take", async () => {
+    const created = (more: object = {}) =>
+      draft({ action: "created", changed: [], live: {}, ...more });
+    const guild = {
+      id: "f2",
+      name: "Guild",
+      listId: "l1",
+      multiple: false,
+      required: false,
+      draft: created(),
+    };
+    const given = person("p6", "Finley Fictional", {
+      values: { f2: ["c1"] },
+      draft: draft({ action: "changed", changed: ["f2"] }),
+    });
+    const answers = (permissions: string[]) => ({
+      "GET /api/session": session([...permissions, "people:view"]),
+      "GET /api/people": () =>
+        Response.json({
+          people: [given],
+          fields: [site, guild],
+          order: [],
+          views: [],
+        }),
+    });
+    const fetch = await openDrafts(answers(["people:approve"]));
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the draft of Finley Fictional",
+      }),
+    );
+    expect(
+      screen.queryByRole("checkbox", {
+        name: "Select the draft of the column Guild",
+      }),
+    ).toBeNull();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Approve 1 draft" }),
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "Another approver needed",
+    });
+    expect(
+      within(dialog).getByText(
+        "Your role doesn't let you approve these drafts:",
+      ),
+    ).toBeDefined();
+    expect(within(dialog).getByText("the column Guild")).toBeDefined();
+    expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([]);
+  });
+
+  it("names the drafts of other areas that rejecting would take with it", async () => {
+    const guild = {
+      id: "f2",
+      name: "Guild",
+      listId: "l1",
+      multiple: false,
+      required: false,
+      draft: draft({ action: "created", changed: [], live: {} }),
+    };
+    const given = person("p6", "Finley Fictional", {
+      values: { f2: ["c1"] },
+      draft: draft({ action: "changed", changed: ["f2"] }),
+    });
+    await openDrafts({
+      "GET /api/session": session(["configuration:approve", "people:view"]),
+      "GET /api/people": () =>
+        Response.json({
+          people: [given],
+          fields: [site, guild],
+          order: [],
+          views: [],
+        }),
+    });
+    await userEvent.click(
+      await screen.findByRole("checkbox", {
+        name: "Select the draft of the column Guild",
+      }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Reject…" }));
+    const dialog = await screen.findByRole("dialog", {
+      name: "Another approver needed",
+    });
+    expect(
+      within(dialog).getByText(
+        "Your role doesn't let you reject these drafts:",
+      ),
+    ).toBeDefined();
+    expect(within(dialog).getByText("Finley Fictional")).toBeDefined();
+  });
+
   it("puts drafts of columns, web link columns included, and of the column order in words, and approves the order with the columns it places", async () => {
     const levels = {
       ...sites,
@@ -428,7 +527,14 @@ describe("the Drafts page", () => {
 
   it("opens for Approvers who see lists but not people, with only the drafts of lists", async () => {
     const fetch = serverAnswers({
-      "GET /api/session": session(["drafts:approve", "configuration:view"]),
+      "GET /api/session": session([
+        "plan:approve",
+        "releases:approve",
+        "people:approve",
+        "hiring-plan:approve",
+        "configuration:approve",
+        "configuration:view",
+      ]),
       "GET /api/release-streams": noStreams,
       "GET /api/lists": () =>
         Response.json({
@@ -453,7 +559,14 @@ describe("the Drafts page", () => {
 
   it("puts a release's changed note in words without its formatting", async () => {
     serverAnswers({
-      "GET /api/session": session(["drafts:approve", "plan:view"]),
+      "GET /api/session": session([
+        "plan:approve",
+        "releases:approve",
+        "people:approve",
+        "hiring-plan:approve",
+        "configuration:approve",
+        "plan:view",
+      ]),
       "GET /api/release-streams": () =>
         Response.json({
           streams: [
@@ -497,7 +610,14 @@ describe("the Drafts page", () => {
       ],
     });
     const fetch = serverAnswers({
-      "GET /api/session": session(["drafts:approve", "plan:view"]),
+      "GET /api/session": session([
+        "plan:approve",
+        "releases:approve",
+        "people:approve",
+        "hiring-plan:approve",
+        "configuration:approve",
+        "plan:view",
+      ]),
       "GET /api/release-streams": () =>
         Response.json({
           streams: [

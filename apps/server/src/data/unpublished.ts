@@ -14,7 +14,7 @@ import {
   drafts,
   unpublishedDrafts,
 } from "@fathom/db";
-import type { Unpublished } from "@fathom/shared";
+import type { DraftKind, Unpublished } from "@fathom/shared";
 import { and, asc, eq, max } from "drizzle-orm";
 import {
   type Actor,
@@ -37,7 +37,6 @@ import {
   asDraft,
   type Draft,
   drafted,
-  type DraftType,
   lockDrafts,
   openChangeSets,
   readPersonDrafts,
@@ -104,7 +103,7 @@ const ownRows = (reader: Reader, userId: string): Promise<Row[]> =>
     .where(eq(unpublishedDrafts.userId, userId))
     .orderBy(asc(unpublishedDrafts.sequence));
 
-const idsOf = (rows: readonly Row[], recordType: DraftType) =>
+const idsOf = (rows: readonly Row[], recordType: DraftKind) =>
   rows
     .filter((row) => row.recordType === recordType)
     .map(({ recordId }) => recordId);
@@ -177,7 +176,7 @@ async function readVersions(
 // drafted to be added, as everyone else does.
 function versionOf(
   versions: Versions,
-  recordType: DraftType,
+  recordType: DraftKind,
   id: string,
 ): Recorded | undefined {
   const { mine, theirs } = versions;

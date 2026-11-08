@@ -119,17 +119,18 @@ const role = () => ({
   permissions: [],
 });
 
-// The kinds of drafts an Approver decides, each with what seeing it needs beside drafts:approve.
+// The kinds of drafts an Approver decides, each with its area's Approve permission and what seeing it
+// needs.
 const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
   {
     variant: "people",
-    needs: allOf("drafts:approve", "people:view"),
+    needs: allOf("people:approve", "people:view"),
     asked: () => ({ people: [id()] }),
   },
   {
     // Only those who also see the hiring plan see hires' drafts; others are told they are gone.
     variant: "planned hires",
-    needs: allOf("drafts:approve", "people:view"),
+    needs: allOf("hiring-plan:approve", "people:view"),
     asked: () => ({ plannedHires: [id()] }),
   },
   ...[
@@ -141,18 +142,18 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     // Lists are seen with configuration, and with people, whose columns draw on them.
     needs: {
       kind: "permissions",
-      all: ["drafts:approve"],
+      all: ["configuration:approve"],
       any: ["configuration:view", "people:view"],
     } as const,
   })),
   {
     variant: "columns",
-    needs: allOf("drafts:approve", "people:view"),
+    needs: allOf("configuration:approve", "people:view"),
     asked: () => ({ columns: [id()] }),
   },
   {
     variant: "column order",
-    needs: allOf("drafts:approve", "people:view"),
+    needs: allOf("configuration:approve", "people:view"),
     asked: () => ({ columnOrder: true }),
   },
   {
@@ -160,7 +161,7 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     variant: "records",
     needs: {
       kind: "permissions",
-      all: ["drafts:approve"],
+      all: ["releases:approve"],
       any: ["plan:view", "configuration:view"],
     },
     asked: () => ({ records: [{ type: "release", id: id() }] }),

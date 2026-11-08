@@ -11,6 +11,7 @@
 import {
   type Choice,
   type ChoiceRequest,
+  type DraftKind,
   type List,
   matchesWords,
   searchWords,
@@ -33,6 +34,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Fragment, type MouseEvent, type ReactNode, useState } from "react";
 import { DecisionModal } from "./decision-dialog.tsx";
 import {
+  approvesAll,
   decidable,
   type Decision,
   decisionFor,
@@ -335,12 +337,15 @@ function ListsTable({
 // The switch names each option's radio button after its own name, which is how closing a panel
 // finds the option chosen.
 const kindName = "list-kind";
+
+// The kinds of draft decided on the page: lists, their choices, and the order of their choices.
+const listKinds: readonly DraftKind[] = ["list", "list-item", "choice-order"];
 const kindOptionId = (kind: ListKind) => `${kindName}-${kind}`;
 
 export function ListsPage({
   listId,
   canEdit: mayEdit,
-  canApprove: mayApprove,
+  approves,
   show = "both",
   onShow,
   search = "",
@@ -351,7 +356,8 @@ export function ListsPage({
 }: {
   listId: string | undefined;
   canEdit: boolean;
-  canApprove: boolean;
+  // The kinds of draft the user's role approves and rejects.
+  approves: readonly DraftKind[];
   // Whether the user sees people, whose columns and drafts may use drafts of lists and choices, so
   // deciding those here includes them as the Drafts page does.
   seesPeople?: boolean;
@@ -374,6 +380,7 @@ export function ListsPage({
     ...(kind === "all" ? {} : { kind }),
   };
   const query = useQuery(listsQuery);
+  const mayApprove = approvesAll(approves, listKinds);
   const readsPeople = seesPeople && mayApprove;
   const people = useQuery({ ...peopleQuery, enabled: readsPeople });
   // Deciding waits for the people, since rejecting must include the drafts of people that use a
@@ -648,7 +655,9 @@ export function ListsPage({
     decide: (asking, what) => {
       // Every list, with its rejected drafts, whatever is shown, so a draft that depends on one
       // waits.
-      setDecision(decisionFor(asking, selectionOf(what), all, people.data));
+      setDecision(
+        decisionFor(asking, selectionOf(what), approves, all, people.data),
+      );
       setDeciding(true);
     },
   };
@@ -718,7 +727,9 @@ export function ListsPage({
     ? waitingIn(shownLists)
     : { selection: noDrafts(), total: 0 };
   const decideAll = (asking: "approve" | "reject") => {
-    setDecision(decisionFor(asking, waiting.selection, all, people.data));
+    setDecision(
+      decisionFor(asking, waiting.selection, approves, all, people.data),
+    );
     setDeciding(true);
   };
 

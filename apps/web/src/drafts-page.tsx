@@ -8,9 +8,11 @@
 // table and the Lists page too. Approving or rejecting names any other drafts it includes.
 
 import {
+  type Asking,
   builtInColumnNames,
   type ChangeValue,
   type Choice,
+  type DraftKind,
   type DraftState,
   type Field,
   type List,
@@ -39,12 +41,12 @@ import { type ReactNode, useState } from "react";
 import { describeField } from "./changes.ts";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import {
-  type Asking,
   type Decision,
   decisionFor,
   type DraftSelection,
   waitsForRejected,
   joined,
+  mayDecide,
   noDrafts,
 } from "./drafts.ts";
 import { personDraftFields } from "./draft-details.tsx";
@@ -481,14 +483,15 @@ function DraftEntry({
 }
 
 export function DraftsPage({
-  canApprove,
+  approves,
   seesPeople = true,
   seesLists = true,
   seesPlan = true,
   search,
   onSearch,
 }: {
-  canApprove: boolean;
+  // The kinds of draft the user's role approves and rejects.
+  approves: readonly DraftKind[];
   // Whether the user sees people, so their drafts; those who see only lists see only theirs.
   seesPeople?: boolean;
   // Whether the user sees lists, through people or planning configuration.
@@ -560,9 +563,12 @@ export function DraftsPage({
         people,
         records,
       });
+    // Drafts of the areas the user's role approves are chosen to decide.
+    const choosable = (one: Entry) => mayDecide(approves, one.selects);
     // A draft only its maker sees, or one someone is changing, is not decided until published.
     const waiting = shown.filter(
       (one) =>
+        choosable(one) &&
         one.state === "waiting" &&
         !waits(one) &&
         !one.unpublished &&
@@ -579,7 +585,7 @@ export function DraftsPage({
         noDrafts(),
       );
       setDecision(
-        decisionFor(asking, selection, lists.data as List[], {
+        decisionFor(asking, selection, approves, lists.data as List[], {
           fields,
           orderDraft,
           people,
@@ -590,7 +596,7 @@ export function DraftsPage({
     };
     content = (
       <>
-        {canApprove && shown.length > 0 && (
+        {shown.some(choosable) && (
           <Group justify="space-between">
             <Checkbox
               label="Select all waiting"
@@ -653,7 +659,7 @@ export function DraftsPage({
                 key={one.key}
                 shown={one}
                 waits={waits(one)}
-                {...(canApprove
+                {...(choosable(one)
                   ? {
                       selection: {
                         selected: selected.has(one.key),

@@ -23,6 +23,7 @@ import {
   savedViews,
 } from "@fathom/db";
 import {
+  type DraftKind,
   type RecordType as PlanRecordType,
   recordTypeSchema,
   type Tier,
@@ -53,7 +54,6 @@ import {
   fitsColumns,
   lockDrafts,
   readPersonDrafts,
-  type DraftType,
   type Recorded,
   rejectedField,
   setRejection,
@@ -977,7 +977,7 @@ async function undoIn(
     for (const record of draftRecords) {
       await setRejection(
         transaction,
-        record.recordType as DraftType,
+        record.recordType as DraftKind,
         [record.id],
         {
           state: "rejected",

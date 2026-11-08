@@ -5,12 +5,16 @@
 // columns. Neither can be undone. Approving a draft approves the drafts it uses too, of any kind,
 // which are counted first: the server says which choices or columns an order uses, and the rest,
 // such as the new choices and columns a person is given and the new lists they belong to, are
-// worked out here, as is what a decision covers, and whether a draft waits for a rejected one it
-// depends on.
+// worked out here, as is what a decision covers, whether a draft waits for a rejected one it
+// depends on, and whether the user's role approves drafts of every area the decision covers.
 
 import {
+  type Asking,
   type ColumnOrderDraft,
+  type DraftKind,
+  draftsWhere,
   type Field,
+  kindsAsked,
   type List,
   type Person,
   type RecordRef,
@@ -66,6 +70,18 @@ export const draftTotal = (selection: DraftSelection) =>
   selection.columns.length +
   selection.records.length +
   (selection.columnOrder ? 1 : 0);
+
+// Whether a user who approves drafts of some kinds approves drafts of every kind given.
+export const approvesAll = (
+  approves: readonly DraftKind[],
+  kinds: readonly DraftKind[],
+): boolean => kinds.every((kind) => approves.includes(kind));
+
+// Whether a user who approves drafts of these kinds may approve or reject every draft chosen.
+export const mayDecide = (
+  approves: readonly DraftKind[],
+  selection: DraftSelection,
+): boolean => approvesAll(approves, kindsAsked(selection));
 
 // Approves the drafts chosen, and those they use, all together, and gives the change set that
 // applied them.
@@ -389,8 +405,6 @@ export function draftNames(
   return names;
 }
 
-export type Asking = "approve" | "reject";
-
 // Whether any draft in the selection waits for a rejected draft it depends on, so cannot be
 // approved until that one is resubmitted. Every list, with its rejected drafts, is needed to tell.
 export const waitsForRejected = (
@@ -415,6 +429,9 @@ export interface Decision {
   // The drafts the approval would apply that this user changed, named, when their role does not let
   // them approve their own: another approver must approve them, so nothing is approved.
   othersApprove?: string[];
+  // The drafts the decision covers whose areas this user's role does not approve, named: another
+  // approver must decide them, so nothing is decided.
+  beyondRole?: string[];
 }
 
 // The drafts in a selection that this user changed and may not approve themselves.
@@ -471,12 +488,14 @@ function needingOthers(
   };
 }
 
-// A decision on the drafts chosen: approving includes the drafts they depend on, and skips any that
-// depend on a rejected draft; rejecting includes the drafts that depend on them. Asked to, it names
-// the drafts chosen, when there are several.
+// A decision on the drafts chosen, by a user who approves drafts of the kinds given: approving
+// includes the drafts they depend on, and skips any that depend on a rejected draft; rejecting
+// includes the drafts that depend on them. Asked to, it names the drafts chosen, when there are
+// several.
 export function decisionFor(
   asking: Asking,
   chosen: DraftSelection,
+  approves: readonly DraftKind[],
   lists: readonly List[],
   columns?: Columns,
   naming = false,
@@ -486,11 +505,18 @@ export function decisionFor(
     draftNames(decided, lists, fields, columns?.people, columns?.records);
   const named = (decided: DraftSelection) =>
     naming && draftTotal(decided) > 1 ? { together: names(decided) } : {};
+  const beyond = (selection: DraftSelection) =>
+    draftsWhere(selection, (kind) => !approves.includes(kind));
   if (asking === "reject") {
     const dependents = usingDrafts(chosen, lists, columns);
+    const selection = joined(chosen, dependents);
+    const outside = beyond(selection);
+    if (draftTotal(outside) > 0) {
+      return { asking, selection, beyondRole: names(outside) };
+    }
     return {
       asking,
-      selection: joined(chosen, dependents),
+      selection,
       ...named(chosen),
       ...(draftTotal(dependents) > 0 ? { included: names(dependents) } : {}),
     };
@@ -500,17 +526,18 @@ export function decisionFor(
   if (draftTotal(ready) === 0)
     return { asking, selection: chosen, waiting: true };
   const used = usedDrafts(ready, lists, columns);
-  const mine = needingOthers(joined(ready, used), lists, columns);
+  const selection = joined(ready, used);
+  const outside = beyond(selection);
+  if (draftTotal(outside) > 0) {
+    return { asking, selection, beyondRole: names(outside) };
+  }
+  const mine = needingOthers(selection, lists, columns);
   if (draftTotal(mine) > 0) {
-    return {
-      asking,
-      selection: joined(ready, used),
-      othersApprove: names(mine),
-    };
+    return { asking, selection, othersApprove: names(mine) };
   }
   return {
     asking,
-    selection: joined(ready, used),
+    selection,
     ...named(ready),
     ...(draftTotal(used) > 0 ? { included: names(used) } : {}),
     ...(draftTotal(held) > 0 ? { leftOut: draftTotal(held) } : {}),

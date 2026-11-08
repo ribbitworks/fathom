@@ -481,7 +481,7 @@ describe("changes to positions and states", () => {
     const unseeing = await grantedOnly([
       "people:view",
       "hiring-plan:view",
-      "drafts:approve",
+      "hiring-plan:approve",
     ]);
     const refused = await send(unseeing, "POST", "/api/drafts/approval", {
       plannedHires: [id],

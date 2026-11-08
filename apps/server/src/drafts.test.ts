@@ -544,7 +544,7 @@ describe("approving and rejecting", () => {
     const roles: [Role | Permission[], number][] = [
       ["workforce-administrator", 403],
       ["project-manager", 404],
-      [["drafts:approve", "people:view"], 404],
+      [["people:approve", "people:view"], 404],
     ];
     for (const [held, status] of roles) {
       const { cookie } = await test.signedIn(held);
@@ -563,7 +563,7 @@ describe("approving and rejecting", () => {
       preferredName: unique("Fictional"),
       endDate: "2032-01-01",
     });
-    const planner = await test.signedIn(["drafts:approve", "people:view"]);
+    const planner = await test.signedIn(["people:approve", "people:view"]);
     const refused = await approve([partly.id], planner.cookie);
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toEqual({
@@ -591,7 +591,7 @@ describe("approving and rejecting", () => {
     expect((await approve([added.id], planner.cookie)).statusCode).toBe(200);
     expect((await approve([partly.id])).statusCode).toBe(200);
     const manager = await test.signedIn([
-      "drafts:approve",
+      "people:approve",
       "people:view",
       "restricted:view",
     ]);
@@ -600,7 +600,8 @@ describe("approving and rejecting", () => {
 
   describe("drafts the approver changed", () => {
     const maker = [
-      "drafts:approve",
+      "people:approve",
+      "configuration:approve",
       "people:edit",
       "restricted:edit",
       "confidential:edit",

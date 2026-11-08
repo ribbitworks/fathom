@@ -21,7 +21,8 @@ beforeAll(async () => {
   test = await startTestApp();
   editor = await test.signedIn("workforce-administrator");
   approver = await test.signedIn([
-    "drafts:approve",
+    "configuration:approve",
+    "people:approve",
     "people:edit",
     "restricted:edit",
     "confidential:edit",

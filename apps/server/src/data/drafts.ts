@@ -24,11 +24,7 @@ import {
   userRoles,
   users,
 } from "@fathom/db";
-import {
-  isLink,
-  type RecordType as PlanRecordType,
-  type Tier,
-} from "@fathom/shared";
+import { type DraftKind, isLink, type Tier } from "@fathom/shared";
 import {
   type AnyColumn,
   and,
@@ -58,17 +54,6 @@ type UnpublishedRow = typeof unpublishedDrafts.$inferSelect;
 // The user whose own unpublished drafts are read in place of the published ones, or undefined to
 // read the published drafts alone, as Approvers decide them.
 export type Viewer = string | undefined;
-
-// The kinds of record that have drafts. A list's choice order is one record, named by its list.
-export type DraftType =
-  | "person"
-  | "planned-hire"
-  | "list"
-  | "list-item"
-  | "choice-order"
-  | "field"
-  | "column-order"
-  | PlanRecordType;
 
 export interface Draft {
   action: Change["action"];
@@ -235,7 +220,7 @@ const bySequence = (
 // draft of has none.
 export async function readDrafts(
   reader: Reader,
-  recordType: DraftType,
+  recordType: DraftKind,
   ids?: readonly string[],
   viewer?: Viewer,
 ): Promise<Map<string, Draft>> {
@@ -296,7 +281,7 @@ export interface Held {
 // hold, or that anyone holds when there is no viewer, by record.
 export async function readHeld(
   reader: Reader,
-  recordType: DraftType,
+  recordType: DraftKind,
   viewer: Viewer,
   ids?: readonly string[],
 ): Promise<Map<string, Held>> {
@@ -334,7 +319,7 @@ export const heldMessage = (holder: string) =>
 export async function refuseHeld(
   reader: Reader,
   editor: string,
-  recordType: DraftType,
+  recordType: DraftKind,
   ids: readonly string[],
 ): Promise<void> {
   const [held] = (await readHeld(reader, recordType, editor, ids)).values();
@@ -345,7 +330,7 @@ export async function refuseHeld(
 // Approvers decide only published drafts that nobody is changing.
 export async function refuseHeldDecision(
   reader: Reader,
-  recordType: DraftType,
+  recordType: DraftKind,
   ids: readonly string[],
 ): Promise<void> {
   const [held] = (await readHeld(reader, recordType, undefined, ids)).values();
@@ -382,7 +367,7 @@ function sameDraft(
 async function keepUnpublished(
   transaction: Transaction,
   editor: string,
-  recordType: DraftType,
+  recordType: DraftKind,
   id: string,
   draft: Pick<Draft, "action" | "fields"> | undefined,
 ): Promise<void> {
@@ -416,7 +401,7 @@ export type Rejection = Pick<Draft, "state" | "reason">;
 export async function writeDraft(
   transaction: Transaction,
   editor: string,
-  recordType: DraftType,
+  recordType: DraftKind,
   id: string,
   live: Recorded | undefined,
   wanted: Recorded | undefined,
@@ -443,7 +428,7 @@ export const writePersonDraft = (
 export async function discardDrafts(
   transaction: Transaction,
   editor: string,
-  recordType: DraftType,
+  recordType: DraftKind,
   ids: readonly string[],
 ): Promise<void> {
   for (const id of ids) {
@@ -454,7 +439,7 @@ export async function discardDrafts(
 // Removes the published drafts of the records of one kind given, as approving them does.
 export async function deleteDrafts(
   transaction: Transaction,
-  recordType: DraftType,
+  recordType: DraftKind,
   ids: readonly string[],
 ): Promise<void> {
   for (const chunk of inChunks([...ids])) {
@@ -470,7 +455,7 @@ export async function deleteDrafts(
 // a reason.
 export async function setRejection(
   transaction: Transaction,
-  recordType: DraftType,
+  recordType: DraftKind,
   ids: readonly string[],
   rejection: Rejection,
 ): Promise<void> {
@@ -539,7 +524,7 @@ export const otherApprover = (maker: Maker | undefined) =>
 // Unpublished changes count only for the viewer's own unpublished drafts, which hold them.
 export async function draftMakers(
   reader: Pick<Database, "select">,
-  recordType: DraftType,
+  recordType: DraftKind,
   ids: readonly string[],
   seen: (field: string, tier: Tier) => boolean,
   viewer: string,
@@ -720,7 +705,7 @@ export async function refuseOwnDrafts(
 export async function addDrafts(
   transaction: Transaction,
   editor: string,
-  recordType: DraftType,
+  recordType: DraftKind,
   added: readonly { id: string; fields: Recorded }[],
 ): Promise<void> {
   for (const chunk of inChunks([...added])) {
@@ -916,7 +901,7 @@ export function clearedRejection(
   tierOf: (field: string) => Tier,
   live: Recorded | undefined,
   draft: Draft | undefined,
-  recordType: DraftType = "person",
+  recordType: DraftKind = "person",
 ): Change[] {
   return draft?.state === "rejected"
     ? [

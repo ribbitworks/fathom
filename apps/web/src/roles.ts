@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Roles through the server's API, and what a role's permissions mean in plain English: what its
-// holders can and cannot do, which pages they see, any permission that does nothing without another,
+// holders can and cannot do, which pages they see, any permission that does nothing without others,
 // and, for a change to a role, what each account holding it gains and loses.
 
 import {
@@ -85,11 +85,13 @@ const linesNotBuilt = new Set([
 // Whether a line of the summary or the confirmation is about something Fathom does not have yet.
 export const notBuiltYet = (line: string): boolean => linesNotBuilt.has(line);
 
+const eitherOf = new Intl.ListFormat("en", { type: "disjunction" });
+
 export interface Consequences {
   pages: string[];
   can: string[];
   cannot: string[];
-  // Permissions granted that do nothing without another the role does not grant.
+  // Permissions granted that do nothing without any of others the role does not grant.
   ineffective: string[];
 }
 
@@ -124,11 +126,11 @@ export function consequences(granted: readonly Permission[]): Consequences {
   const ineffective = held.flatMap((permission) => {
     // The permission is always one of the shared list.
     // eslint-disable-next-line security/detect-object-injection
-    const { needs } = permissionDescriptions[permission];
-    return needs === undefined || held.includes(needs)
+    const { needs = [] } = permissionDescriptions[permission];
+    return needs.length === 0 || needs.some((one) => held.includes(one))
       ? []
       : [
-          `${permissionLabel(permission)} does nothing without ${permissionLabel(needs)}.`,
+          `${permissionLabel(permission)} does nothing without ${eitherOf.format(needs.map(permissionLabel))}.`,
         ];
   });
   return { pages, can, cannot, ineffective };

@@ -258,26 +258,33 @@ describe("who may read and change people", () => {
     expect(response.json()).toEqual({ error: "Forbidden" });
   });
 
-  // Approving and rejecting need drafts:approve, which each other role is tried without.
-  const decisions: [Method, string, object][] = [
-    ["POST", "/api/drafts/approval", { people: [randomUUID()] }],
+  // Approving and rejecting people's drafts need people:approve, which each other role is tried
+  // without.
+  const decisions: [Method, string, object, string][] = [
+    [
+      "POST",
+      "/api/drafts/approval",
+      { people: [randomUUID()] },
+      "Your role doesn't let you approve drafts of people",
+    ],
     [
       "POST",
       "/api/drafts/rejection",
       { people: [randomUUID()], reason: "Fictional" },
+      "Your role doesn't let you reject drafts of people",
     ],
   ];
   it.each(
     decisions.flatMap((decision) =>
       roleSchema.options
-        .filter((role) => !rolesGranting("drafts:approve").includes(role))
+        .filter((role) => !rolesGranting("people:approve").includes(role))
         .map((role) => [role, ...decision] as const),
     ),
-  )("refuses a %s %s %s", async (role, method, url, payload) => {
+  )("refuses a %s %s %s", async (role, method, url, payload, error) => {
     const { cookie } = await test.signedIn(role);
     const response = await send(cookie, method, url, payload);
     expect(response.statusCode).toBe(403);
-    expect(response.json()).toEqual({ error: "Forbidden" });
+    expect(response.json()).toEqual({ error });
   });
 
   // Saved views need only seeing people, so each role is tried on its own.

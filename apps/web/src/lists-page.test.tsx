@@ -2016,7 +2016,15 @@ describe("drafts on the Lists page", () => {
   const approverOnly = () =>
     Response.json({
       ...fictionalUser,
-      permissions: ["configuration:view", "drafts:approve", "plan:view"],
+      permissions: [
+        "configuration:view",
+        "plan:approve",
+        "releases:approve",
+        "people:approve",
+        "hiring-plan:approve",
+        "configuration:approve",
+        "plan:view",
+      ],
     });
 
   const approver = () =>
@@ -2025,7 +2033,11 @@ describe("drafts on the Lists page", () => {
       permissions: [
         "configuration:edit",
         "configuration:view",
-        "drafts:approve",
+        "plan:approve",
+        "releases:approve",
+        "people:approve",
+        "hiring-plan:approve",
+        "configuration:approve",
         "plan:view",
       ],
     });
@@ -2553,7 +2565,11 @@ describe("drafts on the Lists page", () => {
           ...fictionalUser,
           permissions: [
             "configuration:view",
-            "drafts:approve",
+            "plan:approve",
+            "releases:approve",
+            "people:approve",
+            "hiring-plan:approve",
+            "configuration:approve",
             "people:view",
             "plan:view",
           ],
@@ -3290,7 +3306,11 @@ describe("unpublished and held changes on the Lists page", () => {
       permissions: [
         "configuration:edit",
         "configuration:view",
-        "drafts:approve",
+        "plan:approve",
+        "releases:approve",
+        "people:approve",
+        "hiring-plan:approve",
+        "configuration:approve",
         "plan:view",
       ],
     });

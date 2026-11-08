@@ -1,9 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for working out, as the server does, which other drafts approving or rejecting a selection
-// includes, and how they are named.
+// includes, how they are named, and whether the approver's role approves drafts of their areas.
 
-import type { Choice, Field, List, Person } from "@fathom/shared";
+import {
+  type Choice,
+  draftKinds,
+  type Field,
+  type List,
+  type Person,
+} from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import {
   type Columns,
@@ -12,6 +18,7 @@ import {
   draftTotal,
   heldBack,
   joined,
+  mayDecide,
   noDrafts,
   rejectedAmong,
   usedDrafts,
@@ -184,6 +191,29 @@ describe("drafts of columns an approval or rejection includes", () => {
       "the column Previous site",
       "the new order for People's columns",
     ]);
+  });
+
+  it("names the drafts a decision covers whose areas the approver's role does not approve, deciding none", () => {
+    const order = { ...noDrafts(), columnOrder: true };
+    const column = { ...noDrafts(), columns: ["f1"] };
+    expect(mayDecide(["column-order"], order)).toBe(true);
+    expect(mayDecide(["column-order"], column)).toBe(false);
+    expect(
+      decisionFor("approve", order, ["column-order"], [], columns),
+    ).toEqual({
+      asking: "approve",
+      selection: { ...order, columns: ["f1"] },
+      beyondRole: ["the column Previous site"],
+    });
+    expect(
+      decisionFor("reject", column, ["field"], [], columns).beyondRole,
+    ).toEqual(["the new order for People's columns"]);
+    expect(
+      decisionFor("approve", order, draftKinds, [], columns).beyondRole,
+    ).toBeUndefined();
+    expect(
+      decisionFor("reject", column, draftKinds, [], columns).beyondRole,
+    ).toBeUndefined();
   });
 });
 
@@ -454,17 +484,25 @@ describe("drafts the approver changed", () => {
     const people = [person("p1", true), person("p2")];
     const chosen = { ...noDrafts(), people: ["p1", "p2"] };
     expect(
-      decisionFor("approve", chosen, lists, { fields: [], people }),
+      decisionFor("approve", chosen, draftKinds, lists, {
+        fields: [],
+        people,
+      }),
     ).toMatchObject({ othersApprove: ["Fictional p1"] });
     expect(
-      decisionFor("reject", chosen, lists, { fields: [], people })
-        .othersApprove,
-    ).toBeUndefined();
-    expect(
-      decisionFor("approve", { ...noDrafts(), people: ["p2"] }, lists, {
+      decisionFor("reject", chosen, draftKinds, lists, {
         fields: [],
         people,
       }).othersApprove,
+    ).toBeUndefined();
+    expect(
+      decisionFor(
+        "approve",
+        { ...noDrafts(), people: ["p2"] },
+        draftKinds,
+        lists,
+        { fields: [], people },
+      ).othersApprove,
     ).toBeUndefined();
   });
 
@@ -531,7 +569,8 @@ describe("drafts the approver changed", () => {
       records: [ref],
     };
     expect(
-      decisionFor("approve", chosen, [ownList], columns).othersApprove,
+      decisionFor("approve", chosen, draftKinds, [ownList], columns)
+        .othersApprove,
     ).toEqual([
       "the planned hire Fictional h9",
       "the column Own column",

@@ -24,9 +24,20 @@ describe("permissionDescriptions", () => {
         expect(sentence).toMatch(/^[A-Z].*\.$/u);
       }
       expect(allows).not.toBe(without);
-      expect(needs).not.toBe(permission);
+      expect(needs ?? []).not.toContain(permission);
     },
   );
+
+  it("lets an approver approve their own drafts with any area's Approve", () => {
+    const approving = permissionGrid.flatMap(({ actions }) =>
+      actions.approve === undefined || actions.approve === "drafts:approve-own"
+        ? []
+        : [actions.approve],
+    );
+    expect(
+      [...(permissionDescriptions["drafts:approve-own"].needs ?? [])].sort(),
+    ).toEqual(approving.sort());
+  });
 });
 
 describe("permissionGrid", () => {

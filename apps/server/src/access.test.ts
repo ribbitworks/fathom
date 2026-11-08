@@ -47,14 +47,18 @@ const expected: [Role, Permission[]][] = [
     [
       "plan:view",
       "plan:edit",
+      "plan:approve",
+      "releases:approve",
       "allocations:view",
       "org-chart:view",
       "people:view",
+      "people:approve",
       "feature-teams:approve",
       "hiring-plan:view",
+      "hiring-plan:approve",
       "configuration:view",
+      "configuration:approve",
       "drafts:submit",
-      "drafts:approve",
       "changes:view",
     ],
   ],
@@ -81,17 +85,21 @@ const expected: [Role, Permission[]][] = [
     [
       "plan:view",
       "plan:edit",
+      "plan:approve",
+      "releases:approve",
       "allocations:view",
       "allocations:edit",
       "org-chart:view",
       "people:view",
+      "people:approve",
       "feature-teams:approve",
       "restricted:view",
       "confidential:view",
       "hiring-plan:view",
+      "hiring-plan:approve",
       "configuration:view",
+      "configuration:approve",
       "drafts:submit",
-      "drafts:approve",
       "drafts:approve-own",
       "changes:view",
     ],
@@ -179,9 +187,11 @@ describe("what each role lets a user do", () => {
 
 describe("permissions from a stored role", () => {
   it("grants what the role stores, with viewing what may be edited", () => {
-    expect(
-      actorWith(user, ["plan:edit", "drafts:approve"]).permissions,
-    ).toEqual(["drafts:approve", "plan:edit", "plan:view"]);
+    expect(actorWith(user, ["plan:edit", "plan:approve"]).permissions).toEqual([
+      "plan:approve",
+      "plan:edit",
+      "plan:view",
+    ]);
   });
 
   it("ignores a permission the server does not know", () => {

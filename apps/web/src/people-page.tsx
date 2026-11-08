@@ -11,6 +11,7 @@
 // be saved as a view shared with everyone who sees people.
 
 import type {
+  DraftKind,
   Field,
   List,
   Person,
@@ -223,7 +224,7 @@ const cannotAddId = "people-cannot-add";
 export function PeoplePage({
   canEdit,
   canEditHires = false,
-  canApprove = false,
+  approves = [],
   canEditColumns,
   showDates,
   showHireDates = showDates,
@@ -238,7 +239,8 @@ export function PeoplePage({
   canEdit: boolean;
   // Whether the user may change planned hires too.
   canEditHires?: boolean;
-  canApprove?: boolean;
+  // The kinds of draft the user's role approves and rejects.
+  approves?: readonly DraftKind[];
   canEditColumns: boolean;
   showDates: boolean;
   // Whether the user sees planned hires' target dates, which come with the hiring plan.
@@ -300,6 +302,7 @@ export function PeoplePage({
         decisionFor(
           asking,
           chosen,
+          approves,
           lists.data as List[],
           { fields, orderDraft, people },
           naming,
@@ -663,7 +666,7 @@ export function PeoplePage({
           lists={lists.data}
           canEdit={canEdit}
           canEditHires={canEditHires}
-          canApprove={canApprove}
+          approves={approves}
           saving={saving}
           canEditColumns={canEditColumns}
           showDates={showDates}

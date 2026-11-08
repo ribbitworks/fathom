@@ -397,12 +397,12 @@ describe("the grid of permissions", () => {
       within(grid).getByText(name).closest("td")?.textContent;
     expect(area("Allocations")).toBe("Allocations, Not built yet");
     expect(area("Feature teams")).toBe("Feature teams, Not built yet");
-    expect(area("Drafts of every kind")).toBe(
-      "Drafts of every kind, Draft not built yet",
-    );
-    expect(area("Plan")).toBe("Plan");
+    expect(area("Drafts")).toBe("Drafts, Not built yet");
+    expect(area("Plan")).toBe("Plan, Approve not built yet");
+    expect(area("Releases")).toBe("Releases");
     expect(box(dialog, "Edit Allocations, not built yet")).toBeDefined();
-    expect(box(dialog, "Approve Drafts of every kind")).toBeDefined();
+    expect(box(dialog, "Approve Plan, not built yet")).toBeDefined();
+    expect(box(dialog, "Approve Releases")).toBeDefined();
     expect(
       within(dialog).getByText(/marked Not built yet/).textContent,
     ).toContain("A role can grant it now, and it works once it is built.");

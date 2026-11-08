@@ -6,6 +6,7 @@
 // Approver approves or rejects, several kinds at once.
 
 import { z } from "zod";
+import type { Permission } from "./access.ts";
 
 // A draft waits for approval until an Approver approves or rejects it; a rejected draft keeps its
 // reason until it is changed again or discarded.
@@ -140,6 +141,94 @@ export type DraftsRequest = z.infer<typeof draftsRequestSchema>;
 
 // Drafts asked for in code, naming only the kinds there are any of.
 export type DraftsAsked = z.input<typeof draftsRequestSchema>;
+
+// The kinds of record that have drafts. A list's choice is a list item, a People column a field,
+// and a list's choice order is one record, named by its list.
+export const draftKinds = [
+  "person",
+  "planned-hire",
+  "list",
+  "list-item",
+  "choice-order",
+  "field",
+  "column-order",
+  ...recordTypeSchema.options,
+] as const;
+
+export type DraftKind = (typeof draftKinds)[number];
+
+// The permission that approves or rejects each kind's drafts, that of the area it belongs to, as the
+// Decisions Log sets out. Every kind must be listed, which the compiler checks.
+export const approvePermissions = {
+  person: "people:approve",
+  "planned-hire": "hiring-plan:approve",
+  list: "configuration:approve",
+  "list-item": "configuration:approve",
+  "choice-order": "configuration:approve",
+  field: "configuration:approve",
+  "column-order": "configuration:approve",
+  "release-stream": "releases:approve",
+  "cycle-pattern": "releases:approve",
+  release: "releases:approve",
+} as const satisfies Record<DraftKind, Permission>;
+
+export type ApprovePermission = (typeof approvePermissions)[DraftKind];
+
+// What the drafts each area's Approve permission decides are of, as refusals name them.
+export const approvedAreaNames: Record<ApprovePermission, string> = {
+  "people:approve": "people",
+  "hiring-plan:approve": "planned hires",
+  "configuration:approve": "configuration",
+  "releases:approve": "releases",
+};
+
+// Whether drafts are being approved or rejected.
+export type Asking = "approve" | "reject";
+
+// The kinds of draft some permissions let a user approve and reject.
+export const approvableKinds = (permissions: readonly string[]): DraftKind[] =>
+  draftKinds.filter((kind) =>
+    // The kind is always one of the fixed list above.
+    // eslint-disable-next-line security/detect-object-injection
+    permissions.includes(approvePermissions[kind]),
+  );
+
+// The drafts asked for of the kinds a test keeps.
+export function draftsWhere(
+  asked: DraftsRequest,
+  kept: (kind: DraftKind) => boolean,
+): DraftsRequest {
+  return {
+    people: kept("person") ? asked.people : [],
+    plannedHires: kept("planned-hire") ? asked.plannedHires : [],
+    lists: kept("list") ? asked.lists : [],
+    choices: kept("list-item") ? asked.choices : [],
+    orders: kept("choice-order") ? asked.orders : [],
+    columns: kept("field") ? asked.columns : [],
+    columnOrder: asked.columnOrder && kept("column-order"),
+    records: asked.records.filter(({ type }) => kept(type)),
+  };
+}
+
+// The kinds there are drafts of among those asked for.
+export function kindsAsked(asked: DraftsRequest): DraftKind[] {
+  const records = new Set(asked.records.map(({ type }) => type));
+  const asks: Record<DraftKind, boolean> = {
+    person: asked.people.length > 0,
+    "planned-hire": asked.plannedHires.length > 0,
+    list: asked.lists.length > 0,
+    "list-item": asked.choices.length > 0,
+    "choice-order": asked.orders.length > 0,
+    field: asked.columns.length > 0,
+    "column-order": asked.columnOrder,
+    "release-stream": records.has("release-stream"),
+    "cycle-pattern": records.has("cycle-pattern"),
+    release: records.has("release"),
+  };
+  // The kind is always one of the fixed list above.
+  // eslint-disable-next-line security/detect-object-injection
+  return draftKinds.filter((kind) => asks[kind]);
+}
 
 export const rejectionRequestSchema = draftsAsked
   .extend({ reason: z.string().trim().min(1).max(reasonLength) })

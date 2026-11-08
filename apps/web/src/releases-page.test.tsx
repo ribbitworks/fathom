@@ -139,7 +139,14 @@ const editsAll = { canEditStreams: true, canEditReleases: true };
 const approver = () =>
   Response.json({
     ...fictionalUser,
-    permissions: ["plan:view", "drafts:approve"],
+    permissions: [
+      "plan:view",
+      "plan:approve",
+      "releases:approve",
+      "people:approve",
+      "hiring-plan:approve",
+      "configuration:approve",
+    ],
   });
 const changeSetId = "00000000-0000-4000-8000-000000000001";
 const savedAs = () => Response.json({ changeSetId });

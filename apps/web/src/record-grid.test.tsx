@@ -6,7 +6,12 @@
 // order, the records as they are live, the records the metrics count, and the live columns.
 // People's own table is tested in people-grid.test.tsx.
 
-import type { Field, List } from "@fathom/shared";
+import {
+  type DraftKind,
+  draftKinds,
+  type Field,
+  type List,
+} from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import {
   act,
@@ -165,7 +170,7 @@ function renderGadgets({
   given = actions(),
   view = emptyView,
   onView = noop,
-  canApprove = false,
+  approves = [],
   canEditColumns = false,
   fields = [colour],
 }: {
@@ -175,7 +180,7 @@ function renderGadgets({
   given?: RecordActions<Gadget, GadgetChange, GadgetChange>;
   view?: View;
   onView?: (view: View) => void;
-  canApprove?: boolean;
+  approves?: readonly DraftKind[];
   canEditColumns?: boolean;
 }) {
   return render(
@@ -187,7 +192,7 @@ function renderGadgets({
         order={[]}
         lists={[colours]}
         canEdit
-        canApprove={canApprove}
+        approves={approves}
         canEditColumns={canEditColumns}
         view={view}
         onView={onView}
@@ -272,7 +277,7 @@ describe("a table of another kind of record", () => {
         gadget("g2", { draft: { ...waiting, action: "created" } }),
       ],
       given: actions({ remove, decide }),
-      canApprove: true,
+      approves: draftKinds,
     });
     await userEvent.click(
       screen.getByRole("button", { name: "Actions for Gadget g1" }),

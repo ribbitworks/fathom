@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies, for each permission a role can grant, that an account holding only that permission, and any permission it needs, sees the pages and can take the actions the permission allows, and is not offered the next thing beyond it. The six permissions Fathom has not built yet are checked together.
+Verifies, for each permission a role can grant, that an account holding only that permission, and any permission it needs, sees the pages and can take the actions the permission allows, and is not offered the next thing beyond it. The seven permissions Fathom has not built yet are checked together.
 
 ## Test Environment
 
@@ -317,9 +317,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Drafts
 
-#### PERM-12: Approve Drafts Approves What the Account Sees
+#### PERM-12: Approve Configuration Approves Drafts of Lists
 
-**Preconditions:** The seed's draft of a new order for **Levels** still waiting, as after R2, then Team Member granted only **Approve** on **Drafts of every kind** and **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
+**Preconditions:** The seed's draft of a new order for **Levels** still waiting, as after R2, then Team Member granted only **View** and **Approve** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
 - [ ] **Step 1.** Look at the left-hand menu.
   - **Expected:** The menu shows **Releases** under **Plan**, **Drafts** and **Lists** under **People**, and the **Help** section, and nothing else.
@@ -339,9 +339,27 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
-#### PERM-13: Approve Their Own Drafts Lets the Account Approve What It Changed
+#### PERM-13: Approve People Leaves Drafts of Other Areas to Another Approver
 
-**Preconditions:** Team Member granted only **Edit** on **Plan**, **Approve** on **Drafts of every kind** and **Approve** on **Their own drafts** (P4), signed in as `team.member@fathom.test`. **Releases** page open, with **Platform** selected in the streams table.
+**Preconditions:** Team Member granted only **View** and **Approve** on **People** (P4), signed in as `team.member@fathom.test`.
+
+- [ ] **Step 1.** Select **Drafts** under **People** in the left-hand menu, and type `Skills` in the search box.
+  - **Expected:** The entry **Engineering Operations Manager drafted changes to Silje Holm-Schrøder: Skills set to Rust** has a checkbox. The entries for the list **Skills**, the column **Skills** and its choices have none.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **Silje Holm-Schrøder** entry's checkbox, then **Approve 1 draft**.
+  - **Expected:** A dialog titled **Another approver needed** reads **Your role doesn't let you approve these drafts:** above *the column Skills*, *the list Skills* and *the choice Rust in Skills*, with only a **Close** button.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Close**.
+  - **Expected:** The dialog closes, and the **Silje Holm-Schrøder** entry is still shown.
+  - **Notes:**
+
+**Afterwards:** P5.
+
+#### PERM-14: Approve Their Own Drafts Lets the Account Approve What It Changed
+
+**Preconditions:** Team Member granted only **Edit** on **Plan**, **Approve** on **Releases** and **Approve** on **Their own drafts** (P4), signed in as `team.member@fathom.test`. **Releases** page open, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**. Replace the name with `Harbor Three`, and select **Save**.
   - **Expected:** **Harbor Three** is followed by a hollow yellow dot and **Draft**.
@@ -359,7 +377,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Configuration
 
-#### PERM-14: View Configuration Shows Lists and Release Streams Without Changing Them
+#### PERM-15: View Configuration Shows Lists and Release Streams Without Changing Them
 
 **Preconditions:** Team Member granted only **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -377,7 +395,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
-#### PERM-15: Edit Configuration Changes Release Streams
+#### PERM-16: Edit Configuration Changes Release Streams
 
 **Preconditions:** Team Member granted only **Edit** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -397,7 +415,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Change History
 
-#### PERM-16: View Change History Shows Only Changes to Data the Account Sees
+#### PERM-17: View Change History Shows Only Changes to Data the Account Sees
 
 **Preconditions:** Team Member granted only **View** on **Change history** (P4), signed in as `team.member@fathom.test`.
 
@@ -409,7 +427,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Access History
 
-#### PERM-17: View Access History Shows the Access History
+#### PERM-18: View Access History Shows the Access History
 
 **Preconditions:** Team Member granted only **View** on **Access history** (P4), signed in as `team.member@fathom.test`.
 
@@ -421,7 +439,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Accounts
 
-#### PERM-18: Edit Accounts Manages Accounts
+#### PERM-19: Edit Accounts Manages Accounts
 
 **Preconditions:** Team Member granted only **Edit** on **Accounts** (P4), signed in as `team.member@fathom.test`.
 
@@ -445,7 +463,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Roles
 
-#### PERM-19: Edit Roles Creates and Changes Roles
+#### PERM-20: Edit Roles Creates and Changes Roles
 
 **Preconditions:** Team Member granted only **Edit** on **Roles** (P4), signed in as `team.member@fathom.test`.
 
@@ -461,7 +479,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Settings
 
-#### PERM-20: Edit Settings Changes Fathom's Time Zone
+#### PERM-21: Edit Settings Changes Fathom's Time Zone
 
 **Preconditions:** Team Member granted only **Edit** on **Settings** (P4), signed in as `team.member@fathom.test`.
 
@@ -477,9 +495,9 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Not Built Yet
 
-#### PERM-21: Permissions Not Built Yet Add Only the Capacity Entry
+#### PERM-22: Permissions Not Built Yet Add Only the Capacity Entry
 
-**Preconditions:** Team Member granted only **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts of every kind** (P4), signed in as `team.member@fathom.test`.
+**Preconditions:** Team Member granted only **Approve** on **Plan**, **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts** (P4), signed in as `team.member@fathom.test`.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The Help **Roles** page is open. The menu shows **Capacity** tagged **Later** under **People**, and the **Help** section, and nothing else. There is no Publish button.
@@ -489,7 +507,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Putting Everything Back
 
-#### PERM-22: Every Starting Role Is as Fathom Started It
+#### PERM-23: Every Starting Role Is as Fathom Started It
 
 **Preconditions:** All the test cases above run. Signed in (P1) as `fathom.administrator@fathom.test`.
 

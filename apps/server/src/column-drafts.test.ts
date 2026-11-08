@@ -1074,7 +1074,10 @@ describe("what decides and keeps column drafts safe", () => {
       (await decide("approval", { columns: [field.id] }, listsOnly.cookie))
         .statusCode,
     ).toBe(403);
-    const generalOnly = await test.signedIn(["drafts:approve", "people:view"]);
+    const generalOnly = await test.signedIn([
+      "configuration:approve",
+      "people:view",
+    ]);
     expect(
       (
         await decide(

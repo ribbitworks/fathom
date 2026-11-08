@@ -6,6 +6,7 @@
 // it uses, and rejecting a draft only with those that use it.
 
 import {
+  drafts,
   fields,
   fieldValues,
   listItems,
@@ -14,7 +15,7 @@ import {
   plannedHires,
 } from "@fathom/db";
 import type { Choice, Field, List, Person } from "@fathom/shared";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { listTier, type ListsState } from "./data/lists.ts";
 import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
@@ -468,9 +469,33 @@ describe("approving a draft with the drafts it uses", () => {
     expect(await isLive(people, id)).toBe(false);
   });
 
+  it("refuses an Approver whose role does not approve the areas of the drafts a person's draft uses, approving nothing", async () => {
+    const peopleApprover = await test.signedIn([
+      "people:approve",
+      "people:view",
+      "restricted:view",
+      "confidential:view",
+    ]);
+    const { list, choices, field } = await addedColumn();
+    const id = await personWith({ [field.id]: choiceIds(choices).slice(0, 1) });
+    const refused = await decide(
+      "approval",
+      { people: [id] },
+      peopleApprover.cookie,
+    );
+    expect(refused.statusCode).toBe(403);
+    expect(refused.json()).toEqual({
+      error: "Your role doesn't let you approve drafts of configuration",
+    });
+    expect(await isLive(lists, list.id)).toBe(false);
+    expect(await isLive(fields, field.id)).toBe(false);
+    expect(await isLive(people, id)).toBe(false);
+  });
+
   it("refuses an Approver who may not see a column a person's draft gives a value in, approving nothing", async () => {
     const generalApprover = await test.signedIn([
-      "drafts:approve",
+      "people:approve",
+      "configuration:approve",
       "people:view",
     ]);
     const { list, choices, field } = await addedColumn("confidential");
@@ -506,6 +531,36 @@ describe("rejecting a draft only with the drafts that use it", () => {
     expect(await test.historyOf(id)).toContainEqual(
       expect.objectContaining({ newValue: reason, tier: "confidential" }),
     );
+  });
+
+  it("refuses an Approver whose role does not approve people rejecting a choice with the person whose draft uses it, rejecting nothing", async () => {
+    const configurationApprover = await test.signedIn([
+      "configuration:approve",
+      "configuration:view",
+      "people:view",
+    ]);
+    const { choices, field } = await addedColumn();
+    const [alpha] = choiceIds(choices);
+    const id = await personWith({ [field.id]: [String(alpha)] });
+    const refused = await decide(
+      "rejection",
+      { people: [id], choices: [alpha], reason: "No" },
+      configurationApprover.cookie,
+    );
+    expect(refused.statusCode).toBe(403);
+    expect(refused.json()).toEqual({
+      error: "Your role doesn't let you reject drafts of people",
+    });
+    const states = await test.connection
+      .select({ state: drafts.state })
+      .from(drafts)
+      .where(
+        and(
+          eq(drafts.recordType, "list-item"),
+          eq(drafts.recordId, String(alpha)),
+        ),
+      );
+    expect(states).toEqual([{ state: "waiting" }]);
   });
 
   it("refuses rejecting a choice, a column, or a list a person's draft uses without that person", async () => {

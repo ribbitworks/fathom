@@ -24,10 +24,14 @@ export type Role = z.infer<typeof roleSchema>;
 export const permissionSchema = z.enum([
   "plan:view",
   "plan:edit",
+  "plan:approve",
+  // Releases are an area of their own, apart from the plan, for approving.
+  "releases:approve",
   "allocations:view",
   "allocations:edit",
   "people:view",
   "people:edit",
+  "people:approve",
   // The org chart, apart from People: without people:view, each card shows only a name, position,
   // and team, and opens nothing.
   "org-chart:view",
@@ -46,12 +50,14 @@ export const permissionSchema = z.enum([
   // Confidential data.
   "hiring-plan:view",
   "hiring-plan:edit",
+  "hiring-plan:approve",
   // Opens the configuration pages, such as Lists; configuration the plan uses is seen with the plan.
   "configuration:view",
   "configuration:edit",
+  "configuration:approve",
   "drafts:submit",
-  "drafts:approve",
-  // Approving drafts the approver changed themselves, which nobody may do without it.
+  // Approving drafts the approver changed themselves, in the areas they approve, which nobody may
+  // do without it.
   "drafts:approve-own",
   "accounts:manage",
   // Changing what roles grant, apart from managing accounts, as the Decisions Log sets out.
@@ -66,12 +72,12 @@ export const permissionSchema = z.enum([
 export type Permission = z.infer<typeof permissionSchema>;
 
 // What each permission lets a user do, and what a user without it cannot, in plain English, for
-// showing the result of setting roles, and any permission it does nothing without. Pages that do not
-// appear without a permission are worked out from the pages themselves, so these speak only of data
-// and actions. Every permission must be described, which the compiler checks.
+// showing the result of setting roles, and the permissions it does nothing without any of. Pages that
+// do not appear without a permission are worked out from the pages themselves, so these speak only of
+// data and actions. Every permission must be described, which the compiler checks.
 export const permissionDescriptions: Record<
   Permission,
-  { allows: string; without: string; needs?: Permission }
+  { allows: string; without: string; needs?: readonly Permission[] }
 > = {
   "plan:view": {
     allows:
@@ -82,6 +88,18 @@ export const permissionDescriptions: Record<
   "plan:edit": {
     allows: "Changes the plan across every project.",
     without: "Cannot change the plan.",
+  },
+  "plan:approve": {
+    allows:
+      "Approves or rejects drafts of the plan: features, projects, proposals, and the roadmap.",
+    without: "Cannot approve drafts of the plan.",
+    needs: ["plan:view"],
+  },
+  "releases:approve": {
+    allows:
+      "Approves or rejects drafts of releases, release streams, and cycle patterns.",
+    without: "Cannot approve drafts of releases.",
+    needs: ["plan:view", "configuration:view"],
   },
   "allocations:view": {
     allows: "Sees allocations: who is assigned to what, and when.",
@@ -102,6 +120,12 @@ export const permissionDescriptions: Record<
       "Adds, changes, and removes people, with their teams and reporting lines.",
     without: "Cannot change people.",
   },
+  "people:approve": {
+    allows:
+      "Approves or rejects drafts of people, with their teams and reporting lines.",
+    without: "Cannot approve drafts of people.",
+    needs: ["people:view"],
+  },
   "org-chart:view": {
     allows:
       "Sees the org chart: who reports to whom, with each person's name, position, and the team they lead. With View People, a person's card opens them on People.",
@@ -111,7 +135,7 @@ export const permissionDescriptions: Record<
     allows:
       "Chooses the colour each team is drawn in on the org chart, for every team.",
     without: "Cannot change teams' colours.",
-    needs: "org-chart:view",
+    needs: ["org-chart:view"],
   },
   "feature-teams:propose": {
     allows: "Proposes feature teams for approval.",
@@ -130,39 +154,45 @@ export const permissionDescriptions: Record<
       "Sees people who haven't started yet, and Restricted details of the people the role sees, such as gender, start and end dates, and past managers.",
     without:
       "Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.",
-    needs: "people:view",
+    needs: ["people:view"],
   },
 
   "restricted:edit": {
     allows: "Changes Restricted details of people.",
     without: "Cannot change Restricted details.",
-    needs: "people:edit",
+    needs: ["people:edit"],
   },
 
   "confidential:view": {
     allows:
       "Sees Confidential data, such as future-dated reorganizations and columns marked Confidential.",
     without: "Confidential data is hidden wherever it appears.",
-    needs: "people:view",
+    needs: ["people:view"],
   },
 
   "confidential:edit": {
     allows: "Changes Confidential data, such as columns marked Confidential.",
     without: "Cannot change Confidential data.",
-    needs: "people:edit",
+    needs: ["people:edit"],
   },
 
   "hiring-plan:view": {
     allows:
       "Sees the hiring plan: every planned hire, with its target date, drafts, and history.",
     without: "Planned hires appear only as placeholders.",
-    needs: "people:view",
+    needs: ["people:view"],
   },
 
   "hiring-plan:edit": {
     allows: "Adds, changes, and removes planned hires.",
     without: "Cannot change the hiring plan.",
-    needs: "people:edit",
+    needs: ["people:edit"],
+  },
+
+  "hiring-plan:approve": {
+    allows: "Approves or rejects drafts of planned hires.",
+    without: "Cannot approve drafts of planned hires.",
+    needs: ["hiring-plan:view"],
   },
 
   "configuration:view": {
@@ -176,21 +206,30 @@ export const permissionDescriptions: Record<
       "Changes configuration, such as lists of choices, People's columns, and release streams.",
     without: "Cannot change configuration.",
   },
+  "configuration:approve": {
+    allows:
+      "Approves or rejects drafts of configuration, such as lists of choices and People's columns.",
+    without: "Cannot approve drafts of configuration.",
+    needs: ["configuration:view", "people:view"],
+  },
   "drafts:submit": {
     allows:
       "Makes drafts of changes to the plan and allocations, for approval, once those can be changed in Fathom.",
     without: "Cannot make drafts of changes to the plan or allocations.",
   },
 
-  "drafts:approve": {
-    allows: "Approves or rejects drafts of the data their role lets them see.",
-    without: "Cannot approve drafts.",
-  },
   "drafts:approve-own": {
     allows:
-      "Approves drafts they changed themselves, which otherwise need another approver.",
+      "Approves drafts they changed themselves, in the areas they approve, which otherwise need another approver.",
     without: "Drafts they changed need someone else to approve them.",
-    needs: "drafts:approve",
+    needs: [
+      "plan:approve",
+      "releases:approve",
+      "people:approve",
+      "hiring-plan:approve",
+      "feature-teams:approve",
+      "configuration:approve",
+    ],
   },
   "accounts:manage": {
     allows:
@@ -223,6 +262,7 @@ export const permissionDescriptions: Record<
 // The Roles page marks them, as the Decisions Log sets out, so roles can be set up ahead of the
 // features. Building a feature takes its permissions out of this list.
 export const unbuiltPermissions: readonly Permission[] = [
+  "plan:approve",
   "allocations:view",
   "allocations:edit",
   "feature-teams:propose",
@@ -275,12 +315,23 @@ export const permissionGrid: readonly {
   area: string;
   actions: Partial<Record<GridAction, Permission>>;
 }[] = [
-  { area: "Plan", actions: { view: "plan:view", edit: "plan:edit" } },
+  {
+    area: "Plan",
+    actions: { view: "plan:view", approve: "plan:approve", edit: "plan:edit" },
+  },
+  { area: "Releases", actions: { approve: "releases:approve" } },
   {
     area: "Allocations",
     actions: { view: "allocations:view", edit: "allocations:edit" },
   },
-  { area: "People", actions: { view: "people:view", edit: "people:edit" } },
+  {
+    area: "People",
+    actions: {
+      view: "people:view",
+      approve: "people:approve",
+      edit: "people:edit",
+    },
+  },
   { area: "Org chart", actions: { view: "org-chart:view" } },
   { area: "Team colours", actions: { edit: "team-colours:edit" } },
   {
@@ -293,7 +344,11 @@ export const permissionGrid: readonly {
   },
   {
     area: "Hiring plan",
-    actions: { view: "hiring-plan:view", edit: "hiring-plan:edit" },
+    actions: {
+      view: "hiring-plan:view",
+      approve: "hiring-plan:approve",
+      edit: "hiring-plan:edit",
+    },
   },
   {
     area: "Feature teams",
@@ -304,13 +359,17 @@ export const permissionGrid: readonly {
     },
   },
   {
-    area: "Drafts of every kind",
-    actions: { draft: "drafts:submit", approve: "drafts:approve" },
+    area: "Drafts",
+    actions: { draft: "drafts:submit" },
   },
   { area: "Their own drafts", actions: { approve: "drafts:approve-own" } },
   {
     area: "Configuration",
-    actions: { view: "configuration:view", edit: "configuration:edit" },
+    actions: {
+      view: "configuration:view",
+      approve: "configuration:approve",
+      edit: "configuration:edit",
+    },
   },
   { area: "Change history", actions: { view: "changes:view" } },
   { area: "Access history", actions: { view: "history:view" } },
@@ -378,14 +437,18 @@ export const startingRoles: Record<
       "Edits the plan, sees people and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.",
     permissions: [
       "plan:edit",
+      "plan:approve",
+      "releases:approve",
       "allocations:view",
       "org-chart:view",
       "people:view",
+      "people:approve",
       "feature-teams:approve",
       "hiring-plan:view",
+      "hiring-plan:approve",
       "configuration:view",
+      "configuration:approve",
       "drafts:submit",
-      "drafts:approve",
       "changes:view",
     ],
   },
@@ -414,16 +477,20 @@ export const startingRoles: Record<
       "Edits the plan and allocations, sees people, with their Restricted and Confidential data and the hiring plan, and approves or rejects drafts of the data the role sees.",
     permissions: [
       "plan:edit",
+      "plan:approve",
+      "releases:approve",
       "allocations:edit",
       "org-chart:view",
       "people:view",
+      "people:approve",
       "feature-teams:approve",
       "restricted:view",
       "confidential:view",
       "hiring-plan:view",
+      "hiring-plan:approve",
       "configuration:view",
+      "configuration:approve",
       "drafts:submit",
-      "drafts:approve",
       "drafts:approve-own",
       "changes:view",
     ],

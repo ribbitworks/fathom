@@ -30,8 +30,10 @@
 // buttons close it, and the table changes nothing else until then.
 
 import type {
+  Asking,
   Choice,
   ColumnOrderDraft,
+  DraftKind,
   Field,
   FieldDraft,
   List,
@@ -76,11 +78,11 @@ import {
   WaitingNote,
 } from "./draft-details.tsx";
 import {
-  type Asking,
   type ColumnDraftTarget,
   decidable,
   type DraftSelection,
   draftTotal,
+  mayDecide,
   noDrafts,
   waitsForRejected,
 } from "./drafts.ts";
@@ -906,7 +908,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   canEdit: boolean;
   // Whether new records can be added, for those who may edit; true unless told otherwise.
   canAdd?: boolean;
-  canApprove?: boolean;
+  // The kinds of draft the user's role approves and rejects.
+  approves?: readonly DraftKind[];
   // Whether a change is still saving, which approving all shown waits for, so it never sends a
   // draft not saved yet.
   saving?: boolean;
@@ -929,7 +932,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   lists,
   canEdit: mayEdit,
   canAdd = true,
-  canApprove: mayApprove = false,
+  approves: mayApprove = [],
   saving = false,
   canEditColumns,
   actions,
@@ -1031,7 +1034,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     });
   }
   const canEdit = mayEdit && !liveOnly;
-  const canApprove = mayApprove && !liveOnly;
+  const approves = liveOnly ? [] : mayApprove;
+  const approvesOrder = approves.includes("column-order");
+  // Whether the user's role approves a record's draft, and those it decides with it.
+  const approvesRecord = (record: Rec) =>
+    mayDecide(approves, table.drafts([record.id]));
   // Beside a column whose draft changes it, the column as it is live, to compare, as a record's live
   // row is shown under their draft.
   const fieldsLive = new Map(
@@ -1170,7 +1177,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const [filtering, setFiltering] = useState<string>();
 
   // The actions column, for those who may edit records or approve drafts.
-  const withActions = canEdit || canApprove || table.menuItems !== undefined;
+  const withActions =
+    canEdit || approves.length > 0 || table.menuItems !== undefined;
   // Whether the user may change a record, as they may the table's others, unless it is one they
   // may only view.
   const mayChange = (record: Rec) =>
@@ -1180,7 +1188,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const hasMenu = (record: Rec) =>
     !isPending(record) &&
     (mayChange(record) ||
-      (canApprove && record.draft !== undefined) ||
+      (record.draft !== undefined && approvesRecord(record)) ||
       Boolean(table.menuItems?.(record)));
   // Whether a record's cells cannot be changed: by those who may only view it, while it is drafted
   // to be removed, until the draft is discarded, or while it is being added.
@@ -1889,11 +1897,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                       ...fieldDraftLines(field, lists),
                       ...(joinedOrder ? [movedLine(orderDraft)] : []),
                     ]}
-                    divider={(canApprove && ownWaiting) || changesColumn}
+                    divider={
+                      (ownWaiting && mayDecide(approves, deciding)) ||
+                      changesColumn
+                    }
                   />
                   {/* One decision for the column's draft and the order that moves it, among those
                       waiting: a rejected draft is back with its makers until they send it again. */}
-                  {canApprove && ownWaiting && (
+                  {ownWaiting && mayDecide(approves, deciding) && (
                     <>
                       <Menu.Item
                         disabled={field.draft.needsOtherApprover === true}
@@ -1943,7 +1954,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     <OrderItems
                       draft={orderDraft}
                       canEdit={movesColumns}
-                      canApprove={canApprove}
+                      canApprove={approvesOrder}
                       actions={actions}
                       waits={false}
                       withColumnDraft
@@ -2018,11 +2029,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 </>
               )}
               {/* A moved column's menu decides the order that moves it, as a drafted record's does. */}
-              {moved && !joinedOrder && (canEditColumns || canApprove) && (
+              {moved && !joinedOrder && (canEditColumns || approvesOrder) && (
                 <OrderItems
                   draft={orderDraft}
                   canEdit={canEditColumns}
-                  canApprove={canApprove}
+                  canApprove={approvesOrder}
                   actions={actions}
                   waits={orderWaits}
                   heldBy={orderHeldBy}
@@ -2198,9 +2209,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
         <MenuTitle>{table.nameOf(record)}</MenuTitle>
         {/* Who holds the record matters only to those who may change or decide it. */}
-        {record.heldBy !== undefined && (mayChange(record) || canApprove) && (
-          <HeldNote by={record.heldBy} />
-        )}
+        {record.heldBy !== undefined &&
+          (mayChange(record) || approvesRecord(record)) && (
+            <HeldNote by={record.heldBy} />
+          )}
         {draft?.unpublished === true && <UnpublishedNote />}
         {draft && (
           <MenuDraftLines
@@ -2212,7 +2224,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             // Set apart from the items after it, when any are offered.
             divider={
               (mayChange(record) && record.heldBy === undefined) ||
-              (canApprove && decidable(record)) ||
+              (decidable(record) && approvesRecord(record)) ||
               Boolean(table.menuItems?.(record))
             }
           />
@@ -2231,7 +2243,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         })}
         {table.menuItems?.(record)}
         {/* A rejected draft is back with its makers, until they send it again. */}
-        {canApprove && decidable(record) && (
+        {decidable(record) && approvesRecord(record) && (
           <>
             <Menu.Item
               disabled={record.draft?.needsOtherApprover === true}
@@ -2291,20 +2303,25 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
 
   // The drafts waiting among the records and columns shown, which Approvers approve or reject all at
   // once.
-  const waitingShown: DraftSelection = canApprove
-    ? {
-        ...table.drafts(shownRecords.filter(decidable).map(({ id }) => id)),
-        columns: fields
+  const waitingShown: DraftSelection = {
+    ...table.drafts(
+      shownRecords
+        .filter((record) => decidable(record) && approvesRecord(record))
+        .map(({ id }) => id),
+    ),
+    columns: approves.includes("field")
+      ? fields
           .filter(
             (field) =>
               decidable(field) && columns.some(({ key }) => key === field.id),
           )
-          .map(({ id }) => id),
-        columnOrder:
-          orderDraft !== undefined &&
-          decidable({ draft: orderDraft, heldBy: orderHeldBy }),
-      }
-    : noDrafts();
+          .map(({ id }) => id)
+      : [],
+    columnOrder:
+      approvesOrder &&
+      orderDraft !== undefined &&
+      decidable({ draft: orderDraft, heldBy: orderHeldBy }),
+  };
   const waitingTotal = draftTotal(waitingShown);
 
   // A column only drafted to be added, or to draw on another list, has no live figures to compare.
@@ -2439,11 +2456,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 }}
               />
             )}
-            {orderShown && (canEditColumns || canApprove) && (
+            {orderShown && (canEditColumns || approvesOrder) && (
               <OrderItems
                 draft={orderDraft}
                 canEdit={canEditColumns}
-                canApprove={canApprove}
+                canApprove={approvesOrder}
                 actions={actions}
                 waits={orderWaits}
                 heldBy={orderHeldBy}

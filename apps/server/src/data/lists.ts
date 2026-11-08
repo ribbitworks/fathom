@@ -26,6 +26,7 @@ import type {
   Choice,
   ChoiceDraft,
   ChoiceRequest,
+  DraftKind,
   List,
   ListDraft,
   ListRequest,
@@ -74,7 +75,6 @@ import {
   draftFields,
   draftMakers,
   draftsUse,
-  type DraftType,
   everything,
   type Held,
   heldMessage,
@@ -1241,7 +1241,7 @@ async function removeDiscarded(
     const key = `${recordType} ${recordId}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    await discardDrafts(transaction, editor, recordType as DraftType, [
+    await discardDrafts(transaction, editor, recordType as DraftKind, [
       recordId,
     ]);
   }
@@ -1589,7 +1589,7 @@ export async function resubmitListDraft(
   });
 }
 
-export const draftTypeOf = (kind: ListDraftKind): DraftType => {
+export const draftTypeOf = (kind: ListDraftKind): DraftKind => {
   if (kind === "list") return "list";
   return kind === "order" ? "choice-order" : "list-item";
 };

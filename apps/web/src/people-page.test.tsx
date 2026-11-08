@@ -1262,7 +1262,11 @@ describe("drafts", () => {
   it("lets Approvers approve or reject a draft from its person's menu, or all those shown at once", async () => {
     const fetch = await openPeople({
       "GET /api/session": session([
-        "drafts:approve",
+        "plan:approve",
+        "releases:approve",
+        "people:approve",
+        "hiring-plan:approve",
+        "configuration:approve",
         "people:view",
         "restricted:view",
       ]),
@@ -1389,7 +1393,11 @@ describe("drafts", () => {
     let finish: (response: Response) => void = () => undefined;
     await openPeople({
       "GET /api/session": session([
-        "drafts:approve",
+        "plan:approve",
+        "releases:approve",
+        "people:approve",
+        "hiring-plan:approve",
+        "configuration:approve",
         "people:edit",
         "people:view",
         "restricted:edit",
@@ -2863,7 +2871,11 @@ describe("drafts of columns", () => {
   const approverEditor = session([
     "configuration:edit",
     "configuration:view",
-    "drafts:approve",
+    "plan:approve",
+    "releases:approve",
+    "people:approve",
+    "hiring-plan:approve",
+    "configuration:approve",
     "people:edit",
     "people:view",
     "plan:view",
@@ -3770,7 +3782,11 @@ describe("unpublished and held changes", () => {
   const approverEditor = session([
     "configuration:edit",
     "configuration:view",
-    "drafts:approve",
+    "plan:approve",
+    "releases:approve",
+    "people:approve",
+    "hiring-plan:approve",
+    "configuration:approve",
     "people:edit",
     "people:view",
     "plan:view",
