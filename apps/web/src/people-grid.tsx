@@ -580,15 +580,22 @@ export function newRecordRequest(
   kind: string,
   values: Readonly<Record<string, CellValue>>,
 ): RowRequest {
-  return {
-    ...requestFor(
-      columnsOn(columns, kind).map((column) =>
-        column.change(values[column.key] as CellValue),
-      ),
+  return requestFromChanges(
+    columnsOn(columns, kind).map((column) =>
+      column.change(values[column.key] as CellValue),
     ),
-    ...(kind === hireKind ? { kind } : {}),
-  };
+    kind,
+  );
 }
+
+// The request that adds a record of a kind, from each column's change.
+export const requestFromChanges = (
+  changes: readonly RowChange[],
+  kind: string,
+): RowRequest => ({
+  ...requestFor(changes),
+  ...(kind === hireKind ? { kind } : {}),
+});
 
 // The request that adds a person or planned hire, from each column's value as its kind would save
 // it, with every choice column named and no link left empty.
@@ -718,10 +725,7 @@ function peopleTable(
     draftFields: (person, draft, fields, lists) =>
       personDraftFields(person, draft, fields, lists, people),
     recordProblem,
-    request: (changes, kind) => ({
-      ...requestFor(changes),
-      ...(kind === hireKind ? { kind } : {}),
-    }),
+    request: requestFromChanges,
     kindOfNewRow: (values) =>
       kindOfState(lists, asIds(values.stateId ?? [])[0]),
     drafts: (ids) => ({

@@ -4332,6 +4332,17 @@ describe("adding from New", () => {
     expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
   });
 
+  it("finishes the field when Enter is pressed, adding nothing", async () => {
+    // Given a new person with a required value still empty
+    const fetch = await openNew();
+    // When Enter is pressed in Name
+    await userEvent.type(field("Name"), "Casey Fictional{Enter}");
+    // Then the value is kept, nothing is checked as Add would, and nothing is sent
+    expect(field("Name").value).toBe("Casey Fictional");
+    expect(within(row("Position")).queryByText("Position needed")).toBeNull();
+    expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
+  });
+
   it("adds the person with Add, then shows them in the panel", async () => {
     // Given a new person with every value needed
     let added = false;

@@ -101,11 +101,8 @@ import {
   type RecordTable,
 } from "./record-grid.tsx";
 import { useDiscardQuestion } from "./person-editing.tsx";
-import { entered } from "./new-record-panel.tsx";
-import {
-  type FormValues,
-  NewPlanRecordPanel,
-} from "./new-plan-record-panel.tsx";
+import { entered, type FormValues } from "./new-record-panel.tsx";
+import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { RecordMenu } from "./record-menu.tsx";

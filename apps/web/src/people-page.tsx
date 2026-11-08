@@ -40,13 +40,13 @@ import { listsQuery } from "./lists.ts";
 import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
 import {
-  entered,
   type NewRecord,
   newRecord,
   newRecordId,
-  NewRecordPanel,
+  NewPersonPanel,
   recordQuestion,
-} from "./new-record-panel.tsx";
+} from "./new-person-panel.tsx";
+import { entered } from "./new-record-panel.tsx";
 import { kept, personUpdate } from "./person-change.ts";
 import {
   noteQuestion,
@@ -665,18 +665,22 @@ export function PeoplePage({
                     id: personPanelId,
                     name: "details",
                     node: (
-                      <NewRecordPanel
+                      <NewPersonPanel
                         key={forms}
                         record={beingAdded}
                         onRecord={setBeingAdded}
                         people={query.data.people}
-                        fields={query.data.fields}
                         lists={lists.data}
-                        order={query.data.order}
-                        showDates={showDates}
-                        showHireDates={showHireDates}
-                        showPosition={!positionHidden}
-                        canAddHires={canEditHires}
+                        allColumns={columnsFor(
+                          query.data.fields,
+                          lists.data,
+                          query.data.order,
+                          showDates,
+                          query.data.people,
+                          !positionHidden,
+                          showHireDates,
+                          canEditHires,
+                        )}
                         narrow={narrow}
                         notes={notes}
                         onAdd={(request) => {

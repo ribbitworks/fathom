@@ -9,10 +9,8 @@ import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import {
-  type FormValues,
-  NewPlanRecordPanel,
-} from "./new-plan-record-panel.tsx";
+import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
+import type { FormValues } from "./new-record-panel.tsx";
 import type { PlanChange } from "./project-grids.tsx";
 import {
   cellColumn,
@@ -219,6 +217,16 @@ describe("adding", () => {
     await add();
     expect(screen.getByText("Not this one")).toBeTruthy();
     expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it("adds the record when Enter is pressed in a field", async () => {
+    const onAdd = vi.fn();
+    renderPanel({ given: table([column("name", "text")]), onAdd });
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "name" }),
+      "Words{Enter}",
+    );
+    expect(onAdd).toHaveBeenCalledOnce();
   });
 
   it("does not close while saving", async () => {

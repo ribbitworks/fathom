@@ -1,49 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Adding a customer, proposal, project, or milestone in the panel beside its table: a field for each
-// column a new record has, its value checked as a new row's is, with any problem named under its
-// field, and Add and Cancel at the foot. The page holds what has been entered, so it can ask before
-// discarding it.
+// Adding a customer, proposal, project, or milestone in the panel beside its table: a form field for
+// each column a new record has, with any problem Add finds named under its field.
 
-import {
-  Button,
-  Checkbox,
-  Group,
-  MultiSelect,
-  Select,
-  Stack,
-} from "@mantine/core";
-import { isLink, linkProblems } from "@fathom/shared";
-import {
-  type ReactElement,
-  type SubmitEvent,
-  useEffect,
-  useState,
-} from "react";
-import { cellKinds, toggledFlag } from "./cell-kinds.tsx";
+import { Checkbox, MultiSelect, Select } from "@mantine/core";
+import { isLink } from "@fathom/shared";
+import { type ReactElement, useState } from "react";
+import { toggledFlag } from "./cell-kinds.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
 import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
-import type { PlanChange } from "./project-grids.tsx";
 import {
-  type Column,
-  columnsOn,
-  type GridRecord,
-  newRecordProblems,
-  readOnlyFor,
-  type RecordTable,
-} from "./record-grid.tsx";
-import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
+  type FormValues,
+  newRecordFields,
+  NewRecordPanel,
+} from "./new-record-panel.tsx";
+import type { PlanChange } from "./project-grids.tsx";
+import type { Column, GridRecord, RecordTable } from "./record-grid.tsx";
 import type { CellValue } from "./table-view.ts";
-
-export type FormValues = Readonly<Record<string, CellValue>>;
 
 type FieldColumn = Pick<
   Column<GridRecord, PlanChange>,
   "key" | "label" | "kind" | "required" | "multiple" | "choices"
 >;
 
-const titleId = "new-plan-record-title";
 const fieldId = (column: Pick<FieldColumn, "key">) =>
   `new-plan-record-${column.key}`;
 
@@ -174,97 +154,57 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   onCancel: () => void;
 }) {
   const kind = table.kinds?.[0] ?? "";
-  // A new record's values follow from nothing else, so it has no columns that only show them.
-  const columns = columnsOn(table.columnsFor([], [], [], records), kind).filter(
-    (column) => !readOnlyFor(column, kind),
-  );
+  const {
+    columns,
+    valueOf,
+    values: shown,
+  } = newRecordFields(table.columnsFor([], [], [], records), kind, values);
   const [problems, setProblems] = useState<ReadonlyMap<string, string>>(
     new Map(),
   );
-  const valueOf = (column: Column<Rec, PlanChange>): CellValue =>
-    values[column.key] ??
-    column.newRowValue?.(kind) ??
-    cellKinds[column.kind].empty;
-  useEffect(() => {
-    focusSoon(titleId);
-  }, []);
-  const add = (event: SubmitEvent) => {
-    event.preventDefault();
-    const found = [
-      ...newRecordProblems(
-        columns,
-        kind,
-        Object.fromEntries(
-          columns.map((column) => [column.key, valueOf(column)]),
-        ),
-        table.recordProblem,
-        () => [],
-      ),
-      ...columns.flatMap((column) => {
-        const value = valueOf(column);
-        const message = isLink(value) ? linkProblems(value).address : undefined;
-        return message === undefined ? [] : [{ column: column.key, message }];
-      }),
-    ];
-    setProblems(new Map(found.map(({ column, message }) => [column, message])));
-    const first = columns.find(({ key }) =>
-      found.some(({ column }) => column === key),
-    );
-    if (first !== undefined) {
-      focusSoon(fieldId(first));
-      return;
-    }
-    onAdd(
-      table.request(
-        columns.map((column) => column.change(valueOf(column))),
-        kind,
-      ),
-    );
-  };
   return (
-    <SidePanelFrame
-      id={panelId}
-      titleId={titleId}
+    <NewRecordPanel
+      panelId={panelId}
       title={title}
       narrow={narrow}
-      close={{
-        label: `Close ${title}`,
-        onClose: () => {
-          if (!saving) onCancel();
-        },
+      saving={saving}
+      gap="md"
+      enterAdds
+      table={table}
+      columns={columns}
+      kind={kind}
+      values={shown}
+      others={() => []}
+      onRefused={(found) => {
+        setProblems(
+          new Map(found.map(({ column, message }) => [column, message])),
+        );
+        // Every problem is in one of the columns shown.
+        const first = columns.find(({ key }) =>
+          found.some(({ column }) => column === key),
+        ) as (typeof columns)[number];
+        focusSoon(fieldId(first));
       }}
+      onAdd={(request) => {
+        setProblems(new Map());
+        onAdd(request);
+      }}
+      onCancel={onCancel}
     >
-      <form
-        className={sidePanelScroll}
-        inert={saving}
-        noValidate
-        onSubmit={add}
-      >
-        <Stack gap="md">
-          {columns.map((column) => (
-            <Field
-              key={column.key}
-              column={column}
-              value={valueOf(column)}
-              problem={problems.get(column.key)}
-              onChange={(value) => {
-                setProblems(
-                  new Map([...problems].filter(([key]) => key !== column.key)),
-                );
-                onValues({ ...values, [column.key]: value });
-              }}
-            />
-          ))}
-          <Group justify="flex-end" gap="xs">
-            <Button variant="default" onClick={onCancel} disabled={saving}>
-              Cancel
-            </Button>
-            <Button type="submit" loading={saving}>
-              Add
-            </Button>
-          </Group>
-        </Stack>
-      </form>
-    </SidePanelFrame>
+      {columns.map((column) => (
+        <Field
+          key={column.key}
+          column={column}
+          value={valueOf(column)}
+          problem={problems.get(column.key)}
+          onChange={(value) => {
+            setProblems(
+              new Map([...problems].filter(([key]) => key !== column.key)),
+            );
+            onValues({ ...values, [column.key]: value });
+          }}
+        />
+      ))}
+    </NewRecordPanel>
   );
 }
