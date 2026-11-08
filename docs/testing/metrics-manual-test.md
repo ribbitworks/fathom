@@ -1,5 +1,5 @@
 ---
-title: "Manual Test: Metrics on the People Table"
+title: "Manual Test: Metrics and Frozen Columns on the People Table"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
@@ -7,11 +7,11 @@ dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", 
 last_updated: "2026-11-07"
 ---
 
-# Manual Test: Metrics on the People Table
+# Manual Test: Metrics and Frozen Columns on the People Table
 
 ## Scope
 
-Verifies the People table's Metrics panel: breaking people down by one column or two, following the filters and the Draft menu, resizing the panel, and keeping metrics in saved views.
+Verifies the People table's Metrics panel: breaking people down by one column or two, following the filters and the Draft menu, resizing the panel, and keeping metrics in saved views. Also verifies that frozen columns stay in view while the table scrolls sideways, in light and dark mode.
 
 ## Test Environment
 
@@ -90,6 +90,7 @@ Use only where this test says so. This deletes every account and record in the d
 - **Views menu:** the menu that opens from the **Views** button, next to the search box.
 - **Column menu:** the menu that opens when you select a column's name in the People table's header.
 - **Panel edge:** the strip between the table and the Metrics panel. A blue line shows on it when the pointer is over it.
+- **Appearance menu:** the **Appearance** items in the account menu, which opens from the account button at the top right, showing the account's name.
 
 ## Test Cases
 
@@ -198,3 +199,43 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 - [ ] **Step 2.** Press Tab repeatedly.
   - **Expected:** The focus moves only among the panel's controls, never to the table behind it.
   - **Notes:**
+
+### METRICS-09: Frozen Columns Stay in View While the Table Scrolls Sideways
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-08.
+
+**Preconditions:** Browser window at least 1,440 pixels wide. **People** page open from the left-hand menu, with the Metrics panel closed. In the Appearance menu, **Light** selected.
+
+- [ ] **Step 1.** Look at the right edge of the **Name** column, then scroll the table sideways to the right.
+  - **Expected:** A thin grey line runs down the right edge of **Name**, header included. As the table scrolls, the other columns pass under **Name**, which stays in place, and a soft shadow shows to the right of the line.
+  - **Notes:**
+
+- [ ] **Step 2.** Scroll back to the left. Open the **ID** column menu and select **Freeze up to this column**.
+  - **Expected:** The line moves to the right edge of **ID**. The bar above the table shows **Frozen to ID** with an **×**.
+  - **Notes:**
+
+- [ ] **Step 3.** Scroll the table sideways to the right, then down.
+  - **Expected:** **Name** and **ID** stay in place, with the shadow beside it, and the header row stays at the top. Rows tinted blue or yellow for a draft keep their tint in the frozen columns.
+  - **Notes:**
+
+- [ ] **Step 4.** In the Appearance menu, select **Dark**, then repeat step 3.
+  - **Expected:** The frozen columns are dark, with nothing from the columns underneath showing through, and the line and shadow are visible.
+  - **Notes:**
+
+- [ ] **Step 5.** Scroll back to the left. Open the menu of the column furthest to the right.
+  - **Expected:** **Freeze up to this column** is greyed out and cannot be selected.
+  - **Notes:**
+
+- [ ] **Step 6.** Press Esc. Drag the **Site** column's name onto the **Name** column's name.
+  - **Expected:** **Site** moves before **Name**, and stays in place with the other frozen columns when the table scrolls sideways.
+  - **Notes:**
+
+- [ ] **Step 7.** Open the **ID** column menu and select **Unfreeze columns**.
+  - **Expected:** No column stays in place when the table scrolls sideways, and the bar shows **Unfrozen**.
+  - **Notes:**
+
+- [ ] **Step 8.** Select the **×** on **Unfrozen**. In the Appearance menu, select **Light**.
+  - **Expected:** Only the first column stays in place again, and **Unfrozen** is gone from the bar.
+  - **Notes:**
+
+**Afterwards:** Run R1, which puts the column order back.

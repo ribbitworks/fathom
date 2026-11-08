@@ -28,6 +28,7 @@ describe("viewDefinitionSchema", () => {
         },
         sort: ["name", "-level", "bad level!", 7],
         breakdown: ["site", "site", "level", "team", "bad key!"],
+        frozen: 1.5,
       }),
     ).toEqual({
       search: undefined,
@@ -35,7 +36,16 @@ describe("viewDefinitionSchema", () => {
       filters: { site: { any: ["a"] } },
       sort: ["name", "-level"],
       breakdown: ["site", "level"],
+      frozen: undefined,
     });
+  });
+
+  it("reads how many columns are frozen, none included, but never fewer or too many", () => {
+    expect(viewDefinitionSchema.parse({ frozen: 0 }).frozen).toBe(0);
+    expect(viewDefinitionSchema.parse({ frozen: 3 }).frozen).toBe(3);
+    expect(viewDefinitionSchema.parse({ frozen: -1 }).frozen).toBe(undefined);
+    expect(viewDefinitionSchema.parse({ frozen: 101 }).frozen).toBe(undefined);
+    expect(viewDefinitionSchema.parse({ frozen: "2" }).frozen).toBe(undefined);
   });
 
   it("drops filters, sorts, and breakdowns that are not lists or records", () => {
@@ -61,8 +71,17 @@ describe("savedViewRequestSchema", () => {
 
   it("accepts a view that fits", () => {
     expect(
-      request({ filters: { site: {} }, breakdown: ["site", "level"] }).success,
+      request({
+        filters: { site: {} },
+        breakdown: ["site", "level"],
+        frozen: 2,
+      }).success,
     ).toBe(true);
+  });
+
+  it("refuses a number of frozen columns that is not whole or is negative", () => {
+    expect(request({ frozen: 1.5 }).success).toBe(false);
+    expect(request({ frozen: -1 }).success).toBe(false);
   });
 
   it("refuses too many filters and a column broken down twice", () => {

@@ -2008,6 +2008,44 @@ describe("searching, sorting, and filtering", () => {
     });
   });
 
+  it("freezes the columns up to one chosen, naming them above the table until reset", async () => {
+    const { history } = await openAt("/people");
+    const frozen = (label: string) =>
+      header(label).closest("th")?.style.left !== "";
+    const [first] = screen
+      .getAllByRole("columnheader")
+      .map((cell) => cell.textContent);
+    expect(frozen(String(first))).toBe(true);
+    expect(frozen("Site")).toBe(false);
+    expect(screen.queryByText(/^Frozen to/)).toBeNull();
+
+    await choose("Site", "Freeze up to this column");
+    expect(frozen("Site")).toBe(true);
+    expect(address(history)).toMatch(/frozen=\d/);
+    expect(screen.getByText("Frozen to Site")).toBeDefined();
+    await userEvent.click(header("Site"));
+    const unfreeze = await screen.findByRole("menuitem", {
+      name: "Unfreeze columns",
+    });
+    expect(
+      screen.queryByRole("menuitem", { name: "Freeze up to this column" }),
+    ).toBeNull();
+    await userEvent.click(unfreeze);
+    expect(address(history)).toContain("frozen=0");
+    expect(frozen(String(first))).toBe(false);
+    expect(screen.getByText("Unfrozen")).toBeDefined();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Reset frozen columns" }),
+    );
+    expect(history.location.search).toBe("");
+    expect(frozen(String(first))).toBe(true);
+
+    await choose("Site", "Freeze up to this column");
+    await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
+    expect(history.location.search).toBe("");
+  });
+
   it("sorts by each column chosen in turn, naming each level above the table", async () => {
     const { history } = await openAt("/people");
     await choose("Site", "List order");

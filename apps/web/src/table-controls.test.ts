@@ -48,6 +48,15 @@ describe("what saving a view keeps", () => {
     ]);
   });
 
+  it("names the last column frozen, or none, once they differ from the table's own", () => {
+    expect(viewParts({ ...emptyView, frozen: 2 }, [level, site])).toEqual([
+      { name: "Frozen", value: "Up to Site" },
+    ]);
+    expect(viewParts({ ...emptyView, frozen: 0 }, [level, site])).toEqual([
+      { name: "Frozen", value: "None" },
+    ]);
+  });
+
   it("leaves out what is not set, and metrics that break down by nothing yet", () => {
     expect(viewParts(emptyView, [level])).toEqual([]);
     expect(

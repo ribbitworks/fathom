@@ -396,6 +396,16 @@ describe("the view in the page address", () => {
     ).toBe(false);
   });
 
+  it("reads and writes how many columns are frozen, and saves them, unless the table's own default", () => {
+    expect(viewFrom({ frozen: 0 })).toEqual(view({ frozen: 0 }));
+    expect(searchFor(view({ frozen: 3 }))).toEqual({ frozen: 3 });
+    expect(searchFor(view({ frozen: undefined }))).toEqual({});
+    expect(viewSearchSchema.parse({ frozen: "x" }).frozen).toBe(undefined);
+    expect(savedFor(view({ frozen: 0 }))).toEqual({ frozen: 0 });
+    expect(sameView(view({ frozen: 2 }), emptyView)).toBe(false);
+    expect(sameView(view({ frozen: 2 }), view({ frozen: 2 }))).toBe(true);
+  });
+
   it("names the saved view the view started from, until it is cleared", () => {
     const id = "00000000-0000-4000-8000-0000000000a1";
     expect(viewSearchSchema.parse({ view: id }).view).toBe(id);
@@ -545,6 +555,7 @@ describe("columns the user may not see", () => {
             { key: "start", descending: true },
           ],
           breakdown: ["hidden", "level"],
+          frozen: 2,
         }),
         columns,
       ),
@@ -554,6 +565,7 @@ describe("columns the user may not see", () => {
         filters: { name: { empty: true } },
         sort: [{ key: "start", descending: true }],
         breakdown: ["level"],
+        frozen: 2,
       }),
     );
     expect(knownView(view({ breakdown: ["hidden"] }), columns)).toEqual(

@@ -450,6 +450,7 @@ select.cellInput {
 
 /* Never so short that the table hides its rows; the page scrolls first. */
 .tableScrollPanel {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 7rem;
@@ -607,7 +608,9 @@ select.cellInput {
 /* A new row being filled in is tinted as the draft it will be. */
 .draftRow,
 .recordFillingRow {
-  background: var(--mantine-color-sea-0);
+  --row-tint: var(--mantine-color-sea-0);
+
+  background: var(--row-tint);
 }
 
 /* A column with a draft is tinted as a row with one is, before the colours of the cells a draft
@@ -623,23 +626,27 @@ select.cellInput {
 }
 
 .draftCell {
-  background: var(--mantine-color-yellow-1);
+  --cell-tint: var(--mantine-color-yellow-1);
+
+  background: var(--cell-tint);
 }
 
 /* A cell a rejected draft changes is a soft red instead. */
 .rejectedCell {
-  background: var(--mantine-color-red-1);
+  --cell-tint: var(--mantine-color-red-1);
+
+  background: var(--cell-tint);
 }
 
 /* In the dark scheme, the same colours as faint tints over the dark background, so they mark a
    change without shouting, and light text stays readable on them. */
 :global([data-mantine-color-scheme="dark"]) .draftRow,
 :global([data-mantine-color-scheme="dark"]) .recordFillingRow {
-  background: var(--mantine-color-sea-light);
+  --row-tint: var(--mantine-color-sea-light);
 }
 
 :global([data-mantine-color-scheme="dark"]) .draftCell {
-  background: color-mix(
+  --cell-tint: color-mix(
     in srgb,
     var(--mantine-color-yellow-5) 12%,
     transparent
@@ -647,7 +654,7 @@ select.cellInput {
 }
 
 :global([data-mantine-color-scheme="dark"]) .rejectedCell {
-  background: color-mix(in srgb, var(--mantine-color-red-5) 14%, transparent);
+  --cell-tint: color-mix(in srgb, var(--mantine-color-red-5) 14%, transparent);
 }
 
 /* A list or choice a draft removes is struck through, as a removed person is. */
@@ -764,11 +771,13 @@ select.cellInput {
 }
 
 .recordLiveRow {
-  background: var(--mantine-color-green-0);
+  --row-tint: var(--mantine-color-green-0);
+
+  background: var(--row-tint);
 }
 
 :global([data-mantine-color-scheme="dark"]) .recordLiveRow {
-  background: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
+  --row-tint: color-mix(in srgb, var(--mantine-color-green-5) 6%, transparent);
 }
 
 .recordLiveRow .recordCell {
@@ -853,6 +862,58 @@ th.liveColumn {
 
 .recordColActions {
   width: 2.75rem;
+}
+
+/* Frozen columns stay on the left while the rest scroll sideways under them, so each frozen cell
+   lays its own tint, its column's, and its row's over the page's background, as the header's cells
+   do. */
+.frozen {
+  z-index: 1;
+}
+
+/* A cell reached from the keyboard scrolls clear of the frozen columns. */
+.recordTable :is(td, th):not(.frozen) {
+  scroll-margin-left: var(--frozen-width, 0);
+}
+
+.recordTable td.frozen {
+  position: sticky;
+  background:
+    linear-gradient(
+      var(--cell-tint, transparent),
+      var(--cell-tint, transparent)
+    ),
+    linear-gradient(
+      var(--column-tint, transparent),
+      var(--column-tint, transparent)
+    ),
+    linear-gradient(var(--row-tint, transparent), var(--row-tint, transparent)),
+    var(--mantine-color-body);
+}
+
+/* The frozen columns' edge: a line, with a shadow over the columns scrolled under them. */
+.frozenEdge {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  border-left: 1px solid var(--mantine-color-default-border);
+  pointer-events: none;
+}
+
+.frozenEdge[data-scrolled] {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--mantine-color-black) 12%, transparent),
+    transparent
+  );
+}
+
+:global([data-mantine-color-scheme="dark"]) .frozenEdge[data-scrolled] {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--mantine-color-black) 40%, transparent),
+    transparent
+  );
 }
 
 /* The editor fills its cell exactly, whatever is typed. */

@@ -84,7 +84,6 @@ Goals the owner has added that are not yet placed in a stage:
 - **Pinned views:** A saved view kept visible as its own table, alongside the table's own view, until it is unpinned. Until then, pinning a view means applying it, as the [Decisions Log](decisions.md) records.
 - **Private views:** A saved view is either private, seen only by the user who saved it, or shared, seen by everyone who may see the data it shows. Until then, every saved view is shared, as the [Decisions Log](decisions.md) records.
 - **Hiding columns:** Any column, built-in ones included, can be hidden from a table's view, and shown again, with hidden columns kept in saved views. Deleting an added column is offered in its column menu too, not only in its dialog.
-- **Freezing columns:** A table's first column, or its first several, chosen by the user, stays in view while the others scroll sideways, as in a spreadsheet, and is kept in saved views. Asked for by the owner on 2026-11-04.
 - **Row timestamps:** Every database row records when it was created and last updated.
 - **Totals:** Sums and other totals of amounts over the rows shown, which follow the filters as they are added and removed, once the number and currency column types under Your Own Fields and Tables exist. Counts and shares of a column's values are already given by People's [metrics](decisions.md#configuration).
 - **Help:** More help, such as for Fathom's pages and terms, beyond Help's Roles and Drafts pages.

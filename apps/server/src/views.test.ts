@@ -241,13 +241,18 @@ describe("saved views", () => {
       await save(viewer.cookie, "Metrics open", {
         show: "drafts",
         breakdown: [],
+        frozen: 0,
       })
     ).json<Saved>().view;
-    expect(general.definition).toEqual({ show: "drafts", breakdown: [] });
+    expect(general.definition).toEqual({
+      show: "drafts",
+      breakdown: [],
+      frozen: 0,
+    });
     expect(
       (await viewsOf(viewer.cookie)).find(({ id }) => id === general.id)
         ?.definition,
-    ).toEqual({ show: "drafts", breakdown: [] });
+    ).toEqual({ show: "drafts", breakdown: [], frozen: 0 });
 
     const { view } = (
       await save(manager.cookie, "By start", {

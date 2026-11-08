@@ -85,6 +85,12 @@ import {
   waitsForRejected,
 } from "./drafts.ts";
 import { focusSoon } from "./focus.ts";
+import {
+  frozenByDefault,
+  frozenLayout,
+  useFrozenMoves,
+  useMeasured,
+} from "./frozen-columns.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
 import { movedKeys } from "./list-drafts.tsx";
@@ -1086,16 +1092,26 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const liveCellBeside = (
     record: Rec | undefined,
     column: Column<Rec, Change>,
-  ) =>
-    liveBeside(column) && (
-      <Table.Td
-        key={`${column.key}-live`}
-        aria-hidden="true"
-        className={[classes.recordCell, classes.liveColumn].join(" ")}
-      >
-        {liveCell(record, column)}
-      </Table.Td>
+    index: number,
+  ) => {
+    const at = frozenCell(index, 1);
+    return (
+      liveBeside(column) && (
+        <Table.Td
+          key={`${column.key}-live`}
+          aria-hidden="true"
+          className={[
+            classes.recordCell,
+            classes.liveColumn,
+            at.className,
+          ].join(" ")}
+          style={at.style}
+        >
+          {liveCell(record, column)}
+        </Table.Td>
+      )
     );
+  };
   // A column with a draft is tinted, as a row with one is, and one a draft removes is struck through.
   const columnTint = (column: Column<Rec, Change>) => {
     const draft = column.field?.draft;
@@ -1114,9 +1130,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     new Map(),
   );
   const stableId = (record: Rec) => shownAs.get(record.id) ?? record.id;
+  // Freezing columns moves no rows.
+  const rowView = { ...view, frozen: undefined };
   const shownRecords = useSteadyOrder(
     records,
-    view,
+    rowView,
     (rows) => applyView(rows, columns, view, [draftColumn]),
     stableId,
     added,
@@ -1141,6 +1159,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const [problem, setProblem] = useState<ShownProblem>();
   const [menuFor, setMenuFor] = useState<string>();
   const [dragging, setDragging] = useState<string>();
+  // Whether the table is scrolled sideways, which the frozen columns' edge shows with a shadow.
+  const [scrolled, setScrolled] = useState(false);
   // The column whose filter is open, by key.
   const [filtering, setFiltering] = useState<string>();
 
@@ -1176,6 +1196,30 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     row.newRow ? `new-${String(row.newRow.key)}` : stableId(row.record);
   const rowKeys = rows.map(rowKey);
   const keys = columns.map((column) => column.key);
+  // Each column's header cells: its own, and any live copy beside it.
+  const headerCells = columns.map((column) => (liveBeside(column) ? 2 : 1));
+  const [scrollRef, measured] = useMeasured(
+    columns
+      .map((column) => `${column.key}${liveBeside(column) ? "+" : ""}`)
+      .join(" "),
+  );
+  const frozenAsked = Math.min(view.frozen ?? frozenByDefault, columns.length);
+  const frozen = frozenLayout(measured, headerCells, frozenAsked);
+  // Where a frozen column's cell, or its live copy's, sits, or nothing for a column not frozen.
+  const frozenCell = (index: number, copy = 0) =>
+    index < frozen.frozen
+      ? {
+          className: classes.frozen,
+          style: { left: frozen.lefts.get(`${String(index)}-${String(copy)}`) },
+        }
+      : { className: "", style: undefined };
+  const freeze = (count: number) => {
+    onView({
+      ...view,
+      frozen: count === frozenByDefault ? undefined : count,
+    });
+  };
+  const refreeze = useFrozenMoves(keys, freeze);
   const cellId = (row: number, column: number) =>
     `cell-${String(rowKeys.at(row))}-${String(keys.at(column))}`;
   // The row and column of a cell, which is always within the table.
@@ -1707,6 +1751,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const to = index + step;
     if (to < 0 || to >= keys.length) return;
     const others = keys.filter((key) => key !== column.key);
+    refreeze(frozenAsked, index, to);
     actions.moveColumn(column.key, column.label, others[to - 1] ?? null);
     focusSoon(headerId(column));
   };
@@ -1717,10 +1762,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     setDragging(undefined);
     if (moved === undefined) return;
     const after = droppedAfter(keys, moved.key, onto.key);
-    if (after !== undefined) actions.moveColumn(moved.key, moved.label, after);
+    if (after === undefined) return;
+    const others = keys.filter((key) => key !== moved.key);
+    refreeze(
+      frozenAsked,
+      keys.indexOf(moved.key),
+      after === null ? 0 : others.indexOf(after) + 1,
+    );
+    actions.moveColumn(moved.key, moved.label, after);
   };
 
-  const header = (column: Column<Rec, Change>) => {
+  const header = (column: Column<Rec, Change>, index: number) => {
     const { field } = column;
     const moved = orderShown && isMoved(column);
     // A moved column's own waiting draft is decided together with the waiting order that moves it;
@@ -1753,12 +1805,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           },
         }
       : {};
+    const frozenAt = frozenCell(index);
     return (
       <Table.Th
         key={column.key}
         scope="col"
         aria-sort={ariaSort(view, column.key)}
-        className={columnTint(column)}
+        className={[columnTint(column), frozenAt.className].join(" ")}
+        style={frozenAt.style}
         {...dragProps}
       >
         <FilterPopover
@@ -1900,6 +1954,26 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 }}
                 breaksDown={breaksDown(column)}
               />
+              {index + 1 !== frozenAsked && (
+                <Menu.Item
+                  leftSection={<Icon name="freeze" />}
+                  disabled={frozen.fits.at(index) !== true}
+                  onClick={() => {
+                    freeze(index + 1);
+                  }}
+                >
+                  Freeze up to this column
+                </Menu.Item>
+              )}
+              {frozenAsked > 0 && (
+                <Menu.Item
+                  onClick={() => {
+                    freeze(0);
+                  }}
+                >
+                  Unfreeze columns
+                </Menu.Item>
+              )}
               {canEditColumns && (changesColumn || movesColumns) && (
                 <>
                   <Menu.Divider />
@@ -2367,13 +2441,20 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       />
       <Paper withBorder className={classes.tableScrollPanel}>
         <div
+          ref={scrollRef}
           className={classes.tableScroll}
           // Cells reached from the keyboard scroll clear of the header, however many lines of marks
-          // it has under the columns' names.
-          style={{
-            scrollPaddingTop: `max(var(--fathom-table-head-height), ${String(
-              markLines + 1,
-            )} * ${headerLineHeight} + ${headerPadding})`,
+          // it has under the columns' names, and of the frozen columns.
+          style={
+            {
+              scrollPaddingTop: `max(var(--fathom-table-head-height), ${String(
+                markLines + 1,
+              )} * ${headerLineHeight} + ${headerPadding})`,
+              "--frozen-width": `${String(frozen.width)}px`,
+            } as CSSProperties
+          }
+          onScroll={(event) => {
+            setScrolled(event.currentTarget.scrollLeft > 0);
           }}
         >
           <Table
@@ -2409,16 +2490,20 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             </colgroup>
             <Table.Thead>
               <Table.Tr>
-                {columns.flatMap((column) => {
+                {columns.flatMap((column, columnIndex) => {
                   const live = liveBeside(column);
+                  const liveAt = frozenCell(columnIndex, 1);
                   return [
-                    header(column),
+                    header(column, columnIndex),
                     live && (
                       <Table.Th
                         key={`${column.key}-live`}
                         scope="col"
                         aria-hidden="true"
-                        className={classes.liveColumn}
+                        className={[classes.liveColumn, liveAt.className].join(
+                          " ",
+                        )}
+                        style={liveAt.style}
                       >
                         <span className={classes.recordHeadButton}>
                           <span className={classes.headerName}>
@@ -2492,6 +2577,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         active.row === rowIndex &&
                         active.column === columnIndex;
                       const changes = draftChanges(draft, column);
+                      const frozenAt = frozenCell(columnIndex);
                       const live =
                         changes && draft?.action === "changed"
                           ? shown(liveColumn(column), column.live(draft)) ||
@@ -2521,7 +2607,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             problemIn(cell) === undefined || editingHere
                               ? ""
                               : classes.recordProblemCell,
+                            frozenAt.className,
                           ].join(" ")}
+                          style={frozenAt.style}
                           aria-readonly={
                             readOnlyFor(column, rowKind(row)) ||
                             (row.record &&
@@ -2620,7 +2708,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             </span>
                           )}
                         </Table.Td>,
-                        liveCellBeside(row.record, column),
+                        liveCellBeside(row.record, column, columnIndex),
                       ];
                     })}
                     {withActions && (
@@ -2646,10 +2734,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                       >
                         {columns.flatMap((column, columnIndex) => {
                           const standIn = liveStandIn(record, column);
+                          const frozenAt = frozenCell(columnIndex);
                           return [
                             <Table.Td
                               key={column.key}
-                              className={classes.recordCell}
+                              className={[
+                                classes.recordCell,
+                                frozenAt.className,
+                              ].join(" ")}
+                              style={frozenAt.style}
                             >
                               {standIn === undefined ? (
                                 liveContent(
@@ -2674,7 +2767,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                 </StatusMark>
                               )}
                             </Table.Td>,
-                            liveCellBeside(row.record, column),
+                            liveCellBeside(row.record, column, columnIndex),
                           ];
                         })}
                         {withActions && (
@@ -2687,6 +2780,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             </Table.Tbody>
           </Table>
         </div>
+        {frozen.frozen > 0 && (
+          <div
+            aria-hidden="true"
+            className={classes.frozenEdge}
+            data-scrolled={scrolled || undefined}
+            style={{ left: frozen.width, height: measured.height }}
+          />
+        )}
       </Paper>
     </WithSidePanel>
   );

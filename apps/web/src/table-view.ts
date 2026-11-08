@@ -3,8 +3,8 @@
 // Filtering, searching, and sorting any table, in the browser, over the rows the user has been
 // sent, as ADR 0006 sets out. A table describes its columns, each of a kind, and how to read a
 // row's value in each; each kind says how its values are searched, sorted, and filtered, so a new
-// kind is added in one place. The view a table shows, its search, filters, sort, and metrics, is
-// kept in the page address, with the saved view it started from, if any.
+// kind is added in one place. The view a table shows, its search, filters, sort, metrics, and
+// frozen columns, is kept in the page address, with the saved view it started from, if any.
 
 import {
   type Filter,
@@ -74,6 +74,9 @@ export interface View {
   sort: SortLevel[];
   // The keys of the columns the metrics break the rows down by, set while the metrics show.
   breakdown?: string[] | undefined;
+  // How many columns, from the first, stay in view while the table scrolls sideways, when not the
+  // table's own default.
+  frozen?: number | undefined;
 }
 
 export const emptyView: View = {
@@ -107,6 +110,7 @@ export function viewFrom(search: ViewDefinition): View {
         : { key: level, descending: false },
     ),
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
+    ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
   };
 }
 
@@ -158,6 +162,7 @@ export function searchFor(view: View): ViewDefinition {
           ),
         }),
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
+    ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
   };
 }
 
@@ -213,7 +218,8 @@ export function narrows(view: View): boolean {
 
 // The view with only the filters, sorts, and breakdown on columns the table has, and the filters it
 // offers that are not columns, leaving out those on columns the user may not see, such as in a link
-// from someone who may. The breakdown keeps only the columns the metrics offer, when given.
+// from someone who may, and with its frozen columns. The breakdown keeps only the columns the
+// metrics offer, when given.
 export function knownView(
   view: View,
   columns: readonly { key: string }[],
@@ -240,6 +246,7 @@ export function knownView(
             (key) => known.has(key) && counted.has(key),
           ),
         }),
+    ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
   };
 }
 

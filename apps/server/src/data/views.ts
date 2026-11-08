@@ -110,6 +110,7 @@ function withoutDeleted(
     filters: filters.length === 0 ? undefined : Object.fromEntries(filters),
     sort: sort.length === 0 ? undefined : sort,
     breakdown: definition.breakdown?.filter((key) => tiers.has(key)),
+    frozen: definition.frozen,
   });
 }
 

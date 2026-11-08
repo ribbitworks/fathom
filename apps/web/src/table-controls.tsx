@@ -158,7 +158,26 @@ export function viewParts(
     ...(breakdown.length === 0
       ? []
       : [{ name: "Metrics", value: breakdown.join(" by ") }]),
+    ...(view.frozen === undefined
+      ? []
+      : [
+          {
+            name: "Frozen",
+            value: frozenUpTo(view.frozen, columns, "Up to", "None"),
+          },
+        ]),
   ];
+}
+
+// The frozen columns in words: the last one frozen, after `upTo`, or `none`.
+function frozenUpTo(
+  frozen: number,
+  columns: readonly AnyColumn[],
+  upTo: string,
+  none: string,
+): string {
+  const last = columns.slice(0, frozen).at(-1);
+  return last === undefined ? none : `${upTo} ${last.label}`;
 }
 
 // A filter in words, such as "Site: Harbour, Northmere".
@@ -776,6 +795,22 @@ export function ViewBar({
           {describeFilter(column, filter)}
         </Pill>
       ))}
+      {view.frozen !== undefined && (
+        <Pill
+          size="md"
+          withRemoveButton
+          removeButtonProps={{
+            "aria-hidden": false,
+            tabIndex: 0,
+            "aria-label": "Reset frozen columns",
+          }}
+          onRemove={() => {
+            onView({ ...view, frozen: undefined });
+          }}
+        >
+          {frozenUpTo(view.frozen, shownColumns, "Frozen to", "Unfrozen")}
+        </Pill>
+      )}
       {/* Always there, so screen readers announce the count as it changes. */}
       <Text
         component="span"
@@ -788,7 +823,7 @@ export function ViewBar({
           ? `${count(shown)} of ${count(total)}`
           : (counted ?? `${count(total)} ${total === 1 ? one : noun}`)}
       </Text>
-      {(narrows(view) || view.sort.length > 0) && (
+      {(narrows(view) || view.sort.length > 0 || view.frozen !== undefined) && (
         <Button
           size="compact-sm"
           variant="default"

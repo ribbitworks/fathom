@@ -8,9 +8,16 @@
 
 import type { Field, List } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { act, render, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { noDrafts } from "./drafts.ts";
 import {
   cellColumn,
@@ -157,7 +164,9 @@ function renderGadgets({
   table = gadgetTable(),
   given = actions(),
   view = emptyView,
+  onView = noop,
   canApprove = false,
+  canEditColumns = false,
   fields = [colour],
 }: {
   gadgets: Gadget[];
@@ -165,7 +174,9 @@ function renderGadgets({
   table?: RecordTable<Gadget, GadgetChange, GadgetChange>;
   given?: RecordActions<Gadget, GadgetChange, GadgetChange>;
   view?: View;
+  onView?: (view: View) => void;
   canApprove?: boolean;
+  canEditColumns?: boolean;
 }) {
   return render(
     <MantineProvider theme={testTheme}>
@@ -177,9 +188,9 @@ function renderGadgets({
         lists={[colours]}
         canEdit
         canApprove={canApprove}
-        canEditColumns={false}
+        canEditColumns={canEditColumns}
         view={view}
-        onView={noop}
+        onView={onView}
         actions={given}
       />
     </MantineProvider>,
@@ -429,6 +440,218 @@ describe("where a dragged column goes", () => {
     ["x", "a", undefined],
   ])("%s dropped on %s follows %s", (moved, onto, after) => {
     expect(droppedAfter(keys, moved, onto)).toBe(after);
+  });
+});
+
+describe("frozen columns", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  // Every header cell 100 pixels wide, in a table with `room` pixels to show them.
+  function measuredAs(room: { width: number }) {
+    vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue({
+      width: 100,
+    } as DOMRect);
+    vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(
+      () => room.width,
+    );
+  }
+
+  const headerOf = (label: string) =>
+    screen.getByRole("button", {
+      name: (name) => name.startsWith(`${label} column`),
+    });
+  const leftOf = (label: string) => headerOf(label).closest("th")?.style.left;
+
+  const changedColour: Field = {
+    ...colour,
+    draft: {
+      state: "waiting",
+      madeBy: null,
+      madeAt: null,
+      action: "changed",
+      changed: ["name"],
+      live: { name: "Hue" },
+    },
+  };
+
+  it("sets each frozen cell, and a live copy beside one, where the columns before it end", () => {
+    measuredAs({ width: 1000 });
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, frozen: 3 },
+      fields: [changedColour],
+    });
+    expect(leftOf("Name")).toBe("0px");
+    expect(leftOf("Code")).toBe("100px");
+    expect(leftOf("Colour")).toBe("200px");
+    const live = screen
+      .getAllByRole("columnheader", { hidden: true })
+      .find((cell) => cell.textContent.startsWith("Hue"));
+    expect(live?.style.left).toBe("300px");
+  });
+
+  it("freezes no more than half the room the table has, and fewer once it has less", async () => {
+    let resized: (() => void) | undefined;
+    const disconnect = vi.fn();
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(callback: () => void) {
+          resized = callback;
+        }
+        observe = noop;
+        disconnect = disconnect;
+      },
+    );
+    const room = { width: 1000 };
+    measuredAs(room);
+    const { unmount } = renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, frozen: 3 },
+    });
+    expect(leftOf("Colour")).toBe("200px");
+    room.width = 250;
+    act(() => {
+      resized?.();
+    });
+    expect(leftOf("Name")).toBe("0px");
+    expect(leftOf("Code")).toBe("");
+    await userEvent.click(headerOf("Code"));
+    const freeze = await screen.findByRole("menuitem", {
+      name: "Freeze up to this column",
+    });
+    expect(freeze.hasAttribute("disabled")).toBe(true);
+    unmount();
+    expect(disconnect).toHaveBeenCalled();
+  });
+
+  it("shadows the frozen columns' edge once the table scrolls sideways", () => {
+    renderGadgets({ gadgets: [gadget("g1")] });
+    const scroll = screen.getByRole("grid").parentElement as HTMLElement;
+    const edge = scroll.nextElementSibling as HTMLElement;
+    expect(edge.hasAttribute("data-scrolled")).toBe(false);
+    scroll.scrollLeft = 40;
+    fireEvent.scroll(scroll);
+    expect(edge.hasAttribute("data-scrolled")).toBe(true);
+  });
+
+  it("freezes up to the first column as the table does to start", async () => {
+    const onView = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: { ...emptyView, frozen: 0 },
+      onView,
+    });
+    await userEvent.click(headerOf("Name"));
+    await userEvent.click(
+      await screen.findByRole("menuitem", {
+        name: "Freeze up to this column",
+      }),
+    );
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ frozen: undefined }),
+    );
+  });
+
+  // The table with the columns in the order given, as a move, or undoing it, leaves them.
+  function movable(onView: (view: View) => void, moveColumn = vi.fn()) {
+    const table = (order: string[]) => (
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={[gadget("g1")]}
+          table={gadgetTable()}
+          fields={[colour]}
+          order={order}
+          lists={[colours]}
+          canEdit
+          canEditColumns
+          view={emptyView}
+          onView={onView}
+          actions={actions({ moveColumn })}
+        />
+      </MantineProvider>
+    );
+    const { rerender } = render(table([]));
+    return (order: string[]) => {
+      rerender(table(order));
+    };
+  }
+
+  it("keeps a column moved into the frozen ones frozen once it moves, until the move is undone", () => {
+    const onView = vi.fn();
+    const moveColumn = vi.fn();
+    const ordered = movable(onView, moveColumn);
+    fireEvent.dragStart(headerOf("Code").closest("th") as HTMLElement);
+    fireEvent.drop(headerOf("Name").closest("th") as HTMLElement);
+    expect(moveColumn).toHaveBeenCalledWith("code", "Code", null);
+    expect(onView).not.toHaveBeenCalled();
+    ordered(["code", "name", "f1"]);
+    ordered(["code", "name", "f1"]);
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ frozen: 2 }),
+    );
+    ordered(["name", "code", "f1"]);
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ frozen: undefined }),
+    );
+    expect(onView).toHaveBeenCalledTimes(2);
+  });
+
+  it("unfreezes a frozen column moved out once it moves, and changes nothing for a move that never shows", async () => {
+    const onView = vi.fn();
+    const ordered = movable(onView);
+    headerOf("Code").focus();
+    await userEvent.keyboard("{Alt>}{ArrowRight}{/Alt}");
+    ordered(["name", "code", "f1"]);
+    expect(onView).not.toHaveBeenCalled();
+    headerOf("Name").focus();
+    await userEvent.keyboard("{Alt>}{ArrowRight}{/Alt}");
+    ordered(["code", "name", "f1"]);
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({ frozen: 0 }),
+    );
+    ordered(["code", "f1", "name"]);
+    ordered(["name", "code", "f1"]);
+    expect(onView).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the rows where they are when the columns frozen change", () => {
+    const sorted: View = {
+      ...emptyView,
+      sort: [{ key: "name", descending: false }],
+    };
+    const table = (gadgets: Gadget[], view: View) => (
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={gadgets}
+          table={gadgetTable()}
+          fields={[colour]}
+          order={[]}
+          lists={[colours]}
+          canEdit
+          canEditColumns={false}
+          view={view}
+          onView={noop}
+          actions={actions()}
+        />
+      </MantineProvider>
+    );
+    const names = () =>
+      screen
+        .getAllByRole("gridcell")
+        .filter((cell) => cell.id.endsWith("-name"))
+        .map((cell) => cell.textContent)
+        .filter((text) => text !== "");
+    const first = gadget("a", { name: "Alpha" });
+    const second = gadget("b", { name: "Bravo" });
+    const { rerender } = render(table([first, second], sorted));
+    rerender(
+      table([{ ...first, name: "Zulu" }, second], { ...sorted, frozen: 2 }),
+    );
+    expect(names()).toEqual(["Zulu", "Bravo"]);
   });
 });
 
