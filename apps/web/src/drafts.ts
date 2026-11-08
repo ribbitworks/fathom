@@ -495,6 +495,51 @@ function needingOthers(
   };
 }
 
+// Whether a person's draft holds what a fill drafts on them, rather than only changes of their own.
+const partOfFill = (draft: Person["draft"]) =>
+  draft?.action === "created" ||
+  ["positionId", "managerId", "managerFrom", "isManager"].some(
+    (field) => draft?.changed.includes(field) === true,
+  );
+
+// The other drafts of any fill those chosen are part of, which are decided with them: the hire, the
+// person who fills it, and the planned hires it moves to them. The server decides them together.
+function fillDrafts(
+  selection: DraftSelection,
+  columns?: Columns,
+): DraftSelection {
+  const people = columns?.people ?? [];
+  const found = noDrafts();
+  for (const hire of people) {
+    if (typeof hire.filler !== "string") continue;
+    const moved = people.filter(
+      (one) =>
+        one.kind === "planned-hire" &&
+        one.manager?.id === hire.filler &&
+        one.draft?.live.managerId === hire.id,
+    );
+    const hires = [hire.id, ...moved.map(({ id }) => id)];
+    const filler = people.filter(
+      ({ id, draft }) => id === hire.filler && partOfFill(draft),
+    );
+    if (
+      !hires.some((id) => selection.plannedHires.includes(id)) &&
+      !filler.some(({ id }) => selection.people.includes(id))
+    ) {
+      continue;
+    }
+    found.plannedHires.push(
+      ...hires.filter((id) => !selection.plannedHires.includes(id)),
+    );
+    found.people.push(
+      ...filler
+        .map(({ id }) => id)
+        .filter((id) => !selection.people.includes(id)),
+    );
+  }
+  return found;
+}
+
 // A decision on the drafts chosen, by a user who approves drafts of the kinds given: approving
 // includes the drafts they depend on, and skips any that depend on a rejected draft; rejecting
 // includes the drafts that depend on them. Asked to, it names the drafts chosen, when there are
@@ -515,7 +560,10 @@ export function decisionFor(
   const beyond = (selection: DraftSelection) =>
     draftsWhere(selection, (kind) => !approves.includes(kind));
   if (asking === "reject") {
-    const dependents = usingDrafts(chosen, lists, columns);
+    const dependents = joined(
+      usingDrafts(chosen, lists, columns),
+      fillDrafts(chosen, columns),
+    );
     const selection = joined(chosen, dependents);
     const outside = beyond(selection);
     if (draftTotal(outside) > 0) {
@@ -532,7 +580,10 @@ export function decisionFor(
   const ready = without(chosen, held);
   if (draftTotal(ready) === 0)
     return { asking, selection: chosen, waiting: true };
-  const used = usedDrafts(ready, lists, columns);
+  const used = joined(
+    usedDrafts(ready, lists, columns),
+    fillDrafts(ready, columns),
+  );
   const selection = joined(ready, used);
   const outside = beyond(selection);
   if (draftTotal(outside) > 0) {

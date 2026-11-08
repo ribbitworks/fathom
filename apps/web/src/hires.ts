@@ -9,6 +9,7 @@
 import {
   changeSetIdSchema,
   type HireChange,
+  type HireFill,
   type HireRequest,
   savedSchema,
 } from "@fathom/shared";
@@ -89,6 +90,15 @@ export async function deleteHire(id: string): Promise<string | null> {
 
 export async function discardHireDraft(id: string): Promise<string | null> {
   return (await sendDeleteFor(`${hirePath(id)}/draft`, savedSchema))
+    .changeSetId;
+}
+
+// Drafts filling a hire, as one change, with a new person or someone already in Fathom.
+export async function fillHire(
+  id: string,
+  fill: HireFill,
+): Promise<string | null> {
+  return (await sendJsonFor("POST", `${hirePath(id)}/fill`, fill, savedSchema))
     .changeSetId;
 }
 

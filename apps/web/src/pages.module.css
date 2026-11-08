@@ -1267,3 +1267,10 @@ th.liveColumn {
 .passwordRequirement[data-state="unmet"] {
   color: var(--mantine-color-error);
 }
+
+/* A long list scrolls within itself, so it never makes the page taller, which would bring in the
+   page's scrollbar and narrow everything on it. */
+.choiceOptions {
+  max-height: 16rem;
+  overflow-y: auto;
+}

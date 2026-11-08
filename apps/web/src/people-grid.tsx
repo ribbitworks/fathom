@@ -11,7 +11,7 @@
 // rows have the same ID, a person's end date cannot be before their start date, and an ID typed in
 // cannot look like a temporary one.
 
-import { ShowDetailsButton } from "./show-details-button.tsx";
+import { FillHireButton, ShowDetailsButton } from "./show-details-button.tsx";
 import type { Choice, Field, List, Person, Show } from "@fathom/shared";
 import {
   builtInColumnNames,
@@ -20,6 +20,7 @@ import {
 } from "@fathom/shared";
 import { Menu, VisuallyHidden } from "@mantine/core";
 import { notShown, personDraftFields } from "./draft-details.tsx";
+import { canFill } from "./hire-fill.ts";
 import { noDrafts } from "./drafts.ts";
 import { choice, offered, sameName } from "./lists.ts";
 import {
@@ -43,6 +44,7 @@ import {
   type RowChange,
   rowName,
   type RowRequest,
+  stateMeaning,
 } from "./people-rows.ts";
 import { type CellValue, formatMonth } from "./table-view.ts";
 import { count } from "./numbers.ts";
@@ -113,7 +115,7 @@ function managersNamed(people: readonly Person[]): Map<string, string> {
   return named;
 }
 
-const byLabel = (choices: Choice[]) =>
+export const byLabel = (choices: Choice[]) =>
   choices.sort((a, b) => collator.compare(a.label, b.label));
 
 // The people and planned hires a row may report to, by name, and, no longer offered, those who have
@@ -164,7 +166,7 @@ const asIds = (value: CellValue) => value as string[];
 const markedChoice = choice(flagChoice, "Yes", false);
 
 // A single choice as a cell's value: the one chosen, or none.
-const chosen = (id: string | null | undefined): string[] =>
+export const chosen = (id: string | null | undefined): string[] =>
   typeof id === "string" ? [id] : [];
 
 // Gone by today while someone still reports to them, for readers who may see when people leave.
@@ -561,11 +563,7 @@ export function kindOfState(
   lists: readonly List[],
   stateId: string | undefined,
 ): string | undefined {
-  return kindOfMeaning(
-    lists
-      .find(({ builtIn }) => builtIn === "hiring-states")
-      ?.choices.find(({ id }) => id === stateId)?.meaning,
-  );
+  return kindOfMeaning(stateMeaning(lists, stateId));
 }
 
 // The kind of record a state's meaning is for: a planned hire is Proposed or Open, and a person
@@ -647,6 +645,7 @@ function peopleTable(
   lists: readonly List[],
   canEditHires: boolean,
   onOpen: ((person: Person) => void) | undefined,
+  onFill: ((hire: Person) => void) | undefined,
 ): RecordTable<Person, RowChange, RowRequest> {
   const kindOf = (row: Person) => row.kind ?? personKind;
   const hireIds = new Set(people.filter(isHire).map(({ id }) => id));
@@ -695,12 +694,22 @@ function peopleTable(
               ...column,
               mark: (row: Person) =>
                 !isPending(row) && (
-                  <ShowDetailsButton
-                    name={row.preferredName}
-                    onOpen={() => {
-                      onOpen(row);
-                    }}
-                  />
+                  <>
+                    {onFill !== undefined && canFill(row, lists) && (
+                      <FillHireButton
+                        name={rowName(row, lists)}
+                        onFill={() => {
+                          onFill(row);
+                        }}
+                      />
+                    )}
+                    <ShowDetailsButton
+                      name={row.preferredName}
+                      onOpen={() => {
+                        onOpen(row);
+                      }}
+                    />
+                  </>
                 ),
             }
           : column,
@@ -755,6 +764,8 @@ type PeopleGridProps = Omit<
   canEditHires?: boolean;
   // Shows a person's details beside the table.
   onOpen?: ((person: Person) => void) | undefined;
+  // Starts filling a planned hire in its details, for those who may.
+  onFill?: ((hire: Person) => void) | undefined;
 };
 
 export function PeopleGrid({
@@ -764,6 +775,7 @@ export function PeopleGrid({
   showPosition = true,
   canEditHires = false,
   onOpen,
+  onFill,
   ...props
 }: PeopleGridProps) {
   return (
@@ -777,6 +789,7 @@ export function PeopleGrid({
         props.lists,
         canEditHires,
         onOpen,
+        onFill,
       )}
       canAdd={showPosition}
       {...props}

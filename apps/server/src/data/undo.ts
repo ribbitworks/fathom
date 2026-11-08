@@ -477,6 +477,7 @@ async function undoPersonDrafts(
   editor: string,
   columns: readonly ColumnInfo[],
   records: readonly Undone[],
+  hiresUndone: readonly string[],
 ): Promise<void> {
   const ids = records.map(({ id }) => id);
   const today = await readToday(transaction);
@@ -536,6 +537,7 @@ async function undoPersonDrafts(
         person,
         undone(id),
         today,
+        hiresUndone,
       );
     }
     await writePersonDraft(transaction, editor, id, live.get(id), person);
@@ -553,6 +555,7 @@ async function refuseUndoneReporting(
   person: Recorded,
   putBack: ReadonlySet<string>,
   today: string,
+  hiresUndone: readonly string[],
 ): Promise<void> {
   if (putBack.has("teamName") && typeof person.teamName === "string") {
     await refuseTakenTeamNames(transaction, [{ id, name: person.teamName }]);
@@ -563,6 +566,14 @@ async function refuseUndoneReporting(
       putBack.has(field),
     ) &&
     (await hireDraftsNaming(transaction, "filledBy", [id], editor))
+  ) {
+    throw new ConflictError(partOfFill);
+  }
+  if (
+    putBack.has("positionId") &&
+    (await hireDraftsNaming(transaction, "filledBy", [id], editor, {
+      except: hiresUndone,
+    }))
   ) {
     throw new ConflictError(partOfFill);
   }
@@ -1070,6 +1081,7 @@ async function undoIn(
       actor.user.id,
       await columnsWithAdded(transaction, actor.user.id),
       personDrafts,
+      hireDrafts.map(({ id }) => id),
     );
   }
   // The people put back must still fit their columns as they are now.

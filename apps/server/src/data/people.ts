@@ -1030,7 +1030,8 @@ export async function draftPersonChange(
   }
   // What a fill waiting for approval sets on its person is kept until the fill is discarded.
   if (
-    (change.managerId !== undefined ||
+    (change.positionId !== undefined ||
+      change.managerId !== undefined ||
       change.managerFrom !== undefined ||
       change.isManager !== undefined) &&
     (await hireDraftsNaming(transaction, "filledBy", [id]))

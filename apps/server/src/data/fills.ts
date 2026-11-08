@@ -3,7 +3,7 @@
 // Filling planned hires, as the Decisions Log sets out, as part of the data access layer. A fill is
 // one draft spread over several records: the hire, drafted as filled by its person; the person, a
 // new one drafted to be added with the hire's position, manager, and values, or someone already in
-// Fathom drafted to move to the hire's manager; and, for a planned manager, the hires reporting to
+// Fathom drafted to take the hire's position and move to its manager; and, for a planned manager, the hires reporting to
 // it, drafted to report to the person instead. Approving, rejecting, or resubmitting any of them
 // does so for the whole fill, and discarding any of them takes the fill out of the rest.
 
@@ -28,11 +28,13 @@ import {
   type Viewer,
 } from "./drafts.ts";
 import {
+  checkFillManager,
   discardHireDraftIn,
   draftHireAsLive,
   draftHireFilled,
   draftReportsMoved,
   fillableHire,
+  requirePersonManager,
   hireDraftsNaming,
   readHireDrafts,
   readLiveHires,
@@ -116,11 +118,12 @@ export async function readFills(
 }
 
 // The fields of someone already in Fathom that a fill of the hire drafts, as their draft holds
-// them: the hire's manager, with the line's date, and Manager? for a planned manager. Filling is
-// refused while they have a draft of their own, so these are the fill's.
+// them: the hire's position, its manager, with the line's date, and Manager? for a planned manager.
+// Filling is refused while they have a draft of their own, so these are the fill's.
 function fillFields(draft: Draft, hire: Recorded): string[] {
   if (draft.action !== "changed") return [];
   return [
+    ...(draft.fields.positionId === hire.positionId ? ["positionId"] : []),
     ...(typeof hire.managerId === "string" &&
     draft.fields.managerId === hire.managerId
       ? ["managerId", "managerFrom"]
@@ -152,7 +155,7 @@ export async function withFills(
     if (!inFill(fill, asked)) continue;
     if (fill.people.length > 0 && !seesSensitivity(actor, "restricted")) {
       throw new ForbiddenError(
-        "Filling a planned hire changes someone's Restricted details, so an Approver who sees them must decide it",
+        "A fill names who fills the hire, so an Approver who sees Restricted details must decide it",
       );
     }
     if (
@@ -242,8 +245,22 @@ export async function fillHire(
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const { before, hire } = await fillableHire(transaction, actor, hireId);
-    const managerId =
+    // Someone already in Fathom given no manager keeps the one they have; a new person needs one.
+    const keepsOwn = fill.managerId === null && fill.by === "existing person";
+    if (
+      typeof hire.managerId === "string" &&
+      typeof fill.managerId !== "string" &&
+      !keepsOwn
+    ) {
+      await requirePersonManager(transaction, hire.managerId);
+    }
+    if (typeof fill.managerId === "string") {
+      await checkFillManager(transaction, fill.managerId, actor.user.id);
+    }
+    const hireManager =
       typeof hire.managerId === "string" ? hire.managerId : null;
+    const managerId =
+      fill.managerId === undefined ? hireManager : fill.managerId;
     const plannedManager = hire.isManager === true;
     const made: Change[] = [];
     let personId: string;
@@ -259,9 +276,9 @@ export async function fillHire(
             startDate: fill.startDate,
             managerId,
             isManager: plannedManager,
-            values: Object.fromEntries(valuesOf(hire)),
-            links: linksOf(hire),
-            notes: notesOf(hire),
+            values: { ...fill.values, ...Object.fromEntries(valuesOf(hire)) },
+            links: { ...fill.links, ...linksOf(hire) },
+            notes: { ...fill.notes, ...notesOf(hire) },
           },
         ],
         today,
@@ -287,6 +304,9 @@ export async function fillHire(
                     : { managerFrom: fill.managerFrom }),
                 }
               : {}),
+            ...(hire.positionId === person.positionId
+              ? {}
+              : { positionId: String(hire.positionId) }),
             ...(plannedManager ? { isManager: true } : {}),
           },
           today,
@@ -297,7 +317,7 @@ export async function fillHire(
       ...(await draftHireFilled(
         transaction,
         actor,
-        { id: hireId, before, hire },
+        { id: hireId, before, hire, managerId: fill.managerId },
         personId,
       )),
     );
@@ -373,7 +393,7 @@ const discardIn = (transaction: Transaction, actor: Actor, asked: Asked) =>
     : discardHireDraftIn(transaction, actor, asked.id);
 
 // Discards the draft asked for, and takes its fill, if any, out of the drafts of the fill's other
-// records, keeping their other changes: the hire's filler, its person's manager, Manager? and line,
+// records, keeping their other changes: the hire's filler and manager, its person's position, manager, Manager? and line,
 // and the hires moved to them, put back as they are live. A person only drafted to be added by the
 // fill is discarded with it.
 async function discardWithFill(
@@ -390,9 +410,12 @@ async function discardWithFill(
   const made = await discardIn(transaction, actor, asked);
   for (const id of others("planned-hire", fill.plannedHires)) {
     made.push(
-      ...(await draftHireAsLive(transaction, actor, id, [
-        id === fill.hireId ? "filledBy" : "managerId",
-      ])),
+      ...(await draftHireAsLive(
+        transaction,
+        actor,
+        id,
+        id === fill.hireId ? ["filledBy", "managerId"] : ["managerId"],
+      )),
     );
   }
   const personDrafts = await readPersonDrafts(

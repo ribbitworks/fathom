@@ -78,3 +78,7 @@
     font-size: var(--mantine-font-size-sm);
   }
 }
+
+.filledBy {
+  margin-top: var(--mantine-spacing-md);
+}

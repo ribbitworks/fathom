@@ -257,8 +257,14 @@ export async function unseedHireDrafts(
   if (ids.length === 0) return 0;
   const data = createDataAccess(database);
   const editor = await actorOf(database, editorEmail);
-  for (const id of ids) await data.hires.discardDraft(editor, id);
-  await data.unpublished.publish(editor);
+  for (const id of ids) {
+    // Discarding one draft of a fill can discard the fill's other hires' drafts with it, which only
+    // publishing takes off the drafts read here.
+    if ((await hireDraftIds(database, organization)).includes(id)) {
+      await data.hires.discardDraft(editor, id);
+      await data.unpublished.publish(editor);
+    }
+  }
   return ids.length;
 }
 

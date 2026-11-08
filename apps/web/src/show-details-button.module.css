@@ -1,18 +1,22 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* The button at the end of a record's Name cell, shown while the row is pointed at or one of its
-   cells has focus. It sits over the cell rather than beside its text, so a narrow column cuts the
-   name short instead of moving the button under it, and the text makes room for it while it shows.
-   A frozen cell is placed already. */
+/* The buttons over a record's Name cell: showing its details, shown while the row is pointed at or
+   one of its cells has focus, and filling a planned hire. They sit over the cell rather than beside
+   its text, so a narrow column cuts the name short instead of moving a button under it, and the text
+   makes room for them while they show. A frozen cell is placed already. */
 
-.showDetails {
+.showDetails,
+.fillHire {
   position: absolute;
   /* Centred without a transform, which Mantine replaces while a button is pressed, moving it from
      under the pointer. */
   top: 0;
-  right: 4px;
   bottom: 0;
   margin-block: auto;
+}
+
+.showDetails {
+  right: 4px;
   opacity: 0;
 }
 
@@ -30,9 +34,21 @@ tr:focus-within .showDetails,
 }
 
 tr:hover td:has(> .showDetails),
-tr:focus-within td:has(> .showDetails) {
+tr:focus-within td:has(> .showDetails),
+td:has(> .fillHire) {
   padding-right: calc(
     var(--table-horizontal-spacing, var(--mantine-spacing-sm)) +
-      var(--show-details-room)
+      var(--show-details-room) + var(--fill-hire-room, 0px)
   );
+}
+
+/* The Fill button of a planned hire that can be filled, always shown, left of the details button's
+   place. The name makes room for both. */
+
+.fillHire {
+  right: calc(4px + var(--show-details-room));
+}
+
+td:has(> .fillHire) {
+  --fill-hire-room: 3rem;
 }

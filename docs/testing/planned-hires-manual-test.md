@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-08"
 ---
 
 # Manual Test: Planned Hires on People
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, what a Resource Planner sees, and filling a hire from its details panel with a new or an existing person. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -43,7 +43,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 ### R1: Restore the Seed Data
 
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand.
+Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test and anyone added by filling a seeded hire, then adds the seed data again; it keeps accounts and anything else added by hand.
 
 1. In the second terminal, run:
 
@@ -330,12 +330,12 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account. **People** page open, with no filters.
 
-- [ ] **Step 1.** Type **TBD-3** in the search box.
-  - **Expected:** One row is shown, its **Name** **Engineering Manager, TBD-3** in grey italics. Its **Manager?** cell shows a checked box.
+- [ ] **Step 1.** Type **Engineering Manager TBD** in the search box.
+  - **Expected:** One row is shown, its **Name** **Engineering Manager, TBD-** and a number, in grey italics. Its **Manager?** cell shows a checked box.
   - **Notes:**
 
-- [ ] **Step 2.** Clear the search box, and type **TBD-4**.
-  - **Expected:** One row is shown, its **Name** **Platform engineer**. Its **Manager** and **Team** both read **Engineering Manager, TBD-3**.
+- [ ] **Step 2.** Clear the search box, and type **Platform engineer TBD**.
+  - **Expected:** One row is shown, its **Name** **Platform engineer**. Its **Manager** and **Team** both read **Engineering Manager, TBD-** and the same number.
   - **Notes:**
 
 - [ ] **Step 3.** Select the row's **Manager** cell, and press Enter.
@@ -343,13 +343,161 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 4.** Type **TBD**.
-  - **Expected:** The list offers **Engineering Manager, TBD-3**.
+  - **Expected:** The list offers **Engineering Manager, TBD-** and the same number.
   - **Notes:**
 
-- [ ] **Step 5.** Press Esc, clear the search box, and type **TBD-3**.
-  - **Expected:** One row is shown, **Engineering Manager, TBD-3**.
+- [ ] **Step 5.** Press Esc, clear the search box, and type **Engineering Manager TBD**.
+  - **Expected:** One row is shown, **Engineering Manager, TBD-** and the same number.
   - **Notes:**
 
 - [ ] **Step 6.** Click once in the row's **Manager?** cell.
   - **Expected:** A message reads **Reassign direct reports first**. The box stays checked, and the row has no **Draft** mark.
   - **Notes:**
+
+**Afterwards:** R1.
+
+### HIRE-13: A Planned Hire Is Filled With a New Person
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-12. Step 7 signs in as another account.
+
+**Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **People** page open, with no filters.
+
+- [ ] **Step 1.** Type **Backend engineer 2** in the search box, and look at the row's **Name** cell.
+  - **Expected:** A **Fill** button sits at the right of the cell, and **Backend engineer 2** is still readable beside it.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Fill**.
+  - **Expected:** The panel beside the table is headed **Backend engineer 2**. Under **Fill this planned hire**, **New person** is selected next to **Existing person**, with fields **Name**, **ID**, **Position**, **Start** and **Manager**. **Position** reads **Software Engineer**, with no pencil. **Start** holds the same date as the row's **Start** cell in the table, and **Manager** the same name as its **Manager** cell.
+  - **Notes:**
+
+- [ ] **Step 3.** Type **Fictional new starter** in **Name** and **EMP-9001** in **ID**, and select **Fill** at the foot of the panel.
+  - **Expected:** The form closes and the panel is headed **Fictional new starter**, with a hollow yellow dot and **Draft**. The **Backend engineer 2** row no longer has a **Fill** button, and has a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the button with an arrow out of a box at the right of the **Backend engineer 2** row's **Name** cell.
+  - **Expected:** The panel is headed **Backend engineer 2**, with a **Filled by** section under its heading reading **Fictional new starter** in **Name** and **EMP-9001** in **ID**, each a link that shows that person in the panel.
+  - **Notes:**
+
+- [ ] **Step 5.** Clear the search box, and type **Fictional new starter**.
+  - **Expected:** One row, with a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the Publish button.
+  - **Expected:** A notice reads **Published 2 changes.**
+  - **Notes:**
+
+- [ ] **Step 7.** Sign in as the Engineering Director, `engineering.director@fathom.test`, changing account. Open **Drafts**, type **Backend engineer 2** in the search box, select the entry's checkbox, then **Approve**.
+  - **Expected:** The dialog reads **Also approves the drafts these depend on:** and names **Fictional new starter**.
+  - **Notes:**
+
+- [ ] **Step 8.** In the dialog, select **Approve**.
+  - **Expected:** The dialog closes, and a notice says the drafts were approved.
+  - **Notes:**
+
+- [ ] **Step 9.** Open **People** and type **Fictional new starter** in the search box.
+  - **Expected:** One row, with no **Draft** mark, reading **Software Engineer** in **Position**, a name in **Manager**, and **Ashgrove** in **Site**. Searching for **Backend engineer 2** shows no row named **Backend engineer 2**.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### HIRE-14: A Planned Hire Is Filled With Someone Already in Fathom
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-13.
+
+**Preconditions:** Signed in with this account. **People** page open, with no filters.
+
+- [ ] **Step 1.** Search for **REQ-2042**, select the row's **Fill** button, and in the panel select **Existing person**.
+  - **Expected:** The **Person** row is empty, with a pencil button at its right. **Position** reads the planned hire's position, with no pencil.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the pencil, and scroll through the list.
+  - **Expected:** Each entry shows a name, an ID in brackets, and a position, in name order. No planned hires are listed. The list scrolls within itself, and the panel stays the same width as the list opens and closes.
+  - **Notes:**
+
+- [ ] **Step 3.** Without typing, select the first person in the list. If no **Manager since** row then shows, select the pencil and choose the next person in the list.
+  - **Expected:** The **Person** row shows who you chose. **Position** still reads the planned hire's position, and **Manager** the name in the row's **Manager** cell in the table. **Manager since** holds today's date.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the pencil beside **Manager**, and choose a different name from the one shown.
+  - **Expected:** The **Manager** row shows the name you chose, and **Manager since** still holds today's date.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Fill** at the foot of the panel.
+  - **Expected:** The form closes and the panel is headed with the person you chose. Its **Manager** row reads the name you chose in Step 4, and its **Position** row the planned hire's position, each with a yellow dot and **Draft** beside it.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### HIRE-15: Filling a Planned Manager Moves Its Planned Hires
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-14.
+
+**Preconditions:** Signed in with this account. **People** page open, with no filters.
+
+- [ ] **Step 1.** Type **Engineering Manager TBD** in the search box, and look at the row's **Name** cell.
+  - **Expected:** There is no **Fill** button, since its **State** is **Request to hire**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
+  - **Expected:** A **Fill** button shows in the row's **Name** cell.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Fill**.
+  - **Expected:** A **Direct reports** row names the planned hires that report to this one, **Platform engineer** among them.
+  - **Notes:**
+
+- [ ] **Step 4.** Type **Fictional new lead** in **Name** and **EMP-9002** in **ID**, select the pencil beside **Grade**, and choose **P1**.
+  - **Expected:** The fields hold what you entered, and **Grade** reads **P1**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Fill** at the foot of the panel.
+  - **Expected:** The form closes and the panel is headed **Fictional new lead**.
+  - **Notes:**
+
+- [ ] **Step 6.** Clear the search box, and type **Platform engineer TBD**.
+  - **Expected:** The **Manager** cell of **Platform engineer** reads **Fictional new lead**, and the row has a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### HIRE-16: The Fill Form Reads Well in Dark Mode, and Leaving It Asks First
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-15.
+
+**Preconditions:** Signed in with this account. **Dark** chosen in the Appearance menu. **People** page open, with no filters.
+
+- [ ] **Step 1.** Search for **REQ-2047**, and look at the row. Select **Fill**.
+  - **Expected:** The row's **Fill** button, the panel's **New person** and **Existing person** choice, and its fields are all easy to read.
+  - **Notes:**
+
+- [ ] **Step 2.** Type **Fictional name** in **Name**, and select **Cancel**.
+  - **Expected:** A dialog titled **Stop filling this planned hire?** offers **Keep filling** and **Discard**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Keep filling**.
+  - **Expected:** The dialog closes, and **Name** still reads **Fictional name**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Cancel**, then **Discard**.
+  - **Expected:** The panel shows the hire's details, and a **Fill** button under its heading, with focus on it.
+  - **Notes:**
+
+### HIRE-17: A Hire Under a Planned Manager Needs a Manager Chosen
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-16.
+
+**Preconditions:** Signed in with this account. **People** page open, with no filters.
+
+- [ ] **Step 1.** Search for **Platform engineer TBD**. Select the row's **State** cell, press Enter, choose **Approved to hire**, and press Enter. Select the row's **Fill** button.
+  - **Expected:** The form's **Manager** row reads **No manager**.
+  - **Notes:**
+
+- [ ] **Step 2.** Type **Fictional platform starter** in **Name** and **EMP-9003** in **ID**, and select **Fill** at the foot of the panel.
+  - **Expected:** **Manager needed** shows in red under **Manager**, and **Grade needed** under **Grade**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the pencil beside **Manager** and choose the first name in the list. Select the pencil beside **Grade** and choose **P1**. Select **Fill** at the foot of the panel.
+  - **Expected:** The form closes and the panel is headed **Fictional platform starter**. Its **Manager** row reads the name you chose.
+  - **Notes:**
+
+**Afterwards:** R1.

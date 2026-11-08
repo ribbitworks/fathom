@@ -22,8 +22,6 @@ import {
 } from "./people-grid.tsx";
 import { positionLabel, type RowRequest } from "./people-rows.ts";
 import {
-  changeId,
-  editorId,
   type EditingContext,
   personPanelId,
   type NoteEditing,
@@ -113,7 +111,7 @@ export function NewRecordPanel({
   onAdd: (request: RowRequest) => void;
   onCancel: () => void;
 }) {
-  const { editingOf, refuse } = usePersonEditing(notes);
+  const { editingOf, refuseEntered } = usePersonEditing(notes);
   const { kind } = record;
   const adding = record.saving === true;
   const all = columnsFor(
@@ -215,19 +213,7 @@ export function NewRecordPanel({
       others,
     );
     if (found.length > 0) {
-      refuse(
-        formId,
-        found.map(({ column, message }) => ({ key: column, message })),
-      );
-      const keys = new Set(found.map(({ column }) => column));
-      // Every column a new record has is shown, so each problem is in one of them.
-      const first = shownColumns.find(({ key }) => keys.has(key)) as Column;
-      // A text or date is a field always open; any other value opens from its change button.
-      focusSoon(
-        cellKinds[first.kind].Editor === undefined
-          ? editorId(first)
-          : changeId(first),
-      );
+      refuseEntered(formId, found, shownColumns);
       return;
     }
     onAdd(newRecordRequest(columns, kind, values));

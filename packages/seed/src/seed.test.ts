@@ -49,7 +49,7 @@ import {
   unseedDrafts,
 } from "./drafts.ts";
 import { seedHires } from "./hires.ts";
-import { seed, seedCommand, unseed } from "./seed.ts";
+import { describeFailure, seed, seedCommand, unseed } from "./seed.ts";
 
 let database: TestDatabase;
 let pool: ReturnType<typeof createPool>;
@@ -389,6 +389,35 @@ describe("seeding", () => {
     expect(await unseed(connection, organization)).toEqual([]);
     expect(await totalOf(people)).toBe(0);
     expect(await totalOf(reportingLines)).toBe(0);
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
+  it("removes someone added by filling a seeded hire, so the seed data can be added again", async () => {
+    // Given someone added by hand who fills a seeded hire and reports to a seeded manager
+    const managerId = String(organization.reportingLines[0]?.managerId);
+    const fillerId = "00000000-0000-4000-8000-000000000003";
+    const hire = organization.hires.find(({ filledBy }) => filledBy === null);
+    await seedHires(connection, organization);
+    await connection.insert(people).values({
+      id: fillerId,
+      preferredName: "Fictional Hire Filler",
+      employeeId: "H-3",
+      positionId: handPosition,
+    });
+    await connection
+      .insert(reportingLines)
+      .values({ personId: fillerId, managerId, fromDate: "2026-01-01" });
+    await connection
+      .update(plannedHires)
+      .set({ filledBy: fillerId })
+      .where(eq(plannedHires.id, String(hire?.id)));
+
+    // When the seed data is removed
+    const kept = await unseed(connection, organization);
+
+    // Then nothing is kept for them, and it can be added again
+    expect(kept).toEqual([]);
+    expect(await totalOf(people)).toBe(0);
     expect(await seed(connection, organization)).toBe(true);
   });
 
@@ -855,6 +884,52 @@ describe("the seed command", () => {
     expect(await seedCommand(["unseed"], environment())).toBe(0);
   });
 
+  it("removes the seed data while filling a planned manager waits for approval", async () => {
+    // Given a fill that drafts several planned hires together
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    expect(await seedCommand(["seed"], environment())).toBe(0);
+    const data = createDataAccess(connection);
+    const editor = await actorOf(
+      connection,
+      "engineering.operations.manager@fathom.test",
+    );
+    const manager = organization.hires.find(({ isManager }) => isManager);
+    const [open] = await connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(
+        and(eq(lists.builtIn, "hiring-states"), eq(listItems.meaning, "open")),
+      );
+    await data.hires.update(editor, String(manager?.id), {
+      stateId: String(open?.id),
+    });
+    await data.hires.fill(editor, String(manager?.id), {
+      by: "new person",
+      preferredName: "Fictional Fill Lead",
+      employeeId: "H-4",
+      startDate: null,
+      values:
+        organization.hires.find(({ name }) => name === "Backend engineer 2")
+          ?.values ?? {},
+      links: {},
+      notes: {},
+    });
+    await data.unpublished.publish(editor);
+
+    // When the seed data is removed
+    const removed = await seedCommand(["unseed"], environment());
+
+    // Then it finishes, leaving no draft of a planned hire
+    expect(removed).toBe(0);
+    expect(
+      await connection
+        .select()
+        .from(drafts)
+        .where(eq(drafts.recordType, "planned-hire")),
+    ).toHaveLength(0);
+  });
+
   it("stops before adding anything when sign-in settings or the accounts' password are missing or unusable", async () => {
     await withoutFictionalData();
     const problems = vi
@@ -908,5 +983,18 @@ describe("the seed command", () => {
       personaAccounts.map(({ email }) => `Account ready: ${email}`),
     );
     expect(await totalOf(people)).toBe(before);
+  });
+});
+
+describe("describing a failure", () => {
+  it("adds the reason a failed query gives", () => {
+    expect(
+      describeFailure(new Error("Failed query", { cause: new Error("Why") })),
+    ).toBe("Failed query\nWhy");
+  });
+
+  it("gives the message alone when there is no cause", () => {
+    expect(describeFailure(new Error("Something"))).toBe("Something");
+    expect(describeFailure("Something else")).toBe("Something else");
   });
 });

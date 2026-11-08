@@ -4,7 +4,7 @@
 // laid out as it fills.
 
 import { describe, expect, it } from "vitest";
-import { isDay, typedDay } from "./days.ts";
+import { defaultLineFrom, isDay, typedDay } from "./days.ts";
 
 describe("isDay", () => {
   it("accepts only ISO dates that exist", () => {
@@ -35,5 +35,16 @@ describe("typedDay", () => {
 
   it("leaves text that is not digits and dashes as typed, trimmed", () => {
     expect(typedDay(" 4 Jan 2027 ")).toBe("4 Jan 2027");
+  });
+});
+
+describe("the day a new reporting line starts", () => {
+  it("is today for someone who has started, or has no start date", () => {
+    expect(defaultLineFrom("2020-01-01", "2026-11-08")).toBe("2026-11-08");
+    expect(defaultLineFrom(null, "2026-11-08")).toBe("2026-11-08");
+  });
+
+  it("is their start date for someone who has not started", () => {
+    expect(defaultLineFrom("2027-01-01", "2026-11-08")).toBe("2027-01-01");
   });
 });

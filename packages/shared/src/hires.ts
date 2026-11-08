@@ -18,9 +18,9 @@ import {
   preferredNameSchema,
   recordIdSchema,
   requestedLinksSchema,
+  temporaryIdPrefix,
   requestedNotesSchema,
   requestedValuesSchema,
-  temporaryIdPrefix,
   valuesSchema,
 } from "./people.ts";
 
@@ -163,21 +163,31 @@ export const hireChangeSchema = z.object({
 
 export type HireChange = z.infer<typeof hireChangeSchema>;
 
+// Who a fill's person reports to in place of the hire's manager, when another is given: a person,
+// or, with null, nobody, which leaves someone already in Fathom with the manager they have.
+const fillManagerSchema = z.uuid().nullable().optional();
+
 // Fills a planned hire, as one draft: with a new person, added with the hire's position, manager,
 // and values in the columns they share, starting on the day given, or with someone already in
-// Fathom, who moves to the hire's manager from the day given, or by default from today, or their
-// start date if it is later.
+// Fathom, who takes the hire's position and moves to the hire's manager from the day given, or by
+// default from today, or their start date if it is later.
 export const hireFillSchema = z.discriminatedUnion("by", [
   z.object({
     by: z.literal("new person"),
     preferredName: preferredNameSchema,
     employeeId: recordIdSchema,
     startDate: day.nullable(),
+    managerId: fillManagerSchema,
+    // What People requires that the hire has no value for.
+    values: requestedValuesSchema.default({}),
+    links: z.record(z.uuid(), linkValueSchema).default({}),
+    notes: requestedNotesSchema.optional(),
   }),
   z.object({
     by: z.literal("existing person"),
     personId: z.uuid(),
     managerFrom: day.optional(),
+    managerId: fillManagerSchema,
   }),
 ]);
 

@@ -1380,16 +1380,18 @@ describe("planned hires beside people", () => {
   });
 });
 
-describe("the button showing a person's details", () => {
+describe("the buttons over a Name cell", () => {
   // The simulated browser neither lays out the page nor applies :active, so the stylesheet is read.
-  it("is not placed with a transform, which Mantine replaces while a button is pressed", () => {
+  it("are not placed with a transform, which Mantine replaces while a button is pressed", () => {
     const stylesheet = readFileSync(
       join(import.meta.dirname, "show-details-button.module.css"),
       "utf8",
     );
-    const rule = /\.showDetails\s*\{([^}]*)\}/.exec(stylesheet)?.[1];
+    const rule = /\.showDetails,\s*\.fillHire\s*\{([^}]*)\}/.exec(
+      stylesheet,
+    )?.[1];
     expect(rule).toContain("position: absolute");
-    expect(rule).not.toMatch(/\btransform\s*:/);
+    expect(stylesheet).not.toMatch(/\btransform\s*:/);
   });
 });
 

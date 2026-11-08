@@ -368,8 +368,23 @@ export async function unseed(
     const kept: string[] = [];
     const made: SeededChange[] = [];
     // The seeded people still there, and all their values, read at once, but for those whom people
-    // added by hand report to, or have, and the managers above them.
-    const seededIds = organization.people.map(({ id }) => id);
+    // added by hand report to, or have, and the managers above them. Whoever filled a seeded hire
+    // goes with it, since no hire is left to say why they were added.
+    const fillers = await transaction
+      .select({ filledBy: plannedHires.filledBy })
+      .from(plannedHires)
+      .where(
+        inArray(
+          plannedHires.id,
+          organization.hires.map(({ id }) => id),
+        ),
+      );
+    const seededIds = [
+      ...new Set([
+        ...organization.people.map(({ id }) => id),
+        ...fillers.flatMap(({ filledBy }) => filledBy ?? []),
+      ]),
+    ];
     const lines = await transaction
       .select()
       .from(reportingLines)
@@ -659,6 +674,15 @@ function readPassword(environment: NodeJS.ProcessEnv): string {
   return password;
 }
 
+// What went wrong, for the console. A failed query's own message is the query; the reason is in its
+// cause.
+export function describeFailure(error: unknown): string {
+  const cause = error instanceof Error ? error.cause : undefined;
+  return cause === undefined
+    ? describeError(error)
+    : `${describeError(error)}\n${describeError(cause)}`;
+}
+
 // Seeds or unseeds the database the FATHOM_DB_* settings name. Returns a failing exit code after
 // reporting what went wrong.
 export async function seedCommand(
@@ -793,7 +817,7 @@ export async function seedCommand(
       `error: ${
         hasDatabaseCode(error, databaseCodes.uniqueViolation)
           ? "A list, column, release stream, feature, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
-          : describeError(error)
+          : describeFailure(error)
       }`,
     );
     return 1;

@@ -40,6 +40,14 @@ export const positionLabel = (
     .find(({ builtIn }) => builtIn === "positions")
     ?.choices.find(({ id }) => id === positionId)?.label;
 
+export const stateMeaning = (
+  lists: readonly List[],
+  stateId: string | null | undefined,
+): string | null | undefined =>
+  lists
+    .find(({ builtIn }) => builtIn === "hiring-states")
+    ?.choices.find(({ id }) => id === stateId)?.meaning;
+
 export function rowName(row: Person, lists: readonly List[]): string {
   if (!isHire(row) || row.preferredName !== "") return row.preferredName;
   return hireCalled(null, row.employeeId, positionLabel(lists, row.positionId));

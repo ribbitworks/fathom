@@ -24,3 +24,11 @@ export function typedDay(text: string): string {
     .filter((part) => part !== "")
     .join("-");
 }
+
+// The day a new reporting line starts unless another is given: today, or the person's start date if
+// that is later.
+export const defaultLineFrom = (
+  startDate: string | null | undefined,
+  today: string,
+): string =>
+  typeof startDate === "string" && startDate > today ? startDate : today;

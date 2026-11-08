@@ -15,6 +15,7 @@ import { LoadProblem } from "./load-problem.tsx";
 import type {
   DraftKind,
   Field,
+  HireFill,
   List,
   Person,
   PersonDraft,
@@ -62,12 +63,24 @@ import {
   decisionFor,
 } from "./drafts.ts";
 import classes from "./pages.module.css";
+import {
+  fillButtonId,
+  HireFillAction,
+  HireFillForm,
+} from "./hire-fill-form.tsx";
+import {
+  canFill,
+  fillQuestion,
+  type HireFilling,
+  newFilling,
+} from "./hire-fill.ts";
 import { columnsFor, type PeopleActions, PeopleGrid } from "./people-grid.tsx";
 import { draftColumn, isPending, pendingId } from "./record-grid.tsx";
 import {
   createHires,
   deleteHire,
   discardHireDraft,
+  fillHire,
   hireRequest,
   resubmitHireDraft,
 } from "./hires.ts";
@@ -246,10 +259,21 @@ export function PeoplePage({
   // Each New starts a form afresh, with none of a discarded one's fields.
   const [forms, setForms] = useState(0);
   // The record just added, by Fathom's own ID, whose details show once People has it.
-  const justAdded = useRef<string>(undefined);
+  const justAdded = useRef<(person: Person) => boolean>(undefined);
   // The add being saved, so its outcome changes nothing once the form is closed or replaced.
   const submitted = useRef<NewRecord>(undefined);
+  // A planned hire being filled in its details.
+  const [filling, setFilling] = useState<HireFilling>();
+  const mayFill = canEdit && canEditHires && view.show !== "live";
   const shownId = useShownId(open, query.data?.people);
+  // Showing another record, as by Back, leaves the fill of the one before.
+  const [fillShown, setFillShown] = useState(shownId);
+  if (fillShown !== shownId) {
+    setFillShown(shownId);
+    if (filling !== undefined && filling.hireId !== shownId) {
+      setFilling(undefined);
+    }
+  }
   const shownRecord = query.data?.people.find(({ id }) => id === shownId);
   const note = notes.note(beingAdded === undefined ? shownId : newRecordId);
   const question = useDiscardQuestion();
@@ -260,13 +284,22 @@ export function PeoplePage({
       ? noteQuestion
       : beingAdded !== undefined && entered(beingAdded)
         ? recordQuestion(beingAdded.kind)
-        : undefined;
+        : filling !== undefined && entered(filling)
+          ? fillQuestion
+          : undefined;
   const leave = (go: () => void) => {
     question.ask(leaving(), () => {
       notes.discard();
       submitted.current = undefined;
       setBeingAdded(undefined);
+      setFilling(undefined);
       go();
+    });
+  };
+  const startFill = (hire: Person) => {
+    leave(() => {
+      onOpen?.(hire.employeeId, open === hire.employeeId);
+      setFilling(newFilling(hire));
     });
   };
   const showRecord = (employeeId: string | undefined, replace = false) => {
@@ -277,7 +310,7 @@ export function PeoplePage({
   useEffect(() => {
     if (justAdded.current === undefined) return;
     const added = query.data?.people.find(
-      ({ id }) => id === justAdded.current && !isPending({ id }),
+      (one) => justAdded.current?.(one) === true && !isPending(one),
     );
     if (added === undefined) return;
     justAdded.current = undefined;
@@ -463,6 +496,39 @@ export function PeoplePage({
     },
   };
 
+  // Saves the fill as one draft. The form stays open, with what was entered, if it is refused.
+  const fill = (hire: Person, request: HireFill) => {
+    setFilling((current) => current && { ...current, saving: true });
+    save({
+      // Readers who see Restricted details are told who; the reload says for the rest.
+      next: (data) => ({
+        ...data,
+        people: data.people.map((other) =>
+          other.id === hire.id
+            ? {
+                ...other,
+                filler:
+                  request.by === "existing person" ? request.personId : null,
+              }
+            : other,
+        ),
+      }),
+      save: () => fillHire(hire.id, request),
+      failure: `Fathom could not fill ${nameOf(hire)}.`,
+      onFailed: () => {
+        setFilling((current) => current && { ...current, saving: false });
+      },
+      onSaved: (changeSetId, before) => {
+        setFilling(undefined);
+        justAdded.current = ({ id, employeeId }) =>
+          request.by === "new person"
+            ? employeeId === request.employeeId
+            : id === request.personId;
+        undoable(changeSetId, before);
+      },
+    });
+  };
+
   // The dialog saved the column itself, so the page shows it at once, then reloads the people once
   // no other change is saving.
   const saved = (field: Field, changeSetId: string | null) => {
@@ -589,6 +655,7 @@ export function PeoplePage({
               showRecord(person.employeeId);
             })
           }
+          onFill={mayFill ? startFill : undefined}
           panels={[
             ...(beingAdded === undefined
               ? []
@@ -623,7 +690,7 @@ export function PeoplePage({
                               if (submitted.current !== saving) return;
                               submitted.current = undefined;
                               setBeingAdded(undefined);
-                              justAdded.current = saved;
+                              justAdded.current = ({ id }) => id === saved;
                             },
                             () => {
                               if (submitted.current !== saving) return;
@@ -682,6 +749,53 @@ export function PeoplePage({
                         }}
                         onChange={canEdit ? actions.update : undefined}
                         notes={notes}
+                        hireFill={(hire, shownPeople, columns) =>
+                          filling?.hireId === hire.id
+                            ? {
+                                form: (
+                                  <HireFillForm
+                                    hire={hire}
+                                    people={shownPeople}
+                                    lists={lists.data}
+                                    columns={columns}
+                                    filling={filling}
+                                    onFilling={setFilling}
+                                    notes={notes}
+                                    onFill={(request) => {
+                                      fill(hire, request);
+                                    }}
+                                    onCancel={() => {
+                                      question.ask(
+                                        entered(filling)
+                                          ? fillQuestion
+                                          : undefined,
+                                        () => {
+                                          setFilling(undefined);
+                                          focusSoon(fillButtonId);
+                                        },
+                                      );
+                                    }}
+                                  />
+                                ),
+                              }
+                            : {
+                                action: (
+                                  <HireFillAction
+                                    hire={hire}
+                                    people={shownPeople}
+                                    columns={columns}
+                                    onPerson={showRecord}
+                                    onFill={
+                                      mayFill && canFill(hire, lists.data)
+                                        ? () => {
+                                            startFill(hire);
+                                          }
+                                        : undefined
+                                    }
+                                  />
+                                ),
+                              }
+                        }
                         onClose={() => {
                           leave(() => {
                             onOpen(undefined);

@@ -8,6 +8,7 @@
 // team renamed keeps its colour, which is not part of any draft, and one whose name is removed
 // loses it.
 
+import { defaultLineFrom } from "@fathom/shared";
 import {
   type Database,
   drafts,
@@ -191,8 +192,7 @@ export function shownReporting(
 // The date a new line starts from when none is given: today, or the person's start date if it is
 // later, so a new employee's first line starts when they do.
 export function defaultFrom(person: Recorded, today: string): string {
-  const start = text(person.startDate);
-  return start !== null && start > today ? start : today;
+  return defaultLineFrom(text(person.startDate), today);
 }
 
 // A person's reporting fields as a change asks for them: a new manager, or none, from the date given

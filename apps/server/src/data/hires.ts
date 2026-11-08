@@ -31,7 +31,7 @@ import {
   temporaryId,
   type Tier,
 } from "@fathom/shared";
-import { and, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, notInArray, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
@@ -105,7 +105,7 @@ import {
   recordedValues,
   valuesOf,
 } from "./people.ts";
-import { notMarked, reassignReports } from "./reporting.ts";
+import { notMarked, readManagers, reassignReports } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
 type Reader = Pick<Database, "select">;
@@ -784,6 +784,7 @@ async function refuseChangingFill(
   if (
     (filling &&
       (change.stateId !== undefined ||
+        change.positionId !== undefined ||
         change.managerId !== undefined ||
         change.isManager !== undefined)) ||
     (change.managerId !== undefined &&
@@ -907,7 +908,8 @@ async function hiresAmong(
   return found;
 }
 
-async function checkManager(
+// Refuses naming as a manager a planned hire that a fill, in any draft, is filling.
+async function refuseHireBeingFilled(
   transaction: Transaction,
   managerId: unknown,
   editor: string,
@@ -922,9 +924,42 @@ async function checkManager(
       "That planned hire is being filled, so it can't be a manager; once the fill is approved, choose the person who fills it",
     );
   }
+}
+
+async function checkManager(
+  transaction: Transaction,
+  managerId: unknown,
+  editor: string,
+): Promise<void> {
+  await refuseHireBeingFilled(transaction, managerId, editor);
   if (!(await managerAllowed(transaction, managerId, editor))) {
-    throw new BadRequestError("Choose a manager from People");
+    throw new BadRequestError(chooseManager);
   }
+}
+
+// Refuses a fill of a hire reporting to a planned manager when it gives its person no manager of
+// their own, since people report only to people.
+export async function requirePersonManager(
+  transaction: Transaction,
+  managerId: string,
+): Promise<void> {
+  const managers = await readManagers(transaction, [managerId]);
+  if (!managers.has(managerId)) throw new ConflictError(chooseManager);
+}
+
+// Refuses a manager given for a fill's person who is not a live person, since people report only to
+// people.
+export async function checkFillManager(
+  transaction: Transaction,
+  managerId: string,
+  editor: string,
+): Promise<void> {
+  await refuseHireBeingFilled(transaction, managerId, editor);
+  const manager = (await readManagers(transaction, [managerId])).get(managerId);
+  if (manager === undefined || manager.removing) {
+    throw new BadRequestError(chooseManager);
+  }
+  if (!manager.isManager) throw new ConflictError(notMarked(manager));
 }
 
 // Refuses a requisition that a person's Employee ID or another hire's requisition already is, live
@@ -1276,18 +1311,18 @@ export async function updateHire(
 const filledAlready = "This planned hire is already filled";
 const notApproved =
   "This planned hire's headcount isn't approved yet; move it to an approved state before filling it";
-const plannedManager = "Fill its manager's planned hire first";
+const chooseManager = "Choose a manager from People";
 
 // The hire asked to be filled, as the actor's draft makes it, with it as it is live: one not drafted
-// to be removed or already filled, in a state meaning Open, and whose manager, if any, is a person,
-// since people report only to people.
+// to be removed or already filled, with no rejected draft, whose changes a fill would otherwise send
+// for approval again, and in a state meaning Open.
 export async function fillableHire(
   transaction: Transaction,
   actor: Actor,
   id: string,
 ): Promise<{ before: Recorded | undefined; hire: Recorded }> {
   requireHiringEdit(actor);
-  const { before, hire } = await lockDraftedHire(transaction, actor, id);
+  const { before, draft, hire } = await lockDraftedHire(transaction, actor, id);
   if (hire === undefined) {
     throw new ConflictError(
       "This planned hire's draft removes it; discard the draft to fill it",
@@ -1299,6 +1334,11 @@ export async function fillableHire(
     );
   }
   if (!unfilled(hire)) throw new ConflictError(filledAlready);
+  if (draft?.state === "rejected") {
+    throw new ConflictError(
+      "This planned hire has a rejected draft; discard it or send it for approval again before filling it",
+    );
+  }
   if (hire.managerId !== before.managerId) {
     throw new ConflictError(
       "This planned hire's draft changes its manager; approve or discard that draft before filling it",
@@ -1309,34 +1349,31 @@ export async function fillableHire(
     .from(listItems)
     .where(eq(listItems.id, String(hire.stateId)));
   if (state?.meaning !== "open") throw new ConflictError(notApproved);
-  if (typeof hire.managerId === "string") {
-    const [manager] = await transaction
-      .select({ id: people.id })
-      .from(people)
-      .where(eq(people.id, hire.managerId));
-    if (manager === undefined) throw new ConflictError(plannedManager);
-  }
   return { before, hire };
 }
 
 // Drafts the hire filled by the person given, keeping the rest of its draft, and returns the changes
-// made, for the caller to record.
+// made, for the caller to record. A manager given for the person is drafted on the hire too, so the
+// fill's draft of the person is known by matching the hire's manager.
 export async function draftHireFilled(
   transaction: Transaction,
   actor: Actor,
-  filled: { id: string; before: Recorded | undefined; hire: Recorded },
+  filled: {
+    id: string;
+    before: Recorded | undefined;
+    hire: Recorded;
+    managerId: string | null | undefined;
+  },
   personId: string,
 ): Promise<Change[]> {
-  const { id, before, hire } = filled;
-  const after: Recorded = { ...hire, filledBy: personId };
+  const { id, before, hire, managerId } = filled;
+  const after: Recorded = {
+    ...hire,
+    filledBy: personId,
+    ...(managerId === undefined ? {} : { managerId }),
+  };
   const tierOf = await readHireTier(transaction);
-  const draft = (await readHireDrafts(transaction, [id], actor.user.id)).get(
-    id,
-  );
-  const made = [
-    ...asDraft(hireChanges(id, "changed", hire, after, tierOf)),
-    ...clearedRejection(id, rejectionTier(tierOf), before, draft, recordType),
-  ];
+  const made = asDraft(hireChanges(id, "changed", hire, after, tierOf));
   requireHireEdits(actor, made);
   await writeDraft(transaction, actor.user.id, recordType, id, before, after);
   return made;
@@ -1588,7 +1625,10 @@ export async function hireDraftsNaming(
   field: "managerId" | "filledBy",
   ids: readonly string[],
   editor?: string,
-  { byRecord }: { byRecord: boolean } = { byRecord: false },
+  {
+    byRecord = false,
+    except = [],
+  }: { byRecord?: boolean; except?: readonly string[] } = {},
 ): Promise<boolean> {
   for (const chunk of inChunks([...ids])) {
     for (const table of [drafts, unpublishedDrafts]) {
@@ -1604,6 +1644,9 @@ export async function hireDraftsNaming(
                   sql`${table.fields}->>${field} IS NOT NULL`,
                 )
               : inArray(sql`${table.fields}->>${field}`, chunk),
+            except.length === 0
+              ? undefined
+              : notInArray(table.recordId, [...except]),
             table === drafts && editor !== undefined
               ? sql`NOT EXISTS (SELECT 1 FROM ${unpublishedDrafts} WHERE ${unpublishedDrafts.userId} = ${editor} AND ${unpublishedDrafts.recordType} = ${recordType} AND ${unpublishedDrafts.recordId} = ${drafts.recordId})`
               : undefined,

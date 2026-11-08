@@ -32,6 +32,16 @@ export const problemId = (column: Column) => idOf(column, "problem");
 export const editorId = (column: Column) => idOf(column, "editor");
 const wordsId = (column: Column) => idOf(column, "words");
 
+// Puts focus on a value being entered: a text or date is a field always open, and any other value
+// opens from its change button.
+export const focusValue = (column: Column) => {
+  focusSoon(
+    cellKinds[column.kind].Editor === undefined
+      ? editorId(column)
+      : changeId(column),
+  );
+};
+
 // Saves a change to the record, with the column and value it puts there.
 export type SaveChange = (
   change: RowChange,
@@ -388,7 +398,22 @@ export function usePersonEditing(notes: Pick<NoteEditing, "start">) {
     setProblems(found.map(({ key, message }) => ({ id, key, message })));
   };
 
-  return { closeStale, editingOf, refuse };
+  // Names what is wrong with the values being entered, with focus on the first of them shown.
+  const refuseEntered = (
+    id: string,
+    found: readonly { column: string; message: string }[],
+    shown: readonly Column[],
+  ) => {
+    refuse(
+      id,
+      found.map(({ column, message }) => ({ key: column, message })),
+    );
+    const keys = new Set(found.map(({ column }) => column));
+    // Every problem is in one of the columns shown.
+    focusValue(shown.find(({ key }) => keys.has(key)) as Column);
+  };
+
+  return { closeStale, editingOf, refuse, refuseEntered };
 }
 
 // Whether a column's values are changed with an editor of their kind's own, rather than as text.

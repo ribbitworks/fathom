@@ -119,7 +119,13 @@ export {
   patternStartFits,
   yearsAhead,
 } from "./cycles.ts";
-export { daySchema, isDay, monthSchema, typedDay } from "./days.ts";
+export {
+  daySchema,
+  defaultLineFrom,
+  isDay,
+  monthSchema,
+  typedDay,
+} from "./days.ts";
 export {
   cleanNote,
   colourClosing,

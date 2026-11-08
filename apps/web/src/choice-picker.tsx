@@ -127,7 +127,7 @@ export function ChoicePicker({
         />
       </Combobox.Target>
       <Combobox.Dropdown>
-        <Combobox.Options>
+        <Combobox.Options className={classes.choiceOptions}>
           {shown.map((option) => (
             <Combobox.Option
               key={option.value}

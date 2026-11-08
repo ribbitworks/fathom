@@ -611,3 +611,116 @@ describe("a draft sent for approval again", () => {
     expect(draftSentAgain({})).toEqual({});
   });
 });
+
+describe("the drafts of a fill", () => {
+  const draft = {
+    action: "changed" as const,
+    changed: ["managerId"],
+    live: { managerId: "filled", values: {}, links: {} },
+    state: "waiting" as const,
+    madeBy: null,
+    madeAt: null,
+  };
+  const row = (id: string, details: object) =>
+    ({
+      id,
+      preferredName: id,
+      employeeId: id,
+      values: {},
+      links: {},
+      ...details,
+    }) as Person;
+  const hire = (id: string, details: object) =>
+    row(id, { kind: "planned-hire", ...details });
+  const people = [
+    hire("filled", { filler: "starter", draft }),
+    row("starter", { draft: { ...draft, action: "created" } }),
+    hire("moved", {
+      manager: { id: "starter", preferredName: "starter" },
+      draft,
+    }),
+    row("kept", {
+      manager: { id: "starter", preferredName: "starter" },
+      draft,
+    }),
+    hire("other", { filler: "someone", draft }),
+    row("someone", {}),
+  ];
+  const columns = { fields: [], people };
+
+  it("approves the rest of a fill with the hire chosen", () => {
+    expect(
+      decisionFor(
+        "approve",
+        { ...noDrafts(), plannedHires: ["filled"] },
+        draftKinds,
+        [],
+        columns,
+      ).selection,
+    ).toMatchObject({ people: ["starter"], plannedHires: ["filled", "moved"] });
+  });
+
+  it("rejects the rest of a fill with the person chosen, naming them", () => {
+    const decision = decisionFor(
+      "reject",
+      { ...noDrafts(), people: ["starter"] },
+      draftKinds,
+      [],
+      columns,
+    );
+    expect(decision.selection).toMatchObject({
+      people: ["starter"],
+      plannedHires: ["filled", "moved"],
+    });
+    expect(decision.included?.length).toBeGreaterThan(0);
+  });
+
+  it("leaves out a hire drafted to report to the filler that the fill does not move", () => {
+    const withOther = [
+      ...people,
+      hire("elsewhere", {
+        manager: { id: "starter", preferredName: "starter" },
+        draft: { ...draft, live: { ...draft.live, managerId: "another" } },
+      }),
+    ];
+
+    expect(
+      decisionFor(
+        "approve",
+        { ...noDrafts(), plannedHires: ["filled"] },
+        draftKinds,
+        [],
+        { fields: [], people: withOther },
+      ).selection.plannedHires,
+    ).not.toContain("elsewhere");
+  });
+
+  it("leaves out a filler whose only draft is of their own", () => {
+    const own = [
+      hire("filled", { filler: "starter", draft }),
+      row("starter", { draft: { ...draft, changed: ["preferredName"] } }),
+    ];
+
+    expect(
+      decisionFor(
+        "approve",
+        { ...noDrafts(), plannedHires: ["filled"] },
+        draftKinds,
+        [],
+        { fields: [], people: own },
+      ).selection.people,
+    ).toEqual([]);
+  });
+
+  it("adds no one who has no draft of their own, and leaves other fills out", () => {
+    expect(
+      decisionFor(
+        "approve",
+        { ...noDrafts(), plannedHires: ["other"] },
+        draftKinds,
+        [],
+        columns,
+      ).selection,
+    ).toMatchObject({ people: [], plannedHires: ["other"] });
+  });
+});
