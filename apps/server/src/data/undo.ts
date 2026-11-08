@@ -33,8 +33,9 @@ import {
   type Actor,
   mostSensitive,
   requirePermission,
-  requireTierEdit,
-  seesTier,
+  requireSensitivityEdit,
+  type Sensitivity,
+  seesSensitivity,
   storedTier,
 } from "../access.ts";
 import { choicesWithAdded, columnsWithAdded } from "./added-columns.ts";
@@ -106,6 +107,7 @@ import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
 import { readToday } from "./settings.ts";
 import {
+  hireSensitivities,
   readHireTier,
   recordHiringChanges,
   refuseUnmarkingHireManagers,
@@ -119,7 +121,7 @@ const changedSince =
   "This has been changed since, so it can no longer be undone";
 
 // The permissions each kind of record needs to change it: planned hires, those to edit people and
-// change Confidential data, until they are a permission area of their own.
+// the hiring plan.
 const editPermissions = {
   list: ["configuration:edit"],
   "list-item": ["configuration:edit"],
@@ -127,7 +129,7 @@ const editPermissions = {
   field: ["configuration:edit"],
   "column-order": ["configuration:edit"],
   person: ["people:edit"],
-  "planned-hire": ["people:edit", "confidential:edit"],
+  "planned-hire": ["people:edit", "hiring-plan:edit"],
   // Who may change each view is checked for the view itself.
   "saved-view": ["people:view"],
 } as const;
@@ -741,7 +743,7 @@ async function undoColumnDrafts(
       if (
         (await draftsUse(transaction, { column: record.id }, editor)) ||
         !actor.permissions.includes("people:edit") ||
-        !seesTier(actor, tier)
+        !seesSensitivity(actor, tier)
       ) {
         throw new ConflictError(changedSince);
       }
@@ -873,8 +875,8 @@ async function undoIn(
   await lockDrafts(transaction);
   await lockRecords(transaction, records);
   // A person's details are as sensitive as they are now, such as a position or a column's values
-  // as their list, or were when they changed, whichever is more sensitive. A hire's position and
-  // state are as their lists are now, since undoing a hire's changes needs Edit Confidential too.
+  // as their list, or were when they changed, whichever is more sensitive, as are a hire's, whose
+  // own details need Edit Hiring plan instead.
   const tierNow = personTier(await columnsWithAdded(transaction, undefined));
   const hireTierNow = await readHireTier(transaction);
   // So is a saved view's history, as sensitive as the columns it uses are now.
@@ -894,7 +896,10 @@ async function undoIn(
       return { ...change, tier: higher(change.tier, tierNow(change.field)) };
     }
     if (change.recordType === "planned-hire") {
-      return { ...change, tier: hireTierNow(change.field) };
+      return {
+        ...change,
+        tier: higher(change.tier, hireTierNow(change.field)),
+      };
     }
     return change.recordType === "saved-view"
       ? {
@@ -907,13 +912,16 @@ async function undoIn(
   // Each tier is its own permission, so the actor needs every tier a change had and has now, not
   // only the most sensitive. A view's tier is that of the columns it uses, which its maker needs
   // only to see.
-  const tiersOf = (change: StoredChange): Tier[] => {
+  const tiersOf = (change: StoredChange): Sensitivity[] => {
     const recorded = storedTier(change.tier);
     if (change.recordType === "person") {
       return [recorded, tierNow(change.field)];
     }
     if (change.recordType === "planned-hire") {
-      return [recorded, hireTierNow(change.field)];
+      return hireSensitivities(change.field, [
+        recorded,
+        hireTierNow(change.field),
+      ]);
     }
     if (change.recordType === "saved-view") {
       return [recorded, viewTiers.get(change.recordId) as Tier];
@@ -923,9 +931,9 @@ async function undoIn(
   for (const change of rows) {
     for (const tier of new Set(tiersOf(change))) {
       if (change.recordType === "saved-view") {
-        if (!seesTier(actor, tier)) throw new ForbiddenError();
+        if (!seesSensitivity(actor, tier)) throw new ForbiddenError();
       } else if (tier !== "general") {
-        requireTierEdit(actor, tier);
+        requireSensitivityEdit(actor, tier);
       }
     }
   }

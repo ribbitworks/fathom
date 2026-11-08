@@ -24,7 +24,7 @@ import {
   type Actor,
   requireAnyPermission,
   requirePermission,
-  seesTier,
+  seesSensitivity,
 } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
@@ -106,10 +106,10 @@ async function seenAsked(
   const shown = new Set(columns.map(({ id }) => valueField(id)));
   const seen = (field: string) =>
     (fieldOfValue(field) === null || shown.has(field)) &&
-    seesTier(actor, tierOf(field));
+    seesSensitivity(actor, tierOf(field));
   // Those without Restricted details see everyone who has started, as the live dates say.
   const listed = (id: string, draft: Draft) =>
-    seesTier(actor, "restricted") ||
+    seesSensitivity(actor, "restricted") ||
     !notStarted(live.get(id) ?? draft.fields, today);
   for (const [id, draft] of found) {
     const fields = draftFields(live.get(id), draft);

@@ -37,9 +37,10 @@ type Change = ChangeRecord & { action: "created" | "deleted" };
 type Reader = Pick<Database, "select">;
 type HireRow = typeof plannedHires.$inferSelect;
 
-// The first choice of the hiring states list with each meaning, and the tier of the Positions and
-// hiring states lists, which a hire's position and state are recorded at. Its values are as the
-// seeded lists, which are General.
+// The first choice of the hiring states list with each meaning, and the tier each of a hire's fields
+// is recorded at, as the server records them: its name General, its position and state as the
+// Positions and hiring states lists, its values as the seeded lists, which are General, and the
+// rest Confidential.
 async function hiringSettings(reader: Reader) {
   const states = await reader
     .select({ id: listItems.id, meaning: listItems.meaning })
@@ -63,7 +64,7 @@ async function hiringSettings(reader: Reader) {
     tierOf: (field: string) => {
       if (field === "positionId") return String(tiers.get("positions"));
       if (field === "stateId") return String(tiers.get("hiring-states"));
-      if (fieldOfValue(field) !== null) return "general";
+      if (field === "name" || fieldOfValue(field) !== null) return "general";
       return "confidential";
     },
   };

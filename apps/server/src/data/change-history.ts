@@ -47,10 +47,16 @@ import {
   type SQL,
   sql,
 } from "drizzle-orm";
-import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
+import {
+  type Actor,
+  mostSensitive,
+  seesSensitivity,
+  storedTier,
+  tierOfSensitivity,
+} from "../access.ts";
 import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
-import { readHireTier } from "./hires.ts";
+import { hireSensitivities, hiringPlanFields, readHireTier } from "./hires.ts";
 import { personTier } from "./people.ts";
 import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
@@ -73,7 +79,7 @@ const configurationKinds: readonly RecordType[] = [
   "column-order",
 ];
 const peopleKinds: readonly RecordType[] = ["person", "saved-view"];
-// The hiring plan, by those who see people and Confidential data.
+// The hiring plan, by those who see people and the hiring plan.
 const hiringKinds: readonly RecordType[] = ["planned-hire"];
 
 // The fields a planned hire is named by: its position and its ID.
@@ -268,7 +274,7 @@ async function nameHires(
     positions.filter((id) => !facts.names.has(id)),
     facts,
   );
-  const seesPositions = seesTier(
+  const seesPositions = seesSensitivity(
     actor,
     await builtInTier(database, "positions"),
   );
@@ -457,10 +463,15 @@ async function visibleRows(
           [viewTiers.get(row.recordId) as Tier]
         : []),
     ];
-    const tier = mostSensitive(tiers);
+    // A hire's own details are seen with the hiring plan, whatever tier they were recorded at.
+    const sensitivities =
+      row.recordType === "planned-hire"
+        ? hireSensitivities(row.field, tiers)
+        : tiers;
+    const tier = mostSensitive(sensitivities.map(tierOfSensitivity));
     const seen = planKinds.includes(row.recordType as RecordType)
       ? seesPlanKinds(actor) && tier === "general"
-      : tiers.every((each) => seesTier(actor, each));
+      : sensitivities.every((each) => seesSensitivity(actor, each));
     return seen ? [{ row, tier }] : [];
   });
 }
@@ -645,13 +656,14 @@ export async function readChangeHistory(
       ? configurationKinds
       : []),
     ...(actor.permissions.includes("people:view") ? peopleKinds : []),
-    ...(actor.permissions.includes("people:view") &&
-    seesTier(actor, "confidential")
-      ? hiringKinds
-      : []),
   ];
+  const hiring =
+    actor.permissions.includes("people:view") &&
+    seesSensitivity(actor, "hiring-plan");
   const plan = seesPlanKinds(actor);
-  const tiers = tierSchema.options.filter((tier) => seesTier(actor, tier));
+  const tiers = tierSchema.options.filter((tier) =>
+    seesSensitivity(actor, tier),
+  );
   if (kinds.length === 0 && !plan) {
     return { entries: [], next: null, includedSensitive: false };
   }
@@ -662,6 +674,16 @@ export async function readChangeHistory(
           inArray(changes.recordType, [...kinds]),
           inArray(changes.tier, tiers),
         ),
+    // A hire's own details are recorded as Confidential, but seen with the hiring plan.
+    hiring
+      ? and(
+          inArray(changes.recordType, [...hiringKinds]),
+          or(
+            inArray(changes.tier, tiers),
+            inArray(changes.field, [...hiringPlanFields]),
+          ),
+        )
+      : undefined,
     plan
       ? and(
           inArray(changes.recordType, [...planKinds]),

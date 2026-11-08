@@ -3973,8 +3973,8 @@ describe("unpublished and held changes", () => {
 describe("planned hires", () => {
   const hiringEditor = session([
     "configuration:view",
-    "confidential:edit",
-    "confidential:view",
+    "hiring-plan:edit",
+    "hiring-plan:view",
     "people:edit",
     "people:view",
     "plan:view",

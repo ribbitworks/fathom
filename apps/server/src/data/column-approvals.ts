@@ -10,7 +10,7 @@
 import { fields, lists } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { type Actor, mostSensitive, seesTier } from "../access.ts";
+import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import {
@@ -70,7 +70,7 @@ async function stateWithDrafts(
       (version) => version !== undefined,
     );
     if (
-      !seesTier(
+      !seesSensitivity(
         actor,
         mostSensitive(versions.map((one) => columnTier(state, one))),
       )

@@ -37,8 +37,8 @@ import {
   type Actor,
   mostSensitive,
   requirePermission,
-  requireTierEdit,
-  seesTier,
+  requireSensitivityEdit,
+  seesSensitivity,
 } from "../access.ts";
 import {
   BadRequestError,
@@ -323,7 +323,7 @@ export function personChanges(
 // Refuses changes to tiers the actor may not change.
 function requireEdits(actor: Actor, made: readonly Change[]): void {
   for (const tier of new Set(made.map((change) => change.tier))) {
-    requireTierEdit(actor, tier);
+    requireSensitivityEdit(actor, tier);
   }
 }
 
@@ -618,15 +618,17 @@ async function readPeopleIn(
   actor: Actor,
   today: string,
 ): Promise<PeopleRead> {
-  const restricted = seesTier(actor, "restricted");
+  const restricted = seesSensitivity(actor, "restricted");
   const allColumns = await columnsWithAdded(database, actor.user.id);
-  const columns = allColumns.filter((column) => seesTier(actor, column.tier));
+  const columns = allColumns.filter((column) =>
+    seesSensitivity(actor, column.tier),
+  );
   const tierOf = personTier(allColumns);
   const shownFields = new Set<string>([
     "preferredName",
     "employeeId",
-    ...(seesTier(actor, allColumns.positionTier) ? ["positionId"] : []),
-    ...(seesTier(actor, allColumns.stateTier) ? ["stateId"] : []),
+    ...(seesSensitivity(actor, allColumns.positionTier) ? ["positionId"] : []),
+    ...(seesSensitivity(actor, allColumns.stateTier) ? ["stateId"] : []),
     "teamName",
     "isManager",
     ...(restricted ? ["startDate", "endDate", "managerId", "managerFrom"] : []),
@@ -641,7 +643,7 @@ async function readPeopleIn(
     [...draftsNow.keys()],
     (field, tier) =>
       shownFields.has(field) &&
-      seesTier(actor, mostSensitive([tier, tierOf(field)])),
+      seesSensitivity(actor, mostSensitive([tier, tierOf(field)])),
     actor.user.id,
   );
   const ids = [
@@ -657,7 +659,7 @@ async function readPeopleIn(
   // Every person's state means Hired or Left, as their end date decides, and as the live dates
   // decide for those who see no dates.
   const statesTier = allColumns.stateTier;
-  const seesStates = seesTier(actor, statesTier);
+  const seesStates = seesSensitivity(actor, statesTier);
   const stateOf = seesStates ? await readStates(database) : undefined;
   // A person's state as a reader sees it: from the end date they see.
   const shownState = (person: Recorded, before: Recorded | undefined) =>
@@ -771,7 +773,7 @@ async function readPeopleIn(
       draft.state === "rejected" &&
       draft.reason !== null &&
       draftFields(before, draft).every((field) =>
-        seesTier(actor, tierOf(field)),
+        seesSensitivity(actor, tierOf(field)),
       )
         ? { reason: draft.reason }
         : {};
@@ -860,7 +862,7 @@ export async function createPeople(
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const columns = await columnsWithAdded(transaction, actor.user.id, true);
-    if (!seesTier(actor, columns.positionTier)) {
+    if (!seesSensitivity(actor, columns.positionTier)) {
       throw new ForbiddenError(
         "Every person needs a position, and your role doesn't let you see positions",
       );
@@ -1031,7 +1033,9 @@ export async function updatePerson(
       // Those who see no dates are offered states from the live end date, so their choice is
       // checked against it, and a draft's end date is never revealed by a refusal; a state that
       // stops fitting once the draft is approved shows the first of the meaning instead.
-      const dates = seesTier(actor, "restricted") ? after : (before ?? after);
+      const dates = seesSensitivity(actor, "restricted")
+        ? after
+        : (before ?? after);
       await checkState(
         transaction,
         { ...after, endDate: dates.endDate },
@@ -1155,7 +1159,7 @@ export async function resubmitPersonDraft(
     const tierOf = personTier(columns);
     // Resubmitting sends every change the draft holds, so it needs the right to make each of them.
     for (const field of draftFields(before, draft)) {
-      requireTierEdit(actor, tierOf(field));
+      requireSensitivityEdit(actor, tierOf(field));
     }
     const made = clearedRejection(id, tierOf, before, draft);
     await transaction

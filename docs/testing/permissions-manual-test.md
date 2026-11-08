@@ -249,6 +249,10 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Expected:** An **Offer letter** column is shown. **Start**, **End** and **Manager since** are not shown. There is no **New person** button.
   - **Notes:**
 
+- [ ] **Step 2.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
+  - **Expected:** Only hire rows are shown, none with a **Draft** mark, and **REQ-2050** is not among them.
+  - **Notes:**
+
 **Afterwards:** P5.
 
 #### PERM-09: Edit Confidential Data Changes Confidential Values
@@ -269,9 +273,51 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
+### Hiring Plan
+
+#### PERM-10: View Hiring Plan Shows Planned Hires' Drafts
+
+**Preconditions:** Team Member granted only **View** on **People** and **View** on **Hiring plan** (P4), signed in as `team.member@fathom.test`.
+
+- [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
+  - **Expected:** Only hire rows are shown. **REQ-2050** is among them, and it and **Backend engineer 1** have a **Draft** mark. There is no **New planned hire** button.
+  - **Notes:**
+
+- [ ] **Step 2.** Read the column headers, then the **Start** cell of **REQ-2050**.
+  - **Expected:** **Start** is shown, and **End** and **Manager since** are not. The **Start** cell of **REQ-2050** shows a date.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Clear all** above the table, and search for **Max Munk**.
+  - **Expected:** The row's **Start** cell is empty.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Clear all** again, search for **Backend engineer 1**, select the row's **Name** cell, and type a letter.
+  - **Expected:** No editor opens.
+  - **Notes:**
+
+**Afterwards:** P5.
+
+#### PERM-11: Edit Hiring Plan Changes Planned Hires
+
+**Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Hiring plan** (P4), signed in as `team.member@fathom.test`.
+
+- [ ] **Step 1.** Look at the top right of the page.
+  - **Expected:** **New person** and **New planned hire** are shown.
+  - **Notes:**
+
+- [ ] **Step 2.** Search for **Backend engineer 2**. Select the row's **Name** cell, press Enter, replace the text with `Backend engineer 3`, and press Enter.
+  - **Expected:** The cell reads **Backend engineer 3** and is yellow. The row has a hollow yellow dot and **Draft**. The Publish button reads **Publish 1 change**.
+  - **Notes:**
+
+- [ ] **Step 3.** Discard your unpublished changes (P6).
+  - **Expected:** The **Name** cell reads **Backend engineer 2**.
+  - **Notes:**
+
+**Afterwards:** P5.
+
 ### Drafts
 
-#### PERM-10: Approve Drafts Approves What the Account Sees
+#### PERM-12: Approve Drafts Approves What the Account Sees
 
 **Preconditions:** The seed's draft of a new order for **Levels** still waiting, as after R2, then Team Member granted only **Approve** on **Drafts of every kind** and **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -293,7 +339,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
-#### PERM-11: Approve Their Own Drafts Lets the Account Approve What It Changed
+#### PERM-13: Approve Their Own Drafts Lets the Account Approve What It Changed
 
 **Preconditions:** Team Member granted only **Edit** on **Plan**, **Approve** on **Drafts of every kind** and **Approve** on **Their own drafts** (P4), signed in as `team.member@fathom.test`. **Releases** page open, with **Platform** selected in the streams table.
 
@@ -313,7 +359,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Configuration
 
-#### PERM-12: View Configuration Shows Lists and Release Streams Without Changing Them
+#### PERM-14: View Configuration Shows Lists and Release Streams Without Changing Them
 
 **Preconditions:** Team Member granted only **View** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -331,7 +377,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Afterwards:** P5.
 
-#### PERM-13: Edit Configuration Changes Release Streams
+#### PERM-15: Edit Configuration Changes Release Streams
 
 **Preconditions:** Team Member granted only **Edit** on **Configuration** (P4), signed in as `team.member@fathom.test`.
 
@@ -351,7 +397,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Change History
 
-#### PERM-14: View Change History Shows Only Changes to Data the Account Sees
+#### PERM-16: View Change History Shows Only Changes to Data the Account Sees
 
 **Preconditions:** Team Member granted only **View** on **Change history** (P4), signed in as `team.member@fathom.test`.
 
@@ -363,7 +409,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Access History
 
-#### PERM-15: View Access History Shows the Access History
+#### PERM-17: View Access History Shows the Access History
 
 **Preconditions:** Team Member granted only **View** on **Access history** (P4), signed in as `team.member@fathom.test`.
 
@@ -375,7 +421,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Accounts
 
-#### PERM-16: Edit Accounts Manages Accounts
+#### PERM-18: Edit Accounts Manages Accounts
 
 **Preconditions:** Team Member granted only **Edit** on **Accounts** (P4), signed in as `team.member@fathom.test`.
 
@@ -399,7 +445,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Roles
 
-#### PERM-17: Edit Roles Creates and Changes Roles
+#### PERM-19: Edit Roles Creates and Changes Roles
 
 **Preconditions:** Team Member granted only **Edit** on **Roles** (P4), signed in as `team.member@fathom.test`.
 
@@ -415,7 +461,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Settings
 
-#### PERM-18: Edit Settings Changes Fathom's Time Zone
+#### PERM-20: Edit Settings Changes Fathom's Time Zone
 
 **Preconditions:** Team Member granted only **Edit** on **Settings** (P4), signed in as `team.member@fathom.test`.
 
@@ -431,7 +477,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Not Built Yet
 
-#### PERM-19: Permissions Not Built Yet Add Only the Capacity Entry
+#### PERM-21: Permissions Not Built Yet Add Only the Capacity Entry
 
 **Preconditions:** Team Member granted only **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts of every kind** (P4), signed in as `team.member@fathom.test`.
 
@@ -443,7 +489,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 ### Putting Everything Back
 
-#### PERM-20: Every Starting Role Is as Fathom Started It
+#### PERM-22: Every Starting Role Is as Fathom Started It
 
 **Preconditions:** All the test cases above run. Signed in (P1) as `fathom.administrator@fathom.test`.
 

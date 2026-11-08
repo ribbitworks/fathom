@@ -17,7 +17,7 @@ import {
 } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { type Actor, mostSensitive, seesTier } from "../access.ts";
+import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
 import {
   BadRequestError,
   ConflictError,
@@ -423,7 +423,7 @@ function refuseUnseenTier(
   field: Recorded,
   message = unseenTier,
 ) {
-  if (!seesTier(actor, columnTier(state, field))) {
+  if (!seesSensitivity(actor, columnTier(state, field))) {
     throw new ForbiddenError(message);
   }
 }
@@ -595,7 +595,10 @@ export async function deleteField(
       columnTier(state, field),
       columnTier(state, live),
     ]);
-    if (!actor.permissions.includes("people:edit") || !seesTier(actor, tier)) {
+    if (
+      !actor.permissions.includes("people:edit") ||
+      !seesSensitivity(actor, tier)
+    ) {
       throw new ForbiddenError(
         `${String(field.name)} holds people's details your role does not let you change, so someone who may must delete it`,
       );
@@ -783,7 +786,7 @@ export async function readColumnsOut(
       columnTier(state, field),
       ...(live === undefined ? [] : [columnTier(state, live)]),
     ]);
-    if (!seesTier(actor, tier)) return [];
+    if (!seesSensitivity(actor, tier)) return [];
     return [
       {
         ...toFieldOut(id, field),
@@ -800,7 +803,7 @@ export async function readColumnsOut(
   });
   const visible = new Set([
     ...[...builtIn]
-      .filter(([, tier]) => seesTier(actor, tier))
+      .filter(([, tier]) => seesSensitivity(actor, tier))
       .map(([key]) => key),
     ...shown.map(({ id }) => id),
   ]);

@@ -49,7 +49,7 @@ interface User {
 let test: TestApp;
 // A Workforce Administrator, who changes the hiring plan.
 let editor: User;
-// An Approver who sees Confidential data, so decides hires' drafts.
+// An Approver who sees the hiring plan, so decides hires' drafts.
 let approver: User;
 // A Resource Planner, who sees people, so the hiring plan's placeholders.
 let planner: User;
@@ -230,7 +230,7 @@ const placeholderKeys = [
 ];
 
 describe("the hiring plan", () => {
-  it("is shown whole, with its drafts, to those who see Confidential data, by ID", async () => {
+  it("is shown whole, with its drafts, to those who see the hiring plan, by ID", async () => {
     const manager = await person();
     const later = await liveHire({
       requisition: "Zz-Fictional-REQ",
@@ -1194,8 +1194,13 @@ describe("changes to the hiring plan in the change history", () => {
 });
 
 describe("each role's view of the hiring plan", () => {
-  it("shows an Engineering Manager, who sees Restricted but not Confidential data, only placeholders and none of the plan's history", async () => {
-    const manager = await test.signedIn("engineering-manager");
+  it("shows those who see Restricted and Confidential data, but not the hiring plan, only placeholders and none of the plan's history", async () => {
+    const manager = await test.signedIn([
+      "people:view",
+      "restricted:view",
+      "confidential:view",
+      "changes:view",
+    ]);
     const requisition = unique("Fictional-Managed");
     const id = await liveHire({ requisition });
     await changed(id, { stateId: open });
@@ -1225,17 +1230,74 @@ describe("each role's view of the hiring plan", () => {
     );
   });
 
-  it.each([
-    ["administrator"],
-    ["team-member"],
-    ["planner"],
-    ["project-manager"],
-  ] as const)("refuses the plan to the %s role alone", async (role) => {
-    const user = await test.signedIn(role);
-    expect((await send(user, "GET", "/api/planned-hires")).statusCode).toBe(
-      403,
+  it("shows a Project Manager the whole plan, with each hire's target date on People", async () => {
+    const id = await liveHire({ stateId: open });
+    const manager = await test.signedIn("project-manager");
+    const seen = await hiresSeen(manager);
+    expect(seen.wholePlan).toBe(true);
+    expect(seen.hires.find((hire) => hire.id === id)?.targetDate).toBe(
+      "2027-03-15",
     );
+    const { people: rows } = await ok<{ people: Person[] }>(
+      await send(manager, "GET", "/api/people"),
+    );
+    expect(rows.find((row) => row.id === id)?.startDate).toBe("2027-03-15");
+    expect(
+      rows.some((row) => row.kind !== "planned-hire" && "startDate" in row),
+    ).toBe(false);
   });
+
+  it.each(roleSchema.options)(
+    "shows a %s the whole plan, with target dates, only when the role sees people and the hiring plan",
+    async (role) => {
+      const id = await liveHire();
+      const who = await test.signedIn(role);
+      const response = await send(who, "GET", "/api/planned-hires");
+      if (!rolesGranting("people:view").includes(role)) {
+        expect(response.statusCode).toBe(403);
+        return;
+      }
+      const { hires, wholePlan } = response.json<Hires>();
+      const whole = rolesGranting("hiring-plan:view").includes(role);
+      expect(wholePlan).toBe(whole);
+      expect(hires.find((hire) => hire.id === id)?.targetDate).toBe(
+        whole ? "2027-03-15" : undefined,
+      );
+    },
+  );
+
+  it("lets a Project Manager approve drafts of people's General details and of hires", async () => {
+    const manager = await test.signedIn("project-manager");
+    const someone = await person();
+    await ok(
+      await send(editor, "PATCH", `/api/people/${someone}`, {
+        preferredName: unique("Fictional Renamed"),
+      }),
+    );
+    const id = await liveHire();
+    await changed(id, {
+      requisition: unique("Fictional-PM-Approved"),
+      stateId: open,
+    });
+    await ok(
+      await send(manager, "POST", "/api/drafts/approval", {
+        people: [someone],
+        plannedHires: [id],
+      }),
+    );
+    expect((await hireSeen(id))?.draft).toBeUndefined();
+    expect((await hireSeen(id))?.stateId).toBe(open);
+  });
+
+  it.each([["administrator"], ["team-member"], ["planner"]] as const)(
+    "refuses the plan to the %s role alone",
+    async (role) => {
+      const user = await test.signedIn(role);
+      expect((await send(user, "GET", "/api/planned-hires")).statusCode).toBe(
+        403,
+      );
+    },
+  );
 
   it("shows Administrators that the hiring plan changed, without naming the hire", async () => {
     const administrator = await test.signedIn("administrator");
@@ -1252,11 +1314,12 @@ describe("each role's view of the hiring plan", () => {
     expect(JSON.stringify(entries)).not.toContain(requisition);
   });
 
-  it("answers an Approver who does not see Confidential data as if a hire had no draft", async () => {
+  it("answers an Approver who does not see the hiring plan as if a hire had no draft", async () => {
     const approving = await test.signedIn([
       "drafts:approve",
       "people:view",
       "restricted:view",
+      "confidential:view",
     ]);
     const id = await liveHire();
     await changed(id, { stateId: open });
@@ -1556,10 +1619,14 @@ describe("a hire Fathom holds no history of", () => {
 });
 
 describe("who may change the hiring plan", () => {
-  it("needs the right to change Confidential data, not only to see it", async () => {
+  it("needs the right to change the hiring plan, not only to see it, nor to change Confidential data", async () => {
     const id = await liveHire();
     const who = await test.signedIn([]);
-    await test.holdOnly(who.id, ["people:edit", "confidential:view"]);
+    await test.holdOnly(who.id, [
+      "people:edit",
+      "hiring-plan:view",
+      "confidential:edit",
+    ]);
     expect(
       (await send(who, "POST", "/api/planned-hires", hireRequest({})))
         .statusCode,
@@ -1591,14 +1658,14 @@ describe("who may change the hiring plan", () => {
   });
 
   it.each(roleSchema.options)(
-    "refuses a %s's changes to hires unless the role may edit people and change Confidential data",
+    "refuses a %s's changes to hires unless the role may edit people and the hiring plan",
     async (role) => {
       const live = await liveHire();
       const { id } = await draftHire();
       const who = await test.signedIn(role);
       const may =
         rolesGranting("people:edit").includes(role) &&
-        rolesGranting("confidential:edit").includes(role);
+        rolesGranting("hiring-plan:edit").includes(role);
       const statuses = [
         await send(who, "POST", "/api/planned-hires", hireRequest({})),
         await send(who, "PATCH", `/api/planned-hires/${live}`, {
@@ -1612,9 +1679,9 @@ describe("who may change the hiring plan", () => {
     },
   );
 
-  it("lets those who may edit people and change Confidential data change it", async () => {
+  it("lets those who may edit people and the hiring plan change it", async () => {
     const who = await test.signedIn([]);
-    await test.holdOnly(who.id, ["people:edit", "confidential:edit"]);
+    await test.holdOnly(who.id, ["people:edit", "hiring-plan:edit"]);
     expect(
       (await send(who, "POST", "/api/planned-hires", hireRequest({})))
         .statusCode,
@@ -1623,10 +1690,38 @@ describe("who may change the hiring plan", () => {
 });
 
 describe("undoing changes to the hiring plan", () => {
+  it("needs only the rights to edit people and the hiring plan to undo, discard, and resubmit", async () => {
+    const who = await test.signedIn([]);
+    await test.holdOnly(who.id, ["people:edit", "hiring-plan:edit"]);
+    const id = await liveHire();
+    const dated = await ok<{ changeSetId: string }>(
+      await change(id, { targetDate: "2027-07-15" }, who),
+    );
+    await ok(await send(who, "POST", `/api/undo/${dated.changeSetId}`));
+    expect((await hireSeen(id))?.draft).toBeUndefined();
+    await ok(await change(id, { targetDate: "2027-08-15" }, who));
+    await ok(
+      await send(approver, "POST", "/api/drafts/rejection", {
+        plannedHires: [id],
+        reason: "Fictional reason",
+      }),
+    );
+    await ok(
+      await send(who, "DELETE", `/api/planned-hires/${id}/draft/rejection`),
+    );
+    expect((await hireSeen(id))?.draft?.state).toBe("waiting");
+    await ok(await send(who, "DELETE", `/api/planned-hires/${id}/draft`));
+    expect((await hireSeen(id))?.draft).toBeUndefined();
+  });
+
   it("needs the rights to change hires when undoing, not only when the change was made", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const { changeSetId } = await draftHire({}, maker);
-    await test.holdOnly(maker.id, ["people:edit", "confidential:view"]);
+    await test.holdOnly(maker.id, [
+      "people:edit",
+      "hiring-plan:view",
+      "confidential:edit",
+    ]);
     const response = await send(maker, "POST", `/api/undo/${changeSetId}`);
     expect(response.statusCode).toBe(403);
   });
@@ -1764,6 +1859,64 @@ describe("values in People's columns", () => {
       visibility: "general",
     });
     expect(response.json<{ field: Field }>().field.onPlannedHires).toBe(true);
+  });
+
+  it("shows an Engineering Manager, who sees the hiring plan but not Confidential data, the whole plan and its history, without values in Confidential columns", async () => {
+    const manager = await test.signedIn("engineering-manager");
+    const secret = await linkColumn({ visibility: "confidential" });
+    const requisition = unique("Fictional-Managed");
+    const id = await liveHire({
+      requisition,
+      links: { [secret.id]: link("https://example.test/managed-secret") },
+    });
+    await changed(id, { stateId: open });
+    const { hires, wholePlan } = await hiresSeen(manager);
+    expect(wholePlan).toBe(true);
+    const seen = hires.find((hire) => hire.id === id);
+    expect(seen?.targetDate).toBe("2027-03-15");
+    expect(seen?.draft?.changed).toEqual(["stateId"]);
+    expect(seen?.links[secret.id]).toBeUndefined();
+    const history = JSON.stringify(
+      (await ok<ChangeHistory>(await send(manager, "GET", "/api/changes")))
+        .entries,
+    );
+    expect(history).toContain(requisition);
+    expect(history).not.toContain("managed-secret");
+  });
+
+  it("lets an Approver who sees the hiring plan, but not Confidential data, decide a hire's draft only when it changes nothing in a Confidential column", async () => {
+    const deciding = await test.signedIn([
+      "drafts:approve",
+      "people:view",
+      "hiring-plan:view",
+      "changes:view",
+    ]);
+    const secret = await linkColumn({ visibility: "confidential" });
+    const reason = unique("Fictional reason");
+    const own = await draftHire({ requisition: unique("Fictional-Own") });
+    await ok(
+      await send(deciding, "POST", "/api/drafts/rejection", {
+        plannedHires: [own.id],
+        reason,
+      }),
+    );
+    expect(
+      JSON.stringify(
+        (await ok<ChangeHistory>(await send(deciding, "GET", "/api/changes")))
+          .entries,
+      ),
+    ).toContain(reason);
+    const withSecret = await draftHire({
+      links: { [secret.id]: link("https://example.test/undecided") },
+    });
+    expect(
+      (
+        await send(deciding, "POST", "/api/drafts/rejection", {
+          plannedHires: [withSecret.id],
+          reason,
+        })
+      ).statusCode,
+    ).toBe(403);
   });
 
   it("keeps a hire's values, drafted and then live, and shows each at its column's tier", async () => {

@@ -102,6 +102,26 @@ describe("the order of the columns", () => {
     ).toEqual([]);
   });
 
+  it("shows Start only on planned hires to those who see the hiring plan but not people's dates", () => {
+    const keys = (showDates: boolean, showHireDates: boolean) =>
+      columnsFor([], [], [], showDates, [], true, showHireDates).map(
+        ({ key }) => key,
+      );
+    expect(keys(false, false)).not.toContain("startDate");
+    expect(keys(true, false)).toContain("endDate");
+    expect(keys(false, true)).not.toContain("endDate");
+    const start = columnsFor([], [], [], false, [], true, true).find(
+      ({ key }) => key === "startDate",
+    );
+    expect(start?.offeredOn?.("planned-hire")).toBe(true);
+    expect(start?.offeredOn?.("person")).toBe(false);
+    expect(
+      columnsFor([], [], [], true, [], true, true).find(
+        ({ key }) => key === "startDate",
+      )?.offeredOn,
+    ).toBeUndefined();
+  });
+
   it("offers no choices for a column whose list cannot be found", () => {
     expect(columnsFor([site], [], [], false).at(-1)?.choices).toEqual([]);
   });

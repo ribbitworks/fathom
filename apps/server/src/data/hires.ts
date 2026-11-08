@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Planned hires, as part of the data access layer. The hiring plan is Confidential, so every change
-// to a hire is recorded at that tier, and only those who see Confidential data see hires' drafts
-// and their history. Everyone who sees people sees each placeholder: a hire not yet filled, or, for
-// readers who do not see the person who filled it, one whose person has not started, with its ID,
-// manager, expected month, its position and state to those who see their list's tier, and its
-// values in the columns it shares with people, each to those who see its column's tier. Every
-// change is a draft, as drafts.ts sets out, and changing the hiring plan is recorded in the access
-// history, without naming the hire.
+// Planned hires, as part of the data access layer. The hiring plan is Confidential, so changes to a
+// hire's own details are recorded at that tier, but it is a permission area of its own: only those
+// who see the hiring plan see hires' drafts and their history. Everyone who sees people sees each
+// placeholder: a hire not yet filled, or, for readers who do not see the person who filled it, one
+// whose person has not started, with its ID, manager, expected month, its position and state to
+// those who see their list's tier, and its values in the columns it shares with people, each to
+// those who see its column's tier. Every change is a draft, as drafts.ts sets out, and changing the
+// hiring plan is recorded in the access history, without naming the hire.
 
 import {
   type Database,
@@ -35,8 +35,9 @@ import { randomUUID } from "node:crypto";
 import {
   type Actor,
   requirePermission,
-  requireTierEdit,
-  seesTier,
+  requireSensitivityEdit,
+  type Sensitivity,
+  seesSensitivity,
 } from "../access.ts";
 import {
   BadRequestError,
@@ -73,6 +74,7 @@ import {
   drafted,
   draftFields,
   draftMakers,
+  draftTier,
   fitsColumns,
   lockDrafts,
   otherApprover,
@@ -126,16 +128,46 @@ export const hireFields = [
   "filledBy",
 ] as const;
 
-// Every detail of a hire is part of the hiring plan, so Confidential, even those a placeholder
-// shows, since the change history shows changes to them beside the rest.
-export const hireTier = () => "confidential" as const;
+// A hire's own details, the hiring plan itself, even those a placeholder shows, since the change
+// history shows changes to them beside the rest. They are Confidential, but seen and changed with
+// the hiring plan's permissions.
+export const hiringPlanFields: readonly string[] = hireFields.filter(
+  (field) => !["name", "positionId", "stateId"].includes(field),
+);
 
 export type HireTier = (field: string) => Tier;
 
+// What lets a user see or change a field of a hire, given the tiers it has, as recorded, now, or
+// both: the hiring plan for the hire's own details, and the tiers for the rest. A draft's rejection
+// covers the whole draft, so it needs the hiring plan and the tiers of the fields it holds, which
+// it is recorded at.
+export function hireSensitivities(
+  field: string,
+  tiers: readonly Tier[],
+): Sensitivity[] {
+  if (hiringPlanFields.includes(field)) return ["hiring-plan"];
+  return field === rejectedField ? ["hiring-plan", ...tiers] : [...tiers];
+}
+
+// Whether the actor sees a field of a hire, of the tiers given.
+export const seesHireField =
+  (actor: Actor, tierOf: HireTier) =>
+  (field: string): boolean =>
+    hireSensitivities(field, [tierOf(field)]).every((sensitivity) =>
+      seesSensitivity(actor, sensitivity),
+    );
+
+// The tiers of a hire's fields that a rejection of its draft is recorded at: those of its fields
+// other than the hire's own details, which the hiring plan's permissions cover.
+const rejectionTier =
+  (tierOf: HireTier): HireTier =>
+  (field) =>
+    hiringPlanFields.includes(field) ? "general" : tierOf(field);
+
 // The tier of each field of a hire: its name is General, as a person's is; its position and state
 // are as sensitive as their lists, and its values in a column as the column's, as a person's are;
-// and the rest of the hiring plan is Confidential, as are values in a column not among those given,
-// the live columns unless others are.
+// the rest of the hiring plan is Confidential, as are values in a column not among those given, the
+// live columns unless others are; and a draft's rejection adds no tier to those it is recorded at.
 export async function readHireTier(
   reader: Reader,
   columns?: readonly ColumnInfo[],
@@ -149,7 +181,7 @@ export async function readHireTier(
     ]),
   );
   return (field) => {
-    if (field === "name") return "general";
+    if (field === "name" || field === rejectedField) return "general";
     if (field === "positionId") return positions;
     if (field === "stateId") return states;
     return valueTiers.get(field) ?? "confidential";
@@ -208,10 +240,13 @@ function refuseNotOffered(
   }
 }
 
-// Refuses changes to fields of a tier the actor may not change.
+// Refuses changes to fields the actor may not change.
 function requireHireEdits(actor: Actor, made: readonly Change[]): void {
-  for (const tier of new Set(made.map((change) => change.tier))) {
-    requireTierEdit(actor, tier);
+  const needed = made.flatMap((change) =>
+    hireSensitivities(change.field, [change.tier]),
+  );
+  for (const sensitivity of new Set(needed)) {
+    requireSensitivityEdit(actor, sensitivity);
   }
 }
 
@@ -362,7 +397,7 @@ async function peopleNamed(
 }
 
 // The hires the actor may see, by ID, for those who see people: the whole hiring plan, as drafts
-// make it, for those who also see Confidential data, which does nothing without seeing people, and
+// make it, for those who also see the hiring plan, which does nothing without seeing people, and
 // otherwise the placeholders as they are live, without their drafts. A filled hire is left out once
 // its person is seen instead: by readers who see Restricted data, or by everyone once the person has
 // started.
@@ -385,7 +420,7 @@ export async function readHiresIn(
   actor: Actor,
   today: string,
 ): Promise<Hires & { includedRestricted: boolean }> {
-  const wholePlan = seesTier(actor, "confidential");
+  const wholePlan = seesSensitivity(actor, "hiring-plan");
   const live = await readLiveHires(transaction);
   const draftsNow = wholePlan
     ? await readHireDrafts(transaction, undefined, actor.user.id)
@@ -396,11 +431,12 @@ export async function readHiresIn(
     ? await columnsWithAdded(transaction, actor.user.id)
     : await readColumns(transaction);
   const tierOf = await readHireTier(transaction, columns);
-  const seesPositions = seesTier(actor, tierOf("positionId"));
-  const seesStates = seesTier(actor, tierOf("stateId"));
+  const seesField = seesHireField(actor, tierOf);
+  const seesPositions = seesSensitivity(actor, tierOf("positionId"));
+  const seesStates = seesSensitivity(actor, tierOf("stateId"));
   // The columns whose values the reader sees on hires.
   const shownColumns = offeredOn(columns).filter((column) =>
-    seesTier(actor, column.tier),
+    seesSensitivity(actor, column.tier),
   );
   const shownValue = new Set(shownColumns.map(({ id }) => id));
   const shownValues = <Value>(byColumn: Iterable<[string, Value]>) =>
@@ -412,7 +448,7 @@ export async function readHiresIn(
     transaction,
     recordType,
     [...draftsNow.keys()],
-    (field) => seesTier(actor, tierOf(field)),
+    seesField,
     actor.user.id,
   );
   const ids = [
@@ -429,7 +465,7 @@ export async function readHiresIn(
   });
   // Readers who cannot see Restricted data see only people who have started, so a hire names its
   // manager to them only once the manager has started, as People shows them.
-  const restricted = seesTier(actor, "restricted");
+  const restricted = seesSensitivity(actor, "restricted");
   const named = await peopleNamed(
     transaction,
     versions.flatMap(({ hire, before }) =>
@@ -494,9 +530,7 @@ export async function readHiresIn(
     const drafted = draftFields(before, draft);
     const seen = (field: string) => {
       const fieldId = fieldOfValue(field);
-      return fieldId === null
-        ? seesTier(actor, tierOf(field))
-        : shownValue.has(fieldId);
+      return fieldId === null ? seesField(field) : shownValue.has(fieldId);
     };
     if (!drafted.some(seen)) return {};
     // A hire's ID is one field to the reader, whichever of the two a draft changes.
@@ -582,11 +616,11 @@ export async function readHiresIn(
   return { hires, wholePlan, includedRestricted };
 }
 
-// Until planned hires are a permission area of their own, changing them needs the rights to edit
-// people and to change Confidential data, as the Decisions Log sets out.
+// Changing planned hires needs the rights to edit people and the hiring plan, as the Decisions Log
+// sets out.
 function requireHiringEdit(actor: Actor): void {
   requirePermission(actor, "people:edit");
-  requirePermission(actor, "confidential:edit");
+  requirePermission(actor, "hiring-plan:edit");
 }
 
 // Hired and Left are people's states, and a hire is hired only by filling it.
@@ -730,12 +764,12 @@ export async function createHires(
     // Every hire needs a position and a state, so one who cannot see either cannot add hires.
     const columns = await columnsWithAdded(transaction, actor.user.id, true);
     const tierOf = await readHireTier(transaction, columns);
-    if (!seesTier(actor, tierOf("positionId"))) {
+    if (!seesSensitivity(actor, tierOf("positionId"))) {
       throw new ForbiddenError(
         "Every planned hire needs a position, and your role doesn't let you see positions",
       );
     }
-    if (!seesTier(actor, tierOf("stateId"))) {
+    if (!seesSensitivity(actor, tierOf("stateId"))) {
       throw new ForbiddenError(
         "Every planned hire needs a state, and your role doesn't let you see hiring states",
       );
@@ -909,7 +943,7 @@ export async function updateHire(
     if (made.length === 0) return null;
     const all = [
       ...asDraft(made),
-      ...clearedRejection(id, tierOf, before, draft, recordType),
+      ...clearedRejection(id, rejectionTier(tierOf), before, draft, recordType),
     ];
     await writeDraft(transaction, actor.user.id, recordType, id, before, after);
     await recordHiringChanges(transaction, actor.user.id, all);
@@ -941,7 +975,7 @@ export async function deleteHire(
     const tierOf = await readHireTier(transaction);
     const made = [
       ...asDraft(hireChanges(id, "deleted", hire, undefined, tierOf)),
-      ...clearedRejection(id, tierOf, before, draft, recordType),
+      ...clearedRejection(id, rejectionTier(tierOf), before, draft, recordType),
     ];
     requireHireEdits(actor, made);
     await writeDraft(
@@ -978,9 +1012,17 @@ export async function resubmitHireDraft(
     const tierOf = await readHireTier(transaction);
     // Resubmitting sends every change the draft holds, so it needs the right to make each of them.
     for (const field of draftFields(before, draft)) {
-      requireTierEdit(actor, tierOf(field));
+      for (const sensitivity of hireSensitivities(field, [tierOf(field)])) {
+        requireSensitivityEdit(actor, sensitivity);
+      }
     }
-    const made = clearedRejection(id, tierOf, before, draft, recordType);
+    const made = clearedRejection(
+      id,
+      rejectionTier(tierOf),
+      before,
+      draft,
+      recordType,
+    );
     await transaction
       .update(drafts)
       .set({ state: "waiting", reason: null })
@@ -1013,7 +1055,7 @@ export async function discardHireDraft(
     const tierOf = await readHireTier(transaction);
     const made = [
       ...asDraft(hireChanges(id, action, hire, before, tierOf)),
-      ...clearedRejection(id, tierOf, before, draft, recordType),
+      ...clearedRejection(id, rejectionTier(tierOf), before, draft, recordType),
     ];
     requireHireEdits(actor, made);
     await writeDraft(
@@ -1117,21 +1159,21 @@ export async function refuseUnmarkingHireManagers(
 }
 
 // Checks the actor may approve or reject the drafts of the hires asked for, and reads them with the
-// hires as they are live. Only those who see Confidential data see hires' drafts, so for anyone
-// else they are answered as drafts that do not exist.
+// hires as they are live. Only those who see the hiring plan see hires' drafts, so for anyone else
+// they are answered as drafts that do not exist.
 async function seenHires(
   transaction: Transaction,
   actor: Actor,
   ids: readonly string[],
 ) {
-  if (!seesTier(actor, "confidential")) throw new NotFoundError(noDraft);
+  if (!seesSensitivity(actor, "hiring-plan")) throw new NotFoundError(noDraft);
   const found = await readHireDrafts(transaction, ids);
   if (found.size !== ids.length) throw new NotFoundError(noDraft);
   const live = await readLiveHires(transaction, ids, true);
   const tierOf = await readHireTier(transaction);
   for (const [id, draft] of found) {
     const fields = draftFields(live.get(id), draft);
-    if (!fields.every((field) => seesTier(actor, tierOf(field)))) {
+    if (!fields.every(seesHireField(actor, tierOf))) {
       throw new ForbiddenError(
         "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
       );
@@ -1253,7 +1295,7 @@ export async function rejectHiresIn(
   reason: string,
 ): Promise<Change[]> {
   if (ids.length === 0) return [];
-  const { found } = await seenHires(transaction, actor, ids);
+  const { found, live, tierOf } = await seenHires(transaction, actor, ids);
   const made: Change[] = [];
   for (const id of ids) {
     const draft = found.get(id) as Draft;
@@ -1263,7 +1305,7 @@ export async function rejectHiresIn(
       recordId: id,
       action: "changed",
       field: rejectedField,
-      tier: hireTier(),
+      tier: draftTier(rejectionTier(tierOf), live.get(id), draft),
       oldValue: draft.state === "rejected" ? draft.reason : null,
       newValue: reason,
       draft: true,

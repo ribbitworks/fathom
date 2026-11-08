@@ -21,7 +21,7 @@ import {
 } from "@fathom/shared";
 import { asc, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { type Actor, mostSensitive, seesTier } from "../access.ts";
+import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../errors.ts";
 import {
   type Change,
@@ -76,7 +76,9 @@ function sees(
   tiers: ReadonlyMap<string, Tier>,
   definition: ViewDefinition,
 ): boolean {
-  return usedTiers(tiers, definition).every((tier) => seesTier(actor, tier));
+  return usedTiers(tiers, definition).every((tier) =>
+    seesSensitivity(actor, tier),
+  );
 }
 
 // Whether the actor may rename, update, or delete a view.

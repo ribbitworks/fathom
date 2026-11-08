@@ -106,7 +106,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 2.** Read the **What it is for** column.
-  - **Expected:** Engineering Manager reads **Edits the plan and allocations, sees people, including everyone's Restricted details, colours teams on the org chart, and proposes feature teams.** Wherever **Restricted** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
+  - **Expected:** Engineering Manager reads **Edits the plan and allocations, sees people, with everyone's Restricted details and the hiring plan, colours teams on the org chart, and proposes feature teams.** Wherever **Restricted** or **Confidential** appears, it is in its tier colour, in light and dark mode alike.
   - **Notes:**
 
 ### ROLE-03: The Dialog Shows What a Role Grants
@@ -114,7 +114,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** As ROLE-02.
 
 - [ ] **Step 1.** Open the **Project Manager** role (P3).
-  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid. The ticked boxes are **View** and **Edit** on **Plan**, with **View** greyed; **View** on **Allocations**; **View** on **Org chart**; **Approve** on **Feature teams**; **Draft** and **Approve** on **Drafts of every kind**; and **View** on **Configuration** and on **Change history**. Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
+  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid. The ticked boxes are **View** and **Edit** on **Plan**, with **View** greyed; **View** on **Allocations**; **View** on **People**; **View** on **Org chart**; **View** on **Hiring plan**; **Approve** on **Feature teams**; **Draft** and **Approve** on **Drafts of every kind**; and **View** on **Configuration** and on **Change history**. Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Area** column, and the lines under the grid.
@@ -122,7 +122,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 3.** Read the summary.
-  - **Expected:** **Pages its holders see** lists Overview, Projects, Releases, Org chart, Drafts, Capacity, Lists and Change history, with Projects and Capacity tagged **Not built yet**. **Can** names seeing allocations, approving feature teams, and making drafts of changes to the plan and allocations, each tagged **Not built yet**, and seeing the plan, changing the plan, seeing the org chart, approving drafts, seeing configuration, and seeing the change history. Under **Cannot**, these lines are tagged **Not built yet**: **Cannot change allocations.**, **Cannot propose feature teams.**, and **Cannot change feature teams.** **Cannot** includes **The People page does not appear.** and **Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.**, with the tier colours.
+  - **Expected:** **Pages its holders see** lists Overview, Projects, Releases, People, Org chart, Drafts, Capacity, Lists and Change history, with Projects and Capacity tagged **Not built yet**. **Can** names seeing allocations, approving feature teams, and making drafts of changes to the plan and allocations, each tagged **Not built yet**, and seeing the plan, changing the plan, seeing people, seeing the org chart, seeing the hiring plan, approving drafts, seeing configuration, and seeing the change history. Under **Cannot**, these lines are tagged **Not built yet**: **Cannot change allocations.**, **Cannot propose feature teams.**, and **Cannot change feature teams.** **Cannot** includes **Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**, with the tier colours, and not **The People page does not appear.**
   - **Notes:**
 
 - [ ] **Step 4.** Look at the foot of the dialog.
@@ -145,16 +145,16 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** The **Project Manager** dialog open, as at the end of ROLE-04.
 
-- [ ] **Step 1.** Tick **View** on the **People** row, and watch the summary.
-  - **Expected:** **People** appears under **Pages its holders see**, and a sentence about seeing people appears under **Can**, each in bold teal, turning to plain text after about three seconds. Under **Cannot**, **The People page does not appear.** is struck through in red and fades away over about three seconds, then goes.
+- [ ] **Step 1.** Untick **View** on the **People** row, and watch the summary.
+  - **Expected:** **People** under **Pages its holders see**, and the sentence about seeing people under **Can**, are struck through in red and fade away over about three seconds, then go. Under **Cannot**, **The People page does not appear.** appears in bold teal, turning to plain text after about three seconds. A yellow box at the top of the summary reads **View Hiring plan does nothing without View People.**
   - **Notes:**
 
-- [ ] **Step 2.** Untick **View** on the **People** row.
-  - **Expected:** The lines added in Step 1 are struck through in red and fade away; **The People page does not appear.** comes back in bold teal.
+- [ ] **Step 2.** Tick **View** on the **People** row again.
+  - **Expected:** The lines taken out in Step 1 come back in bold teal; **The People page does not appear.** is struck through in red and fades away, and the yellow box goes.
   - **Notes:**
 
-- [ ] **Step 3.** Tick **View** on the **Restricted details** row, leaving **People** unticked.
-  - **Expected:** A yellow box at the top of the summary reads **View Restricted details does nothing without View People.**
+- [ ] **Step 3.** Untick **View** on the **Hiring plan** row.
+  - **Expected:** The sentence about seeing the hiring plan under **Can** is struck through in red and fades away; under **Cannot**, **Planned hires appear only as placeholders.** appears in bold teal.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Cancel**, then open the **Project Manager** role again (P3).

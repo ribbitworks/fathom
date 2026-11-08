@@ -320,14 +320,14 @@ const peopleRoute = createRoute({
     return (
       <PeoplePage
         canEdit={permissions.includes("people:edit")}
-        // Until planned hires are a permission area of their own, as the server checks.
         canEditHires={
           permissions.includes("people:edit") &&
-          permissions.includes("confidential:edit")
+          permissions.includes("hiring-plan:edit")
         }
         canApprove={permissions.includes("drafts:approve")}
         canEditColumns={permissions.includes("configuration:edit")}
         showDates={permissions.includes("restricted:view")}
+        showHireDates={permissions.includes("hiring-plan:view")}
         {...viewProps(search, (next, replace) => {
           void navigate({ search: { ...next, open }, replace });
         })}

@@ -2,8 +2,8 @@
 
 // The People page: everyone the user may see, and the planned hires, in a table edited like a
 // spreadsheet, with the columns people have added, each drawing on a list. Those who may change
-// people add, edit, and delete them, and those who may also change Confidential data do the same
-// for planned hires; those who may change planning configuration add, change, and delete columns,
+// people add, edit, and delete them, and those who may also change the hiring plan do the same for
+// planned hires; those who may change planning configuration add, change, and delete columns,
 // and move any column. Every change to a person is a draft, shown in place until an Approver
 // approves it on the Drafts page. Every change shows at once and saves in the background, and the
 // latest can be undone with Cmd+Z or Ctrl+Z, or from its notification when it took something out of
@@ -226,6 +226,7 @@ export function PeoplePage({
   canApprove = false,
   canEditColumns,
   showDates,
+  showHireDates = showDates,
   view,
   onView,
   applied,
@@ -240,6 +241,8 @@ export function PeoplePage({
   canApprove?: boolean;
   canEditColumns: boolean;
   showDates: boolean;
+  // Whether the user sees planned hires' target dates, which come with the hiring plan.
+  showHireDates?: boolean;
   view: View;
   onView: ChangeView;
   // The saved view the view started from, and how to apply one, replacing the current address
@@ -664,6 +667,7 @@ export function PeoplePage({
           saving={saving}
           canEditColumns={canEditColumns}
           showDates={showDates}
+          showHireDates={showHireDates}
           showPosition={query.data.positionHidden !== true}
           actions={actions}
           view={view}
@@ -705,6 +709,7 @@ export function PeoplePage({
                         showDates,
                         query.data.people,
                         query.data.positionHidden !== true,
+                        showHireDates,
                       ),
                       [draftColumn],
                     ),

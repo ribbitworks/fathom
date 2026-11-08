@@ -127,7 +127,7 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ people: [id()] }),
   },
   {
-    // Only those who also see Confidential data see hires' drafts; others are told they are gone.
+    // Only those who also see the hiring plan see hires' drafts; others are told they are gone.
     variant: "planned hires",
     needs: allOf("drafts:approve", "people:view"),
     asked: () => ({ plannedHires: [id()] }),
@@ -447,7 +447,7 @@ const routes: Route[] = [
   },
 
   // Those who see people see hires as placeholders; the hiring plan's details need
-  // confidential:view, as the hires tests check.
+  // hiring-plan:view, as the hires tests check.
   {
     method: "GET",
     pattern: "/api/org-chart",
@@ -464,25 +464,25 @@ const routes: Route[] = [
   {
     method: "GET",
     pattern: "/api/planned-hires",
-    // Seeing Confidential data does nothing without seeing people.
+    // Seeing the hiring plan does nothing without seeing people.
     needs: allOf("people:view"),
   },
   {
     method: "POST",
     pattern: "/api/planned-hires",
-    needs: allOf("people:edit", "confidential:edit"),
+    needs: allOf("people:edit", "hiring-plan:edit"),
     body: () => ({ hires: [{ positionId: testPosition }] }),
   },
   {
     method: "PATCH",
     pattern: "/api/planned-hires/:hireId",
-    needs: allOf("people:edit", "confidential:edit"),
+    needs: allOf("people:edit", "hiring-plan:edit"),
     body: () => ({ targetDate: null }),
   },
   ...["", "/draft", "/draft/rejection"].map((end): Route => ({
     method: "DELETE",
     pattern: `/api/planned-hires/:hireId${end}`,
-    needs: allOf("people:edit", "confidential:edit"),
+    needs: allOf("people:edit", "hiring-plan:edit"),
   })),
 
   // Planning configuration is seen with the plan.

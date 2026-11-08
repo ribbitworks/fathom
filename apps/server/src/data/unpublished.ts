@@ -16,7 +16,11 @@ import {
 } from "@fathom/db";
 import type { Unpublished } from "@fathom/shared";
 import { and, asc, eq, max } from "drizzle-orm";
-import { type Actor, requireAnyPermission, seesTier } from "../access.ts";
+import {
+  type Actor,
+  requireAnyPermission,
+  seesSensitivity,
+} from "../access.ts";
 import { ConflictError } from "../errors.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
@@ -221,7 +225,7 @@ function subjectOf(versions: Versions, row: Row, actor: Actor): string {
     if (typeof hire.name === "string") return `the planned hire ${hire.name}`;
     const { requisition, temporaryId } = hireIdOf(hire);
     const shownId = String(requisition ?? temporaryId);
-    if (!seesTier(actor, versions.hires.tierOf("positionId"))) {
+    if (!seesSensitivity(actor, versions.hires.tierOf("positionId"))) {
       return `the planned hire ${shownId}`;
     }
     const position = versionOf(versions, "list-item", String(hire.positionId));

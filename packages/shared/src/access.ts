@@ -42,6 +42,10 @@ export const permissionSchema = z.enum([
   "restricted:edit",
   "confidential:view",
   "confidential:edit",
+  // The hiring plan is Confidential, but has a permission area of its own, apart from other
+  // Confidential data.
+  "hiring-plan:view",
+  "hiring-plan:edit",
   // Opens the configuration pages, such as Lists; configuration the plan uses is seen with the plan.
   "configuration:view",
   "configuration:edit",
@@ -137,15 +141,27 @@ export const permissionDescriptions: Record<
 
   "confidential:view": {
     allows:
-      "Sees Confidential data, such as the hiring plan and future-dated reorganizations.",
-    without:
-      "Confidential data is hidden; planned hires appear only as placeholders.",
+      "Sees Confidential data, such as future-dated reorganizations and columns marked Confidential.",
+    without: "Confidential data is hidden wherever it appears.",
     needs: "people:view",
   },
 
   "confidential:edit": {
-    allows: "Changes Confidential data, such as the hiring plan.",
+    allows: "Changes Confidential data, such as columns marked Confidential.",
     without: "Cannot change Confidential data.",
+    needs: "people:edit",
+  },
+
+  "hiring-plan:view": {
+    allows:
+      "Sees the hiring plan: every planned hire, with its target date, drafts, and history.",
+    without: "Planned hires appear only as placeholders.",
+    needs: "people:view",
+  },
+
+  "hiring-plan:edit": {
+    allows: "Adds, changes, and removes planned hires.",
+    without: "Cannot change the hiring plan.",
     needs: "people:edit",
   },
 
@@ -228,6 +244,7 @@ export const impliedPermissions: Partial<Record<Permission, Permission>> = {
   "people:edit": "people:view",
   "restricted:edit": "restricted:view",
   "confidential:edit": "confidential:view",
+  "hiring-plan:edit": "hiring-plan:view",
   "configuration:edit": "configuration:view",
 };
 
@@ -273,6 +290,10 @@ export const permissionGrid: readonly {
   {
     area: "Confidential data",
     actions: { view: "confidential:view", edit: "confidential:edit" },
+  },
+  {
+    area: "Hiring plan",
+    actions: { view: "hiring-plan:view", edit: "hiring-plan:edit" },
   },
   {
     area: "Feature teams",
@@ -349,16 +370,19 @@ export const startingRoles: Record<
       "changes:view",
     ],
   },
-  // Project Managers approve drafts, so they see lists, and can judge drafts of them.
+  // Project Managers approve drafts, so they see lists, people, and the hiring plan, and can judge
+  // drafts of them.
   "project-manager": {
     name: "Project Manager",
     description:
-      "Edits the plan, and approves or rejects drafts of the data the role sees, including feature teams.",
+      "Edits the plan, sees people and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.",
     permissions: [
       "plan:edit",
       "allocations:view",
       "org-chart:view",
+      "people:view",
       "feature-teams:approve",
+      "hiring-plan:view",
       "configuration:view",
       "drafts:submit",
       "drafts:approve",
@@ -369,7 +393,7 @@ export const startingRoles: Record<
   "engineering-manager": {
     name: "Engineering Manager",
     description:
-      "Edits the plan and allocations, sees people, including everyone's Restricted details, colours teams on the org chart, and proposes feature teams.",
+      "Edits the plan and allocations, sees people, with everyone's Restricted details and the hiring plan, colours teams on the org chart, and proposes feature teams.",
     permissions: [
       "plan:edit",
       "allocations:edit",
@@ -379,6 +403,7 @@ export const startingRoles: Record<
       "feature-teams:propose",
       "feature-teams:edit",
       "restricted:view",
+      "hiring-plan:view",
       "drafts:submit",
       "changes:view",
     ],
@@ -386,7 +411,7 @@ export const startingRoles: Record<
   "engineering-director": {
     name: "Engineering Director",
     description:
-      "Edits the plan and allocations, sees people, with their Restricted and Confidential data, and approves or rejects drafts of the data the role sees.",
+      "Edits the plan and allocations, sees people, with their Restricted and Confidential data and the hiring plan, and approves or rejects drafts of the data the role sees.",
     permissions: [
       "plan:edit",
       "allocations:edit",
@@ -395,6 +420,7 @@ export const startingRoles: Record<
       "feature-teams:approve",
       "restricted:view",
       "confidential:view",
+      "hiring-plan:view",
       "configuration:view",
       "drafts:submit",
       "drafts:approve",
@@ -415,6 +441,7 @@ export const startingRoles: Record<
       "feature-teams:edit",
       "restricted:edit",
       "confidential:edit",
+      "hiring-plan:edit",
       "configuration:edit",
       "changes:view",
     ],
@@ -422,7 +449,7 @@ export const startingRoles: Record<
   executive: {
     name: "Executive",
     description:
-      "Sees the plan, and people, with their Restricted and Confidential data, without editing them.",
+      "Sees the plan, and people, with their Restricted and Confidential data and the hiring plan, without editing them.",
     permissions: [
       "plan:view",
       "allocations:view",
@@ -430,6 +457,7 @@ export const startingRoles: Record<
       "people:view",
       "restricted:view",
       "confidential:view",
+      "hiring-plan:view",
       "changes:view",
     ],
   },

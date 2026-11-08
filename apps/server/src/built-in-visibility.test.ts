@@ -313,7 +313,7 @@ describe("the State column", () => {
       stateId: await openState(),
     });
     expect(drafted.statusCode, drafted.body).toBe(200);
-    const plan = await grantedOnly(["people:view", "confidential:view"]);
+    const plan = await grantedOnly(["people:view", "hiring-plan:view"]);
     expect((await hireSeen(plan, id))?.draft?.changed.toSorted()).toEqual([
       "positionId",
       "stateId",
@@ -372,7 +372,7 @@ describe("changes to positions and states", () => {
     const { changeSetId } = changed.json<{ changeSetId: string }>();
     const plan = await grantedOnly([
       "people:view",
-      "confidential:view",
+      "hiring-plan:view",
       "changes:view",
     ]);
     const name = async () =>
@@ -413,8 +413,8 @@ describe("changes to positions and states", () => {
     const hireEditor = await grantedOnly([
       "people:view",
       "people:edit",
-      "confidential:view",
-      "confidential:edit",
+      "hiring-plan:view",
+      "hiring-plan:edit",
     ]);
     const id = await liveHire();
     const add = () =>
@@ -480,7 +480,7 @@ describe("changes to positions and states", () => {
     await setVisibility("positions", "restricted");
     const unseeing = await grantedOnly([
       "people:view",
-      "confidential:view",
+      "hiring-plan:view",
       "drafts:approve",
     ]);
     const refused = await send(unseeing, "POST", "/api/drafts/approval", {
@@ -500,8 +500,8 @@ describe("changes to positions and states", () => {
     const hireEditor = await grantedOnly([
       "people:view",
       "people:edit",
-      "confidential:view",
-      "confidential:edit",
+      "hiring-plan:view",
+      "hiring-plan:edit",
       "drafts:submit",
     ]);
     const made = await test.request(
@@ -582,8 +582,8 @@ describe("changing a position", () => {
     const hireEditor = await grantedOnly([
       "people:view",
       "people:edit",
-      "confidential:view",
-      "confidential:edit",
+      "hiring-plan:view",
+      "hiring-plan:edit",
     ]);
     const drafted = await send(
       hireEditor,

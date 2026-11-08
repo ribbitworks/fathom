@@ -12,7 +12,10 @@ import {
   actorWith,
   requireAnyPermission,
   requirePermission,
+  requireSensitivityEdit,
   rolesGranting,
+  seesSensitivity,
+  tierOfSensitivity,
 } from "./access.ts";
 import { ForbiddenError } from "./errors.ts";
 
@@ -46,7 +49,9 @@ const expected: [Role, Permission[]][] = [
       "plan:edit",
       "allocations:view",
       "org-chart:view",
+      "people:view",
       "feature-teams:approve",
+      "hiring-plan:view",
       "configuration:view",
       "drafts:submit",
       "drafts:approve",
@@ -66,6 +71,7 @@ const expected: [Role, Permission[]][] = [
       "feature-teams:propose",
       "feature-teams:edit",
       "restricted:view",
+      "hiring-plan:view",
       "drafts:submit",
       "changes:view",
     ],
@@ -82,6 +88,7 @@ const expected: [Role, Permission[]][] = [
       "feature-teams:approve",
       "restricted:view",
       "confidential:view",
+      "hiring-plan:view",
       "configuration:view",
       "drafts:submit",
       "drafts:approve",
@@ -103,6 +110,8 @@ const expected: [Role, Permission[]][] = [
       "restricted:edit",
       "confidential:view",
       "confidential:edit",
+      "hiring-plan:view",
+      "hiring-plan:edit",
       "configuration:view",
       "configuration:edit",
       "changes:view",
@@ -117,6 +126,7 @@ const expected: [Role, Permission[]][] = [
       "people:view",
       "restricted:view",
       "confidential:view",
+      "hiring-plan:view",
       "changes:view",
     ],
   ],
@@ -215,5 +225,30 @@ describe("permission checks", () => {
         "people:view",
       ]);
     }).toThrow(ForbiddenError);
+  });
+});
+
+describe("the hiring plan's permissions", () => {
+  it("are apart from Confidential data's", () => {
+    const viewer = actorWith(user, ["people:view", "hiring-plan:view"]);
+    expect(seesSensitivity(viewer, "hiring-plan")).toBe(true);
+    expect(seesSensitivity(viewer, "confidential")).toBe(false);
+    expect(
+      seesSensitivity(actorWith(user, ["confidential:edit"]), "hiring-plan"),
+    ).toBe(false);
+    expect(() => {
+      requireSensitivityEdit(viewer, "hiring-plan");
+    }).toThrow(ForbiddenError);
+    expect(() => {
+      requireSensitivityEdit(
+        actorWith(user, ["hiring-plan:edit"]),
+        "hiring-plan",
+      );
+    }).not.toThrow();
+  });
+
+  it("cover data recorded as Confidential", () => {
+    expect(tierOfSensitivity("hiring-plan")).toBe("confidential");
+    expect(tierOfSensitivity("restricted")).toBe("restricted");
   });
 });

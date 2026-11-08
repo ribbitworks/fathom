@@ -23,7 +23,7 @@ import {
 } from "@fathom/shared";
 import { eq, inArray } from "drizzle-orm";
 import { NotFoundError } from "../errors.ts";
-import { type Actor, seesTier } from "../access.ts";
+import { type Actor, seesSensitivity } from "../access.ts";
 import {
   type Draft,
   drafted,
@@ -115,7 +115,7 @@ export async function readOrgChart(
   // Restricted and Confidential details are details of people, so they show only with people, as
   // the Roles page says; a role can be given them without people, but then they do nothing here.
   const seesPeople = actor.permissions.includes("people:view");
-  const restricted = seesPeople && seesTier(actor, "restricted");
+  const restricted = seesPeople && seesSensitivity(actor, "restricted");
   // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
   const { rows, lines, teams, drafts, positionTier, labels } =
     await database.transaction(
@@ -177,7 +177,7 @@ export async function readOrgChart(
     seesPeople,
     seesPositions:
       positionTier === "general" ||
-      (seesPeople && seesTier(actor, positionTier)),
+      (seesPeople && seesSensitivity(actor, positionTier)),
     today,
   };
   const draftedChart = chartOf(

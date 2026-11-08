@@ -543,7 +543,7 @@ describe("approving and rejecting", () => {
     // draft at all, so asking reveals nothing.
     const roles: [Role | Permission[], number][] = [
       ["workforce-administrator", 403],
-      ["project-manager", 403],
+      ["project-manager", 404],
       [["drafts:approve", "people:view"], 404],
     ];
     for (const [held, status] of roles) {

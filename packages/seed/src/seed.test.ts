@@ -251,6 +251,29 @@ describe("seeding", () => {
     expect(await seed(connection, organization)).toBe(true);
   });
 
+  it("records a planned hire's name as General and its own details as Confidential, as the server does", async () => {
+    await seed(connection, organization);
+    await seedHires(connection, organization);
+    const created = await connection
+      .select({ field: changes.field, tier: changes.tier })
+      .from(changes)
+      .where(
+        and(
+          eq(changes.recordType, "planned-hire"),
+          eq(changes.action, "created"),
+          inArray(changes.field, ["name", "requisition"]),
+        ),
+      );
+    const tiersOf = (field: string) =>
+      new Set(
+        created
+          .filter((change) => change.field === field)
+          .map(({ tier }) => tier),
+      );
+    expect(tiersOf("name")).toEqual(new Set(["general"]));
+    expect(tiersOf("requisition")).toEqual(new Set(["confidential"]));
+  });
+
   it("adds the newest starters' onboarding notes, as notes allow, recorded as made by Fathom itself", async () => {
     await seed(connection, organization);
     const written = organization.people.flatMap(({ id, notes }) =>

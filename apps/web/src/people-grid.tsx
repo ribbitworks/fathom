@@ -278,6 +278,7 @@ export function columnsFor(
   showDates: boolean,
   people: readonly Person[] = [],
   showPosition = true,
+  showHireDates = showDates,
 ): Column[] {
   const builtIn = (
     key: DetailKey,
@@ -389,6 +390,11 @@ export function columnsFor(
       ...(statesList === undefined ? [] : [state]),
       ...(showDates
         ? [builtIn("startDate", "date"), personal(builtIn("endDate", "date"))]
+        : []),
+      // A planned hire's target date is part of the hiring plan, not a personal detail, so readers
+      // who see the plan but not people's dates see it for hires alone.
+      ...(!showDates && showHireDates
+        ? [{ ...builtIn("startDate", "date"), offeredOn: hiresOnly }]
         : []),
       manager,
       personal({
@@ -647,6 +653,7 @@ function ShowDetailsButton({
 
 function peopleTable(
   showDates: boolean,
+  showHireDates: boolean,
   showPosition: boolean,
   people: readonly Person[],
   lists: readonly List[],
@@ -685,18 +692,25 @@ function peopleTable(
     nameOf: (row) => rowName(row, lists),
     readOnlyRecord: (row) => isHire(row) && !canEditHires,
     columnsFor: (fields, lists, order, records) =>
-      columnsFor(fields, lists, order, showDates, records, showPosition).map(
-        (column) =>
-          column.key === "preferredName" && onOpen !== undefined
-            ? {
-                ...column,
-                mark: (row: Person) =>
-                  !isHire(row) &&
-                  !isPending(row) && (
-                    <ShowDetailsButton row={row} onOpen={onOpen} />
-                  ),
-              }
-            : column,
+      columnsFor(
+        fields,
+        lists,
+        order,
+        showDates,
+        records,
+        showPosition,
+        showHireDates,
+      ).map((column) =>
+        column.key === "preferredName" && onOpen !== undefined
+          ? {
+              ...column,
+              mark: (row: Person) =>
+                !isHire(row) &&
+                !isPending(row) && (
+                  <ShowDetailsButton row={row} onOpen={onOpen} />
+                ),
+            }
+          : column,
       ),
     liveRecords: livePeople,
     draftFields: (person, draft, fields, lists) =>
@@ -738,6 +752,8 @@ type PeopleGridProps = Omit<
   // what order.
   people: Person[];
   showDates: boolean;
+  // Whether the user sees planned hires' target dates, which come with the hiring plan.
+  showHireDates?: boolean;
   // Whether the user sees the Positions list's tier; without it they see no Position column and
   // cannot add people, who each need a position.
   showPosition?: boolean;
@@ -750,6 +766,7 @@ type PeopleGridProps = Omit<
 export function PeopleGrid({
   people,
   showDates,
+  showHireDates = showDates,
   showPosition = true,
   canEditHires = false,
   onOpen,
@@ -760,6 +777,7 @@ export function PeopleGrid({
       records={people}
       table={peopleTable(
         showDates,
+        showHireDates,
         showPosition,
         people,
         props.lists,

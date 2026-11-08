@@ -2,8 +2,9 @@
 
 // Planned hires: roles to be filled, kept apart from people but shown beside them, as the Decisions
 // Log sets out. Each hire not yet filled is a placeholder that everyone who sees people sees: its
-// name, ID, position, manager, and the month it is expected. Its state and target date are
-// Confidential. What a user receives leaves out what their role does not let them see.
+// name, ID, position, manager, and the month it is expected. Its target date and drafts are seen
+// only with the hiring plan, a permission area of its own. What a user receives leaves out what
+// their role does not let them see.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -62,7 +63,7 @@ export const hireDraftSchema = z.object({
 export type HireDraft = z.infer<typeof hireDraftSchema>;
 
 // A planned hire as the user sees it. Everyone who sees it sees its name, ID, position, manager,
-// and the month it is expected; only those who see Confidential data see the rest, the hire as its
+// and the month it is expected; only those who see the hiring plan see the rest, the hire as its
 // draft, if any, makes it, and the draft beside.
 export const hireSchema = z.object({
   id: z.string(),

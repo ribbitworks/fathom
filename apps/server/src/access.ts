@@ -65,19 +65,37 @@ export function requireAnyPermission(
     throw new ForbiddenError();
 }
 
-// The permissions that let a user see and change data of each tier. General people data comes with
-// seeing and editing people.
-const tierPermissions: Record<Tier, { view: Permission; edit: Permission }> = {
+// What lets a user see and change some data: its tier, or, for the hiring plan's own details, which
+// are Confidential, the hiring plan's permissions, since the hiring plan is a permission area of
+// its own, as the Decisions Log sets out.
+export type Sensitivity = Tier | "hiring-plan";
+
+// The permissions that let a user see and change data of each sensitivity. General people data
+// comes with seeing and editing people. Every sensitivity must be listed, which the compiler checks.
+const sensitivityPermissions: Record<
+  Sensitivity,
+  { view: Permission; edit: Permission }
+> = {
   general: { view: "people:view", edit: "people:edit" },
   restricted: { view: "restricted:view", edit: "restricted:edit" },
   confidential: { view: "confidential:view", edit: "confidential:edit" },
+  "hiring-plan": { view: "hiring-plan:view", edit: "hiring-plan:edit" },
 };
+
+const permissionsOf = (sensitivity: Sensitivity) =>
+  // The sensitivity is always one of the fixed sensitivities listed above.
+  // eslint-disable-next-line security/detect-object-injection
+  sensitivityPermissions[sensitivity];
 
 const tierRank: readonly Tier[] = ["general", "restricted", "confidential"];
 
 // A tier as stored, or, for one the server no longer knows, the most sensitive, rather than trusted.
 export const storedTier = (value: unknown): Tier =>
   tierSchema.catch("confidential").parse(value);
+
+// The tier data of a sensitivity is recorded at: the hiring plan is Confidential.
+export const tierOfSensitivity = (sensitivity: Sensitivity): Tier =>
+  sensitivity === "hiring-plan" ? "confidential" : sensitivity;
 
 // The most sensitive of some tiers, or General when there are none.
 export function mostSensitive(tiers: readonly Tier[]): Tier {
@@ -88,13 +106,16 @@ export function mostSensitive(tiers: readonly Tier[]): Tier {
   );
 }
 
-export function seesTier(actor: Actor, tier: Tier): boolean {
-  // The tier is always one of the fixed tiers listed above.
-  // eslint-disable-next-line security/detect-object-injection
-  return actor.permissions.includes(tierPermissions[tier].view);
+export function seesSensitivity(
+  actor: Actor,
+  sensitivity: Sensitivity,
+): boolean {
+  return actor.permissions.includes(permissionsOf(sensitivity).view);
 }
 
-export function requireTierEdit(actor: Actor, tier: Tier): void {
-  // eslint-disable-next-line security/detect-object-injection
-  requirePermission(actor, tierPermissions[tier].edit);
+export function requireSensitivityEdit(
+  actor: Actor,
+  sensitivity: Sensitivity,
+): void {
+  requirePermission(actor, permissionsOf(sensitivity).edit);
 }

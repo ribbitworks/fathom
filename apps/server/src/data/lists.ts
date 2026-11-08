@@ -44,7 +44,12 @@ import {
 } from "@fathom/shared";
 import { and, asc, count, eq, inArray, isNull, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { type Actor, mostSensitive, seesTier, storedTier } from "../access.ts";
+import {
+  type Actor,
+  mostSensitive,
+  seesSensitivity,
+  storedTier,
+} from "../access.ts";
 import {
   BadRequestError,
   ConflictError,
@@ -1071,7 +1076,7 @@ async function saveDraft(
 // A list's visibility is the tier of the columns that draw on it, so, as for a column, it can be
 // given only a tier the editor sees, and only someone who sees a list's values may change it.
 function refuseUnseenVisibility(actor: Actor, tier: Tier, message: string) {
-  if (!seesTier(actor, tier)) throw new ForbiddenError(message);
+  if (!seesSensitivity(actor, tier)) throw new ForbiddenError(message);
 }
 
 const unseenVisibility = "Give the list a visibility your role lets you see";
