@@ -18,9 +18,10 @@ import {
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { describeProblem } from "./api.ts";
-import { notifyFailure, notifySuccess } from "./notices.tsx";
+import { changeMade, notifyFailure, notifySuccess } from "./notices.tsx";
 import classes from "./org-chart.module.css";
-import { updatePerson } from "./people.ts";
+import { orgChartQuery } from "./org-chart.ts";
+import { peopleQuery, updatePerson } from "./people.ts";
 import { unpublishedQuery } from "./unpublished.tsx";
 
 export function TeamNameEditor({
@@ -51,13 +52,21 @@ export function TeamNameEditor({
         describeProblem(error, `Fathom could not change the name of ${team}.`),
       );
     },
+    // The chart and a person's details show the name as drafted, as does the count of changes.
     onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: unpublishedQuery.queryKey }),
+      Promise.all(
+        [unpublishedQuery, orgChartQuery, peopleQuery].map(({ queryKey }) =>
+          queryClient.invalidateQueries({ queryKey }),
+        ),
+      ),
   });
   const save = () => {
     const wanted = typed.trim();
     if (wanted === (name ?? "")) setOpened(false);
-    else change.mutate(wanted);
+    else {
+      changeMade();
+      change.mutate(wanted);
+    }
   };
   return (
     <Popover

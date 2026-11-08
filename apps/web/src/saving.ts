@@ -8,10 +8,17 @@
 
 import type { QueryKey } from "@tanstack/react-query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError, describeProblem, sendJsonFor } from "./api.ts";
 import { focusSoon } from "./focus.ts";
-import { closeUndoNotice, notifyFailure, notifyUndoable } from "./notices.tsx";
+import {
+  changeMade,
+  closeUndoNotice,
+  isLatestChange,
+  notifyFailure,
+  notifySuccess,
+  notifyUndoable,
+} from "./notices.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
 import { savedSchema } from "@fathom/shared";
 
@@ -62,20 +69,29 @@ export function useSaving<Data>({
   queryKey,
   removed,
   blocked,
+  refreshes = [],
 }: {
   queryKey: QueryKey;
+  // Other data the changes alter, reloaded with it, such as the org chart drawn from the people.
+  refreshes?: readonly QueryKey[];
   // What to say when something changed has been removed by someone else.
   removed: string;
   blocked: boolean;
 }) {
   const queryClient = useQueryClient();
   const changeKey = [...queryKey, "change"];
-  const [undo, setUndo] = useState<() => void>();
+  // The latest change's undo, with the change's count, which is undone only while no change has
+  // been made since, here or elsewhere on the page.
+  const [undo, setUndo] = useState<{ run: () => void; change: number }>();
+
+  // The count of the change saved last, as made, so only the latest change made can be undone, even
+  // when an earlier one finishes saving after it.
+  const savedLast = useRef(0);
 
   const change = useMutation({
     mutationKey: changeKey,
     scope: { id: JSON.stringify(queryKey) },
-    mutationFn: ({ save }: Change<Data>) => save(),
+    mutationFn: ({ save }: Change<Data> & { made: number }) => save(),
     onMutate: async ({ next }) => {
       await queryClient.cancelQueries({ queryKey });
       const before = queryClient.getQueryData(queryKey) as Data;
@@ -91,7 +107,8 @@ export function useSaving<Data>({
           : describeProblem(error, failure),
       );
     },
-    onSuccess: (changeSetId, { onSaved }, context) => {
+    onSuccess: (changeSetId, { onSaved, made }, context) => {
+      savedLast.current = made;
       onSaved?.(changeSetId, context.before);
     },
     onSettled: async () => {
@@ -100,15 +117,25 @@ export function useSaving<Data>({
       await Promise.all([
         queryClient.invalidateQueries({ queryKey }),
         queryClient.invalidateQueries({ queryKey: unpublishedQuery.queryKey }),
+        ...refreshes.map((key) =>
+          queryClient.invalidateQueries({ queryKey: key }),
+        ),
       ]);
     },
   });
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (undo === undefined || blocked || !isUndo(event)) return;
+      if (
+        undo === undefined ||
+        blocked ||
+        !isUndo(event) ||
+        !isLatestChange(undo.change)
+      ) {
+        return;
+      }
       event.preventDefault();
-      undo();
+      undo.run();
     };
     document.addEventListener("keydown", onKey);
     return () => {
@@ -119,6 +146,7 @@ export function useSaving<Data>({
   // Undoes a saved change set, showing the data as it was before it at once.
   const revert = (before: Data, changeSetId: string, onUndone?: () => void) => {
     change.mutate({
+      made: changeMade(),
       next: () => before,
       save: () => undoChange(changeSetId),
       failure: undoFailure,
@@ -134,13 +162,14 @@ export function useSaving<Data>({
     focus?: string,
     onUndone?: () => void,
   ): (() => void) => {
-    closeUndoNotice();
+    const change = savedLast.current;
+    if (isLatestChange(change)) closeUndoNotice();
     const run = () => {
       setUndo(undefined);
       revert(before, changeSetId, onUndone);
       if (focus !== undefined) focusSoon(focus);
     };
-    setUndo(() => run);
+    setUndo({ run, change });
     return run;
   };
 
@@ -170,12 +199,15 @@ export function useSaving<Data>({
     onUndone?: () => void,
   ) => {
     if (changeSetId === null) return;
-    notifyUndoable(message, offer(changeSetId, before, focus, onUndone));
+    const undo = offer(changeSetId, before, focus, onUndone);
+    // A change made since has its own Undo, so this one only says what was done.
+    if (isLatestChange(savedLast.current)) notifyUndoable(message, undo);
+    else notifySuccess(message);
   };
 
   return {
     save: (next: Change<Data>) => {
-      change.mutate(next);
+      change.mutate({ ...next, made: changeMade() });
     },
     undoable,
     done,

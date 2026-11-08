@@ -84,6 +84,8 @@ export interface EditorProps {
   // For an editor in the side panel: whether a value is being changed there, so the table waits for
   // it, rather than only read.
   onWriting?: (writing: boolean) => void;
+  // For an editor in the side panel: whether the value now differs from the one it opened with.
+  onChanged?: (changed: boolean) => void;
   onDone: (value: CellValue, how: Finish) => void;
   onCancel: () => void;
 }
@@ -331,6 +333,7 @@ const note: CellKind = {
     problem,
     readOnly,
     onWriting,
+    onChanged,
     onDone,
     onCancel,
   }) => (
@@ -341,6 +344,7 @@ const note: CellKind = {
       refused={problem}
       canEdit={!readOnly}
       onWriting={onWriting}
+      onChanged={onChanged}
       onSave={(saved) => {
         onDone(saved, "leave");
       }}

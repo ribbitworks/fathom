@@ -12,7 +12,7 @@ import { AppMenu } from "./app-menu.tsx";
 import { Swatch } from "./colour-swatch.tsx";
 import { colourWords } from "./colours.ts";
 import { Icon } from "./icons.tsx";
-import { notifyFailure, notifyUndoable } from "./notices.tsx";
+import { changeMade, notifyFailure, notifyUndoable } from "./notices.tsx";
 import { orgChartQuery, setTeamColour } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
 
@@ -59,7 +59,9 @@ export function TeamColourMenu({
       queryClient.invalidateQueries({ queryKey: orgChartQuery.queryKey }),
   });
   const choose = (colour: PaletteColour | null) => {
-    if (colour !== current) change.mutate({ colour, previous: current });
+    if (colour === current) return;
+    changeMade();
+    change.mutate({ colour, previous: current });
   };
   const ticked = (colour: PaletteColour | null) =>
     colour === current ? <Icon name="check" /> : null;

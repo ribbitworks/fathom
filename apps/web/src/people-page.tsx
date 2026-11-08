@@ -37,6 +37,8 @@ import { DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
+import { kept, personUpdate } from "./person-change.ts";
+import { useNoteEditing } from "./person-editing.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
 import { type Decision, decisionFor } from "./drafts.ts";
@@ -52,16 +54,13 @@ import {
   createHires,
   deleteHire,
   discardHireDraft,
-  hireChange,
   hireRequest,
   resubmitHireDraft,
-  updateHire,
 } from "./hires.ts";
 import {
   addedNames,
   isHire,
   personOnly,
-  type RowChange,
   rowName,
   type RowRequest,
 } from "./people-rows.ts";
@@ -78,7 +77,6 @@ import {
   moveColumn,
   type PeopleData,
   peopleQuery,
-  updatePerson,
   updateView,
 } from "./people.ts";
 import { useSaving } from "./saving.ts";
@@ -102,44 +100,6 @@ function withView(views: readonly SavedView[], saved: SavedView): SavedView[] {
   return views.some((other) => other.id === saved.id)
     ? views.map((other) => (other.id === saved.id ? saved : other))
     : [...views, saved];
-}
-
-// Values asked for, by column, without those removed.
-const kept = <Value,>(
-  asked: Readonly<Record<string, Value | null>>,
-): Record<string, Value> =>
-  Object.fromEntries(
-    Object.entries(asked).flatMap(([key, value]) =>
-      value === null ? [] : [[key, value]],
-    ),
-  );
-
-// A row with a change applied, as the table shows it before it is saved. A planned hire's ID
-// cleared shows empty until the server gives it a temporary one.
-function changed(person: Person, change: RowChange): Person {
-  const {
-    values,
-    links,
-    notes,
-    preferredName,
-    employeeId,
-    positionId,
-    stateId,
-    ...dates
-  } = change;
-  return {
-    ...person,
-    ...dates,
-    preferredName: preferredName ?? person.preferredName,
-    employeeId: employeeId ?? person.employeeId,
-    positionId: positionId ?? person.positionId,
-    stateId: stateId ?? person.stateId,
-    values: { ...person.values, ...values },
-    links: kept({ ...person.links, ...links }),
-    ...(person.notes === undefined && notes === undefined
-      ? {}
-      : { notes: kept({ ...person.notes, ...notes }) }),
-  };
 }
 
 // Someone or a planned hire being added, as the table shows them before they are saved: a draft
@@ -254,7 +214,7 @@ export function PeoplePage({
   // The person whose details are shown beside the table, by Employee ID, and showing someone's, or
   // nobody's.
   open?: string | undefined;
-  onOpen?: (employeeId: string | undefined) => void;
+  onOpen?: (employeeId: string | undefined, replace?: boolean) => void;
   // Whether the reader sees the org chart, which a person's details then link to.
   seesChart?: boolean;
 }) {
@@ -280,6 +240,9 @@ export function PeoplePage({
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
   const grid = useRef<PeopleGridHandle>(null);
+  // A person's details and a note of theirs being written, beside the table.
+  const notes = useNoteEditing();
+  const note = notes.note(open, query.data?.people);
   const { save, undoable, done } = useSaving<PeopleData>({
     queryKey: peopleQuery.queryKey,
     removed: "Someone else has removed this. The people have been refreshed.",
@@ -373,17 +336,7 @@ export function PeoplePage({
     },
     update: (person, change) => {
       save({
-        next: (data) => ({
-          ...data,
-          people: data.people.map((other) =>
-            other.id === person.id ? changed(other, change) : other,
-          ),
-        }),
-        save: () =>
-          isHire(person)
-            ? updateHire(person.id, hireChange(change))
-            : updatePerson(person.id, personOnly(change)),
-        failure: `Fathom could not save the change to ${nameOf(person)}.`,
+        ...personUpdate(person, change, nameOf(person)),
         onSaved: (changeSetId, before) => {
           undoable(changeSetId, before);
         },
@@ -610,8 +563,8 @@ export function PeoplePage({
               onOpen(person.employeeId);
             })
           }
-          panels={
-            open === undefined || onOpen === undefined
+          panels={[
+            ...(open === undefined || onOpen === undefined
               ? []
               : [
                   {
@@ -642,6 +595,11 @@ export function PeoplePage({
                           )
                         }
                         onPerson={onOpen}
+                        onFollow={(next) => {
+                          onOpen(next, true);
+                        }}
+                        onChange={canEdit ? actions.update : undefined}
+                        notes={notes}
                         onClose={() => {
                           const shown = query.data.people.find(
                             (person) =>
@@ -656,8 +614,9 @@ export function PeoplePage({
                       />
                     ),
                   },
-                ]
-          }
+                ]),
+            ...(note === undefined ? [] : [note]),
+          ]}
           people={query.data.people}
           fields={query.data.fields}
           order={query.data.order}

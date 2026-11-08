@@ -429,7 +429,7 @@ const offered = (column: AnyColumn, kind: string) =>
   column.offeredOn?.(kind) ?? true;
 
 // A column as a row's cell sees it: with the choices the row may be given, when they depend on it.
-function onRow<
+export function onRow<
   Rec extends GridRecord,
   Col extends {
     pickable?: ((choice: Choice) => boolean) | undefined;
@@ -445,13 +445,13 @@ function onRow<
 }
 
 // Whether a kind of record's cells in a column cannot be changed.
-const readOnlyFor = (column: AnyColumn, kind: string) =>
+export const readOnlyFor = (column: AnyColumn, kind: string) =>
   column.readOnly === true ||
   column.readOnlyOn?.(kind) === true ||
   !offered(column, kind);
 
 // The columns a kind of record has, each required as it is for that kind.
-function columnsOn<Col extends AnyColumn>(
+export function columnsOn<Col extends AnyColumn>(
   columns: readonly Col[],
   kind: string,
 ): Col[] {
@@ -472,6 +472,41 @@ const pendingId = () => `${pendingPrefix}${crypto.randomUUID()}`;
 
 export const isPending = (record: GridRecord) =>
   record.id.startsWith(pendingPrefix);
+
+// Whether a record's values cannot change for now, whoever may change it: while it is drafted to be
+// removed, until the draft is discarded, while someone else holds it, or while it is being added.
+export const heldBack = (record: GridRecord) =>
+  record.draft?.action === "deleted" ||
+  record.heldBy !== undefined ||
+  isPending(record);
+
+// What putting a new value in a record's column comes to: nothing, when it is the value already
+// there; what is wrong, with the value itself or with the record's values taken together, beside
+// the others'; or the change that saves it.
+export function valueChange<Rec extends GridRecord, Change>(
+  recordProblem: RecordTable<Rec, Change, unknown>["recordProblem"],
+  column: Column<Rec, Change>,
+  kind: string,
+  before: Record<string, CellValue>,
+  value: CellValue,
+  others: () => Record<string, CellValue>[],
+): { change: Change } | { problem: RowProblem } | undefined {
+  if (JSON.stringify(before[column.key]) === JSON.stringify(value)) {
+    return undefined;
+  }
+  const problem = firstProblem(
+    columnsOn([column], kind),
+    () => value,
+    () =>
+      recordProblem(
+        { ...before, [column.key]: value },
+        others,
+        column.key,
+        before,
+      ),
+  );
+  return problem === undefined ? { change: column.change(value) } : { problem };
+}
 
 // What the table can do for whoever opens it: put focus on the row for adding a record, of the
 // kind given, or of the table's first.
@@ -772,6 +807,66 @@ export function liveFields(fields: readonly Field[]): Field[] {
   });
 }
 
+// The columns, their lists, and their order as a choice of the Draft menu shows them. Live only
+// shows the live columns, in their live order, with their lists as they are live. Drafts applied
+// shows the columns as they will be once approved: a rejected draft, not on its way to approval, is
+// taken back, and a column drafted to be removed is left out, as are the choices drafted away from
+// their lists.
+export function shownSchema(
+  show: Show,
+  fields: readonly Field[],
+  lists: readonly List[],
+  order: readonly string[],
+  orderDraft: ColumnOrderDraft | undefined,
+): {
+  fields: Field[];
+  lists: List[];
+  order: readonly string[];
+  // The draft of the order, when it is shown.
+  orderDraft: ColumnOrderDraft | undefined;
+} {
+  const applied = show === "drafts";
+  const orderShown =
+    orderDraft !== undefined &&
+    show !== "live" &&
+    !(applied && orderDraft.state === "rejected");
+  return {
+    fields:
+      show === "live"
+        ? liveFields(fields)
+        : applied
+          ? fields.flatMap((field) => {
+              if (field.draft?.state === "rejected") return liveFields([field]);
+              return field.draft?.action === "deleted" ? [] : [field];
+            })
+          : [...fields],
+    lists:
+      show === "live"
+        ? liveLists(lists)
+        : applied
+          ? draftedLists(lists)
+          : [...lists],
+    order: orderDraft === undefined || orderShown ? order : orderDraft.live,
+    orderDraft: orderShown ? orderDraft : undefined,
+  };
+}
+
+// The records as a choice of the Draft menu shows them: as they are live, as drafted, or as they
+// will be once approved, where a rejected draft is taken back and those drafted to be removed are
+// left out.
+export function recordsAsShown<Rec extends GridRecord>(
+  show: Show,
+  records: readonly Rec[],
+  liveRecords: (records: readonly Rec[]) => Rec[],
+): Rec[] {
+  if (show === "live") return liveRecords(records);
+  if (show === "both") return [...records];
+  return records.flatMap((record) => {
+    if (record.draft?.state === "rejected") return liveRecords([record]);
+    return record.draft?.action === "deleted" ? [] : [record];
+  });
+}
+
 // What a column's draft changes, field by field, with lists named rather than identified.
 function fieldDraftLines(field: Field, lists: readonly List[]): Phrase[] {
   const draft = field.draft as FieldDraft;
@@ -942,9 +1037,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   ref,
   panels = [],
 }: RecordGridProps<Rec, Change, Request>) {
-  // Live only shows the live columns, in their live order. Drafts applied shows the columns as they
-  // will be once approved: a rejected draft, not on its way to approval, is taken back, and a column
-  // drafted to be removed is left out.
   const applied = asked.show === "drafts";
   // A new column order that places a column whose addition was rejected waits for it.
   const orderWaits = waitsForRejected(
@@ -952,22 +1044,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     lists,
     { fields: draftedFields, orderDraft },
   );
-  const fields =
-    asked.show === "live"
-      ? liveFields(draftedFields)
-      : applied
-        ? draftedFields.flatMap((field) => {
-            if (field.draft?.state === "rejected") return liveFields([field]);
-            return field.draft?.action === "deleted" ? [] : [field];
-          })
-        : draftedFields;
-  // The order drafted, unless it is taken back.
-  const orderShown =
-    orderDraft !== undefined &&
-    asked.show !== "live" &&
-    !(applied && orderDraft.state === "rejected");
-  const order =
-    orderDraft === undefined || orderShown ? draftedOrder : orderDraft.live;
+  const {
+    fields,
+    lists: listsShown,
+    order,
+    orderDraft: shownOrderDraft,
+  } = shownSchema(asked.show, draftedFields, lists, draftedOrder, orderDraft);
+  const orderShown = shownOrderDraft !== undefined;
   // The columns with their lists as they are live, for the live records and each live row, so a
   // choice's drafted name is not shown as live.
   const listsLive = liveLists(lists);
@@ -983,12 +1066,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const columns =
     asked.show === "live"
       ? liveColumns
-      : table.columnsFor(
-          fields,
-          applied ? draftedLists(lists) : lists,
-          order,
-          everyone,
-        );
+      : table.columnsFor(fields, listsShown, order, everyone);
   const known = knownView(
     asked,
     columns,
@@ -1022,17 +1100,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       },
     };
   }
-  // Drafts applied shows every record as it will be once approved: a rejected draft is taken back,
-  // and those drafted to be removed are left out.
-  let records = everyone;
-  if (liveOnly) records = table.liveRecords(everyone);
-  else if (applied) {
-    records = everyone.flatMap((record) => {
-      if (record.draft?.state === "rejected")
-        return table.liveRecords([record]);
-      return record.draft?.action === "deleted" ? [] : [record];
-    });
-  }
+  const records = recordsAsShown(known.show, everyone, table.liveRecords);
   const canEdit = mayEdit && !liveOnly;
   const approves = liveOnly ? [] : mayApprove;
   const approvesOrder = approves.includes("column-order");
@@ -1073,7 +1141,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // The columns a draft of the order moves, marked under their names, unless drafted to be removed,
   // since where such a column goes matters to no one.
   const movedColumns = orderShown
-    ? movedKeys(orderDraft.live, draftedOrder)
+    ? movedKeys(shownOrderDraft.live, draftedOrder)
     : new Map<string, number>();
   const isMoved = (column: Column<Rec, Change>) =>
     movedColumns.has(column.key) && column.field?.draft?.action !== "deleted";
@@ -1192,11 +1260,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       Boolean(table.menuItems?.(record)));
   // Whether a record's cells cannot be changed: by those who may only view it, while it is drafted
   // to be removed, until the draft is discarded, or while it is being added.
-  const locked = (record: Rec) =>
-    !mayChange(record) ||
-    record.draft?.action === "deleted" ||
-    record.heldBy !== undefined ||
-    isPending(record);
+  const locked = (record: Rec) => !mayChange(record) || heldBack(record);
   const defaultKind = table.kinds?.[0] ?? "";
   // The kind of record a row is, or adds.
   const rowKind = (row: Row<Rec>) =>
@@ -1457,29 +1521,25 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       setProblem(undefined);
       return true;
     }
-    const before = column.value(row.record);
-    if (JSON.stringify(before) === JSON.stringify(value)) return true;
-    const refused = firstProblem(
-      columnsOn([column], rowKind(row)),
-      () => value,
-      () =>
-        table.recordProblem(
-          { ...valuesOf(row.record), [column.key]: value },
-          otherValues(everyRowsValues(), key),
-          column.key,
-          valuesOf(row.record),
-        ),
+    const made = valueChange(
+      table.recordProblem,
+      column,
+      rowKind(row),
+      valuesOf(row.record),
+      value,
+      otherValues(everyRowsValues(), key),
     );
-    if (refused !== undefined) {
+    if (made === undefined) return true;
+    if ("problem" in made) {
       setProblem({
         row: key,
-        column: refused.column ?? column.key,
-        message: refused.message,
+        column: made.problem.column ?? column.key,
+        message: made.problem.message,
       });
       return false;
     }
     setProblem(undefined);
-    actions.update(row.record, column.change(value));
+    actions.update(row.record, made.change);
     return true;
   };
 
@@ -1868,11 +1928,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   {moved && (
                     <StatusMark
                       tone={
-                        orderDraft.state === "rejected" ? "rejected" : "draft"
+                        shownOrderDraft.state === "rejected"
+                          ? "rejected"
+                          : "draft"
                       }
                       spaced
                     >
-                      {orderDraft.state === "rejected"
+                      {shownOrderDraft.state === "rejected"
                         ? "Rejected: moved"
                         : "Draft: moved"}
                     </StatusMark>
@@ -1895,7 +1957,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     draft={field.draft}
                     lines={[
                       ...fieldDraftLines(field, lists),
-                      ...(joinedOrder ? [movedLine(orderDraft)] : []),
+                      ...(joinedOrder ? [movedLine(shownOrderDraft)] : []),
                     ]}
                     divider={
                       (ownWaiting && mayDecide(approves, deciding)) ||
@@ -1952,7 +2014,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   )}
                   {joinedOrder && (
                     <OrderItems
-                      draft={orderDraft}
+                      draft={shownOrderDraft}
                       canEdit={movesColumns}
                       canApprove={approvesOrder}
                       actions={actions}
@@ -2031,7 +2093,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
               {/* A moved column's menu decides the order that moves it, as a drafted record's does. */}
               {moved && !joinedOrder && (canEditColumns || approvesOrder) && (
                 <OrderItems
-                  draft={orderDraft}
+                  draft={shownOrderDraft}
                   canEdit={canEditColumns}
                   canApprove={approvesOrder}
                   actions={actions}
@@ -2458,7 +2520,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             )}
             {orderShown && (canEditColumns || approvesOrder) && (
               <OrderItems
-                draft={orderDraft}
+                draft={shownOrderDraft}
                 canEdit={canEditColumns}
                 canApprove={approvesOrder}
                 actions={actions}

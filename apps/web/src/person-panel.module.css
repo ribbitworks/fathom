@@ -32,6 +32,17 @@
   margin: 0;
 }
 
+/* A value that opens its editor when clicked. */
+.editable {
+  cursor: pointer;
+}
+
+/* People's cell editors reach past their cell's text to meet its edges; here they reach the
+   value's edges instead, rather than past them. */
+.cellEditor {
+  padding-inline: var(--fathom-cell-editor-bleed);
+}
+
 /* A drafted value's live value, under it. */
 .live {
   margin-top: 4px;

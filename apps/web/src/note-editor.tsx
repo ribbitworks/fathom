@@ -350,6 +350,7 @@ function NoteEditorPanel({
   refused,
   narrow,
   onWriting,
+  onChanged,
   onSave,
   onCancel,
 }: {
@@ -359,6 +360,7 @@ function NoteEditorPanel({
   refused: string | undefined;
   narrow: boolean;
   onWriting: ((writing: boolean) => void) | undefined;
+  onChanged: ((changed: boolean) => void) | undefined;
   onSave: (note: string) => void;
   onCancel: () => void;
 }) {
@@ -368,6 +370,9 @@ function NoteEditorPanel({
   // The note as it was, written as the panel writes it, however the server was given it.
   const [original] = useState(() => cleanNote(note));
   const [problem, setProblem] = useState<string>();
+  // Whether the editor holds a note different from the one opened, kept as it is typed, which does
+  // not draw the panel again.
+  const [edited, setEdited] = useState(false);
   const editor = useEditor({
     extensions: noteExtensions,
     content: noteToDoc(note),
@@ -382,8 +387,10 @@ function NoteEditorPanel({
   // The note as it reads and the Markdown view both show the Markdown kept here.
   const switchTo = (next: View) => {
     const kept = current();
-    if (next === "editor") editor.commands.setContent(noteToDoc(kept));
-    else setMarkdown(kept);
+    if (next === "editor") {
+      editor.commands.setContent(noteToDoc(kept));
+      setEdited(kept !== original);
+    } else setMarkdown(kept);
     setView(next);
   };
   // Reading the note as it was, Esc closes the panel, and the table may be used meanwhile; otherwise
@@ -392,6 +399,20 @@ function NoteEditorPanel({
   useEffect(() => {
     onWriting?.(!reading);
   }, [reading, onWriting]);
+  // Whether the note differs from the one opened, in the editor or as Markdown.
+  useEffect(() => {
+    const update = () => {
+      setEdited(cleanNote(docToNote(editor.getJSON())) !== original);
+    };
+    editor.on("update", update);
+    return () => {
+      editor.off("update", update);
+    };
+  }, [editor, original]);
+  const changed = view === "editor" ? edited : cleanNote(markdown) !== original;
+  useEffect(() => {
+    onChanged?.(changed);
+  }, [changed, onChanged]);
   // A panel closed by its page, rather than by its buttons, leaves nothing being written.
   useEffect(
     () => () => {
@@ -530,6 +551,7 @@ export function NotePanel({
   refused,
   canEdit,
   onWriting,
+  onChanged,
   onSave,
   onClose,
 }: {
@@ -542,6 +564,8 @@ export function NotePanel({
   canEdit: boolean;
   // Whether the note is being changed, rather than only read.
   onWriting?: ((writing: boolean) => void) | undefined;
+  // Whether the note now differs from the one it opened with.
+  onChanged?: ((changed: boolean) => void) | undefined;
   onSave: (note: string) => void;
   onClose: () => void;
 }) {
@@ -555,6 +579,7 @@ export function NotePanel({
         refused={refused}
         narrow={narrow}
         onWriting={onWriting}
+        onChanged={onChanged}
         onSave={onSave}
         onCancel={onClose}
       />

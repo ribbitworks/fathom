@@ -920,9 +920,9 @@ th.liveColumn {
 .recordEditor {
   display: block;
   box-sizing: border-box;
-  width: calc(100% + 16px);
+  width: calc(100% + 2 * var(--fathom-cell-editor-bleed));
   height: 28px;
-  margin: 0 -8px;
+  margin: 0 calc(-1 * var(--fathom-cell-editor-bleed));
   padding: 3px 7px;
   border: 1px solid var(--mantine-color-default-border);
   border-radius: 5px;

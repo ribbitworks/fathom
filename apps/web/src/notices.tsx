@@ -14,6 +14,20 @@ const undoSeconds = 8;
 // The notification whose Undo is still offered, if any.
 let undoNotice: string | undefined;
 
+// The latest change made on the page, by its count, which alone can be undone, however it was saved.
+let latestChange = 0;
+
+// Marks a change as the latest, which ends the Undo offered for any change before it, and returns
+// the change's count.
+export function changeMade(): number {
+  closeUndoNotice();
+  latestChange += 1;
+  return latestChange;
+}
+
+export const isLatestChange = (change: number): boolean =>
+  change === latestChange;
+
 export function notifySuccess(message: string): void {
   notifications.show({
     message,

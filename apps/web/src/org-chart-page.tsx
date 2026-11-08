@@ -82,7 +82,11 @@ import {
 import classes from "./org-chart.module.css";
 import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
+import { personUpdate } from "./person-change.ts";
+import { useNoteEditing } from "./person-editing.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
+import { type PeopleData, peopleQuery } from "./people.ts";
+import { useSaving } from "./saving.ts";
 import { motionLasts, useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { DraftMark, StatusMark } from "./status-mark.tsx";
 import { DraftMenu } from "./table-controls.tsx";
@@ -730,10 +734,13 @@ export function OrgChartPage({
   onSearch,
   seesPeople,
   showDates = false,
+  canEdit = false,
   teamEdits,
 }: {
   search: ChartSearch;
   seesPeople: boolean;
+  // Whether the reader may change people, in a person's details.
+  canEdit?: boolean;
   // Whether the reader sees Restricted details, such as dates, in a person's details.
   showDates?: boolean;
   teamEdits: TeamEdits;
@@ -741,6 +748,19 @@ export function OrgChartPage({
 }) {
   const query = useQuery(orgChartQuery);
   const narrow = useNarrow();
+  // A person's details and a note of theirs being written, beside the chart.
+  const notes = useNoteEditing();
+  const people = useQuery({ ...peopleQuery, enabled: seesPeople });
+  const note = notes.note(
+    seesPeople ? search.open : undefined,
+    people.data?.people,
+  );
+  const { save, undoable } = useSaving<PeopleData>({
+    queryKey: peopleQuery.queryKey,
+    removed: "Someone else has removed this. The people have been refreshed.",
+    blocked: false,
+    refreshes: [orgChartQuery.queryKey],
+  });
   // Those who do not see people are sent no drafts, so every choice draws the approved chart, which
   // they may still colour teams on.
   const show = seesPeople ? (search.show ?? "both") : "both";
@@ -824,8 +844,8 @@ export function OrgChartPage({
       ) : (
         <WithSidePanel
           storageKey="fathom-table-panel-width"
-          panels={
-            seesPeople && search.open !== undefined
+          panels={[
+            ...(seesPeople && search.open !== undefined
               ? [
                   {
                     key: "person",
@@ -854,6 +874,26 @@ export function OrgChartPage({
                         onPerson={(employeeId) => {
                           onSearch({ ...search, open: employeeId }, false);
                         }}
+                        onFollow={(employeeId) => {
+                          onSearch({ ...search, open: employeeId }, true);
+                        }}
+                        notes={notes}
+                        onChange={
+                          canEdit
+                            ? (person, change) => {
+                                save({
+                                  ...personUpdate(
+                                    person,
+                                    change,
+                                    person.preferredName,
+                                  ),
+                                  onSaved: (changeSetId, before) => {
+                                    undoable(changeSetId, before);
+                                  },
+                                });
+                              }
+                            : undefined
+                        }
                         onClose={() => {
                           const open = (search.open as string).toLowerCase();
                           const card = [...everyone.people.values()].find(
@@ -873,8 +913,9 @@ export function OrgChartPage({
                     ),
                   },
                 ]
-              : []
-          }
+              : []),
+            ...(note === undefined ? [] : [note]),
+          ]}
         >
           <ReactFlowProvider key={lead?.id ?? ""}>
             <Chart

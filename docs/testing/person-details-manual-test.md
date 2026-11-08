@@ -2,7 +2,7 @@
 title: "Manual Test: Person Details"
 category: "How-To"
 audience: "AI Coding Assistant"
-applies_to: ["apps/web/src/person-panel*", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
+applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
 last_updated: "2026-11-07"
 ---
@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies a person's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the mark on someone who has left, opening and closing it with the mouse and the keyboard, and how it reads in light and dark mode, resized, and in a narrow window.
+Verifies a person's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the mark on someone who has left, opening and closing it with the mouse and the keyboard, how it reads in light and dark mode, resized, and in a narrow window, and changing their details there, beside People and the org chart.
 
 ## Test Environment
 
@@ -25,6 +25,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 - **Engineering Manager account:** `engineering.manager@fathom.test`, shown in Fathom as **Engineering Manager**. It sees people, with their Restricted details, such as their dates, and cannot change them.
 - **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people without their Restricted details, and cannot change them.
+- **Engineering Operations Manager account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It sees people, with their Restricted details, and changes them.
 
 ## Common Procedures
 
@@ -67,6 +68,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
 - **Details panel:** the panel that slides out on the right of the org chart or the **People** table, headed with a person's name, with the sections **Reporting**, **Details** and **Columns**, each a list of labels on the left and values on the right, and an **×** at its top right.
+- **Change button:** a small pencil at the right of a value in the details panel, shown to accounts that may change people.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a name or a value.
 - **Draft menu:** the menu opened by the **Draft** button above the chart or the table.
 
@@ -218,4 +220,92 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 6.** Restore the window, and choose **Light** in the Appearance menu.
   - **Expected:** The page is light again, with the panel beside the table.
+  - **Notes:**
+
+### DETAILS-08: Changing a Person's Details Beside People
+
+**Account:** Engineering Operations Manager, `engineering.operations.manager@fathom.test`, changed from DETAILS-07.
+
+**Preconditions:** Signed in (P1). **Light** chosen in the Appearance menu. **People** page open from the left-hand menu, searched for **E10026**, with **Lorenza Thiel**'s details open beside the table.
+
+- [ ] **Step 1.** Read the panel.
+  - **Expected:** Every value under **Reporting**, **Details** and **Columns** has a change button at its right, except **Team** and **Direct reports**. **Details** starts with **Name** **Lorenza Thiel**. **Manager?** shows a ticked checkbox and **Yes** instead of a change button.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the change button beside **Site**, which reads **Corran Quay**.
+  - **Expected:** A list of sites opens in place of the value, as it does in a **Site** cell of the table.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Kestrel Bay**.
+  - **Expected:** **Site** reads **Kestrel Bay**, followed by a yellow dot and **Draft**, with **Corran Quay** under it, in grey, followed by a green dot and **Live**. Her **Site** cell in the table reads **Kestrel Bay** too, and focus is on the change button beside **Site**.
+  - **Notes:**
+
+- [ ] **Step 4.** Press Cmd+Z on a Mac, or Ctrl+Z otherwise.
+  - **Expected:** **Site** reads **Corran Quay** again, with no mark, in the panel and the table.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the word **None** beside **Team name**, type **Harbour team**, and press Enter.
+  - **Expected:** **Team name** reads **Harbour team**, followed by a yellow dot and **Draft**, with **None** under it, in grey, followed by a green dot and **Live**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the change button beside **End**, type **2014-01-01**, and press Enter.
+  - **Expected:** The field stays open, outlined in red, with **The end date cannot be before the start date** in red under it.
+  - **Notes:**
+
+- [ ] **Step 7.** Press Esc.
+  - **Expected:** The field closes, **End** shows no date, the red line has gone, and the panel stays open.
+  - **Notes:**
+
+- [ ] **Step 8.** Press Shift+Tab until the change button beside **Position** has focus, then press Enter, choose **SDET** with the down arrow, and press Enter.
+  - **Expected:** A list of positions opens, then closes. **Position** reads **SDET**, followed by a yellow dot and **Draft**, and **SDET** under the heading at the top of the panel follows it.
+  - **Notes:**
+
+- [ ] **Step 9.** Choose **Dark** in the Appearance menu, then select the change button beside **Grade**.
+  - **Expected:** The list of grades and every value, mark and change button in the panel are easy to read on the dark page.
+  - **Notes:**
+
+- [ ] **Step 10.** Press Esc, then choose **Light** in the Appearance menu.
+  - **Expected:** The list closes, **Grade** reads as it did, and the page is light again.
+  - **Notes:**
+
+- [ ] **Step 11.** Select **Draft** above the table, then **Live only**, then press Esc.
+  - **Expected:** The panel shows no change buttons, and **Manager?** reads **Yes** with no checkbox.
+  - **Notes:**
+
+- [ ] **Step 12.** Select **Draft**, then **Drafts beside live**, then press Esc.
+  - **Expected:** The change buttons show again.
+  - **Notes:**
+
+### DETAILS-09: Changing a Person's Details Beside the Org Chart
+
+**Account:** Engineering Operations Manager, `engineering.operations.manager@fathom.test`, the same as DETAILS-08.
+
+**Preconditions:** **Org chart** page open from the left-hand menu.
+
+- [ ] **Step 1.** In the finder above the chart, type **Lorenza Thiel**, choose her, then select her name on her card.
+  - **Expected:** The details panel shows **Lorenza Thiel**, with **Team name** reading **Harbour team** and a yellow dot and **Draft**, as DETAILS-08 left it. Her card shows **Harbour team** too.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the change button beside **Team name**, replace the text with **Quayside team**, and press Enter.
+  - **Expected:** In the panel, **Team name** reads **Quayside team**, followed by a yellow dot and **Draft**, and, within a moment, her card shows **Quayside team** as well.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the change button beside **Onboarding**, under **Columns**.
+  - **Expected:** A second panel opens under her details, headed **Onboarding for Lorenza Thiel**, with **Clear**, **Cancel** and **Save** buttons, and her details stay above it, the two sharing the height.
+  - **Notes:**
+
+- [ ] **Step 4.** Type **Laptop ready** in the note, then select the name on the card for **Silje Holm-Schrøder**.
+  - **Expected:** The details above now show **Silje Holm-Schrøder**. The note panel below stays, still headed **Onboarding for Lorenza Thiel** and holding **Laptop ready**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Cancel** in the note panel.
+  - **Expected:** The note panel closes, and Silje's details fill the side.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Tanushree Patel-Singh** under **Direct reports**, then the change button beside **Onboarding**, then, without changing the note, select **Silje Holm-Schrøder** beside **Manager**.
+  - **Expected:** Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh** and showing her checklist; once Silje is chosen, the details show Silje and the note panel closes.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Lorenza Thiel** under **Direct reports**, then run R1.
+  - **Expected:** After the reload, her details show no **Draft** mark, and **Team name** reads **None**.
   - **Notes:**

@@ -2,10 +2,13 @@
 
 // One person's details in a side panel, beside People or the org chart, for those who see people:
 // their name and position, who they report to and who reports to them, their details, and every
-// added column People shows them, read only. It shows only what People sends the reader, so each
-// tier is kept as there, and reading it is recorded as reading People is. It follows the Draft menu
-// of the page it is on: each drafted value beside the live one, the drafts applied, or the person
-// as they are live. Choosing their manager or a report shows that person instead.
+// added column People shows them. It shows only what People sends the reader, so each tier is kept
+// as there, and reading it is recorded as reading People is. It follows the Draft menu of the page it
+// is on: each drafted value beside the live one, the drafts applied, or the person as they are live.
+// Choosing their manager or a report shows that person instead. Those who may change people change
+// each value there as in its People cell, with the same editors and checks, each change a draft;
+// the live values alone, and someone drafted to be removed or held by another's changes, are only
+// read.
 
 import {
   type Link as WebLink,
@@ -14,6 +17,7 @@ import {
   type Show,
 } from "@fathom/shared";
 import {
+  ActionIcon,
   Alert,
   Anchor,
   Button,
@@ -23,12 +27,19 @@ import {
   Text,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { type ReactNode, useEffect } from "react";
+import {
+  type MouseEvent,
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+  useState,
+} from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { Swatch } from "./colour-swatch.tsx";
 import { focusSoon } from "./focus.ts";
+import { Icon } from "./icons.tsx";
 import { LinkCell } from "./link-field.tsx";
-import { liveLists, listsQuery } from "./lists.ts";
+import { listsQuery } from "./lists.ts";
 import { NoteView } from "./note-editor.tsx";
 import { orgChartQuery } from "./org-chart.ts";
 import {
@@ -36,16 +47,29 @@ import {
   type Column,
   livePeople,
   peopleAsShown,
+  personKind,
 } from "./people-grid.tsx";
 import { isHire } from "./people-rows.ts";
 import { peopleQuery } from "./people.ts";
+import {
+  changeId,
+  personPanelId,
+  type Editing,
+  type EditingContext,
+  labelId,
+  problemId,
+  type NoteEditing,
+  type SaveChange,
+  usePersonEditing,
+} from "./person-editing.tsx";
 import classes from "./person-panel.module.css";
+import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { DraftMark, StatusMark } from "./status-mark.tsx";
-import { formatDay } from "./table-view.ts";
+import { type CellValue, formatDay } from "./table-view.ts";
 import { today } from "./today.ts";
 
-export const personPanelId = "person-panel";
+export { personPanelId };
 const titleId = "person-panel-title";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
@@ -53,6 +77,7 @@ const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 // The columns each section shows, by key, in this order; added columns follow in People's order.
 const reportingKeys = ["managerId", "managerFrom", "team", "teamName"];
 const detailKeys = [
+  "preferredName",
   "employeeId",
   "positionId",
   "stateId",
@@ -79,7 +104,7 @@ function Value({ column, value }: { column: Column; value: unknown }) {
     return value === null ? (
       <Text c="dimmed">None</Text>
     ) : (
-      <LinkCell link={value as WebLink} />
+      <LinkCell link={value as WebLink} inTable={false} />
     );
   }
   const words = kind.inWords(
@@ -119,11 +144,13 @@ function Row({
   column,
   person,
   show,
+  editing,
   children,
 }: {
   column: Column;
   person: Person;
   show: Show;
+  editing?: Editing | undefined;
   children?: ReactNode;
 }) {
   const { draft } = person;
@@ -132,14 +159,65 @@ function Row({
     show === "both" &&
     draft?.action === "changed" &&
     draft.changed.includes(column.changesWith ?? column.key);
+  const start = editing?.open === true ? undefined : editing?.onStart;
+  // A click on the value, but not on a link in it, opens its editor, as the button beside it does.
+  const onClick =
+    start === undefined
+      ? undefined
+      : (event: MouseEvent) => {
+          if ((event.target as HTMLElement).closest("a, button") === null) {
+            start();
+          }
+        };
+  const checkbox = editing !== undefined && editing.onStart === undefined;
   return (
     <div className={classes.row}>
-      <dt className={classes.label}>{column.label}</dt>
-      <dd className={classes.value}>
-        <Group gap={6} wrap="nowrap" align="baseline">
-          {children ?? <Value column={column} value={column.value(person)} />}
-          {drafted && <DraftMark draft={draft} />}
-        </Group>
+      <dt id={labelId(column)} className={classes.label}>
+        {column.label}
+      </dt>
+      <dd
+        className={[
+          classes.value,
+          onClick === undefined ? "" : classes.editable,
+        ].join(" ")}
+        onClick={onClick}
+      >
+        {editing?.open === true ? (
+          editing.editor
+        ) : (
+          <Group
+            gap={6}
+            wrap="nowrap"
+            justify="space-between"
+            align="flex-start"
+          >
+            <Group gap={6} wrap="nowrap" align="baseline">
+              {checkbox
+                ? editing.editor
+                : (children ?? (
+                    <Value column={column} value={column.value(person)} />
+                  ))}
+              {drafted && <DraftMark draft={draft} />}
+            </Group>
+            {start !== undefined && (
+              <ActionIcon
+                id={changeId(column)}
+                variant="subtle"
+                color="gray"
+                size="sm"
+                aria-label={`Change ${column.label}`}
+                onClick={start}
+              >
+                <Icon name="edit" />
+              </ActionIcon>
+            )}
+          </Group>
+        )}
+        {editing?.problem !== undefined && (
+          <Text id={problemId(column)} c="red" size="sm" mt={4}>
+            {editing.problem}
+          </Text>
+        )}
         {drafted && (
           <Group
             gap={6}
@@ -164,7 +242,10 @@ export function PersonPanel({
   narrow,
   elsewhere,
   onPerson,
+  onFollow,
   onClose,
+  onChange,
+  notes,
 }: {
   employeeId: string;
   // What the Draft menu of the page beside it shows.
@@ -176,14 +257,47 @@ export function PersonPanel({
   // A link to the person on the other page that shows people, such as the org chart from People.
   elsewhere: (person: Person) => ReactNode;
   onPerson: (employeeId: string) => void;
+  // Puts the person shown in the address again, under their new ID, in place of their old one.
+  onFollow: (employeeId: string) => void;
   onClose: () => void;
+  // Saves a change to the person, for those who may change people.
+  onChange?: SaveChange | undefined;
+  // Opens a note, which the page holds, since a note is written in a panel of its own.
+  notes: Pick<NoteEditing, "start">;
 }) {
   const query = useQuery(peopleQuery);
   const lists = useQuery(listsQuery);
   const chart = useQuery({ ...orgChartQuery, enabled: seesChart });
+  const { closeStale, editingOf } = usePersonEditing(notes);
+  // The person shown, by Fathom's own ID, with the Employee ID the address named them by, so they
+  // stay shown when that ID changes, by anyone, or the change is undone or fails, while the address
+  // still names them so; an address moved to an ID nobody has, as by Back, shows nobody.
+  const [followed, setFollowed] = useState<{
+    id: string;
+    employeeId: string;
+  }>();
+  const people = (query.data?.people ?? []).filter((one) => !isHire(one));
+  const found = people.find((one) => sameId(one, employeeId));
+  if (
+    found !== undefined &&
+    (found.id !== followed?.id || followed.employeeId !== employeeId)
+  ) {
+    setFollowed({ id: found.id, employeeId });
+  }
+  const drafted =
+    found ??
+    (followed?.employeeId === employeeId
+      ? people.find(({ id }) => id === followed.id)
+      : undefined);
+  const renamed = found === undefined ? drafted?.employeeId : undefined;
+  const follow = useEffectEvent(onFollow);
+  useEffect(() => {
+    if (renamed !== undefined) follow(renamed);
+  }, [renamed]);
+  const shown = drafted?.id ?? employeeId;
   useEffect(() => {
     focusSoon(titleId);
-  }, [employeeId]);
+  }, [shown]);
   const frame = (title: string, content: ReactNode) => (
     <SidePanelFrame
       id={personPanelId}
@@ -219,13 +333,9 @@ export function PersonPanel({
       </Alert>,
     );
   }
-  const everyone = peopleAsShown(query.data.people, show).filter(
-    (person) => !isHire(person),
-  );
-  const person = everyone.find((one) => sameId(one, employeeId));
-  const drafted = query.data.people.find(
-    (one) => !isHire(one) && sameId(one, employeeId),
-  );
+  const asShown = peopleAsShown(query.data.people, show);
+  const everyone = asShown.filter((one) => !isHire(one));
+  const person = everyone.find(({ id }) => id === drafted?.id);
   if (person === undefined) {
     return frame(
       drafted?.preferredName ?? "Details",
@@ -240,14 +350,24 @@ export function PersonPanel({
       </Text>,
     );
   }
-  const columns = columnsFor(
+  const schema = shownSchema(
+    show,
     query.data.fields,
-    show === "live" ? liveLists(lists.data) : lists.data,
+    lists.data,
     query.data.order,
+    query.data.orderDraft,
+  );
+  const allColumns = columnsFor(
+    schema.fields,
+    schema.lists,
+    schema.order,
     showDates,
     everyone,
     query.data.positionHidden !== true,
-  ).filter((column) => column.offeredOn?.("person") ?? true);
+  );
+  const columns = allColumns
+    .filter((column) => column.offeredOn?.(personKind) ?? true)
+    .map((column) => onRow(column, person, personKind));
   const byKey = new Map(columns.map((column) => [column.key, column]));
   const section = (keys: readonly string[]) =>
     keys.flatMap((key) => {
@@ -258,8 +378,8 @@ export function PersonPanel({
   const manager = everyone.find(({ id }) => id === person.manager?.id);
   // Today's reports, and those who have not started yet, by name; those who have left are not.
   const day = today();
-  const reportsAmong = (people: readonly Person[]) =>
-    people.filter(
+  const reportsAmong = (among: readonly Person[]) =>
+    among.filter(
       (one) =>
         !isHire(one) &&
         one.manager?.id === person.id &&
@@ -279,6 +399,24 @@ export function PersonPanel({
     chart.data?.people.find(({ id }) => id === person.id)?.teamColour ?? null;
   const left = typeof person.endDate === "string" && person.endDate < day;
   const position = byKey.get("positionId");
+  const valuesOf = (one: Person): Record<string, CellValue> =>
+    Object.fromEntries(
+      allColumns.map((column) => [column.key, column.value(one)]),
+    );
+  // The live values alone are only read, as on People, since every change makes a draft; so is
+  // someone drafted to be removed or held by another's changes. Their values are checked beside
+  // everyone else's, planned hires too, as People shows them.
+  const context: EditingContext = {
+    person,
+    save:
+      onChange === undefined || show === "live" || heldBack(person)
+        ? undefined
+        : onChange,
+    valuesOf,
+    others: () => asShown.filter(({ id }) => id !== person.id).map(valuesOf),
+  };
+  closeStale(context);
+  const editing = editingOf(context);
   const rowOf = (column: Column) => {
     const special =
       column.key === "managerId" && manager !== undefined ? (
@@ -299,7 +437,13 @@ export function PersonPanel({
         </Group>
       ) : undefined;
     return (
-      <Row key={column.key} column={column} person={person} show={show}>
+      <Row
+        key={column.key}
+        column={column}
+        person={person}
+        show={show}
+        editing={editing(column)}
+      >
         {special}
       </Row>
     );

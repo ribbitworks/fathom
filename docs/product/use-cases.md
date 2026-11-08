@@ -79,7 +79,7 @@ flowchart TD
 - **Goal:** Keep Fathom's copy of employee details from the company's HR system current, including teams, managers, and end dates.
 - **Outcome:** People can be planned for. People who leave are kept, with their end date, rather than deleted.
 
-Details are typed or pasted into People, or [imported](decisions.md#people-and-privacy) from a file:
+Details are typed or pasted into People, changed in a person's details beside People or the org chart, or [imported](decisions.md#people-and-privacy) from a file:
 
 ```mermaid
 flowchart TD

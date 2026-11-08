@@ -33,6 +33,7 @@ import {
   type RecordGridProps,
   type RecordTable,
   type RowProblem,
+  recordsAsShown,
 } from "./record-grid.tsx";
 import { StatusMark } from "./status-mark.tsx";
 import { flagChoice } from "./cell-kinds.tsx";
@@ -54,7 +55,7 @@ export type PeopleGridHandle = RecordGridHandle;
 
 export type Column = RecordColumn<Person, RowChange>;
 
-const personKind = "person";
+export const personKind = "person";
 const hireKind = "planned-hire";
 
 // What a planned hire has but a person does not, and the other way round.
@@ -452,18 +453,10 @@ export function livePeople(people: readonly Person[]): Person[] {
 
 // Everyone as the Draft menu's choice shows them: as drafted, with the drafts applied, where a
 // rejected draft is taken back and someone drafted to be removed is gone, or as they are live.
-export function peopleAsShown(people: readonly Person[], show: Show): Person[] {
-  if (show !== "drafts")
-    return show === "live" ? livePeople(people) : [...people];
-  const live = new Map(livePeople(people).map((person) => [person.id, person]));
-  return people.flatMap((person) => {
-    if (person.draft?.state === "rejected") {
-      const before = live.get(person.id);
-      return before === undefined ? [] : [before];
-    }
-    return person.draft?.action === "deleted" ? [] : [person];
-  });
-}
+export const peopleAsShown = (
+  people: readonly Person[],
+  show: Show,
+): Person[] => recordsAsShown(show, people, livePeople);
 
 function makeLivePeople(people: readonly Person[]): Person[] {
   const drafted = new Map(people.map((person) => [person.id, person.draft]));
@@ -509,7 +502,7 @@ function makeLivePeople(people: readonly Person[]): Person[] {
 // in the end date, or a manager without the date they are the person's manager from, or that date
 // given to someone with no manager and no line to move, such as someone added. The Employee ID is
 // checked when it is what changed, or when a person is added.
-function recordProblem(
+export function recordProblem(
   values: Record<string, CellValue>,
   others: () => Record<string, CellValue>[],
   changed?: string,

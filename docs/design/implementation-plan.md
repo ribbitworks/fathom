@@ -111,7 +111,7 @@ The additions to the org chart that the [Decisions Log](../product/decisions.md#
 
 1. **Team colours:** each team's colour, from the palette releases use, chosen on the org chart and changed at once rather than drafted, with a Team colours permission, which needs a migration; with it, naming teams on the chart as drafts, a Teams panel, and teams in the finder.
 2. **Drafts on the chart:** the Draft menu tables have, on the org chart: people drafted to a new manager drawn under them with a Live copy under their current one, drafted team names, Drafts applied and Live only, as the [Decisions Log](../product/decisions.md#workforce) sets out.
-3. **Person details:** one person's details in a side panel, which the org chart's cards and People's rows open, as the [Decisions Log](../product/decisions.md#workforce) sets out. Restricted details shown there are recorded in the access history, as on People.
+3. **Person details:** one person's details in a side panel, which the org chart's cards and People's rows open, as the [Decisions Log](../product/decisions.md#workforce) sets out. Restricted details shown there are recorded in the access history, as on People. Those who may change people change the person's details there, as on People.
 4. **Chart fields, filters, and sort:** cards show fields chosen from People's columns, at the tiers the reader may see, kept apart from the card's own details, with filters and sort saved as People's views are.
 
 The [Features and the Roadmap](#features-and-the-roadmap) slice adds a second chart, of feature teams, with their own colours and dotted lines to members' managers, as the [Decisions Log](../product/decisions.md#workforce) records.

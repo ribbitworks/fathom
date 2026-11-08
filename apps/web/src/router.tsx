@@ -334,8 +334,8 @@ const peopleRoute = createRoute({
         })}
         open={open}
         seesChart={permissions.includes("org-chart:view")}
-        onOpen={(next) => {
-          void navigate({ search: { ...search, open: next } });
+        onOpen={(next, replace = false) => {
+          void navigate({ search: { ...search, open: next }, replace });
         }}
       />
     );
@@ -361,6 +361,7 @@ const orgChartRoute = createRoute({
       <OrgChartPage
         seesPeople={permissions.includes("people:view")}
         showDates={permissions.includes("restricted:view")}
+        canEdit={permissions.includes("people:edit")}
         teamEdits={teamEdits}
         search={orgChartRoute.useSearch()}
         onSearch={(search, replace) => {

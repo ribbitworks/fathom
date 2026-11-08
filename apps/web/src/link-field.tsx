@@ -37,8 +37,15 @@ const focusCell = (event: MouseEvent<HTMLElement>) => {
 
 // The address is checked again here, so a link that reached the browser some other way can never
 // run anything. Opening without the referrer keeps the page address, which holds the table's search
-// and filters, from reaching the linked site.
-export function LinkCell({ link }: { link: Link }) {
+// and filters, from reaching the linked site. Outside a table, as in a person's details, it is an
+// ordinary link, reached with Tab.
+export function LinkCell({
+  link,
+  inTable = true,
+}: {
+  link: Link;
+  inTable?: boolean;
+}) {
   const href = webAddress(link.address);
   const label = linkLabel(link);
   if (href === null) return <span title={link.address}>{label}</span>;
@@ -49,9 +56,8 @@ export function LinkCell({ link }: { link: Link }) {
       rel="noopener noreferrer"
       title={href}
       // Tab moves between cells; the row's menu opens the link from the keyboard.
-      tabIndex={-1}
+      {...(inTable ? { tabIndex: -1, onClick: focusCell } : {})}
       className={classes.cellLink}
-      onClick={focusCell}
     >
       {label}
     </a>
