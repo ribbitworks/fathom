@@ -12,6 +12,7 @@ import {
   index,
   integer,
   jsonb,
+  numeric,
   pgSchema,
   primaryKey,
   text,
@@ -207,6 +208,13 @@ const builtInListList = sqlList([
   "proposal-statuses",
 ]);
 const meaningList = sqlList(["proposed", "open", "hired", "left"]);
+const featureStatusList = sqlList([
+  "possible",
+  "planned",
+  "in-progress",
+  "done",
+  "cancelled",
+]);
 
 // Lists of choices, such as locations or skills, for columns elsewhere to draw on. Most are defined
 // by people; a built-in list is known by its key, cannot be removed, and is drawn on by a built-in
@@ -371,7 +379,7 @@ export const customers = fathomSchema.table(
 // is unique, ignoring letter case, and so is its Proposal ID when it has one. Its status is a
 // choice in the built-in proposal statuses list, which the server checks. Its customers are kept
 // as a list of identifiers, which the server checks name customers, since a proposal picks several
-// and its draft changes them together.
+// and its draft changes them together. The features it proposes are kept and checked the same way.
 export const proposals = fathomSchema.table(
   "proposals",
   {
@@ -389,6 +397,10 @@ export const proposals = fathomSchema.table(
     statusId: uuid("status_id")
       .notNull()
       .references(() => listItems.id, { onDelete: "restrict" }),
+    featureIds: uuid("feature_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
   },
   (table) => [
     uniqueIndex("proposals_name_index").on(sql`lower(${table.name})`),
@@ -401,8 +413,9 @@ export const proposals = fathomSchema.table(
 );
 
 // Projects. A project's name is unique, ignoring letter case, and so is its Project ID when it has
-// one. Its dates are not kept: they come from its milestones. Its customers and the proposals it
-// links to are kept as lists of identifiers, which the server checks name records.
+// one. Its dates are not kept: they come from its milestones. Its customers, the proposals it links
+// to, and the features it needs are kept as lists of identifiers, which the server checks name
+// records.
 export const projects = fathomSchema.table(
   "projects",
   {
@@ -420,6 +433,10 @@ export const projects = fathomSchema.table(
       .array()
       .notNull()
       .default(sql`'{}'`),
+    featureIds: uuid("feature_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
   },
   (table) => [
     uniqueIndex("projects_name_index").on(sql`lower(${table.name})`),
@@ -430,19 +447,82 @@ export const projects = fathomSchema.table(
   ],
 );
 
-// Milestones, each of one project, on a day, and either a customer delivery or not.
+// Milestones, each of one project or one feature, on a day, and either a customer delivery or not.
 export const milestones = fathomSchema.table(
   "milestones",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    projectId: uuid("project_id")
-      .notNull()
-      .references(() => projects.id, { onDelete: "restrict" }),
+    projectId: uuid("project_id").references(() => projects.id, {
+      onDelete: "restrict",
+    }),
+    featureId: uuid("feature_id").references(() => features.id, {
+      onDelete: "restrict",
+    }),
     name: text("name").notNull(),
     date: date("date").notNull(),
     customerDelivery: boolean("customer_delivery").notNull().default(false),
   },
-  (table) => [index("milestones_project_index").on(table.projectId)],
+  (table) => [
+    index("milestones_project_index").on(table.projectId),
+    index("milestones_feature_index").on(table.featureId),
+    check(
+      "milestones_one_owner",
+      sql`num_nonnulls(${table.projectId}, ${table.featureId}) = 1`,
+    ),
+  ],
+);
+
+// Features: the planned work on the roadmap. A feature's name is unique, ignoring letter case. A
+// project's general feature has no name of its own, since it shows its project's and follows it. A
+// target cycle is known by its stream and start date, as cycles are worked out rather than stored;
+// a feature with none is in Later. The estimate is one value, in hours, whichever unit it is shown
+// in; PostgreSQL ranks NaN above every number, so it must be refused by name.
+export const features = fathomSchema.table(
+  "features",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name"),
+    status: text("status").notNull().default("possible"),
+    targetStreamId: uuid("target_stream_id").references(
+      () => releaseStreams.id,
+      { onDelete: "restrict" },
+    ),
+    targetCycle: date("target_cycle"),
+    estimateHours: numeric("estimate_hours", { precision: 12, scale: 2 }),
+    featureTeamId: uuid("feature_team_id").references(() => featureTeams.id, {
+      onDelete: "restrict",
+    }),
+    description: text("description"),
+    generalForProjectId: uuid("general_for_project_id").references(
+      () => projects.id,
+      { onDelete: "restrict" },
+    ),
+  },
+  (table) => [
+    uniqueIndex("features_name_index").on(sql`lower(${table.name})`),
+    uniqueIndex("features_general_for_project_index").on(
+      table.generalForProjectId,
+    ),
+    index("features_target_index").on(table.targetStreamId, table.targetCycle),
+    index("features_feature_team_index").on(table.featureTeamId),
+    check(
+      "features_status_known",
+      sql`${table.status} IN (${sql.raw(featureStatusList)})`,
+    ),
+    check(
+      "features_named_or_general",
+      sql`(${table.name} IS NULL) = (${table.generalForProjectId} IS NOT NULL)`,
+    ),
+    check(
+      "features_target_whole",
+      sql`(${table.targetStreamId} IS NULL) = (${table.targetCycle} IS NULL)`,
+    ),
+    check(
+      "features_estimate_not_negative",
+      sql`${table.estimateHours} >= 0 AND ${table.estimateHours} <> 'NaN'`,
+    ),
+    check("features_description_not_empty", sql`${table.description} <> ''`),
+  ],
 );
 
 // The change history: every change made to Fathom's data, with its old and new values, grouped into

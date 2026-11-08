@@ -348,7 +348,11 @@ export async function unseedProjects(database: Database): Promise<string[]> {
             seededProjects.map(({ key }) => projectId(key)),
           ),
         ),
-      new Set(handMilestones.map((milestone) => milestone.projectId)),
+      new Set(
+        handMilestones
+          .map((milestone) => milestone.projectId)
+          .filter((id) => id !== null),
+      ),
       (name) => `The project ${name}, which has milestones added by hand`,
     );
     const projectIds = removingProjects.map(({ id }) => id);

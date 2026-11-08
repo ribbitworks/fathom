@@ -11,9 +11,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { createDatabase, createPool } from "./client.ts";
 import type { DatabaseConfig } from "./config.ts";
+import { databaseCodes } from "./errors.ts";
 import {
   migrateCommand,
   runMigrations,
@@ -512,24 +521,24 @@ describe("lists", () => {
   });
 });
 
+// Adds fictional streams with the names given, and gives their ids in order.
+async function addStreams(client: Client, ...names: string[]) {
+  const ids: string[] = [];
+  for (const name of names) {
+    const added = await client.query<{ id: string }>(
+      "INSERT INTO release_streams (name, cycles_until) VALUES ($1, '2029-01-01') RETURNING id",
+      [name],
+    );
+    ids.push(added.rows[0]?.id as string);
+  }
+  return ids;
+}
+
 describe("release streams", () => {
   const uniqueViolation = "23505";
   const checkViolation = "23514";
   const restrictViolation = "23001";
   const notNullViolation = "23502";
-
-  // Adds fictional streams with the names given, and gives their ids in order.
-  async function addStreams(client: Client, ...names: string[]) {
-    const ids: string[] = [];
-    for (const name of names) {
-      const added = await client.query<{ id: string }>(
-        "INSERT INTO release_streams (name, cycles_until) VALUES ($1, '2029-01-01') RETURNING id",
-        [name],
-      );
-      ids.push(added.rows[0]?.id as string);
-    }
-    return ids;
-  }
 
   const addPattern = (
     client: Client,
@@ -1016,6 +1025,365 @@ describe("planned hires", () => {
           ),
         ),
       ).toBe(checkViolation);
+    });
+  });
+});
+
+describe("features", () => {
+  const { uniqueViolation, checkViolation, restrictViolation } = databaseCodes;
+  const prefix = "Fictional Feature Test";
+
+  afterEach(async () => {
+    await withClient(database.app, async (client) => {
+      await client.query(`DELETE FROM milestones WHERE name LIKE '${prefix}%'`);
+      await client.query(
+        `DELETE FROM features WHERE name LIKE '${prefix}%' OR general_for_project_id IN (SELECT id FROM projects WHERE name LIKE '${prefix}%')`,
+      );
+      await client.query(`DELETE FROM projects WHERE name LIKE '${prefix}%'`);
+      await client.query(`DELETE FROM proposals WHERE name LIKE '${prefix}%'`);
+      await client.query(
+        `DELETE FROM release_streams WHERE name LIKE '${prefix}%'`,
+      );
+      await client.query(
+        `DELETE FROM feature_teams WHERE name LIKE '${prefix}%'`,
+      );
+    });
+  });
+
+  async function firstId(
+    client: Client,
+    statement: string,
+    values: readonly unknown[],
+  ) {
+    const added = await client.query<{ id: string }>(statement, [...values]);
+    return added.rows[0]?.id as string;
+  }
+
+  const addProject = (client: Client, name = `${prefix} Project`) =>
+    firstId(client, "INSERT INTO projects (name) VALUES ($1) RETURNING id", [
+      name,
+    ]);
+
+  const addStream = async (client: Client) => {
+    const [id] = await addStreams(client, `${prefix} Stream`);
+    return id as string;
+  };
+
+  const addTeam = (client: Client) =>
+    firstId(
+      client,
+      "INSERT INTO feature_teams (name) VALUES ($1) RETURNING id",
+      [`${prefix} Team`],
+    );
+
+  const addFeature = (client: Client, name: string | null = `${prefix} One`) =>
+    client.query("INSERT INTO features (name) VALUES ($1)", [name]);
+
+  const addFeatureId = (client: Client) =>
+    firstId(client, "INSERT INTO features (name) VALUES ($1) RETURNING id", [
+      `${prefix} One`,
+    ]);
+
+  const addGeneralFeature = (
+    client: Client,
+    projectId: string,
+    name: string | null = null,
+  ) =>
+    client.query(
+      "INSERT INTO features (name, general_for_project_id) VALUES ($1, $2)",
+      [name, projectId],
+    );
+
+  const addTarget = (
+    client: Client,
+    stream: string | null,
+    cycle: string | null,
+  ) =>
+    client.query(
+      "INSERT INTO features (name, target_stream_id, target_cycle) VALUES ($1, $2, $3)",
+      [`${prefix} One`, stream, cycle],
+    );
+
+  const addEstimate = (client: Client, hours: string) =>
+    client.query(
+      "INSERT INTO features (name, estimate_hours) VALUES ($1, $2)",
+      [`${prefix} One`, hours],
+    );
+
+  const addMilestone = (
+    client: Client,
+    project: string | null,
+    feature: string | null,
+  ) =>
+    client.query(
+      "INSERT INTO milestones (name, date, project_id, feature_id) VALUES ($1, '2027-03-01', $2, $3)",
+      [`${prefix} Milestone`, project, feature],
+    );
+
+  const removeRow = (client: Client, table: string, id: string) =>
+    client.query(`DELETE FROM ${table} WHERE id = $1`, [id]);
+
+  const countMilestones = async (client: Client) => {
+    const counted = await client.query<{ count: number }>(
+      `SELECT count(*)::int AS count FROM milestones WHERE name LIKE '${prefix}%'`,
+    );
+    return counted.rows;
+  };
+
+  it("starts a feature as Possible, with nothing else filled in", async () => {
+    await withClient(database.app, async (client) => {
+      await addFeature(client);
+      const added = await client.query(
+        `SELECT status, target_stream_id, target_cycle, estimate_hours, feature_team_id, description, general_for_project_id FROM features WHERE name = '${prefix} One'`,
+      );
+      expect(added.rows).toEqual([
+        {
+          status: "possible",
+          target_stream_id: null,
+          target_cycle: null,
+          estimate_hours: null,
+          feature_team_id: null,
+          description: null,
+          general_for_project_id: null,
+        },
+      ]);
+    });
+  });
+
+  it("keeps features' names unique, ignoring letter case", async () => {
+    await withClient(database.app, async (client) => {
+      await addFeature(client);
+      expect(await errorCodeOf(addFeature(client, `${prefix} ONE`))).toBe(
+        uniqueViolation,
+      );
+    });
+  });
+
+  it("lets several projects' general features go without a name", async () => {
+    await withClient(database.app, async (client) => {
+      await addGeneralFeature(client, await addProject(client));
+      await addGeneralFeature(
+        client,
+        await addProject(client, `${prefix} Project Two`),
+      );
+      const general = await client.query(
+        `SELECT name FROM features WHERE general_for_project_id IN (SELECT id FROM projects WHERE name LIKE '${prefix}%')`,
+      );
+      expect(general.rows).toEqual([{ name: null }, { name: null }]);
+    });
+  });
+
+  it("gives a project at most one general feature", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      await addGeneralFeature(client, projectId);
+      expect(await errorCodeOf(addGeneralFeature(client, projectId))).toBe(
+        uniqueViolation,
+      );
+    });
+  });
+
+  it("refuses a general feature with a name of its own", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      expect(
+        await errorCodeOf(
+          addGeneralFeature(client, projectId, `${prefix} Named General`),
+        ),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("refuses a feature with no name that is no project's general feature", async () => {
+    await withClient(database.app, async (client) => {
+      expect(await errorCodeOf(addFeature(client, null))).toBe(checkViolation);
+    });
+  });
+
+  it.each(["possible", "planned", "in-progress", "done", "cancelled"])(
+    "accepts the status %s",
+    async (status) => {
+      await withClient(database.app, async (client) => {
+        await client.query(
+          "INSERT INTO features (name, status) VALUES ($1, $2)",
+          [`${prefix} ${status}`, status],
+        );
+        const added = await client.query(
+          `SELECT status FROM features WHERE name = '${prefix} ${status}'`,
+        );
+        expect(added.rows).toEqual([{ status }]);
+      });
+    },
+  );
+
+  it("refuses a status outside the fixed set", async () => {
+    await withClient(database.app, async (client) => {
+      expect(
+        await errorCodeOf(
+          client.query("INSERT INTO features (name, status) VALUES ($1, $2)", [
+            `${prefix} One`,
+            "paused",
+          ]),
+        ),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("targets a cycle by its stream and start date", async () => {
+    await withClient(database.app, async (client) => {
+      const streamId = await addStream(client);
+      await addTarget(client, streamId, "2027-01-01");
+      const added = await client.query(
+        `SELECT target_stream_id FROM features WHERE name = '${prefix} One'`,
+      );
+      expect(added.rows).toEqual([{ target_stream_id: streamId }]);
+    });
+  });
+
+  it("refuses a target stream with no start date", async () => {
+    await withClient(database.app, async (client) => {
+      const streamId = await addStream(client);
+      expect(await errorCodeOf(addTarget(client, streamId, null))).toBe(
+        checkViolation,
+      );
+    });
+  });
+
+  it("refuses a target start date with no stream", async () => {
+    await withClient(database.app, async (client) => {
+      expect(await errorCodeOf(addTarget(client, null, "2027-01-01"))).toBe(
+        checkViolation,
+      );
+    });
+  });
+
+  it("rounds an estimate to two decimal places", async () => {
+    await withClient(database.app, async (client) => {
+      await addEstimate(client, "12.345");
+      const added = await client.query(
+        `SELECT estimate_hours FROM features WHERE name = '${prefix} One'`,
+      );
+      expect(added.rows).toEqual([{ estimate_hours: "12.35" }]);
+    });
+  });
+
+  it("accepts an estimate of zero", async () => {
+    await withClient(database.app, async (client) => {
+      await addEstimate(client, "0");
+      const added = await client.query(
+        `SELECT estimate_hours FROM features WHERE name = '${prefix} One'`,
+      );
+      expect(added.rows).toEqual([{ estimate_hours: "0.00" }]);
+    });
+  });
+
+  it.each(["-1", "NaN"])("refuses the estimate %s", async (hours) => {
+    await withClient(database.app, async (client) => {
+      expect(await errorCodeOf(addEstimate(client, hours))).toBe(
+        checkViolation,
+      );
+    });
+  });
+
+  it("holds no empty description", async () => {
+    await withClient(database.app, async (client) => {
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO features (name, description) VALUES ($1, '')",
+            [`${prefix} One`],
+          ),
+        ),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("keeps a stream a feature targets from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const streamId = await addStream(client);
+      await addTarget(client, streamId, "2027-01-01");
+      expect(
+        await errorCodeOf(removeRow(client, "release_streams", streamId)),
+      ).toBe(restrictViolation);
+    });
+  });
+
+  it("keeps a feature team with features from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const teamId = await addTeam(client);
+      await client.query(
+        "INSERT INTO features (name, feature_team_id) VALUES ($1, $2)",
+        [`${prefix} One`, teamId],
+      );
+      expect(
+        await errorCodeOf(removeRow(client, "feature_teams", teamId)),
+      ).toBe(restrictViolation);
+    });
+  });
+
+  it("keeps a project with a general feature from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      await addGeneralFeature(client, projectId);
+      expect(await errorCodeOf(removeRow(client, "projects", projectId))).toBe(
+        restrictViolation,
+      );
+    });
+  });
+
+  it("lets a milestone belong to a project", async () => {
+    await withClient(database.app, async (client) => {
+      await addMilestone(client, await addProject(client), null);
+      expect(await countMilestones(client)).toEqual([{ count: 1 }]);
+    });
+  });
+
+  it("lets a milestone belong to a feature", async () => {
+    await withClient(database.app, async (client) => {
+      await addMilestone(client, null, await addFeatureId(client));
+      expect(await countMilestones(client)).toEqual([{ count: 1 }]);
+    });
+  });
+
+  it("refuses a milestone of both a project and a feature", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      const featureId = await addFeatureId(client);
+      expect(
+        await errorCodeOf(addMilestone(client, projectId, featureId)),
+      ).toBe(checkViolation);
+    });
+  });
+
+  it("refuses a milestone of neither a project nor a feature", async () => {
+    await withClient(database.app, async (client) => {
+      expect(await errorCodeOf(addMilestone(client, null, null))).toBe(
+        checkViolation,
+      );
+    });
+  });
+
+  it("keeps a feature with milestones from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const featureId = await addFeatureId(client);
+      await addMilestone(client, null, featureId);
+      expect(await errorCodeOf(removeRow(client, "features", featureId))).toBe(
+        restrictViolation,
+      );
+    });
+  });
+
+  it("starts projects and proposals with no features", async () => {
+    await withClient(database.app, async (client) => {
+      await addProject(client);
+      await client.query(
+        "INSERT INTO proposals (name, status_id) SELECT $1, i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'proposal-statuses' AND i.label = 'Open'",
+        [`${prefix} Proposal`],
+      );
+      const linked = await client.query(
+        `SELECT feature_ids FROM projects WHERE name = '${prefix} Project' UNION ALL SELECT feature_ids FROM proposals WHERE name = '${prefix} Proposal'`,
+      );
+      expect(linked.rows).toEqual([{ feature_ids: [] }, { feature_ids: [] }]);
     });
   });
 });

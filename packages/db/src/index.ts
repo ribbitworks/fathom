@@ -32,6 +32,7 @@ export {
   featureTeams,
   fieldValues,
   fathomSchema,
+  features,
   listItems,
   lists,
   milestones,
