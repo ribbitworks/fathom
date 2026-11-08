@@ -169,7 +169,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 5.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open the **People** page.
-  - **Expected:** The table has a **Position** column, and **New person** can be selected.
+  - **Expected:** The table has a **Position** column, and **New** can be selected.
   - **Notes:**
 
 - [ ] **Step 6.** Reset the database (R2).

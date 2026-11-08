@@ -33,6 +33,7 @@ import {
   inOrder,
   liveFields,
   liveRecordsOf,
+  newRecordProblems,
   type RecordActions,
   RecordGrid,
   type RecordTable,
@@ -1353,5 +1354,47 @@ describe("a refused value", () => {
     await userEvent.keyboard("{ArrowDown}{Enter}");
     expect(screen.queryByText("Widget")).toBeNull();
     expect(document.activeElement?.closest("tr")?.textContent).toContain("S1");
+  });
+});
+
+describe("the problems with a new record", () => {
+  const columns = gadgetColumns([], [], []);
+  const problems = (
+    values: Record<string, string>,
+    whole: { message: string; column?: string } | undefined,
+  ) =>
+    newRecordProblems(
+      columns,
+      "record",
+      values,
+      () => whole,
+      () => [],
+    );
+
+  it("names values taken together in the first column when they name none", () => {
+    expect(problems({ name: "Gizmo" }, { message: "Not unique" })).toEqual([
+      { message: "Not unique", column: "name" },
+    ]);
+  });
+
+  it("names values taken together before the columns' own problems", () => {
+    expect(
+      problems(
+        { name: "", code: "X" },
+        { message: "Codes are fixed", column: "code" },
+      ),
+    ).toEqual([
+      { message: "Codes are fixed", column: "code" },
+      { message: "Name needed", column: "name" },
+    ]);
+  });
+
+  it("names only the column's own problem when values taken together name the same column", () => {
+    expect(
+      problems(
+        { name: "", code: "" },
+        { message: "Not unique", column: "name" },
+      ),
+    ).toEqual([{ message: "Name needed", column: "name" }]);
   });
 });

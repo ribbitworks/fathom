@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies a person's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the mark on someone who has left, opening and closing it with the mouse and the keyboard, how it reads in light and dark mode, resized, and in a narrow window, and changing their details there, beside People and the org chart.
+Verifies a person's or planned hire's details in the side panel beside the org chart and People: what it shows of them, moving to another person, drafted values beside live ones and following the Draft menu, the mark on someone who has left, opening and closing it with the mouse and the keyboard, how it reads in light and dark mode, resized, and in a narrow window, changing their details there, beside People and the org chart, being asked before a changed note is discarded, and adding a person or planned hire from **New**.
 
 ## Test Environment
 
@@ -56,7 +56,8 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
-- **Details panel:** the panel that slides out on the right of the org chart or the **People** table, headed with a person's name, with the sections **Reporting**, **Details** and **Columns**, each a list of labels on the left and values on the right, and an **×** at its top right.
+- **Details panel:** the panel that slides out on the right of the org chart or the **People** table, headed with a person's or planned hire's name, with the sections **Reporting**, **Details** and **Columns**, each a list of labels on the left and values on the right, and an **×** at its top right.
+- **New:** the button at the top right of the **People** page, which opens the details panel to add a person or planned hire.
 - **Change button:** a small pencil at the right of a value in the details panel, shown to accounts that may change people.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a name or a value.
 - **Draft menu:** the menu opened by the **Draft** button above the chart or the table.
@@ -288,17 +289,111 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 5.** Type **Laptop ready** in the note, then select the name on the card for **Silje Holm-Schrøder**.
-  - **Expected:** The details above now show **Silje Holm-Schrøder**. The note panel below stays, still headed **Onboarding for Lorenza Thiel** and holding **Laptop ready**.
+  - **Expected:** A box asks **Discard the note you're writing?**, with **Keep writing** and **Discard**. The details behind it still show **Lorenza Thiel**.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Cancel** in the note panel.
-  - **Expected:** The note panel closes, and Silje's details fill the side.
+- [ ] **Step 6.** Select **Keep writing**.
+  - **Expected:** The box closes. The details still show **Lorenza Thiel**, and the note panel still holds **Laptop ready**.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Tanushree Patel-Singh** under **Direct reports**, then the change button beside **Onboarding**, then, without changing the note, select **Silje Holm-Schrøder** beside **Manager**.
-  - **Expected:** Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh** and showing her checklist; once Silje is chosen, the details show Silje and the note panel closes.
+- [ ] **Step 7.** Select the name on the card for **Silje Holm-Schrøder** again, then **Discard**.
+  - **Expected:** The details show **Silje Holm-Schrøder**, and the note panel has closed.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Lorenza Thiel** under **Direct reports**, then run R1.
+- [ ] **Step 8.** Select **Tanushree Patel-Singh** under **Direct reports**, then the change button beside **Onboarding**, then, without changing the note, select **Silje Holm-Schrøder** beside **Manager**.
+  - **Expected:** Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh** and showing her checklist; once Silje is chosen, nothing asks, the details show Silje, and the note panel closes.
+  - **Notes:**
+
+- [ ] **Step 9.** Select **Lorenza Thiel** under **Direct reports**, then run R1.
   - **Expected:** After the reload, her details show no **Draft** mark, and **Team name** reads **None**.
+  - **Notes:**
+
+### DETAILS-10: A Planned Hire's Details Open Beside People
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DETAILS-09.
+
+**Preconditions:** **People** page open from the left-hand menu. **Light** chosen in the Appearance menu.
+
+- [ ] **Step 1.** In the search box above the table, type **TBD-3**.
+  - **Expected:** Three rows show: **Engineering Manager, TBD-3**, its name in grey italics, and **Platform engineer** and **SDET, TBD-5**, each with **Engineering Manager, TBD-3** in **Manager**.
+  - **Notes:**
+
+- [ ] **Step 2.** Point at the row for **Engineering Manager, TBD-3**, and select the arrow button at the right of its **Name** cell.
+  - **Expected:** The details panel opens, headed **Engineering Manager, TBD-3**, with **Engineering Manager** under the heading, followed by a dot and **Planned, expected Nov 2026**. There is no **Show on org chart** link.
+  - **Notes:**
+
+- [ ] **Step 3.** Read the **Reporting** and **Details** sections.
+  - **Expected:** **Manager** reads **No manager**, and **Direct reports** lists **Platform engineer** and **SDET, TBD-5**. **Details** shows **ID** **TBD-3**, **State** **Request to hire** and **Expected** **Nov 2026**, and has no **End**. **Manager?** shows a ticked checkbox and **Yes**. Every other value has a change button, except **Team**, **Expected** and **Direct reports**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **SDET, TBD-5** under **Direct reports**.
+  - **Expected:** The panel shows **SDET, TBD-5**, and **Manager** reads **Engineering Manager, TBD-3**, as a link.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the change button beside **Name**, type **Fictional test lead**, and press Enter.
+  - **Expected:** **Name** reads **Fictional test lead**, followed by a yellow dot and **Draft**, and the heading reads **Fictional test lead**. Its row in the table reads **Fictional test lead** too.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### DETAILS-11: A Person Is Added From New
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DETAILS-10.
+
+**Preconditions:** **People** page open from the left-hand menu. **Light** chosen in the Appearance menu.
+
+- [ ] **Step 1.** Select **New** at the top right of the page.
+  - **Expected:** The details panel opens, headed **New person**. Its first row is **State**, reading **Hired**, with a change button. **Name**, **ID**, **Start**, **End**, **Manager since** and **Team name** are empty boxes to type in, **Manager?** is an empty checkbox, and the other values have change buttons. **Cancel** and **Add** are at the foot of the panel.
+  - **Notes:**
+
+- [ ] **Step 2.** Type **Fictional Newcomer** in **Name**, press Tab, type **E10007** in **ID**, and press Tab.
+  - **Expected:** The **ID** box is outlined in red, with **Someone already has that ID** in red under it.
+  - **Notes:**
+
+- [ ] **Step 3.** Replace the ID with **E20001**, press Tab, and select **Add**.
+  - **Expected:** The red line under **ID** has gone. **Position needed** shows in red under **Position**, and **Grade needed** under **Grade**, and focus is on the change button beside **Position**. Nothing is added to the table.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the change button beside **Position** and choose **Software Engineer**, then the change button beside **Grade** and choose **P2**, then select **Add**.
+  - **Expected:** The panel shows **Fictional Newcomer**, with **Software Engineer** under the heading, followed by a hollow yellow dot and **Draft: added**, and change buttons beside its values. Her row is in the table with the same mark.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### DETAILS-12: State Decides Whether a Person or a Planned Hire Is Added
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DETAILS-11.
+
+**Preconditions:** **People** page open from the left-hand menu. **Light** chosen in the Appearance menu.
+
+- [ ] **Step 1.** Select **New**. Type **Fictional Opening** in **Name**, then type **2027-06-30** in **End** and press Tab.
+  - **Expected:** The panel is headed **New person**, and **End** holds **2027-06-30**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the change button beside **State**.
+  - **Expected:** A list opens offering **Hired**, **Left**, **Request to hire** and **Approved to hire**.
+  - **Notes:**
+
+- [ ] **Step 3.** Choose **Request to hire**.
+  - **Expected:** The heading reads **New planned hire**. Under **State**, a grey line reads **End was cleared, since a planned hire doesn't have it.** **Name** still holds **Fictional Opening**, and there is no **End**, **Manager since** or **Team name**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the **×** in the **Name** box, choose **SDET** in **Position** from its change button, then type **REQ-4100** in **ID** and press Tab.
+  - **Expected:** The **Name** box is empty, showing **SDET, REQ-4100** in grey.
+  - **Notes:**
+
+- [ ] **Step 5.** Choose **Dark** in the Appearance menu, and read the panel.
+  - **Expected:** Every label, value, box and button in the panel, and the grey line, is easy to read.
+  - **Notes:**
+
+- [ ] **Step 6.** Choose **Light** in the Appearance menu, then select the **×** at the top right of the panel.
+  - **Expected:** A box asks **Discard the planned hire you're adding?**, with **Keep adding** and **Discard**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Keep adding**.
+  - **Expected:** The box closes, and the panel still shows **New planned hire**, with **SDET, REQ-4100** in grey in **Name**.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Cancel** at the foot of the panel, then **Discard**.
+  - **Expected:** The panel closes, and no row for **Fictional Opening** is in the table.
   - **Notes:**

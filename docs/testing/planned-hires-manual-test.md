@@ -139,8 +139,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Select **New planned hire** above the table.
-  - **Expected:** Focus moves to the empty row at the bottom. Its **State** cell reads **Request to hire**, and its other cells are blank.
+- [ ] **Step 1.** Select the **Name** cell of the empty row at the bottom of the table. Using only the keyboard, move to its **State** cell, press Enter, choose **Request to hire**, and press Enter.
+  - **Expected:** The row's **State** cell reads **Request to hire**, and its other cells are blank.
   - **Notes:**
 
 - [ ] **Step 2.** Using only the keyboard, move to the row's **Position** cell, press Enter, choose **SDET**, and press Enter.
@@ -155,10 +155,10 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account. **People** page open. In the text editor, two lines, typed with the Tab key where shown:
 
-- First line: **Fictional pasted hire**, Tab, **REQ-3001**, Tab, **SDET**.
-- Second line: Tab, **REQ-3002**, Tab, **Software Engineer**.
+- First line: **Fictional pasted hire**, Tab, **REQ-3001**, Tab, **SDET**, Tab, **Request to hire**.
+- Second line: Tab, **REQ-3002**, Tab, **Software Engineer**, Tab, **Request to hire**.
 
-- [ ] **Step 1.** Copy both lines. Select **New planned hire**, select the new row's **Name** cell, and paste.
+- [ ] **Step 1.** Copy both lines. Select the **Name** cell of the empty row at the bottom of the table, and paste.
   - **Expected:** Two hire rows are added: **Fictional pasted hire** with ID **REQ-3001**, and **Software Engineer, REQ-3002** in grey italics. Each reads **Request to hire** in **State** and has a hollow yellow dot and **Draft**.
   - **Notes:**
 
@@ -170,8 +170,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account. **People** page open.
 
-- [ ] **Step 1.** Select **New planned hire**. In the new row, type **Fictional platform hire** in **Name**, press Tab, type **REQ-3100** in **ID**, press Tab, choose **Software Engineer** in **Position**, and press Enter.
-  - **Expected:** The row is added with a hollow yellow dot and **Draft**, and **Request to hire** in **State**.
+- [ ] **Step 1.** Select **New** at the top right. In the panel, choose **Request to hire** in **State**, type **Fictional platform hire** in **Name** and **REQ-3100** in **ID**, choose **Software Engineer** in **Position**, and select **Add**.
+  - **Expected:** The panel shows **Fictional platform hire**. Its row in the table has a hollow yellow dot and **Draft**, and **Request to hire** in **State**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the Publish button.

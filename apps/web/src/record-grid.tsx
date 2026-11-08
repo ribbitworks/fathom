@@ -56,8 +56,6 @@ import {
   type DragEvent,
   type KeyboardEvent,
   type ReactNode,
-  type Ref,
-  useImperativeHandle,
   useRef,
   useState,
 } from "react";
@@ -241,6 +239,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   // another, and each record's kind; a table of one kind leaves them out.
   kinds?: readonly string[];
   kindOf?: (record: Rec) => string;
+  // For a table of several kinds of record: the kind a new row's values make it, such as a state
+  // only one kind has, or none when they leave it as it is.
+  kindOfNewRow?: (values: Record<string, CellValue>) => string | undefined;
   // What assistive technology calls a new row of a kind, such as "New person".
   newRowLabel: (kind: string) => string;
   // What removing a record is called in its menu, such as "Remove person".
@@ -479,12 +480,34 @@ export function columnsOn<Col extends AnyColumn>(
     }));
 }
 
+// A new record's values, kept for the kind it is now: those in the columns the kind has, and the
+// columns it no longer has that held something.
+export function keptForKind<Col extends AnyColumn>(
+  columns: readonly Col[],
+  values: Readonly<Record<string, CellValue>>,
+  kind: string,
+): { values: Record<string, CellValue>; lost: Col[] } {
+  const lost = columns.filter(
+    (column) =>
+      readOnlyFor(column, kind) &&
+      column.key in values &&
+      !isEmpty(values[column.key] as CellValue),
+  );
+  const gone = new Set(lost.map(({ key }) => key));
+  return {
+    values: Object.fromEntries(
+      Object.entries(values).filter(([key]) => !gone.has(key)),
+    ),
+    lost,
+  };
+}
+
 // A record added but not saved yet is shown at once under an identifier of the table's own, until
 // the server gives its own; until then it cannot be changed. The table goes on naming its row by it,
 // so the row keeps its place, and focus, when the server's identifier replaces it.
 const pendingPrefix = "pending-";
 
-const pendingId = () => `${pendingPrefix}${crypto.randomUUID()}`;
+export const pendingId = () => `${pendingPrefix}${crypto.randomUUID()}`;
 
 export const isPending = (record: GridRecord) =>
   record.id.startsWith(pendingPrefix);
@@ -522,12 +545,6 @@ export function valueChange<Rec extends GridRecord, Change>(
       ),
   );
   return problem === undefined ? { change: column.change(value) } : { problem };
-}
-
-// What the table can do for whoever opens it: put focus on the row for adding a record, of the
-// kind given, or of the table's first.
-export interface RecordGridHandle {
-  addRow: (kind?: string) => void;
 }
 
 // Whether a draft changing a record names a column, or the column its values follow from.
@@ -700,6 +717,34 @@ function firstProblem(
   return (
     inColumns(kindProblem, false) ?? whole() ?? inColumns(neededProblem, true)
   );
+}
+
+// Everything wrong with a new record's values, as adding its row checks them, each in its column,
+// or, for values taken together that name none, in the first: a value its column will not take or
+// still needs, and the values taken together beside the other records', unless their column
+// already names a problem.
+export function newRecordProblems<Rec extends GridRecord, Change>(
+  columns: readonly Column<Rec, Change>[],
+  kind: string,
+  values: Readonly<Record<string, CellValue>>,
+  recordProblem: RecordTable<Rec, Change, unknown>["recordProblem"],
+  others: () => Record<string, CellValue>[],
+): (RowProblem & { column: string })[] {
+  const offeredColumns = columnsOn(columns, kind);
+  const inColumns = offeredColumns.flatMap(
+    (column): (RowProblem & { column: string })[] => {
+      const value = values[column.key] ?? emptyValue(column);
+      const message =
+        kindProblem(column, value) ?? neededProblem(column, value);
+      return message === undefined ? [] : [{ message, column: column.key }];
+    },
+  );
+  const whole = recordProblem({ ...values }, others);
+  if (whole === undefined) return inColumns;
+  const column = whole.column ?? (offeredColumns[0] as Column<Rec, Change>).key;
+  return inColumns.some((problem) => problem.column === column)
+    ? inColumns
+    : [{ message: whole.message, column }, ...inColumns];
 }
 
 // The new rows pasted text makes, from the given column across: one for each line, with each cell's
@@ -1037,7 +1082,6 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   onView: ChangeView;
   // The table's saved views; absent where they are not offered.
   saved?: SavedViews | undefined;
-  ref?: Ref<RecordGridHandle> | undefined;
 }
 
 export function RecordGrid<Rec extends GridRecord, Change, Request>({
@@ -1057,7 +1101,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   view: asked,
   onView,
   saved,
-  ref,
   panels = [],
 }: RecordGridProps<Rec, Change, Request>) {
   const applied = asked.show === "drafts";
@@ -1408,20 +1451,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     focusSoon(`cell-${place.row}-${place.column}`);
   };
 
-  // Adding a record goes to the last new row, of which there is always at least one, and which is
-  // always empty, so it takes the kind asked for.
-  useImperativeHandle(ref, () => ({
-    addRow: (kind = defaultKind) => {
-      const last = newRows.at(-1) as NewRow;
-      if ((last.kind ?? defaultKind) !== kind) {
-        const kept: NewRow = { ...last, kind };
-        if (kind === defaultKind) delete kept.kind;
-        setNewRows((current) => [...current.slice(0, -1), kept]);
-      }
-      focusNew(last.key);
-    },
-  }));
-
   const moveTo = (row: number, column: number) => {
     const target = {
       row: Math.max(0, Math.min(row, rows.length - 1)),
@@ -1538,17 +1567,16 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   ): boolean => {
     const key = rowKey(row);
     if (row.newRow) {
-      const values = { ...row.newRow.values, [column.key]: value };
-      const soFar = wrongSoFar(values, key, rowKind(row));
+      const made = followingKind({
+        key: row.newRow.key,
+        ...kindKept(row.newRow),
+        values: { ...row.newRow.values, [column.key]: value },
+      });
+      const soFar = wrongSoFar(made.values, key, made.kind ?? defaultKind);
       setNewRows((current) =>
         current.map((newRow) =>
           newRow.key === row.newRow.key
-            ? {
-                key: newRow.key,
-                ...kindKept(newRow),
-                values,
-                ...(soFar ? { soFar } : {}),
-              }
+            ? { ...made, ...(soFar ? { soFar } : {}) }
             : newRow,
         ),
       );
@@ -1583,6 +1611,22 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // A new row's kind, kept when the row is made again with new values.
   const kindKept = (newRow: NewRow) =>
     newRow.kind === undefined ? {} : { kind: newRow.kind };
+
+  // A new row of the kind its values make it, when they decide one, without the values that kind
+  // does not have.
+  const followingKind = (newRow: NewRow): NewRow => {
+    const kind = table.kindOfNewRow?.(newRow.values);
+    if (kind === undefined || kind === (newRow.kind ?? defaultKind)) {
+      return newRow;
+    }
+    const made: NewRow = {
+      ...newRow,
+      kind,
+      values: keptForKind(columns, newRow.values, kind).values,
+    };
+    if (kind === defaultKind) delete made.kind;
+    return made;
+  };
 
   // A new row with something in it can be cleared, so it is no longer added.
   const clearable = (newRow: NewRow) => !emptyNewRow(newRow);
@@ -1700,11 +1744,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       submitNewRows(
         newRows.map((newRow) =>
           newRow.key === row.newRow.key
-            ? {
+            ? followingKind({
                 key: newRow.key,
                 ...kindKept(newRow),
                 values: { ...newRow.values, [key]: value },
-              }
+              })
             : newRow,
         ),
       );
@@ -1840,7 +1884,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       cell.column,
       nextKey,
       rowKind(row),
-    ).map((newRow) => ({ ...newRow, ...kindKept(row.newRow) }));
+    ).map((newRow) => followingKind({ ...newRow, ...kindKept(row.newRow) }));
     if (made.length > pasteLimit) {
       setProblem({
         row: rowKey(row),

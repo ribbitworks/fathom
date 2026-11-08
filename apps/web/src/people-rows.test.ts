@@ -162,8 +162,10 @@ describe("what a notice calls the rows being added", () => {
       links: {},
     };
     const opening = { ...person, kind: "planned-hire" as const };
-    expect(addedNames([person])).toBe("the people");
-    expect(addedNames([opening])).toBe("the planned hires");
+    expect(addedNames([person])).toBe("the person");
+    expect(addedNames([opening])).toBe("the planned hire");
+    expect(addedNames([person, person])).toBe("the people");
+    expect(addedNames([opening, opening])).toBe("the planned hires");
     expect(addedNames([person, opening])).toBe("the people and planned hires");
   });
 });

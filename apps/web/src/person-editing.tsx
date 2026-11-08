@@ -1,20 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Changing a person's values in their details panel, as their People cells do: which value's editor
-// is open, what is wrong with the value last given, and a note being written, in a panel of its own
-// under the details. Each value is saved and checked as its cell saves and checks it. One note is
-// open at a time. Once its person is no longer shown it closes, unless it has been changed, when it
-// stays, named for its person, until its own Save, Cancel or close button, so nothing typed is lost,
-// as People's note panel stays while its row leaves the table. The page holds this, since it draws
-// both panels.
+// Changing the values of a person or planned hire in the details panel, or of one being added there,
+// as their People cells do: which value's editor is open, what is wrong with the value last given,
+// and a note being written, in a panel of its own under the details. Each value is saved and checked
+// as its cell saves and checks it. One note is open at a time, for the record shown; once that
+// record is no longer shown the note closes. Showing another record, or adding one, while a note has
+// been changed, or while a record being added holds something, asks first whether to discard it, so
+// nothing typed is lost unasked. The page holds this, since it draws both panels.
 
 import type { Person } from "@fathom/shared";
-import { Checkbox, Group, Text, TextInput } from "@mantine/core";
+import { Button, Checkbox, Group, Modal, Text } from "@mantine/core";
 import { type ReactNode, useState } from "react";
 import { cellKinds, type EditorProps } from "./cell-kinds.tsx";
+import { ClearableInput } from "./clearable-input.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { focusSoon } from "./focus.ts";
-import { type Column, personKind, recordProblem } from "./people-grid.tsx";
+import { type Column, recordProblem } from "./people-grid.tsx";
 import type { RowChange } from "./people-rows.ts";
 import classes from "./person-panel.module.css";
 import { readOnlyFor, valueChange } from "./record-grid.tsx";
@@ -28,28 +29,39 @@ const idOf = (column: Column, part: string) =>
 export const labelId = (column: Column) => idOf(column, "label");
 export const changeId = (column: Column) => idOf(column, "change");
 export const problemId = (column: Column) => idOf(column, "problem");
-const editorId = (column: Column) => idOf(column, "editor");
+export const editorId = (column: Column) => idOf(column, "editor");
 const wordsId = (column: Column) => idOf(column, "words");
 
-export type SaveChange = (person: Person, change: RowChange) => void;
+// Saves a change to the record, with the column and value it puts there.
+export type SaveChange = (
+  change: RowChange,
+  column: Column,
+  value: CellValue,
+) => void;
 
-// Editing text or a date, which Enter or leaving the field saves and Esc leaves as it was. It names
-// its own problem, which Mantine ties to the field.
+// Editing text or a date, which Enter or leaving the field saves and Esc leaves as it was, with an ×
+// to empty it. It names its own problem, which Mantine ties to the field.
 function TextEditor({
   id,
   column,
   value,
   problem,
+  hint,
   onDone,
   onCancel,
-}: EditorProps) {
+}: EditorProps & { hint?: string | undefined }) {
   // Text and dates are held as text.
   const [text, setText] = useState(value as string);
   return (
-    <TextInput
+    <ClearableInput
       id={id}
       size="sm"
       aria-label={column.label}
+      clearLabel={`Clear ${column.label}`}
+      placeholder={hint}
+      onClear={() => {
+        setText("");
+      }}
       error={problem}
       value={text}
       autoComplete="off"
@@ -82,17 +94,24 @@ export interface Editing {
   problem: string | undefined;
 }
 
-// What changing the person shown needs: the person, how their changes are saved, unless they may
-// not be changed for now, and their values and everyone else's, as People's cells check them.
+// What changing the record shown needs: Fathom's own ID for it, its kind, its name, its values and
+// everyone else's, as People's cells check them, and how its changes are saved, unless it may not be
+// changed for now.
 export interface EditingContext {
-  person: Person;
+  id: string;
+  kind: string;
+  name: string;
+  values: Record<string, CellValue>;
   save: SaveChange | undefined;
-  valuesOf: (person: Person) => Record<string, CellValue>;
   others: () => Record<string, CellValue>[];
+  // Whether the record is being added, so its text and dates are fields always open.
+  adding?: boolean;
+  // What an empty text field shows in grey, if anything, such as the name a record goes by while it
+  // has none of its own.
+  hint?: (column: Column) => string | undefined;
 }
 
-// A note being written, for the person and column it was opened for, whatever the panel shows
-// meanwhile, with how it is saved.
+// A note being written, for the record and column it was opened for, with how it is saved.
 interface Writing {
   column: Column;
   context: EditingContext & { save: SaveChange };
@@ -100,38 +119,31 @@ interface Writing {
 
 type Checked = { change: RowChange } | { problem: string } | undefined;
 
-// What putting a value in a person's column comes to, as their People cell would find: nothing, when
+// What putting a value in a record's column comes to, as its People cell would find: nothing, when
 // it is the value already there, the change that saves it, or why it will not do.
 function checked(
-  { person, valuesOf, others }: EditingContext,
+  { kind, values, others }: EditingContext,
   column: Column,
   value: CellValue,
 ): Checked {
-  const made = valueChange(
-    recordProblem,
-    column,
-    personKind,
-    valuesOf(person),
-    value,
-    others,
-  );
+  const made = valueChange(recordProblem, column, kind, values, value, others);
   if (made === undefined) return undefined;
   return "problem" in made ? { problem: made.problem.message } : made;
 }
 
 const titleOfDetails = `${personPanelId}-title`;
 
-// A person's note being written, in a panel of its own under their details, which the page holds,
-// since it draws both panels.
+// A note being written, in a panel of its own under the details, which the page holds, since it
+// draws both panels.
 export function useNoteEditing() {
   const [writing, setWriting] = useState<Writing>();
-  // Whether the note open differs from the one it opened with, so it is kept when someone else, or
-  // another of the person's notes, is chosen.
+  // Whether the note open differs from the one it opened with, so it is kept when another of the
+  // record's notes is chosen, and showing another record asks first.
   const [changing, setChanging] = useState(false);
   // Why the note last saved was refused, if it was.
   const [refused, setRefused] = useState<string>();
 
-  // Opens a person's note, unless another being changed is open, which keeps focus instead.
+  // Opens a record's note, unless another being changed is open, which keeps focus instead.
   const start = (
     context: EditingContext & { save: SaveChange },
     column: Column,
@@ -144,28 +156,19 @@ export function useNoteEditing() {
     setRefused(undefined);
     // A note with something in it opens as it reads, with its editor hidden.
     focusSoon(
-      column.value(context.person) === ""
+      context.values[column.key] === ""
         ? editorId(column)
         : `${editorId(column)}-title`,
     );
   };
 
-  // The panel of the note open, under the details, while there is one, given the Employee ID of the
-  // person shown, if anyone, and everyone People shows. Showing someone else, or nobody, closes it,
-  // unless it has been changed. The person is known by Fathom's own ID, so a change to their
-  // Employee ID, before the address has followed it, does not close it.
-  const note = (
-    shown: string | undefined,
-    people: readonly Person[] | undefined,
-  ): SidePanel | undefined => {
+  // The panel of the note open, under the details, while there is one, given Fathom's own ID for the
+  // record shown, if any. Showing another record, or none, closes it, unless it has been changed,
+  // which the page asks about first, so it stays only when the address moved on its own, as by Back.
+  const note = (shown: string | undefined): SidePanel | undefined => {
     if (writing === undefined) return undefined;
     const { column, context } = writing;
-    const named = (employeeId: string) =>
-      shown?.toLowerCase() === employeeId.toLowerCase();
-    const stillShown =
-      (people?.find((one) => named(one.employeeId))?.id ??
-        (named(context.person.employeeId) ? context.person.id : undefined)) ===
-      context.person.id;
+    const stillShown = shown === context.id;
     if (!changing && !stillShown) {
       setWriting(undefined);
       return undefined;
@@ -189,12 +192,9 @@ export function useNoteEditing() {
       node: (
         <NoteEditor
           id={id}
-          // Named for the person too, since someone else may be chosen while it is changed.
-          column={{
-            ...column,
-            label: `${column.label} for ${context.person.preferredName}`,
-          }}
-          value={column.value(context.person)}
+          // Named for the record too, in case the address moves on while it is changed.
+          column={{ ...column, label: `${column.label} for ${context.name}` }}
+          value={context.values[column.key] as CellValue}
           typed=""
           invalid={refused !== undefined}
           problem={refused}
@@ -206,7 +206,7 @@ export function useNoteEditing() {
               setRefused(made.problem);
               return;
             }
-            if (made !== undefined) context.save(context.person, made.change);
+            if (made !== undefined) context.save(made.change, column, edited);
             close();
           }}
           onCancel={close}
@@ -215,22 +215,36 @@ export function useNoteEditing() {
     };
   };
 
-  return { start, note };
+  const discard = () => {
+    setWriting(undefined);
+    setChanging(false);
+    setRefused(undefined);
+  };
+
+  return { start, note, changing: writing !== undefined && changing, discard };
 }
 
 export type NoteEditing = ReturnType<typeof useNoteEditing>;
 
-// Changing the values of the person the details panel shows, each in its row, held by the panel;
-// their notes are opened in the page's note panel.
+// Changing the values of the record the details panel shows, each in its row, held by the panel;
+// its notes are opened in the page's note panel.
 export function usePersonEditing(notes: Pick<NoteEditing, "start">) {
-  // The value whose editor is open, by the person's own ID and the column's key, and what is wrong
-  // with the value last given there.
+  // The value whose editor is open, by the record's own ID and the column's key, and what is wrong
+  // with the values last given, each named under its own row.
   const [open, setOpen] = useState<{ id: string; key: string }>();
-  const [problem, setProblem] = useState<{
-    id: string;
-    key: string;
-    message: string;
-  }>();
+  const [problems, setProblems] = useState<
+    readonly { id: string; key: string; message: string }[]
+  >([]);
+  // Names what is wrong with one value, or, with no message, takes back what was.
+  const setProblem = (id: string, key: string, message?: string) => {
+    setProblems((current) => [
+      ...current.filter((one) => one.id !== id || one.key !== key),
+      ...(message === undefined ? [] : [{ id, key, message }]),
+    ]);
+  };
+  const clearProblems = () => {
+    setProblems([]);
+  };
 
   // Saves a value as its People cell would, returning whether it would do, and naming why not.
   const saved = (
@@ -241,26 +255,22 @@ export function usePersonEditing(notes: Pick<NoteEditing, "start">) {
   ): boolean => {
     const made = checked(context, column, value);
     if (made !== undefined && "problem" in made) {
-      setProblem({
-        id: context.person.id,
-        key: column.key,
-        message: made.problem,
-      });
+      setProblem(context.id, column.key, made.problem);
       return false;
     }
-    setProblem(undefined);
-    if (made !== undefined) save(context.person, made.change);
+    setProblem(context.id, column.key);
+    if (made !== undefined) save(made.change, column, value);
     return true;
   };
 
-  const stop = (column: Column) => {
+  const stop = (id: string, column: Column) => {
     setOpen(undefined);
-    setProblem(undefined);
+    setProblem(id, column.key);
     focusSoon(changeId(column));
   };
 
   // A refused value keeps its editor open, naming why, unless the editor was left, which puts the
-  // value back, as in a People cell.
+  // value back, as in a People cell; a field always open stays, naming why.
   const finish = (
     context: EditingContext,
     column: Column,
@@ -268,20 +278,21 @@ export function usePersonEditing(notes: Pick<NoteEditing, "start">) {
     how: Finish,
     save: SaveChange,
   ) => {
+    const alwaysOpen = context.adding === true && !hasEditor(column);
     if (saved(context, column, value, save)) {
-      stop(column);
-    } else if (how === "leave") {
+      if (!alwaysOpen) stop(context.id, column);
+    } else if (how === "leave" && !alwaysOpen) {
       setOpen(undefined);
-      setProblem(undefined);
+      setProblem(context.id, column.key);
     }
   };
 
-  // Closes an editor open for someone no longer shown, or who may no longer be changed, as the panel
-  // is drawn, so it never opens again on its own.
-  const closeStale = ({ person, save }: EditingContext) => {
-    if (open !== undefined && (save === undefined || open.id !== person.id)) {
+  // Closes an editor open for a record no longer shown, or that may no longer be changed, as the
+  // panel is drawn, so it never opens again on its own.
+  const closeStale = ({ id, save }: EditingContext) => {
+    if (open !== undefined && (save === undefined || open.id !== id)) {
       setOpen(undefined);
-      setProblem(undefined);
+      clearProblems();
     }
   };
 
@@ -289,16 +300,15 @@ export function usePersonEditing(notes: Pick<NoteEditing, "start">) {
   const editingOf =
     (context: EditingContext) =>
     (column: Column): Editing | undefined => {
-      const { person, save } = context;
-      if (save === undefined || readOnlyFor(column, personKind)) {
+      const { id, save } = context;
+      if (save === undefined || readOnlyFor(column, context.kind)) {
         return undefined;
       }
       const kind = cellKinds[column.kind];
-      const value = column.value(person);
-      const wrong =
-        problem?.id === person.id && problem.key === column.key
-          ? problem.message
-          : undefined;
+      const value = context.values[column.key] as CellValue;
+      const wrong = problems.find(
+        (one) => one.id === id && one.key === column.key,
+      )?.message;
       const { toggled } = kind;
       if (toggled !== undefined) {
         // Named by the row's label and the word beside the box, as both are seen.
@@ -330,7 +340,9 @@ export function usePersonEditing(notes: Pick<NoteEditing, "start">) {
           problem: undefined,
         };
       }
-      const isOpen = open?.id === person.id && open.key === column.key;
+      const isOpen =
+        (context.adding === true && !hasEditor(column)) ||
+        (open?.id === id && open.key === column.key);
       // The panel's own text field names its problem; People's other cell editors, which reach
       // their cell's edges, leave it to the row.
       const ownField = kind.Editor === undefined;
@@ -340,6 +352,7 @@ export function usePersonEditing(notes: Pick<NoteEditing, "start">) {
         editor: isOpen && (
           <div className={ownField ? undefined : classes.cellEditor}>
             <Editor
+              {...(ownField ? { hint: context.hint?.(column) } : {})}
               id={editorId(column)}
               column={column}
               value={value}
@@ -352,19 +365,107 @@ export function usePersonEditing(notes: Pick<NoteEditing, "start">) {
                 finish(context, column, edited, how, save);
               }}
               onCancel={() => {
-                stop(column);
+                stop(id, column);
               }}
             />
           </div>
         ),
         onStart: () => {
-          setProblem(undefined);
-          setOpen({ id: person.id, key: column.key });
+          setProblem(id, column.key);
+          setOpen({ id, key: column.key });
           focusSoon(editorId(column));
         },
         problem: ownField ? undefined : wrong,
       };
     };
 
-  return { closeStale, editingOf };
+  // Names what is wrong with a record's values, each under its row, as when it was given, such as
+  // when the record is added.
+  const refuse = (
+    id: string,
+    found: readonly { key: string; message: string }[],
+  ) => {
+    setProblems(found.map(({ key, message }) => ({ id, key, message })));
+  };
+
+  return { closeStale, editingOf, refuse };
+}
+
+// Whether a column's values are changed with an editor of their kind's own, rather than as text.
+const hasEditor = (column: Column) =>
+  cellKinds[column.kind].Editor !== undefined;
+
+// Asking whether to discard what is being written before showing another record or adding one: a
+// note changed, or a record being added that holds something. Discard goes on; Keep writing, or
+// closing the question, stays.
+export function useDiscardQuestion() {
+  const [asking, setAsking] = useState<{
+    title: string;
+    keep: string;
+    go: () => void;
+  }>();
+  const ask = (
+    question: { title: string; keep: string } | undefined,
+    go: () => void,
+  ) => {
+    if (question === undefined) go();
+    else setAsking({ ...question, go });
+  };
+  const close = () => {
+    setAsking(undefined);
+  };
+  const dialog = (
+    <Modal
+      opened={asking !== undefined}
+      onClose={close}
+      title={asking?.title}
+      size="sm"
+    >
+      <Group justify="flex-end" gap="xs">
+        <Button variant="default" onClick={close} data-autofocus>
+          {asking?.keep}
+        </Button>
+        <Button
+          color="red"
+          onClick={() => {
+            asking?.go();
+            close();
+          }}
+        >
+          Discard
+        </Button>
+      </Group>
+    </Modal>
+  );
+  return { ask, dialog };
+}
+
+export const noteQuestion = {
+  title: "Discard the note you're writing?",
+  keep: "Keep writing",
+};
+
+// Fathom's own ID for the record the address names by its ID, kept while that ID changes and the
+// address has not yet followed it, so what is open for the record stays open.
+export function useShownId(
+  open: string | undefined,
+  people: readonly Person[] | undefined,
+): string | undefined {
+  const [followed, setFollowed] = useState<{ open: string; id: string }>();
+  const named = people?.find(
+    ({ employeeId }) => employeeId.toLowerCase() === open?.toLowerCase(),
+  );
+  if (
+    open !== undefined &&
+    named !== undefined &&
+    (followed === undefined ||
+      followed.id !== named.id ||
+      followed.open !== open)
+  ) {
+    setFollowed({ open, id: named.id });
+  }
+  if (named !== undefined) return named.id;
+  return followed !== undefined && followed.open === open
+    ? followed.id
+    : undefined;
 }

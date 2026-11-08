@@ -27,6 +27,12 @@
   color: var(--mantine-color-dimmed);
 }
 
+/* A label beside an open field lines up with the field's text, not its top edge, however tall a
+   problem named under the field makes the row. */
+.row[data-field] {
+  align-items: baseline;
+}
+
 .value {
   min-width: 0;
   margin: 0;

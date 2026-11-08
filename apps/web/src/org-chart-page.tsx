@@ -83,7 +83,12 @@ import classes from "./org-chart.module.css";
 import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
 import { personUpdate } from "./person-change.ts";
-import { useNoteEditing } from "./person-editing.tsx";
+import {
+  noteQuestion,
+  useDiscardQuestion,
+  useNoteEditing,
+  useShownId,
+} from "./person-editing.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import { useSaving } from "./saving.ts";
@@ -785,10 +790,22 @@ export function OrgChartPage({
   // A person's details and a note of theirs being written, beside the chart.
   const notes = useNoteEditing();
   const people = useQuery({ ...peopleQuery, enabled: seesPeople });
-  const note = notes.note(
+  const shownId = useShownId(
     seesPeople ? search.open : undefined,
     people.data?.people,
   );
+  const note = notes.note(shownId);
+  const question = useDiscardQuestion();
+  // Showing someone else's details, or none, while a note has been changed asks first.
+  const go = (next: ChartSearch, replace: boolean) => {
+    question.ask(
+      notes.changing && next.open !== search.open ? noteQuestion : undefined,
+      () => {
+        notes.discard();
+        onSearch(next, replace);
+      },
+    );
+  };
   const { save, undoable } = useSaving<PeopleData>({
     queryKey: peopleQuery.queryKey,
     removed: "Someone else has removed this. The people have been refreshed.",
@@ -839,7 +856,7 @@ export function OrgChartPage({
               <Button
                 variant="default"
                 onClick={() => {
-                  onSearch(
+                  go(
                     {
                       person: search.person,
                       show: search.show,
@@ -906,7 +923,7 @@ export function OrgChartPage({
                           </Anchor>
                         )}
                         onPerson={(employeeId) => {
-                          onSearch({ ...search, open: employeeId }, false);
+                          go({ ...search, open: employeeId }, false);
                         }}
                         onFollow={(employeeId) => {
                           onSearch({ ...search, open: employeeId }, true);
@@ -934,7 +951,7 @@ export function OrgChartPage({
                             ({ employeeId }) =>
                               employeeId?.toLowerCase() === open,
                           );
-                          onSearch({ ...search, open: undefined }, false);
+                          go({ ...search, open: undefined }, false);
                           // A person whose card is not drawn leaves focus on finding them.
                           focusSoon(
                             ...(card === undefined
@@ -961,11 +978,12 @@ export function OrgChartPage({
               teamEdits={edits}
               show={show}
               search={search}
-              onSearch={onSearch}
+              onSearch={go}
             />
           </ReactFlowProvider>
         </WithSidePanel>
       )}
+      {question.dialog}
     </>
   );
 }

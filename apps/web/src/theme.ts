@@ -79,6 +79,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-table-head-height": "2.25rem",
     // How far a cell's editor reaches past its cell's text on each side, to meet the cell's edges.
     "--fathom-cell-editor-bleed": "8px",
+    // Room for a focus ring, which Mantine draws 2px out with a 2px outline, inside an edge that clips.
+    "--fathom-focus-room": "4px",
   },
   light: {
     "--mantine-color-body": "#ffffff",

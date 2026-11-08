@@ -38,6 +38,16 @@ const editor = session([
   "restricted:edit",
   "restricted:view",
 ]);
+const hiringEditor = session([
+  "configuration:view",
+  "hiring-plan:edit",
+  "hiring-plan:view",
+  "people:edit",
+  "people:view",
+  "plan:view",
+  "restricted:edit",
+  "restricted:view",
+]);
 
 const choice = (id: string, label: string, retired = false) => ({
   id,
@@ -93,6 +103,16 @@ const positions = {
 };
 const listsAnswer = () =>
   Response.json({ lists: [sites, roles, old, positions] });
+// The built-in hiring states list, with a state of each meaning.
+const states = {
+  ...list("states", "Hiring states", [
+    { ...choice("s-proposed", "Request to hire"), meaning: "proposed" },
+    { ...choice("s-open", "Approved to hire"), meaning: "open" },
+    { ...choice("s-hired", "Hired"), meaning: "hired" },
+    { ...choice("s-left", "Fictional Resigned"), meaning: "left" },
+  ]),
+  builtIn: "hiring-states",
+};
 
 const site = {
   id: "f1",
@@ -183,6 +203,7 @@ const columnKeys = new Map([
   ["Name", "preferredName"],
   ["ID", "employeeId"],
   ["Position", "positionId"],
+  ["State", "stateId"],
   ["Site", "f1"],
   ["Role on team", "f2"],
   ["Start", "startDate"],
@@ -274,7 +295,7 @@ describe("who sees the People page", () => {
         .map((header) => header.textContent),
     ).not.toContain("Position");
     const newPerson = screen.getByRole<HTMLButtonElement>("button", {
-      name: "New person",
+      name: "New",
     });
     expect(newPerson.disabled).toBe(true);
     expect(newPerson.getAttribute("aria-describedby")).toBe(
@@ -321,7 +342,7 @@ describe("who sees the People page", () => {
       "Actions",
     ]);
     expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
     expect(screen.queryByRole("row", { name: "New person" })).toBeNull();
     focusCell("p1", "preferredName");
     await userEvent.keyboard("{Enter}x");
@@ -346,7 +367,7 @@ describe("who sees the People page", () => {
     });
     renderApp("/people");
     await screen.findByRole("grid", { name: "People" });
-    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
     expect(
       screen
         .getByRole("button", { name: "New column" })
@@ -723,7 +744,7 @@ describe("adding people", () => {
     });
   });
 
-  it("goes to the new row from New person, marks it until saved, and shows who was added at once", async () => {
+  it("adds from the new row, marks it until saved, and shows who was added at once", async () => {
     // The server answers adding only when the test lets it, so what shows before is seen.
     let answer: (response: Response) => void = () => undefined;
     let saved = false;
@@ -749,17 +770,17 @@ describe("adding people", () => {
           views: [],
         }),
     });
-    // Adding a person is the page's main action, beside adding a column.
-    const button = screen.getByRole("button", { name: "New person" });
-    expect(button.getAttribute("data-variant")).toBe("filled");
+    // Adding is the page's main action, beside adding a column.
+    expect(
+      screen.getByRole("button", { name: "New" }).getAttribute("data-variant"),
+    ).toBe("filled");
     expect(
       screen
         .getByRole("button", { name: "New column" })
         .getAttribute("data-variant"),
     ).toBe("default");
-    await userEvent.click(button);
-    await waitFor(() => {
-      expect(document.activeElement).toBe(newCell("Name"));
+    act(() => {
+      newCell("Name").focus();
     });
     expect(newRow().textContent).not.toContain("not saved yet");
     await userEvent.keyboard("Casey{Tab}E9{Tab}");
@@ -830,7 +851,7 @@ describe("adding people", () => {
     answer(Response.json({ error: "Fictional failure" }, { status: 500 }));
     expect(
       await screen.findByText(
-        "Fathom could not add the people. Try again in a moment.",
+        "Fathom could not add the person. Try again in a moment.",
       ),
     ).toBeDefined();
     expect(screen.queryByText("Draft: added")).toBeNull();
@@ -841,14 +862,14 @@ describe("adding people", () => {
     ]);
   });
 
-  it("offers New person only once the people and lists have loaded", async () => {
+  it("offers New only once the people and lists have loaded", async () => {
     serverAnswers({
       "GET /api/session": editor,
       "GET /api/people": peopleAnswer,
       "GET /api/lists": () => new Promise<Response>(() => undefined),
     });
     renderApp("/people");
-    const button = await screen.findByRole("button", { name: "New person" });
+    const button = await screen.findByRole("button", { name: "New" });
     expect(button).toHaveProperty("disabled", true);
   });
 
@@ -997,7 +1018,7 @@ describe("adding people", () => {
     await paste(newCell("Name"), "Fay Fictional\tE30\tEngineer\tHarbour");
     expect(
       await screen.findByText(
-        "Fathom could not add the people. Try again in a moment.",
+        "Fathom could not add the person. Try again in a moment.",
       ),
     ).toBeDefined();
     await waitFor(() => {
@@ -2396,7 +2417,7 @@ describe("searching, sorting, and filtering", () => {
     });
     expect(screen.getByText("Avery Fictional")).toBeDefined();
     expect(screen.queryByText("Casey Fictional")).toBeNull();
-    expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "New" })).toBeNull();
     // The live people have no drafts, so a filter on drafts in the address is set aside.
     history.push('/people?show=live&filters={"draft":{"any":["waiting"]}}');
     await waitFor(() => {
@@ -3993,25 +4014,6 @@ describe("unpublished and held changes", () => {
 });
 
 describe("planned hires", () => {
-  const hiringEditor = session([
-    "configuration:view",
-    "hiring-plan:edit",
-    "hiring-plan:view",
-    "people:edit",
-    "people:view",
-    "plan:view",
-    "restricted:edit",
-    "restricted:view",
-  ]);
-  const states = {
-    ...list("states", "Hiring states", [
-      { ...choice("s-proposed", "Request to hire"), meaning: "proposed" },
-      { ...choice("s-open", "Approved to hire"), meaning: "open" },
-      { ...choice("s-hired", "Hired"), meaning: "hired" },
-      { ...choice("s-left", "Fictional Resigned"), meaning: "left" },
-    ]),
-    builtIn: "hiring-states",
-  };
   const rejected = {
     action: "changed",
     changed: ["stateId"],
@@ -4153,21 +4155,53 @@ describe("planned hires", () => {
     });
   });
 
-  it("adds planned hires from New planned hire, in Request to hire unless another state is chosen", async () => {
+  it("names the new row for the kind its state makes it", async () => {
+    await openHires();
+    const newRow = () => screen.getAllByRole("row", { name: /^New / })[0];
+    const focusNew = (label: string) => {
+      act(() => {
+        inRow(newRow() as HTMLElement, label).focus();
+      });
+    };
+    focusNew("State");
+    await userEvent.keyboard("Request{Tab}{Escape}");
+    await waitFor(() => {
+      expect(newRow()?.getAttribute("aria-label")).toBe("New planned hire");
+    });
+    focusNew("State");
+    await userEvent.keyboard("Hired{Tab}{Escape}");
+    await waitFor(() => {
+      expect(newRow()?.getAttribute("aria-label")).toBe("New person");
+    });
+  });
+
+  it("adds a planned hire when a hiring state is the last value picked in the new row", async () => {
+    // Given a new row with a name, ID, and position
+    const fetch = await openHires();
+    const newRow = screen.getByRole("row", { name: "New person" });
+    act(() => {
+      inRow(newRow, "Name").focus();
+    });
+    await userEvent.keyboard("Fictional opening{Tab}REQ-11{Tab}tes{Tab}");
+    // When Request to hire is picked for its state
+    await pick("Request to hire");
+    // Then it is added as a planned hire, not a person
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/planned-hires")).toHaveLength(1);
+    });
+    expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
+  });
+
+  it("adds planned hires from the new row once a hiring state is chosen", async () => {
     const fetch = await openHires({
       "POST /api/planned-hires": () =>
         Response.json({ ids: ["h3", "h4"], changeSetId: s1 }, { status: 201 }),
     });
-    const newHire = screen.getByRole("button", { name: "New planned hire" });
-    await userEvent.click(newHire);
-    await userEvent.click(screen.getByRole("button", { name: "New person" }));
-    expect(screen.getByRole("row", { name: "New person" })).toBeDefined();
-    await userEvent.click(newHire);
-    const newRow = screen.getByRole("row", { name: "New planned hire" });
-    expect(inRow(newRow, "Name").textContent).toBe("");
+    const newRow = screen.getByRole("row", { name: "New person" });
+    expect(inRow(newRow, "State").textContent).toBe("Hired");
     await paste(
       inRow(newRow, "Name"),
-      "\tREQ-9\tEngineer\nFictional opening\tREQ-10\tTester",
+      "\tREQ-9\tEngineer\tRequest to hire\nFictional opening\tREQ-10\tTester\tRequest to hire",
     );
     await waitFor(() => {
       expect(bodyOf(fetch, "POST", "/api/planned-hires")).toEqual([
@@ -4199,5 +4233,460 @@ describe("planned hires", () => {
         },
       ]);
     });
+  });
+});
+
+describe("adding from New", () => {
+  const casey = {
+    ...avery,
+    id: "p9",
+    preferredName: "Casey Fictional",
+    employeeId: "E9",
+    stateId: "s-hired",
+    values: { f1: ["c1"] },
+  };
+
+  async function openNew(
+    who: () => Response = hiringEditor,
+    answers: Answers = {},
+  ) {
+    const fetch = await openPeople({
+      "GET /api/session": who,
+      "GET /api/lists": () =>
+        Response.json({ lists: [sites, roles, positions, states] }),
+      ...answers,
+    });
+    const button = screen.getByRole<HTMLButtonElement>("button", {
+      name: "New",
+    });
+    await waitFor(() => {
+      expect(button.disabled).toBe(false);
+    });
+    await userEvent.click(button);
+    await form("New person");
+    return fetch;
+  }
+
+  const form = (title: string) => screen.findByRole("region", { name: title });
+
+  const row = (label: string) =>
+    screen.getByText(label, { selector: "dt" }).parentElement as HTMLElement;
+
+  const field = (label: string) =>
+    screen.getByRole<HTMLInputElement>("textbox", { name: label });
+
+  async function typeInto(label: string, text: string) {
+    await userEvent.type(field(label), `${text}{Tab}`);
+  }
+
+  async function choose(label: string, option: string) {
+    await userEvent.click(
+      screen.getByRole("button", { name: `Change ${label}` }),
+    );
+    await pick(option);
+  }
+
+  async function answerQuestion(title: string, answer: string) {
+    await userEvent.click(
+      within(await screen.findByRole("dialog", { name: title })).getByRole(
+        "button",
+        { name: answer },
+      ),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: title })).toBeNull();
+    });
+  }
+
+  it("starts a new person, with State first and Hired", async () => {
+    await openNew();
+    const panel = await form("New person");
+    expect(
+      within(panel)
+        .getAllByRole("heading")
+        .map(({ textContent }) => textContent)[0],
+    ).toBe("New person");
+    expect(panel.querySelector("dt")?.textContent).toBe("State");
+    expect(within(row("State")).getByText("Hired")).toBeDefined();
+  });
+
+  it("names every problem on Add, with focus on the first the panel shows", async () => {
+    // Given a new person with a name and ID, but no position or site
+    const fetch = await openNew();
+    await typeInto("Name", "Casey Fictional");
+    await typeInto("ID", "E9");
+    // When Add is pressed
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    // Then each missing value is named under its row, focus goes to Position, and nothing is sent
+    expect(within(row("Position")).getByText("Position needed")).toBeDefined();
+    expect(within(row("Site")).getByText("Site needed")).toBeDefined();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Change Position" }),
+      );
+    });
+    expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
+  });
+
+  it("adds the person with Add, then shows them in the panel", async () => {
+    // Given a new person with every value needed
+    let added = false;
+    const fetch = await openNew(hiringEditor, {
+      "POST /api/people": () => {
+        added = true;
+        return Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 });
+      },
+      "GET /api/people": () =>
+        Response.json({
+          people: added ? [avery, blake, casey] : [avery, blake],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    await typeInto("Name", "Casey Fictional");
+    await typeInto("ID", "E9");
+    await choose("Position", "Engineer");
+    await choose("Site", "Harbour");
+    // When Add is pressed
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    // Then they are sent, as Hired, and their details show in place of the form
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/people")).toEqual([
+        {
+          people: [
+            expect.objectContaining({
+              preferredName: "Casey Fictional",
+              employeeId: "E9",
+              positionId: "position-1",
+              stateId: "s-hired",
+              values: expect.objectContaining({ f1: ["c1"] }) as unknown,
+            }),
+          ],
+        },
+      ]);
+    });
+    expect(await form("Casey Fictional")).toBeDefined();
+    expect(screen.queryByRole("region", { name: "New person" })).toBeNull();
+  });
+
+  it("puts focus on its title when it opens", async () => {
+    await openNew();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("heading", { name: "New person" }),
+      );
+    });
+  });
+
+  it("keeps the form while an add is saved, and leaves a newer one as it is when the add fails", async () => {
+    // Given an add still being saved
+    let answer: (response: Response) => void = () => undefined;
+    const fetch = await openNew(hiringEditor, {
+      "POST /api/people": () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    });
+    await typeInto("Name", "Casey Fictional");
+    await typeInto("ID", "E9");
+    await choose("Position", "Engineer");
+    await choose("Site", "Harbour");
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    // When the panel's close button is pressed
+    await userEvent.click(
+      screen.getByRole("button", { name: "Close New person" }),
+    );
+    // Then the form stays
+    expect(await form("New person")).toBeDefined();
+    // When New is pressed, the add discarded, and the add then fails
+    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await answerQuestion("Discard the person you're adding?", "Discard");
+    await typeInto("Name", "Dee Fictional");
+    act(() => {
+      answer(new Response(null, { status: 500 }));
+    });
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/people")).toHaveLength(1);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    // Then the newer form stays as it is
+    expect(field("Name").value).toBe("Dee Fictional");
+  });
+
+  it("leaves a form opened while an add is saved as it is", async () => {
+    // Given an add still being saved
+    let answer: (response: Response) => void = () => undefined;
+    const fetch = await openNew(hiringEditor, {
+      "POST /api/people": () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    });
+    await typeInto("Name", "Casey Fictional");
+    await typeInto("ID", "E9");
+    await choose("Position", "Engineer");
+    await choose("Site", "Harbour");
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    // When New is pressed, the add asked about, and the add then saved
+    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await answerQuestion("Discard the person you're adding?", "Discard");
+    await typeInto("Name", "Dee Fictional");
+    act(() => {
+      answer(Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 }));
+    });
+    // Then, once it is saved, the new form stays, with what was typed in it
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/people")).toHaveLength(1);
+    });
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(await form("New person")).toBeDefined();
+    expect(field("Name").value).toBe("Dee Fictional");
+  });
+
+  it("closes with Cancel, putting focus back on New", async () => {
+    await openNew();
+    await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "New person" })).toBeNull();
+    });
+    await waitFor(() => {
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "New" }),
+      );
+    });
+  });
+
+  it("offers every state to those who may change people and the hiring plan", async () => {
+    await openNew();
+    await userEvent.click(screen.getByRole("button", { name: "Change State" }));
+    expect(await offeredOptions()).toEqual([
+      "Request to hire",
+      "Approved to hire",
+      "Hired",
+      "Fictional Resigned",
+    ]);
+  });
+
+  it("offers only a person's states to those who may change people alone", async () => {
+    await openNew(editor);
+    await userEvent.click(screen.getByRole("button", { name: "Change State" }));
+    expect(await offeredOptions()).toEqual(["Hired", "Fictional Resigned"]);
+  });
+
+  it("becomes a planned hire with a hiring state, keeping the values both have and naming those cleared", async () => {
+    // Given a new person with a name and an end date
+    await openNew();
+    await typeInto("Name", "Casey Fictional");
+    await typeInto("End", "2027-01-31");
+    // When their state is changed to Request to hire
+    await choose("State", "Request to hire");
+    // Then it is a planned hire, keeping the name, with the end date cleared and said to be
+    expect(await form("New planned hire")).toBeDefined();
+    expect(field("Name").value).toBe("Casey Fictional");
+    expect(screen.queryByRole("textbox", { name: "End" })).toBeNull();
+    expect(
+      screen.getByText(
+        "End was cleared, since a planned hire doesn't have it.",
+      ),
+    ).toBeDefined();
+    // When it is changed back to Hired
+    await choose("State", "Hired");
+    // Then it is a person again, keeping the name, with nothing more cleared
+    expect(await form("New person")).toBeDefined();
+    expect(field("Name").value).toBe("Casey Fictional");
+    expect(screen.queryByText(/was cleared/)).toBeNull();
+  });
+
+  it("names a new planned hire in grey by its position, then its position and ID", async () => {
+    await openNew();
+    await choose("State", "Request to hire");
+    await form("New planned hire");
+    expect(field("Name").placeholder).toBe("");
+    await choose("Position", "Tester");
+    await waitFor(() => {
+      expect(field("Name").placeholder).toBe("Tester");
+    });
+    await typeInto("ID", "REQ-4100");
+    await waitFor(() => {
+      expect(field("Name").placeholder).toBe("Tester, REQ-4100");
+    });
+  });
+
+  it("names no new person in grey", async () => {
+    await openNew();
+    await choose("Position", "Tester");
+    await waitFor(() => {
+      expect(within(row("Position")).getByText("Tester")).toBeDefined();
+    });
+    expect(field("Name").placeholder).toBe("");
+  });
+
+  it("closes an untouched form without asking", async () => {
+    await openNew();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Close New person" }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "New person" })).toBeNull();
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("asks before discarding a person being added, keeping them until Discard", async () => {
+    // Given a new person with a name
+    await openNew();
+    await typeInto("Name", "Casey Fictional");
+    const close = screen.getByRole("button", { name: "Close New person" });
+    // When the form is closed, and adding kept
+    await userEvent.click(close);
+    await answerQuestion("Discard the person you're adding?", "Keep adding");
+    // Then the form stays, as it was
+    expect(field("Name").value).toBe("Casey Fictional");
+    // When it is closed again, and discarded
+    await userEvent.click(close);
+    await answerQuestion("Discard the person you're adding?", "Discard");
+    // Then it closes
+    await waitFor(() => {
+      expect(screen.queryByRole("region", { name: "New person" })).toBeNull();
+    });
+  });
+
+  it("asks before discarding a planned hire being added", async () => {
+    await openNew();
+    await choose("State", "Approved to hire");
+    await form("New planned hire");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Close New planned hire" }),
+    );
+    await answerQuestion("Discard the planned hire you're adding?", "Discard");
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("region", { name: "New planned hire" }),
+      ).toBeNull();
+    });
+  });
+
+  it("has no State for those not sent the hiring states", async () => {
+    await openNew(editor, { "GET /api/lists": listsAnswer });
+    const panel = await form("New person");
+    expect(panel.querySelector("dt")?.textContent).toBe("Name");
+    expect(screen.queryByText("State", { selector: "dt" })).toBeNull();
+  });
+
+  it("empties a field with its ×, keeping focus in it", async () => {
+    await openNew();
+    await userEvent.type(field("Name"), "Casey Fictional");
+    await userEvent.click(screen.getByRole("button", { name: "Clear Name" }));
+    expect(field("Name").value).toBe("");
+    expect(document.activeElement).toBe(field("Name"));
+  });
+
+  it("keeps the form, with what was entered, when adding fails", async () => {
+    // Given a new person with every value needed, whom the server will not add
+    await openNew(hiringEditor, {
+      "POST /api/people": refused(500, "Fictional failure"),
+    });
+    await typeInto("Name", "Casey Fictional");
+    await typeInto("ID", "E9");
+    await choose("Position", "Engineer");
+    await choose("Site", "Harbour");
+    // When Add is pressed
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    // Then the form stays, as it was, to be added again
+    expect(
+      await screen.findByText(
+        "Fathom could not add the person. Try again in a moment.",
+      ),
+    ).toBeDefined();
+    expect(field("Name").value).toBe("Casey Fictional");
+    await waitFor(() => {
+      expect(
+        screen.getByRole<HTMLButtonElement>("button", { name: "Add" }).disabled,
+      ).toBe(false);
+    });
+  });
+
+  it("names every value cleared when it becomes a planned hire", async () => {
+    await openNew(hiringEditor, {
+      "GET /api/people": () =>
+        Response.json({
+          people: [{ ...avery, isManager: true }, blake],
+          fields: [site, role],
+          order,
+          views: [],
+        }),
+    });
+    await typeInto("End", "2027-01-31");
+    await choose("Manager", "Avery Fictional");
+    await typeInto("Manager since", "2026-12-01");
+    await choose("State", "Request to hire");
+    expect(
+      await screen.findByText(
+        "End and Manager since were cleared, since a planned hire doesn't have them.",
+      ),
+    ).toBeDefined();
+  });
+
+  it("adds a planned hire through the planned hires' route", async () => {
+    const fetch = await openNew(hiringEditor, {
+      "POST /api/planned-hires": () =>
+        Response.json({ ids: ["h9"], changeSetId: s1 }, { status: 201 }),
+    });
+    await choose("State", "Approved to hire");
+    await choose("Position", "Tester");
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    await waitFor(() => {
+      expect(bodyOf(fetch, "POST", "/api/planned-hires")).toEqual([
+        {
+          hires: [
+            expect.objectContaining({
+              name: null,
+              requisition: null,
+              positionId: "position-2",
+              stateId: "s-open",
+            }),
+          ],
+        },
+      ]);
+    });
+    expect(bodyOf(fetch, "POST", "/api/people")).toEqual([]);
+  });
+
+  it("puts focus in the first box to type in when its value is the first problem", async () => {
+    await openNew();
+    await userEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(within(row("Name")).getByText("Name needed")).toBeDefined();
+    await waitFor(() => {
+      expect(document.activeElement).toBe(field("Name"));
+    });
+  });
+
+  it("names a value cleared when a planned hire becomes a person", async () => {
+    // Given a reader who sees planned hires' dates but not people's
+    await openNew(
+      session([
+        "configuration:view",
+        "hiring-plan:edit",
+        "hiring-plan:view",
+        "people:edit",
+        "people:view",
+        "plan:view",
+      ]),
+    );
+    await choose("State", "Request to hire");
+    await typeInto("Start", "2027-03-01");
+    // When the planned hire becomes a person
+    await choose("State", "Hired");
+    // Then the date is cleared, and named
+    expect(
+      await screen.findByText(
+        "Start was cleared, since a person doesn't have it.",
+      ),
+    ).toBeDefined();
   });
 });

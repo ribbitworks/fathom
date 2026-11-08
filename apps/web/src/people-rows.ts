@@ -32,17 +32,26 @@ export function personOnly<Row extends RowChange | RowRequest>(
 export const isHire = (row: Pick<Person, "kind">) =>
   row.kind === "planned-hire";
 
+export const positionLabel = (
+  lists: readonly List[],
+  positionId: string | null | undefined,
+): string | undefined =>
+  lists
+    .find(({ builtIn }) => builtIn === "positions")
+    ?.choices.find(({ id }) => id === positionId)?.label;
+
 export function rowName(row: Person, lists: readonly List[]): string {
   if (!isHire(row) || row.preferredName !== "") return row.preferredName;
-  const position = lists
-    .find(({ builtIn }) => builtIn === "positions")
-    ?.choices.find(({ id }) => id === row.positionId)?.label;
-  return hireCalled(null, row.employeeId, position);
+  return hireCalled(null, row.employeeId, positionLabel(lists, row.positionId));
 }
 
-// What a notice calls the rows being added: people, planned hires, or both.
+// What a notice calls the rows being added: a person, a planned hire, people, planned hires, or
+// both.
 export function addedNames(requests: readonly RowRequest[]): string {
   const hires = requests.filter(isHire).length;
+  if (requests.length === 1) {
+    return hires === 1 ? "the planned hire" : "the person";
+  }
   if (hires === 0) return "the people";
   return hires === requests.length
     ? "the planned hires"

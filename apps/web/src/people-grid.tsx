@@ -24,12 +24,12 @@ import { offered, sameName } from "./lists.ts";
 import {
   cellColumn,
   type Column as RecordColumn,
+  columnsOn,
   inOrder,
   isPending,
   liveRecordsOf,
   type RecordActions,
   RecordGrid,
-  type RecordGridHandle,
   type RecordGridProps,
   type RecordTable,
   type RowProblem,
@@ -51,12 +51,10 @@ import classes from "./people-grid.module.css";
 
 export type PeopleActions = RecordActions<Person, RowChange, RowRequest>;
 
-export type PeopleGridHandle = RecordGridHandle;
-
 export type Column = RecordColumn<Person, RowChange>;
 
 export const personKind = "person";
-const hireKind = "planned-hire";
+export const hireKind = "planned-hire";
 
 // What a planned hire has but a person does not, and the other way round.
 const hiresOnly = (kind: string) => kind === hireKind;
@@ -279,6 +277,7 @@ export function columnsFor(
   people: readonly Person[] = [],
   showPosition = true,
   showHireDates = showDates,
+  canAddHires = false,
 ): Column[] {
   const builtIn = (
     key: DetailKey,
@@ -335,17 +334,17 @@ export function columnsFor(
     required: true,
     multiple: false,
     choices: states,
-    // A planned hire is Proposed or Open, and hired by filling it. A person is Hired, or Left once
-    // their end date has passed, which the state they show already says, so they are offered only
-    // states of its meaning. A new person may be either, as the end date given decides, which the
-    // server checks.
+    // A record being added may be given the state of any kind the user may add, which decides its
+    // kind: Hired or Left, as the end date given decides, which the server checks, or, for those who
+    // may add planned hires, Proposed or Open. A planned hire is Proposed or Open, and hired by
+    // filling it. A person is Hired, or Left once their end date has passed, which the state they
+    // show already says, so they are offered only states of its meaning.
     pickableOn: (option, row, rowKind) => {
-      if (hiresOnly(rowKind)) {
-        return option.meaning === "proposed" || option.meaning === "open";
-      }
+      const makes = kindOfMeaning(option.meaning);
       if (row === undefined) {
-        return option.meaning === "hired" || option.meaning === "left";
+        return makes === personKind || (canAddHires && makes === hireKind);
       }
+      if (hiresOnly(rowKind)) return makes === hireKind;
       const meaning = states.find(({ id }) => id === row.stateId)?.meaning;
       return option.meaning === meaning;
     },
@@ -564,6 +563,43 @@ export function recordProblem(
   return undefined;
 }
 
+// The kind of record a state makes a new row: a planned hire for a state meaning Proposed or Open,
+// and a person for one meaning Hired or Left.
+export function kindOfState(
+  lists: readonly List[],
+  stateId: string | undefined,
+): string | undefined {
+  return kindOfMeaning(
+    lists
+      .find(({ builtIn }) => builtIn === "hiring-states")
+      ?.choices.find(({ id }) => id === stateId)?.meaning,
+  );
+}
+
+// The kind of record a state's meaning is for: a planned hire is Proposed or Open, and a person
+// Hired or Left.
+function kindOfMeaning(meaning: string | null | undefined): string | undefined {
+  if (meaning === "proposed" || meaning === "open") return hireKind;
+  if (meaning === "hired" || meaning === "left") return personKind;
+  return undefined;
+}
+
+// The request that adds a record of a kind, from its value in each column the kind has.
+export function newRecordRequest(
+  columns: readonly Column[],
+  kind: string,
+  values: Readonly<Record<string, CellValue>>,
+): RowRequest {
+  return {
+    ...requestFor(
+      columnsOn(columns, kind).map((column) =>
+        column.change(values[column.key] as CellValue),
+      ),
+    ),
+    ...(kind === hireKind ? { kind } : {}),
+  };
+}
+
 // The request that adds a person or planned hire, from each column's value as its kind would save
 // it, with every choice column named and no link left empty.
 function requestFor(parts: readonly RowChange[]): RowRequest {
@@ -692,12 +728,12 @@ function peopleTable(
         records,
         showPosition,
         showHireDates,
+        canEditHires,
       ).map((column) =>
         column.key === "preferredName" && onOpen !== undefined
           ? {
               ...column,
               mark: (row: Person) =>
-                !isHire(row) &&
                 !isPending(row) && (
                   <ShowDetailsButton row={row} onOpen={onOpen} />
                 ),
@@ -712,17 +748,18 @@ function peopleTable(
       ...requestFor(changes),
       ...(kind === hireKind ? { kind } : {}),
     }),
+    kindOfNewRow: (values) =>
+      kindOfState(lists, asIds(values.stateId ?? [])[0]),
     drafts: (ids) => ({
       ...noDrafts(),
       people: ids.filter((id) => !hireIds.has(id)),
       plannedHires: ids.filter((id) => hireIds.has(id)),
     }),
-    // Planned hires have no details of their own to show, nor has a row not saved yet.
+    // A row not saved yet has no details to show.
     ...(onOpen === undefined
       ? {}
       : {
           menuItems: (row: Person) =>
-            !isHire(row) &&
             !isPending(row) && (
               <Menu.Item
                 onClick={() => {

@@ -591,7 +591,7 @@ describe("a person's details", () => {
     });
   });
 
-  it("offers no details for planned hires", async () => {
+  it("shows a planned hire's details too", async () => {
     answers([
       robin,
       sasha,
@@ -599,12 +599,12 @@ describe("a person's details", () => {
       { ...person("h1", "Fictional Hire"), kind: "planned-hire" },
     ]);
     renderApp("/people");
-    await screen.findByRole("button", {
-      name: "Show details of Robin Fictional",
-    });
-    expect(
-      screen.queryByRole("button", { name: "Show details of Fictional Hire" }),
-    ).toBeNull();
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show details of Fictional Hire",
+      }),
+    );
+    expect(await panel("Fictional Hire")).toBeDefined();
   });
 
   it("does not tell those who only view People who holds a record", async () => {
@@ -1198,7 +1198,7 @@ describe("changing a person's details", () => {
       expect(screen.queryByRole("region", { name: sashasNote })).toBeNull();
     });
 
-    it("keeps a changed note, named for its person, when someone else is shown, until it is closed", async () => {
+    it("asks before discarding a changed note when someone else is shown", async () => {
       // Given Sasha's note changed
       const fetch = editAnswers({ "PATCH /api/people/2": savedAs });
       renderApp("/people?open=E2");
@@ -1210,28 +1210,44 @@ describe("changing a person's details", () => {
         screen.getByRole("textbox", { name: "Markdown" }),
         " more",
       );
-      // When Robin's details are asked for from the table
+      const showRobin = screen.getByRole("button", {
+        name: "Show details of Robin Fictional",
+      });
+      // When Robin's details are asked for, and writing is kept
+      await userEvent.click(showRobin);
+      const asked = await screen.findByRole("dialog", {
+        name: "Discard the note you're writing?",
+      });
       await userEvent.click(
-        screen.getByRole("button", { name: "Show details of Robin Fictional" }),
+        within(asked).getByRole("button", { name: "Keep writing" }),
       );
-      // Then Robin's details show above Sasha's note, which stays, unsaved
-      expect(await panel("Robin Fictional")).toBeDefined();
+      // Then Sasha's details and her note stay
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("dialog", {
+            name: "Discard the note you're writing?",
+          }),
+        ).toBeNull();
+      });
+      expect(
+        screen.getByRole("region", { name: "Sasha Fictional" }),
+      ).toBeDefined();
       expect(screen.getByRole("region", { name: sashasNote })).toBeDefined();
-      expect(bodies(fetch, "/api/people/2")).toEqual([]);
-      // When the note is closed
-      await userEvent.click(screen.getByRole("button", { name: "Close note" }));
-      // Then only Robin's details are left, with focus on his name
+      // When Robin's are asked for again, and the note discarded
+      await userEvent.click(showRobin);
+      await userEvent.click(
+        within(
+          await screen.findByRole("dialog", {
+            name: "Discard the note you're writing?",
+          }),
+        ).getByRole("button", { name: "Discard" }),
+      );
+      // Then Robin's details show, the note has closed, and nothing was saved
+      expect(await panel("Robin Fictional")).toBeDefined();
       await waitFor(() => {
         expect(screen.queryByRole("region", { name: sashasNote })).toBeNull();
       });
-      expect(
-        screen.getByRole("region", { name: "Robin Fictional" }),
-      ).toBeDefined();
-      await waitFor(() => {
-        expect(document.activeElement).toBe(
-          screen.getByRole("heading", { name: "Robin Fictional" }),
-        );
-      });
+      expect(bodies(fetch, "/api/people/2")).toEqual([]);
     });
 
     it("closes, with no changes, once the address names an ID nobody has", async () => {
@@ -1417,6 +1433,65 @@ describe("changing a person's details", () => {
       });
     });
 
+    it("keeps a changed note while the address moves on its own, with focus on the details once it closes", async () => {
+      // Given Sasha's note changed
+      editAnswers();
+      const history = renderApp("/people?open=E2");
+      await panel("Sasha Fictional");
+      await userEvent.click(change("Background"));
+      await panel(sashasNote);
+      await userEvent.click(screen.getByRole("radio", { name: "Markdown" }));
+      await userEvent.type(
+        screen.getByRole("textbox", { name: "Markdown" }),
+        " more",
+      );
+      // When the address moves to Robin, as by Back
+      act(() => {
+        history.push("/people?open=E1");
+      });
+      // Then Robin's details show, with Sasha's note still open
+      expect(await panel("Robin Fictional")).toBeDefined();
+      expect(screen.getByRole("region", { name: sashasNote })).toBeDefined();
+      // When the note is closed
+      await userEvent.click(screen.getByRole("button", { name: "Close note" }));
+      // Then focus goes to Robin's name
+      await waitFor(() => {
+        expect(document.activeElement).toBe(
+          screen.getByRole("heading", { name: "Robin Fictional" }),
+        );
+      });
+    });
+
+    it("asks before discarding a changed note when someone else is shown beside the org chart", async () => {
+      // Given Sasha's note changed, beside the org chart
+      editAnswers();
+      renderApp("/org-chart?open=E2");
+      await panel("Sasha Fictional");
+      await userEvent.click(change("Background"));
+      await panel(sashasNote);
+      await userEvent.click(screen.getByRole("radio", { name: "Markdown" }));
+      await userEvent.type(
+        screen.getByRole("textbox", { name: "Markdown" }),
+        " more",
+      );
+      // When her manager is chosen, and the note discarded
+      await userEvent.click(
+        within(row("Manager")).getByText("Robin Fictional"),
+      );
+      await userEvent.click(
+        within(
+          await screen.findByRole("dialog", {
+            name: "Discard the note you're writing?",
+          }),
+        ).getByRole("button", { name: "Discard" }),
+      );
+      // Then Robin's details show, and the note has closed
+      expect(await panel("Robin Fictional")).toBeDefined();
+      await waitFor(() => {
+        expect(screen.queryByRole("region", { name: sashasNote })).toBeNull();
+      });
+    });
+
     it("opens under the details beside the org chart too", async () => {
       editAnswers();
       renderApp("/org-chart?open=E2");
@@ -1530,5 +1605,103 @@ describe("changing a person's details", () => {
       // Then the panel's change is not undone
       expect(undone(fetch)).toBe(0);
     });
+  });
+});
+
+describe("changing a planned hire's details", () => {
+  const hiringEditor = session([
+    "people:view",
+    "people:edit",
+    "hiring-plan:view",
+    "hiring-plan:edit",
+    "org-chart:view",
+    "restricted:view",
+    "plan:view",
+  ]);
+  const peopleEditor = session([
+    "people:view",
+    "people:edit",
+    "hiring-plan:view",
+    "org-chart:view",
+    "restricted:view",
+    "plan:view",
+  ]);
+  const states = {
+    ...positions,
+    id: "states",
+    name: "Hiring states",
+    builtIn: "hiring-states",
+    choices: [
+      ["s-proposed", "Request to hire", "proposed"],
+      ["s-open", "Approved to hire", "open"],
+      ["s-hired", "Hired", "hired"],
+      ["s-left", "Fictional Resigned", "left"],
+    ].map(([id, label, meaning]) => ({
+      id,
+      label,
+      meaning,
+      description: "",
+      retired: false,
+    })),
+  };
+  const opening = person("h1", "Fictional Opening", {
+    kind: "planned-hire",
+    employeeId: "REQ-7",
+    stateId: "s-open",
+    expected: "2027-01",
+    startDate: null,
+  });
+
+  function hireAnswers(who: () => Response) {
+    return serverAnswers({
+      "GET /api/session": who,
+      "GET /api/people": peopleAnswer([robin, opening]),
+      "GET /api/lists": () => Response.json({ lists: [positions, states] }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        Response.json({ people: chart, drafted: chart }),
+      "PATCH /api/planned-hires/h1": () =>
+        Response.json({ changeSetId: "00000000-0000-4000-8000-0000000000c2" }),
+    });
+  }
+
+  it("offers a planned hire only the hiring states", async () => {
+    hireAnswers(hiringEditor);
+    renderApp("/people?open=REQ-7");
+    await panel("Fictional Opening");
+    await userEvent.click(screen.getByRole("button", { name: "Change State" }));
+    const options = await screen.findAllByRole("option");
+    expect(options.map(({ textContent }) => textContent)).toEqual([
+      "Request to hire",
+      "Approved to hire",
+    ]);
+  });
+
+  it("saves a change through the planned hires' route for those who may change the hiring plan", async () => {
+    const fetch = hireAnswers(hiringEditor);
+    renderApp("/people?open=REQ-7");
+    await panel("Fictional Opening");
+    await userEvent.click(screen.getByRole("button", { name: "Change Name" }));
+    const field = await screen.findByRole("textbox", { name: "Name" });
+    await userEvent.clear(field);
+    await userEvent.type(field, "Fictional Lead{Enter}");
+    await waitFor(() => {
+      expect(
+        fetch.mock.calls
+          .filter(
+            ([url, init]) =>
+              url === "/api/planned-hires/h1" && init?.method === "PATCH",
+          )
+          .map(([, init]) => JSON.parse(init?.body as string) as unknown),
+      ).toEqual([{ name: "Fictional Lead" }]);
+    });
+  });
+
+  it("offers no changes to a planned hire to those who may change people but not the hiring plan", async () => {
+    hireAnswers(peopleEditor);
+    renderApp("/people?open=REQ-7");
+    await panel("Fictional Opening");
+    expect(screen.queryByRole("button", { name: "Change Name" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Change State" })).toBeNull();
   });
 });

@@ -8,16 +8,15 @@ import { personLengths } from "@fathom/shared";
 import {
   Button,
   Group,
-  Input,
   Popover,
   Stack,
   Text,
-  TextInput,
   UnstyledButton,
 } from "@mantine/core";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { describeProblem } from "./api.ts";
+import { ClearableInput } from "./clearable-input.tsx";
 import { changeMade, notifyFailure, notifySuccess } from "./notices.tsx";
 import classes from "./org-chart.module.css";
 import { orgChartQuery } from "./org-chart.ts";
@@ -103,20 +102,14 @@ export function TeamNameEditor({
           }}
         >
           <Stack gap="xs" w={240}>
-            <TextInput
+            <ClearableInput
               placeholder="Team name"
               aria-label="Team name"
               value={typed}
-              rightSection={
-                typed === "" ? null : (
-                  <Input.ClearButton
-                    aria-label="Clear the name"
-                    onClick={() => {
-                      setTyped("");
-                    }}
-                  />
-                )
-              }
+              clearLabel="Clear the name"
+              onClear={() => {
+                setTyped("");
+              }}
               maxLength={personLengths.teamName}
               data-autofocus
               onChange={(event) => {

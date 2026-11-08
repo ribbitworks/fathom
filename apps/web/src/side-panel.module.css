@@ -227,10 +227,14 @@
   }
 }
 
-/* Content that scrolls within its place beside the panel, such as a list of records. */
+/* Content that scrolls within its place beside the panel, such as a list of records. Scrolling
+   clips at the edges, so a few pixels of room, taken back by the margin, keep the focus ring of a
+   control at an edge, such as a change button, whole without moving the content. */
 .scroll {
   max-height: 100%;
   overflow: auto;
+  padding: var(--fathom-focus-room);
+  margin: calc(-1 * var(--fathom-focus-room));
 }
 
 /* A side panel's frame, with its title at the top, a foot at the bottom, and what it holds

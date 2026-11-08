@@ -3,12 +3,13 @@
 // The People page: everyone the user may see, and the planned hires, in a table edited like a
 // spreadsheet, with the columns people have added, each drawing on a list. Those who may change
 // people add, edit, and delete them, and those who may also change the hiring plan do the same for
-// planned hires; those who may change planning configuration add, change, and delete columns,
-// and move any column. Every change to a person is a draft, shown in place until an Approver
-// approves it on the Drafts page. Every change shows at once and saves in the background, and the
-// latest can be undone with Cmd+Z or Ctrl+Z, or from its notification when it took something out of
-// view. What the table shows, its search, filters, and sort, is kept in the page address, and can
-// be saved as a view shared with everyone who sees people.
+// planned hires, adding either from New, in the details panel, or in the table's new row; those who
+// may change planning configuration add, change, and delete columns, and move any column. Every
+// change to a person is a draft, shown in place until an Approver approves it on the Drafts page.
+// Every change shows at once and saves in the background, and the latest can be undone with Cmd+Z
+// or Ctrl+Z, or from its notification when it took something out of view. What the table shows,
+// its search, filters, and sort, is kept in the page address, and can be saved as a view shared
+// with everyone who sees people.
 
 import type {
   DraftKind,
@@ -31,25 +32,33 @@ import {
 } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
 import { DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
+import {
+  entered,
+  type NewRecord,
+  newRecord,
+  newRecordId,
+  NewRecordPanel,
+  recordQuestion,
+} from "./new-record-panel.tsx";
 import { kept, personUpdate } from "./person-change.ts";
-import { useNoteEditing } from "./person-editing.tsx";
+import {
+  noteQuestion,
+  useDiscardQuestion,
+  useNoteEditing,
+  useShownId,
+} from "./person-editing.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
 import { type Decision, decisionFor } from "./drafts.ts";
 import classes from "./pages.module.css";
-import {
-  columnsFor,
-  type PeopleActions,
-  PeopleGrid,
-  type PeopleGridHandle,
-} from "./people-grid.tsx";
-import { draftColumn } from "./record-grid.tsx";
+import { columnsFor, type PeopleActions, PeopleGrid } from "./people-grid.tsx";
+import { draftColumn, isPending, pendingId } from "./record-grid.tsx";
 import {
   createHires,
   deleteHire,
@@ -180,6 +189,7 @@ function reordered(
 }
 
 const cannotAddId = "people-cannot-add";
+const newRecordButtonId = "people-new";
 
 export function PeoplePage({
   canEdit,
@@ -239,10 +249,49 @@ export function PeoplePage({
   // Approving or rejecting drafts, which asks first.
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
-  const grid = useRef<PeopleGridHandle>(null);
-  // A person's details and a note of theirs being written, beside the table.
+  // A record's details, or one being added, and a note of its being written, beside the table.
   const notes = useNoteEditing();
-  const note = notes.note(open, query.data?.people);
+  const [beingAdded, setBeingAdded] = useState<NewRecord>();
+  // Each New starts a form afresh, with none of a discarded one's fields.
+  const [forms, setForms] = useState(0);
+  // The record just added, by Fathom's own ID, whose details show once People has it.
+  const justAdded = useRef<string>(undefined);
+  // The add being saved, so its outcome changes nothing once the form is closed or replaced.
+  const submitted = useRef<NewRecord>(undefined);
+  const shownId = useShownId(open, query.data?.people);
+  const shownRecord = query.data?.people.find(({ id }) => id === shownId);
+  const note = notes.note(beingAdded === undefined ? shownId : newRecordId);
+  const question = useDiscardQuestion();
+  // What showing another record, or adding one, would discard, if anything: a note changed, or a
+  // record being added that holds something.
+  const leaving = () =>
+    notes.changing
+      ? noteQuestion
+      : beingAdded !== undefined && entered(beingAdded)
+        ? recordQuestion(beingAdded.kind)
+        : undefined;
+  const leave = (go: () => void) => {
+    question.ask(leaving(), () => {
+      notes.discard();
+      submitted.current = undefined;
+      setBeingAdded(undefined);
+      go();
+    });
+  };
+  const showRecord = (employeeId: string | undefined, replace = false) => {
+    leave(() => {
+      onOpen?.(employeeId, replace);
+    });
+  };
+  useEffect(() => {
+    if (justAdded.current === undefined) return;
+    const added = query.data?.people.find(
+      ({ id }) => id === justAdded.current && !isPending({ id }),
+    );
+    if (added === undefined) return;
+    justAdded.current = undefined;
+    onOpen?.(added.employeeId, true);
+  }, [query.data, onOpen]);
   const { save, undoable, done } = useSaving<PeopleData>({
     queryKey: peopleQuery.queryKey,
     removed: "Someone else has removed this. The people have been refreshed.",
@@ -560,11 +609,64 @@ export function PeoplePage({
           onOpen={
             onOpen &&
             ((person) => {
-              onOpen(person.employeeId);
+              showRecord(person.employeeId);
             })
           }
           panels={[
-            ...(open === undefined || onOpen === undefined
+            ...(beingAdded === undefined
+              ? []
+              : [
+                  {
+                    key: "person",
+                    id: personPanelId,
+                    name: "details",
+                    node: (
+                      <NewRecordPanel
+                        key={forms}
+                        record={beingAdded}
+                        onRecord={setBeingAdded}
+                        people={query.data.people}
+                        fields={query.data.fields}
+                        lists={lists.data}
+                        order={query.data.order}
+                        showDates={showDates}
+                        showHireDates={showHireDates}
+                        showPosition={!positionHidden}
+                        canAddHires={canEditHires}
+                        narrow={narrow}
+                        notes={notes}
+                        onAdd={(request) => {
+                          const id = pendingId();
+                          const saving = { ...beingAdded, saving: true };
+                          submitted.current = saving;
+                          setBeingAdded(saving);
+                          actions.add(
+                            [{ id, request }],
+                            ([saved]) => {
+                              if (submitted.current !== saving) return;
+                              submitted.current = undefined;
+                              setBeingAdded(undefined);
+                              justAdded.current = saved;
+                            },
+                            () => {
+                              if (submitted.current !== saving) return;
+                              submitted.current = undefined;
+                              setBeingAdded({ ...saving, saving: false });
+                            },
+                          );
+                        }}
+                        onCancel={() => {
+                          leave(() => {
+                            focusSoon(newRecordButtonId);
+                          });
+                        }}
+                      />
+                    ),
+                  },
+                ]),
+            ...(beingAdded !== undefined ||
+            open === undefined ||
+            onOpen === undefined
               ? []
               : [
                   {
@@ -576,10 +678,13 @@ export function PeoplePage({
                         employeeId={open}
                         show={view.show}
                         showDates={showDates}
+                        showHireDates={showHireDates}
+                        canEditHires={canEditHires}
                         seesChart={seesChart}
                         narrow={narrow}
                         elsewhere={(person) =>
-                          seesChart && (
+                          seesChart &&
+                          !isHire(person) && (
                             <Anchor
                               size="sm"
                               renderRoot={(props) => (
@@ -594,22 +699,19 @@ export function PeoplePage({
                             </Anchor>
                           )
                         }
-                        onPerson={onOpen}
+                        onPerson={showRecord}
                         onFollow={(next) => {
                           onOpen(next, true);
                         }}
                         onChange={canEdit ? actions.update : undefined}
                         notes={notes}
                         onClose={() => {
-                          const shown = query.data.people.find(
-                            (person) =>
-                              person.employeeId.toLowerCase() ===
-                              open.toLowerCase(),
-                          );
-                          onOpen(undefined);
-                          if (shown !== undefined) {
-                            focusSoon(`cell-${shown.id}-preferredName`);
-                          }
+                          leave(() => {
+                            onOpen(undefined);
+                            if (shownRecord !== undefined) {
+                              focusSoon(`cell-${shownRecord.id}-preferredName`);
+                            }
+                          });
                         }}
                       />
                     ),
@@ -635,8 +737,8 @@ export function PeoplePage({
           view={view}
           onView={onView}
           saved={savedViews(query.data.views)}
-          ref={grid}
         />
+        {question.dialog}
         <DecisionModal
           decision={decision}
           opened={deciding}
@@ -740,24 +842,18 @@ export function PeoplePage({
               {/* The live people alone are read only. */}
               {canEdit && view.show !== "live" && (
                 <Button
+                  id={newRecordButtonId}
                   variant="filled"
                   {...addButton}
                   onClick={() => {
-                    grid.current?.addRow();
+                    leave(() => {
+                      onOpen?.(undefined);
+                      setForms((count) => count + 1);
+                      setBeingAdded(newRecord());
+                    });
                   }}
                 >
-                  New person
-                </Button>
-              )}
-              {canEditHires && view.show !== "live" && (
-                <Button
-                  variant="default"
-                  {...addButton}
-                  onClick={() => {
-                    grid.current?.addRow("planned-hire");
-                  }}
-                >
-                  New planned hire
+                  New
                 </Button>
               )}
             </Group>
