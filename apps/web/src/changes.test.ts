@@ -2,11 +2,11 @@
 
 // Tests for how the change history words a new order of a list's choices, one choice moved, drafted
 // or approved, how it names the plan's records, such as release streams, and how it words a
-// release's colour.
+// release's colour, and the words for a feature team's changes.
 
 import type { ChangedRecord } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { describeField, describeRecord } from "./changes.ts";
+import { describeField, describeRecord, describeValue } from "./changes.ts";
 
 const order = (
   oldValue: string[],
@@ -98,6 +98,11 @@ describe("the plan's records in the change history", () => {
       planRecord("planned-hire", null, null),
       "drafted adding a planned hire",
     ],
+    [
+      "a feature team",
+      planRecord("feature-team", "Fictional Harbour", null),
+      "drafted adding the feature team Fictional Harbour",
+    ],
   ])("names %s", (_case, record, sentence) => {
     expect(describeRecord(record).sentence).toBe(sentence);
   });
@@ -134,5 +139,45 @@ describe("a release's colour in the change history", () => {
     expect(
       describeField({ field: "colour", oldValue: null, newValue: "teal" }),
     ).toEqual([{ strong: "Colour" }, " set to ", { value: "teal" }]);
+  });
+});
+
+describe("a feature team's changes in the change history", () => {
+  it("names its lead, members, and the days they join or leave", () => {
+    expect([
+      describeField({
+        field: "leadId",
+        oldValue: "Avery Fictional",
+        newValue: "Blake Fictional",
+      })[0],
+      describeField({
+        field: "members",
+        oldValue: ["Avery Fictional"],
+        newValue: ["Avery Fictional", "Blake Fictional"],
+      })[0],
+      describeField({ field: "memberFrom", oldValue: null, newValue: null }),
+    ]).toEqual([
+      { strong: "Feature lead" },
+      { strong: "Members" },
+      [{ strong: "Joining and leaving dates" }, " changed"],
+    ]);
+  });
+
+  it("words a value of a record added or removed, or nothing without one", () => {
+    expect([
+      describeValue("leadId", "Avery Fictional"),
+      describeValue("members", ["Avery Fictional", "Blake Fictional"]),
+      describeValue("members", []),
+      describeValue("leadId", null),
+    ]).toEqual([
+      [{ strong: "Feature lead" }, " ", { value: "Avery Fictional" }],
+      [
+        { strong: "Members" },
+        " ",
+        { value: "Avery Fictional, Blake Fictional" },
+      ],
+      undefined,
+      undefined,
+    ]);
   });
 });

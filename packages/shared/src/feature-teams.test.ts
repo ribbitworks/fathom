@@ -1,0 +1,161 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Tests for what is accepted when adding and changing a feature team: its name, its members, each
+// once, its lead, the day members join or leave, and its colour.
+
+import { describe, expect, it } from "vitest";
+import {
+  featureTeamChangeSchema,
+  featureTeamColourSchema,
+  featureTeamDraftSchema,
+  featureTeamLengths,
+  featureTeamRequestSchema,
+} from "./feature-teams.ts";
+
+const person = "018f4f6e-7b1a-4c3d-8e2f-000000000001";
+const other = "018f4f6e-7b1a-4c3d-8e2f-000000000002";
+
+describe("adding a feature team", () => {
+  it("needs only a name, trimmed, with no lead or members", () => {
+    expect(featureTeamRequestSchema.parse({ name: "  Search " })).toEqual({
+      name: "Search",
+      leadId: null,
+      members: [],
+    });
+  });
+
+  it("refuses a name that is empty or too long", () => {
+    expect(featureTeamRequestSchema.safeParse({ name: "  " }).success).toBe(
+      false,
+    );
+    expect(
+      featureTeamRequestSchema.safeParse({
+        name: "x".repeat(featureTeamLengths.name + 1),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("takes at most as many members as a team could hold", () => {
+    const members = (count: number) =>
+      Array.from(
+        { length: count },
+        (_, index) =>
+          `018f4f6e-7b1a-4c3d-8e2f-${String(index).padStart(12, "0")}`,
+      );
+    expect(
+      featureTeamRequestSchema.safeParse({
+        name: "Search",
+        members: members(featureTeamLengths.members),
+      }).success,
+    ).toBe(true);
+    expect(
+      featureTeamRequestSchema.safeParse({
+        name: "Search",
+        members: members(featureTeamLengths.members + 1),
+      }).success,
+    ).toBe(false);
+  });
+
+  it("takes each member once", () => {
+    expect(
+      featureTeamRequestSchema.safeParse({
+        name: "Search",
+        members: [person, other],
+      }).success,
+    ).toBe(true);
+    expect(
+      featureTeamRequestSchema.safeParse({
+        name: "Search",
+        members: [person, person],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("refuses a member or lead who is not named by an identifier, and a day that is not one", () => {
+    for (const asked of [
+      { members: ["someone"] },
+      { leadId: "someone" },
+      { from: "soon" },
+    ]) {
+      expect(
+        featureTeamRequestSchema.safeParse({ name: "Search", ...asked })
+          .success,
+      ).toBe(false);
+    }
+  });
+});
+
+describe("changing a feature team", () => {
+  it("takes any of its details, or none", () => {
+    expect(featureTeamChangeSchema.parse({})).toEqual({});
+    expect(
+      featureTeamChangeSchema.parse({
+        name: "Search",
+        leadId: null,
+        add: [person],
+        remove: [other],
+        from: "2026-01-05",
+      }),
+    ).toEqual({
+      name: "Search",
+      leadId: null,
+      add: [person],
+      remove: [other],
+      from: "2026-01-05",
+    });
+  });
+
+  it("takes each member added or removed once", () => {
+    expect(
+      featureTeamChangeSchema.safeParse({ add: [person, person] }).success,
+    ).toBe(false);
+    expect(
+      featureTeamChangeSchema.safeParse({ remove: [other, other] }).success,
+    ).toBe(false);
+  });
+});
+
+describe("a feature team's draft", () => {
+  const draft = {
+    action: "changed",
+    changed: ["members"],
+    live: {},
+    state: "waiting",
+    madeBy: null,
+    madeAs: null,
+    madeAt: null,
+    editors: [],
+    changedBy: {},
+  };
+
+  it("may give the days members join or leave, by person", () => {
+    expect(
+      featureTeamDraftSchema.parse({
+        ...draft,
+        days: { [person]: "2026-01-05" },
+      }).days,
+    ).toEqual({ [person]: "2026-01-05" });
+    expect(featureTeamDraftSchema.parse(draft).days).toBeUndefined();
+  });
+
+  it("refuses a day that is not one", () => {
+    expect(
+      featureTeamDraftSchema.safeParse({ ...draft, days: { [person]: "soon" } })
+        .success,
+    ).toBe(false);
+  });
+});
+
+describe("a feature team's colour", () => {
+  it("is one of the palette, or none", () => {
+    expect(featureTeamColourSchema.parse({ colour: "teal" })).toEqual({
+      colour: "teal",
+    });
+    expect(featureTeamColourSchema.parse({ colour: null })).toEqual({
+      colour: null,
+    });
+    expect(featureTeamColourSchema.safeParse({ colour: "sea" }).success).toBe(
+      false,
+    );
+  });
+});

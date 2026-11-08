@@ -25,6 +25,8 @@ import {
   databaseCodes,
   describeError,
   drafts,
+  featureTeamMemberships,
+  featureTeams,
   fields,
   fieldValues,
   listItems,
@@ -291,10 +293,67 @@ export async function seed(
     for (const chunk of inChunks(organization.teams)) {
       await transaction.insert(teams).values(chunk);
     }
+    made.push(...(await addFeatureTeams(transaction, organization)));
     // Made by Fathom itself.
     await recordChanges(transaction, null, made);
     return true;
   });
+}
+
+// Adds the fictional feature teams, with every record of their members joining and leaving, and
+// returns the changes that record them, with members as they are on the reference date.
+async function addFeatureTeams(
+  transaction: Pick<Database, "insert">,
+  organization: FictionalOrganization,
+): Promise<Change[]> {
+  const made: Change[] = [];
+  for (const team of organization.featureTeams) {
+    const { memberships, ...row } = team;
+    await transaction.insert(featureTeams).values(row);
+    await transaction
+      .insert(featureTeamMemberships)
+      .values(memberships.map((one) => ({ teamId: team.id, ...one })));
+    const latest = new Map(
+      [...memberships]
+        .filter(({ fromDate }) => fromDate <= organization.referenceDate)
+        .sort((a, b) => a.fromDate.localeCompare(b.fromDate))
+        .map(({ personId, member }) => [personId, member]),
+    );
+    made.push(
+      ...recorded("feature-team", team.id, "created", {
+        name: team.name,
+        leadId: team.leadId,
+        members: [...latest]
+          .filter(([, member]) => member)
+          .map(([personId]) => personId)
+          .sort(),
+      }),
+    );
+  }
+  return made;
+}
+
+// Removes the seeded feature teams, with every record of their members, and returns the changes
+// that record them going. Every draft of a feature team goes first, published or not, since drafts
+// made by hand may name seeded people.
+async function removeFeatureTeams(
+  transaction: Pick<Database, "delete">,
+  organization: FictionalOrganization,
+): Promise<Change[]> {
+  const ids = organization.featureTeams.map(({ id }) => id);
+  for (const table of [drafts, unpublishedDrafts]) {
+    await transaction.delete(table).where(eq(table.recordType, "feature-team"));
+  }
+  const removed = await transaction
+    .delete(featureTeams)
+    .where(inArray(featureTeams.id, ids))
+    .returning();
+  return removed.flatMap((team) =>
+    recorded("feature-team", team.id, "deleted", {
+      name: team.name,
+      leadId: team.leadId,
+    }),
+  );
 }
 
 async function total(query: Promise<{ total: number }[]>): Promise<number> {
@@ -319,6 +378,7 @@ export async function unseed(
     // The seeded hires go first, since they name people. People whom planned hires added by hand
     // name are kept like managers, with those above them.
     made.push(...(await removeSeededHires(transaction, organization)));
+    made.push(...(await removeFeatureTeams(transaction, organization)));
     const managing = new Set<string>(
       (await transaction.select().from(plannedHires))
         .flatMap(({ managerId, filledBy }) => [managerId, filledBy])
@@ -338,6 +398,17 @@ export async function unseed(
         .filter((id): id is string => id !== null && seededIds.includes(id)),
     );
     for (const id of owners) managing.add(id);
+    // People who lead a feature team left behind are kept too, with those above them.
+    const leads = new Set(
+      (
+        await transaction
+          .select({ leadId: featureTeams.leadId })
+          .from(featureTeams)
+      )
+        .map(({ leadId }) => leadId)
+        .filter((id): id is string => id !== null && seededIds.includes(id)),
+    );
+    for (const id of leads) managing.add(id);
     for (let grew = true; grew;) {
       grew = false;
       for (const line of lines) {
@@ -366,11 +437,11 @@ export async function unseed(
         .select({ id: people.id, preferredName: people.preferredName })
         .from(people)
         .where(inArray(people.id, [...managing]))) {
-        kept.push(
-          owners.has(row.id)
-            ? `${row.preferredName}, who owns a project or proposal kept`
-            : `${row.preferredName}, whom people or planned hires added by hand report to, or have`,
-        );
+        let reason =
+          "whom people or planned hires added by hand report to, or have";
+        if (owners.has(row.id)) reason = "who owns a project or proposal kept";
+        else if (leads.has(row.id)) reason = "who leads a feature team kept";
+        kept.push(`${row.preferredName}, ${reason}`);
       }
     }
     const currentLine = new Map(lines.map((line) => [line.personId, line]));

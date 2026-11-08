@@ -391,7 +391,7 @@ describe("the grid of permissions", () => {
     const area = (name: string) =>
       within(grid).getByText(name).closest("td")?.textContent;
     expect(area("Allocations")).toBe("Allocations, Not built yet");
-    expect(area("Feature teams")).toBe("Feature teams, Not built yet");
+    expect(area("Feature teams")).toBe("Feature teams");
     expect(area("Drafts")).toBe("Drafts, Not built yet");
     expect(area("Plan")).toBe("Plan");
     expect(area("Releases")).toBe("Releases");
@@ -819,11 +819,7 @@ describe("confirming a change to what is not built yet", () => {
           effects: [
             {
               account: planner,
-              before: [
-                "plan:view",
-                "allocations:view",
-                "feature-teams:propose",
-              ],
+              before: ["plan:view", "allocations:view", "drafts:submit"],
               after: ["plan:view", "allocations:view", "allocations:edit"],
             },
           ],
@@ -851,7 +847,7 @@ describe("confirming a change to what is not built yet", () => {
       `${permissionDescriptions["allocations:edit"].allows}, Not built yet`,
     ]);
     expect(lines("Loses")).toEqual([
-      `${permissionDescriptions["feature-teams:propose"].without}, Not built yet`,
+      `${permissionDescriptions["drafts:submit"].without}, Not built yet`,
     ]);
   });
 });

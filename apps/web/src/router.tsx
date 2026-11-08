@@ -63,6 +63,10 @@ const chartSearch = z.object({
   team: z.string().max(chartAddressLength).optional().catch(undefined),
   show: showSchema.optional().catch(undefined),
   open: z.string().max(personLengths.employeeId).optional().catch(undefined),
+  // Which teams the chart draws: managers' teams, or, when chosen, feature teams.
+  view: z.literal("feature-teams").optional().catch(undefined),
+  // The feature team whose details are shown beside the chart.
+  featureTeam: z.uuid().optional().catch(undefined),
 });
 
 // Pages only for users with a permission; anyone else is told there is no such page.
@@ -226,6 +230,10 @@ const draftsRoute = createRoute({
           permissions.includes("plan:view") ||
           permissions.includes("configuration:view")
         }
+        seesTeams={
+          permissions.includes("org-chart:view") &&
+          permissions.includes("people:view")
+        }
         search={draftsRoute.useSearch().search ?? ""}
         onSearch={(search, replace) => {
           void navigate({ search: { search: search || undefined }, replace });
@@ -370,12 +378,27 @@ const orgChartRoute = createRoute({
       }),
       [permissions],
     );
+    const featureTeamEdits = useMemo(
+      () => ({
+        propose:
+          permissions.includes("people:view") &&
+          (permissions.includes("feature-teams:propose") ||
+            permissions.includes("feature-teams:edit")),
+        edit:
+          permissions.includes("people:view") &&
+          permissions.includes("feature-teams:edit"),
+        colours: permissions.includes("team-colours:edit"),
+        dates: permissions.includes("restricted:edit"),
+      }),
+      [permissions],
+    );
     return (
       <OrgChartPage
         seesPeople={permissions.includes("people:view")}
         showDates={permissions.includes("restricted:view")}
         canEdit={permissions.includes("people:edit")}
         teamEdits={teamEdits}
+        featureTeamEdits={featureTeamEdits}
         search={orgChartRoute.useSearch()}
         onSearch={(search, replace) => {
           void navigate({ search, replace });

@@ -76,9 +76,11 @@ export function ChartControls({
     return [
       {
         group: "People",
-        items: named(everyone, (person) => person.preferredName).map(
-          ({ person, label }) => ({ value: person.id, label }),
-        ),
+        // A feature team's own card, while it has no lead, is found as a team, not a person.
+        items: named(
+          everyone.filter((person) => person.teamCard !== true),
+          (person) => person.preferredName,
+        ).map(({ person, label }) => ({ value: person.id, label })),
       },
       {
         group: "Teams",
@@ -130,8 +132,11 @@ export function ChartControls({
                 <Text size="sm">{option.label}</Text>
                 <Text size="xs" c="dimmed">
                   {lead === undefined
-                    ? livePosition(tree.people.get(option.value))
-                    : `Led by ${lead.preferredName}`}
+                    ? (tree.people.get(option.value)?.featureTeam ??
+                      livePosition(tree.people.get(option.value)))
+                    : lead.teamCard === true
+                      ? "No feature lead"
+                      : `Led by ${lead.preferredName}`}
                 </Text>
               </div>
             );

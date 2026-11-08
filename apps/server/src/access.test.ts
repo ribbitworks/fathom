@@ -87,7 +87,6 @@ const expected: [Role, Permission[]][] = [
       "people:view",
       "team-colours:edit",
       "feature-teams:propose",
-      "feature-teams:edit",
       "restricted:view",
       "hiring-plan:view",
       "drafts:submit",

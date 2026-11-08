@@ -14,11 +14,16 @@ import {
   type Choice,
   type DraftKind,
   type DraftState,
+  type FeatureTeam,
+  type FeatureTeamDraft,
+  type FeatureTeams,
   type Field,
   type List,
   isNoteField,
   matchesWords,
   notePlainText,
+  type OrgChart,
+  type OrgChartPerson,
   type Person,
   type PersonDraft,
   type RecordDraft,
@@ -37,8 +42,10 @@ import {
   Text,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
+import { featureTeamsQuery, teamPersonNamer } from "./feature-teams.ts";
+import { orgChartQuery } from "./org-chart.ts";
 import { type ReactNode, useState } from "react";
-import { describeField } from "./changes.ts";
+import { describeField, describeValue } from "./changes.ts";
 import { DecisionModal, drafts } from "./decision-dialog.tsx";
 import {
   type Decision,
@@ -64,6 +71,7 @@ import { type PeopleData, peopleQuery } from "./people.ts";
 import { isHire, rowName } from "./people-rows.ts";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseList, phraseText } from "./phrase.tsx";
+import { formatDay } from "./table-view.ts";
 import { draftWords, HoldMarks, StatusMark } from "./status-mark.tsx";
 
 interface Drafted {
@@ -413,6 +421,72 @@ function recordEntries(streams: readonly ReleaseStream[]): Entry[] {
   ]);
 }
 
+const nothingLeftInTeamDraft: Phrase = [
+  "Nothing is left to change, since the people it named have left",
+];
+
+// Every draft of a feature team, as entries, naming members and leads from its names and the org chart.
+function teamEntries(
+  teams: readonly FeatureTeam[],
+  people: readonly OrgChartPerson[],
+): Entry[] {
+  return teams.flatMap((team): Entry[] => {
+    const { draft } = team;
+    if (draft === undefined) return [];
+    const nameOf = teamPersonNamer(team, people);
+    // Who joins or leaves on which day, such as "Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026".
+    const dayText = (days: FeatureTeamDraft["days"]): string | null => {
+      const lines = Object.entries(days ?? {})
+        .map(([personId, day]) => `${nameOf(personId)}, ${formatDay(day)}`)
+        .sort();
+      return lines.length === 0 ? null : lines.join("; ");
+    };
+    const valueOf = (key: string, from: "live" | "now"): ChangeValue => {
+      const source = from === "live" ? draft.live : team;
+      if (key === "name") return source.name ?? null;
+      if (key === "leadId") {
+        return source.leadId == null ? null : nameOf(source.leadId);
+      }
+      if (key === "members") return (source.members ?? []).map(nameOf);
+      if (key === "memberFrom" && from === "now") return dayText(draft.days);
+      return null;
+    };
+    const changeLine = (key: string): Phrase =>
+      credited(
+        describeField({
+          field: key,
+          oldValue: valueOf(key, "live"),
+          newValue: valueOf(key, "now"),
+        }),
+        key,
+        draft,
+      );
+    const details =
+      draft.action === "changed"
+        ? [
+            ...draft.changed.map(changeLine),
+            ...(draft.changed.length === 0 ? [nothingLeftInTeamDraft] : []),
+          ]
+        : [
+            ...["leadId", "members"].flatMap((key) => {
+              const line = describeValue(key, valueOf(key, "now"));
+              return line === undefined ? [] : [credited(line, key, draft)];
+            }),
+            ...(dayText(draft.days) === null ? [] : [changeLine("memberFrom")]),
+          ];
+    return [
+      entry(
+        `feature-team ${team.id}`,
+        draft,
+        `the feature team ${team.name}`,
+        details,
+        { featureTeams: [team.id] },
+        team.heldBy,
+      ),
+    ];
+  });
+}
+
 function DraftEntry({
   shown,
   waits,
@@ -485,6 +559,7 @@ export function DraftsPage({
   seesPeople = true,
   seesLists = true,
   seesPlan = true,
+  seesTeams = false,
   search,
   onSearch,
 }: {
@@ -496,6 +571,8 @@ export function DraftsPage({
   seesLists?: boolean;
   // Whether the user sees the plan's records, such as release streams.
   seesPlan?: boolean;
+  // Whether the user sees feature teams, on the org chart.
+  seesTeams?: boolean;
   search: string;
   onSearch: (search: string, replace: boolean) => void;
 }) {
@@ -505,6 +582,8 @@ export function DraftsPage({
     ? listsRead
     : { ...listsRead, isPending: false, isError: false, data: [] };
   const releases = useQuery({ ...releaseStreamsQuery, enabled: seesPlan });
+  const featureTeams = useQuery({ ...featureTeamsQuery, enabled: seesTeams });
+  const chart = useQuery({ ...orgChartQuery, enabled: seesTeams });
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [decision, setDecision] = useState<Decision>();
   const [opened, setOpened] = useState(false);
@@ -517,10 +596,17 @@ export function DraftsPage({
   if (
     (seesPeople && people.isPending) ||
     lists.isPending ||
-    (seesPlan && releases.isPending)
+    (seesPlan && releases.isPending) ||
+    (seesTeams && (featureTeams.isPending || chart.isPending))
   ) {
     content = <Loader role="status" aria-label="Loading" />;
-  } else if (people.isError || lists.isError || releases.isError) {
+  } else if (
+    people.isError ||
+    lists.isError ||
+    releases.isError ||
+    featureTeams.isError ||
+    chart.isError
+  ) {
     content = (
       <Alert color="red" role="alert">
         <Group justify="space-between">
@@ -533,6 +619,10 @@ export function DraftsPage({
               void people.refetch();
               void lists.refetch();
               void releases.refetch();
+              if (seesTeams) {
+                void featureTeams.refetch();
+                void chart.refetch();
+              }
             }}
           >
             Try again
@@ -547,6 +637,12 @@ export function DraftsPage({
       ...columnEntries(peopleData as PeopleData, lists.data),
       ...listEntries(lists.data as List[]),
       ...recordEntries(streams as ReleaseStream[]),
+      ...(seesTeams
+        ? teamEntries(
+            (featureTeams.data as FeatureTeams).teams,
+            (chart.data as OrgChart).people,
+          )
+        : []),
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
     // Loaded, or empty for those who see only lists.

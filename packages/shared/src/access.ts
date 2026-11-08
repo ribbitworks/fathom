@@ -152,14 +152,17 @@ export const permissionDescriptions: Record<
   "feature-teams:propose": {
     allows: "Proposes feature teams for approval.",
     without: "Cannot propose feature teams.",
+    needs: ["people:view"],
   },
   "feature-teams:edit": {
     allows: "Changes feature teams.",
     without: "Cannot change feature teams.",
+    needs: ["people:view"],
   },
   "feature-teams:approve": {
     allows: "Approves or rejects proposed feature teams.",
     without: "Cannot approve feature teams.",
+    needs: ["people:view"],
   },
   "restricted:view": {
     allows:
@@ -290,9 +293,6 @@ export const unbuiltPermissions: readonly Permission[] = [
   "features:edit",
   "allocations:view",
   "allocations:edit",
-  "feature-teams:propose",
-  "feature-teams:edit",
-  "feature-teams:approve",
   "drafts:submit",
 ];
 
@@ -511,7 +511,6 @@ export const startingRoles: Record<
       "changes:view",
     ],
   },
-  // Engineering Managers edit feature teams directly until plan approval arrives, as Roles sets out.
   "engineering-manager": {
     name: "Engineering Manager",
     description:
@@ -524,7 +523,6 @@ export const startingRoles: Record<
       "people:view",
       "team-colours:edit",
       "feature-teams:propose",
-      "feature-teams:edit",
       "restricted:view",
       "hiring-plan:view",
       "drafts:submit",

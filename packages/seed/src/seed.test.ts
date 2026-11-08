@@ -11,6 +11,7 @@ import {
   columnOrders,
   createDatabase,
   drafts,
+  featureTeams,
   createPool,
   type Database,
   fields,
@@ -415,6 +416,64 @@ describe("seeding", () => {
     await connection
       .delete(plannedHires)
       .where(eq(plannedHires.id, String(hire?.id)));
+    expect(await unseed(connection, organization)).toEqual([]);
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
+  it("keeps a seeded person who leads a feature team left behind, and discards every feature team draft", async () => {
+    const [lead, member] = organization.people;
+    const account = { id: "fictional-hand-account" };
+    await connection.insert(users).values({
+      ...account,
+      name: "Fictional Hand Account",
+      email: "hand.account@example.test",
+      emailVerified: false,
+    });
+    const [team] = await connection
+      .insert(featureTeams)
+      .values({ name: "Fictional Hand Team", leadId: lead?.id })
+      .returning({ id: featureTeams.id });
+    const handDraft = "00000000-0000-4000-8000-0000000000e1";
+    await connection.insert(drafts).values({
+      recordType: "feature-team",
+      recordId: handDraft,
+      action: "created",
+      fields: { name: "Fictional Drafted Team", members: [member?.id] },
+    });
+    await connection.insert(unpublishedDrafts).values({
+      recordType: "feature-team",
+      recordId: handDraft,
+      userId: account.id,
+      action: "created",
+      fields: { name: "Fictional Unpublished Team" },
+    });
+
+    const kept = await unseed(connection, organization);
+
+    expect(kept).toContain(
+      `${String(lead?.preferredName)}, who leads a feature team kept`,
+    );
+    expect(
+      (await connection.select({ id: people.id }).from(people)).map(
+        ({ id }) => id,
+      ),
+    ).toContain(lead?.id);
+    expect(
+      await connection
+        .select({ id: drafts.recordId })
+        .from(drafts)
+        .where(eq(drafts.recordType, "feature-team")),
+    ).toEqual([]);
+    expect(
+      await connection
+        .select({ id: unpublishedDrafts.recordId })
+        .from(unpublishedDrafts)
+        .where(eq(unpublishedDrafts.recordType, "feature-team")),
+    ).toEqual([]);
+    await connection
+      .delete(featureTeams)
+      .where(eq(featureTeams.id, String(team?.id)));
+    await connection.delete(users).where(eq(users.id, account.id));
     expect(await unseed(connection, organization)).toEqual([]);
     expect(await seed(connection, organization)).toBe(true);
   });

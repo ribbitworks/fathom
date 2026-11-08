@@ -36,6 +36,7 @@ import {
 export interface DraftSelection {
   people: string[];
   plannedHires: string[];
+  featureTeams: string[];
   lists: string[];
   choices: string[];
   orders: string[];
@@ -53,6 +54,7 @@ export type ColumnDraftTarget =
 export const noDrafts = (): DraftSelection => ({
   people: [],
   plannedHires: [],
+  featureTeams: [],
   lists: [],
   choices: [],
   orders: [],
@@ -64,6 +66,7 @@ export const noDrafts = (): DraftSelection => ({
 export const draftTotal = (selection: DraftSelection) =>
   selection.people.length +
   selection.plannedHires.length +
+  selection.featureTeams.length +
   selection.lists.length +
   selection.choices.length +
   selection.orders.length +
@@ -272,6 +275,9 @@ export const without = (
   plannedHires: selection.plannedHires.filter(
     (id) => !other.plannedHires.includes(id),
   ),
+  featureTeams: selection.featureTeams.filter(
+    (id) => !other.featureTeams.includes(id),
+  ),
   lists: selection.lists.filter((id) => !other.lists.includes(id)),
   choices: selection.choices.filter((id) => !other.choices.includes(id)),
   orders: selection.orders.filter((id) => !other.orders.includes(id)),
@@ -360,6 +366,7 @@ export const joined = (
 ): DraftSelection => ({
   people: [...new Set([...first.people, ...second.people])],
   plannedHires: [...new Set([...first.plannedHires, ...second.plannedHires])],
+  featureTeams: [...new Set([...first.featureTeams, ...second.featureTeams])],
   lists: [...new Set([...first.lists, ...second.lists])],
   choices: [...new Set([...first.choices, ...second.choices])],
   orders: [...new Set([...first.orders, ...second.orders])],

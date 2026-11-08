@@ -24,7 +24,7 @@ import {
   sv,
   zh_CN,
 } from "@faker-js/faker";
-import { addMonths } from "@fathom/shared";
+import { addDays, addMonths } from "@fathom/shared";
 import { createHash } from "node:crypto";
 
 // The fixed namespace every fictional identifier is made in.
@@ -105,6 +105,16 @@ export interface FictionalTeam {
   colour: string | null;
 }
 
+// A feature team: its name, lead, if any, colour, if any, and every record of people joining and
+// leaving it, each from a day.
+export interface FictionalFeatureTeam {
+  id: string;
+  name: string;
+  leadId: string | null;
+  colour: string | null;
+  memberships: { personId: string; member: boolean; fromDate: string }[];
+}
+
 // A planned hire: named, if it has a name, and known by its requisition, or by a temporary ID the
 // seed data gives it while it has none, in the first hiring state with its meaning, due on its
 // target date, as YYYY-MM-DD, if it has one, filled by a person, when it is, and with choices in
@@ -135,6 +145,9 @@ export interface FictionalOrganization {
   reportingLines: FictionalLine[];
   // Names for about half the managers' teams; the rest have none.
   teams: FictionalTeam[];
+  // Feature teams drawn from current people across managers' teams: some coloured, one with no
+  // lead, someone on two teams, and someone who has left a team, so its history holds a past member.
+  featureTeams: FictionalFeatureTeam[];
   // People made like the rest but not added, for drafts that add them.
   newcomers: FictionalPerson[];
   // Planned hires in each state, with requisitions and temporary IDs, most under current managers,
@@ -761,5 +774,65 @@ export function fictionalOrganization({
     ...lines,
     newcomers: everyone.slice(size),
     hires: hiresFor(people, lines.reportingLines, referenceDate),
+    featureTeams: featureTeamsFor(people, referenceDate),
   };
+}
+
+// The feature teams, as the organization's feature teams list says, from people current on the
+// reference date, oldest starters first, so the same people lead them on every run.
+const featureTeamJoinedDaysAgo = 300;
+const featureTeamLeftDaysAgo = 153;
+
+const featureTeamPlans: readonly {
+  name: string;
+  colour: string | null;
+  size: number;
+  lead: boolean;
+}[] = [
+  { name: "Payments core", colour: "teal", size: 5, lead: true },
+  { name: "Search", colour: "indigo", size: 4, lead: true },
+  { name: "Platform reliability", colour: null, size: 3, lead: false },
+  { name: "Mobile apps", colour: "orange", size: 4, lead: true },
+];
+
+function featureTeamsFor(
+  people: readonly FictionalPerson[],
+  referenceDate: string,
+): FictionalFeatureTeam[] {
+  const current = people
+    .filter(
+      ({ startDate, endDate }) =>
+        String(startDate) <= referenceDate && endDate === null,
+    )
+    .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+  const joined = addDays(referenceDate, -featureTeamJoinedDaysAgo);
+  let next = 0;
+  return featureTeamPlans.map((plan, index) => {
+    const members = current.slice(next, next + plan.size);
+    next += plan.size - (index === 0 ? 1 : 0);
+    const memberships = members.map(({ id, startDate }) => ({
+      personId: id,
+      member: true,
+      fromDate: String(startDate) > joined ? String(startDate) : joined,
+    }));
+    // The last team had one more member, who left it.
+    const leaver = current.at(next + plan.size);
+    if (index === featureTeamPlans.length - 1 && leaver !== undefined) {
+      memberships.push(
+        { personId: leaver.id, member: true, fromDate: joined },
+        {
+          personId: leaver.id,
+          member: false,
+          fromDate: addDays(referenceDate, -featureTeamLeftDaysAgo),
+        },
+      );
+    }
+    return {
+      id: fictionalId(`feature-team:${plan.name}`),
+      name: plan.name,
+      leadId: plan.lead ? (members[0]?.id ?? null) : null,
+      colour: plan.colour,
+      memberships,
+    };
+  });
 }

@@ -54,6 +54,11 @@ export interface ChartPerson extends OrgChartPerson {
   // The team's approved name, which only a team with one can be coloured by, as the chart shows the
   // drafted one.
   approvedTeamName?: string | null;
+  // On the feature team chart: the feature team the card is drawn in, since someone on two teams
+  // has a card in each, and whether the card stands for the team itself, while it has no lead.
+  featureTeam?: string;
+  featureTeamId?: string;
+  teamCard?: true;
 }
 
 // The people as the Draft menu's choice draws them: the approved chart, with each person's draft,
@@ -388,4 +393,8 @@ export interface ChartSearch {
   show?: Show | undefined;
   // The person whose details are shown beside the chart, by Employee ID.
   open?: string | undefined;
+  // Which teams the chart draws: managers', or feature teams.
+  view?: "feature-teams" | undefined;
+  // The feature team whose details are shown beside the chart.
+  featureTeam?: string | undefined;
 }

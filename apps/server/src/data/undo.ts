@@ -106,6 +106,7 @@ import { typeOf } from "./column-types.ts";
 import { type ColumnInfo, fieldOfValue, writeValues } from "./values.ts";
 import { requireViewUndo, viewTierNow } from "./views.ts";
 import { readToday } from "./settings.ts";
+import { recordTeamDayChanges, undoTeamDrafts } from "./feature-teams.ts";
 import {
   hireSensitivities,
   readHireTier,
@@ -132,6 +133,8 @@ const editPermissions = {
   "column-order": ["configuration:edit"],
   person: ["people:edit"],
   "planned-hire": ["people:edit", "hiring-plan:edit"],
+  // Proposing or editing them is checked for the teams themselves.
+  "feature-team": ["org-chart:view"],
   // Who may change each view is checked for the view itself.
   "saved-view": ["people:view"],
 } as const;
@@ -146,6 +149,7 @@ const kindOrder: readonly RecordType[] = [
   "column-order",
   "person",
   "planned-hire",
+  "feature-team",
   "saved-view",
 ];
 
@@ -210,6 +214,8 @@ const columnsOf: Record<
     isManager: flag,
     stateId: textOrNull,
   },
+  // Feature teams change only through drafts, so their live rows are never put back here.
+  "feature-team": {},
   "planned-hire": {
     requisition: textOrNull,
     temporaryNumber: asStored,
@@ -1027,6 +1033,12 @@ async function undoIn(
   const hireDrafts = draftRecords.filter(
     ({ recordType }) => recordType === "planned-hire",
   );
+  const teamDrafts = draftRecords.filter(
+    ({ recordType }) => recordType === "feature-team",
+  );
+  if (teamDrafts.length > 0) {
+    await undoTeamDrafts(transaction, actor, teamDrafts, changedSince);
+  }
   const columnKinds: readonly RecordType[] = ["field", "column-order"];
   const columnDrafts = draftRecords.filter(({ recordType }) =>
     columnKinds.includes(recordType),
@@ -1074,6 +1086,7 @@ async function undoIn(
   }
   await recordSensitiveChanges(transaction, actor.user.id, undoing);
   await recordHiringChanges(transaction, actor.user.id, undoing);
+  await recordTeamDayChanges(transaction, actor.user.id, undoing);
   return recordChanges(transaction, actor, undoing);
 }
 

@@ -121,6 +121,12 @@ export function seesSensitivity(
   return actor.permissions.includes(permissionsOf(sensitivity).view);
 }
 
+// Restricted details are details of people, so they show only with people, as the Roles page says;
+// a role can be given them without people, but then they do nothing.
+export const seesRestrictedDetails = (actor: Actor): boolean =>
+  actor.permissions.includes("people:view") &&
+  seesSensitivity(actor, "restricted");
+
 export function requireSensitivityEdit(
   actor: Actor,
   sensitivity: Sensitivity,

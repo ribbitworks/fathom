@@ -399,3 +399,17 @@ export {
   paletteColours,
   paletteColourSchema,
 } from "./palette.ts";
+export {
+  type FeatureTeam,
+  type FeatureTeamChange,
+  featureTeamChangeSchema,
+  featureTeamColourSchema,
+  type FeatureTeamDraft,
+  featureTeamDraftSchema,
+  featureTeamLengths,
+  type FeatureTeamRequest,
+  featureTeamRequestSchema,
+  type FeatureTeams,
+  featureTeamSchema,
+  featureTeamsSchema,
+} from "./feature-teams.ts";

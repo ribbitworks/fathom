@@ -78,7 +78,7 @@ export function TeamsPanel({
                 {person.teamName === null ? null : edits.colours &&
                   hasApprovedName(person) ? (
                   <TeamColourMenu
-                    managerId={person.id}
+                    teamId={person.id}
                     current={person.teamColour}
                     team={person.teamName}
                     square

@@ -69,6 +69,13 @@ import { columnsWithAdded } from "./added-columns.ts";
 import { refuseUsedAcross, withUsedAcross } from "./draft-uses.ts";
 import { withFills } from "./fills.ts";
 import {
+  approveTeamsIn,
+  checkTeamsAsked,
+  recordTeamDayChanges,
+  refuseRemovingPeopleOnTeams,
+  rejectTeamsIn,
+} from "./feature-teams.ts";
+import {
   applyReporting,
   refuseRemovingManagers,
   refuseUnmarkingManagers,
@@ -315,6 +322,7 @@ async function approvePeopleIn(
   await refuseRemovingManagers(transaction, removed);
   await refuseRemovingHiresPeople(transaction, removed);
   await refuseRemovingNamedPeople(transaction, removed);
+  await refuseRemovingPeopleOnTeams(transaction, removed);
   await apply(transaction, wanted);
   await applyReporting(transaction, wanted, today);
   const unmarked = ids.filter(
@@ -374,6 +382,11 @@ async function deciding(
   if (asksForColumns(asked)) requirePermission(actor, "people:view");
   // Planned hires are seen beside the people who manage and fill them.
   if (asked.plannedHires.length > 0) requirePermission(actor, "people:view");
+  // Feature teams are seen on the org chart, and their drafts, as details of people, with people.
+  if (asked.featureTeams.length > 0) {
+    requirePermission(actor, "org-chart:view");
+    requirePermission(actor, "people:view");
+  }
   // The plan's records, such as release streams, are seen with the plan or planning configuration.
   if (asked.records.length > 0) {
     requireAnyPermission(actor, ["plan:view", "configuration:view"]);
@@ -400,6 +413,7 @@ export async function approveDrafts(
         await seenAsked(transaction, actor, requested.people, today);
       }
       await checkHiresAsked(transaction, actor, requested.plannedHires);
+      await checkTeamsAsked(transaction, actor, requested.featureTeams, today);
       const asked = await withUsedAcross(
         transaction,
         await withFills(transaction, actor, requested),
@@ -424,6 +438,14 @@ export async function approveDrafts(
           today,
         )),
       );
+      made.push(
+        ...(await approveTeamsIn(
+          transaction,
+          actor,
+          asked.featureTeams,
+          today,
+        )),
+      );
       const left = await draftKeys(transaction);
       const decided = [...waiting].filter((key) => !left.has(key));
       // The drafts approved with those asked for may belong to other areas.
@@ -437,6 +459,7 @@ export async function approveDrafts(
       await refuseOwnDrafts(transaction, actor, decided);
       await recordSensitiveChanges(transaction, actor.user.id, made);
       await recordHiringChanges(transaction, actor.user.id, made);
+      await recordTeamDayChanges(transaction, actor.user.id, made);
       return recordChanges(transaction, actor, made, "approval");
     });
   } catch (error) {
@@ -495,6 +518,13 @@ export async function rejectDrafts(
     }
     made.push(
       ...(await rejectHiresIn(transaction, actor, asked.plannedHires, reason)),
+      ...(await rejectTeamsIn(
+        transaction,
+        actor,
+        asked.featureTeams,
+        reason,
+        today,
+      )),
     );
     await recordHiringChanges(transaction, actor.user.id, made);
     return recordChanges(transaction, actor, made, "rejection");

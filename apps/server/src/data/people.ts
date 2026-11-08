@@ -80,6 +80,7 @@ import { checkBuiltInChoice, firstOffered } from "./built-in-lists.ts";
 import { isNote, type LiveValues, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { readToday } from "./settings.ts";
+import { refuseRemovingPeopleOnTeams } from "./feature-teams.ts";
 import {
   hireDraftsNaming,
   hireRow,
@@ -1209,6 +1210,7 @@ export async function deletePerson(
     }
     await refuseRemovingHiresPeople(transaction, [id]);
     await refuseRemovingNamedPeople(transaction, [id]);
+    await refuseRemovingPeopleOnTeams(transaction, [id]);
     const made = [
       ...asDraft(personChanges(columns, id, "deleted", person, undefined)),
       ...clearedRejection(id, personTier(columns), before, draft),

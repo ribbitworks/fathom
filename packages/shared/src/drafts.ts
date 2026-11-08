@@ -110,6 +110,7 @@ const ids = (what: string) =>
 const draftsAsked = z.object({
   people: ids("person"),
   plannedHires: ids("planned hire"),
+  featureTeams: ids("feature team"),
   lists: ids("list"),
   choices: ids("choice"),
   orders: ids("list"),
@@ -134,6 +135,7 @@ const fewEnough = (asked: Asked) => {
   const total =
     asked.people.length +
     asked.plannedHires.length +
+    asked.featureTeams.length +
     asked.lists.length +
     asked.choices.length +
     asked.orders.length +
@@ -159,6 +161,7 @@ export type DraftsAsked = z.input<typeof draftsRequestSchema>;
 export const draftKinds = [
   "person",
   "planned-hire",
+  "feature-team",
   "list",
   "list-item",
   "choice-order",
@@ -174,6 +177,7 @@ export type DraftKind = (typeof draftKinds)[number];
 export const approvePermissions = {
   person: "people:approve",
   "planned-hire": "hiring-plan:approve",
+  "feature-team": "feature-teams:approve",
   list: "configuration:approve",
   "list-item": "configuration:approve",
   "choice-order": "configuration:approve",
@@ -194,6 +198,7 @@ export type ApprovePermission = (typeof approvePermissions)[DraftKind];
 export const approvedAreaNames: Record<ApprovePermission, string> = {
   "people:approve": "people",
   "hiring-plan:approve": "planned hires",
+  "feature-teams:approve": "feature teams",
   "configuration:approve": "configuration",
   "releases:approve": "releases",
   "plan:approve": "the plan",
@@ -218,6 +223,7 @@ export function draftsWhere(
   return {
     people: kept("person") ? asked.people : [],
     plannedHires: kept("planned-hire") ? asked.plannedHires : [],
+    featureTeams: kept("feature-team") ? asked.featureTeams : [],
     lists: kept("list") ? asked.lists : [],
     choices: kept("list-item") ? asked.choices : [],
     orders: kept("choice-order") ? asked.orders : [],
@@ -233,6 +239,7 @@ export function kindsAsked(asked: DraftsRequest): DraftKind[] {
   const asks: Record<DraftKind, boolean> = {
     person: asked.people.length > 0,
     "planned-hire": asked.plannedHires.length > 0,
+    "feature-team": asked.featureTeams.length > 0,
     list: asked.lists.length > 0,
     "list-item": asked.choices.length > 0,
     "choice-order": asked.orders.length > 0,

@@ -137,6 +137,12 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     needs: allOf("hiring-plan:approve", "people:view"),
     asked: () => ({ plannedHires: [id()] }),
   },
+  {
+    // Feature teams are seen on the org chart, and their drafts with people.
+    variant: "feature teams",
+    needs: allOf("feature-teams:approve", "org-chart:view", "people:view"),
+    asked: () => ({ featureTeams: [id()] }),
+  },
   ...[
     { variant: "lists", asked: () => ({ lists: [id()] }) },
     { variant: "choices", asked: () => ({ choices: [id()] }) },
@@ -180,6 +186,13 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ records: [{ type: "project", id: id() }] }),
   },
 ];
+
+// Those who propose or edit feature teams change them, seeing the org chart and people.
+const changingTeams: Needs = {
+  kind: "permissions",
+  all: ["org-chart:view", "people:view"],
+  any: ["feature-teams:propose", "feature-teams:edit"],
+};
 
 // Who may discard and resend drafts of each kind of the plan's records.
 const recordKinds: { type: string; needs: Needs }[] = [
@@ -522,6 +535,42 @@ const routes: Route[] = [
   },
 
   // Planning configuration is seen with the plan.
+  // Feature teams are seen and changed on the org chart; renaming one needs feature-teams:edit, as
+  // the feature teams tests check.
+  {
+    method: "GET",
+    pattern: "/api/feature-teams",
+    needs: allOf("org-chart:view"),
+  },
+  {
+    method: "POST",
+    pattern: "/api/feature-teams",
+    needs: changingTeams,
+    body: () => ({ name: unique("Fictional Feature Team") }),
+  },
+  {
+    method: "PATCH",
+    pattern: "/api/feature-teams/:teamId",
+    needs: changingTeams,
+    body: () => ({ leadId: null }),
+  },
+  {
+    method: "DELETE",
+    pattern: "/api/feature-teams/:teamId",
+    needs: allOf("org-chart:view", "people:view", "feature-teams:edit"),
+  },
+  ...["/draft", "/draft/rejection"].map((end): Route => ({
+    method: "DELETE",
+    pattern: `/api/feature-teams/:teamId${end}`,
+    needs: changingTeams,
+  })),
+  {
+    method: "PUT",
+    pattern: "/api/feature-teams/:teamId/colour",
+    needs: allOf("org-chart:view", "team-colours:edit"),
+    body: () => ({ colour: "teal" }),
+  },
+
   {
     method: "GET",
     pattern: "/api/release-streams",
@@ -663,7 +712,13 @@ const routes: Route[] = [
     { method: "POST" as const, pattern: "/api/unpublished/discard" },
   ].map((route): Route => ({
     ...route,
-    needs: anyOf("people:edit", "configuration:edit", "plan:edit"),
+    needs: anyOf(
+      "people:edit",
+      "configuration:edit",
+      "plan:edit",
+      "feature-teams:propose",
+      "feature-teams:edit",
+    ),
   })),
 ];
 

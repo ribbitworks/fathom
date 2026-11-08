@@ -112,6 +112,7 @@ describe("drafts an approval includes", () => {
     expect(both).toEqual({
       people: ["p1"],
       plannedHires: [],
+      featureTeams: [],
       lists: ["l1"],
       choices: ["b"],
       orders: ["l2"],
@@ -146,6 +147,20 @@ describe("planned hires an approval includes", () => {
     expect(
       without(chosen, { ...noDrafts(), plannedHires: ["h2"] }).plannedHires,
     ).toEqual(["h1"]);
+  });
+});
+
+describe("feature teams an approval includes", () => {
+  it("joins them once each, counts them, and takes them out of another selection", () => {
+    const chosen = joined(
+      { ...noDrafts(), featureTeams: ["t1", "t2"] },
+      { ...noDrafts(), featureTeams: ["t2"] },
+    );
+    expect([
+      chosen.featureTeams,
+      draftTotal(chosen),
+      without(chosen, { ...noDrafts(), featureTeams: ["t2"] }).featureTeams,
+    ]).toEqual([["t1", "t2"], 2, ["t1"]]);
   });
 });
 
@@ -271,6 +286,7 @@ describe("drafts that wait on rejected ones", () => {
   const everything = {
     people: ["p1"],
     plannedHires: [],
+    featureTeams: [],
     lists: ["l1"],
     choices: ["b", "e", "f"],
     orders: ["l1", "l2"],
@@ -305,6 +321,7 @@ describe("drafts that wait on rejected ones", () => {
     expect(without(everything, held)).toEqual({
       people: ["p1"],
       plannedHires: [],
+      featureTeams: [],
       lists: ["l1"],
       choices: ["e", "f"],
       orders: [],

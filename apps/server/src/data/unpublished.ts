@@ -81,6 +81,13 @@ import {
   recordHiringChanges,
 } from "./hires.ts";
 import { columnsWithAdded } from "./added-columns.ts";
+import {
+  readLiveTeams,
+  readTeamDrafts,
+  recordTeamDayChanges,
+  teamChanges,
+} from "./feature-teams.ts";
+import { readToday } from "./settings.ts";
 import type { PeopleColumns } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
@@ -92,6 +99,8 @@ const requireDrafting = (actor: Actor) => {
     "people:edit",
     "configuration:edit",
     "plan:edit",
+    "feature-teams:propose",
+    "feature-teams:edit",
   ]);
 };
 
@@ -135,6 +144,11 @@ interface Versions {
     theirs: Map<string, Draft>;
     tierOf: HireTier;
   };
+  teams: {
+    live: Map<string, Recorded>;
+    mine: Map<string, Draft>;
+    theirs: Map<string, Draft>;
+  };
   records: RecordVersions;
 }
 
@@ -145,6 +159,7 @@ async function readVersions(
 ): Promise<Versions> {
   const personIds = idsOf(rows, "person");
   const hireIds = idsOf(rows, "planned-hire");
+  const teamIds = idsOf(rows, "feature-team");
   const columns = await columnsWithAdded(reader, userId);
   return {
     rows,
@@ -167,6 +182,12 @@ async function readVersions(
       mine: await readHireDrafts(reader, hireIds, userId),
       theirs: await readHireDrafts(reader, hireIds),
       tierOf: await readHireTier(reader),
+    },
+    teams: {
+      live: (await readLiveTeams(reader, await readToday(reader), teamIds))
+        .teams,
+      mine: await readTeamDrafts(reader, teamIds, userId),
+      theirs: await readTeamDrafts(reader, teamIds),
     },
     records: await readRecordVersions(reader, userId),
   };
@@ -192,6 +213,13 @@ function versionOf(
     return (
       drafted(live, versions.hires.mine.get(id)) ??
       drafted(live, versions.hires.theirs.get(id))
+    );
+  }
+  if (recordType === "feature-team") {
+    const live = versions.teams.live.get(id);
+    return (
+      drafted(live, versions.teams.mine.get(id)) ??
+      drafted(live, versions.teams.theirs.get(id))
     );
   }
   if (recordType === "list") {
@@ -230,6 +258,10 @@ function subjectOf(versions: Versions, row: Row, actor: Actor): string {
       String(requisition ?? temporaryId),
       position,
     )}`;
+  }
+  if (row.recordType === "feature-team") {
+    // A team whose draft is listed is live or drafted, so has a version.
+    return `the feature team ${String(versionOf(versions, "feature-team", id)?.name)}`;
   }
   if (row.recordType === "list") return `the list ${listName(id)}`;
   if (row.recordType === "list-item") {
@@ -317,7 +349,9 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
     return draftedList(lists, id) !== undefined;
   }
   if (row.recordType === "person") return !taken.has(id);
-  if (row.recordType === "planned-hire") return true;
+  if (row.recordType === "planned-hire" || row.recordType === "feature-team") {
+    return true;
+  }
   if (row.recordType === "list") {
     const list = draftedList(lists, id);
     return list === undefined || !listNameTaken(lists, String(list.name), id);
@@ -457,6 +491,12 @@ function takingBack(versions: Versions, row: Row): Change[] {
       versions.hires.tierOf,
     );
   }
+  if (row.recordType === "feature-team") {
+    const live = versions.teams.live.get(id);
+    const before = drafted(live, versions.teams.mine.get(id));
+    const after = drafted(live, versions.teams.theirs.get(id));
+    return teamChanges(id, actionTo(before, after), before, after);
+  }
   if (row.recordType === "list" || row.recordType === "list-item") {
     const isList = row.recordType === "list";
     const versionIn = isList ? draftedList : draftedChoice;
@@ -511,6 +551,7 @@ export async function discardUnpublished(
       .where(eq(unpublishedDrafts.userId, userId));
     await recordSensitiveChanges(transaction, userId, made);
     await recordHiringChanges(transaction, userId, made);
+    await recordTeamDayChanges(transaction, userId, made);
     await recordChanges(transaction, actor, made, "withdrawal");
     return rows.length;
   });

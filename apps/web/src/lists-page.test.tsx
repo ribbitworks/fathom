@@ -2188,6 +2188,7 @@ describe("drafts on the Lists page", () => {
         {
           people: [],
           plannedHires: [],
+          featureTeams: [],
           lists: ["l5"],
           choices: ["c8"],
           orders: [],
@@ -2969,6 +2970,7 @@ describe("drafts on the Lists page", () => {
         {
           people: [],
           plannedHires: [],
+          featureTeams: [],
           lists: ["l5"],
           choices: ["c8"],
           orders: [],
@@ -3050,6 +3052,7 @@ describe("drafts on the Lists page", () => {
         {
           people: [],
           plannedHires: [],
+          featureTeams: [],
           lists: ["l5"],
           choices: ["c8"],
           orders: [],
@@ -3099,6 +3102,7 @@ describe("drafts on the Lists page", () => {
         {
           people: [],
           plannedHires: [],
+          featureTeams: [],
           lists: ["l2"],
           choices: [],
           orders: [],

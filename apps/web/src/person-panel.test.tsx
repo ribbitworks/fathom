@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for a person's details in a side panel, with the server's responses simulated: what it shows
-// of them, their manager and reports, their details and added columns, drafted values beside live
-// ones, following the Draft menu, opening it from People and the org chart, moving to another
-// person, closing it, and someone it cannot find.
+// of them, their manager and reports, their feature teams, their details and added columns, drafted
+// values beside live ones, following the Draft menu, opening it from People and the org chart, moving
+// to another person, closing it, and someone it cannot find.
 
 import type { OrgChartPerson } from "@fathom/shared";
 import {
@@ -262,7 +262,7 @@ describe("a person's details", () => {
     answers();
     renderApp("/people?open=E2");
     await panel("Sasha Fictional");
-    const team = row("Team name");
+    const team = row("Reporting team name");
     expect(within(team).getByText("Fictional crew")).toBeDefined();
     expect(within(team).getByText("Draft")).toBeDefined();
     expect(within(team).getByText("Live")).toBeDefined();
@@ -272,8 +272,10 @@ describe("a person's details", () => {
     answers();
     renderApp("/people?open=E2&show=live");
     await panel("Sasha Fictional");
-    expect(within(row("Team name")).queryByText("Fictional crew")).toBeNull();
-    expect(within(row("Team name")).queryByText("Live")).toBeNull();
+    expect(
+      within(row("Reporting team name")).queryByText("Fictional crew"),
+    ).toBeNull();
+    expect(within(row("Reporting team name")).queryByText("Live")).toBeNull();
   });
 
   it("finds the person whatever the letter case of the ID", async () => {
@@ -388,7 +390,9 @@ describe("a person's details", () => {
       answers(everyone);
       renderApp("/people?open=E3&show=drafts");
       await panel("Uma Fictional");
-      expect(within(row("Team name")).queryByText("Uma's crew")).toBeNull();
+      expect(
+        within(row("Reporting team name")).queryByText("Uma's crew"),
+      ).toBeNull();
     });
 
     it("leaves out reports whose addition was rejected with Drafts applied", async () => {
@@ -434,16 +438,18 @@ describe("a person's details", () => {
     answers();
     renderApp("/people?open=E1");
     await panel("Robin Fictional");
-    expect(within(row("Team name")).getByText("Fictional team")).toBeDefined();
+    expect(
+      within(row("Reporting team name")).getByText("Fictional team"),
+    ).toBeDefined();
   });
 
   it("draws no colour for a team without a name", async () => {
     answers();
     renderApp("/people?open=E3");
     await panel("Uma Fictional");
-    expect(within(row("Team name")).getByText("None")).toBeDefined();
+    expect(within(row("Reporting team name")).getByText("None")).toBeDefined();
     expect(
-      row("Team name").querySelector(".mantine-ColorSwatch-root"),
+      row("Reporting team name").querySelector(".mantine-ColorSwatch-root"),
     ).toBeNull();
   });
 
@@ -560,7 +566,7 @@ describe("a person's details", () => {
     renderApp("/people?open=E1");
     await panel("Robin Fictional");
     expect(
-      row("Team name").querySelector(".mantine-ColorSwatch-root"),
+      row("Reporting team name").querySelector(".mantine-ColorSwatch-root"),
     ).not.toBeNull();
   });
 
@@ -684,6 +690,79 @@ describe("a person's details", () => {
         screen.getByRole("link", { name: "Sasha Fictional" }),
       );
     });
+  });
+});
+
+describe("a person's feature teams", () => {
+  const team = (id: string, name: string, leadId: string | null) => ({
+    id,
+    name,
+    leadId,
+    colour: null,
+    members: ["2"],
+    names: {},
+  });
+  const featureTeams = [
+    team("00000000-0000-4000-8000-0000000000f1", "Fictional Beacon", "2"),
+    team("00000000-0000-4000-8000-0000000000f2", "Fictional Lighthouse", "1"),
+    team("00000000-0000-4000-8000-0000000000f3", "Fictional Pier", "gone"),
+    team("00000000-0000-4000-8000-0000000000f4", "Fictional Quay", null),
+    {
+      ...team("00000000-0000-4000-8000-0000000000f5", "Fictional Wharf", "1"),
+      members: ["1"],
+    },
+  ];
+  const open = (teams: object[]) => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/people": peopleAnswer(),
+      "GET /api/lists": () => Response.json({ lists: [positions] }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () =>
+        Response.json({ people: chart, drafted: chart }),
+      "GET /api/feature-teams": () => Response.json({ teams }),
+    });
+    return renderApp("/people?open=E2");
+  };
+  const section = () => screen.getByRole("region", { name: "Feature teams" });
+
+  it("lists those they are on, with who leads each, linking to the team on the org chart", async () => {
+    open(featureTeams);
+    await panel("Sasha Fictional");
+    await waitFor(() => {
+      expect(
+        [...section().querySelectorAll("li")].map(
+          ({ textContent }) => textContent,
+        ),
+      ).toEqual([
+        "Fictional BeaconLead",
+        "Fictional LighthouseLed by Robin Fictional",
+        "Fictional PierLed by someone you can't see",
+        "Fictional QuayNo feature lead",
+      ]);
+    });
+    expect(
+      within(section())
+        .getByRole("link", { name: "Fictional Quay" })
+        .getAttribute("href"),
+    ).toBe(
+      "/org-chart?view=feature-teams&featureTeam=00000000-0000-4000-8000-0000000000f4&open=E2",
+    );
+  });
+
+  it("says when they are on none", async () => {
+    open([]);
+    await panel("Sasha Fictional");
+    expect(within(section()).getByText("None")).toBeDefined();
+  });
+
+  it("names their reporting team apart from feature teams beside People", async () => {
+    open([]);
+    await panel("Sasha Fictional");
+    expect([
+      row("Reporting team").textContent,
+      within(row("Reporting team name")).getByText("Fictional crew"),
+    ]).toEqual([expect.stringContaining("Fictional team"), expect.anything()]);
   });
 });
 
@@ -820,13 +899,13 @@ describe("changing a person's details", () => {
     renderApp("/people?open=E1");
     await panel("Robin Fictional");
     // When their team's name is typed and Enter pressed
-    await typeInto("Team name", "Harbour team{Enter}");
+    await typeInto("Reporting team name", "Harbour team{Enter}");
     // Then the change is saved, and focus is back on its button
     expect(bodies(fetch, "/api/people/1")).toEqual([
       { teamName: "Harbour team" },
     ]);
     await waitFor(() => {
-      expect(document.activeElement).toBe(change("Team name"));
+      expect(document.activeElement).toBe(change("Reporting team name"));
     });
   });
 
@@ -835,7 +914,7 @@ describe("changing a person's details", () => {
     const fetch = editAnswers();
     renderApp("/people?open=E1");
     await panel("Robin Fictional");
-    await typeInto("Team name", "Harbour team{Enter}");
+    await typeInto("Reporting team name", "Harbour team{Enter}");
     await settled(fetch);
     // When Cmd+Z is pressed
     await userEvent.keyboard("{Meta>}z{/Meta}");
@@ -1105,8 +1184,8 @@ describe("changing a person's details", () => {
     editAnswers();
     const history = renderApp("/people?open=E1");
     await panel("Robin Fictional");
-    await userEvent.click(change("Team name"));
-    await screen.findByRole("textbox", { name: "Team name" });
+    await userEvent.click(change("Reporting team name"));
+    await screen.findByRole("textbox", { name: "Reporting team name" });
     // When only the live values are shown, then the drafts again
     act(() => {
       history.push("/people?open=E1&show=live");
@@ -1121,7 +1200,9 @@ describe("changing a person's details", () => {
     expect(
       await screen.findByRole("button", { name: "Change Name" }),
     ).toBeDefined();
-    expect(screen.queryByRole("textbox", { name: "Team name" })).toBeNull();
+    expect(
+      screen.queryByRole("textbox", { name: "Reporting team name" }),
+    ).toBeNull();
     expect(errors).not.toHaveBeenCalled();
     errors.mockRestore();
   });
@@ -1329,8 +1410,8 @@ describe("changing a person's details", () => {
       await userEvent.click(screen.getByRole("button", { name: "Save" }));
       await screen.findByText("Background needed");
       // When her team name's editor is opened
-      await userEvent.click(change("Team name"));
-      await screen.findByRole("textbox", { name: "Team name" });
+      await userEvent.click(change("Reporting team name"));
+      await screen.findByRole("textbox", { name: "Reporting team name" });
       // Then the note still names why it was refused
       expect(screen.getByText("Background needed")).toBeDefined();
     });
@@ -1414,7 +1495,7 @@ describe("changing a person's details", () => {
       const fetch = editAnswers({ "PATCH /api/people/2": savedAs });
       renderApp("/people?open=E2");
       await panel("Sasha Fictional");
-      await typeInto("Team name", "Harbour team{Enter}");
+      await typeInto("Reporting team name", "Harbour team{Enter}");
       await settled(fetch);
       await userEvent.click(change("Background"));
       await panel(sashasNote);
@@ -1508,11 +1589,13 @@ describe("changing a person's details", () => {
     editAnswers();
     renderApp("/people?open=E2");
     await panel("Sasha Fictional");
-    await userEvent.click(change("Team name"));
-    await screen.findByRole("textbox", { name: "Team name" });
+    await userEvent.click(change("Reporting team name"));
+    await screen.findByRole("textbox", { name: "Reporting team name" });
     await userEvent.click(within(row("Manager")).getByText("Robin Fictional"));
     await panel("Robin Fictional");
-    expect(screen.queryByRole("textbox", { name: "Team name" })).toBeNull();
+    expect(
+      screen.queryByRole("textbox", { name: "Reporting team name" }),
+    ).toBeNull();
   });
 
   describe("beside the org chart", () => {
@@ -1526,7 +1609,7 @@ describe("changing a person's details", () => {
       await panel("Robin Fictional");
       const before = charts(fetch);
       // When their team's name is changed
-      await typeInto("Team name", "Harbour team{Enter}");
+      await typeInto("Reporting team name", "Harbour team{Enter}");
       // Then it is saved, and the chart drawn again
       expect(bodies(fetch, "/api/people/1")).toEqual([
         { teamName: "Harbour team" },
@@ -1541,7 +1624,7 @@ describe("changing a person's details", () => {
       const fetch = editAnswers();
       renderApp("/org-chart?open=E1");
       await panel("Robin Fictional");
-      await typeInto("Team name", "Harbour team{Enter}");
+      await typeInto("Reporting team name", "Harbour team{Enter}");
       await settled(fetch);
       const before = charts(fetch);
       // When Cmd+Z is pressed
@@ -1585,7 +1668,7 @@ describe("changing a person's details", () => {
       });
       renderApp("/org-chart?open=E1");
       await panel("Robin Fictional");
-      await typeInto("Team name", "Harbour team{Enter}");
+      await typeInto("Reporting team name", "Harbour team{Enter}");
       await settled(fetch);
       await userEvent.click(
         screen.getByRole("button", { name: /^Colour of Fictional team:/ }),

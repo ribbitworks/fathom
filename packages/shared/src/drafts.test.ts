@@ -100,6 +100,7 @@ describe("approving by area", () => {
   const everyKind = draftsRequestSchema.parse({
     people: [randomUUID()],
     plannedHires: [randomUUID()],
+    featureTeams: [randomUUID()],
     lists: [randomUUID()],
     choices: [randomUUID()],
     orders: [randomUUID()],
@@ -145,6 +146,7 @@ describe("approving by area", () => {
       {
         people: [],
         plannedHires: [],
+        featureTeams: [],
         lists: [],
         choices: [],
         orders: [],

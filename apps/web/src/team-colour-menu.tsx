@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The menu that changes a manager's team's colour, for those who may colour teams.
+// The menu that changes a team's colour, a manager's or a feature team's, for those who may colour
+// teams.
 // A colour is no draft, so the chart is redrawn in it once saved, and the change can be undone from
 // its notification.
 
 import { type PaletteColour, paletteColours } from "@fathom/shared";
 import { ActionIcon, Menu, UnstyledButton } from "@mantine/core";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryKey,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { describeProblem } from "./api.ts";
 import { AppMenu } from "./app-menu.tsx";
 import { Swatch } from "./colour-swatch.tsx";
@@ -17,16 +22,23 @@ import { orgChartQuery, setTeamColour } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
 
 export function TeamColourMenu({
-  managerId,
+  teamId,
   current,
   team,
   square = false,
+  save = (colour) => setTeamColour(teamId, colour),
+  refreshes = orgChartQuery.queryKey,
 }: {
-  managerId: string;
+  // The manager whose team it is, or the feature team's id when save is given.
+  teamId: string;
   current: PaletteColour | null;
   team: string;
   // The dot in a button's square, where a bare dot would be missed.
   square?: boolean;
+  // Saves the colour chosen, a manager's team's unless given.
+  save?: (colour: PaletteColour | null) => Promise<void>;
+  // The data the colour is drawn from, reloaded once it is saved.
+  refreshes?: QueryKey;
 }) {
   const queryClient = useQueryClient();
   const change = useMutation({
@@ -36,7 +48,7 @@ export function TeamColourMenu({
       colour: PaletteColour | null;
       // The colour before, which Undo puts back; none when this is the undoing.
       previous?: PaletteColour | null;
-    }) => setTeamColour(managerId, colour),
+    }) => save(colour),
     onError: (error) => {
       notifyFailure(
         describeProblem(
@@ -55,8 +67,7 @@ export function TeamColourMenu({
         change.mutate({ colour: previous });
       });
     },
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: orgChartQuery.queryKey }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: refreshes }),
   });
   const choose = (colour: PaletteColour | null) => {
     if (colour === current) return;

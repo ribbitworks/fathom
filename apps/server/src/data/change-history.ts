@@ -47,14 +47,17 @@ import {
   eq,
   exists,
   inArray,
+  notInArray,
   or,
-  type SQL,
   sql,
+  type SQL,
 } from "drizzle-orm";
 import {
   type Actor,
   mostSensitive,
+  seesRestrictedDetails,
   seesSensitivity,
+  type Sensitivity,
   storedTier,
   tierOfSensitivity,
 } from "../access.ts";
@@ -116,6 +119,10 @@ const belonging = new Map<string, string>([
 // The fields that name a record.
 const nameFields = ["name", "label", "preferredName"];
 
+// Drafts of these are details of people, so names labelling what readers who do not see people
+// are shown come only from approved changes.
+const recordTypesOfPeople = ["person", "feature-team"];
+
 // Fields that only tie a record to where it belongs, which the history does not show.
 const unshownFields = new Set(["tableName", "createdBy"]);
 
@@ -132,7 +139,13 @@ export interface ReadChangeHistory {
 // Fields whose value is one record's identifier: a choice's list, a list's order, a manager, or a
 // choice in a built-in list, such as a position or a hiring state.
 const referencesOne = (field: string) =>
-  ["listId", "order", "managerId", "positionId", "stateId"].includes(field);
+  ["listId", "order", "managerId", "positionId", "stateId", "leadId"].includes(
+    field,
+  );
+
+// A feature team's members are named, person by person.
+const namesMembers = (row: { recordType: string; field: string }) =>
+  row.recordType === "feature-team" && row.field === "members";
 
 // The fields of each kind of the plan's records that hold one record's identifier or a list of
 // them: its links, and the people and choices it names.
@@ -155,7 +168,11 @@ function referencedIds(row: StoredChange): string[] {
   if (fieldOfValue(row.field) !== null) {
     return [fieldOfValue(row.field) as string, ...values.flatMap(strings)];
   }
-  if (row.recordType === "column-order" || row.recordType === "choice-order") {
+  if (
+    row.recordType === "column-order" ||
+    row.recordType === "choice-order" ||
+    namesMembers(row)
+  ) {
     return values.flatMap(strings);
   }
   if (referencesPlan(row)) {
@@ -216,6 +233,12 @@ async function readFacts(
           ]),
           sql`${changes.newValue} IS NOT NULL`,
           seenSets(actor),
+          actor.permissions.includes("people:view")
+            ? undefined
+            : or(
+                eq(changes.draft, false),
+                notInArray(changes.recordType, recordTypesOfPeople),
+              ),
         ),
       )
       .orderBy(changes.recordId, changes.field, desc(changes.id));
@@ -388,7 +411,8 @@ function shown(
     fieldOfValue(row.field) !== null ||
     row.recordType === "column-order" ||
     row.recordType === "choice-order" ||
-    (referencesPlan(row) && Array.isArray(value))
+    (referencesPlan(row) && Array.isArray(value)) ||
+    namesMembers(row)
   ) {
     return value === null ? null : named(strings(value));
   }
@@ -407,6 +431,31 @@ function shown(
   // Such as the length of a release stream's cycles.
   if (typeof value === "number") return String(value);
   return null;
+}
+
+// Whether the actor sees a change, by the rule of its kind of record. Feature teams' General details
+// are seen with the org chart, whether or not the reader sees people, but their drafts and
+// Restricted details, being details of people, only with people; a role can be given the rest
+// without them.
+function seesRowOfKind(
+  actor: Actor,
+  row: StoredChange,
+  tier: Tier,
+  sensitivities: readonly Sensitivity[],
+  seenPlan: readonly RecordType[],
+): boolean {
+  if (row.recordType === "feature-team") {
+    return (
+      (!row.draft || actor.permissions.includes("people:view")) &&
+      (tier === "general" || seesRestrictedDetails(actor))
+    );
+  }
+  if (planKinds.includes(row.recordType as RecordType)) {
+    return (
+      seenPlan.includes(row.recordType as RecordType) && tier === "general"
+    );
+  }
+  return sensitivities.every((each) => seesSensitivity(actor, each));
 }
 
 // Leaves out the changes the actor may not see: those to kinds of record their role does not cover,
@@ -498,9 +547,7 @@ async function visibleRows(
         ? hireSensitivities(row.field, tiers)
         : tiers;
     const tier = mostSensitive(sensitivities.map(tierOfSensitivity));
-    const seen = planKinds.includes(row.recordType as RecordType)
-      ? seenPlan.includes(row.recordType as RecordType) && tier === "general"
-      : sensitivities.every((each) => seesSensitivity(actor, each));
+    const seen = seesRowOfKind(actor, row, tier, sensitivities, seenPlan);
     return seen ? [{ row, tier }] : [];
   });
 }
@@ -561,6 +608,31 @@ async function notStartedAmong(
       typeof start === "string" && start > today ? [id] : [],
     ),
   );
+}
+
+const teamRowKey = (row: StoredChange) =>
+  `${row.changeSetId} ${row.recordId} ${String(row.draft)}`;
+
+// Whether a change to a team's members or lead changes no one the reader sees, once those hidden
+// from them are taken out of its old and new values.
+function teamRowShowsNoOne(
+  row: StoredChange,
+  hidden: ReadonlySet<string>,
+): boolean {
+  if (
+    hidden.size === 0 ||
+    row.recordType !== "feature-team" ||
+    row.action !== "changed" ||
+    (row.field !== "members" && row.field !== "leadId")
+  ) {
+    return false;
+  }
+  const seenOf = (value: unknown) =>
+    (typeof value === "string" ? [value] : strings(value))
+      .filter((id) => !hidden.has(id))
+      .sort()
+      .join();
+  return seenOf(row.oldValue) === seenOf(row.newValue);
 }
 
 // The records a change set changed, in the order first changed, each with the fields it changed.
@@ -705,31 +777,46 @@ async function readBatch(
   );
   // Readers who do not see Restricted details see nobody who has not started, as People hides them:
   // neither a person's own changes nor a hire's manager or filler naming them.
-  const restricted = seesSensitivity(actor, "restricted");
-  const hidden =
-    restricted || !actor.permissions.includes("people:view")
-      ? new Set<string>()
-      : await notStartedAmong(
-          database,
-          [
-            ...new Set(
-              rows.flatMap((row) => {
-                if (row.recordType === "person") return [row.recordId];
-                return row.recordType === "planned-hire" &&
-                  (row.field === "managerId" || row.field === "filledBy")
-                  ? [row.oldValue, row.newValue].filter(
-                      (value): value is string => typeof value === "string",
-                    )
-                  : [];
-              }),
-            ),
-          ],
-          await readToday(database),
-        );
-  const visible = (
+  const restricted = seesRestrictedDetails(actor);
+  const hidden = restricted
+    ? new Set<string>()
+    : await notStartedAmong(
+        database,
+        [
+          ...new Set(
+            rows.flatMap((row) => {
+              if (row.recordType === "person") return [row.recordId];
+              if (namesMembers(row)) {
+                return [row.oldValue, row.newValue].flatMap(strings);
+              }
+              return (row.recordType === "planned-hire" &&
+                (row.field === "managerId" || row.field === "filledBy")) ||
+                (row.recordType === "feature-team" && row.field === "leadId")
+                ? [row.oldValue, row.newValue].filter(
+                    (value): value is string => typeof value === "string",
+                  )
+                : [];
+            }),
+          ),
+        ],
+        await readToday(database),
+      );
+  const seenRows = (
     await visibleRows(database, actor, rows, facts, tierNow)
   ).filter(
     ({ row }) => !(row.recordType === "person" && hidden.has(row.recordId)),
+  );
+  // A change to a team's members or lead that only those the reader does not see are part of shows
+  // nothing to them, and neither does the rejection cleared with it.
+  const nothingSeen = new Set(
+    seenRows
+      .filter(({ row }) => teamRowShowsNoOne(row, hidden))
+      .map(({ row }) => teamRowKey(row)),
+  );
+  const visible = seenRows.filter(
+    ({ row }) =>
+      !teamRowShowsNoOne(row, hidden) &&
+      !(row.field === rejectedField && nothingSeen.has(teamRowKey(row))),
   );
   const bySet = new Map<string, { rows: StoredChange[]; sensitive: boolean }>();
   for (const { row, tier } of visible) {
@@ -798,6 +885,8 @@ export async function readChangeHistory(
       : []),
     ...(actor.permissions.includes("people:view") ? peopleKinds : []),
   ];
+  // Feature teams are seen on the org chart, whether or not the reader sees people.
+  const teams = actor.permissions.includes("org-chart:view");
   const hiring =
     actor.permissions.includes("people:view") &&
     seesSensitivity(actor, "hiring-plan");
@@ -805,7 +894,7 @@ export async function readChangeHistory(
   const tiers = tierSchema.options.filter((tier) =>
     seesSensitivity(actor, tier),
   );
-  if (kinds.length === 0 && plan.length === 0) {
+  if (kinds.length === 0 && plan.length === 0 && !teams) {
     return { entries: [], next: null, includedSensitive: false };
   }
   const mayShow = or(
@@ -823,6 +912,12 @@ export async function readChangeHistory(
             inArray(changes.tier, tiers),
             inArray(changes.field, [...hiringPlanFields]),
           ),
+        )
+      : undefined,
+    teams
+      ? and(
+          eq(changes.recordType, "feature-team"),
+          or(eq(changes.tier, "general"), inArray(changes.tier, tiers)),
         )
       : undefined,
     plan.length > 0

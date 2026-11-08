@@ -28,7 +28,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | People, teams, and reporting lines (General) | None | None | View | View | View | Edit | Edit | View | View | None |
 | The org chart: who reports to whom, with each person's name, position, and team; a card shows the person's details beside it only for those who see people | View | View | View | View | View | View | View | View | View | None |
 | Teams' colours on the org chart, for every team until accounts are linked to people, then for Engineering Managers only the teams below them | None | None | None | None | Edit | Edit | Edit | None | None | None |
-| Feature teams (General), with seeing them coming with seeing the plan (**proposal**) | View | View | Propose | Approve | Propose | Approve | Edit | View | View | None |
+| Feature teams (General), seen with the org chart, where they are kept, and changed as drafts: Propose adds teams and changes their members and leads, Edit also renames and removes them | View | View | Propose | Approve | Propose | Approve | Edit | View | View | None |
 | Restricted employee details | None | None | None | None | View | Edit | Edit | View | None | None |
 | Confidential data | None | None | None | None | None | Edit | Edit | View | None | None |
 | The hiring plan: every planned hire, with its target date, drafts, and history (decided by the owner on 2026-11-07) | None | None | None | View | View | Edit | Edit | View | None | None |
@@ -52,7 +52,7 @@ Approving is granted area by area, and rejecting with it, as [Approving by area]
 
 **Proposal:** Seeing drafts is a permission of its own, like seeing the change history, so the Executive sees only approved data. Still open: whether the change history then leaves out edits to drafts for those who may not see drafts. Until it is agreed, the Executive sees drafts, as every role that sees the data does.
 
-The owner has decided that a role letting a user edit some data also lets them view it, so a Product Manager sees the plan and a Resource Planner sees allocations without being granted to view them as well. Feature teams are seen with the plan, so editing them grants no view of their own. Every starting role but Administrator sees the plan and allocations.
+The owner has decided that a role letting a user edit some data also lets them view it, so a Product Manager sees the plan and a Resource Planner sees allocations without being granted to view them as well. Feature teams are seen with the org chart, where they are kept, so proposing or editing them grants no view of their own. Every starting role but Administrator sees the plan and allocations.
 
 Seeing people is kept to the roles that work with them, so Product Managers and Team Members do not see the People table; Project Managers see it, with the hiring plan, decided by the owner on 2026-11-07. They do see the org chart, with each person's name, position, and team, as the [Decisions Log](decisions.md#workforce) sets out. The choices of a list are seen by everyone who sees data drawn from it, such as People's columns, without seeing the Lists page.
 

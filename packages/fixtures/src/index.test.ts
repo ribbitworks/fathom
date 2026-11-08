@@ -324,6 +324,22 @@ describe("the organization on another day", () => {
           expect(hire.targetDate > referenceDate).toBe(true);
         }
       }
+      expect(
+        after.featureTeams.map(({ name, leadId, memberships }) => [
+          name,
+          leadId,
+          memberships,
+        ]),
+      ).toEqual(
+        before.featureTeams.map(({ name, leadId, memberships }) => [
+          name,
+          leadId,
+          memberships.map(({ fromDate, ...rest }) => ({
+            ...rest,
+            fromDate: addDays(fromDate, days),
+          })),
+        ]),
+      );
     },
   );
 });

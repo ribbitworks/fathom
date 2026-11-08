@@ -134,7 +134,7 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Drafts",
         icon: "drafts",
         to: "/drafts",
-        // Drafts of people, of lists, which Approvers see, and of the plan's records.
+        // Drafts of people and feature teams, of lists, which Approvers see, and of the plan's records.
         permission: ["people:view", "configuration:view", "plan:view"],
       },
       {

@@ -1387,6 +1387,7 @@ describe("drafts", () => {
       {
         people: ["p1"],
         plannedHires: [],
+        featureTeams: [],
         lists: [],
         choices: [],
         orders: [],
@@ -1399,6 +1400,7 @@ describe("drafts", () => {
       {
         people: ["p1", "p2"],
         plannedHires: [],
+        featureTeams: [],
         lists: [],
         choices: [],
         orders: [],
@@ -3061,6 +3063,7 @@ describe("drafts of columns", () => {
         {
           people: [],
           plannedHires: [],
+          featureTeams: [],
           lists: [],
           choices: [],
           orders: [],
@@ -3400,6 +3403,7 @@ describe("drafts of columns", () => {
         {
           people: [],
           plannedHires: [],
+          featureTeams: [],
           lists: [],
           choices: [],
           orders: [],

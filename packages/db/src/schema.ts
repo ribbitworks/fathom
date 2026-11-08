@@ -872,3 +872,49 @@ export const teams = fathomSchema.table(
   },
   (table) => [uniqueIndex("teams_name_index").on(sql`lower(${table.name})`)],
 );
+
+// Feature teams: the people working on a set of related features, apart from reporting lines, as
+// the Decisions Log sets out. A team's name is required and unique, ignoring letter case; its
+// feature lead, if any, is one of its current members, which the server checks. A team may name a
+// colour from the palette, for the feature team chart, as a manager's team does.
+export const featureTeams = fathomSchema.table(
+  "feature_teams",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    leadId: uuid("lead_id").references(() => people.id, {
+      onDelete: "restrict",
+    }),
+    colour: text("colour"),
+  },
+  (table) => [
+    uniqueIndex("feature_teams_name_index").on(sql`lower(${table.name})`),
+    index("feature_teams_lead_index").on(table.leadId),
+  ],
+);
+
+// Joining and leaving feature teams: each record puts a person on a team, or takes them off it,
+// from a date, in force until their next record for that team, so past memberships are kept, as
+// reporting lines are.
+export const featureTeamMemberships = fathomSchema.table(
+  "feature_team_memberships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    teamId: uuid("team_id")
+      .notNull()
+      .references(() => featureTeams.id, { onDelete: "cascade" }),
+    personId: uuid("person_id")
+      .notNull()
+      .references(() => people.id, { onDelete: "cascade" }),
+    member: boolean("member").notNull(),
+    fromDate: date("from_date").notNull(),
+  },
+  (table) => [
+    uniqueIndex("feature_team_memberships_from_index").on(
+      table.teamId,
+      table.personId,
+      table.fromDate,
+    ),
+    index("feature_team_memberships_person_index").on(table.personId),
+  ],
+);

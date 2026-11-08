@@ -28,7 +28,11 @@ import {
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { NotFoundError } from "../errors.ts";
-import { type Actor, seesSensitivity } from "../access.ts";
+import {
+  type Actor,
+  seesRestrictedDetails,
+  seesSensitivity,
+} from "../access.ts";
 import {
   type Draft,
   drafted,
@@ -169,10 +173,8 @@ export async function readOrgChart(
   asOf?: string,
 ): Promise<OrgChartRead> {
   const today = asOf ?? (await readToday(database));
-  // Restricted and Confidential details are details of people, so they show only with people, as
-  // the Roles page says; a role can be given them without people, but then they do nothing here.
   const seesPeople = actor.permissions.includes("people:view");
-  const restricted = seesPeople && seesSensitivity(actor, "restricted");
+  const restricted = seesRestrictedDetails(actor);
   // Hires' drafts are part of the hiring plan, which does nothing without seeing people.
   const wholePlan = seesPeople && seesSensitivity(actor, "hiring-plan");
   // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.

@@ -80,6 +80,10 @@ const fieldNames = new Map([
   ["temporaryNumber", "ID"],
   ["targetDate", "Start"],
   ["filledBy", "Filled by"],
+  // A feature team's lead and members, and the days members join or leave.
+  ["leadId", "Feature lead"],
+  ["members", "Members"],
+  ["memberFrom", "Joining and leaving dates"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {
@@ -137,6 +141,22 @@ export function describeField(change: ChangedField, kind?: string): Phrase {
   return [name, " from ", { value: before }, " to ", { value: after }];
 }
 
+// A field's value in a record being added or removed, such as "Members Avery, Blake", or nothing
+// when it has none.
+export function describeValue(
+  field: string,
+  value: ChangeValue,
+): Phrase | undefined {
+  const text = valueText(field, value);
+  return text === null
+    ? undefined
+    : [
+        { strong: fieldName({ field, oldValue: null, newValue: null }) },
+        " ",
+        { value: text },
+      ];
+}
+
 // The record, as a sentence names it, such as "the choice North in Sites".
 function thing({ kind, name, list }: ChangedRecord): string {
   const called = name ?? "without a name";
@@ -167,6 +187,8 @@ function thing({ kind, name, list }: ChangedRecord): string {
         : `the release ${called} in ${list}`;
     case "planned-hire":
       return name === null ? "a planned hire" : `the planned hire ${name}`;
+    case "feature-team":
+      return `the feature team ${called}`;
     default:
       return "a record";
   }

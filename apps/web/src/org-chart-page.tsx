@@ -11,7 +11,7 @@
 // managers, positions and team names beside the live chart, applied to it, or not at all, which
 // leaves the chart read only; its choice is kept in the address.
 
-import type { PaletteColour, Show } from "@fathom/shared";
+import type { FeatureTeams, PaletteColour, Show } from "@fathom/shared";
 import {
   ActionIcon,
   Alert,
@@ -20,6 +20,7 @@ import {
   Group,
   Loader,
   Paper,
+  SegmentedControl,
   Stack,
   Text,
   Tooltip,
@@ -47,11 +48,21 @@ import {
   useMemo,
   useRef,
   useState,
+  type ReactNode,
 } from "react";
 import { Swatch } from "./colour-swatch.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
 import { TeamNameEditor } from "./team-name-editor.tsx";
 import { TeamsPanel } from "./teams-panel.tsx";
+import { useFeatureTeamActions } from "./feature-team-actions.ts";
+import {
+  type FeatureTeamEdits,
+  FeatureTeamPanel,
+  featureTeamPanelId,
+  noFeatureTeamEdits,
+} from "./feature-team-panel.tsx";
+import { FeatureTeamsList } from "./feature-teams-list.tsx";
+import { featureTeamPeople, featureTeamsQuery } from "./feature-teams.ts";
 import { colourVariable } from "./colours.ts";
 import { Icon } from "./icons.tsx";
 import { ChartControls } from "./org-chart-controls.tsx";
@@ -102,6 +113,10 @@ interface CardData extends Record<string, unknown> {
   // The colour of the team the person is on, if it has one.
   colour: PaletteColour | undefined;
   reports: number;
+  // Whether those under the card are a feature team's members rather than reports.
+  members: boolean;
+  // Opens the feature team the card leads, on the feature team chart.
+  onFeatureTeam: (() => void) | undefined;
   collapsed: boolean;
   found: boolean;
   // The chart's address with the person found and their details shown beside it.
@@ -133,9 +148,12 @@ const plainClick = (event: MouseEvent) =>
 function TeamRow({
   person,
   teamEdits,
+  onFeatureTeam,
 }: {
   person: ChartPerson;
   teamEdits: TeamEdits;
+  // Opens the feature team the card leads, on the feature team chart.
+  onFeatureTeam?: (() => void) | undefined;
 }) {
   const { renamed } = person;
   if (person.teamName === null && renamed === undefined) return null;
@@ -146,7 +164,7 @@ function TeamRow({
         person.teamName !== null &&
         hasApprovedName(person) ? (
           <TeamColourMenu
-            managerId={person.id}
+            teamId={person.id}
             current={person.teamColour}
             team={person.teamName}
           />
@@ -155,7 +173,16 @@ function TeamRow({
             <Swatch colour={person.teamColour} size={8} />
           )
         )}
-        {teamEdits.names ? (
+        {onFeatureTeam !== undefined && person.teamName !== null ? (
+          <Anchor
+            component="button"
+            size="xs"
+            className={["nodrag", "nopan"].join(" ")}
+            onClick={onFeatureTeam}
+          >
+            {person.teamName}
+          </Anchor>
+        ) : teamEdits.names ? (
           <TeamNameEditor
             managerId={person.id}
             managerName={person.preferredName}
@@ -250,6 +277,8 @@ function PersonCard({ data }: NodeProps<CardNode>) {
     person,
     colour,
     reports,
+    members,
+    onFeatureTeam,
     collapsed,
     found,
     opened,
@@ -299,7 +328,8 @@ function PersonCard({ data }: NodeProps<CardNode>) {
         className={classes.handle}
       />
       <div className={classes.name}>
-        {person.employeeId === null || onOpen === undefined ? (
+        {(person.employeeId === null && person.teamCard !== true) ||
+        onOpen === undefined ? (
           <span
             className={[classes.label, madeName ? classes.madeName : ""].join(
               " ",
@@ -353,7 +383,11 @@ function PersonCard({ data }: NodeProps<CardNode>) {
           Planned, expected {formatMonth(planned.expected)}
         </StatusMark>
       )}
-      <TeamRow person={person} teamEdits={teamEdits} />
+      <TeamRow
+        person={person}
+        teamEdits={teamEdits}
+        onFeatureTeam={onFeatureTeam}
+      />
       {reports > 0 && (
         <UnstyledButton
           className={[classes.toggle, "nodrag", "nopan"].join(" ")}
@@ -362,7 +396,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
             onToggle(person.id);
           }}
         >
-          {`${collapsed ? "Show" : "Hide"} ${String(reports)} ${reports === 1 ? "report" : "reports"}`}{" "}
+          {`${collapsed ? "Show" : "Hide"} ${String(reports)} ${members ? (reports === 1 ? "member" : "members") : reports === 1 ? "report" : "reports"}`}{" "}
           <VisuallyHidden>of {person.preferredName}</VisuallyHidden>
         </UnstyledButton>
       )}
@@ -414,7 +448,10 @@ function Chart({
   show,
   search,
   onSearch,
+  teamsList,
 }: {
+  // The list of teams beside the chart, in place of managers' teams, such as feature teams.
+  teamsList?: ReactNode;
   tree: OrgTree;
   everyone: OrgTree;
   // The colour each manager's reports are drawn in, worked out from the whole chart.
@@ -431,21 +468,29 @@ function Chart({
 }) {
   const flow = useReactFlow();
   const colorScheme = useComputedColorScheme("light");
-  const byAddress = useMemo(
-    () =>
-      new Map(
-        [...tree.people.values()].flatMap((person) => {
-          const address = addressOf(person, seesPeople);
-          return address === null ? [] : [[address, person]];
-        }),
-      ),
-    [tree, seesPeople],
-  );
+  // Someone on two feature teams is found at their first card.
+  const byAddress = useMemo(() => {
+    const cards = new Map<string, ChartPerson>();
+    for (const person of tree.people.values()) {
+      const address = addressOf(person, seesPeople);
+      if (address !== null && !cards.has(address)) cards.set(address, person);
+    }
+    return cards;
+  }, [tree, seesPeople]);
   // Someone shown by name only has nothing to keep in the address, so is found here alone.
   const [foundByName, setFoundByName] = useState<string | null>(null);
+  // A feature team opened is found at its first card, its lead's or its own.
+  const teamCard =
+    search.featureTeam === undefined
+      ? undefined
+      : [...tree.people.values()].find(
+          (person) =>
+            person.featureTeamId === search.featureTeam &&
+            person.managerId === null,
+        )?.id;
   const found =
     search.person === undefined
-      ? foundByName
+      ? (teamCard ?? foundByName)
       : (byAddress.get(search.person)?.id ?? null);
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(() =>
     collapsedBelow(tree, openLevels),
@@ -499,11 +544,23 @@ function Chart({
         const reports = tree.reports.get(id)?.length ?? 0;
         const { employeeId } = person;
         const address = addressOf(person, seesPeople);
-        const opened = {
-          ...search,
-          person: address ?? undefined,
-          open: employeeId ?? undefined,
-        };
+        // On the feature team chart, a team's own card, while it has no lead, opens the team; every
+        // other card opens its person, as on managers' teams.
+        const teamId = person.featureTeamId;
+        const opened =
+          person.teamCard === true
+            ? {
+                ...search,
+                person: undefined,
+                open: undefined,
+                featureTeam: teamId,
+              }
+            : {
+                ...search,
+                person: address ?? undefined,
+                open: employeeId ?? undefined,
+                featureTeam: undefined,
+              };
         return {
           id,
           type: "person",
@@ -522,7 +579,18 @@ function Chart({
             found: id === found,
             opened,
             teamEdits: person.nameOnly === true ? noTeamEdits : teamEdits,
+            members: teamId !== undefined,
+            onFeatureTeam:
+              teamId === undefined || person.teamName === null
+                ? undefined
+                : () => {
+                    onSearch(
+                      { ...search, person: undefined, featureTeam: teamId },
+                      false,
+                    );
+                  },
             onTeam:
+              teamId !== undefined ||
               address === null ||
               reports === 0 ||
               (alone && tree.roots.includes(id))
@@ -539,7 +607,7 @@ function Chart({
               });
             },
             onOpen:
-              employeeId === null || !seesPeople
+              person.teamCard !== true && (employeeId === null || !seesPeople)
                 ? undefined
                 : () => {
                     centreOnSpace(true);
@@ -695,9 +763,10 @@ function Chart({
           )
         }
         teams={
-          (teamEdits.names || teamEdits.colours) && (
+          teamsList ??
+          ((teamEdits.names || teamEdits.colours) && (
             <TeamsPanel tree={everyone} edits={teamEdits} />
-          )
+          ))
         }
         found={found}
         levels={levels}
@@ -775,7 +844,9 @@ export function OrgChartPage({
   showDates = false,
   canEdit = false,
   teamEdits,
+  featureTeamEdits = noFeatureTeamEdits,
 }: {
+  featureTeamEdits?: FeatureTeamEdits;
   search: ChartSearch;
   seesPeople: boolean;
   // Whether the reader may change people, in a person's details.
@@ -815,15 +886,32 @@ export function OrgChartPage({
   // Those who do not see people are sent no drafts, so every choice draws the approved chart, which
   // they may still colour teams on.
   const show = seesPeople ? (search.show ?? "both") : "both";
-  const everyone = useMemo(
-    () =>
-      query.data === undefined
-        ? undefined
-        : treeOf(chartPeople(query.data, show)),
-    [query.data, show],
+  const featureView = search.view === "feature-teams";
+  const teamsQuery = useQuery({
+    ...featureTeamsQuery,
+    enabled: featureView,
+  });
+  const [creating, setCreating] = useState(false);
+  const everyone = useMemo(() => {
+    if (query.data === undefined) return undefined;
+    if (!featureView) return treeOf(chartPeople(query.data, show));
+    return teamsQuery.data === undefined
+      ? undefined
+      : treeOf(
+          featureTeamPeople(teamsQuery.data.teams, query.data.people, show),
+        );
+  }, [query.data, show, featureView, teamsQuery.data]);
+  const openTeam = (id: string | undefined) => {
+    setCreating(false);
+    go({ ...search, person: undefined, featureTeam: id }, false);
+  };
+  const teamActions = useFeatureTeamActions(openTeam);
+  const openedTeam = teamsQuery.data?.teams.find(
+    ({ id }) => id === search.featureTeam,
   );
-  // Live only is read only, as on tables.
-  const edits = show === "live" ? noTeamEdits : teamEdits;
+  // Live only is read only, as on tables, and managers' teams are not changed on the feature team
+  // chart.
+  const edits = show === "live" || featureView ? noTeamEdits : teamEdits;
   const lead =
     everyone === undefined
       ? undefined
@@ -848,31 +936,56 @@ export function OrgChartPage({
       <PageHeader
         title="Org chart"
         action={
-          lead !== undefined && (
-            <Group gap="sm">
-              <Text size="sm">
-                You're seeing only the team of {lead.preferredName}.
-              </Text>
-              <Button
-                variant="default"
-                onClick={() => {
-                  go(
-                    {
-                      person: search.person,
-                      show: search.show,
-                      open: search.open,
-                    },
-                    false,
-                  );
-                }}
-              >
-                Show everyone
-              </Button>
-            </Group>
-          )
+          <Group gap="sm">
+            <SegmentedControl
+              aria-label="Teams drawn"
+              data={[
+                { value: "reporting", label: "Reporting teams" },
+                { value: "feature-teams", label: "Feature teams" },
+              ]}
+              value={featureView ? "feature-teams" : "reporting"}
+              onChange={(value) => {
+                // The person found, or whose details are open, stays found, so the chart starts at
+                // them.
+                go(
+                  {
+                    show: search.show,
+                    open: search.open,
+                    person: search.person ?? search.open,
+                    ...(value === "feature-teams"
+                      ? { view: "feature-teams" as const }
+                      : {}),
+                  },
+                  false,
+                );
+              }}
+            />
+            {lead !== undefined && (
+              <Group gap="sm">
+                <Text size="sm">
+                  You're seeing only the team of {lead.preferredName}.
+                </Text>
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    go(
+                      {
+                        person: search.person,
+                        show: search.show,
+                        open: search.open,
+                      },
+                      false,
+                    );
+                  }}
+                >
+                  Show everyone
+                </Button>
+              </Group>
+            )}
+          </Group>
         }
       />
-      {query.isPending ? (
+      {query.isPending || (featureView && teamsQuery.isPending) ? (
         <Loader role="status" aria-label="Loading" />
       ) : query.isError || tree === undefined || everyone === undefined ? (
         <Alert color="red" role="alert">
@@ -884,13 +997,14 @@ export function OrgChartPage({
               size="xs"
               onClick={() => {
                 void query.refetch();
+                if (featureView) void teamsQuery.refetch();
               }}
             >
               Try again
             </Button>
           </Group>
         </Alert>
-      ) : tree.people.size === 0 ? (
+      ) : tree.people.size === 0 && !featureView ? (
         <Text c="dimmed">Nobody is on the org chart yet.</Text>
       ) : (
         <WithSidePanel
@@ -905,6 +1019,7 @@ export function OrgChartPage({
                     node: (
                       <PersonPanel
                         employeeId={search.open}
+                        teams={featureView ? "feature-teams" : "reporting"}
                         show={show}
                         showDates={showDates}
                         narrow={narrow}
@@ -923,7 +1038,10 @@ export function OrgChartPage({
                           </Anchor>
                         )}
                         onPerson={(employeeId) => {
-                          go({ ...search, open: employeeId }, false);
+                          go(
+                            { ...search, open: employeeId, person: employeeId },
+                            false,
+                          );
                         }}
                         onFollow={(employeeId) => {
                           onSearch({ ...search, open: employeeId }, true);
@@ -966,9 +1084,43 @@ export function OrgChartPage({
                 ]
               : []),
             ...(note === undefined ? [] : [note]),
+            ...(featureView && (creating || openedTeam !== undefined)
+              ? [
+                  {
+                    key: `feature-team ${openedTeam?.id ?? "new"}`,
+                    id: featureTeamPanelId,
+                    name: "feature team",
+                    node: (
+                      <FeatureTeamPanel
+                        key={openedTeam?.id ?? "new"}
+                        team={creating ? undefined : openedTeam}
+                        people={query.data.people}
+                        edits={featureTeamEdits}
+                        show={show}
+                        narrow={narrow}
+                        actions={teamActions}
+                        teams={(teamsQuery.data as FeatureTeams).teams}
+                        onTeam={openTeam}
+                        onNew={() => {
+                          onSearch(
+                            { ...search, featureTeam: undefined },
+                            false,
+                          );
+                          setCreating(true);
+                        }}
+                        onClose={() => {
+                          openTeam(undefined);
+                        }}
+                      />
+                    ),
+                  },
+                ]
+              : []),
           ]}
         >
-          <ReactFlowProvider key={lead?.id ?? ""}>
+          <ReactFlowProvider
+            key={`${featureView ? "feature-teams" : "reporting"} ${lead?.id ?? ""}`}
+          >
             <Chart
               tree={tree}
               everyone={everyone}
@@ -979,6 +1131,21 @@ export function OrgChartPage({
               show={show}
               search={search}
               onSearch={go}
+              {...(featureView
+                ? {
+                    teamsList: (
+                      <FeatureTeamsList
+                        teams={(teamsQuery.data as FeatureTeams).teams}
+                        canAdd={featureTeamEdits.propose && show !== "live"}
+                        onOpen={openTeam}
+                        onNew={() => {
+                          go({ ...search, featureTeam: undefined }, false);
+                          setCreating(true);
+                        }}
+                      />
+                    ),
+                  }
+                : {})}
             />
           </ReactFlowProvider>
         </WithSidePanel>

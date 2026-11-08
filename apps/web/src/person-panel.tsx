@@ -42,6 +42,7 @@ import { Icon } from "./icons.tsx";
 import { LinkCell } from "./link-field.tsx";
 import { listsQuery } from "./lists.ts";
 import { NoteView } from "./note-editor.tsx";
+import { PersonFeatureTeams } from "./person-feature-teams.tsx";
 import { orgChartQuery } from "./org-chart.ts";
 import {
   columnsFor,
@@ -78,6 +79,17 @@ const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 // The columns each section shows, by key, in this order, each where its kind of record has it;
 // added columns follow in People's order.
 export const reportingKeys = ["managerId", "managerFrom", "team", "teamName"];
+// A person's team and its name are their reporting team's, told apart from feature teams.
+const reportingLabels = new Map([
+  ["team", "Reporting team"],
+  ["teamName", "Reporting team name"],
+]);
+const reportingLabel = <Labelled extends { key: string; label: string }>(
+  column: Labelled,
+): Labelled => ({
+  ...column,
+  label: reportingLabels.get(column.key) ?? column.label,
+});
 export const detailKeys = [
   "preferredName",
   "employeeId",
@@ -245,6 +257,7 @@ export function PersonPanel({
   showHireDates = showDates,
   canEditHires = false,
   seesChart = true,
+  teams = "reporting",
   narrow,
   elsewhere,
   onPerson,
@@ -263,6 +276,9 @@ export function PersonPanel({
   canEditHires?: boolean;
   // Whether the reader sees the org chart, which gives each team's colour.
   seesChart?: boolean;
+  // Which teams the person is shown in: their reporting line, or, beside the feature team chart,
+  // their feature teams in its place.
+  teams?: "reporting" | "feature-teams";
   narrow: boolean;
   // A link to the record on the other page that shows it, such as the org chart from People.
   elsewhere: (person: Person) => ReactNode;
@@ -495,55 +511,72 @@ export function PersonPanel({
         </Group>
         {elsewhere(person)}
       </div>
-      <section aria-labelledby="person-reporting">
-        <h3 className={classes.heading} id="person-reporting">
-          Reporting
-        </h3>
-        <dl className={classes.list}>
-          {section(reportingKeys).map(rowOf)}
-          <div className={classes.row}>
-            <dt className={classes.label}>Direct reports</dt>
-            <dd className={classes.value}>
-              {reports.length === 0 ? (
-                <Text c="dimmed">None</Text>
-              ) : (
-                <ul className={classes.reports}>
-                  {reports.map((report) => (
-                    <li
-                      key={report.id}
-                      className={
-                        shownIds.has(report.id) ? undefined : classes.live
-                      }
-                    >
-                      <PersonLink
-                        person={report}
-                        name={nameOf(report)}
-                        onPerson={onPerson}
-                      />
-                      {typeof report.startDate === "string" &&
-                        report.startDate > day && (
-                          <Text span c="dimmed" size="sm" ml={8}>
-                            Starts {formatDay(report.startDate)}
-                          </Text>
+      {teams === "feature-teams" && (
+        <section aria-labelledby="person-reporting">
+          <h3 className={classes.heading} id="person-reporting">
+            Reporting
+          </h3>
+          <dl className={classes.list}>{section(["managerId"]).map(rowOf)}</dl>
+        </section>
+      )}
+      {teams === "reporting" && (
+        <section aria-labelledby="person-reporting">
+          <h3 className={classes.heading} id="person-reporting">
+            Reporting
+          </h3>
+          <dl className={classes.list}>
+            {section(reportingKeys).map(reportingLabel).map(rowOf)}
+            <div className={classes.row}>
+              <dt className={classes.label}>Direct reports</dt>
+              <dd className={classes.value}>
+                {reports.length === 0 ? (
+                  <Text c="dimmed">None</Text>
+                ) : (
+                  <ul className={classes.reports}>
+                    {reports.map((report) => (
+                      <li
+                        key={report.id}
+                        className={
+                          shownIds.has(report.id) ? undefined : classes.live
+                        }
+                      >
+                        <PersonLink
+                          person={report}
+                          name={nameOf(report)}
+                          onPerson={onPerson}
+                        />
+                        {typeof report.startDate === "string" &&
+                          report.startDate > day && (
+                            <Text span c="dimmed" size="sm" ml={8}>
+                              Starts {formatDay(report.startDate)}
+                            </Text>
+                          )}
+                        {show === "both" &&
+                          !liveIds.has(report.id) &&
+                          report.draft !== undefined && (
+                            <DraftMark draft={report.draft} />
+                          )}
+                        {!shownIds.has(report.id) && (
+                          <StatusMark tone="live" spaced>
+                            Live
+                          </StatusMark>
                         )}
-                      {show === "both" &&
-                        !liveIds.has(report.id) &&
-                        report.draft !== undefined && (
-                          <DraftMark draft={report.draft} />
-                        )}
-                      {!shownIds.has(report.id) && (
-                        <StatusMark tone="live" spaced>
-                          Live
-                        </StatusMark>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </dd>
-          </div>
-        </dl>
-      </section>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </dd>
+            </div>
+          </dl>
+        </section>
+      )}
+      {!isHire(person) && (
+        <PersonFeatureTeams
+          personId={person.id}
+          employeeId={person.employeeId}
+          seesChart={seesChart}
+        />
+      )}
       <section aria-labelledby="person-details">
         <h3 className={classes.heading} id="person-details">
           Details

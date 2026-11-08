@@ -29,6 +29,7 @@ export type RecordType =
   | "column-order"
   | "person"
   | "planned-hire"
+  | "feature-team"
   | "saved-view"
   | PlanRecordType;
 

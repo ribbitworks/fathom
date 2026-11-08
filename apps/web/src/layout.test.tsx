@@ -62,6 +62,22 @@ describe("the sidebar", () => {
     ).toBe("Capacity, Later");
   });
 
+  it("leaves Drafts out for those who see only the org chart", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({ ...fictionalUser, permissions: ["org-chart:view"] }),
+      "GET /api/org-chart": () => Response.json({ people: [], drafted: [] }),
+    });
+    renderApp("/");
+    const menu = await screen.findByRole("navigation", { name: "Sections" });
+    await within(menu).findByRole("link", { name: "Org chart" });
+    expect(
+      within(menu)
+        .getAllByRole("link")
+        .map((link) => link.getAttribute("href")),
+    ).not.toContain("/drafts");
+  });
+
   it("leaves Capacity out for those who may not see allocations", async () => {
     serverAnswers({
       "GET /api/session": signedIn,

@@ -17,6 +17,9 @@ import type {
   DraftsAsked,
   Field,
   FieldRequest,
+  FeatureTeamChange,
+  FeatureTeamRequest,
+  FeatureTeams,
   HireChange,
   HireFill,
   HireRequest,
@@ -66,6 +69,7 @@ import * as peopleData from "./people.ts";
 import { readOrgChart, setTeamColour } from "./org-chart.ts";
 import * as hireData from "./hires.ts";
 import * as fills from "./fills.ts";
+import * as featureTeamData from "./feature-teams.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
 import * as projectData from "./projects.ts";
@@ -142,6 +146,9 @@ export interface DataAccess {
   people: PeopleAccess;
   // Planned hires: the hiring plan, or its placeholders.
   hires: HireAccess;
+  // Feature teams, seen by everyone who sees the org chart, and drafted by those who propose or edit
+  // them.
+  featureTeams: FeatureTeamAccess;
   // The actor's own unpublished changes to drafts, which only they see until they publish them.
   unpublished: UnpublishedAccess;
   // Release streams, their cycle patterns, and their releases, which everyone who sees the plan or
@@ -418,6 +425,62 @@ export interface HireAccess {
   discardDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   resubmitDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   fill(actor: Actor, id: string, fill: HireFill): Promise<ChangeSetId>;
+}
+
+export interface FeatureTeamAccess {
+  read(actor: Actor): Promise<FeatureTeams>;
+  create(actor: Actor, request: FeatureTeamRequest): Promise<Saved<string>>;
+  update(
+    actor: Actor,
+    id: string,
+    change: FeatureTeamChange,
+  ): Promise<ChangeSetId>;
+  delete(actor: Actor, id: string): Promise<ChangeSetId>;
+  discardDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+  resubmitDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+  setColour(
+    actor: Actor,
+    id: string,
+    colour: PaletteColour | null,
+  ): Promise<void>;
+}
+
+function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
+  return {
+    read: async (actor) => {
+      const read = await featureTeamData.readFeatureTeams(database, actor);
+      // The days a draft gives members joining or leaving are Restricted, so seeing them is recorded.
+      if (read.teams.some(({ draft }) => draft?.days !== undefined)) {
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          await readTimeZone(database),
+        );
+      }
+      return read;
+    },
+    create: async (actor, request) => {
+      const { id, changeSetId } = await featureTeamData.createFeatureTeam(
+        database,
+        actor,
+        request,
+      );
+      return { result: id, changeSetId };
+    },
+    update: async (actor, id, change) =>
+      featureTeamData.updateFeatureTeam(database, actor, id, change),
+    delete: async (actor, id) =>
+      featureTeamData.deleteFeatureTeam(database, actor, id),
+    discardDraft: async (actor, id) =>
+      featureTeamData.discardFeatureTeamDraft(database, actor, id),
+    resubmitDraft: async (actor, id) =>
+      featureTeamData.resubmitFeatureTeamDraft(database, actor, id),
+    setColour: async (actor, id, colour) => {
+      requirePermission(actor, "org-chart:view");
+      requirePermission(actor, "team-colours:edit");
+      await featureTeamData.setFeatureTeamColour(database, id, colour);
+    },
+  };
 }
 
 function createHireAccess(database: Database): HireAccess {
@@ -857,6 +920,7 @@ export function createDataAccess(database: Database): DataAccess {
     },
     people: createPeopleAccess(database),
     hires: createHireAccess(database),
+    featureTeams: createFeatureTeamAccess(database),
     unpublished: {
       read: async (actor) => readUnpublished(database, actor),
       publish: async (actor) => publishUnpublished(database, actor),
