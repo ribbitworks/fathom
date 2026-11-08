@@ -8,6 +8,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 ## Access History
 
 - **Sign-ins, sign-outs, and failed sign-ins:** Not recorded in the access history. The server's request log already records each sign-in attempt with its time and network address, and active sessions are kept in the database. Deferred by the owner; worth revisiting if HR or IT asks for them.
+- **Positions on the org chart:** The org chart does not record in the access history that it showed people's positions when the Positions list is more sensitive than General, as People does; it records this for planned hires' placeholders only.
 
 ## Roles
 
@@ -61,6 +62,8 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Pasting several choices:** Pasting into a column that takes several choices reads each cell as one choice name. How several are pasted into one cell was left for later by the owner.
 - **Spare width on a narrow table:** A table on the shared grid that is narrower than its panel spreads the spare width over every column, so a width someone sets is not kept exactly and dragging a column's edge runs ahead of the pointer. People is wider than the screen, so it does not show yet. A last column that takes the spare width would fix it, once a narrower table moves to the shared grid. Deferred by the owner on 2026-11-07.
 - **A planned hire's Start in saved views:** A planned hire's Start value is its target date, which is part of the hiring plan, recorded as Confidential, while saved views treat the Start column as Restricted, so a view on Start saved by someone who sees Confidential data is recorded in the change history as Restricted. No value is revealed, since each reader filters only the rows they are sent. Found in review on 2026-11-07.
+- **Two drafts beside live on the org chart:** A person's drafted manager and team name beside the live chart come from `draftBeside` in `apps/server/src/data/org-chart.ts`, and a planned hire's drafted manager from `hireDraftBeside` beside it. They are to become one `draftBeside` that takes the kind of record, when drafted positions are marked on the chart.
+- **Undoing a live change to a planned hire:** In `apps/server/src/data/undo.ts`, the columns a planned hire's live change is put back into have no Manager? and take a manager to be a person only. Nothing reaches this yet, since planned hires change live only by approval, which cannot be undone; it needs fixing before they can.
 
 ## Drafts
 

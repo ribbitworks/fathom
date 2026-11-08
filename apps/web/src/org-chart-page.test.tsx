@@ -349,6 +349,54 @@ describe("the org chart", () => {
     });
   });
 
+  it("draws planned hires as placeholders, one with no name by its ID with its position under it, a planned manager heading its hires, opening nothing and left out of the Teams panel", async () => {
+    const planned = [
+      ...people,
+      person("h1", "Fictional Engineer, TBD-7", null, {
+        employeeId: null,
+        planned: { expected: "2027-03", shownId: "TBD-7" },
+      }),
+      person("h2", "Fictional Planned Report", "h1", {
+        employeeId: null,
+        planned: { expected: "2026-11" },
+      }),
+    ];
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["people:view", "org-chart:view", "people:edit"],
+        }),
+      "GET /api/unpublished": () => Response.json({ changes: [] }),
+      "GET /api/org-chart": () => chartJson({ people: planned }),
+    });
+    renderApp("/org-chart");
+    const onCard = (name: string) =>
+      screen
+        .getAllByText(name)
+        .map((shown) => shown.closest<HTMLElement>("div.react-flow__node"))
+        .find((node) => node !== null) as HTMLElement;
+    await screen.findAllByText("TBD-7");
+    const placeholder = onCard("TBD-7");
+    expect(within(placeholder).queryByRole("link")).toBeNull();
+    expect(within(placeholder).getByText(/^Planned, expected/)).toBeDefined();
+    expect(within(placeholder).getByText("Fictional Engineer")).toBeDefined();
+    const report = onCard("Fictional Planned Report").textContent;
+    expect(report).toContain("Fictional Engineer");
+    await userEvent.click(screen.getByRole("button", { name: "Teams" }));
+    const panel = await screen.findByRole("dialog", { name: "Teams" });
+    expect(within(panel).queryByText(/Fictional Engineer, TBD-7/)).toBeNull();
+    await userEvent.keyboard("{Escape}");
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Show only the team of Fictional Engineer, TBD-7",
+      }),
+    );
+    await screen.findByText(
+      "You're seeing only the team of Fictional Engineer, TBD-7.",
+    );
+  });
+
   it("lists every manager's team in the Teams panel, where an unnamed one can be named", async () => {
     serverAnswers({
       "GET /api/session": () =>

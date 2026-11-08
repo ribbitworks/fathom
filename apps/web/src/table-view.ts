@@ -326,6 +326,17 @@ export function formatDay(value: string): string {
   return day.format(new Date(`${value}T00:00:00Z`));
 }
 
+const month = new Intl.DateTimeFormat(undefined, {
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+// A month, such as 2027-03, as people read it, such as Mar 2027.
+export function formatMonth(value: string): string {
+  return month.format(new Date(`${value}-01T00:00:00Z`));
+}
+
 // Each kind's values are of one type: text and dates are strings, choices are lists, and links are
 // links or null.
 const asText = (value: CellValue) => value as string;

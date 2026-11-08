@@ -4,7 +4,8 @@
 // who sees only its placeholders; drafting hires added, changed, moved between states, and removed;
 // their requisitions and temporary IDs; their values in People's columns offered on them;
 // approving, rejecting, discarding, resending, and undoing those drafts; keeping the people hires
-// name; and recording changes to the plan in the access history without naming the hire.
+// name; planned managers, whom other hires report to; and recording changes to the plan in the
+// access history without naming the hire.
 
 import {
   accessHistory,
@@ -217,6 +218,7 @@ const numberOf = (hire: Hire | undefined) =>
 const placeholderKeys = [
   "expected",
   "id",
+  "isManager",
   "links",
   "managerId",
   "managerName",
@@ -1194,6 +1196,20 @@ describe("changes to the hiring plan in the change history", () => {
     expect(seen).toContain("Fictional Person");
     expect(await entries(planner)).toEqual([]);
   });
+
+  it("names a planned manager with no name by its position and ID", async () => {
+    const manager = await liveHire({ isManager: true });
+    const requisition = unique("Fictional-Reporting");
+    const id = await liveHire({ requisition });
+    await changed(id, { managerId: manager });
+    const seen = JSON.stringify(
+      (
+        await ok<ChangeHistory>(await send(approver, "GET", "/api/changes"))
+      ).entries.filter((entry) => JSON.stringify(entry).includes(requisition)),
+    );
+    const managerId = String((await hireSeen(manager))?.temporaryId);
+    expect(seen).toContain(`Fictional Engineer, ${managerId}`);
+  });
 });
 
 describe("each role's view of the hiring plan", () => {
@@ -1406,9 +1422,7 @@ describe("a hire's manager", () => {
       send(editor, "PATCH", `/api/people/${manager}`, { isManager: false });
     const refused = await unmark();
     expect(refused.statusCode).toBe(409);
-    expect(refusal(refused)).toBe(
-      "Manager? stays checked while a planned hire not yet filled names this person as its manager",
-    );
+    expect(refusal(refused)).toBe("Reassign direct reports first");
     await changed(id, { managerId: other });
     expect((await unmark()).statusCode).toBe(409);
     await approved({ plannedHires: [id] });
@@ -1441,9 +1455,7 @@ describe("a hire's manager", () => {
     await draftHire({ managerId: manager });
     const undone = await send(editor, "POST", `/api/undo/${changeSetId}`);
     expect(undone.statusCode).toBe(409);
-    expect(refusal(undone)).toBe(
-      "Manager? stays checked while a planned hire not yet filled names this person as its manager",
-    );
+    expect(refusal(undone)).toBe("Reassign direct reports first");
   });
 
   it("is needed by a manager an undo puts back on a hire not yet filled", async () => {
@@ -1501,6 +1513,222 @@ describe("a hire's manager", () => {
       "A planned hire names this person; change the hire first",
     );
     await test.connection.delete(drafts).where(eq(drafts.recordId, manager));
+  });
+});
+
+describe("a planned manager", () => {
+  const peopleRow = async (id: string, who: User) =>
+    (
+      await ok<{ people: Person[] }>(await send(who, "GET", "/api/people"))
+    ).people.find((row) => row.id === id);
+  const temporaryManager = /^Fictional Engineer, TBD-\d+$/;
+  const loop =
+    "That manager reports to this planned hire, directly or through others";
+  const stillReporting = "Reassign direct reports first";
+
+  it("has planned hires report to it, named as its row is, to everyone who sees people", async () => {
+    const manager = await liveHire({ isManager: true });
+    const id = await liveHire({ managerId: manager });
+    expect(await liveRow(id)).toMatchObject({
+      managerId: null,
+      managerHireId: manager,
+    });
+    expect(await hireSeen(id, planner)).toMatchObject({
+      managerId: manager,
+      managerName: expect.stringMatching(temporaryManager) as unknown,
+    });
+    expect((await hireSeen(manager, planner))?.isManager).toBe(true);
+    expect(await peopleRow(id, planner)).toMatchObject({
+      manager: { id: manager },
+      team: null,
+    });
+    expect((await peopleRow(manager, planner))?.isManager).toBe(true);
+    const name = unique("Fictional Planned Lead");
+    const named = await liveHire({ isManager: true, name });
+    const report = await liveHire({ managerId: named });
+    expect((await hireSeen(report, planner))?.managerName).toBe(name);
+  });
+
+  it("keeps a hire's manager in the column for its kind when it moves between a person and a planned hire", async () => {
+    const manager = await liveHire({ isManager: true });
+    const id = await liveHire({ managerId: manager });
+    const somebody = await person();
+    await changed(id, { managerId: somebody });
+    await approved({ plannedHires: [id] });
+    expect(await liveRow(id)).toMatchObject({
+      managerId: somebody,
+      managerHireId: null,
+    });
+  });
+
+  it("must be marked as a manager, as a person must", async () => {
+    const name = unique("Fictional Unmarked Hire");
+    const unmarked = await liveHire({ name });
+    const response = await send(
+      editor,
+      "POST",
+      "/api/planned-hires",
+      hireRequest({ managerId: unmarked }),
+    );
+    expect(response.statusCode).toBe(400);
+    expect(refusal(response)).toBe(
+      `${name} is not a manager yet: check Manager? on their row and have it approved first`,
+    );
+    const nameless = await liveHire();
+    const id = await liveHire();
+    const refused = await change(id, { managerId: nameless });
+    expect(refusal(refused)).toMatch(
+      /^Fictional Engineer, TBD-\d+ is not a manager yet/,
+    );
+  });
+
+  it("is refused on approval once no longer marked, however that came about", async () => {
+    const manager = await liveHire({ isManager: true });
+    const { id } = await draftHire({ managerId: manager });
+    await test.connection
+      .update(plannedHires)
+      .set({ isManager: false })
+      .where(eq(plannedHires.id, manager));
+    expect((await approve({ plannedHires: [id] })).statusCode).toBe(409);
+  });
+
+  it("cannot manage once filled, or while a draft removes it", async () => {
+    const filled = randomUUID();
+    await test.connection.insert(plannedHires).values({
+      id: filled,
+      temporaryNumber: 900_011,
+      positionId: testPosition,
+      stateId: open,
+      isManager: true,
+      filledBy: await person(),
+    });
+    const naming = (managerId: string) =>
+      send(editor, "POST", "/api/planned-hires", hireRequest({ managerId }));
+    expect((await naming(filled)).statusCode).toBe(400);
+    const leaving = await liveHire({ isManager: true });
+    await ok(await send(editor, "DELETE", `/api/planned-hires/${leaving}`));
+    expect((await naming(leaving)).statusCode).toBe(400);
+  });
+
+  it("is never a person's manager", async () => {
+    const manager = await liveHire({ isManager: true });
+    const somebody = await person();
+    const response = await send(editor, "PATCH", `/api/people/${somebody}`, {
+      managerId: manager,
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("cannot report to itself, or to a planned hire that reports to it", async () => {
+    const top = await liveHire({ isManager: true });
+    const below = await liveHire({ isManager: true, managerId: top });
+    expect(refusal(await change(top, { managerId: top }))).toBe(
+      "A planned hire can't report to itself",
+    );
+    expect(refusal(await change(top, { managerId: below }))).toBe(loop);
+  });
+
+  it("is refused on approval when drafts made apart would make a loop", async () => {
+    const first = await liveHire({ isManager: true });
+    const second = await liveHire({ isManager: true });
+    const one = await test.signedIn("workforce-administrator");
+    const other = await test.signedIn("workforce-administrator");
+    const unpublished = { publish: false };
+    const path = (id: string) => `/api/planned-hires/${id}`;
+    await ok(
+      await send(one, "PATCH", path(first), { managerId: second }, unpublished),
+    );
+    await ok(
+      await send(
+        other,
+        "PATCH",
+        path(second),
+        { managerId: first },
+        unpublished,
+      ),
+    );
+    await ok(await send(one, "POST", "/api/unpublished/publish"));
+    await ok(await send(other, "POST", "/api/unpublished/publish"));
+    const response = await approve({ plannedHires: [first, second] });
+    expect(response.statusCode).toBe(409);
+    expect(refusal(response)).toMatch(
+      /^Fictional Engineer, TBD-\d+ would end up reporting to itself$/,
+    );
+  });
+
+  it("stays marked while a planned hire reports to it, or is drafted to", async () => {
+    const manager = await liveHire({ isManager: true });
+    await liveHire({ managerId: manager });
+    const refused = await change(manager, { isManager: false });
+    expect(refused.statusCode).toBe(409);
+    expect(refusal(refused)).toBe(stillReporting);
+    const drafting = await liveHire({ isManager: true });
+    await draftHire({ managerId: drafting });
+    expect(refusal(await change(drafting, { isManager: false }))).toBe(
+      stillReporting,
+    );
+  });
+
+  it("shows its mark drafted to be cleared beside the live one", async () => {
+    const manager = await liveHire({ isManager: true });
+    await changed(manager, { isManager: false });
+    expect((await hireSeen(manager))?.draft).toMatchObject({
+      changed: ["isManager"],
+      live: { isManager: true },
+    });
+    expect((await peopleRow(manager, editor))?.draft?.live.isManager).toBe(
+      true,
+    );
+  });
+
+  it("keeps its mark on approval while a planned hire has come to report to it", async () => {
+    const manager = await liveHire({ isManager: true });
+    await changed(manager, { isManager: false });
+    const report = await liveHire({ managerId: manager });
+    expect(report).toEqual(expect.any(String));
+    const response = await approve({ plannedHires: [manager] });
+    expect(response.statusCode).toBe(409);
+    expect(refusal(response)).toBe(stillReporting);
+  });
+
+  it("cannot be removed while planned hires report to it", async () => {
+    const manager = await liveHire({ isManager: true });
+    await liveHire({ managerId: manager });
+    const response = await send(
+      editor,
+      "DELETE",
+      `/api/planned-hires/${manager}`,
+    );
+    expect(response.statusCode).toBe(409);
+    expect(refusal(response)).toBe("Reassign direct reports first");
+  });
+
+  it("keeps its mark when undoing a change would clear it while a hire reports to it", async () => {
+    const manager = await liveHire({ isManager: true });
+    await changed(manager, { isManager: false });
+    const marked = await changed(manager, { isManager: true });
+    await draftHire({ managerId: manager });
+    const undone = await send(editor, "POST", `/api/undo/${String(marked)}`);
+    expect(undone.statusCode).toBe(409);
+  });
+
+  it("is checked as a manager, and for loops, when an undo puts it back", async () => {
+    const top = await liveHire({ isManager: true });
+    const below = await liveHire({ isManager: true });
+    await changed(top, { managerId: below });
+    const cleared = await changed(top, { managerId: null });
+    await changed(below, { managerId: top });
+    const looping = await send(editor, "POST", `/api/undo/${String(cleared)}`);
+    expect(refusal(looping)).toBe(loop);
+    const manager = await liveHire({ isManager: true });
+    const id = await liveHire();
+    await changed(id, { managerId: manager });
+    const unnamed = await changed(id, { managerId: null });
+    await changed(manager, { isManager: false });
+    await approved({ plannedHires: [manager] });
+    const unmarked = await send(editor, "POST", `/api/undo/${String(unnamed)}`);
+    expect(unmarked.statusCode).toBe(409);
+    expect(refusal(unmarked)).toMatch(/^TBD-\d+ is not a manager yet/);
   });
 });
 

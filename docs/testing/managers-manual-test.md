@@ -148,7 +148,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in (P1) as `engineering.operations.manager@fathom.test`. **People** page open.
 
 - [ ] **Step 1.** Search for **Max Munk**. Click once in the row's **Manager?** cell.
-  - **Expected:** A message reads **Manager? stays checked while anyone reports to this person, or is drafted to**. The box stays checked, and the row has no **Draft** mark.
+  - **Expected:** A message reads **Reassign direct reports first**. The box stays checked, and the row has no **Draft** mark.
   - **Notes:**
 
 ### MGR-06: Changing a Manager Moves the Person to Their New Manager's Team

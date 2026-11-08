@@ -90,6 +90,7 @@ export {
   hireSchema,
   hiresSchema,
   type HiringMeaning,
+  hireCalled,
   hiringMeaningSchema,
   temporaryId,
 } from "./hires.ts";
@@ -116,7 +117,7 @@ export {
   patternStartFits,
   yearsAhead,
 } from "./cycles.ts";
-export { daySchema, isDay, typedDay } from "./days.ts";
+export { daySchema, isDay, monthSchema, typedDay } from "./days.ts";
 export {
   cleanNote,
   colourClosing,

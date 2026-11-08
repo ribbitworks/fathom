@@ -3,15 +3,22 @@
 // Tests for the org chart, against a migrated PostgreSQL server: who appears, under whom, with
 // which details, as the lines approved for today have it, with drafts of managers and team names
 // beside, as each reader may see them; managers whose end date has passed, and what each reader is
-// told of them; and what each role may read.
+// told of them; planned hires as placeholders, and their drafts; and what each role may read.
 
-import { accessHistory, lists, teams } from "@fathom/db";
+import {
+  accessHistory,
+  listItems,
+  lists,
+  plannedHires,
+  teams,
+} from "@fathom/db";
 import {
   type OrgChartPerson,
   type Permission,
   roleSchema,
 } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
 import {
@@ -536,6 +543,273 @@ describe("the org chart", () => {
         }
       },
     );
+  });
+});
+
+describe("planned hires on the chart", () => {
+  const approveHires = async (ids: readonly string[]) => {
+    const approver = await test.signedIn("engineering-director");
+    const response = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { plannedHires: ids },
+    );
+    expect(response.statusCode, response.body).toBe(200);
+  };
+  // A planned hire with the test position, drafted, and approved unless told otherwise.
+  const hire = async (details: object = {}, approve = true) => {
+    const response = await test.request(cookie, "POST", "/api/planned-hires", {
+      hires: [{ positionId: testPosition, ...details }],
+    });
+    expect(response.statusCode, response.body).toBe(201);
+    const id = String(response.json<{ ids: string[] }>().ids[0]);
+    if (approve) await approveHires([id]);
+    return id;
+  };
+  const changeHire = async (id: string, body: object) => {
+    const response = await test.request(
+      cookie,
+      "PATCH",
+      `/api/planned-hires/${id}`,
+      body,
+    );
+    expect(response.statusCode, response.body).toBe(200);
+  };
+  const madeName = /^Fictional Engineer, TBD-\d+$/;
+
+  it("shows each hire as a placeholder under its manager, a person or a planned manager, to every reader of the chart", async () => {
+    const manager = await person();
+    const planned = await hire({
+      isManager: true,
+      managerId: manager,
+      targetDate: "2026-09-10",
+    });
+    const name = unique("Fictional Planned Report");
+    const report = await hire({ managerId: planned, name });
+    const shown = await chart();
+    expect(shown.get(planned)).toEqual({
+      id: planned,
+      preferredName: expect.stringMatching(madeName) as unknown,
+      employeeId: null,
+      position: "Fictional Engineer",
+      teamName: null,
+      teamColour: null,
+      managerId: manager,
+      planned: {
+        expected: "2026-09",
+        shownId: expect.stringMatching(/^TBD-\d+$/) as unknown,
+      },
+    });
+    expect(shown.get(report)).toMatchObject({
+      preferredName: name,
+      managerId: planned,
+    });
+    expect(shown.get(report)?.planned).toEqual({ expected: "2026-06" });
+    const viewer = await test.signedIn(["org-chart:view"]);
+    expect((await chart(viewer.cookie)).get(report)?.managerId).toBe(planned);
+  });
+
+  it("names a hire by its ID alone to those who cannot see positions", async () => {
+    const id = await hire();
+    await test.connection
+      .update(lists)
+      .set({ visibility: "restricted" })
+      .where(eq(lists.builtIn, "positions"));
+    try {
+      const viewer = await test.signedIn(["org-chart:view"]);
+      expect((await chart(viewer.cookie)).get(id)).toMatchObject({
+        preferredName: expect.stringMatching(/^TBD-\d+$/) as unknown,
+        position: null,
+      });
+    } finally {
+      await test.connection
+        .update(lists)
+        .set({ visibility: "general" })
+        .where(eq(lists.builtIn, "positions"));
+    }
+  });
+
+  it("puts a hire whose manager has not started at the top until they do", async () => {
+    const starting = await person({ startDate: "2027-01-01" });
+    const id = await hire({ managerId: starting });
+    const shown = await chart();
+    expect(shown.get(id)?.managerId).toBeNull();
+    expect(shown.has(starting)).toBe(false);
+    await changeHire(id, { managerId: null });
+    expect((await chart()).get(id)?.draft).toBeUndefined();
+    const placed = await hire({ managerId: await person() });
+    await changeHire(placed, { managerId: starting });
+    expect((await chart()).get(placed)?.draft?.managerId).toBeNull();
+    expect((await drafted()).get(placed)?.managerId).toBeNull();
+  });
+
+  it("shows a filled hire whose person has not started only to those who do not see them", async () => {
+    const starter = await person({ startDate: "2026-08-03", isManager: false });
+    const started = await person({ isManager: false });
+    const [waiting, done] = [randomUUID(), randomUUID()];
+    const states = await test.connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .where(eq(listItems.meaning, "open"))
+      .limit(1);
+    const stateId = String(states[0]?.id);
+    await test.connection.insert(plannedHires).values([
+      {
+        id: waiting,
+        temporaryNumber: 900_101,
+        positionId: testPosition,
+        stateId,
+        filledBy: starter,
+      },
+      {
+        id: done,
+        temporaryNumber: 900_102,
+        positionId: testPosition,
+        stateId,
+        filledBy: started,
+      },
+    ]);
+    const viewer = await test.signedIn(["org-chart:view"]);
+    const shown = await chart(viewer.cookie);
+    expect(shown.get(waiting)?.planned).toEqual({
+      expected: "2026-08",
+      shownId: "TBD-900101",
+    });
+    expect(shown.has(done)).toBe(false);
+    expect((await chart()).has(waiting)).toBe(false);
+  });
+
+  it("shows hires' drafts to those who see the hiring plan: a manager beside, and the chart as drafts make it", async () => {
+    const first = await person();
+    const second = await person();
+    const moving = await hire({ managerId: first });
+    await changeHire(moving, { managerId: second });
+    const renamed = await hire({ managerId: first });
+    await changeHire(renamed, { name: unique("Fictional Renamed Hire") });
+    const added = await hire({ managerId: first }, false);
+    const removed = await hire({ managerId: first });
+    const removal = await test.request(
+      cookie,
+      "DELETE",
+      `/api/planned-hires/${removed}`,
+    );
+    expect(removal.statusCode, removal.body).toBe(200);
+    const shown = await chart();
+    expect(shown.get(moving)).toMatchObject({
+      managerId: first,
+      draft: { managerId: second, state: "waiting", unpublished: false },
+    });
+    expect(shown.get(renamed)?.draft).toBeUndefined();
+    expect(shown.has(added)).toBe(false);
+    const asDrafted = await drafted();
+    expect(asDrafted.get(moving)?.managerId).toBe(second);
+    expect(asDrafted.get(added)?.managerId).toBe(first);
+    expect(asDrafted.get(renamed)?.preferredName).toMatch(
+      /^Fictional Renamed Hire/,
+    );
+    expect(asDrafted.has(removed)).toBe(false);
+    const planner = await test.signedIn("resource-planner");
+    expect((await chart(planner.cookie)).get(moving)?.draft).toBeUndefined();
+    const plannerDrafted = await drafted(planner.cookie);
+    expect(plannerDrafted.get(moving)?.managerId).toBe(first);
+    expect(plannerDrafted.has(added)).toBe(false);
+  });
+
+  it("sends hires' drafts only to those who see people and the hiring plan, and records their view of the hiring plan", async () => {
+    const first = await person();
+    const moving = await hire({ managerId: first });
+    await changeHire(moving, { managerId: await person() });
+    const added = await hire({ managerId: first }, false);
+    const plansViewed = (actorId: string) =>
+      test.connection
+        .select({ id: accessHistory.id })
+        .from(accessHistory)
+        .where(
+          and(
+            eq(accessHistory.actorId, actorId),
+            eq(accessHistory.action, "hiring-plan-viewed"),
+          ),
+        );
+    const chartOnly = await test.signedIn(["org-chart:view"]);
+    expect((await chart(chartOnly.cookie)).get(moving)?.draft).toBeUndefined();
+    const asDrafted = await drafted(chartOnly.cookie);
+    expect(asDrafted.get(moving)?.managerId).toBe(first);
+    expect(asDrafted.has(added)).toBe(false);
+    expect(await plansViewed(chartOnly.id)).toHaveLength(0);
+    const planReader = await test.signedIn([
+      "org-chart:view",
+      "people:view",
+      "hiring-plan:view",
+    ]);
+    await chart(planReader.cookie);
+    expect(await plansViewed(planReader.id)).toHaveLength(1);
+  });
+
+  it("records a view of Restricted details when placeholders show positions more sensitive than General", async () => {
+    await hire();
+    await test.connection
+      .update(lists)
+      .set({ visibility: "restricted" })
+      .where(eq(lists.builtIn, "positions"));
+    try {
+      const viewer = await test.signedIn([
+        "org-chart:view",
+        "people:view",
+        "restricted:view",
+      ]);
+      await chart(viewer.cookie);
+      const views = await test.connection
+        .select({ id: accessHistory.id })
+        .from(accessHistory)
+        .where(
+          and(
+            eq(accessHistory.actorId, viewer.id),
+            eq(accessHistory.action, "restricted-viewed"),
+          ),
+        );
+      expect(views).toHaveLength(1);
+    } finally {
+      await test.connection
+        .update(lists)
+        .set({ visibility: "general" })
+        .where(eq(lists.builtIn, "positions"));
+    }
+  });
+
+  it("takes a rejected hire's draft back on the chart as drafts make it, and records no Restricted view for it", async () => {
+    const first = await person();
+    const second = await person();
+    const moving = await hire({ managerId: first });
+    await changeHire(moving, { managerId: second });
+    const approver = await test.signedIn("engineering-director");
+    const rejected = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/rejection",
+      { plannedHires: [moving], reason: "Fictional reason" },
+    );
+    expect(rejected.statusCode, rejected.body).toBe(200);
+    expect((await chart()).get(moving)?.draft?.state).toBe("rejected");
+    expect((await drafted()).get(moving)?.managerId).toBe(first);
+    const viewer = await test.signedIn([
+      "org-chart:view",
+      "people:view",
+      "hiring-plan:view",
+    ]);
+    expect((await chart(viewer.cookie)).get(moving)?.draft?.managerId).toBe(
+      second,
+    );
+    const views = await test.connection
+      .select({ id: accessHistory.id })
+      .from(accessHistory)
+      .where(
+        and(
+          eq(accessHistory.actorId, viewer.id),
+          eq(accessHistory.action, "restricted-viewed"),
+        ),
+      );
+    expect(views).toHaveLength(0);
   });
 });
 

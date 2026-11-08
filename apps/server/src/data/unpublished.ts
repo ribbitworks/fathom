@@ -14,7 +14,7 @@ import {
   drafts,
   unpublishedDrafts,
 } from "@fathom/db";
-import type { DraftKind, Unpublished } from "@fathom/shared";
+import { type DraftKind, hireCalled, type Unpublished } from "@fathom/shared";
 import { and, asc, eq, max } from "drizzle-orm";
 import {
   type Actor,
@@ -221,14 +221,15 @@ function subjectOf(versions: Versions, row: Row, actor: Actor): string {
     // "Software Engineer, TBD-7", or by its ID alone to those who cannot see the Positions list's
     // tier. A hire whose draft is listed is live or drafted, so has a version.
     const hire = versionOf(versions, "planned-hire", id) as Recorded;
-    if (typeof hire.name === "string") return `the planned hire ${hire.name}`;
     const { requisition, temporaryId } = hireIdOf(hire);
-    const shownId = String(requisition ?? temporaryId);
-    if (!seesSensitivity(actor, versions.hires.tierOf("positionId"))) {
-      return `the planned hire ${shownId}`;
-    }
-    const position = versionOf(versions, "list-item", String(hire.positionId));
-    return `the planned hire ${String(position?.label)}, ${shownId}`;
+    const position = seesSensitivity(actor, versions.hires.tierOf("positionId"))
+      ? String(versionOf(versions, "list-item", String(hire.positionId))?.label)
+      : undefined;
+    return `the planned hire ${hireCalled(
+      typeof hire.name === "string" ? hire.name : null,
+      String(requisition ?? temporaryId),
+      position,
+    )}`;
   }
   if (row.recordType === "list") return `the list ${listName(id)}`;
   if (row.recordType === "list-item") {

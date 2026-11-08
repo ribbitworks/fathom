@@ -91,8 +91,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in (P1) as `engineering.manager@fathom.test`. **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read the card at the top of the chart.
-  - **Expected:** It reads **Silje Holm-Schrøder**, with **Manager** under the name and **Platform team** under that, and ends with **Hide 8 reports**.
+- [ ] **Step 1.** Read the card at the top left of the chart.
+  - **Expected:** It reads **Silje Holm-Schrøder**, with **Manager** under the name and **Platform team** under that, and ends with **Hide 8 reports**. Two cards with dashed edges are beside it at the top: **TBD-3**, with **Engineering Manager** under it, and **REQ-2047**, with **Software Engineer** under it.
   - **Notes:**
 
 - [ ] **Step 2.** Read the cards under it.
@@ -107,8 +107,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** As ORG-02.
 
-- [ ] **Step 1.** On the card for **Lorenza Thiel**, select **Show 7 reports**.
-  - **Expected:** Seven cards appear under **Lorenza Thiel**, each joined to her by a line: six in a column under her card's left edge, from **Candice Swift** to **Valéry Caron**, and **Atmananda Ganaka** to the right of them. The button now reads **Hide 7 reports**.
+- [ ] **Step 1.** On the card for **Lorenza Thiel**, select **Show 8 reports**.
+  - **Expected:** Eight cards appear under **Lorenza Thiel**, each joined to her by a line: seven in a column under her card's left edge, from **Candice Swift** to **Valéry Caron**, then **REQ-2042**, with **SDET** under it and a dashed edge, and **Atmananda Ganaka** to the right of them. The button now reads **Hide 8 reports**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Show levels**, then **All levels**, then **Fit to screen**.
@@ -132,7 +132,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 4.** Select the **×** at the right of the finder, type **Billing**, and select **Billing team**, which has **Led by Joaquin Rice** under it.
-  - **Expected:** The finder reads **Joaquin Rice**. His card is in the middle of the panel, with a blue ring around it, and his reports' cards are shown under it, his card ending with **Hide 4 reports**.
+  - **Expected:** The finder reads **Joaquin Rice**. His card is in the middle of the panel, with a blue ring around it, and his reports' cards are shown under it, his card ending with **Hide 5 reports**.
   - **Notes:**
 
 ### ORG-05: The Chart Pans and Zooms
@@ -168,7 +168,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Select the button.
-  - **Expected:** **Lorenza Thiel** is at the top of the chart, with her seven reports under her. **Silje Holm-Schrøder** is not shown. To the right of the heading, the page reads **You're seeing only the team of Lorenza Thiel.**, with **Show everyone** beside it. Her card has no org chart button.
+  - **Expected:** **Lorenza Thiel** is at the top of the chart, with her eight reports under her. **Silje Holm-Schrøder** is not shown. To the right of the heading, the page reads **You're seeing only the team of Lorenza Thiel.**, with **Show everyone** beside it. Her card has no org chart button.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Show everyone**.
@@ -184,7 +184,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in (P1) as `resource.planner@fathom.test`. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the top of the chart.
-  - **Expected:** Two cards are at the top, side by side, with no line between them: **Silje Holm-Schrøder**, ending with **Hide 6 reports**, and **Viktoria Holmberg**.
+  - **Expected:** Four cards are at the top, side by side, with no line between them: **Silje Holm-Schrøder**, ending with **Hide 6 reports**, **Viktoria Holmberg**, and, with dashed edges, **TBD-3** and **REQ-2047**.
   - **Notes:**
 
 - [ ] **Step 2.** Read the card for **Viktoria Holmberg**.
@@ -203,8 +203,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Each card has a teal band, and each line from her card is teal.
   - **Notes:**
 
-- [ ] **Step 3.** On the card for **Lorenza Thiel**, select **Show 7 reports**.
-  - **Expected:** Her card shows no team name. Her seven reports' cards have teal bands, and the lines to them are teal.
+- [ ] **Step 3.** On the card for **Lorenza Thiel**, select **Show 8 reports**.
+  - **Expected:** Her card shows no team name. Her eight reports' cards have teal bands, and the lines to them are teal.
   - **Notes:**
 
 - [ ] **Step 4.** On the card for **Atmananda Ganaka**, select **Show 9 reports**.
@@ -341,4 +341,26 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 1.** On the card for **Viktoria Holmberg**, read the column under it.
   - **Expected:** **Simone Jean**, **우아현** and **西尾 亮**, each on an untinted card with no mark. No card on the chart is light green.
+  - **Notes:**
+
+### ORG-16: Planned Hires Are Placeholders, and a Planned Manager Heads Its Team
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-15.
+
+**Preconditions:** Signed in (P1) as `engineering.manager@fathom.test`. **Org chart** page open from the left-hand menu. **Light** chosen in the Appearance menu.
+
+- [ ] **Step 1.** Read the card for **TBD-3**, at the top of the chart.
+  - **Expected:** The card has a grey dashed edge and no shadow. **TBD-3** is grey and in italics, with **Engineering Manager** under it. Under that, a hollow grey dot is followed by **Planned, expected** and this month, such as **Nov 2026**. It ends with **Hide 2 reports**.
+  - **Notes:**
+
+- [ ] **Step 2.** Read the two cards under it.
+  - **Expected:** **Platform engineer**, with **Software Engineer** under the name, and **TBD-5**, in grey italics, with **SDET** under it, each with a dashed edge and joined to **TBD-3** by a line. **Platform engineer** reads **Planned, expected** and the month six months after the month R1 was run, such as **May 2027** for a run in November 2026.
+  - **Notes:**
+
+- [ ] **Step 3.** On the card for **TBD-3**, select the small org chart button at the top right.
+  - **Expected:** **TBD-3** is at the top of the chart, with its two planned hires under it, and the page reads **You're seeing only the team of Engineering Manager, TBD-3.**
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Show everyone**, then choose **Dark** in the Appearance menu.
+  - **Expected:** The dashed edges and the hollow dots are easy to see on the dark cards.
   - **Notes:**

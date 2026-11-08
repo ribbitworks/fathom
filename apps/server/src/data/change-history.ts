@@ -32,6 +32,7 @@ import {
   recordSearchText,
   recordTypeSchema,
   searchWords,
+  hireCalled,
   temporaryId,
   type Tier,
   tierSchema,
@@ -278,10 +279,12 @@ async function nameHires(
     actor,
     await builtInTier(database, "positions"),
   );
-  const named = (name: unknown, position: string, shownId: string) => {
-    if (typeof name === "string") return name;
-    return seesPositions ? `${position}, ${shownId}` : shownId;
-  };
+  const named = (name: unknown, position: string, shownId: string) =>
+    hireCalled(
+      typeof name === "string" ? name : null,
+      shownId,
+      seesPositions ? position : undefined,
+    );
   for (const [id, fields] of latest) {
     const position = facts.names.get(String(fields.get("positionId")));
     const requisition = fields.get("requisition");
@@ -581,12 +584,18 @@ async function readBatch(
     ...rows.map((row) => row.recordId),
     ...rows.flatMap((row) => referencedIds(row)),
   ]);
+  // A hire's manager may be a planned hire too, named as any hire is.
+  const hireRows = rows.filter((row) => row.recordType === "planned-hire");
   await nameHires(
     database,
     actor,
-    rows
-      .filter((row) => row.recordType === "planned-hire")
-      .map((row) => row.recordId),
+    [
+      ...hireRows.map((row) => row.recordId),
+      ...hireRows
+        .filter((row) => row.field === "managerId")
+        .flatMap((row) => [row.oldValue, row.newValue])
+        .filter((value): value is string => typeof value === "string"),
+    ],
     facts,
   );
   // Lists named only through their choices and columns.

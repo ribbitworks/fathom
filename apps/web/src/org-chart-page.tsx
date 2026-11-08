@@ -89,6 +89,7 @@ import { type PeopleData, peopleQuery } from "./people.ts";
 import { useSaving } from "./saving.ts";
 import { motionLasts, useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { DraftMark, StatusMark } from "./status-mark.tsx";
+import { formatMonth } from "./table-view.ts";
 import { DraftMenu } from "./table-controls.tsx";
 
 interface CardData extends Record<string, unknown> {
@@ -238,10 +239,17 @@ function PersonCard({ data }: NodeProps<CardNode>) {
     onToggle,
     onOpen,
   } = data;
+  const { planned } = person;
+  // A planned hire with no name of its own goes by its position and ID; its card shows the ID as
+  // its name, with the position under it as a person's is, so the name fits.
+  const shownId = planned?.shownId;
+  const madeName = shownId !== undefined;
+  const cardName = shownId ?? person.preferredName;
   return (
     <div
       className={classes.card}
       data-found={found || undefined}
+      data-planned={planned === undefined ? undefined : true}
       data-draft={
         person.moved !== undefined || person.renamed !== undefined || undefined
       }
@@ -270,7 +278,13 @@ function PersonCard({ data }: NodeProps<CardNode>) {
       />
       <div className={classes.name}>
         {person.employeeId === null || onOpen === undefined ? (
-          <span className={classes.label}>{person.preferredName}</span>
+          <span
+            className={[classes.label, madeName ? classes.madeName : ""].join(
+              " ",
+            )}
+          >
+            {cardName}
+          </span>
         ) : (
           <Link
             id={cardLinkId(person.id)}
@@ -316,6 +330,11 @@ function PersonCard({ data }: NodeProps<CardNode>) {
           {person.position}
         </Text>
       )}
+      {planned !== undefined && (
+        <StatusMark tone="planned">
+          Planned, expected {formatMonth(planned.expected)}
+        </StatusMark>
+      )}
       <TeamRow person={person} teamEdits={teamEdits} />
       {reports > 0 && (
         <UnstyledButton
@@ -358,11 +377,13 @@ const openLevels = 2;
 
 // How the address names a person, for the team shown alone and the person found. A reader who sees
 // people has each person's Employee ID; one who does not has Fathom's own ID for them, which means
-// nothing outside Fathom. Null for someone shown by name only, who cannot be kept there, and for a
-// Live copy, which the person themselves stands for.
+// nothing outside Fathom, as a planned hire has for everyone. Null for someone shown by name only,
+// who cannot be kept there, and for a Live copy, which the person themselves stands for.
 function addressOf(person: ChartPerson, seesPeople: boolean): string | null {
   if (person.nameOnly === true || person.liveCopyOf !== undefined) return null;
-  return seesPeople ? person.employeeId : person.id;
+  return seesPeople && person.planned === undefined
+    ? person.employeeId
+    : person.id;
 }
 
 function Chart({

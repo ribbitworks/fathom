@@ -43,7 +43,7 @@ import {
   rowName,
   type RowRequest,
 } from "./people-rows.ts";
-import type { CellValue } from "./table-view.ts";
+import { type CellValue, formatMonth } from "./table-view.ts";
 import { count } from "./numbers.ts";
 import { today } from "./today.ts";
 import { Icon } from "./icons.tsx";
@@ -94,11 +94,10 @@ const markedLive = (person: Person) =>
     ? person.draft.live.isManager === true
     : person.isManager === true;
 
-// Whether someone may be given as a manager: live and marked as a manager live, so neither drafted
-// to be added or removed nor still being added, and not gone by today, as far as the reader sees
-// their end date. Fathom checks the rest, such as loops.
+// Whether someone, or a planned hire, may be given as a manager: live and marked as a manager live,
+// so neither drafted to be added or removed nor still being added, and not gone by today, as far
+// as the reader sees their end date. Fathom checks the rest, such as loops.
 const mayManage = (person: Person, today: string) =>
-  !isHire(person) &&
   person.draft?.action !== "deleted" &&
   person.draft?.action !== "created" &&
   !isPending(person) &&
@@ -127,16 +126,20 @@ const choice = (id: string, label: string, retired: boolean): Choice => ({
 const byLabel = (choices: Choice[]) =>
   choices.sort((a, b) => collator.compare(a.label, b.label));
 
-// The people a person may report to, by name, and, no longer offered, those who have gone, or are
-// no longer marked as managers, while someone still reports to them.
-function managerChoices(people: readonly Person[], today: string): Choice[] {
+// The people and planned hires a row may report to, by name, and, no longer offered, those who have
+// gone, or are no longer marked as managers, while someone still reports to them.
+function managerChoices(
+  people: readonly Person[],
+  lists: readonly List[],
+  today: string,
+): Choice[] {
   const named = managersNamed(people);
   const shown = new Set(people.map(({ id }) => id));
   return byLabel([
     ...people.flatMap((person) => {
       const manages = mayManage(person, today);
-      return !isHire(person) && (manages || named.has(person.id))
-        ? [choice(person.id, person.preferredName, !manages)]
+      return manages || named.has(person.id)
+        ? [choice(person.id, rowName(person, lists), !manages)]
         : [];
     }),
     ...[...named]
@@ -187,25 +190,30 @@ function LeftMark({ person }: { person: Person }) {
 // choices are not made again each time the table is drawn.
 const madeFor = new WeakMap<
   readonly Person[],
-  { day: string; columns: [Column, Column] }
+  { day: string; lists: readonly List[]; columns: [Column, Column] }
 >();
 
-// The Manager column, picking from the people given, and the Team column, which follows from it.
+// The Manager column, picking from the people and planned managers given, and the Team column, which
+// follows from it.
 function reportingColumns(
   people: readonly Person[],
+  lists: readonly List[],
   today: string,
 ): [Column, Column] {
   const made = madeFor.get(people);
-  if (made?.day === today) return made.columns;
-  const columns = makeReportingColumns(people, today);
-  madeFor.set(people, { day: today, columns });
+  if (made?.day === today && made.lists === lists) return made.columns;
+  const columns = makeReportingColumns(people, lists, today);
+  madeFor.set(people, { day: today, lists, columns });
   return columns;
 }
 
 function makeReportingColumns(
   people: readonly Person[],
+  lists: readonly List[],
   today: string,
 ): [Column, Column] {
+  // People report only to people; a planned hire reports to a person or another planned hire.
+  const hires = new Set(people.filter(isHire).map(({ id }) => id));
   const manager: Column = {
     key: "managerId",
     kind: "choice",
@@ -213,7 +221,10 @@ function makeReportingColumns(
     label: builtInColumnNames.get("managerId") as string,
     required: false,
     multiple: false,
-    choices: managerChoices(people, today),
+    choices: managerChoices(people, lists, today),
+    pickableOn: (offeredChoice, row, kind) =>
+      !hires.has(offeredChoice.id) ||
+      (hiresOnly(kind) && offeredChoice.id !== row?.id),
     emptyLabel: "No manager",
     retiredLabel: "No longer offered",
     value: (person) => chosen(person.manager?.id),
@@ -238,24 +249,12 @@ function makeReportingColumns(
   ];
 }
 
-const month = new Intl.DateTimeFormat(undefined, {
-  month: "short",
-  year: "numeric",
-  timeZone: "UTC",
-});
-
 // The months planned hires are expected, earliest first, as choices named as people read them, such
 // as Mar 2027, so the column sorts and filters by month.
 function monthChoices(people: readonly Person[]): Choice[] {
   return [...new Set(people.flatMap(({ expected }) => expected ?? []))]
     .sort()
-    .map((expected) =>
-      choice(
-        expected,
-        month.format(new Date(`${expected}-01T00:00:00Z`)),
-        false,
-      ),
-    );
+    .map((expected) => choice(expected, formatMonth(expected), false));
 }
 
 // Whether a column is offered on planned hires as the server takes it: as live, since a hire's
@@ -300,7 +299,7 @@ export function columnsFor(
     ...column,
     offeredOn: peopleOnly,
   });
-  const [manager, team] = reportingColumns(people, today());
+  const [manager, team] = reportingColumns(people, lists, today());
   const position: Column = {
     key: "positionId",
     kind: "choice",
@@ -398,11 +397,11 @@ export function columnsFor(
         ? [{ ...builtIn("startDate", "date"), offeredOn: hiresOnly }]
         : []),
       manager,
-      personal({
+      {
         ...builtIn("isManager", "flag"),
         choices: [markedChoice],
         emptyLabel: "No",
-      }),
+      },
       ...(showDates
         ? [
             // Fathom takes today, or a new person's start date, when no date is given.

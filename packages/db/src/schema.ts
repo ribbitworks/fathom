@@ -18,6 +18,7 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -450,7 +451,8 @@ export const plannedHireTemporaryNumbers = fathomSchema.sequence(
 // and, checked by the server, with Employee IDs, and never look like a temporary ID. Its state is a
 // choice in the built-in hiring states list and its position one in Positions, which the server
 // checks. A filled hire names the person who filled it. A person may fill several over time, and is
-// removed only with the hires they filled, which the server does in one draft.
+// removed only with the hires they filled, which the server does in one draft. A hire's manager is a
+// person or, marked as a manager, another planned hire, never both; the server refuses loops.
 export const plannedHires = fathomSchema.table(
   "planned_hires",
   {
@@ -468,6 +470,11 @@ export const plannedHires = fathomSchema.table(
     managerId: uuid("manager_id").references(() => people.id, {
       onDelete: "restrict",
     }),
+    managerHireId: uuid("manager_hire_id").references(
+      (): AnyPgColumn => plannedHires.id,
+      { onDelete: "restrict" },
+    ),
+    isManager: boolean("is_manager").notNull().default(false),
     filledBy: uuid("filled_by").references(() => people.id, {
       onDelete: "restrict",
     }),
@@ -481,11 +488,20 @@ export const plannedHires = fathomSchema.table(
     ),
     index("planned_hires_filled_by_index").on(table.filledBy),
     index("planned_hires_manager_index").on(table.managerId),
+    index("planned_hires_manager_hire_index").on(table.managerHireId),
     index("planned_hires_position_index").on(table.positionId),
     index("planned_hires_state_index").on(table.stateId),
     check(
       "planned_hires_one_id",
       sql`num_nonnulls(${table.requisition}, ${table.temporaryNumber}) = 1`,
+    ),
+    check(
+      "planned_hires_one_manager",
+      sql`num_nonnulls(${table.managerId}, ${table.managerHireId}) <= 1`,
+    ),
+    check(
+      "planned_hires_not_own_manager",
+      sql`${table.managerHireId} IS NULL OR ${table.managerHireId} <> ${table.id}`,
     ),
     check(
       "planned_hires_requisition_not_temporary",

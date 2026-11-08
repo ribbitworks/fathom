@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies planned hires shown as rows of the People table: how their rows look beside people's in light and dark mode, their names, the **State** column, their values in added columns, a column switched off for them, people who have left, saving a view of planned hires alone, a planned manager whom other planned hires report to, adding one with the keyboard and by pasting, approving a hire's draft on the Drafts page, and what a Resource Planner sees. The seeded hires are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -333,4 +333,34 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 6.** Select **Hiring plan**, then **Delete view**.
   - **Expected:** A notice reads **Deleted the Hiring plan view.**, with **Undo**. The hire rows stay as they are, and the button now reads **Views**, marked with a dot.
+  - **Notes:**
+
+### HIRE-12: Planned Hires Report to a Planned Manager
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-11.
+
+**Preconditions:** Signed in (P1) with this account. **People** page open, with no filters.
+
+- [ ] **Step 1.** Type **TBD-3** in the search box.
+  - **Expected:** One row is shown, its **Name** **Engineering Manager, TBD-3** in grey italics. Its **Manager?** cell shows a checked box.
+  - **Notes:**
+
+- [ ] **Step 2.** Clear the search box, and type **TBD-4**.
+  - **Expected:** One row is shown, its **Name** **Platform engineer**. Its **Manager** and **Team** both read **Engineering Manager, TBD-3**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the row's **Manager** cell, and press Enter.
+  - **Expected:** The cell opens for typing, with a list of managers under it.
+  - **Notes:**
+
+- [ ] **Step 4.** Type **TBD**.
+  - **Expected:** The list offers **Engineering Manager, TBD-3**.
+  - **Notes:**
+
+- [ ] **Step 5.** Press Esc, clear the search box, and type **TBD-3**.
+  - **Expected:** One row is shown, **Engineering Manager, TBD-3**.
+  - **Notes:**
+
+- [ ] **Step 6.** Click once in the row's **Manager?** cell.
+  - **Expected:** A message reads **Reassign direct reports first**. The box stays checked, and the row has no **Draft** mark.
   - **Notes:**

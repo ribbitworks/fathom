@@ -594,8 +594,7 @@ describe("a reporting line", () => {
 describe("the Manager? mark", () => {
   const notMarked = (name: string) =>
     `${name} is not a manager yet: check Manager? on their row and have it approved first`;
-  const stillReporting =
-    "Manager? stays checked while anyone reports to this person, or is drafted to";
+  const stillReporting = "Reassign direct reports first";
   const nameOf = async (id: string) =>
     String((await readPerson(id))?.preferredName);
 

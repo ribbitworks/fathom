@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Days, such as 2026-10-31, as Fathom keeps and shows them everywhere: whether text is one that
-// exists, and a day typed as digits alone, such as 20261031, put in that form.
+// Days, such as 2026-10-31, and months, such as 2026-10, as Fathom keeps and shows them everywhere:
+// whether text is a day that exists, and a day typed as digits alone, such as 20261031, put in that
+// form.
 
 import { z } from "zod";
 
 export const daySchema = z.iso.date();
+
+export const monthSchema = z.string().regex(/^\d{4}-\d{2}$/);
 
 // Whether text is a whole day, such as 2026-10-31, that exists.
 export const isDay = (text: string): boolean =>

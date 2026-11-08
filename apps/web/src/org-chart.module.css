@@ -48,6 +48,19 @@
   content: "";
 }
 
+/* A planned hire, a place still to fill, has a dashed edge and no shadow. */
+.card[data-planned] {
+  border-style: dashed;
+  border-color: var(--mantine-color-gray-5);
+  box-shadow: none;
+}
+
+/* A planned hire's ID, standing for a name it does not have, as People's Name cell shows one. */
+.madeName {
+  color: var(--mantine-color-dimmed);
+  font-style: italic;
+}
+
 /* A card with a draft is tinted as a row with one is on tables. */
 .card[data-draft] {
   background: var(--mantine-color-sea-0);

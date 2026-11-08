@@ -12,6 +12,7 @@ import {
   type Database,
   fields,
   fieldValues,
+  inChunks,
   listItems,
   lists,
 } from "@fathom/db";
@@ -292,6 +293,23 @@ export async function writeValues(
     );
   const rows = valueRows(recordId, fieldId, value, owner);
   if (rows.length > 0) await transaction.insert(fieldValues).values(rows);
+}
+
+// The labels of the choices given, by choice.
+export async function choiceLabels(
+  reader: Reader,
+  choiceIds: readonly string[],
+): Promise<Map<string, string>> {
+  const labels = new Map<string, string>();
+  for (const chunk of inChunks([...new Set(choiceIds)])) {
+    for (const { id, label } of await reader
+      .select({ id: listItems.id, label: listItems.label })
+      .from(listItems)
+      .where(inArray(listItems.id, chunk))) {
+      labels.set(id, label);
+    }
+  }
+  return labels;
 }
 
 // Choices in list order, so values compare and are recorded the same way however they were sent.

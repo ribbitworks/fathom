@@ -59,6 +59,18 @@ describe("the org chart's tree", () => {
     expect(tree.roots).toEqual(["lost"]);
   });
 
+  it("puts planned hires after the people under the same manager", () => {
+    const tree = treeOf([
+      person("head", null, "Quinn"),
+      {
+        ...person("hire", "head", "Avery"),
+        planned: { expected: "2027-03" },
+      },
+      person("report", "head", "Zane"),
+    ]);
+    expect(tree.reports.get("head")).toEqual(["report", "hire"]);
+  });
+
   it("orders people with the same name by their identifier", () => {
     const tree = treeOf([person("b", null, "Sam"), person("a", null, "Sam")]);
     expect(tree.roots).toEqual(["a", "b"]);

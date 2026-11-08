@@ -108,7 +108,8 @@ export interface FictionalTeam {
 // A planned hire: named, if it has a name, and known by its requisition, or by a temporary ID the
 // seed data gives it while it has none, in the first hiring state with its meaning, due on its
 // target date, as YYYY-MM-DD, if it has one, filled by a person, when it is, and with choices in
-// some of the columns it shares with people, by column.
+// some of the columns it shares with people, by column. Its manager is a person or a planned hire
+// marked as a manager.
 export interface FictionalHire {
   id: string;
   name: string | null;
@@ -117,6 +118,7 @@ export interface FictionalHire {
   meaning: "proposed" | "open";
   targetDate: string | null;
   managerId: string | null;
+  isManager: boolean;
   filledBy: string | null;
   values: Record<string, string[]>;
 }
@@ -416,8 +418,9 @@ function reporting(
 }
 
 // The planned hires not yet filled, each due some months after the reference date, or with no
-// target date, under the current managers in turn, but for those with none, and with a site and
-// level where decided. Invented requisitions.
+// target date, under the current managers in turn, but for those with none and those under a
+// planned manager, named by its key, which comes earlier in the list, and with a site and level
+// where decided. Invented requisitions.
 const openings: readonly {
   name: string | null;
   requisition: string | null;
@@ -425,6 +428,9 @@ const openings: readonly {
   meaning: FictionalHire["meaning"];
   months: number | null;
   managed: boolean;
+  key?: string;
+  managedBy?: string;
+  isManager?: boolean;
   site?: string;
   level?: string;
 }[] = [
@@ -473,6 +479,8 @@ const openings: readonly {
     meaning: "proposed",
     months: null,
     managed: false,
+    key: "planned-manager",
+    isManager: true,
   },
   {
     name: null,
@@ -481,6 +489,24 @@ const openings: readonly {
     meaning: "open",
     months: 2,
     managed: false,
+  },
+  {
+    name: "Platform engineer",
+    requisition: null,
+    position: "Software Engineer",
+    meaning: "proposed",
+    months: 6,
+    managed: false,
+    managedBy: "planned-manager",
+  },
+  {
+    name: null,
+    requisition: null,
+    position: "SDET",
+    meaning: "proposed",
+    months: null,
+    managed: false,
+    managedBy: "planned-manager",
   },
 ];
 
@@ -503,18 +529,38 @@ function hiresFor(
   );
   const due = (months: number) => addMonths(referenceDate, months);
   let next = 0;
+  const openingId = (index: number) =>
+    fictionalId(`planned-hire:${String(index)}`);
+  const managerOfOpening = (managed: boolean, managedBy?: string) => {
+    if (managedBy !== undefined) {
+      return openingId(openings.findIndex(({ key }) => key === managedBy));
+    }
+    return managed ? String(managers.at(next++ % managers.length)?.id) : null;
+  };
   const open = openings.map(
     (
-      { position, months, managed, site, level, ...hire },
+      {
+        name,
+        requisition,
+        meaning,
+        position,
+        months,
+        managed,
+        managedBy,
+        isManager,
+        site,
+        level,
+      },
       index,
     ): FictionalHire => ({
-      id: fictionalId(`planned-hire:${String(index)}`),
-      ...hire,
+      id: openingId(index),
+      name,
+      requisition,
+      meaning,
       positionId: choice(positions, position),
       targetDate: months === null ? null : due(months),
-      managerId: managed
-        ? String(managers.at(next++ % managers.length)?.id)
-        : null,
+      managerId: managerOfOpening(managed, managedBy),
+      isManager: isManager ?? false,
       filledBy: null,
       values: {
         ...(site === undefined
@@ -557,6 +603,7 @@ function hiresFor(
             targetDate,
             // Both were found among those with a manager.
             managerId: String(managerOf.get(person.id)),
+            isManager: false,
             filledBy: person.id,
             values: { ...person.values },
           },

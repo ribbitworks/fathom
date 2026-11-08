@@ -5,7 +5,7 @@
 // The grid it is built on is tested in record-grid.test.tsx, and the page around it in
 // people-page.test.tsx.
 
-import type { Field, List, Person } from "@fathom/shared";
+import type { Choice, Field, List, Person } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { act, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
@@ -553,6 +553,46 @@ describe("managers and teams", () => {
     expect(manager?.retiredLabel).toBe("No longer offered");
   });
 
+  it("offers planned managers, named as their rows are, only on planned hires' rows and never to the hire itself", () => {
+    const hire = (id: string, more: Partial<Person> = {}): Person =>
+      person(id, {
+        kind: "planned-hire",
+        preferredName: "",
+        employeeId: `TBD-${id}`,
+        ...more,
+      });
+    const rows = [
+      person("p1"),
+      hire("h1"),
+      hire("h2", { isManager: false }),
+      hire("h3", { preferredName: "Fictional Lead Hire" }),
+    ];
+    const manager = columnsFor([], [positions], [], true, rows).find(
+      ({ key }) => key === "managerId",
+    );
+    expect(manager?.choices.map(({ id, label }) => [id, label])).toEqual([
+      ["h1", "Fictional Engineer, TBD-h1"],
+      ["h3", "Fictional Lead Hire"],
+      ["p1", "Fictional p1"],
+    ]);
+    const choiceOf = (id: string) =>
+      manager?.choices.find((offered) => offered.id === id) as Choice;
+    const pickable = (id: string, row: Person) =>
+      manager?.pickableOn?.(choiceOf(id), row, row.kind ?? "person");
+    expect(pickable("h1", rows[0] as Person)).toBe(false);
+    expect(pickable("p1", rows[0] as Person)).toBe(true);
+    expect(pickable("h1", rows[3] as Person)).toBe(true);
+    expect(pickable("h1", rows[1] as Person)).toBe(false);
+    expect(pickable("p1", rows[1] as Person)).toBe(true);
+  });
+
+  it("offers Manager? on planned hires as on people", () => {
+    const marked = columnsFor([], [], [], true).find(
+      ({ key }) => key === "isManager",
+    );
+    expect(marked?.offeredOn?.("planned-hire") ?? true).toBe(true);
+  });
+
   it("offers nobody drafted to be added or removed, or still being added", () => {
     const draft = { state: "waiting" as const, madeBy: null, madeAt: null };
     const manager = columnsFor([], [], [], true, [
@@ -961,8 +1001,9 @@ describe("managers and teams", () => {
 
   it("gives the same live people and columns again for the same people", () => {
     expect(livePeople(people)).toBe(livePeople(people));
+    const lists = [positions];
     const team = () =>
-      columnsFor([], [], [], true, people).find(({ key }) => key === "team");
+      columnsFor([], lists, [], true, people).find(({ key }) => key === "team");
     expect(team()).toBe(team());
   });
 

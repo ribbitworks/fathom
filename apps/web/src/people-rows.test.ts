@@ -59,6 +59,7 @@ describe("what a planned hire's row sends", () => {
       positionId: "position-1",
       targetDate: null,
       managerId: null,
+      isManager: false,
       values: {},
       links: {},
     });
@@ -69,6 +70,7 @@ describe("what a planned hire's row sends", () => {
         employeeId: "REQ-1",
         startDate: "2027-03-01",
         managerId: "p1",
+        isManager: true,
         stateId: "s1",
       }),
     ).toEqual({
@@ -77,6 +79,7 @@ describe("what a planned hire's row sends", () => {
       positionId: "position-1",
       targetDate: "2027-03-01",
       managerId: "p1",
+      isManager: true,
       stateId: "s1",
       values: {},
       links: {},
@@ -114,6 +117,7 @@ describe("what a planned hire's row sends", () => {
         startDate: null,
         stateId: "s2",
         managerId: null,
+        isManager: true,
       }),
     ).toEqual({
       name: null,
@@ -122,6 +126,7 @@ describe("what a planned hire's row sends", () => {
       targetDate: null,
       stateId: "s2",
       managerId: null,
+      isManager: true,
     });
   });
 

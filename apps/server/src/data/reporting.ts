@@ -249,8 +249,8 @@ export function changedReporting(
 export const notMarked = ({ preferredName }: { preferredName: string }) =>
   `${preferredName} is not a manager yet: check Manager? on their row and have it approved first`;
 
-const stillReporting =
-  "Manager? stays checked while anyone reports to this person, or is drafted to";
+// Why someone, or a planned manager, stays a manager while others report to them.
+export const reassignReports = "Reassign direct reports first";
 
 // Refuses clearing the Manager? mark of people anyone still employed reports to, by a line in force
 // or yet to start. When drafting, drafts naming them as a manager, published or not, count too; on
@@ -297,7 +297,7 @@ export async function refuseUnmarkingManagers(
       (drafted &&
         (await draftedPersonValues(reader, "managerId", chunk, [])).length > 0)
     ) {
-      throw new ConflictError(stillReporting);
+      throw new ConflictError(reassignReports);
     }
   }
 }

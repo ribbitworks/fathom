@@ -26,6 +26,7 @@ import {
   type HireDraft,
   type HireRequest,
   type Hires,
+  hireCalled,
   type Person,
   temporaryId,
   type Tier,
@@ -51,6 +52,7 @@ import { checkBuiltInChoice, firstChoiceMeaning } from "./built-in-lists.ts";
 import { type LiveValues, typeOf } from "./column-types.ts";
 import {
   builtInTier,
+  choiceLabels,
   type ColumnInfo,
   type FieldValue,
   fieldOfValue,
@@ -103,7 +105,7 @@ import {
   recordedValues,
   valuesOf,
 } from "./people.ts";
-import { notMarked } from "./reporting.ts";
+import { notMarked, reassignReports } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
 type Reader = Pick<Database, "select">;
@@ -125,6 +127,7 @@ export const hireFields = [
   "targetDate",
   "stateId",
   "managerId",
+  "isManager",
   "filledBy",
 ] as const;
 
@@ -261,7 +264,9 @@ export function recordedHire(
     positionId: row.positionId,
     targetDate: row.targetDate,
     stateId: row.stateId,
-    managerId: row.managerId,
+    managerId: row.managerId ?? row.managerHireId,
+    // Kept only when marked, so a hire never marked and one unmarked are the same.
+    ...(row.isManager ? { isManager: true } : {}),
     filledBy: row.filledBy,
     ...recordedValues(values),
   };
@@ -283,6 +288,16 @@ export function hireIdOf(hire: Recorded): {
         ? temporaryId(hire.temporaryNumber)
         : null,
   };
+}
+
+// What a hire is called in menus and notices, given its position's label for those who see it.
+function nameOfHire(hire: Recorded, position: string | undefined): string {
+  const { requisition, temporaryId: temporary } = hireIdOf(hire);
+  return hireCalled(
+    textOrNull(hire.name),
+    String(requisition ?? temporary),
+    position,
+  );
 }
 
 export function hireChanges(
@@ -475,6 +490,33 @@ export async function readHiresIn(
     ),
     today,
   );
+  // A planned manager is named as its row is, to everyone who sees its placeholder.
+  const managingHires = [
+    ...new Set(
+      versions.flatMap(({ hire }) =>
+        typeof hire.managerId === "string" && live.has(hire.managerId)
+          ? [hire.managerId]
+          : [],
+      ),
+    ),
+  ];
+  const managerPositions = seesPositions
+    ? await choiceLabels(
+        transaction,
+        managingHires.map((managerId) =>
+          String(live.get(managerId)?.positionId),
+        ),
+      )
+    : new Map<string, string>();
+  const hireManagers = new Map(
+    managingHires.map((managerId) => {
+      const manager = live.get(managerId) as Recorded;
+      return [
+        managerId,
+        nameOfHire(manager, managerPositions.get(String(manager.positionId))),
+      ];
+    }),
+  );
   const thisMonth = today.slice(0, 7);
   const hires = versions.flatMap(({ id, before, draft, hire }): Hire[] => {
     const filler =
@@ -489,11 +531,13 @@ export async function readHiresIn(
     ) {
       return [];
     }
-    const manager =
-      typeof hire.managerId === "string"
-        ? named.get(hire.managerId)
-        : undefined;
-    const shown = manager !== undefined && (restricted || manager.started);
+    const managerId = textOrNull(hire.managerId);
+    const managingHire =
+      managerId === null ? undefined : hireManagers.get(managerId);
+    const manager = managerId === null ? undefined : named.get(managerId);
+    const shownPerson =
+      manager !== undefined && (restricted || manager.started);
+    const shown = managingHire !== undefined || shownPerson;
     const targetDate = textOrNull(hire.targetDate);
     const expectedOn = filler?.startDate ?? targetDate;
     return [
@@ -502,8 +546,9 @@ export async function readHiresIn(
         name: textOrNull(hire.name),
         ...hireIdOf(hire),
         ...(seesPositions ? { positionId: String(hire.positionId) } : {}),
-        managerId: shown ? String(hire.managerId) : null,
-        managerName: shown ? manager.name : null,
+        managerId: shown ? managerId : null,
+        managerName: managingHire ?? (shownPerson ? manager.name : null),
+        isManager: hire.isManager === true,
         expected: expectedOn === null ? thisMonth : expectedOn.slice(0, 7),
         ...(seesStates ? { stateId: String(hire.stateId) } : {}),
         values: shownValues(valuesOf(hire)),
@@ -574,6 +619,9 @@ export async function readHiresIn(
         if (field === "managerId") {
           liveValues.managerId = textOrNull(before.managerId);
         }
+        if (field === "isManager") {
+          liveValues.isManager = before.isManager === true;
+        }
       }
     }
     const maker = makers.get(id);
@@ -631,43 +679,168 @@ function refuseHired(meaning: string | null): void {
   if (peoplesMeaning(meaning)) throw new BadRequestError(hiredState);
 }
 
-// Whether a hire may have the manager given: none, or a live person whom no draft removes,
-// published or not.
+// Whether any draft, published or not, removes the record given.
+async function draftedRemoval(
+  transaction: Transaction,
+  type: "person" | typeof recordType,
+  id: string,
+): Promise<boolean> {
+  for (const table of [drafts, unpublishedDrafts]) {
+    const [found] = await transaction
+      .select({ recordId: table.recordId })
+      .from(table)
+      .where(
+        and(
+          eq(table.recordType, type),
+          eq(table.recordId, id),
+          eq(table.action, "deleted"),
+        ),
+      )
+      .limit(1);
+    if (found !== undefined) return true;
+  }
+  return false;
+}
+
+// Whether a hire may have the manager given: none, a live person, or a live planned hire not yet
+// filled, whom no draft removes, published or not.
 async function managerAllowed(
   transaction: Transaction,
   managerId: unknown,
 ): Promise<boolean> {
   if (typeof managerId !== "string") return true;
-  const found = await transaction
+  const [person] = await transaction
     .select({ id: people.id })
     .from(people)
     .where(eq(people.id, managerId))
     .for("share");
-  const removing = await transaction
-    .select({ recordId: drafts.recordId })
-    .from(drafts)
-    .where(
-      and(
-        eq(drafts.recordType, "person"),
-        eq(drafts.recordId, managerId),
-        eq(drafts.action, "deleted"),
-      ),
-    );
-  const removingUnpublished = await transaction
-    .select({ recordId: unpublishedDrafts.recordId })
-    .from(unpublishedDrafts)
-    .where(
-      and(
-        eq(unpublishedDrafts.recordType, "person"),
-        eq(unpublishedDrafts.recordId, managerId),
-        eq(unpublishedDrafts.action, "deleted"),
-      ),
-    );
+  if (person !== undefined) {
+    return !(await draftedRemoval(transaction, "person", managerId));
+  }
+  const [hire] = await transaction
+    .select({ filledBy: plannedHires.filledBy })
+    .from(plannedHires)
+    .where(eq(plannedHires.id, managerId))
+    .for("share");
   return (
-    found.length > 0 &&
-    removing.length === 0 &&
-    removingUnpublished.length === 0
+    hire !== undefined &&
+    hire.filledBy === null &&
+    !(await draftedRemoval(transaction, recordType, managerId))
   );
+}
+
+const hireLoop =
+  "That manager reports to this planned hire, directly or through others";
+const ownManager = "A planned hire can't report to itself";
+
+// Each hire's manager as it is live: a person or a planned hire.
+async function liveManagers(reader: Reader): Promise<Map<string, unknown>> {
+  const rows = await reader
+    .select({
+      id: plannedHires.id,
+      managerId: plannedHires.managerId,
+      managerHireId: plannedHires.managerHireId,
+    })
+    .from(plannedHires);
+  return new Map(
+    rows.map(({ id, managerId, managerHireId }) => [
+      id,
+      managerId ?? managerHireId,
+    ]),
+  );
+}
+
+// Refuses a planned manager who is the hire itself, or reports to it, directly or through other
+// planned hires, as every hire is live or as the editor's drafts make it, with the hire's wanted
+// manager in place of its draft's.
+async function refuseHireLoop(
+  transaction: Transaction,
+  editor: string,
+  id: string,
+  managerId: unknown,
+): Promise<void> {
+  if (typeof managerId !== "string") return;
+  if (managerId === id) throw new BadRequestError(ownManager);
+  const live = await liveManagers(transaction);
+  const managerOf = new Map(live);
+  for (const [hireId, draft] of await readHireDrafts(
+    transaction,
+    undefined,
+    editor,
+  )) {
+    const before = live.has(hireId)
+      ? { managerId: live.get(hireId) }
+      : undefined;
+    managerOf.set(hireId, drafted(before, draft)?.managerId);
+  }
+  managerOf.set(id, managerId);
+  if (reachesItself(managerOf, id)) throw new BadRequestError(hireLoop);
+}
+
+// Whether following managers up from the hire comes back to it. A chain that loops elsewhere, which
+// the rules never let in, ends where it first repeats.
+function reachesItself(
+  managerOf: ReadonlyMap<string, unknown>,
+  id: string,
+): boolean {
+  const seen = new Set<string>();
+  let next = managerOf.get(id);
+  while (typeof next === "string" && !seen.has(next)) {
+    if (next === id) return true;
+    seen.add(next);
+    next = managerOf.get(next);
+  }
+  return false;
+}
+
+// Refuses approving managers that, now applied, make a planned hire report to itself, naming it.
+async function refuseHireLoopsLive(
+  transaction: Transaction,
+  ids: readonly string[],
+  seesPositions: boolean,
+): Promise<void> {
+  const managerOf = await liveManagers(transaction);
+  const looping = ids.find((id) => reachesItself(managerOf, id));
+  if (looping === undefined) return;
+  const [row] = await transaction
+    .select()
+    .from(plannedHires)
+    .where(eq(plannedHires.id, looping));
+  // The hire was just approved, so it is live.
+  const hire = recordedHire(row as HireRow);
+  throw new ConflictError(
+    `${await nameWithPosition(transaction, hire, seesPositions)} would end up reporting to itself`,
+  );
+}
+
+// A hire's name, with its position's label for those who see positions.
+async function nameWithPosition(
+  reader: Reader,
+  hire: Recorded,
+  seesPositions: boolean,
+): Promise<string> {
+  const positionId = String(hire.positionId);
+  const position = seesPositions
+    ? (await choiceLabels(reader, [positionId])).get(positionId)
+    : undefined;
+  return nameOfHire(hire, position);
+}
+
+// Which of the managers given are planned hires, so their hires keep them in that column.
+async function hiresAmong(
+  reader: Reader,
+  ids: readonly string[],
+): Promise<Set<string>> {
+  const found = new Set<string>();
+  for (const chunk of inChunks([...new Set(ids)])) {
+    for (const { id } of await reader
+      .select({ id: plannedHires.id })
+      .from(plannedHires)
+      .where(inArray(plannedHires.id, chunk))) {
+      found.add(id);
+    }
+  }
+  return found;
 }
 
 async function checkManager(
@@ -733,12 +906,14 @@ const newlyManaged = (before: Recorded | undefined, after: Recorded) =>
   unfilled(after) &&
   before?.managerId !== after.managerId;
 
-// Refuses a manager who is not marked as a manager for a hire not yet filled, as people's managers
-// are.
+// Refuses a manager, a person or a planned hire, who is not marked as a manager for a hire not yet
+// filled, as people's managers are. A planned hire is named by its position only to those who see
+// positions.
 async function refuseUnmarked(
   reader: Reader,
   managerId: string,
   refused: (message: string) => Error,
+  { seesPositions }: { seesPositions: boolean },
 ): Promise<void> {
   const [manager] = await reader
     .select({
@@ -750,6 +925,57 @@ async function refuseUnmarked(
   if (manager !== undefined && !manager.isManager) {
     throw refused(notMarked(manager));
   }
+  const [row] = await reader
+    .select()
+    .from(plannedHires)
+    .where(eq(plannedHires.id, managerId));
+  if (row !== undefined && !row.isManager) {
+    throw refused(
+      notMarked({
+        preferredName: await nameWithPosition(
+          reader,
+          recordedHire(row),
+          seesPositions,
+        ),
+      }),
+    );
+  }
+}
+
+// Whether a hire not yet filled names any of the planned hires given as its manager, live, or, when
+// asked, in a draft, published or not.
+async function hiresReportTo(
+  reader: Reader,
+  ids: readonly string[],
+  { drafted }: { drafted: boolean },
+): Promise<boolean> {
+  for (const chunk of inChunks([...ids])) {
+    const [live] = await reader
+      .select({ id: plannedHires.id })
+      .from(plannedHires)
+      .where(
+        and(
+          inArray(plannedHires.managerHireId, chunk),
+          isNull(plannedHires.filledBy),
+        ),
+      )
+      .limit(1);
+    if (live !== undefined) return true;
+    for (const table of drafted ? [drafts, unpublishedDrafts] : []) {
+      const [found] = await reader
+        .select({ id: table.recordId })
+        .from(table)
+        .where(
+          and(
+            eq(table.recordType, recordType),
+            inArray(sql`${table.fields}->>'managerId'`, chunk),
+          ),
+        )
+        .limit(1);
+      if (found !== undefined) return true;
+    }
+  }
+  return false;
 }
 
 // Drafts adding the hires asked for, together in one change, so they are undone together, or none
@@ -783,6 +1009,7 @@ export async function createHires(
     for (const request of requests) {
       await checkManager(transaction, request.managerId);
       await checkBuiltInChoice(transaction, "positions", request.positionId);
+      const seesPositions = seesSensitivity(actor, tierOf("positionId"));
       const stateId =
         request.stateId ??
         (await firstChoiceMeaning(transaction, "hiring-states", "proposed"));
@@ -804,6 +1031,8 @@ export async function createHires(
         targetDate: request.targetDate,
         stateId,
         managerId: request.managerId,
+        // Left out unless marked, as a new person's mark is.
+        ...(request.isManager ? { isManager: true } : {}),
         filledBy: null,
         ...recordedValues(
           checkedValues(offered, known, request.values, undefined),
@@ -816,6 +1045,7 @@ export async function createHires(
           transaction,
           String(after.managerId),
           (message) => new BadRequestError(message),
+          { seesPositions },
         );
       }
       await addDrafts(transaction, actor.user.id, recordType, [
@@ -906,9 +1136,14 @@ export async function updateHire(
     if (typeof change.requisition === "string") {
       await checkRequisition(transaction, change.requisition, id);
     }
+    const unmarked = Object.fromEntries(
+      Object.entries(hire).filter(([field]) => field !== "isManager"),
+    );
+    const marked = change.isManager ?? hire.isManager === true;
     // Columns left with nothing chosen are left out.
     const after: Recorded = tidy({
-      ...hire,
+      ...unmarked,
+      ...(marked ? { isManager: true } : {}),
       ...(change.name === undefined ? {} : { name: change.name }),
       ...(await idAsChanged(transaction, hire, change.requisition)),
       ...(change.positionId === undefined
@@ -930,14 +1165,25 @@ export async function updateHire(
       ...checkedLinks(offered, change.links ?? {}),
       ...checkedNotes(offered, change.notes ?? {}),
     });
+    const tierOf = await readHireTier(transaction, columns);
     if (newlyManaged(hire, after)) {
       await refuseUnmarked(
         transaction,
         String(after.managerId),
         (message) => new BadRequestError(message),
+        { seesPositions: seesSensitivity(actor, tierOf("positionId")) },
       );
     }
-    const tierOf = await readHireTier(transaction, columns);
+    if (change.managerId !== undefined) {
+      await refuseHireLoop(transaction, actor.user.id, id, after.managerId);
+    }
+    if (
+      hire.isManager === true &&
+      after.isManager !== true &&
+      (await hiresReportTo(transaction, [id], { drafted: true }))
+    ) {
+      throw new ConflictError(reassignReports);
+    }
     const made = hireChanges(id, "changed", hire, after, tierOf);
     requireHireEdits(actor, made);
     if (made.length === 0) return null;
@@ -971,6 +1217,9 @@ export async function deleteHire(
       throw new ConflictError(
         "A filled hire is kept; give its person an end date instead",
       );
+    }
+    if (await hiresReportTo(transaction, [id], { drafted: true })) {
+      throw new ConflictError(reassignReports);
     }
     const tierOf = await readHireTier(transaction);
     const made = [
@@ -1151,9 +1400,7 @@ export async function refuseUnmarkingHireManagers(
       named ||= found !== undefined;
     }
     if (named) {
-      throw new ConflictError(
-        "Manager? stays checked while a planned hire not yet filled names this person as its manager",
-      );
+      throw new ConflictError(reassignReports);
     }
   }
 }
@@ -1221,6 +1468,19 @@ export async function approveHiresIn(
   }
   const made: Change[] = [];
   const heldValues: (typeof fieldValues.$inferInsert)[] = [];
+  const removed: string[] = [];
+  const seesPositions = seesSensitivity(actor, tierOf("positionId"));
+  const managingHires = await hiresAmong(
+    transaction,
+    wanted.flatMap(({ hire }) =>
+      typeof hire?.managerId === "string" ? [hire.managerId] : [],
+    ),
+  );
+  // The columns that hold a hire's manager: a person's, or a planned hire's.
+  const managerColumns = (managerId: string | null) =>
+    managerId !== null && managingHires.has(managerId)
+      ? { managerId: null, managerHireId: managerId }
+      : { managerId, managerHireId: null };
   for (const { id, before, draft, hire } of wanted) {
     made.push(...hireChanges(id, draft.action, before, hire, tierOf));
     if (hire !== undefined && newlyManaged(before, hire)) {
@@ -1228,10 +1488,11 @@ export async function approveHiresIn(
         transaction,
         String(hire.managerId),
         (message) => new ConflictError(message),
+        { seesPositions },
       );
     }
     if (hire === undefined) {
-      await transaction.delete(plannedHires).where(eq(plannedHires.id, id));
+      removed.push(id);
       continue;
     }
     // The state may have come to mean Hired or Left since the draft was made.
@@ -1250,7 +1511,8 @@ export async function approveHiresIn(
       positionId: String(hire.positionId),
       targetDate: textOrNull(hire.targetDate),
       stateId: String(hire.stateId),
-      managerId: textOrNull(hire.managerId),
+      ...managerColumns(textOrNull(hire.managerId)),
+      isManager: hire.isManager === true,
       filledBy: textOrNull(hire.filledBy),
     };
     if (before === undefined) {
@@ -1268,6 +1530,23 @@ export async function approveHiresIn(
       }
     }
   }
+  // Hires approved together may move a planned manager's hires away and clear its mark, so marks
+  // cleared are checked once every change is made. A removal needs no check: drafting it, and naming
+  // a manager drafted to be removed, are both refused.
+  const unmarked = wanted.flatMap(({ id, before, hire }) =>
+    before?.isManager === true && hire !== undefined && hire.isManager !== true
+      ? [id]
+      : [],
+  );
+  if (await hiresReportTo(transaction, unmarked, { drafted: false })) {
+    throw new ConflictError(reassignReports);
+  }
+  for (const chunk of inChunks(removed)) {
+    await transaction
+      .delete(plannedHires)
+      .where(inArray(plannedHires.id, chunk));
+  }
+  await refuseHireLoopsLive(transaction, ids, seesPositions);
   // Each hire approved holds the values its draft makes, replacing those it had.
   for (const chunk of inChunks([...ids])) {
     await transaction
@@ -1370,12 +1649,23 @@ export async function undoHireDrafts(
     ) {
       throw new ConflictError(changedSince);
     }
+    // Undoing can take a planned manager's mark away, or the manager itself, as clearing or
+    // removing it can.
+    if (
+      now?.isManager === true &&
+      hire?.isManager !== true &&
+      (await hiresReportTo(transaction, [record.id], { drafted: true }))
+    ) {
+      throw new ConflictError(changedSince);
+    }
     if (hire !== undefined && newlyManaged(now, hire)) {
       await refuseUnmarked(
         transaction,
         String(hire.managerId),
         (message) => new ConflictError(message),
+        { seesPositions: false },
       );
+      await refuseHireLoop(transaction, editor, record.id, hire.managerId);
     }
     await writeDraft(
       transaction,
@@ -1421,6 +1711,7 @@ export function hireRow(
     ...(hire.managerId === null
       ? {}
       : { team: teamOf.get(hire.managerId) ?? null }),
+    isManager: hire.isManager,
     values: hire.values,
     links: hire.links,
     notes: hire.notes,
@@ -1447,6 +1738,9 @@ export function hireRow(
               ...(live.managerId === undefined
                 ? {}
                 : { managerId: live.managerId }),
+              ...(live.isManager === undefined
+                ? {}
+                : { isManager: live.isManager }),
               values: live.values,
               links: live.links,
               notes: live.notes,

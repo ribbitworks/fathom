@@ -71,6 +71,7 @@ const toneClass = new Map([
   ["unpublished", classes.unpublishedMark],
   ["held", classes.heldMark],
   ["warning", classes.draftRejected],
+  ["planned", classes.plannedMark],
 ]);
 
 // A rejected draft's dot cannot also be hollow, so its unpublished changes have a mark of their own.
@@ -108,7 +109,14 @@ export function StatusMark({
   spaced = false,
   children,
 }: {
-  tone: "draft" | "rejected" | "live" | "unpublished" | "held" | "warning";
+  tone:
+    | "draft"
+    | "rejected"
+    | "live"
+    | "unpublished"
+    | "held"
+    | "warning"
+    | "planned";
   // Set apart from what it follows, such as a person's name.
   spaced?: boolean;
   children: ReactNode;

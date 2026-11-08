@@ -7,7 +7,7 @@
 // their role does not let them see.
 
 import { z } from "zod";
-import { daySchema } from "./days.ts";
+import { daySchema, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { meaningSchema } from "./lists.ts";
 import { linkValueSchema } from "./links.ts";
@@ -34,9 +34,19 @@ export type HiringMeaning = z.infer<typeof hiringMeaningSchema>;
 export const temporaryId = (number: number): string =>
   `${temporaryIdPrefix}${String(number)}`;
 
+// What a planned hire is called in menus, notices, the change history, and on the org chart: its
+// name, or, while it has none, its position and ID, such as "Software Engineer, TBD-7", or its ID
+// alone to those who cannot see positions, for whom no position is given.
+export function hireCalled(
+  name: string | null,
+  shownId: string,
+  position: string | undefined,
+): string {
+  if (name !== null) return name;
+  return position === undefined ? shownId : `${position}, ${shownId}`;
+}
+
 const day = daySchema;
-// A month, such as 2026-10.
-const month = z.string().regex(/^\d{4}-\d{2}$/);
 
 // A hire's draft, as the user may see it: whether it adds, changes, or removes the hire, the fields it
 // changes, and their live values, which a draft adding the hire has none of.
@@ -52,6 +62,7 @@ export const hireDraftSchema = z.object({
     targetDate: day.nullable().optional(),
     stateId: z.string().optional(),
     managerId: z.string().nullable().optional(),
+    isManager: z.boolean().optional(),
     // The live values of the added columns the draft changes, as a person's draft has them.
     values: valuesSchema.default({}),
     links: linksSchema.default({}),
@@ -73,12 +84,15 @@ export const hireSchema = z.object({
   temporaryId: z.string().nullable(),
   // Left out for readers who cannot see the Positions list's tier.
   positionId: z.string().optional(),
-  // None, too, for readers who cannot see Restricted data while the manager has not yet started.
+  // A person, or a planned hire marked as a manager. None, too, for readers who cannot see
+  // Restricted data while the manager has not yet started.
   managerId: z.string().nullable(),
   managerName: z.string().nullable(),
+  // Whether other planned hires can be named as reporting to the hire, which is General.
+  isManager: z.boolean(),
   // The first month the hire can be allocated: that of its target date, or of its person's start
   // date once filled, or the current month for a hire with no target date.
-  expected: month,
+  expected: monthSchema,
   targetDate: day.nullable().optional(),
   stateId: z.string().optional(),
   // Its values in the added columns offered on planned hires, each at its column's visibility, as a
@@ -113,6 +127,7 @@ export const hireRequestSchema = z.object({
   targetDate: day.nullable().default(null),
   stateId: z.uuid().optional(),
   managerId: z.uuid().nullable().default(null),
+  isManager: z.boolean().default(false),
   values: requestedValuesSchema.default({}),
   links: z.record(z.uuid(), linkValueSchema).default({}),
   notes: requestedNotesSchema.optional(),
@@ -125,7 +140,8 @@ export const hiresRequestSchema = z.object({
   hires: z.array(hireRequestSchema).min(1).max(1000),
 });
 
-// Changes some of a hire's details, or moves it to another state. Clearing the requisition gives
+// Changes some of a hire's details, or moves it to another state. Its manager may be a person or a
+// planned hire marked as a manager. Clearing the requisition gives
 // the hire a new temporary ID. Columns named in values have their choices replaced, those named in
 // links their link, and those named in notes their note, as for a person.
 export const hireChangeSchema = z.object({
@@ -135,6 +151,7 @@ export const hireChangeSchema = z.object({
   targetDate: day.nullable().optional(),
   stateId: z.uuid().optional(),
   managerId: z.uuid().nullable().optional(),
+  isManager: z.boolean().optional(),
   values: requestedValuesSchema.optional(),
   links: requestedLinksSchema.optional(),
   notes: requestedNotesSchema.optional(),

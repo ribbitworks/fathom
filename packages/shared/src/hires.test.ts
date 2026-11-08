@@ -8,6 +8,7 @@ import {
   hireChangeSchema,
   hireRequestSchema,
   hiringMeaningSchema,
+  hireCalled,
   temporaryId,
 } from "./hires.ts";
 import { meaningsOf } from "./lists.ts";
@@ -31,14 +32,27 @@ describe("hiring meanings and temporary IDs", () => {
   });
 });
 
+describe("what a hire is called", () => {
+  it("is its name, or else its position and ID, or its ID alone without a position", () => {
+    expect(hireCalled("Fictional opening", "TBD-7", "Software Engineer")).toBe(
+      "Fictional opening",
+    );
+    expect(hireCalled(null, "TBD-7", "Software Engineer")).toBe(
+      "Software Engineer, TBD-7",
+    );
+    expect(hireCalled(null, "TBD-7", undefined)).toBe("TBD-7");
+  });
+});
+
 describe("adding a hire", () => {
-  it("gives it no name, a temporary ID, no target date, and no manager unless told otherwise", () => {
+  it("gives it no name, a temporary ID, no target date, no manager, and no Manager? mark unless told otherwise", () => {
     expect(hireRequestSchema.parse({ positionId: position })).toEqual({
       name: null,
       requisition: null,
       positionId: position,
       targetDate: null,
       managerId: null,
+      isManager: false,
       values: {},
       links: {},
     });
@@ -61,6 +75,7 @@ describe("adding a hire", () => {
       targetDate: "2027-03-01",
       stateId: state,
       managerId: manager,
+      isManager: false,
       values: {},
       links: {},
     });

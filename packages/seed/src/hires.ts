@@ -77,9 +77,12 @@ function recorded(
   action: Change["action"],
   tierOf: (field: string) => string,
 ): Change[] {
-  const { id, ...details } = row;
+  // The server records a hire's manager, a person or a planned hire, as one field.
+  const { id, managerHireId, isManager, ...details } = row;
   return Object.entries({
     ...details,
+    managerId: details.managerId ?? managerHireId,
+    isManager: isManager ? true : null,
     ...Object.fromEntries(
       Object.entries(values).map(([columnId, chosen]) => [
         valueField(columnId),
@@ -117,10 +120,13 @@ export async function seedHires(
     if (present.length > 0 || organization.hires.length === 0) return false;
     const { stateOf, tierOf } = await hiringSettings(transaction);
     const made: Change[] = [];
+    const hireIds = new Set(organization.hires.map(({ id }) => id));
+    // A planned manager comes before the hires under it.
     for (const {
       meaning,
       requisition,
       values,
+      managerId,
       ...hire
     } of organization.hires) {
       const temporaryNumber =
@@ -133,11 +139,14 @@ export async function seedHires(
               ).rows[0]?.number,
             )
           : null;
+      const managedByHire = managerId !== null && hireIds.has(managerId);
       const row: HireRow = {
         ...hire,
         requisition,
         temporaryNumber,
         stateId: stateOf(meaning),
+        managerId: managedByHire ? null : managerId,
+        managerHireId: managedByHire ? managerId : null,
       };
       await transaction.insert(plannedHires).values(row);
       const chosen = Object.entries(values).flatMap(([fieldId, choiceIds]) =>
@@ -218,6 +227,7 @@ export async function seedHireDrafts(
       positionId: open.positionId,
       targetDate: open.targetDate,
       managerId: open.managerId,
+      isManager: false,
       values: {},
       links: {},
     },

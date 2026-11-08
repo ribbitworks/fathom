@@ -85,7 +85,7 @@ Use only where this test says so. This deletes every account and record in the d
 ## Terms
 
 - **Metrics panel:** the panel titled **Metrics** that opens on the right of the People table.
-- **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as **150 people and 6 planned hires**.
+- **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as **150 people and 8 planned hires**.
 - **Draft menu:** the menu that opens from the **Draft** button above the table, next to the search box.
 - **Views menu:** the menu that opens from the **Views** button, next to the search box.
 - **Column menu:** the menu that opens when you select a column's name in the People table's header.
@@ -123,7 +123,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** **People** page open. Live only shown (P3).
 
 - [ ] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
-  - **Expected:** The count line says **150 people and 6 planned hires**. The figures are headed **Count**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 72 (46.2%), Test Engineer 36 (23.1%), SDET 31 (19.9%), Engineering Manager 17 (10.9%) and Architect 0 (0%). No row shows **Live**.
+  - **Expected:** The count line says **150 people and 8 planned hires**. The figures are headed **Count**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 73 (46.2%), Test Engineer 36 (22.8%), SDET 32 (20.3%), Engineering Manager 17 (10.8%) and Architect 0 (0%). No row shows **Live**.
   - **Notes:**
 
 ### METRICS-03: Two Columns Are Crossed
@@ -131,7 +131,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** As METRICS-02, with the panel open.
 
 - [ ] **Step 1.** Set **Break down by** to **Position**, then **and by** to **Site**.
-  - **Expected:** A table headed **Position by Site** has a column for each site and an **All** column, and a row for each position and an **All** row. An **Empty** column counts the planned hires, which have no site. The **All** row shows Kestrel Bay 31, Northmere 33, Ashgrove 47, Corran Quay 39, Empty 6 and All 156. **Count** is selected above the table.
+  - **Expected:** A table headed **Position by Site** has a column for each site and an **All** column, and a row for each position and an **All** row. An **Empty** column counts the planned hires, which have no site. The **All** row shows Kestrel Bay 31, Northmere 33, Ashgrove 47, Corran Quay 39, Empty 8 and All 158. **Count** is selected above the table.
   - **Notes:**
 
 ### METRICS-04: Metrics Follow the Filters
@@ -139,7 +139,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
 **Preconditions:** As METRICS-02, with **Break down by** set to **Position**.
 
 - [ ] **Step 1.** Open the **Site** column menu, select **Filter…**, and pick only **Ashgrove**. Press Esc.
-  - **Expected:** The bar above the table says **47 of 156**. The count line says **47 people**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 20 (42.6%), Test Engineer 12 (25.5%), SDET 6 (12.8%), Engineering Manager 9 (19.1%) and Architect 0 (0%).
+  - **Expected:** The bar above the table says **47 of 158**. The count line says **47 people**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 20 (42.6%), Test Engineer 12 (25.5%), SDET 6 (12.8%), Engineering Manager 9 (19.1%) and Architect 0 (0%).
   - **Notes:**
 
 - [ ] **Step 2.** Select **Clear all** in the bar above the table.

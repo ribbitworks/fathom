@@ -21,10 +21,16 @@ import { DraftMark, StatusMark } from "./status-mark.tsx";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
-// Named teams first, by name, then unnamed ones by their manager's name.
+// Named teams first, by name, then unnamed ones by their manager's name. A planned team is named
+// only once someone fills its planned manager, so it is not listed.
 function teamsOf(tree: OrgTree): ChartPerson[] {
   return [...tree.people.values()]
-    .filter((person) => person.nameOnly !== true && tree.reports.has(person.id))
+    .filter(
+      (person) =>
+        person.nameOnly !== true &&
+        person.planned === undefined &&
+        tree.reports.has(person.id),
+    )
     .sort((a, b) =>
       a.teamName === null || b.teamName === null
         ? Number(a.teamName === null) - Number(b.teamName === null) ||

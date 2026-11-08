@@ -576,15 +576,21 @@ function createPeopleAccess(database: Database): PeopleAccess {
     },
     readOrgChart: async (actor) => {
       requirePermission(actor, "org-chart:view");
-      const { includedRestricted, ...chart } = await readOrgChart(
-        database,
-        actor,
-      );
+      const { includedRestricted, includedHiringPlan, ...chart } =
+        await readOrgChart(database, actor);
       if (includedRestricted) {
         await recordRestrictedView(
           database,
           actor.user.id,
           await readTimeZone(database),
+        );
+      }
+      if (includedHiringPlan) {
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          await readTimeZone(database),
+          "hiring-plan-viewed",
         );
       }
       return chart;

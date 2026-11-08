@@ -5,12 +5,13 @@
 // a planned hire with none, by its position and ID, such as "Software Engineer, TBD-7", or by its
 // ID alone to those who cannot see positions.
 
-import type {
-  List,
-  Person,
-  PersonChange,
-  PersonRequest,
-  RowKind,
+import {
+  hireCalled,
+  type List,
+  type Person,
+  type PersonChange,
+  type PersonRequest,
+  type RowKind,
 } from "@fathom/shared";
 
 // A change to a row: a person's, or a planned hire's.
@@ -36,9 +37,7 @@ export function rowName(row: Person, lists: readonly List[]): string {
   const position = lists
     .find(({ builtIn }) => builtIn === "positions")
     ?.choices.find(({ id }) => id === row.positionId)?.label;
-  return position === undefined
-    ? row.employeeId
-    : `${position}, ${row.employeeId}`;
+  return hireCalled(null, row.employeeId, position);
 }
 
 // What a notice calls the rows being added: people, planned hires, or both.

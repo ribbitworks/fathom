@@ -823,6 +823,12 @@ th.liveColumn {
   color: var(--mantine-color-text);
 }
 
+/* A planned hire, not yet a person: a hollow grey dot, as it is a place still to fill. */
+.plannedMark .statusDot {
+  background: transparent;
+  border: 1.5px solid var(--mantine-color-gray-6);
+}
+
 .liveMark .statusDot {
   color: var(--mantine-color-green-6);
 }

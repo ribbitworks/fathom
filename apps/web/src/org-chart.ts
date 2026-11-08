@@ -4,6 +4,8 @@
 // manager, reports by name, and those with no manager at the top. Collapsing a manager hides
 // everyone below them. The people shown are laid out top to bottom, with reports who manage nobody
 // stacked in a column under their manager, so a large organization grows down rather than across.
+// Planned hires are drawn as placeholders under their managers, after the people there, and a
+// planned manager heads its planned team.
 // Each team is drawn in its colour, which reaches down to the teams below that have none. The
 // Draft menu chooses whether drafts of managers and team names are drawn beside the live chart, the
 // chart is drawn as drafts make it, or drafts are left out.
@@ -112,9 +114,14 @@ export interface OrgTree {
   reports: ReadonlyMap<string, readonly string[]>;
 }
 
+// People come before planned hires among a manager's reports.
+const plannedLast = (person: ChartPerson) =>
+  person.planned === undefined ? 0 : 1;
+
 export function treeOf(people: readonly ChartPerson[]): OrgTree {
   const sorted = [...people].sort(
     (a, b) =>
+      plannedLast(a) - plannedLast(b) ||
       byName.compare(a.preferredName, b.preferredName) ||
       a.id.localeCompare(b.id),
   );

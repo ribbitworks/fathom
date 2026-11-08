@@ -5,11 +5,14 @@
 // today, and any manager they still report to whose end date has passed. Each person comes with
 // General details only, and a draft's manager and dates, which are Restricted, only to readers who
 // see Restricted details, and a drafted position only to readers who see the Positions list.
+// Planned hires join it as placeholders, to every reader, and their drafts only to readers who see
+// the hiring plan.
 // Whether a manager has left follows from their end date, which is Restricted, so only readers who
 // see Restricted details are told, and see the people above them. Other readers see such a manager
 // only as People names them, by name and team, at the top of their part of the chart.
 
 import { z } from "zod";
+import { monthSchema } from "./days.ts";
 import { draftStateSchema } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
 
@@ -25,6 +28,8 @@ export const orgChartDraftSchema = z.object({
 
 export type OrgChartDraft = z.infer<typeof orgChartDraftSchema>;
 
+// A card on the chart: a person, or a planned hire's placeholder, named as its People row is, under
+// its manager, a person or a planned manager. A placeholder opens nothing and leads no named team.
 export const orgChartPersonSchema = z.object({
   id: z.string(),
   preferredName: z.string(),
@@ -41,6 +46,12 @@ export const orgChartPersonSchema = z.object({
   // A manager who has left, shown by name and team only to readers who do not see Restricted
   // details, who cannot be kept in the chart's address or have their team changed.
   nameOnly: z.boolean().optional(),
+  // Set for a planned hire: the month it is expected, never the day, and, for one with no name of
+  // its own, whose name is made from its position and ID, that ID, which its card shows in place of
+  // the made name, with the position under it, so the card's name fits.
+  planned: z
+    .object({ expected: monthSchema, shownId: z.string().optional() })
+    .optional(),
   draft: orgChartDraftSchema.optional(),
 });
 

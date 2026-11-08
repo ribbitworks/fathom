@@ -9,7 +9,7 @@
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
-import { daySchema } from "./days.ts";
+import { daySchema, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import { listLengths } from "./lists.ts";
@@ -145,9 +145,6 @@ export const rowKindSchema = z.enum(["person", "planned-hire"]);
 
 export type RowKind = z.infer<typeof rowKindSchema>;
 
-// A month, such as 2026-10.
-const month = z.string().regex(/^\d{4}-\d{2}$/);
-
 // A row of the People table as the user sees it: a person, or a planned hire, as its draft, if any,
 // makes it, with the draft beside, or, for a draft that removes it, as it is. A planned hire's
 // name, which may be empty, is its preferred name, its requisition or temporary ID its ID, and its
@@ -162,7 +159,7 @@ export const personSchema = z.object({
   // first choice meaning Hired. Left out for users who cannot see the list's tier.
   stateId: z.string().optional(),
   // The first month a planned hire can be allocated.
-  expected: month.optional(),
+  expected: monthSchema.optional(),
   // A choice in the built-in Positions list, left out for users who cannot see the list's tier.
   positionId: z.string().optional(),
   // Left out for users who cannot see Restricted details; null when not set.
