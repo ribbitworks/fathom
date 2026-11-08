@@ -9,6 +9,8 @@ import type { Choice, Field, List, Person } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import { act, render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import { countRows } from "./metrics.ts";
 import {
@@ -1375,6 +1377,19 @@ describe("planned hires beside people", () => {
       .map((cell) => cell.id)
       .filter((id) => !id.includes("new"));
     expect(names).toEqual(["cell-h1-preferredName", "cell-p1-preferredName"]);
+  });
+});
+
+describe("the button showing a person's details", () => {
+  // The simulated browser neither lays out the page nor applies :active, so the stylesheet is read.
+  it("is not placed with a transform, which Mantine replaces while a button is pressed", () => {
+    const stylesheet = readFileSync(
+      join(import.meta.dirname, "people-grid.module.css"),
+      "utf8",
+    );
+    const rule = /\.showDetails\s*\{([^}]*)\}/.exec(stylesheet)?.[1];
+    expect(rule).toContain("position: absolute");
+    expect(rule).not.toMatch(/\btransform\s*:/);
   });
 });
 

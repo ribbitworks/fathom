@@ -2936,7 +2936,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                       ];
                     })}
                     {withActions && (
-                      <Table.Td className={classes.recordCell}>
+                      <Table.Td
+                        className={[
+                          classes.recordCell,
+                          classes.recordActionsCell,
+                        ].join(" ")}
+                      >
                         {row.record &&
                           hasMenu(row.record) &&
                           rowMenu(row.record)}

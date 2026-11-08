@@ -7,15 +7,18 @@
 
 .showDetails {
   position: absolute;
-  top: 50%;
+  /* Centred without a transform, which Mantine replaces while a button is pressed, moving it from
+     under the pointer. */
+  top: 0;
   right: 4px;
+  bottom: 0;
+  margin-block: auto;
   opacity: 0;
-  transform: translateY(-50%);
 }
 
 td:has(> .showDetails) {
   /* The button's own size, which the cell does not inherit from it, and a little room beside it. */
-  --show-details-room: calc(1.375rem * var(--mantine-scale) + 4px);
+  --show-details-room: calc(var(--fathom-small-button-size) + 4px);
 
   position: relative;
 }

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-08"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -512,3 +512,17 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 **Afterwards:** R2.
+
+### DRAFT-26: A Row With a Draft Ends With One Menu Button
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-25.
+
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
+
+- [ ] **Step 1.** In the search box above the table, type **Simone Jean**.
+  - **Expected:** Her row shows, tinted blue, with a yellow dot and **Draft** after her name, and a row in grey under it with a green dot and **Live**.
+  - **Notes:**
+
+- [ ] **Step 2.** Scroll the table all the way to the right, and read the end of that row.
+  - **Expected:** The row ends with one **⋯** button, with nothing beside it.
+  - **Notes:**

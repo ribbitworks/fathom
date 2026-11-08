@@ -79,6 +79,8 @@ export const cssVariables: CSSVariablesResolver = (mantine) => ({
     "--fathom-table-head-height": "2.25rem",
     // How far a cell's editor reaches past its cell's text on each side, to meet the cell's edges.
     "--fathom-cell-editor-bleed": "8px",
+    // Mantine sets the size of its small icon buttons on each button only, out of a cell's reach.
+    "--fathom-small-button-size": "calc(1.375rem * var(--mantine-scale))",
     // Room for a focus ring, which Mantine draws 2px out with a 2px outline, inside an edge that clips.
     "--fathom-focus-room": "4px",
   },

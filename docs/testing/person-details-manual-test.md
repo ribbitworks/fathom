@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-08"
 ---
 
 # Manual Test: Person Details
@@ -156,11 +156,15 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A small button, an arrow pointing out of a box, appears at the right of her **Name** cell. Pointing away from the row hides it again.
   - **Notes:**
 
-- [ ] **Step 3.** Point at her row again, and select that button.
+- [ ] **Step 3.** Point at her row again, put the pointer on that arrow button, and press the mouse button without letting go.
+  - **Expected:** The arrow button stays under the pointer.
+  - **Notes:**
+
+- [ ] **Step 4.** Let go of the mouse button.
   - **Expected:** The details panel slides out on the right, headed **Lorenza Thiel**, with the link **Show on org chart** under her position, and the table narrows to make room. **Details** shows no **Start** or **End**, and **Reporting** shows no **Manager since**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Show on org chart**.
+- [ ] **Step 5.** Select **Show on org chart**.
   - **Expected:** The **Org chart** page opens. The finder reads **Lorenza Thiel**, and her card has a blue ring around it.
   - **Notes:**
 

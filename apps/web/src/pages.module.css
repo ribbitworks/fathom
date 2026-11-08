@@ -903,8 +903,18 @@ th.liveColumn {
   background: var(--mantine-primary-color-filled);
 }
 
+/* As wide as a row's small menu button and its cell's padding. */
 .recordColActions {
-  width: 2.75rem;
+  width: calc(
+    var(--fathom-small-button-size) + 2 *
+      var(--table-horizontal-spacing, var(--mantine-spacing-sm))
+  );
+}
+
+/* A button a fraction too wide for its cell, as at some browser zooms, would otherwise bring an
+   ellipsis beside it. */
+.recordActionsCell {
+  text-overflow: clip;
 }
 
 /* Frozen columns stay on the left while the rest scroll sideways under them, so each frozen cell
