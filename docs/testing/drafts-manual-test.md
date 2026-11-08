@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies how drafts of people, columns, lists, choices, and column and choice orders are shown on the People, Lists and Drafts pages, and what a Workforce Administrator, an Engineering Director and a Project Manager can do with them, including drafts that use drafts of another kind, and that nobody but the Engineering Director approves drafts they changed, shown here with a release's draft.
+Verifies how drafts of people, columns, lists, choices, and column and choice orders are shown on the People, Lists and Drafts pages, and what a Workforce Administrator, an Engineering Director and a Project Manager can do with them, including drafts that use drafts of another kind, and that nobody approves drafts they changed unless their role grants it, as [Roles](../product/roles.md#what-each-role-can-do) sets out, shown here with a release's draft.
 
 ## Test Environment
 
@@ -23,9 +23,9 @@ Verifies how drafts of people, columns, lists, choices, and column and choice or
 
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes. Each account must hold its role as Fathom starts it: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change people, lists and columns, and its changes are drafts; it cannot approve them.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can change people, lists and columns, and approve and reject drafts, including those it changed itself.
-- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It can change releases, as drafts, and approve and reject drafts, but not those it changed.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Project Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 

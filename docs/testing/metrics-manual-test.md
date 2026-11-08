@@ -23,7 +23,7 @@ Verifies the People table's Metrics panel: breaking people down by one column or
 
 R1 creates this account, with every other development account, so it exists once R1 has run. The accounts share one password, which R1 prints when it finishes. Each account must hold its role as Fathom starts it: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It sees every column on People, including Start and End, and can save views.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 

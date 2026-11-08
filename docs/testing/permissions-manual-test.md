@@ -23,8 +23,8 @@ Verifies, for each permission a role can grant, that an account holding only tha
 
 R2 creates these accounts, with every other development account. They share one password, which R2 prints when it finishes.
 
-- **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds only the Administrator role, so it can edit roles.
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, so it can do exactly what Team Member grants.
+- **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds the Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. R3 uses it to add a column.
 - **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. R3 uses it to approve that column.
 

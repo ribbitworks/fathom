@@ -23,9 +23,9 @@ Verifies the People table's **Manager**, **Manager?**, **Manager since**, **Team
 
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change people, and its changes are drafts; it cannot approve them.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can change people, and approve and reject drafts, including those it changed itself.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people without their Restricted details, such as their dates, and cannot change them.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 

@@ -24,10 +24,10 @@ Verifies what only a person can judge on the Accounts page and the screens aroun
 
 R2 creates these accounts, with every other development account, each holding one role, as [Development Setup](../design/development-setup.md#development-accounts) lists. They share one password, which R2 prints when it finishes. Every role is as Fathom starts it.
 
-- **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds the Administrator role, so it can manage accounts, edit roles, and see the access history.
+- **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds the Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Superuser account:** `superuser@fathom.test`, shown in Fathom as **Superuser**. It holds the Superuser role, which grants every permission.
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, and cannot manage accounts.
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 

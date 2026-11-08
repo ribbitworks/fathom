@@ -23,9 +23,9 @@ Verifies a person's details in the side panel beside the org chart and People: w
 
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
 
-- **Engineering Manager account:** `engineering.manager@fathom.test`, shown in Fathom as **Engineering Manager**. It sees people, with their Restricted details, such as their dates, and cannot change them.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people without their Restricted details, and cannot change them.
-- **Engineering Operations Manager account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It sees people, with their Restricted details, and changes them.
+- **Engineering Manager account:** `engineering.manager@fathom.test`, shown in Fathom as **Engineering Manager**. It holds the Engineering Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Operations Manager account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 

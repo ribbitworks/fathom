@@ -11,12 +11,16 @@ not here. The standards they point to are in `docs/standards/shared/`.
 ### Reading the Standards
 
 - Linked files are not loaded on their own. At the start of every session,
-  including after the context is cleared, read in full every standard linked
-  from these rules or the project's `AGENTS.md`, language standards included.
-- Just before each step a standard governs, re-read its section rather than
+  including after the context is cleared, read the core principles and the
+  agent workflow in full.
+- Before changing files, read in full each standard whose `applies_to`
+  frontmatter names those files' types, such as the TypeScript standard before
+  editing a `.ts` file. Standards that apply to every file are read at the
+  steps they govern instead.
+- Just before each step a standard governs, read its section rather than
   working from memory: for example, the commit message rules before proposing a
   commit message or pull request text, the review standards before a review,
-  and the documentation standards before editing documents.
+  and the testing standards before writing tests.
 
 ### Working Mode
 

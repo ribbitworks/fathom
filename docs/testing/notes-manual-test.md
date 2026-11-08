@@ -23,9 +23,9 @@ Verifies what only a person can judge of Note columns on the People table: how t
 
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It adds People's columns and changes people; its changes are drafts, and it cannot approve them.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It changes people, and approves and rejects drafts.
-- **Executive account:** `executive@fathom.test`, shown in Fathom as **Executive**. It sees people, with all their details, without being able to change them.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Executive account:** `executive@fathom.test`, shown in Fathom as **Executive**. It holds the Executive role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 

@@ -24,9 +24,9 @@ Verifies planned hires shown as rows of the People table: how their rows look be
 
 R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change people and planned hires, and its changes are drafts; it cannot approve them.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people and the planned hires' placeholders, and cannot change them.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 

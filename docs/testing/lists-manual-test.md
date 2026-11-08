@@ -23,9 +23,9 @@ Verifies the Lists page's built-in lists, Positions and Hiring states: their mar
 
 R2 creates these accounts, with every other development account. They share one password, which R2 prints when it finishes. Every account holds its role as Fathom starts it.
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It can change lists, and its changes are drafts; it cannot approve them.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It can approve and reject drafts.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It sees people without their Restricted details.
+- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 

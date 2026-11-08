@@ -13,21 +13,21 @@ Fathom is the single place where a software organization's managers plan project
 
 ## Users
 
-About 20–30 users at first, mostly managers and leads, in one private company operating in British Columbia, with employees in several countries. Team members may be given accounts later. Not all users can edit.
+About 20–30 users at first, mostly managers and leads, in one private company operating in British Columbia, with employees in several countries. Team members may be given accounts later. Not all users can edit; [Roles](roles.md) sets out who can do what.
 
 Personas are named as they are widely known in the software industry. Each organization matches them to its own titles, such as those shown.
 
-| Persona | Typical titles | Primary needs | Expected access |
-| --- | --- | --- | --- |
-| Product Manager | Product Manager, Product Owner | Shape the roadmap, prioritize features | Edit |
-| Project Manager | Project Manager, Program Manager, Delivery Manager | Deliver projects' scope to customers by their dates, maintain milestones, often own projects, approve plan changes | Edit |
-| Engineering Manager | Engineering Manager, Software Development Manager | Manage people, assign them to work, balance load across the team | Edit |
-| Feature Lead | Feature Lead, Tech Lead | Lead a feature team, and see its features, members, and their load | Edit |
-| Engineering Director | Director, Head of Engineering | See status and capacity across teams, decide on trade-offs, approve plan changes | Edit, and view sensitive data |
-| Engineering Operations Manager | Engineering Operations Manager, Chief of Staff, Resource Manager | Maintain employee details, teams, reporting lines, the hiring plan, and planning configuration | Edit workforce data |
-| Executive | VP, CTO | See the roadmap and risks at a glance | View, including sensitive data |
-| Team Member | Software Engineer, Test Engineer | See their own assignments and the plan they are part of | View |
-| Fathom Administrator | System administrator | Run Fathom, its accounts, and its settings, without seeing people data | Accounts and settings only |
+| Persona | Typical titles | Primary needs |
+| --- | --- | --- |
+| Product Manager | Product Manager, Product Owner | Shape the roadmap, prioritize features |
+| Project Manager | Project Manager, Program Manager, Delivery Manager | Deliver projects' scope to customers by their dates, maintain milestones, often own projects, approve plan changes |
+| Engineering Manager | Engineering Manager, Software Development Manager | Manage people, assign them to work, balance load across the team |
+| Feature Lead | Feature Lead, Tech Lead | Lead a feature team, and see its features, members, and their load |
+| Engineering Director | Director, Head of Engineering | See status and capacity across teams, decide on trade-offs, approve plan changes |
+| Engineering Operations Manager | Engineering Operations Manager, Chief of Staff, Resource Manager | Maintain employee details, teams, reporting lines, the hiring plan, and planning configuration |
+| Executive | VP, CTO | See the roadmap and risks at a glance |
+| Team Member | Software Engineer, Test Engineer | See their own assignments and the plan they are part of |
+| Fathom Administrator | System administrator | Run Fathom, its accounts, and its settings, without seeing people data |
 
 ## Goals for v1
 
@@ -101,5 +101,5 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 1. **Roles and approval:** Which roles exist, and what can each see, edit, and approve? See the proposal in [Roles](roles.md). Which changes need approval is decided in the [Decisions Log](decisions.md#planning).
 1. **Privacy review:** A document describing the personal data Fathom holds and how it is protected will be prepared for HR to review and approve. Which laws apply, in Canada, India, and other countries, is to be confirmed in that review.
 1. **Backup location:** Where are backup files kept?
-1. **Project Manager input:** Project Managers approve feature teams through their role, as [Roles](roles.md) sets out. Is other input needed on whether teams are in place, such as comments or proposals?
+1. **Project Manager input:** How do Project Managers give input on whether teams are in place, beyond what [Roles](roles.md) grants, such as comments or proposals?
 1. **Timeline changes:** The timeline goal asks for drag and drop to change dates and assignments. [ADR 0009](../adr/0009-roadmap-and-timeline-views.md) proposes moving features between cycles and feature teams first. Is dragging to shift a feature's allocations by months also needed?

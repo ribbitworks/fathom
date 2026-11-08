@@ -53,7 +53,9 @@ after it was written is debt, not a finding against an unrelated change:
 
 ## Rating System
 
-Each focus area is rated from 1 to 5, or marked not applicable:
+Each applicable focus area, one the change touches, is rated from 1 to 5;
+Documentation always applies. The detailed review lists the areas that do not
+apply in one line, without a section each:
 
 - **5, Excellent:** meets every standard, with no findings.
 - **4, Good:** meets the standards, with minor suggestions.
@@ -97,8 +99,9 @@ are 24-hour.
    [Commit Message Rules](#commit-message-rules).
 1. **PR description:** intent and impact.
 1. **Highlights:** what the change does well, specifically.
-1. **Detailed review:** one section per focus area, with its rating, file
-   paths, line numbers and reasoning.
+1. **Detailed review:** one section per applicable focus area, with its rating,
+   file paths, line numbers and reasoning, then a one-line list of the areas
+   that do not apply.
 1. **Action list:** numbered, ordered BLOCKING, HIGH, MEDIUM, LOW; each item has
    its priority, file, line where it applies, and fix.
 
@@ -129,8 +132,10 @@ are 24-hour.
 
 ### SOLID Principles
 
-Rate and comment on each of the five principles separately, each with its own
-reasoning, paths and lines. Do not collapse them into one score. See
+When the change adds or reshapes code, rate and comment on each of the five
+principles separately, each with its own reasoning, paths and lines. Do not
+collapse them into one score. A change to documents, tests or configuration only
+marks them not applicable. See
 [core-principles.md § SOLID](core-principles.md#solid) for what each means.
 
 - **Single Responsibility:** flag types doing two jobs, such as a UI layer
