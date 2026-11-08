@@ -105,7 +105,19 @@ describe("approving by area", () => {
     orders: [randomUUID()],
     columns: [randomUUID()],
     columnOrder: true,
-    records: [release, stream, { type: "cycle-pattern", id: randomUUID() }],
+    records: [
+      release,
+      stream,
+      ...(
+        [
+          "cycle-pattern",
+          "customer",
+          "proposal",
+          "project",
+          "milestone",
+        ] as const
+      ).map((type) => ({ type, id: randomUUID() })),
+    ],
   });
 
   it("approves each kind with an Approve permission on the Roles grid", () => {
@@ -151,6 +163,12 @@ describe("approving by area", () => {
       "cycle-pattern",
       "release",
     ]);
-    expect(approvableKinds(["plan:approve", "people:view"])).toEqual([]);
+    expect(approvableKinds(["plan:approve", "people:view"])).toEqual([
+      "customer",
+      "proposal",
+      "project",
+      "milestone",
+    ]);
+    expect(approvableKinds(["features:edit", "people:view"])).toEqual([]);
   });
 });

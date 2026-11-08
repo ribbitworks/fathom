@@ -78,7 +78,11 @@ import {
   asksForLists,
   rejectListDrafts,
 } from "./list-approvals.ts";
-import { approveRecordDrafts, rejectRecordDrafts } from "./records.ts";
+import {
+  approveRecordDrafts,
+  refuseRemovingNamedPeople,
+  rejectRecordDrafts,
+} from "./records.ts";
 import { inListOrder, readColumns, valueField, valueRows } from "./values.ts";
 import { readToday } from "./settings.ts";
 import {
@@ -310,6 +314,7 @@ async function approvePeopleIn(
   );
   await refuseRemovingManagers(transaction, removed);
   await refuseRemovingHiresPeople(transaction, removed);
+  await refuseRemovingNamedPeople(transaction, removed);
   await apply(transaction, wanted);
   await applyReporting(transaction, wanted, today);
   const unmarked = ids.filter(

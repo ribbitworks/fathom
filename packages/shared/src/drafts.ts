@@ -53,6 +53,10 @@ export const recordTypeSchema = z.enum([
   "release-stream",
   "cycle-pattern",
   "release",
+  "customer",
+  "proposal",
+  "project",
+  "milestone",
 ]);
 
 export type RecordType = z.infer<typeof recordTypeSchema>;
@@ -73,7 +77,13 @@ export const recordDraftSchema = z.object({
   changed: z.array(z.string()),
   live: z.record(
     z.string(),
-    z.union([z.string(), z.number(), z.boolean(), z.null()]),
+    z.union([
+      z.string(),
+      z.number(),
+      z.boolean(),
+      z.null(),
+      z.array(z.string()),
+    ]),
   ),
   uses: z.array(recordRefSchema),
   ...draftShape,
@@ -172,6 +182,10 @@ export const approvePermissions = {
   "release-stream": "releases:approve",
   "cycle-pattern": "releases:approve",
   release: "releases:approve",
+  customer: "plan:approve",
+  proposal: "plan:approve",
+  project: "plan:approve",
+  milestone: "plan:approve",
 } as const satisfies Record<DraftKind, Permission>;
 
 export type ApprovePermission = (typeof approvePermissions)[DraftKind];
@@ -182,6 +196,7 @@ export const approvedAreaNames: Record<ApprovePermission, string> = {
   "hiring-plan:approve": "planned hires",
   "configuration:approve": "configuration",
   "releases:approve": "releases",
+  "plan:approve": "the plan",
 };
 
 // Whether drafts are being approved or rejected.
@@ -226,6 +241,10 @@ export function kindsAsked(asked: DraftsRequest): DraftKind[] {
     "release-stream": records.has("release-stream"),
     "cycle-pattern": records.has("cycle-pattern"),
     release: records.has("release"),
+    customer: records.has("customer"),
+    proposal: records.has("proposal"),
+    project: records.has("project"),
+    milestone: records.has("milestone"),
   };
   // The kind is always one of the fixed list above.
   // eslint-disable-next-line security/detect-object-injection

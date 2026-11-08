@@ -287,7 +287,6 @@ export const permissionDescriptions: Record<
 // The Roles page marks them, as the Decisions Log sets out, so roles can be set up ahead of the
 // features. Building a feature takes its permissions out of this list.
 export const unbuiltPermissions: readonly Permission[] = [
-  "plan:approve",
   "features:edit",
   "allocations:view",
   "allocations:edit",

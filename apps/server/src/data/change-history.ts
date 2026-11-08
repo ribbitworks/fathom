@@ -90,24 +90,26 @@ const hiringKinds: readonly RecordType[] = ["planned-hire"];
 // The fields a planned hire is named by: its position and its ID.
 const hireNameFields = ["name", "positionId", "requisition", "temporaryNumber"];
 
-// The plan's records, such as release streams, are seen with the plan or planning configuration.
+// The plan's records, such as release streams.
 const planKinds: readonly RecordType[] = recordTypeSchema.options;
 
-// The plan's records are General plan data, seen with the plan or planning configuration rather
-// than through the tiers of people's data.
-const seesPlanKinds = (actor: Actor) =>
-  actor.permissions.includes("plan:view") ||
-  actor.permissions.includes("configuration:view");
+// The kinds of the plan's records the actor sees: General plan data, seen with the permissions each
+// kind is read with rather than through the tiers of people's data.
+const seenPlanKinds = (actor: Actor): RecordType[] =>
+  recordKinds
+    .filter((kind) =>
+      kind.readWith.some((permission) =>
+        actor.permissions.includes(permission),
+      ),
+    )
+    .map((kind) => kind.type);
 
 // The kinds of record that belong to another, which the history names them by, as a choice is by
 // its list.
 const belonging = new Map<string, string>([
   ["list-item", "listId"],
-  ...recordKinds.flatMap((kind) =>
-    Object.keys(kind.links).map((field): [string, string] => [
-      kind.type,
-      field,
-    ]),
+  ...recordKinds.flatMap((kind): [string, string][] =>
+    kind.belongsTo === undefined ? [] : [[kind.type, kind.belongsTo]],
   ),
 ]);
 
@@ -132,6 +134,18 @@ export interface ReadChangeHistory {
 const referencesOne = (field: string) =>
   ["listId", "order", "managerId", "positionId", "stateId"].includes(field);
 
+// The fields of each kind of the plan's records that hold one record's identifier or a list of
+// them: its links, and the people and choices it names.
+const planReferences = new Map(
+  recordKinds.map((kind) => [
+    kind.type as string,
+    new Set([...Object.keys(kind.links), ...Object.keys(kind.refers ?? {})]),
+  ]),
+);
+
+const referencesPlan = (row: StoredChange) =>
+  planReferences.get(row.recordType)?.has(row.field) === true;
+
 const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
 
@@ -143,6 +157,11 @@ function referencedIds(row: StoredChange): string[] {
   }
   if (row.recordType === "column-order" || row.recordType === "choice-order") {
     return values.flatMap(strings);
+  }
+  if (referencesPlan(row)) {
+    return values.flatMap((value) =>
+      typeof value === "string" ? [value] : strings(value),
+    );
   }
   if (
     referencesOne(row.field) ||
@@ -368,7 +387,8 @@ function shown(
   if (
     fieldOfValue(row.field) !== null ||
     row.recordType === "column-order" ||
-    row.recordType === "choice-order"
+    row.recordType === "choice-order" ||
+    (referencesPlan(row) && Array.isArray(value))
   ) {
     return value === null ? null : named(strings(value));
   }
@@ -378,6 +398,7 @@ function shown(
   }
   if (
     referencesOne(row.field) ||
+    referencesPlan(row) ||
     (row.recordType === "planned-hire" && row.field === "filledBy")
   ) {
     return typeof value === "string" ? (name(value) ?? null) : null;
@@ -451,6 +472,7 @@ async function visibleRows(
     held.size === 0
       ? new Map<string, Tier>()
       : await viewTiersNow(database, held);
+  const seenPlan = seenPlanKinds(actor);
   return rows.flatMap((row) => {
     // A tier the server no longer knows is treated as the most sensitive rather than trusted.
     const recorded = storedTier(row.tier);
@@ -477,7 +499,7 @@ async function visibleRows(
         : tiers;
     const tier = mostSensitive(sensitivities.map(tierOfSensitivity));
     const seen = planKinds.includes(row.recordType as RecordType)
-      ? seesPlanKinds(actor) && tier === "general"
+      ? seenPlan.includes(row.recordType as RecordType) && tier === "general"
       : sensitivities.every((each) => seesSensitivity(actor, each));
     return seen ? [{ row, tier }] : [];
   });
@@ -779,11 +801,11 @@ export async function readChangeHistory(
   const hiring =
     actor.permissions.includes("people:view") &&
     seesSensitivity(actor, "hiring-plan");
-  const plan = seesPlanKinds(actor);
+  const plan = seenPlanKinds(actor);
   const tiers = tierSchema.options.filter((tier) =>
     seesSensitivity(actor, tier),
   );
-  if (kinds.length === 0 && !plan) {
+  if (kinds.length === 0 && plan.length === 0) {
     return { entries: [], next: null, includedSensitive: false };
   }
   const mayShow = or(
@@ -803,11 +825,8 @@ export async function readChangeHistory(
           ),
         )
       : undefined,
-    plan
-      ? and(
-          inArray(changes.recordType, [...planKinds]),
-          eq(changes.tier, "general"),
-        )
+    plan.length > 0
+      ? and(inArray(changes.recordType, plan), eq(changes.tier, "general"))
       : undefined,
   );
   const words = searchWords(search);

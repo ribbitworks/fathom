@@ -33,6 +33,7 @@ import { historyRoutes } from "./routes/history.ts";
 import { listRoutes } from "./routes/lists.ts";
 import { peopleRoutes } from "./routes/people.ts";
 import { hireRoutes } from "./routes/hires.ts";
+import { projectRoutes } from "./routes/projects.ts";
 import { releaseRoutes } from "./routes/releases.ts";
 import { undoRoutes } from "./routes/undo.ts";
 import { unpublishedRoutes } from "./routes/unpublished.ts";
@@ -201,6 +202,7 @@ export async function buildApp(options: AppOptions) {
   await app.register(
     releaseRoutes(options.data.releases, options.data.records),
   );
+  await app.register(projectRoutes(options.data.projects));
   await app.register(undoRoutes(options.data));
   await app.register(unpublishedRoutes(options.data.unpublished));
   await app.register(greetingRoutes(options.data));

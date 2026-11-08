@@ -113,6 +113,10 @@ const release = () => ({
   firstCycle: "2027-01-04",
   lastCycle: "2027-01-04",
 });
+const milestone = () => ({
+  name: unique("Fictional Milestone"),
+  date: "2027-01-04",
+});
 const role = () => ({
   name: unique("Fictional Role"),
   description: "",
@@ -166,6 +170,15 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     },
     asked: () => ({ records: [{ type: "release", id: id() }] }),
   },
+  {
+    variant: "plan records",
+    needs: {
+      kind: "permissions",
+      all: ["plan:approve"],
+      any: ["plan:view", "configuration:view"],
+    },
+    asked: () => ({ records: [{ type: "project", id: id() }] }),
+  },
 ];
 
 // Who may discard and resend drafts of each kind of the plan's records.
@@ -173,6 +186,10 @@ const recordKinds: { type: string; needs: Needs }[] = [
   { type: "release-stream", needs: allOf("configuration:edit") },
   { type: "cycle-pattern", needs: allOf("configuration:edit") },
   { type: "release", needs: allOf("plan:edit") },
+  { type: "customer", needs: allOf("plan:edit") },
+  { type: "proposal", needs: allOf("plan:edit") },
+  { type: "project", needs: allOf("plan:edit") },
+  { type: "milestone", needs: allOf("plan:edit") },
 ];
 
 // Every API route, with what it needs. The web routes are left out: the test app serves no front
@@ -581,6 +598,49 @@ const routes: Route[] = [
     pattern: "/api/release-streams/:streamId/releases/:id/note",
     needs: allOf("plan:edit"),
     body: () => ({ note: "Fictional **note**" }),
+  },
+  { method: "GET", pattern: "/api/projects", needs: allOf("plan:view") },
+  // Owners by name and proposal statuses, for those who see the plan but not People or Lists.
+  {
+    method: "GET",
+    pattern: "/api/projects/choices",
+    needs: allOf("plan:view"),
+  },
+  ...["customers", "projects", "proposals"].flatMap((path): Route[] => [
+    {
+      method: "POST",
+      pattern: `/api/${path}`,
+      needs: allOf("plan:edit"),
+      body: named,
+    },
+    {
+      method: "PUT",
+      pattern: `/api/${path}/:id`,
+      needs: allOf("plan:edit"),
+      body: named,
+    },
+    {
+      method: "DELETE",
+      pattern: `/api/${path}/:id`,
+      needs: allOf("plan:edit"),
+    },
+  ]),
+  {
+    method: "POST",
+    pattern: "/api/projects/:projectId/milestones",
+    needs: allOf("plan:edit"),
+    body: milestone,
+  },
+  {
+    method: "PUT",
+    pattern: "/api/projects/:projectId/milestones/:id",
+    needs: allOf("plan:edit"),
+    body: milestone,
+  },
+  {
+    method: "DELETE",
+    pattern: "/api/projects/:projectId/milestones/:id",
+    needs: allOf("plan:edit"),
   },
   ...["/draft", "/draft/rejection"].flatMap((end) =>
     recordKinds.map(({ type, needs }): Route => ({

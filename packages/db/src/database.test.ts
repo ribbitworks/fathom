@@ -821,7 +821,7 @@ describe("planned hires", () => {
     return row.rows[0]?.id as string;
   }
 
-  it("starts with the built-in lists, Employee and Manager positions, hiring states each with a meaning, and keeps them from being retired", async () => {
+  it("starts with the built-in lists, Employee and Manager positions, hiring states each with a meaning, and proposal statuses, and keeps them from being retired", async () => {
     await withClient(database.app, async (client) => {
       const lists = await client.query(
         "SELECT name, built_in, visibility FROM lists WHERE built_in IS NOT NULL ORDER BY built_in",
@@ -833,6 +833,20 @@ describe("planned hires", () => {
           visibility: "general",
         },
         { name: "Positions", built_in: "positions", visibility: "general" },
+        {
+          name: "Proposal statuses",
+          built_in: "proposal-statuses",
+          visibility: "general",
+        },
+      ]);
+      const statuses = await client.query(
+        "SELECT label FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'proposal-statuses' ORDER BY i.position",
+      );
+      expect(statuses.rows.map(({ label }) => String(label))).toEqual([
+        "Open",
+        "Won",
+        "Lost",
+        "Withdrawn",
       ]);
       const states = await client.query(
         "SELECT label, meaning FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'hiring-states' ORDER BY i.position",

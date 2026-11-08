@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions and Hiring states: their mark, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions, Hiring states and Proposal statuses: their mark, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
 
 ## Test Environment
 
@@ -72,7 +72,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read the **Name** column of the **Hiring states** and **Positions** rows.
+- [ ] **Step 1.** Read the **Name** column of the **Hiring states**, **Positions** and **Proposal statuses** rows.
   - **Expected:** Each name has a grey **Built in** label beside it. No other list has one.
   - **Notes:**
 
@@ -183,5 +183,5 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
 - [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
-  - **Expected:** The table shows only **Hiring states** and **Positions**, and the count reads **2 of 9**.
+  - **Expected:** The table shows only **Hiring states**, **Positions** and **Proposal statuses**, and the count reads **3 of 10**.
   - **Notes:**

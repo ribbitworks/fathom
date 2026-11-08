@@ -437,6 +437,32 @@ describe("the table of lists", () => {
     ).toBeTruthy();
   });
 
+  it("says under proposal statuses' choices what the list is for", async () => {
+    serverAnswers({
+      "GET /api/session": editor,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              builtIn: "proposal-statuses",
+              name: "Proposal statuses",
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", {
+      name: "Proposal statuses",
+      level: 2,
+    });
+    expect(
+      screen.getByText(
+        /Every proposal has one of these statuses\.\s+Keep at least one\./,
+      ),
+    ).toBeTruthy();
+  });
+
   it("shows each current list with its description and offered choices in order", async () => {
     serverAnswers({
       "GET /api/session": viewer,

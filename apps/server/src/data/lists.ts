@@ -89,6 +89,7 @@ import {
   writeDraft,
 } from "./drafts.ts";
 import { builtInColumns } from "./built-in-lists.ts";
+import { recordNaming } from "./records.ts";
 
 type ListRow = typeof lists.$inferSelect;
 type ChoiceRow = typeof listItems.$inferSelect;
@@ -513,8 +514,8 @@ export async function refuseIfUsed(
 export const choiceInUse =
   "This choice cannot be removed while it is in use; retire it instead";
 
-// Refuses removing a choice that people or planned hires have, live or in a draft, as the editor
-// sees the drafts: as a value in a column, a position, or a state.
+// Refuses removing a choice that people, planned hires, or the plan's records have, live or in a
+// draft, as the editor sees the drafts: as a value in a column, a position, a state, or a status.
 export async function refuseIfChosen(
   transaction: Reader,
   id: string,
@@ -535,6 +536,7 @@ export async function refuseIfChosen(
   if (
     Number(held?.total) + Number(positioned?.total) + Number(hired?.total) >
       0 ||
+    (await recordNaming(transaction, "choice", [id], editor)) !== undefined ||
     (await draftsUse(transaction, { choice: id }, editor))
   ) {
     throw new ConflictError(choiceInUse);

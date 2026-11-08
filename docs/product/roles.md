@@ -35,7 +35,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | View | None |
 | Lists of choices, and People's columns and their order | None | None | None | View lists, decided by the owner on 2026-11-01 | None | Edit | Edit | View lists | None | None |
 | Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | Edit | None |
-| Approving drafts of the plan: features, projects, proposals, and the roadmap (not built yet) | None | Approve | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts of the plan: features, projects, proposals, and the roadmap | None | Approve | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of releases, release streams, and cycle patterns | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of people, teams, and reporting lines | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of planned hires | None | None | None | Approve | None | Approve | None | None | None | None |

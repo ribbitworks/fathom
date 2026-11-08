@@ -201,7 +201,11 @@ export const accessHistory = fathomSchema.table(
 // the choices of those that have them, as SQL lists.
 const sqlList = (values: readonly string[]) =>
   values.map((value) => `'${value}'`).join(", ");
-const builtInListList = sqlList(["positions", "hiring-states"]);
+const builtInListList = sqlList([
+  "positions",
+  "hiring-states",
+  "proposal-statuses",
+]);
 const meaningList = sqlList(["proposed", "open", "hired", "left"]);
 
 // Lists of choices, such as locations or skills, for columns elsewhere to draw on. Most are defined
@@ -349,6 +353,96 @@ export const releases = fathomSchema.table(
     ),
     check("releases_note_not_empty", sql`${table.note} <> ''`),
   ],
+);
+
+// Customers, whom projects and proposals are for. A customer's name is unique, ignoring letter case.
+export const customers = fathomSchema.table(
+  "customers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+  },
+  (table) => [
+    uniqueIndex("customers_name_index").on(sql`lower(${table.name})`),
+  ],
+);
+
+// Proposals: work offered or requested that may become a project, such as a bid. A proposal's name
+// is unique, ignoring letter case, and so is its Proposal ID when it has one. Its status is a
+// choice in the built-in proposal statuses list, which the server checks. Its customers are kept
+// as a list of identifiers, which the server checks name customers, since a proposal picks several
+// and its draft changes them together.
+export const proposals = fathomSchema.table(
+  "proposals",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    externalId: text("external_id"),
+    link: text("link"),
+    ownerId: uuid("owner_id").references(() => people.id, {
+      onDelete: "restrict",
+    }),
+    customerIds: uuid("customer_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
+    statusId: uuid("status_id")
+      .notNull()
+      .references(() => listItems.id, { onDelete: "restrict" }),
+  },
+  (table) => [
+    uniqueIndex("proposals_name_index").on(sql`lower(${table.name})`),
+    uniqueIndex("proposals_external_id_index").on(
+      sql`lower(${table.externalId})`,
+    ),
+    index("proposals_owner_index").on(table.ownerId),
+    index("proposals_status_index").on(table.statusId),
+  ],
+);
+
+// Projects. A project's name is unique, ignoring letter case, and so is its Project ID when it has
+// one. Its dates are not kept: they come from its milestones. Its customers and the proposals it
+// links to are kept as lists of identifiers, which the server checks name records.
+export const projects = fathomSchema.table(
+  "projects",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    externalId: text("external_id"),
+    ownerId: uuid("owner_id").references(() => people.id, {
+      onDelete: "restrict",
+    }),
+    customerIds: uuid("customer_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
+    proposalIds: uuid("proposal_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
+  },
+  (table) => [
+    uniqueIndex("projects_name_index").on(sql`lower(${table.name})`),
+    uniqueIndex("projects_external_id_index").on(
+      sql`lower(${table.externalId})`,
+    ),
+    index("projects_owner_index").on(table.ownerId),
+  ],
+);
+
+// Milestones, each of one project, on a day, and either a customer delivery or not.
+export const milestones = fathomSchema.table(
+  "milestones",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id")
+      .notNull()
+      .references(() => projects.id, { onDelete: "restrict" }),
+    name: text("name").notNull(),
+    date: date("date").notNull(),
+    customerDelivery: boolean("customer_delivery").notNull().default(false),
+  },
+  (table) => [index("milestones_project_index").on(table.projectId)],
 );
 
 // The change history: every change made to Fathom's data, with its old and new values, grouped into

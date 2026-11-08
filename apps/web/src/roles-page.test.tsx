@@ -393,10 +393,10 @@ describe("the grid of permissions", () => {
     expect(area("Allocations")).toBe("Allocations, Not built yet");
     expect(area("Feature teams")).toBe("Feature teams, Not built yet");
     expect(area("Drafts")).toBe("Drafts, Not built yet");
-    expect(area("Plan")).toBe("Plan, Approve not built yet");
+    expect(area("Plan")).toBe("Plan");
     expect(area("Releases")).toBe("Releases");
     expect(box(dialog, "Edit Allocations, not built yet")).toBeDefined();
-    expect(box(dialog, "Approve Plan, not built yet")).toBeDefined();
+    expect(box(dialog, "Approve Plan")).toBeDefined();
     expect(box(dialog, "Approve Releases")).toBeDefined();
     expect(
       within(dialog).getByText(/marked Not built yet/).textContent,

@@ -19,6 +19,7 @@ import {
   lists,
   people,
   plannedHires,
+  projects,
   recordChanges,
   reportingLines,
   teams,
@@ -94,8 +95,8 @@ describe("seeding", () => {
   it("adds the lists, columns, and people, recorded as made by Fathom itself, and adds nothing the second time", async () => {
     expect(await seed(connection, organization)).toBe(true);
     expect(await totalOf(people)).toBe(20);
-    // With the two lists Fathom builds in, Positions holding the seeded positions.
-    expect(await totalOf(lists)).toBe(7);
+    // With the three lists Fathom builds in, Positions holding the seeded positions.
+    expect(await totalOf(lists)).toBe(8);
     expect(await totalOf(fields)).toBe(4);
     const [order] = await connection.select().from(columnOrders);
     expect(order?.keys.slice(0, 4)).toEqual([
@@ -418,6 +419,40 @@ describe("seeding", () => {
     expect(await seed(connection, organization)).toBe(true);
   });
 
+  it("keeps a seeded person who owns a project left behind, and discards drafts naming one removed", async () => {
+    const [owner, other] = organization.people;
+    const [project] = await connection
+      .insert(projects)
+      .values({ name: "Fictional Hand Project", ownerId: owner?.id })
+      .returning({ id: projects.id });
+    await connection.insert(drafts).values({
+      recordType: "proposal",
+      recordId: "00000000-0000-4000-8000-0000000000d1",
+      action: "changed",
+      fields: { ownerId: String(other?.id) },
+    });
+    const kept = await unseed(connection, organization);
+    expect(kept).toContain(
+      `${String(owner?.preferredName)}, who owns a project or proposal kept`,
+    );
+    expect(
+      (await connection.select({ id: people.id }).from(people)).map(
+        ({ id }) => id,
+      ),
+    ).toContain(owner?.id);
+    expect(
+      await connection
+        .select()
+        .from(drafts)
+        .where(eq(drafts.recordType, "proposal")),
+    ).toEqual([]);
+    await connection
+      .delete(projects)
+      .where(eq(projects.id, String(project?.id)));
+    expect(await unseed(connection, organization)).toEqual([]);
+    expect(await seed(connection, organization)).toBe(true);
+  });
+
   it("removes only what seeding added, keeping a column and list that people added by hand use", async () => {
     const [site] = organization.columns;
     const [sites, levels] = organization.lists;
@@ -445,7 +480,7 @@ describe("seeding", () => {
     ]);
     expect(await totalOf(people)).toBe(1);
     expect(await totalOf(fields)).toBe(1);
-    expect(await totalOf(lists)).toBe(4);
+    expect(await totalOf(lists)).toBe(5);
     expect(await unseed(connection, organization)).toEqual(kept);
   });
 
@@ -689,6 +724,7 @@ describe("the seed command", () => {
       "Added 150 fictional people, with their lists and columns",
       "Added 10 fictional planned hires",
       "Added fictional release streams, with their cycles and releases",
+      "Added fictional customers, proposals, and projects with their milestones",
       ...addresses.map((email) => `Account ready: ${email}`),
       "Added drafts made by the personas",
       "Added drafts of planned hires made by the personas",
@@ -800,7 +836,7 @@ describe("the seed command", () => {
       "error: Usage: seed.ts seed | unseed | accounts",
       expect.stringMatching(/^error: /),
       "error: FATHOM_SEED_PASSWORD_FILE is not set",
-      "error: A list, column, release stream, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
+      "error: A list, column, release stream, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again",
     ]);
   });
 

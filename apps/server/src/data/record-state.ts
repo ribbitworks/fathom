@@ -7,7 +7,7 @@
 // approving it approves them, and they are rejected only together with it, as the Decisions Log
 // sets out. Part of the data access layer; records.ts reads and changes the records.
 
-import type { RecordRef, RecordType } from "@fathom/shared";
+import type { Permission, RecordRef, RecordType } from "@fathom/shared";
 import type { PgTable } from "drizzle-orm/pg-core";
 import {
   draftBetween,
@@ -23,11 +23,19 @@ export interface RecordKind {
   table: PgTable;
   // The record's fields, as the change history records them, in the order they are shown.
   fields: readonly string[];
-  // The fields that link to another record, by the kind of record each links to.
+  // The fields that link to other records, by the kind of record each links to. A field links to
+  // one record, by its identifier, or to several, by a list of them, or to none when empty.
   links: Readonly<Record<string, RecordType>>;
-  // A field whose value no other record has, ignoring letter case, among the records with the same
-  // value in another field, if one is named.
-  unique?: { field: string; within?: string; message: string };
+  // The link naming the record this one belongs to, such as a release's stream, which the change
+  // history names it by.
+  belongsTo?: string;
+  // Fields whose value no other record has, ignoring letter case, among the records with the same
+  // value in another field, if one is named. A record with no value in such a field takes none.
+  unique?: readonly UniqueValue[];
+  // Fields naming something other than the plan's records: a person, or a choice in a list.
+  refers?: Readonly<Record<string, "person" | "choice">>;
+  // The permissions any of which lets someone read records of the kind, and their history.
+  readWith: readonly Permission[];
   // The record as the Drafts page names it, such as "the release stream Major".
   subject: (state: RecordsState, id: string) => string;
   // The drafts the record's draft uses beyond the records it links to, such as the cycle patterns
@@ -36,6 +44,12 @@ export interface RecordKind {
   // Values a record added is given beside its fields, such as its place at the end of an order,
   // from the kind's rows, including those added before it in the same approval.
   added?: (rows: ReadonlyMap<string, Recorded>) => Recorded;
+}
+
+export interface UniqueValue {
+  field: string;
+  within?: string;
+  message: string;
 }
 
 export interface KindState {
@@ -107,6 +121,18 @@ const field = (record: Recorded | undefined, name: string): unknown =>
   // eslint-disable-next-line security/detect-object-injection
   record?.[name];
 
+// The records a link field names: one, several, or none.
+export function linkedIds(
+  record: Recorded | undefined,
+  name: string,
+): string[] {
+  const value = field(record, name);
+  if (typeof value === "string") return [value];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+}
+
 // The drafts a record's draft uses: those of the records only drafted to be added that it links to,
 // unless it removes the record, and any others its kind names. A record with no draft uses none.
 export function usesOf(
@@ -116,56 +142,74 @@ export function usesOf(
 ): RecordRef[] {
   if (!state[kind.type].drafts.has(id)) return [];
   const version = versionOf(state, kind.type, id);
-  const linked = Object.entries(kind.links).flatMap(([name, type]) => {
-    const target = field(version, name);
-    return typeof target === "string" && addedOnly(state, type, target)
-      ? [{ type, id: target }]
-      : [];
-  });
+  const linked = Object.entries(kind.links).flatMap(([name, type]) =>
+    linkedIds(version, name)
+      .filter((target) => addedOnly(state, type, target))
+      .map((target) => ({ type, id: target })),
+  );
   return [...linked, ...(kind.alsoUses?.(state, id) ?? [])];
 }
 
-// The value a record has in its kind's unique field, ignoring letter case, and the value it must be
-// unique among.
-const uniqueKey = (
-  unique: NonNullable<RecordKind["unique"]>,
-  record: Recorded,
-) => ({
-  value: String(field(record, unique.field)).trim().toLowerCase(),
-  within:
-    unique.within === undefined ? undefined : field(record, unique.within),
-});
-
-// Whether another record has the record's unique value: live, or in a draft, published or not. A
-// live record's value stays taken until a draft that changes it is approved, and an unpublished
-// draft's until it is discarded, as the Decisions Log sets out.
-export function valueTaken(
-  kind: RecordKind,
+// Every version of the records of a kind: live, as drafts make them, and as others' unpublished
+// changes would, each with its record's identifier.
+export function everyVersion(
   state: RecordsState,
-  record: Recorded,
-  except: string,
-): boolean {
-  const { unique } = kind;
-  if (unique === undefined) return false;
-  const { live, drafts, held } = stateOf(state, kind.type);
-  const wanted = uniqueKey(unique, record);
-  const versions: [string, Recorded | undefined][] = [
+  type: RecordType,
+): [string, Recorded | undefined][] {
+  const { live, drafts, held } = stateOf(state, type);
+  return [
     ...live,
     ...[...drafts.keys()].map((id): [string, Recorded | undefined] => [
       id,
-      versionOf(state, kind.type, id),
+      versionOf(state, type, id),
     ]),
     ...[...held].map(([id, { draft }]): [string, Recorded | undefined] => [
       id,
       drafted(live.get(id), draft),
     ]),
   ];
-  return versions.some(([id, version]) => {
-    if (id === except || version === undefined) return false;
-    const key = uniqueKey(unique, version);
-    return key.value === wanted.value && key.within === wanted.within;
-  });
 }
+
+// The value a record has in a unique field, ignoring letter case, or undefined when it has none,
+// and the value it must be unique among.
+const uniqueKey = (unique: UniqueValue, record: Recorded) => {
+  const held = field(record, unique.field);
+  const value = typeof held === "string" ? held.trim().toLowerCase() : "";
+  return {
+    value: value === "" ? undefined : value,
+    within:
+      unique.within === undefined ? undefined : field(record, unique.within),
+  };
+};
+
+// Why the record cannot have its unique values: the message of the first another record has, live
+// or in a draft, published or not, or undefined when none is taken. A live record's value stays
+// taken until a draft that changes it is approved, and an unpublished draft's until it is
+// discarded, as the Decisions Log sets out.
+export function takenValue(
+  kind: RecordKind,
+  state: RecordsState,
+  record: Recorded,
+  except: string,
+): string | undefined {
+  const versions = everyVersion(state, kind.type);
+  return (kind.unique ?? []).find((unique) => {
+    const wanted = uniqueKey(unique, record);
+    if (wanted.value === undefined) return false;
+    return versions.some(([id, version]) => {
+      if (id === except || version === undefined) return false;
+      const key = uniqueKey(unique, version);
+      return key.value === wanted.value && key.within === wanted.within;
+    });
+  })?.message;
+}
+
+export const valueTaken = (
+  kind: RecordKind,
+  state: RecordsState,
+  record: Recorded,
+  except: string,
+): boolean => takenValue(kind, state, record, except) !== undefined;
 
 // The state with one record as wanted, as the editor's draft would make it, for checking a change
 // before it is saved.

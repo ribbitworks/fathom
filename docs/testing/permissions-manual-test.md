@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies, for each permission a role can grant, that an account holding only that permission, and any permission it needs, sees the pages and can take the actions the permission allows, and is not offered the next thing beyond it. The eight permissions Fathom has not built yet are checked together, one of them on its own.
+Verifies, for each permission a role can grant, that an account holding only that permission, and any permission it needs, sees the pages and can take the actions the permission allows, and is not offered the next thing beyond it. The seven permissions Fathom has not built yet are checked together, one of them on its own.
 
 ## Test Environment
 
@@ -590,7 +590,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Account:** Team Member, `team.member@fathom.test`, changed by P2 from the Administrator, the account PERM-25 ended with.
 
-**Preconditions:** Team Member granted only **Approve** on **Plan**, **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts** (P2), signed in with this account.
+**Preconditions:** Team Member granted only **View** and **Edit** on **Allocations**, **Draft**, **Approve** and **Edit** on **Feature teams**, and **Draft** on **Drafts** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The Help **Roles** page is open. The menu shows **Capacity** tagged **Later** in the **People** section, and the **Help** section, and nothing else. There is no Publish button.

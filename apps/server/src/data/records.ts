@@ -53,10 +53,13 @@ import {
   wantsNoDraft,
   writeDraft,
 } from "./drafts.ts";
+import { projectKinds } from "./project-kinds.ts";
 import { releaseKinds, releaseProblem } from "./release-kinds.ts";
 import {
   addedOnly,
+  everyVersion,
   type KindState,
+  linkedIds,
   liveOnly,
   type RecordKind,
   recordExists,
@@ -66,7 +69,7 @@ import {
   stateOf,
   type Touched,
   usesOf,
-  valueTaken,
+  takenValue,
   versionOf,
   withVersion,
 } from "./record-state.ts";
@@ -75,14 +78,42 @@ type Reader = Pick<Database, "select">;
 
 // Every kind, in the order approving adds and changes them, so a record comes after the records it
 // links to; removals go the other way.
-export const recordKinds: readonly RecordKind[] = releaseKinds;
+export const recordKinds: readonly RecordKind[] = [
+  ...releaseKinds,
+  ...projectKinds,
+];
+
+// A record removed while another, as shown, still links to it, such as a customer a project names.
+function linkedProblem(
+  state: RecordsState,
+  touched: readonly Touched[],
+): string | undefined {
+  for (const removed of touched) {
+    if (versionOf(state, removed.type, removed.id) !== undefined) continue;
+    for (const kind of recordKinds) {
+      const linking = Object.entries(kind.links).filter(
+        ([, type]) => type === removed.type,
+      );
+      if (linking.length === 0) continue;
+      const user = shownIds(state, kind.type).find((id) =>
+        linking.some(([name]) =>
+          linkedIds(versionOf(state, kind.type, id), name).includes(removed.id),
+        ),
+      );
+      if (user !== undefined) {
+        return `This is used by ${kind.subject(state, user)}; change that first`;
+      }
+    }
+  }
+  return undefined;
+}
 
 // The rules across records of several kinds, checked for each change drafted, published, and
 // approved: each gives the first way the records break it, if any.
 const recordRules: readonly ((
   state: RecordsState,
   touched: readonly Touched[],
-) => string | undefined)[] = [releaseProblem];
+) => string | undefined)[] = [linkedProblem, releaseProblem];
 
 const ruleProblem = (state: RecordsState, touched: readonly Touched[]) =>
   recordRules
@@ -109,6 +140,43 @@ const ownFields = (kind: RecordKind, from: Recorded): Recorded =>
     // eslint-disable-next-line security/detect-object-injection
     kind.fields.map((name) => [name, from[name]]),
   );
+
+// How the Drafts page names the first record, live, in a draft, or in anyone's unpublished
+// changes, as the editor sees them, that names any of the people or choices given.
+export async function recordNaming(
+  reader: Reader,
+  named: "person" | "choice",
+  ids: readonly string[],
+  editor?: Viewer,
+): Promise<string | undefined> {
+  const state = await readRecordsState(reader, editor);
+  const wanted = new Set(ids);
+  for (const kind of recordKinds) {
+    const fields = Object.entries(kind.refers ?? {})
+      .filter(([, refersTo]) => refersTo === named)
+      .map(([name]) => name);
+    const found = everyVersion(state, kind.type).find(([, version]) =>
+      fields.some((name) =>
+        linkedIds(version, name).some((id) => wanted.has(id)),
+      ),
+    );
+    if (found !== undefined) return kind.subject(state, found[0]);
+  }
+  return undefined;
+}
+
+// Refuses removing people a record names, live or in a draft, published or not.
+export async function refuseRemovingNamedPeople(
+  reader: Reader,
+  ids: readonly string[],
+): Promise<void> {
+  const naming = await recordNaming(reader, "person", ids);
+  if (naming !== undefined) {
+    throw new ConflictError(
+      `This person is named by ${naming}; change that first`,
+    );
+  }
+}
 
 // Every record of every kind, live and in drafts, as the viewer sees them, with the records others
 // hold, or, with no viewer, the published drafts, as Approvers decide them.
@@ -287,19 +355,18 @@ function misfitOf(
   before: Recorded,
 ): RequestError | undefined {
   if (wanted !== undefined) {
-    if (valueTaken(kind, state, wanted, id)) {
-      return new ConflictError(String(kind.unique?.message));
-    }
+    const taken = takenValue(kind, state, wanted, id);
+    if (taken !== undefined) return new ConflictError(taken);
     for (const [name, type] of Object.entries(kind.links)) {
-      // The field is one of the kind's own.
-      // eslint-disable-next-line security/detect-object-injection
-      const target = String(wanted[name]);
-      if (!recordExists(state, type, target))
-        return new NotFoundError(noRecord);
-      if (versionOf(state, type, target) === undefined) {
-        return new ConflictError(
-          "What this belongs to is drafted to be removed; discard that draft first",
-        );
+      for (const target of linkedIds(wanted, name)) {
+        if (!recordExists(state, type, target)) {
+          return new NotFoundError(noRecord);
+        }
+        if (versionOf(state, type, target) === undefined) {
+          return new ConflictError(
+            `This links to ${kindOf(type).subject(state, target)}, which is drafted to be removed; discard that draft first`,
+          );
+        }
       }
     }
   }
@@ -367,12 +434,11 @@ function holderBreaking(
     const theirs = withHolding(state, holding);
     const linkGone =
       wanted !== undefined &&
-      Object.entries(kind.links).some(([name, type]) => {
-        // The field is one of the kind's own.
-        // eslint-disable-next-line security/detect-object-injection
-        const target = String(wanted[name]);
-        return versionOf(theirs, type, target) === undefined;
-      });
+      Object.entries(kind.links).some(([name, type]) =>
+        linkedIds(wanted, name).some(
+          (target) => versionOf(theirs, type, target) === undefined,
+        ),
+      );
     if (linkGone || ruleProblem(theirs, touched) !== undefined) {
       return holding.holder;
     }
@@ -464,9 +530,9 @@ function addedBelow(state: RecordsState, root: RecordRef): RecordRef[] {
         if (
           !addedOnly(state, kind.type, id) ||
           found.has(refKey(ref)) ||
-          // The fields are the kind's own links.
-          // eslint-disable-next-line security/detect-object-injection
-          !linking.some(([name]) => version?.[name] === parent.id)
+          !linking.some(([name]) =>
+            linkedIds(version, name).includes(parent.id),
+          )
         ) {
           continue;
         }
@@ -546,10 +612,8 @@ export async function discardRecordDraft(
             draft,
           );
           return Object.entries(kind.links).some(([name, linked]) =>
-            addedKeys.has(
-              // The fields are the kind's own links.
-              // eslint-disable-next-line security/detect-object-injection
-              refKey({ type: linked, id: String(version?.[name]) }),
+            linkedIds(version, name).some((target) =>
+              addedKeys.has(refKey({ type: linked, id: target })),
             ),
           );
         }),

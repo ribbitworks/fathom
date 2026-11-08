@@ -24,12 +24,15 @@ import type {
   HistoryEntry,
   List,
   ListRequest,
+  MilestoneRequest,
   OrgChart,
   PaletteColour,
   Permission,
   Person,
   PersonChange,
   PersonRequest,
+  PlanChoices,
+  ProjectPlan,
   RecordType,
   ReleaseNoteRequest,
   ReleaseRequest,
@@ -65,6 +68,8 @@ import * as hireData from "./hires.ts";
 import * as fills from "./fills.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
+import * as projectData from "./projects.ts";
+import type { PlanKind, PlanRecordRequest } from "./projects.ts";
 import * as releases from "./releases.ts";
 import type { Saved } from "./changes.ts";
 import { undoChangeSet } from "./undo.ts";
@@ -142,6 +147,9 @@ export interface DataAccess {
   // Release streams, their cycle patterns, and their releases, which everyone who sees the plan or
   // planning configuration may read.
   releases: ReleaseAccess;
+  // Customers, projects with their milestones, and proposals, which everyone who sees the plan may
+  // read.
+  projects: ProjectAccess;
   // Discarding and resubmitting drafts of the plan's records, whatever their kind.
   records: RecordAccess;
   // Undoes a change set the actor made, returning the change set that undid it.
@@ -207,6 +215,40 @@ export interface ReleaseAccess {
     startsOn: string,
     request: CycleLengthRequest,
   ): Promise<Saved<ReleaseStream>>;
+}
+
+export type { PlanKind, PlanRecordRequest } from "./projects.ts";
+
+// Every change to customers, projects, milestones, and proposals is a draft, made by those who edit
+// the plan. Each answers with every record as the editor now sees them.
+export interface ProjectAccess {
+  read(actor: Actor): Promise<ProjectPlan>;
+  // What the plan's records can be given, which everyone who sees the plan may read, though they
+  // may not see People or Lists.
+  readChoices(actor: Actor): Promise<PlanChoices>;
+  add(actor: Actor, added: PlanRecordRequest): Promise<Saved<ProjectPlan>>;
+  change(
+    actor: Actor,
+    id: string,
+    changed: PlanRecordRequest,
+  ): Promise<Saved<ProjectPlan>>;
+  remove(actor: Actor, type: PlanKind, id: string): Promise<ChangeSetId>;
+  addMilestone(
+    actor: Actor,
+    projectId: string,
+    request: MilestoneRequest,
+  ): Promise<Saved<ProjectPlan>>;
+  changeMilestone(
+    actor: Actor,
+    projectId: string,
+    id: string,
+    request: MilestoneRequest,
+  ): Promise<Saved<ProjectPlan>>;
+  removeMilestone(
+    actor: Actor,
+    projectId: string,
+    id: string,
+  ): Promise<ChangeSetId>;
 }
 
 export interface RecordAccess {
@@ -478,6 +520,10 @@ const recordEditors: Record<RecordType, Permission> = {
   "release-stream": "configuration:edit",
   "cycle-pattern": "configuration:edit",
   release: "plan:edit",
+  customer: "plan:edit",
+  proposal: "plan:edit",
+  project: "plan:edit",
+  milestone: "plan:edit",
 };
 
 function recordEditor(actor: Actor, type: RecordType): Actor {
@@ -557,6 +603,92 @@ function createReleaseAccess(database: Database): ReleaseAccess {
         streamId,
         startsOn,
         request,
+      ),
+  };
+}
+
+// What an editor's change answers with: they edit the plan, so may change what they see.
+const edited = async (
+  saved: Promise<Saved<projectData.PlanRecords>>,
+): Promise<Saved<ProjectPlan>> => {
+  const { result, changeSetId } = await saved;
+  return { result: { ...result, canEdit: true }, changeSetId };
+};
+
+// How each kind of record is added and changed.
+const planChanges = {
+  customer: {
+    add: projectData.addCustomer,
+    change: projectData.changeCustomer,
+  },
+  project: { add: projectData.addProject, change: projectData.changeProject },
+  proposal: {
+    add: projectData.addProposal,
+    change: projectData.changeProposal,
+  },
+} as const;
+
+function createProjectAccess(database: Database): ProjectAccess {
+  return {
+    read: async (actor) => {
+      requirePermission(actor, "plan:view");
+      return {
+        ...(await projectData.readPlanRecords(database, actor)),
+        canEdit: actor.permissions.includes("plan:edit"),
+      };
+    },
+    readChoices: async (actor) => {
+      requirePermission(actor, "plan:view");
+      return projectData.readPlanChoices(database);
+    },
+    // The kind is one of the fixed kinds above, and the request the one it takes, as
+    // PlanRecordRequest pairs them.
+    add: async (actor, { type, request }) =>
+      edited(
+        // eslint-disable-next-line security/detect-object-injection
+        planChanges[type].add(
+          database,
+          recordEditor(actor, type),
+          request as never,
+        ),
+      ),
+    change: async (actor, id, { type, request }) =>
+      edited(
+        // eslint-disable-next-line security/detect-object-injection
+        planChanges[type].change(
+          database,
+          recordEditor(actor, type),
+          id,
+          request as never,
+        ),
+      ),
+    remove: async (actor, type, id) =>
+      projectData.removeRecord(database, recordEditor(actor, type), type, id),
+    addMilestone: async (actor, projectId, request) =>
+      edited(
+        projectData.addMilestone(
+          database,
+          recordEditor(actor, "milestone"),
+          projectId,
+          request,
+        ),
+      ),
+    changeMilestone: async (actor, projectId, id, request) =>
+      edited(
+        projectData.changeMilestone(
+          database,
+          recordEditor(actor, "milestone"),
+          projectId,
+          id,
+          request,
+        ),
+      ),
+    removeMilestone: async (actor, projectId, id) =>
+      projectData.removeMilestone(
+        database,
+        recordEditor(actor, "milestone"),
+        projectId,
+        id,
       ),
   };
 }
@@ -704,6 +836,7 @@ export function createDataAccess(database: Database): DataAccess {
     },
     lists: createListAccess(database),
     releases: createReleaseAccess(database),
+    projects: createProjectAccess(database),
     records: {
       discardDraft: async (actor, type, id) =>
         discardRecordDraft(

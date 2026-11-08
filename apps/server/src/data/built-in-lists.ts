@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The lists Fathom builds in, which its built-in columns draw on: Positions, for people and planned
-// hires, and the hiring states, a list with meanings. Part of the data access layer. A built-in
-// column takes only a live choice of its list, since the database refers to the choice itself.
+// hires, the hiring states, a list with meanings, and proposals' statuses. Part of the data access
+// layer. A built-in column takes only a live choice of its list, since the database refers to the
+// choice itself.
 
 import { type Database, listItems, lists } from "@fathom/db";
 import {
@@ -21,6 +22,7 @@ type Reader = Pick<Database, "select">;
 export const builtInColumns: ReadonlyMap<string, string> = new Map([
   ["positions", "Position"],
   ["hiring-states", "State"],
+  ["proposal-statuses", "Status"],
 ]);
 
 const columnName = (key: BuiltInList) =>
@@ -57,11 +59,11 @@ export async function checkBuiltInChoice(
   return choice.meaning;
 }
 
-// The first choice offered for a meaning, in the list's order, if any is.
+// The first choice offered, for a meaning when one is given, in the list's order, if any is.
 export async function firstOffered(
   reader: Reader,
   key: BuiltInList,
-  meaning: Meaning,
+  meaning?: Meaning,
 ): Promise<string | undefined> {
   const [choice] = await reader
     .select({ id: listItems.id })
@@ -70,7 +72,7 @@ export async function firstOffered(
     .where(
       and(
         eq(lists.builtIn, key),
-        eq(listItems.meaning, meaning),
+        meaning === undefined ? undefined : eq(listItems.meaning, meaning),
         eq(listItems.retired, false),
       ),
     )

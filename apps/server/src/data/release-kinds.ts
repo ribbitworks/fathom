@@ -33,15 +33,21 @@ const nameIn = (state: RecordsState, id: string): string =>
   // A stream is never removed, so what belongs to it always has one.
   String(shownVersion(state, "release-stream", id)?.name);
 
+// Planning configuration is seen with the plan, as Roles proposes.
+const planOrConfiguration = ["plan:view", "configuration:view"] as const;
+
 export const streamKind: RecordKind = {
   type: "release-stream",
   table: releaseStreams,
   fields: ["name", "retired", "cyclesUntil"],
   links: {},
-  unique: {
-    field: "name",
-    message: "There is already a release stream with that name",
-  },
+  unique: [
+    {
+      field: "name",
+      message: "There is already a release stream with that name",
+    },
+  ],
+  readWith: planOrConfiguration,
   subject: (state, id) => planSubjects.stream(nameIn(state, id)),
   // A stream added goes at the end of the order.
   added: (rows) => ({
@@ -58,11 +64,15 @@ export const patternKind: RecordKind = {
   table: cyclePatterns,
   fields: ["streamId", "startsOn", "length", "unit", "naming"],
   links: { streamId: "release-stream" },
-  unique: {
-    field: "startsOn",
-    within: "streamId",
-    message: "This stream already has cycles that change on that day",
-  },
+  belongsTo: "streamId",
+  unique: [
+    {
+      field: "startsOn",
+      within: "streamId",
+      message: "This stream already has cycles that change on that day",
+    },
+  ],
+  readWith: planOrConfiguration,
   subject: (state, id) => {
     const pattern = shownVersion(state, "cycle-pattern", id);
     return planSubjects.pattern(
@@ -110,11 +120,15 @@ export const releaseKind: RecordKind = {
     "note",
   ],
   links: { streamId: "release-stream" },
-  unique: {
-    field: "name",
-    within: "streamId",
-    message: "This stream already has a release with that name",
-  },
+  belongsTo: "streamId",
+  unique: [
+    {
+      field: "name",
+      within: "streamId",
+      message: "This stream already has a release with that name",
+    },
+  ],
+  readWith: planOrConfiguration,
   subject: (state, id) => {
     const release = shownVersion(state, "release", id);
     return planSubjects.release(

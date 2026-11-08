@@ -58,12 +58,15 @@ import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import roleClasses from "./roles-page.module.css";
 import {
+  actionHeadings,
   consequences,
   createRole,
   difference,
+  notBuilt,
   notBuiltYet,
   previewRole,
   rolesQuery,
+  rowNotBuilt,
   updateRole,
 } from "./roles.ts";
 import { type SignedInUser, sessionQuery } from "./session.ts";
@@ -76,16 +79,6 @@ type Dialog =
 const detailsSchema = roleRequestSchema.pick({ name: true, description: true });
 
 type Details = z.infer<typeof detailsSchema>;
-
-const actionHeadings = {
-  view: "View",
-  draft: "Draft",
-  approve: "Approve",
-  edit: "Edit",
-} as const;
-
-// The words that mark something Fathom does not have yet.
-const notBuilt = "Not built yet";
 
 // Marks something Fathom does not have yet, as the sidebar marks pages still to come.
 function NotBuiltTag({ text = notBuilt }: { text?: string }) {
@@ -105,24 +98,6 @@ function Line({ text }: { text: string }) {
       {notBuiltYet(text) && <NotBuiltTag />}
     </>
   );
-}
-
-// What a row of the grid grants that Fathom does not have yet: every action, or the ones named.
-function rowNotBuilt(
-  actions: (typeof permissionGrid)[number]["actions"],
-): string | undefined {
-  const offered = gridActions.filter((action) => action in actions);
-  const unbuilt = offered.filter((action) => {
-    // The action is always one of the fixed list.
-    // eslint-disable-next-line security/detect-object-injection
-    const permission = actions[action];
-    return permission !== undefined && unbuiltPermissions.includes(permission);
-  });
-  if (unbuilt.length === 0) return undefined;
-  if (unbuilt.length === offered.length) return notBuilt;
-  // The action is always one of the fixed list.
-  // eslint-disable-next-line security/detect-object-injection
-  return `${unbuilt.map((action) => actionHeadings[action]).join(" and ")} ${notBuilt.toLowerCase()}`;
 }
 
 // The permission granted with another, such as viewing with editing, if a granted one brings it.

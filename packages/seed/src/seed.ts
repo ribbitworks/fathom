@@ -3,10 +3,11 @@
 // Adds the fictional organization from @fathom/fixtures to a development database, and removes it
 // again: its lists, the choices it adds to the built-in Positions list, the columns on people
 // drawing on its lists and its note column, about 150 people, the newest with onboarding notes, its
-// planned hires, from ./hires.ts, and its release streams, from ./releases.ts, each
-// recorded in the change history as made by Fathom itself, and an account for each persona, from
-// ./accounts.ts, recorded in the access history. Seeding twice adds nothing more, and removing
-// takes away only what seeding added, keeping a seeded column, list, or release stream that
+// planned hires, from ./hires.ts, its release streams, from ./releases.ts, and its customers,
+// proposals, and projects, from ./projects.ts, each recorded in the change history as made by
+// Fathom itself, and an account for each persona, from ./accounts.ts, recorded in the access
+// history. Seeding twice adds nothing more, and removing takes away only what seeding added,
+// keeping a seeded column, list, release stream, project, proposal, customer, or person that
 // something added by hand still uses, and deactivating the accounts. Drafts made by the personas,
 // from ./drafts.ts, are added once the accounts are, and discarded before the rest is removed,
 // unpublished changes first. A development-only package, never included in the runtime image.
@@ -33,6 +34,8 @@ import {
   loadDatabaseConfig,
   people,
   plannedHires,
+  projects,
+  proposals,
   recordChanges,
   reportingLines,
   teams,
@@ -64,6 +67,7 @@ import {
   unseedListDrafts,
 } from "./list-drafts.ts";
 import { defaultPasswordSettings, passwordLength } from "@fathom/shared";
+import { seedProjects, unseedProjects } from "./projects.ts";
 import { seedReleases, unseedReleases } from "./releases.ts";
 import {
   removeSeededHires,
@@ -320,6 +324,20 @@ export async function unseed(
         .flatMap(({ managerId, filledBy }) => [managerId, filledBy])
         .filter((id): id is string => id !== null && seededIds.includes(id)),
     );
+    // People who own a project or proposal left behind are kept too, with those above them.
+    const owners = new Set(
+      [
+        ...(await transaction
+          .select({ ownerId: projects.ownerId })
+          .from(projects)),
+        ...(await transaction
+          .select({ ownerId: proposals.ownerId })
+          .from(proposals)),
+      ]
+        .map(({ ownerId }) => ownerId)
+        .filter((id): id is string => id !== null && seededIds.includes(id)),
+    );
+    for (const id of owners) managing.add(id);
     for (let grew = true; grew;) {
       grew = false;
       for (const line of lines) {
@@ -345,11 +363,13 @@ export async function unseed(
     const presentIds = present.map(({ id }) => id);
     if (managing.size > 0) {
       for (const row of await transaction
-        .select({ preferredName: people.preferredName })
+        .select({ id: people.id, preferredName: people.preferredName })
         .from(people)
         .where(inArray(people.id, [...managing]))) {
         kept.push(
-          `${row.preferredName}, whom people or planned hires added by hand report to, or have`,
+          owners.has(row.id)
+            ? `${row.preferredName}, who owns a project or proposal kept`
+            : `${row.preferredName}, whom people or planned hires added by hand report to, or have`,
         );
       }
     }
@@ -403,6 +423,17 @@ export async function unseed(
           restrictedFields,
         ),
       );
+    }
+    // Drafts made by hand that name a person removed as an owner go with them.
+    for (const table of [drafts, unpublishedDrafts]) {
+      await transaction
+        .delete(table)
+        .where(
+          and(
+            inArray(table.recordType, ["project", "proposal"]),
+            inArray(sql`${table.fields}->>'ownerId'`, presentIds),
+          ),
+        );
     }
     await transaction
       .delete(reportingLines)
@@ -604,6 +635,19 @@ export async function seedCommand(
           "Added fictional release streams, with their cycles and releases",
         );
       }
+      if (
+        await seedProjects(
+          database,
+          organization.referenceDate,
+          organization.people
+            .filter(({ isManager, endDate }) => isManager && endDate === null)
+            .map(({ id }) => id),
+        )
+      ) {
+        console.log(
+          "Added fictional customers, proposals, and projects with their milestones",
+        );
+      }
       const accounts = await seedAccounts(auth, database, password);
       for (const email of accounts) console.log(`Account ready: ${email}`);
       if (await seedDrafts(database, organization)) {
@@ -647,7 +691,9 @@ export async function seedCommand(
           `Discarded ${String(discardedLists)} drafts of lists and columns made by the personas`,
         );
       }
+      // Projects and proposals before people, whom they name as owners.
       const kept = [
+        ...(await unseedProjects(database)),
         ...(await unseedReleases(database)),
         ...(await unseed(database, organization)),
       ];
@@ -662,7 +708,7 @@ export async function seedCommand(
     console.error(
       `error: ${
         hasDatabaseCode(error, databaseCodes.uniqueViolation)
-          ? "A list, column, release stream, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
+          ? "A list, column, release stream, customer, project, proposal, or Employee ID in the fictional data is already used by something added by hand; rename that, then try again"
           : describeError(error)
       }`,
     );

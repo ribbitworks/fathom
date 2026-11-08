@@ -41,6 +41,10 @@ const recordsState = (parts: Partial<RecordsState>): RecordsState => ({
   "release-stream": kindState(),
   "cycle-pattern": kindState(),
   release: kindState(),
+  customer: kindState(),
+  proposal: kindState(),
+  project: kindState(),
+  milestone: kindState(),
   ...parts,
 });
 
@@ -50,6 +54,7 @@ const linking: RecordKind = {
   table: releases,
   fields: ["streamId", "label"],
   links: { streamId: "release-stream" },
+  readWith: ["plan:view"],
   subject: () => "a fictional record",
 };
 

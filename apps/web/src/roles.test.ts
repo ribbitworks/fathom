@@ -12,7 +12,7 @@ import {
 } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { pagesNotBuilt } from "./layout.tsx";
-import { consequences, difference, notBuiltYet } from "./roles.ts";
+import { consequences, difference, notBuiltYet, rowNotBuilt } from "./roles.ts";
 
 const allows = (permission: Permission) =>
   // The permission is always one of the shared list.
@@ -207,5 +207,20 @@ describe("lines about what is not built yet", () => {
     expect(
       consequences(every).pages.filter((line) => notBuiltYet(line)),
     ).toEqual([...pagesNotBuilt]);
+  });
+});
+
+describe("a row of the grid not built yet", () => {
+  const actions = { view: "plan:view", approve: "plan:approve" } as const;
+
+  it("names the actions not built yet, or marks the whole row", () => {
+    expect(rowNotBuilt(actions, [])).toBeUndefined();
+    expect(rowNotBuilt(actions, ["plan:approve"])).toBe(
+      "Approve not built yet",
+    );
+    expect(rowNotBuilt(actions, ["plan:view", "plan:approve"])).toBe(
+      "Not built yet",
+    );
+    expect(rowNotBuilt(actions)).toBeUndefined();
   });
 });

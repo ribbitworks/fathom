@@ -1,7 +1,7 @@
 # Fathom — Domain Model
 
 **Status:** Draft
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-08
 
 A first sketch of Fathom's core entities and how they relate. It describes structure only: terms are defined in [Domain Concepts](../product/domain.md), and rules and allowed values are in the [Decisions Log](../product/decisions.md). It describes concepts, not database tables. Items marked **proposal** are suggested modeling choices that have not been agreed.
 
@@ -17,7 +17,7 @@ erDiagram
     FEATURE |o--o{ MILESTONE : has
     PROJECT }o--o{ CUSTOMER : "driven by"
     PROPOSAL }o--o{ FEATURE : proposes
-    PROPOSAL |o--o| PROJECT : "becomes"
+    PROJECT }o--o{ PROPOSAL : "links to"
     PROPOSAL }o--o{ CUSTOMER : "made for"
     PERSON |o--o{ PROPOSAL : owns
     FEATURE }o..o{ PRODUCT : "part of"
@@ -50,13 +50,13 @@ erDiagram
 
 ## Planning Entities
 
-- **Project:** Has a name, and optionally a Project ID, an owner, who is a person, and customers. Has milestones, which give it its dates, and links to the features it needs, which its draft holds whichever side they are edited from. Has one general feature, which takes allocations made to the project directly. May have come from a proposal.
-- **Proposal:** Work offered or requested that may become a project, such as a bid or a customer request. Has a name, a status, and optionally a Proposal ID, a web link, an owner, who is a person, and customers. Links to the features it proposes, and to the one project it became, once won.
+- **Project:** Has a name, and optionally a Project ID, an owner, who is a person, and customers. Has milestones, which give it its dates, and links to the features it needs, which its draft holds whichever side they are edited from. Has one general feature, which takes allocations made to the project directly. Links to one or more proposals; nothing else ties them.
+- **Proposal:** Work offered or requested that may become a project, such as a bid or a customer request. Has a name, a status, and optionally a Proposal ID, a web link, an owner, who is a person, and customers. Links to the features it proposes. Projects link to proposals; a proposal is not made into a project.
 - **Feature:** Has a name, a status, and optionally a description, a target cycle, an estimate, and the feature team that owns and delivers it. Has no owner of its own; ownership comes from its feature team. Can be needed by several projects. Ships in the release that includes its target cycle, and its start and end months follow from its allocations.
 - **Milestone:** A dated point in one project or one feature, with a name, which says whether it is a customer delivery date. Milestones are kept in a table of their own.
 - **Allocation:** Puts one person or planned hire on one feature from a month, with a percentage, or with none when it stops the allocation. It is in force until the next allocation for the same person or planned hire and feature, as reporting lines are kept from a date. It points to a person or a planned hire, never both. Filling a planned hire moves its allocations to the person, as set out below.
 - **Estimate:** A feature's one estimate, its total effort, kept as one value and shown in the unit the reader picks.
-- **Customer:** A built-in table with a name.
+- **Customer:** A row of the built-in Customers table, with a name, picked directly by projects and proposals.
 - **Product:** A built-in table with a name. Features are part of products through a column users add.
 
 The values of every built-in field are set out in the [Decisions Log](../product/decisions.md).

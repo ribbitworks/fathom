@@ -92,8 +92,12 @@ export const orderDraftSchema = z.object({
 export type OrderDraft = z.infer<typeof orderDraftSchema>;
 
 // The lists Fathom builds in, each drawn on by a built-in column: Positions, for people and planned
-// hires, and the hiring states, a list with meanings.
-export const builtInListSchema = z.enum(["positions", "hiring-states"]);
+// hires, the hiring states, a list with meanings, and proposals' statuses.
+export const builtInListSchema = z.enum([
+  "positions",
+  "hiring-states",
+  "proposal-statuses",
+]);
 
 export type BuiltInList = z.infer<typeof builtInListSchema>;
 
@@ -102,6 +106,7 @@ export type BuiltInList = z.infer<typeof builtInListSchema>;
 export const listMeanings: Readonly<Record<BuiltInList, readonly Meaning[]>> = {
   positions: [],
   "hiring-states": ["proposed", "open", "hired", "left"],
+  "proposal-statuses": [],
 };
 
 // The meanings a list's choices are tied to, by its built-in key: none for any other list.
