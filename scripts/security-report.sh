@@ -48,10 +48,11 @@ docker run --rm --network none --volume "$git_dir:/repo/.git:ro" \
 
 info "Scanning code for security flaws"
 # Semgrep gives up on a file after 5 seconds a rule by default, which large test files can reach on
-# a busy machine; any file left unscanned fails the report, so it is given longer.
+# a busy machine, such as while 'pnpm check' runs the tests beside it; any file left unscanned fails
+# the report, so it is given longer.
 docker run --rm --volume "$scan_copy:/src:ro" --workdir /src "$semgrep_image" \
   semgrep scan --config p/default --metrics=off --disable-version-check --quiet --json \
-  --timeout 30 . \
+  --timeout 120 . \
   >"$report_dir/code.json" || info "The scan of code for security flaws did not complete"
 
 info "Scanning dependencies for vulnerabilities and licences"

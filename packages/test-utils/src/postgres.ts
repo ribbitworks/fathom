@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Starts a throwaway PostgreSQL server from Fathom's own image for tests, with the same roles and
-// settings as development and random passwords for each run.
+// settings as development apart from writing to disk, random passwords for each run, and only a few
+// starting at once on this computer.
 
 import {
   PostgreSqlContainer,
@@ -12,6 +13,7 @@ import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { cloneName } from "./clone.ts";
+import { inStartSlot } from "./start-slots.ts";
 
 const repositoryRoot = fileURLToPath(new URL("../../../", import.meta.url));
 // Each copy of the repository builds its own image, so copies changing it at once never test each
@@ -69,9 +71,60 @@ export interface TestDatabase {
   ): Promise<{ exitCode: number; output: string }>;
 }
 
-// Starts a fresh PostgreSQL from Fathom's own image, built and named exactly as for development.
-// Passwords are random for each run.
+interface Passwords {
+  superuser: string;
+  migrator: string;
+  app: string;
+}
+
+// Each test database is thrown away, so it keeps its data in memory and does not wait for writes to
+// reach the disk, which protects data only after a crash and slows every change the tests make.
+function startContainer(
+  passwords: Passwords,
+): Promise<StartedPostgreSqlContainer> {
+  return new PostgreSqlContainer(imageName)
+    .withDatabase("fathom")
+    .withUsername("postgres")
+    .withPassword(passwords.superuser)
+    .withEnvironment({
+      POSTGRES_INITDB_ARGS: composeSetting(
+        /^\s+POSTGRES_INITDB_ARGS:\s+(.+)$/m,
+        "server settings",
+      ),
+    })
+    .withCommand([
+      "postgres",
+      "-c",
+      "fsync=off",
+      "-c",
+      "synchronous_commit=off",
+      "-c",
+      "full_page_writes=off",
+    ])
+    .withTmpFs({ "/var/lib/postgresql": "rw" })
+    .withCopyContentToContainer([
+      {
+        content: passwords.migrator,
+        target: "/run/secrets/fathom_migrator_password",
+        mode: 0o644,
+      },
+      {
+        content: passwords.app,
+        target: "/run/secrets/fathom_app_password",
+        mode: 0o644,
+      },
+    ])
+    .start();
+}
+
+// Starts a fresh PostgreSQL from Fathom's own image, built and named exactly as for development, with
+// the same settings apart from writing to disk. Passwords are random for each run.
 export async function startTestDatabase(): Promise<TestDatabase> {
+  const passwords: Passwords = {
+    superuser: randomBytes(32).toString("hex"),
+    migrator: randomBytes(32).toString("hex"),
+    app: randomBytes(32).toString("hex"),
+  };
   // Builds the image the same way development does, so tests run exactly that image.
   execFileSync(
     "bash",
@@ -86,35 +139,9 @@ export async function startTestDatabase(): Promise<TestDatabase> {
       stdio: "inherit",
     },
   );
-
-  const passwords = {
-    superuser: randomBytes(32).toString("hex"),
-    migrator: randomBytes(32).toString("hex"),
-    app: randomBytes(32).toString("hex"),
-  };
-  const container = await new PostgreSqlContainer(imageName)
-    .withDatabase("fathom")
-    .withUsername("postgres")
-    .withPassword(passwords.superuser)
-    .withEnvironment({
-      POSTGRES_INITDB_ARGS: composeSetting(
-        /^\s+POSTGRES_INITDB_ARGS:\s+(.+)$/m,
-        "server settings",
-      ),
-    })
-    .withCopyContentToContainer([
-      {
-        content: passwords.migrator,
-        target: "/run/secrets/fathom_migrator_password",
-        mode: 0o644,
-      },
-      {
-        content: passwords.app,
-        target: "/run/secrets/fathom_app_password",
-        mode: 0o644,
-      },
-    ])
-    .start();
+  // The build waits for no slot: on the first run of a day it fetches security fixes, which would
+  // hold up every other start.
+  const container = await inStartSlot(() => startContainer(passwords));
 
   const configFor = (
     user: string,

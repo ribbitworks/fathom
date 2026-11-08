@@ -97,13 +97,14 @@ Both modes use a locally trusted certificate created with mkcert and stored in t
 | `pnpm dev:reset` | Delete and recreate the development database, add the fictional data and the [development accounts](#development-accounts), print the accounts' password, and start development mode |
 | `pnpm typecheck` | Check types across the workspace |
 | `pnpm check` | The single command from the [Testing Standards](../standards/testing.md#running-tests) |
-| `pnpm test` | All tests, including database tests that run against a throwaway PostgreSQL container |
+| `pnpm test` | All tests, including database tests that each run against a throwaway PostgreSQL container: `pnpm test:scripts` for the scripts in `scripts/`, then `pnpm test:packages` for every workspace package at once. A test database keeps its data in memory and does not wait for writes to reach the disk, since it is thrown away, and no more than 8 start at once on one computer, across copies of the repository, each holding a slot file in a folder of the user's own under the system's temporary folder until it has started |
+| `pnpm test:changed` | The tests a change can affect, as the [Testing Standards](../standards/testing.md#running-tests) describe |
 | `pnpm security` | The security report, written to a dated folder under the git-ignored `output/security/` folder |
-| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell`, `pnpm lint:licences` | Individual linters, also run by `pnpm check` |
+| `pnpm lint`, `pnpm lint:md`, `pnpm lint:shell`, `pnpm lint:powershell`, `pnpm lint:licences` | Individual linters, also run by `pnpm check`. `pnpm lint` keeps a cache in the git-ignored `.tmp/eslint/`, so unchanged files are not linted again; `pnpm check` lints without it, since a change to one file's types can break another file that has not changed |
 | `pnpm format` | Format source files |
 | `pnpm updates` | List available dependency updates with Renovate, written to the git-ignored `output/updates/` folder; changes nothing, and needs network access to the package and container registries |
 | `pnpm update:analyzer <version>` | Pin a new PSScriptAnalyzer version together with its SHA-256 |
-| `pnpm reset-caches` | Remove cached scanner data, which is rebuilt on the next check |
+| `pnpm reset-caches` | Remove cached scanner data, which the next check rebuilds, and ESLint's cache, which the next `pnpm lint` rebuilds |
 | `pnpm prune-reports [days]` | Delete local reports older than the given number of days, 365 by default. Security reports are always kept for at least one calendar year, and must also be kept in the location agreed with IT, as the [Security Plan](../security/security-plan.md) requires |
 | `pnpm stack:up`, `pnpm stack:down`, `pnpm stack:reset`, and `pnpm stack:logs` | Start, stop, delete the data of, and follow the logs of production-like mode |
 | `pnpm stack:create-account --name <name> --email <email> [--role <role>]` and `pnpm stack:create-administrator --email <email>` | Create an account, or the Fathom Administrator account, in production-like mode while it runs, as `pnpm account:create` and `pnpm admin:create` do |

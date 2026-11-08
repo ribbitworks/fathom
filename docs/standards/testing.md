@@ -65,9 +65,15 @@ Logic, validation, access checks and data handling are never excluded. The code 
 
 ## Running Tests
 
-`pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell, PowerShell and licence linting, the unit, integration, access control and security tests, and the build-time security scans. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
+`pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell, PowerShell and licence linting, the unit, integration, access control and security tests, and the build-time security scans, side by side, then lists each one's result and time. `pnpm test:changed` runs the script tests and every test of each package a change touches, committed or not, and of every package that depends on one; a change outside the packages, other than to documentation, runs every test, and a change to documentation alone runs none. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
 
-While working, and for each fix that follows a review, UI feedback or owner feedback, run `pnpm test`, `pnpm lint`, `pnpm format:check`, and `pnpm lint:md` or `pnpm lint:shell` for the files changed. The workflow's test step runs the full `pnpm check` once before the code review, and once more after each round of feedback is fixed, not after each fix within it. A change that affects the containers runs `pnpm test:containers` with that step, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](shared/agent-workflow.md#autonomous-mode) allows.
+While working, run `pnpm test:changed`, `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, and `pnpm lint:md` or `pnpm lint:shell` for the files changed. The workflow's test step, which [agent-workflow.md](shared/agent-workflow.md#autonomous-mode) repeats after each round of fixes, runs:
+
+- **Before the code review:** the full `pnpm check`. The review may start while it runs, since both only read the code; if the check fails, its fixes are a round of fixes like any other.
+- **After each round of fixes,** whether from a review, UI feedback or owner feedback: `pnpm test:changed`, `pnpm lint`, `pnpm format:check`, `pnpm typecheck`, and `pnpm lint:md` or `pnpm lint:shell` for the files changed. `pnpm security` runs too, but only if the round changed dependencies, the lockfile, a container file or the security scans' settings.
+- **Before opening the pull request, and before each later push to it:** the full `pnpm check`, on the final code rebased onto `main`, so every build pushed for review has had every scan the [Security Plan](../security/security-plan.md#vulnerability-scanning) runs on every build.
+
+A change that affects the containers runs `pnpm test:containers` with the test step before the code review, and again only if a later fix changes the containers. A change to documentation only may skip the test step, as [agent-workflow.md](shared/agent-workflow.md#autonomous-mode) allows.
 
 ## Manual Tests
 

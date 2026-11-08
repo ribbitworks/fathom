@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
+# Runs everything 'pnpm check' covers side by side: ESLint without its cache, the formatting check,
+# type checking, Markdown, shell, PowerShell and licence linting, the script and package tests, and
+# the security report. Prints each job's output once it ends, then each job's result and time.
+# Fails if any job fails.
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+# shellcheck source=scripts/lib.sh
+source scripts/lib.sh
+
+# Each job is its name and its command. ESLint runs without its cache here: its type-aware rules
+# can fail in a file that has not changed when another file's types change, which the cache cannot
+# see.
+jobs=(
+  "ESLint|pnpm lint --no-cache"
+  "Formatting|pnpm format:check"
+  "Types|pnpm typecheck"
+  "Markdown|pnpm lint:md"
+  "Shell scripts|pnpm lint:shell"
+  "PowerShell scripts|pnpm lint:powershell"
+  "Licences|pnpm lint:licences"
+  "Script tests|pnpm test:scripts"
+  "Package tests|pnpm test:packages"
+  "Security report|pnpm security"
+)
+
+logs=""
+# The process of each job still running, emptied once it ends.
+pids=()
+results=()
+seconds=()
+
+main() {
+  local index started
+  local -a starts=()
+  mkdir -p .tmp && chmod 700 .tmp
+  logs="$(mktemp -d "$PWD/.tmp/check.XXXXXX")"
+  trap 'stop_jobs; rm -rf "$logs"' EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  # Each job runs in its own process group, so stopping the check stops everything a job started.
+  set -m
+
+  started="$(date +%s)"
+  for index in "${!jobs[@]}"; do
+    run_job "$index" &
+    pids[index]=$!
+    starts[index]="$(date +%s)"
+  done
+  info "Started ${#jobs[@]} jobs side by side; each one's output follows when it ends"
+
+  local remaining="${#jobs[@]}" status
+  while [ "$remaining" -gt 0 ]; do
+    for index in "${!jobs[@]}"; do
+      [ -n "${pids[index]}" ] || continue
+      if [ -s "$logs/$index.status" ]; then
+        status="$(cat "$logs/$index.status")"
+      elif kill -0 "${pids[index]}" 2>/dev/null; then
+        continue
+      elif [ -s "$logs/$index.status" ]; then
+        status="$(cat "$logs/$index.status")"
+      else
+        # The job's runner was stopped before it could record how the job ended, so whatever it
+        # started is stopped too.
+        status=1
+        kill -TERM -- "-${pids[index]}" 2>/dev/null || true
+        wait "${pids[index]}" 2>/dev/null || true
+      fi
+      pids[index]=""
+      seconds[index]=$(($(date +%s) - starts[index]))
+      if [ "$status" = 0 ]; then results[index]="Pass"; else results[index]="Fail"; fi
+      remaining=$((remaining - 1))
+      printf '\n==> %s: %s in %ss (%s)\n' "$(job_name "$index")" "${results[index]}" "${seconds[index]}" \
+        "$(job_command "$index")"
+      cat "$logs/$index.log" 2>/dev/null || true
+    done
+    [ "$remaining" -eq 0 ] || sleep 1
+  done
+
+  print_results "$(($(date +%s) - started))"
+}
+
+job_name() { printf '%s\n' "${jobs[$1]%%|*}"; }
+job_command() { printf '%s\n' "${jobs[$1]#*|}"; }
+
+run_job() {
+  local index="$1" status=0
+  bash -c "$(job_command "$index")" >"$logs/$index.log" 2>&1 </dev/null || status=$?
+  printf '%s\n' "$status" >"$logs/$index.status"
+}
+
+print_results() {
+  local index failed=0
+  printf '\n| Job | Result | Seconds |\n| --- | --- | --- |\n'
+  for index in "${!jobs[@]}"; do
+    printf '| %s | %s | %s |\n' "$(job_name "$index")" "${results[index]}" "${seconds[index]}"
+    [ "${results[index]}" = "Pass" ] || failed=1
+  done
+  printf '\nTotal: %ss\n' "$1"
+  [ "$failed" -eq 0 ] || fail "Some checks failed; see their output above"
+}
+
+stop_jobs() {
+  local pid
+  for pid in ${pids[@]+"${pids[@]}"}; do
+    [ -n "$pid" ] || continue
+    kill -TERM -- "-$pid" 2>/dev/null || true
+  done
+}
+
+main "$@"

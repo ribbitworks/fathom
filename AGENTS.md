@@ -117,7 +117,7 @@ cannot say. Never narrate names, UI, tickets, use-case numbers or history. See
 - **Setup on a new branch:** `pnpm install`, then run `pnpm dev` again, which first stops this clone's running one, since the top bar's development label shows the branch `pnpm dev` started on. A clone that already has `.dev/` needs nothing more to run the app. In a clone without it, ask the owner whether to copy `.dev/` from another clone, so the development accounts keep one password everywhere, and which clone number to give it with `pnpm dev:setup <number>`, run straight after copying, since `.dev/` holds the other clone's number. Each clone number has its own database and ports, as [Development Setup](docs/design/development-setup.md#ways-to-run-fathom) describes.
 - **Workflow test step:** `pnpm check`, which runs everything listed in [Testing Standards](docs/standards/testing.md#running-tests). When a change affects the containers, the test step also runs `pnpm test:containers`.
 - **Tests only:** `pnpm test`
-- **Checks while working and for each fix:** `pnpm test` and the linters, as [Testing Standards](docs/standards/testing.md#running-tests) describes; the full workflow test step still runs before the review and after each round of feedback
+- **Checks while working and after each round of fixes:** `pnpm test:changed` and the linters, as [Testing Standards](docs/standards/testing.md#running-tests) describes; the full `pnpm check` runs before the review and again before the pull request
 - **Container tests:** `pnpm test:containers`
 - **Markdown lint:** `pnpm lint:md`
 - **Shell lint:** `pnpm lint:shell`
