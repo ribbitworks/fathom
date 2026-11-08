@@ -105,6 +105,7 @@ import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
 import { movedKeys } from "./list-drafts.tsx";
 import { draftedLists, liveLists } from "./lists.ts";
+import { nameAs } from "./names.ts";
 import {
   type ChangeView,
   ColumnViewItems,
@@ -913,7 +914,8 @@ function fieldDraftLines(field: Field, lists: readonly List[]): Phrase[] {
 
 // Who drafted the column order, as the heading of its section in a menu, and as a line of a moved
 // column's draft.
-const orderMaker = (draft: ColumnOrderDraft) => draft.madeBy ?? "Fathom";
+const orderMaker = (draft: ColumnOrderDraft) =>
+  draft.madeBy === null ? "Fathom" : nameAs(draft.madeBy, draft.madeAs);
 const movedLine = (draft: ColumnOrderDraft): Phrase => [
   { strong: "Moved" },
   ` by ${orderMaker(draft)}`,

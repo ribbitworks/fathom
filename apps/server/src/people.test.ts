@@ -24,7 +24,7 @@ import {
   type Person,
   roleSchema,
 } from "@fathom/shared";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, ne, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { rolesGranting } from "./access.ts";
@@ -204,7 +204,12 @@ async function accessOf(actorId: string) {
       subjectId: accessHistory.subjectId,
     })
     .from(accessHistory)
-    .where(eq(accessHistory.actorId, actorId))
+    .where(
+      and(
+        eq(accessHistory.actorId, actorId),
+        ne(accessHistory.action, "signed-in"),
+      ),
+    )
     .orderBy(desc(accessHistory.id));
 }
 
@@ -1082,7 +1087,9 @@ describe("access history", () => {
       .entries.filter(
         // Reading People also reads the planned hires other tests add, which hires.test.ts covers.
         ({ actor, action }) =>
-          actor?.id === actorId && action !== "hiring-plan-viewed",
+          actor?.id === actorId &&
+          action !== "hiring-plan-viewed" &&
+          action !== "signed-in",
       )
       .map(({ action, subject }) => [action, subject]);
   }

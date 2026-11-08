@@ -176,6 +176,30 @@ describe("the entries", () => {
     ]);
   });
 
+  it("name the role each change was made as, but not for Fathom itself", async () => {
+    serverAnswers({
+      "GET /api/session": changesViewer,
+      "GET /api/changes": page([
+        {
+          ...entry([record("list-item", "created", [], "North", "Sites")]),
+          madeAs: "Engineering Manager",
+        },
+        {
+          ...entry(
+            [record("list-item", "created", [], "South", "Sites")],
+            null,
+          ),
+          madeAs: null,
+        },
+      ]),
+    });
+    renderApp("/changes");
+    expect(await lines()).toEqual([
+      "Fictional Person as Engineering Manager added the choice North in Sites",
+      "Fathom added the choice South in Sites",
+    ]);
+  });
+
   it("say who changed what, and what changed in it", async () => {
     serverAnswers({
       "GET /api/session": changesViewer,

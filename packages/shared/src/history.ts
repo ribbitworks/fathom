@@ -9,6 +9,10 @@ import { passwordSettingsSchema } from "./passwords.ts";
 export const accessActionSchema = z.enum([
   "account-created",
   "roles-changed",
+  // A user switched the role they act as, naming the role before and after.
+  "role-switched",
+  // A user signed in, naming the role the session started as.
+  "signed-in",
   "name-changed",
   "email-changed",
   "password-reset",
@@ -41,11 +45,15 @@ export const accessActionSchema = z.enum([
 export type AccessAction = z.infer<typeof accessActionSchema>;
 
 export const historyDetailsSchema = z.object({
-  // For an account created or given another role: the role's name then, and the one it held
-  // before. For a role created or changed: its name then, any name it had before, and the
-  // permissions granted or withdrawn, as stored, so a permission renamed since is still shown.
+  // For an account created or given other roles: its default role's name then, and the one it had
+  // before, with every role it holds then and before, by name. For a role switched: the role acted
+  // as then and before. For a sign-in: the role the session started as. For a role created or
+  // changed: its name then, any name it had before, and the permissions granted or withdrawn, as
+  // stored, so a permission renamed since is still shown.
   role: z.string().optional(),
   previousRole: z.string().optional(),
+  roles: z.array(z.string()).optional(),
+  previousRoles: z.array(z.string()).optional(),
   previousName: z.string().optional(),
   granted: z.array(z.string()).optional(),
   withdrawn: z.array(z.string()).optional(),

@@ -82,8 +82,8 @@ A manual test is a test specification a test engineer, including one new to Fath
 - **Scope:** one or two sentences on what the test verifies.
 - **Test Environment:** what must be running and set up, with links to the documents that say how.
 - **Test Accounts:** each account the test uses, named by its role in Fathom, with its email address, its name as Fathom shows it, the role it holds, linking to the document that sets out what that role can do rather than restating it, which procedure creates it, and where its password comes from.
-- **Common Procedures:** numbered procedures the test cases refer to: starting Fathom, each way of restoring or resetting the data, with the exact commands, which terminal runs them, how to confirm they worked, and what each deletes, and signing in and out.
-- **Terms:** where on screen any menu or control the steps name is found, when its label alone does not say.
+- **Common Procedures:** numbered procedures the test cases refer to: starting Fathom, each way of restoring or resetting the data, with the exact commands, which terminal runs them, how to confirm they worked, and what each deletes. Signing in and out are not procedures: steps just say which account to sign in as.
+- **Terms:** where on screen any menu or control the steps name is found, when its label alone does not say. Steps name a page as it appears in the left-hand menu, such as "Select **Drafts** in the left-hand menu", never by its position or the item next to it, since the menu's order changes as pages are added.
 - **Test Cases:** each with an ID, such as `DRAFT-01`, a title saying what it verifies, an **Account:** line naming the account it starts with, its preconditions (the page and view, and any procedure to run first), its steps, and any procedure to run afterwards. Each step is an unticked checkbox with the step's number and one action, followed by an **Expected:** line and an empty **Notes:** line for the tester. Steps are never laid out as tables.
 
 Rules:

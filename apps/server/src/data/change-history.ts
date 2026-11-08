@@ -15,6 +15,7 @@ import {
   listItems,
   lists,
   plannedHires,
+  roles,
   users,
 } from "@fathom/db";
 import {
@@ -546,9 +547,11 @@ async function readBatch(
       kind: changeSets.kind,
       madeAt: changeSets.madeAt,
       madeBy: users.name,
+      madeAs: roles.name,
     })
     .from(changeSets)
     .leftJoin(users, eq(users.id, changeSets.madeBy))
+    .leftJoin(roles, eq(roles.id, changeSets.madeAsRoleId))
     .where(
       and(
         seenSets(actor),
@@ -629,6 +632,7 @@ async function readBatch(
                   .parse(set.kind === "withdrawal" ? "discard" : set.kind),
                 madeAt: set.madeAt.toISOString(),
                 madeBy: set.madeBy,
+                madeAs: set.madeAs,
                 records: recordsOf(held.rows, facts.names, facts.lists),
               },
               sensitive: held.sensitive,

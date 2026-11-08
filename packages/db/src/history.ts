@@ -43,22 +43,33 @@ export function inChunks<Row>(rows: readonly Row[], size = 1000): Row[][] {
   );
 }
 
+// Who made a change set: the user, and the role they were acting as, which is null only for an actor
+// that reads no role from the database, as some tests make.
+export interface ChangeMaker {
+  userId: string;
+  roleId: string | null;
+}
+
 // Records changes as one change set, in the transaction that makes them. The maker is null for
 // Fathom itself, such as for seed data. With no changes, nothing is recorded, so there is never an
 // empty change set, and the result is null; otherwise it is the change set's identifier. Changes
 // to drafts not yet published are seen only by their maker until published.
 export async function recordChanges(
   transaction: Pick<Database, "insert">,
-  madeBy: string | null,
+  maker: ChangeMaker | null,
   made: readonly ChangeRecord[],
   kind: ChangeSetKind = "edit",
   unpublished = false,
 ): Promise<string | null> {
   if (made.length === 0) return null;
   const changeSetId = randomUUID();
-  await transaction
-    .insert(changeSets)
-    .values({ id: changeSetId, madeBy, kind, unpublished });
+  await transaction.insert(changeSets).values({
+    id: changeSetId,
+    madeBy: maker?.userId ?? null,
+    madeAsRoleId: maker?.roleId ?? null,
+    kind,
+    unpublished,
+  });
   for (const chunk of inChunks(made)) {
     await transaction.insert(changes).values(
       chunk.map((change) => ({

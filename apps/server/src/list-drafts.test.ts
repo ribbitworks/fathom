@@ -5,16 +5,29 @@
 // drafts that use them, discarding them and sending them for approval again, the names drafts take,
 // removals, and undoing edits to drafts.
 
-import { drafts, listItems, lists } from "@fathom/db";
+import {
+  changes,
+  changeSets,
+  drafts,
+  listItems,
+  lists,
+  rolePermissions,
+  roles,
+  userRoles,
+} from "@fathom/db";
 import type { Choice, List } from "@fathom/shared";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { actorWith } from "./access.ts";
 import { recordChanges } from "./data/changes.ts";
+import { findStartingRole } from "./data/roles.ts";
 import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
+// The editor as an actor whose changes are recorded without a role, as before roles were recorded.
+const editorActor = () => actorWith({ id: editor.id, name: "", email: "" }, []);
 let approver: { id: string; cookie: string };
 
 beforeAll(async () => {
@@ -525,6 +538,80 @@ describe("discarding drafts and sending them again", () => {
   });
 });
 
+describe("drafts made under several roles", () => {
+  // The roles each change set to a list was made as, oldest first.
+  const madeAs = async (id: string) =>
+    (
+      await test.connection
+        .selectDistinct({
+          kind: changeSets.kind,
+          roleId: changeSets.madeAsRoleId,
+          madeAt: changeSets.madeAt,
+        })
+        .from(changes)
+        .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
+        .where(and(eq(changes.recordId, id), eq(changeSets.unpublished, false)))
+        .orderBy(asc(changeSets.madeAt))
+    ).map(({ kind, roleId }) => ({ kind, roleId }));
+
+  it("records the role each change was made as, and refuses its maker approving it under another role", async () => {
+    const person = await test.signedIn("workforce-administrator");
+    const [approving] = await test.connection
+      .insert(roles)
+      .values({ name: unique("Fictional Approving Role") })
+      .returning({ id: roles.id });
+    const approvingId = String(approving?.id);
+    await test.connection
+      .insert(rolePermissions)
+      .values(
+        (["configuration:approve", "configuration:view"] as const).map(
+          (permission) => ({ roleId: approvingId, permission }),
+        ),
+      );
+    await test.connection
+      .insert(userRoles)
+      .values({ userId: person.id, roleId: approvingId });
+    const drafted = await test.request(person.cookie, "POST", "/api/lists", {
+      name: unique("Fictional List"),
+    });
+    const { list } = drafted.json<{ list: List }>();
+    const switched = await test.request(
+      person.cookie,
+      "PUT",
+      "/api/session/role",
+      { roleId: approvingId },
+      { publish: false },
+    );
+    expect(switched.statusCode, switched.body).toBe(204);
+    const refused = await decide(
+      "approval",
+      { lists: [list.id] },
+      person.cookie,
+    );
+    expect(refused.statusCode).toBe(403);
+    expect(refused.json()).toEqual({
+      error: "Drafts changed by the approver need another approver",
+    });
+    expect((await decide("approval", { lists: [list.id] })).statusCode).toBe(
+      200,
+    );
+    const [approverRole] = await test.connection
+      .select({ roleId: userRoles.roleId })
+      .from(userRoles)
+      .where(eq(userRoles.userId, approver.id));
+    expect(await madeAs(list.id)).toEqual([
+      {
+        kind: "edit",
+        roleId: await findStartingRole(
+          test.connection,
+          "workforce-administrator",
+        ),
+      },
+      { kind: "approval", roleId: approverRole?.roleId },
+    ]);
+  });
+});
+
 describe("approving and rejecting drafts of lists, refused", () => {
   it("refuses approving the retiring of a list a column now draws on", async () => {
     const { list } = await liveList(["A"]);
@@ -670,7 +757,7 @@ describe("undoing changes to drafts of lists, refused", () => {
 describe("undoing changes to lists saved before lists had drafts", () => {
   const legacy = (made: Parameters<typeof recordChanges>[2]) =>
     test.connection.transaction((transaction) =>
-      recordChanges(transaction, editor.id, made),
+      recordChanges(transaction, editorActor(), made),
     );
   const field = (
     recordType: "list" | "list-item",

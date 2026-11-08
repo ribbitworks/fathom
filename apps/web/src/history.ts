@@ -15,6 +15,7 @@ import {
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson } from "./api.ts";
+import { rolesHeld } from "./names.ts";
 
 export const historyQuery = queryOptions({
   queryKey: ["access-history"],
@@ -40,6 +41,14 @@ const actionWords: Record<AccessAction, ActionWords> = {
   "roles-changed": {
     verb: "changed the role of",
     caution: true,
+  },
+  "role-switched": {
+    verb: "switched role",
+    caution: false,
+  },
+  "signed-in": {
+    verb: "signed in",
+    caution: false,
   },
   "name-changed": {
     verb: "changed the name of",
@@ -137,7 +146,9 @@ export function subjectName({ action, subject }: HistoryEntry): string | null {
   if (
     subject === null ||
     action === "password-changed" ||
-    action === "own-name-changed"
+    action === "own-name-changed" ||
+    action === "role-switched" ||
+    action === "signed-in"
   ) {
     return null;
   }
@@ -209,15 +220,31 @@ function describePasswords(
   return phrases.join("; ");
 }
 
+// An account's roles as they were then, or its default alone, as entries made before accounts held
+// several roles name it.
+function heldRoles(
+  role: string | undefined,
+  roles: readonly string[] | undefined,
+): string | undefined {
+  if (roles === undefined || roles.length === 0) return role;
+  return rolesHeld(role, roles).join(", ");
+}
+
 // The roles, time zones, or password settings involved in an entry, in words, or an empty string
-// when none were. An account's role is named as it was then.
+// when none were. An account's roles are named as they were then.
 export function describeDetails({ action, details }: HistoryEntry): string {
   const { role, previousRole, timeZone, previousTimeZone } = details;
-  if (action === "account-created" && role !== undefined) return `with ${role}`;
-  if (action === "roles-changed" && role !== undefined) {
-    return previousRole === undefined
-      ? `to ${role}`
-      : `from ${previousRole} to ${role}`;
+  const held = heldRoles(role, details.roles);
+  const previousHeld = heldRoles(previousRole, details.previousRoles);
+  if (action === "account-created" && held !== undefined) return `with ${held}`;
+  if (action === "signed-in" && role !== undefined) return `as ${role}`;
+  if (
+    (action === "roles-changed" || action === "role-switched") &&
+    held !== undefined
+  ) {
+    return previousHeld === undefined
+      ? `to ${held}`
+      : `from ${previousHeld} to ${held}`;
   }
   if (role !== undefined) return describeRole(details);
   if (timeZone !== undefined) {

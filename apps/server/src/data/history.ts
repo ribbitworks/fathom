@@ -90,6 +90,8 @@ const storedDetailsSchema = z
   .object({
     role: z.string().optional(),
     previousRole: z.string().optional(),
+    roles: z.array(z.string()).optional(),
+    previousRoles: z.array(z.string()).optional(),
     previousName: z.string().optional(),
     granted: z.array(z.string()).optional(),
     withdrawn: z.array(z.string()).optional(),

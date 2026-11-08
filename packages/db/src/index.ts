@@ -8,6 +8,7 @@ export { createDatabase, createPool, type Database } from "./client.ts";
 export { type DatabaseConfig, loadDatabaseConfig } from "./config.ts";
 export { databaseCodes, describeError, hasDatabaseCode } from "./errors.ts";
 export {
+  type ChangeMaker,
   type ChangeRecord,
   type ChangeSetKind,
   fieldOfValue,

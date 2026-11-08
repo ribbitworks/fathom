@@ -185,6 +185,13 @@ const routes: Route[] = [
   { method: "GET", pattern: "/api/auth/get-session", needs: open },
   // Answers who is signed in, or that no one is.
   { method: "GET", pattern: "/api/session", needs: open },
+  // Each user switches among their own roles; a random one is not theirs, so is not found.
+  {
+    method: "PUT",
+    pattern: "/api/session/role",
+    needs: signedIn,
+    body: () => ({ roleId: id() }),
+  },
 
   { method: "GET", pattern: "/api/accounts", needs: allOf("accounts:view") },
   {

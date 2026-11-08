@@ -222,6 +222,43 @@ describe("the entries", () => {
     ]);
   });
 
+  it("say which role each sign-in started as, and which role a user switched from and to", async () => {
+    serverAnswers({
+      "GET /api/session": historyViewer,
+      "GET /api/access-history": () =>
+        Response.json({
+          entries: [
+            {
+              id: 9,
+              occurredAt: "2026-10-30T20:00:00.000Z",
+              actor: subject,
+              action: "role-switched",
+              subject,
+              details: { previousRole: "Planner", role: "Team Member" },
+            },
+            {
+              id: 8,
+              occurredAt: "2026-10-30T19:00:00.000Z",
+              actor: subject,
+              action: "signed-in",
+              subject,
+              details: { role: "Planner" },
+            },
+          ],
+        }),
+    });
+    renderApp("/history");
+    const lines = (await screen.findAllByRole("listitem")).map((item) =>
+      item.textContent.slice(
+        String(item.querySelector("time")?.textContent).length,
+      ),
+    );
+    expect(lines).toEqual([
+      "Fictional Planner switched role: from Planner to Team Member",
+      "Fictional Planner signed in: as Planner",
+    ]);
+  });
+
   it("say whose name or email address changed, without the values", async () => {
     serverAnswers({
       "GET /api/session": historyViewer,

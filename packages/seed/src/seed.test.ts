@@ -624,18 +624,22 @@ describe("the seed command", () => {
       action: "changed",
       fields: { preferredName: "Fictional Hand Draft" },
     });
-    await recordChanges(connection, director?.id ?? null, [
-      {
-        recordType: "person",
-        recordId: String(seeded.people[10]?.id),
-        action: "changed",
-        field: "preferredName",
-        tier: "general",
-        oldValue: seeded.people[10]?.preferredName,
-        newValue: "Fictional Hand Draft",
-        draft: true,
-      },
-    ]);
+    await recordChanges(
+      connection,
+      director ? { userId: director.id, roleId: null } : null,
+      [
+        {
+          recordType: "person",
+          recordId: String(seeded.people[10]?.id),
+          action: "changed",
+          field: "preferredName",
+          tier: "general",
+          oldValue: seeded.people[10]?.preferredName,
+          newValue: "Fictional Hand Draft",
+          draft: true,
+        },
+      ],
+    );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     // The two rejected drafts of people, the one being changed, the one given a skill, the one made
     // by hand, the fourteen of lists, the five of columns, and the three of planned hires.

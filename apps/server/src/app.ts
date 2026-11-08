@@ -158,6 +158,7 @@ export async function buildApp(options: AppOptions) {
   );
 
   app.decorateRequest("actor", null as unknown as Actor);
+  app.decorateRequest("sessionId", "");
 
   // Better Auth reports only warnings and errors, each logged with its own level alongside.
   const auth = createAuth(options.database, options.auth, (level, message) => {
@@ -184,6 +185,7 @@ export async function buildApp(options: AppOptions) {
         .send({ error: "The password must be changed before continuing." });
     }
     request.actor = actor;
+    request.sessionId = actor.sessionId;
     return undefined;
   });
   await app.register(authRoutes(auth, options.data, options.auth.publicUrl));
@@ -213,7 +215,9 @@ export type App = Awaited<ReturnType<typeof buildApp>>;
 
 declare module "fastify" {
   interface FastifyRequest {
-    // Who is making the request. Set for every route that requires sign-in, before its handler.
+    // Who is making the request, and the session they make it in. Set for every route that requires
+    // sign-in, before its handler.
     actor: Actor;
+    sessionId: string;
   }
 }

@@ -18,7 +18,7 @@ import {
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import type { Actor } from "./access.ts";
+import { type Actor, actorWith } from "./access.ts";
 import { recordChanges } from "./data/changes.ts";
 import { createDataAccess } from "./data/index.ts";
 import { ConflictError, ForbiddenError } from "./errors.ts";
@@ -26,6 +26,8 @@ import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
 
 let test: TestApp;
 let editor: { id: string; cookie: string };
+// The editor as an actor whose changes are recorded without a role, as before roles were recorded.
+const editorActor = () => actorWith({ id: editor.id, name: "", email: "" }, []);
 let approver: { id: string; cookie: string };
 
 beforeAll(async () => {
@@ -308,6 +310,7 @@ describe("drafting columns", () => {
     // An actor who may change configuration but not people, as no role grants today.
     const configurationOnly: Actor = {
       user: { id: editor.id, name: "Fictional Editor", email: "" },
+      roleId: null,
       permissions: ["configuration:edit", "configuration:view"],
     };
     const refusal = createDataAccess(test.connection).people.deleteField(
@@ -322,6 +325,7 @@ describe("drafting columns", () => {
   // grants today. It is the editor's own user, so it sees the editor's unpublished drafts.
   const generalOnly = (): Actor => ({
     user: { id: editor.id, name: "Fictional Editor", email: "" },
+    roleId: null,
     permissions: ["configuration:edit", "configuration:view", "people:view"],
   });
   const choice = (listId: string, name = unique("Fictional Column")) =>
@@ -919,7 +923,7 @@ describe("undoing changes to columns saved before columns had drafts", () => {
       .set({ listId: second.id })
       .where(eq(fields.id, field.id));
     const changed = await test.connection.transaction((transaction) =>
-      recordChanges(transaction, editor.id, [
+      recordChanges(transaction, editorActor(), [
         {
           recordType: "field",
           recordId: field.id,
@@ -947,7 +951,7 @@ describe("undoing changes to columns saved before columns had drafts", () => {
     ).toBe(200);
     expect((await liveField(field.id))?.listId).toBe(first.id);
     const gone = await test.connection.transaction((transaction) =>
-      recordChanges(transaction, editor.id, [
+      recordChanges(transaction, editorActor(), [
         {
           recordType: "field",
           recordId: field.id,
@@ -979,7 +983,7 @@ describe("undoing changes to columns saved before columns had drafts", () => {
       .set({ keys: moved })
       .where(eq(columnOrders.tableName, "people"));
     const changed = await test.connection.transaction((transaction) =>
-      recordChanges(transaction, editor.id, [
+      recordChanges(transaction, editorActor(), [
         {
           recordType: "field",
           recordId: field.id,
@@ -1020,7 +1024,7 @@ describe("undoing changes to columns saved before columns had drafts", () => {
       const changeSetId = await test.connection.transaction((transaction) =>
         recordChanges(
           transaction,
-          editor.id,
+          editorActor(),
           (
             ["tableName", "name", "listId", "multiple", "required"] as const
           ).map((name) => ({
@@ -1187,7 +1191,7 @@ describe("undoing changes to column drafts", () => {
     // No role changes configuration without people today, so the actor is made by hand.
     const configurationOnly = {
       user: { id: remover.id, name: "Fictional Remover", email: "" },
-      roles: [],
+      roleId: null,
       permissions: ["configuration:edit", "configuration:view"] as Permission[],
     };
     await expect(
@@ -1213,7 +1217,7 @@ describe("undoing changes to column drafts", () => {
     ).json<{ changeSetId: string }>();
     const withoutConfidential = {
       user: { id: remover.id, name: "Fictional Remover", email: "" },
-      roles: [],
+      roleId: null,
       permissions: [
         "configuration:edit",
         "configuration:view",

@@ -31,7 +31,7 @@ import {
   roleSchema,
   type Unpublished,
 } from "@fathom/shared";
-import { and, count as total, eq, inArray } from "drizzle-orm";
+import { and, count as total, eq, inArray, ne } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rolesGranting } from "./access.ts";
@@ -402,7 +402,12 @@ describe("the hiring plan", () => {
       test.connection
         .select({ action: accessHistory.action })
         .from(accessHistory)
-        .where(eq(accessHistory.actorId, who.id));
+        .where(
+          and(
+            eq(accessHistory.actorId, who.id),
+            ne(accessHistory.action, "signed-in"),
+          ),
+        );
     expect(await viewsBy(reader)).toEqual([
       { action: "restricted-viewed" },
       { action: "hiring-plan-viewed" },

@@ -511,7 +511,7 @@ export async function discardUnpublished(
       .where(eq(unpublishedDrafts.userId, userId));
     await recordSensitiveChanges(transaction, userId, made);
     await recordHiringChanges(transaction, userId, made);
-    await recordChanges(transaction, userId, made, "withdrawal");
+    await recordChanges(transaction, actor, made, "withdrawal");
     return rows.length;
   });
 }

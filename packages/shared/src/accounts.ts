@@ -37,8 +37,7 @@ const newPasswordSchema = z
   .min(passwordLength.minimum)
   .max(passwordLength.maximum);
 
-// The one role an account holds, by its ID, with its name for showing. Null only for an account
-// whose role could not be read, which Fathom never makes.
+// A role an account holds, by its ID, with its name for showing.
 export const accountRoleSchema = z.object({ id: z.uuid(), name: z.string() });
 
 export type AccountRole = z.infer<typeof accountRoleSchema>;
@@ -47,7 +46,11 @@ export const accountSchema = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
+  // The account's default role, which it signs in as the first time; null only for an account
+  // whose roles could not be read, which Fathom never makes.
   role: accountRoleSchema.nullable(),
+  // Every role the account holds, the default among them, by name.
+  roles: z.array(accountRoleSchema),
   active: z.boolean(),
   createdAt: z.iso.datetime({ offset: true }),
 });
@@ -56,20 +59,22 @@ export type Account = z.infer<typeof accountSchema>;
 
 export const accountListSchema = z.object({ accounts: z.array(accountSchema) });
 
-// Fathom generates the first password, so the request names none.
+// Fathom generates the first password, so the request names none. The server refuses a default
+// role outside the roles the account holds.
 export const newAccountSchema = z.object({
   name: accountName,
   email: z.email(),
-  // Every account holds exactly one role, any role, starting or made later.
+  // The account's default role, any role, starting or made later.
   roleId: z.uuid(),
+  // Every role the account holds, the default among them; left out, the default alone.
+  roleIds: z.array(z.uuid()).min(1, "Choose at least one role").optional(),
 });
 
 export type NewAccountRequest = z.infer<typeof newAccountSchema>;
 
-// Any of an account's name, email address, and role, changed together.
-export const accountChangeSchema = newAccountSchema
-  .pick({ name: true, email: true, roleId: true })
-  .partial();
+// Any of an account's name, email address, roles, and default role, changed together. A default
+// given without the roles makes it the account's only role, as for a new account.
+export const accountChangeSchema = newAccountSchema.partial();
 
 export type AccountChangeRequest = z.infer<typeof accountChangeSchema>;
 

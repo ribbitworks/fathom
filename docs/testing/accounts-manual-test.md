@@ -2,7 +2,7 @@
 title: "Manual Test: Accounts"
 category: "How-To"
 audience: "AI Coding Assistant"
-applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts"]
+applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
 last_updated: "2026-11-07"
 ---
@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies what only a person can judge on the Accounts page and the screens around it: who sees the Accounts page, how it looks in light and dark mode, creating an account and the one-time password Fathom generates for it, with its eye button and Copy button; the journey from the administrator's browser to the new person's first sign-in, the forced change of the generated password with its checklist, and a reset; editing, deactivating, and reactivating an account, and the greyed-out control that keeps one account able to manage accounts and edit roles; the password settings and a generated password that follows them; and the command that creates the Fathom Administrator account at install. The server's refusals, validation messages, permissions, and every wording of the access history are proven by automated tests.
+Verifies what only a person can judge on the Accounts page and the screens around it: who sees the Accounts page, how it looks in light and dark mode, creating an account and the one-time password Fathom generates for it, with its eye button and Copy button; the journey from the administrator's browser to the new person's first sign-in, the forced change of the generated password with its checklist, and a reset; editing, deactivating, and reactivating an account, and the greyed-out control that keeps one account able to manage accounts and edit roles; giving an account several roles and a default, switching role from the account menu with the pages following at once, the role chosen last coming back at sign-in, and the role a change was made as in the change history and on the Drafts page; the password settings and a generated password that follows them; and the command that creates the Fathom Administrator account at install. The server's refusals, validation messages, permissions, and every wording of the access history are proven by automated tests.
 
 ## Test Environment
 
@@ -22,15 +22,16 @@ Verifies what only a person can judge on the Accounts page and the screens aroun
 
 ## Test Accounts
 
-R2 creates these accounts, with every other development account, each holding one role, as [Development Setup](../design/development-setup.md#development-accounts) lists. They share one password, which R2 prints when it finishes. Every role is as Fathom starts it.
+R2 creates these accounts, with every other development account, each holding one role except the Feature Lead, which holds two, as [Development Setup](../design/development-setup.md#development-accounts) lists. They share one password, which R2 prints when it finishes. Every role is as Fathom starts it.
 
 - **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds the Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Superuser account:** `superuser@fathom.test`, shown in Fathom as **Superuser**. It holds the Superuser role, which grants every permission.
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Feature Lead account:** `feature.lead@fathom.test`, shown in Fathom as **Feature Lead**. It holds the Feature Lead role, its default, and the Engineering Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **New Team Member account:** `test.newcomer@fathom.test`, shown in Fathom as **Test Newcomer**. ACCT-03 creates it with the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out, and its password is the one ACCT-03 shows, until ACCT-04 changes it and ACCT-05 resets it. ACCT-06 renames it **Test Arrival**, `test.arrival@fathom.test`, with the Product Manager role.
 - **Second new Team Member account:** `test.rules@fathom.test`, shown in Fathom as **Test Rules**. ACCT-08 creates it with the Team Member role, and its password is the one ACCT-08 shows.
-- **Installed Administrator account:** `install.admin@fathom.test`, shown in Fathom as **Fathom Administrator**. ACCT-10 creates it with the Administrator role, in an empty database, and its password is the one the command in ACCT-10 prints.
+- **Installed Administrator account:** `install.admin@fathom.test`, shown in Fathom as **Fathom Administrator**. ACCT-14 creates it with the Administrator role, in an empty database, and its password is the one the command in ACCT-14 prints.
 
 ## Common Procedures
 
@@ -72,23 +73,14 @@ Use only where a test case asks for it. Like R2, it deletes every account and re
 
 3. Confirm that it finishes with no error.
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first (P2).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
 - **Search box:** the box above the table with a magnifying glass at its left and the hint **Search**, and, once something is typed in it, a **×** at its right end.
 - **Filter:** the three buttons beside the search box: **All**, **Active** and **Deactivated**, each followed by a count.
-- **Role list:** the **Role** choices in the **New account** and **Edit** dialogs, one round button for each role, with its description under its name.
+- **Role list:** the **Roles** tick boxes in the **New account** and **Edit** dialogs, one square box for each role, with its description under its name.
+- **Default role:** the round buttons under the role list, one for each role ticked, shown only while more than one is ticked.
+- **Role menu:** the choices under **Role**, in the menu that opens from your name and initials at the top right of every page, shown only for an account with more than one role.
 
 ## Test Cases
 
@@ -98,28 +90,28 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 2 signs in as another account.
 
-**Preconditions:** Signed in (P1) with this account.
+**Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Look at the left-hand menu.
   - **Expected:** There is no **Administration** section and no **Accounts** page.
   - **Notes:**
 
-- [ ] **Step 2.** Sign out (P2), and sign in (P1) as the Administrator, `fathom.administrator@fathom.test`.
-  - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings** under **Administration**.
+- [ ] **Step 2.** Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`.
+  - **Expected:** The left-hand menu shows **Accounts**, **Roles** and **Settings**.
   - **Notes:**
 
 ### ACCT-02: The Accounts Page Lists Every Account
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account ACCT-01 ended with.
 
-**Preconditions:** Signed in (P1) with this account. **Light** chosen in the Appearance menu.
+**Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Select **Accounts** under **Administration** in the left-hand menu, and read the column headings.
-  - **Expected:** The table has the columns **Person**, **Role**, **Status** and **Created**. **New account** is at the top right.
+- [ ] **Step 1.** Select **Accounts** in the left-hand menu, and read the column headings.
+  - **Expected:** The table has the columns **Person**, **Roles**, **Status** and **Created**. **New account** is at the top right.
   - **Notes:**
 
 - [ ] **Step 2.** Read the rows from top to bottom.
-  - **Expected:** There are 12 rows, in alphabetical order by name. Each **Person** cell shows the person's initials, name, and email address, and each **Role** cell shows one role, as [Development Setup](../design/development-setup.md#development-accounts) lists. Each **Status** cell says **Active**, in green. Each **Created** cell shows a date. Each row ends with an **Edit** button.
+  - **Expected:** There are 12 rows, in alphabetical order by name. Each **Person** cell shows the person's initials, name, and email address, and each **Roles** cell shows the account's roles, as [Development Setup](../design/development-setup.md#development-accounts) lists: one for every account but **Feature Lead**, whose cell shows **Feature Lead (default)** then **Engineering Manager**. Each **Status** cell says **Active**, in green. Each **Created** cell shows a date. Each row ends with an **Edit** button.
   - **Notes:**
 
 - [ ] **Step 3.** Look at the **Fathom Administrator** row.
@@ -158,10 +150,10 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-02.
 
-**Preconditions:** **Accounts** page open, signed in (P1) with this account in the first browser.
+**Preconditions:** **Accounts** page open, signed in with this account in the first browser.
 
 - [ ] **Step 1.** Select **New account**.
-  - **Expected:** A dialog titled **New account**, with an empty **Name**, an empty **Email address**, and **Role**, and no password field. **Role** lists every role in the order of the **Roles** page, each with a round button and its description under its name. Only **Team Member** is chosen. Under the role list, a dimmed line says **Custom roles are created on the Roles page.**, with **Roles** as a link.
+  - **Expected:** A dialog titled **New account**, with an empty **Name**, an empty **Email address**, and **Roles**, and no password field. **Roles** lists every role in the order of the **Roles** page, each with a square tick box and its description under its name. Only **Team Member** is ticked, and there is no **Default role**. Under the role list, a dimmed line says **Custom roles are created on the Roles page.**, with **Roles** as a link.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Roles** in the line under the role list.
@@ -193,7 +185,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 9.** Write the password down for ACCT-04, and select **Done**.
-  - **Expected:** The dialog closes, a green banner says **Created the account for Test Newcomer.**, and **Test Newcomer** is in the table with **Team Member** in its **Role** column.
+  - **Expected:** The dialog closes, a green banner says **Created the account for Test Newcomer.**, and **Test Newcomer** is in the table with **Team Member** in its **Roles** column.
   - **Notes:**
 
 ### ACCT-04: A Generated Password Must Be Changed First
@@ -202,7 +194,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** ACCT-03 run, with the password it showed written down. The first browser stays signed in with this account.
 
-- [ ] **Step 1.** In the second browser, open Fathom's address and sign in (P1) as the new Team Member, `test.newcomer@fathom.test`, with the password written down.
+- [ ] **Step 1.** In the second browser, open Fathom's address and sign in as the new Team Member, `test.newcomer@fathom.test`, with the password written down.
   - **Expected:** The page shows only Fathom's name and mark above a panel headed **Change password**, saying **Fathom generated this password. A new password is required to continue.**, with **Current password**, **New password**, **New password again**, **Sign out**, and **Change password**. Under **New password**, a checklist shows **12 to 128 characters** and **Not a common or easily guessed password**, each with a dimmed circle. There is no left-hand menu and no account button.
   - **Notes:**
 
@@ -252,7 +244,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The **Sign in** page opens.
   - **Notes:**
 
-- [ ] **Step 5.** Sign in (P1) as the new Team Member, `test.newcomer@fathom.test`, with the password written down in Step 3.
+- [ ] **Step 5.** Sign in as the new Team Member, `test.newcomer@fathom.test`, with the password written down in Step 3.
   - **Expected:** The panel headed **Change password** opens, as in ACCT-04.
   - **Notes:**
 
@@ -262,8 +254,8 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** ACCT-05 run. The first browser signed in with this account, with the **Accounts** page open.
 
-- [ ] **Step 1.** Select **Edit** in the **Test Newcomer** row. Type `Test Arrival` in **Name** and `test.arrival@fathom.test` in **Email address**, choose **Product Manager**, and select **Save**.
-  - **Expected:** The dialog, titled **Edit Test Newcomer**, shows the account's name, email address, and role, with **Team Member** chosen and the buttons **Reset password**, **Deactivate**, **Cancel** and **Save**. After **Save** is selected, the dialog closes, a green banner says **Saved the account for Test Arrival.**, and the table has a **Test Arrival** row with `test.arrival@fathom.test` and **Product Manager**, and no **Test Newcomer** row.
+- [ ] **Step 1.** Select **Edit** in the **Test Newcomer** row. Type `Test Arrival` in **Name** and `test.arrival@fathom.test` in **Email address**, tick **Product Manager**, untick **Team Member**, and select **Save**.
+  - **Expected:** The dialog, titled **Edit Test Newcomer**, shows the account's name, email address, and roles, with only **Team Member** ticked and the buttons **Reset password**, **Deactivate**, **Cancel** and **Save**. After **Save** is selected, the dialog closes, a green banner says **Saved the account for Test Arrival.**, and the table has a **Test Arrival** row with `test.arrival@fathom.test` and **Product Manager**, and no **Test Newcomer** row.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Edit** in the **Test Arrival** row, then **Deactivate**.
@@ -278,7 +270,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The edit dialog offers **Reactivate** in place of **Deactivate**. A dialog titled **Reactivate Test Arrival** says **Test Arrival will be able to sign in again.** After the second **Reactivate**, a green banner says **Reactivated the account for Test Arrival.**, and the filter reads **All 13**, **Active 13** and **Deactivated 0**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Access history** under **History** in the left-hand menu.
+- [ ] **Step 5.** Select **Access history** in the left-hand menu.
   - **Expected:** The latest entry says Fathom Administrator (`fathom.administrator@fathom.test`) **reactivated the account for** Test Arrival (`test.arrival@fathom.test`). The one before says **deactivated the account for** Test Arrival (`test.arrival@fathom.test`), and is marked as worth checking.
   - **Notes:**
 
@@ -293,16 +285,20 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 2.** Select **Edit** in the **Fathom Administrator** row.
-  - **Expected:** **Deactivate** is greyed out. In the role list, **Administrator** is chosen, **Superuser** can be chosen, and **Team Member** is greyed out, like every role that cannot both manage accounts and edit roles.
+  - **Expected:** **Deactivate** is greyed out. In the role list, **Administrator** is ticked and greyed out, and every other role can be ticked.
+  - **Notes:**
+
+- [ ] **Step 3.** Tick **Superuser** in the role list.
+  - **Expected:** **Administrator** is no longer greyed out. Under the role list, **Default role** shows **Administrator** and **Superuser**, with **Administrator** chosen.
   - **Notes:**
 
 ### ACCT-08: Setting the Password Rules and Recipe
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-07. Step 6 signs in as another account, in the second browser.
 
-**Preconditions:** ACCT-07 run, with its **Edit Fathom Administrator** dialog still open. The first browser signed in with this account.
+**Preconditions:** ACCT-07 run, with its **Edit Fathom Administrator** dialog still open and unsaved. The first browser signed in with this account.
 
-- [ ] **Step 1.** Select **Cancel**, then **Settings** under **Administration** in the left-hand menu.
+- [ ] **Step 1.** Select **Cancel**, then **Settings** in the left-hand menu.
   - **Expected:** Under **Time zone**, a second panel has two parts. **Password requirements** shows **Minimum length** at 12, and **Must have** with **An uppercase letter**, **A lowercase letter**, **A digit**, and **A symbol**, none ticked, then the dimmed line **Changes apply the next time each person changes their password.** **Generated passwords** shows **Length** at 20, and **Use** with **Uppercase letters**, **Lowercase letters**, and **Digits** ticked and **Symbols:** `! # $ % & * + - = ? @ ^ _ ~` not ticked, then **Leave out characters that look alike:** `I L O i l o 0 1`, ticked. The panel's **Save** is turned off.
   - **Notes:**
 
@@ -322,7 +318,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The dialog titled **Password for Test Rules** shows a password of 16 characters that includes at least one of `! # $ % & * + - = ? @ ^ _ ~`.
   - **Notes:**
 
-- [ ] **Step 6.** Write the password down, and select **Done**. In the second browser, sign in (P1) as the second new Team Member, `test.rules@fathom.test`, with it.
+- [ ] **Step 6.** Write the password down, and select **Done**. In the second browser, sign in as the second new Team Member, `test.rules@fathom.test`, with it.
   - **Expected:** The panel headed **Change password** opens. Under **New password**, before anything is typed, a checklist shows **14 to 128 characters**, **A symbol**, and **Not a common or easily guessed password**, each with a dimmed circle.
   - **Notes:**
 
@@ -330,7 +326,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-08. Step 8 signs in again with this account.
 
-**Preconditions:** Signed in (P1) with this account. The computer's appearance set to light. **Light** chosen in the Appearance menu, as ACCT-02 leaves it. The case ends with **Light** chosen.
+**Preconditions:** Signed in with this account. The computer's appearance set to light. **Light** chosen in the Appearance menu, as ACCT-02 leaves it. The case ends with **Light** chosen.
 
 - [ ] **Step 1.** Choose **System** in the Appearance menu.
   - **Expected:** The page stays light, as the computer is set.
@@ -356,11 +352,11 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The tick is beside **Dark**.
   - **Notes:**
 
-- [ ] **Step 7.** Press Escape, and sign out (P2).
+- [ ] **Step 7.** Press Escape, and sign out.
   - **Expected:** The sign-in page is dark.
   - **Notes:**
 
-- [ ] **Step 8.** Sign in (P1) with this account again.
+- [ ] **Step 8.** Sign in with this account again.
   - **Expected:** The page is dark.
   - **Notes:**
 
@@ -380,11 +376,111 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The page stays light, and the tick is beside **Light**.
   - **Notes:**
 
-### ACCT-10: Creating the Fathom Administrator at Install
+### ACCT-10: Giving an Account Several Roles and a Default
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ACCT-09. Step 1 deletes it, and step 2 signs in as another account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-09.
 
-**Preconditions:** None. This test case empties the database, so ACCT-11 must follow it.
+**Preconditions:** Signed in with this account in the first browser, with the **Accounts** page open.
+
+- [ ] **Step 1.** Select **Edit** in the **Team Member** row.
+  - **Expected:** In the role list, only **Team Member** is ticked, and there is no **Default role**.
+  - **Notes:**
+
+- [ ] **Step 2.** Tick **Executive**.
+  - **Expected:** Under the role list, **Default role** shows **Executive** and **Team Member**, in the order of the role list, with **Team Member** chosen.
+  - **Notes:**
+
+- [ ] **Step 3.** Choose **Executive** under **Default role**, and select **Save**.
+  - **Expected:** A green banner says **Saved the account for Team Member.**, and the **Roles** cell of the **Team Member** row shows **Executive (default)** then **Team Member**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Edit** in the **Team Member** row, and untick **Executive**.
+  - **Expected:** **Default role** disappears, and only **Team Member** is ticked.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Save**.
+  - **Expected:** A green banner says **Saved the account for Team Member.**, and the **Roles** cell of the **Team Member** row shows only **Team Member**.
+  - **Notes:**
+
+### ACCT-11: Switching Role From the Account Menu
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the second browser, changed from ACCT-10.
+
+**Preconditions:** In the second browser, select **Sign out** on the **Change password** panel ACCT-08 left open, and sign in with this account. **Light** chosen in the Appearance menu.
+
+- [ ] **Step 1.** Open the menu from your name and initials at the top right.
+  - **Expected:** Under `feature.lead@fathom.test`, **Role** lists **Engineering Manager** and **Feature Lead**, with a tick beside **Feature Lead** only, followed by **Change name**, **Change password**, **Appearance**, and **Sign out**.
+  - **Notes:**
+
+- [ ] **Step 2.** Press Escape. Select **Releases** in the left-hand menu, then **Platform** in the table.
+  - **Expected:** In the panel beside the table, under **Releases**, the rows **Harbor 1**, **Harbor 2**, and **Harbor 3** have no **⋯** button, and there is no **New release…** button.
+  - **Notes:**
+
+- [ ] **Step 3.** Choose **Engineering Manager** in the role menu.
+  - **Expected:** The menu closes, and the page stays on **Releases** with **Platform** open, without the browser reloading. Under **Releases**, each row now ends with a **⋯** button, and **New release…** shows.
+  - **Notes:**
+
+- [ ] **Step 4.** Open the menu from your name and initials, and press Escape.
+  - **Expected:** The tick is beside **Engineering Manager** only.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the **⋯** button at the end of the **Harbor 3** row, then **Change…**. Replace the name with `Harbor Three`, and select **Save**.
+  - **Expected:** A notification says **Drafted the change to the release.** The row reads **Harbor Three**, with a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the **Publish** button in the top bar.
+  - **Expected:** A notification says **Published**, and the button is gone.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Change history** in the left-hand menu.
+  - **Expected:** The latest entry names **Harbor Three** and starts with **Feature Lead as Engineering Manager**.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Drafts** in the left-hand menu.
+  - **Expected:** The entry for **Harbor Three** starts with **Feature Lead as Engineering Manager**.
+  - **Notes:**
+
+- [ ] **Step 9.** Choose **Feature Lead** in the role menu.
+  - **Expected:** The page stays on **Drafts**, and the entry for **Harbor Three** still starts with **Feature Lead as Engineering Manager**.
+  - **Notes:**
+
+- [ ] **Step 10.** Choose **Dark** in the Appearance menu, open the menu from your name and initials, then press Escape and choose **Light** in the Appearance menu.
+  - **Expected:** In dark mode, the role menu's ticks and names are easy to read.
+  - **Notes:**
+
+### ACCT-12: Signing In Again Comes Back to the Last Role
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the second browser, the same as ACCT-11. Step 2 signs in with it in the first browser, and step 3 signs in as another account there.
+
+**Preconditions:** ACCT-11 run, with **Feature Lead** chosen in the role menu in the second browser.
+
+- [ ] **Step 1.** Choose **Engineering Manager** in the role menu. Sign out, sign in with this account again, and open the menu from your name and initials.
+  - **Expected:** The tick is beside **Engineering Manager** only.
+  - **Notes:**
+
+- [ ] **Step 2.** In the first browser, sign out, sign in as the Feature Lead, `feature.lead@fathom.test`, and open the menu from your name and initials.
+  - **Expected:** The tick is beside **Feature Lead** only.
+  - **Notes:**
+
+- [ ] **Step 3.** In the first browser, sign out, sign in as the Administrator, `fathom.administrator@fathom.test`, and open the menu from your name and initials.
+  - **Expected:** Under `fathom.administrator@fathom.test`, the menu shows **Administrator**, with no **Role** heading and nothing to choose, then **Change name**.
+  - **Notes:**
+
+### ACCT-13: The Access History Records a Switch of Role
+
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-12.
+
+**Preconditions:** ACCT-10 to ACCT-12 run. Signed in with this account in the first browser.
+
+- [ ] **Step 1.** Press Escape. Select **Access history** in the left-hand menu, and type `switched` in the search box at the top of the page.
+  - **Expected:** The latest entry says Feature Lead (`feature.lead@fathom.test`) **switched role**, **from Feature Lead to Engineering Manager**, not marked as worth checking.
+  - **Notes:**
+
+### ACCT-14: Creating the Fathom Administrator at Install
+
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the first browser, the same as ACCT-13. Step 1 deletes it, and step 2 signs in as another account.
+
+**Preconditions:** None. This test case empties the database, so ACCT-15 must follow it.
 
 - [ ] **Step 1.** Start with no accounts (R3). In the second terminal, run:
 
@@ -395,20 +491,20 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** It prints `Created the Fathom Administrator account for install.admin@fathom.test.`, then `Password:` followed by 20 letters and digits, then `Fathom shows this password only once, and asks for a new one at first sign-in.`
   - **Notes:**
 
-- [ ] **Step 2.** Write the password down. Start Fathom (R0), and in the first browser sign in (P1) as the installed Administrator, `install.admin@fathom.test`, with it.
+- [ ] **Step 2.** Write the password down. Start Fathom (R0), and in the first browser sign in as the installed Administrator, `install.admin@fathom.test`, with it.
   - **Expected:** The panel headed **Change password** opens, as in ACCT-04.
   - **Notes:**
 
-### ACCT-11: Put Every Account Back
+### ACCT-15: Put Every Account Back
 
-**Account:** Installed Administrator, `install.admin@fathom.test`, the same as the account ACCT-10 ended with. Step 1 signs in as another account.
+**Account:** Installed Administrator, `install.admin@fathom.test`, the same as the account ACCT-14 ended with. Step 1 signs in as another account.
 
 **Preconditions:** All the test cases above run.
 
-- [ ] **Step 1.** Reset the database (R2), and sign in (P1) as the Administrator, `fathom.administrator@fathom.test`.
+- [ ] **Step 1.** Reset the database (R2), and sign in as the Administrator, `fathom.administrator@fathom.test`.
   - **Expected:** Fathom opens.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Accounts** under **Administration** in the left-hand menu.
+- [ ] **Step 2.** Select **Accounts** in the left-hand menu.
   - **Expected:** The table lists 12 accounts, as in ACCT-02, with no **Test Arrival** or **Test Rules**, and with `fathom.administrator@fathom.test` as the **Fathom Administrator**. The filter reads **All 12**, **Active 12** and **Deactivated 0**.
   - **Notes:**

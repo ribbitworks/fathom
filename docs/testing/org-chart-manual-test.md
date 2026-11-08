@@ -53,17 +53,6 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 2. Confirm that the last line printed gives the shared password, with no error above it.
 3. Reload the browser page.
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first (P2).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
@@ -83,7 +72,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`; the first test case.
 
-**Preconditions:** Signed in (P1) with this account.
+**Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select **Org chart** in the **People** section of the left-hand menu.
   - **Expected:** The page's heading reads **Org chart**. The top bar reads **People / Org chart**. Above the chart are the finder, **Draft** and **Teams** on the left, and **Show levels**, **+**, **−** and **Fit to screen** on the right.
@@ -93,7 +82,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as ORG-01.
 
-**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the card at the top left of the chart.
   - **Expected:** It reads **Silje Holm-Schrøder**, with **Manager** under the name and **Platform team** under that, and ends with **Hide 8 reports**. Two cards with dashed edges are beside it at the top: **TBD-3**, with **Engineering Manager** under it, and **REQ-2047**, with **Software Engineer** under it.
@@ -197,7 +186,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from ORG-07.
 
-**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the top of the chart.
   - **Expected:** Four cards are at the top, side by side, with no line between them: **Silje Holm-Schrøder**, ending with **Hide 6 reports**, **Viktoria Holmberg**, and, with dashed edges, **TBD-3** and **REQ-2047**.
@@ -245,7 +234,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ORG-09.
 
-**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** On the card for **Silje Holm-Schrøder**, select the small teal dot before **Platform team**.
   - **Expected:** A menu opens headed **Colour of Platform team**, listing **Indigo**, **Violet**, **Grape**, **Pink**, **Red**, **Orange**, **Yellow**, **Lime**, **Green** and **Teal**, each after a small dot of its colour, then **No colour**. **Teal** has a tick.
@@ -269,7 +258,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as ORG-10.
 
-**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read **Platform team** on the card for **Silje Holm-Schrøder**.
   - **Expected:** **Platform team** is underlined.
@@ -379,7 +368,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from ORG-14.
 
-**Preconditions:** Signed in (P1) with this account, with **Resource Planner** on the account button at the top right. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account, with **Resource Planner** on the account button at the top right. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** On the card for **Viktoria Holmberg**, read the column under it.
   - **Expected:** **Simone Jean**, **우아현** and **西尾 亮**. The card for **Simone Jean** is untinted and has no mark. No card on the chart is light green.
@@ -389,7 +378,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ORG-15.
 
-**Preconditions:** Signed in (P1) with this account. **Org chart** page open from the left-hand menu. **Light** chosen in the Appearance menu.
+**Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Read the card for **TBD-3**, at the top of the chart.
   - **Expected:** The card has a grey dashed edge and no shadow. **TBD-3** is grey and in italics, with **Engineering Manager** under it. Under that, a hollow grey dot is followed by **Planned, expected** and this month, such as **Nov 2026**. It ends with **Hide 2 reports**.

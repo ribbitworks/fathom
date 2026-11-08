@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Local accounts that sign in with a password: creating them, with the one role each holds, the
-// passwords Fathom generates for them, which their users must change at first sign-in, and the
-// administration of them: those who see accounts list them, and those who manage them change their
-// names, email addresses, and role, reset their passwords, and deactivate them. Administrators
+// Local accounts that sign in with a password: creating them, with the roles each holds and its
+// default, the passwords Fathom generates for them, which their users must change at first sign-in,
+// and the administration of them: those who see accounts list them, and those who manage them change
+// their names, email addresses, and roles, reset their passwords, and deactivate them. Administrators
 // manage their own account like any other, except that some active account must keep the
 // permissions to manage accounts and to edit roles, so no one can lock everyone out, and nobody
 // resets their own password here.
@@ -19,6 +19,7 @@ import {
 } from "@fathom/db";
 import {
   type Account,
+  type AccountRole,
   kindsIn,
   type PasswordRecipe,
   recipeCharacters,
@@ -38,19 +39,48 @@ import type { Transaction } from "./changes.ts";
 import { type HistoryEvent, recordEvent, recordEvents } from "./history.ts";
 import { readPasswordSettings } from "./settings.ts";
 import {
+  defaultRoleOutside,
   findRole,
   findStartingRole,
-  giveRole,
+  giveRoles,
   keepAccessManaged,
   lockAccessManagers,
+  readRoles,
 } from "./roles.ts";
+
+// Roles by name, for showing.
+const byName = (roles: readonly AccountRole[]) =>
+  [...roles].sort((a, b) => a.name.localeCompare(b.name));
+
+// Each of the roles with these IDs, by name, refused if any does not exist.
+async function findRoles(
+  database: Pick<Database, "select">,
+  roleIds: readonly string[],
+): Promise<AccountRole[]> {
+  return byName(await Promise.all(roleIds.map((id) => findRole(database, id))));
+}
+
+// What the access history records of an account's roles: the default's name, and every role's.
+function roleDetails(
+  roles: readonly AccountRole[],
+  defaultRoleId: string | null,
+): { role?: string; roles: string[] } {
+  const role = roles.find(({ id }) => id === defaultRoleId);
+  return {
+    ...(role === undefined ? {} : { role: role.name }),
+    roles: roles.map(({ name }) => name),
+  };
+}
 
 export interface NewAccount {
   name: string;
   email: string;
   password: string;
-  // Any role, starting or made later; it must exist.
+  // The default role, any role, starting or made later; it must exist.
   roleId: string;
+  // Every role the account holds, the default among them, each of which must exist; left out, the
+  // default alone.
+  roleIds?: readonly string[] | undefined;
   // Whether its user must change the password before doing anything else.
   mustChangePassword?: boolean;
 }
@@ -132,13 +162,22 @@ async function checkEmail(
 export async function createAccount(
   auth: Auth,
   database: Database,
-  { name, email, password, roleId, mustChangePassword = false }: NewAccount,
+  {
+    name,
+    email,
+    password,
+    roleId,
+    roleIds = [roleId],
+    mustChangePassword = false,
+  }: NewAccount,
   createdBy: string | null = null,
 ): Promise<string> {
   const context = await auth.$context;
   await checkPassword(auth, password);
   const normalizedEmail = await checkEmail(auth, email);
-  await findRole(database, roleId);
+  const held = [...new Set(roleIds)];
+  if (!held.includes(roleId)) throw new BadRequestError(defaultRoleOutside);
+  await findRoles(database, held);
   const user = await context.internalAdapter.createUser(
     { name: name.trim(), email: normalizedEmail, emailVerified: true },
     { method: "admin" },
@@ -152,8 +191,8 @@ export async function createAccount(
     });
     await database.transaction(async (transaction) => {
       // Read again, so a role deleted meanwhile is refused rather than named wrongly.
-      const role = await findRole(transaction, roleId);
-      await giveRole(transaction, user.id, role.id);
+      const roles = await findRoles(transaction, held);
+      await giveRoles(transaction, user.id, held, roleId);
       if (mustChangePassword) {
         await transaction
           .update(users)
@@ -164,7 +203,7 @@ export async function createAccount(
         actorId: createdBy,
         action: "account-created",
         subjectId: user.id,
-        details: { role: role.name },
+        details: roleDetails(roles, roleId),
       });
     });
   } catch (error) {
@@ -263,7 +302,34 @@ export async function setAccountActive(
 export interface AccountChange {
   name?: string | undefined;
   email?: string | undefined;
+  // The default role, which must be among the roles the account holds after the change.
   roleId?: string | undefined;
+  // Every role the account is to hold; left out with a default given, the default alone.
+  roleIds?: readonly string[] | undefined;
+}
+
+// The roles and default an account change asks for, refusing a default outside them, or undefined
+// when it asks for none or for those the account holds. A default given without the roles is the
+// account's only role.
+function changedRoles(
+  previous: Account,
+  { roleId, roleIds }: AccountChange,
+): { roleIds: string[]; defaultRoleId: string } | undefined {
+  if (roleId === undefined && roleIds === undefined) return undefined;
+  const previousIds = previous.roles.map(({ id }) => id);
+  const defaultRoleId = roleId ?? previous.role?.id;
+  if (defaultRoleId === undefined) {
+    throw new BadRequestError(defaultRoleOutside);
+  }
+  const wanted = [...new Set(roleIds ?? [defaultRoleId])];
+  if (!wanted.includes(defaultRoleId)) {
+    throw new BadRequestError(defaultRoleOutside);
+  }
+  const same =
+    defaultRoleId === previous.role?.id &&
+    wanted.length === previousIds.length &&
+    wanted.every((id) => previousIds.includes(id));
+  return same ? undefined : { roleIds: wanted, defaultRoleId };
 }
 
 export interface AccountAdministration {
@@ -273,8 +339,8 @@ export interface AccountAdministration {
     actor: Actor,
     account: AccountDetails,
   ): Promise<{ account: Account; password: string }>;
-  // Changes any of an account's name, email address, and role together, recording each that
-  // changes in the access history.
+  // Changes any of an account's name, email address, roles, and default role together, recording
+  // each that changes in the access history.
   updateAccount(
     actor: Actor,
     userId: string,
@@ -312,18 +378,19 @@ export function createAccountAdministration(
         id: users.id,
         name: users.name,
         email: users.email,
-        role: { id: roleTable.id, name: roleTable.name },
         deactivatedAt: users.deactivatedAt,
         createdAt: users.createdAt,
       })
       .from(users)
-      .leftJoin(userRoles, eq(userRoles.userId, users.id))
-      .leftJoin(roleTable, eq(roleTable.id, userRoles.roleId))
       .where(eq(users.id, userId));
     if (user === undefined) throw new NotFoundError("There is no such account");
+    const { roles, defaultRoleId } = await readRoles(reader, userId);
     const { deactivatedAt, createdAt, ...details } = user;
+    const shown = roles.map(({ id, name }) => ({ id, name }));
     return {
       ...details,
+      role: shown.find(({ id }) => id === defaultRoleId) ?? null,
+      roles: shown,
       createdAt: createdAt.toISOString(),
       active: deactivatedAt === null,
     };
@@ -366,10 +433,7 @@ export function createAccountAdministration(
         const previous = await readAccount(userId, transaction);
         const name = change.name?.trim() ?? previous.name;
         const email = changedEmail ?? previous.email;
-        const role =
-          change.roleId === undefined || change.roleId === previous.role?.id
-            ? undefined
-            : await findRole(transaction, change.roleId);
+        const roles = changedRoles(previous, change);
         const events: HistoryEvent[] = [
           ...(name === previous.name ? [] : ["name-changed" as const]),
           ...(email === previous.email ? [] : ["email-changed" as const]),
@@ -378,16 +442,21 @@ export function createAccountAdministration(
           action,
           subjectId: userId,
         }));
-        if (role !== undefined) {
+        if (roles !== undefined) {
+          const before = roleDetails(previous.roles, previous.role?.id ?? null);
           events.push({
             actorId: actor.user.id,
             action: "roles-changed",
             subjectId: userId,
             details: {
-              role: role.name,
-              ...(previous.role === null
+              ...roleDetails(
+                await findRoles(transaction, roles.roleIds),
+                roles.defaultRoleId,
+              ),
+              ...(before.role === undefined
                 ? {}
-                : { previousRole: previous.role.name }),
+                : { previousRole: before.role }),
+              previousRoles: before.roles,
             },
           });
         }
@@ -396,8 +465,13 @@ export function createAccountAdministration(
           .update(users)
           .set({ name, email, updatedAt: new Date() })
           .where(eq(users.id, userId));
-        if (role !== undefined) {
-          await giveRole(transaction, userId, role.id);
+        if (roles !== undefined) {
+          await giveRoles(
+            transaction,
+            userId,
+            roles.roleIds,
+            roles.defaultRoleId,
+          );
           await keepAccessManaged(
             transaction,
             "The last active account that can manage accounts or edit roles keeps that access",

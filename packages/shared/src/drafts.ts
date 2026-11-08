@@ -25,6 +25,8 @@ export const draftShape = {
   state: draftStateSchema,
   reason: z.string().optional(),
   madeBy: z.string().nullable(),
+  // The role who last changed it was acting as, null when unknown.
+  madeAs: z.string().nullable().optional(),
   madeAt: z.iso.datetime({ offset: true }).nullable(),
   // Everyone who changed the draft, of the changes the user may see, first to last, null for Fathom
   // itself; several people's changes to one record make one draft.

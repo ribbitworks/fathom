@@ -65,18 +65,7 @@ Use only where this test says so. This deletes every account and record in the d
 3. Confirm that the last line printed gives the shared password, with no error above it.
 4. Start Fathom again (R0).
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first (P2).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
-### P3: Show Live Only
+### P1: Show Live Only
 
 1. Select the **Draft** button above the table, next to the search box.
 2. Select **Live only**.
@@ -96,7 +85,7 @@ Use only where this test says so. This deletes every account and record in the d
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1, then sign in (P1) as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with R0, then R1, then sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Check each step whose expected result you see, and write anything else under its notes.
 
 ### METRICS-01: The Panel Opens and Closes
 
@@ -124,7 +113,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as the Wo
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-01.
 
-**Preconditions:** **People** page open. Live only shown (P3).
+**Preconditions:** **People** page open. Live only shown (P1).
 
 - [ ] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
   - **Expected:** The count line says **150 people and 8 planned hires**. The figures are headed **Count**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 73 (46.2%), Test Engineer 36 (22.8%), SDET 32 (20.3%), Engineering Manager 17 (10.8%) and Architect 0 (0%). No row shows **Live**.
@@ -186,7 +175,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as the Wo
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-06.
 
-**Preconditions:** **People** page open. Live only shown (P3). Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
+**Preconditions:** **People** page open. Live only shown (P1). Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
 
 - [ ] **Step 1.** Open the Views menu, select **Save view…**, type `Fictional positions by site`, and select **Save**.
   - **Expected:** The Views button is named **Fictional positions by site**.

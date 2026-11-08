@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What a user's role lets them do, and the checks the data access layer makes. Each account holds one
-// role. Roles and what they grant are kept in the database, where they can be edited; the starting
-// roles below are what the migrations stored, kept here for tests and seed data that act as a
-// starting role without reading the database. Adding a permission changes the shared list in
-// packages/shared, with its plain-English description.
+// What a user's active role lets them do, and the checks the data access layer makes. Each account
+// holds one or more roles, and a session acts as one of them at a time, never several at once. Roles
+// and what they grant are kept in the database, where they can be edited; the starting roles below
+// are what the migrations stored, kept here for tests and seed data that act as a starting role
+// without reading the database. Adding a permission changes the shared list in packages/shared,
+// with its plain-English description.
 
 import type { Permission, Role, Tier } from "@fathom/shared";
 import {
@@ -21,19 +22,26 @@ export interface SignedInUser {
   email: string;
 }
 
-// Who is making a request, and what their role lets them do.
+// Who is making a request, the role they act as, and what it lets them do. The role is null for an
+// actor made without reading the database, as for tests.
 export interface Actor {
   user: SignedInUser;
+  roleId: string | null;
   permissions: Permission[];
 }
 
-// An actor whose role grants the permissions given, as read from the database. A permission the
-// server does not know grants nothing, rather than being trusted.
+// An actor whose active role grants the permissions given, as read from the database. A permission
+// the server does not know grants nothing, rather than being trusted.
 export function actorWith(
   user: SignedInUser,
   grantedPermissions: readonly string[],
+  roleId: string | null = null,
 ): Actor {
-  return { user, permissions: withImplied(grantedPermissions).sort() };
+  return {
+    user,
+    roleId,
+    permissions: withImplied(grantedPermissions).sort(),
+  };
 }
 
 // An actor holding a starting role as Fathom first grants it, for tests and seed data.

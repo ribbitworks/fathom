@@ -40,3 +40,9 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Live:** Approved, and so part of the plan everyone works from.
 - **Approver:** Anyone whose role lets them approve drafts of that data. Not a role of its own.
 - **Saved view:** A view saved under a name, shared with everyone who sees the table, and applied again from the table's Views menu.
+
+## Access Terms
+
+- **Role:** A set of permissions, as [Roles](roles.md) sets out. An account holds one or more.
+- **Default role:** The one of an account's roles it acts as when it signs in on a browser where it has not chosen another.
+- **Acting role:** The one role a session acts as, whose permissions alone apply: the role last chosen on that browser, or else the default, until the user switches to another they hold, as the [Decisions Log](decisions.md#people-and-privacy) records.

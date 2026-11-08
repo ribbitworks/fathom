@@ -18,6 +18,7 @@ import { Menu, Text } from "@mantine/core";
 import type { ReactNode } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { describeField } from "./changes.ts";
+import { nameAs } from "./names.ts";
 import type { DetailKey } from "./people-grid.tsx";
 import classes from "./pages.module.css";
 import { type Phrase, PhraseText, phraseText } from "./phrase.tsx";
@@ -170,16 +171,20 @@ export function configDraftFields(
 export interface Credited {
   action?: "created" | "changed" | "deleted";
   madeBy: string | null;
+  madeAs?: string | null | undefined;
   editors?: (string | null)[] | undefined;
   changedBy?: Record<string, string | null> | undefined;
 }
 
 const nameOf = (name: string | null | undefined) => name ?? "Fathom";
 
+// Who last changed a draft, with the role they acted as.
+const makerOf = (draft: Credited) => nameAs(nameOf(draft.madeBy), draft.madeAs);
+
 // Who changed a field of a draft, or, without a record of it, who last changed the draft.
 export function changerOf(draft: Credited, key: string): string {
   const by = new Map(Object.entries(draft.changedBy ?? {}));
-  return nameOf(by.has(key) ? by.get(key) : draft.madeBy);
+  return by.has(key) ? nameOf(by.get(key)) : makerOf(draft);
 }
 
 // A draft in lines: what it does, or each field it changes, each with who did it.
@@ -188,13 +193,13 @@ export function draftLines(
   changed: readonly DraftField[],
 ): Phrase[] {
   if (draft.action === "created") {
-    return [[{ strong: "Added" }, ` by ${nameOf(draft.madeBy)}`]];
+    return [[{ strong: "Added" }, ` by ${makerOf(draft)}`]];
   }
   if (draft.action === "deleted") {
-    return [[{ strong: "Removed" }, ` by ${nameOf(draft.madeBy)}`]];
+    return [[{ strong: "Removed" }, ` by ${makerOf(draft)}`]];
   }
   if (changed.length === 0) {
-    return [[{ strong: "Changed" }, ` by ${nameOf(draft.madeBy)}`]];
+    return [[{ strong: "Changed" }, ` by ${makerOf(draft)}`]];
   }
   return changed.map(({ key, field }) => [
     ...describeField(field),

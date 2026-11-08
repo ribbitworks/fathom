@@ -12,6 +12,7 @@ import {
   recordChanges as recordChangeSet,
 } from "@fathom/db";
 import type { RecordType as PlanRecordType, Tier } from "@fathom/shared";
+import type { Actor } from "../access.ts";
 import { ConflictError } from "../errors.ts";
 
 export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
@@ -134,11 +135,17 @@ const editing: readonly ChangeSetKind[] = ["edit", "discard", "withdrawal"];
 // unless they are to published drafts themselves.
 export async function recordChanges(
   transaction: Pick<Database, "insert">,
-  madeBy: string | null,
+  maker: Actor,
   made: readonly Change[],
   kind: ChangeSetKind = "edit",
   unpublished = editing.includes(kind) &&
     made.some(({ draft }) => draft === true),
 ): Promise<string | null> {
-  return recordChangeSet(transaction, madeBy, made, kind, unpublished);
+  return recordChangeSet(
+    transaction,
+    { userId: maker.user.id, roleId: maker.roleId },
+    made,
+    kind,
+    unpublished,
+  );
 }

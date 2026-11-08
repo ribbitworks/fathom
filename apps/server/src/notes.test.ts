@@ -510,7 +510,7 @@ describe("undoing live changes", () => {
               eq(fieldValues.fieldId, field.id),
             ),
           );
-        return recordChanges(transaction, userId, [
+        return recordChanges(transaction, { userId, roleId: null }, [
           {
             recordType: "person",
             recordId: id,

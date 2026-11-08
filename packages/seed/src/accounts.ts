@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Development accounts, one for each persona in docs/product/brief.md, named after the persona and
-// holding its role from docs/product/roles.md, so each role can be tried by signing in as it, a
+// holding its role from docs/product/roles.md, so each role can be tried by signing in as it, with
+// one also holding a second role, so switching roles can be tried, a
 // Resource Planner, which sees people without their Restricted details, and a Superuser, which holds
 // a role of the seed's own granting every permission, for trying anything at once. They share one
 // password. Accounts are never deleted, since the change history and saved views refer to them, so
@@ -35,8 +36,10 @@ export const superuserRole = {
 export interface PersonaAccount {
   name: string;
   email: string;
-  // A starting role, or the seed's own Superuser role.
+  // A starting role, or the seed's own Superuser role, which is the account's default.
   role: Role | "superuser";
+  // The other starting roles the account holds, if any.
+  otherRoles?: readonly Role[];
 }
 
 export const personaAccounts: readonly PersonaAccount[] = [
@@ -59,6 +62,7 @@ export const personaAccounts: readonly PersonaAccount[] = [
     name: "Feature Lead",
     email: `feature.lead@${accountDomain}`,
     role: "feature-lead",
+    otherRoles: ["engineering-manager"],
   },
   {
     name: "Engineering Director",
@@ -175,6 +179,10 @@ export async function seedAccounts(
   for (const account of accounts) {
     const found = existing.find(({ email }) => email === account.email);
     if (found === undefined) {
+      const roleId = await roleIdOf(database, account.role);
+      const others = await Promise.all(
+        (account.otherRoles ?? []).map((role) => roleIdOf(database, role)),
+      );
       await createAccount(
         auth,
         database,
@@ -182,7 +190,8 @@ export async function seedAccounts(
           name: account.name,
           email: account.email,
           password,
-          roleId: await roleIdOf(database, account.role),
+          roleId,
+          roleIds: [roleId, ...others],
         },
         null,
       );

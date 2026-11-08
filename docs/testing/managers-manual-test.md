@@ -53,17 +53,6 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 2. Confirm that the last line printed gives the shared password, with no error above it.
 3. Reload the browser page.
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first (P2).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
 ## Terms
 
 - **Search for:** type the person's name in the search box above the People table, so only their row is shown.
@@ -81,7 +70,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
   - **Expected:** **Manager?** comes straight after **Manager**, followed by **Manager since**, **Team** and **Team name**.
@@ -131,7 +120,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, changed from MGR-03. Step 3 signs in as another account.
 
-**Preconditions:** MGR-03 done. Signed in (P1) with this account. **Drafts** page open from the left-hand menu.
+**Preconditions:** MGR-03 done. Signed in with this account. **Drafts** page open from the left-hand menu.
 
 - [ ] **Step 1.** Type **Lilian Lang** in the search box.
   - **Expected:** One entry is shown: **Engineering Operations Manager drafted changes to Lilian Lang: Manager? from No to Yes**.
@@ -141,7 +130,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 3.** Sign in (P1) as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open **People**, search for **Samuel Richter**, select the row's **Manager** cell, press Enter, and type **Lilian**.
+- [ ] **Step 3.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open **People**, search for **Samuel Richter**, select the row's **Manager** cell, press Enter, and type **Lilian**.
   - **Expected:** **Lilian Lang** is offered.
   - **Notes:**
 
@@ -155,7 +144,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as the account MGR-04 ended with.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **Max Munk**. Click once in the row's **Manager?** cell.
   - **Expected:** A message reads **Reassign direct reports first**. The box stays checked, and the row has no **Draft** mark.
@@ -223,7 +212,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from MGR-09.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Read the column headers from left to right.
   - **Expected:** **Manager**, **Manager?**, **Team** and **Team name** are shown. **Manager since**, **Start** and **End** are not.

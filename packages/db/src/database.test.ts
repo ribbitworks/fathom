@@ -1013,7 +1013,21 @@ describe("recording changes", () => {
     try {
       expect(await recordChanges(connection, null, [])).toBeNull();
       const recordId = "00000000-0000-4000-8000-0000000000aa";
-      const changeSetId = await recordChanges(connection, null, [
+      const [role] = await connection
+        .select({ id: schema.roles.id })
+        .from(schema.roles)
+        .where(eq(schema.roles.key, "feature-lead"));
+      const roleId = role?.id ?? null;
+      await connection
+        .insert(schema.users)
+        .values({
+          id: "fictional-maker",
+          name: "Fictional Maker",
+          email: "maker@example.test",
+        })
+        .onConflictDoNothing();
+      const maker = { userId: "fictional-maker", roleId };
+      const changeSetId = await recordChanges(connection, maker, [
         {
           recordType: "person",
           recordId,
@@ -1031,6 +1045,30 @@ describe("recording changes", () => {
       expect(recorded).toMatchObject([
         { changeSetId, field: "value:f1", newValue: ["c1"] },
       ]);
+      const [set] = await connection
+        .select()
+        .from(schema.changeSets)
+        .where(eq(schema.changeSets.id, changeSetId ?? ""));
+      expect(set).toMatchObject({
+        madeBy: "fictional-maker",
+        madeAsRoleId: roleId,
+      });
+      const byFathom = await recordChanges(connection, null, [
+        {
+          recordType: "person",
+          recordId,
+          action: "changed",
+          field: valueField("f1"),
+          tier: "general",
+          oldValue: ["c1"],
+          newValue: null,
+        },
+      ]);
+      const [fathomSet] = await connection
+        .select()
+        .from(schema.changeSets)
+        .where(eq(schema.changeSets.id, byFathom ?? ""));
+      expect(fathomSet).toMatchObject({ madeBy: null, madeAsRoleId: null });
       expect(fieldOfValue("value:f1")).toBe("f1");
       expect(inChunks([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
       expect(inChunks([])).toEqual([]);
@@ -1454,6 +1492,28 @@ describe("roles", () => {
         { key: null, name: "Fictional Renamed Role" },
       ]);
       await client.query(`DELETE FROM roles ${where}`);
+    });
+  });
+
+  it("gives an account several roles, with at most one default", async () => {
+    await withClient(database.app, async (client) => {
+      const user = "fictional-several-roles";
+      await client.query(
+        `INSERT INTO users (id, name, email) VALUES ('${user}', 'Fictional Several', 'several@example.test')`,
+      );
+      const give = (key: string, isDefault: boolean) =>
+        client.query(
+          `INSERT INTO user_roles (user_id, role_id, is_default) SELECT '${user}', id, ${String(isDefault)} FROM roles WHERE key = '${key}'`,
+        );
+      await give("feature-lead", true);
+      await give("executive", false);
+      expect(await errorCodeOf(give("team-member", true))).toBe("23505");
+      expect(await errorCodeOf(give("executive", false))).toBe("23505");
+      const held = await client.query(
+        `SELECT count(*)::int AS count FROM user_roles WHERE user_id = '${user}'`,
+      );
+      expect(held.rows).toEqual([{ count: 2 }]);
+      await client.query(`DELETE FROM users WHERE id = '${user}'`);
     });
   });
 });

@@ -801,6 +801,7 @@ function draftOut<Live extends Record<string, unknown>>(
       : {}),
     ...unpublishedMark(draft),
     madeBy: maker?.madeBy ?? null,
+    madeAs: maker?.madeAs ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
     ...otherApprover(maker),
@@ -899,6 +900,7 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
               : {}),
             ...unpublishedMark(orderDraft),
             madeBy: makers.order.get(id)?.madeBy ?? null,
+            madeAs: makers.order.get(id)?.madeAs ?? null,
             madeAt: makers.order.get(id)?.madeAt.toISOString() ?? null,
             editors: makers.order.get(id)?.editors ?? [],
             ...otherApprover(makers.order.get(id)),
@@ -941,7 +943,7 @@ export function listsOut(state: ListsState, makers: Makers): List[] {
 async function readMakers(
   reader: Pick<Database, "select">,
   state: ListsState,
-  viewer: string,
+  viewer: Actor,
 ): Promise<Makers> {
   return {
     list: await draftMakers(
@@ -972,13 +974,13 @@ async function readMakers(
 // choices in order.
 export async function readLists(
   database: Database,
-  viewer: string,
+  viewer: Actor,
 ): Promise<List[]> {
   // Lists and their drafts are read as of one moment, so an approval saved meanwhile is seen whole
   // or not at all.
   return database.transaction(
     async (transaction) => {
-      const state = await readState(transaction, viewer);
+      const state = await readState(transaction, viewer.user.id);
       return listsOut(state, await readMakers(transaction, state, viewer));
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
@@ -988,10 +990,10 @@ export async function readLists(
 // The list as the editor now sees it, with its drafts.
 async function listNow(
   transaction: Transaction,
-  editor: string,
+  editor: Actor,
   id: string,
 ): Promise<List> {
-  const state = await readState(transaction, editor);
+  const state = await readState(transaction, editor.user.id);
   // The list was just saved, so is there.
   return listsOut(state, await readMakers(transaction, state, editor)).find(
     (other) => other.id === id,
@@ -1052,7 +1054,7 @@ function changeableChoice(
 // Saves a list's or choice's draft as wanted and records the changes, clearing a rejection.
 async function saveDraft(
   transaction: Transaction,
-  madeBy: string,
+  maker: Actor,
   recordType: "list" | "list-item",
   id: string,
   live: Recorded | undefined,
@@ -1066,8 +1068,8 @@ async function saveDraft(
   else if (after === undefined) action = "deleted";
   const made = asDraft(toRecord(id, action, before, after));
   if (made.length === 0) return null;
-  await writeDraft(transaction, madeBy, recordType, id, live, after);
-  return recordChanges(transaction, madeBy, [
+  await writeDraft(transaction, maker.user.id, recordType, id, live, after);
+  return recordChanges(transaction, maker, [
     ...made,
     ...clearedRejection(id, () => "general", live, draft, recordType),
   ]);
@@ -1086,16 +1088,15 @@ export async function createList(
   actor: Actor,
   request: ListRequest,
 ): Promise<Saved<List>> {
-  const madeBy = actor.user.id;
   refuseUnseenVisibility(actor, request.visibility, unseenVisibility);
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, actor.user.id, async (transaction, state) => {
     if (listNameTaken(state, request.name)) {
       throw new ConflictError(duplicateList);
     }
     const id = randomUUID();
     const changeSetId = await saveDraft(
       transaction,
-      madeBy,
+      actor,
       "list",
       id,
       undefined,
@@ -1103,14 +1104,14 @@ export async function createList(
       { ...request, retired: false },
       undefined,
     );
-    return { result: await listNow(transaction, madeBy, id), changeSetId };
+    return { result: await listNow(transaction, actor, id), changeSetId };
   });
 }
 
 // Drafts a change to a list's settings, or to whether it is retired.
 async function changeList(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   id: string,
   change: (
     transaction: Transaction,
@@ -1118,12 +1119,12 @@ async function changeList(
     list: Recorded,
   ) => Promise<Recorded>,
 ): Promise<Saved<List>> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     const list = changeableList(state, id);
     const after = await change(transaction, state, list);
     const changeSetId = await saveDraft(
       transaction,
-      madeBy,
+      maker,
       "list",
       id,
       state.lists.get(id),
@@ -1131,7 +1132,7 @@ async function changeList(
       after,
       state.listDrafts.get(id),
     );
-    return { result: await listNow(transaction, madeBy, id), changeSetId };
+    return { result: await listNow(transaction, maker, id), changeSetId };
   });
 }
 
@@ -1141,8 +1142,7 @@ export async function updateList(
   id: string,
   request: ListRequest,
 ): Promise<Saved<List>> {
-  const madeBy = actor.user.id;
-  return changeList(database, madeBy, id, async (_transaction, state, list) => {
+  return changeList(database, actor, id, async (_transaction, state, list) => {
     refuseUnseenVisibility(
       actor,
       listTier(state, id),
@@ -1159,22 +1159,17 @@ export async function updateList(
 // Drafts retiring or restoring a list. A list cannot be retired while a column draws on it.
 export async function setListRetired(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   id: string,
   retired: boolean,
 ): Promise<string | null> {
   return (
-    await changeList(
-      database,
-      madeBy,
-      id,
-      async (transaction, _state, list) => {
-        if (retired && list.retired !== true) {
-          await refuseIfUsed(transaction, id, "retired", madeBy);
-        }
-        return { ...list, retired };
-      },
-    )
+    await changeList(database, maker, id, async (transaction, _state, list) => {
+      if (retired && list.retired !== true) {
+        await refuseIfUsed(transaction, id, "retired", maker.user.id);
+      }
+      return { ...list, retired };
+    })
   ).changeSetId;
 }
 
@@ -1273,20 +1268,24 @@ export async function removeEmptyOrders(
 // to be deleted while its choices or their order have drafts.
 export async function deleteList(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   id: string,
 ): Promise<string | null> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     const list = changeableList(state, id);
     const live = state.lists.get(id);
     if (live === undefined) {
-      await refuseIfUsed(transaction, id, "discarded", madeBy);
-      await refuseIfDraftsChoose(transaction, madeBy, addedChoices(state, id));
+      await refuseIfUsed(transaction, id, "discarded", maker.user.id);
+      await refuseIfDraftsChoose(
+        transaction,
+        maker.user.id,
+        addedChoices(state, id),
+      );
       const made = discardingList(state, id);
-      await removeDiscarded(transaction, madeBy, made);
-      return recordChanges(transaction, madeBy, made, "discard");
+      await removeDiscarded(transaction, maker.user.id, made);
+      return recordChanges(transaction, maker, made, "discard");
     }
-    await refuseIfUsed(transaction, id, "deleted", madeBy);
+    await refuseIfUsed(transaction, id, "deleted", maker.user.id);
     if (choicesHaveDrafts(state, id)) {
       throw new ConflictError(
         "This list's choices have drafts; approve or discard them before deleting the list",
@@ -1294,7 +1293,7 @@ export async function deleteList(
     }
     return saveDraft(
       transaction,
-      madeBy,
+      maker,
       "list",
       id,
       live,
@@ -1308,11 +1307,11 @@ export async function deleteList(
 // Drafts adding choices to the end of a list, in the order given, all saved together.
 export async function addChoices(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   listId: string,
   requests: readonly ChoiceRequest[],
 ): Promise<Saved<Choice[]>> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     changeableList(state, listId);
     const labels = requests.map(({ label }) => lower(label));
     if (
@@ -1336,20 +1335,20 @@ export async function addChoices(
     }));
     await addDrafts(
       transaction,
-      madeBy,
+      maker.user.id,
       "list-item",
       added.map(({ id, record }) => ({ id, fields: record })),
     );
     const changeSetId = await recordChanges(
       transaction,
-      madeBy,
+      maker,
       asDraft(
         added.flatMap(({ id, record }) =>
           choiceChanges(id, "created", undefined, record),
         ),
       ),
     );
-    const list = await listNow(transaction, madeBy, listId);
+    const list = await listNow(transaction, maker, listId);
     return {
       result: added.map(
         ({ id }) => list.choices.find((choice) => choice.id === id) as Choice,
@@ -1363,12 +1362,12 @@ export async function addChoices(
 // place.
 async function changeChoice(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   listId: string,
   id: string,
   change: (state: ListsState, choice: Recorded) => Recorded,
 ): Promise<Saved<Choice>> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     const choice = changeableChoice(state, listId, id);
     const after = change(state, choice);
     refuseLastKept(state, listId, id, after);
@@ -1377,7 +1376,7 @@ async function changeChoice(
     }
     const changeSetId = await saveDraft(
       transaction,
-      madeBy,
+      maker,
       "list-item",
       id,
       state.choices.get(id)?.record,
@@ -1385,7 +1384,7 @@ async function changeChoice(
       after,
       state.choiceDrafts.get(id),
     );
-    const list = await listNow(transaction, madeBy, listId);
+    const list = await listNow(transaction, maker, listId);
     // The choice was just saved, so is there.
     const result = list.choices.find((other) => other.id === id) as Choice;
     return { result, changeSetId };
@@ -1394,12 +1393,12 @@ async function changeChoice(
 
 export async function updateChoice(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   listId: string,
   id: string,
   request: ChoiceRequest,
 ): Promise<Saved<Choice>> {
-  return changeChoice(database, madeBy, listId, id, (state, choice) => {
+  return changeChoice(database, maker, listId, id, (state, choice) => {
     if (choiceLabelTaken(state, listId, request.label, id)) {
       throw new ConflictError(duplicateChoice);
     }
@@ -1411,13 +1410,13 @@ export async function updateChoice(
 
 export async function setChoiceRetired(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   listId: string,
   id: string,
   retired: boolean,
 ): Promise<string | null> {
   return (
-    await changeChoice(database, madeBy, listId, id, (_state, choice) => ({
+    await changeChoice(database, maker, listId, id, (_state, choice) => ({
       ...choice,
       retired,
     }))
@@ -1428,7 +1427,7 @@ export async function setChoiceRetired(
 // list's choices.
 export async function moveChoice(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   listId: string,
   id: string,
   after: string | null,
@@ -1436,7 +1435,7 @@ export async function moveChoice(
   if (after === id) {
     throw new BadRequestError("A choice cannot follow itself");
   }
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     changeableChoice(state, listId, id);
     refuseHeldIn(state.held.orders, listId);
     const before = draftedOrder(state, listId);
@@ -1448,9 +1447,9 @@ export async function moveChoice(
     const wanted = [...others.slice(0, at), id, ...others.slice(at)];
     const made = asDraft(orderChanges(listId, before, wanted));
     if (made.length === 0) return null;
-    await writeOrderDraft(transaction, madeBy, state, listId, wanted);
+    await writeOrderDraft(transaction, maker.user.id, state, listId, wanted);
     const draft = state.orderDrafts.get(listId);
-    return recordChanges(transaction, madeBy, [
+    return recordChanges(transaction, maker, [
       ...made,
       ...clearedRejection(
         listId,
@@ -1467,24 +1466,24 @@ export async function moveChoice(
 // cannot be removed while people have it, live or in a draft.
 export async function deleteChoice(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   listId: string,
   id: string,
 ): Promise<string | null> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     const choice = changeableChoice(state, listId, id);
     const live = state.choices.get(id)?.record;
     refuseLastKept(state, listId, id, undefined);
     if (live === undefined) {
-      await refuseIfDraftsChoose(transaction, madeBy, [id]);
+      await refuseIfDraftsChoose(transaction, maker.user.id, [id]);
       const made = discardingChoice(state, id);
-      await removeDiscarded(transaction, madeBy, made);
-      return recordChanges(transaction, madeBy, made, "discard");
+      await removeDiscarded(transaction, maker.user.id, made);
+      return recordChanges(transaction, maker, made, "discard");
     }
-    await refuseIfChosen(transaction, id, madeBy);
+    await refuseIfChosen(transaction, id, maker.user.id);
     return saveDraft(
       transaction,
-      madeBy,
+      maker,
       "list-item",
       id,
       live,
@@ -1530,18 +1529,18 @@ function draftOf(
 // one only drafted to be added, gone, with the drafts of its choices.
 export async function discardListDraft(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   kind: ListDraftKind,
   listId: string,
   choiceId?: string,
 ): Promise<string | null> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     draftOf(state, kind, listId, choiceId);
     if (kind === "list" && !state.lists.has(listId)) {
-      await refuseIfUsed(transaction, listId, "discarded", madeBy);
+      await refuseIfUsed(transaction, listId, "discarded", maker.user.id);
       await refuseIfDraftsChoose(
         transaction,
-        madeBy,
+        maker.user.id,
         addedChoices(state, listId),
       );
     }
@@ -1549,27 +1548,27 @@ export async function discardListDraft(
       const id = choiceId as string;
       refuseLastKept(state, listId, id, state.choices.get(id)?.record);
       if (!state.choices.has(id)) {
-        await refuseIfDraftsChoose(transaction, madeBy, [id]);
+        await refuseIfDraftsChoose(transaction, maker.user.id, [id]);
       }
     }
     let made: Change[];
     if (kind === "list") made = discardingList(state, listId);
     else if (kind === "order") made = discardingOrder(state, listId);
     else made = discardingChoice(state, choiceId as string);
-    await removeDiscarded(transaction, madeBy, made);
-    return recordChanges(transaction, madeBy, made, "discard");
+    await removeDiscarded(transaction, maker.user.id, made);
+    return recordChanges(transaction, maker, made, "discard");
   });
 }
 
 // Sends a rejected draft of a list, a choice, or a list's order for approval again, unchanged.
 export async function resubmitListDraft(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   kind: ListDraftKind,
   listId: string,
   choiceId?: string,
 ): Promise<string | null> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     const draft = draftOf(state, kind, listId, choiceId);
     if (draft.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
@@ -1582,7 +1581,7 @@ export async function resubmitListDraft(
     });
     return recordChanges(
       transaction,
-      madeBy,
+      maker,
       clearedRejection(id, () => "general", undefined, draft, recordType),
       "resubmission",
     );

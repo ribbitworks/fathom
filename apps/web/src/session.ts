@@ -29,8 +29,8 @@ async function fetchSession(): Promise<SessionResponse | null> {
   }
 }
 
-// The signed-in user, with their role and permissions, and Fathom's settings, or null when no one is
-// signed in.
+// The signed-in user, with the role they act as, the others they hold, and its permissions, and
+// Fathom's settings, or null when no one is signed in.
 export const sessionQuery = queryOptions({
   queryKey: ["session"],
   queryFn: fetchSession,
@@ -52,6 +52,12 @@ export async function signIn(request: SignInRequest): Promise<SignInResult> {
 
 export async function signOut(): Promise<void> {
   await sendJson("POST", "/api/auth/sign-out", {});
+}
+
+// Switches the session to another of the user's roles, which the server remembers on this browser
+// for the next sign-in.
+export async function switchRole(roleId: string): Promise<void> {
+  await sendJson("PUT", "/api/session/role", { roleId });
 }
 
 // Where to go after signing in: a page within Fathom, or the home page. The address is resolved as

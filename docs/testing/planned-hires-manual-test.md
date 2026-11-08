@@ -54,17 +54,6 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 2. Confirm that the last line printed gives the shared password, with no error above it.
 3. Reload the browser page.
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first (P2).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
@@ -82,7 +71,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
-**Preconditions:** **Light** chosen in the Appearance menu. Signed in (P1) with this account. **People** page open from the left-hand menu.
+**Preconditions:** **Light** chosen in the Appearance menu. Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
   - **Expected:** **Name**, **ID**, **Position** and **State** come first, in that order, and **Expected** comes after **Start**. There is no **Kind** column.
@@ -128,7 +117,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-02.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **REQ-2047**. Select the row's **State** cell and press Enter.
   - **Expected:** A picker opens offering **Request to hire** and **Approved to hire** only. **Hired** and **Left** are not offered.
@@ -148,7 +137,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-03.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select **New planned hire** above the table.
   - **Expected:** Focus moves to the empty row at the bottom. Its **State** cell reads **Request to hire**, and its other cells are blank.
@@ -164,7 +153,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-04.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open. In the text editor, two lines, typed with the Tab key where shown:
+**Preconditions:** Signed in with this account. **People** page open. In the text editor, two lines, typed with the Tab key where shown:
 
 - First line: **Fictional pasted hire**, Tab, **REQ-3001**, Tab, **SDET**.
 - Second line: Tab, **REQ-3002**, Tab, **Software Engineer**.
@@ -179,7 +168,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-05. Steps 3 and 5 sign in as other accounts.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select **New planned hire**. In the new row, type **Fictional platform hire** in **Name**, press Tab, type **REQ-3100** in **ID**, press Tab, choose **Software Engineer** in **Position**, and press Enter.
   - **Expected:** The row is added with a hollow yellow dot and **Draft**, and **Request to hire** in **State**.
@@ -189,7 +178,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A notice reads **Published 1 change.**
   - **Notes:**
 
-- [ ] **Step 3.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`, changing account. Open **Drafts** and type **REQ-3100** in the search box.
+- [ ] **Step 3.** Sign in as the Engineering Director, `engineering.director@fathom.test`, changing account. Open **Drafts** and type **REQ-3100** in the search box.
   - **Expected:** One entry is shown, adding the planned hire **Fictional platform hire**.
   - **Notes:**
 
@@ -197,7 +186,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 5.** Sign in (P1) as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People** and search for **Fictional platform hire**.
+- [ ] **Step 5.** Sign in as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People** and search for **Fictional platform hire**.
   - **Expected:** One hire row, with no **Draft** mark, reading **REQ-3100** in **ID**, **Software Engineer** in **Position**, and **Request to hire** in **State**.
   - **Notes:**
 
@@ -207,7 +196,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, the same as the account HIRE-06 ended with.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
   - **Expected:** Only hire rows are shown. None has a **Draft** mark, and there is no **Start** column. **REQ-2036** is among them, and **REQ-2050** is not.
@@ -229,7 +218,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-07.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **Payments tester**, and read the row's **Site** and **Level** cells.
   - **Expected:** **Northmere** and **P2**.
@@ -245,7 +234,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-08.
 
-**Preconditions:** Signed in (P1) with this account. **Light** chosen in the Appearance menu. **People** page open.
+**Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **People** page open.
 
 - [ ] **Step 1.** Select the **Skills** header, then **Edit column**.
   - **Expected:** A dialog titled **Edit column** shows **Offered on planned hires** ticked, and **Planned hires can leave it empty** under **Must be filled in**.
@@ -289,7 +278,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-09. Step 3 signs in as another account.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open.
+**Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Left** only, and press Esc.
   - **Expected:** Only people are shown, **Viktoria Holmberg** among them. Every **State** cell reads **Left**, and every **End** cell holds a date that has passed.
@@ -299,7 +288,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A picker opens offering **Left** only. Press Esc to close it.
   - **Notes:**
 
-- [ ] **Step 3.** Sign in (P1) as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People**, and filter **State** to **Left** only, as in Step 1.
+- [ ] **Step 3.** Sign in as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People**, and filter **State** to **Left** only, as in Step 1.
   - **Expected:** The same people are shown, **Viktoria Holmberg** among them, each with **Left** in **State**. There are no **Start** or **End** columns.
   - **Notes:**
 
@@ -309,7 +298,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, the same as the account HIRE-10 ended with.
 
-**Preconditions:** R1 run after HIRE-10. Signed in (P1) with this account. **People** page open, with no filters.
+**Preconditions:** R1 run after HIRE-10. Signed in with this account. **People** page open, with no filters.
 
 - [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire** only, and press Esc.
   - **Expected:** Only hire rows are shown.
@@ -339,7 +328,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from HIRE-11.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open, with no filters.
+**Preconditions:** Signed in with this account. **People** page open, with no filters.
 
 - [ ] **Step 1.** Type **TBD-3** in the search box.
   - **Expected:** One row is shown, its **Name** **Engineering Manager, TBD-3** in grey italics. Its **Manager?** cell shows a checked box.

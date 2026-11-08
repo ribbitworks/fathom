@@ -234,7 +234,7 @@ export async function createView(
       await transaction.insert(savedViews).values(row);
       const changeSetId = await recordChanges(
         transaction,
-        actor.user.id,
+        actor,
         viewChanges(row.id, "created", undefined, row, tier),
       );
       return { result: toSavedView(row, actor, tiers), changeSetId };
@@ -298,7 +298,7 @@ export async function updateView(
       ]);
       const changeSetId = await recordChanges(
         transaction,
-        actor.user.id,
+        actor,
         viewChanges(id, "changed", before, after, tier),
       );
       if (changeSetId !== null) {
@@ -322,7 +322,7 @@ export async function deleteView(
     await transaction.delete(savedViews).where(eq(savedViews.id, id));
     return recordChanges(
       transaction,
-      actor.user.id,
+      actor,
       viewChanges(
         id,
         "deleted",

@@ -578,7 +578,7 @@ describe("undoing live changes", () => {
               eq(fieldValues.fieldId, field.id),
             ),
           );
-        return recordChanges(transaction, userId, [
+        return recordChanges(transaction, { userId, roleId: null }, [
           {
             recordType: "person",
             recordId: id,
@@ -611,7 +611,7 @@ describe("undoing live changes", () => {
           .update(fields)
           .set({ visibility: "restricted" })
           .where(eq(fields.id, field.id));
-        return recordChanges(transaction, userId, [
+        return recordChanges(transaction, { userId, roleId: null }, [
           {
             recordType: "field",
             recordId: field.id,

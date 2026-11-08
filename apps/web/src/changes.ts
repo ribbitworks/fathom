@@ -24,6 +24,7 @@ import { visibilityName } from "./lists.ts";
 import type { Phrase } from "./phrase.tsx";
 import { formatDay } from "./table-view.ts";
 import { count } from "./numbers.ts";
+import { nameAs } from "./names.ts";
 import { colourName } from "./releases.ts";
 
 // The change history holding every word of a search, if any, a page at a time.
@@ -46,9 +47,10 @@ export const changesQuery = (search: string) =>
     placeholderData: keepPreviousData,
   });
 
-// Who saved a change set: a user, or Fathom itself, as for the seed data.
-export function madeByName({ madeBy }: ChangeEntry): string {
-  return madeBy ?? "Fathom";
+// Who saved a change set, with the role they acted as: a user, or Fathom itself, as for the seed
+// data.
+export function madeByName({ madeBy, madeAs }: ChangeEntry): string {
+  return madeBy === null ? "Fathom" : nameAs(madeBy, madeAs);
 }
 
 const fieldNames = new Map([

@@ -18,6 +18,7 @@ import {
 } from "./draft-details.tsx";
 import { decidable, type DraftSelection, noDrafts } from "./drafts.ts";
 import { Icon } from "./icons.tsx";
+import { makerNames } from "./names.ts";
 import { withRetiring } from "./lists.ts";
 import { closesOnBlankClick } from "./app-menu.tsx";
 import classes from "./pages.module.css";
@@ -317,15 +318,8 @@ export const madeVerb = (action: "created" | "changed" | "deleted") => {
 const listed = new Intl.ListFormat("en", { type: "conjunction" });
 
 // Everyone who changed a draft, since several people's changes to one record make one draft.
-export const makers = (draft: {
-  madeBy: string | null;
-  editors?: (string | null)[] | undefined;
-}) =>
-  listed.format(
-    (draft.editors?.length ? draft.editors : [draft.madeBy]).map(
-      (name) => name ?? "Fathom",
-    ),
-  );
+export const makers = (draft: Parameters<typeof makerNames>[0]) =>
+  listed.format(makerNames(draft));
 
 // What may be done with one draft, in a menu: deciding it, for Approvers, unless it waits for a
 // rejected draft it depends on, and resubmitting it once rejected, or discarding it, for those who

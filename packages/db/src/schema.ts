@@ -66,6 +66,9 @@ export const sessions = fathomSchema.table(
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
+    // The one role the session acts as, among the account's roles; null until the server first
+    // picks it. Better Auth neither reads nor writes it.
+    activeRoleId: uuid("active_role_id").references(() => roles.id),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
@@ -151,21 +154,28 @@ export const rolePermissions = fathomSchema.table(
   (table) => [primaryKey({ columns: [table.roleId, table.permission] })],
 );
 
-// The role each user holds: exactly one, as the Decisions Log sets out, which the server checks; the
-// user's ID is the key, so the database refuses a second. A role held by any account cannot be
-// deleted, so nobody's access vanishes unseen.
+// The roles each user holds, as the Decisions Log sets out: one or more, exactly one of them the
+// default, which the server checks; the database refuses a second default. A role held by any
+// account cannot be deleted, so nobody's access vanishes unseen.
 export const userRoles = fathomSchema.table(
   "user_roles",
   {
     userId: text("user_id")
-      .primaryKey()
+      .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     roleId: uuid("role_id")
       .notNull()
       .references(() => roles.id, { onDelete: "restrict" }),
+    isDefault: boolean("is_default").notNull().default(false),
     createdAt: createdAt(),
   },
-  (table) => [index("user_roles_role_id_index").on(table.roleId)],
+  (table) => [
+    primaryKey({ columns: [table.userId, table.roleId] }),
+    index("user_roles_role_id_index").on(table.roleId),
+    uniqueIndex("user_roles_default_index")
+      .on(table.userId)
+      .where(sql`${table.isDefault}`),
+  ],
 );
 
 // Who did what, and when, to accounts and to protected data, without the values. It can only be
@@ -357,6 +367,9 @@ export const changeSets = fathomSchema.table(
     // Null for Fathom itself, such as for data made by setup or seed scripts. Accounts are deactivated,
     // never deleted, so the user who made a change always exists.
     madeBy: text("made_by").references(() => users.id),
+    // The role its maker was acting as, beside them; null for Fathom itself. Roles are never
+    // deleted, so it always exists.
+    madeAsRoleId: uuid("made_as_role_id").references(() => roles.id),
     // The time of saving itself, not when its transaction began, so a change that waited for another
     // is not dated before it.
     madeAt: timestamp("made_at", { withTimezone: true })

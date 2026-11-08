@@ -1,7 +1,7 @@
 # Fathom — Use Cases
 
 **Status:** Draft
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md) and the [Decisions Log](decisions.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
@@ -147,7 +147,7 @@ flowchart TD
 ### Manage Users and Roles
 
 - **Actor:** Fathom Administrator, a persona in the [Product Brief](brief.md#users), with the Administrator role in [Roles](roles.md)
-- **Goal:** Create local accounts and give each user one role.
+- **Goal:** Create local accounts and give each user one or more roles, one of them the default.
 - **Outcome:** Each user sees and changes only what their role allows.
 
 ### Back Up and Restore

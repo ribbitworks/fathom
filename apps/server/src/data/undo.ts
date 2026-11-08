@@ -987,7 +987,7 @@ async function undoIn(
     }
     await recordSensitiveChanges(transaction, actor.user.id, undoing);
     await recordHiringChanges(transaction, actor.user.id, undoing);
-    return recordChanges(transaction, actor.user.id, undoing, "edit", false);
+    return recordChanges(transaction, actor, undoing, "edit", false);
   }
 
   const ascending = [...liveRecords].sort((a, b) => byKind(a) - byKind(b));
@@ -1057,7 +1057,7 @@ async function undoIn(
   }
   await recordSensitiveChanges(transaction, actor.user.id, undoing);
   await recordHiringChanges(transaction, actor.user.id, undoing);
-  return recordChanges(transaction, actor.user.id, undoing);
+  return recordChanges(transaction, actor, undoing);
 }
 
 // Undoes a change set the actor made, and returns the change set that undid it.

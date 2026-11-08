@@ -644,7 +644,7 @@ async function readPeopleIn(
     (field, tier) =>
       shownFields.has(field) &&
       seesSensitivity(actor, mostSensitive([tier, tierOf(field)])),
-    actor.user.id,
+    actor,
   );
   const ids = [
     ...live.keys(),
@@ -785,6 +785,7 @@ async function readPeopleIn(
       ...reason,
       ...(draft.unpublished === true ? { unpublished: true } : {}),
       madeBy: maker?.madeBy ?? null,
+      madeAs: maker?.madeAs ?? null,
       madeAt: maker?.madeAt.toISOString() ?? null,
       editors: maker?.editors ?? [],
       ...otherApprover(maker),
@@ -934,7 +935,7 @@ export async function createPeople(
     await recordSensitiveChanges(transaction, actor.user.id, drafts);
     return {
       ids: added.map(({ id }) => id),
-      changeSetId: await recordChanges(transaction, actor.user.id, drafts),
+      changeSetId: await recordChanges(transaction, actor, drafts),
     };
   });
 }
@@ -1092,7 +1093,7 @@ export async function updatePerson(
     ];
     await writePersonDraft(transaction, actor.user.id, id, before, after);
     await recordSensitiveChanges(transaction, actor.user.id, all);
-    return recordChanges(transaction, actor.user.id, all);
+    return recordChanges(transaction, actor, all);
   });
 }
 
@@ -1130,7 +1131,7 @@ export async function deletePerson(
     await recordSensitiveChanges(transaction, actor.user.id, made);
     return recordChanges(
       transaction,
-      actor.user.id,
+      actor,
       made,
       before === undefined ? "discard" : "edit",
     );
@@ -1167,7 +1168,7 @@ export async function resubmitPersonDraft(
       .set({ state: "waiting", reason: null })
       .where(and(eq(drafts.recordType, "person"), eq(drafts.recordId, id)));
     await recordSensitiveChanges(transaction, actor.user.id, made);
-    return recordChanges(transaction, actor.user.id, made, "resubmission");
+    return recordChanges(transaction, actor, made, "resubmission");
   });
 }
 
@@ -1201,6 +1202,6 @@ export async function discardPersonDraft(
     requireEdits(actor, made);
     await writePersonDraft(transaction, actor.user.id, id, before, before);
     await recordSensitiveChanges(transaction, actor.user.id, made);
-    return recordChanges(transaction, actor.user.id, made, "discard");
+    return recordChanges(transaction, actor, made, "discard");
   });
 }

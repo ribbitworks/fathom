@@ -24,7 +24,7 @@ import { createAuth } from "@fathom/server/auth";
 import { findStartingRole } from "@fathom/server/roles";
 import { permissionSchema, startingRoles } from "@fathom/shared";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
-import { asc, eq, inArray } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   personaAccounts,
@@ -135,7 +135,7 @@ describe("the persona accounts", () => {
 });
 
 describe("seeding the accounts", () => {
-  it("creates each, named after its persona, holding its persona's role", async () => {
+  it("creates each, named after its persona, holding its persona's role as its default, and any others", async () => {
     expect(await seedAccounts(auth, connection, password)).toEqual(addresses);
     for (const account of personaAccounts) {
       const id = await idOf(account.email);
@@ -145,14 +145,28 @@ describe("seeding the accounts", () => {
         .where(eq(users.id, id));
       expect(row).toEqual({ name: account.name, deactivatedAt: null });
       const roles = await connection
-        .select({ key: roleTable.key, name: roleTable.name })
+        .select({
+          key: roleTable.key,
+          name: roleTable.name,
+          isDefault: userRoles.isDefault,
+        })
         .from(userRoles)
         .innerJoin(roleTable, eq(roleTable.id, userRoles.roleId))
-        .where(eq(userRoles.userId, id));
+        .where(eq(userRoles.userId, id))
+        .orderBy(desc(userRoles.isDefault), asc(roleTable.key));
       expect(roles).toEqual([
         account.role === "superuser"
-          ? { key: null, name: superuserRole.name }
-          : { key: account.role, name: expect.any(String) as unknown },
+          ? { key: null, name: superuserRole.name, isDefault: true }
+          : {
+              key: account.role,
+              name: expect.any(String) as unknown,
+              isDefault: true,
+            },
+        ...(account.otherRoles ?? []).map((key) => ({
+          key,
+          name: expect.any(String) as unknown,
+          isDefault: false,
+        })),
       ]);
     }
   });

@@ -31,6 +31,25 @@ describe("a draft's details", () => {
     ).toEqual(["Changed by Fathom"]);
   });
 
+  it("names the role who last changed a draft acted as, beside their name", () => {
+    const madeAs = { ...draft, madeAs: "Feature Lead" };
+    expect(
+      draftLines({ ...madeAs, action: "created" }, []).map(phraseText),
+    ).toEqual(["Added by Fictional Editor as Feature Lead"]);
+    expect(
+      draftLines({ ...madeAs, action: "deleted" }, []).map(phraseText),
+    ).toEqual(["Removed by Fictional Editor as Feature Lead"]);
+    expect(
+      draftLines(
+        { ...madeAs, action: "changed" },
+        configDraftFields(
+          { action: "changed", changed: ["description"], live: {} },
+          { description: "" },
+        ),
+      ).map(phraseText),
+    ).toEqual(["Description changed, by Fictional Editor as Feature Lead"]);
+  });
+
   it("names who changed each field, or who last changed the draft when that is not recorded", () => {
     const changed = configDraftFields(
       { action: "changed", changed: ["label", "description"], live: {} },

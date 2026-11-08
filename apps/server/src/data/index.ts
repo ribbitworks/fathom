@@ -71,7 +71,12 @@ import {
   publishUnpublished,
   readUnpublished,
 } from "./unpublished.ts";
-import { type ActorAccess, readActorAccess } from "./roles.ts";
+import {
+  type ActorAccess,
+  keepSessionRole,
+  readActorAccess,
+  switchRole,
+} from "./roles.ts";
 import {
   changePasswordSettings,
   changeTimeZone,
@@ -84,10 +89,21 @@ import * as views from "./views.ts";
 export interface DataAccess {
   // Fails, with a message naming the settings to check, unless the database can be queried.
   checkConnection(): Promise<void>;
-  // The role of the signed-in user making a request, and what it grants, or null if their account
-  // is deactivated. The server needs them to know who is asking, so it is the one function that
-  // checks no permission.
-  readActorAccess(userId: string): Promise<ActorAccess | null>;
+  // The roles of the signed-in user making a request, the one their session acts as, and what it
+  // grants, or null if their account is deactivated. The server needs them to know who is asking,
+  // so it checks no permission. The remembered role is the browser's last choice, which a session
+  // starts as if the account holds it.
+  readActorAccess(
+    userId: string,
+    sessionId: string,
+    rememberedRoleId?: string,
+  ): Promise<ActorAccess | null>;
+  // Switches the actor's session to another of their roles, which needs no permission, recording it
+  // in the access history; a role they do not hold is refused.
+  switchRole(actor: Actor, sessionId: string, roleId: string): Promise<void>;
+  // Gives the session with this token, which a password change starts, the role the session it
+  // replaces acted as.
+  keepSessionRole(token: string, roleId: string | null): Promise<void>;
   readGreeting(actor: Actor): Promise<string>;
   // Settings for the whole of Fathom, which every signed-in user's screens follow, so reading them
   // checks no permission.
@@ -401,9 +417,9 @@ function createHireAccess(database: Database): HireAccess {
 }
 
 // Checks the actor may change lists, and returns who to record as making the change.
-function editor(actor: Actor): string {
+function editor(actor: Actor): Actor {
   requirePermission(actor, "configuration:edit");
-  return actor.user.id;
+  return actor;
 }
 
 function createListAccess(database: Database): ListAccess {
@@ -411,7 +427,7 @@ function createListAccess(database: Database): ListAccess {
     // Lists' choices are also read by those who see People, whose columns draw on them.
     read: async (actor) => {
       requireAnyPermission(actor, ["configuration:view", "people:view"]);
-      return lists.readLists(database, actor.user.id);
+      return lists.readLists(database, actor);
     },
     create: async (actor, request) => {
       editor(actor);
@@ -460,11 +476,11 @@ const recordEditors: Record<RecordType, Permission> = {
   release: "plan:edit",
 };
 
-function recordEditor(actor: Actor, type: RecordType): string {
+function recordEditor(actor: Actor, type: RecordType): Actor {
   // The kind is always one of the fixed kinds listed above.
   // eslint-disable-next-line security/detect-object-injection
   requirePermission(actor, recordEditors[type]);
-  return actor.user.id;
+  return actor;
 }
 
 function createReleaseAccess(database: Database): ReleaseAccess {
@@ -475,7 +491,7 @@ function createReleaseAccess(database: Database): ReleaseAccess {
     read: async (actor) => {
       requireAnyPermission(actor, ["plan:view", "configuration:view"]);
       return {
-        streams: await releases.readReleaseStreams(database, actor.user.id),
+        streams: await releases.readReleaseStreams(database, actor),
         canEditStreams: actor.permissions.includes("configuration:edit"),
         canEditReleases: actor.permissions.includes("plan:edit"),
       };
@@ -660,7 +676,12 @@ export function createDataAccess(database: Database): DataAccess {
         );
       }
     },
-    readActorAccess: (userId) => readActorAccess(database, userId),
+    readActorAccess: (userId, sessionId, rememberedRoleId) =>
+      readActorAccess(database, userId, sessionId, rememberedRoleId),
+    switchRole: (actor, sessionId, roleId) =>
+      switchRole(database, actor.user.id, sessionId, roleId),
+    keepSessionRole: (token, roleId) =>
+      keepSessionRole(database, token, roleId),
     readHistory: async (actor) => {
       requirePermission(actor, "history:view");
       return readHistory(database, actor.permissions.includes("people:view"));

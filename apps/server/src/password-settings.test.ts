@@ -76,12 +76,12 @@ async function sessionPasswords(as = cookie): Promise<PasswordSettings> {
 }
 
 async function latestEntry() {
-  const [entry] = (
-    await test.request(cookie, "GET", "/api/access-history")
-  ).json<{
-    entries: { action: string; details: object; actor: { id: string } }[];
-  }>().entries;
-  return entry;
+  // Each account's sign-ins are recorded too, which these tests do not look at.
+  return (await test.request(cookie, "GET", "/api/access-history"))
+    .json<{
+      entries: { action: string; details: object; actor: { id: string } }[];
+    }>()
+    .entries.find(({ action }) => action !== "signed-in");
 }
 
 let changes = 0;

@@ -267,6 +267,13 @@
       "when": 1794109322648,
       "tag": "0037_planned_managers",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1794112457393,
+      "tag": "0038_several_roles",
+      "breakpoints": true
     }
   ]
 }

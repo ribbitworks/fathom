@@ -94,6 +94,7 @@ const signedInRoute = createRoute({
     return {
       user: session.user,
       role: session.role,
+      roles: session.roles,
       permissions: session.permissions,
       mustChangePassword: session.mustChangePassword,
       timeZone: session.settings.timeZone,
@@ -101,7 +102,7 @@ const signedInRoute = createRoute({
     };
   },
   component: function SignedIn() {
-    const { user, permissions, mustChangePassword, passwords } =
+    const { user, role, roles, permissions, mustChangePassword, passwords } =
       signedIn.useRouteContext();
     if (mustChangePassword) {
       return <FirstPasswordChange rules={passwords.rules} owner={user} />;
@@ -109,6 +110,8 @@ const signedInRoute = createRoute({
     return (
       <Layout
         user={user}
+        role={role}
+        roles={roles}
         permissions={permissions}
         passwordRules={passwords.rules}
       />

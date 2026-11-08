@@ -447,9 +447,8 @@ export function permissionLabel(permission: string): string {
 }
 
 // The roles Fathom starts with, one for each persona, as the migrations store them, which a test
-// checks: their names, what each is for, and what each grants. Each account holds one role. A
-// starting role can be put back to this version from the Roles page. Every role must be listed,
-// which the compiler checks.
+// checks: their names, what each is for, and what each grants. A starting role can be put back to
+// this version from the Roles page. Every role must be listed, which the compiler checks.
 export const startingRoles: Record<
   Role,
   { name: string; description: string; permissions: readonly Permission[] }

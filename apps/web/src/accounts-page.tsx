@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Accounts page, for users who may see accounts: every account with its one role and whether it
-// can sign in, and, for those who may manage accounts, dialogs to create accounts and to edit them,
-// where their names, email addresses, and role are changed, choosing from every role, and from
-// which their passwords are reset and they are deactivated or reactivated. Fathom generates the
-// password of a new account and of a reset, which the dialog then shows once, to copy. A user's own
-// account offers all but the password reset, as changing one's own password needs the current one.
-// A dialog cannot be closed while its change is being saved, shows plainly why a change was
-// refused, and keeps no password once it closes. Some active account must keep each of the
-// permissions to manage accounts and to edit roles, so a role or a deactivation that would leave
-// none holding one is turned off, as the server refuses it.
+// The Accounts page, for users who may see accounts: every account with its roles, the default
+// first, and whether it can sign in, and, for those who may manage accounts, dialogs to create
+// accounts and to edit them, where their names, email addresses, roles, and default role are
+// changed, choosing from every role, and from which their passwords are reset and they are
+// deactivated or reactivated. Fathom generates the password of a new account and of a reset, which
+// the dialog then shows once, to copy. A user's own account offers all but the password reset, as
+// changing one's own password needs the current one. A dialog cannot be closed while its change is
+// being saved, shows plainly why a change was refused, and keeps no password once it closes. Some
+// active account must keep each of the permissions to manage accounts and to edit roles, so taking
+// away a role or deactivating when that would leave none holding one is turned off, as the server
+// refuses it.
 
 import {
   type Account,
-  type AccountChangeRequest,
   newAccountSchema,
-  type NewAccountRequest,
   type RoleSummary,
 } from "@fathom/shared";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +24,7 @@ import {
   Avatar,
   Badge,
   Button,
+  Checkbox,
   CopyButton,
   Group,
   Loader,
@@ -42,17 +42,19 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { type ReactNode, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { z } from "zod";
 import {
   accountsQuery,
   createAccount,
+  defaultAmong,
   nameProblem,
   resetPassword,
   setActive,
   updateAccount,
 } from "./accounts.ts";
 import { DialogActions } from "./dialog-actions.tsx";
-import { initials } from "./names.ts";
+import { initials, rolesHeld } from "./names.ts";
 import { notifySuccess } from "./notices.tsx";
 import { rolesQuery } from "./roles.ts";
 import { TableSearch } from "./table-controls.tsx";
@@ -99,28 +101,30 @@ function dialogTitle(dialog: Dialog): string {
   }
 }
 
-// What keeps Fathom manageable: some active account's role must grant each of these.
+// What keeps Fathom manageable: some active account's roles must grant each of these.
 const keptPermissions = ["accounts:manage", "roles:edit"] as const;
 
-// Whether some active account's role grants each kept permission, as the server checks after
-// changing an account's role or deactivating it.
+// Whether some active account's roles grant each kept permission, as the server checks after
+// changing an account's roles or deactivating it.
 function staysManageable(
-  accounts: readonly Pick<Account, "active" | "role">[],
+  accounts: readonly Pick<Account, "active" | "roles">[],
   roles: readonly RoleSummary[],
 ): boolean {
   return keptPermissions.every((permission) =>
     accounts.some(
-      ({ active, role }) =>
-        active &&
-        roles
-          .find(({ id }) => id === role?.id)
-          ?.permissions.includes(permission),
+      (account) =>
+        account.active &&
+        account.roles.some(({ id }) =>
+          roles
+            .find((role) => role.id === id)
+            ?.permissions.includes(permission),
+        ),
     ),
   );
 }
 
-// The changes to an account that the server refuses: the roles it cannot be given, and whether it
-// cannot be deactivated.
+// The changes to an account that the server refuses: the roles picked for it that it cannot give
+// up, and whether it cannot be deactivated.
 interface RefusedChanges {
   roleIds: ReadonlySet<string>;
   deactivating: boolean;
@@ -128,6 +132,7 @@ interface RefusedChanges {
 
 function refusedChanges(
   account: Account,
+  picked: readonly string[],
   accounts: readonly Account[],
   roles: readonly RoleSummary[],
 ): RefusedChanges {
@@ -135,62 +140,115 @@ function refusedChanges(
     accounts.map((other) =>
       other.id === account.id ? { ...other, ...change } : other,
     );
+  const holding = (roleIds: readonly string[]) =>
+    roles.filter(({ id }) => roleIds.includes(id));
   return {
-    // Keeping its role is no change, so it is never refused.
+    // Adding a role never leaves Fathom unmanageable, so only those picked can be refused.
     roleIds: new Set(
-      roles
-        .filter(
-          (role) =>
-            role.id !== account.role?.id &&
-            !staysManageable(changed({ role }), roles),
-        )
-        .map(({ id }) => id),
+      picked.filter(
+        (roleId) =>
+          !staysManageable(
+            changed({
+              roles: holding(picked.filter((other) => other !== roleId)),
+            }),
+            roles,
+          ),
+      ),
     ),
     deactivating:
       account.active && !staysManageable(changed({ active: false }), roles),
   };
 }
 
-// One role for the account, from every role, each with what it is for.
-function RoleChoice({
+const roleProblem = "Choose a role.";
+
+// What the account dialogs edit: the person's name and email address, the roles they hold, and
+// which of those is their default.
+const accountFormSchema = newAccountSchema.extend({
+  roleIds: z.array(z.uuid()).min(1),
+});
+
+type AccountForm = z.infer<typeof accountFormSchema>;
+
+// The account's roles, from every role, each with what it is for, and, with several picked, which
+// of them is the default.
+function RolesChoice({
+  form,
   roles,
-  value,
-  onChange,
-  error,
   refused,
   canEditRoles,
 }: {
+  form: ReturnType<typeof useForm<AccountForm>>;
   roles: readonly RoleSummary[];
   canEditRoles: boolean;
-  value: string;
-  onChange: (roleId: string) => void;
-  error?: string | undefined;
-  // Roles the server would refuse, turned off.
+  // Roles the server would refuse to take away, turned off.
   refused?: ReadonlySet<string>;
 }) {
+  const picked = useWatch({ control: form.control, name: "roleIds" });
+  const { errors } = form.formState;
   return (
-    <Radio.Group label="Role" value={value} onChange={onChange} error={error}>
-      <Stack gap="sm" mt="xs">
-        {roles.map((role) => (
-          <Radio
-            key={role.id}
-            value={role.id}
-            label={role.name}
-            description={role.description}
-            disabled={refused?.has(role.id)}
-          />
-        ))}
-        {canEditRoles && (
-          <Text size="sm" c="dimmed">
-            Custom roles are created on the{" "}
-            <Anchor component={Link} to="/roles" inherit>
-              Roles
-            </Anchor>{" "}
-            page.
-          </Text>
+    <Stack gap="md">
+      <Controller
+        control={form.control}
+        name="roleIds"
+        render={({ field }) => (
+          <Checkbox.Group
+            label="Roles"
+            value={field.value}
+            onChange={(roleIds) => {
+              field.onChange(roleIds);
+              form.setValue(
+                "roleId",
+                defaultAmong(roleIds, form.getValues("roleId")),
+              );
+            }}
+            error={errors.roleIds && roleProblem}
+          >
+            <Stack gap="sm" mt="xs">
+              {roles.map((role) => (
+                <Checkbox
+                  key={role.id}
+                  value={role.id}
+                  label={role.name}
+                  description={role.description}
+                  disabled={refused?.has(role.id)}
+                />
+              ))}
+              {canEditRoles && (
+                <Text size="sm" c="dimmed">
+                  Custom roles are created on the{" "}
+                  <Anchor component={Link} to="/roles" inherit>
+                    Roles
+                  </Anchor>{" "}
+                  page.
+                </Text>
+              )}
+            </Stack>
+          </Checkbox.Group>
         )}
-      </Stack>
-    </Radio.Group>
+      />
+      {picked.length > 1 && (
+        <Controller
+          control={form.control}
+          name="roleId"
+          render={({ field }) => (
+            <Radio.Group
+              label="Default role"
+              value={field.value}
+              onChange={field.onChange}
+            >
+              <Group gap="md" mt="xs">
+                {roles
+                  .filter(({ id }) => picked.includes(id))
+                  .map((role) => (
+                    <Radio key={role.id} value={role.id} label={role.name} />
+                  ))}
+              </Group>
+            </Radio.Group>
+          )}
+        />
+      )}
+    </Stack>
   );
 }
 
@@ -221,8 +279,6 @@ function useAccountChange<Input, Output>(
   });
 }
 
-const roleProblem = "Choose a role.";
-
 function CreateAccount({
   roles,
   canEditRoles,
@@ -230,13 +286,15 @@ function CreateAccount({
   onBusy,
   onOpen,
 }: DialogProps & { roles: readonly RoleSummary[] }) {
-  const form = useForm<NewAccountRequest>({
-    resolver: zodResolver(newAccountSchema),
+  // A new account sees the plan unless other roles are chosen.
+  const teamMember = roles.find(({ key }) => key === "team-member")?.id;
+  const form = useForm<AccountForm>({
+    resolver: zodResolver(accountFormSchema),
     defaultValues: {
       name: "",
       email: "",
-      // A new account sees the plan unless another role is chosen.
-      roleId: roles.find(({ key }) => key === "team-member")?.id ?? "",
+      roleId: teamMember ?? "",
+      roleIds: teamMember === undefined ? [] : [teamMember],
     },
   });
   const { errors } = form.formState;
@@ -271,19 +329,7 @@ function CreateAccount({
           error={errors.email && "Enter a valid email address."}
           {...form.register("email")}
         />
-        <Controller
-          control={form.control}
-          name="roleId"
-          render={({ field }) => (
-            <RoleChoice
-              roles={roles}
-              canEditRoles={canEditRoles}
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.roleId && roleProblem}
-            />
-          )}
-        />
+        <RolesChoice form={form} roles={roles} canEditRoles={canEditRoles} />
         <DialogActions
           error={creating.error}
           pending={creating.isPending}
@@ -295,23 +341,19 @@ function CreateAccount({
   );
 }
 
-const accountEditSchema = newAccountSchema.pick({
-  name: true,
-  email: true,
-  roleId: true,
-});
-
-// After users change their own account, the rest of Fathom shows them as they now are: their name
-// and email address, and, once their role no longer lets them manage accounts, the first page they
-// may open.
-function useOwnAccountRefresh(roles: readonly RoleSummary[]) {
+// After users change their own account, the rest of Fathom shows them as they now are: their name,
+// email address, and roles, and, once the role they act as no longer lets them manage accounts, the
+// first page they may open.
+function useOwnAccountRefresh() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const navigate = useNavigate();
-  return async (saved: Account) => {
-    await queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey });
-    const role = roles.find(({ id }) => id === saved.role?.id);
-    if (role?.permissions.includes("accounts:manage"))
+  return async () => {
+    const session = await queryClient.query({
+      ...sessionQuery,
+      staleTime: 0,
+    });
+    if (session?.permissions.includes("accounts:manage"))
       await router.invalidate();
     else await navigate({ to: "/" });
   };
@@ -332,19 +374,21 @@ function EditAccount({
   accounts: readonly Account[];
   roles: readonly RoleSummary[];
 }) {
-  const refused = refusedChanges(account, accounts, roles);
-  const form = useForm<NewAccountRequest>({
-    resolver: zodResolver(accountEditSchema),
+  const form = useForm<AccountForm>({
+    resolver: zodResolver(accountFormSchema),
     defaultValues: {
       name: account.name,
       email: account.email,
       roleId: account.role?.id ?? "",
+      roleIds: account.roles.map(({ id }) => id),
     },
   });
   const { errors } = form.formState;
-  const refreshOwn = useOwnAccountRefresh(roles);
+  const picked = useWatch({ control: form.control, name: "roleIds" });
+  const refused = refusedChanges(account, picked, accounts, roles);
+  const refreshOwn = useOwnAccountRefresh();
   const saving = useAccountChange(
-    (change: AccountChangeRequest) => updateAccount(account.id, change),
+    (change: AccountForm) => updateAccount(account.id, change),
     onBusy,
     own ? refreshOwn : undefined,
   );
@@ -373,19 +417,11 @@ function EditAccount({
           error={errors.email && "Enter a valid email address."}
           {...form.register("email")}
         />
-        <Controller
-          control={form.control}
-          name="roleId"
-          render={({ field }) => (
-            <RoleChoice
-              roles={roles}
-              canEditRoles={canEditRoles}
-              value={field.value}
-              onChange={field.onChange}
-              error={errors.roleId && roleProblem}
-              refused={refused.roleIds}
-            />
-          )}
+        <RolesChoice
+          form={form}
+          roles={roles}
+          canEditRoles={canEditRoles}
+          refused={refused.roleIds}
         />
         <DialogActions
           error={saving.error}
@@ -668,14 +704,27 @@ function AccountRow({
         </Group>
       </Table.Td>
       <Table.Td>
-        {account.role === null ? (
+        {account.roles.length === 0 ? (
           <Text fz="sm" c="dimmed">
             No role
           </Text>
         ) : (
-          <Badge variant="default" radius="sm" tt="none" fw={400}>
-            {account.role.name}
-          </Badge>
+          <Group gap={4}>
+            {rolesHeld(
+              account.role?.name,
+              account.roles.map(({ name }) => name),
+            ).map((role) => (
+              <Badge
+                key={role}
+                variant="default"
+                radius="sm"
+                tt="none"
+                fw={400}
+              >
+                {role}
+              </Badge>
+            ))}
+          </Group>
         )}
       </Table.Td>
       <Table.Td>
@@ -793,7 +842,7 @@ export function AccountsPage({
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>Person</Table.Th>
-                    <Table.Th>Role</Table.Th>
+                    <Table.Th>Roles</Table.Th>
                     <Table.Th>Status</Table.Th>
                     <Table.Th>Created</Table.Th>
                     {canManage && (

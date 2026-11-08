@@ -58,6 +58,15 @@ export async function resetPassword(id: string): Promise<string> {
   ).password;
 }
 
+// The default role among an account's roles: the one it had, while it still holds it, or else the
+// first, or none without roles.
+export function defaultAmong(
+  roleIds: readonly string[],
+  previous: string,
+): string {
+  return roleIds.includes(previous) ? previous : (roleIds[0] ?? "");
+}
+
 // What is wrong with a name the account rules refuse: the form's own words when it is empty, and the
 // rule it breaks otherwise.
 export function nameProblem(

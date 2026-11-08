@@ -19,9 +19,8 @@ import {
   inChunks,
   people,
   plannedHires,
+  roles,
   unpublishedDrafts,
-  rolePermissions,
-  userRoles,
   users,
 } from "@fathom/db";
 import { type DraftKind, isLink, type Tier } from "@fathom/shared";
@@ -471,6 +470,8 @@ export async function setRejection(
 
 export interface Maker {
   madeBy: string | null;
+  // The role the last maker was acting as, null for Fathom itself.
+  madeAs: string | null;
   madeAt: Date;
   // Everyone who changed the draft, by name, first to last, null for Fathom itself.
   editors: (string | null)[];
@@ -495,25 +496,6 @@ export function openChangeSets(userId: string): SQL {
   ) as SQL;
 }
 
-// Whether a user's role lets them approve drafts they changed themselves.
-async function mayApproveOwn(
-  reader: Pick<Database, "select">,
-  userId: string,
-): Promise<boolean> {
-  const [granted] = await reader
-    .select({ permission: rolePermissions.permission })
-    .from(userRoles)
-    .innerJoin(rolePermissions, eq(rolePermissions.roleId, userRoles.roleId))
-    .where(
-      and(
-        eq(userRoles.userId, userId),
-        eq(rolePermissions.permission, "drafts:approve-own"),
-      ),
-    )
-    .limit(1);
-  return granted !== undefined;
-}
-
 // The marker a draft carries when the reader changed it and may not approve their own.
 export const otherApprover = (maker: Maker | undefined) =>
   maker?.needsOtherApprover === true ? { needsOtherApprover: true } : {};
@@ -527,10 +509,10 @@ export async function draftMakers(
   recordType: DraftKind,
   ids: readonly string[],
   seen: (field: string, tier: Tier) => boolean,
-  viewer: string,
+  viewer: Actor,
 ): Promise<Map<string, Maker>> {
   const makers = new Map<string, Maker>();
-  const approvesOwn = await mayApproveOwn(reader, viewer);
+  const approvesOwn = viewer.permissions.includes("drafts:approve-own");
   for (const chunk of inChunks([...ids])) {
     const ownRows = await reader
       .select({ id: unpublishedDrafts.recordId })
@@ -538,7 +520,7 @@ export async function draftMakers(
       .where(
         and(
           eq(unpublishedDrafts.recordType, recordType),
-          eq(unpublishedDrafts.userId, viewer),
+          eq(unpublishedDrafts.userId, viewer.user.id),
           inArray(unpublishedDrafts.recordId, chunk),
         ),
       );
@@ -552,12 +534,14 @@ export async function draftMakers(
         kind: changeSets.kind,
         unpublished: changeSets.unpublished,
         madeBy: users.name,
+        madeAs: roles.name,
         makerId: changeSets.madeBy,
         madeAt: changeSets.madeAt,
       })
       .from(changes)
       .innerJoin(changeSets, eq(changeSets.id, changes.changeSetId))
       .leftJoin(users, eq(users.id, changeSets.madeBy))
+      .leftJoin(roles, eq(roles.id, changeSets.madeAsRoleId))
       .where(
         and(
           eq(changes.recordType, recordType),
@@ -566,7 +550,7 @@ export async function draftMakers(
             eq(changes.draft, true),
             inArray(changeSets.kind, ["approval", "discard"]),
           ),
-          or(eq(changeSets.unpublished, false), openChangeSets(viewer)),
+          or(eq(changeSets.unpublished, false), openChangeSets(viewer.user.id)),
         ),
       )
       .orderBy(changes.id);
@@ -574,7 +558,9 @@ export async function draftMakers(
       (row) => !row.unpublished || own.has(row.recordId),
     );
     // The viewer's changes count whatever their tier, since they made them.
-    const mine = approvesOwn ? new Set<string>() : changedBy(counted, viewer);
+    const mine = approvesOwn
+      ? new Set<string>()
+      : changedBy(counted, viewer.user.id);
     for (const row of counted) {
       if (row.kind === "approval" || row.kind === "discard") {
         makers.delete(row.recordId);
@@ -592,6 +578,7 @@ export async function draftMakers(
       const editors = maker?.editors ?? [];
       makers.set(row.recordId, {
         madeBy: row.madeBy,
+        madeAs: row.madeAs,
         madeAt: row.madeAt,
         editors: [
           ...editors.filter((editor) => editor !== row.madeBy),

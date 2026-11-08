@@ -69,18 +69,7 @@ Use only where a test case says so. This deletes every account and record in the
 3. Confirm that the last line printed gives the shared password, with no error above it.
 4. Start Fathom again ([R0](#r0-start-fathom)).
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first ([P2](#p2-sign-out)).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
-### P3: Publish
+### P1: Publish
 
 1. Select the **Publish** button in the top bar, followed by the number of changes waiting, such as **Publish 4 changes**.
 2. Confirm that a notification says **Published**, and that the button is gone.
@@ -88,7 +77,7 @@ Use only where a test case says so. This deletes every account and record in the
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
-- **Seeded dates:** the seed data is dated from the day it is added, as the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and the steps name them by where they fall. **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. A cycle's name is the year it ends in and its number in that year, such as **26.4** or **P26.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
+- **Seeded dates:** the seed data is dated from the day it is added, as the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and the steps name them by where they fall. **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. A cycle's name is the year it ends in and its number in that year, such as **26.4** or **P24.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a record's name. A hollow dot means the change is still unpublished.
 - **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Stream**, **Cycle schedule** and **Releases**. Selecting a row opens the stream in the side panel.
 - **Side panel:** the panel beside the streams table for the selected stream, which the table narrows to make room for, headed with its name, with the sections **Cycle schedule**, **Releases** and **Cycles**. Its close button, an **×**, is at its top right, and dragging its left edge resizes it.
@@ -105,9 +94,9 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
-**Preconditions:** [R2](#r2-start-from-an-empty-database) run, then signed in ([P1](#p1-sign-in)) with this account.
+**Preconditions:** [R2](#r2-start-from-an-empty-database) run, then signed in with this account.
 
-- [ ] **Step 1.** In the left-hand menu, under **Plan**, select **Releases**.
+- [ ] **Step 1.** In the left-hand menu, in the **Plan** section, select **Releases**.
   - **Expected:** The **Releases** page opens with no table. It reads **No release streams yet.**, and a **New release stream** button is at the top right.
   - **Notes:**
 
@@ -115,7 +104,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as REL-01.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-01. **Releases** page open.
+**Preconditions:** Signed in with this account. Run after REL-01. **Releases** page open.
 
 - [ ] **Step 1.** Select **New release stream** at the top right of the page.
   - **Expected:** A dialog titled **New release stream** opens, with a **Name** box.
@@ -129,7 +118,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as REL-02.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-02. **Testing Stream** open in the side panel.
+**Preconditions:** Signed in with this account. Run after REL-02. **Testing Stream** open in the side panel.
 
 - [ ] **Step 1.** In the side panel, select **Set up cycles…** under **Cycle schedule**.
   - **Expected:** A dialog titled **Set up cycles for Testing Stream** opens, with an empty **First cycle starts** box showing **2027-01-01** in grey, **Each cycle lasts** set to **3**, **Months** selected, and **Names** set to **{YY}.{N}**.
@@ -147,7 +136,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** The dialog closes, and a notification says **Drafted the cycles.** Under **Cycle schedule**, a row reads **From 2027-01-04**, then **Every 2 weeks, named Sprint {#}** with a hollow yellow dot and **Draft: added**, and below it **Planned to** and a day two years after today, with a **Change…** button under it. Below **Releases**, a **Cycles** section, its count in brackets, lists the cycles from **Sprint 1** on. In the table, the **Cycle schedule** column of **Testing Stream** reads **Every 2 weeks, named Sprint {#}**.
   - **Notes:**
 
-- [ ] **Step 5.** Publish ([P3](#p3-publish)).
+- [ ] **Step 5.** Publish ([P1](#p1-publish)).
   - **Expected:** The marks after **Testing Stream** and after its cycles' row are now solid yellow dots with **Draft: added**.
   - **Notes:**
 
@@ -155,7 +144,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from REL-03.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-03. **Releases** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. Run after REL-03. **Releases** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select **Testing Stream** in the table, then **New release…** under **Releases** in the side panel.
   - **Expected:** A dialog titled **New release in Testing Stream** opens, with **Name**, **First cycle**, **Last cycle** and an empty **Ships on**.
@@ -169,7 +158,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted the new release.** Under **Releases** in the side panel, a row reads **Testing Release** with a hollow yellow dot and **Draft: added**, then **Sprint 1 to Sprint 2 · ships 2027-01-31**. In the table, the **Releases** column of **Testing Stream** reads **(1) Testing Release**.
   - **Notes:**
 
-- [ ] **Step 4.** Publish ([P3](#p3-publish)).
+- [ ] **Step 4.** Publish ([P1](#p1-publish)).
   - **Expected:** The mark after **Testing Release** is now a solid yellow dot with **Draft: added**.
   - **Notes:**
 
@@ -177,7 +166,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from REL-04.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-04. **Testing Stream** open in the side panel.
+**Preconditions:** Signed in with this account. Run after REL-04. **Testing Stream** open in the side panel.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Testing Release** row, then **Approve…**.
   - **Expected:** A dialog titled **Approve 3 drafts?** says **Also approves the drafts these depend on:**, listing **the release stream Testing Stream** and **the cycles of Testing Stream from 2027-01-04**.
@@ -193,7 +182,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Team Member, `team.member@fathom.test`, changed from REL-05.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-05. **Releases** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. Run after REL-05. **Releases** page open from the left-hand menu.
 
 - [ ] **Step 1.** Run [R1](#r1-restore-the-seed-data).
   - **Expected:** [R1](#r1-restore-the-seed-data) finishes with no error. After the page reloads, the table shows **Testing Stream**, **Platform** and **Patches**, in that order, with no marks, and there is no **New release stream** button.
@@ -207,21 +196,21 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Team Member, `team.member@fathom.test`, the same as REL-06.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-06. **Releases** page open.
+**Preconditions:** Signed in with this account. Run after REL-06. **Releases** page open.
 
 - [ ] **Step 1.** Select **Patches** in the table, then scroll the side panel down to **Cycles**.
   - **Expected:** A table with the columns **Name**, **Starts**, **Ends**, **Release**, **Months**.
   - **Notes:**
 
 - [ ] **Step 2.** Read the first row, each column in order.
-  - **Expected:** The first cycle's name, then the Monday eight weeks before this week's Monday, then the Sunday four weeks later, nothing under **Release**, and the share of each month it spans, such as **P26.1**, **2026-09-07**, **2026-10-04**, **Sep 2026 80%, Oct 13%**.
+  - **Expected:** The first cycle's name, then the Monday eight weeks before this week's Monday, then the Sunday four weeks later, nothing under **Release**, and the share of each month it spans, such as **P24.1**, **2026-09-07**, **2026-10-04**, **Sep 2026 80%, Oct 13%**.
   - **Notes:**
 
 #### REL-08: Cycles Change Only From the Start of a Cycle
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-07.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-07. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-07. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** In the side panel, select **Change…** under **Cycle schedule**, then **Length or names from a date…**.
   - **Expected:** The menu offers **Planned to…** and **Length or names from a date…**. A dialog titled **Change the length or names of Platform's cycles** opens, with **From the start of** and the text **Cycles before it keep their names and dates**.
@@ -241,7 +230,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as REL-08.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-08. **Releases** page open from the left-hand menu, with **Testing Stream** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-08. **Releases** page open from the left-hand menu, with **Testing Stream** selected in the table.
 
 - [ ] **Step 1.** Select **Rename** at the top of the side panel.
   - **Expected:** A dialog titled **Rename Testing Stream** opens, with **Testing Stream** in the **Name** box.
@@ -259,13 +248,13 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as REL-09.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-09. **Releases** page open, with **Patches** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-09. **Releases** page open, with **Patches** selected in the table.
 
 - [ ] **Step 1.** Select **Retire** at the top of the side panel.
   - **Expected:** A notification says **Drafted retiring Patches.** The side panel shows **Retired** in grey, then a hollow yellow dot and **Draft: retired**, and its button now reads **Restore**. In the table, **Patches** is under a **Retired** heading, with the same yellow mark.
   - **Notes:**
 
-- [ ] **Step 2.** Publish ([P3](#p3-publish)).
+- [ ] **Step 2.** Publish ([P1](#p1-publish)).
   - **Expected:** The yellow mark is now a solid dot with **Draft: retired**.
   - **Notes:**
 
@@ -273,7 +262,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from REL-10.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-10. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-10. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
 - [ ] **Step 1.** Select the **⋯** button beside the close button at the top of the side panel, then **Approve…**.
   - **Expected:** A dialog titled **Approve 1 draft?** opens.
@@ -291,7 +280,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from REL-11.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-11. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-11. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 3** opens, with **Harbor 3** in **Name**, next quarter's cycle as the first cycle, and the first half as the last, such as **27.1 (2027-01-01 to 2027-03-31)** and **27.3 (2027-07-01 to 2027-12-31)**.
@@ -301,7 +290,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted the change to the release.** The row reads **Harbor Three**, with a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 3.** Publish ([P3](#p3-publish)).
+- [ ] **Step 3.** Publish ([P1](#p1-publish)).
   - **Expected:** The mark after **Harbor Three** is now a solid yellow dot with **Draft**.
   - **Notes:**
 
@@ -309,7 +298,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from REL-12.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-12. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-12. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor Three** row, then **Reject…**.
   - **Expected:** A dialog titled **Reject 1 draft?** opens, with a **Reason** box.
@@ -323,7 +312,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from REL-13.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-13. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-13. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor Three** row.
   - **Expected:** Under **Harbor Three**, the menu offers **Change…** and **Remove**, then shows a red dot and **Rejected**, **Reason: Keep the old name** and **Changed by Product Manager**, then offers **Resubmit** and **Discard draft**.
@@ -337,7 +326,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as REL-14.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-14. **Platform** open in the side panel.
+**Preconditions:** Signed in with this account. Run after REL-14. **Platform** open in the side panel.
 
 - [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Harbor 1** row, then **Remove**.
   - **Expected:** A notification says **Drafted removing Harbor 1.** The **Harbor 1** row is struck through, with a hollow yellow dot and **Draft: removed**.
@@ -351,7 +340,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-15.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-15. **Platform** open in the side panel.
+**Preconditions:** Signed in with this account. Run after REL-15. **Platform** open in the side panel.
 
 - [ ] **Step 1.** Under **Cycle schedule**, select **Change…** below **Planned to**, followed by 31 December three years after this year, such as **Planned to 2029-12-31**, then **Planned to…**.
   - **Expected:** A dialog titled **Change how far Platform is planned** opens, with that day in **Planned to**. Below it, as many cycles in all as the **Cycles** heading counts, followed by **as now**, such as **11 cycles in all, as now**, then **Last cycles**: the last three half-year cycles, the last starting on or before that day, such as **28.2** with **2028-07-01 to 2028-12-31**, **29.1** with **2029-01-01 to 2029-06-30**, and **29.2** with **2029-07-01 to 2029-12-31**.
@@ -369,7 +358,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from REL-16.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-16. **Platform** open in the side panel.
+**Preconditions:** Signed in with this account. Run after REL-16. **Platform** open in the side panel.
 
 - [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Harbor 2** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 2** opens, with an empty **Ships on** and, under it, **Leave empty to ship at the end of its last cycle, on** the last day of this quarter, such as **2026-12-31**.
@@ -389,7 +378,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Team Member, `team.member@fathom.test`, changed from REL-17.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-17. **Releases** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. Run after REL-17. **Releases** page open from the left-hand menu.
 
 - [ ] **Step 1.** Run [R1](#r1-restore-the-seed-data).
   - **Expected:** [R1](#r1-restore-the-seed-data) finishes with no error. After the page reloads, the streams table shows **Testing Stream**, **Platform** and **Patches**, none under **Retired**.
@@ -408,14 +397,14 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 5.** Read **Patches**' cycles lane.
-  - **Expected:** Each four-week cycle is a block as long as its dates on the axis, named inside only when its name fits. Hovering over one shows its name and dates, such as **P26.3: 2026-11-02 to 2026-11-29**.
+  - **Expected:** Each four-week cycle is a block as long as its dates on the axis, named inside only when its name fits. Hovering over one shows its name and dates, such as **P24.3: 2026-11-02 to 2026-11-29**.
   - **Notes:**
 
 #### REL-19: The Timeline Zooms In and Out
 
 **Account:** Team Member, `team.member@fathom.test`, the same as REL-18.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-18. **Releases** page open, scrolled to the timeline, at **Year**.
+**Preconditions:** Signed in with this account. Run after REL-18. **Releases** page open, scrolled to the timeline, at **Year**.
 
 - [ ] **Step 1.** Select **All**.
   - **Expected:** The whole timeline fits across, from the earliest cycle of any stream to the end of the last, such as 2026 to 2030, with no scrolling sideways, and the **−** button is greyed out.
@@ -437,7 +426,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from REL-19.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-19. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-19. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 2** row, then **Change…**. Type the day 31 days after this quarter ends, such as `20270131`, in **Ships on**, and select **Save**.
   - **Expected:** A notification says **Drafted the change to the release.**
@@ -455,7 +444,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Product Manager, `product.manager@fathom.test`, the same as REL-20. Step 5 signs in as another account.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-20. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-20. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Close the side panel, scroll to the timeline, select **Year**, and find **Platform**'s and **Patches**' releases lanes, scrolling the timeline left if **Harbor 1** is not wholly in view.
   - **Expected:** **Harbor 1** and **Harbor 3** are blue, **Harbor 2** is purple, the later patch release, such as **Patch December**, is orange, and the earlier, such as **Patch November**, is blue. Each diamond is the colour of its span, and each name is in the page's usual text colour.
@@ -473,7 +462,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted the change to the release.** The **Harbor 1** row has a hollow yellow dot and **Draft**, and its square is teal. On the timeline, **Harbor 1**'s span is teal, with a dashed edge.
   - **Notes:**
 
-- [ ] **Step 5.** Publish ([P3](#p3-publish)), then sign in ([P1](#p1-sign-in)) as the Project Manager, `project.manager@fathom.test`, and open **Drafts** from the left-hand menu.
+- [ ] **Step 5.** Publish ([P1](#p1-publish)), then sign in as the Project Manager, `project.manager@fathom.test`, and open **Drafts** from the left-hand menu.
   - **Expected:** The draft of **the release Harbor 1 in Platform** lists **Colour from Sea to Teal**.
   - **Notes:**
 
@@ -487,7 +476,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-21.
 
-**Preconditions:** Run after REL-21. Restore the seed data ([R1](#r1-restore-the-seed-data)). Signed in ([P1](#p1-sign-in)) with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Run after REL-21. Restore the seed data ([R1](#r1-restore-the-seed-data)). Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, such as **27.1**, then **Change length…**.
   - **Expected:** A dialog titled **Change the length of** that cycle opens. **Length** reads **3**, followed by **months**, with the cycle's dates under its label. Under **Later cycles**, **Move with it** is selected, and **Keep their dates** is offered. **New dates** lists that cycle, the next one and the first half, with their dates as now, such as **27.1**, **2027-01-01 to 2027-03-31**; **27.2**, **2027-04-01 to 2027-06-30**; and **27.3**, **2027-07-01 to 2027-12-31**.
@@ -501,7 +490,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, a row **From** the changed cycle's first day, **Every 2 months, named {YY}.{N}**, and a row **From** the next cycle's new first day, **Every 3 months, named {YY}.{N}**, each have a hollow yellow dot and **Draft: added**, and the first half's row, now **From** a month earlier, **Every 6 months, named {YY}.{N}**, has a hollow yellow dot and **Draft**, such as **From 2027-01-01**, **From 2027-03-01** and **From 2027-06-01**. The **Harbor 3** row has a hollow yellow dot and **Draft**, and ships on the first half's new last day, such as **27.1 to 27.3 · ships 2027-11-30**. In the **Cycles** table, the first half runs on its new dates, such as **27.3** from **2027-06-01** to **2027-11-30**.
   - **Notes:**
 
-- [ ] **Step 4.** Publish ([P3](#p3-publish)).
+- [ ] **Step 4.** Publish ([P1](#p1-publish)).
   - **Expected:** The dots on the three rows of the cycle schedule and on **Harbor 3** are filled.
   - **Notes:**
 
@@ -509,7 +498,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from REL-22.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-22. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-22. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
   - **Expected:** A dialog titled **Approve 4 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Platform from** each of the three days in REL-22 Step 3, such as **the cycles of Platform from 2027-01-01**, **the cycles of Platform from 2027-03-01** and **the cycles of Platform from 2027-06-01**.
@@ -523,24 +512,24 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from REL-23.
 
-**Preconditions:** Run after REL-23. Signed in ([P1](#p1-sign-in)) with this account. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
+**Preconditions:** Run after REL-23. Signed in with this account. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] **Step 1.** In the **Cycles** table, select the **⋯** button at the end of the later patch release's last cycle, the fourth cycle, such as **P26.4**, then **Change length…**. Replace **4** in **Length** with `2`, and select **Keep their dates**.
-  - **Expected:** **Length** is followed by **weeks**. **New dates** lists that cycle two weeks long, then a cycle from the next day to the end of the cycle after it, six weeks long, then the cycle after that as now, such as **P26.4**, **2026-11-30 to 2026-12-13**; **P27.1**, **2026-12-14 to 2027-01-24**; and **P27.2**, **2027-01-25 to 2027-02-21**. Below it, the dialog says the later patch release ships on that cycle's new last day, such as **Patch December ships 2026-12-13.**
+- [ ] **Step 1.** In the **Cycles** table, select the **⋯** button at the end of the later patch release's last cycle, the fourth cycle, such as **P24.4**, then **Change length…**. Replace **4** in **Length** with `2`, and select **Keep their dates**.
+  - **Expected:** **Length** is followed by **weeks**. **New dates** lists that cycle two weeks long, then a cycle from the next day to the end of the cycle after it, six weeks long, then the cycle after that as now, such as **P24.4**, **2026-11-30 to 2026-12-13**; **P25.1**, **2026-12-14 to 2027-01-24**; and **P25.2**, **2027-01-25 to 2027-02-21**. Below it, the dialog says the later patch release ships on that cycle's new last day, such as **Patch December ships 2026-12-13.**
   - **Notes:**
 
-- [ ] **Step 2.** Select **Change length**, then publish ([P3](#p3-publish)).
-  - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, a row **From** each of the three cycles' first days, such as **From 2026-11-30**, **From 2026-12-14** and **From 2027-01-25**, has a yellow dot and **Draft: added**. The later patch release has no mark, and ships on the changed cycle's new last day, since it has no Ships on day of its own, such as **Patch December**, **P26.3 to P26.4 · ships 2026-12-13**.
+- [ ] **Step 2.** Select **Change length**, then publish ([P1](#p1-publish)).
+  - **Expected:** A notification says **Drafted the new length.** Under **Cycle schedule**, a row **From** each of the three cycles' first days, such as **From 2026-11-30**, **From 2026-12-14** and **From 2027-01-25**, has a yellow dot and **Draft: added**. The later patch release has no mark, and ships on the changed cycle's new last day, since it has no Ships on day of its own, such as **Patch December**, **P24.3 to P24.4 · ships 2026-12-13**.
   - **Notes:**
 
 #### REL-25: Discarding One Draft of a New Length Discards Them All
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as REL-24.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-24. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-24. **Releases** page open from the left-hand menu, with **Patches** selected in the table.
 
-- [ ] **Step 1.** Select the **⋯** button at the end of the second of the three rows REL-24 added, such as **From 2026-12-14**, then **Discard draft**, and publish ([P3](#p3-publish)).
-  - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only its first row, and the fourth cycle is four weeks long again, such as **P26.4** from **2026-11-30** to **2026-12-27**.
+- [ ] **Step 1.** Select the **⋯** button at the end of the second of the three rows REL-24 added, such as **From 2026-12-14**, then **Discard draft**, and publish ([P1](#p1-publish)).
+  - **Expected:** A notification says **Discarded the draft.** The cycle schedule has only its first row, and the fourth cycle is four weeks long again, such as **P24.4** from **2026-11-30** to **2026-12-27**.
   - **Notes:**
 
 ### Part 6: Release Notes
@@ -549,7 +538,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from REL-25.
 
-**Preconditions:** Signed in ([P1](#p1-sign-in)) with this account. Run after REL-25. **Light** chosen in the Appearance menu. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Signed in with this account. Run after REL-25. **Light** chosen in the Appearance menu. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Select **Harbor 2**'s underlined name.
   - **Expected:** A panel titled **Harbor 2** opens above the stream's panel, showing the note as it reads: two headings, a bullet list with **every** in bold, a checklist with its first box ticked, red text, and a link.

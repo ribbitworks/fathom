@@ -353,6 +353,8 @@ export {
 } from "./passwords.ts";
 export { type GreetingResponse, greetingResponseSchema } from "./greeting.ts";
 export {
+  type RoleSwitchRequest,
+  roleSwitchSchema,
   sessionIdleMinutes,
   type SessionResponse,
   sessionResponseSchema,

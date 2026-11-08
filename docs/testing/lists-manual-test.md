@@ -54,17 +54,6 @@ Use before the first test case and after the last, so every list and role is as 
 3. Confirm that the last line printed gives the shared password, with no error above it.
 4. Start Fathom again (R0).
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first (P2).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
 ## Terms
 
 - **Panel:** the area that opens beside the table of lists when you select a list's name, showing the list's choices.
@@ -81,7 +70,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case.
 
-**Preconditions:** Signed in (P1) with this account. **Lists** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the **Name** column of the **Hiring states** and **Positions** rows.
   - **Expected:** Each name has a grey **Built in** label beside it. No other list has one.
@@ -143,7 +132,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, changed from LIST-05.
 
-**Preconditions:** LIST-05 done. Signed in (P1) with this account. **Lists** page open, with the **Hiring states** panel open.
+**Preconditions:** LIST-05 done. Signed in with this account. **Lists** page open, with the **Hiring states** panel open.
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **Approved to hire** row, then select **Approve…**.
   - **Expected:** A dialog titled **Approve 1 draft?** opens.
@@ -161,7 +150,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from LIST-06. Steps 3, 4 and 5 sign in as other accounts.
 
-**Preconditions:** LIST-06 done. Signed in (P1) with this account. **Lists** page open, with the **Positions** panel open.
+**Preconditions:** LIST-06 done. Signed in with this account. **Lists** page open, with the **Positions** panel open.
 
 - [ ] **Step 1.** Select **Edit list**. Under **Visible to**, select **Restricted**, then select **Save**.
   - **Expected:** The dialog closes. **Positions** has a hollow yellow dot beside its name.
@@ -171,15 +160,15 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** A notice says the changes were published.
   - **Notes:**
 
-- [ ] **Step 3.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`. Open the **Lists** page and select **Positions**. Select the **⋯** button beside **Edit list**, then select **Approve…**, then **Approve**.
+- [ ] **Step 3.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Open the **Lists** page and select **Positions**. Select the **⋯** button beside **Edit list**, then select **Approve…**, then **Approve**.
   - **Expected:** The dialog closes, and the dot beside **Positions** is gone.
   - **Notes:**
 
-- [ ] **Step 4.** Sign in (P1) as the Resource Planner, `resource.planner@fathom.test`. Open the **People** page.
+- [ ] **Step 4.** Sign in as the Resource Planner, `resource.planner@fathom.test`. Open the **People** page.
   - **Expected:** The table has no **Position** column.
   - **Notes:**
 
-- [ ] **Step 5.** Sign in (P1) as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open the **People** page.
+- [ ] **Step 5.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open the **People** page.
   - **Expected:** The table has a **Position** column, and **New person** can be selected.
   - **Notes:**
 
@@ -191,7 +180,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as the account LIST-07 ended with.
 
-**Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in (P1) with this account. **Lists** page open from the left-hand menu, with no list's panel open.
+**Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
 - [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
   - **Expected:** The table shows only **Hiring states** and **Positions**, and the count reads **2 of 9**.

@@ -58,6 +58,7 @@ import {
   recordSubjects,
   releaseStreamsQuery,
 } from "./releases.ts";
+import { makerNames } from "./names.ts";
 import { PageHeader } from "./page-header.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import { isHire, rowName } from "./people-rows.ts";
@@ -121,6 +122,7 @@ function entry(
     state: DraftState;
     reason?: string | undefined;
     madeBy: string | null;
+    madeAs?: string | null | undefined;
     madeAt: string | null;
     editors?: (string | null)[] | undefined;
     unpublished?: boolean | undefined;
@@ -132,11 +134,7 @@ function entry(
   heldBy?: string,
 ): Entry {
   // Everyone who changed the draft, since several people's changes to one record make one draft.
-  const who = joinedNames(
-    (draft.editors?.length ? draft.editors : [draft.madeBy]).map(
-      (name) => name ?? "Fathom",
-    ),
-  );
+  const who = joinedNames(makerNames(draft));
   const rejected = draft.state === "rejected" ? draftWords(draft) : "";
   const did = verb(draft.action);
   return {

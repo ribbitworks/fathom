@@ -464,7 +464,7 @@ export async function readHiresIn(
     recordType,
     [...draftsNow.keys()],
     seesField,
-    actor.user.id,
+    actor,
   );
   const ids = [
     ...live.keys(),
@@ -638,6 +638,7 @@ export async function readHiresIn(
         : {}),
       ...(draft.unpublished === true ? { unpublished: true } : {}),
       madeBy: maker?.madeBy ?? null,
+      madeAs: maker?.madeAs ?? null,
       madeAt: maker?.madeAt.toISOString() ?? null,
       editors: maker?.editors ?? [],
       ...otherApprover(maker),
@@ -1060,7 +1061,7 @@ export async function createHires(
     await recordHiringChanges(transaction, actor.user.id, made);
     return {
       ids,
-      changeSetId: await recordChanges(transaction, actor.user.id, made),
+      changeSetId: await recordChanges(transaction, actor, made),
     };
   });
 }
@@ -1193,7 +1194,7 @@ export async function updateHire(
     ];
     await writeDraft(transaction, actor.user.id, recordType, id, before, after);
     await recordHiringChanges(transaction, actor.user.id, all);
-    return recordChanges(transaction, actor.user.id, all);
+    return recordChanges(transaction, actor, all);
   });
 }
 
@@ -1238,7 +1239,7 @@ export async function deleteHire(
     await recordHiringChanges(transaction, actor.user.id, made);
     return recordChanges(
       transaction,
-      actor.user.id,
+      actor,
       made,
       before === undefined ? "discard" : "edit",
     );
@@ -1277,7 +1278,7 @@ export async function resubmitHireDraft(
       .set({ state: "waiting", reason: null })
       .where(and(eq(drafts.recordType, recordType), eq(drafts.recordId, id)));
     await recordHiringChanges(transaction, actor.user.id, made);
-    return recordChanges(transaction, actor.user.id, made, "resubmission");
+    return recordChanges(transaction, actor, made, "resubmission");
   });
 }
 
@@ -1316,7 +1317,7 @@ export async function discardHireDraft(
       before,
     );
     await recordHiringChanges(transaction, actor.user.id, made);
-    return recordChanges(transaction, actor.user.id, made, "discard");
+    return recordChanges(transaction, actor, made, "discard");
   });
 }
 

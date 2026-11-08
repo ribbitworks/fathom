@@ -158,6 +158,7 @@ describe("the change history", () => {
       kind: "edit",
       madeAt: expect.any(String) as string,
       madeBy: "Fictional User 1",
+      madeAs: "Workforce Administrator",
       records: [
         {
           kind: "person",

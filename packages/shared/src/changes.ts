@@ -83,6 +83,9 @@ export const changeEntrySchema = z.object({
   madeAt: z.iso.datetime({ offset: true }),
   // The name of who saved it, or null for Fathom itself, as for the seed data.
   madeBy: z.string().nullable(),
+  // The role they saved it as, null for Fathom itself and for changes saved before roles were
+  // recorded.
+  madeAs: z.string().nullable().optional(),
   records: z.array(changedRecordSchema),
 });
 

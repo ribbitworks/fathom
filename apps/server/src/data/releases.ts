@@ -27,6 +27,7 @@ import {
   type RecordType,
 } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
+import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import type { Saved } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
@@ -150,12 +151,12 @@ export function streamsOut(
 // Every stream as the viewer sees it, with its patterns, cycles, and releases.
 export async function readReleaseStreams(
   database: Database,
-  viewer: string,
+  viewer: Actor,
 ): Promise<ReleaseStream[]> {
   // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
   return database.transaction(
     async (transaction) => {
-      const state = await readRecordsState(transaction, viewer);
+      const state = await readRecordsState(transaction, viewer.user.id);
       return streamsOut(
         state,
         await readRecordMakers(transaction, state, viewer),
@@ -169,16 +170,16 @@ export async function readReleaseStreams(
 // sees it.
 async function changingStream(
   database: Database,
-  editor: string,
+  editor: Actor,
   streamId: string,
   change: (
     transaction: Parameters<Parameters<typeof drafting>[2]>[0],
     state: RecordsState,
   ) => Promise<string | null>,
 ): Promise<Saved<ReleaseStream>> {
-  return drafting(database, editor, async (transaction, state) => {
+  return drafting(database, editor.user.id, async (transaction, state) => {
     const changeSetId = await change(transaction, state);
-    const now = await readRecordsState(transaction, editor);
+    const now = await readRecordsState(transaction, editor.user.id);
     return {
       result: streamOut(
         now,
@@ -193,14 +194,14 @@ async function changingStream(
 // A stream's cycles are made until two years from the day it is drafted.
 export async function createStream(
   database: Database,
-  editor: string,
+  maker: Actor,
   request: ReleaseStreamRequest,
   asOf?: string,
 ): Promise<Saved<ReleaseStream>> {
   const today = asOf ?? (await readToday(database));
   const id = randomUUID();
-  return changingStream(database, editor, id, (transaction, state) =>
-    saveRecordDraft(transaction, editor, state, "release-stream", id, {
+  return changingStream(database, maker, id, (transaction, state) =>
+    saveRecordDraft(transaction, maker, state, "release-stream", id, {
       name: request.name,
       retired: false,
       cyclesUntil: horizonFrom(today),
@@ -210,13 +211,13 @@ export async function createStream(
 
 export async function updateStream(
   database: Database,
-  editor: string,
+  maker: Actor,
   id: string,
   change: Partial<{ name: string; retired: boolean; cyclesUntil: string }>,
 ): Promise<Saved<ReleaseStream>> {
-  return changingStream(database, editor, id, (transaction, state) => {
+  return changingStream(database, maker, id, (transaction, state) => {
     const stream = changeableRecord(state, "release-stream", id);
-    return saveRecordDraft(transaction, editor, state, "release-stream", id, {
+    return saveRecordDraft(transaction, maker, state, "release-stream", id, {
       ...stream,
       ...change,
     });
@@ -257,21 +258,21 @@ const releaseRecord = (streamId: string, request: ReleaseRequest) => ({
 // Drafts adding a pattern or release to a stream.
 export async function addToStream(
   database: Database,
-  editor: string,
+  maker: Actor,
   streamId: string,
   added:
     | { type: "cycle-pattern"; request: CyclePatternRequest }
     | { type: "release"; request: ReleaseRequest },
 ): Promise<Saved<ReleaseStream>> {
   // Saving refuses a stream that does not exist, as it does any link to a record.
-  return changingStream(database, editor, streamId, (transaction, state) => {
+  return changingStream(database, maker, streamId, (transaction, state) => {
     const record =
       added.type === "cycle-pattern"
         ? patternRecord(streamId, added.request)
         : releaseRecord(streamId, added.request);
     return saveRecordDraft(
       transaction,
-      editor,
+      maker,
       state,
       added.type,
       randomUUID(),
@@ -284,20 +285,20 @@ export async function addToStream(
 // as a release's note.
 export async function changeInStream(
   database: Database,
-  editor: string,
+  maker: Actor,
   streamId: string,
   id: string,
   changed:
     | { type: "cycle-pattern"; request: CyclePatternRequest }
     | { type: "release"; request: ReleaseRequest },
 ): Promise<Saved<ReleaseStream>> {
-  return changingStream(database, editor, streamId, (transaction, state) => {
+  return changingStream(database, maker, streamId, (transaction, state) => {
     const kept = inStreamRecord(state, changed.type, streamId, id);
     const record =
       changed.type === "cycle-pattern"
         ? patternRecord(streamId, changed.request)
         : releaseRecord(streamId, changed.request);
-    return saveRecordDraft(transaction, editor, state, changed.type, id, {
+    return saveRecordDraft(transaction, maker, state, changed.type, id, {
       ...kept,
       ...record,
     });
@@ -308,7 +309,7 @@ export async function changeInStream(
 // notes do not allow is refused rather than cleaned, so what is kept is what the editor showed.
 export async function changeReleaseNote(
   database: Database,
-  editor: string,
+  maker: Actor,
   streamId: string,
   id: string,
   note: string | null,
@@ -318,9 +319,9 @@ export async function changeReleaseNote(
     const problem = noteProblem(kept);
     if (problem !== undefined) throw new BadRequestError(problem);
   }
-  return changingStream(database, editor, streamId, (transaction, state) => {
+  return changingStream(database, maker, streamId, (transaction, state) => {
     const release = inStreamRecord(state, "release", streamId, id);
-    return saveRecordDraft(transaction, editor, state, "release", id, {
+    return saveRecordDraft(transaction, maker, state, "release", id, {
       ...release,
       note: kept,
     });
@@ -331,23 +332,27 @@ export async function changeReleaseNote(
 // its draft, as records.ts discards drafts.
 export async function removeFromStream(
   database: Database,
-  editor: string,
+  maker: Actor,
   streamId: string,
   type: "cycle-pattern" | "release",
   id: string,
   mayChangeCycles: boolean,
 ): Promise<string | null> {
-  const discards = await drafting(database, editor, (_transaction, state) => {
-    inStreamRecord(state, type, streamId, id);
-    return Promise.resolve(addedOnly(state, type, id));
-  });
+  const discards = await drafting(
+    database,
+    maker.user.id,
+    (_transaction, state) => {
+      inStreamRecord(state, type, streamId, id);
+      return Promise.resolve(addedOnly(state, type, id));
+    },
+  );
   if (discards) {
-    return discardRecordDraft(database, editor, type, id, mayChangeCycles);
+    return discardRecordDraft(database, maker, type, id, mayChangeCycles);
   }
   return (
-    await changingStream(database, editor, streamId, (transaction, state) => {
+    await changingStream(database, maker, streamId, (transaction, state) => {
       inStreamRecord(state, type, streamId, id);
-      return saveRecordDraft(transaction, editor, state, type, id, undefined);
+      return saveRecordDraft(transaction, maker, state, type, id, undefined);
     })
   ).changeSetId;
 }
@@ -429,12 +434,12 @@ const nameOf = (state: RecordsState, streamId: string): string =>
 // move, moved with them, all in one change set, as the Decisions Log sets out.
 export async function changeCycleLength(
   database: Database,
-  editor: string,
+  maker: Actor,
   streamId: string,
   startsOn: string,
   request: CycleLengthRequest,
 ): Promise<Saved<ReleaseStream>> {
-  return changingStream(database, editor, streamId, (transaction, state) => {
+  return changingStream(database, maker, streamId, (transaction, state) => {
     changeableRecord(state, "release-stream", streamId);
     const kept = streamPatterns(state, streamId);
     const patterns = kept.map(({ pattern }) => pattern);
@@ -453,7 +458,7 @@ export async function changeCycleLength(
     }
     const made = patternsForLength(patterns, { startsOn, ...request });
     if ("problem" in made) throw new ConflictError(made.problem);
-    return saveRecordDrafts(transaction, editor, state, [
+    return saveRecordDrafts(transaction, maker, state, [
       ...patternDrafts(state, streamId, kept, made.patterns),
       ...releaseDrafts(
         state,

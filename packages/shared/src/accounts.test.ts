@@ -15,10 +15,15 @@ import {
 import { greetingResponseSchema } from "./greeting.ts";
 import { historyListSchema } from "./history.ts";
 import { defaultPasswordSettings } from "./passwords.ts";
-import { sessionResponseSchema, signInRequestSchema } from "./session.ts";
+import {
+  roleSwitchSchema,
+  sessionResponseSchema,
+  signInRequestSchema,
+} from "./session.ts";
 
 const password = "p".repeat(passwordLength.minimum);
 const roleId = "00000000-0000-4000-8000-0000000000a1";
+const otherRoleId = "00000000-0000-4000-8000-0000000000a2";
 
 describe("account requests", () => {
   const account = {
@@ -43,6 +48,8 @@ describe("account requests", () => {
     ["an address that is not an email", { email: "not an email" }],
     ["a role that is not an ID", { roleId: "team-member" }],
     ["no role", { roleId: undefined }],
+    ["an empty set of roles", { roleIds: [] }],
+    ["a role in the set that is not an ID", { roleIds: ["team-member"] }],
     ["a name longer than 100 characters", { name: "n".repeat(101) }],
     ["a name holding a control character", { name: "A\u0007B" }],
     ["a name holding a zero-width space", { name: "A\u200BB" }],
@@ -60,8 +67,19 @@ describe("account requests", () => {
     );
   });
 
-  it("changes any of an account's name, email, and role, but not its password", () => {
+  it("creates an account with several roles, one of them its default", () => {
+    expect(
+      newAccountSchema.parse({ ...account, roleIds: [roleId, otherRoleId] })
+        .roleIds,
+    ).toEqual([roleId, otherRoleId]);
+  });
+
+  it("changes any of an account's name, email, roles, and default role, but not its password", () => {
     expect(accountChangeSchema.parse({ roleId })).toEqual({ roleId });
+    expect(accountChangeSchema.parse({ roleIds: [otherRoleId] })).toEqual({
+      roleIds: [otherRoleId],
+    });
+    expect(accountChangeSchema.safeParse({ roleIds: [] }).success).toBe(false);
     expect(accountChangeSchema.parse({ password })).toEqual({});
   });
 
@@ -103,6 +121,13 @@ describe("account requests", () => {
     ]);
   });
 
+  it("switches to a role given by its ID", () => {
+    expect(roleSwitchSchema.safeParse({ roleId }).success).toBe(true);
+    expect(roleSwitchSchema.safeParse({ roleId: "executive" }).success).toBe(
+      false,
+    );
+  });
+
   it("signs in with an email address and a password", () => {
     expect(
       signInRequestSchema.safeParse({
@@ -130,6 +155,11 @@ describe("responses", () => {
           name: "Administrator",
           description: "Fictional description.",
         },
+        roles: [
+          { id: roleId, name: "Administrator" },
+          { id: otherRoleId, name: "Fictional Role" },
+        ],
+        defaultRoleId: otherRoleId,
         permissions: ["accounts:manage"],
         mustChangePassword: true,
         settings: {
@@ -148,6 +178,7 @@ describe("responses", () => {
           name: "Fictional User",
           email: "user@example.test",
           role: { id: roleId, name: "Fictional Role" },
+          roles: [{ id: roleId, name: "Fictional Role" }],
           active: true,
           createdAt: "2026-11-03T12:00:00+00:00",
         },
@@ -165,6 +196,10 @@ describe("responses", () => {
             name: "Fictional User",
             email: "user@example.test",
             role: { id: roleId, name: "Fictional Role" },
+            roles: [
+              { id: roleId, name: "Fictional Role" },
+              { id: otherRoleId, name: "Fictional Other Role" },
+            ],
             active: true,
             createdAt: "2026-11-03T12:00:00+00:00",
           },
@@ -183,7 +218,20 @@ describe("responses", () => {
             actor: null,
             action: "roles-changed",
             subject: { id: "1", name: null },
-            details: { role: "Team Member", previousRole: "Planner" },
+            details: {
+              role: "Team Member",
+              previousRole: "Planner",
+              roles: ["Team Member", "Executive"],
+              previousRoles: ["Planner"],
+            },
+          },
+          {
+            id: 2,
+            occurredAt: "2026-11-03T12:05:00Z",
+            actor: { id: "1", name: "Fictional User" },
+            action: "role-switched",
+            subject: { id: "1", name: "Fictional User" },
+            details: { role: "Executive", previousRole: "Team Member" },
           },
         ],
       }).success,

@@ -423,7 +423,7 @@ export async function approveDrafts(
       await refuseOwnDrafts(transaction, actor, decided);
       await recordSensitiveChanges(transaction, actor.user.id, made);
       await recordHiringChanges(transaction, actor.user.id, made);
-      return recordChanges(transaction, actor.user.id, made, "approval");
+      return recordChanges(transaction, actor, made, "approval");
     });
   } catch (error) {
     // A choice deleted, or an Employee ID or name taken, since the draft was saved, or a choice
@@ -479,7 +479,7 @@ export async function rejectDrafts(
       ...(await rejectHiresIn(transaction, actor, asked.plannedHires, reason)),
     );
     await recordHiringChanges(transaction, actor.user.id, made);
-    return recordChanges(transaction, actor.user.id, made, "rejection");
+    return recordChanges(transaction, actor, made, "rejection");
   });
 }
 

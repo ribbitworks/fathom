@@ -4,7 +4,7 @@
 
 import { defaultPasswordSettings, type HistoryEntry } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
-import { describeAction, describeDetails } from "./history.ts";
+import { describeAction, describeDetails, subjectName } from "./history.ts";
 
 const entry = (
   action: string,
@@ -31,6 +31,56 @@ describe("describeDetails", () => {
     expect(describeDetails(entry("roles-changed", { role: "Planner" }))).toBe(
       "to Planner",
     );
+  });
+
+  it("names the role a session started as, naming its account only once", () => {
+    const signedIn = entry("signed-in", { role: "Project Manager" });
+    expect(describeAction("signed-in")).toEqual({
+      verb: "signed in",
+      caution: false,
+    });
+    expect(describeDetails(signedIn)).toBe("as Project Manager");
+    expect(subjectName(signedIn)).toBeNull();
+    expect(describeDetails(entry("signed-in", {}))).toBe("");
+  });
+
+  it("names the role switched from and to, naming its account only once", () => {
+    const switched = entry("role-switched", {
+      role: "Engineering Manager",
+      previousRole: "Feature Lead",
+    });
+    expect(describeAction("role-switched")).toEqual({
+      verb: "switched role",
+      caution: false,
+    });
+    expect(describeDetails(switched)).toBe(
+      "from Feature Lead to Engineering Manager",
+    );
+    expect(subjectName(switched)).toBeNull();
+  });
+
+  it("names every role an account holds, the default first and marked, before and after", () => {
+    expect(
+      describeDetails(
+        entry("roles-changed", {
+          role: "Planner",
+          roles: ["Executive", "Planner"],
+          previousRole: "Executive",
+          previousRoles: ["Executive"],
+        }),
+      ),
+    ).toBe("from Executive to Planner (default), Executive");
+    expect(
+      describeDetails(
+        entry("account-created", {
+          role: "Planner",
+          roles: ["Planner", "Executive"],
+        }),
+      ),
+    ).toBe("with Planner (default), Executive");
+    expect(
+      describeDetails(entry("roles-changed", { role: "Planner", roles: [] })),
+    ).toBe("to Planner");
   });
 
   it("names nothing for an entry with no roles or time zones", () => {

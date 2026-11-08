@@ -1305,7 +1305,7 @@ describe("drafts of streams, patterns, and releases", () => {
   it("are not shown to a reader who sees neither the plan nor anything else in the history", async () => {
     const actor = {
       user: { id: viewer.id, name: "Fictional", email: "" },
-      roles: [],
+      roleId: null,
       permissions: ["changes:view" as const],
     };
     expect(await readChangeHistory(test.connection, actor)).toEqual({

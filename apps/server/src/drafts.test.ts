@@ -6,7 +6,16 @@
 // people and the change history hold afterwards; undoing changes to drafts, but never an approval
 // or rejection; Employee IDs taken in drafts; and the columns and choices drafts keep in use.
 
-import { drafts, fields, people, recordChanges, users } from "@fathom/db";
+import {
+  drafts,
+  fields,
+  people,
+  recordChanges,
+  rolePermissions,
+  roles,
+  userRoles,
+  users,
+} from "@fathom/db";
 import type {
   ChangeHistory,
   Choice,
@@ -16,6 +25,7 @@ import type {
   Person,
   Role,
 } from "@fathom/shared";
+import { startingRoles } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -319,6 +329,7 @@ describe("drafts as people see them", () => {
     });
     expect((await seen(editor.cookie, id))?.draft).toMatchObject({
       madeBy: null,
+      madeAs: null,
       madeAt: null,
     });
     await saved("DELETE", `/api/people/${id}/draft`);
@@ -1207,6 +1218,49 @@ describe("who last changed a draft", () => {
     expect((await seen(manager.cookie, person.id))?.draft?.madeBy).toBe(
       otherUser?.name,
     );
+    expect((await seen(planner.cookie, person.id))?.draft?.madeAs).toBe(
+      startingRoles["workforce-administrator"].name,
+    );
+  });
+
+  it("names the role its maker acted as, which a switch of role changes", async () => {
+    const person = await livePerson({ startDate: "2020-01-01" });
+    const maker = await test.signedIn("workforce-administrator");
+    const name = unique("Fictional Editing Role");
+    const [editing] = await test.connection
+      .insert(roles)
+      .values({ name })
+      .returning({ id: roles.id });
+    const editingId = String(editing?.id);
+    await test.connection
+      .insert(rolePermissions)
+      .values(
+        startingRoles["workforce-administrator"].permissions.map(
+          (permission) => ({ roleId: editingId, permission }),
+        ),
+      );
+    await test.connection
+      .insert(userRoles)
+      .values({ userId: maker.id, roleId: editingId });
+    const planner = await test.signedIn("resource-planner");
+    await send(maker.cookie, "PATCH", `/api/people/${person.id}`, {
+      preferredName: unique("Fictional"),
+    });
+    expect((await seen(planner.cookie, person.id))?.draft?.madeAs).toBe(
+      startingRoles["workforce-administrator"].name,
+    );
+    const switched = await test.request(
+      maker.cookie,
+      "PUT",
+      "/api/session/role",
+      { roleId: editingId },
+      { publish: false },
+    );
+    expect(switched.statusCode, switched.body).toBe(204);
+    await send(maker.cookie, "PATCH", `/api/people/${person.id}`, {
+      preferredName: unique("Fictional"),
+    });
+    expect((await seen(planner.cookie, person.id))?.draft?.madeAs).toBe(name);
   });
 });
 
@@ -1238,7 +1292,7 @@ describe("live people", () => {
     await approveColumns(field.id);
     const person = await livePerson();
     const changeSetId = await test.connection.transaction((transaction) =>
-      recordChanges(transaction, editor.id, [
+      recordChanges(transaction, { userId: editor.id, roleId: null }, [
         {
           recordType: "person",
           recordId: person.id,
@@ -1261,7 +1315,7 @@ describe("live people", () => {
       values: { [field.id]: [a] },
     });
     const changeSetId = await test.connection.transaction((transaction) =>
-      recordChanges(transaction, editor.id, [
+      recordChanges(transaction, { userId: editor.id, roleId: null }, [
         {
           recordType: "person",
           recordId: person.id,
@@ -1293,7 +1347,7 @@ describe("live people", () => {
       .set({ required: true })
       .where(eq(fields.id, field.id));
     const cleared = await test.connection.transaction((transaction) =>
-      recordChanges(transaction, editor.id, [
+      recordChanges(transaction, { userId: editor.id, roleId: null }, [
         {
           recordType: "person",
           recordId: person.id,

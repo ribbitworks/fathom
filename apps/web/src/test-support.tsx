@@ -47,6 +47,8 @@ export const fictionalUser = {
     name: "Team Member",
     description: "Sees the plan, including everyone's work assignments.",
   },
+  roles: [{ id: "00000000-0000-4000-8000-0000000000a1", name: "Team Member" }],
+  defaultRoleId: "00000000-0000-4000-8000-0000000000a1",
   permissions: ["plan:view"],
   mustChangePassword: false,
   settings: {

@@ -78,6 +78,14 @@ const roles = [
 ];
 const roleList = () => Response.json({ roles });
 const holding = ({ id, name }: { id: string; name: string }) => ({ id, name });
+// An account's default role and every role it holds: the default, then any others.
+const holdingRoles = (
+  defaultRole: { id: string; name: string },
+  ...others: { id: string; name: string }[]
+) => ({
+  role: holding(defaultRole),
+  roles: [defaultRole, ...others].map(holding),
+});
 
 const manager = () =>
   Response.json({
@@ -94,7 +102,7 @@ const own = {
   id: "user-1",
   name: "Fictional Person",
   email: "person@example.test",
-  role: holding(administratorRole),
+  ...holdingRoles(administratorRole),
   active: true,
   createdAt: "2026-10-12T09:00:00.000Z",
 };
@@ -102,7 +110,7 @@ const planner = {
   id: "user-2",
   name: "Fictional Planner",
   email: "planner@example.test",
-  role: holding(productManagerRole),
+  ...holdingRoles(productManagerRole),
   active: true,
   createdAt: "2026-10-14T09:00:00.000Z",
 };
@@ -110,7 +118,7 @@ const former = {
   id: "user-3",
   name: "Fictional Former",
   email: "former@example.test",
-  role: holding(teamMemberRole),
+  ...holdingRoles(teamMemberRole),
   active: false,
   createdAt: "2026-10-16T09:00:00.000Z",
 };
@@ -259,6 +267,31 @@ describe("the list of accounts", () => {
     expect(within(row as HTMLElement).queryByText("You")).toBeNull();
   });
 
+  it("shows every role an account holds, the default first and marked", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": () =>
+        Response.json({
+          accounts: [
+            own,
+            {
+              ...planner,
+              ...holdingRoles(productManagerRole, auditorsRole),
+            },
+          ],
+        }),
+    });
+    renderApp("/accounts");
+    const row = (await screen.findByText("Fictional Planner")).closest("tr");
+    const roles = within(row as HTMLElement).getAllByRole("cell")[1];
+    expect(
+      Array.from(roles?.firstElementChild?.children ?? []).map(
+        ({ textContent }) => textContent,
+      ),
+    ).toEqual(["Product Manager (default)", "Fictional Auditors"]);
+  });
+
   it("offers every change to one's own account but resetting its password, which needs the current one", async () => {
     serverAnswers({
       "GET /api/session": manager,
@@ -280,7 +313,9 @@ describe("the list of accounts", () => {
       "GET /api/session": manager,
       "GET /api/roles": roleList,
       "GET /api/accounts": () =>
-        Response.json({ accounts: [own, { ...planner, role: null }] }),
+        Response.json({
+          accounts: [own, { ...planner, role: null, roles: [] }],
+        }),
     });
     renderApp("/accounts");
     const row = (await screen.findByText("Fictional Planner")).closest("tr");
@@ -288,7 +323,7 @@ describe("the list of accounts", () => {
     const dialog = await openEditFor("Fictional Planner");
     expect(
       within(dialog)
-        .getAllByRole<HTMLInputElement>("radio")
+        .getAllByRole<HTMLInputElement>("checkbox")
         .some(({ checked }) => checked),
     ).toBe(false);
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -388,20 +423,23 @@ describe("changing one's own account", () => {
           return Response.json({ error: "Forbidden" }, { status: 403 });
         }
         return Response.json({
-          accounts: [own, { ...planner, role: holding(administratorRole) }],
+          accounts: [own, { ...planner, ...holdingRoles(administratorRole) }],
         });
       },
       "PATCH /api/accounts/user-1": () => {
         session = signedIn;
         return Response.json({
-          account: { ...own, role: holding(teamMemberRole) },
+          account: { ...own, ...holdingRoles(teamMemberRole) },
         });
       },
     });
     const history = renderApp("/accounts");
     const dialog = await openEditFor("Fictional Person");
     await userEvent.click(
-      within(dialog).getByRole("radio", { name: "Team Member" }),
+      within(dialog).getByRole("checkbox", { name: "Team Member" }),
+    );
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Administrator" }),
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     await waitFor(() => {
@@ -418,7 +456,7 @@ describe("changing one's own account", () => {
       "GET /api/roles": roleList,
       "GET /api/accounts": () =>
         Response.json({
-          accounts: [own, { ...planner, role: holding(administratorRole) }],
+          accounts: [own, { ...planner, ...holdingRoles(administratorRole) }],
         }),
     });
     renderApp("/accounts");
@@ -466,59 +504,66 @@ describe("the last active account that manages accounts and edits roles", () => 
       name: "Deactivate",
     });
     const choice = (name: string) =>
-      within(dialog).getByRole<HTMLInputElement>("radio", { name });
+      within(dialog).getByRole<HTMLInputElement>("checkbox", { name });
     return { deactivate, choice };
   }
 
-  it("can neither be given a role without both nor be deactivated", async () => {
+  it("can neither give up the role that alone grants both nor be deactivated, though it can take on others", async () => {
     const { deactivate, choice } = await controlsFor([own, planner, former]);
     expect((deactivate as HTMLButtonElement).disabled).toBe(true);
     expect(choice("Administrator").checked).toBe(true);
-    expect(choice("Team Member").disabled).toBe(true);
-    expect(choice("Fictional Keepers").disabled).toBe(false);
+    expect(choice("Administrator").disabled).toBe(true);
+    expect(choice("Team Member").disabled).toBe(false);
   });
 
   it("can do both once another active account's role grants both, even a role made later", async () => {
     const { deactivate, choice } = await controlsFor([
       own,
-      { ...planner, role: holding(keepersRole) },
+      { ...planner, ...holdingRoles(keepersRole) },
     ]);
     expect((deactivate as HTMLButtonElement).disabled).toBe(false);
-    expect(choice("Team Member").disabled).toBe(false);
+    expect(choice("Administrator").disabled).toBe(false);
   });
 
-  it("can be given a role that keeps the one permission no other active account's role grants", async () => {
+  it("can give up a role once another of its picked roles grants both", async () => {
+    const { choice } = await controlsFor([own, planner]);
+    await userEvent.click(choice("Fictional Keepers"));
+    expect(choice("Administrator").disabled).toBe(false);
+    expect(choice("Fictional Keepers").disabled).toBe(false);
+    await userEvent.click(choice("Administrator"));
+    expect(choice("Fictional Keepers").disabled).toBe(true);
+  });
+
+  it("can give up the role whose permissions its other roles and another account's role keep", async () => {
     const { deactivate, choice } = await controlsFor([
-      own,
-      { ...planner, role: holding(accountKeepersRole) },
+      { ...own, ...holdingRoles(administratorRole, roleEditorsRole) },
+      { ...planner, ...holdingRoles(accountKeepersRole) },
     ]);
+    expect(choice("Administrator").disabled).toBe(false);
     expect(choice("Fictional Role Editors").disabled).toBe(false);
-    expect(choice("Fictional Account Keepers").disabled).toBe(true);
-    expect(choice("Team Member").disabled).toBe(true);
     expect((deactivate as HTMLButtonElement).disabled).toBe(true);
   });
 
   it("keeps each permission apart, when no account's role grants both", async () => {
     const { deactivate, choice } = await controlsFor(
       [
-        { ...own, role: holding(roleEditorsRole) },
-        { ...planner, role: holding(accountKeepersRole) },
+        { ...own, ...holdingRoles(roleEditorsRole) },
+        { ...planner, ...holdingRoles(accountKeepersRole) },
       ],
       "Fictional Planner",
     );
     expect((deactivate as HTMLButtonElement).disabled).toBe(true);
     expect(choice("Fictional Account Keepers").checked).toBe(true);
-    expect(choice("Fictional Account Keepers").disabled).toBe(false);
-    expect(choice("Fictional Role Editors").disabled).toBe(true);
-    expect(choice("Administrator").disabled).toBe(false);
+    expect(choice("Fictional Account Keepers").disabled).toBe(true);
+    expect(choice("Fictional Role Editors").disabled).toBe(false);
   });
 
   it("counts a deactivated account as gone", async () => {
     const { choice } = await controlsFor([
       own,
-      { ...former, role: holding(administratorRole) },
+      { ...former, ...holdingRoles(administratorRole) },
     ]);
-    expect(choice("Team Member").disabled).toBe(true);
+    expect(choice("Administrator").disabled).toBe(true);
   });
 });
 
@@ -578,7 +623,7 @@ describe("finding accounts", () => {
 });
 
 describe("creating an account", () => {
-  it("sends the new account with the one role chosen, any role, then shows its password once, to copy", async () => {
+  it("sends the new account with the roles chosen, any role, and its default, then shows its password once, to copy", async () => {
     const fetch = serverAnswers({
       "GET /api/session": manager,
       "GET /api/roles": roleList,
@@ -607,7 +652,12 @@ describe("creating an account", () => {
     );
     expect(within(dialog).queryByLabelText(/password/iu)).toBeNull();
     await userEvent.click(
-      within(dialog).getByRole("radio", { name: "Fictional Auditors" }),
+      within(dialog).getByRole("checkbox", { name: "Fictional Auditors" }),
+    );
+    await userEvent.click(
+      within(
+        within(dialog).getByRole("radiogroup", { name: "Default role" }),
+      ).getByRole("radio", { name: "Fictional Auditors" }),
     );
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create account" }),
@@ -624,6 +674,7 @@ describe("creating an account", () => {
           name: "Fictional Newcomer",
           email: "newcomer@example.test",
           roleId: auditorsRole.id,
+          roleIds: [teamMemberRole.id, auditorsRole.id],
         }),
       }),
     );
@@ -667,10 +718,55 @@ describe("creating an account", () => {
     );
     const dialog = await screen.findByRole("dialog");
     expect(
-      within(dialog).getByRole<HTMLInputElement>("radio", {
+      within(dialog).getByRole<HTMLInputElement>("checkbox", {
         name: "Team Member",
       }).checked,
     ).toBe(true);
+    expect(within(dialog).queryByRole("radiogroup")).toBeNull();
+  });
+
+  it("asks for the default role only with several roles, keeping it while it is still held", async () => {
+    serverAnswers({
+      "GET /api/session": manager,
+      "GET /api/roles": roleList,
+      "GET /api/accounts": accountList,
+    });
+    renderApp("/accounts");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New account" }),
+    );
+    const dialog = await screen.findByRole("dialog");
+    const tick = (name: string) =>
+      userEvent.click(within(dialog).getByRole("checkbox", { name }));
+    const defaultRole = () =>
+      within(dialog).queryByRole("radiogroup", { name: "Default role" });
+    const choices = () =>
+      within(defaultRole() as HTMLElement)
+        .getAllByRole<HTMLInputElement>("radio")
+        .map((choice) => [choice.labels?.[0]?.textContent, choice.checked]);
+    await tick("Product Manager");
+    expect(choices()).toEqual([
+      ["Product Manager", false],
+      ["Team Member", true],
+    ]);
+    await tick("Fictional Auditors");
+    await userEvent.click(
+      within(defaultRole() as HTMLElement).getByRole("radio", {
+        name: "Product Manager",
+      }),
+    );
+    await tick("Team Member");
+    expect(choices()).toEqual([
+      ["Fictional Auditors", false],
+      ["Product Manager", true],
+    ]);
+    await tick("Product Manager");
+    expect(defaultRole()).toBeNull();
+    await tick("Team Member");
+    expect(choices()).toEqual([
+      ["Fictional Auditors", true],
+      ["Team Member", false],
+    ]);
   });
 
   it("points those who may edit roles to the Roles page, in New account and Edit", async () => {
@@ -714,7 +810,7 @@ describe("creating an account", () => {
     renderApp("/accounts");
     const edit = await openEditFor("Fictional Planner");
     expect(
-      within(edit).getByRole("radio", { name: "Product Manager" }),
+      within(edit).getByRole("checkbox", { name: "Product Manager" }),
     ).toBeDefined();
     expect(within(edit).queryByText(/Custom roles are created/u)).toBeNull();
     expect(within(edit).queryByRole("link", { name: "Roles" })).toBeNull();
@@ -740,6 +836,11 @@ describe("creating an account", () => {
       within(dialog).getByLabelText("Email address"),
       "newcomer@example.test",
     );
+    const auditors = within(dialog).getByRole("checkbox", {
+      name: "Fictional Auditors",
+    });
+    await userEvent.click(auditors);
+    await userEvent.click(auditors);
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Create account" }),
     );
@@ -847,7 +948,7 @@ describe("creating an account", () => {
 });
 
 describe("changing an account", () => {
-  it("changes its name, email address, and role together", async () => {
+  it("changes its name, email address, and roles together", async () => {
     const fetch = serverAnswers({
       "GET /api/session": manager,
       "GET /api/roles": roleList,
@@ -857,7 +958,7 @@ describe("changing an account", () => {
           account: {
             ...planner,
             name: "Fictional Planning",
-            role: holding(teamMemberRole),
+            ...holdingRoles(teamMemberRole),
           },
         }),
     });
@@ -875,7 +976,10 @@ describe("changing an account", () => {
     await userEvent.clear(email);
     await userEvent.type(email, "planning@example.test");
     await userEvent.click(
-      within(dialog).getByRole("radio", { name: "Team Member" }),
+      within(dialog).getByRole("checkbox", { name: "Team Member" }),
+    );
+    await userEvent.click(
+      within(dialog).getByRole("checkbox", { name: "Product Manager" }),
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect((await screen.findByRole("status")).textContent).toBe(
@@ -889,6 +993,7 @@ describe("changing an account", () => {
           name: "Fictional Planning",
           email: "planning@example.test",
           roleId: teamMemberRole.id,
+          roleIds: [teamMemberRole.id],
         }),
       }),
     );
@@ -1652,7 +1757,7 @@ describe("after a change", () => {
     const dialog = await screen.findByRole("dialog", { name: "New account" });
     expect(
       within(dialog)
-        .getAllByRole("radio")
+        .getAllByRole("checkbox")
         .map((choice) => [
           (choice as HTMLInputElement).labels?.[0]?.textContent,
           document.getElementById(

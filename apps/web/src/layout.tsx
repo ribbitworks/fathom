@@ -2,14 +2,15 @@
 
 // The frame around every page for a signed-in user: a sidebar of Fathom's sections, showing only
 // the pages, current and still to come, that the user's roles allow, marking those still to come,
-// and a top bar saying where they are, with their own account's menu for changing their name and
-// password, in dialogs, and signing out, which also happens after a time without use. The sidebar
-// collapses to a rail of icons, each naming its page on hover or focus, and remembers the choice.
-// On narrow screens the sidebar opens from a menu button instead.
+// and a top bar saying where they are, with their own account's menu showing the role they act as,
+// for switching to another they hold, changing their name and password, in dialogs, and signing
+// out, which also happens after a time without use. The sidebar collapses to a rail of icons, each
+// naming its page on hover or focus, and remembers the choice. On narrow screens the sidebar opens
+// from a menu button instead.
 
 import { AboutBox, build } from "./about.tsx";
 import { AppMenu } from "./app-menu.tsx";
-import type { PasswordRules, Permission } from "@fathom/shared";
+import type { AccountRole, PasswordRules, Permission } from "@fathom/shared";
 import {
   Alert,
   AppShell,
@@ -44,7 +45,12 @@ import classes from "./layout.module.css";
 import { ChangeNameDialog } from "./change-name.tsx";
 import { ChangePasswordDialog } from "./change-password.tsx";
 import { initials } from "./names.ts";
-import { type SignedInUser, sessionQuery, signOut } from "./session.ts";
+import {
+  type SignedInUser,
+  sessionQuery,
+  signOut,
+  switchRole,
+} from "./session.ts";
 import { UnpublishedControl } from "./unpublished.tsx";
 
 const headerHeight = 56;
@@ -204,37 +210,62 @@ const appearances: readonly { scheme: MantineColorScheme; label: string }[] = [
   { scheme: "dark", label: "Dark" },
 ];
 
-function AppearanceChoices() {
-  const { colorScheme, setColorScheme } = useMantineColorScheme();
+// A group of choices in the account menu, the chosen one ticked.
+function MenuChoices<Value extends string>({
+  label,
+  choices,
+  chosen,
+  onChoose,
+}: {
+  label: string;
+  choices: readonly { value: Value; label: string }[];
+  chosen: Value | undefined;
+  onChoose: (value: Value) => void;
+}) {
   const labelId = useId();
   return (
     <>
       <Menu.Divider />
-      <Menu.Label id={labelId}>Appearance</Menu.Label>
+      <Menu.Label id={labelId}>{label}</Menu.Label>
       <div role="group" aria-labelledby={labelId}>
-        {appearances.map(({ scheme, label }) => (
+        {choices.map((choice) => (
           <Menu.Item
-            key={scheme}
+            key={choice.value}
             leftSection={
               <span
-                className={classes.appearanceTick}
-                data-chosen={colorScheme === scheme || undefined}
+                className={classes.choiceTick}
+                data-chosen={chosen === choice.value || undefined}
               >
                 <Icon name="check" />
               </span>
             }
             onClick={() => {
-              setColorScheme(scheme);
+              onChoose(choice.value);
             }}
           >
-            {label}
-            {colorScheme === scheme && (
+            {choice.label}
+            {chosen === choice.value && (
               <VisuallyHidden>, chosen</VisuallyHidden>
             )}
           </Menu.Item>
         ))}
       </div>
     </>
+  );
+}
+
+function AppearanceChoices() {
+  const { colorScheme, setColorScheme } = useMantineColorScheme();
+  return (
+    <MenuChoices
+      label="Appearance"
+      choices={appearances.map(({ scheme, label }) => ({
+        value: scheme,
+        label,
+      }))}
+      chosen={colorScheme}
+      onChoose={setColorScheme}
+    />
   );
 }
 
@@ -279,16 +310,30 @@ export const pagesNotBuilt: readonly string[] = sections.flatMap(({ items }) =>
     .map((item) => item.label),
 );
 
-// Where the user is, as the top bar names it: the sidebar's section and page, or their own account.
-const places = new Map<string, [string, string]>([
-  ...sections.flatMap((section) =>
-    section.items.flatMap((item): [string, [string, string]][] =>
-      item.to === undefined
-        ? []
-        : [[item.to.replace("/{-$listId}", ""), [section.label, item.label]]],
-    ),
-  ),
-]);
+// The sidebar's section and page at an address, which the top bar names: a page's own address, or,
+// for a page with addresses below its own, such as each list's, any of them.
+function placeAt(
+  pathname: string,
+): { section: string; item: Item } | undefined {
+  for (const section of sections) {
+    const item = section.items.find(({ to, nested }) => {
+      if (to === undefined) return false;
+      const base = to.replace(/\/\{-\$\w+\}$/, "");
+      return (
+        pathname === base ||
+        (nested === true && pathname.startsWith(`${base}/`))
+      );
+    });
+    if (item !== undefined) return { section: section.label, item };
+  }
+  return undefined;
+}
+
+// Whether some permissions open the page at an address. Pages outside the sidebar are open to all.
+function opensPage(pathname: string, permissions: readonly Permission[]) {
+  const place = placeAt(pathname);
+  return place === undefined || opens(place.item, permissions);
+}
 
 // In the rail, each page's name shows beside its icon on hover or focus.
 function RailTip({
@@ -417,10 +462,15 @@ function Sidebar({
 
 export function Layout({
   user,
+  role,
+  roles,
   permissions,
   passwordRules,
 }: {
   user: SignedInUser;
+  // The role the session acts as, and every role the user holds, which they may switch to.
+  role: AccountRole | null;
+  roles: readonly AccountRole[];
   permissions: Permission[];
   // What a new password must meet, which the Change password dialog shows.
   passwordRules: PasswordRules;
@@ -442,13 +492,11 @@ export function Layout({
     key: "fathom-sidebar-collapsed",
     defaultValue: false,
   });
-  const [failed, setFailed] = useState(false);
+  const [problem, setProblem] = useState<string>();
   const [changingName, setChangingName] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const narrow = useMediaQuery("(max-width: 48em)");
-  // A list's address, such as /lists/ followed by its identifier, is a place within the Lists page.
-  const place =
-    places.get(pathname) ?? places.get(pathname.replace(/\/[^/]*$/, ""));
+  const place = placeAt(pathname);
 
   const rail = collapsed && !narrow;
 
@@ -467,7 +515,28 @@ export function Layout({
       leave();
       await navigate({ to: "/sign-in" });
     } catch {
-      setFailed(true);
+      setProblem("Fathom could not sign you out. Try again in a moment.");
+    }
+  }
+
+  // Everything follows the new role at once: the sidebar, the page's data, and, when the role does
+  // not open the page, the page itself, which gives way to the first the role opens.
+  async function handleSwitch(roleId: string) {
+    if (roleId === role?.id) return;
+    try {
+      await switchRole(roleId);
+      const session = await queryClient.query({
+        ...sessionQuery,
+        staleTime: 0,
+      });
+      if (session !== null && !opensPage(pathname, session.permissions)) {
+        await navigate({ to: "/" });
+      }
+      await queryClient.resetQueries();
+      await router.invalidate();
+      setProblem(undefined);
+    } catch {
+      setProblem("Fathom could not switch your role. Try again in a moment.");
     }
   }
 
@@ -522,9 +591,9 @@ export function Layout({
             />
             {place && (
               <Breadcrumbs separator="/" fz="sm" c="dimmed">
-                <span>{place[0]}</span>
+                <span>{place.section}</span>
                 <Text span fz="sm" fw={500} c="var(--mantine-color-text)">
-                  {place[1]}
+                  {place.item.label}
                 </Text>
               </Breadcrumbs>
             )}
@@ -547,6 +616,20 @@ export function Layout({
               </AppMenu.Target>
               <AppMenu.Dropdown miw={200} maw="calc(100vw - 2rem)">
                 <Menu.Label>{user.email}</Menu.Label>
+                {roles.length > 1 ? (
+                  <MenuChoices
+                    label="Role"
+                    choices={roles.map(({ id, name }) => ({
+                      value: id,
+                      label: name,
+                    }))}
+                    chosen={role?.id}
+                    onChoose={(roleId) => void handleSwitch(roleId)}
+                  />
+                ) : (
+                  role !== null && <Menu.Label>{role.name}</Menu.Label>
+                )}
+                <Menu.Divider />
                 <Menu.Item
                   onClick={() => {
                     setChangingName(true);
@@ -611,9 +694,9 @@ export function Layout({
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main className={classes.main}>
-        {failed && (
+        {problem !== undefined && (
           <Alert color="red" role="alert" mb="md">
-            Fathom could not sign you out. Try again in a moment.
+            {problem}
           </Alert>
         )}
         <Outlet />

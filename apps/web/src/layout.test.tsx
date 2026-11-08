@@ -323,6 +323,147 @@ describe("choosing light or dark mode", () => {
   });
 });
 
+describe("switching role", () => {
+  const accountMenu = () =>
+    screen.getByRole("button", { name: /^Your account,/ });
+  const teamMember = fictionalUser.role;
+  const keepers = {
+    id: "00000000-0000-4000-8000-0000000000a2",
+    key: null,
+    name: "Fictional Keepers",
+    description: "Sees every account.",
+  };
+  // The fictional user holding both roles, acting as one of them, with only its permissions.
+  const actingAs = (role: typeof teamMember | typeof keepers) => () =>
+    Response.json({
+      ...fictionalUser,
+      role,
+      roles: [teamMember, keepers].map(({ id, name }) => ({ id, name })),
+      permissions: role === keepers ? ["accounts:view"] : ["plan:view"],
+    });
+
+  it("names the one role an account holds, with nothing to switch to", async () => {
+    serverAnswers({
+      "GET /api/session": signedIn,
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+    await userEvent.click(accountMenu());
+    await screen.findByRole("group", { name: "Appearance" });
+    expect(screen.getByText("Team Member")).toBeDefined();
+    expect(screen.queryByRole("group", { name: "Role" })).toBeNull();
+    expect(
+      screen.queryByRole("menuitem", { name: /^Team Member/u }),
+    ).toBeNull();
+  });
+
+  it("offers every role held, the one acted as chosen", async () => {
+    serverAnswers({
+      "GET /api/session": actingAs(teamMember),
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+    await userEvent.click(accountMenu());
+    const group = await screen.findByRole("group", { name: "Role" });
+    expect(
+      within(group)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual(["Team Member, chosen", "Fictional Keepers"]);
+  });
+
+  it("switches through the server, then shows the first page the new role opens", async () => {
+    let session = actingAs(keepers);
+    const fetch = serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/greeting": greeting,
+      "GET /api/accounts": () => Response.json({ accounts: [] }),
+      "PUT /api/session/role": () => {
+        session = actingAs(teamMember);
+        return new Response(null, { status: 204 });
+      },
+    });
+    const history = renderApp("/accounts");
+    await screen.findByRole("heading", { name: "Accounts" });
+    await userEvent.click(accountMenu());
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Team Member" }),
+    );
+    expect(await screen.findByText("Hello, Fathom")).toBeDefined();
+    expect(history.location.pathname).toBe("/");
+    expect(fetch).toHaveBeenCalledWith(
+      "/api/session/role",
+      expect.objectContaining({
+        method: "PUT",
+        body: JSON.stringify({ roleId: teamMember.id }),
+      }),
+    );
+    expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
+    await userEvent.click(accountMenu());
+    expect(
+      await screen.findByRole("menuitem", { name: "Team Member, chosen" }),
+    ).toBeDefined();
+  });
+
+  it("stays on a page the new role still opens", async () => {
+    let session = actingAs(teamMember);
+    serverAnswers({
+      "GET /api/session": () => session(),
+      "GET /api/greeting": greeting,
+      "PUT /api/session/role": () => {
+        session = actingAs(keepers);
+        return new Response(null, { status: 204 });
+      },
+    });
+    const history = renderApp("/help/roles");
+    await screen.findByRole("heading", { name: "Roles", level: 1 });
+    await userEvent.click(accountMenu());
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Fictional Keepers" }),
+    );
+    expect(await screen.findByRole("link", { name: "Accounts" })).toBeDefined();
+    expect(history.location.pathname).toBe("/help/roles");
+  });
+
+  it("sends nothing when the role acted as is chosen again", async () => {
+    const fetch = serverAnswers({
+      "GET /api/session": actingAs(teamMember),
+      "GET /api/greeting": greeting,
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+    await userEvent.click(accountMenu());
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Team Member, chosen" }),
+    );
+    expect(fetch).not.toHaveBeenCalledWith(
+      "/api/session/role",
+      expect.anything(),
+    );
+  });
+
+  it("says when the switch fails, and keeps the role", async () => {
+    serverAnswers({
+      "GET /api/session": actingAs(teamMember),
+      "GET /api/greeting": greeting,
+      "PUT /api/session/role": () =>
+        Response.json({ error: "Internal Server Error" }, { status: 500 }),
+    });
+    renderApp("/");
+    await screen.findByText("Hello, Fathom");
+    await userEvent.click(accountMenu());
+    await userEvent.click(
+      await screen.findByRole("menuitem", { name: "Fictional Keepers" }),
+    );
+    expect((await screen.findByRole("alert")).textContent).toBe(
+      "Fathom could not switch your role. Try again in a moment.",
+    );
+    expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
+  });
+});
+
 describe("on a narrow screen", () => {
   it("keeps the sidebar out of reach until it is opened, and closes it after moving page", async () => {
     vi.stubGlobal(

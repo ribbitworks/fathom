@@ -379,7 +379,7 @@ const sameType = "A column's type cannot change";
 // Saves a column's draft as wanted and records the changes, clearing a rejection.
 async function saveFieldDraft(
   transaction: Transaction,
-  madeBy: string,
+  maker: Actor,
   state: ColumnsState,
   id: string,
   before: Recorded | undefined,
@@ -398,8 +398,8 @@ async function saveFieldDraft(
     ),
   );
   if (made.length === 0) return null;
-  await writeDraft(transaction, madeBy, "field", id, live, after);
-  return recordChanges(transaction, madeBy, [
+  await writeDraft(transaction, maker.user.id, "field", id, live, after);
+  return recordChanges(transaction, maker, [
     ...made,
     ...clearedRejection(
       id,
@@ -435,8 +435,7 @@ export async function createField(
   actor: Actor,
   request: FieldRequest,
 ): Promise<Saved<Field>> {
-  const madeBy = actor.user.id;
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, actor.user.id, async (transaction, state) => {
     if (nameTaken(state, request.name)) throw new ConflictError(duplicateField);
     if (request.listId !== undefined) {
       await checkList(transaction, state, request.listId, badRequest);
@@ -452,7 +451,7 @@ export async function createField(
     );
     const changeSetId = await saveFieldDraft(
       transaction,
-      madeBy,
+      actor,
       state,
       id,
       undefined,
@@ -478,8 +477,7 @@ export async function updateField(
   id: string,
   request: FieldRequest,
 ): Promise<Saved<Field>> {
-  const madeBy = actor.user.id;
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, actor.user.id, async (transaction, state) => {
     const field = changeableField(state, id);
     const live = state.fields.get(id);
     const unseen = `${String(field.name)} holds people's details your role does not let you see, so someone who may must change it`;
@@ -502,7 +500,7 @@ export async function updateField(
     refuseUnseenTier(actor, state, after);
     const changeSetId = await saveFieldDraft(
       transaction,
-      madeBy,
+      actor,
       state,
       id,
       field,
@@ -584,7 +582,7 @@ export async function deleteField(
       const made = discardingField(state, id);
       await discardDrafts(transaction, actor.user.id, "field", [id]);
       await removeEmptyColumnOrder(transaction, actor.user.id);
-      return recordChanges(transaction, actor.user.id, made, "discard");
+      return recordChanges(transaction, actor, made, "discard");
     }
     if (await draftsUse(transaction, { column: id }, actor.user.id)) {
       throw new ConflictError(
@@ -603,14 +601,7 @@ export async function deleteField(
         `${String(field.name)} holds people's details your role does not let you change, so someone who may must delete it`,
       );
     }
-    return saveFieldDraft(
-      transaction,
-      actor.user.id,
-      state,
-      id,
-      field,
-      undefined,
-    );
+    return saveFieldDraft(transaction, actor, state, id, field, undefined);
   });
 }
 
@@ -618,14 +609,14 @@ export async function deleteField(
 // none, as a new order of the columns.
 export async function moveColumn(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   key: string,
   after: string | null,
 ): Promise<string | null> {
   if (after === key) {
     throw new BadRequestError("A column cannot follow itself");
   }
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     refuseHeldIn(state.held.order);
     const before = draftedColumnOrder(state);
     if (!before.includes(key)) throw new NotFoundError(noField);
@@ -637,8 +628,8 @@ export async function moveColumn(
     const wanted = [...others.slice(0, at), key, ...others.slice(at)];
     const made = asDraft(columnOrderChanges(before, wanted));
     if (made.length === 0) return null;
-    await writeColumnOrderDraft(transaction, madeBy, state, wanted);
-    return recordChanges(transaction, madeBy, [
+    await writeColumnOrderDraft(transaction, maker.user.id, state, wanted);
+    return recordChanges(transaction, maker, [
       ...made,
       ...clearedRejection(
         table,
@@ -671,36 +662,41 @@ function draftOf(state: ColumnsState, target: ColumnDraftTarget): Draft {
 // Discards a draft of a column or of the column order.
 export async function discardColumnDraft(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   target: ColumnDraftTarget,
 ): Promise<string | null> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     const draft = draftOf(state, target);
     // A column not live is only drafted to be added, so its draft holds all its settings.
     if (target.kind === "column" && !state.fields.has(target.id)) {
-      await refuseIfDraftsFill(transaction, madeBy, target.id, draft.fields);
+      await refuseIfDraftsFill(
+        transaction,
+        maker.user.id,
+        target.id,
+        draft.fields,
+      );
     }
     const made =
       target.kind === "order"
         ? discardingOrder(state)
         : discardingField(state, target.id);
     if (target.kind === "order") {
-      await discardDrafts(transaction, madeBy, "column-order", [table]);
+      await discardDrafts(transaction, maker.user.id, "column-order", [table]);
     } else {
-      await discardDrafts(transaction, madeBy, "field", [target.id]);
-      await removeEmptyColumnOrder(transaction, madeBy);
+      await discardDrafts(transaction, maker.user.id, "field", [target.id]);
+      await removeEmptyColumnOrder(transaction, maker.user.id);
     }
-    return recordChanges(transaction, madeBy, made, "discard");
+    return recordChanges(transaction, maker, made, "discard");
   });
 }
 
 // Sends a rejected draft of a column or of the column order for approval again, unchanged.
 export async function resubmitColumnDraft(
   database: Database,
-  madeBy: string,
+  maker: Actor,
   target: ColumnDraftTarget,
 ): Promise<string | null> {
-  return drafting(database, madeBy, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     const draft = draftOf(state, target);
     if (draft.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
@@ -713,7 +709,7 @@ export async function resubmitColumnDraft(
     });
     return recordChanges(
       transaction,
-      madeBy,
+      maker,
       clearedRejection(id, () => "general", undefined, draft, recordType),
       "resubmission",
     );
@@ -745,6 +741,7 @@ function draftOut(
       : {}),
     ...unpublishedMark(draft),
     madeBy: maker?.madeBy ?? null,
+    madeAs: maker?.madeAs ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
     ...otherApprover(maker),
@@ -775,7 +772,7 @@ export async function readColumnsOut(
     "field",
     [...state.fieldDrafts.keys()],
     everything,
-    viewer,
+    actor,
   );
   const shown = ids.flatMap((id): Field[] => {
     const live = state.fields.get(id);
@@ -808,7 +805,7 @@ export async function readColumnsOut(
     ...shown.map(({ id }) => id),
   ]);
   const orderMaker = (
-    await draftMakers(reader, "column-order", [table], everything, viewer)
+    await draftMakers(reader, "column-order", [table], everything, actor)
   ).get(table);
   const showsOrder =
     state.orderDraft !== undefined &&
@@ -828,6 +825,7 @@ export async function readColumnsOut(
               : {}),
             ...unpublishedMark(state.orderDraft),
             madeBy: orderMaker?.madeBy ?? null,
+            madeAs: orderMaker?.madeAs ?? null,
             madeAt: orderMaker?.madeAt.toISOString() ?? null,
             editors: orderMaker?.editors ?? [],
             ...otherApprover(orderMaker),

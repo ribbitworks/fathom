@@ -15,6 +15,7 @@ import type { RecordDraft, RecordRef, RecordType } from "@fathom/shared";
 import { recordTypeSchema } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
+import type { Actor } from "../access.ts";
 import {
   ConflictError,
   ForbiddenError,
@@ -142,7 +143,7 @@ export type Makers = ReadonlyMap<RecordType, Map<string, Maker>>;
 export async function readRecordMakers(
   reader: Reader,
   state: RecordsState,
-  viewer: string,
+  viewer: Actor,
 ): Promise<Makers> {
   const makers = new Map<RecordType, Map<string, Maker>>();
   for (const kind of recordKinds) {
@@ -194,6 +195,7 @@ export function recordDraftOut(
       : {}),
     ...(draft.unpublished === true ? { unpublished: true } : {}),
     madeBy: maker?.madeBy ?? null,
+    madeAs: maker?.madeAs ?? null,
     madeAt: maker?.madeAt.toISOString() ?? null,
     editors: maker?.editors ?? [],
     ...otherApprover(maker),
@@ -390,13 +392,13 @@ export interface Wanted {
 // change set, or null when nothing changed.
 export async function saveRecordDraft(
   transaction: Transaction,
-  editor: string,
+  maker: Actor,
   state: RecordsState,
   type: RecordType,
   id: string,
   wanted: Recorded | undefined,
 ): Promise<string | null> {
-  return saveRecordDrafts(transaction, editor, state, [
+  return saveRecordDrafts(transaction, maker, state, [
     { type, id, record: wanted },
   ]);
 }
@@ -405,7 +407,7 @@ export async function saveRecordDraft(
 // the others as they will all be, so a change that needs them all is not refused part way.
 export async function saveRecordDrafts(
   transaction: Transaction,
-  editor: string,
+  maker: Actor,
   state: RecordsState,
   wanted: readonly Wanted[],
 ): Promise<string | null> {
@@ -429,7 +431,7 @@ export async function saveRecordDrafts(
     if (misfit !== undefined) throw misfit;
     const changes = asDraft(kindChanges(kind, id, before, record));
     if (changes.length === 0) continue;
-    await writeDraft(transaction, editor, type, id, live, record);
+    await writeDraft(transaction, maker.user.id, type, id, live, record);
     made.push(
       ...changes,
       ...clearedRejection(
@@ -441,7 +443,7 @@ export async function saveRecordDrafts(
       ),
     );
   }
-  return made.length === 0 ? null : recordChanges(transaction, editor, made);
+  return made.length === 0 ? null : recordChanges(transaction, maker, made);
 }
 
 // The records only drafted to be added that belong to one, through the links of their kinds, and
@@ -500,12 +502,12 @@ function boundWith(state: RecordsState, root: RecordRef): RecordRef[] {
 // and, to an editor who may not change cycles, when it would discard a draft of a stream's cycles.
 export async function discardRecordDraft(
   database: Database,
-  editor: string,
+  maker: Actor,
   type: RecordType,
   id: string,
   mayChangeCycles: boolean,
 ): Promise<string | null> {
-  return drafting(database, editor, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
     refuseHeldIn(state, type, id);
     if (!stateOf(state, type).drafts.has(id)) throw new NotFoundError(noDraft);
@@ -594,20 +596,20 @@ export async function discardRecordDraft(
           ref.type,
         ),
       );
-      await discardDrafts(transaction, editor, ref.type, [ref.id]);
+      await discardDrafts(transaction, maker.user.id, ref.type, [ref.id]);
     }
-    return recordChanges(transaction, editor, made, "discard");
+    return recordChanges(transaction, maker, made, "discard");
   });
 }
 
 // Sends a rejected draft of a record for approval again, unchanged.
 export async function resubmitRecordDraft(
   database: Database,
-  editor: string,
+  maker: Actor,
   type: RecordType,
   id: string,
 ): Promise<string | null> {
-  return drafting(database, editor, async (transaction, state) => {
+  return drafting(database, maker.user.id, async (transaction, state) => {
     if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
     refuseHeldIn(state, type, id);
     const draft = stateOf(state, type).drafts.get(id);
@@ -621,7 +623,7 @@ export async function resubmitRecordDraft(
     });
     return recordChanges(
       transaction,
-      editor,
+      maker,
       clearedRejection(id, () => "general", undefined, draft, type),
       "resubmission",
     );

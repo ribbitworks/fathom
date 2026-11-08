@@ -53,17 +53,6 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 2. Confirm that the last line printed gives the shared password, with no error above it.
 3. Reload the browser page.
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first (P2).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
@@ -80,7 +69,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`; the first test case.
 
-**Preconditions:** Signed in (P1) with this account. **Light** chosen in the Appearance menu. **Org chart** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **Org chart** page open from the left-hand menu.
 
 - [ ] **Step 1.** On the card at the top of the chart, select the name **Silje Holm-Schrøder**.
   - **Expected:** The details panel slides out on the right, headed **Silje Holm-Schrøder**, with **Engineering Manager** under the heading and the link **Show in People** under that. The chart narrows to make room, and her card, with a blue ring around it, stays in the middle of the space left beside the panel.
@@ -156,7 +145,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from DETAILS-04.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** In the search box above the table, type **E10026**.
   - **Expected:** Only the row for **Lorenza Thiel** shows.
@@ -226,7 +215,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DETAILS-07.
 
-**Preconditions:** Signed in (P1) with this account. **Light** chosen in the Appearance menu. **People** page open from the left-hand menu, searched for **E10026**, with **Lorenza Thiel**'s details open beside the table.
+**Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **People** page open from the left-hand menu, searched for **E10026**, with **Lorenza Thiel**'s details open beside the table.
 
 - [ ] **Step 1.** Read the panel.
   - **Expected:** Every value under **Reporting**, **Details** and **Columns** has a change button at its right, except **Team** and **Direct reports**. **Details** starts with **Name** **Lorenza Thiel**. **Manager?** shows a ticked checkbox and **Yes** instead of a change button.

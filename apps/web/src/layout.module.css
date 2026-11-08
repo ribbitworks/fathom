@@ -112,11 +112,11 @@
 }
 
 /* Hidden ticks keep their space, so the choices' names line up. */
-.appearanceTick {
+.choiceTick {
   display: flex;
   visibility: hidden;
 }
 
-.appearanceTick[data-chosen] {
+.choiceTick[data-chosen] {
   visibility: visible;
 }

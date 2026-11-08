@@ -1,7 +1,7 @@
 # Fathom — Product Brief
 
 **Status:** Draft
-**Last updated:** 2026-11-06
+**Last updated:** 2026-11-07
 
 ## Problem
 
@@ -78,7 +78,7 @@ Personas are named as they are widely known in the software industry. Each organ
 - **Planning model:** Monthly planning, with allocations as a percentage of a person's month.
 - **Planning level:** Fathom plans features, not their stories or tasks, and is never a clone of a full project management application. See the [Decisions Log](decisions.md#planning).
 - **Planned hires:** Planned hires appear in the plan and can be allocated like current staff.
-- **Access:** Role-based. Each user holds one role, and roles grant access to tiers of data by sensitivity.
+- **Access:** Role-based. Each user holds one or more roles and acts as one at a time, and roles grant access to tiers of data by sensitivity.
 - **Editing:** No live collaboration. Draft changes are approved before they reach the live plan.
 - **Configurability:** A fixed core of built-in tables, extended with custom fields and tables. See the [Decisions Log](decisions.md#configuration).
 - **Employee data:** A manually maintained copy of details held in the company's HR system.

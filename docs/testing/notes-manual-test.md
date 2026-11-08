@@ -53,18 +53,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 2. Confirm that the last line printed gives the shared password, with no error above it.
 3. Reload the browser page.
 
-### P1: Sign In
-
-1. If someone is signed in, sign out first (P2).
-2. On the **Sign in** page, enter the account's email address and the shared password.
-3. Select **Sign in**.
-
-### P2: Sign Out
-
-1. Select the account button at the top right, which shows the account's name.
-2. Select **Sign out**.
-
-### P3: Publish
+### P1: Publish
 
 1. Select the **Publish** button in the top bar, followed by the number of changes waiting.
 2. Confirm that a notification says **Published**, and that the button is gone.
@@ -84,13 +73,13 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 2 signs in as another account.
 
-**Preconditions:** Signed in (P1) with this account. **People** page open from the left-hand menu.
+**Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Select **New column**. Type `Background` in **Name**, choose **Note** in **Type**, leave **General** chosen, select **Add column**, then publish (P3).
+- [ ] **Step 1.** Select **New column**. Type `Background` in **Name**, choose **Note** in **Type**, leave **General** chosen, select **Add column**, then publish (P1).
   - **Expected:** A **Background** column is at the end of the table, its name marked **Draft: added**.
   - **Notes:**
 
-- [ ] **Step 2.** Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`. Open **Drafts** from the left-hand menu and approve the **Background** column.
+- [ ] **Step 2.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Open **Drafts** from the left-hand menu and approve the **Background** column.
   - **Expected:** A notification says the draft is approved.
   - **Notes:**
 
@@ -98,7 +87,7 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from NOTE-01.
 
-**Preconditions:** Signed in (P1) with this account. Run after NOTE-01. **People** page open, with **Max Munk** searched for.
+**Preconditions:** Signed in with this account. Run after NOTE-01. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
   - **Expected:** The panel slides in smoothly from the right over the table, which then has room beside it, with no jump. It is headed **Background**, with **Note**, **Editor** and **Markdown** at the top, **Editor** chosen, the note's text under them, the toolbar under the text, and **Clear**, **Cancel** and **Save** at the bottom. It looks like the Metrics panel.
@@ -128,7 +117,7 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as NOTE-02.
 
-**Preconditions:** Signed in (P1) with this account. Run after NOTE-02. **People** page open, with **Lilian Lang** searched for.
+**Preconditions:** Signed in with this account. Run after NOTE-02. **People** page open, with **Lilian Lang** searched for.
 
 - [ ] **Step 1.** In a word processor or web page, copy a passage holding a heading, bold text, highlighted text, a numbered list, a table, and an image. Select Lilian Lang's **Background** cell and paste it into the editor.
   - **Expected:** The heading and bold stay, highlighting and the image are gone, and the numbered list becomes a bullet list. What is left reads sensibly.
@@ -142,7 +131,7 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as NOTE-03.
 
-**Preconditions:** Signed in (P1) with this account. Run after NOTE-03. **Light** chosen in the Appearance menu. **People** page open, with **Max Munk** searched for.
+**Preconditions:** Signed in with this account. Run after NOTE-03. **Light** chosen in the Appearance menu. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Using only the keyboard, move to Max Munk's **Background** cell and press Enter.
   - **Expected:** The panel opens on **Note**. Tab reaches **Note**, **Editor** and **Markdown**, the arrow keys choose **Editor**, and Tab then puts the cursor in the note, ready to type.
@@ -184,12 +173,12 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from NOTE-04. Step 2 signs in as another account.
 
-**Preconditions:** Run after NOTE-04. Publish (P3) as the Workforce Administrator, then sign in (P1) with this account. **People** page open, with **Max Munk** searched for.
+**Preconditions:** Run after NOTE-04. Publish (P1) as the Workforce Administrator, then sign in with this account. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
   - **Expected:** The panel shows the note as it reads, with a close button, and nothing to change it with.
   - **Notes:**
 
-- [ ] **Step 2.** Press Esc. Sign in (P1) as the Engineering Director, `engineering.director@fathom.test`, open **Drafts** from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
+- [ ] **Step 2.** Press Esc. Sign in as the Engineering Director, `engineering.director@fathom.test`, open **Drafts** from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
   - **Expected:** The draft and the history show the note's words without formatting, and read clearly.
   - **Notes:**
