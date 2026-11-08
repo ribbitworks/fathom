@@ -295,7 +295,11 @@ describe("who may read and change people", () => {
   // Saved views need only seeing people, so each role is tried on its own.
   const view = `/api/people/views/${randomUUID()}`;
   const viewChanges: [Method, string, object | undefined][] = [
-    ["POST", "/api/people/views", { name: "Fictional", definition: {} }],
+    [
+      "POST",
+      "/api/people/views",
+      { name: "Fictional", scope: "personal", definition: {} },
+    ],
     ["PUT", view, { name: "Fictional" }],
     ["DELETE", view, undefined],
   ];

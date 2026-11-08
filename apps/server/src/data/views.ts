@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Saved views of the People table: reading those a user may see, and saving, changing, and deleting
-// them. Part of the data access layer, the only server code that queries the database. Everyone who
-// sees people sees the table's saved views, except a view that filters, sorts, or breaks down by a
-// column they may not see, since its filters and metrics could reveal values they may not see.
-// Anyone who sees people may save a view; only its maker, or someone who may change planning
-// configuration, may change or delete it. Each change is recorded in the change history with the
-// most sensitive tier of the view's columns.
+// them. Part of the data access layer, the only server code that queries the database. A personal
+// view is seen and changed only by its maker. Everyone who sees people sees the table's shared
+// views, except a view that filters, sorts, or breaks down by a column they may not see, since its
+// filters and metrics could reveal values they may not see. Anyone who sees people may save a
+// personal view; those who may change planning configuration may save shared ones, and share their
+// own personal views or take them back. Only a shared view's maker, or someone who may change
+// planning configuration, may change or delete it. Each change is recorded in the change history
+// with the most sensitive tier of the view's columns.
 
-import { type Database, savedViews } from "@fathom/db";
+import { changes, type Database, inChunks, savedViews } from "@fathom/db";
 import {
   type SavedView,
   type SavedViewChange,
@@ -18,8 +20,9 @@ import {
   type ViewDefinition,
   viewColumnKeys,
   viewDefinitionSchema,
+  viewScopeSchema,
 } from "@fathom/shared";
-import { asc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
 import { BadRequestError, ForbiddenError, NotFoundError } from "../errors.ts";
@@ -38,12 +41,22 @@ const noView = "There is no such view";
 const duplicateView = "There is already a view with that name";
 const notYours =
   "Only the person who saved a view, or someone who may change planning configuration, can change it";
+const notSharer =
+  "Only someone who may change planning configuration can share a view they saved, or take it back";
+const notSharedViewMaker =
+  "Only someone who may change planning configuration can save a shared view";
 const hiddenColumns = "Choose only columns you can see";
 
 type Reader = Pick<Database, "select">;
 type ViewRow = typeof savedViews.$inferSelect;
 
-const viewFields = ["tableName", "name", "definition", "createdBy"] as const;
+const viewFields = [
+  "tableName",
+  "name",
+  "scope",
+  "definition",
+  "createdBy",
+] as const;
 
 // The tier of each of the People table's columns, by key.
 async function columnTiers(reader: Reader): Promise<Map<string, Tier>> {
@@ -81,13 +94,28 @@ function sees(
   );
 }
 
+const makesSharedViews = (actor: Actor) =>
+  actor.permissions.includes("configuration:edit");
+
 // Whether the actor may rename, update, or delete a view.
-export function mayChange(actor: Actor, createdBy: string): boolean {
+export function mayChange(
+  actor: Actor,
+  createdBy: string,
+  scope: string,
+): boolean {
   return (
     createdBy === actor.user.id ||
-    actor.permissions.includes("configuration:edit")
+    (scope === "shared" && makesSharedViews(actor))
   );
 }
+
+const mayShare = (actor: Actor, createdBy: string) =>
+  createdBy === actor.user.id && makesSharedViews(actor);
+
+const isOthersPersonal = (
+  actor: Actor,
+  row: Pick<ViewRow, "createdBy" | "scope">,
+) => row.scope === "personal" && row.createdBy !== actor.user.id;
 
 // Whether the actor may see a column, which they may unless it is one of the table's they may not;
 // a column the table no longer has hides nothing.
@@ -149,8 +177,10 @@ function toSavedView(
   return {
     id: row.id,
     name: row.name,
+    scope: viewScopeSchema.parse(row.scope),
     definition: sentTo(actor, tiers, definitionOf(row)),
-    canChange: mayChange(actor, row.createdBy),
+    canChange: mayChange(actor, row.createdBy, row.scope),
+    canShare: mayShare(actor, row.createdBy),
   };
 }
 
@@ -163,7 +193,15 @@ export async function readViews(
   const rows = await reader
     .select()
     .from(savedViews)
-    .where(eq(savedViews.tableName, table))
+    .where(
+      and(
+        eq(savedViews.tableName, table),
+        or(
+          eq(savedViews.scope, "shared"),
+          eq(savedViews.createdBy, actor.user.id),
+        ),
+      ),
+    )
     .orderBy(asc(sql`lower(${savedViews.name})`), asc(savedViews.id));
   return rows
     .filter((row) => sees(actor, tiers, definitionOf(row)))
@@ -220,10 +258,14 @@ export async function createView(
   actor: Actor,
   request: SavedViewRequest,
 ): Promise<Saved<SavedView>> {
+  if (request.scope === "shared" && !makesSharedViews(actor)) {
+    throw new ForbiddenError(notSharedViewMaker);
+  }
   const row: ViewRow = {
     id: randomUUID(),
     tableName: table,
     name: request.name,
+    scope: request.scope,
     definition: stored(request.definition),
     createdBy: actor.user.id,
   };
@@ -255,14 +297,20 @@ async function lockView(
     .where(eq(savedViews.id, id))
     .for("update");
   const tiers = await columnTiers(transaction);
-  if (row === undefined || !sees(actor, tiers, definitionOf(row))) {
+  if (
+    row === undefined ||
+    isOthersPersonal(actor, row) ||
+    !sees(actor, tiers, definitionOf(row))
+  ) {
     throw new NotFoundError(noView);
   }
-  if (!mayChange(actor, row.createdBy)) throw new ForbiddenError(notYours);
+  if (!mayChange(actor, row.createdBy, row.scope)) {
+    throw new ForbiddenError(notYours);
+  }
   return { row, tiers };
 }
 
-// Renames a view, saves a new view over it, or both.
+// Renames a view, saves a new view over it, shares it or takes it back, or any of these.
 export async function updateView(
   database: Database,
   actor: Actor,
@@ -272,6 +320,13 @@ export async function updateView(
   return refusingDuplicates(duplicateView, () =>
     database.transaction(async (transaction) => {
       const { row: before, tiers } = await lockView(transaction, actor, id);
+      if (
+        change.scope !== undefined &&
+        change.scope !== before.scope &&
+        !mayShare(actor, before.createdBy)
+      ) {
+        throw new ForbiddenError(notSharer);
+      }
       // The actor was not sent the widths of columns they may not see, so keeps those already set.
       const keepingHidden = (row: ViewRow, definition: ViewDefinition) => {
         const widths = {
@@ -286,6 +341,7 @@ export async function updateView(
       const after: ViewRow = {
         ...before,
         ...(change.name === undefined ? {} : { name: change.name }),
+        ...(change.scope === undefined ? {} : { scope: change.scope }),
         ...(change.definition === undefined
           ? {}
           : { definition: stored(keepingHidden(before, change.definition)) }),
@@ -304,7 +360,11 @@ export async function updateView(
       if (changeSetId !== null) {
         await transaction
           .update(savedViews)
-          .set({ name: after.name, definition: after.definition })
+          .set({
+            name: after.name,
+            scope: after.scope,
+            definition: after.definition,
+          })
           .where(eq(savedViews.id, id));
       }
       return { result: toSavedView(after, actor, tiers), changeSetId };
@@ -371,20 +431,101 @@ export async function viewTiersNow(
   );
 }
 
-// Refuses to undo a change to a view unless the actor still may change it: they made it, or may
-// change planning configuration. A view the undo puts back is checked against who made it.
+interface ViewHistory {
+  createdBy: unknown;
+  opening: unknown;
+  scopes: { from: number; scope: unknown }[];
+}
+
+const scopeAt = (view: ViewHistory, id: number) =>
+  view.scopes.reduce(
+    (scope, change) => (change.from <= id ? change.scope : scope),
+    view.opening,
+  );
+
+// Whether each change to the views given is kept from the actor: every change to another user's
+// view that is personal now, as the history last recorded it, which it still holds once the view is
+// deleted, and those made while a view now shared was personal, so sharing a view shows nothing of
+// its private past. A name changed in the same request as sharing is recorded before the scope, so
+// its old name stays kept too.
+export async function readKeptViewChanges(
+  reader: Reader,
+  actor: Actor,
+  ids: readonly string[],
+): Promise<(change: { id: number; recordId: string }) => boolean> {
+  const views = new Map<string, ViewHistory>(
+    ids.map((id) => [id, { createdBy: undefined, opening: null, scopes: [] }]),
+  );
+  for (const chunk of inChunks([...ids])) {
+    const rows = await reader
+      .select({
+        id: changes.id,
+        recordId: changes.recordId,
+        field: changes.field,
+        oldValue: changes.oldValue,
+        newValue: changes.newValue,
+      })
+      .from(changes)
+      .where(
+        and(
+          eq(changes.recordType, "saved-view"),
+          inArray(changes.field, ["scope", "createdBy"]),
+          inArray(changes.recordId, chunk),
+        ),
+      )
+      .orderBy(asc(changes.id));
+    for (const { id, recordId, field, oldValue, newValue } of rows) {
+      // Every view asked for has its entry, made just above.
+      const view = views.get(recordId) as ViewHistory;
+      const value = newValue ?? oldValue;
+      if (field === "createdBy") {
+        view.createdBy = value;
+      } else {
+        view.opening ??= oldValue ?? newValue;
+        view.scopes.push({ from: id, scope: value });
+      }
+    }
+  }
+  return ({ id, recordId }) => {
+    const view = views.get(recordId) as ViewHistory;
+    return (
+      view.createdBy !== actor.user.id &&
+      (scopeAt(view, Number.POSITIVE_INFINITY) === "personal" ||
+        scopeAt(view, id) === "personal")
+    );
+  };
+}
+
+// Refuses to undo a change to a view unless the actor still may change it: they made it, or it is
+// shared and they may change planning configuration. A view the undo puts back is checked against
+// who made it and how it was kept. Undoing also needs what the undo does to the view's scope:
+// sharing it or taking it back as for doing so directly, and putting back a deleted shared view as
+// for saving one.
 export async function requireViewUndo(
   transaction: Transaction,
   actor: Actor,
   id: string,
-  oldCreatedBy: unknown,
+  old: ReadonlyMap<string, unknown>,
 ): Promise<void> {
   const [row] = await transaction
-    .select({ createdBy: savedViews.createdBy })
+    .select({ createdBy: savedViews.createdBy, scope: savedViews.scope })
     .from(savedViews)
     .where(eq(savedViews.id, id));
-  const createdBy = row?.createdBy ?? oldCreatedBy;
-  if (typeof createdBy !== "string" || !mayChange(actor, createdBy)) {
+  // A view its maker has since taken back: the undo is refused as changed since.
+  if (row !== undefined && isOthersPersonal(actor, row)) return;
+  const createdBy = row?.createdBy ?? old.get("createdBy");
+  if (
+    typeof createdBy !== "string" ||
+    !mayChange(actor, createdBy, String(row?.scope ?? old.get("scope")))
+  ) {
     throw new ForbiddenError(notYours);
+  }
+  const scopeBack = old.get("scope");
+  if (row === undefined) {
+    if (scopeBack === "shared" && !makesSharedViews(actor)) {
+      throw new ForbiddenError(notSharedViewMaker);
+    }
+  } else if (typeof scopeBack === "string" && !mayShare(actor, createdBy)) {
+    throw new ForbiddenError(notSharer);
   }
 }

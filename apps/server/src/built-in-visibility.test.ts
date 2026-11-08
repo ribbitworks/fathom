@@ -236,6 +236,7 @@ describe("the Position column", () => {
     const save = () =>
       send(saver, "POST", "/api/people/views", {
         name: unique("Fictional View"),
+        scope: "personal",
         definition: { sort: ["positionId"] },
       });
     expect((await save()).statusCode).toBe(201);
@@ -262,6 +263,7 @@ describe("the State column", () => {
     const save = () =>
       send(saver, "POST", "/api/people/views", {
         name: unique("Fictional View"),
+        scope: "personal",
         definition: { filters: { stateId: { empty: true } } },
       });
     expect((await save()).statusCode).toBe(201);

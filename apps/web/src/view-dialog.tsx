@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The dialog for naming a saved view, when saving the table's view or renaming a saved one. The name
-// is checked against the table's other saved views as it is typed. The dialog saves the view itself,
+// is checked against the table's other saved views of the same scope as it is typed. The dialog saves the view itself,
 // so a name someone else has just taken is refused here, and cannot be closed while it saves.
 
 import { type SavedView, viewLengths } from "@fathom/shared";
@@ -57,7 +57,10 @@ export function ViewDialog({
     onSuccess: onSaved,
   });
   const taken = views.some(
-    (other) => other.id !== view?.id && sameName(other.name, name),
+    (other) =>
+      other.id !== view?.id &&
+      other.scope === (view?.scope ?? "personal") &&
+      sameName(other.name, name),
   );
   const refusedAsTaken =
     saving.error instanceof ApiError &&

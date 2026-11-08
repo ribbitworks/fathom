@@ -228,6 +228,7 @@ const columnsOf: Record<
   "saved-view": {
     tableName: text,
     name: text,
+    scope: text,
     definition: asStored,
     createdBy: text,
   },
@@ -971,12 +972,7 @@ async function undoIn(
   }
   for (const record of records) {
     if (record.recordType === "saved-view") {
-      await requireViewUndo(
-        transaction,
-        actor,
-        record.id,
-        record.old.get("createdBy"),
-      );
+      await requireViewUndo(transaction, actor, record.id, record.old);
     }
   }
   // Only changes the user may see count: another user's unpublished changes stay theirs, and a

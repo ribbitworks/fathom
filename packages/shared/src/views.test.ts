@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import {
   columnWidths,
+  savedViewChangeSchema,
   savedViewRequestSchema,
   textLimit,
   viewColumnKeys,
@@ -79,9 +80,36 @@ describe("viewDefinitionSchema", () => {
   });
 });
 
+describe("savedViewChangeSchema", () => {
+  it("accepts a scope, or none, and refuses one that is not personal or shared", () => {
+    expect(savedViewChangeSchema.safeParse({ scope: "shared" }).success).toBe(
+      true,
+    );
+    expect(savedViewChangeSchema.safeParse({}).success).toBe(true);
+    expect(savedViewChangeSchema.safeParse({ scope: "team" }).success).toBe(
+      false,
+    );
+  });
+});
+
 describe("savedViewRequestSchema", () => {
   const request = (definition: object) =>
-    savedViewRequestSchema.safeParse({ name: "Fictional View", definition });
+    savedViewRequestSchema.safeParse({
+      name: "Fictional View",
+      scope: "personal",
+      definition,
+    });
+
+  it("needs a view to be personal or shared", () => {
+    const named = { name: "Fictional View", definition: {} };
+    expect(
+      savedViewRequestSchema.safeParse({ ...named, scope: "shared" }).success,
+    ).toBe(true);
+    expect(savedViewRequestSchema.safeParse(named).success).toBe(false);
+    expect(
+      savedViewRequestSchema.safeParse({ ...named, scope: "team" }).success,
+    ).toBe(false);
+  });
 
   it("accepts a view that fits", () => {
     expect(

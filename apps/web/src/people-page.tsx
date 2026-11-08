@@ -873,7 +873,11 @@ export function PeoplePage({
               save={(name) =>
                 naming.saved
                   ? updateView(naming.saved.id, { name })
-                  : createView({ name, definition: savedFor(naming.view) })
+                  : createView({
+                      name,
+                      scope: "personal",
+                      definition: savedFor(naming.view),
+                    })
               }
               onSaved={named}
               onCancel={() => {

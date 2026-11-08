@@ -42,7 +42,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Approving drafts of lists of choices, and of People's columns and their order | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts they changed themselves, in the areas they approve, which otherwise need another approver (decided by the owner on 2026-11-07) | None | None | None | None | None | Approve | None | None | None | None |
 | Change history, for the data the role sees (**proposal**) | None | View | View | View | View | View | View | View | View | None |
-| Saved views of tables the role sees | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change their own | Save, and change any | Save, and change their own | Save, and change their own | None |
+| Saved views of tables the role sees | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal and shared views, share their own or take them back, and change their own and any shared view | Save personal and shared views, share their own or take them back, and change their own and any shared view | Save personal views, and change their own | Save personal views, and change their own | None |
 | User accounts and the role each holds | None | None | None | None | None | View | None | View | None | Edit |
 | Roles, and what each grants | None | None | None | None | None | View | None | View | None | Edit |
 | System settings | None | None | None | None | None | View | None | View | None | Edit |

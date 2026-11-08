@@ -826,9 +826,11 @@ export const fieldValues = fathomSchema.table(
   ],
 );
 
-// Saved views: a table's search, filters, and sort, saved under a name that is unique within the
-// table, ignoring letter case, and shared with everyone who sees the table. Who made each view is
-// kept with it, since its maker may change it; the change history records every change to it.
+// Saved views: a table's search, filters, and sort, saved under a name, personal to its maker or
+// shared with everyone who sees the table. A name is unique, ignoring letter case, among the table's
+// shared views and among each maker's personal ones, so a personal view's name never tells anyone
+// else that it exists. Who made each view is kept with it, since its maker may change it; the
+// change history records every change to it.
 export const savedViews = fathomSchema.table(
   "saved_views",
   {
@@ -836,6 +838,8 @@ export const savedViews = fathomSchema.table(
     // The table the view is of, such as "people", checked by the server.
     tableName: text("table_name").notNull(),
     name: text("name").notNull(),
+    // "personal" or "shared", checked by the server.
+    scope: text("scope").notNull(),
     // The view as the page address holds it, checked by the server.
     definition: jsonb("definition").notNull(),
     createdBy: text("created_by")
@@ -843,10 +847,12 @@ export const savedViews = fathomSchema.table(
       .references(() => users.id),
   },
   (table) => [
-    uniqueIndex("saved_views_table_name_index").on(
-      table.tableName,
-      sql`lower(${table.name})`,
-    ),
+    uniqueIndex("saved_views_shared_name_index")
+      .on(table.tableName, sql`lower(${table.name})`)
+      .where(sql`${table.scope} = 'shared'`),
+    uniqueIndex("saved_views_personal_name_index")
+      .on(table.tableName, table.createdBy, sql`lower(${table.name})`)
+      .where(sql`${table.scope} = 'personal'`),
   ],
 );
 

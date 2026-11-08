@@ -1,7 +1,7 @@
 # Fathom: Security Plan
 
 **Status:** Proposal for review by the owner and IT
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-08
 
 How Fathom is protected: what it must protect, the threats against it, how each threat is mitigated and verified, how its technology is scanned for vulnerabilities, how confidence in its source code is established, and how the plan is enforced. It builds on [ADR 0001](../adr/0001-tech-stack.md), the [Decisions Log](../product/decisions.md), and [Roles](../product/roles.md). Everything here is proposed until reviewed.
 
@@ -82,6 +82,7 @@ How Fathom is protected: what it must protect, the threats against it, how each 
 | An unpatched host, virtualization layer, container runtime, or database | Regular patching of every layer | Host and container vulnerability scans |
 | Personal data leaks through logs or error messages | Personal data kept out of logs, except each request's client address, which is kept to investigate security problems; generic error messages to users | Automated tests; code review; log review |
 | A saved view's filters or metrics reveal values a user may not see, such as an end-date filter on a view named for people leaving | A saved view is sent only to users who see every column it filters, sorts, or breaks down by, and saving one on a column the user may not see is refused; its history entries take the tier of its most sensitive column; a filter on drafts is General, since each user is sent only the drafts they may see | Automated tests |
+| A personal saved view's name or filters tell others what a user is looking at, such as a view named for someone they plan to move | A personal view is sent only to its maker and refused to everyone else as if it did not exist, whatever their role; its changes appear in the change history only to its maker, even once it is deleted, and sharing a view shows others only what changes after it is shared; only those who may change planning configuration may share a view, or put a shared one back by undoing; names are unique per maker, so a taken name reveals nothing | Automated tests |
 | Searches and filters reveal personal data through page addresses | Logs record each request's path without the rest of the address. Addresses carry what the user typed, such as a name, and choices only by identifier; they stay in the user's browser history and in links they share, which anyone they are sent to can read, though opening one needs a Fathom sign-in | Automated tests; code review |
 | Backups are stolen or read | Encrypted backups, with the key held by someone other than the backup operator | Restore tests; key custody check |
 | A former user keeps access | Accounts are disabled when users leave | Account review |

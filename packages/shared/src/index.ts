@@ -363,6 +363,8 @@ export {
   draftFilterKey,
   viewColumnKeys,
   viewDefinitionSchema,
+  viewScopeSchema,
+  type ViewScope,
   viewLengths,
 } from "./views.ts";
 export { allOf, eitherOf } from "./words.ts";

@@ -69,7 +69,7 @@ import { personTier } from "./people.ts";
 import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { recordKinds } from "./records.ts";
-import { viewTiersNow } from "./views.ts";
+import { readKeptViewChanges, viewTiersNow } from "./views.ts";
 
 // The most recent change sets shown at once; older ones are read by naming the last one read. When
 // change sets read are hidden or, in a search, do not match, reading goes on, up to ten times as
@@ -436,14 +436,16 @@ function shown(
 // Whether the actor sees a change, by the rule of its kind of record. Feature teams' General details
 // are seen with the org chart, whether or not the reader sees people, but their drafts and
 // Restricted details, being details of people, only with people; a role can be given the rest
-// without them.
+// without them. Changes to a saved view are kept from others as long as it is, or was then, personal.
 function seesRowOfKind(
   actor: Actor,
   row: StoredChange,
   tier: Tier,
   sensitivities: readonly Sensitivity[],
   seenPlan: readonly RecordType[],
+  keptViewChange: (row: StoredChange) => boolean,
 ): boolean {
+  if (row.recordType === "saved-view" && keptViewChange(row)) return false;
   if (row.recordType === "feature-team") {
     return (
       (!row.draft || actor.permissions.includes("people:view")) &&
@@ -459,9 +461,9 @@ function seesRowOfKind(
 }
 
 // Leaves out the changes the actor may not see: those to kinds of record their role does not cover,
-// and those in tiers they do not see, as sensitive as they were when made or are now, whichever is
-// more: a person's choices in a column whose list has since become more sensitive, or a saved view
-// on such a column.
+// those kept with another user's personal saved view, and those in tiers they do not see, as sensitive as
+// they were when made or are now, whichever is more: a person's choices in a column whose list has
+// since become more sensitive, or a saved view on such a column.
 async function visibleRows(
   database: Database,
   actor: Actor,
@@ -521,6 +523,7 @@ async function visibleRows(
     held.size === 0
       ? new Map<string, Tier>()
       : await viewTiersNow(database, held);
+  const keptViewChange = await readKeptViewChanges(database, actor, viewIds);
   const seenPlan = seenPlanKinds(actor);
   return rows.flatMap((row) => {
     // A tier the server no longer knows is treated as the most sensitive rather than trusted.
@@ -547,7 +550,14 @@ async function visibleRows(
         ? hireSensitivities(row.field, tiers)
         : tiers;
     const tier = mostSensitive(sensitivities.map(tierOfSensitivity));
-    const seen = seesRowOfKind(actor, row, tier, sensitivities, seenPlan);
+    const seen = seesRowOfKind(
+      actor,
+      row,
+      tier,
+      sensitivities,
+      seenPlan,
+      keptViewChange,
+    );
     return seen ? [{ row, tier }] : [];
   });
 }

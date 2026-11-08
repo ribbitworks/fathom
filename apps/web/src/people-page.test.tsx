@@ -2660,14 +2660,18 @@ describe("searching, sorting, and filtering", () => {
     const harbour = {
       id: v1,
       name: "Harbour",
+      scope: "shared",
       definition: { filters: { f1: { any: ["c1"] } } },
       canChange: true,
+      canShare: true,
     };
     const theirs = {
       id: v2,
       name: "Theirs",
+      scope: "shared",
       definition: { sort: ["-preferredName"] },
       canChange: false,
+      canShare: false,
     };
     const withViews = (views: object[]) => () =>
       Response.json({
@@ -2713,7 +2717,11 @@ describe("searching, sorting, and filtering", () => {
         expect(address(history)).toContain(`view=${v1}`);
       });
       expect(bodyOf(fetch, "POST", "/api/people/views")).toEqual([
-        { name: "Harbour", definition: { filters: { f1: { any: ["c1"] } } } },
+        {
+          name: "Harbour",
+          scope: "personal",
+          definition: { filters: { f1: { any: ["c1"] } } },
+        },
       ]);
       expect(viewsButton().getAttribute("aria-label")).toBe("Views: Harbour");
 
@@ -2805,6 +2813,16 @@ describe("searching, sorting, and filtering", () => {
       await waitFor(() => {
         expect(undone(fetch)).toEqual([s1]);
       });
+    });
+
+    it("lets a new view, which is personal, take the name of a shared one", async () => {
+      await openAt("/people?search=avery", {
+        "GET /api/people": withViews([harbour]),
+      });
+      await chooseView("Save view…");
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.keyboard("harbour");
+      expect(within(dialog).queryByText("Already a view")).toBeNull();
     });
 
     it("starts the menu with clearing the view when there are no saved views", async () => {

@@ -2,9 +2,9 @@
 
 // A table's view, its search, filters, sort, breakdown, frozen columns, and the widths set for its
 // columns, as the page address holds it and as a saved view keeps it, and the saved views
-// themselves. Saved views are shared: everyone who sees a table sees its saved views, except those
-// that filter, sort, or break down by a column they may not see. Their maker, and those who may
-// change planning configuration, may change them.
+// themselves. A saved view is personal, seen and changed only by its maker, or shared: seen by
+// everyone who sees the table, except those it filters, sorts, or breaks down by a column they may
+// not see, and changed by its maker and those who may change planning configuration.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -183,12 +183,19 @@ export function viewColumnKeys(definition: ViewDefinition): string[] {
   ];
 }
 
-// A saved view as a user receives it, with whether they may rename, update, or delete it.
+export const viewScopeSchema = z.enum(["personal", "shared"]);
+
+export type ViewScope = z.infer<typeof viewScopeSchema>;
+
+// A saved view as a user receives it, with whether they may rename, update, or delete it, and
+// whether they may share it or take it back.
 export const savedViewSchema = z.object({
   id: z.string(),
   name: z.string(),
+  scope: viewScopeSchema,
   definition: strictDefinitionSchema,
   canChange: z.boolean(),
+  canShare: z.boolean(),
 });
 
 export type SavedView = z.infer<typeof savedViewSchema>;
@@ -197,21 +204,25 @@ const viewName = z.string().trim().min(1).max(viewLengths.name);
 
 export const savedViewRequestSchema = z.object({
   name: viewName,
+  scope: viewScopeSchema,
   definition: strictDefinitionSchema,
 });
 
 export interface SavedViewRequest {
   name: string;
+  scope: ViewScope;
   definition: ViewDefinition;
 }
 
-// Renames a saved view, saves a new view over it, or both.
+// Renames a saved view, saves a new view over it, shares it or takes it back, or any of these.
 export const savedViewChangeSchema = z.object({
   name: viewName.optional(),
+  scope: viewScopeSchema.optional(),
   definition: strictDefinitionSchema.optional(),
 });
 
 export interface SavedViewChange {
   name?: string | undefined;
+  scope?: ViewScope | undefined;
   definition?: ViewDefinition | undefined;
 }

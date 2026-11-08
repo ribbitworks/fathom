@@ -471,7 +471,7 @@ const routes: Route[] = [
     method: "POST",
     pattern: "/api/people/views",
     needs: allOf("people:view"),
-    body: () => ({ ...named(), definition: {} }),
+    body: () => ({ ...named(), scope: "personal", definition: {} }),
   },
   {
     method: "PUT",
