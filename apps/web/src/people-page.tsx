@@ -48,12 +48,8 @@ import {
 } from "./new-person-panel.tsx";
 import { entered } from "./new-record-panel.tsx";
 import { kept, personUpdate } from "./person-change.ts";
-import {
-  noteQuestion,
-  useDiscardQuestion,
-  useNoteEditing,
-  useShownId,
-} from "./person-editing.tsx";
+import { noteQuestion, useNoteEditing, useShownId } from "./person-editing.tsx";
+import { useDiscardQuestion } from "./discard-question.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
 import {

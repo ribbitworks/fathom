@@ -43,12 +43,12 @@ import {
 } from "./people-rows.ts";
 import {
   type EditingContext,
-  focusValue,
   type NoteEditing,
   usePersonEditing,
 } from "./person-editing.tsx";
-import classes from "./person-panel.module.css";
+import classes from "./record-details.module.css";
 import { RecordLink, Row } from "./record-details.tsx";
+import { focusValue } from "./record-editing.tsx";
 import {
   cellColumn,
   columnsOn,
@@ -298,6 +298,7 @@ export function HireFillForm({
     values,
     adding: true,
     others,
+    recordProblem,
     save: (_change, column, value) => {
       onFilling({
         ...filling,

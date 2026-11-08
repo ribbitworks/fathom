@@ -1089,6 +1089,106 @@ describe("the page around its tables", () => {
   });
 });
 
+describe("changing a record in its panel", () => {
+  const atProposal = `/projects?tab=proposals&open=${proposalId}`;
+  const pencil = (label: string) =>
+    within(sidePanel()).queryByRole("button", { name: `Change ${label}` });
+  const heading = () =>
+    screen.findByRole("heading", { name: /Fictional Proposal/ });
+
+  it.each([
+    [
+      atProposal,
+      /Fictional Proposal/,
+      `PUT /api/proposals/${proposalId}`,
+      "Proposal ID",
+      "externalId",
+    ],
+    [
+      `/projects?open=${projectId}`,
+      /Fictional Project/,
+      `PUT /api/projects/${projectId}`,
+      "Project ID",
+      "externalId",
+    ],
+    [
+      `/projects?tab=customers&open=${customerId}`,
+      /Fictional Customer/,
+      `PUT /api/customers/${customerId}`,
+      "Name",
+      "name",
+    ],
+  ])(
+    "saves a value changed from its pencil at %s",
+    async (address, name, request, label, key) => {
+      // Given a record open beside the table
+      const start = plan();
+      const { fetch } = await openPage(address, start, {
+        [request]: saved(() => start),
+      });
+      await screen.findByRole("heading", { name });
+      // When a value is changed
+      await userEvent.click(pencil(label) as HTMLElement);
+      const box = within(sidePanel()).getByRole("textbox", { name: label });
+      await userEvent.clear(box);
+      await userEvent.type(box, "Changed{Enter}");
+      // Then the change is sent
+      await waitFor(() => {
+        expect(sent(fetch, request)).toEqual([
+          expect.objectContaining({ [key]: "Changed" }),
+        ]);
+      });
+    },
+  );
+
+  it("names a value it will not take, saving nothing", async () => {
+    // Given a proposal open beside the table
+    const start = plan();
+    const { fetch } = await openPage(atProposal, start, {
+      [`PUT /api/proposals/${proposalId}`]: saved(() => start),
+    });
+    await heading();
+    // When its Name is emptied
+    await userEvent.click(pencil("Name") as HTMLElement);
+    await userEvent.clear(
+      within(sidePanel()).getByRole("textbox", { name: "Name" }),
+    );
+    await userEvent.keyboard("{Enter}");
+    // Then the problem is named and nothing is sent
+    expect(within(sidePanel()).getByText("Name needed")).toBeTruthy();
+    expect(sent(fetch, `PUT /api/proposals/${proposalId}`)).toEqual([]);
+  });
+
+  it.each([
+    ["those who only see the plan", atProposal, { canEdit: false }, {}],
+    ["Live only", `${atProposal}&show=live`, {}, {}],
+    ["a record held by another's changes", atProposal, {}, { heldBy: "Rae" }],
+    [
+      "a record drafted to be removed",
+      atProposal,
+      {},
+      { draft: recordDraft({ action: "deleted" }) },
+    ],
+  ])(
+    "offers no pencils to %s",
+    async (_who, address, planMore, proposalMore) => {
+      await openPage(
+        address,
+        plan({ ...planMore, proposals: [proposal(proposalMore)] }),
+      );
+      await heading();
+      expect(pencil("Name")).toBeNull();
+    },
+  );
+
+  it("offers no pencil for a project's dates", async () => {
+    await openPage(`/projects?open=${projectId}`, plan());
+    await screen.findByRole("heading", { name: /Fictional Project/ });
+    expect(pencil("Name")).not.toBeNull();
+    expect(pencil("First milestone")).toBeNull();
+  });
+});
+
 describe("the panel beside Live only", () => {
   const drafted = plan({
     proposals: [

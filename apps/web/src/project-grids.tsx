@@ -162,6 +162,9 @@ const drafts = (type: PlanRecordKind) => (ids: string[]) => ({
 });
 
 // What a kind of record's table needs besides its columns.
+// The plan's records have no rule that takes their values together.
+export const noRecordProblem = () => undefined;
+
 function planTable<Rec extends PlanRecord, Request>({
   type,
   label,
@@ -197,7 +200,7 @@ function planTable<Rec extends PlanRecord, Request>({
     columnsFor: (_fields, _lists, _order, records) => columns(records),
     liveRecords: livePlanRecords,
     draftFields: (record, draft) => draftFieldsOf(columns([]), record, draft),
-    recordProblem: () => undefined,
+    recordProblem: noRecordProblem,
     request: (changes) => request(changes),
     drafts: drafts(type),
     menuItems,

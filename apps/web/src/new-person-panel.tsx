@@ -23,7 +23,7 @@ import {
   usePersonEditing,
 } from "./person-editing.tsx";
 import { detailKeys, reportingKeys } from "./person-panel.tsx";
-import classes from "./person-panel.module.css";
+import classes from "./record-details.module.css";
 import { newRecordFields, NewRecordPanel } from "./new-record-panel.tsx";
 import { Row } from "./record-details.tsx";
 import { keptForKind } from "./record-grid.tsx";
@@ -105,6 +105,7 @@ export function NewPersonPanel({
     values,
     adding: true,
     others,
+    recordProblem,
     // A planned hire with no name of its own goes by its position and ID, as People shows it; the
     // ID comes when it is added, if none is typed.
     hint: (column) => {

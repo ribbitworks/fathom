@@ -59,7 +59,7 @@ import { Icon } from "./icons.tsx";
 import { LoadProblem } from "./load-problem.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
-import details from "./person-panel.module.css";
+import details from "./record-details.module.css";
 import {
   customerTable,
   dayOrEmpty,
@@ -68,6 +68,7 @@ import {
   milestoneColumns,
   milestoneTable,
   noColumnActions,
+  noRecordProblem,
   type PlanChange,
   PlanGrid,
   projectColumns,
@@ -100,12 +101,18 @@ import {
 import { RecordLink, Row } from "./record-details.tsx";
 import {
   type Column,
+  heldBack,
   newRecordProblems,
   pendingId,
   type RecordActions,
   type RecordTable,
 } from "./record-grid.tsx";
-import { useDiscardQuestion } from "./person-editing.tsx";
+import {
+  type Editing,
+  type RecordEditingContext,
+  useRecordEditing,
+} from "./record-editing.tsx";
+import { useDiscardQuestion } from "./discard-question.tsx";
 import { entered, type FormValues } from "./new-record-panel.tsx";
 import {
   NewPlanRecordPanel,
@@ -482,6 +489,9 @@ export function ProjectsPage({
       showRecord: (next, id) => {
         onTab?.(next, id);
       },
+      onChange: (type, record, change) => {
+        actionsFor<PlanRecord, unknown>(type).update(record, change);
+      },
     });
     const shared = { canEdit, approves, saving, view, onView };
     // The form takes the panel's place while a record is being added.
@@ -718,6 +728,9 @@ const newestId = (
       .find(({ id }) => !taken.includes(id)) as PlanRecord
   ).id;
 
+// The kind of a record in a table of one kind.
+const onlyKind = "";
+
 const milestoneFields = milestoneColumns([]).filter(
   ({ key }) => key !== "projectId",
 );
@@ -756,9 +769,9 @@ function MilestoneForm({
   });
   const problems = newRecordProblems(
     milestoneFields,
-    "",
+    onlyKind,
     values,
-    () => undefined,
+    noRecordProblem,
     noOthers,
   );
   const submit = (event: SubmitEvent) => {
@@ -825,6 +838,7 @@ function recordPanel({
   menu,
   showMilestones,
   showRecord,
+  onChange,
 }: {
   tab: PlanTab;
   plan: ProjectPlan;
@@ -839,6 +853,11 @@ function recordPanel({
   menu: MilestoneMenu;
   showMilestones: (project: Project) => void;
   showRecord: (tab: ProjectTab, id: string) => void;
+  onChange: (
+    type: PlanRecordKind,
+    record: PlanRecord,
+    change: PlanChange,
+  ) => void;
 }): SidePanel | undefined {
   if (open === undefined) return undefined;
   const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
@@ -848,6 +867,7 @@ function recordPanel({
     Record<
       PlanTab,
       | {
+          type: PlanRecordKind;
           record: PlanRecord | undefined;
           columns: readonly Column<never, PlanChange>[];
         }
@@ -855,16 +875,19 @@ function recordPanel({
     >
   > = {
     projects: {
+      type: "project",
       record: projects.find(({ id }) => id === open),
       columns: projectColumns(choices).filter(
         ({ key }) => !projectDateColumns.some(([date]) => date === key),
       ),
     },
     proposals: {
+      type: "proposal",
       record: asShown(plan.proposals).find(({ id }) => id === open),
       columns: proposalColumns(choices),
     },
     customers: {
+      type: "customer",
       record: asShown(plan.customers).find(({ id }) => id === open),
       columns: customerTable().columnsFor([], [], [], []),
     },
@@ -875,7 +898,6 @@ function recordPanel({
   // eslint-disable-next-line security/detect-object-injection
   const onTab = shownOnTab[tab];
   const record = onTab?.record;
-  const columns = onTab?.columns ?? [];
   const project = projects.find(({ id }) => id === open);
   const extra =
     tab === "projects" && project !== undefined ? (
@@ -889,8 +911,9 @@ function recordPanel({
         showMilestones={showMilestones}
       />
     ) : null;
-  if (record === undefined) return undefined;
+  if (onTab === undefined || record === undefined) return undefined;
   const shown = record;
+  const { type, columns } = onTab;
   return {
     key: "record",
     id: panelId,
@@ -910,19 +933,16 @@ function recordPanel({
         close={{ label: "Close details", onClose }}
       >
         <Stack gap="lg" className={sidePanelScroll}>
-          <dl className={details.list}>
-            {columns
-              .filter(({ key }) => key !== "name")
-              .map((column) => (
-                <DetailRow
-                  key={column.key}
-                  column={column}
-                  record={shown}
-                  beside={show === "both"}
-                  showRecord={showRecord}
-                />
-              ))}
-          </dl>
+          <PlanRecordDetails
+            columns={columns}
+            record={shown}
+            beside={show === "both"}
+            canEdit={canEdit}
+            showRecord={showRecord}
+            onChange={(change) => {
+              onChange(type, shown, change);
+            }}
+          />
           {extra}
         </Stack>
       </SidePanelFrame>
@@ -966,27 +986,83 @@ function RecordLinks({
   );
 }
 
+// A record's values, as its table shows them, each changed in place as in its cell by those who may.
+function PlanRecordDetails({
+  columns,
+  record,
+  beside,
+  canEdit,
+  showRecord,
+  onChange,
+}: {
+  columns: readonly Column<never, PlanChange>[];
+  record: PlanRecord;
+  beside: boolean;
+  canEdit: boolean;
+  showRecord: (tab: ProjectTab, id: string) => void;
+  onChange: (change: PlanChange) => void;
+}) {
+  const { closeStale, editingOf } = useRecordEditing<never, PlanChange>();
+  const values = Object.fromEntries(
+    columns.map((column) => [column.key, column.value(record as never)]),
+  );
+  const context: RecordEditingContext<never, PlanChange> = {
+    id: record.id,
+    kind: onlyKind,
+    values,
+    save:
+      canEdit && !heldBack(record)
+        ? (change) => {
+            onChange(change);
+          }
+        : undefined,
+    others: noOthers,
+    recordProblem: noRecordProblem,
+  };
+  closeStale(context);
+  const editing = editingOf(context);
+  return (
+    <dl className={details.list}>
+      {columns.map((column) => (
+        <DetailRow
+          key={column.key}
+          column={column}
+          record={record}
+          value={values[column.key] as CellValue}
+          beside={beside}
+          editing={editing(column)}
+          showRecord={showRecord}
+        />
+      ))}
+    </dl>
+  );
+}
+
 function DetailRow({
   column,
   record,
+  value,
   beside,
+  editing,
   showRecord,
 }: {
   column: Column<never, PlanChange>;
   record: PlanRecord;
+  value: CellValue;
   beside: boolean;
+  editing: Editing | undefined;
   showRecord: (tab: ProjectTab, id: string) => void;
 }) {
   const draft = record.draft;
   const changed =
     beside && draft?.action === "changed" && draft.changed.includes(column.key);
-  const value = column.value(record as never);
   const linkedTab = linkedTabs.get(column.key);
   return (
     <Row
       column={column}
       value={value}
       changed={changed ? { live: column.live(draft as never) } : undefined}
+      editing={editing}
     >
       {linkedTab !== undefined && Array.isArray(value) && value.length > 0 ? (
         <RecordLinks

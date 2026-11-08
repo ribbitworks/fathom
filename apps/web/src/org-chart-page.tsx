@@ -94,12 +94,8 @@ import classes from "./org-chart.module.css";
 import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
 import { personUpdate } from "./person-change.ts";
-import {
-  noteQuestion,
-  useDiscardQuestion,
-  useNoteEditing,
-  useShownId,
-} from "./person-editing.tsx";
+import { noteQuestion, useNoteEditing, useShownId } from "./person-editing.tsx";
+import { useDiscardQuestion } from "./discard-question.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
 import { useSaving } from "./saving.ts";

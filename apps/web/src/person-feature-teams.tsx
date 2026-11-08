@@ -9,7 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { featureTeamsQuery } from "./feature-teams.ts";
 import { orgChartQuery } from "./org-chart.ts";
-import classes from "./person-panel.module.css";
+import classes from "./record-details.module.css";
 
 export function PersonFeatureTeams({
   personId,

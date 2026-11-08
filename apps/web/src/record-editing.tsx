@@ -1,0 +1,334 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Changing the values of a record in a details panel, or of one being added there, as its table's
+// cells do: which value's editor is open, and what is wrong with the value last given. Each value is
+// saved and checked as its cell saves and checks it.
+
+import { Checkbox, Group, Text } from "@mantine/core";
+import { type ReactNode, useState } from "react";
+import { cellKinds, type EditorProps } from "./cell-kinds.tsx";
+import type { Finish } from "./choice-picker.tsx";
+import { ClearableInput } from "./clearable-input.tsx";
+import { focusSoon } from "./focus.ts";
+import {
+  type Column,
+  type GridRecord,
+  readOnlyFor,
+  type RecordTable,
+  valueChange,
+} from "./record-grid.tsx";
+import classes from "./record-details.module.css";
+import type { CellValue } from "./table-view.ts";
+
+type Keyed = Pick<Column<never>, "key">;
+
+const idOf = (column: Keyed, part: string) =>
+  `record-value-${column.key}-${part}`;
+export const labelId = (column: Keyed) => idOf(column, "label");
+export const changeId = (column: Keyed) => idOf(column, "change");
+export const problemId = (column: Keyed) => idOf(column, "problem");
+export const editorId = (column: Keyed) => idOf(column, "editor");
+const wordsId = (column: Keyed) => idOf(column, "words");
+
+// Puts focus on a value being entered: a text or date is a field always open, and any other value
+// opens from its change button.
+export const focusValue = (column: Keyed & Pick<Column<never>, "kind">) => {
+  focusSoon(
+    cellKinds[column.kind].Editor === undefined
+      ? editorId(column)
+      : changeId(column),
+  );
+};
+
+// Saves a change to the record, with the column and value it puts there.
+export type SaveChange<Rec extends GridRecord, Change> = (
+  change: Change,
+  column: Column<Rec, Change>,
+  value: CellValue,
+) => void;
+
+// Editing text or a date, which Enter or leaving the field saves and Esc leaves as it was, with an ×
+// to empty it. It names its own problem, which Mantine ties to the field.
+function TextEditor({
+  id,
+  column,
+  value,
+  problem,
+  hint,
+  onDone,
+  onCancel,
+}: EditorProps & { hint?: string | undefined }) {
+  // Text and dates are held as text.
+  const [text, setText] = useState(value as string);
+  return (
+    <ClearableInput
+      id={id}
+      size="sm"
+      aria-label={column.label}
+      clearLabel={`Clear ${column.label}`}
+      placeholder={hint}
+      onClear={() => {
+        setText("");
+      }}
+      error={problem}
+      value={text}
+      autoComplete="off"
+      onChange={(event) => {
+        setText(event.currentTarget.value);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          onCancel();
+        } else if (event.key === "Enter") {
+          event.preventDefault();
+          onDone(text, "enter");
+        }
+      }}
+      onBlur={() => {
+        onDone(text, "leave");
+      }}
+    />
+  );
+}
+
+// How a row's value may be changed: by its editor, started from the button beside the value and
+// shown in its place while open, or, with nothing to start, by a checkbox shown as the value, which
+// changes it in one step; and what is wrong with the value last given.
+export interface Editing {
+  open: boolean;
+  editor: ReactNode;
+  onStart?: (() => void) | undefined;
+  problem: string | undefined;
+}
+
+// What changing the record shown needs: Fathom's own ID for it, its kind, its values and
+// everyone else's, as its table's cells check them, and how its changes are saved, unless it may not
+// be changed for now.
+export interface RecordEditingContext<Rec extends GridRecord, Change> {
+  id: string;
+  kind: string;
+  values: Record<string, CellValue>;
+  save: SaveChange<Rec, Change> | undefined;
+  others: () => Record<string, CellValue>[];
+  recordProblem: RecordTable<Rec, Change, unknown>["recordProblem"];
+  // Whether the record is being added, so its text and dates are fields always open.
+  adding?: boolean;
+  // What an empty text field shows in grey, if anything, such as the name a record goes by while it
+  // has none of its own.
+  hint?: (column: Column<Rec, Change>) => string | undefined;
+}
+
+// Opens a note, for tables that have them, which is written in a panel of its own.
+export interface NoteStarter<Rec extends GridRecord, Change, Context> {
+  start: (
+    context: Context & { save: SaveChange<Rec, Change> },
+    column: Column<Rec, Change>,
+  ) => void;
+}
+
+type Checked<Change> = { change: Change } | { problem: string } | undefined;
+
+// What putting a value in a record's column comes to, as its cell would find: nothing, when it is
+// the value already there, the change that saves it, or why it will not do.
+export function checked<Rec extends GridRecord, Change>(
+  { kind, values, others, recordProblem }: RecordEditingContext<Rec, Change>,
+  column: Column<Rec, Change>,
+  value: CellValue,
+): Checked<Change> {
+  const made = valueChange(recordProblem, column, kind, values, value, others);
+  if (made === undefined) return undefined;
+  return "problem" in made ? { problem: made.problem.message } : made;
+}
+
+// Changing the values of the record a details panel shows, each in its row, held by the panel; a
+// table with notes opens them through what it is given.
+export function useRecordEditing<
+  Rec extends GridRecord,
+  Change,
+  Context extends RecordEditingContext<Rec, Change> = RecordEditingContext<
+    Rec,
+    Change
+  >,
+>(notes?: NoteStarter<Rec, Change, Context>) {
+  // The value whose editor is open, by the record's own ID and the column's key, and what is wrong
+  // with the values last given, each named under its own row.
+  const [open, setOpen] = useState<{ id: string; key: string }>();
+  const [problems, setProblems] = useState<
+    readonly { id: string; key: string; message: string }[]
+  >([]);
+  // Names what is wrong with one value, or, with no message, takes back what was.
+  const setProblem = (id: string, key: string, message?: string) => {
+    setProblems((current) => [
+      ...current.filter((one) => one.id !== id || one.key !== key),
+      ...(message === undefined ? [] : [{ id, key, message }]),
+    ]);
+  };
+  const clearProblems = () => {
+    setProblems([]);
+  };
+
+  // Saves a value as its cell would, returning whether it would do, and naming why not.
+  const saved = (
+    context: RecordEditingContext<Rec, Change>,
+    column: Column<Rec, Change>,
+    value: CellValue,
+    save: SaveChange<Rec, Change>,
+  ): boolean => {
+    const made = checked(context, column, value);
+    if (made !== undefined && "problem" in made) {
+      setProblem(context.id, column.key, made.problem);
+      return false;
+    }
+    setProblem(context.id, column.key);
+    if (made !== undefined) save(made.change, column, value);
+    return true;
+  };
+
+  const stop = (id: string, column: Column<Rec, Change>) => {
+    setOpen(undefined);
+    setProblem(id, column.key);
+    focusSoon(changeId(column));
+  };
+
+  // A refused value keeps its editor open, naming why, unless the editor was left, which puts the
+  // value back, as in a table's cell; a field always open stays, naming why.
+  const finish = (
+    context: RecordEditingContext<Rec, Change>,
+    column: Column<Rec, Change>,
+    value: CellValue,
+    how: Finish,
+    save: SaveChange<Rec, Change>,
+  ) => {
+    const alwaysOpen = context.adding === true && !hasEditor(column);
+    if (saved(context, column, value, save)) {
+      if (!alwaysOpen) stop(context.id, column);
+    } else if (how === "leave" && !alwaysOpen) {
+      setOpen(undefined);
+      setProblem(context.id, column.key);
+    }
+  };
+
+  // Closes an editor open for a record no longer shown, or that may no longer be changed, as the
+  // panel is drawn, so it never opens again on its own.
+  const closeStale = ({ id, save }: RecordEditingContext<Rec, Change>) => {
+    if (open !== undefined && (save === undefined || open.id !== id)) {
+      setOpen(undefined);
+      clearProblems();
+    }
+  };
+
+  // How each of the record's values may be changed, if at all.
+  const editingOf =
+    (context: Context) =>
+    (column: Column<Rec, Change>): Editing | undefined => {
+      const { id, save } = context;
+      if (save === undefined || readOnlyFor(column, context.kind)) {
+        return undefined;
+      }
+      const kind = cellKinds[column.kind];
+      const value = context.values[column.key] as CellValue;
+      const wrong = problems.find(
+        (one) => one.id === id && one.key === column.key,
+      )?.message;
+      const { toggled } = kind;
+      if (toggled !== undefined) {
+        // Named by the row's label and the word beside the box, as both are seen.
+        return {
+          open: false,
+          editor: (
+            <Group gap={8} wrap="nowrap">
+              <Checkbox
+                id={changeId(column)}
+                aria-labelledby={`${labelId(column)} ${wordsId(column)}`}
+                checked={(value as readonly string[]).length > 0}
+                onChange={() => {
+                  saved(context, column, toggled(value), save);
+                }}
+              />
+              <Text id={wordsId(column)}>{kind.inWords(column, value)}</Text>
+            </Group>
+          ),
+          problem: wrong,
+        };
+      }
+      if (kind.inPanel === true) {
+        if (notes === undefined) return undefined;
+        return {
+          open: false,
+          editor: undefined,
+          onStart: () => {
+            notes.start({ ...context, save }, column);
+          },
+          problem: undefined,
+        };
+      }
+      const isOpen =
+        (context.adding === true && !hasEditor(column)) ||
+        (open?.id === id && open.key === column.key);
+      // The panel's own text field names its problem; a table's other cell editors, which reach
+      // their cell's edges, leave it to the row.
+      const ownField = kind.Editor === undefined;
+      const Editor = kind.Editor ?? TextEditor;
+      return {
+        open: isOpen,
+        editor: isOpen && (
+          <div className={ownField ? undefined : classes.cellEditor}>
+            <Editor
+              {...(ownField ? { hint: context.hint?.(column) } : {})}
+              id={editorId(column)}
+              column={column}
+              value={value}
+              typed=""
+              invalid={wrong !== undefined}
+              describedBy={wrong === undefined ? undefined : problemId(column)}
+              problem={wrong}
+              readOnly={false}
+              onDone={(edited, how) => {
+                finish(context, column, edited, how, save);
+              }}
+              onCancel={() => {
+                stop(id, column);
+              }}
+            />
+          </div>
+        ),
+        onStart: () => {
+          setProblem(id, column.key);
+          setOpen({ id, key: column.key });
+          focusSoon(editorId(column));
+        },
+        problem: ownField ? undefined : wrong,
+      };
+    };
+
+  // Names what is wrong with a record's values, each under its row, as when it was given, such as
+  // when the record is added.
+  const refuse = (
+    id: string,
+    found: readonly { key: string; message: string }[],
+  ) => {
+    setProblems(found.map(({ key, message }) => ({ id, key, message })));
+  };
+
+  // Names what is wrong with the values being entered, with focus on the first of them shown.
+  const refuseEntered = (
+    id: string,
+    found: readonly { column: string; message: string }[],
+    shown: readonly Column<Rec, Change>[],
+  ) => {
+    refuse(
+      id,
+      found.map(({ column, message }) => ({ key: column, message })),
+    );
+    const keys = new Set(found.map(({ column }) => column));
+    // Every problem is in one of the columns shown.
+    focusValue(shown.find(({ key }) => keys.has(key)) as Column<Rec, Change>);
+  };
+
+  return { closeStale, editingOf, refuse, refuseEntered };
+}
+
+// Whether a column's values are changed with an editor of their kind's own, rather than as text.
+const hasEditor = (column: Pick<Column<never>, "kind">) =>
+  cellKinds[column.kind].Editor !== undefined;

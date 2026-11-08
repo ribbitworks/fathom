@@ -127,7 +127,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Notes:**
 
 - [ ] **Step 9.** Open the project's ⋯ menu and select **Show details**.
-  - **Expected:** The side panel opens, headed with the project's name, listing **Project ID**, **Owner**, **Customers**, **Proposals**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date. There is no **Add milestone** button, and no milestone has a ⋯ button.
+  - **Expected:** The side panel opens, headed with the project's name, listing **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date. There is no **Add milestone** button, and no milestone has a ⋯ button.
   - **Notes:**
 
 - [ ] **Step 10.** Select **Light** in the Appearance menu.
@@ -500,4 +500,34 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
 
 - [ ] **Step 6.** Select **Clear row**.
   - **Expected:** The row is empty again.
+  - **Notes:**
+
+### PROJ-10: The Product Manager Changes a Proposal in Its Side Panel
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-09.
+
+**Preconditions:** Signed in with this account. **Projects** page open, **Proposals** tab chosen.
+
+- [ ] **Step 1.** In the first row of the table, open the row's ⋯ menu and select **Show details**.
+  - **Expected:** The side panel opens, headed with the proposal's name. Its first row is **Name**, and each row has a small pencil button at its right.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the pencil beside **Proposal ID**, select the **×** at the end of the box if it holds anything, type `PRO-9000`, and press Enter.
+  - **Expected:** **Proposal ID** shows `PRO-9000`, with its earlier value under it, dimmed, after a green dot and **Live**. A yellow dot and **Draft** show beside the name at the top of the panel. The proposal's row in the table shows `PRO-9000` too.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the pencil beside **Owner**, and choose a name from the list.
+  - **Expected:** **Owner** shows the name chosen, and the list is gone.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the pencil beside **Name**, empty the box, and press Enter.
+  - **Expected:** The box stays open, outlined in red, with **Name needed** in red under it.
+  - **Notes:**
+
+- [ ] **Step 5.** Press Esc.
+  - **Expected:** The box is gone, **Name** shows the proposal's name as before, and focus is on the pencil beside **Name**.
+  - **Notes:**
+
+- [ ] **Step 6.** Open the **Draft** menu and select **Live only**.
+  - **Expected:** The panel shows no pencil buttons, and **Proposal ID** shows its earlier value.
   - **Notes:**

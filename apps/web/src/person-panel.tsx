@@ -27,6 +27,7 @@ import {
   livePeople,
   peopleAsShown,
   personKind,
+  recordProblem,
 } from "./people-grid.tsx";
 import { isHire, rowName, type RowChange } from "./people-rows.ts";
 import { peopleQuery } from "./people.ts";
@@ -37,7 +38,7 @@ import {
   usePersonEditing,
   useShownId,
 } from "./person-editing.tsx";
-import classes from "./person-panel.module.css";
+import classes from "./record-details.module.css";
 import { RecordLink, Row } from "./record-details.tsx";
 import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
@@ -277,6 +278,7 @@ export function PersonPanel({
             onChange(person, change);
           },
     others: () => asShown.filter(({ id }) => id !== person.id).map(valuesOf),
+    recordProblem,
   };
   closeStale(context);
   const editing = editingOf(context);

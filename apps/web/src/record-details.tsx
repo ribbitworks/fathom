@@ -16,8 +16,8 @@ import {
   type Editing,
   labelId,
   problemId,
-} from "./person-editing.tsx";
-import classes from "./person-panel.module.css";
+} from "./record-editing.tsx";
+import classes from "./record-details.module.css";
 import type { Column } from "./record-grid.tsx";
 import { type DraftLike, DraftMark, StatusMark } from "./status-mark.tsx";
 import type { CellValue } from "./table-view.ts";
