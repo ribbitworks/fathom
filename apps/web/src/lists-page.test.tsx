@@ -1217,10 +1217,9 @@ describe("retiring and restoring choices", () => {
     );
     focusRow("c4");
     await userEvent.keyboard("{ContextMenu}");
+    const restore = await screen.findByRole("menuitem", { name: /^Restore/ });
     expect(screen.queryByRole("menuitem", { name: "Move up" })).toBeNull();
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: /^Restore/ }),
-    );
+    await userEvent.click(restore);
     expect(
       await screen.findByText("Drafted restoring Old Mill."),
     ).toBeDefined();

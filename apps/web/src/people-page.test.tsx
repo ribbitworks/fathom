@@ -328,7 +328,10 @@ describe("who sees the People page", () => {
     await userEvent.dblClick(cell("p1", "preferredName"));
     expect(within(screen.getByRole("grid")).queryByRole("textbox")).toBeNull();
     await userEvent.keyboard("{Shift>}{F10}{/Shift}");
-    expect(screen.queryByRole("menu")).toBeNull();
+    await screen.findByRole("menuitem", { name: "Show details" });
+    expect(
+      screen.getAllByRole("menuitem").map(({ textContent }) => textContent),
+    ).toEqual(["Show details"]);
   });
 
   it("makes adding a person the main action for those who may, and otherwise adding a column", async () => {
@@ -787,9 +790,12 @@ describe("adding people", () => {
     act(() => {
       inRow(row, "Name").focus();
     });
-    await userEvent.keyboard("x{Delete}{Shift>}{F10}{/Shift}");
+    await userEvent.keyboard("x{Delete}");
     expect(within(row).queryByRole("textbox")).toBeNull();
-    expect(screen.queryByRole("menu")).toBeNull();
+    // A menu shows a frame after it opens, too late to check it stays shut, so look for its button.
+    expect(
+      within(row).queryByRole("button", { name: /^Actions for/ }),
+    ).toBeNull();
     expect(inRow(row, "Name").textContent).toContain("Casey");
     // Once saved, they keep their place and focus, under their own identifier, and can be changed.
     saved = true;

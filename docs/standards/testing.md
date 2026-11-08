@@ -59,6 +59,10 @@ Whole files that only start a program or serve the tests, such as the server's `
 
 Logic, validation, access checks and data handling are never excluded. The code review judges each exclusion.
 
+## Web App Tests
+
+- **Checking that nothing opened:** Mantine shows a menu, popover or dialog a frame after it opens, so checking straight after an action that none opened proves nothing: the check usually passes even when one opens, and fails now and then. Before checking that one is absent, a test **Must** wait for something the action does show, or check that the control that opens it is absent, when that control is shown exactly when the menu or dialog can open in any way, such as from a key.
+
 ## Running Tests
 
 `pnpm check` runs ESLint, the Prettier formatting check, type checking, Markdown, shell, PowerShell and licence linting, the unit, integration, access control and security tests, and the build-time security scans. Container tests run with `pnpm test:containers`, and UI tests have their own command once they are added. If any category cannot run, for example because no container runtime is available, stop and tell the user; never report the tests as passing.
