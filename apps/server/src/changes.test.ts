@@ -309,6 +309,73 @@ describe("the change history", () => {
     }
   });
 
+  it("shows someone added before they start only to readers who see Restricted details, until they start", async () => {
+    // Given someone added to start in the future, and someone who has started
+    const added = await send("POST", "/api/people", {
+      people: [
+        {
+          preferredName: "Kappa Starter",
+          employeeId: "KAPPA-1",
+          positionId: testPosition,
+          startDate: "2099-01-04",
+        },
+        {
+          preferredName: "Kappa Current",
+          employeeId: "KAPPA-2",
+          positionId: testPosition,
+          startDate: "2020-01-06",
+        },
+      ],
+    });
+    const named = async (role: Role) => {
+      const entry = await entryFor(
+        (await test.signedIn(role)).cookie,
+        added.changeSetId,
+      );
+      return (entry?.records ?? []).map(({ name }) => name);
+    };
+
+    // Then only readers who see Restricted details see the future starter
+    expect(await named("workforce-administrator")).toEqual([
+      "Kappa Starter",
+      "Kappa Current",
+    ]);
+    expect(await named("resource-planner")).toEqual(["Kappa Current"]);
+  });
+
+  it("finds no one who has not started for readers who do not see Restricted details, even someone never added", async () => {
+    // Given a future starter, and another drafted and then discarded before ever being added
+    await send("POST", "/api/people", {
+      people: [
+        {
+          preferredName: "Lambda Starter",
+          employeeId: "LAMBDA-1",
+          positionId: testPosition,
+          startDate: "2099-02-01",
+        },
+      ],
+    });
+    const drafted = await send("POST", "/api/people", {
+      people: [
+        {
+          preferredName: "Lambda Discarded",
+          employeeId: "LAMBDA-2",
+          positionId: testPosition,
+          startDate: "2099-03-01",
+        },
+      ],
+    });
+    const [discardedId] = drafted.ids as string[];
+    await send("DELETE", `/api/people/${String(discardedId)}/draft`);
+    const planner = (await test.signedIn("resource-planner")).cookie;
+
+    // Then neither is found by a reader who does not see Restricted details
+    expect((await search(planner, "Lambda")).entries).toEqual([]);
+    expect(
+      (await search(admin.cookie, "Lambda")).entries.length,
+    ).toBeGreaterThan(0);
+  });
+
   it("keeps hiding choices once their column is deleted, by their lists' visibility now", async () => {
     const made = await makePersonWithColumn("Kappa");
     const chosen = await send("PATCH", `/api/people/${made.personId}`, {

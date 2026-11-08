@@ -252,7 +252,17 @@ export async function readOrgChart(
       (seesPeople && seesSensitivity(actor, positionTier)),
     today,
   };
-  const startOf = new Map(rows.map(({ id, startDate }) => [id, startDate]));
+  // Start dates of everyone live, and of those only drafted to be added, such as a new person a
+  // fill drafts, so a hire is drawn under them, or gives way to them, only once they start.
+  const startOf = new Map([
+    ...[...drafts].flatMap(([id, draft]): [string, string | null][] =>
+      draft.action === "created" ? [[id, text(draft.fields.startDate)]] : [],
+    ),
+    ...rows.map(({ id, startDate }): [string, string | null] => [
+      id,
+      startDate,
+    ]),
+  ]);
   const managerShown = managerOnChart(startOf, today);
   const placeholder = placeholderOf(startOf, managerShown, labelOf, reader);
   const liveHires = hireRecords(hires, placeholder);

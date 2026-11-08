@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Planned hires: reading those the user may see, and drafting hires added, changed, moved between
-// states, and removed, discarding drafts, and sending rejected ones for approval again. Approving and
-// rejecting drafts is in drafts.ts. The data access layer checks the actor's permissions.
+// states, filled, and removed, discarding drafts, and sending rejected ones for approval again.
+// Approving and rejecting drafts is in drafts.ts. The data access layer checks the actor's
+// permissions.
 
 import {
   changeSetIdSchema,
   hireChangeSchema,
+  hireFillSchema,
   hiresRequestSchema,
   hiresSchema,
   savedSchema,
@@ -78,6 +80,20 @@ export function hireRoutes(hires: HireAccess): FastifyPluginCallbackZod {
         changeSetId: await hires.discardDraft(
           request.actor,
           request.params.hireId,
+        ),
+      }),
+    );
+
+    app.post(
+      "/api/planned-hires/:hireId/fill",
+      {
+        schema: { params: hireParams, body: hireFillSchema, response: saved },
+      },
+      async (request) => ({
+        changeSetId: await hires.fill(
+          request.actor,
+          request.params.hireId,
+          request.body,
         ),
       }),
     );

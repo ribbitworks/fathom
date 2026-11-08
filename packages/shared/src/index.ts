@@ -83,6 +83,8 @@ export {
   type HireDraft,
   hireChangeSchema,
   hireDraftSchema,
+  type HireFill,
+  hireFillSchema,
   type HireRequest,
   hireRequestSchema,
   hiresRequestSchema,

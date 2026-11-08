@@ -18,6 +18,7 @@ import type {
   Field,
   FieldRequest,
   HireChange,
+  HireFill,
   HireRequest,
   Hires,
   HistoryEntry,
@@ -61,6 +62,7 @@ import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
 import { readOrgChart, setTeamColour } from "./org-chart.ts";
 import * as hireData from "./hires.ts";
+import * as fills from "./fills.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
 import * as releases from "./releases.ts";
@@ -373,6 +375,7 @@ export interface HireAccess {
   delete(actor: Actor, id: string): Promise<ChangeSetId>;
   discardDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   resubmitDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+  fill(actor: Actor, id: string, fill: HireFill): Promise<ChangeSetId>;
 }
 
 function createHireAccess(database: Database): HireAccess {
@@ -410,9 +413,10 @@ function createHireAccess(database: Database): HireAccess {
       hireData.updateHire(database, actor, id, change),
     delete: async (actor, id) => hireData.deleteHire(database, actor, id),
     discardDraft: async (actor, id) =>
-      hireData.discardHireDraft(database, actor, id),
+      fills.discardDraft(database, actor, { kind: "planned-hire", id }),
     resubmitDraft: async (actor, id) =>
-      hireData.resubmitHireDraft(database, actor, id),
+      fills.resubmitDraft(database, actor, { kind: "planned-hire", id }),
+    fill: async (actor, id, fill) => fills.fillHire(database, actor, id, fill),
   };
 }
 
@@ -628,9 +632,9 @@ function createPeopleAccess(database: Database): PeopleAccess {
       peopleData.updatePerson(database, actor, id, change),
     delete: async (actor, id) => peopleData.deletePerson(database, actor, id),
     discardDraft: async (actor, id) =>
-      peopleData.discardPersonDraft(database, actor, id),
+      fills.discardDraft(database, actor, { kind: "person", id }),
     resubmitDraft: async (actor, id) =>
-      peopleData.resubmitPersonDraft(database, actor, id),
+      fills.resubmitDraft(database, actor, { kind: "person", id }),
     createField: async (actor, request) => {
       editor(actor);
       return columnDrafts.createField(database, actor, request);

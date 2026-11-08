@@ -110,6 +110,8 @@ import {
   hireSensitivities,
   readHireTier,
   recordHiringChanges,
+  hireDraftsNaming,
+  partOfFill,
   refuseUnmarkingHireManagers,
   undoHireDrafts,
 } from "./hires.ts";
@@ -534,9 +536,10 @@ async function undoPersonDrafts(
   }
 }
 
-// Refuses putting back, among the fields given: a team name another team has taken since; a line to
-// a manager no longer checked as one, or one that makes a loop with the drafts made since; and an
-// unchecked Manager? while people report to the person.
+// Refuses putting back, among the fields given: a team name another team has taken since; a manager,
+// line, or Manager? that a fill drafted since holds; a line to a manager no longer checked as one,
+// or one that makes a loop with the drafts made since; and an unchecked Manager? while people report
+// to the person.
 async function refuseUndoneReporting(
   transaction: Transaction,
   editor: string,
@@ -547,6 +550,15 @@ async function refuseUndoneReporting(
 ): Promise<void> {
   if (putBack.has("teamName") && typeof person.teamName === "string") {
     await refuseTakenTeamNames(transaction, [{ id, name: person.teamName }]);
+  }
+  // What a fill drafted sets on its person is kept until the fill is discarded, undone or decided.
+  if (
+    ["managerId", "managerFrom", "isManager"].some((field) =>
+      putBack.has(field),
+    ) &&
+    (await hireDraftsNaming(transaction, "filledBy", [id], editor))
+  ) {
+    throw new ConflictError(partOfFill);
   }
   if (
     (putBack.has("managerId") || putBack.has("managerFrom")) &&
@@ -571,7 +583,10 @@ async function refuseUndoneReporting(
   }
   if (putBack.has("isManager") && person.isManager !== true) {
     await refuseUnmarkingManagers(transaction, [id], today, { drafted: true });
-    await refuseUnmarkingHireManagers(transaction, [id], { drafted: true });
+    await refuseUnmarkingHireManagers(transaction, [id], {
+      drafted: true,
+      editor,
+    });
   }
 }
 
@@ -1032,6 +1047,11 @@ async function undoIn(
     await undoColumnDrafts(transaction, actor, columnDrafts);
     await removeEmptyColumnOrder(transaction, actor.user.id);
   }
+  // Hires come before people, so undoing a fill puts a planned manager's hires back under it before
+  // its person's Manager? mark comes off.
+  if (hireDrafts.length > 0) {
+    await undoHireDrafts(transaction, actor.user.id, hireDrafts, changedSince);
+  }
   if (personDrafts.length > 0) {
     await undoPersonDrafts(
       transaction,
@@ -1039,9 +1059,6 @@ async function undoIn(
       await columnsWithAdded(transaction, actor.user.id),
       personDrafts,
     );
-  }
-  if (hireDrafts.length > 0) {
-    await undoHireDrafts(transaction, actor.user.id, hireDrafts, changedSince);
   }
   // The people put back must still fit their columns as they are now.
   const restored = liveRecords.filter(

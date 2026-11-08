@@ -18,7 +18,7 @@ Fathom is used by about 20–30 people in the software organization at first: ma
 
 ## What Personal Information Fathom Holds
 
-Fathom holds a small set of work-related details about each employee in the software organization. They are copied by hand from the company's HR system, which remains the official record. They can also be imported from a CSV or TSV file, which Fathom reads in the user's browser and does not keep.
+Fathom holds a small set of work-related details about each employee in the software organization. They are copied by hand from the company's HR system, which remains the official record. From v1.1, they can also be imported from a CSV or TSV file, which Fathom reads in the user's browser and does not keep.
 
 Each employee's preferred name, Employee ID, position, start and end dates, and whether they manage people are built in, with positions chosen from a list that role keeps. Their site, level, and role on the team are columns the role that maintains workforce information adds, each choosing from a list that role keeps, such as a list of sites. Each list is marked with who may see what is chosen from it, so a column can be General, Restricted, or Confidential. A column can instead hold a web link for each employee, such as the address of a page about them, or a note written about them, of up to 10,000 characters of text, each marked the same way. Notes are written freely, so what they hold depends on those who write them; like any other change, a note is a draft until it is approved. That marking can later be lowered, which shows the details already chosen to more people; such a change is recorded and can be undone. Any further column that holds personal information is brought to HR for approval before it is used.
 

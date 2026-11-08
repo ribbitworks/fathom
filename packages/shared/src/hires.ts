@@ -15,6 +15,7 @@ import {
   hireNameSchema,
   linksSchema,
   notesSchema,
+  preferredNameSchema,
   recordIdSchema,
   requestedLinksSchema,
   requestedNotesSchema,
@@ -100,6 +101,9 @@ export const hireSchema = z.object({
   values: valuesSchema.default({}),
   links: linksSchema.default({}),
   notes: notesSchema.default({}),
+  // Who the hire's draft fills it with, for those who see the hiring plan: the person, for those
+  // who see Restricted details, and otherwise null, since they may not have started.
+  filler: z.string().nullable().optional(),
   draft: hireDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -158,3 +162,23 @@ export const hireChangeSchema = z.object({
 });
 
 export type HireChange = z.infer<typeof hireChangeSchema>;
+
+// Fills a planned hire, as one draft: with a new person, added with the hire's position, manager,
+// and values in the columns they share, starting on the day given, or with someone already in
+// Fathom, who moves to the hire's manager from the day given, or by default from today, or their
+// start date if it is later.
+export const hireFillSchema = z.discriminatedUnion("by", [
+  z.object({
+    by: z.literal("new person"),
+    preferredName: preferredNameSchema,
+    employeeId: recordIdSchema,
+    startDate: day.nullable(),
+  }),
+  z.object({
+    by: z.literal("existing person"),
+    personId: z.uuid(),
+    managerFrom: day.optional(),
+  }),
+]);
+
+export type HireFill = z.infer<typeof hireFillSchema>;

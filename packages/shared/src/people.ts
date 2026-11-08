@@ -185,6 +185,8 @@ export const personSchema = z.object({
   values: valuesSchema,
   links: linksSchema.default({}),
   notes: notesSchema.optional(),
+  // For a planned hire, who its draft fills it with, as a planned hire has it.
+  filler: z.string().nullable().optional(),
   draft: personDraftSchema.optional(),
   heldBy: heldBySchema,
 });
@@ -233,10 +235,14 @@ export const recordIdSchema = z
     `An ID cannot start with ${temporaryIdPrefix}, which temporary IDs use`,
   );
 
-const preferredName = z.string().trim().min(1).max(personLengths.preferredName);
+export const preferredNameSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(personLengths.preferredName);
 
 // A planned hire's name, any label that identifies it, or null for none.
-export const hireNameSchema = preferredName.nullable();
+export const hireNameSchema = preferredNameSchema.nullable();
 const employeeId = recordIdSchema;
 // An empty name removes it.
 const teamName = z
@@ -255,7 +261,7 @@ const reporting = {
 };
 
 export const personRequestSchema = z.object({
-  preferredName,
+  preferredName: preferredNameSchema,
   employeeId,
   positionId: z.uuid(),
   startDate: day.nullable().optional(),
@@ -279,7 +285,7 @@ export const peopleRequestSchema = z.object({
 // Changes some of a person's details; columns named in values have their choices replaced, those
 // named in links their link, and those named in notes their note.
 export const personChangeSchema = z.object({
-  preferredName: preferredName.optional(),
+  preferredName: preferredNameSchema.optional(),
   employeeId: employeeId.optional(),
   positionId: z.uuid().optional(),
   startDate: day.nullable().optional(),

@@ -67,6 +67,7 @@ import {
 } from "./column-approvals.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { refuseUsedAcross, withUsedAcross } from "./draft-uses.ts";
+import { withFills } from "./fills.ts";
 import {
   applyReporting,
   refuseRemovingManagers,
@@ -375,10 +376,10 @@ async function deciding(
   await lockDrafts(transaction);
 }
 
-// Approves the drafts asked for, with the drafts they use, of any kind, applying them all to the
-// live records, and returns the change set that applied them. The plan's records come first, then
-// lists and choices, then columns, which may draw on them, then people, who may be given both, then
-// planned hires, whose managers are people.
+// Approves the drafts asked for, with the drafts they use, of any kind, and the rest of any fill they
+// belong to, applying them all to the live records, and returns the change set that applied them.
+// The plan's records come first, then lists and choices, then columns, which may draw on them, then
+// people, who may be given both, then planned hires, whose managers and fillers are people.
 export async function approveDrafts(
   database: Database,
   actor: Actor,
@@ -394,7 +395,10 @@ export async function approveDrafts(
         await seenAsked(transaction, actor, requested.people, today);
       }
       await checkHiresAsked(transaction, actor, requested.plannedHires);
-      const asked = await withUsedAcross(transaction, requested);
+      const asked = await withUsedAcross(
+        transaction,
+        await withFills(transaction, actor, requested),
+      );
       const made = await approveRecordDrafts(transaction, asked.records);
       if (asksForLists(asked)) {
         made.push(...(await approveListDrafts(transaction, asked)));
@@ -408,7 +412,12 @@ export async function approveDrafts(
         );
       }
       made.push(
-        ...(await approveHiresIn(transaction, actor, asked.plannedHires)),
+        ...(await approveHiresIn(
+          transaction,
+          actor,
+          asked.plannedHires,
+          today,
+        )),
       );
       const left = await draftKeys(transaction);
       const decided = [...waiting].filter((key) => !left.has(key));
@@ -444,18 +453,22 @@ export async function approveDrafts(
   }
 }
 
-// Rejects the drafts asked for, with a reason, and returns the change set that recorded it. A
-// rejected draft keeps its reason until it is changed again or discarded.
+// Rejects the drafts asked for, and the rest of any fill they belong to, with a reason, and returns
+// the change set that recorded it. A rejected draft keeps its reason until it is changed again or
+// discarded.
 export async function rejectDrafts(
   database: Database,
   actor: Actor,
-  asked: DraftsRequest,
+  requested: DraftsRequest,
   reason: string,
   asOf?: string,
 ): Promise<string | null> {
   const today = asOf ?? (await readToday(database));
   return database.transaction(async (transaction) => {
-    await deciding(transaction, actor, asked, "reject");
+    await deciding(transaction, actor, requested, "reject");
+    // A fill is rejected whole, so every area its drafts belong to must be one the actor approves.
+    const asked = await withFills(transaction, actor, requested);
+    refuseBeyondRole(actor, kindsAsked(asked), "reject");
     const seen =
       asked.people.length > 0
         ? await seenAsked(transaction, actor, asked.people, today)

@@ -747,6 +747,50 @@ describe("planned hires on the chart", () => {
     expect((await chart()).has(waiting)).toBe(false);
   });
 
+  it("keeps a new person a fill drafts off the chart as drafts make it until they start, for readers who do not see them", async () => {
+    // Given a planned manager, approved to hire, with a hire reporting to it
+    const [open] = await test.connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .where(eq(listItems.meaning, "open"))
+      .limit(1);
+    const stateId = String(open?.id);
+    const planned = await hire({
+      managerId: await person(),
+      isManager: true,
+      stateId,
+    });
+    const report = await hire({ managerId: planned });
+    const starter = unique("Fictional Starter");
+
+    // When it is filled with someone who starts later
+    const response = await test.request(
+      cookie,
+      "POST",
+      `/api/planned-hires/${planned}/fill`,
+      {
+        by: "new person",
+        preferredName: starter,
+        employeeId: unique("OC"),
+        startDate: "2026-09-01",
+      },
+    );
+    expect(response.statusCode, response.body).toBe(200);
+
+    // Then a reader who sees the hiring plan but not Restricted details sees the planned manager
+    // still, its hire at the top rather than under the starter, and never the starter
+    const manager = await test.signedIn("project-manager");
+    const asDrafted = await drafted(manager.cookie);
+    expect(asDrafted.has(planned)).toBe(true);
+    expect(asDrafted.get(report)?.managerId).toBeNull();
+    expect(
+      [...asDrafted.values()].some(
+        ({ preferredName }) => preferredName === starter,
+      ),
+    ).toBe(false);
+    expect((await drafted()).has(planned)).toBe(false);
+  });
+
   it("shows hires' drafts to those who see the hiring plan: a manager beside, and the chart as drafts make it", async () => {
     const first = await person();
     const second = await person();

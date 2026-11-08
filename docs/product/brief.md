@@ -48,7 +48,6 @@ Personas are named as they are widely known in the software industry. Each organ
 - **Change history:** See who changed what, and when, for the data each user may see.
 - **Custom fields and tables:** Let users add their own fields to Fathom's built-in tables, and their own tables, set up in plain language rather than database terms.
 - **Exports:** Export the plan and roadmap, limited to what each user's roles allow.
-- **Importing people:** Add and update people from a CSV or TSV file.
 - **Snapshots:** Save point-in-time snapshots of the plan and view them later.
 - **Backups:** Provide automated backup and restore of Fathom's data.
 
@@ -94,6 +93,7 @@ Detailed decisions are recorded in the [Decisions Log](decisions.md). The order 
 - Integrations with Jira and HR systems
 - Other integrations as needs emerge
 - Physical resources, such as equipment, planned and allocated alongside people
+- Importing people: adding and updating people from a CSV or TSV file, planned for v1.1, as the [Roadmap](roadmap.md#not-yet-placed) records
 
 ## Open questions
 

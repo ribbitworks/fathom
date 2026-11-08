@@ -492,6 +492,17 @@ const routes: Route[] = [
     pattern: `/api/planned-hires/:hireId${end}`,
     needs: allOf("people:edit", "hiring-plan:edit"),
   })),
+  {
+    method: "POST",
+    pattern: "/api/planned-hires/:hireId/fill",
+    needs: allOf("people:edit", "hiring-plan:edit"),
+    body: () => ({
+      by: "new person",
+      preferredName: "Fictional Starter",
+      employeeId: "FICTIONAL-FILL",
+      startDate: null,
+    }),
+  },
 
   // Planning configuration is seen with the plan.
   {

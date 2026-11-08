@@ -154,6 +154,44 @@ describe("a draft's details", () => {
     expect(field?.field.oldValue).toBe("Someone not shown in People");
   });
 
+  it("says a planned hire is filled, naming its person only when they are among the people shown", () => {
+    const hire = (filler: string | null): Person => ({
+      id: "h1",
+      kind: "planned-hire",
+      preferredName: "",
+      employeeId: "REQ-9001",
+      positionId: "position-1",
+      filler,
+      values: {},
+      links: {},
+    });
+    const filling = {
+      action: "changed" as const,
+      changed: ["filledBy"],
+      live: { values: {}, links: {} },
+      state: "waiting" as const,
+      madeBy: "Fictional Editor",
+      madeAt: null,
+    };
+    const starter: Person = {
+      id: "p9",
+      preferredName: "Fictional Starter",
+      employeeId: "E90001",
+      values: {},
+      links: {},
+    };
+    const lines = (person: Person) =>
+      draftLines(
+        { ...draft, action: "changed" },
+        personDraftFields(person, filling, [], [], [starter]),
+      ).map(phraseText);
+
+    expect(lines(hire("p9"))).toEqual([
+      "Filled with Fictional Starter, by Fictional Editor",
+    ]);
+    expect(lines(hire(null))).toEqual(["Filled, by Fictional Editor"]);
+  });
+
   it("leaves an old manager unnamed when no people are given", () => {
     const [field] = personDraftFields(
       {

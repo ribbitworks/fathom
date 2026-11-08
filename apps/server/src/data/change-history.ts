@@ -10,10 +10,12 @@ import {
   changes,
   changeSets,
   type Database,
+  drafts,
   fieldOfValue,
   inChunks,
   listItems,
   lists,
+  people,
   plannedHires,
   roles,
   users,
@@ -59,6 +61,7 @@ import {
 import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
 import { hireSensitivities, hiringPlanFields, readHireTier } from "./hires.ts";
+import { readToday } from "./settings.ts";
 import { personTier } from "./people.ts";
 import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
@@ -480,13 +483,83 @@ async function visibleRows(
   });
 }
 
+// Which of the people and planned hires given are people who have not started yet: by their start
+// date when live, by the draft adding them when only drafted, and otherwise by the last start date
+// recorded for them, such as for someone removed. Planned hires are never among them.
+async function notStartedAmong(
+  database: Database,
+  ids: readonly string[],
+  today: string,
+): Promise<Set<string>> {
+  const starts = new Map<string, unknown>();
+  for (const chunk of inChunks([...ids])) {
+    for (const { id, startDate } of await database
+      .select({ id: people.id, startDate: people.startDate })
+      .from(people)
+      .where(inArray(people.id, chunk))) {
+      starts.set(id, startDate);
+    }
+  }
+  const unknown = () => ids.filter((id) => !starts.has(id));
+  for (const chunk of inChunks(unknown())) {
+    for (const { recordId, fields } of await database
+      .select({ recordId: drafts.recordId, fields: drafts.fields })
+      .from(drafts)
+      .where(
+        and(
+          eq(drafts.recordType, "person"),
+          eq(drafts.action, "created"),
+          inArray(drafts.recordId, chunk),
+        ),
+      )) {
+      starts.set(recordId, fields.startDate ?? null);
+    }
+  }
+  for (const chunk of inChunks(unknown())) {
+    for (const { recordId, oldValue, newValue } of await database
+      .select({
+        recordId: changes.recordId,
+        oldValue: changes.oldValue,
+        newValue: changes.newValue,
+      })
+      .from(changes)
+      .where(
+        and(
+          eq(changes.recordType, "person"),
+          eq(changes.field, "startDate"),
+          inArray(changes.recordId, chunk),
+        ),
+      )
+      .orderBy(asc(changes.id))) {
+      starts.set(recordId, newValue ?? oldValue);
+    }
+  }
+  return new Set(
+    [...starts].flatMap(([id, start]) =>
+      typeof start === "string" && start > today ? [id] : [],
+    ),
+  );
+}
+
 // The records a change set changed, in the order first changed, each with the fields it changed.
 function recordsOf(
   rows: readonly StoredChange[],
   names: Map<string, string>,
   listOf: Map<string, string>,
+  hidden: ReadonlySet<string>,
+  restricted: boolean,
 ): ChangedRecord[] {
   const name = (id: string) => names.get(id);
+  // People the reader does not see are named nowhere, such as a hire's manager. Who fills a hire is
+  // named only to readers who see Restricted details, since it tells of their reporting line to
+  // come.
+  const valueName = (row: StoredChange) => (id: string) =>
+    hidden.has(id) ||
+    (!restricted &&
+      row.recordType === "planned-hire" &&
+      row.field === "filledBy")
+      ? undefined
+      : name(id);
   const records = new Map<string, ChangedRecord>();
   for (const row of rows) {
     const key = `${row.recordType} ${row.recordId} ${String(row.draft)}`;
@@ -517,8 +590,8 @@ function recordsOf(
     const field: ChangedField = {
       field: columnId === null ? row.field : "value",
       ...(column === undefined ? {} : { column }),
-      oldValue: shown(row, row.oldValue, name),
-      newValue: shown(row, row.newValue, name),
+      oldValue: shown(row, row.oldValue, valueName(row)),
+      newValue: shown(row, row.newValue, valueName(row)),
     };
     record.fields.push(field);
   }
@@ -608,7 +681,34 @@ async function readBatch(
     [...facts.lists.values()].filter((id) => !facts.names.has(id)),
     facts,
   );
-  const visible = await visibleRows(database, actor, rows, facts, tierNow);
+  // Readers who do not see Restricted details see nobody who has not started, as People hides them:
+  // neither a person's own changes nor a hire's manager or filler naming them.
+  const restricted = seesSensitivity(actor, "restricted");
+  const hidden =
+    restricted || !actor.permissions.includes("people:view")
+      ? new Set<string>()
+      : await notStartedAmong(
+          database,
+          [
+            ...new Set(
+              rows.flatMap((row) => {
+                if (row.recordType === "person") return [row.recordId];
+                return row.recordType === "planned-hire" &&
+                  (row.field === "managerId" || row.field === "filledBy")
+                  ? [row.oldValue, row.newValue].filter(
+                      (value): value is string => typeof value === "string",
+                    )
+                  : [];
+              }),
+            ),
+          ],
+          await readToday(database),
+        );
+  const visible = (
+    await visibleRows(database, actor, rows, facts, tierNow)
+  ).filter(
+    ({ row }) => !(row.recordType === "person" && hidden.has(row.recordId)),
+  );
   const bySet = new Map<string, { rows: StoredChange[]; sensitive: boolean }>();
   for (const { row, tier } of visible) {
     const held = bySet.get(row.changeSetId) ?? { rows: [], sensitive: false };
@@ -633,7 +733,13 @@ async function readBatch(
                 madeAt: set.madeAt.toISOString(),
                 madeBy: set.madeBy,
                 madeAs: set.madeAs,
-                records: recordsOf(held.rows, facts.names, facts.lists),
+                records: recordsOf(
+                  held.rows,
+                  facts.names,
+                  facts.lists,
+                  hidden,
+                  restricted,
+                ),
               },
               sensitive: held.sensitive,
             },

@@ -43,7 +43,6 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
 - **Web link columns:** Added by the owner. A column on People holding one web link for each person, ahead of the other column types.
 - **Note columns:** Added by the owner. A column on People holding one rich-text note for each person, and notes on releases, built on one shared note format.
-- **Importing people:** Added by the owner. Adding and updating people from a CSV or TSV file.
 - **Resource assignment** and **Capacity visibility**
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
@@ -89,6 +88,7 @@ Goals the owner has added that are not yet placed in a stage:
 - **Help:** More help, such as for Fathom's pages and terms, beyond Help's Roles and Drafts pages.
 - **Renaming terms:** An organization renames Fathom's terms to its own, such as Feature to Epic, or Cycle to Program Increment.
 - **Colours for choices:** Choices can be shown in their own colours, so values stand out in tables. Still open: whether colours belong to a list's choices, set when they are added, to a table view, like conditional highlighting in a spreadsheet, or to both.
+- **Importing people:** Added by the owner. Adding and updating people from a CSV or TSV file. Moved out of the first stage and v1 by the owner on 2026-11-07, for v1.1, so the remaining v1 work goes to its core: filling planned hires, feature teams, and team composition.
 - **Publishing chosen drafts:** On the Drafts page, a user ticks some of their own unpublished drafts and publishes them for approval, or discards them, leaving the rest unpublished. Today Publish and Discard all act on every unpublished draft at once. Asked for by the owner on 2026-11-05.
 - **Automated UI tests:** The manual tests' journeys run in a real browser with Playwright, as [ADR 0002](../adr/0002-libraries.md) chose, against a database of their own, starting with the happy path of Releases, so the manual tests keep only what a person must judge, such as how a screen looks and whether it is clear. A low priority, added by the owner on 2026-11-04.
 

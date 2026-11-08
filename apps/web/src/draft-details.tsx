@@ -71,6 +71,21 @@ export function personDraftFields(
   people?: readonly Person[],
 ): DraftField[] {
   return draft.changed.flatMap((key): DraftField[] => {
+    // Only a planned hire's draft fills it, naming the person only to those who see them.
+    if (key === "filledBy") {
+      return [
+        {
+          key,
+          field: {
+            field: key,
+            oldValue: null,
+            newValue:
+              people?.find(({ id }) => id === person.filler)?.preferredName ??
+              null,
+          },
+        },
+      ];
+    }
     const reporting = reportingValues(key, person, draft.live, people);
     if (reporting !== undefined) {
       const [oldValue, newValue] = reporting;
@@ -202,10 +217,21 @@ export function draftLines(
     return [[{ strong: "Changed" }, ` by ${makerOf(draft)}`]];
   }
   return changed.map(({ key, field }) => [
-    ...describeField(field),
+    ...(describers.get(key) ?? describeField)(field),
     `, by ${changerOf(draft, key)}`,
   ]);
 }
+
+function describeFill(field: ChangedField): Phrase {
+  return field.newValue === null
+    ? [{ strong: "Filled" }]
+    : [{ strong: "Filled" }, " with ", { value: String(field.newValue) }];
+}
+
+// Fields a draft words in a way of their own, rather than as a change from one value to another.
+const describers = new Map<string, (field: ChangedField) => Phrase>([
+  ["filledBy", describeFill],
+]);
 
 // Under Approve, greyed out, for a draft this account changed when its role does not let it approve
 // its own.
