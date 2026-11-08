@@ -55,6 +55,7 @@ import {
 import {
   cyclesUntilOf,
   streamPatterns,
+  livePatterns,
   streamFeatures,
   streamReleases,
 } from "./release-kinds.ts";
@@ -120,16 +121,25 @@ function streamOut(
       ...extras(state, makers, "release", releaseId),
     }),
   );
+  const cycles = cyclesOf(
+    streamPatterns(state, id).map(({ pattern }) => pattern),
+    cyclesUntilOf(state, id),
+  );
+  const liveStream = stateOf(state, "release-stream").live.get(id);
+  const liveCycles = cyclesOf(
+    livePatterns(state, id),
+    String(liveStream?.cyclesUntil ?? stream.cyclesUntil),
+  );
   return {
     id,
     name: String(stream.name),
     retired: stream.retired === true,
     cyclesUntil: String(stream.cyclesUntil),
     patterns,
-    cycles: cyclesOf(
-      streamPatterns(state, id).map(({ pattern }) => pattern),
-      cyclesUntilOf(state, id),
-    ),
+    cycles,
+    ...(JSON.stringify(liveCycles) === JSON.stringify(cycles)
+      ? {}
+      : { liveCycles }),
     releases,
     ...extras(state, makers, "release-stream", id),
   };

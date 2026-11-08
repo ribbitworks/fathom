@@ -82,6 +82,8 @@ export const releaseStreamSchema = z.object({
   cyclesUntil: z.string(),
   patterns: z.array(cyclePatternSchema),
   cycles: z.array(cycleSchema),
+  // Its cycles as they are live, where drafts of its patterns or plan change them.
+  liveCycles: z.array(cycleSchema).optional(),
   releases: z.array(releaseSchema),
   draft: recordDraftSchema.optional(),
   heldBy: heldBySchema,

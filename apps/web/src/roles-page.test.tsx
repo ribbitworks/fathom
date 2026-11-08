@@ -448,6 +448,7 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "Overview",
       "Projects",
+      "Features",
       "Releases",
       "People",
       "Drafts",
@@ -504,6 +505,7 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "Overview",
       "Projects",
+      "Features",
       "Releases",
       "No longer: People",
       // Drafts stays, since viewing the plan opens it too.
@@ -524,6 +526,7 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Pages its holders see")).toEqual([
       "No longer: Overview",
       "No longer: Projects",
+      "No longer: Features",
       // Releases and Drafts come back, since configuration opens them too.
       "Releases",
       "No longer: People",

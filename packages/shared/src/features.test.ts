@@ -8,6 +8,7 @@ import {
   featureRequestSchema,
   firstFeatureStatus,
   largestEstimateHours,
+  needsFeatureTeam,
 } from "./features.ts";
 import { projectSubjects } from "./projects.ts";
 
@@ -66,6 +67,28 @@ describe("a feature request", () => {
 
   it("starts a feature as Possible", () => {
     expect(firstFeatureStatus).toBe("possible");
+  });
+});
+
+describe("which features need a feature team", () => {
+  it.each(["planned", "in-progress"] as const)(
+    "needs one for a %s feature with none",
+    (status) => {
+      expect(needsFeatureTeam({ status, featureTeamId: null })).toBe(true);
+    },
+  );
+
+  it.each(["possible", "done", "cancelled"] as const)(
+    "does not need one for a %s feature",
+    (status) => {
+      expect(needsFeatureTeam({ status, featureTeamId: null })).toBe(false);
+    },
+  );
+
+  it("does not need one for a planned feature that has one", () => {
+    expect(needsFeatureTeam({ status: "planned", featureTeamId: "t1" })).toBe(
+      false,
+    );
   });
 });
 

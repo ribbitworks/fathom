@@ -1091,6 +1091,56 @@ describe("drafts in a stream's panel", () => {
     ).toBeDefined();
   });
 
+  it("names a feature's draft that approving includes", async () => {
+    const featureId = "00000000-0000-4000-8000-0000000000f1";
+    const stream = fictionalStream({
+      releases: [
+        fictionalRelease({
+          draft: recordDraft({
+            action: "changed",
+            uses: [{ type: "feature", id: featureId }],
+          }),
+        }),
+      ],
+    });
+    const { fetch } = await openStream([stream], {
+      answers: {
+        "GET /api/session": approver,
+        "GET /api/projects": () =>
+          Response.json({
+            customers: [],
+            projects: [],
+            proposals: [],
+            features: [
+              {
+                id: featureId,
+                name: "Fictional Moving",
+                status: "planned",
+                targetStreamId: streamId,
+                targetCycle: "2027-07-01",
+                estimateHours: null,
+                featureTeamId: null,
+                description: null,
+                draft: recordDraft({ action: "changed" }),
+              },
+            ],
+            canEdit: false,
+            canEditFeatures: false,
+          }),
+      },
+    });
+    await waitFor(() => {
+      expect(fetch.mock.calls.map(([url]) => url)).toContain("/api/projects");
+    });
+    await chooseInMenu("Fictional One", "Approve…");
+    const dialog = await screen.findByRole("dialog", {
+      name: "Approve 2 drafts?",
+    });
+    expect(
+      within(dialog).getByText("the feature Fictional Moving"),
+    ).toBeDefined();
+  });
+
   it("approves a draft with the drafts it uses", async () => {
     // A release in a stream only drafted to be added.
     const stream = fictionalStream({

@@ -2,10 +2,12 @@
 
 // Tests for the Projects page's tables: what their columns save from what is typed into a cell.
 
-import type { Customer, RecordDraft } from "@fathom/shared";
+import type { Customer, Feature, RecordDraft } from "@fathom/shared";
 import { describe, expect, it } from "vitest";
 import { cellKinds, flagChoice } from "./cell-kinds.tsx";
 import {
+  featureColumns,
+  featureTable,
   livePlanRecords,
   milestoneColumns,
   noColumnActions,
@@ -14,7 +16,8 @@ import {
   proposalColumns,
 } from "./project-grids.tsx";
 import type { TableChoices } from "./projects.ts";
-import { recordDraft } from "./test-support.tsx";
+import { cycleChoices } from "./projects.ts";
+import { fictionalStream, recordDraft } from "./test-support.tsx";
 
 function milestoneColumn(key: string) {
   const column = milestoneColumns([]).find((each) => each.key === key);
@@ -42,7 +45,177 @@ const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
   proposals: [],
   projects: [],
   statuses: [],
+  featureTeams: [],
+  cycles: [],
   ...more,
+});
+
+const feature = (more: Partial<Feature> = {}): Feature => ({
+  id: "f1",
+  name: "Fictional Feature",
+  status: "planned",
+  targetStreamId: null,
+  targetCycle: null,
+  estimateHours: null,
+  featureTeamId: "t1",
+  description: null,
+  ...more,
+});
+
+const cycleChoice = (id: string, label: string) => ({
+  id,
+  label,
+  description: "",
+  retired: false,
+});
+
+const cycles = [
+  cycleChoice("s1 2027-01-01", "Fictional Stream: 27.1"),
+  cycleChoice("s1 2027-04-01", "Fictional Stream: 27.2"),
+];
+
+describe("the Features table", () => {
+  const columns = featureColumns(choices({ cycles }));
+  const target = columns.find(({ key }) => key === "targetCycle");
+  const team = columns.find(({ key }) => key === "featureTeamId");
+  const status = columns.find(({ key }) => key === "status");
+  const groupOf = (more: Partial<Feature>) =>
+    featureTable(choices({ cycles })).grouping?.of(feature(more));
+
+  it("shows a feature's target as its stream and cycle together", () => {
+    expect(
+      target?.value(
+        feature({ targetStreamId: "s1", targetCycle: "2027-01-01" }),
+      ),
+    ).toEqual(["s1 2027-01-01"]);
+  });
+
+  it("shows a feature with no target as having none", () => {
+    expect(target?.value(feature())).toEqual([]);
+  });
+
+  it("saves a target as its stream and cycle", () => {
+    expect(target?.change(["s1 2027-04-01"])).toEqual({
+      targetStreamId: "s1",
+      targetCycle: "2027-04-01",
+    });
+  });
+
+  it("saves no target as Later", () => {
+    expect(target?.change([])).toEqual({
+      targetStreamId: null,
+      targetCycle: null,
+    });
+  });
+
+  it("reads a draft's live target", () => {
+    expect(
+      target?.live(
+        recordDraft({
+          changed: ["targetCycle"],
+          live: { targetStreamId: "s1", targetCycle: "2027-01-01" },
+        }),
+      ),
+    ).toEqual(["s1 2027-01-01"]);
+  });
+
+  it("makes one request from the values of a new row", () => {
+    expect(
+      featureTable(choices({ cycles })).request(
+        [{ name: "Fictional" }, { status: "planned" }],
+        "",
+      ),
+    ).toEqual({ name: "Fictional", status: "planned" });
+  });
+
+  it("names a cycle only live, kept from being picked, in date order", () => {
+    const offered = cycleChoices([
+      fictionalStream({
+        cycles: [
+          {
+            startsOn: "2027-06-01",
+            endsOn: "2027-08-31",
+            name: "New",
+            months: [],
+          },
+        ],
+        liveCycles: [
+          {
+            startsOn: "2027-07-01",
+            endsOn: "2027-09-30",
+            name: "Old",
+            months: [],
+          },
+          {
+            startsOn: "2027-06-01",
+            endsOn: "2027-08-31",
+            name: "New",
+            months: [],
+          },
+        ],
+      }),
+    ]);
+    expect(offered.map(({ label, retired }) => [label, retired])).toEqual([
+      ["Fictional Majors: New", false],
+      ["Fictional Majors: Old", true],
+    ]);
+  });
+
+  it("starts a new feature as Possible", () => {
+    expect(status?.newRowValue?.("")).toEqual(["possible"]);
+  });
+
+  it("marks a planned feature with no feature team", () => {
+    expect(team?.mark?.(feature({ featureTeamId: null }))).toBeTruthy();
+  });
+
+  it("does not mark a possible feature with no feature team", () => {
+    expect(
+      team?.mark?.(feature({ status: "possible", featureTeamId: null })),
+    ).toBe(false);
+  });
+
+  it("groups a feature under its cycle, in the cycles' order", () => {
+    expect(
+      groupOf({ targetStreamId: "s1", targetCycle: "2027-04-01" }),
+    ).toEqual({
+      key: "s1 2027-04-01",
+      label: "Fictional Stream: 27.2",
+      rank: 1,
+    });
+  });
+
+  it("groups a feature with no target in Later, after every cycle", () => {
+    expect(groupOf({})).toEqual({ key: "later", label: "Later", rank: 2 });
+  });
+
+  it("groups a feature on a cycle no longer offered in Later", () => {
+    expect(
+      groupOf({ targetStreamId: "gone", targetCycle: "2030-01-01" })?.key,
+    ).toBe("later");
+  });
+
+  it("describes a changed target in words in a draft", () => {
+    const fields = planDraftFields(
+      "feature",
+      feature({
+        targetStreamId: "s1",
+        targetCycle: "2027-04-01",
+        draft: recordDraft({
+          changed: ["targetCycle", "targetStreamId"],
+          live: { targetStreamId: "s1", targetCycle: "2027-01-01" },
+        }),
+      }),
+      choices({ cycles }),
+    );
+    expect(fields.map(({ field }) => field)).toEqual([
+      {
+        field: "Target cycle",
+        oldValue: ["Fictional Stream: 27.1"],
+        newValue: ["Fictional Stream: 27.2"],
+      },
+    ]);
+  });
 });
 
 describe("a date pasted into a cell", () => {

@@ -105,6 +105,7 @@ export const viewDefinitionSchema = z.object({
             ),
           ].slice(0, breakdownLimit),
     ),
+  ungrouped: z.literal(true).optional().catch(undefined),
   frozen: frozen.optional().catch(undefined),
   widths: z
     .record(z.string(), z.unknown())
@@ -133,6 +134,7 @@ export interface ViewDefinition {
   filters?: Record<string, Filter> | undefined;
   sort?: string[] | undefined;
   breakdown?: string[] | undefined;
+  ungrouped?: true | undefined;
   frozen?: number | undefined;
   widths?: Record<string, number> | undefined;
 }
@@ -154,6 +156,7 @@ const strictDefinitionSchema = z.object({
     .max(breakdownLimit)
     .refine((keys) => new Set(keys).size === keys.length, "Repeated column")
     .optional(),
+  ungrouped: z.literal(true).optional(),
   frozen: frozen.optional(),
   widths: z
     .record(columnKey, width)

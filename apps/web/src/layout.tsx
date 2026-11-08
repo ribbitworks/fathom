@@ -71,6 +71,7 @@ type Page =
   | "/org-chart"
   | "/releases/{-$streamId}"
   | "/projects"
+  | "/features"
   | "/help/roles"
   | "/help/drafts";
 
@@ -110,6 +111,12 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Projects",
         icon: "projects",
         to: "/projects",
+        permission: "plan:view",
+      },
+      {
+        label: "Features",
+        icon: "projects",
+        to: "/features",
         permission: "plan:view",
       },
       {

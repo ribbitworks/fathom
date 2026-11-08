@@ -127,7 +127,8 @@ const noPlan = () =>
     canEdit: false,
     canEditFeatures: false,
   });
-const noPlanChoices = () => Response.json({ owners: [], statuses: [] });
+const noPlanChoices = () =>
+  Response.json({ owners: [], statuses: [], featureTeams: [] });
 
 type Answers = Parameters<typeof serverAnswers>[0];
 
@@ -638,6 +639,56 @@ describe("the Drafts page", () => {
       "the milestone Fictional Kickoff of Fictional Project",
     );
     expect(listed).not.toContain("Settled");
+  });
+
+  it("lists a feature's draft, naming the cycle in words", async () => {
+    const streamOfCycles = fictionalStream();
+    const [first, second] = streamOfCycles.cycles;
+    serverAnswers({
+      "GET /api/session": session(["plan:approve", "plan:view"]),
+      "GET /api/release-streams": () =>
+        Response.json({
+          streams: [streamOfCycles],
+          canEditStreams: false,
+          canEditReleases: false,
+        }),
+      "GET /api/people": peopleWith([]),
+      "GET /api/lists": () => Response.json({ lists: [] }),
+      "GET /api/projects/choices": noPlanChoices,
+      "GET /api/projects": () =>
+        Response.json({
+          customers: [],
+          projects: [],
+          proposals: [],
+          features: [
+            {
+              id: "00000000-0000-4000-8000-0000000000f1",
+              name: "Fictional Moving",
+              status: "planned",
+              targetStreamId: streamOfCycles.id,
+              targetCycle: second?.startsOn,
+              estimateHours: null,
+              featureTeamId: null,
+              description: null,
+              draft: recordDraft({
+                changed: ["targetStreamId", "targetCycle"],
+                live: {
+                  targetStreamId: streamOfCycles.id,
+                  targetCycle: String(first?.startsOn),
+                },
+              }),
+            },
+          ],
+          canEdit: false,
+          canEditFeatures: false,
+        }),
+    });
+    renderApp("/drafts");
+    const entry = await screen.findByText(/the feature Fictional Moving/);
+    expect(entry).not.toBeNull();
+    expect(document.body.textContent).toContain(
+      `${streamOfCycles.name}: ${String(second?.name)}`,
+    );
   });
 
   it("tries the plan's records again when they could not be loaded", async () => {

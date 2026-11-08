@@ -483,7 +483,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
   - **Notes:**
 
 - [ ] **Step 2.** Replace **3** in **Length** with `2`.
-  - **Expected:** The red line is gone. **New dates** lists the cycle two months long, then the next a quarter and the first half half a year, each starting a month earlier than before, such as **27.1**, **2027-01-01 to 2027-02-28**; **27.2**, **2027-03-01 to 2027-05-31**; and **27.3**, **2027-06-01 to 2027-11-30**. Below it, the dialog says **Harbor 3 moves with its cycles.** and **Harbor 3 ships** on the first half's new last day, such as **Harbor 3 ships 2027-11-30.**
+  - **Expected:** The red line is gone. **New dates** lists the cycle two months long, then the next a quarter and the first half half a year, each starting a month earlier than before, such as **27.1**, **2027-01-01 to 2027-02-28**; **27.2**, **2027-03-01 to 2027-05-31**; and **27.3**, **2027-06-01 to 2027-11-30**. Below it, the dialog says that **Harbor 3**, **Data Retention Controls** and **Report Builder** move with their cycles, and **Harbor 3 ships** on the first half's new last day, such as **Harbor 3 ships 2027-11-30.**
   - **Notes:**
 
 - [ ] **Step 3.** Select **Change length**.
@@ -501,7 +501,7 @@ Run the test cases in order. Start with [R0](#r0-start-fathom), then [R2](#r2-st
 **Preconditions:** Signed in with this account. Run after REL-22. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** Under **Releases**, select the **⋯** button at the end of the **Harbor 3** row, then **Approve…**.
-  - **Expected:** A dialog titled **Approve 6 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Platform from** each of the three days in REL-22 Step 3, such as **the cycles of Platform from 2027-01-01**, **the cycles of Platform from 2027-03-01** and **the cycles of Platform from 2027-06-01**.
+  - **Expected:** A dialog titled **Approve 6 drafts?** says **Also approves the drafts these depend on:**, listing **the cycles of Platform from** each of the three days in REL-22 Step 3, such as **the cycles of Platform from 2027-01-01**, **the cycles of Platform from 2027-03-01** and **the cycles of Platform from 2027-06-01**, with **the feature Data Retention Controls** and **the feature Report Builder**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Approve**.

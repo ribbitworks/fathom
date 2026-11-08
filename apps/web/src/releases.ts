@@ -6,6 +6,7 @@
 // its draft name it.
 
 import {
+  type Feature,
   changeSetIdSchema,
   type Cycle,
   type CycleLengthRequest,
@@ -137,13 +138,14 @@ export const changeCycleLength = (
   );
 
 // What a new length for one cycle makes of its stream, as the server would draft it: the cycles
-// from that one on, the names of the releases that move with their cycles, the new ship dates of
+// from that one on, the names of the releases and features that move with their cycles, the new ship dates of
 // releases that ship when their last cycle ends, and why it cannot be made, if it cannot. Cycles
 // the length cannot make are shown as they are now.
 export function lengthChangeOf(
   stream: ReleaseStream,
   startsOn: string,
   request: CycleLengthRequest,
+  features: readonly Feature[] = [],
 ): {
   cycles: Cycle[];
   moved: string[];
@@ -169,7 +171,25 @@ export function lengthChangeOf(
     ({ draft }) => draft?.action !== "deleted",
   );
   const moved = movedCycles(stream.cycles, cycles);
-  const moving = movedReleases(kept, moved, stream.cyclesUntil, stream.name);
+  const moving = movedReleases(
+    [
+      ...kept,
+      ...features
+        .filter(
+          ({ targetStreamId, draft }) =>
+            targetStreamId === stream.id && draft?.action !== "deleted",
+        )
+        .map(({ name, targetCycle }) => ({
+          name,
+          firstCycle: String(targetCycle),
+          lastCycle: String(targetCycle),
+          shipsOn: null,
+        })),
+    ],
+    moved,
+    stream.cyclesUntil,
+    stream.name,
+  );
   if ("problem" in moving) {
     return {
       cycles: from(cycles),

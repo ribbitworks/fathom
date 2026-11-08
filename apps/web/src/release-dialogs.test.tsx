@@ -55,8 +55,10 @@ function show(dialog: (handlers: ReturnType<typeof saving>) => ReactElement) {
 }
 
 function bodiesOf(fetch: ReturnType<typeof serverAnswers>): unknown[] {
-  return fetch.mock.calls.map(
-    ([, init]) => JSON.parse(init?.body as string) as unknown,
+  return fetch.mock.calls.flatMap(([, init]) =>
+    init?.body === undefined
+      ? []
+      : [JSON.parse(init.body as string) as unknown],
   );
 }
 
@@ -886,6 +888,61 @@ describe("the dialog changing one cycle's length", () => {
     ).not.toBeNull();
   });
 
+  it("names the features that move with their cycles", async () => {
+    const featureOf = (name: string, more: object) => ({
+      id: name,
+      name,
+      status: "planned",
+      estimateHours: null,
+      featureTeamId: null,
+      description: null,
+      targetStreamId: streamId,
+      targetCycle: "2027-07-01",
+      ...more,
+    });
+    serverAnswers({
+      "GET /api/projects": () =>
+        Response.json({
+          customers: [],
+          projects: [],
+          proposals: [],
+          features: [
+            featureOf("Fictional Moved", {}),
+            featureOf("Fictional Elsewhere", { targetStreamId: "other" }),
+            featureOf("Fictional Removed", {
+              draft: recordDraft({ action: "deleted" }),
+            }),
+          ],
+          canEdit: false,
+          canEditFeatures: false,
+        }),
+    });
+    show((handlers) => (
+      <CycleLengthDialog stream={stream} cycle={second} {...handlers} />
+    ));
+    await waitFor(() => {
+      expect(lengthBox().value).toBe("3");
+    });
+    await typeLength("2");
+    expect(
+      await screen.findByText("Fictional Moved moves with its cycles."),
+    ).not.toBeNull();
+  });
+
+  it("names no features to one the server refuses the plan", async () => {
+    serverAnswers({
+      "GET /api/projects": () => new Response(null, { status: 403 }),
+    });
+    show((handlers) => (
+      <CycleLengthDialog stream={withLater} cycle={second} {...handlers} />
+    ));
+    await typeLength("2");
+    expect(
+      await screen.findByText("Fictional Later moves with its cycles."),
+    ).not.toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+
   it("keeps the next cycle's end date when asked, moving no release after it", async () => {
     const lastOnly = fictionalStream({
       releases: [
@@ -938,7 +995,7 @@ describe("the dialog changing one cycle's length", () => {
       screen.getByRole("button", { name: "Change length" }),
     );
     expect(screen.getByRole("alert").textContent).toBe("Choose a new length.");
-    expect(fetch).not.toHaveBeenCalled();
+    expect(bodiesOf(fetch)).toEqual([]);
   });
 
   it("names every release that moves", async () => {
@@ -1003,7 +1060,7 @@ describe("the dialog changing one cycle's length", () => {
       screen.getByRole("button", { name: "Change length" }),
     );
     expect(screen.getByText("From 1 to two years")).not.toBeNull();
-    expect(fetch).not.toHaveBeenCalled();
+    expect(bodiesOf(fetch)).toEqual([]);
   });
 
   it("refuses moving a release's first cycle after its Ships on day", async () => {

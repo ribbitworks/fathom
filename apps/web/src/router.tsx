@@ -334,6 +334,26 @@ const projectsSearch = viewSearchSchema.extend({
   open: z.uuid().optional().catch(undefined),
 });
 
+const featuresRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/features",
+  validateSearch: viewSearchSchema,
+  beforeLoad: requiring("plan:view"),
+  component: function Features() {
+    const { permissions } = signedIn.useRouteContext();
+    const navigate = featuresRoute.useNavigate();
+    return (
+      <ProjectsPage
+        tab="features"
+        approves={approvableKinds(permissions)}
+        {...viewProps(featuresRoute.useSearch(), (next, replace) => {
+          void navigate({ search: next, replace });
+        })}
+      />
+    );
+  },
+});
+
 const projectsRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/projects",
@@ -499,6 +519,7 @@ const routeTree = rootRoute.addChildren([
     listsRoute,
     releasesRoute,
     projectsRoute,
+    featuresRoute,
     peopleRoute,
     orgChartRoute,
     draftsRoute,

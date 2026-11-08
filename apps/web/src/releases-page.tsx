@@ -78,6 +78,7 @@ import { sidePanelScroll, useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { DraftMark, HoldMarks } from "./status-mark.tsx";
 import { unpublishedQuery } from "./unpublished.tsx";
 import { today } from "./today.ts";
+import { planNodes, projectPlanQuery } from "./projects.ts";
 
 type Dialog =
   | { kind: "stream"; stream?: ReleaseStream }
@@ -776,6 +777,8 @@ export function ReleasesPage({
 }) {
   const queryClient = useQueryClient();
   const query = useQuery(releaseStreamsQuery);
+  // Drafts of features move with cycles; those who see only configuration are sent none.
+  const plan = useQuery(projectPlanQuery);
   const narrow = useNarrow();
   const navigate = useNavigate();
   const [dialog, setDialog] = useState<Dialog>();
@@ -837,7 +840,10 @@ export function ReleasesPage({
   }
 
   const { streams, canEditStreams, canEditReleases } = query.data;
-  const nodes = recordNodes(streams);
+  const nodes = [
+    ...recordNodes(streams),
+    ...(plan.data === undefined ? [] : planNodes(plan.data)),
+  ];
   const open = streams.find(({ id }) => id === streamId);
   // A note belongs to the stream open beside it, so opening another stream closes it.
   const noted =

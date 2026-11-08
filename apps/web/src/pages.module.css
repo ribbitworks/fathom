@@ -538,6 +538,17 @@ select.cellInput {
   text-align: center;
 }
 
+.recordGroup {
+  background: var(--mantine-color-default-hover);
+  font-weight: 600;
+}
+
+/* A heading stays in view while the table scrolls sideways. */
+.recordGroupLabel {
+  position: sticky;
+  left: 8px;
+}
+
 /* The bar above a table: its saved views, its search, the filters in use, and how many rows are
    shown. */
 .tableSearch {

@@ -11,7 +11,11 @@ import {
   type ChangeValue,
   type Customer,
   type CustomerRequest,
+  type Feature,
+  featureLengths,
+  type FeatureStatus,
   type Milestone,
+  needsFeatureTeam,
   type Project,
   type ProjectRequest,
   projectLengths,
@@ -19,20 +23,24 @@ import {
   type ProposalRequest,
   type RecordDraft,
 } from "@fathom/shared";
-import { Menu } from "@mantine/core";
+import { Menu, VisuallyHidden } from "@mantine/core";
 import type { ReactNode } from "react";
 import { cellKinds, flagChoice } from "./cell-kinds.tsx";
 import type { DraftField } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
 import { choice } from "./lists.ts";
-import type {
-  MilestoneAdding,
-  PlanRecord,
-  PlanRecordKind,
-  ProjectTab,
-  TableChoices,
+import {
+  cycleChoiceId,
+  type FeatureFields,
+  type MilestoneAdding,
+  type PlanRecord,
+  type PlanRecordKind,
+  type PlanTab,
+  type TableChoices,
+  targetOf,
 } from "./projects.ts";
 import { ShowDetailsButton } from "./show-details-button.tsx";
+import { StatusMark } from "./status-mark.tsx";
 import {
   fieldColumn,
   liveRecordsBy,
@@ -41,6 +49,7 @@ import {
   RecordGrid,
   type RecordGridProps,
   type RecordTable,
+  type RowGrouping,
 } from "./record-grid.tsx";
 import type { CellValue } from "./table-view.ts";
 
@@ -73,15 +82,16 @@ type Kinds = "text" | "date" | "choice" | "link" | "flag";
 
 // What each tab's records are called.
 const recordWords: Readonly<
-  Record<ProjectTab, { label: string; one: string; noun: string }>
+  Record<PlanTab, { label: string; one: string; noun: string }>
 > = {
   projects: { label: "Projects", one: "project", noun: "projects" },
   proposals: { label: "Proposals", one: "proposal", noun: "proposals" },
   customers: { label: "Customers", one: "customer", noun: "customers" },
   milestones: { label: "Milestones", one: "milestone", noun: "milestones" },
+  features: { label: "Features", one: "feature", noun: "features" },
 };
 
-export const wordsOf = (tab: ProjectTab) =>
+export const wordsOf = (tab: PlanTab) =>
   // The tab is always one of the fixed tabs.
   // eslint-disable-next-line security/detect-object-injection
   recordWords[tab];
@@ -161,6 +171,7 @@ function planTable<Rec extends PlanRecord, Request>({
   request,
   menuItems,
   kinds,
+  grouping,
   nameOf = (record) => (record as { name: string }).name,
 }: {
   type: PlanRecordKind;
@@ -171,6 +182,7 @@ function planTable<Rec extends PlanRecord, Request>({
   request: (changes: PlanChange[]) => Request;
   menuItems: (record: Rec) => ReactNode;
   kinds?: readonly string[];
+  grouping?: RowGrouping<Rec>;
   nameOf?: (record: Rec) => string;
 }): RecordTable<Rec, PlanChange, Request> {
   return {
@@ -178,6 +190,7 @@ function planTable<Rec extends PlanRecord, Request>({
     one,
     noun,
     ...(kinds === undefined ? {} : { kinds, kindOf: () => savedKind }),
+    ...(grouping === undefined ? {} : { grouping }),
     newRowLabel: () => `New ${one}`,
     removeLabel: () => `Remove ${one}`,
     nameOf,
@@ -416,6 +429,95 @@ export function milestoneTable(
   });
 }
 
+const featureStatuses: readonly (readonly [FeatureStatus, string])[] = [
+  ["possible", "Possible"],
+  ["planned", "Planned"],
+  ["in-progress", "In progress"],
+  ["done", "Done"],
+  ["cancelled", "Cancelled"],
+];
+
+const cycleOf = (target: {
+  targetStreamId?: string | null | undefined;
+  targetCycle?: string | null | undefined;
+}): string[] =>
+  typeof target.targetStreamId === "string" &&
+  typeof target.targetCycle === "string"
+    ? [cycleChoiceId(target.targetStreamId, target.targetCycle)]
+    : [];
+
+export function featureColumns(
+  choices: TableChoices,
+): Column<Feature, PlanChange>[] {
+  return [
+    nameColumn<Feature>(undefined),
+    {
+      ...field<Feature>("status", "Status", "choice", {
+        required: true,
+        choices: featureStatuses.map(([id, label]) => choice(id, label, false)),
+      }),
+      newRowValue: () => ["possible"],
+    },
+    {
+      ...field<Feature>("targetCycle", "Target cycle", "choice", {
+        choices: choices.cycles,
+        emptyLabel: "Later",
+      }),
+      value: cycleOf,
+      live: (draft) => cycleOf(draft.live),
+      change: (value) => targetOf((value as string[]).at(0)),
+    },
+    {
+      ...field<Feature>("featureTeamId", "Feature team", "choice", {
+        choices: choices.featureTeams,
+        emptyLabel: "No feature team",
+      }),
+      mark: (feature) =>
+        needsFeatureTeam(feature) && (
+          <StatusMark tone="warning" spaced>
+            No team
+            <VisuallyHidden>: it needs a feature team to own it</VisuallyHidden>
+          </StatusMark>
+        ),
+    },
+    field<Feature>("description", "Description", "text", {
+      maxLength: featureLengths.description,
+    }),
+  ];
+}
+
+const laterGroup = "later";
+
+// The rows' groups: each cycle in the choices' order, then Later.
+function byCycle(cycles: readonly Choice[]): RowGrouping<Feature> {
+  const placeOf = new Map(
+    cycles.map((offered, rank) => [offered.id, { offered, rank }]),
+  );
+  return {
+    label: "Group by cycle",
+    of: (feature) => {
+      const [cycle = ""] = cycleOf(feature);
+      const place = placeOf.get(cycle);
+      return place === undefined
+        ? { key: laterGroup, label: "Later", rank: cycles.length }
+        : { key: cycle, label: place.offered.label, rank: place.rank };
+    },
+  };
+}
+
+export function featureTable(
+  choices: TableChoices,
+): RecordTable<Feature, PlanChange, FeatureFields> {
+  return planTable<Feature, FeatureFields>({
+    type: "feature",
+    ...wordsOf("features"),
+    columns: () => featureColumns(choices),
+    grouping: byCycle(choices.cycles),
+    request: (changes) => merged(changes) as FeatureFields,
+    menuItems: () => false,
+  });
+}
+
 // The plan's tables have no columns that can be moved or edited.
 const ignoreColumn = () => undefined;
 export const noColumnActions = {
@@ -454,6 +556,7 @@ const draftColumns: Readonly<
   project: projectColumns,
   proposal: proposalColumns,
   milestone: (choices) => milestoneColumns(choices.projects),
+  feature: featureColumns,
 };
 
 export function planDraftFields(

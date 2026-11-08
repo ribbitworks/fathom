@@ -15,6 +15,7 @@ import {
   renderApp,
   serverAnswers,
 } from "./test-support.tsx";
+import { operationsOf } from "./projects.ts";
 
 const customerId = "c0000000-0000-4000-8000-000000000001";
 const proposalId = "b0000000-0000-4000-8000-000000000001";
@@ -99,6 +100,7 @@ async function openPage(
       Response.json({
         owners: [{ id: ownerId, name: "Fictional Owner", retired: false }],
         statuses: [{ id: statusId, name: "Open", retired: false }],
+        featureTeams: [],
       }),
     ...answers,
   });
@@ -169,7 +171,7 @@ describe("the page's tabs", () => {
           ? Response.json(plan())
           : Response.json({ error: "Down" }, { status: 500 }),
       "GET /api/projects/choices": () =>
-        Response.json({ owners: [], statuses: [] }),
+        Response.json({ owners: [], statuses: [], featureTeams: [] }),
     });
     renderApp("/projects");
     expect(
@@ -1241,5 +1243,317 @@ describe("changing a record from its row", () => {
       expect(history.location.search).toContain(projectId);
     });
     expect(sidePanel()).toBeTruthy();
+  });
+});
+
+describe("the Features page", () => {
+  const streamId = "00000000-0000-4000-8000-0000000000aa";
+  const teamId = "00000000-0000-4000-8000-0000000000ab";
+  const cycleOne = "2027-01-01";
+  const cycleTwo = "2027-04-01";
+  const cycle = (startsOn: string, endsOn: string, name: string) => ({
+    startsOn,
+    endsOn,
+    name,
+    months: [],
+  });
+  const streams = () =>
+    Response.json({
+      streams: [
+        {
+          id: streamId,
+          name: "Fictional Stream",
+          position: 1,
+          retired: false,
+          cyclesUntil: "2027-12-31",
+          patterns: [],
+          cycles: [
+            cycle(cycleOne, "2027-03-31", "27.1"),
+            cycle(cycleTwo, "2027-06-30", "27.2"),
+          ],
+          releases: [],
+        },
+      ],
+      canEditStreams: true,
+      canEditReleases: true,
+    });
+  const choices = () =>
+    Response.json({
+      owners: [],
+      statuses: [],
+      featureTeams: [{ id: teamId, name: "Fictional Team", retired: false }],
+    });
+  const feature = (name: string, targetCycle: string | null) => ({
+    id: crypto.randomUUID(),
+    name,
+    status: "possible" as const,
+    targetStreamId: targetCycle === null ? null : streamId,
+    targetCycle,
+    estimateHours: 40,
+    featureTeamId: null,
+    description: null,
+  });
+  const later = feature("Fictional Later", null);
+  const second = feature("Fictional Second", cycleTwo);
+  const first = feature("Fictional First", cycleOne);
+  const featurePlan = (more: Partial<Plan> = {}) =>
+    plan({
+      features: [later, second, first],
+      canEdit: false,
+      canEditFeatures: true,
+      ...more,
+    });
+  const answers = {
+    "GET /api/release-streams": streams,
+    "GET /api/projects/choices": choices,
+  };
+  const featureEditor = ["plan:view", "features:edit"];
+  const open = (
+    start = featurePlan(),
+    more: typeof answers | object = {},
+    path = "/features",
+  ) => openPage(path, start, { ...answers, ...more }, featureEditor);
+  const groupHeading = /^(Fictional Stream: 27\.[12]|Later)\d+ features?$/;
+  const headings = () =>
+    screen
+      .queryAllByRole("rowheader")
+      .map((cell) => cell.textContent)
+      .filter((text) => groupHeading.test(text));
+  const groupButton = () =>
+    screen.getByRole("button", { name: "Group by cycle" });
+  const rowNames = () =>
+    screen
+      .getAllByRole("row")
+      .map(
+        ({ textContent }) =>
+          /Fictional (Later|Second|First)/.exec(textContent)?.[0],
+      )
+      .filter((name) => name !== undefined);
+
+  it("titles the page Features, with no tabs", async () => {
+    await open();
+    expect(screen.getByRole("heading", { name: "Features" })).not.toBeNull();
+    expect(screen.queryByRole("tab")).toBeNull();
+  });
+
+  it("groups features by cycle, in the cycles' order, with Later last", async () => {
+    await open();
+    expect(headings()).toEqual([
+      "Fictional Stream: 27.11 feature",
+      "Fictional Stream: 27.21 feature",
+      "Later1 feature",
+    ]);
+    expect(rowNames()).toEqual([
+      "Fictional First",
+      "Fictional Second",
+      "Fictional Later",
+    ]);
+  });
+
+  it("counts each group's rows that show, under a search", async () => {
+    await open(
+      featurePlan({
+        features: [
+          feature("Fictional First", cycleOne),
+          feature("Fictional First Again", cycleOne),
+          later,
+        ],
+      }),
+    );
+    await userEvent.type(
+      screen.getByRole("textbox", { name: "Search features" }),
+      "Again",
+    );
+    await waitFor(() => {
+      expect(headings()).toEqual(["Fictional Stream: 27.11 feature"]);
+    });
+  });
+
+  it("sorts within each group, keeping the groups in order", async () => {
+    await open(
+      featurePlan({
+        features: [
+          later,
+          feature("Fictional Zebra", cycleOne),
+          feature("Fictional Aardvark", cycleOne),
+        ],
+      }),
+      {},
+      "/features?sort=%5B%22name%22%5D",
+    );
+    expect(
+      screen
+        .getAllByRole("row")
+        .map(
+          ({ textContent }) =>
+            /Fictional (Zebra|Aardvark|Later)/.exec(textContent)?.[0],
+        )
+        .filter((name) => name !== undefined),
+    ).toEqual(["Fictional Aardvark", "Fictional Zebra", "Fictional Later"]);
+  });
+
+  it("moves down past a heading to the next group's first row", async () => {
+    await open();
+    await userEvent.click(
+      document.getElementById(`cell-${first.id}-name`) as HTMLElement,
+    );
+    await userEvent.keyboard("{ArrowDown}");
+    expect(document.activeElement?.id).toBe(`cell-${second.id}-name`);
+  });
+
+  it("shows one list once grouping is turned off, kept in the address", async () => {
+    const { history } = await open();
+    await userEvent.click(groupButton());
+    await waitFor(() => {
+      expect(headings()).toEqual([]);
+    });
+    expect(history.location.search).toContain("ungrouped");
+  });
+
+  it("groups them again when turned back on", async () => {
+    await open();
+    await userEvent.click(groupButton());
+    await waitFor(() => {
+      expect(headings()).toEqual([]);
+    });
+    await userEvent.click(groupButton());
+    await waitFor(() => {
+      expect(headings()).toHaveLength(3);
+    });
+  });
+
+  it("shows those who only see the plan the table with no way to add", async () => {
+    await openPage(
+      "/features",
+      featurePlan({ canEditFeatures: false }),
+      answers,
+      ["plan:view"],
+    );
+    expect(screen.queryByRole("button", { name: "New feature" })).toBeNull();
+  });
+
+  it("offers one who edits features but not the plan the New button", async () => {
+    await open();
+    expect(await newButton("feature")).not.toBeNull();
+  });
+
+  it("sends a change of status with the feature's other values", async () => {
+    const path = `PUT /api/features/${later.id}`;
+    const { fetch } = await open(featurePlan(), {
+      [path]: saved(featurePlan),
+    });
+    const operations = operationsOf("feature");
+    await operations.change(later, { status: "planned" });
+    expect(sent(fetch, path)).toEqual([
+      {
+        name: "Fictional Later",
+        status: "planned",
+        estimateHours: 40,
+        featureTeamId: null,
+        description: null,
+        target: null,
+      },
+    ]);
+  });
+
+  it("sends a target as a stream and a cycle together", async () => {
+    const path = `PUT /api/features/${later.id}`;
+    const { fetch } = await open(featurePlan(), {
+      [path]: saved(featurePlan),
+    });
+    await operationsOf("feature").change(later, {
+      targetStreamId: streamId,
+      targetCycle: cycleOne,
+    });
+    expect(sent(fetch, path)).toMatchObject([
+      { target: { streamId, cycle: cycleOne } },
+    ]);
+  });
+
+  it("adds a feature with what is entered and the rest empty", async () => {
+    const { fetch } = await open(featurePlan(), {
+      "POST /api/features": saved(featurePlan),
+    });
+    await operationsOf("feature").add({ name: "Fictional New" });
+    expect(sent(fetch, "POST /api/features")).toEqual([
+      {
+        name: "Fictional New",
+        status: "possible",
+        estimateHours: null,
+        featureTeamId: null,
+        description: null,
+        target: null,
+      },
+    ]);
+  });
+
+  it("removes a feature from its row's menu", async () => {
+    const path = `DELETE /api/features/${later.id}`;
+    const { fetch } = await open(featurePlan(), { [path]: deleted });
+    await chooseFrom(await rowMenu("Fictional Later"), "Remove feature");
+    await waitFor(() => {
+      expect(sentTo(fetch)).toContain(path);
+    });
+  });
+
+  it("keeps a row under its heading until the view changes", async () => {
+    const path = `DELETE /api/features/${later.id}`;
+    const { held } = await open(featurePlan(), { [path]: deleted });
+    held.plan = featurePlan({
+      features: [
+        later,
+        { ...second, targetCycle: cycleOne },
+        first,
+        feature("Fictional Arrived", cycleOne),
+      ],
+    });
+    await chooseFrom(await rowMenu("Fictional Later"), "Remove feature");
+    await waitFor(() => {
+      expect(rowNames()).toEqual([
+        "Fictional First",
+        "Fictional Second",
+        "Fictional Later",
+      ]);
+    });
+    // The row that arrived since stays at the end, under a heading of its own.
+    await waitFor(() => {
+      expect(headings()).toEqual([
+        "Fictional Stream: 27.11 feature",
+        "Fictional Stream: 27.21 feature",
+        "Later1 feature",
+        "Fictional Stream: 27.11 feature",
+      ]);
+    });
+  });
+
+  it("says when the release streams could not be loaded", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({ ...fictionalUser, permissions: featureEditor }),
+      "GET /api/projects": () => Response.json(featurePlan()),
+      "GET /api/projects/choices": choices,
+      "GET /api/release-streams": () => new Response(null, { status: 500 }),
+    });
+    renderApp("/features");
+    expect(
+      await screen.findByText(/could not load the features/i),
+    ).not.toBeNull();
+  });
+
+  it("tries the release streams again when asked", async () => {
+    let healthy = false;
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({ ...fictionalUser, permissions: featureEditor }),
+      "GET /api/projects": () => Response.json(featurePlan()),
+      "GET /api/projects/choices": choices,
+      "GET /api/release-streams": () =>
+        healthy ? streams() : new Response(null, { status: 500 }),
+    });
+    renderApp("/features");
+    const again = await screen.findByRole("button", { name: "Try again" });
+    healthy = true;
+    await userEvent.click(again);
+    expect(await screen.findByRole("grid")).not.toBeNull();
   });
 });

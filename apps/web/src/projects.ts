@@ -8,6 +8,9 @@ import {
   type Choice,
   type Customer,
   type CustomerRequest,
+  type Feature,
+  type FeatureRequest,
+  firstFeatureStatus,
   type Milestone,
   type MilestoneRequest,
   type PlanChoice,
@@ -20,6 +23,7 @@ import {
   projectSubjects,
   type Proposal,
   type ProposalRequest,
+  type ReleaseStream,
   savedSchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
@@ -42,17 +46,19 @@ export const planChoicesQuery = queryOptions({
 export const asChoices = (choices: readonly PlanChoice[]): Choice[] =>
   choices.map(({ id, name, retired }) => choice(id, name, retired));
 
-export type PlanKind = "customer" | "project" | "proposal";
+export type PlanKind = "customer" | "project" | "proposal" | "feature";
 
 export type PlanRequest =
   | { type: "customer"; request: CustomerRequest }
   | { type: "project"; request: ProjectRequest }
-  | { type: "proposal"; request: ProposalRequest };
+  | { type: "proposal"; request: ProposalRequest }
+  | { type: "feature"; request: FeatureRequest };
 
 const paths: Readonly<Record<PlanKind, string>> = {
   customer: "/api/customers",
   project: "/api/projects",
   proposal: "/api/proposals",
+  feature: "/api/features",
 };
 
 const savedPlan = z.object({
@@ -144,15 +150,58 @@ export const milestoneRequest = (milestone: Milestone): MilestoneRequest => ({
   customerDelivery: milestone.customerDelivery,
 });
 
+// The fields a feature's table edits, as the server shows them.
+export type FeatureFields = Pick<
+  Feature,
+  | "name"
+  | "status"
+  | "targetStreamId"
+  | "targetCycle"
+  | "estimateHours"
+  | "featureTeamId"
+  | "description"
+>;
+
+// What saving a feature sends: its target as a stream and a cycle together.
+export const featureRequest = ({
+  name,
+  status,
+  estimateHours,
+  featureTeamId,
+  description,
+  targetStreamId,
+  targetCycle,
+}: FeatureFields): FeatureRequest => ({
+  name,
+  status,
+  estimateHours,
+  featureTeamId,
+  description,
+  target:
+    targetStreamId === null || targetCycle === null
+      ? null
+      : { streamId: targetStreamId, cycle: targetCycle },
+});
+
 // Every milestone of every project.
 export const allMilestones = (plan: Pick<ProjectPlan, "projects">) =>
   plan.projects.flatMap((project) => project.milestones);
 
-// Every customer, proposal, project, and milestone, named as the Drafts page names them.
+type PlanLists = Pick<
+  ProjectPlan,
+  "customers" | "projects" | "proposals" | "features"
+>;
+
+// Every customer, proposal, project, milestone, and feature, named as the Drafts page names them.
 export function listedPlanRecords(
-  plan: Pick<ProjectPlan, "customers" | "projects" | "proposals">,
+  plan: PlanLists,
 ): { kind: PlanRecordKind; record: PlanRecord; subject: string }[] {
   return [
+    ...plan.features.map((record) => ({
+      kind: "feature" as const,
+      record,
+      subject: projectSubjects.feature(record.name),
+    })),
     ...plan.customers.map((record) => ({
       kind: "customer" as const,
       record,
@@ -178,9 +227,7 @@ export function listedPlanRecords(
   ];
 }
 
-export const planNodes = (
-  plan: Pick<ProjectPlan, "customers" | "projects" | "proposals">,
-): RecordNode[] =>
+export const planNodes = (plan: PlanLists): RecordNode[] =>
   listedPlanRecords(plan).map(({ kind, record, subject }) =>
     recordNode(kind, record, subject),
   );
@@ -194,8 +241,12 @@ export const projectTabs = [
 
 export type ProjectTab = (typeof projectTabs)[number];
 
-export type PlanRecord = Customer | Project | Proposal | Milestone;
-export type PlanRecordKind = "customer" | "project" | "proposal" | "milestone";
+// What the plan's page shows: one of the Projects page's tabs, or the Features page.
+export type PlanTab = ProjectTab | "features";
+
+export type PlanRecord = Customer | Project | Proposal | Milestone | Feature;
+export type PlanRecordKind =
+  "customer" | "project" | "proposal" | "milestone" | "feature";
 
 // A milestone being added, with the project it is added to.
 export type MilestoneAdding = MilestoneRequest & { projectId: string };
@@ -206,7 +257,12 @@ export type MilestoneAdding = MilestoneRequest & { projectId: string };
 type Blank<Rec> = Omit<Rec, "id" | "draft" | "heldBy">;
 
 interface PlanRecordOperations {
-  blank: Blank<Customer> | Blank<Project> | Blank<Proposal> | Blank<Milestone>;
+  blank:
+    | Blank<Customer>
+    | Blank<Project>
+    | Blank<Proposal>
+    | Blank<Milestone>
+    | Blank<Feature>;
   all: (plan: ProjectPlan) => readonly PlanRecord[];
   withAll: (plan: ProjectPlan, records: readonly PlanRecord[]) => ProjectPlan;
   add: (request: unknown) => Promise<SavedPlan>;
@@ -302,6 +358,33 @@ const planRecordOperations: Readonly<
       }),
     remove: (record) => removeMilestone(record as Milestone),
   },
+  feature: {
+    blank: {
+      name: "",
+      status: firstFeatureStatus,
+      targetStreamId: null,
+      targetCycle: null,
+      estimateHours: null,
+      featureTeamId: null,
+      description: null,
+    },
+    all: (plan) => plan.features,
+    withAll: (plan, records) => ({ ...plan, features: records as Feature[] }),
+    add: (request) =>
+      addRecord({
+        type: "feature",
+        request: featureRequest({
+          ...planRecordOperations.feature.blank,
+          ...(request as object),
+        } as FeatureFields),
+      }),
+    change: (record, change) =>
+      changeRecord(record.id, {
+        type: "feature",
+        request: featureRequest({ ...(record as Feature), ...change }),
+      }),
+    remove: (record) => removeRecord("feature", record.id),
+  },
 };
 
 export const operationsOf = (kind: PlanRecordKind): PlanRecordOperations =>
@@ -316,14 +399,55 @@ export interface TableChoices {
   proposals: readonly Proposal[];
   projects: readonly Project[];
   statuses: Choice[];
+  featureTeams: Choice[];
+  // Every cycle a feature can target.
+  cycles: Choice[];
 }
 
+// A cycle a feature targets, as a value in a cell.
+export const cycleChoiceId = (streamId: string, startsOn: string) =>
+  `${streamId} ${startsOn}`;
+
+// The stream and first day of the cycle a cell holds, each null for a feature in Later.
+export function targetOf(chosen: string | undefined): {
+  targetStreamId: string | null;
+  targetCycle: string | null;
+} {
+  const [targetStreamId = null, targetCycle = null] = chosen?.split(" ") ?? [];
+  return { targetStreamId, targetCycle };
+}
+
+// Every stream's cycles, each named with its stream, streams in their order and cycles by date;
+// those of a retired stream are kept to name what targets them, and offered to nothing new.
+export const cycleChoices = (streams: readonly ReleaseStream[]): Choice[] =>
+  streams.flatMap((stream) => {
+    const drafted = new Set(stream.cycles.map(({ startsOn }) => startsOn));
+    return [
+      ...stream.cycles.map((cycle) => ({ cycle, retired: stream.retired })),
+      // Cycles only as they are live are kept to name what is on them until a draft is approved.
+      ...(stream.liveCycles ?? [])
+        .filter(({ startsOn }) => !drafted.has(startsOn))
+        .map((cycle) => ({ cycle, retired: true })),
+    ]
+      .sort((a, b) => a.cycle.startsOn.localeCompare(b.cycle.startsOn))
+      .map(({ cycle, retired }) =>
+        choice(
+          cycleChoiceId(stream.id, cycle.startsOn),
+          `${stream.name}: ${cycle.name}`,
+          retired,
+        ),
+      );
+  });
+
 export const tableChoices = (
-  plan: Pick<ProjectPlan, "customers" | "projects" | "proposals">,
+  plan: PlanLists,
   picks: PlanChoices,
+  streams: readonly ReleaseStream[],
 ): TableChoices => ({
   people: asChoices(picks.owners),
   statuses: asChoices(picks.statuses),
+  featureTeams: asChoices(picks.featureTeams),
+  cycles: cycleChoices(streams),
   customers: plan.customers,
   proposals: plan.proposals,
   projects: plan.projects,

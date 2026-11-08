@@ -26,9 +26,10 @@ describe("what a role allows", () => {
   it("lists no pages for a role granting nothing, and every page as not appearing", () => {
     const { pages, cannot } = consequences([]);
     expect(pages).toEqual([]);
-    expect(cannot.slice(0, 13)).toEqual([
+    expect(cannot.slice(0, 14)).toEqual([
       "The Overview page does not appear.",
       "The Projects page does not appear.",
+      "The Features page does not appear.",
       "The Releases page does not appear.",
       "The People page does not appear.",
       "The Org chart page does not appear.",
@@ -150,6 +151,7 @@ describe("what a change to an account's permissions does", () => {
       gains: [
         "Sees the Overview page.",
         "Sees the Projects page.",
+        "Sees the Features page.",
         "Sees the Releases page.",
         allows("plan:view"),
       ],

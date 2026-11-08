@@ -1,16 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Projects page: the plan's projects, proposals, customers, and milestones, a tab each, each a
-// table edited like People's, with a record's details beside it, and a project's milestones there
-// too. Every change is a draft, shown in place until an Approver approves it, from a record's menu
-// or the Draft menu. Those who only see the plan see the same tables, read only. The tab, the
-// table's view, and the record shown are kept in the page address.
+// The plan's records, each a table edited like People's: the Projects page, with its projects,
+// proposals, customers, and milestones, a tab each, a record's details beside it, and a project's
+// milestones there too; and the Features page, grouped by cycle. Every change is a draft, shown in
+// place until an Approver approves it, from a record's menu or the Draft menu. Those who only see
+// the plan see the same tables, read only. The tab, the table's view, and the record shown are kept
+// in the page address.
 
 import type {
   Asking,
   Customer,
   CustomerRequest,
   DraftKind,
+  Feature,
   Milestone,
   MilestoneRequest,
   Project,
@@ -65,6 +67,7 @@ import classes from "./pages.module.css";
 import details from "./person-panel.module.css";
 import {
   customerTable,
+  featureTable,
   livePlanRecords,
   milestoneTable,
   noColumnActions,
@@ -81,6 +84,7 @@ import {
   addMilestone,
   allMilestones,
   changeMilestone,
+  type FeatureFields,
   type MilestoneAdding,
   operationsOf,
   listedPlanRecords,
@@ -88,6 +92,7 @@ import {
   planNodes,
   type PlanRecord,
   type PlanRecordKind,
+  type PlanTab,
   projectPlanQuery,
   type ProjectTab,
   projectTabs,
@@ -106,7 +111,11 @@ import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { RecordMenu } from "./record-menu.tsx";
-import { discardRecordDraft, resubmitRecordDraft } from "./releases.ts";
+import {
+  discardRecordDraft,
+  releaseStreamsQuery,
+  resubmitRecordDraft,
+} from "./releases.ts";
 import { useSaving } from "./saving.ts";
 import {
   type SidePanel,
@@ -173,6 +182,22 @@ const discarded = (record: PlanRecord): PlanRecord | undefined =>
     ? undefined
     : livePlanRecords([record]).at(0);
 
+// What sets each of the plan's pages apart.
+const planPages = {
+  projects: {
+    title: "Projects",
+    tabbed: true,
+    loadsStreams: false,
+    mayEdit: (plan: ProjectPlan) => plan.canEdit,
+  },
+  features: {
+    title: "Features",
+    tabbed: false,
+    loadsStreams: true,
+    mayEdit: (plan: ProjectPlan) => plan.canEditFeatures,
+  },
+};
+
 export function ProjectsPage({
   tab,
   onTab,
@@ -183,28 +208,34 @@ export function ProjectsPage({
   onOpen,
   onMilestonesOf,
 }: {
-  tab: ProjectTab;
-  onTab: (tab: ProjectTab, open?: string) => void;
+  tab: PlanTab;
+  onTab?: (tab: ProjectTab, open?: string) => void;
   // The kinds of draft the user's role approves and rejects.
   approves?: readonly DraftKind[];
   view: View;
   onView: ChangeView;
   // The record whose details are shown beside the table, by its identifier.
   open?: string | undefined;
-  onOpen: (id: string | undefined) => void;
+  onOpen?: (id: string | undefined) => void;
   // Shows the Milestones tab with only a project's milestones.
-  onMilestonesOf: (project: Project) => void;
+  onMilestonesOf?: (project: Project) => void;
 }) {
+  const page = planPages[tab === "features" ? "features" : "projects"];
   const query = useQuery(projectPlanQuery);
   const choicesQuery = useQuery(planChoicesQuery);
-  const choicesSettled = choicesQuery.isSuccess;
+  const streamsQuery = useQuery({
+    ...releaseStreamsQuery,
+    enabled: page.loadsStreams,
+  });
+  const streamsPending = page.loadsStreams && streamsQuery.isPending;
+  const choicesSettled = choicesQuery.isSuccess && !streamsPending;
   const narrow = useNarrow();
   const saving =
     useIsMutating({ mutationKey: [...projectPlanQuery.queryKey, "change"] }) >
     0;
   // What is being entered for a new record, on the tab it is being added to.
   const [beingAdded, setBeingAdded] = useState<{
-    tab: ProjectTab;
+    tab: PlanTab;
     values: FormValues;
     saving?: boolean;
   }>();
@@ -243,7 +274,7 @@ export function ProjectsPage({
     }
     if (openedAdded.current === justAdded) return;
     openedAdded.current = justAdded;
-    onOpen(justAdded);
+    onOpen?.(justAdded);
   }, [justAdded, query.data, onOpen]);
   useEffect(() => {
     if (open !== undefined) focusSoon(panelTitleId);
@@ -260,7 +291,7 @@ export function ProjectsPage({
     removed: "Someone else has removed this. The plan has been refreshed.",
     blocked: deciding || dialogOpened,
   });
-  const canEdit = query.data?.canEdit === true;
+  const canEdit = query.data !== undefined && page.mayEdit(query.data);
 
   const decide = (asking: Asking, chosen: DraftSelection, naming?: boolean) => {
     const plan = query.data as ProjectPlan;
@@ -376,30 +407,39 @@ export function ProjectsPage({
   }
 
   let content: ReactNode;
-  if (query.isPending || choicesQuery.isPending) {
+  if (query.isPending || choicesQuery.isPending || streamsPending) {
     content = <Loader role="status" aria-label="Loading" />;
-  } else if (query.isError || choicesQuery.isError) {
+  } else if (
+    query.isError ||
+    choicesQuery.isError ||
+    (page.loadsStreams && streamsQuery.isError)
+  ) {
     content = (
       <LoadProblem
-        what="the projects"
+        what={`the ${wordsOf(tab).noun}`}
         onRetry={() => {
           void query.refetch();
           void choicesQuery.refetch();
+          if (page.loadsStreams) void streamsQuery.refetch();
         }}
       />
     );
   } else {
     const plan = query.data;
-    const choices = tableChoices(plan, choicesQuery.data);
+    const choices = tableChoices(
+      plan,
+      choicesQuery.data,
+      streamsQuery.data?.streams ?? [],
+    );
     const nodes = planNodes(plan);
     const openRecord = (record: { id: string }) => {
       leave(() => {
-        onOpen(record.id);
+        onOpen?.(record.id);
       });
     };
     const showMilestonesOf = (project: Project) => {
       leave(() => {
-        onMilestonesOf(project);
+        onMilestonesOf?.(project);
       });
     };
     const panel = recordPanel({
@@ -413,7 +453,7 @@ export function ProjectsPage({
       approves,
       nodes,
       onClose: () => {
-        onOpen(undefined);
+        onOpen?.(undefined);
         focusSoon(`cell-${String(open)}-name`);
       },
       menu: {
@@ -435,7 +475,9 @@ export function ProjectsPage({
         },
       },
       showMilestones: showMilestonesOf,
-      showRecord: onTab,
+      showRecord: (next, id) => {
+        onTab?.(next, id);
+      },
     });
     const shared = { canEdit, approves, saving, view, onView };
     // The form takes the panel's place while a record is being added.
@@ -471,8 +513,9 @@ export function ProjectsPage({
                   [{ id: pendingId(), request }],
                   ([saved]) => {
                     setBeingAdded(undefined);
-                    if (type === "milestone") focusSoon(newButtonId);
-                    else setJustAdded(saved);
+                    if (type === "milestone" || type === "feature") {
+                      focusSoon(newButtonId);
+                    } else setJustAdded(saved);
                   },
                   () => {
                     setBeingAdded({ ...pending, saving: false });
@@ -490,7 +533,20 @@ export function ProjectsPage({
       ];
     }
     const filteredTo = view.filters.projectId?.any?.at(0);
-    const grids: Readonly<Record<ProjectTab, () => ReactElement>> = {
+    const grids: Readonly<Record<PlanTab, () => ReactElement>> = {
+      features: () => {
+        const table = featureTable(choices);
+        const actions = actionsFor<Feature, FeatureFields>("feature");
+        return (
+          <PlanGrid
+            {...shared}
+            panels={panelsWith("feature", table, plan.features, actions)}
+            records={plan.features}
+            table={table}
+            actions={actions}
+          />
+        );
+      },
       customers: () => {
         const table = customerTable(openRecord);
         const actions = actionsFor<Customer, CustomerRequest>("customer");
@@ -520,7 +576,7 @@ export function ProjectsPage({
       milestones: () => {
         const table = milestoneTable(plan.projects, filteredTo, (milestone) => {
           leave(() => {
-            onTab("projects", milestone.projectId);
+            onTab?.("projects", milestone.projectId);
           });
         });
         const records = allMilestones(plan);
@@ -557,7 +613,7 @@ export function ProjectsPage({
   return (
     <Stack gap="md" className={classes.tablePage}>
       <PageHeader
-        title="Projects"
+        title={page.title}
         action={
           // The live records alone are read only.
           canEdit &&
@@ -568,7 +624,7 @@ export function ProjectsPage({
               disabled={!query.isSuccess || !choicesSettled}
               onClick={() => {
                 leave(() => {
-                  onOpen(undefined);
+                  onOpen?.(undefined);
                   setForms((count) => count + 1);
                   setBeingAdded({ tab, values: {} });
                 });
@@ -579,22 +635,24 @@ export function ProjectsPage({
           )
         }
       />
-      <Tabs
-        value={tab}
-        onChange={(next) => {
-          leave(() => {
-            onTab(projectTabSchema.parse(next));
-          });
-        }}
-      >
-        <Tabs.List>
-          {projectTabs.map((one) => (
-            <Tabs.Tab key={one} value={one}>
-              {wordsOf(one).label}
-            </Tabs.Tab>
-          ))}
-        </Tabs.List>
-      </Tabs>
+      {page.tabbed && (
+        <Tabs
+          value={tab}
+          onChange={(next) => {
+            leave(() => {
+              onTab?.(projectTabSchema.parse(next));
+            });
+          }}
+        >
+          <Tabs.List>
+            {projectTabs.map((one) => (
+              <Tabs.Tab key={one} value={one}>
+                {wordsOf(one).label}
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
+        </Tabs>
+      )}
       <Fragment key={tab}>{content}</Fragment>
       {question.dialog}
       <DecisionModal
@@ -758,7 +816,7 @@ function recordPanel({
   showMilestones,
   showRecord,
 }: {
-  tab: ProjectTab;
+  tab: PlanTab;
   plan: ProjectPlan;
   choices: TableChoices;
   open: string | undefined;
@@ -778,7 +836,7 @@ function recordPanel({
   const projects = asShown(plan.projects);
   const shownOnTab: Readonly<
     Record<
-      ProjectTab,
+      PlanTab,
       | {
           record: PlanRecord | undefined;
           columns: readonly Column<never, PlanChange>[];
@@ -801,6 +859,7 @@ function recordPanel({
       columns: customerTable().columnsFor([], [], [], []),
     },
     milestones: undefined,
+    features: undefined,
   };
   // The tab is always one of the fixed tabs.
   // eslint-disable-next-line security/detect-object-injection

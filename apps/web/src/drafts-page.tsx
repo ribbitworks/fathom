@@ -499,8 +499,12 @@ function teamEntries(
 }
 
 // Every draft of a customer, proposal, project, or milestone, as entries.
-function planEntries(plan: ProjectPlan, picks: PlanChoices): Entry[] {
-  const offered = tableChoices(plan, picks);
+function planEntries(
+  plan: ProjectPlan,
+  picks: PlanChoices,
+  streams: readonly ReleaseStream[],
+): Entry[] {
+  const offered = tableChoices(plan, picks, streams);
   return listedPlanRecords(plan).flatMap(({ kind, record, subject }) => {
     const { draft, heldBy } = record;
     if (draft === undefined) return [];
@@ -681,7 +685,11 @@ export function DraftsPage({
         : []),
       ...(seesProjects && plan.data !== undefined
         ? // The page shows its entries once both have loaded.
-          planEntries(plan.data, choices.data as PlanChoices)
+          planEntries(
+            plan.data,
+            choices.data as PlanChoices,
+            streams as ReleaseStream[],
+          )
         : []),
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));

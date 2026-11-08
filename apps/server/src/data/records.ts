@@ -241,7 +241,13 @@ export function recordDraftOut(
   if (draft === undefined) return undefined;
   const live = stateOf(state, kind.type).live.get(id);
   const touched = draftFields(live, draft);
-  const changed = kind.fields.filter((name) => touched.includes(name));
+  const together = kind.changedTogether ?? [];
+  const changed = kind.fields.filter(
+    (name) =>
+      touched.includes(name) ||
+      (together.includes(name) &&
+        together.some((other) => touched.includes(other))),
+  );
   const maker = makers.get(kind.type)?.get(id);
   return {
     action: draft.action,
@@ -269,7 +275,12 @@ export function recordDraftOut(
     editors: maker?.editors ?? [],
     ...otherApprover(maker),
     changedBy: Object.fromEntries(
-      changed.map((name) => [name, maker?.fieldEditors.get(name) ?? null]),
+      changed.map((name) => [
+        name,
+        [name, ...together]
+          .map((field) => maker?.fieldEditors.get(field))
+          .find((editor) => editor !== undefined) ?? null,
+      ]),
     ),
   };
 }

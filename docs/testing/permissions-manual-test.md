@@ -109,7 +109,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 **Preconditions:** Team Member granted only **View** on **Plan** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Overview** page is open. The menu shows **Overview**, **Projects** tagged **Later**, and **Releases** in the **Plan** section, **Drafts** in the **People** section, and the **Help** section, and nothing else.
+  - **Expected:** The **Overview** page is open. The menu shows **Overview**, **Projects**, **Features**, and **Releases** in the **Plan** section, **Drafts** in the **People** section, and the **Help** section, and nothing else.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Releases**, then **Platform** in the table.

@@ -76,6 +76,8 @@ export interface View {
   sort: SortLevel[];
   // The keys of the columns the metrics break the rows down by, set while the metrics show.
   breakdown?: string[] | undefined;
+  // Set when a table that groups its rows shows them as one list.
+  ungrouped?: true | undefined;
   // How many columns, from the first, stay in view while the table scrolls sideways, when not the
   // table's own default.
   frozen?: number | undefined;
@@ -114,6 +116,7 @@ export function viewFrom(search: ViewDefinition): View {
         : { key: level, descending: false },
     ),
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
+    ...(search.ungrouped === undefined ? {} : { ungrouped: search.ungrouped }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
     ...(hasWidths(search.widths) ? { widths: search.widths } : {}),
   };
@@ -196,6 +199,7 @@ export function searchFor(view: View): ViewDefinition {
           ),
         }),
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
+    ...(view.ungrouped === undefined ? {} : { ungrouped: view.ungrouped }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...(hasWidths(view.widths) ? { widths: view.widths } : {}),
   };
@@ -248,6 +252,7 @@ export function isActive(filter: Filter | undefined): boolean {
 export function setsApart(view: View): boolean {
   return (
     view.sort.length > 0 ||
+    view.ungrouped === true ||
     view.frozen !== undefined ||
     view.widths !== undefined
   );
@@ -291,6 +296,7 @@ export function knownView(
             (key) => known.has(key) && counted.has(key),
           ),
         }),
+    ...(view.ungrouped === undefined ? {} : { ungrouped: view.ungrouped }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...widthsOf(view.widths, known),
   };

@@ -298,6 +298,7 @@ export {
   featureStatusSchema,
   firstFeatureStatus,
   largestEstimateHours,
+  needsFeatureTeam,
 } from "./features.ts";
 export {
   type OrgChart,

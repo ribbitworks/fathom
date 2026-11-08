@@ -373,6 +373,9 @@ describe("the view in the page address", () => {
 
   it("reads and writes the columns the metrics break down by, kept while the metrics show with none", () => {
     expect(viewFrom({ breakdown: [] })).toEqual(view({ breakdown: [] }));
+    expect(viewFrom({ ungrouped: true })).toEqual(view({ ungrouped: true }));
+    expect(searchFor(view({ ungrouped: true }))).toEqual({ ungrouped: true });
+    expect(setsApart(view({ ungrouped: true }))).toBe(true);
     expect(searchFor(view({ breakdown: ["level", "start"] }))).toEqual({
       breakdown: ["level", "start"],
     });

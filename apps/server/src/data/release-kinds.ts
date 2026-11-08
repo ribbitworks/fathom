@@ -2,12 +2,12 @@
 
 // Release streams, their cycle patterns, their releases, and the features that target their cycles,
 // as kinds of the plan's records, with the rules the Decisions Log sets for them: a stream's later
-// patterns start on the start of one of its cycles, so the cycles before keep their names and dates;
-// a release includes consecutive cycles of its stream, from its first to its last, which no other
-// release in the stream includes, and none starting after the stream's cycles-until date; and a
-// feature targets one of its stream's cycles. Part of the data access layer; records.ts
-// checks the rules when a change is drafted or published, against the records as the editor sees
-// them, and when drafts are approved, against the live records.
+// patterns start on the start of one of its cycles, so the cycles before keep their names and
+// dates; a release includes consecutive cycles of its stream, from its first to its last, which no
+// other release in the stream includes, and none starting after the stream's cycles-until date; and
+// a feature targets one of its stream's cycles. Part of the data access layer; records.ts checks
+// the rules when a change is drafted or published, against the records as the editor sees them, and
+// when drafts are approved, against the live records.
 
 import { cyclePatterns, features, releases, releaseStreams } from "@fathom/db";
 import {
@@ -203,6 +203,7 @@ export const featureKind: RecordKind = {
   ],
   links: { targetStreamId: "release-stream" },
   refers: { featureTeamId: "feature-team" },
+  changedTogether: ["targetStreamId", "targetCycle"],
   unique: [
     { field: "name", message: "There is already a feature with that name" },
   ],
@@ -259,7 +260,7 @@ export function streamPatterns(
   });
 }
 
-function livePatterns(
+export function livePatterns(
   state: RecordsState,
   streamId: string,
 ): CyclePatternLike[] {

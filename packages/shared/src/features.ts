@@ -25,6 +25,14 @@ export type FeatureStatus = z.infer<typeof featureStatusSchema>;
 
 export const firstFeatureStatus: FeatureStatus = "possible";
 
+// A feature being planned or worked on needs a feature team to own it, as the Decisions Log sets
+// out; a possible one need not have one yet, and a done or cancelled one raises no warnings.
+export const needsFeatureTeam = (
+  feature: Pick<Feature, "status" | "featureTeamId">,
+): boolean =>
+  feature.featureTeamId === null &&
+  (feature.status === "planned" || feature.status === "in-progress");
+
 // A feature as its draft makes it. A target cycle is known by its stream and the day it starts.
 export const featureSchema = z.object({
   ...recordShape,

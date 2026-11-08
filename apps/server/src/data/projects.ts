@@ -6,7 +6,13 @@
 // Part of the data access layer; the caller checks the actor's permissions. Every change is a
 // draft of a plan record, as records.ts sets out, with the kinds project-kinds.ts describes.
 
-import { type Database, listItems, lists, people } from "@fathom/db";
+import {
+  type Database,
+  featureTeams,
+  listItems,
+  lists,
+  people,
+} from "@fathom/db";
 import {
   type CustomerRequest,
   type Customer,
@@ -33,7 +39,7 @@ import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { checkBuiltInChoice, firstOffered } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
-import { checkTeamForFeature } from "./feature-teams.ts";
+import { checkTeamForFeature, readTeamDrafts } from "./feature-teams.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import {
   addedOnly,
@@ -586,8 +592,8 @@ export async function removeMilestone(
   });
 }
 
-// People as owners, by name alone, those whose end date has passed retired, and the proposal
-// statuses, in their list's order.
+// People as owners, by name alone, those whose end date has passed retired, the proposal statuses,
+// in their list's order, and the live feature teams by name, those drafted to be removed retired.
 export async function readPlanChoices(
   database: Database,
   asOf?: string,
@@ -611,6 +617,11 @@ export async function readPlanChoices(
     .innerJoin(lists, eq(lists.id, listItems.listId))
     .where(eq(lists.builtIn, "proposal-statuses"))
     .orderBy(asc(listItems.position), asc(listItems.id));
+  const teams = await database
+    .select({ id: featureTeams.id, name: featureTeams.name })
+    .from(featureTeams)
+    .orderBy(asc(featureTeams.name), asc(featureTeams.id));
+  const teamDrafts = await readTeamDrafts(database);
   return {
     owners: owners.map(({ id, name, endDate }) => ({
       id,
@@ -618,5 +629,9 @@ export async function readPlanChoices(
       retired: endDate !== null && endDate < today,
     })),
     statuses,
+    featureTeams: teams.map((team) => ({
+      ...team,
+      retired: teamDrafts.get(team.id)?.action === "deleted",
+    })),
   };
 }

@@ -37,7 +37,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Swatch } from "./colour-swatch.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
@@ -59,6 +59,7 @@ import {
   savePattern,
   saveRelease,
 } from "./releases.ts";
+import { projectPlanQuery } from "./projects.ts";
 
 interface Saving {
   onSaved: (saved: SavedStream) => void;
@@ -489,6 +490,8 @@ export function CycleLengthDialog({
   const [length, setLength] = useState<number | string>(maker.length);
   const [later, setLater] = useState<LaterCycles>("move");
   const [tried, setTried] = useState(false);
+  // Those who see only configuration do not see the plan's features, and name none.
+  const plan = useQuery(projectPlanQuery);
   const save = useSave(
     () =>
       changeCycleLength(stream.id, cycle.startsOn, {
@@ -509,6 +512,7 @@ export function CycleLengthDialog({
       length: lengthOk ? Number(length) : maker.length,
       later,
     },
+    plan.data?.features,
   );
   return (
     <form

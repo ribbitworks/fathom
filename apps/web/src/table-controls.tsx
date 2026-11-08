@@ -777,6 +777,7 @@ export function ViewBar({
   onLeave,
   saved,
   draftItems,
+  groupLabel,
 }: {
   // What the rows are, one and several, such as "person" and "people".
   one: string;
@@ -792,6 +793,9 @@ export function ViewBar({
   // For rows of several kinds, how many of each there are in all, such as "150 people and 6
   // planned hires".
   counted?: string | undefined;
+  // What the button that groups the rows, or shows them as one list, is called, for a table that
+  // groups them.
+  groupLabel?: string | undefined;
   // Goes back to the table from the search field.
   onLeave: () => void;
   saved?: SavedViews | undefined;
@@ -851,6 +855,20 @@ export function ViewBar({
       >
         Metrics
       </Button>
+      {groupLabel !== undefined && (
+        <Button
+          variant={view.ungrouped === true ? "default" : "light"}
+          aria-pressed={view.ungrouped !== true}
+          onClick={() => {
+            onView({
+              ...view,
+              ungrouped: view.ungrouped === true ? undefined : true,
+            });
+          }}
+        >
+          {groupLabel}
+        </Button>
+      )}
       {filters.map(({ column, filter }) => (
         <Pill
           key={column.key}

@@ -15,6 +15,7 @@ import {
 import type {
   ChangeHistory,
   Feature,
+  PlanChoices,
   ProjectPlan,
   ReleaseStream,
 } from "@fathom/shared";
@@ -276,6 +277,24 @@ describe("target cycles", () => {
     expect(response.statusCode).toBe(404);
   });
 
+  it("shows the live stream and cycle together when only the cycle changes", async () => {
+    const streamId = await liveStream();
+    const feature = await liveFeature(target(streamId));
+    await put(feature.id, {
+      name: feature.name,
+      ...target(streamId, cycle.fourth),
+    });
+    expect((await shown(feature.id)).draft).toMatchObject({
+      changed: ["targetStreamId", "targetCycle"],
+      live: { targetStreamId: streamId, targetCycle: cycle.third },
+    });
+    const { draft } = await shown(feature.id);
+    expect(draft?.changedBy?.targetStreamId).toBe(
+      draft?.changedBy?.targetCycle,
+    );
+    expect(draft?.changedBy?.targetStreamId).not.toBeNull();
+  });
+
   it("does not judge a feature when another on its stream changes", async () => {
     const streamId = await liveStream();
     const other = await liveFeature(target(streamId));
@@ -299,6 +318,68 @@ describe("target cycles", () => {
 });
 
 describe("feature teams", () => {
+  const removeTeam = (
+    id: string,
+    options?: { publish?: boolean },
+    cookie = configurer.cookie,
+  ) =>
+    test.request(
+      cookie,
+      "DELETE",
+      `/api/feature-teams/${id}`,
+      undefined,
+      options,
+    );
+
+  it("are offered by name to those who see the plan", async () => {
+    const featureTeamId = await liveTeam();
+    const response = await test.request(
+      viewer.cookie,
+      "GET",
+      "/api/projects/choices",
+    );
+    const offered = response
+      .json<PlanChoices>()
+      .featureTeams.find(({ id }) => id === featureTeamId);
+    expect(Object.keys(offered ?? {}).sort()).toEqual([
+      "id",
+      "name",
+      "retired",
+    ]);
+    expect(offered?.retired).toBe(false);
+  });
+
+  it("are not offered once drafted to be removed", async () => {
+    const featureTeamId = await liveTeam();
+    await removeTeam(featureTeamId);
+    const response = await test.request(
+      viewer.cookie,
+      "GET",
+      "/api/projects/choices",
+    );
+    expect(
+      response
+        .json<PlanChoices>()
+        .featureTeams.find(({ id }) => id === featureTeamId)?.retired,
+    ).toBe(true);
+  });
+
+  it("offer only live teams, never one only drafted to be added", async () => {
+    const name = unique("Fictional Drafted Team");
+    await test.request(configurer.cookie, "POST", "/api/feature-teams", {
+      name,
+      members: [],
+    });
+    const response = await test.request(
+      viewer.cookie,
+      "GET",
+      "/api/projects/choices",
+    );
+    expect(
+      response.json<PlanChoices>().featureTeams.map((team) => team.name),
+    ).not.toContain(name);
+  });
+
   it("are given to a feature", async () => {
     const featureTeamId = await liveTeam();
     expect((await draftFeature({ featureTeamId })).featureTeamId).toBe(
@@ -316,19 +397,6 @@ describe("feature teams", () => {
       "Choose a feature team that has been approved",
     );
   });
-
-  const removeTeam = (
-    id: string,
-    options?: { publish?: boolean },
-    cookie = configurer.cookie,
-  ) =>
-    test.request(
-      cookie,
-      "DELETE",
-      `/api/feature-teams/${id}`,
-      undefined,
-      options,
-    );
 
   it.each([
     ["published", true],
@@ -445,6 +513,19 @@ describe("when a stream's cycles change", () => {
     ).patterns.flatMap(({ id, draft }) =>
       draft === undefined ? [] : [{ type: "cycle-pattern", id }],
     );
+
+  it("sends a stream's live cycles beside those its drafts make", async () => {
+    const streamId = await liveStream();
+    await changeLength(streamId, cycle.second, 2);
+    const stream = (
+      await test.request(configurer.cookie, "GET", "/api/release-streams")
+    )
+      .json<{ streams: ReleaseStream[] }>()
+      .streams.find(({ id }) => id === streamId);
+    expect(stream?.liveCycles?.map(({ startsOn }) => startsOn)).toContain(
+      cycle.third,
+    );
+  });
 
   it("moves features on the cycles that move, in the same drafts", async () => {
     const streamId = await liveStream();

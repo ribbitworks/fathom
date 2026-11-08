@@ -164,7 +164,11 @@ describe("choices", () => {
     );
     expect(response.statusCode).toBe(200);
     const choices = response.json<PlanChoices>();
-    expect(Object.keys(choices).sort()).toEqual(["owners", "statuses"]);
+    expect(Object.keys(choices).sort()).toEqual([
+      "featureTeams",
+      "owners",
+      "statuses",
+    ]);
     for (const choice of [...choices.owners, ...choices.statuses]) {
       expect(Object.keys(choice).sort()).toEqual(["id", "name", "retired"]);
     }

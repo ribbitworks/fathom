@@ -42,6 +42,8 @@ export interface RecordKind {
   // The drafts the record's draft uses beyond the records it links to, such as the cycle patterns
   // drafted that make a release's cycles, asked of a draft that removes the record too.
   alsoUses?: (state: RecordsState, id: string) => RecordRef[];
+  // Fields that mean one thing together, so a draft changing any of them shows them all.
+  changedTogether?: readonly string[];
   // Values a record added is given beside its fields, such as its place at the end of an order,
   // from the kind's rows, including those added before it in the same approval.
   added?: (rows: ReadonlyMap<string, Recorded>) => Recorded;
