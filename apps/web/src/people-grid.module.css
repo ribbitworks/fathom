@@ -1,0 +1,16 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The People table's button showing a person's details, at the right of their Name cell, shown while
+   the row is pointed at or one of its cells has focus. */
+
+.showDetails {
+  float: right;
+  margin-left: 4px;
+  opacity: 0;
+}
+
+tr:hover .showDetails,
+tr:focus-within .showDetails,
+.showDetails:focus-visible {
+  opacity: 1;
+}

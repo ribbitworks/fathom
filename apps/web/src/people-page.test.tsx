@@ -318,6 +318,7 @@ describe("who sees the People page", () => {
       "Team",
       "Team name",
       "Expected",
+      "Actions",
     ]);
     expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
     expect(screen.queryByRole("button", { name: "New person" })).toBeNull();
@@ -1243,7 +1244,7 @@ describe("drafts", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Resubmit", "Discard draft"]);
+    ).toEqual(["Show details", "Resubmit", "Discard draft"]);
     await userEvent.click(screen.getByRole("menuitem", { name: "Resubmit" }));
     await waitFor(() => {
       expect(
@@ -1301,7 +1302,9 @@ describe("drafts", () => {
       screen.getByRole("button", { name: "Actions for Casey Fictional" }),
     );
     expect(await screen.findByText("Reason: Fictional reason")).toBeDefined();
-    expect(screen.queryAllByRole("menuitem")).toEqual([]);
+    expect(
+      screen.queryAllByRole("menuitem").map(({ textContent }) => textContent),
+    ).toEqual(["Show details"]);
     await userEvent.keyboard("{Escape}");
     await waitFor(() => {
       expect(screen.queryByRole("menu")).toBeNull();
@@ -1313,7 +1316,7 @@ describe("drafts", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Approve draft", "Reject draft…"]);
+    ).toEqual(["Show details", "Approve draft", "Reject draft…"]);
     await userEvent.click(
       screen.getByRole("menuitem", { name: "Approve draft" }),
     );
@@ -1498,7 +1501,7 @@ describe("drafts", () => {
       (await screen.findAllByRole("menuitem")).map(
         ({ textContent }) => textContent,
       ),
-    ).toEqual(["Discard draft"]);
+    ).toEqual(["Show details", "Discard draft"]);
     await userEvent.click(
       screen.getByRole("menuitem", { name: "Discard draft" }),
     );
@@ -2531,7 +2534,7 @@ describe("searching, sorting, and filtering", () => {
       "nobody",
     );
     expect(screen.getByText("No matching people").closest("td")?.colSpan).toBe(
-      9,
+      10,
     );
     expect(
       within(screen.getByRole("grid"))
@@ -2547,6 +2550,7 @@ describe("searching, sorting, and filtering", () => {
       "Team name",
       "Manager?",
       "Expected",
+      "Actions",
     ]);
   });
 

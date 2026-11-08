@@ -11,13 +11,13 @@
 // rows have the same ID, a person's end date cannot be before their start date, and an ID typed in
 // cannot look like a temporary one.
 
-import type { Choice, Field, List, Person } from "@fathom/shared";
+import type { Choice, Field, List, Person, Show } from "@fathom/shared";
 import {
   builtInColumnNames,
   personLengths,
   temporaryIdPrefix,
 } from "@fathom/shared";
-import { VisuallyHidden } from "@mantine/core";
+import { ActionIcon, Menu, VisuallyHidden } from "@mantine/core";
 import { notShown, personDraftFields } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
 import { offered, sameName } from "./lists.ts";
@@ -45,6 +45,8 @@ import {
 import type { CellValue } from "./table-view.ts";
 import { count } from "./numbers.ts";
 import { today } from "./today.ts";
+import { Icon } from "./icons.tsx";
+import classes from "./people-grid.module.css";
 
 export type PeopleActions = RecordActions<Person, RowChange, RowRequest>;
 
@@ -442,6 +444,21 @@ export function livePeople(people: readonly Person[]): Person[] {
   return live;
 }
 
+// Everyone as the Draft menu's choice shows them: as drafted, with the drafts applied, where a
+// rejected draft is taken back and someone drafted to be removed is gone, or as they are live.
+export function peopleAsShown(people: readonly Person[], show: Show): Person[] {
+  if (show !== "drafts")
+    return show === "live" ? livePeople(people) : [...people];
+  const live = new Map(livePeople(people).map((person) => [person.id, person]));
+  return people.flatMap((person) => {
+    if (person.draft?.state === "rejected") {
+      const before = live.get(person.id);
+      return before === undefined ? [] : [before];
+    }
+    return person.draft?.action === "deleted" ? [] : [person];
+  });
+}
+
 function makeLivePeople(people: readonly Person[]): Person[] {
   const drafted = new Map(people.map((person) => [person.id, person.draft]));
   const named = managersNamed(people);
@@ -596,12 +613,45 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
 const withNotes = (notes: [string, string | null][]) =>
   notes.length === 0 ? {} : { notes: Object.fromEntries(notes) };
 
+// The button at the end of a person's Name cell that shows their details beside the table, shown
+// while the row is pointed at or one of its cells has focus, so they show without the row's menu.
+// From the keyboard, the row's menu offers the same.
+function ShowDetailsButton({
+  row,
+  onOpen,
+}: {
+  row: Person;
+  onOpen: (person: Person) => void;
+}) {
+  return (
+    <ActionIcon
+      variant="subtle"
+      color="gray"
+      size="sm"
+      tabIndex={-1}
+      className={classes.showDetails}
+      aria-label={`Show details of ${row.preferredName}`}
+      // The cell would otherwise take the click as choosing or editing it.
+      onMouseDown={(event) => {
+        event.stopPropagation();
+      }}
+      onClick={(event) => {
+        event.stopPropagation();
+        onOpen(row);
+      }}
+    >
+      <Icon name="open" />
+    </ActionIcon>
+  );
+}
+
 function peopleTable(
   showDates: boolean,
   showPosition: boolean,
   people: readonly Person[],
   lists: readonly List[],
   canEditHires: boolean,
+  onOpen: ((person: Person) => void) | undefined,
 ): RecordTable<Person, RowChange, RowRequest> {
   const kindOf = (row: Person) => row.kind ?? personKind;
   const hireIds = new Set(people.filter(isHire).map(({ id }) => id));
@@ -635,7 +685,19 @@ function peopleTable(
     nameOf: (row) => rowName(row, lists),
     readOnlyRecord: (row) => isHire(row) && !canEditHires,
     columnsFor: (fields, lists, order, records) =>
-      columnsFor(fields, lists, order, showDates, records, showPosition),
+      columnsFor(fields, lists, order, showDates, records, showPosition).map(
+        (column) =>
+          column.key === "preferredName" && onOpen !== undefined
+            ? {
+                ...column,
+                mark: (row: Person) =>
+                  !isHire(row) &&
+                  !isPending(row) && (
+                    <ShowDetailsButton row={row} onOpen={onOpen} />
+                  ),
+              }
+            : column,
+      ),
     liveRecords: livePeople,
     draftFields: (person, draft, fields, lists) =>
       personDraftFields(person, draft, fields, lists, people),
@@ -649,6 +711,22 @@ function peopleTable(
       people: ids.filter((id) => !hireIds.has(id)),
       plannedHires: ids.filter((id) => hireIds.has(id)),
     }),
+    // Planned hires have no details of their own to show, nor has a row not saved yet.
+    ...(onOpen === undefined
+      ? {}
+      : {
+          menuItems: (row: Person) =>
+            !isHire(row) &&
+            !isPending(row) && (
+              <Menu.Item
+                onClick={() => {
+                  onOpen(row);
+                }}
+              >
+                Show details
+              </Menu.Item>
+            ),
+        }),
   };
 }
 
@@ -665,6 +743,8 @@ type PeopleGridProps = Omit<
   showPosition?: boolean;
   // Whether the user may change planned hires, as well as people.
   canEditHires?: boolean;
+  // Shows a person's details beside the table.
+  onOpen?: ((person: Person) => void) | undefined;
 };
 
 export function PeopleGrid({
@@ -672,6 +752,7 @@ export function PeopleGrid({
   showDates,
   showPosition = true,
   canEditHires = false,
+  onOpen,
   ...props
 }: PeopleGridProps) {
   return (
@@ -683,6 +764,7 @@ export function PeopleGrid({
         people,
         props.lists,
         canEditHires,
+        onOpen,
       )}
       canAdd={showPosition}
       {...props}

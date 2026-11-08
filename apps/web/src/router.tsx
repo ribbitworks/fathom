@@ -12,13 +12,11 @@ import {
   personLengths,
   showSchema,
 } from "@fathom/shared";
-import { Anchor } from "@mantine/core";
 import {
   createRootRouteWithContext,
   createRoute,
   createRouter,
   getRouteApi,
-  Link,
   notFound,
   type RouterHistory,
   redirect,
@@ -55,14 +53,15 @@ const signedIn = getRouteApi("/signed-in");
 const people = getRouteApi("/signed-in/people");
 
 // The org chart's address: the person found on it, and the manager whose team alone is shown, each
-// by Employee ID, or by Fathom's own ID for readers who do not see people, and what the Draft menu
-// shows. People keeps it while opened from the chart, to lead back to it.
+// by Employee ID, or by Fathom's own ID for readers who do not see people, what the Draft menu
+// shows, and the person whose details are shown beside it.
 const fathomIdLength = 36;
 const chartAddressLength = Math.max(personLengths.employeeId, fathomIdLength);
 const chartSearch = z.object({
   person: z.string().max(chartAddressLength).optional().catch(undefined),
   team: z.string().max(chartAddressLength).optional().catch(undefined),
   show: showSchema.optional().catch(undefined),
+  open: z.string().max(personLengths.employeeId).optional().catch(undefined),
 });
 
 // Pages only for users with a permission; anyone else is told there is no such page.
@@ -304,31 +303,22 @@ const releasesRoute = createRoute({
   },
 });
 
+// People's address: its view, and the person whose details are shown beside it, by Employee ID.
+const peopleSearch = viewSearchSchema.extend({
+  open: z.string().max(personLengths.employeeId).optional().catch(undefined),
+});
+
 const peopleRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/people",
-  validateSearch: viewSearchSchema.extend({
-    chart: chartSearch.optional().catch(undefined),
-  }),
+  validateSearch: peopleSearch,
   beforeLoad: requiring("people:view"),
   component: function People() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = people.useNavigate();
-    const { chart, ...search } = people.useSearch();
+    const { open, ...search } = people.useSearch();
     return (
       <PeoplePage
-        back={
-          chart !== undefined && (
-            <Anchor
-              size="sm"
-              renderRoot={(props) => (
-                <Link {...props} to="/org-chart" search={chart} />
-              )}
-            >
-              Back to org chart
-            </Anchor>
-          )
-        }
         canEdit={permissions.includes("people:edit")}
         // Until planned hires are a permission area of their own, as the server checks.
         canEditHires={
@@ -339,8 +329,13 @@ const peopleRoute = createRoute({
         canEditColumns={permissions.includes("configuration:edit")}
         showDates={permissions.includes("restricted:view")}
         {...viewProps(search, (next, replace) => {
-          void navigate({ search: { ...next, chart }, replace });
+          void navigate({ search: { ...next, open }, replace });
         })}
+        open={open}
+        seesChart={permissions.includes("org-chart:view")}
+        onOpen={(next) => {
+          void navigate({ search: { ...search, open: next } });
+        }}
       />
     );
   },
@@ -364,6 +359,7 @@ const orgChartRoute = createRoute({
     return (
       <OrgChartPage
         seesPeople={permissions.includes("people:view")}
+        showDates={permissions.includes("restricted:view")}
         teamEdits={teamEdits}
         search={orgChartRoute.useSearch()}
         onSearch={(search, replace) => {

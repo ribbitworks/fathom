@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Org chart page, for users who see the org chart: today's reporting lines, each person under
-// their manager. Managers' reports can be hidden and shown again, a number of levels shown at once, the
-// chart panned, zoomed, and fitted to the screen, and a person found by name, which brings them to
-// the centre. A manager's team can be shown alone. For those who see people, a person opens People,
-// searched for their Employee ID, which leads back to the chart with them found. The person found, and the team shown
-// alone, are kept in the page's address. Each team's cards, and the lines to them, are drawn in its
-// colour, which reaches down to the teams below that have none, even when a team is shown alone.
-// The Draft menu, as on tables, draws drafts of managers and team names beside the live chart,
-// applied to it, or not at all, which leaves the chart read only; its choice is kept in the address.
+// their manager. Managers' reports can be hidden and shown again, a number of levels shown at once,
+// the chart panned, zoomed, and fitted to the screen, and a person found by name, which brings them
+// to the centre. A manager's team can be shown alone. For those who see people, a person's card
+// finds them and shows their details in a side panel beside the chart. The person found, the team
+// shown alone, and the person whose details are shown, are kept in the page's address. Each team's
+// cards, and the lines to them, are drawn in its colour, which reaches down to the teams below that
+// have none, even when a team is shown alone. The Draft menu, as on tables, draws drafts of
+// managers and team names beside the live chart, applied to it, or not at all, which leaves the
+// chart read only; its choice is kept in the address.
 
 import type { PaletteColour, Show } from "@fathom/shared";
 import {
   ActionIcon,
   Alert,
+  Anchor,
   Button,
   Group,
   Loader,
@@ -26,7 +28,7 @@ import {
   useComputedColorScheme,
 } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import {
   type Edge,
   Handle,
@@ -65,6 +67,7 @@ import {
   type ChartSearch,
   collapsedBelow,
   levelsOf,
+  findFieldId,
   managersAbove,
   type OrgTree,
   orgChartQuery,
@@ -77,7 +80,10 @@ import {
   treeOf,
 } from "./org-chart.ts";
 import classes from "./org-chart.module.css";
+import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
+import { PersonPanel, personPanelId } from "./person-panel.tsx";
+import { motionLasts, useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { DraftMark, StatusMark } from "./status-mark.tsx";
 import { DraftMenu } from "./table-controls.tsx";
 
@@ -88,22 +94,22 @@ interface CardData extends Record<string, unknown> {
   reports: number;
   collapsed: boolean;
   found: boolean;
-  // The chart's address once the person is opened, which People leads back to.
-  back: ChartSearch;
+  // The chart's address with the person found and their details shown beside it.
+  opened: ChartSearch;
   // Shows only the person's team; absent unless they manage someone, are known by more than their
   // name, and are not already shown alone.
   onTeam: (() => void) | undefined;
   // Whether the reader may change the name and colour of the team the person leads.
   teamEdits: TeamEdits;
   onToggle: (id: string) => void;
-  // Opens the person on People; absent for someone People does not show the reader.
+  // Shows the person's details beside the chart; absent for someone People does not show the reader.
   onOpen: (() => void) | undefined;
 }
 
 type CardNode = Node<CardData, "person">;
 
-// A plain click opens People in this tab, after the chart's address keeps the person; any other,
-// such as one opening a new tab, is left to the browser.
+// A plain click shows the person's details beside the chart; any other, such as one opening a new
+// tab, is left to the browser.
 const plainClick = (event: MouseEvent) =>
   event.button === 0 &&
   !event.metaKey &&
@@ -222,7 +228,7 @@ function PersonCard({ data }: NodeProps<CardNode>) {
     reports,
     collapsed,
     found,
-    back,
+    opened,
     onTeam,
     teamEdits,
     onToggle,
@@ -263,8 +269,9 @@ function PersonCard({ data }: NodeProps<CardNode>) {
           <span className={classes.label}>{person.preferredName}</span>
         ) : (
           <Link
-            to="/people"
-            search={{ search: person.employeeId, chart: back }}
+            id={cardLinkId(person.id)}
+            to="/org-chart"
+            search={opened}
             className={[classes.label, classes.link, "nodrag", "nopan"].join(
               " ",
             )}
@@ -340,6 +347,8 @@ function PersonCard({ data }: NodeProps<CardNode>) {
 
 const nodeTypes = { person: PersonCard };
 
+const cardLinkId = (id: string) => `card-${id}`;
+
 // The levels shown when the chart opens, so a large organization starts readable.
 const openLevels = 2;
 
@@ -378,7 +387,6 @@ function Chart({
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
   const flow = useReactFlow();
-  const navigate = useNavigate();
   const colorScheme = useComputedColorScheme("light");
   const byAddress = useMemo(
     () =>
@@ -448,7 +456,11 @@ function Chart({
         const reports = tree.reports.get(id)?.length ?? 0;
         const { employeeId } = person;
         const address = addressOf(person, seesPeople);
-        const back = { ...search, person: address ?? undefined };
+        const opened = {
+          ...search,
+          person: address ?? undefined,
+          open: employeeId ?? undefined,
+        };
         return {
           id,
           type: "person",
@@ -465,7 +477,7 @@ function Chart({
             reports,
             collapsed: collapsed.has(id),
             found: id === found,
-            back,
+            opened,
             teamEdits: person.nameOnly === true ? noTeamEdits : teamEdits,
             onTeam:
               address === null ||
@@ -476,6 +488,7 @@ function Chart({
                     onSearch({ team: address, show: search.show }, false);
                   },
             onToggle: (toggled) => {
+              centreOnSpace(false);
               setCollapsed((before) => {
                 const after = new Set(before);
                 if (!after.delete(toggled)) after.add(toggled);
@@ -486,11 +499,8 @@ function Chart({
               employeeId === null || !seesPeople
                 ? undefined
                 : () => {
-                    onSearch(back, true);
-                    void navigate({
-                      to: "/people",
-                      search: { search: employeeId, chart: back },
-                    });
+                    centreOnSpace(true);
+                    onSearch(opened, false);
                   },
           },
         };
@@ -506,7 +516,6 @@ function Chart({
       teamEdits,
       search,
       onSearch,
-      navigate,
     ],
   );
   const edges = useMemo(
@@ -539,6 +548,55 @@ function Chart({
   // Brings the person found to the centre once the managers above them are shown, and only then,
   // so showing or hiding reports afterwards leaves the chart where it is.
   const centred = useRef<string | null>(null);
+  // A person whose details are opened from their card stays in the middle of the chart while the
+  // space beside the panel changes, as it opens, is resized, or closes, until the chart is moved
+  // any other way.
+  const keepCentred = useRef(false);
+  // The zoom finding them is moving towards, if it is, which they are kept at.
+  const centredZoom = useRef<number | null>(null);
+  const centreOnSpace = (keep: boolean) => {
+    keepCentred.current = keep;
+    centredZoom.current = null;
+  };
+  // Once the details close, the chart keeps its place after the panel has slid away.
+  const detailsOpen = search.open !== undefined;
+  useEffect(() => {
+    if (detailsOpen) return;
+    const timer = setTimeout(() => {
+      keepCentred.current = false;
+    }, motionLasts);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [detailsOpen]);
+  const chartArea = useRef<HTMLDivElement>(null);
+  // What the observer below centres, as the chart is now drawn.
+  const placing = useRef({ layout, found, tree });
+  useEffect(() => {
+    placing.current = { layout, found, tree };
+  });
+  useEffect(() => {
+    // The chart's panel is drawn whenever the chart is.
+    const area = chartArea.current as HTMLDivElement;
+    // Only a change of width counts, not the size reported when watching starts.
+    let width: number | undefined;
+    const observer = new ResizeObserver(([entry]) => {
+      const now = (entry as ResizeObserverEntry).contentRect.width;
+      const changed = width !== undefined && now !== width;
+      width = now;
+      const { layout: shown, found: at, tree: drawn } = placing.current;
+      const card = shown.cards.find(({ id }) => id === at);
+      if (!changed || !keepCentred.current || card === undefined) return;
+      const height = heightOf(drawn.people.get(card.id));
+      void flow.setCenter(card.x + cardWidth / 2, card.y + height / 2, {
+        zoom: centredZoom.current ?? flow.getZoom(),
+      });
+    });
+    observer.observe(area);
+    return () => {
+      observer.disconnect();
+    };
+  }, [flow]);
   const [reveals, setReveals] = useState(0);
   const [ready, setReady] = useState(false);
   // A chart opened with someone found starts at them, rather than fitted to the screen.
@@ -550,8 +608,10 @@ function Chart({
     const card = layout.cards.find(({ id }) => id === found) as Placed;
     centred.current = found;
     const height = heightOf(tree.people.get(card.id));
+    const zoom = Math.max(flow.getZoom(), 1);
+    centredZoom.current = zoom;
     void flow.setCenter(card.x + cardWidth / 2, card.y + height / 2, {
-      zoom: Math.max(flow.getZoom(), 1),
+      zoom,
       duration: 300,
     });
   }, [layout, found, flow, ready, reveals, tree]);
@@ -560,6 +620,7 @@ function Chart({
   // once laid out; showing or hiding one manager's reports leaves it where it is.
   const fitNext = useRef(false);
   const showLevels = (levels: number | "all") => {
+    centreOnSpace(false);
     fitNext.current = true;
     setLevelsChosen(levels);
     setCollapsed(levels === "all" ? new Set() : collapsedBelow(tree, levels));
@@ -616,8 +677,11 @@ function Chart({
           setReveals((count) => count + 1);
         }}
         onLevels={showLevels}
+        onMove={() => {
+          centreOnSpace(false);
+        }}
       />
-      <Paper withBorder className={classes.chart}>
+      <Paper withBorder className={classes.chart} ref={chartArea}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -645,6 +709,10 @@ function Chart({
           minZoom={0.1}
           fitView={fitOnOpen}
           fitViewOptions={fitOptions}
+          onMoveStart={(event) => {
+            // Only the reader's own moves have an event.
+            if (event !== null) centreOnSpace(false);
+          }}
           onInit={() => {
             setReady(true);
           }}
@@ -661,14 +729,18 @@ export function OrgChartPage({
   search,
   onSearch,
   seesPeople,
+  showDates = false,
   teamEdits,
 }: {
   search: ChartSearch;
   seesPeople: boolean;
+  // Whether the reader sees Restricted details, such as dates, in a person's details.
+  showDates?: boolean;
   teamEdits: TeamEdits;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
   const query = useQuery(orgChartQuery);
+  const narrow = useNarrow();
   // Those who do not see people are sent no drafts, so every choice draws the approved chart, which
   // they may still colour teams on.
   const show = seesPeople ? (search.show ?? "both") : "both";
@@ -713,7 +785,14 @@ export function OrgChartPage({
               <Button
                 variant="default"
                 onClick={() => {
-                  onSearch({ person: search.person, show: search.show }, false);
+                  onSearch(
+                    {
+                      person: search.person,
+                      show: search.show,
+                      open: search.open,
+                    },
+                    false,
+                  );
                 }}
               >
                 Show everyone
@@ -743,19 +822,74 @@ export function OrgChartPage({
       ) : tree.people.size === 0 ? (
         <Text c="dimmed">Nobody is on the org chart yet.</Text>
       ) : (
-        <ReactFlowProvider key={lead?.id ?? ""}>
-          <Chart
-            tree={tree}
-            everyone={everyone}
-            colours={colours}
-            alone={lead !== undefined}
-            seesPeople={seesPeople}
-            teamEdits={edits}
-            show={show}
-            search={search}
-            onSearch={onSearch}
-          />
-        </ReactFlowProvider>
+        <WithSidePanel
+          storageKey="fathom-table-panel-width"
+          panels={
+            seesPeople && search.open !== undefined
+              ? [
+                  {
+                    key: "person",
+                    id: personPanelId,
+                    name: "details",
+                    node: (
+                      <PersonPanel
+                        employeeId={search.open}
+                        show={show}
+                        showDates={showDates}
+                        narrow={narrow}
+                        elsewhere={(person) => (
+                          <Anchor
+                            size="sm"
+                            renderRoot={(props) => (
+                              <Link
+                                {...props}
+                                to="/people"
+                                search={{ search: person.employeeId }}
+                              />
+                            )}
+                          >
+                            Show in People
+                          </Anchor>
+                        )}
+                        onPerson={(employeeId) => {
+                          onSearch({ ...search, open: employeeId }, false);
+                        }}
+                        onClose={() => {
+                          const open = (search.open as string).toLowerCase();
+                          const card = [...everyone.people.values()].find(
+                            ({ employeeId }) =>
+                              employeeId?.toLowerCase() === open,
+                          );
+                          onSearch({ ...search, open: undefined }, false);
+                          // A person whose card is not drawn leaves focus on finding them.
+                          focusSoon(
+                            ...(card === undefined
+                              ? []
+                              : [cardLinkId(card.id)]),
+                            findFieldId,
+                          );
+                        }}
+                      />
+                    ),
+                  },
+                ]
+              : []
+          }
+        >
+          <ReactFlowProvider key={lead?.id ?? ""}>
+            <Chart
+              tree={tree}
+              everyone={everyone}
+              colours={colours}
+              alone={lead !== undefined}
+              seesPeople={seesPeople}
+              teamEdits={edits}
+              show={show}
+              search={search}
+              onSearch={onSearch}
+            />
+          </ReactFlowProvider>
+        </WithSidePanel>
       )}
     </>
   );

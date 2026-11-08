@@ -1,0 +1,57 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* A person's details in a side panel: each section a list of labels and values, the label to the left
+   in a wide panel and over the value in a narrow one. */
+
+.heading {
+  margin: 0 0 var(--mantine-spacing-xs);
+  font-size: var(--mantine-font-size-md);
+  font-weight: 600;
+}
+
+/* Each list follows its own width, so a narrow panel stacks its labels, wherever the panel is. */
+.list {
+  margin: 0;
+  container-type: inline-size;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: var(--mantine-spacing-md);
+  padding: 6px 0;
+  border-bottom: 1px solid var(--mantine-color-default-border);
+}
+
+.label {
+  color: var(--mantine-color-dimmed);
+}
+
+.value {
+  min-width: 0;
+  margin: 0;
+}
+
+/* A drafted value's live value, under it. */
+.live {
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.reports {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* In a narrow panel, each label is a small heading over its value, rather than a column beside it. */
+@container (max-width: 26rem) {
+  .row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .label {
+    font-size: var(--mantine-font-size-sm);
+  }
+}

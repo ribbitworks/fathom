@@ -19,6 +19,7 @@ import type {
 } from "@fathom/shared";
 import {
   Alert,
+  Anchor,
   Button,
   Group,
   Loader,
@@ -28,11 +29,15 @@ import {
   Text,
 } from "@mantine/core";
 import { useIsMutating, useQuery } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { type ReactNode, useRef, useState } from "react";
 import { ColumnDialog } from "./column-dialog.tsx";
 import { DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
+import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
+import { PersonPanel, personPanelId } from "./person-panel.tsx";
+import { useNarrow } from "./side-panel.tsx";
 import { type Decision, decisionFor } from "./drafts.ts";
 import classes from "./pages.module.css";
 import {
@@ -216,7 +221,6 @@ function reordered(
 const cannotAddId = "people-cannot-add";
 
 export function PeoplePage({
-  back,
   canEdit,
   canEditHires = false,
   canApprove = false,
@@ -226,8 +230,10 @@ export function PeoplePage({
   onView,
   applied,
   onApply,
+  open,
+  onOpen,
+  seesChart = false,
 }: {
-  back?: ReactNode;
   canEdit: boolean;
   // Whether the user may change planned hires too.
   canEditHires?: boolean;
@@ -240,8 +246,15 @@ export function PeoplePage({
   // rather than adding to its history when asked.
   applied: string | undefined;
   onApply: (view: View, id: string, replace?: boolean) => void;
+  // The person whose details are shown beside the table, by Employee ID, and showing someone's, or
+  // nobody's.
+  open?: string | undefined;
+  onOpen?: (employeeId: string | undefined) => void;
+  // Whether the reader sees the org chart, which a person's details then link to.
+  seesChart?: boolean;
 }) {
   const query = useQuery(peopleQuery);
+  const narrow = useNarrow();
   const positionHidden = query.data?.positionHidden === true;
   const saving =
     useIsMutating({ mutationKey: [...peopleQuery.queryKey, "change"] }) > 0;
@@ -585,6 +598,60 @@ export function PeoplePage({
     content = (
       <>
         <PeopleGrid
+          onOpen={
+            onOpen &&
+            ((person) => {
+              onOpen(person.employeeId);
+            })
+          }
+          panels={
+            open === undefined || onOpen === undefined
+              ? []
+              : [
+                  {
+                    key: "person",
+                    id: personPanelId,
+                    name: "details",
+                    node: (
+                      <PersonPanel
+                        employeeId={open}
+                        show={view.show}
+                        showDates={showDates}
+                        seesChart={seesChart}
+                        narrow={narrow}
+                        elsewhere={(person) =>
+                          seesChart && (
+                            <Anchor
+                              size="sm"
+                              renderRoot={(props) => (
+                                <Link
+                                  {...props}
+                                  to="/org-chart"
+                                  search={{ person: person.employeeId }}
+                                />
+                              )}
+                            >
+                              Show on org chart
+                            </Anchor>
+                          )
+                        }
+                        onPerson={onOpen}
+                        onClose={() => {
+                          const shown = query.data.people.find(
+                            (person) =>
+                              person.employeeId.toLowerCase() ===
+                              open.toLowerCase(),
+                          );
+                          onOpen(undefined);
+                          if (shown !== undefined) {
+                            focusSoon(`cell-${shown.id}-preferredName`);
+                          }
+                        }}
+                      />
+                    ),
+                  },
+                ]
+          }
           people={query.data.people}
           fields={query.data.fields}
           order={query.data.order}
@@ -686,7 +753,6 @@ export function PeoplePage({
 
   return (
     <Stack gap="md" className={classes.tablePage}>
-      {back}
       <PageHeader
         title="People"
         action={

@@ -24,7 +24,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Plan: projects, proposals, features, milestones, releases and the cycles they include (**proposal**), products and customers (**proposal**), and estimates | View | Edit | Edit | Edit | Edit | View | View | View | None |
 | Allocations | View | View | View | Edit | Edit | View | View | Edit | None |
 | People, teams, and reporting lines (General) | None | None | None | View | View | Edit | View | View | None |
-| The org chart: who reports to whom, with each person's name, position, and team; a card opens the person on People only for those who see people | View | View | View | View | View | View | View | View | None |
+| The org chart: who reports to whom, with each person's name, position, and team; a card shows the person's details beside it only for those who see people | View | View | View | View | View | View | View | View | None |
 | Teams' colours on the org chart, for every team until accounts are linked to people, then for Engineering Managers only the teams below them | None | None | None | Edit | None | Edit | None | None | None |
 | Feature teams (General), with seeing them coming with seeing the plan (**proposal**) | View | View | Approve | Propose | Approve | Edit | View | View | None |
 | Restricted employee details | None | None | None | View | View | Edit | View | None | None |

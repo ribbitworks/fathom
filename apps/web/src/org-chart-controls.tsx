@@ -19,7 +19,12 @@ import { useReactFlow } from "@xyflow/react";
 import { type ReactNode, useMemo, useState } from "react";
 import { AppMenu } from "./app-menu.tsx";
 import { Icon } from "./icons.tsx";
-import { fitOptions, nothingFound, type OrgTree } from "./org-chart.ts";
+import {
+  findFieldId,
+  fitOptions,
+  nothingFound,
+  type OrgTree,
+} from "./org-chart.ts";
 
 const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
@@ -36,6 +41,7 @@ export function ChartControls({
   onFind,
   onFindAgain,
   onLevels,
+  onMove,
 }: {
   tree: OrgTree;
   // Everyone not on the chart while one team is shown alone.
@@ -49,6 +55,8 @@ export function ChartControls({
   // Someone was chosen in the finder, even the person already found.
   onFindAgain: () => void;
   onLevels: (levels: number | "all") => void;
+  // The chart is zoomed or fitted to the screen.
+  onMove: () => void;
 }) {
   const flow = useReactFlow();
   const [search, setSearch] = useState("");
@@ -87,6 +95,7 @@ export function ChartControls({
     <Group justify="space-between" gap="sm">
       <Group gap="xs">
         <Select
+          id={findFieldId}
           aria-label="Find a person or team"
           placeholder="Find a person or team"
           leftSection={<Icon name="search" />}
@@ -172,6 +181,7 @@ export function ChartControls({
             size="lg"
             aria-label="Zoom in"
             onClick={() => {
+              onMove();
               void flow.zoomIn({ duration: 200 });
             }}
           >
@@ -184,6 +194,7 @@ export function ChartControls({
             size="lg"
             aria-label="Zoom out"
             onClick={() => {
+              onMove();
               void flow.zoomOut({ duration: 200 });
             }}
           >
@@ -193,6 +204,7 @@ export function ChartControls({
         <Button
           variant="default"
           onClick={() => {
+            onMove();
             void flow.fitView({ ...fitOptions, duration: 300 });
           }}
         >

@@ -268,6 +268,8 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   request: (changes: Change[], kind: string) => Request;
   // The drafts of the records named, to approve or reject.
   drafts: (ids: string[]) => DraftSelection;
+  // What else a record's menu offers, after its columns' own items, such as showing its details.
+  menuItems?: (record: Rec) => ReactNode;
 }
 
 // What is wrong with a row, and the column whose value is wrong, when one is.
@@ -891,6 +893,8 @@ function OrderItems({
 export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // Every record the user may see; the view decides which are shown, and in what order.
   records: Rec[];
+  // Side panels the page opens beside the table, stacked above the table's own.
+  panels?: readonly SidePanel[] | undefined;
   table: RecordTable<Rec, Change, Request>;
   fields: Field[];
   // The keys of the columns, in order, as a draft of the order makes it, and that draft.
@@ -933,6 +937,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   onView,
   saved,
   ref,
+  panels = [],
 }: RecordGridProps<Rec, Change, Request>) {
   // Live only shows the live columns, in their live order. Drafts applied shows the columns as they
   // will be once approved: a rejected draft, not on its way to approval, is taken back, and a column
@@ -1165,16 +1170,18 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const [filtering, setFiltering] = useState<string>();
 
   // The actions column, for those who may edit records or approve drafts.
-  const withActions = canEdit || canApprove;
+  const withActions = canEdit || canApprove || table.menuItems !== undefined;
   // Whether the user may change a record, as they may the table's others, unless it is one they
   // may only view.
   const mayChange = (record: Rec) =>
     canEdit && table.readOnlyRecord?.(record) !== true;
-  // A record's menu: approving or rejecting its draft, for Approvers, and discarding it or
-  // removing the record, for those who may change it.
+  // A record's menu: approving or rejecting its draft, for Approvers, discarding it or removing the
+  // record, for those who may change it, and whatever else the table offers, such as its details.
   const hasMenu = (record: Rec) =>
     !isPending(record) &&
-    (mayChange(record) || (canApprove && record.draft !== undefined));
+    (mayChange(record) ||
+      (canApprove && record.draft !== undefined) ||
+      Boolean(table.menuItems?.(record)));
   // Whether a record's cells cannot be changed: by those who may only view it, while it is drafted
   // to be removed, until the draft is discarded, or while it is being added.
   const locked = (record: Rec) =>
@@ -2190,7 +2197,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       >
         {/* Names whose menu it is, and gives every menu somewhere to click that closes it. */}
         <MenuTitle>{table.nameOf(record)}</MenuTitle>
-        {record.heldBy !== undefined && <HeldNote by={record.heldBy} />}
+        {/* Who holds the record matters only to those who may change or decide it. */}
+        {record.heldBy !== undefined && (mayChange(record) || canApprove) && (
+          <HeldNote by={record.heldBy} />
+        )}
         {draft?.unpublished === true && <UnpublishedNote />}
         {draft && (
           <MenuDraftLines
@@ -2202,7 +2212,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             // Set apart from the items after it, when any are offered.
             divider={
               (mayChange(record) && record.heldBy === undefined) ||
-              (canApprove && decidable(record))
+              (canApprove && decidable(record)) ||
+              Boolean(table.menuItems?.(record))
             }
           />
         )}
@@ -2218,6 +2229,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             )
           );
         })}
+        {table.menuItems?.(record)}
         {/* A rejected draft is back with its makers, until they send it again. */}
         {canApprove && decidable(record) && (
           <>
@@ -2376,6 +2388,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     ];
   })();
   const sidePanels: SidePanel[] = [
+    ...panels,
     ...cellPanel,
     ...(metrics === false
       ? []
@@ -2531,7 +2544,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 <Table.Tr>
                   <Table.Td
                     colSpan={
-                      columns.length + besides.length + (withActions ? 1 : 0)
+                      columns.length + besides.length + Number(withActions)
                     }
                     className={classes.recordNone}
                   >

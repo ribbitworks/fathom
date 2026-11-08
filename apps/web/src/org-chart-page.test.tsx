@@ -6,7 +6,13 @@
 // it, and what those who see the chart but not People see.
 
 import type { OrgChartPerson } from "@fathom/shared";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
@@ -95,13 +101,54 @@ async function showLevels(choice: string) {
   await userEvent.click(await screen.findByRole("menuitem", { name: choice }));
 }
 
+// Opens the chart with its own panel, which holds React Flow, watched for changes of width, which
+// the test then makes.
+async function openWatchedChart() {
+  const resized: ((width: number) => void)[] = [];
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      readonly callback: (entries: object[]) => void;
+      constructor(callback: (entries: object[]) => void) {
+        this.callback = callback;
+      }
+      observe(target: Element) {
+        if (target.querySelector(".react-flow") !== null) {
+          resized.push((width) => {
+            this.callback([{ contentRect: { width } }]);
+          });
+        }
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  await openChart();
+  const viewport = document.querySelector(
+    ".react-flow__viewport",
+  ) as HTMLElement;
+  const transform = () => viewport.style.transform;
+  const resize = (width: number) => {
+    act(() => {
+      for (const callback of resized) callback(width);
+    });
+  };
+  return { transform, resize };
+}
+
+const settled = () => new Promise((settle) => setTimeout(settle, 400));
+
 // Opens the chart at the address given, with every level shown unless asked not to.
 async function openChart(
   answer: () => Response = chartAnswer,
   expand = true,
   path = "/org-chart",
 ) {
-  serverAnswers({ "GET /api/session": viewer, "GET /api/org-chart": answer });
+  serverAnswers({
+    "GET /api/session": viewer,
+    "GET /api/org-chart": answer,
+    ...peopleAnswers,
+  });
   const history = renderApp(path);
   await screen.findByRole("heading", { name: "Org chart" });
   if (expand) await showLevels("All levels");
@@ -944,75 +991,122 @@ describe("the org chart", () => {
     expect(screen.queryByRole("button", { name: "Show levels" })).toBeNull();
   });
 
-  it("opens People, searched for the person, from their name, and leads back to them", async () => {
+  it("shows the person's details beside the chart from their name, and finds them", async () => {
     const history = await openChart();
     await userEvent.click(
       await screen.findByRole("link", { name: "Uma Fictional" }),
-    );
-    expect(history.location.pathname).toBe("/people");
-    expect(history.location.search).toContain("search=FX-p4");
-    await userEvent.click(
-      await screen.findByRole("link", { name: "Back to org chart" }),
     );
     expect(history.location.pathname).toBe("/org-chart");
-    await screen.findByRole("link", { name: "Uma Fictional" });
+    expect(history.location.search).toContain("open=FX-p4");
+    expect(
+      await screen.findByRole("region", { name: "Uma Fictional" }),
+    ).toBeDefined();
+    expect(history.location.search).toContain("person=FX-p4");
     expect(card("Uma Fictional").querySelector("[data-found]")).not.toBeNull();
   });
 
-  it("finds the person opened when the browser goes back", async () => {
+  it("keeps the person whose details are opened centred as the chart's width changes, until the chart is moved", async () => {
+    const { transform, resize } = await openWatchedChart();
+    resize(800);
+    // Zoomed out, so finding the person zooms in.
+    await userEvent.click(screen.getByRole("button", { name: "Zoom out" }));
+    await settled();
+    expect(transform()).not.toContain("scale(1)");
+    await userEvent.click(
+      await screen.findByRole("link", { name: "Uma Fictional" }),
+    );
+    await screen.findByRole("region", { name: "Uma Fictional" });
+    // Narrowing while the chart moves to the person centres them at once, well before the move
+    // would have ended.
+    resize(600);
+    await new Promise((settle) => setTimeout(settle, 60));
+    const soon = transform();
+    await settled();
+    expect(soon).toBe(transform());
+    // It is kept at the zoom finding them moves to.
+    expect(soon).toContain("scale(1)");
+    // Zooming is moving the chart.
+    await userEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    await settled();
+    const zoomed = transform();
+    resize(400);
+    expect(transform()).toBe(zoomed);
+  });
+
+  it("keeps a person already found at the zoom chosen when their details open again", async () => {
+    const { transform, resize } = await openWatchedChart();
+    resize(800);
+    const uma = await screen.findByRole("link", { name: "Uma Fictional" });
+    await userEvent.click(uma);
+    await screen.findByRole("region", { name: "Uma Fictional" });
+    await settled();
+    await userEvent.click(screen.getByRole("button", { name: "Zoom in" }));
+    await settled();
+    const scale = /scale\([^)]*\)/.exec(transform())?.[0];
+    expect(scale).not.toBe("scale(1)");
+    await userEvent.click(uma);
+    resize(600);
+    expect(transform()).toContain(scale);
+  });
+
+  it("stops keeping the person centred once the chart is moved by hand", async () => {
+    const { transform, resize } = await openWatchedChart();
+    resize(800);
+    await userEvent.click(
+      await screen.findByRole("link", { name: "Uma Fictional" }),
+    );
+    await screen.findByRole("region", { name: "Uma Fictional" });
+    await new Promise((settle) => setTimeout(settle, 400));
+    fireEvent.wheel(
+      document.querySelector(".react-flow__pane") as HTMLElement,
+      { deltaY: 100 },
+    );
+    await new Promise((settle) => setTimeout(settle, 50));
+    const moved = transform();
+    resize(600);
+    expect(transform()).toBe(moved);
+  });
+
+  it.each([
+    ["showing a number of levels", () => showLevels("1 level")],
+    [
+      "hiding reports",
+      async () => {
+        await userEvent.click(
+          screen.getByRole("button", {
+            name: "Hide 1 report of Sasha Fictional",
+          }),
+        );
+      },
+    ],
+  ])("stops keeping the person centred after %s", async (_, move) => {
+    const { transform, resize } = await openWatchedChart();
+    resize(800);
+    await userEvent.click(
+      await screen.findByRole("link", { name: "Uma Fictional" }),
+    );
+    await screen.findByRole("region", { name: "Uma Fictional" });
+    await settled();
+    await move();
+    await settled();
+    const moved = transform();
+    resize(600);
+    expect(transform()).toBe(moved);
+  });
+
+  it("closes the details with the browser's back button", async () => {
     const history = await openChart();
     await userEvent.click(
       await screen.findByRole("link", { name: "Uma Fictional" }),
     );
-    await screen.findByRole("link", { name: "Back to org chart" });
+    await screen.findByRole("region", { name: "Uma Fictional" });
     history.back();
-    await screen.findByRole("link", { name: "Uma Fictional" });
-    expect(card("Uma Fictional").querySelector("[data-found]")).not.toBeNull();
-  });
-
-  it("keeps the link back while People's search changes", async () => {
-    serverAnswers({
-      "GET /api/session": viewer,
-      ...peopleAnswers,
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("region", { name: "Uma Fictional" }),
+      ).toBeNull();
     });
-    const history = renderApp(
-      `/people?search=FX-p4&chart=${encodeURIComponent(JSON.stringify({ person: "FX-p4" }))}`,
-    );
-    const search = await screen.findByRole("textbox", {
-      name: "Search people",
-    });
-    await userEvent.clear(search);
-    await userEvent.type(search, "Uma");
-    expect(history.location.search).toContain("search=Uma");
-    expect(
-      screen
-        .getByRole("link", { name: "Back to org chart" })
-        .getAttribute("href"),
-    ).toBe("/org-chart?person=FX-p4");
-  });
-
-  it("keeps the Draft menu's choice in the link back", async () => {
-    serverAnswers({ "GET /api/session": viewer, ...peopleAnswers });
-    renderApp(
-      `/people?search=FX-p4&chart=${encodeURIComponent(JSON.stringify({ person: "FX-p4", show: "live" }))}`,
-    );
-    expect(
-      (
-        await screen.findByRole("link", { name: "Back to org chart" })
-      ).getAttribute("href"),
-    ).toBe("/org-chart?person=FX-p4&show=live");
-  });
-
-  it("shows no link back when People is opened another way", async () => {
-    serverAnswers({
-      "GET /api/session": viewer,
-      ...peopleAnswers,
-    });
-    renderApp("/people");
-    await screen.findByRole("textbox", { name: "Search people" });
-    expect(
-      screen.queryByRole("link", { name: "Back to org chart" }),
-    ).toBeNull();
+    expect(history.location.search).not.toContain("open=");
   });
 
   it("leaves a click that opens a new tab to the browser", async () => {
@@ -1046,14 +1140,13 @@ describe("the org chart", () => {
     ).toBe(true);
   });
 
-  it("opens People from anywhere else on the card", async () => {
+  it("shows the person's details from anywhere else on the card", async () => {
     const history = await openChart();
     await screen.findByRole("link", { name: "Uma Fictional" });
     fireEvent.click(
       within(card("Uma Fictional")).getByText("Fictional Engineer"),
     );
-    expect(history.location.pathname).toBe("/people");
-    expect(history.location.search).toContain("search=FX-p4");
+    expect(history.location.search).toContain("open=FX-p4");
   });
 
   it("hides a manager's reports, and everyone below them, and shows them again", async () => {
@@ -1380,42 +1473,18 @@ describe("the org chart", () => {
     expect(card("Uma Fictional").querySelector("[data-found]")).not.toBeNull();
   });
 
-  it("leads back to the team shown alone", async () => {
+  it("keeps the team shown alone while showing someone's details", async () => {
     const history = await openChart(chartAnswer, true, "/org-chart?team=FX-p2");
     await userEvent.click(
       await screen.findByRole("link", { name: "Uma Fictional" }),
     );
-    await userEvent.click(
-      await screen.findByRole("link", { name: "Back to org chart" }),
-    );
     expect(history.location.search).toContain("team=FX-p2");
+    expect(history.location.search).toContain("open=FX-p4");
     expect(
       await screen.findByText(
         "You're seeing only the team of Sasha Fictional.",
       ),
     ).toBeDefined();
-  });
-
-  it("leads back to the whole chart when the person in People's address cannot be read", async () => {
-    serverAnswers({ "GET /api/session": viewer, ...peopleAnswers });
-    renderApp(
-      `/people?chart=${encodeURIComponent(JSON.stringify({ person: 5 }))}`,
-    );
-    await screen.findByRole("textbox", { name: "Search people" });
-    expect(
-      screen
-        .getByRole("link", { name: "Back to org chart" })
-        .getAttribute("href"),
-    ).toBe("/org-chart");
-  });
-
-  it("shows no link back when People's address names the chart wrongly", async () => {
-    serverAnswers({ "GET /api/session": viewer, ...peopleAnswers });
-    renderApp("/people?chart=%22nonsense%22");
-    await screen.findByRole("textbox", { name: "Search people" });
-    expect(
-      screen.queryByRole("link", { name: "Back to org chart" }),
-    ).toBeNull();
   });
 
   it("shows everyone, with nobody found, when the address names a person or team too long to be one", async () => {

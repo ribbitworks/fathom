@@ -27,6 +27,8 @@ export const orgChartQuery = queryOptions({
 // Fitting a small chart to the screen never enlarges its cards past their own size.
 export const fitOptions = { maxZoom: 1 };
 
+export const findFieldId = "org-chart-find";
+
 export const cardWidth = 240;
 export const cardHeight = 104;
 // A card whose team's name is drafted shows the live name, if any, under the drafted one.
@@ -361,4 +363,6 @@ export interface ChartSearch {
   person?: string | undefined;
   team?: string | undefined;
   show?: Show | undefined;
+  // The person whose details are shown beside the chart, by Employee ID.
+  open?: string | undefined;
 }

@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, opening People from a card and coming back, the mark on a manager who has left, and drafts drawn beside the chart, applied to it, or left out with the Draft menu.
+Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, showing a person's details beside the chart from a card, the mark on a manager who has left, and drafts drawn beside the chart, applied to it, or left out with the Draft menu.
 
 ## Test Environment
 
@@ -147,16 +147,16 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The chart zooms in and out around the pointer.
   - **Notes:**
 
-### ORG-06: A Card Opens the Person on People, and Leads Back
+### ORG-06: A Card Shows the Person's Details Beside the Chart
 
 **Preconditions:** As ORG-02.
 
 - [ ] **Step 1.** On the card for **Lorenza Thiel**, select the name.
-  - **Expected:** The **People** page opens. Its search box reads **E10026**, and only the row for **Lorenza Thiel** is shown. **Back to org chart** is above the **People** heading.
+  - **Expected:** A panel slides out on the right, headed **Lorenza Thiel**, and the chart narrows to make room. Her card, with a blue ring around it, stays in the middle of the space left beside the panel.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Back to org chart**.
-  - **Expected:** The **Org chart** page opens. The finder reads **Lorenza Thiel**, and her card is in the middle of the panel, with a blue ring around it.
+- [ ] **Step 2.** Select the **×** at the top right of the panel.
+  - **Expected:** The panel slides away, and the chart fills the page again, with her card still in the middle. The finder reads **Lorenza Thiel**.
   - **Notes:**
 
 ### ORG-07: One Team Is Shown Alone
@@ -331,8 +331,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** **Draft** is there, and **Teams** is not.
   - **Notes:**
 
-- [ ] **Step 7.** On the card for **Silje Holm-Schrøder**, select the name, then select **Back to org chart** on the **People** page.
-  - **Expected:** The **Org chart** page opens with a dot after **Draft**, and the card for **Silje Holm-Schrøder** ends with **Hide 7 reports**.
+- [ ] **Step 7.** On the card for **Silje Holm-Schrøder**, select the name.
+  - **Expected:** Her details slide out in a panel on the right. **Draft** still has a dot after it, her card still ends with **Hide 7 reports**, and **Simone Jean** is not under her in **Direct reports** in the panel.
   - **Notes:**
 
 ### ORG-15: Readers Who Do Not See Restricted Details See No Drafted Manager
