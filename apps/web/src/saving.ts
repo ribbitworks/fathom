@@ -49,15 +49,40 @@ export interface Change<Data> {
   onFailed?: () => void;
 }
 
-// Whether a key press asks to undo the latest change. In a text field with something typed, it
-// undoes the typing instead.
+// Fields that are typed in and keep their own undo, the note editor among them.
+const typedField = [
+  "textarea",
+  "input:not([type])",
+  ...["text", "search", "email", "url", "tel", "password", "number"].map(
+    (type) => `input[type="${type}"]`,
+  ),
+  '[contenteditable]:not([contenteditable="false"])',
+].join(", ");
+
+// Whether the key press is in a field with something typed in it, whose own undo takes Cmd+Z. An
+// empty one leaves Cmd+Z to the page, so a change made from it, such as adding a choice, can be
+// undone without leaving it.
+function inTypedText(target: EventTarget | null): boolean {
+  if (!(target instanceof Element) || !target.matches(typedField)) {
+    return false;
+  }
+  const text =
+    target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+      ? target.value
+      : target.textContent;
+  return text !== "";
+}
+
+// Whether a key press asks to undo the latest change, rather than the typing in a field. A field
+// that handles the keys itself, such as the note editor, has already undone its typing, so may be
+// empty by the time the page hears them.
 export function isUndo(event: KeyboardEvent): boolean {
-  const target = event.target as HTMLInputElement;
   return (
+    !event.defaultPrevented &&
     (event.metaKey || event.ctrlKey) &&
     !event.shiftKey &&
     event.key.toLowerCase() === "z" &&
-    !(target.matches("input, textarea") && target.value !== "")
+    !inTypedText(event.target)
   );
 }
 

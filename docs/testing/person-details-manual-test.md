@@ -283,18 +283,22 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A second panel opens under her details, headed **Onboarding for Lorenza Thiel**, with **Clear**, **Cancel** and **Save** buttons, and her details stay above it, the two sharing the height.
   - **Notes:**
 
-- [ ] **Step 4.** Type **Laptop ready** in the note, then select the name on the card for **Silje Holm-Schrøder**.
+- [ ] **Step 4.** Type **Laptop ready** in the note, then press Cmd+Z on a Mac, or Ctrl+Z otherwise.
+  - **Expected:** **Laptop ready** goes from the note. **Team name** still reads **Quayside team**, followed by a yellow dot and **Draft**, and her card still shows **Quayside team**.
+  - **Notes:**
+
+- [ ] **Step 5.** Type **Laptop ready** in the note, then select the name on the card for **Silje Holm-Schrøder**.
   - **Expected:** The details above now show **Silje Holm-Schrøder**. The note panel below stays, still headed **Onboarding for Lorenza Thiel** and holding **Laptop ready**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Cancel** in the note panel.
+- [ ] **Step 6.** Select **Cancel** in the note panel.
   - **Expected:** The note panel closes, and Silje's details fill the side.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Tanushree Patel-Singh** under **Direct reports**, then the change button beside **Onboarding**, then, without changing the note, select **Silje Holm-Schrøder** beside **Manager**.
+- [ ] **Step 7.** Select **Tanushree Patel-Singh** under **Direct reports**, then the change button beside **Onboarding**, then, without changing the note, select **Silje Holm-Schrøder** beside **Manager**.
   - **Expected:** Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh** and showing her checklist; once Silje is chosen, the details show Silje and the note panel closes.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Lorenza Thiel** under **Direct reports**, then run R1.
+- [ ] **Step 8.** Select **Lorenza Thiel** under **Direct reports**, then run R1.
   - **Expected:** After the reload, her details show no **Draft** mark, and **Team name** reads **None**.
   - **Notes:**

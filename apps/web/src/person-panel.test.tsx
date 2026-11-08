@@ -6,7 +6,13 @@
 // person, closing it, and someone it cannot find.
 
 import type { OrgChartPerson } from "@fathom/shared";
-import { act, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
@@ -1385,6 +1391,30 @@ describe("changing a person's details", () => {
       expect(await screen.findByText("Background needed")).toBeDefined();
       expect(screen.getByRole("region", { name: sashasNote })).toBeDefined();
       expect(bodies(fetch, "/api/people/2")).toEqual([]);
+    });
+
+    it("leaves Cmd+Z in the note to the note's own undo, undoing no saved change", async () => {
+      // Given a change saved from Sasha's details, and her note open in the editor
+      const fetch = editAnswers({ "PATCH /api/people/2": savedAs });
+      renderApp("/people?open=E2");
+      await panel("Sasha Fictional");
+      await typeInto("Team name", "Harbour team{Enter}");
+      await settled(fetch);
+      await userEvent.click(change("Background"));
+      await panel(sashasNote);
+      await userEvent.click(screen.getByRole("radio", { name: "Editor" }));
+      const editor = screen.getByRole("textbox", { name: "Note" });
+      // When Cmd+Z is pressed in the note
+      const leftToNote = fireEvent.keyDown(editor, { key: "z", metaKey: true });
+      // Then the page leaves it to the note, and the change is undone only from outside it
+      expect(leftToNote).toBe(true);
+      act(() => {
+        screen.getByRole("heading", { name: sashasNote }).focus();
+      });
+      await userEvent.keyboard("{Meta>}z{/Meta}");
+      await waitFor(() => {
+        expect(undone(fetch)).toBe(1);
+      });
     });
 
     it("opens under the details beside the org chart too", async () => {

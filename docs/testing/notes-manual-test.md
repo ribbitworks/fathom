@@ -61,6 +61,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 ## Terms
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
+- **Background cell:** the cell in a person's row under the **Background** column, which NOTE-01 adds at the right end of the People table; scroll right to reach it.
 - **Search for:** type the person's name in the search box above the People table, so only their row is shown.
 - **Panel:** the side panel that opens beside the table from a **Background** cell, headed **Background**.
 - **Toolbar:** the row of buttons under the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, checkbox list, link, and removing a link.
@@ -111,6 +112,14 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 - [ ] **Step 6.** Select **Save**.
   - **Expected:** The panel slides out smoothly to the right over the table, which is already full width, with no jump. The cell shows the note's words on one line, cut short where they do not fit, and the row is marked **Draft**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select Max Munk's **Background** cell again, then **Editor**. Type a space and `again` at the end of `Set goals`, then press Cmd+Z on a Mac, or Ctrl+Z otherwise.
+  - **Expected:** Only the space and **again** go, leaving **Set goals**. The rest of the note is as saved.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Cancel**.
+  - **Expected:** The panel closes. The cell still shows the note's words, and the row is still marked **Draft**.
   - **Notes:**
 
 ### NOTE-03: Text Is Pasted From Another App
