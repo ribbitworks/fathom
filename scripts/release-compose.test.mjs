@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests of the Compose configuration a release's images are built from.
+// Tests of the Compose configuration a release's images are built from, and of the names of the
+// images a release publishes, which the daily image scan pulls.
 
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
-import { releaseCompose } from "./release-compose.mjs";
+import { releaseCompose, releaseImages } from "./release-compose.mjs";
 
 const script = fileURLToPath(new URL("release-compose.mjs", import.meta.url));
 
@@ -83,6 +84,56 @@ describe("releaseCompose", () => {
     assert.equal(
       JSON.parse(result.stdout).services.app.image,
       "registry.example.com/team/fathom-app:0.1.0",
+    );
+  });
+});
+
+describe("releaseImages", () => {
+  it("names each image the release builds once, as releaseCompose names it", () => {
+    const withMigration = {
+      services: {
+        ...config.services,
+        migrate: { image: "fathom-app:latest", build: { context: "/src" } },
+      },
+    };
+    const names = releaseImages(withMigration, release.registry, "0.1.0");
+    assert.deepEqual(names, [
+      "registry.example.com/team/fathom-app:0.1.0",
+      "registry.example.com/team/fathom-proxy:0.1.0",
+    ]);
+    const built = releaseCompose(withMigration, release).services;
+    assert.equal(built.app.image, names[0]);
+    assert.equal(built.proxy.image, names[1]);
+  });
+
+  it("refuses a release with no registry or version", () => {
+    assert.throws(
+      () => releaseImages(config, "", "0.1.0"),
+      /registry and version/,
+    );
+    assert.throws(
+      () => releaseImages(config, "example.com", ""),
+      /registry and version/,
+    );
+  });
+
+  it("prints the names with --images", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        script,
+        "--images",
+        "--registry",
+        "example.com/team",
+        "--version",
+        "0.2.0",
+      ],
+      { input: JSON.stringify(config), encoding: "utf8" },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(
+      result.stdout,
+      "example.com/team/fathom-app:0.2.0\nexample.com/team/fathom-proxy:0.2.0\n",
     );
   });
 });

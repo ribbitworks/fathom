@@ -1,0 +1,69 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Scans Fathom's container images every day: the default branch's, built that day, and the newest
+# published release's, pulled from the GitHub Container Registry, since those are what people run.
+# A failed scan fails the run, which the Actions tab shows; GitHub also emails the person who last
+# changed the schedule, if their notification settings allow. The scan and its summary are kept
+# with the run. The work is in scripts/scan-images.sh, which any other scheduler can run the same.
+
+name: Scan images daily
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: scan-images
+
+jobs:
+  scan:
+    # The default branch's images, scripts and security exceptions, never another branch's.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Check out with every tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+
+      - name: Sign in to the GitHub Container Registry
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s\n' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and scan the images
+        env:
+          OWNER: ${{ github.repository_owner }}
+        # The registry needs the owner's name in lowercase.
+        run: FATHOM_REGISTRY="ghcr.io/${OWNER,,}" pnpm scan:images
+
+      - name: Sign out of the registry
+        if: always()
+        run: docker logout ghcr.io
+
+      - name: Keep the scan
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-scan
+          path: output/security/
+          if-no-files-found: ignore
+          # The longest GitHub keeps a public repository's artifacts; Issues records the gap.
+          retention-days: 90

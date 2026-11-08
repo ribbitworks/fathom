@@ -214,27 +214,196 @@ stop_dev_servers() {
   info "Stopped this copy's development servers that were still running"
 }
 
-# Trivy, which the security report and the release's image scan share.
+# Trivy, which the security report and the image scans share.
 fathom_trivy_image="aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
+# How each image is scanned, all of which decides whether an earlier image scan can be reused.
+fathom_image_scan_arguments=(
+  image --quiet --skip-version-check --disable-telemetry --skip-db-update --scanners 'vuln,secret'
+  --ignorefile /trivyignore.yaml --format json --exit-code 0 --input /image.tar
+)
+fathom_trivy_lock=".tmp/trivy-cache.lock"
+
+# Every scan container a script starts carries this label, so stop_scan_containers can stop those
+# still running when it stops early; docker run's own client leaving does not stop them.
+fathom_scan_label="fathom.scan=$$"
+
+stop_scan_containers() {
+  local container
+  for container in $(docker ps --quiet --filter "label=$fathom_scan_label" 2>/dev/null || true); do
+    docker rm --force "$container" >/dev/null 2>&1 || true
+  done
+}
+
+trivy_in_cache() {
+  docker run --rm --label "$fathom_scan_label" \
+    --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$@"
+}
+
+# Holds this copy's Trivy cache until release_trivy_cache, so a second scan in the same copy cannot
+# update the database while this one reads it and records its results under its version. Fails,
+# naming the process, while another holds it; a hold whose process has ended is taken over.
+hold_trivy_cache() {
+  local holder
+  mkdir -p .tmp && chmod 700 .tmp
+  if ! mkdir "$fathom_trivy_lock" 2>/dev/null; then
+    holder="$(cat "$fathom_trivy_lock/process" 2>/dev/null || true)"
+    if [ -z "$holder" ] || any_running "$holder"; then
+      fail "Another scan in this copy${holder:+, process $holder,} is using Trivy's cache; run this again when it ends, or remove $fathom_trivy_lock if no scan is running"
+    fi
+    rm -rf "$fathom_trivy_lock"
+    mkdir "$fathom_trivy_lock" || fail "Could not hold Trivy's cache"
+  fi
+  printf '%s\n' "$$" >"$fathom_trivy_lock/process"
+}
+
+release_trivy_cache() {
+  if [ "$(cat "$fathom_trivy_lock/process" 2>/dev/null || true)" = "$$" ]; then
+    rm -rf "$fathom_trivy_lock"
+  fi
+}
+
+# Brings Trivy's vulnerability database in this copy's cache up to date, and prints when it was
+# built, such as 2026-11-07T18:32:58Z. Scans after it skip updating it, so every scan of one report
+# reads the same database, and an earlier result is reused only with the database it was judged by.
+update_trivy_database() {
+  trivy_in_cache "$fathom_trivy_image" image --download-db-only --quiet --skip-version-check \
+    --disable-telemetry >&2 &&
+    trivy_in_cache "$fathom_trivy_image" version --format json |
+    node scripts/trivy-facts.mjs database-version
+}
 
 # Scans the linux/amd64 build of an image for vulnerable packages and built-in secrets, writing
-# Trivy's JSON report to standard output. The image is saved to a file in the folder given, which
-# must be inside the repository, so Trivy is never given access to the container runtime. Overdue
-# findings the Security Plan excepts, listed in .trivyignore.yaml, are left out until each
-# exception expires. Saving fails if the image has no linux/amd64 build, so only what production
-# runs is scanned. Run from the repository root.
+# Trivy's JSON report to standard output, with the database update_trivy_database last fetched. An
+# earlier scan, from a report in output/security/, is reused when the image's configuration, which
+# names every layer by its contents, the exceptions, the scan's arguments, Trivy, its database,
+# given as $4, and the day all match; the day is part of it since an exception stops applying on
+# the day it expires. This scan's inputs are recorded in the report folder, $3, for later reports.
+# The image is saved to a file in the folder given, $2, which must be inside the repository, so
+# Trivy is never given access to the container runtime. Overdue findings the Security Plan excepts,
+# listed in .trivyignore.yaml, are left out until each exception expires. Saving fails if the image
+# has no linux/amd64 build, so only what production runs is scanned. Fails when the scan does not
+# complete. Run from the repository root.
 scan_image() {
-  local image="$1" folder="$2" saved status=0
+  local image="$1" folder="$2" report_dir="$3" database="$4" saved report config exceptions
+  local status=0
   saved="$(mktemp "$folder/image.XXXXXX")" || return 1
-  docker save --platform linux/amd64 --output "$saved" "$image" &&
-    docker run --rm --volume "$saved:/image.tar:ro" \
-      --volume "$PWD/.trivyignore.yaml:/trivyignore.yaml:ro" \
-      --volume "$(clone_name fathom-trivy-cache)":/root/.cache/trivy "$fathom_trivy_image" \
-      image --quiet --skip-version-check --disable-telemetry --scanners vuln,secret \
-      --ignorefile /trivyignore.yaml --format json --exit-code 0 --input /image.tar ||
-    status=$?
-  rm -f "$saved"
+  if ! report="$(mktemp "$folder/report.XXXXXX")"; then
+    rm -f "$saved"
+    return 1
+  fi
+  exceptions="$(git hash-object .trivyignore.yaml)" || exceptions=""
+  if docker save --platform linux/amd64 --output "$saved" "$image" &&
+    config="$(tar -xOf "$saved" manifest.json | node scripts/trivy-facts.mjs image-config)"; then
+    local inputs=(
+      "image-config=$config"
+      "exceptions=$exceptions"
+      "settings=${fathom_image_scan_arguments[*]}"
+      "trivy=$fathom_trivy_image"
+      "database=$database"
+      "day=$(date -u +%Y-%m-%d)"
+    )
+    if node scripts/scan-reuse.mjs reuse-image "$report_dir" "$image" "${inputs[@]}" >"$report"; then
+      info "Reused an earlier scan of $image, which has not changed" >&2
+    elif trivy_in_cache --volume "$saved:/image.tar:ro" \
+      --volume "$PWD/.trivyignore.yaml:/trivyignore.yaml:ro" "$fathom_trivy_image" \
+      "${fathom_image_scan_arguments[@]}" >"$report"; then
+      node scripts/scan-reuse.mjs record-image "$report_dir" "$image" "$report" "${inputs[@]}"
+    else
+      status=1
+    fi
+  else
+    status=1
+  fi
+  [ "$status" -ne 0 ] || cat "$report"
+  rm -f "$saved" "$report"
   return "$status"
+}
+
+# Runs Docker Compose for linux/amd64, with images tagged separately, so the development images
+# built for this machine are untouched. Each copy of the repository tags and caches its own. The
+# images are built without the release, commit and commit date Help's About box shows, which change
+# nothing a scan finds, so an image whose sources have not changed is built the same, and its scan
+# can be reused.
+compose_for_scan() {
+  DOCKER_DEFAULT_PLATFORM=linux/amd64 FATHOM_IMAGE_TAG="$(clone_name security-scan)" \
+    FATHOM_VERSION="" FATHOM_COMMIT="" FATHOM_COMMIT_DATE="" docker compose "$@"
+}
+
+# Builds the images in deploy's Compose files for linux/amd64, and lists each image to scan in
+# images.list in the folder given, or what could not be pulled, built or listed, which counts as not
+# scanned, so a report can never pass on a partial or stale scan. Marks the list finished once
+# every Compose file is done, so a build that stopped part way counts as not scanned too.
+build_compose_images() {
+  local images_dir="$1" compose_file images list="$1/images.list"
+  mkdir -p "$images_dir"
+  : >"$list"
+  for compose_file in deploy/compose*.yaml deploy/compose*.yml; do
+    [ -f "$compose_file" ] || continue
+    # An image that could not be pulled may be stale, so it counts as not scanned.
+    if ! compose_for_scan --file "$compose_file" --profile '*' pull --quiet --ignore-buildable; then
+      info "Could not pull the images in $compose_file"
+      printf 'missing|images pulled by %s\n' "$compose_file" >>"$list"
+      continue
+    fi
+    if ! compose_for_scan --file "$compose_file" --profile '*' build --quiet; then
+      info "Could not build the images in $compose_file"
+      printf 'missing|images built by %s\n' "$compose_file" >>"$list"
+      continue
+    fi
+    if ! images="$(compose_for_scan --file "$compose_file" --profile '*' config --images)"; then
+      info "Could not list the images in $compose_file"
+      printf 'missing|images listed by %s\n' "$compose_file" >>"$list"
+      continue
+    fi
+    printf '%s\n' "$images" | sed -n 's/^\(..*\)$/image|\1/p' >>"$list"
+  done
+  : >"$images_dir/images.finished"
+}
+
+# Scans each image listed in images.list in the folder given, $1, once, however many services or
+# Compose files name it, with Trivy's database $3, and writes the scans to container-images.json
+# in the report folder, $2. An empty database, or a list never marked finished, counts as not
+# scanned.
+scan_compose_images() {
+  local images_dir="$1" report_dir="$2" database="$3" kind name report index=0 scanned=" "
+  local image_reports=()
+  if [ ! -f "$images_dir/images.finished" ]; then
+    info "The images were not all built, so not all of them were scanned"
+    image_reports+=("images that were not all built=$images_dir/missing.json")
+  fi
+  while IFS='|' read -r kind name; do
+    if [ "$kind" = missing ]; then
+      image_reports+=("$name=$images_dir/missing.json")
+      continue
+    fi
+    case "$scanned" in
+      *" $name "*) continue ;;
+    esac
+    scanned="$scanned$name "
+    index=$((index + 1))
+    report="$images_dir/$index.json"
+    if [ -z "$database" ] ||
+      ! scan_image "$name" "$images_dir" "$report_dir" "$database" >"$report"; then
+      info "The scan of $name did not complete"
+      rm -f "$report"
+    fi
+    image_reports+=("$name=$report")
+  done < <(cat "$images_dir/images.list" 2>/dev/null || true)
+  node scripts/combine-image-reports.mjs ${image_reports[@]+"${image_reports[@]}"} \
+    >"$report_dir/container-images.json"
+}
+
+# Finds when each fix the image scans in the report folder name was released, and summarizes them,
+# failing if a fix is overdue or has no known release date, if a secret is built into an image, or
+# if a scan did not complete. A fix first seen now, rather than by an earlier report, has no known
+# release date, so it fails: a fresh machine, such as a hosted runner, would otherwise never find
+# one overdue.
+judge_image_scans() {
+  local report_dir="$1" started
+  started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  node scripts/fix-dates.mjs "$report_dir" || info "Could not find when the fixes were released"
+  node scripts/security-summary.mjs "$report_dir" --first-seen-unknown-from "$started" \
+    container-images.json
 }
 
 # Prints a repository's address as an https web address without credentials, such as

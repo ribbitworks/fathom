@@ -1,19 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for making a release: the next version from the commits since the last release tag, the
-// changelog section, and the checks on the checkout. Git is a fake history, so no test touches
+// changelog section, and the checks on the checkout; and of finding the newest full release, which
+// the daily image scan pulls. Git is a fake history, so no test touches
 // the real repository or creates a tag.
 
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import {
   addToChangelog,
   changelogSection,
   commitsSince,
   compareReleases,
+  latestFullRelease,
   latestRelease,
   nextVersion,
   parseCommit,
@@ -24,6 +28,9 @@ import {
 } from "./release.mjs";
 
 const now = new Date(2026, 10, 7, 23, 30);
+const newestReleaseCommand = fileURLToPath(
+  new URL("newest-release.mjs", import.meta.url),
+);
 
 const commit = (subject, body = "") => ({ subject, body });
 
@@ -129,6 +136,23 @@ describe("release tags", () => {
       "v0.10.0",
     );
     assert.equal(latestRelease([""]), undefined);
+  });
+
+  it("picks the latest full release, leaving out newer pre-releases", () => {
+    assert.equal(
+      latestFullRelease(["v0.2.0", "v0.10.0", "v0.11.0-rc.1", "vtest"]).tag,
+      "v0.10.0",
+    );
+    assert.equal(latestFullRelease(["v0.1.0-rc.1", "latest"]), undefined);
+  });
+
+  it("prints the latest full release from tags on standard input, or nothing before the first", () => {
+    const newest = (input) =>
+      spawnSync("node", [newestReleaseCommand], { input, encoding: "utf8" });
+    assert.equal(newest("v0.1.0\nv0.2.0\nv0.3.0-rc.1\n").stdout, "v0.2.0\n");
+    const none = newest("v0.1.0-rc.1\n");
+    assert.equal(none.status, 0);
+    assert.equal(none.stdout, "");
   });
 });
 

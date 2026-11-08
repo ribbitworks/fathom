@@ -6,9 +6,10 @@
 #
 # Builds the images in deploy/compose.yaml for linux/amd64 from a clean copy of exactly the release
 # tag, each labelled with its source, licence, version and commit, and dated by the commit rather
-# than the build. Scans each image as the security report does, failing if a fix is overdue or has
-# no known release date, then pushes each as <registry>/<name>:<version>, such as
-# ghcr.io/jlarue26/fathom-app:0.1.0. --dry-run does everything but push, and prints what it would.
+# than the build. Scans each image as the security report does, reusing an earlier scan of an image
+# that has not changed, failing if a fix is overdue or has no known release date, then pushes each
+# as <registry>/<name>:<version>, such as ghcr.io/jlarue26/fathom-app:0.1.0. --dry-run does
+# everything but push, and prints what it would.
 #
 # Settings:
 #   FATHOM_REGISTRY    where the images go; ghcr.io/jlarue26 unless set
@@ -29,6 +30,8 @@ cleanup() {
   if [ -n "$copy" ]; then git worktree remove --force "$copy" >/dev/null 2>&1 || true; fi
   if [ -n "$work" ]; then rm -rf "$work"; fi
   git worktree prune
+  stop_scan_containers
+  release_trivy_cache
 }
 
 usage() { fail "Usage: pnpm publish:images [--dry-run] vX.Y.Z"; }
@@ -80,6 +83,7 @@ main() {
   work="$(mktemp -d "$PWD/.tmp/release.XXXXXX")"
   copy="$work/source"
   trap cleanup EXIT
+  hold_trivy_cache
   info "Checking out $tag"
   git worktree add --quiet --detach "$copy" "$revision"
 
@@ -99,23 +103,12 @@ main() {
   local report_dir
   report_dir="$PWD/output/security/$(date -u +%Y-%m-%dT%H-%M-%SZ)"
   mkdir -p "$report_dir"
-  local reports=() index=0 report started
-  for image in "${images[@]}"; do
-    index=$((index + 1))
-    report="$work/$index.json"
-    if ! scan_image "$image" "$work" >"$report"; then
-      info "The scan of $image did not complete"
-      rm -f "$report"
-    fi
-    reports+=("$image=$report")
-  done
-  node scripts/combine-image-reports.mjs "${reports[@]}" >"$report_dir/container-images.json"
-  # A fix first seen now, rather than by an earlier report, has no known release date, so it fails
-  # the scan: a fresh machine, such as a hosted build, would otherwise never find one overdue.
-  started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  node scripts/fix-dates.mjs "$report_dir" || info "Could not find when the fixes were released"
-  node scripts/security-summary.mjs "$report_dir" --first-seen-unknown-from "$started" \
-    container-images.json >/dev/null ||
+  local database
+  database="$(update_trivy_database)" || fail "Could not update Trivy's database, so the images were not scanned"
+  printf 'image|%s\n' "${images[@]}" >"$work/images.list"
+  : >"$work/images.finished"
+  scan_compose_images "$work" "$report_dir" "$database"
+  judge_image_scans "$report_dir" >/dev/null ||
     fail "The images of $tag failed their scan; see $report_dir/summary.md"
   info "The images passed their scan; see $report_dir/summary.md"
 

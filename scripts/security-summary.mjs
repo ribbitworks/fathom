@@ -13,6 +13,7 @@ import { basename, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { firstSeen } from "./fix-dates.mjs";
+import { imageInputsDescription } from "./scan-inputs.mjs";
 import {
   fixKey,
   vulnerabilitiesIn,
@@ -321,6 +322,38 @@ export function checkScanFiles(files = []) {
     throw new Error(`Not a scan's file: ${unknown.join(", ")}`);
 }
 
+// The scans scripts/scan-reuse.mjs recorded as skipped, since nothing that decides them changed.
+// Only the image scan may be skipped, so no other scan can pass by being left out.
+function skippedScans(reportDir) {
+  const recorded = readResults(reportDir, "scans.json");
+  return new Set(
+    (Array.isArray(recorded) ? recorded : [])
+      .filter(
+        (entry) =>
+          entry?.file === "container-images.json" &&
+          typeof entry.skipped === "string",
+      )
+      .map((entry) => entry.file),
+  );
+}
+
+function skippedNote(scan) {
+  return `${scan.name} were not built or scanned, since nothing that can change their scan changed against origin/main: ${imageInputsDescription}. The default branch's images and the newest release's are scanned daily, and each release's as it is published.`;
+}
+
+// Names each result scripts/scan-reuse.mjs took from an earlier report, and which report.
+function reusedNotes(reportDir) {
+  const recorded = readResults(reportDir, "scans.json");
+  if (!Array.isArray(recorded)) return [];
+  return recorded
+    .filter((entry) => typeof entry?.reusedFrom === "string")
+    .map((entry) =>
+      entry.image === undefined
+        ? `Trivy's scan of dependencies and licences was reused from run ${entry.reusedFrom}, since the dependency files, the exceptions and Trivy's database are unchanged.`
+        : `The scan of ${String(entry.image)} was reused from run ${entry.reusedFrom}, since the image, the exceptions and Trivy's database are unchanged.`,
+    );
+}
+
 export function summarize(
   reportDir,
   now = new Date(),
@@ -340,11 +373,16 @@ export function summarize(
   const fixable = new Map();
   let unfixed = 0;
   const unfixedSerious = new Set();
+  const skipped = skippedScans(reportDir);
   const chosen = files
     ? scans.filter((scan) => files.includes(scan.file))
     : scans;
   const rows = chosen.map((scan) => {
     const results = readResults(reportDir, scan.file);
+    if (results === undefined && skipped.has(scan.file)) {
+      notes.push(skippedNote(scan));
+      return `| ${scan.name} | ${scan.tool} | Skipped | | | | |`;
+    }
     if (results === undefined || results === null || !scan.completed(results)) {
       failed = true;
       if (results) notes.push(...(scan.whyIncomplete?.(results) ?? []));
@@ -412,6 +450,7 @@ export function summarize(
     notes.push(
       "The fixes' release dates could not be found, so every fix counts as overdue.",
     );
+  notes.push(...reusedNotes(reportDir));
 
   const markdown = [
     "# Security Report",

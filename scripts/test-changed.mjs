@@ -9,6 +9,7 @@
 
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
+import { changedPaths } from "./changed-paths.mjs";
 
 function isDocumentation(path) {
   return path.endsWith(".md") || path.startsWith("docs/");
@@ -29,26 +30,6 @@ export function testsFor(paths) {
   return scripts
     ? { kind: "packages", packages: [...packages].sort() }
     : { kind: "none" };
-}
-
-function output(command, args) {
-  const result = spawnSync(command, args, { encoding: "utf8" });
-  if (result.status !== 0)
-    throw new Error(
-      `${command} ${args.join(" ")} failed: ${result.stderr.trim()}`,
-    );
-  return result.stdout;
-}
-
-// Every path changed since the branch left origin/main, committed or not, new files included. A
-// moved file is listed at both its old and its new path, so the package it left is tested too.
-function changedPaths() {
-  const base = output("git", ["merge-base", "HEAD", "origin/main"]).trim();
-  const lines = [
-    output("git", ["diff", "--name-only", "--no-renames", base]),
-    output("git", ["ls-files", "--others", "--exclude-standard"]),
-  ].join("\n");
-  return lines.split("\n").filter((line) => line !== "");
 }
 
 function run(args) {

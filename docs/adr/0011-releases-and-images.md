@@ -3,6 +3,7 @@
 - **ADR:** 0011
 - **Status:** Accepted
 - **Date:** 2026-11-07
+- **Revised:** 2026-11-07, to add the daily scan of the default branch's and the newest full release's images to what moving the repository needs
 
 ## Context
 
@@ -25,7 +26,7 @@ Fathom releases with project scripts and a registry:
 
 ## Consequences
 
-- **Releasing works wherever the code is hosted,** and moving the repository changes only the registry setting and, at most, the thin workflow that runs the script.
+- **Releasing works wherever the code is hosted,** and moving the repository changes only the registry setting and, at most, the thin workflows that run the scripts: the one that publishes a release's images, and the daily scan of the default branch's and the newest release's images, which needs that host's scheduler.
 - **The server needs no source or build tools;** it pulls published images. How they reach a server with no route to the registry is part of the [Security Plan's](../security/security-plan.md#open-questions) open build-process question.
 - **Each image names its source and commit,** so what runs can be matched to the code it was built from. The commit date fixes each image's labels and dates, not its digest: each build takes the security fixes released by that day, and installed files keep their build times, so repeatable images are later work, recorded in [Issues](../issues.md#releases).
 - **Releases are started by a person,** never on every merge, so a release is always a deliberate step.

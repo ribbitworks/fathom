@@ -74,6 +74,13 @@ export function latestRelease(tags) {
   return tags.map(parseReleaseTag).filter(Boolean).sort(compareReleases).at(-1);
 }
 
+// The newest release that is not a pre-release, which is what people most likely run.
+export function latestFullRelease(tags) {
+  return latestRelease(
+    tags.filter((tag) => parseReleaseTag(tag)?.pre.length === 0),
+  );
+}
+
 const subjectPattern = /^([a-z]+)(!?):\s*(.*)$/;
 const breakingLine = /^BREAKING[ -]CHANGE:/m;
 

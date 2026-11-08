@@ -732,6 +732,77 @@ describe("security summary", () => {
     const text = readFileSync(join(reportDir, "code.json"), "utf8");
     assert.match(text, /\n {2}"results": \[\]/);
   });
+
+  it("passes a skipped image scan, saying why and what it compared", () => {
+    writeResults({
+      "container-images.json": "",
+      "scans.json": [
+        { file: "container-images.json", skipped: "nothing changed" },
+      ],
+    });
+    rmSync(join(reportDir, "container-images.json"));
+    const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, false);
+    assert.match(rowFor(markdown, "Container images"), /\| Skipped \|/);
+    assert.match(
+      markdown,
+      /- Container images were not built or scanned, since nothing that can change their scan changed against origin\/main: every file other than Fathom's code, .*\. The default branch's images and the newest release's are scanned daily, and each release's as it is published\./,
+    );
+  });
+
+  it("still fails a skipped scan other than the image scan when its results are missing", () => {
+    writeResults({
+      "scans.json": [{ file: "code.json", skipped: "nothing changed" }],
+    });
+    rmSync(join(reportDir, "code.json"));
+    const { failed, markdown } = summarize(reportDir);
+    assert.equal(failed, true);
+    assert.match(rowFor(markdown, "Code security flaws"), /Did not complete/);
+  });
+
+  it("fails a skipped image scan whose results are there but incomplete", () => {
+    writeResults({
+      "container-images.json": [{ image: "example/one:1", report: null }],
+      "scans.json": [
+        { file: "container-images.json", skipped: "nothing changed" },
+      ],
+    });
+    const { failed } = summarize(reportDir);
+    assert.equal(failed, true);
+  });
+
+  it("names each result reused from an earlier report, and which report", () => {
+    writeResults({
+      "scans.json": [
+        {
+          file: "files.json",
+          inputs: { database: "2026-11-07" },
+          reusedFrom: "2026-11-07T10-00-00Z",
+        },
+        {
+          file: "container-images.json",
+          image: "example/one:1",
+          inputs: { database: "2026-11-07" },
+          reusedFrom: "2026-11-07T11-00-00Z",
+        },
+        {
+          file: "container-images.json",
+          image: "example/two:1",
+          inputs: { database: "2026-11-07" },
+        },
+      ],
+    });
+    const { markdown } = summarize(reportDir);
+    assert.match(
+      markdown,
+      /- Trivy's scan of dependencies and licences was reused from run 2026-11-07T10-00-00Z, since the dependency files, the exceptions and Trivy's database are unchanged\./,
+    );
+    assert.match(
+      markdown,
+      /- The scan of example\/one:1 was reused from run 2026-11-07T11-00-00Z, since the image, the exceptions and Trivy's database are unchanged\./,
+    );
+    assert.doesNotMatch(markdown, /example\/two:1 was reused/);
+  });
 });
 
 describe("security summary command", () => {
