@@ -3,10 +3,11 @@
 // The controls that change what a table shows, for any table and any kind of column: the search
 // field, which Cmd+F or Ctrl+F focuses and Esc clears; each column's sort and filter, chosen from
 // its menu, each sort added as the next level; each column's filter, edited in a popover beside its
-// header; the bar naming each level of the sort and each filter, which removes them one at a time
-// or all at once; the menu of the table's saved views, which applies, saves, renames, updates, and
-// deletes them; and the Metrics button, and each column's Break down by, which open the Metrics
-// panel. What they change is the table's view, as table-view.ts sets out.
+// header; the bar naming each filter, which removes them one at a time or all at once; the menu of
+// the table's saved views, which applies, saves, renames, updates, and deletes them, and names each
+// level of the sort and the frozen columns, removing them one at a time; and the Metrics button,
+// and each column's Break down by, which open the Metrics panel. What they change is the table's
+// view, as table-view.ts sets out.
 
 import {
   Button,
@@ -360,28 +361,41 @@ const byName = (first: SavedView, second: SavedView) =>
 
 // The menu of a table's saved views, named after the one the view started from, marked when the
 // view has changed since, or, with none applied, from the table's default view. Choosing a view
-// applies it. The menu clears the view, saves it as a new one, and updates, renames, or deletes the
-// one applied when the user may change it.
+// applies it. The menu names each level of the sort and the frozen columns, which the table itself
+// already marks, each item removing what it names. It clears the view, saves it as a new one, and
+// updates, renames, or deletes the one applied when the user may change it.
 export function ViewsMenu({
-  saved: { views, applied, onApply, onName, onUpdate, onDelete },
+  saved,
   columns,
   filterOnly = [],
   view,
+  onView,
   onClear,
 }: {
-  saved: SavedViews;
+  saved?: SavedViews | undefined;
   columns: readonly AnyColumn[];
   filterOnly?: readonly AnyColumn[];
   view: View;
+  onView: ChangeView;
   // Clears the view, leaving the saved view it started from.
   onClear: () => void;
 }) {
+  const views = saved?.views ?? [];
+  // Each level of the sort, in order, with its column; a column the table does not have is left
+  // out.
+  const sorts = view.sort.flatMap(({ key, descending }) =>
+    columns
+      .filter((column) => column.key === key)
+      .map((column) => ({ column, descending })),
+  );
   // Each saved view as the table can show it, without columns deleted since.
   const shownAs = (saved: SavedView) =>
     knownView(viewFrom(saved.definition), columns, filterOnly);
-  const current = views.find((saved) => saved.id === applied);
+  const current = views.find((each) => each.id === saved?.applied);
   const empty = sameView(view, emptyView);
   const changed = current ? !sameView(shownAs(current), view) : !empty;
+  const parts = sorts.length > 0 || view.frozen !== undefined;
+  const actions = !empty || current?.canChange === true;
   if (views.length === 0 && empty) return null;
   return (
     <AppMenu position="bottom-start" hideDetached={false}>
@@ -399,43 +413,78 @@ export function ViewsMenu({
         </Button>
       </AppMenu.Target>
       <AppMenu.Dropdown>
-        {[...views].sort(byName).map((saved) => (
-          <Menu.Item
-            key={saved.id}
-            // Room for the applied view's check mark only while one is applied, so the names line
-            // up.
-            leftSection={
-              current && (
-                <span className={classes.appliedMark} aria-hidden>
-                  {saved.id === applied ? "✓" : ""}
-                </span>
-              )
-            }
-            onClick={() => {
-              onApply(shownAs(saved), saved.id);
-            }}
-          >
-            {saved.name}
-            {saved.id === applied && <VisuallyHidden>, applied</VisuallyHidden>}
-          </Menu.Item>
-        ))}
-        {!empty && views.length > 0 && <Menu.Divider />}
+        {saved &&
+          [...views].sort(byName).map((each) => (
+            <Menu.Item
+              key={each.id}
+              // Room for the applied view's check mark only while one is applied, so the names
+              // line up.
+              leftSection={
+                current && (
+                  <span className={classes.appliedMark} aria-hidden>
+                    {each.id === saved.applied ? "✓" : ""}
+                  </span>
+                )
+              }
+              onClick={() => {
+                saved.onApply(shownAs(each), each.id);
+              }}
+            >
+              {each.name}
+              {each.id === saved.applied && (
+                <VisuallyHidden>, applied</VisuallyHidden>
+              )}
+            </Menu.Item>
+          ))}
+        {parts && (
+          <>
+            {views.length > 0 && <Menu.Divider />}
+            {sorts.length > 0 && <Menu.Label>Sort</Menu.Label>}
+            {sorts.map(({ column, descending }) => (
+              <Menu.Item
+                key={column.key}
+                rightSection={<Icon name="close" size={12} />}
+                onClick={() => {
+                  onView(unsorted(view, column.key));
+                }}
+              >
+                {column.label} <span aria-hidden>{descending ? "↓" : "↑"}</span>
+                <VisuallyHidden>
+                  {descending ? "descending" : "ascending"}, remove sort
+                </VisuallyHidden>
+              </Menu.Item>
+            ))}
+            {sorts.length > 0 && view.frozen !== undefined && <Menu.Divider />}
+            {view.frozen !== undefined && (
+              <Menu.Item
+                rightSection={<Icon name="close" size={12} />}
+                onClick={() => {
+                  onView({ ...view, frozen: undefined });
+                }}
+              >
+                {frozenUpTo(view.frozen, columns, "Frozen to", "Unfrozen")}
+                <VisuallyHidden>, reset</VisuallyHidden>
+              </Menu.Item>
+            )}
+          </>
+        )}
+        {actions && (views.length > 0 || parts) && <Menu.Divider />}
         {!empty && <Menu.Item onClick={onClear}>Clear view</Menu.Item>}
-        {!empty && (
+        {saved && !empty && (
           <Menu.Item
             onClick={() => {
-              onName(undefined, view);
+              saved.onName(undefined, view);
             }}
           >
             Save view…
           </Menu.Item>
         )}
-        {current?.canChange && (
+        {saved && current?.canChange && (
           <>
             {changed && (
               <Menu.Item
                 onClick={() => {
-                  onUpdate(current, view);
+                  saved.onUpdate(current, view);
                 }}
               >
                 Update {current.name}
@@ -443,7 +492,7 @@ export function ViewsMenu({
             )}
             <Menu.Item
               onClick={() => {
-                onName(current, view);
+                saved.onName(current, view);
               }}
             >
               Rename…
@@ -451,7 +500,7 @@ export function ViewsMenu({
             <Menu.Item
               color="red"
               onClick={() => {
-                onDelete(current);
+                saved.onDelete(current);
               }}
             >
               Delete view
@@ -463,9 +512,6 @@ export function ViewsMenu({
   );
 }
 
-// The bar above a table: its search, its saved views, a button for each filter the table's headers
-// do not offer, a pill for each level of the sort and each filter, how many rows there are, or how
-// many are shown while some are hidden, and Clear all.
 const showOptions: { value: Show; label: string }[] = [
   { value: "both", label: "Drafts beside live" },
   { value: "drafts", label: "Drafts applied" },
@@ -665,6 +711,9 @@ function DraftFilterItems({
   );
 }
 
+// The bar above a table: its search, its Views menu, the Draft menu, Metrics, a pill for each
+// filter, since filters hide rows, how many rows there are, or how many are shown while some are
+// hidden, and Clear all.
 export function ViewBar({
   one,
   noun,
@@ -701,13 +750,6 @@ export function ViewBar({
 }) {
   const filterOnly = [draftFilter];
   const columns = [...shownColumns, ...filterOnly];
-  // Each level of the sort, in order, with its column; a column the table does not have is left
-  // out.
-  const sorts = view.sort.flatMap(({ key, descending }) =>
-    shownColumns
-      .filter((column) => column.key === key)
-      .map((column) => ({ column, descending })),
-  );
   const filters = columns.flatMap((column) => {
     const filter = view.filters[column.key];
     return filter && isActive(filter) ? [{ column, filter }] : [];
@@ -723,17 +765,16 @@ export function ViewBar({
         onLeave={onLeave}
       />
       {/* After the search, so it never moves the field being typed in when it appears. */}
-      {saved && (
-        <ViewsMenu
-          saved={saved}
-          columns={shownColumns}
-          filterOnly={filterOnly}
-          view={view}
-          onClear={() => {
-            onView(emptyView);
-          }}
-        />
-      )}
+      <ViewsMenu
+        saved={saved}
+        columns={shownColumns}
+        filterOnly={filterOnly}
+        view={view}
+        onView={onView}
+        onClear={() => {
+          onView(emptyView);
+        }}
+      />
       <DraftMenu
         show={view.show}
         onShow={(show) => {
@@ -760,23 +801,6 @@ export function ViewBar({
       >
         Metrics
       </Button>
-      {sorts.map(({ column, descending }) => (
-        <Pill
-          key={`sort-${column.key}`}
-          size="md"
-          withRemoveButton
-          removeButtonProps={{
-            "aria-hidden": false,
-            tabIndex: 0,
-            "aria-label": `Remove sort on ${column.label}`,
-          }}
-          onRemove={() => {
-            onView(unsorted(view, column.key));
-          }}
-        >
-          {column.label} {descending ? "↓" : "↑"}
-        </Pill>
-      ))}
       {filters.map(({ column, filter }) => (
         <Pill
           key={column.key}
@@ -795,22 +819,6 @@ export function ViewBar({
           {describeFilter(column, filter)}
         </Pill>
       ))}
-      {view.frozen !== undefined && (
-        <Pill
-          size="md"
-          withRemoveButton
-          removeButtonProps={{
-            "aria-hidden": false,
-            tabIndex: 0,
-            "aria-label": "Reset frozen columns",
-          }}
-          onRemove={() => {
-            onView({ ...view, frozen: undefined });
-          }}
-        >
-          {frozenUpTo(view.frozen, shownColumns, "Frozen to", "Unfrozen")}
-        </Pill>
-      )}
       {/* Always there, so screen readers announce the count as it changes. */}
       <Text
         component="span"

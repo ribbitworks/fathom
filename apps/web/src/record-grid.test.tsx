@@ -208,6 +208,41 @@ describe("a table of another kind of record", () => {
     expect(screen.getByText("No matching gadgets")).toBeTruthy();
   });
 
+  it("names its sort and frozen columns in a Views menu without saved views, removing each", async () => {
+    const onView = vi.fn();
+    renderGadgets({
+      gadgets: [gadget("g1")],
+      view: {
+        ...emptyView,
+        sort: [{ key: "name", descending: false }],
+        frozen: 0,
+      },
+      onView,
+    });
+    await userEvent.click(
+      screen.getByRole("button", { name: "Views, changed" }),
+    );
+    const menu = await screen.findByRole("menu", { name: /^Views/ });
+    expect(
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((item) => item.textContent),
+    ).toEqual([
+      "Name ↑ascending, remove sort",
+      "Unfrozen, reset",
+      "Clear view",
+    ]);
+    await userEvent.click(
+      within(menu).getByRole("menuitem", { name: "Unfrozen, reset" }),
+    );
+    expect(onView).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        sort: [{ key: "name", descending: false }],
+        frozen: undefined,
+      }),
+    );
+  });
+
   it("counts its records in Metrics by the table's own words", () => {
     const { unmount } = renderGadgets({
       gadgets: [gadget("g1")],

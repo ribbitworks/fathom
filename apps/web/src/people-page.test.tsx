@@ -1870,6 +1870,43 @@ describe("searching, sorting, and filtering", () => {
     });
   }
 
+  const viewsButton = () =>
+    screen.getByRole("button", { name: (name) => name.startsWith("Views") });
+
+  // Found by name, since a column's menu just used may still be closing.
+  async function viewsMenu() {
+    await userEvent.click(viewsButton());
+    return screen.findByRole("menu", { name: /^Views/ });
+  }
+
+  async function viewsMenuItems() {
+    return within(await viewsMenu())
+      .getAllByRole("menuitem")
+      .map((item) => item.textContent);
+  }
+
+  // The Views menu's items, headings, and dividers, each divider as "—", to check how it is laid
+  // out.
+  async function viewsMenuLayout() {
+    const menu = await viewsMenu();
+    return [
+      ...menu.querySelectorAll(
+        ".mantine-Menu-item, .mantine-Menu-label, .mantine-Menu-divider",
+      ),
+    ].map((part) =>
+      part.classList.contains("mantine-Menu-divider") ? "—" : part.textContent,
+    );
+  }
+
+  async function chooseView(item: string | RegExp) {
+    await userEvent.click(
+      within(await viewsMenu()).getByRole("menuitem", { name: item }),
+    );
+    await waitFor(() => {
+      expect(screen.queryByRole("menu")).toBeNull();
+    });
+  }
+
   const address = (history: ReturnType<typeof renderApp>) =>
     decodeURIComponent(history.location.search);
 
@@ -2011,7 +2048,7 @@ describe("searching, sorting, and filtering", () => {
     });
   });
 
-  it("freezes the columns up to one chosen, naming them above the table until reset", async () => {
+  it("freezes the columns up to one chosen, naming them in the Views menu until reset", async () => {
     const { history } = await openAt("/people");
     const frozen = (label: string) =>
       header(label).closest("th")?.style.left !== "";
@@ -2020,12 +2057,18 @@ describe("searching, sorting, and filtering", () => {
       .map((cell) => cell.textContent);
     expect(frozen(String(first))).toBe(true);
     expect(frozen("Site")).toBe(false);
-    expect(screen.queryByText(/^Frozen to/)).toBeNull();
 
     await choose("Site", "Freeze up to this column");
     expect(frozen("Site")).toBe(true);
     expect(address(history)).toMatch(/frozen=\d/);
-    expect(screen.getByText("Frozen to Site")).toBeDefined();
+    expect(screen.queryByText("Frozen to Site")).toBeNull();
+    expect(await viewsMenuLayout()).toEqual([
+      "Frozen to Site, reset",
+      "—",
+      "Clear view",
+      "Save view…",
+    ]);
+    await userEvent.keyboard("{Escape}");
     await userEvent.click(header("Site"));
     const unfreeze = await screen.findByRole("menuitem", {
       name: "Unfreeze columns",
@@ -2036,11 +2079,10 @@ describe("searching, sorting, and filtering", () => {
     await userEvent.click(unfreeze);
     expect(address(history)).toContain("frozen=0");
     expect(frozen(String(first))).toBe(false);
-    expect(screen.getByText("Unfrozen")).toBeDefined();
+    expect(await viewsMenuItems()).toContain("Unfrozen, reset");
+    await userEvent.keyboard("{Escape}");
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Reset frozen columns" }),
-    );
+    await chooseView("Unfrozen, reset");
     expect(history.location.search).toBe("");
     expect(frozen(String(first))).toBe(true);
 
@@ -2049,7 +2091,7 @@ describe("searching, sorting, and filtering", () => {
     expect(history.location.search).toBe("");
   });
 
-  it("sorts by each column chosen in turn, naming each level above the table", async () => {
+  it("sorts by each column chosen in turn, naming each level in the Views menu", async () => {
     const { history } = await openAt("/people");
     await choose("Site", "List order");
     expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
@@ -2069,12 +2111,33 @@ describe("searching, sorting, and filtering", () => {
     await choose("Site", "Reverse list order");
     expect(shownNames()).toEqual(["Blake Fictional", "Avery Fictional"]);
     expect(address(history)).toContain('sort=["-f1","-preferredName"]');
-    expect(screen.getByText("Site ↓")).toBeDefined();
-    expect(screen.getByText("Name ↓")).toBeDefined();
+    expect(screen.queryByText(/Site ↓/)).toBeNull();
+    await choose("Site", "Freeze up to this column");
+    expect(await viewsMenuLayout()).toEqual([
+      "Sort",
+      "Site ↓descending, remove sort",
+      "Name ↓descending, remove sort",
+      "—",
+      "Frozen to Site, reset",
+      "—",
+      "Clear view",
+      "Save view…",
+    ]);
+    await userEvent.keyboard("{Escape}");
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Remove sort on Site" }),
-    );
+    // From the keyboard too.
+    viewsButton().focus();
+    await userEvent.keyboard("{Enter}");
+    const menu = await screen.findByRole("menu", { name: /^Views/ });
+    await userEvent.keyboard("{ArrowDown}");
+    await waitFor(() => {
+      expect(
+        within(menu).getByRole("menuitem", {
+          name: "Site descending, remove sort",
+        }),
+      ).toBe(document.activeElement);
+    });
+    await userEvent.keyboard("{Enter}");
     expect(address(history)).toContain('sort=["-preferredName"]');
     expect(
       screen.getByRole("button", { name: "Name column, sorted descending" }),
@@ -2576,19 +2639,6 @@ describe("searching, sorting, and filtering", () => {
         order,
         views,
       });
-    const viewsButton = () =>
-      screen.getByRole("button", {
-        name: (name) => name.startsWith("Views"),
-      });
-    async function chooseView(item: string | RegExp) {
-      await userEvent.click(viewsButton());
-      await userEvent.click(
-        await screen.findByRole("menuitem", { name: item }),
-      );
-      await waitFor(() => {
-        expect(screen.queryByRole("menu")).toBeNull();
-      });
-    }
 
     it("offers nothing to save or apply until there is a view or a saved one", async () => {
       await openAt("/people");
@@ -2642,6 +2692,19 @@ describe("searching, sorting, and filtering", () => {
       await waitFor(() => {
         expect(shownNames()).toEqual(["Avery Fictional", "Blake Fictional"]);
       });
+    });
+
+    it("sets what may be done with the user's own view apart from the views, even with nothing in it", async () => {
+      await openAt(`/people?view=${v1}`, {
+        "GET /api/people": withViews([{ ...harbour, definition: {} }, theirs]),
+      });
+      expect(await viewsMenuLayout()).toEqual([
+        "✓Harbour, applied",
+        "Theirs",
+        "—",
+        "Rename…",
+        "Delete view",
+      ]);
     });
 
     it("marks a changed view, updates, renames, and deletes the user's own, with Undo", async () => {
@@ -2725,6 +2788,7 @@ describe("searching, sorting, and filtering", () => {
       expect(offered.map((item) => item.textContent)).toEqual([
         "Harbour",
         "✓Theirs, applied",
+        "Name ↓descending, remove sort",
         "Clear view",
         "Save view…",
       ]);

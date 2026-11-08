@@ -211,7 +211,7 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Notes:**
 
 - [ ] **Step 2.** Scroll back to the left. Open the **ID** column menu and select **Freeze up to this column**.
-  - **Expected:** The line moves to the right edge of **ID**. The bar above the table shows **Frozen to ID** with an **×**.
+  - **Expected:** The line moves to the right edge of **ID**.
   - **Notes:**
 
 - [ ] **Step 3.** Scroll the table sideways to the right, then down.
@@ -230,12 +230,12 @@ Run the test cases in order. Start with R0, then R1, then sign in (P1) as `engin
   - **Expected:** **Site** moves before **Name**, and stays in place with the other frozen columns when the table scrolls sideways.
   - **Notes:**
 
-- [ ] **Step 7.** Open the **ID** column menu and select **Unfreeze columns**.
-  - **Expected:** No column stays in place when the table scrolls sideways, and the bar shows **Unfrozen**.
+- [ ] **Step 7.** Open the **ID** column menu and select **Unfreeze columns**. Scroll the table sideways and back, then open **Views**.
+  - **Expected:** No column stays in place when the table scrolls sideways. The menu shows **Unfrozen** with an **×**, set apart from the items around it.
   - **Notes:**
 
-- [ ] **Step 8.** Select the **×** on **Unfrozen**. In the Appearance menu, select **Light**.
-  - **Expected:** Only the first column stays in place again, and **Unfrozen** is gone from the bar.
+- [ ] **Step 8.** Select **Unfrozen**. In the Appearance menu, select **Light**.
+  - **Expected:** Only the first column stays in place again.
   - **Notes:**
 
 **Afterwards:** Run R1, which puts the column order back.
