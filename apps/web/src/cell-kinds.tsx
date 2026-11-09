@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // What each kind of cell in a table of records holds and how it behaves, so a new kind of column is
-// added in one place: text, such as a name; a date; choices from a list; a web link; a note; and
-// a checkbox. Each kind says how a record's value is read, live or as drafted, what clears it, how it
-// reads in words, what a pasted cell gives, the change that saves it, how wide its column is, and
+// added in one place: text, such as a name; a date; a number; choices from a list; a web link; a
+// note; and a checkbox. Each kind says how a record's value is read, live or as drafted, what
+// clears it, how it reads in words, what a pasted cell gives, the change that saves it, how wide its column is, and
 // whether its column is worth breaking down by. A kind with an editor, cell, or menu item of its
 // own names it; the rest are edited as text and shown in words.
 
@@ -19,8 +19,10 @@ import {
   notePlainText,
   noteProblem,
   isMonth,
+  numberProblem,
   typedDay,
   typedMonth,
+  typedNumber,
   webAddress,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
@@ -35,6 +37,7 @@ import {
   notePreview,
 } from "./note-editor.tsx";
 import { offered, sameName } from "./lists.ts";
+import { decimal } from "./numbers.ts";
 import {
   type CellValue,
   formatDay,
@@ -62,6 +65,7 @@ export interface CellSource {
   values: Readonly<Record<string, string[]>>;
   links: Readonly<Record<string, Link>>;
   notes?: Readonly<Record<string, string>> | undefined;
+  numbers?: Readonly<Record<string, number>> | undefined;
 }
 
 // The change that saves a value: a detail by its key, or an added column's choices or link.
@@ -70,6 +74,7 @@ export interface CellChange {
   values?: Record<string, string[]> | undefined;
   links?: Record<string, Link | null> | undefined;
   notes?: Record<string, string | null> | undefined;
+  numbers?: Record<string, number | null> | undefined;
 }
 
 export interface EditorProps {
@@ -223,6 +228,33 @@ const month = calendarKind({
   example: "a month such as 2027-03",
   samples: twelveMonths,
 });
+
+const typedOf = (value: CellValue) => typedNumber(asText(value));
+
+const number: CellKind = {
+  ...text,
+  read: (source, key) => {
+    // The key is a column's own.
+    // eslint-disable-next-line security/detect-object-injection
+    const held = source.numbers?.[key];
+    return held === undefined ? "" : String(held);
+  },
+  inWords: (_column, value) => {
+    const held = typedOf(value);
+    return held === undefined ? asText(value) : decimal(held);
+  },
+  inDetail: (_column, value) => asText(value),
+  ownField: {
+    read: (held) => (typeof held === "number" ? String(held) : ""),
+    save: (value) => typedOf(value) ?? null,
+  },
+  problem: (column, value) => {
+    const problem = numberProblem(asText(value));
+    return problem === undefined ? undefined : `${column.label}: ${problem}`;
+  },
+  pasted: (_column, content) => ({ value: content.trim() }),
+  change: (key, value) => ({ numbers: { [key]: typedOf(value) ?? null } }),
+};
 
 // Whether a cell may be given a choice: one offered in its list that the column lets be picked.
 const pickable = (column: AnyColumn, option: Choice) =>
@@ -450,6 +482,7 @@ export const cellKinds: Readonly<Record<Kind, CellKind>> = {
   text,
   date,
   month,
+  number,
   choice,
   link,
   note,

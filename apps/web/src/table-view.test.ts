@@ -30,6 +30,7 @@ import {
   widthWithin,
   withWidth,
 } from "./table-view.ts";
+import { decimal } from "./numbers.ts";
 
 interface Row {
   id: string;
@@ -725,6 +726,55 @@ describe("web link columns", () => {
       "a",
       "c",
     ]);
+  });
+});
+
+describe("number columns", () => {
+  interface Scored {
+    id: string;
+    score: string;
+  }
+  const scoreColumns: TableColumn<Scored>[] = [
+    {
+      key: "score",
+      label: "Score",
+      kind: "number",
+      choices: [],
+      multiple: false,
+      value: (row) => row.score,
+    },
+  ];
+  const scored: Scored[] = [
+    { id: "a", score: "9" },
+    { id: "b", score: "1234.5" },
+    { id: "c", score: "" },
+    { id: "d", score: "0" },
+  ];
+  const shown = (changes: Partial<View>) =>
+    applyView(scored, scoreColumns, view(changes)).map((row) => row.id);
+
+  it("sort as numbers, not text, with no number last either way", () => {
+    const sort = [{ key: "score", descending: false }];
+    expect(shown({ sort })).toEqual(["d", "a", "b", "c"]);
+    expect(shown({ sort: [{ key: "score", descending: true }] })).toEqual([
+      "b",
+      "a",
+      "d",
+      "c",
+    ]);
+  });
+
+  it("are filtered between bounds, either left open, or by having none", () => {
+    const filtered = (filter: object) => shown({ filters: { score: filter } });
+    expect(filtered({ atLeast: 9 })).toEqual(["a", "b"]);
+    expect(filtered({ atMost: 0 })).toEqual(["d"]);
+    expect(filtered({ atLeast: 1, atMost: 10 })).toEqual(["a"]);
+    expect(filtered({ empty: true })).toEqual(["c"]);
+  });
+
+  it("are searched as typed and as shown", () => {
+    expect(shown({ search: "1234.5" })).toEqual(["b"]);
+    expect(shown({ search: decimal(1234.5) })).toEqual(["b"]);
   });
 });
 

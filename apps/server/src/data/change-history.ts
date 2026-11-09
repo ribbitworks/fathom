@@ -389,8 +389,8 @@ async function listTiersNow(
     listId === undefined ? "general" : (tiers.get(listId) ?? "general");
 }
 
-// What a value shows: text, yes or no, or several names, with identifiers named, and a note as its
-// words without their formatting.
+// What a value shows: text, yes or no, or several names, with identifiers named, a note as its
+// words without their formatting, and a number as written.
 function shown(
   row: StoredChange,
   value: unknown,
@@ -406,6 +406,9 @@ function shown(
   }
   if (fieldOfValue(row.field) !== null && typeof value === "string") {
     return notePlainText(value);
+  }
+  if (fieldOfValue(row.field) !== null && typeof value === "number") {
+    return String(value);
   }
   if (
     fieldOfValue(row.field) !== null ||

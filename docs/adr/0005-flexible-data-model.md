@@ -3,7 +3,7 @@
 - **ADR:** 0005
 - **Status:** Proposed
 - **Date:** 2026-10-30
-- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields
+- **Revised:** 2026-10-31, to link to [ADR 0006](0006-table-views-in-the-browser.md) for how tables are filtered and sorted; 2026-11-06, to add Note fields; 2026-11-08, to add Number fields
 
 ## Context
 
@@ -39,7 +39,7 @@ Custom fields and tables use a values table.
 
 ## Built So Far
 
-The people step of the [Implementation Plan](../design/implementation-plan.md) builds the "Choice from a list" type for columns on People, as the [Decisions Log](../product/decisions.md#configuration) records: field definitions, a values table with a person owner column and a link column for choices, one row for each chosen choice, and a check that exactly one owner column is set. A list or choice cannot be deleted while a column or value uses it. The "Web link" type follows, with a typed address column and text column, a check that each value row holds a choice or a link and never both, and an index allowing one link for each record and column; a web link column has a visibility of its own as its tier, since it draws on no list. The "Note" type follows, with a text column holding a note's Markdown, which is never empty, the check widened so each value row holds exactly one of a choice, a link, or a note, and an index allowing one note for each record and column; like a web link column, a note column has a visibility of its own. The order of a table's columns, built-in and added alike, is kept as one list of column keys for each table. The other field types, uniqueness, and custom tables come with the custom fields stage.
+The people step of the [Implementation Plan](../design/implementation-plan.md) builds the "Choice from a list" type for columns on People, as the [Decisions Log](../product/decisions.md#configuration) records: field definitions, a values table with a person owner column and a link column for choices, one row for each chosen choice, and a check that exactly one owner column is set. A list or choice cannot be deleted while a column or value uses it. The "Web link" type follows, with a typed address column and text column, a check that each value row holds a choice or a link and never both, and an index allowing one link for each record and column; a web link column has a visibility of its own as its tier, since it draws on no list. The "Note" type follows, with a text column holding a note's Markdown, which is never empty, the check widened so each value row holds exactly one of a choice, a link, or a note, and an index allowing one note for each record and column; like a web link column, a note column has a visibility of its own. The order of a table's columns, built-in and added alike, is kept as one list of column keys for each table. The "Number" type follows, with a numeric column, the check widened so each value row holds exactly one of a choice, a link, a note, or a number, and an index allowing one number for each record and column; a number column has a visibility of its own too. The other field types, uniqueness, and custom tables come with the custom fields stage.
 
 ## Consequences
 

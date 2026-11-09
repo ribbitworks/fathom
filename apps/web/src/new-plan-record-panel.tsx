@@ -53,6 +53,7 @@ export function PlanField({
   switch (column.kind) {
     case "text":
     case "month":
+    case "number":
       return (
         <ClearableInput
           {...common}

@@ -21,14 +21,15 @@ import {
 } from "@fathom/shared";
 import { useState } from "react";
 import { z } from "zod";
+import { decimal } from "./numbers.ts";
 
-// What a cell holds: text, a date as YYYY-MM-DD or empty, the identifiers of chosen choices, a web
-// link, or null for no link, a note's Markdown, or, for a checkbox, its one choice when checked and
-// nothing when not.
+// What a cell holds: text, a date as YYYY-MM-DD or empty, a number as typed or empty, the
+// identifiers of chosen choices, a web link, or null for no link, a note's Markdown, or, for a
+// checkbox, its one choice when checked and nothing when not.
 export type CellValue = string | string[] | Link | null;
 
 export type Kind =
-  "text" | "date" | "month" | "choice" | "link" | "note" | "flag";
+  "text" | "date" | "month" | "number" | "choice" | "link" | "note" | "flag";
 
 export interface ColumnChoice {
   id: string;
@@ -243,6 +244,8 @@ export function isActive(filter: Filter | undefined): boolean {
     (filter.contains ?? "").trim() !== "" ||
     filter.from !== undefined ||
     filter.to !== undefined ||
+    filter.atLeast !== undefined ||
+    filter.atMost !== undefined ||
     (filter.any ?? []).length > 0 ||
     filter.empty === true
   );
@@ -420,6 +423,20 @@ const dateRules: Rules = {
     (to === undefined || asText(value) <= to),
 };
 
+// A number is searched as it is typed and as it is shown.
+const numberRules: Rules = {
+  isEmpty: (value) => asText(value) === "",
+  words: (_column, value) =>
+    asText(value) === ""
+      ? ""
+      : `${asText(value)} ${decimal(Number(asText(value)))}`,
+  compare: (_column, a, b) => Number(asText(a)) - Number(asText(b)),
+  matches: (value, { atLeast, atMost }) =>
+    (atLeast !== undefined || atMost !== undefined) &&
+    (atLeast === undefined || Number(asText(value)) >= atLeast) &&
+    (atMost === undefined || Number(asText(value)) <= atMost),
+};
+
 // Where each chosen choice comes in its list, so choices sort in their list's order.
 const places = (column: TableColumn<never>, value: CellValue) =>
   asChoices(value).map((id) =>
@@ -489,6 +506,7 @@ const rules: Record<Kind, Rules> = {
   text: textRules,
   date: dateRules,
   month: monthRules,
+  number: numberRules,
   choice: choiceRules,
   link: linkRules,
   note: noteRules,

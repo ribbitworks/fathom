@@ -134,6 +134,7 @@ import type { Phrase } from "./phrase.tsx";
 import { type SidePanel, WithSidePanel } from "./side-panel.tsx";
 import {
   type DraftLike,
+  draftMarkChars,
   DraftMark,
   HoldMarks,
   StatusMark,
@@ -401,6 +402,18 @@ export function liveRecordsBy<Rec extends GridRecord>(
   });
 }
 
+// A record's values of one sort, with those a draft changes put back as they are live.
+export const withLiveValues = <Held,>(
+  held: Readonly<Record<string, Held>> | undefined,
+  changed: readonly string[],
+  live: Readonly<Record<string, Held>> | undefined,
+): Record<string, Held> => ({
+  ...Object.fromEntries(
+    Object.entries(held ?? {}).filter(([key]) => !changed.includes(key)),
+  ),
+  ...live,
+});
+
 export function liveRecordsOf<Rec extends CellRecord>(
   records: readonly Rec[],
   detailKeys: readonly string[],
@@ -417,20 +430,9 @@ export function liveRecordsOf<Rec extends CellRecord>(
         return live.length === 0 ? [] : [[key, live]];
       }),
     ]);
-    const links = {
-      ...Object.fromEntries(
-        Object.entries(record.links).filter(([key]) => !columns.includes(key)),
-      ),
-      ...draft.live.links,
-    };
-    const notes = {
-      ...Object.fromEntries(
-        Object.entries(record.notes ?? {}).filter(
-          ([key]) => !columns.includes(key),
-        ),
-      ),
-      ...draft.live.notes,
-    };
+    const links = withLiveValues(record.links, columns, draft.live.links);
+    const notes = withLiveValues(record.notes, columns, draft.live.notes);
+    const numbers = withLiveValues(record.numbers, columns, draft.live.numbers);
     const details = Object.fromEntries(
       draft.changed
         .filter((key) => detailKeys.includes(key))
@@ -444,6 +446,7 @@ export function liveRecordsOf<Rec extends CellRecord>(
       values,
       links,
       ...(Object.keys(notes).length === 0 ? {} : { notes }),
+      ...(Object.keys(numbers).length === 0 ? {} : { numbers }),
     };
   });
 }
@@ -686,7 +689,13 @@ export function columnWidth(
       kindOf(column).width(column, longestText.get(column.key) ?? 0),
       widestChars,
     ),
-    header: Math.min(column.label.length, widestChars),
+    header: Math.min(
+      Math.max(
+        column.label.length,
+        column.field?.draft ? draftMarkChars(column.field.draft) : 0,
+      ),
+      widestChars,
+    ),
   };
 }
 

@@ -14,6 +14,17 @@ import {
 } from "./views.ts";
 
 describe("viewDefinitionSchema", () => {
+  it("keeps a number filter's bounds, and drops one that is not a number Fathom keeps", () => {
+    expect(
+      viewDefinitionSchema.parse({
+        filters: {
+          score: { atLeast: -1.5, atMost: 10 },
+          rank: { atLeast: "1" },
+        },
+      }).filters,
+    ).toEqual({ score: { atLeast: -1.5, atMost: 10 } });
+  });
+
   it("reads an empty view", () => {
     expect(viewDefinitionSchema.parse({})).toEqual({});
   });

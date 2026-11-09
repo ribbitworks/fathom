@@ -98,11 +98,13 @@ import { recordEvent } from "./history.ts";
 import {
   checkedLinks,
   checkedNotes,
+  checkedNumbers,
   checkedValues,
   choicesAskedFor,
   notStarted,
   linksOf,
   notesOf,
+  numbersOf,
   recordedValues,
   valuesOf,
 } from "./people.ts";
@@ -228,12 +230,14 @@ function refuseNotOffered(
     values?: Readonly<Record<string, unknown>> | undefined;
     links?: Readonly<Record<string, unknown>> | undefined;
     notes?: Readonly<Record<string, unknown>> | undefined;
+    numbers?: Readonly<Record<string, unknown>> | undefined;
   },
 ): void {
   for (const fieldId of [
     ...Object.keys(asked.values ?? {}),
     ...Object.keys(asked.links ?? {}),
     ...Object.keys(asked.notes ?? {}),
+    ...Object.keys(asked.numbers ?? {}),
   ]) {
     const column = columns.find(({ id }) => id === fieldId);
     if (column !== undefined && !column.onPlannedHires) {
@@ -556,6 +560,7 @@ export async function readHiresIn(
         values: shownValues(valuesOf(hire)),
         links: shownValues(Object.entries(linksOf(hire))),
         notes: shownValues(Object.entries(notesOf(hire))),
+        numbers: shownValues(Object.entries(numbersOf(hire))),
         ...(wholePlan
           ? {
               targetDate,
@@ -606,6 +611,7 @@ export async function readHiresIn(
       values: {},
       links: {},
       notes: {},
+      numbers: {},
     };
     if (before !== undefined) {
       for (const field of fields) {
@@ -1150,6 +1156,7 @@ export async function createHires(
         ),
         ...checkedLinks(offered, request.links),
         ...checkedNotes(offered, request.notes ?? {}),
+        ...checkedNumbers(offered, request.numbers ?? {}),
       });
       if (newlyManaged(undefined, after)) {
         await refuseUnmarked(
@@ -1276,6 +1283,7 @@ export async function updateHire(
       ),
       ...checkedLinks(offered, change.links ?? {}),
       ...checkedNotes(offered, change.notes ?? {}),
+      ...checkedNumbers(offered, change.numbers ?? {}),
     });
     const tierOf = await readHireTier(transaction, columns);
     if (newlyManaged(hire, after)) {
@@ -1983,6 +1991,7 @@ export function hireRow(
     values: hire.values,
     links: hire.links,
     notes: hire.notes,
+    numbers: hire.numbers,
     ...(draft === undefined || live === undefined
       ? {}
       : {
@@ -2012,6 +2021,7 @@ export function hireRow(
               values: live.values,
               links: live.links,
               notes: live.notes,
+              numbers: live.numbers,
             },
           },
         }),

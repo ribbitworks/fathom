@@ -328,6 +328,9 @@ export {
   fieldTypeSchema,
   type Links,
   type Notes,
+  type Numbers,
+  numbersSchema,
+  requestedNumbersSchema,
   type Person,
   type PersonChange,
   type PersonRequest,
@@ -367,6 +370,13 @@ export {
   viewLengths,
 } from "./views.ts";
 export { allOf, eitherOf } from "./words.ts";
+export {
+  isNumberValue,
+  numberDigits,
+  numberProblem,
+  numberValueSchema,
+  typedNumber,
+} from "./numbers.ts";
 export {
   dayIn,
   defaultTimeZone,

@@ -334,6 +334,7 @@ export function HireFillForm({
         values: asked.values,
         links: asked.links,
         notes: asked.notes,
+        numbers: asked.numbers,
         by: "new person",
         preferredName: (values.preferredName as string).trim(),
         employeeId: (values.employeeId as string).trim(),

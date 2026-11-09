@@ -41,6 +41,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Draft and Approval | Done |
 | Web Link Columns | Done |
 | Note Columns | Done |
+| Number Columns | Done |
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
 | Org Chart Additions | In progress: team colours, drafts on the chart, and person details; next chart fields, filters, and sort |
 | Projects and Feature Teams | In progress: feature teams on the org chart, with the feature team chart, a team's panel, its members and lead as drafts, and a person's feature teams in their details; projects next |
@@ -102,6 +103,10 @@ A second type of column on People, Web link: each person's value is one web addr
 ### Note Columns
 
 A third type of column on People, Note: each person's value is one rich-text note, kept as Markdown holding only the formats the [Decisions Log](../product/decisions.md#configuration) allows, and written in a side panel in an editor or as Markdown. A Note column sets its own visibility, as a Web link column does. The note format is shared, so each release also has one note of its own, written in the same side panel from the Releases page, with fictional notes on two seeded releases.
+
+### Number Columns
+
+A fourth type of column on People and planned hires, Number: each value is one number, typed in one form and shown as the reader's language writes it, as the [Decisions Log](../product/decisions.md#configuration) sets out, with its own visibility, and sorting, filtering, and Metrics. The rules for what a number is are shared, for later columns that hold a number with more to it, such as an estimate.
 
 ### Teams and Reporting Lines
 

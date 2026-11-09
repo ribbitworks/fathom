@@ -169,3 +169,20 @@ describe("what a notice calls the rows being added", () => {
     expect(addedNames([person, opening])).toBe("the people and planned hires");
   });
 });
+
+describe("a planned hire's numbers", () => {
+  it("are sent when adding a hire and when changing one", () => {
+    const row = {
+      preferredName: "Fictional opening",
+      employeeId: "",
+      positionId: "position-1",
+      values: {},
+      links: {},
+      numbers: { f1: 0 },
+    };
+    expect(hireRequest(row).numbers).toEqual({ f1: 0 });
+    expect(hireChange({ numbers: { f1: null } }).numbers).toEqual({
+      f1: null,
+    });
+  });
+});

@@ -21,12 +21,14 @@ export interface DraftLike {
   unpublished?: boolean | undefined;
 }
 
+const rejectedWord = "Rejected";
+
 // What a draft is, in words.
 export function draftWords(draft: DraftLike): string {
   if (draft.state === "rejected") {
     return draft.reason === undefined
-      ? "Rejected"
-      : `Rejected: ${draft.reason}`;
+      ? rejectedWord
+      : `${rejectedWord}: ${draft.reason}`;
   }
   if (draft.action === "created") return "Draft: added";
   if (draft.action === "deleted") return "Draft: removed";
@@ -36,6 +38,13 @@ export function draftWords(draft: DraftLike): string {
   }
   return "Draft";
 }
+
+const dotChars = 2;
+
+// How many characters a draft's mark takes in a table, with its dot.
+export const draftMarkChars = (draft: DraftLike): number =>
+  (draft.state === "rejected" ? rejectedWord : draftWords(draft)).length +
+  dotChars;
 
 // The mark beside a record with a draft, in words after a dot: yellow, hollow while the draft is
 // the user's own and unpublished, or red once rejected. A rejection's reason is in the record's
@@ -54,7 +63,7 @@ export function DraftMark({ draft }: { draft: DraftLike }) {
   return (
     <>
       <StatusMark tone="rejected" spaced>
-        Rejected
+        {rejectedWord}
         {draft.reason !== undefined && (
           <VisuallyHidden>: {draft.reason}</VisuallyHidden>
         )}

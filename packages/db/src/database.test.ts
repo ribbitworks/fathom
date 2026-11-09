@@ -1013,6 +1013,24 @@ describe("planned hires", () => {
         );
       await note("Hiring soon");
       expect(await errorCodeOf(note("Later"))).toBe(uniqueViolation);
+      const numberField = await client.query<{ id: string }>(
+        "INSERT INTO fields (table_name, name, type, visibility) VALUES ('people', 'Fictional Hire Score', 'number', 'general') RETURNING id",
+      );
+      const number = (value: number) =>
+        client.query(
+          "INSERT INTO field_values (field_id, planned_hire_id, number) VALUES ($1, $2, $3)",
+          [numberField.rows[0]?.id, hire, value],
+        );
+      await number(0);
+      expect(await errorCodeOf(number(1))).toBe(uniqueViolation);
+      expect(
+        await errorCodeOf(
+          client.query(
+            "INSERT INTO field_values (field_id, planned_hire_id, number, note) VALUES ($1, $2, 1, 'Both')",
+            [numberField.rows[0]?.id, hire],
+          ),
+        ),
+      ).toBe(checkViolation);
       await client.query("DELETE FROM planned_hires WHERE id = $1", [hire]);
       const left = await client.query(
         "SELECT person_id FROM field_values WHERE field_id = ANY($1)",

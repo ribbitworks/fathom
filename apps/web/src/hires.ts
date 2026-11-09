@@ -38,6 +38,7 @@ export function hireRequest(row: RowRequest): HireRequest {
     values: row.values,
     links: row.links,
     ...(row.notes === undefined ? {} : { notes: row.notes }),
+    ...(row.numbers === undefined ? {} : { numbers: row.numbers }),
   };
 }
 
@@ -60,6 +61,7 @@ export function hireChange(change: RowChange): HireChange {
     ...(change.values === undefined ? {} : { values: change.values }),
     ...(change.links === undefined ? {} : { links: change.links }),
     ...(change.notes === undefined ? {} : { notes: change.notes }),
+    ...(change.numbers === undefined ? {} : { numbers: change.numbers }),
   };
 }
 

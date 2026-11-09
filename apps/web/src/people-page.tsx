@@ -71,7 +71,12 @@ import {
   newFilling,
 } from "./hire-fill.ts";
 import { columnsFor, type PeopleActions, PeopleGrid } from "./people-grid.tsx";
-import { draftColumn, isPending, pendingId } from "./record-grid.tsx";
+import {
+  draftColumn,
+  isPending,
+  pendingId,
+  withLiveValues,
+} from "./record-grid.tsx";
 import {
   createHires,
   deleteHire,
@@ -128,13 +133,14 @@ function withView(views: readonly SavedView[], saved: SavedView): SavedView[] {
 // Someone or a planned hire being added, as the table shows them before they are saved: a draft
 // adding them.
 function adding(id: string, request: RowRequest): Person {
-  const { values, links, notes, ...details } = request;
+  const { values, links, notes, numbers, ...details } = request;
   return {
     id,
     ...details,
     values,
     links: kept(links),
     ...(notes === undefined ? {} : { notes: kept(notes) }),
+    ...(numbers === undefined ? {} : { numbers: kept(numbers) }),
     // A draft adding someone changes everything, so names nothing in particular.
     draft: pendingDraft("created", { values: {}, links: {} }),
   };
@@ -143,27 +149,14 @@ function adding(id: string, request: RowRequest): Person {
 // A person as they are live, without their draft. A web link column the draft changes that is not
 // in the live links had no link.
 function asLive(person: Person, draft: PersonDraft): Person {
-  const { values, links, notes, ...details } = draft.live;
+  const { values, links, notes, numbers, ...details } = draft.live;
   const live: Person = {
     ...person,
     ...(details as Partial<Person>),
     values: { ...person.values, ...values },
-    links: {
-      ...Object.fromEntries(
-        Object.entries(person.links).filter(
-          ([key]) => !draft.changed.includes(key),
-        ),
-      ),
-      ...links,
-    },
-    notes: {
-      ...Object.fromEntries(
-        Object.entries(person.notes ?? {}).filter(
-          ([key]) => !draft.changed.includes(key),
-        ),
-      ),
-      ...notes,
-    },
+    links: withLiveValues(person.links, draft.changed, links),
+    notes: withLiveValues(person.notes, draft.changed, notes),
+    numbers: withLiveValues(person.numbers, draft.changed, numbers),
   };
   delete live.draft;
   return live;

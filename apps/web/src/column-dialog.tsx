@@ -3,7 +3,7 @@
 // The dialog for adding a column to the People table or changing one: its name, its type, which is
 // set once, whether it must be filled in, which planned hires never must, whether planned hires are
 // offered it too, and, for a choice column, the list it draws on and whether several choices can be
-// picked, or, for a web link column, who may see its links. Changing a column
+// picked, or, for a web link, note, or number column, who may see its values. Changing a column
 // also offers deleting it. The name is checked against the other columns as it is typed. The dialog
 // cannot be closed while a change is being saved.
 
@@ -40,6 +40,7 @@ const typeNames: Record<FieldType, string> = {
   choice: "Choice from a list",
   link: "Web link",
   note: "Note",
+  number: "Number",
 };
 
 export function ColumnDialog({

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for what each type of column on People keeps and holds, apart from the database: the
-// settings, tier, values, and live values of choice, web link, and note columns.
+// settings, tier, values, and live values of choice, web link, note, and number columns.
 
 import { describe, expect, it } from "vitest";
 import { columnTypes, type LiveValues, typeOf } from "./data/column-types.ts";
@@ -73,13 +73,14 @@ describe("choice columns", () => {
   });
 
   it("show their live choices beside a draft, or none", () => {
-    const live: LiveValues = { values: {}, links: {}, notes: {} };
+    const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
     choice.showLive(live, "f1", ["c1"]);
     choice.showLive(live, "f2", undefined);
     expect(live).toEqual({
       values: { f1: ["c1"], f2: [] },
       links: {},
       notes: {},
+      numbers: {},
     });
   });
 });
@@ -128,10 +129,15 @@ describe("web link columns", () => {
   });
 
   it("show their live link beside a draft, or nothing when there is none", () => {
-    const live: LiveValues = { values: {}, links: {}, notes: {} };
+    const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
     linkType.showLive(live, "f1", link);
     linkType.showLive(live, "f2", []);
-    expect(live).toEqual({ values: {}, links: { f1: link }, notes: {} });
+    expect(live).toEqual({
+      values: {},
+      links: { f1: link },
+      notes: {},
+      numbers: {},
+    });
   });
 });
 
@@ -174,9 +180,54 @@ describe("note columns", () => {
   });
 
   it("show their live note beside a draft, or nothing when there is none", () => {
-    const live: LiveValues = { values: {}, links: {}, notes: {} };
+    const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
     note.showLive(live, "f1", "*Kind*");
     note.showLive(live, "f2", []);
-    expect(live).toEqual({ values: {}, links: {}, notes: { f1: "*Kind*" } });
+    expect(live).toEqual({
+      values: {},
+      links: {},
+      notes: { f1: "*Kind*" },
+      numbers: {},
+    });
+  });
+});
+
+describe("number columns", () => {
+  const number = columnTypes.number;
+  const settings = { listId: null, multiple: false };
+
+  it("have a visibility of their own, as their tier", () => {
+    expect(number.settings({ visibility: "restricted" })).toEqual({
+      type: "number",
+      listId: null,
+      visibility: "restricted",
+      multiple: false,
+    });
+  });
+
+  it.each([
+    [0, true],
+    [-1.5, true],
+    [undefined, true],
+    [[], true],
+    [null, true],
+    ["1", false],
+    [["c1"], false],
+    [0.1 + 0.2, false],
+  ])("hold %j: %s", (value, fits) => {
+    expect(number.fits(settings, value, new Map())).toBe(fits);
+  });
+
+  it("count one number, 0 included, and nothing else", () => {
+    expect(number.count(0)).toBe(1);
+    expect(number.count("1")).toBe(0);
+    expect(number.count([])).toBe(0);
+  });
+
+  it("show their live number beside a draft, 0 included, or nothing when there is none", () => {
+    const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
+    number.showLive(live, "f1", 0);
+    number.showLive(live, "f2", []);
+    expect(live.numbers).toEqual({ f1: 0 });
   });
 });

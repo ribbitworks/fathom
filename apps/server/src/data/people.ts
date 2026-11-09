@@ -19,9 +19,11 @@ import {
 } from "@fathom/db";
 import {
   isLink,
+  type FieldType,
   type Link,
   type Links,
   type Notes,
+  type Numbers,
   type Person,
   type PersonChange,
   type PersonDraft,
@@ -78,7 +80,7 @@ import {
   firstOffered,
   listChoices,
 } from "./built-in-lists.ts";
-import { isNote, type LiveValues, typeOf } from "./column-types.ts";
+import { isNote, isNumber, type LiveValues, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { readToday } from "./settings.ts";
 import { refuseRemovingPeopleOnTeams } from "./feature-teams.ts";
@@ -242,8 +244,9 @@ export function recordedValues(
   const record: Recorded = {};
   for (const [fieldId, value] of values) {
     if (isLink(value)) record[valueField(fieldId)] = { ...value };
-    else if (isNote(value)) record[valueField(fieldId)] = value;
-    else if (value.length > 0) record[valueField(fieldId)] = [...value];
+    else if (isNote(value) || isNumber(value)) {
+      record[valueField(fieldId)] = value;
+    } else if (value.length > 0) record[valueField(fieldId)] = [...value];
   }
   return record;
 }
@@ -284,15 +287,23 @@ export function linksOf(person: Recorded): Links {
   );
 }
 
-// A person's or planned hire's notes, by column, as recorded.
-export function notesOf(person: Recorded): Notes {
-  return Object.fromEntries(
+// What a column of one value holds for a person or planned hire, by column, as recorded.
+const valuesHolding = <Held>(
+  person: Recorded,
+  holds: (value: unknown) => value is Held,
+): Record<string, Held> =>
+  Object.fromEntries(
     Object.entries(person).flatMap(([field, value]) => {
       const fieldId = fieldOfValue(field);
-      return fieldId === null || !isNote(value) ? [] : [[fieldId, value]];
+      return fieldId === null || !holds(value) ? [] : [[fieldId, value]];
     }),
   );
-}
+
+export const notesOf = (person: Recorded): Notes =>
+  valuesHolding(person, isNote);
+
+export const numbersOf = (person: Recorded): Numbers =>
+  valuesHolding(person, isNumber);
 
 // The changes between two versions of a person, with each field's tier.
 export function personChanges(
@@ -364,6 +375,7 @@ export async function choicesAskedFor(
     values?: Readonly<Record<string, readonly string[]>> | undefined;
     links?: Readonly<Record<string, Link | null>> | undefined;
     notes?: Readonly<Record<string, string | null>> | undefined;
+    numbers?: Readonly<Record<string, number | null>> | undefined;
   }[],
 ): Promise<ChoiceRow[]> {
   await refuseHeldColumns(
@@ -373,6 +385,7 @@ export async function choicesAskedFor(
       ...Object.keys(request.values ?? {}),
       ...Object.keys(request.links ?? {}),
       ...Object.keys(request.notes ?? {}),
+      ...Object.keys(request.numbers ?? {}),
     ]),
   );
   return choicesWithAdded(
@@ -423,40 +436,50 @@ export function checkedValues(
   return checked;
 }
 
-// The links asked for each column, as recorded: a link, or no choices for a link removed. The
-// shared schema has already checked and normalized each link.
-export function checkedLinks(
+// What is asked for columns of one type, as recorded, refusing any column not of that type.
+function checkedOfType<Asked>(
   columns: readonly ColumnInfo[],
-  requested: Readonly<Record<string, Link | null>>,
+  requested: Readonly<Record<string, Asked>>,
+  type: FieldType,
+  recorded: (asked: Asked) => unknown,
 ): Recorded {
   return Object.fromEntries(
-    Object.entries(requested).map(([fieldId, link]) => {
+    Object.entries(requested).map(([fieldId, asked]): [string, unknown] => {
       const column = columns.find(({ id }) => id === fieldId);
-      if (column?.type !== "link") {
+      if (column?.type !== type) {
         throw new BadRequestError("There is no such column");
       }
-      return [valueField(fieldId), link === null ? [] : { ...link }];
+      return [valueField(fieldId), recorded(asked)];
     }),
   );
 }
 
+// The links asked for each column, as recorded: a link, or no choices for a link removed. The
+// shared schema has already checked and normalized each link.
+export const checkedLinks = (
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, Link | null>>,
+): Recorded =>
+  checkedOfType(columns, requested, "link", (link) =>
+    link === null ? [] : { ...link },
+  );
+
 // The notes asked for each column, as recorded: a note kept exactly as sent, or no choices for a
 // note removed, as an empty note also is. A note holding anything notes do not allow is refused
 // rather than cleaned, so what is kept is what the editor showed.
-export function checkedNotes(
+export const checkedNotes = (
   columns: readonly ColumnInfo[],
   requested: Readonly<Record<string, string | null>>,
-): Recorded {
-  return Object.fromEntries(
-    Object.entries(requested).map(([fieldId, note]): [string, unknown] => {
-      const column = columns.find(({ id }) => id === fieldId);
-      if (column?.type !== "note") {
-        throw new BadRequestError("There is no such column");
-      }
-      return [valueField(fieldId), keptNote(note) ?? []];
-    }),
-  );
-}
+): Recorded =>
+  checkedOfType(columns, requested, "note", (note) => keptNote(note) ?? []);
+
+// The numbers asked for each column, as recorded, or no choices for a number removed. The shared
+// schema has already checked each number.
+export const checkedNumbers = (
+  columns: readonly ColumnInfo[],
+  requested: Readonly<Record<string, number | null>>,
+): Recorded =>
+  checkedOfType(columns, requested, "number", (number) => number ?? []);
 
 // Whether the live people given, as they are now, fit their columns, as fitsColumns sets out. Used
 // after an undo or an approval puts people's values in place, since the columns may have changed
@@ -718,6 +741,11 @@ async function readPeopleIn(
             shownFields.has(valueField(fieldId)),
           ),
         ),
+        numbers: Object.fromEntries(
+          Object.entries(numbersOf(person)).filter(([fieldId]) =>
+            shownFields.has(valueField(fieldId)),
+          ),
+        ),
         ...(seen ? { draft: seen } : {}),
         ...(held.has(id) ? { heldBy: held.get(id)?.holder } : {}),
       },
@@ -743,6 +771,7 @@ async function readPeopleIn(
       values: {},
       links: {},
       notes: {},
+      numbers: {},
     };
     if (before !== undefined) {
       for (const field of fields) {
@@ -900,6 +929,7 @@ export async function draftNewPeople(
     const values = checkedValues(columns, known, request.values, undefined);
     const links = checkedLinks(columns, request.links);
     const notes = checkedNotes(columns, request.notes ?? {});
+    const numbers = checkedNumbers(columns, request.numbers ?? {});
     const row: PersonRow = {
       id,
       preferredName: request.preferredName,
@@ -915,6 +945,7 @@ export async function draftNewPeople(
       ...recorded(row, values),
       ...links,
       ...notes,
+      ...numbers,
       ...(request.managerId == null
         ? {}
         : {
@@ -1067,6 +1098,7 @@ export async function draftPersonChange(
       ),
       ...checkedLinks(columns, change.links ?? {}),
       ...checkedNotes(columns, change.notes ?? {}),
+      ...checkedNumbers(columns, change.numbers ?? {}),
       ...changedReporting(person, change, today),
     }),
     before,

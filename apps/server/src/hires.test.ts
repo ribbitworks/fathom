@@ -224,6 +224,7 @@ const placeholderKeys = [
   "managerName",
   "name",
   "notes",
+  "numbers",
   "positionId",
   "requisition",
   "stateId",

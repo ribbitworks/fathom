@@ -227,6 +227,41 @@ describe("how wide each column is", () => {
     expect(width?.header).toBe(5);
   });
 
+  it("fits a header to its draft's mark when that is longer than the name", () => {
+    const column = (draft: object) =>
+      columnsFor(
+        [
+          {
+            id: "f1",
+            name: "Score",
+            type: "number",
+            listId: null,
+            visibility: "general",
+            multiple: false,
+            required: false,
+            draft,
+          } as unknown as Field,
+        ],
+        [],
+        [],
+        false,
+      ).find(({ key }) => key === "f1");
+    const header = (draft: object) => {
+      const found = column(draft);
+      return found && columnWidth(found, new Map()).header;
+    };
+    expect(header({ action: "created", state: "waiting" })).toBe(
+      "Draft: added".length + 2,
+    );
+    expect(
+      header({
+        action: "created",
+        state: "rejected",
+        reason: "Too long ".repeat(9),
+      }),
+    ).toBe("Rejected".length + 2);
+  });
+
   it("fits a text column with no values to its header", () => {
     const [name] = columnsFor([], [], [], false);
     expect(name && columnWidth(name, new Map())).toEqual({

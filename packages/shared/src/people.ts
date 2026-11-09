@@ -3,9 +3,9 @@
 // People and the columns people add to the People table. Every person has a preferred name, an
 // Employee ID, and a position, which are General, and may have start and end dates, which are
 // Restricted. A choice column draws on a list, and its values are choices from that list, as
-// sensitive as the list's visibility; a web link column holds one link for each person, and a note
-// column one note, as sensitive as the column's own visibility. What a user receives leaves out what
-// their role does not let them see.
+// sensitive as the list's visibility; a web link column holds one link for each person, a note
+// column one note, and a number column one number, as sensitive as the column's own visibility.
+// What a user receives leaves out what their role does not let them see.
 
 import { z } from "zod";
 import { tierSchema } from "./access.ts";
@@ -13,6 +13,7 @@ import { daySchema, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
 import { listLengths } from "./lists.ts";
+import { numberValueSchema } from "./numbers.ts";
 import { savedViewSchema } from "./views.ts";
 
 export const personLengths = {
@@ -25,8 +26,9 @@ export const personLengths = {
 // A date without a time, such as 2026-10-31.
 const day = daySchema;
 
-// A column chooses from a list, holds a web link, or holds a note. A column's type never changes.
-export const fieldTypeSchema = z.enum(["choice", "link", "note"]);
+// A column chooses from a list, or holds a web link, a note, or a number. A column's type never
+// changes.
+export const fieldTypeSchema = z.enum(["choice", "link", "note", "number"]);
 
 export type FieldType = z.infer<typeof fieldTypeSchema>;
 
@@ -103,6 +105,17 @@ export type Notes = Record<string, string>;
 // column's note.
 export const requestedNotesSchema = z.record(z.uuid(), z.string().nullable());
 
+// Each number column's number, by column. A column with no number is left out.
+export const numbersSchema = z.record(z.string(), z.number());
+
+export type Numbers = Record<string, number>;
+
+// Numbers asked for, by column; null removes a column's number.
+export const requestedNumbersSchema = z.record(
+  z.uuid(),
+  numberValueSchema.nullable(),
+);
+
 // Choices asked for, by column: each a choice's identifier, at most once.
 export const requestedValuesSchema = z.record(
   z.uuid(),
@@ -134,6 +147,7 @@ export const personDraftSchema = z.object({
     values: valuesSchema,
     links: linksSchema.default({}),
     notes: notesSchema.optional(),
+    numbers: numbersSchema.optional(),
   }),
   ...draftShape,
 });
@@ -185,6 +199,7 @@ export const personSchema = z.object({
   values: valuesSchema,
   links: linksSchema.default({}),
   notes: notesSchema.optional(),
+  numbers: numbersSchema.optional(),
   // For a planned hire, who its draft fills it with, as a planned hire has it.
   filler: z.string().nullable().optional(),
   draft: personDraftSchema.optional(),
@@ -273,6 +288,7 @@ export const personRequestSchema = z.object({
   values: requestedValuesSchema.default({}),
   links: z.record(z.uuid(), linkValueSchema).default({}),
   notes: requestedNotesSchema.optional(),
+  numbers: requestedNumbersSchema.optional(),
 });
 
 export type PersonRequest = z.infer<typeof personRequestSchema>;
@@ -295,15 +311,19 @@ export const personChangeSchema = z.object({
   values: requestedValuesSchema.optional(),
   links: requestedLinksSchema.optional(),
   notes: requestedNotesSchema.optional(),
+  numbers: requestedNumbersSchema.optional(),
 });
 
 export type PersonChange = z.infer<typeof personChangeSchema>;
 
-const webLink = { kind: "web link", value: "link" };
-const note = { kind: "note", value: "note" };
+const heldAlone = {
+  link: { kind: "web link", value: "link" },
+  note: { kind: "note", value: "note" },
+  number: { kind: "number", value: "number" },
+};
 
-// A choice column names its list, and takes its visibility from it; a web link or note column names
-// its visibility, no list, and takes one link or one note.
+// A choice column names its list, and takes its visibility from it; a web link, note, or number
+// column names its visibility, no list, and takes one value.
 export const fieldRequestSchema = z
   .object({
     name: z.string().trim().min(1).max(personLengths.column),
@@ -321,7 +341,7 @@ export const fieldRequestSchema = z
     if (request.type === "choice") {
       if (request.listId === undefined) issue("Choose a list");
     } else {
-      const { kind, value } = request.type === "link" ? webLink : note;
+      const { kind, value } = heldAlone[request.type];
       if (request.visibility === undefined) issue("Choose a visibility");
       if (request.listId !== undefined) issue(`A ${kind} column has no list`);
       if (request.multiple) issue(`A ${kind} column holds one ${value}`);

@@ -43,6 +43,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
 - **Web link columns:** Added by the owner. A column on People holding one web link for each person, ahead of the other column types.
 - **Note columns:** Added by the owner. A column on People holding one rich-text note for each person, and notes on releases, built on one shared note format.
+- **Number columns:** Added by the owner. A column on People and planned hires holding one number for each record, ahead of the other column types.
 - **Resource assignment** and **Capacity visibility**
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
@@ -60,7 +61,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 ## Stage: Your Own Fields and Tables
 
 - **Custom fields and tables**, as set out in the [Decisions Log](decisions.md#configuration)
-- **More column types:** Columns that users add, on People and other tables, of every type [ADR 0005](../adr/0005-flexible-data-model.md) sets out, such as text, number, date, and yes or no, shown as a checkbox, alongside choices from a list and web links, which come in the first stage. The owner also asked for currency, which ADR 0005 does not cover yet.
+- **More column types:** Columns that users add, on People and other tables, of every type [ADR 0005](../adr/0005-flexible-data-model.md) sets out, such as text, date, and yes or no, shown as a checkbox, alongside choices from a list, web links, notes, and numbers, which come earlier. The owner also asked for currency, which ADR 0005 does not cover yet.
 
 ## Stage: The Organization
 

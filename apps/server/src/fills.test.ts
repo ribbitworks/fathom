@@ -1315,6 +1315,39 @@ describe("what a fill is given", () => {
     expect((await fill(await hire(), newPerson(given))).statusCode).toBe(400);
   });
 
+  it("carries a hire's number to the new person, 0 included, and keeps one the fill gives", async () => {
+    const column = async () =>
+      (
+        await ok<{ field: Field }>(
+          await send(editor, "POST", "/api/people/columns", {
+            name: unique("Fictional Score"),
+            type: "number",
+            visibility: "general",
+            onPlannedHires: true,
+          }),
+          201,
+        )
+      ).field.id;
+    const held = await column();
+    const given = await column();
+    await test.approveLists();
+    const id = await hire({ numbers: { [held]: 0 } });
+    const name = unique("Fictional Starter");
+
+    await filled(
+      id,
+      newPerson({
+        preferredName: name,
+        numbers: { [held]: 7, [given]: 3 },
+      }),
+    );
+
+    expect((await rowNamed(name))?.numbers).toEqual({
+      [held]: 0,
+      [given]: 3,
+    });
+  });
+
   it("does not let a value the fill gives replace one the hire has", async () => {
     const { field } = await ok<{ field: Field }>(
       await send(editor, "POST", "/api/people/columns", {

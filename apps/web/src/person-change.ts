@@ -26,6 +26,7 @@ function changed(person: Person, change: RowChange): Person {
     values,
     links,
     notes,
+    numbers,
     preferredName,
     employeeId,
     positionId,
@@ -44,6 +45,9 @@ function changed(person: Person, change: RowChange): Person {
     ...(person.notes === undefined && notes === undefined
       ? {}
       : { notes: kept({ ...person.notes, ...notes }) }),
+    ...(person.numbers === undefined && numbers === undefined
+      ? {}
+      : { numbers: kept({ ...person.numbers, ...numbers }) }),
   };
 }
 

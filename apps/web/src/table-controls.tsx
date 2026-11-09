@@ -26,8 +26,10 @@ import {
 } from "@mantine/core";
 import {
   byName,
+  numberProblem,
   type SavedView,
   type Show,
+  typedNumber,
   type ViewScope,
 } from "@fathom/shared";
 import {
@@ -63,7 +65,8 @@ import {
 } from "./table-view.ts";
 import { AppMenu } from "./app-menu.tsx";
 import classes from "./pages.module.css";
-import { count } from "./numbers.ts";
+import { ClearableInput } from "./clearable-input.tsx";
+import { count, decimal } from "./numbers.ts";
 
 // Changes the view, replacing the current address rather than adding to its history when asked.
 export type ChangeView = (view: View, replace?: boolean) => void;
@@ -85,6 +88,7 @@ const sortNames: Record<Kind, [string, string]> = {
   text: ["Sort A to Z", "Sort Z to A"],
   date: ["Oldest first", "Newest first"],
   month: ["Earliest first", "Latest first"],
+  number: ["Lowest first", "Highest first"],
   choice: ["List order", "Reverse list order"],
   link: ["Sort A to Z", "Sort Z to A"],
   note: ["Sort A to Z", "Sort Z to A"],
@@ -231,6 +235,18 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
         parts.push(`until ${formatDay(to)}`);
       }
       if (filter.empty) parts.push("no date");
+      return `${column.label}: ${parts.join(" or ")}`;
+    }
+    case "number": {
+      const { atLeast, atMost } = filter;
+      if (atLeast !== undefined && atMost !== undefined) {
+        parts.push(`${decimal(atLeast)} to ${decimal(atMost)}`);
+      } else if (atLeast !== undefined) {
+        parts.push(`at least ${decimal(atLeast)}`);
+      } else if (atMost !== undefined) {
+        parts.push(`at most ${decimal(atMost)}`);
+      }
+      if (filter.empty) parts.push("no number");
       return `${column.label}: ${parts.join(" or ")}`;
     }
     case "text":
@@ -1205,6 +1221,32 @@ function FilterForm({
           {empty("No date")}
         </Stack>
       );
+    case "number":
+      return (
+        <Stack gap="xs">
+          <NumberBound
+            label="At least"
+            initial={filter.atLeast}
+            autoFocus
+            onChange={(atLeast) => {
+              onChange(withPart(filter, "atLeast", atLeast));
+            }}
+          />
+          <NumberBound
+            label="At most"
+            initial={filter.atMost}
+            {...(filter.atLeast !== undefined &&
+            filter.atMost !== undefined &&
+            filter.atMost < filter.atLeast
+              ? { problem: "Lower than At least" }
+              : {})}
+            onChange={(atMost) => {
+              onChange(withPart(filter, "atMost", atMost));
+            }}
+          />
+          {empty("No number")}
+        </Stack>
+      );
     case "text":
     case "month":
     case "link":
@@ -1226,6 +1268,57 @@ function FilterForm({
         </Stack>
       );
   }
+}
+
+// A sign or point alone: a number part way through being typed, not yet wrong.
+const unfinishedNumber = /^-?\.?$/;
+
+// One end of a number filter, kept as typed, so a number part way through being typed stays.
+function NumberBound({
+  label,
+  initial,
+  problem,
+  autoFocus = false,
+  onChange,
+}: {
+  label: string;
+  initial: number | undefined;
+  problem?: string;
+  autoFocus?: boolean;
+  onChange: (value: number | undefined) => void;
+}) {
+  const [typed, setTyped] = useState(
+    initial === undefined ? "" : String(initial),
+  );
+  const typedProblem = unfinishedNumber.test(typed.trim())
+    ? undefined
+    : numberProblem(typed);
+  const change = (next: string) => {
+    setTyped(next);
+    onChange(typedNumber(next));
+  };
+  return (
+    <ClearableInput
+      label={label}
+      size="sm"
+      inputMode="decimal"
+      autoComplete="off"
+      {...(autoFocus ? { "data-autofocus": true } : {})}
+      clearLabel={`Clear ${label}`}
+      onClear={() => {
+        change("");
+      }}
+      value={typed}
+      error={
+        typedProblem === undefined
+          ? problem
+          : `${typedProblem.charAt(0).toUpperCase()}${typedProblem.slice(1)}`
+      }
+      onChange={(event) => {
+        change(event.currentTarget.value);
+      }}
+    />
+  );
 }
 
 // The choices to show, offered ones first, then retired ones under their own heading.

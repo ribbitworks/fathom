@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The values of columns on people and planned hires: one row for each record, column, and chosen
-// choice, or for each record and web link or note column, as ADR 0005 sets out. Part of the data
-// access layer. In the change history, a record's values for a column are one field of the record,
-// named after the column, holding the chosen choices in the list's order, the link, or the note, as
-// sensitive as the column's list, or a web link or note column's own visibility.
+// choice, or for each record and web link, note, or number column, as ADR 0005 sets out. Part of
+// the data access layer. In the change history, a record's values for a column are one field of
+// the record, named after the column, holding the chosen choices in the list's order, the link,
+// the note, or the number, as sensitive as the column's list, or the column's own visibility.
 
 import { storedTier } from "../access.ts";
-import { isNote, typeOf } from "./column-types.ts";
+import { isNote, isNumber, typeOf } from "./column-types.ts";
 import {
   type Database,
   fields,
@@ -18,6 +18,7 @@ import {
 } from "@fathom/db";
 import { isLink, type Link, type Tier } from "@fathom/shared";
 import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
+import type { PgColumn } from "drizzle-orm/pg-core";
 
 type Reader = Pick<Database, "select">;
 export type FieldRow = typeof fields.$inferSelect;
@@ -123,11 +124,11 @@ export const valuesTier = (
 };
 
 // A column's value for one person, as the change history records it: the chosen choices, a link, or
-// a note.
-export type FieldValue = string[] | Link | string;
+// a note, or a number.
+export type FieldValue = string[] | Link | string | number;
 
 // Each record's values, by record and column, for the people, or planned hires, and columns given:
-// chosen choices in their list's order, links, and notes.
+// chosen choices in their list's order, links, notes, and numbers.
 export async function readValues(
   reader: Reader,
   recordIds: readonly string[],
@@ -143,7 +144,7 @@ export async function readValues(
   )) {
     values.set(recordId, new Map(byField));
   }
-  for (const read of [readLinks, readNotes]) {
+  for (const read of [readLinks, readNotes, readNumbers]) {
     for (const [recordId, byField] of await read(
       reader,
       recordIds,
@@ -227,40 +228,45 @@ async function readLinks(
   return links;
 }
 
-// Each record's notes, by record and column.
-async function readNotes(
-  reader: Reader,
-  recordIds: readonly string[],
-  fieldIds: readonly string[],
-  owner: ValueOwner,
-): Promise<Map<string, Map<string, string>>> {
-  const notes = new Map<string, Map<string, string>>();
-  if (recordIds.length === 0 || fieldIds.length === 0) return notes;
-  const rows = await reader
-    .select({
-      recordId: ownerColumn(owner),
-      fieldId: fieldValues.fieldId,
-      note: fieldValues.note,
-    })
-    .from(fieldValues)
-    .where(
-      and(
-        inArray(ownerColumn(owner), [...recordIds]),
-        inArray(fieldValues.fieldId, [...fieldIds]),
-        isNotNull(fieldValues.note),
-      ),
-    );
-  for (const { fieldId, note, ...row } of rows) {
-    const recordId = String(row.recordId);
-    const byField = notes.get(recordId) ?? new Map<string, string>();
-    byField.set(fieldId, String(note));
-    notes.set(recordId, byField);
-  }
-  return notes;
-}
+// Reads what a column of one value holds in the values table, by record and column.
+const readerOf =
+  <Held>(column: PgColumn, held: (value: unknown) => Held) =>
+  async (
+    reader: Reader,
+    recordIds: readonly string[],
+    fieldIds: readonly string[],
+    owner: ValueOwner,
+  ): Promise<Map<string, Map<string, Held>>> => {
+    const found = new Map<string, Map<string, Held>>();
+    if (recordIds.length === 0 || fieldIds.length === 0) return found;
+    const rows = await reader
+      .select({
+        recordId: ownerColumn(owner),
+        fieldId: fieldValues.fieldId,
+        value: column,
+      })
+      .from(fieldValues)
+      .where(
+        and(
+          inArray(ownerColumn(owner), [...recordIds]),
+          inArray(fieldValues.fieldId, [...fieldIds]),
+          isNotNull(column),
+        ),
+      );
+    for (const { fieldId, value, ...row } of rows) {
+      const recordId = String(row.recordId);
+      const byField = found.get(recordId) ?? new Map<string, Held>();
+      byField.set(fieldId, held(value));
+      found.set(recordId, byField);
+    }
+    return found;
+  };
+
+const readNotes = readerOf(fieldValues.note, String);
+const readNumbers = readerOf(fieldValues.number, Number);
 
 // The rows that hold a value as the change history records it: one for each choice, or one for a
-// link or a note. Anything else holds nothing.
+// link, a note, or a number. Anything else holds nothing.
 export function valueRows(
   recordId: string,
   fieldId: string,
@@ -275,6 +281,7 @@ export function valueRows(
     return [{ ...held, linkAddress: value.address, linkText: value.text }];
   }
   if (isNote(value)) return [{ ...held, note: value }];
+  if (isNumber(value)) return [{ ...held, number: value }];
   return [];
 }
 

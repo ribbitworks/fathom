@@ -614,6 +614,8 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
     isManager,
     stateId,
   } = Object.assign({}, ...parts) as RowRequest;
+  const notes = askedOf(parts.map((part) => part.notes));
+  const numbers = askedOf(parts.map((part) => part.numbers));
   return {
     preferredName,
     employeeId,
@@ -636,13 +638,18 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
         ),
       ),
     ),
-    ...withNotes(parts.flatMap((part) => Object.entries(part.notes ?? {}))),
+    ...(notes === undefined ? {} : { notes }),
+    ...(numbers === undefined ? {} : { numbers }),
   };
 }
 
-// A new person's notes, left out when they have none, as for those added before notes were.
-const withNotes = (notes: [string, string | null][]) =>
-  notes.length === 0 ? {} : { notes: Object.fromEntries(notes) };
+// What a new person is given in columns of one value, left out when they are given none.
+function askedOf<Held>(
+  parts: readonly (Record<string, Held> | undefined)[],
+): Record<string, Held> | undefined {
+  const entries = parts.flatMap((part) => Object.entries(part ?? {}));
+  return entries.length === 0 ? undefined : Object.fromEntries(entries);
+}
 
 function peopleTable(
   showDates: boolean,

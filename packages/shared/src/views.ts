@@ -8,6 +8,7 @@
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
+import { numberValueSchema } from "./numbers.ts";
 
 export const viewLengths = { name: 80 } as const;
 
@@ -30,12 +31,15 @@ const frozen = z.number().int().min(0).max(frozenLimit);
 const width = z.number().int().min(columnWidths.least).max(columnWidths.most);
 
 // A column's filter. A row matches when its value matches any part that is set: for text, when it
-// contains the text; for dates, when it falls between from and to, either of which may be left
-// open; for choices, when it holds any of them. With `empty`, an empty value matches too.
+// contains the text; for dates, when it falls between from and to, and for numbers, between
+// atLeast and atMost, either of which may be left open; for choices, when it holds any of them.
+// With `empty`, an empty value matches too.
 export const filterSchema = z.object({
   contains: z.string().max(textLimit).optional(),
   from: daySchema.optional(),
   to: daySchema.optional(),
+  atLeast: numberValueSchema.optional(),
+  atMost: numberValueSchema.optional(),
   any: z.array(key).max(textLimit).optional(),
   empty: z.boolean().optional(),
 });

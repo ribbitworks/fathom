@@ -67,6 +67,23 @@ describe("fieldRequestSchema", () => {
     ]);
   });
 
+  it("refuses a number column without a visibility, with a list, or with several numbers", () => {
+    expect(
+      messages(
+        fieldRequestSchema.safeParse({
+          name: "Score",
+          type: "number",
+          listId: randomUUID(),
+          multiple: true,
+        }),
+      ),
+    ).toEqual([
+      "Choose a visibility",
+      "A number column has no list",
+      "A number column holds one number",
+    ]);
+  });
+
   it("keeps a note column's visibility", () => {
     expect(
       fieldRequestSchema.parse({

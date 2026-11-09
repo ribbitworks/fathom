@@ -15,11 +15,13 @@ import {
   hireNameSchema,
   linksSchema,
   notesSchema,
+  numbersSchema,
   preferredNameSchema,
   recordIdSchema,
   requestedLinksSchema,
   temporaryIdPrefix,
   requestedNotesSchema,
+  requestedNumbersSchema,
   requestedValuesSchema,
   valuesSchema,
 } from "./people.ts";
@@ -68,6 +70,7 @@ export const hireDraftSchema = z.object({
     values: valuesSchema.default({}),
     links: linksSchema.default({}),
     notes: notesSchema.default({}),
+    numbers: numbersSchema.default({}),
   }),
   ...draftShape,
 });
@@ -101,6 +104,7 @@ export const hireSchema = z.object({
   values: valuesSchema.default({}),
   links: linksSchema.default({}),
   notes: notesSchema.default({}),
+  numbers: numbersSchema.default({}),
   // Who the hire's draft fills it with, for those who see the hiring plan: the person, for those
   // who see Restricted details, and otherwise null, since they may not have started.
   filler: z.string().nullable().optional(),
@@ -135,6 +139,7 @@ export const hireRequestSchema = z.object({
   values: requestedValuesSchema.default({}),
   links: z.record(z.uuid(), linkValueSchema).default({}),
   notes: requestedNotesSchema.optional(),
+  numbers: requestedNumbersSchema.optional(),
 });
 
 export type HireRequest = z.infer<typeof hireRequestSchema>;
@@ -159,6 +164,7 @@ export const hireChangeSchema = z.object({
   values: requestedValuesSchema.optional(),
   links: requestedLinksSchema.optional(),
   notes: requestedNotesSchema.optional(),
+  numbers: requestedNumbersSchema.optional(),
 });
 
 export type HireChange = z.infer<typeof hireChangeSchema>;
@@ -182,6 +188,7 @@ export const hireFillSchema = z.discriminatedUnion("by", [
     values: requestedValuesSchema.default({}),
     links: z.record(z.uuid(), linkValueSchema).default({}),
     notes: requestedNotesSchema.optional(),
+    numbers: requestedNumbersSchema.optional(),
   }),
   z.object({
     by: z.literal("existing person"),

@@ -729,12 +729,14 @@ export const fields = fathomSchema.table(
     // The table the column is on, such as "people", checked by the server.
     tableName: text("table_name").notNull(),
     name: text("name").notNull(),
-    // "choice" for a column drawing on a list, "link" for a web link, or "note" for a note.
+    // "choice" for a column drawing on a list, "link" for a web link, "note" for a note, or
+    // "number" for a number.
     type: text("type").notNull().default("choice"),
     listId: uuid("list_id").references(() => lists.id, {
       onDelete: "restrict",
     }),
-    // The tier of a link or note column's values, which a choice column takes from its list instead.
+    // The tier of a link, note, or number column's values, which a choice column takes from its
+    // list instead.
     visibility: text("visibility"),
     multiple: boolean("multiple").notNull().default(false),
     required: boolean("required").notNull().default(false),
@@ -752,7 +754,7 @@ export const fields = fathomSchema.table(
     ),
     check(
       "fields_type_settings",
-      sql`(${table.type} = 'choice' AND ${table.listId} IS NOT NULL AND ${table.visibility} IS NULL) OR (${table.type} IN ('link', 'note') AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL AND NOT ${table.multiple})`,
+      sql`(${table.type} = 'choice' AND ${table.listId} IS NOT NULL AND ${table.visibility} IS NULL) OR (${table.type} IN ('link', 'note', 'number') AND ${table.listId} IS NULL AND ${table.visibility} IS NOT NULL AND NOT ${table.multiple})`,
     ),
   ],
 );
@@ -765,8 +767,9 @@ export const columnOrders = fathomSchema.table("column_orders", {
   keys: jsonb("keys").$type<string[]>().notNull().default([]),
 });
 
-// The values of columns, one row for each record, column, and choice, or for each record and link
-// or note column, as ADR 0005 sets out. Each table that can have columns has its own owner column, and
+// The values of columns, one row for each record, column, and choice, or for each record and link,
+// note, or number column, as ADR 0005 sets out. Each table that can have columns has its own owner
+// column, and
 // exactly one is set. A value is deleted with its record or column, and a choice cannot be deleted
 // while a value uses it.
 export const fieldValues = fathomSchema.table(
@@ -790,6 +793,7 @@ export const fieldValues = fathomSchema.table(
     linkText: text("link_text"),
     // Markdown, as the server checks it; a note removed has no row.
     note: text("note"),
+    number: numeric("number", { mode: "number" }),
   },
   (table) => [
     // Each owner's values are indexed apart, so each index holds only its own owner's rows.
@@ -804,6 +808,11 @@ export const fieldValues = fathomSchema.table(
     uniqueIndex("field_values_person_note_index")
       .on(table.fieldId, table.personId)
       .where(sql`${table.personId} IS NOT NULL AND ${table.note} IS NOT NULL`),
+    uniqueIndex("field_values_person_number_index")
+      .on(table.fieldId, table.personId)
+      .where(
+        sql`${table.personId} IS NOT NULL AND ${table.number} IS NOT NULL`,
+      ),
     uniqueIndex("field_values_planned_hire_choice_index")
       .on(table.fieldId, table.plannedHireId, table.choiceId)
       .where(sql`${table.plannedHireId} IS NOT NULL`),
@@ -816,6 +825,11 @@ export const fieldValues = fathomSchema.table(
       .on(table.fieldId, table.plannedHireId)
       .where(
         sql`${table.plannedHireId} IS NOT NULL AND ${table.note} IS NOT NULL`,
+      ),
+    uniqueIndex("field_values_planned_hire_number_index")
+      .on(table.fieldId, table.plannedHireId)
+      .where(
+        sql`${table.plannedHireId} IS NOT NULL AND ${table.number} IS NOT NULL`,
       ),
     index("field_values_person_index")
       .on(table.personId)
@@ -830,7 +844,7 @@ export const fieldValues = fathomSchema.table(
     ),
     check(
       "field_values_one_kind",
-      sql`num_nonnulls(${table.choiceId}, ${table.linkAddress}, ${table.note}) = 1 AND (${table.linkAddress} IS NULL) = (${table.linkText} IS NULL)`,
+      sql`num_nonnulls(${table.choiceId}, ${table.linkAddress}, ${table.note}, ${table.number}) = 1 AND (${table.linkAddress} IS NULL) = (${table.linkText} IS NULL)`,
     ),
     // The server checks each address in full; this keeps anything but a web address out whatever
     // writes the row.
