@@ -12,7 +12,9 @@ import {
   featureTeamColourSchema,
   featureTeamRequestSchema,
   featureTeamsSchema,
+  monthRangeQuerySchema,
   savedSchema,
+  teamMonthsSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -36,6 +38,17 @@ export function featureTeamRoutes(
         },
       },
       async (request) => teams.read(request.actor, request.query.on),
+    );
+
+    app.get(
+      "/api/feature-teams/months",
+      {
+        schema: {
+          querystring: monthRangeQuerySchema,
+          response: { 200: teamMonthsSchema },
+        },
+      },
+      async (request) => teams.readMonths(request.actor, request.query),
     );
 
     app.post(

@@ -901,6 +901,7 @@ export function ViewBar({
   saved,
   draftItems,
   groupings,
+  withDrafts = true,
 }: {
   // What the rows are, one and several, such as "person" and "people".
   one: string;
@@ -923,6 +924,8 @@ export function ViewBar({
   saved?: SavedViews | undefined;
   // Added to the Draft menu, after what to show and the filter.
   draftItems?: ReactNode;
+  // False for a table whose records never have drafts.
+  withDrafts?: boolean;
 }) {
   const filterOnly = [draftFilter];
   const columns = [...shownColumns, ...filterOnly];
@@ -940,15 +943,17 @@ export function ViewBar({
         }}
         onLeave={onLeave}
       />
-      <DraftMenu
-        show={view.show}
-        onShow={(show) => {
-          onView({ ...view, show });
-        }}
-        filter={{ column: draftFilter, view, onView }}
-      >
-        {draftItems}
-      </DraftMenu>
+      {withDrafts && (
+        <DraftMenu
+          show={view.show}
+          onShow={(show) => {
+            onView({ ...view, show });
+          }}
+          filter={{ column: draftFilter, view, onView }}
+        >
+          {draftItems}
+        </DraftMenu>
+      )}
       <Button
         id={metricsButtonId}
         variant={view.breakdown === undefined ? "default" : "light"}

@@ -3,8 +3,10 @@
 // The palette's colours as the page shows them: as CSS values from the theme, and in words.
 
 // A shade of a theme colour, as a CSS value.
-export const colourVariable = (colour: string, shade: "filled" | "light") =>
-  `var(--mantine-color-${colour}-${shade})`;
+export const colourVariable = (
+  colour: string,
+  shade: "filled" | "light" | "light-color",
+) => `var(--mantine-color-${colour}-${shade})`;
 
 // A colour's name in words, such as "Grape".
 export const colourWords = (colour: string) =>

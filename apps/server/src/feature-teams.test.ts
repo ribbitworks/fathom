@@ -4,10 +4,10 @@
 // not started and the days a draft gives left out for readers who do not see Restricted details, and
 // drafts for those who do not see people; drafting teams added, changed, and removed, with their
 // names, leads, and members checked; the day members join or leave from; people who have left;
-// colours; approving, rejecting, discarding, resubmitting, and undoing their drafts, and publishing
-// and discarding unpublished ones; the change history naming members and leads; and refusing to
-// remove a person who leads a team or is in a draft of one. Which permissions each route needs is
-// checked with every other route in permissions.test.ts.
+// colours; each month's teams for the monthly table; approving, rejecting, discarding, resubmitting,
+// and undoing their drafts, and publishing and discarding unpublished ones; the change history
+// naming members and leads; and refusing to remove a person who leads a team or is in a draft of
+// one. Which permissions each route needs is checked with every other route in permissions.test.ts.
 
 import {
   accessHistory,
@@ -18,9 +18,12 @@ import {
   featureTeams,
 } from "@fathom/db";
 import {
+  addMonths,
+  monthOf,
   type ChangeHistory,
   type FeatureTeam,
   type FeatureTeams,
+  type TeamMonths,
   type Unpublished,
 } from "@fathom/shared";
 import { and, asc, eq } from "drizzle-orm";
@@ -2655,6 +2658,264 @@ describe("teams on a chosen day", () => {
     await teamsOn("2025-02-11", reader);
 
     expect(await accessRecords("restricted-viewed", reader.id)).toHaveLength(1);
+  });
+});
+
+describe("feature teams month by month", () => {
+  const monthsOf = async (from: string, to: string, who = editor) =>
+    ok<TeamMonths>(
+      await send(who, "GET", `/api/feature-teams/months?from=${from}&to=${to}`),
+    );
+
+  const rowOf = async (id: string, from: string, to: string, who = editor) =>
+    (await monthsOf(from, to, who)).people.find((one) => one.id === id);
+
+  it("lists the months asked for and the live teams, with their colours", async () => {
+    const id = await liveTeam();
+    const coloured = await send(
+      editor,
+      "PUT",
+      `/api/feature-teams/${id}/colour`,
+      { colour: "teal" },
+    );
+    expect(coloured.statusCode).toBe(204);
+
+    const read = await monthsOf("2025-01", "2025-03");
+
+    expect(read.months).toEqual(["2025-01", "2025-02", "2025-03"]);
+    expect(read.teams.find((team) => team.id === id)).toEqual({
+      id,
+      name: (await liveRow(id))?.name,
+      colour: "teal",
+    });
+  });
+
+  it("reads each month as of its first day", async () => {
+    const member = await person();
+    const id = await liveTeam({ members: [member], from: "2025-01-15" });
+
+    expect((await rowOf(member, "2025-01", "2025-03"))?.teams).toEqual({
+      "2025-02": [id],
+      "2025-03": [id],
+    });
+  });
+
+  it("reads the current month as of today", async () => {
+    const member = await person();
+    const id = await liveTeam({ members: [member], from: today });
+    const month = monthOf(today);
+    const previous = monthOf(addMonths(`${month}-01`, -1));
+
+    expect((await rowOf(member, previous, month))?.teams).toEqual({
+      [month]: [id],
+    });
+  });
+
+  it("shows planned changes in the months they reach", async () => {
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member], from: "2099-02-01" });
+    await approved(id);
+
+    expect((await rowOf(member, "2099-01", "2099-02"))?.teams).toEqual({
+      "2099-02": [id],
+    });
+  });
+
+  it("stops showing a team from the month after someone leaves it", async () => {
+    const member = await person();
+    const id = await liveTeam({ members: [member], from: "2025-01-15" });
+    await changed(id, { remove: [member], from: "2025-02-20" });
+    await approved(id);
+
+    expect((await rowOf(member, "2025-02", "2025-03"))?.teams).toEqual({
+      "2025-02": [id],
+    });
+  });
+
+  it("gives every team someone is on in a month", async () => {
+    const member = await person();
+    const first = await liveTeam({ members: [member], from: "2025-01-15" });
+    const second = await liveTeam({ members: [member], from: "2025-01-15" });
+
+    const teams = (await rowOf(member, "2025-02", "2025-02"))?.teams;
+
+    expect(teams?.["2025-02"]?.sort()).toEqual(sorted(first, second));
+  });
+
+  it("leaves out what a draft would change", async () => {
+    const member = await person();
+    const id = await liveTeam({ from: "2025-01-15" });
+    await changed(id, { add: [member], from: "2025-01-15" });
+
+    expect((await rowOf(member, "2025-02", "2025-02"))?.teams).toEqual({});
+  });
+
+  it("names each person's manager today, and none for someone without one", async () => {
+    const preferredName = unique("Fictional Manager");
+    const manager = await person({ preferredName, isManager: true });
+    const report = await person({ managerId: manager });
+    const top = await person();
+
+    const read = await monthsOf("2025-01", "2025-01");
+    const find = (id: string) => read.people.find((one) => one.id === id);
+
+    expect(find(report)?.manager).toEqual({
+      id: manager,
+      name: preferredName,
+    });
+    expect(find(top)?.manager).toBeNull();
+  });
+
+  it("names the manager of someone who has not started", async () => {
+    const manager = await person({ isManager: true });
+    const newcomer = await person({
+      startDate: "2099-01-15",
+      managerId: manager,
+    });
+
+    expect((await rowOf(newcomer, "2099-01", "2099-01"))?.manager?.id).toBe(
+      manager,
+    );
+  });
+
+  it("is open to those who see the org chart but not people", async () => {
+    const member = await person();
+    const id = await liveTeam({ members: [member], from: "2025-01-15" });
+
+    expect(
+      (await rowOf(member, "2025-02", "2025-02", chartOnly))?.teams,
+    ).toEqual({ "2025-02": [id] });
+  });
+
+  describe("for readers who see Restricted details", () => {
+    it("lists the months outside someone's employment, and no teams then", async () => {
+      const member = await person({ startDate: "2025-02-10" });
+      const id = await liveTeam({ members: [member], from: "2025-02-15" });
+      await endDated(member, "2025-03-20");
+
+      const row = await rowOf(member, "2025-01", "2025-04");
+
+      expect(row?.outside).toEqual(["2025-01", "2025-04"]);
+      expect(row?.teams).toEqual({ "2025-03": [id] });
+    });
+
+    it("leaves out a month read before someone starts or after they leave", async () => {
+      const member = await person();
+      const id = await liveTeam({ members: [member], from: "2025-01-15" });
+      await endDated(member, "2025-02-15");
+
+      const row = await rowOf(member, "2025-02", "2025-03");
+
+      expect(row?.teams).toEqual({ "2025-02": [id] });
+    });
+
+    it("has no months outside employment for someone with no start date", async () => {
+      const undated = await person({ startDate: null });
+
+      expect(
+        (await rowOf(undated, "2025-01", "2025-02"))?.outside,
+      ).toBeUndefined();
+    });
+
+    it("lists no one employed in none of the months", async () => {
+      const gone = await person({ endDate: "2021-06-30" });
+
+      expect(await rowOf(gone, "2025-01", "2025-02")).toBeUndefined();
+    });
+
+    it("records viewing them in the access history", async () => {
+      const reader = await test.signedIn("workforce-administrator");
+
+      await monthsOf("2025-01", "2025-01", reader);
+
+      expect(await accessRecords("restricted-viewed", reader.id)).toHaveLength(
+        1,
+      );
+    });
+  });
+
+  it("sends no managers to those who do not see people", async () => {
+    const manager = await person({ isManager: true });
+    const report = await person({ managerId: manager });
+    const reader = await test.signedIn(["org-chart:view"]);
+
+    expect(
+      (await rowOf(report, "2025-01", "2025-01", reader))?.manager,
+    ).toBeNull();
+  });
+
+  describe("for readers given Restricted details without people", () => {
+    it("treats them as not seeing Restricted details, and records nothing", async () => {
+      const gone = await person();
+      await endDated(gone, "2025-02-15");
+      const startsLater = await person({ startDate: "2025-02-10" });
+      const reader = await test.signedIn(["org-chart:view", "restricted:view"]);
+
+      const read = await monthsOf("2025-01", "2025-03", reader);
+
+      expect(read.people.some(({ id }) => id === gone)).toBe(false);
+      expect(
+        read.people.find(({ id }) => id === startsLater)?.outside,
+      ).toBeUndefined();
+      expect(await accessRecords("restricted-viewed", reader.id)).toEqual([]);
+    });
+  });
+
+  describe("for readers who do not see Restricted details", () => {
+    it("lists no one who has left, on any month", async () => {
+      const gone = await person();
+      await liveTeam({ members: [gone], from: "2025-01-15" });
+      await endDated(gone, "2025-02-15");
+
+      expect(await rowOf(gone, "2025-01", "2025-02", planner)).toBeUndefined();
+    });
+
+    it("lists no one who has not started, on any month", async () => {
+      const newcomer = await person({ startDate: "2099-01-15" });
+
+      expect(
+        await rowOf(newcomer, "2099-02", "2099-03", planner),
+      ).toBeUndefined();
+    });
+
+    it("gives no sign of an end date still to come", async () => {
+      const member = await person({ endDate: "2099-01-31" });
+      const id = await liveTeam({ members: [member], from: "2025-01-15" });
+
+      expect(await rowOf(member, "2099-01", "2099-03", planner)).toEqual(
+        expect.objectContaining({
+          teams: { "2099-01": [id], "2099-02": [id], "2099-03": [id] },
+        }),
+      );
+      expect(
+        (await rowOf(member, "2099-01", "2099-03", planner))?.outside,
+      ).toBeUndefined();
+    });
+
+    it("records nothing in the access history", async () => {
+      const before = await accessRecords("restricted-viewed", planner.id);
+
+      await monthsOf("2025-01", "2025-01", planner);
+
+      expect(
+        (await accessRecords("restricted-viewed", planner.id)).length,
+      ).toBe(before.length);
+    });
+  });
+
+  it.each([
+    ["the first month after the last", "from=2025-03&to=2025-01"],
+    ["more months than a grid shows", "from=2020-01&to=2025-01"],
+    ["a month that does not exist", "from=2025-13&to=2026-01"],
+    ["a year too early for dates to work", "from=0050-01&to=0050-02"],
+    ["a year too late for dates to work", "from=9999-11&to=9999-12"],
+    ["no months", ""],
+  ])("refuses %s", async (_, query) => {
+    expect(
+      (await send(editor, "GET", `/api/feature-teams/months?${query}`))
+        .statusCode,
+    ).toBe(400);
   });
 });
 

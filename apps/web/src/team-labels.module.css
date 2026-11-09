@@ -1,0 +1,47 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* Labels naming feature teams in a table's cells, and the tooltip giving a label's whole name. */
+
+.labels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* The whole row, so a person's name stays level with their labels. */
+tr:has(.labels) > td {
+  vertical-align: middle;
+}
+
+.label {
+  overflow: hidden;
+  padding: 1px 6px;
+  font-size: var(--mantine-font-size-xs);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: var(--mantine-radius-sm);
+}
+
+/* A team with no colour, in a neutral that stands out from the panel in light and dark modes. */
+.labelNoColour {
+  color: var(--mantine-color-text);
+  background: var(--mantine-color-default-border);
+}
+
+/* Listens for the pointer without taking part in the page's layout. */
+.tips {
+  display: contents;
+}
+
+/* Held back briefly, so passing over a label on the way elsewhere shows nothing. Moving from one
+   label to the next keeps the tooltip open, so it follows at once. */
+.tip {
+  animation: tip-appears 1ms 350ms backwards;
+}
+
+@keyframes tip-appears {
+  from {
+    opacity: 0;
+  }
+}

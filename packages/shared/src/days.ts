@@ -28,6 +28,17 @@ const monthLength = "YYYY-MM".length;
 // The month a day is in, such as 2026-10 for 2026-10-31.
 export const monthOf = (day: string): string => day.slice(0, monthLength);
 
+const monthsInYear = 12;
+
+// A month, or the month of a day, as a count of months, so two can be compared or subtracted.
+export const monthNumber = (monthOrDay: string): number =>
+  Number(monthOrDay.slice(0, "YYYY".length)) * monthsInYear +
+  Number(monthOrDay.slice("YYYY-".length, monthLength));
+
+// The day a month is read as of: its first, or today during the current month.
+export const dayReadingMonth = (month: string, today: string): string =>
+  month === monthOf(today) ? today : `${month}-01`;
+
 // Text with digits alone, or digits and dashes, laid out in parts of the lengths given as the digits
 // fill them. Anything else is left as typed.
 function laidOut(text: string, lengths: readonly number[]): string {

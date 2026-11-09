@@ -5,7 +5,12 @@
 // months, since the exact days people join and leave are Restricted. While the chart shows another
 // date it is read only, which the control says.
 
-import { addMonths, monthOf } from "@fathom/shared";
+import {
+  addToMonth,
+  dayReadingMonth,
+  monthNumber,
+  monthOf,
+} from "@fathom/shared";
 import { ActionIcon, Button, Group, Slider, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import { DayInput } from "./day-input.tsx";
@@ -16,20 +21,15 @@ import { today } from "./today.ts";
 const dateBoxId = "org-chart-date";
 const monthsEachWay = 24;
 const monthsBetweenMarks = 12;
-const monthsInYear = 12;
 // How far down the arrows and timeline sit, to line up with the box under its label.
 const dayBoxLabelHeight = 24;
 const handleOffset = 6;
-
-const monthNumber = (day: string): number =>
-  Number(day.slice(0, "YYYY".length)) * monthsInYear +
-  Number(day.slice("YYYY-".length, "YYYY-MM".length));
 
 // The day the chart draws for the month this far from the current one: the first of that month, or
 // today in the current month.
 function dayOfMonthFromNow(months: number): string {
   const now = today();
-  return months === 0 ? now : addMonths(`${monthOf(now)}-01`, months);
+  return dayReadingMonth(addToMonth(monthOf(now), months), now);
 }
 
 export function OrgChartDate({

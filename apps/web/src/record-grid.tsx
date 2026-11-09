@@ -54,6 +54,7 @@ import {
   type DragEvent,
   type KeyboardEvent,
   type ReactNode,
+  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -91,6 +92,7 @@ import {
   frozenLayout,
   frozenAfterMove,
   frozenLeft,
+  scrollBesideFrozen,
   frozenVariables,
   useMeasured,
 } from "./frozen-columns.ts";
@@ -201,6 +203,13 @@ export interface Column<
   changesWith?: string;
   // Set false for a column not worth breaking down by, such as one with a choice for each record.
   breaksDown?: boolean;
+  // What a record's cell shows in place of its value in words, such as labels in a team's colours.
+  content?: (record: Rec) => ReactNode;
+  // Whether a record's cell is shaded, such as a month outside someone's employment.
+  shaded?: (record: Rec) => boolean;
+  // How many characters the column's cells fit, in place of what its kind works out.
+  cellChars?: number;
+  headingCentred?: boolean;
   live: (draft: DraftOf<Rec>) => CellValue;
   change: (value: CellValue) => Change;
   // Shown after a record's value, such as a warning about it.
@@ -275,6 +284,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   drafts: (ids: string[]) => DraftSelection;
   // What else a record's menu offers, after its columns' own items, such as showing its details.
   menuItems?: (record: Rec) => ReactNode;
+  // For a table where something can have a row under each of several groups: what each row is of,
+  // so the count above the table and the metrics count it once.
+  countedAs?: (record: Rec) => string;
   // The ways the rows can be grouped under headings, the first of which is the table's own, for a
   // table that groups them.
   groupings?: readonly RowGrouping<Rec>[];
@@ -677,7 +689,8 @@ export function columnWidth(
 ): { cells: number; header: number } {
   return {
     cells: Math.min(
-      kindOf(column).width(column, longestText.get(column.key) ?? 0),
+      column.cellChars ??
+        kindOf(column).width(column, longestText.get(column.key) ?? 0),
       widestChars,
     ),
     header: Math.min(
@@ -1031,7 +1044,18 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   onView: ChangeView;
   // The table's saved views; absent where they are not offered.
   saved?: SavedViews | undefined;
+  // The key of the column the table opens scrolled to, just after any frozen columns.
+  opensAtColumn?: string | undefined;
+  // False for a table whose records never have drafts, which offers no Draft menu.
+  withDrafts?: boolean;
 }
+
+const withoutDraftFilter = (view: View): View => ({
+  ...view,
+  filters: Object.fromEntries(
+    Object.entries(view.filters).filter(([key]) => key !== draftFilterKey),
+  ),
+});
 
 // Each row's group as the view last placed it, so a row keeps its heading while it is edited, as
 // it keeps its place; a row added since is placed by what it holds now.
@@ -1074,11 +1098,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   canEditColumns,
   canMoveColumns = false,
   actions,
-  view: asked,
+  view: given,
   onView,
   saved,
+  opensAtColumn,
+  withDrafts = true,
   panels = [],
 }: RecordGridProps<Rec, Change, Request>) {
+  // An address may ask for drafts of a table that has none.
+  const asked = withDrafts
+    ? given
+    : { ...withoutDraftFilter(given), show: "both" as const };
   const applied = asked.show === "drafts";
   const { fields, lists: listsShown } = shownSchema(
     asked.show,
@@ -1118,12 +1148,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   );
   let view = known;
   if (liveOnly) {
-    view = {
-      ...known,
-      filters: Object.fromEntries(
-        Object.entries(known.filters).filter(([key]) => key !== draftFilterKey),
-      ),
-    };
+    view = withoutDraftFilter(known);
   } else if (applied && draftFilter?.any !== undefined) {
     view = {
       ...known,
@@ -1250,6 +1275,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     activeGrouping(view, table.groupings),
     stableId,
   );
+  const { countedAs } = table;
+  const countedOnce = (rows: readonly Rec[]): readonly Rec[] =>
+    countedAs === undefined
+      ? rows
+      : [...new Map(rows.map((row) => [countedAs(row), row])).values()];
   const shownRecords = useSteadyOrder(
     records,
     rowView,
@@ -1351,6 +1381,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   );
   const frozenAsked = Math.min(view.frozen ?? frozenByDefault, columns.length);
   const frozen = frozenLayout(measured, headerCells, frozenAsked);
+  const openedAtColumn = useRef(false);
+  useLayoutEffect(() => {
+    if (opensAtColumn === undefined || openedAtColumn.current) return;
+    const scroll = scrollBesideFrozen(
+      frozen,
+      columns.findIndex(({ key }) => key === opensAtColumn),
+    );
+    if (scroll === undefined || measured.widths.length === 0) return;
+    openedAtColumn.current = true;
+    (scrollRef.current as HTMLDivElement).scrollLeft = scroll;
+  });
   // Where a frozen column's cell, or its live copy's, sits, or nothing for a column not frozen.
   const frozenCell = (index: number, copy = 0) =>
     index < frozen.frozen
@@ -1972,6 +2013,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         aria-sort={ariaSort(view, column.key)}
         className={[columnTint(column), frozenAt.className].join(" ")}
         style={frozenAt.style}
+        data-centred={column.headingCentred === true ? "" : undefined}
         {...dragProps}
       >
         <FilterPopover
@@ -2479,8 +2521,8 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       noun={table.noun}
       kinds={table.counted}
       {...countedRecords(
-        view.show,
-        shownRecords,
+        withDrafts ? view.show : "live",
+        countedOnce(shownRecords),
         columns,
         liveForMetrics,
         table.liveRecords,
@@ -2570,10 +2612,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         draftFilter={draftColumn}
         view={view}
         onView={onView}
-        shown={shownRecords.length}
-        total={records.length}
-        counted={table.counted?.counted(records)}
+        shown={countedOnce(shownRecords).length}
+        total={countedOnce(records).length}
+        counted={table.counted?.counted(countedOnce(records))}
         groupings={table.groupings}
+        withDrafts={withDrafts}
         onLeave={() => {
           moveTo(active.row, active.column);
         }}
@@ -2802,6 +2845,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                             frozenAt.className,
                           ].join(" ")}
                           style={frozenAt.style}
+                          data-shaded={
+                            (row.record && column.shaded?.(row.record)) ||
+                            undefined
+                          }
                           aria-readonly={
                             readOnlyFor(column, rowKind(row)) ||
                             (row.record &&
@@ -2846,7 +2893,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               )
                             : has &&
                               (standInAt(row, column) === undefined ? (
-                                cellContent(column, valueAt(row, column))
+                                row.record && column.content ? (
+                                  column.content(row.record)
+                                ) : (
+                                  cellContent(column, valueAt(row, column))
+                                )
                               ) : (
                                 <Text
                                   component="span"

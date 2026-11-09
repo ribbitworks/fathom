@@ -75,6 +75,9 @@ export function addMonths(day: string, months: number): string {
   return formatDay(new Date(Date.UTC(year, month, dayOfMonth)));
 }
 
+export const addToMonth = (month: string, months: number): string =>
+  monthOf(addMonths(`${month}-01`, months));
+
 // The last day of the month a day is in.
 export function lastDayOfMonth(day: string): string {
   const date = parseDay(day);

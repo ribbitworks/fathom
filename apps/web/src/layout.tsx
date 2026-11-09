@@ -69,6 +69,7 @@ type Page =
   | "/lists/{-$listId}"
   | "/people"
   | "/org-chart"
+  | "/feature-assignments"
   | "/releases/{-$streamId}"
   | "/projects"
   | "/features"
@@ -141,6 +142,12 @@ const sections: { label: string; items: Item[] }[] = [
         label: "Org chart",
         icon: "orgChart",
         to: "/org-chart",
+        permission: "org-chart:view",
+      },
+      {
+        label: "Feature assignments",
+        icon: "assignments",
+        to: "/feature-assignments",
         permission: "org-chart:view",
       },
       {

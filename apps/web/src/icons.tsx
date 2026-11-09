@@ -34,6 +34,7 @@ const paths = {
     </>
   ),
   capacity: <path d="M2.5 13.5V9M6.2 13.5V5.5M9.8 13.5V7.5M13.5 13.5V2.5" />,
+  assignments: <path d="M2.5 3h11v10h-11zM2.5 6.5h11M6 3v10" />,
   features: (
     <>
       <path d="M8 2 14 5 8 8 2 5z" />

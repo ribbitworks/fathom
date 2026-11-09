@@ -11,6 +11,7 @@ import {
   draftKinds,
   type Field,
   type List,
+  draftFilterKey,
 } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
 import {
@@ -1457,5 +1458,211 @@ describe("the problems with a new record", () => {
         { message: "Not unique", column: "name" },
       ),
     ).toEqual([{ message: "Name needed", column: "name" }]);
+  });
+});
+
+describe("what a table can ask of its columns and rows", () => {
+  const noted = (
+    more: Partial<Column<Gadget, GadgetChange>>,
+  ): RecordTable<Gadget, GadgetChange, GadgetChange> => ({
+    ...gadgetTable(),
+    columnsFor: () => {
+      const [name, code] = gadgetColumns([], [], []) as [
+        Column<Gadget, GadgetChange>,
+        Column<Gadget, GadgetChange>,
+      ];
+      return [name, { ...code, ...more }];
+    },
+  });
+
+  const renderTable = (
+    table: RecordTable<Gadget, GadgetChange, GadgetChange>,
+    gadgets: Gadget[],
+    more: {
+      canEdit?: boolean;
+      opensAtColumn?: string;
+      withDrafts?: boolean;
+      view?: View;
+    } = {},
+  ) =>
+    render(
+      <MantineProvider theme={testTheme}>
+        <RecordGrid
+          records={gadgets}
+          table={table}
+          fields={[]}
+          order={[]}
+          lists={[]}
+          canEdit={more.canEdit ?? false}
+          canEditColumns={false}
+          view={more.view ?? emptyView}
+          onView={noop}
+          actions={actions()}
+          {...(more.opensAtColumn === undefined
+            ? {}
+            : { opensAtColumn: more.opensAtColumn })}
+          {...(more.withDrafts === undefined
+            ? {}
+            : { withDrafts: more.withDrafts })}
+        />
+      </MantineProvider>,
+    );
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("shows a column's own content in place of the value in words, on records alone", () => {
+    renderTable(
+      noted({ content: (one) => <b>Made from {one.name}</b> }),
+      [gadget("a")],
+      { canEdit: true },
+    );
+
+    expect(screen.getByText("Made from Gadget a")).toBeDefined();
+    expect(screen.queryByText("A")).toBeNull();
+  });
+
+  it("centres only the headings a column says to", () => {
+    const table = gadgetTable();
+    renderTable(
+      {
+        ...table,
+        columnsFor: (...args: Parameters<typeof table.columnsFor>) =>
+          table
+            .columnsFor(...args)
+            .map((column, index) =>
+              index === 0 ? { ...column, headingCentred: true } : column,
+            ),
+      },
+      [gadget("a")],
+    );
+
+    const [first, second] = screen.getAllByRole("columnheader");
+    expect(first?.hasAttribute("data-centred")).toBe(true);
+    expect(second?.hasAttribute("data-centred")).toBe(false);
+  });
+
+  it("shades only the cells a column says to", () => {
+    renderTable(noted({ shaded: (one) => one.id === "a" }), [
+      gadget("a"),
+      gadget("b"),
+    ]);
+
+    const shaded = (text: string) =>
+      screen.getByText(text).closest("td")?.hasAttribute("data-shaded");
+    expect(shaded("A")).toBe(true);
+    expect(shaded("B")).toBe(false);
+  });
+
+  it("sets a column to the characters asked for", () => {
+    renderTable(noted({ cellChars: 7 }), [gadget("a")]);
+
+    expect(
+      document
+        .querySelector<HTMLElement>('col[data-column="code"]')
+        ?.style.getPropertyValue("--cell-chars"),
+    ).toBe("7");
+  });
+
+  describe("opening at a column", () => {
+    const frozenWidth = 100;
+
+    it("scrolls it to just after the frozen columns", () => {
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+        width: frozenWidth,
+      } as DOMRect);
+      const table = {
+        ...gadgetTable(),
+        columnsFor: () =>
+          [
+            ...gadgetColumns([], [], []),
+            cellColumn<Gadget, GadgetChange>("later", "text", {
+              label: "Later",
+              required: false,
+              choices: [],
+              multiple: false,
+            }),
+          ] as Column<Gadget, GadgetChange>[],
+      };
+
+      renderTable(table, [gadget("a")], { opensAtColumn: "later" });
+
+      expect(screen.getByRole("grid").parentElement?.scrollLeft).toBe(
+        frozenWidth,
+      );
+    });
+
+    it("stays at the start for a column the table does not have", () => {
+      renderTable(gadgetTable(), [gadget("a")], { opensAtColumn: "missing" });
+
+      expect(screen.getByRole("grid").parentElement?.scrollLeft).toBe(0);
+    });
+  });
+
+  describe("without drafts", () => {
+    const withMetrics = { ...emptyView, breakdown: ["code"] };
+
+    it("offers no Draft menu, and the metrics do not mention drafts", () => {
+      renderTable(gadgetTable(), [gadget("a")], {
+        withDrafts: false,
+        view: withMetrics,
+      });
+
+      expect(screen.queryByRole("button", { name: /^Draft/u })).toBeNull();
+      expect(screen.queryByText(/with drafts/u)).toBeNull();
+    });
+
+    it("keeps both for a table with drafts", () => {
+      renderTable(gadgetTable(), [gadget("a")], { view: withMetrics });
+
+      expect(screen.getByRole("button", { name: /^Draft/u })).toBeDefined();
+      expect(screen.getByText(/with drafts/u)).toBeDefined();
+    });
+  });
+
+  describe("something with a row under each of two groups", () => {
+    const counted = { ...gadgetTable(), countedAs: ({ code }: Gadget) => code };
+    const twice = [
+      gadget("a", { code: "SAME" }),
+      gadget("b", { code: "SAME" }),
+      gadget("c", { code: "OTHER" }),
+    ];
+
+    it("is counted once above the table", () => {
+      renderTable(counted, twice);
+
+      expect(screen.getByRole("status").textContent).toBe("2 gadgets");
+    });
+
+    it("is counted once when the view narrows the rows", () => {
+      renderTable(counted, twice, {
+        view: { ...emptyView, search: "same" },
+      });
+
+      expect(screen.getByRole("status").textContent).toBe("1 of 2");
+    });
+
+    it("ignores the drafts an address asks for on a table without drafts", () => {
+      renderTable(counted, twice, {
+        withDrafts: false,
+        view: {
+          ...emptyView,
+          show: "drafts",
+          filters: { [draftFilterKey]: { any: ["rejected"] } },
+        },
+      });
+
+      expect(screen.getByRole("status").textContent).toBe("2 gadgets");
+    });
+
+    it("is counted once in the metrics", () => {
+      renderTable(counted, twice, {
+        withDrafts: false,
+        view: { ...emptyView, breakdown: ["name"] },
+      });
+
+      expect(screen.getAllByText("2 gadgets")).toHaveLength(2);
+    });
   });
 });

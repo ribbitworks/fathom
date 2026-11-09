@@ -68,6 +68,32 @@ export const featureTeamsSchema = z.object({
 
 export type FeatureTeams = z.infer<typeof featureTeamsSchema>;
 
+// Who was on which team, month by month, as approved. Which teams someone was on in a month is
+// General; the months outside someone's employment are given only to readers who see Restricted
+// details.
+export const teamMonthsSchema = z.object({
+  months: z.array(monthSchema),
+  teams: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      colour: paletteColourSchema.nullable(),
+    }),
+  ),
+  people: z.array(
+    z.object({
+      id: z.string(),
+      preferredName: z.string(),
+      manager: z.object({ id: z.string(), name: z.string() }).nullable(),
+      // Each month with a team, and the teams then, by identifier.
+      teams: z.record(monthSchema, z.array(z.string())),
+      outside: z.array(monthSchema).optional(),
+    }),
+  ),
+});
+
+export type TeamMonths = z.infer<typeof teamMonthsSchema>;
+
 // A record of someone joining or leaving a team, with their end date, if it counts.
 export interface MembershipRecord {
   member: boolean;

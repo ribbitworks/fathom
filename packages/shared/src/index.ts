@@ -99,6 +99,7 @@ export {
 export {
   addDays,
   addMonths,
+  addToMonth,
   lastDayOfMonth,
   type Cycle,
   cycleName,
@@ -122,9 +123,11 @@ export {
 export {
   daySchema,
   dayQuerySchema,
+  dayReadingMonth,
   defaultLineFrom,
   isDay,
   isFirstOfMonth,
+  monthNumber,
   monthOf,
   isMonth,
   monthSchema,
@@ -456,4 +459,12 @@ export {
   featureTeamSchema,
   disbandedMonth,
   featureTeamsSchema,
+  type TeamMonths,
+  teamMonthsSchema,
 } from "./feature-teams.ts";
+export {
+  type MonthRange,
+  monthRangeQuerySchema,
+  monthsBetween,
+  mostGridMonths,
+} from "./monthly-grid.ts";

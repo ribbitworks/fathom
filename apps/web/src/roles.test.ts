@@ -26,13 +26,14 @@ describe("what a role allows", () => {
   it("lists no pages for a role granting nothing, and every page as not appearing", () => {
     const { pages, cannot } = consequences([]);
     expect(pages).toEqual([]);
-    expect(cannot.slice(0, 14)).toEqual([
+    expect(cannot.slice(0, 15)).toEqual([
       "The Overview page does not appear.",
       "The Projects page does not appear.",
       "The Features page does not appear.",
       "The Releases page does not appear.",
       "The People page does not appear.",
       "The Org chart page does not appear.",
+      "The Feature assignments page does not appear.",
       "The Drafts page does not appear.",
       "The Capacity page does not appear.",
       "The Lists page does not appear.",
@@ -50,7 +51,10 @@ describe("what a role allows", () => {
     expect(cannot).toContain("The Accounts page does not appear.");
     expect(cannot).toContain("The Org chart page does not appear.");
     expect(cannot).not.toContain("The People page does not appear.");
-    expect(consequences(["org-chart:view"]).pages).toEqual(["Org chart"]);
+    expect(consequences(["org-chart:view"]).pages).toEqual([
+      "Org chart",
+      "Feature assignments",
+    ]);
   });
 
   it("says what its holders can do, in the grid's order, including what editing brings", () => {

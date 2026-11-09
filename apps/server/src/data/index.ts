@@ -27,6 +27,7 @@ import type {
   List,
   ListRequest,
   MilestoneRequest,
+  MonthRange,
   OrgChart,
   PaletteColour,
   Permission,
@@ -48,6 +49,7 @@ import type {
   PasswordOwner,
   PasswordSettings,
   Settings,
+  TeamMonths,
   TimeZoneSetting,
   Unpublished,
 } from "@fathom/shared";
@@ -70,6 +72,7 @@ import { readOrgChart, readOrgChartOn, setTeamColour } from "./org-chart.ts";
 import * as hireData from "./hires.ts";
 import * as fills from "./fills.ts";
 import * as featureTeamData from "./feature-teams.ts";
+import { readTeamMonths } from "./team-months.ts";
 import { readHistory, recordRestrictedView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
 import * as projectData from "./projects.ts";
@@ -428,6 +431,7 @@ export interface HireAccess {
 
 export interface FeatureTeamAccess {
   read(actor: Actor, on?: string): Promise<FeatureTeams>;
+  readMonths(actor: Actor, range: MonthRange): Promise<TeamMonths>;
   create(actor: Actor, request: FeatureTeamRequest): Promise<Saved<string>>;
   update(
     actor: Actor,
@@ -464,6 +468,18 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
             )
           : seesRestrictedDetails(actor);
       if (sawDays) {
+        await recordRestrictedView(
+          database,
+          actor.user.id,
+          await readTimeZone(database),
+        );
+      }
+      return read;
+    },
+    readMonths: async (actor, range) => {
+      const read = await readTeamMonths(database, actor, range);
+      // Rows and shaded months follow employment dates, which are Restricted.
+      if (seesRestrictedDetails(actor)) {
         await recordRestrictedView(
           database,
           actor.user.id,

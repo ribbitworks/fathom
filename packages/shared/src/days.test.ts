@@ -5,10 +5,12 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  dayReadingMonth,
   defaultLineFrom,
   isDay,
   isFirstOfMonth,
   isMonth,
+  monthNumber,
   monthOf,
   typedDay,
   typedMonth,
@@ -17,6 +19,20 @@ import {
 describe("monthOf", () => {
   it("is the year and month of a day", () => {
     expect(monthOf("2027-02-11")).toBe("2027-02");
+  });
+});
+
+describe("dayReadingMonth", () => {
+  it("is a month's first day, or today during the current month", () => {
+    expect(dayReadingMonth("2027-03", "2027-02-11")).toBe("2027-03-01");
+    expect(dayReadingMonth("2027-02", "2027-02-11")).toBe("2027-02-11");
+  });
+});
+
+describe("monthNumber", () => {
+  it("counts months across a year's end, from a month or a day", () => {
+    expect(monthNumber("2027-01") - monthNumber("2026-12")).toBe(1);
+    expect(monthNumber("2027-01-31")).toBe(monthNumber("2027-01"));
   });
 });
 

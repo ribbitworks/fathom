@@ -10,6 +10,7 @@ import {
   frozenLayout,
   frozenVariables,
   frozenWidened,
+  scrollBesideFrozen,
   widestFrozen,
 } from "./frozen-columns.ts";
 
@@ -44,6 +45,13 @@ describe("where frozen columns sit", () => {
     ]);
     expect(layout.frozen).toBe(3);
     expect(layout.width).toBe(400);
+  });
+
+  it("scrolls a column to just after the frozen ones, and nowhere for a column not there", () => {
+    const layout = frozenLayout(measured, [1, 2, 1, 1], 1);
+
+    expect(scrollBesideFrozen(layout, 2)).toBe(220);
+    expect(scrollBesideFrozen(layout, -1)).toBeUndefined();
   });
 
   it("freezes only as many columns as fit in half the room, and none when the first does not", () => {

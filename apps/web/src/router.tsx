@@ -35,6 +35,7 @@ import { Home } from "./home.tsx";
 import { firstPage, Layout } from "./layout.tsx";
 import { ListsPage } from "./lists-page.tsx";
 import { listKindSchema } from "./lists.ts";
+import { FeatureAssignmentsPage } from "./feature-assignments-page.tsx";
 import { OrgChartPage } from "./org-chart-page.tsx";
 import { SettingsPage } from "./settings-page.tsx";
 import { setTimeZone } from "./today.ts";
@@ -500,6 +501,30 @@ const orgChartRoute = createRoute({
   },
 });
 
+const featureAssignmentsRoute = createRoute({
+  getParentRoute: () => signedInRoute,
+  path: "/feature-assignments",
+  validateSearch: viewSearchSchema,
+  beforeLoad: requiring("org-chart:view"),
+  component: function FeatureAssignments() {
+    const { permissions } = signedIn.useRouteContext();
+    const navigate = featureAssignmentsRoute.useNavigate();
+    const { view, onView } = viewProps(
+      featureAssignmentsRoute.useSearch(),
+      (search, replace) => {
+        void navigate({ search, replace });
+      },
+    );
+    return (
+      <FeatureAssignmentsPage
+        seesPeople={permissions.includes("people:view")}
+        view={view}
+        onView={onView}
+      />
+    );
+  },
+});
+
 // What each role allows, open to every signed-in user, whatever their role.
 const helpRoute = createRoute({
   getParentRoute: () => signedInRoute,
@@ -544,6 +569,7 @@ const routeTree = rootRoute.addChildren([
     featuresRoute,
     peopleRoute,
     orgChartRoute,
+    featureAssignmentsRoute,
     draftsRoute,
     helpRoute,
     draftsHelpRoute,

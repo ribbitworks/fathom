@@ -548,6 +548,12 @@ const routes: Route[] = [
     needs: allOf("org-chart:view"),
   },
   {
+    method: "GET",
+    pattern: "/api/feature-teams/months",
+    needs: allOf("org-chart:view"),
+    url: "/api/feature-teams/months?from=2025-01&to=2025-03",
+  },
+  {
     method: "POST",
     pattern: "/api/feature-teams",
     needs: changingTeams,

@@ -1,7 +1,7 @@
 # Fathom — Issues
 
 **Status:** Working list
-**Last updated:** 2026-11-08
+**Last updated:** 2026-11-09
 
 Known problems and deferred work that are not yet scheduled in the [Implementation Plan](design/implementation-plan.md). Each item says why it was deferred. When an item is scheduled or resolved, it moves to the document that owns it, or is removed.
 
@@ -28,6 +28,13 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Undoing changes to the plan's records:** The change history refuses undoing a change to a release stream, cycle pattern, or release, since undoing one can break the rules for cycles and releases that approving checks. Deferred until undo is wanted for them.
 - **Ordering release streams:** Streams keep the order they were added in; moving them, as the Decisions Log allows, is not built yet. Deferred until an organization has enough streams for the order to matter, since the monthly resource grid's picker defaults to the first.
 - **Which delivery a feature is needed by:** The release warning checks each needed feature against its project's earliest customer delivery date still to come, so a phased project warns about features only its later deliveries need. Saying which delivery each feature is needed by was deferred by the owner on 2026-11-03 until the warnings prove noisy.
+
+- **Feature assignments page, still to come:** Kept out of its first, read-only form by the owner on 2026-11-08, to keep that change small: saved views, which the server keeps only for People today; added columns, where any column on People can be added, perhaps with a maximum until pages can be copied with different setups; a Today button; vertical lines for one release stream's cycle ends and releases; and a filter for a feature wherever it shows on the grid, in the bar above the table rather than a column.
+- **Resizing many columns:** Each column is resized on its own, and the Views menu lists every resized column on one Widths line, which grows with each. Bulk resizing was raised by the owner on 2026-11-08; whether to shorten that line is not decided.
+
+- **Read-only tables take editing members:** A table that never changes anything, such as Feature assignments, must still supply the shared table's editing and draft members as stubs that are never called, with a `withDrafts` option to hide its Draft menu. Letting such a table leave them out would reshape the types every table uses, so it is its own change. Found in review on 2026-11-09.
+- **Dates in the years 0 to 99:** `addMonths` in `packages/shared/src/cycles.ts` reads them as the 1900s. The monthly grid's query refuses them; other callers take dates people enter. Found in review on 2026-11-09.
+- **Two meanings of a month's number:** `apps/web/src/timeline.ts` has a private `monthNumber` that counts differently from the shared one in `packages/shared/src/days.ts`. Found in review on 2026-11-09.
 
 - **Proposal milestones:** Proposals are to have milestones, each a number of weeks after the contract award date, as the [Decisions Log](product/decisions.md#planning) records. Deferred to its own change, since it needs a migration.
 - **Owners not in Fathom:** A project's or proposal's owner is to be a person or a typed name, as the [Decisions Log](product/decisions.md#planning) records. Deferred to its own change, since it needs a migration.

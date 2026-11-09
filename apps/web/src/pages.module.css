@@ -498,6 +498,11 @@ select.cellInput {
   text-overflow: ellipsis;
 }
 
+th[data-centred] .recordHeadButton {
+  justify-content: center;
+  width: 100%;
+}
+
 /* A column's name, with any draft's mark under it, so the mark does not widen the column. */
 .headerName {
   display: flex;
@@ -601,6 +606,10 @@ select.cellInput {
   white-space: nowrap;
   vertical-align: top;
   outline: none;
+}
+
+.recordCell[data-shaded] {
+  background: var(--mantine-color-default-hover);
 }
 
 .recordCell:focus {

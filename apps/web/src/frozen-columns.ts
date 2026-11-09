@@ -112,6 +112,16 @@ export interface FrozenLayout {
 export const cellKey = (column: number, copy: number) =>
   `${String(column)}-${String(copy)}`;
 
+// How far to scroll sideways so a column starts just after the frozen ones, or undefined for a
+// column the layout does not have.
+export function scrollBesideFrozen(
+  { lefts, width }: FrozenLayout,
+  column: number,
+): number | undefined {
+  const left = lefts.get(cellKey(column, 0));
+  return left === undefined ? undefined : left - width;
+}
+
 // Where frozen columns sit, given how many header cells each column has, one or, with a live copy
 // beside it, two. Before the table is measured, any number may be frozen.
 export function frozenLayout(
