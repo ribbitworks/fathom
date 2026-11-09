@@ -358,14 +358,21 @@ export async function updateView(
         viewChanges(id, "changed", before, after, tier),
       );
       if (changeSetId !== null) {
-        await transaction
-          .update(savedViews)
-          .set({
-            name: after.name,
-            scope: after.scope,
-            definition: after.definition,
-          })
-          .where(eq(savedViews.id, id));
+        // Sharing or taking back has no dialog to show which name is taken, so the refusal says.
+        await refusingDuplicates(
+          after.scope === before.scope
+            ? duplicateView
+            : `There is already a ${after.scope} view named ${after.name}`,
+          async () =>
+            transaction
+              .update(savedViews)
+              .set({
+                name: after.name,
+                scope: after.scope,
+                definition: after.definition,
+              })
+              .where(eq(savedViews.id, id)),
+        );
       }
       return { result: toSavedView(after, actor, tiers), changeSetId };
     }),

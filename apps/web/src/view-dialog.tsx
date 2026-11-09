@@ -4,8 +4,8 @@
 // is checked against the table's other saved views of the same scope as it is typed. The dialog saves the view itself,
 // so a name someone else has just taken is refused here, and cannot be closed while it saves.
 
-import { type SavedView, viewLengths } from "@fathom/shared";
-import { Group, Button, Stack, Text, TextInput } from "@mantine/core";
+import { type SavedView, viewLengths, type ViewScope } from "@fathom/shared";
+import { Button, Checkbox, Group, Stack, Text, TextInput } from "@mantine/core";
 import type { ViewPart } from "./table-controls.tsx";
 import classes from "./pages.module.css";
 import { useMutation } from "@tanstack/react-query";
@@ -31,23 +31,26 @@ export function ViewDialog({
   onCancel,
   onBusy,
   saves,
+  canSaveShared = false,
 }: {
   // The saved view being renamed; absent when saving a new one.
   view?: SavedView;
   // What saving keeps, listed under the name; absent when renaming.
   saves?: readonly ViewPart[];
+  canSaveShared?: boolean;
   views: readonly SavedView[];
-  save: (name: string) => Promise<SavedViewResult>;
+  save: (name: string, scope: ViewScope) => Promise<SavedViewResult>;
   onSaved: (saved: SavedViewResult) => void;
   onCancel: () => void;
   onBusy: (busy: boolean) => void;
 }) {
   const [name, setName] = useState(view?.name ?? "");
   const [tried, setTried] = useState(false);
-  // The name last sent, so a refusal of it as taken no longer applies once the name changes.
-  const [sentName, setSentName] = useState("");
+  const [scope, setScope] = useState<ViewScope>(view?.scope ?? "personal");
+  // What was last sent, so a refusal of its name as taken no longer applies once either changes.
+  const [sent, setSent] = useState({ name: "", scope });
   const saving = useMutation({
-    mutationFn: save,
+    mutationFn: (sending: string) => save(sending, scope),
     onMutate: () => {
       onBusy(true);
     },
@@ -59,13 +62,14 @@ export function ViewDialog({
   const taken = views.some(
     (other) =>
       other.id !== view?.id &&
-      other.scope === (view?.scope ?? "personal") &&
+      other.scope === scope &&
       sameName(other.name, name),
   );
   const refusedAsTaken =
     saving.error instanceof ApiError &&
     saving.error.status === conflict &&
-    sameName(sentName, name);
+    sent.scope === scope &&
+    sameName(sent.name, name);
   const problem =
     nameProblem(name, viewLengths.name, taken, duplicate) ??
     (refusedAsTaken ? duplicate : undefined);
@@ -77,7 +81,7 @@ export function ViewDialog({
         event.preventDefault();
         setTried(true);
         if (problem !== undefined) return;
-        setSentName(name);
+        setSent({ name, scope });
         saving.mutate(name.trim());
       }}
     >
@@ -95,6 +99,15 @@ export function ViewDialog({
             setName(event.currentTarget.value);
           }}
         />
+        {canSaveShared && (
+          <Checkbox
+            label="Share with everyone who sees this table"
+            checked={scope === "shared"}
+            onChange={(event) => {
+              setScope(event.currentTarget.checked ? "shared" : "personal");
+            }}
+          />
+        )}
         {saves !== undefined && saves.length > 0 && (
           <div>
             <Text id={includesId} fz="sm" fw={500} mb={4}>

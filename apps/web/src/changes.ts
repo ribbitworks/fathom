@@ -17,6 +17,8 @@ import {
   meaningSchema,
   recordSearchText,
   tierSchema,
+  type ViewScope,
+  viewScopeSchema,
 } from "@fathom/shared";
 import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import { getJson } from "./api.ts";
@@ -53,6 +55,11 @@ export function madeByName({ madeBy, madeAs }: ChangeEntry): string {
   return madeBy === null ? "Fathom" : nameAs(madeBy, madeAs);
 }
 
+const scopeNames: Record<ViewScope, string> = {
+  personal: "Personal",
+  shared: "Shared",
+};
+
 const fieldNames = new Map([
   ["name", "Name"],
   ["label", "Name"],
@@ -65,6 +72,7 @@ const fieldNames = new Map([
   ["onPlannedHires", "Offered on planned hires"],
   ["order", "Place"],
   ["definition", "View settings"],
+  ["scope", "Who sees it"],
   ["rejected", "Reason"],
   ["startsOn", "From"],
   ["length", "Length"],
@@ -104,6 +112,10 @@ function valueText(field: string, value: ChangeValue): string | null {
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (isDay(value)) return formatDay(value);
+  if (field === "scope") {
+    const scope = viewScopeSchema.safeParse(value);
+    if (scope.success) return scopeNames[scope.data];
+  }
   if (field === "visibility") {
     const tier = tierSchema.safeParse(value);
     if (tier.success) return visibilityName(tier.data);

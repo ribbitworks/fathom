@@ -24,7 +24,12 @@ import {
   TextInput,
   VisuallyHidden,
 } from "@mantine/core";
-import { byName, type SavedView, type Show } from "@fathom/shared";
+import {
+  byName,
+  type SavedView,
+  type Show,
+  type ViewScope,
+} from "@fathom/shared";
 import {
   Fragment,
   type ReactNode,
@@ -377,14 +382,38 @@ export interface SavedViews {
   onName: (saved: SavedView | undefined, view: View) => void;
   onUpdate: (saved: SavedView, view: View) => void;
   onDelete: (saved: SavedView) => void;
+  onScope: (saved: SavedView, scope: ViewScope) => void;
 }
+
+export const viewScopes: Record<
+  ViewScope,
+  {
+    heading: string;
+    changesTo: ViewScope;
+    changeLabel: string;
+    changedVerb: string;
+  }
+> = {
+  personal: {
+    heading: "My views",
+    changesTo: "shared",
+    changeLabel: "Share current view",
+    changedVerb: "Shared",
+  },
+  shared: {
+    heading: "Shared views",
+    changesTo: "personal",
+    changeLabel: "Take back current view",
+    changedVerb: "Took back",
+  },
+};
 
 // The menu of a table's saved views, named after the one the view started from, marked when the
 // view has changed since, or, with none applied, from the table's default view. Choosing a view
 // applies it. The menu names each level of the sort, the frozen columns, and the columns whose
 // widths are set, which the table itself already shows, each item removing what it names. It clears
 // the view, saves it as a new one, and updates, renames, or deletes the one applied when the user
-// may change it.
+// may change it, and shares it or takes it back when they may.
 export function ViewsMenu({
   saved,
   columns,
@@ -402,6 +431,7 @@ export function ViewsMenu({
   onClear: () => void;
 }) {
   const views = saved?.views ?? [];
+  const groupId = useId();
   // Each level of the sort, in order, with its column; a column the table does not have is left
   // out.
   const sorts = view.sort.flatMap(({ key, descending }) =>
@@ -488,28 +518,42 @@ export function ViewsMenu({
       </AppMenu.Target>
       <AppMenu.Dropdown>
         {saved &&
-          [...views].sort(byName).map((each) => (
-            <Menu.Item
-              key={each.id}
-              // Room for the applied view's check mark only while one is applied, so the names
-              // line up.
-              leftSection={
-                current && (
-                  <span className={classes.appliedMark} aria-hidden>
-                    {each.id === saved.applied ? "✓" : ""}
-                  </span>
-                )
-              }
-              onClick={() => {
-                saved.onApply(shownAs(each), each.id);
-              }}
-            >
-              {each.name}
-              {each.id === saved.applied && (
-                <VisuallyHidden>, applied</VisuallyHidden>
-              )}
-            </Menu.Item>
-          ))}
+          Object.entries(viewScopes).map(([scope, { heading }]) => {
+            const grouped = views.filter((each) => each.scope === scope);
+            return (
+              grouped.length > 0 && (
+                <div
+                  key={scope}
+                  role="group"
+                  aria-labelledby={`${groupId}-${scope}`}
+                >
+                  <Menu.Label id={`${groupId}-${scope}`}>{heading}</Menu.Label>
+                  {grouped.sort(byName).map((each) => (
+                    <Menu.Item
+                      key={each.id}
+                      // Room for the applied view's check mark only while one is applied, so the
+                      // names line up.
+                      leftSection={
+                        current && (
+                          <span className={classes.appliedMark} aria-hidden>
+                            {each.id === saved.applied ? "✓" : ""}
+                          </span>
+                        )
+                      }
+                      onClick={() => {
+                        saved.onApply(shownAs(each), each.id);
+                      }}
+                    >
+                      {each.name}
+                      {each.id === saved.applied && (
+                        <VisuallyHidden>, applied</VisuallyHidden>
+                      )}
+                    </Menu.Item>
+                  ))}
+                </div>
+              )
+            );
+          })}
         {sections.length > 0 && views.length > 0 && <Menu.Divider />}
         {sections.map((section, at) => (
           <Fragment key={section.key}>
@@ -548,6 +592,15 @@ export function ViewsMenu({
             >
               Rename…
             </Menu.Item>
+            {current.canShare && (
+              <Menu.Item
+                onClick={() => {
+                  saved.onScope(current, viewScopes[current.scope].changesTo);
+                }}
+              >
+                {viewScopes[current.scope].changeLabel}
+              </Menu.Item>
+            )}
             <Menu.Item
               color="red"
               onClick={() => {

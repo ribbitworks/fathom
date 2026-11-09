@@ -104,7 +104,7 @@ import {
 } from "./people.ts";
 import { useSaving } from "./saving.ts";
 import type { ChangeView, SavedViews } from "./table-controls.tsx";
-import { viewParts } from "./table-controls.tsx";
+import { viewParts, viewScopes } from "./table-controls.tsx";
 import { type View, savedFor } from "./table-view.ts";
 import { type SavedViewResult, ViewDialog } from "./view-dialog.tsx";
 
@@ -600,6 +600,23 @@ export function PeoplePage({
         },
       });
     },
+    onScope: (saved, scope) => {
+      save({
+        next: (data) => ({
+          ...data,
+          views: withView(data.views, { ...saved, scope }),
+        }),
+        save: async () => (await updateView(saved.id, { scope })).changeSetId,
+        failure: `Fathom could not change ${saved.name}.`,
+        onSaved: (changeSetId, before) => {
+          done(
+            `${viewScopes[saved.scope].changedVerb} the ${saved.name} view.`,
+            changeSetId,
+            before,
+          );
+        },
+      });
+    },
   });
 
   // The dialog saved the view itself, so the page shows it at once. A new view is then the one
@@ -855,6 +872,7 @@ export function PeoplePage({
               {...(naming.saved
                 ? { view: naming.saved }
                 : {
+                    canSaveShared: canEditColumns,
                     saves: viewParts(
                       naming.view,
                       columnsFor(
@@ -870,12 +888,12 @@ export function PeoplePage({
                     ),
                   })}
               views={query.data.views}
-              save={(name) =>
+              save={(name, scope) =>
                 naming.saved
                   ? updateView(naming.saved.id, { name })
                   : createView({
                       name,
-                      scope: "personal",
+                      scope,
                       definition: savedFor(naming.view),
                     })
               }

@@ -614,7 +614,25 @@ describe("personal and shared views", () => {
     expect((await share(first.cookie, "Half", {})).statusCode).toBe(201);
     expect(
       (await change(second.cookie, view.id, { scope: "shared" })).json(),
-    ).toEqual(duplicate);
+    ).toEqual({ error: "There is already a shared view named Half" });
+
+    const own = (await share(second.cookie, "Whole", {})).json<Saved>().view;
+    expect((await save(second.cookie, "Whole", {})).statusCode).toBe(201);
+    expect(
+      (await change(second.cookie, own.id, { scope: "personal" })).json(),
+    ).toEqual({ error: "There is already a personal view named Whole" });
+
+    // A view renamed as it is shared is refused under its new name.
+    await share(first.cookie, "Taken", {});
+    const renaming = (await save(second.cookie, "Free", {})).json<Saved>().view;
+    expect(
+      (
+        await change(second.cookie, renaming.id, {
+          name: "Taken",
+          scope: "shared",
+        })
+      ).json(),
+    ).toEqual({ error: "There is already a shared view named Taken" });
   });
 
   it("lets a maker who may share a view share it and take it back", async () => {

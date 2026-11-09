@@ -374,6 +374,29 @@ describe("the entries", () => {
     ]);
   });
 
+  it("say in words when a view is shared or taken back", async () => {
+    serverAnswers({
+      "GET /api/session": changesViewer,
+      "GET /api/changes": page([
+        entry([
+          record(
+            "saved-view",
+            "changed",
+            [
+              { field: "scope", oldValue: "personal", newValue: "shared" },
+              { field: "scope", oldValue: null, newValue: "team" },
+            ],
+            "Harbour",
+          ),
+        ]),
+      ]),
+    });
+    renderApp("/changes");
+    expect((await lines())[0]).toContain(
+      "Who sees it from Personal to Shared; Who sees it set to team",
+    );
+  });
+
   it("put records added or deleted together in one line, naming them, with the rest on request", async () => {
     const people = "ABCDEFGHIJKL"
       .split("")

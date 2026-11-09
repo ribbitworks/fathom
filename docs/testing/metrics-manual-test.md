@@ -177,7 +177,7 @@ Run the test cases in order. Start with R0, then R1, then sign in as the Workfor
 
 **Preconditions:** **People** page open. Live only shown (P1). Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
 
-- [ ] **Step 1.** Open the Views menu, select **Save view…**, type `Fictional positions by site`, and select **Save**.
+- [ ] **Step 1.** Open the Views menu, select **Save view…**, type `Fictional positions by site`, and select **Save view**.
   - **Expected:** The Views button is named **Fictional positions by site**.
   - **Notes:**
 

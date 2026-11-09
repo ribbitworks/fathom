@@ -2663,7 +2663,7 @@ describe("searching, sorting, and filtering", () => {
       scope: "shared",
       definition: { filters: { f1: { any: ["c1"] } } },
       canChange: true,
-      canShare: true,
+      canShare: false,
     };
     const theirs = {
       id: v2,
@@ -2744,6 +2744,7 @@ describe("searching, sorting, and filtering", () => {
         "GET /api/people": withViews([{ ...harbour, definition: {} }, theirs]),
       });
       expect(await viewsMenuLayout()).toEqual([
+        "Shared views",
         "✓Harbour, applied",
         "Theirs",
         "—",
@@ -2813,6 +2814,166 @@ describe("searching, sorting, and filtering", () => {
       await waitFor(() => {
         expect(undone(fetch)).toEqual([s1]);
       });
+    });
+
+    it("lists views under My views and Shared views", async () => {
+      await openAt("/people", {
+        "GET /api/people": withViews([
+          { ...harbour, scope: "personal" },
+          theirs,
+        ]),
+      });
+      expect(await viewsMenuLayout()).toEqual([
+        "My views",
+        "Harbour",
+        "Shared views",
+        "Theirs",
+      ]);
+    });
+
+    it("leaves out a group with no views", async () => {
+      await openAt("/people", { "GET /api/people": withViews([theirs]) });
+      expect(await viewsMenuLayout()).toEqual(["Shared views", "Theirs"]);
+    });
+
+    it("shares the applied view, offering Undo", async () => {
+      const mine = {
+        ...harbour,
+        scope: "personal",
+        canShare: true,
+        definition: {},
+      };
+      const url = `/api/people/views/${v1}`;
+      const { fetch } = await openAt(`/people?view=${v1}`, {
+        "GET /api/people": withViews([mine]),
+        [`PUT ${url}`]: () =>
+          Response.json({
+            view: { ...mine, scope: "shared" },
+            changeSetId: s1,
+          }),
+      });
+      await chooseView("Share current view");
+      await screen.findByText("Shared the Harbour view.");
+      expect(bodyOf(fetch, "PUT", url)).toEqual([{ scope: "shared" }]);
+      await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+      await waitFor(() => {
+        expect(undone(fetch)).toEqual([s1]);
+      });
+    });
+
+    it("takes back the applied view, offering Undo", async () => {
+      const shared = { ...harbour, canShare: true, definition: {} };
+      const url = `/api/people/views/${v1}`;
+      const { fetch } = await openAt(`/people?view=${v1}`, {
+        "GET /api/people": withViews([shared]),
+        [`PUT ${url}`]: () =>
+          Response.json({
+            view: { ...shared, scope: "personal" },
+            changeSetId: s1,
+          }),
+      });
+      await chooseView("Take back current view");
+      await screen.findByText("Took back the Harbour view.");
+      expect(bodyOf(fetch, "PUT", url)).toEqual([{ scope: "personal" }]);
+      await userEvent.click(screen.getByRole("button", { name: "Undo" }));
+      await waitFor(() => {
+        expect(undone(fetch)).toEqual([s1]);
+      });
+    });
+
+    it("says why a view could not be shared", async () => {
+      const mine = {
+        ...harbour,
+        scope: "personal",
+        canShare: true,
+        definition: {},
+      };
+      await openAt(`/people?view=${v1}`, {
+        "GET /api/people": withViews([mine]),
+        [`PUT /api/people/views/${v1}`]: () =>
+          Response.json(
+            { error: "There is already a shared view named Harbour" },
+            { status: 409 },
+          ),
+      });
+      await chooseView("Share current view");
+      await screen.findByText("There is already a shared view named Harbour");
+      expect(await viewsMenuLayout()).toContain("My views");
+    });
+
+    it("offers no sharing of a view the user may not share", async () => {
+      await openAt(`/people?view=${v1}`, {
+        "GET /api/people": withViews([{ ...harbour, definition: {} }]),
+      });
+      const items = await viewsMenuItems();
+      expect(items).toContain("Rename…");
+      expect(items).not.toContain("Take back current view");
+    });
+
+    it("saves a view as shared when the box is ticked", async () => {
+      const { fetch } = await openAt("/people?search=avery", {
+        "GET /api/people": withViews([]),
+        "POST /api/people/views": () =>
+          Response.json({ view: harbour, changeSetId: s1 }, { status: 201 }),
+      });
+      await chooseView("Save view…");
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.click(
+        within(dialog).getByRole("checkbox", {
+          name: "Share with everyone who sees this table",
+        }),
+      );
+      await userEvent.type(
+        within(dialog).getByRole("textbox", { name: "Name" }),
+        "Harbour{Enter}",
+      );
+      await waitFor(() => {
+        expect(bodyOf(fetch, "POST", "/api/people/views")).toEqual([
+          { name: "Harbour", scope: "shared", definition: { search: "avery" } },
+        ]);
+      });
+    });
+
+    it("offers no choice of sharing to those who may not save shared views", async () => {
+      await openAt("/people?search=avery", {
+        "GET /api/session": viewer,
+        "GET /api/people": withViews([]),
+      });
+      await chooseView("Save view…");
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      expect(within(dialog).getByText("Includes")).toBeDefined();
+      expect(within(dialog).queryByRole("checkbox")).toBeNull();
+    });
+
+    it("checks a name only against views kept the same way", async () => {
+      await openAt("/people?search=avery", {
+        "GET /api/people": withViews([theirs]),
+      });
+      await chooseView("Save view…");
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.keyboard("theirs");
+      expect(within(dialog).queryByText("Already a view")).toBeNull();
+      await userEvent.click(within(dialog).getByRole("checkbox"));
+      expect(within(dialog).getByText("Already a view")).toBeDefined();
+      await userEvent.click(within(dialog).getByRole("checkbox"));
+      expect(within(dialog).queryByText("Already a view")).toBeNull();
+    });
+
+    it("stops showing a name as taken once the view would be kept the other way", async () => {
+      await openAt("/people?search=avery", {
+        "GET /api/people": withViews([]),
+        "POST /api/people/views": () =>
+          Response.json(
+            { error: "There is already a view with that name" },
+            { status: 409 },
+          ),
+      });
+      await chooseView("Save view…");
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.keyboard("Taken{Enter}");
+      expect(await within(dialog).findByText("Already a view")).toBeDefined();
+      await userEvent.click(within(dialog).getByRole("checkbox"));
+      expect(within(dialog).queryByText("Already a view")).toBeNull();
     });
 
     it("lets a new view, which is personal, take the name of a shared one", async () => {

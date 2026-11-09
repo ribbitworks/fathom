@@ -80,7 +80,6 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 Goals the owner has added that are not yet placed in a stage:
 
 - **Pinned views:** A saved view kept visible as its own table, alongside the table's own view, until it is unpinned. Until then, pinning a view means applying it, as the [Decisions Log](decisions.md) records.
-- **Personal and shared views:** Fathom keeps each saved view personal or shared, as the [Decisions Log](decisions.md) records. Choosing which from the Views menu, and the menu's two groups, are still to come; until then, a view saved from the menu is personal.
 - **Hiding columns:** Any column, built-in ones included, can be hidden from a table's view, and shown again, with hidden columns kept in saved views. Deleting an added column is offered in its column menu too, not only in its dialog.
 - **Row timestamps:** Every database row records when it was created and last updated.
 - **Totals:** Sums and other totals of amounts over the rows shown, which follow the filters as they are added and removed, once the number and currency column types under Your Own Fields and Tables exist. Counts and shares of a column's values are already given by People's [metrics](decisions.md#configuration).
