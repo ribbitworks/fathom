@@ -28,7 +28,7 @@ import {
   monthOf,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { NotFoundError } from "../errors.ts";
+import { ForbiddenError, NotFoundError } from "../errors.ts";
 import {
   type Actor,
   seesRestrictedDetails,
@@ -168,16 +168,35 @@ function chartOf(
   return [...shown].map((id) => card(id, recordOf(id)));
 }
 
+// The chart as approved on a chosen day, without drafts or planned hires, which belong to today, for
+// readers who see Restricted details, since past managers are Restricted.
+export async function readOrgChartOn(
+  database: Database,
+  actor: Actor,
+  day: string,
+): Promise<OrgChartRead> {
+  if (!seesRestrictedDetails(actor)) {
+    throw new ForbiddenError(
+      "This role can't see reporting lines on another date",
+    );
+  }
+  return {
+    ...(await readOrgChart(database, actor, { day, approvedOnly: true })),
+    includedRestricted: true,
+  };
+}
+
 export async function readOrgChart(
   database: Database,
   actor: Actor,
-  asOf?: string,
+  { day, approvedOnly = false }: { day?: string; approvedOnly?: boolean } = {},
 ): Promise<OrgChartRead> {
-  const today = asOf ?? (await readToday(database));
+  const today = day ?? (await readToday(database));
   const seesPeople = actor.permissions.includes("people:view");
   const restricted = seesRestrictedDetails(actor);
   // Hires' drafts are part of the hiring plan, which does nothing without seeing people.
-  const wholePlan = seesPeople && seesSensitivity(actor, "hiring-plan");
+  const wholePlan =
+    !approvedOnly && seesPeople && seesSensitivity(actor, "hiring-plan");
   // Read as of one moment, so an approval saved meanwhile is seen whole or not at all.
   const {
     rows,
@@ -191,10 +210,13 @@ export async function readOrgChart(
   } = await database.transaction(
     async (transaction) => {
       // Drafts are details of people, so those who do not see people are sent none.
-      const drafts = seesPeople
-        ? await readPersonDrafts(transaction, undefined, actor.user.id)
-        : new Map<string, Draft>();
-      const hires = await readLiveHires(transaction);
+      const drafts =
+        seesPeople && !approvedOnly
+          ? await readPersonDrafts(transaction, undefined, actor.user.id)
+          : new Map<string, Draft>();
+      const hires = approvedOnly
+        ? new Map<string, Recorded>()
+        : await readLiveHires(transaction);
       const hireDrafts = wholePlan
         ? await readHireDrafts(transaction, undefined, actor.user.id)
         : new Map<string, Draft>();

@@ -2538,9 +2538,7 @@ describe("searching, sorting, and filtering", () => {
     const to = within(start).getByRole("textbox", { name: "To" });
     // A date still being typed is not yet wrong, and filters nothing.
     await userEvent.type(from, "2024-01");
-    expect(
-      within(start).queryByText("Use a date such as 2026-10-31"),
-    ).toBeNull();
+    expect(within(start).queryByText("Invalid YYYY-MM-DD date")).toBeNull();
     expect(screen.queryByText(/^Start: from /)).toBeNull();
     await userEvent.type(from, "-01");
     expect(screen.getByText(/^Start: from /)).toBeDefined();

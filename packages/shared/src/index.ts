@@ -121,6 +121,7 @@ export {
 } from "./cycles.ts";
 export {
   daySchema,
+  dayQuerySchema,
   defaultLineFrom,
   isDay,
   isFirstOfMonth,
@@ -445,6 +446,5 @@ export {
   type FeatureTeams,
   featureTeamSchema,
   disbandedMonth,
-  featureTeamsQuerySchema,
   featureTeamsSchema,
 } from "./feature-teams.ts";

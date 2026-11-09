@@ -168,7 +168,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 5.** Clear the box, and type tomorrow's date as digits alone, such as 20261109.
-  - **Expected:** The digits are laid out as a date, and **Use today or an earlier day** appears in red under the box.
+  - **Expected:** The digits are laid out as a date, and **Use today or an earlier date** appears in red under the box.
   - **Notes:**
 
 - [ ] **Step 6.** Clear the box, and type yesterday's date as digits alone. In **Add member**, choose **Thad Heidenreich**.
@@ -229,6 +229,98 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 3.** Press Shift and Tab together to return to **Discard draft**, and press Enter.
   - **Expected:** The draft mark goes, and Rosendo Champlin is no longer listed.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### FT-06: The Org Chart Moves Through Time
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FT-05.
+
+**Preconditions:** R1 has been run. Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch.
+
+- [ ] **Step 1.** Look at the row between the page's heading and the chart.
+  - **Expected:** A **Date** box shows today's date, written as year, month and day. Beside it are a left arrow, a timeline marked with one month in each year, such as **Nov 2024** and **Nov 2025**, a right arrow, and a **Today** button, which is greyed out.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the left arrow once.
+  - **Expected:** The **Date** box shows the first day of last month. Below the row, text reads **Showing** with that date, then **Nothing can be changed on this date.** The chart redraws without the page going blank, and the **Draft** menu is gone.
+  - **Notes:**
+
+- [ ] **Step 3.** Open the Feature teams button and choose any team.
+  - **Expected:** The team's panel shows its members with no **×** beside them, no **Add member** box, and no **Takes effect from** box.
+  - **Notes:**
+
+- [ ] **Step 4.** Drag the timeline's handle well to the left, and let go.
+  - **Expected:** While dragging, a label shows the month under the handle. The handle stays where you let it go. The chart redraws once, showing only the teams with members that month, which may be none, and the **Date** box shows the first day of that month.
+  - **Notes:**
+
+- [ ] **Step 5.** Clear the **Date** box, and type a date in the middle of a month, as digits alone, such as 20250315.
+  - **Expected:** Below the row, text reads **Showing Mar 15, 2025. Nothing can be changed on this date.**, and the timeline's handle moves to March 2025.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Reporting teams** in the teams switch.
+  - **Expected:** The date stays. The chart shows managers and their reports as of that date.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Today**.
+  - **Expected:** The text below the row goes, **Today** is greyed out, the **Date** box shows today's date, and the **Draft** menu is back.
+  - **Notes:**
+
+- [ ] **Step 8.** Switch Fathom between light and dark mode.
+  - **Expected:** The row is easy to read in both, and the timeline's month labels do not overlap each other or the chart.
+  - **Notes:**
+
+### FT-07: Readers Without Restricted Details Move by Month
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, changed from FT-06.
+
+**Preconditions:** Signed in with this account. **Org chart** open, with **Reporting teams** chosen in the teams switch.
+
+- [ ] **Step 1.** Look at the area between the page's heading and the chart.
+  - **Expected:** There is no date control.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Feature teams** in the teams switch.
+  - **Expected:** The arrows, timeline and **Today** appear, with no **Date** box.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the left arrow once.
+  - **Expected:** Text below the row reads **Showing** with last month and its year, such as **Showing Oct 2026.**, then **Nothing can be changed on this date.** No day of the month is shown.
+  - **Notes:**
+
+### FT-08: The Takes Effect From Box Changes a Draft
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FT-07.
+
+**Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch, and any team with no draft open in its panel.
+
+- [ ] **Step 1.** Clear **Takes effect from**, type the first day of last month as digits alone, and press Enter.
+  - **Expected:** **Make a change first** appears in red under **Takes effect from**, which goes back to today's date.
+  - **Notes:**
+
+- [ ] **Step 2.** Choose someone in **Add member**.
+  - **Expected:** They are listed with a yellow dot and **Draft**, and the red message goes.
+  - **Notes:**
+
+- [ ] **Step 3.** Clear **Takes effect from**, type the first day of last month as digits alone, and press Enter.
+  - **Expected:** The cursor leaves **Takes effect from**, and a notice reads **Date changed**, with **Undo**.
+  - **Notes:**
+
+- [ ] **Step 4.** Close the panel and open the same team again.
+  - **Expected:** **Takes effect from** shows the first day of last month.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Drafts** in the left-hand menu, and find this team's entry.
+  - **Expected:** The dates in the entry are the first day of last month.
+  - **Notes:**
+
+- [ ] **Step 6.** Return to the team's panel. Click in **Takes effect from**, delete its last digit, and press Esc.
+  - **Expected:** The panel stays open, the cursor stays in **Takes effect from**, and it shows the first day of last month again.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Discard draft**.
+  - **Expected:** The draft mark goes, and **Takes effect from** shows today's date.
   - **Notes:**
 
 **Afterwards:** R1.

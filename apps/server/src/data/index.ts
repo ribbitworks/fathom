@@ -67,7 +67,7 @@ import { type ColumnDraftTarget, readColumnsOut } from "./column-drafts.ts";
 import { readChangeHistory } from "./change-history.ts";
 import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
-import { readOrgChart, setTeamColour } from "./org-chart.ts";
+import { readOrgChart, readOrgChartOn, setTeamColour } from "./org-chart.ts";
 import * as hireData from "./hires.ts";
 import * as fills from "./fills.ts";
 import * as featureTeamData from "./feature-teams.ts";
@@ -359,7 +359,7 @@ export interface PeopleAccess {
   // manager and team name beside, and the chart as drafts make it, as the reader may see them.
   // Telling anyone that a manager has left, or showing them a draft's Restricted details, such as
   // its manager, its dates, or someone it adds, is recorded in the access history.
-  readOrgChart(actor: Actor): Promise<OrgChart>;
+  readOrgChart(actor: Actor, on?: string): Promise<OrgChart>;
   // Sets the colour of a manager's named team, or removes it, at once rather than as a draft.
   setTeamColour(
     actor: Actor,
@@ -817,10 +817,12 @@ function createPeopleAccess(database: Database): PeopleAccess {
         views: await views.readViews(database, actor),
       };
     },
-    readOrgChart: async (actor) => {
+    readOrgChart: async (actor, on) => {
       requirePermission(actor, "org-chart:view");
-      const { includedRestricted, includedHiringPlan, ...chart } =
-        await readOrgChart(database, actor);
+      const { includedRestricted, includedHiringPlan, ...chart } = await (on ===
+      undefined
+        ? readOrgChart(database, actor)
+        : readOrgChartOn(database, actor, on));
       if (includedRestricted) {
         await recordRestrictedView(
           database,

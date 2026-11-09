@@ -10,7 +10,7 @@ import { isDay, typedDay } from "@fathom/shared";
 import { TextInput } from "@mantine/core";
 import { useState } from "react";
 
-export const dayProblem = "Use a date such as 2026-10-31";
+export const dayProblem = "Invalid YYYY-MM-DD date";
 export const dayNeeded = "Date needed";
 
 // What a box shows as it is typed in: only digits and dashes, laid out as the given form lays them.
@@ -33,6 +33,8 @@ export function DayInput({
   problem,
   shown = false,
   onChange,
+  onBlur,
+  onKeyDown,
 }: {
   id?: string;
   label: string;
@@ -48,8 +50,17 @@ export function DayInput({
   // Whether to say a missing or partial day is not one, as once a form is submitted.
   shown?: boolean;
   onChange: (day: string | undefined, typed: boolean) => void;
+  onBlur?: () => void;
+  onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
   const [text, setText] = useState(value ?? "");
+  // A day chosen elsewhere replaces what the box holds, but never while it is being typed in.
+  const [lastValue, setLastValue] = useState(value);
+  const [typing, setTyping] = useState(false);
+  if (value !== lastValue) {
+    setLastValue(value);
+    if (!typing && value !== undefined && value !== text) setText(value);
+  }
   const whole = isDay(text);
   const unfinished = text !== "" && !whole;
   const wrong = unfinished && (shown || text.length >= "2026-10-31".length);
@@ -60,6 +71,14 @@ export function DayInput({
       {...(size === undefined ? {} : { size })}
       {...(placeholder === undefined ? {} : { placeholder })}
       {...(description === undefined ? {} : { description })}
+      onFocus={() => {
+        setTyping(true);
+      }}
+      onBlur={() => {
+        setTyping(false);
+        onBlur?.();
+      }}
+      {...(onKeyDown === undefined ? {} : { onKeyDown })}
       aria-required={required}
       autoComplete="off"
       inputMode="numeric"

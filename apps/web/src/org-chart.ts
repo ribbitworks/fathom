@@ -18,14 +18,20 @@ import {
   type PaletteColour,
   type Show,
   allOf,
+  isFirstOfMonth,
 } from "@fathom/shared";
-import { queryOptions } from "@tanstack/react-query";
-import { getJson, sendJson } from "./api.ts";
+import { dayQuery, sendJson } from "./api.ts";
+import { today } from "./today.ts";
 
-export const orgChartQuery = queryOptions({
-  queryKey: ["org-chart"],
-  queryFn: () => getJson("/api/org-chart", orgChartSchema),
-});
+// The chart as it is today, with drafts, or as approved on a chosen day, for readers who see
+// Restricted details.
+export const orgChartQueryOn = dayQuery(
+  "org-chart",
+  "/api/org-chart",
+  orgChartSchema,
+);
+
+export const orgChartQuery = orgChartQueryOn(undefined);
 
 // Fitting a small chart to the screen never enlarges its cards past their own size.
 export const fitOptions = { maxZoom: 1 };
@@ -396,4 +402,18 @@ export interface ChartSearch {
   view?: "feature-teams" | undefined;
   // The feature team whose details are shown beside the chart.
   featureTeam?: string | undefined;
+  // The day the chart is drawn as of, when not today.
+  day?: string | undefined;
+}
+
+// The day the chart should be drawn as of, or undefined for today. Readers who do not see Restricted
+// details see feature teams by whole months, and reporting lines only as they are today.
+export function chartDay(
+  asked: string | undefined,
+  featureTeams: boolean,
+  seesDays: boolean,
+): string | undefined {
+  if (asked === undefined || asked === today()) return undefined;
+  if (seesDays) return asked;
+  return featureTeams && isFirstOfMonth(asked) ? asked : undefined;
 }

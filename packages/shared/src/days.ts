@@ -20,6 +20,9 @@ export const isDay = (text: string): boolean =>
 
 export const isFirstOfMonth = (day: string): boolean => day.endsWith("-01");
 
+// Asks for something as of a day; without one, as it is today.
+export const dayQuerySchema = z.object({ on: daySchema.optional() });
+
 const monthLength = "YYYY-MM".length;
 
 // The month a day is in, such as 2026-10 for 2026-10-31.

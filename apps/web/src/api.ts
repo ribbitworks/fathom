@@ -4,6 +4,7 @@
 // status and message, refusals such as a missing sign-in are not retried, a request refused because
 // the session has ended sends the user to sign in again, and every failure can be put plainly.
 
+import { keepPreviousData, queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 
 const unauthorized = 401;
@@ -134,3 +135,18 @@ export function describeProblem(error: Error, fallback: string): string {
     ? error.serverMessage
     : fallback;
 }
+
+// A read of something as it is today, or as of a chosen day, keeping what is shown while another
+// day's loads.
+export const dayQuery =
+  <Schema extends z.ZodType>(name: string, path: string, schema: Schema) =>
+  (day: string | undefined) =>
+    queryOptions({
+      queryKey: day === undefined ? [name] : [name, day],
+      queryFn: () =>
+        getJson(
+          day === undefined ? path : `${path}?on=${encodeURIComponent(day)}`,
+          schema,
+        ),
+      placeholderData: keepPreviousData,
+    });

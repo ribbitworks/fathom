@@ -29,7 +29,7 @@ import {
 } from "@mantine/core";
 import { useState } from "react";
 import { DayInput } from "./day-input.tsx";
-import { today } from "./today.ts";
+import { useDraftDateBox } from "./feature-team-date-box.ts";
 import {
   featureTeamsQuery,
   liveTeam,
@@ -43,7 +43,6 @@ export const featureTeamPanelId = "feature-team-panel";
 const titleId = "feature-team-panel-title";
 // The picker's choice that starts a new team, which no team's id can be.
 const newTeam = "new";
-const laterDayProblem = "Use today or an earlier day";
 
 export const noFeatureTeamEdits: FeatureTeamEdits = {
   propose: false,
@@ -76,6 +75,8 @@ export interface FeatureTeamActions {
     personId: string,
     from: string | undefined,
   ) => void;
+  // Moves everything the team's draft changes to a day.
+  moveChanges: (team: FeatureTeam, from: string, onFailed: () => void) => void;
   removeTeam: (team: FeatureTeam) => void;
   discard: (team: FeatureTeam) => void;
   resubmit: (team: FeatureTeam) => void;
@@ -113,11 +114,8 @@ export function FeatureTeamPanel({
   onClose: () => void;
 }) {
   const [name, setName] = useState(team?.name ?? "");
-  // Only a day typed into the date box. Left alone it is none, so the server's today is used
-  // however long the panel stays open.
-  const [from, setFrom] = useState<string | undefined>(undefined);
   const [renaming, setRenaming] = useState(false);
-  const dayToSend = () => (from === today() ? undefined : from);
+  const dateBox = useDraftDateBox(team, edits.dates, actions.moveChanges);
   const frame = (title: string, content: React.ReactNode) => (
     <SidePanelFrame
       id={featureTeamPanelId}
@@ -263,6 +261,7 @@ export function FeatureTeamPanel({
             onKeyDown={(event) => {
               if (event.key === "Enter") event.currentTarget.blur();
               if (event.key === "Escape") {
+                event.preventDefault();
                 setName(shown.name);
                 setRenaming(false);
               }
@@ -339,7 +338,9 @@ export function FeatureTeamPanel({
             ]}
             value={shown.leadId}
             onChange={(leadId) => {
-              actions.lead(team, leadId, dayToSend());
+              dateBox.withDay((day) => {
+                actions.lead(team, leadId, day);
+              });
             }}
           />
         ) : (
@@ -381,7 +382,9 @@ export function FeatureTeamPanel({
                 size="sm"
                 aria-label={`Remove ${nameOf(personId)} from ${shown.name}`}
                 onClick={() => {
-                  actions.remove(team, personId, dayToSend());
+                  dateBox.withDay((day) => {
+                    actions.remove(team, personId, day);
+                  });
                 }}
               />
             )}
@@ -398,22 +401,19 @@ export function FeatureTeamPanel({
             data={choices}
             value={null}
             onChange={(personId) => {
-              actions.add(team, String(personId), dayToSend());
+              dateBox.withDay((day) => {
+                actions.add(team, String(personId), day);
+              });
             }}
           />
         )}
         {changes && edits.dates && (
           <DayInput
+            key={dateBox.boxKey}
             label="Takes effect from"
             required={false}
-            description="Your changes take effect on this date. Use today or an earlier date."
-            value={from ?? today()}
-            problem={
-              from !== undefined && from > today() ? laterDayProblem : undefined
-            }
-            onChange={(day) => {
-              setFrom(day);
-            }}
+            description="Today or earlier"
+            {...dateBox.box}
           />
         )}
       </Stack>
@@ -434,6 +434,7 @@ export function FeatureTeamPanel({
               variant="default"
               onClick={() => {
                 actions.discard(team);
+                dateBox.reset();
               }}
             >
               Discard draft

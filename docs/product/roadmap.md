@@ -34,10 +34,10 @@ Development uses fictional data only.
 Covers the owner's immediate needs. Each goal starts in its simplest useful form, and the first stage shows the plan in tables and simple charts rather than an interactive Gantt view.
 
 - **People and teams:** Includes feature teams and feature leads. Employee details are limited to the General tier plus start and end dates.
-- **Org structure:** People managers and their current direct reports, and the org chart of today's reporting lines, without planned changes. The owner brought the org chart forward from The Organization stage, as the [Decisions Log](decisions.md#workforce) records.
+- **Org structure:** People managers and their current direct reports, and the org chart of reporting lines, today or, for those who see Restricted details, on a chosen date, without planned changes. The owner brought the org chart forward from The Organization stage, as the [Decisions Log](decisions.md#workforce) records.
 - **Change history:** Who changed what, and when, for the data each user may see.
 - **Plan approval:** Drafts and their approval, built on people first, so every later table follows the same pattern. Includes feature team approval, in which Engineering Managers' proposals are approved by an Approver.
-- **Projects, proposals, and feature teams:** Projects with their milestones, proposals, and feature teams, built before the roadmap's features, as the [Decisions Log](decisions.md#planning) sets out. Their links to features come with the roadmap view. Feature teams include planned membership changes and leads, a monthly grid of who is on which team, and their chart on a chosen date, brought forward from The Organization stage by the owner on 2026-11-08, as the [Decisions Log](decisions.md#workforce) records.
+- **Projects, proposals, and feature teams:** Projects with their milestones, proposals, and feature teams, built before the roadmap's features, as the [Decisions Log](decisions.md#planning) sets out. Their links to features come with the roadmap view. Feature teams include planned membership changes and leads, a monthly grid of who is on which team, and the org chart on a chosen date, brought forward from The Organization stage by the owner on 2026-11-08, as the [Decisions Log](decisions.md#workforce) records.
 - **Roadmap view:** First built as the Product Manager's working roadmap, an input to the rest of the plan: features in a table grouped by cycle. The visual roadmap comes in a later stage.
 - **Release planning:** Cycles, releases, and release streams.
 - **Lists drawn from a table:** Added by the owner. A list whose choices are the values of a chosen column in a chosen table, such as product names, so a column elsewhere can pick from them without the values being kept twice.
@@ -65,7 +65,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 
 ## Stage: The Organization
 
-- **Org structure:** Planned reporting changes, and the org chart of reporting lines on a chosen date.
+- **Org structure:** Planned reporting changes.
 - **Own record and reports:** Users see their own record and their reports' records through a link to their person record, as proposed in [Roles](roles.md).
 - **Unified people view**
 - **Team composition:** The remaining measures, such as test-to-development ratios.

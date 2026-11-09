@@ -9,7 +9,8 @@
 // cards, and the lines to them, are drawn in its colour, which reaches down to the teams below that
 // have none, even when a team is shown alone. The Draft menu, as on tables, draws drafts of
 // managers, positions and team names beside the live chart, applied to it, or not at all, which
-// leaves the chart read only; its choice is kept in the address.
+// leaves the chart read only; its choice is kept in the address. A date control draws the chart as
+// of another day, read only, and is kept in the address too.
 
 import type { FeatureTeams, PaletteColour, Show } from "@fathom/shared";
 import {
@@ -62,10 +63,11 @@ import {
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
 import { FeatureTeamsList } from "./feature-teams-list.tsx";
-import { featureTeamPeople, featureTeamsQuery } from "./feature-teams.ts";
+import { featureTeamPeople, featureTeamsQueryOn } from "./feature-teams.ts";
 import { colourVariable } from "./colours.ts";
 import { Icon } from "./icons.tsx";
 import { ChartControls } from "./org-chart-controls.tsx";
+import { OrgChartDate } from "./org-chart-date.tsx";
 import {
   hasApprovedName,
   cardWidth,
@@ -76,12 +78,14 @@ import {
   heightOf,
   stackIndent,
   type ChartSearch,
+  chartDay,
   collapsedBelow,
   levelsOf,
   findFieldId,
   managersAbove,
   type OrgTree,
   orgChartQuery,
+  orgChartQueryOn,
   noTeamEdits,
   type Placed,
   type TeamEdits,
@@ -445,7 +449,10 @@ function Chart({
   search,
   onSearch,
   teamsList,
+  dated,
 }: {
+  // Whether the chart shows another day, which has no drafts to choose among.
+  dated: boolean;
   // The list of teams beside the chart, in place of managers' teams, such as feature teams.
   teamsList?: ReactNode;
   tree: OrgTree;
@@ -592,7 +599,10 @@ function Chart({
               (alone && tree.roots.includes(id))
                 ? undefined
                 : () => {
-                    onSearch({ team: address, show: search.show }, false);
+                    onSearch(
+                      { team: address, show: search.show, day: search.day },
+                      false,
+                    );
                   },
             onToggle: (toggled) => {
               centreOnSpace(false);
@@ -746,7 +756,8 @@ function Chart({
         draft={
           // Drafts are details of people, so those who do not see people see only the approved
           // chart.
-          seesPeople && (
+          seesPeople &&
+          !dated && (
             <DraftMenu
               show={show}
               onShow={(next) => {
@@ -852,7 +863,12 @@ export function OrgChartPage({
   teamEdits: TeamEdits;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
-  const query = useQuery(orgChartQuery);
+  const featureView = search.view === "feature-teams";
+  const day = chartDay(search.day, featureView, showDates);
+  // On another day the chart is read only. Those who do not see Restricted details see feature teams
+  // on it, with people as they are today, since reporting lines on another day are Restricted.
+  const dated = day !== undefined;
+  const query = useQuery(orgChartQueryOn(showDates ? day : undefined));
   const narrow = useNarrow();
   // A person's details and a note of theirs being written, beside the chart.
   const notes = useNoteEditing();
@@ -881,12 +897,18 @@ export function OrgChartPage({
   });
   // Those who do not see people are sent no drafts, so every choice draws the approved chart, which
   // they may still colour teams on.
-  const show = seesPeople ? (search.show ?? "both") : "both";
-  const featureView = search.view === "feature-teams";
   const teamsQuery = useQuery({
-    ...featureTeamsQuery,
+    ...featureTeamsQueryOn(day),
     enabled: featureView,
   });
+  // Also read only for the moment another day's data stays on screen while today's loads.
+  const readOnly =
+    dated || query.isPlaceholderData || teamsQuery.isPlaceholderData;
+  const show = readOnly
+    ? "live"
+    : seesPeople
+      ? (search.show ?? "both")
+      : "both";
   const [creating, setCreating] = useState(false);
   const everyone = useMemo(() => {
     if (query.data === undefined) return undefined;
@@ -948,6 +970,7 @@ export function OrgChartPage({
                     show: search.show,
                     open: search.open,
                     person: search.person ?? search.open,
+                    day: search.day,
                     ...(value === "feature-teams"
                       ? { view: "feature-teams" as const }
                       : {}),
@@ -969,6 +992,7 @@ export function OrgChartPage({
                         person: search.person,
                         show: search.show,
                         open: search.open,
+                        day: search.day,
                       },
                       false,
                     );
@@ -981,6 +1005,16 @@ export function OrgChartPage({
           </Group>
         }
       />
+      {(featureView || showDates) && (
+        <OrgChartDate
+          day={day}
+          seesDays={showDates}
+          onDay={(next) => {
+            setCreating(false);
+            go({ ...search, day: next }, true);
+          }}
+        />
+      )}
       {query.isPending || (featureView && teamsQuery.isPending) ? (
         <Loader role="status" aria-label="Loading" />
       ) : query.isError || tree === undefined || everyone === undefined ? (
@@ -1044,7 +1078,7 @@ export function OrgChartPage({
                         }}
                         notes={notes}
                         onChange={
-                          canEdit
+                          canEdit && !readOnly
                             ? (person, change) => {
                                 save({
                                   ...personUpdate(
@@ -1091,7 +1125,7 @@ export function OrgChartPage({
                         key={openedTeam?.id ?? "new"}
                         team={creating ? undefined : openedTeam}
                         people={query.data.people}
-                        edits={featureTeamEdits}
+                        edits={readOnly ? noFeatureTeamEdits : featureTeamEdits}
                         show={show}
                         narrow={narrow}
                         actions={teamActions}
@@ -1125,6 +1159,7 @@ export function OrgChartPage({
               seesPeople={seesPeople}
               teamEdits={edits}
               show={show}
+              dated={dated}
               search={search}
               onSearch={go}
               {...(featureView

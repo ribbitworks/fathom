@@ -7,10 +7,10 @@
 
 import {
   changeSetIdSchema,
+  dayQuerySchema,
   featureTeamChangeSchema,
   featureTeamColourSchema,
   featureTeamRequestSchema,
-  featureTeamsQuerySchema,
   featureTeamsSchema,
   savedSchema,
 } from "@fathom/shared";
@@ -31,7 +31,7 @@ export function featureTeamRoutes(
       "/api/feature-teams",
       {
         schema: {
-          querystring: featureTeamsQuerySchema,
+          querystring: dayQuerySchema,
           response: { 200: featureTeamsSchema },
         },
       },

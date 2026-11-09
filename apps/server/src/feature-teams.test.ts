@@ -779,7 +779,7 @@ describe("changing a feature team", () => {
     );
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "Your role can't choose an earlier day, so use today or a later day",
+      "This role can't choose an earlier date. Use today or a later date.",
     );
   });
 
@@ -899,6 +899,91 @@ describe("changing a feature team", () => {
 
     expect(refusal(response)).toBe(
       "This person joined or left this team on that date or later. Choose a later date.",
+    );
+  });
+
+  it("sends its maker the day of a change not yet published", async () => {
+    const member = await person();
+    const id = await liveTeam();
+
+    await ok(
+      await change(id, { add: [member], from: "2025-10-01" }, editor, {
+        publish: false,
+      }),
+    );
+
+    expect((await teamSeen(id))?.draft?.days).toEqual({
+      [member]: "2025-10-01",
+    });
+    await ok(await send(editor, "POST", "/api/unpublished/discard"));
+  });
+
+  it("moves everything a draft changes to a day given alone", async () => {
+    const lead = await person();
+    const member = await person();
+    const joining = await person();
+    const id = await liveTeam({
+      leadId: lead,
+      members: [member],
+      from: "2025-01-15",
+    });
+    await changed(id, { add: [joining], leadId: member });
+
+    await changed(id, { from: "2025-10-01" });
+
+    expect((await teamSeen(id))?.draft).toMatchObject({
+      days: { [joining]: "2025-10-01" },
+      leadDay: "2025-10-01",
+    });
+  });
+
+  it("moves a draft back to today, keeping no days, when today is given alone", async () => {
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member], from: "2025-10-01" });
+
+    await changed(id, { from: today });
+
+    const draft = (await teamSeen(id))?.draft;
+    expect(draft?.days).toBeUndefined();
+    expect(draft?.changed).toEqual(["members"]);
+  });
+
+  it("puts a draft's days back when moving it is undone", async () => {
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member], from: "2025-10-01" });
+    const moved = await changed(id, { from: "2025-11-03" });
+
+    await ok(await send(editor, "POST", `/api/undo/${String(moved)}`));
+
+    expect((await teamSeen(id))?.draft?.days).toEqual({
+      [member]: "2025-10-01",
+    });
+  });
+
+  it("lets a proposer who does not see Restricted details move a draft to the first of a later month", async () => {
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member] }, proposer);
+
+    await changed(id, { from: "2099-02-01" }, proposer);
+
+    expect((await teamSeen(id, editor))?.draft?.days).toEqual({
+      [member]: "2099-02-01",
+    });
+  });
+
+  it("refuses moving a draft to a day that does not fit its changes", async () => {
+    const member = await person({ startDate: "2024-01-01" });
+    const id = await liveTeam();
+    await changed(id, { add: [member] });
+
+    const response = await change(id, { from: "2023-06-01" });
+
+    expect(response.statusCode).toBe(400);
+    expect(refusal(response)).toBe(
+      "Someone can't join or leave a team before their start date",
     );
   });
 

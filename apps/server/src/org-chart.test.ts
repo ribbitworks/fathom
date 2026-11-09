@@ -114,6 +114,127 @@ async function chart(
 
 const drafted = (as = cookie) => chart(as, "drafted");
 
+async function chartOn(day: string, as = cookie) {
+  const response = await test.request(as, "GET", `/api/org-chart?on=${day}`);
+  expect(response.statusCode, response.body).toBe(200);
+  const read = response.json<{
+    people: OrgChartPerson[];
+    drafted: OrgChartPerson[];
+  }>();
+  return new Map(read.people.map((one) => [one.id, one]));
+}
+
+describe("the org chart on a chosen day", () => {
+  it("shows each person under the manager they had that day", async () => {
+    const earlier = await person();
+    const later = await person();
+    const report = await person({ isManager: false });
+    await changed(report, { managerId: earlier, managerFrom: "2024-01-01" });
+    await approved([report]);
+    await changed(report, { managerId: later, managerFrom: "2024-03-01" });
+    await approved([report]);
+
+    expect((await chartOn("2024-02-29")).get(report)?.managerId).toBe(earlier);
+    expect((await chartOn("2024-03-01")).get(report)?.managerId).toBe(later);
+  });
+
+  it("shows only those employed that day", async () => {
+    const starter = await person({ startDate: "2024-06-01" });
+
+    expect((await chartOn("2024-05-31")).has(starter)).toBe(false);
+    expect((await chartOn("2024-06-01")).has(starter)).toBe(true);
+  });
+
+  it("shows the chart as approved, without drafts", async () => {
+    const manager = await person();
+    const report = await person({ isManager: false });
+    await changed(report, { managerId: manager, managerFrom: "2024-03-01" });
+
+    const shown = (await chartOn("2024-06-01")).get(report);
+
+    expect(shown?.managerId).toBeNull();
+    expect(shown?.draft).toBeUndefined();
+  });
+
+  it.each([
+    ["engineering-manager", 200],
+    ["engineering-director", 200],
+    ["workforce-administrator", 200],
+    ["executive", 200],
+    ["team-member", 403],
+    ["product-manager", 403],
+    ["feature-lead", 403],
+    ["project-manager", 403],
+    ["resource-planner", 403],
+  ] as const)("answers %s with %i", async (role, status) => {
+    const reader = await test.signedIn(role);
+
+    const response = await test.request(
+      reader.cookie,
+      "GET",
+      "/api/org-chart?on=2024-06-01",
+    );
+
+    expect(response.statusCode).toBe(status);
+  });
+
+  it("is refused without the org chart", async () => {
+    const reader = await test.signedIn(["restricted:view", "changes:view"]);
+
+    expect(
+      (await test.request(reader.cookie, "GET", "/api/org-chart?on=2024-06-01"))
+        .statusCode,
+    ).toBe(403);
+  });
+
+  it("is refused when signed out", async () => {
+    expect(
+      (await test.request("", "GET", "/api/org-chart?on=2024-06-01"))
+        .statusCode,
+    ).toBe(401);
+  });
+
+  it("is refused a day that does not exist", async () => {
+    expect(
+      (await test.request(cookie, "GET", "/api/org-chart?on=2024-02-30"))
+        .statusCode,
+    ).toBe(400);
+  });
+
+  it("is refused to readers who do not see Restricted details", async () => {
+    const reader = await test.signedIn("resource-planner");
+
+    const response = await test.request(
+      reader.cookie,
+      "GET",
+      "/api/org-chart?on=2024-06-01",
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json<{ error: string }>().error).toBe(
+      "This role can't see reporting lines on another date",
+    );
+  });
+
+  it("records a view of Restricted details", async () => {
+    const reader = await test.signedIn("engineering-director");
+
+    await chartOn("2024-06-01", reader.cookie);
+
+    expect(
+      await test.connection
+        .select({ id: accessHistory.id })
+        .from(accessHistory)
+        .where(
+          and(
+            eq(accessHistory.actorId, reader.id),
+            eq(accessHistory.action, "restricted-viewed"),
+          ),
+        ),
+    ).not.toEqual([]);
+  });
+});
+
 describe("the org chart", () => {
   const restrictedViews = (actorId: string) =>
     test.connection
@@ -634,6 +755,13 @@ describe("planned hires on the chart", () => {
     if (approve) await approveHires([id]);
     return id;
   };
+
+  it("are left out of the chart on a chosen day", async () => {
+    const id = await hire();
+
+    expect((await chart()).has(id)).toBe(true);
+    expect((await chartOn("2024-06-01")).has(id)).toBe(false);
+  });
   const changeHire = async (id: string, body: object) => {
     const response = await test.request(
       cookie,

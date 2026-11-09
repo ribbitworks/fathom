@@ -12,6 +12,7 @@ import {
   type Permission,
   personLengths,
   showSchema,
+  daySchema,
 } from "@fathom/shared";
 import {
   createRootRouteWithContext,
@@ -68,6 +69,8 @@ const chartSearch = z.object({
   view: z.literal("feature-teams").optional().catch(undefined),
   // The feature team whose details are shown beside the chart.
   featureTeam: z.uuid().optional().catch(undefined),
+  // The day the chart is drawn as of, when not today.
+  day: daySchema.optional().catch(undefined),
 });
 
 // Pages only for users with a permission; anyone else is told there is no such page.

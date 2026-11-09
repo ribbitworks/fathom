@@ -21,7 +21,11 @@ export function useFeatureTeamActions(
   // Shows the team just added.
   openTeam: (id: string) => void,
 ): FeatureTeamActions {
-  const { save: saving, undoable } = useSaving<FeatureTeams>({
+  const {
+    save: saving,
+    undoable,
+    done,
+  } = useSaving<FeatureTeams>({
     queryKey: featureTeamsQuery.queryKey,
     removed:
       "Someone else has removed this feature team. The teams have been refreshed.",
@@ -84,6 +88,17 @@ export function useFeatureTeamActions(
           }),
         `Fathom could not remove a member from ${team.name}.`,
       );
+    },
+    moveChanges: (team, from, onFailed) => {
+      saving({
+        next: (data) => data,
+        onFailed,
+        save: () => updateFeatureTeam(team.id, { from }),
+        failure: `Fathom could not change the date of ${team.name}.`,
+        onSaved: (changeSetId, before) => {
+          done("Date changed", changeSetId, before);
+        },
+      });
     },
     removeTeam: (team) => {
       saveTeam(

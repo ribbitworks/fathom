@@ -115,4 +115,38 @@ describe("the day box", () => {
     );
     expect(screen.getByText(dayProblem)).toBeDefined();
   });
+
+  it("shows a day chosen elsewhere, leaving what is being typed alone", async () => {
+    const shown = (value: string | undefined) => (
+      <MantineProvider theme={testTheme}>
+        <DayInput label="Starts" value={value} onChange={vi.fn()} />
+      </MantineProvider>
+    );
+    const { rerender } = render(shown("2027-01-01"));
+    const input = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "Starts",
+    });
+    rerender(shown("2027-02-01"));
+    expect(input.value).toBe("2027-02-01");
+    await userEvent.clear(input);
+    await userEvent.type(input, "2027");
+    rerender(shown(undefined));
+    expect(input.value).toBe("2027");
+  });
+
+  it("does not replace what is being typed with a day chosen elsewhere", async () => {
+    const shown = (value: string) => (
+      <MantineProvider theme={testTheme}>
+        <DayInput label="Starts" value={value} onChange={vi.fn()} />
+      </MantineProvider>
+    );
+    const { rerender } = render(shown("2027-01-01"));
+    const input = screen.getByRole<HTMLInputElement>("textbox", {
+      name: "Starts",
+    });
+    await userEvent.click(input);
+    await userEvent.keyboard("{Backspace}");
+    rerender(shown(""));
+    expect(input.value).toBe("2027-01-0");
+  });
 });

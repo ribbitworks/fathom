@@ -715,7 +715,7 @@ function fromDay(actor: Actor, from: string | undefined, today: string) {
   if (from === undefined || from === today) return undefined;
   if (from < today && !actor.permissions.includes("restricted:edit")) {
     throw new ForbiddenError(
-      "Your role can't choose an earlier day, so use today or a later day",
+      "This role can't choose an earlier date. Use today or a later date.",
     );
   }
   if (from > today && !seesRestrictedDetails(actor) && !isFirstOfMonth(from)) {
@@ -1082,19 +1082,32 @@ export async function updateFeatureTeam(
         : removed.includes(String(team.leadId))
           ? null
           : textOrNull(team.leadId);
+    // A request giving only a day moves everything the draft changes to that day.
+    const moving =
+      change.from !== undefined &&
+      change.name === undefined &&
+      change.leadId === undefined &&
+      change.add === undefined &&
+      change.remove === undefined;
+    const wasMembers = membersOf(before);
+    const dayPeople = moving
+      ? [...new Set([...members, ...wasMembers])].filter(
+          (one) => members.includes(one) !== wasMembers.includes(one),
+        )
+      : [...added, ...removed];
     const everyone = await peopleOf(
       transaction,
-      [...added, ...removed, ...(leadId === null ? [] : [leadId])],
+      [...dayPeople, ...(leadId === null ? [] : [leadId])],
       today,
     );
     checkMembers(actor, added, members, leadId, everyone);
     // A day is kept for each member a draft adds or removes, so approving it records when; a change
     // taken back leaves none.
-    const days = { ...datesOf(team) };
+    const days = moving ? {} : { ...datesOf(team) };
     if (from !== undefined) {
       // Each is a person the change names.
       // eslint-disable-next-line security/detect-object-injection
-      for (const personId of [...added, ...removed]) days[personId] = from;
+      for (const personId of dayPeople) days[personId] = from;
     }
     const dates = new Map(
       Object.entries(days).filter(
@@ -1106,7 +1119,9 @@ export async function updateFeatureTeam(
     // under the new lead, or the old one when none replaces them.
     const wasLead = textOrNull(before?.leadId);
     const setsLead =
-      change.leadId !== undefined || leadId !== textOrNull(team.leadId);
+      moving ||
+      change.leadId !== undefined ||
+      leadId !== textOrNull(team.leadId);
     const leadChanges = setsLead && leadId !== wasLead;
     const [keptLeadDay] = Object.values(leadDatesOf(team));
     const leadDay = setsLead ? from : keptLeadDay;
@@ -1116,7 +1131,7 @@ export async function updateFeatureTeam(
     if (
       from !== undefined &&
       !usesEmployment &&
-      [...removed, ...(leadChanges && leadId !== null ? [leadId] : [])].some(
+      [...dayPeople, ...(leadChanges && leadId !== null ? [leadId] : [])].some(
         (one) => everyone.get(one)?.started === false,
       )
     ) {
@@ -1125,7 +1140,7 @@ export async function updateFeatureTeam(
     if (from !== undefined) {
       await refuseDaysOutOfOrder(
         transaction,
-        [...added, ...removed]
+        dayPeople
           .filter((personId) => dates.has(personId))
           .map((personId) => ({ teamId: id, personId, from })),
         everyone,

@@ -9,6 +9,7 @@
 import {
   changeSetIdSchema,
   columnKeySchema,
+  dayQuerySchema,
   fieldMoveSchema,
   fieldRequestSchema,
   fieldSchema,
@@ -52,8 +53,13 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
 
     app.get(
       "/api/org-chart",
-      { schema: { response: { 200: orgChartSchema } } },
-      async (request) => people.readOrgChart(request.actor),
+      {
+        schema: {
+          querystring: dayQuerySchema,
+          response: { 200: orgChartSchema },
+        },
+      },
+      async (request) => people.readOrgChart(request.actor, request.query.on),
     );
 
     // A team is its manager's, so it is named by them.

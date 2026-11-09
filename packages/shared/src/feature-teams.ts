@@ -103,11 +103,6 @@ export function disbandedMonth(
   return monthOf(isFirstOfMonth(lastOff) ? lastOff : addMonths(lastOff, 1));
 }
 
-// Asks for the teams as of a day, or as they are today with their drafts when none is given.
-export const featureTeamsQuerySchema = z.object({
-  on: daySchema.optional(),
-});
-
 // Adds a feature team, with its members and lead, who is one of them; members join from the day
 // given, today or later, or earlier for those who may change Restricted details, or from today.
 export const featureTeamRequestSchema = z.object({

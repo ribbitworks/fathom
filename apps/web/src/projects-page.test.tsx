@@ -652,7 +652,7 @@ describe("a project's milestones in its panel", () => {
       const { dialog, date, submit } = await openDialog();
       await userEvent.type(date, "2030");
       await submit();
-      expect(dialog.getByText("Use a date such as 2026-10-31")).toBeTruthy();
+      expect(dialog.getByText("Invalid YYYY-MM-DD date")).toBeTruthy();
     });
 
     it("needs more than spaces in a name, and takes that back once given one", async () => {

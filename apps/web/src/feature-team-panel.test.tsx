@@ -18,6 +18,7 @@ import {
   FeatureTeamPanel,
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
+import { dayProblem } from "./day-input.tsx";
 import { testTheme, wholeText } from "./test-support.tsx";
 
 const person = (
@@ -88,6 +89,7 @@ const actions = () =>
     lead: vi.fn(),
     add: vi.fn(),
     remove: vi.fn(),
+    moveChanges: vi.fn(),
     removeTeam: vi.fn(),
     discard: vi.fn(),
     resubmit: vi.fn(),
@@ -393,53 +395,226 @@ describe("a feature team's panel", () => {
     expect(asked.add).toHaveBeenCalledWith(team(), "p1", undefined);
   });
 
-  it("adds and removes members from an earlier day given", async () => {
+  it("refuses a day with nothing to date, and goes back to today", async () => {
+    const { asked } = openPanel();
+    const from = screen.getByRole<HTMLInputElement>("textbox", {
+      name: /Takes effect from/,
+    });
+    await userEvent.clear(from);
+    await userEvent.type(from, "20270301{Enter}");
+    expect(screen.getByText("Make a change first")).toBeDefined();
+    expect(
+      screen.getByRole<HTMLInputElement>("textbox", {
+        name: /Takes effect from/,
+      }).value,
+    ).toBe("2027-03-10");
+    expect(asked.moveChanges).not.toHaveBeenCalled();
+  });
+
+  it("clears the refusal once a change is made", async () => {
     const { asked } = openPanel();
     const from = screen.getByRole("textbox", { name: /Takes effect from/ });
     await userEvent.clear(from);
-    await userEvent.type(from, "20270301");
-    await userEvent.click(screen.getByRole("combobox", { name: "Add member" }));
-    await userEvent.click(
-      screen.getByRole("option", { name: /^Casey Fictional/ }),
-    );
+    await userEvent.type(from, "20270301{Enter}");
     await userEvent.click(
       screen.getByRole("button", {
         name: "Remove Blake Fictional from Fictional Lighthouse",
       }),
     );
-    expect([asked.add.mock.calls, asked.remove.mock.calls]).toEqual([
-      [[team(), "p1", "2027-03-01"]],
-      [[team(), "m2", "2027-03-01"]],
-    ]);
+    expect(screen.queryByText("Make a change first")).toBeNull();
+    expect(asked.remove.mock.calls).toEqual([[team(), "m2", undefined]]);
   });
 
-  it("says a later day will not do, and sends it for the server to refuse", async () => {
+  it("clears the refusal once something is typed", async () => {
+    openPanel();
+    const from = () =>
+      screen.getByRole("textbox", { name: /Takes effect from/ });
+    await userEvent.clear(from());
+    await userEvent.type(from(), "20270301{Enter}");
+    await userEvent.type(from(), "1");
+    expect(screen.queryByText("Make a change first")).toBeNull();
+  });
+
+  it("says nothing when today is typed with nothing to date", async () => {
+    openPanel();
+    const from = screen.getByRole("textbox", { name: /Takes effect from/ });
+    await userEvent.clear(from);
+    await userEvent.type(from, "20270310{Enter}");
+    expect(screen.queryByText("Make a change first")).toBeNull();
+  });
+
+  it("says a later day will not do, and makes no change until it is put right", async () => {
     const { asked } = openPanel();
     const from = screen.getByRole("textbox", { name: /Takes effect from/ });
-    expect(screen.queryByText("Use today or an earlier day")).toBeNull();
+    expect(screen.queryByText("Use today or an earlier date")).toBeNull();
     await userEvent.clear(from);
     await userEvent.type(from, "20270320");
-    expect(screen.getByText("Use today or an earlier day")).toBeDefined();
+    expect(screen.getByText("Use today or an earlier date")).toBeDefined();
     await userEvent.click(
       screen.getByRole("button", {
         name: "Remove Avery Fictional from Fictional Lighthouse",
       }),
     );
-    expect(asked.remove.mock.calls).toEqual([[team(), "m1", "2027-03-20"]]);
+    expect(asked.remove).not.toHaveBeenCalled();
   });
 
-  it("sends no day not typed in full", async () => {
+  it("makes no change from a day not typed in full, and says so", async () => {
     const { asked } = openPanel();
     const from = screen.getByRole("textbox", { name: /Takes effect from/ });
     await userEvent.clear(from);
     await userEvent.type(from, "2027");
-    expect(screen.queryByText("Use today or an earlier day")).toBeNull();
     await userEvent.click(
       screen.getByRole("button", {
         name: "Remove Blake Fictional from Fictional Lighthouse",
       }),
     );
-    expect(asked.remove.mock.calls).toEqual([[team(), "m2", undefined]]);
+    expect(asked.remove).not.toHaveBeenCalled();
+    expect(screen.getByText(dayProblem)).toBeDefined();
+  });
+
+  const dated = (days: Record<string, string>, leadDay?: string) =>
+    team({
+      draft: draft({
+        changed: ["members"],
+        days,
+        ...(leadDay === undefined ? {} : { leadDay }),
+      }),
+    });
+
+  const dateBox = () =>
+    screen.getByRole<HTMLInputElement>("textbox", {
+      name: /Takes effect from/,
+    });
+
+  it("shows the day its draft gives", () => {
+    openPanel({ shown: dated({ m1: "2027-02-01" }) });
+    expect(dateBox().value).toBe("2027-02-01");
+  });
+
+  it("shows the day of a draft's change of lead", () => {
+    openPanel({ shown: dated({}, "2027-02-01") });
+    expect(dateBox().value).toBe("2027-02-01");
+  });
+
+  it("says when a draft holds several days", () => {
+    openPanel({ shown: dated({ m1: "2027-02-01" }, "2027-01-01") });
+    expect(dateBox().value).toBe("");
+    expect(dateBox().placeholder).toBe("Several dates");
+  });
+
+  it("sends the draft's day with the next change", async () => {
+    const shown = dated({ m1: "2027-02-01" });
+    const { asked } = openPanel({ shown });
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Remove Blake Fictional from Fictional Lighthouse",
+      }),
+    );
+    expect(asked.remove.mock.calls).toEqual([[shown, "m2", "2027-02-01"]]);
+  });
+
+  it("does nothing when the box is left untouched", async () => {
+    const { asked } = openPanel({ shown: dated({ m1: "2027-02-01" }) });
+    await userEvent.click(dateBox());
+    await userEvent.tab();
+    expect(asked.moveChanges).not.toHaveBeenCalled();
+    expect(screen.queryByText("Make a change first")).toBeNull();
+  });
+
+  it("goes back to the draft's day when the box is left empty", async () => {
+    const { asked } = openPanel({ shown: dated({ m1: "2027-02-01" }) });
+    await userEvent.clear(dateBox());
+    await userEvent.tab();
+    expect(dateBox().value).toBe("2027-02-01");
+    expect(asked.moveChanges).not.toHaveBeenCalled();
+  });
+
+  it("refuses a day for a draft with no member or lead to date", async () => {
+    const { asked } = openPanel({
+      shown: team({ draft: draft({ changed: ["name"] }) }),
+    });
+    await userEvent.clear(dateBox());
+    await userEvent.type(dateBox(), "20270201{Enter}");
+    expect(screen.getByText("Make a change first")).toBeDefined();
+    expect(asked.moveChanges).not.toHaveBeenCalled();
+  });
+
+  it("sends no day for those who may not date changes, whatever the draft holds", async () => {
+    const shown = dated({ m1: "2027-02-01" });
+    const { asked } = openPanel({
+      shown,
+      edits: { ...everything, dates: false },
+    });
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Remove Blake Fictional from Fictional Lighthouse",
+      }),
+    );
+    expect(asked.remove.mock.calls).toEqual([[shown, "m2", undefined]]);
+  });
+
+  it("sends no day when today is typed", async () => {
+    const shown = dated({ m1: "2027-02-01" });
+    const { asked } = openPanel({ shown });
+    await userEvent.clear(dateBox());
+    await userEvent.type(dateBox(), "20270310");
+    await userEvent.click(
+      screen.getByRole("button", {
+        name: "Remove Blake Fictional from Fictional Lighthouse",
+      }),
+    );
+    expect(asked.remove.mock.calls).toEqual([[shown, "m2", undefined]]);
+  });
+
+  it("moves the draft to the day typed when Enter is pressed", async () => {
+    const shown = dated({ m1: "2027-02-01" });
+    const { asked } = openPanel({ shown });
+    await userEvent.clear(dateBox());
+    await userEvent.type(dateBox(), "20270205{Enter}");
+    expect(asked.moveChanges.mock.calls).toEqual([
+      [shown, "2027-02-05", expect.any(Function)],
+    ]);
+    expect(document.activeElement).not.toBe(dateBox());
+  });
+
+  it("moves a draft of several days to the day typed, even today", async () => {
+    const shown = dated({ m1: "2027-02-01" }, "2027-01-01");
+    const { asked } = openPanel({ shown });
+    await userEvent.type(dateBox(), "20270310{Enter}");
+    expect(asked.moveChanges.mock.calls).toEqual([
+      [shown, "2027-03-10", expect.any(Function)],
+    ]);
+  });
+
+  it("makes no move when there is no draft to move", async () => {
+    const { asked } = openPanel();
+    await userEvent.clear(dateBox());
+    await userEvent.type(dateBox(), "20270205{Enter}");
+    expect(asked.moveChanges).not.toHaveBeenCalled();
+  });
+
+  it("leaves the draft alone when its own day is typed again", async () => {
+    const { asked } = openPanel({ shown: dated({ m1: "2027-02-01" }) });
+    await userEvent.clear(dateBox());
+    await userEvent.type(dateBox(), "20270201{Enter}");
+    expect(asked.moveChanges).not.toHaveBeenCalled();
+  });
+
+  it("does not move the draft to a day not typed in full", async () => {
+    const { asked } = openPanel({ shown: dated({ m1: "2027-02-01" }) });
+    await userEvent.clear(dateBox());
+    await userEvent.type(dateBox(), "2027{Enter}");
+    expect(asked.moveChanges).not.toHaveBeenCalled();
+    expect(screen.getByText(dayProblem)).toBeDefined();
+  });
+
+  it("puts the day back when Esc is pressed", async () => {
+    const { onClose } = openPanel({ shown: dated({ m1: "2027-02-01" }) });
+    await userEvent.clear(dateBox());
+    await userEvent.type(dateBox(), "2027{Escape}");
+    expect(dateBox().value).toBe("2027-02-01");
+    expect(screen.queryByText(dayProblem)).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it("names someone the org chart does not hold from the team's own names", () => {

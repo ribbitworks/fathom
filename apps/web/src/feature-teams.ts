@@ -16,15 +16,18 @@ import {
   savedSchema,
   type Show,
 } from "@fathom/shared";
-import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
-import { getJson, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
+import { dayQuery, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
 import type { ChartPerson } from "./org-chart.ts";
 
-export const featureTeamsQuery = queryOptions({
-  queryKey: ["feature-teams"],
-  queryFn: () => getJson("/api/feature-teams", featureTeamsSchema),
-});
+// The teams as they are today, with drafts, or those with members on a chosen day, as approved.
+export const featureTeamsQueryOn = dayQuery(
+  "feature-teams",
+  "/api/feature-teams",
+  featureTeamsSchema,
+);
+
+export const featureTeamsQuery = featureTeamsQueryOn(undefined);
 
 const teamPath = (id: string) => `/api/feature-teams/${encodeURIComponent(id)}`;
 

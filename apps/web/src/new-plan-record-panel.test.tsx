@@ -189,7 +189,7 @@ describe("the fields for each kind of column", () => {
     });
     await userEvent.type(screen.getByRole("textbox", { name: /^when/ }), "20");
     await add();
-    expect(screen.getByText("Use a date such as 2026-10-31")).toBeTruthy();
+    expect(screen.getByText("Invalid YYYY-MM-DD date")).toBeTruthy();
     expect(onAdd).not.toHaveBeenCalled();
   });
 
