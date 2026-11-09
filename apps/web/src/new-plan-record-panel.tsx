@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Adding a customer, proposal, project, or milestone in the panel beside its table: a form field for
-// each column a new record has, with any problem Add finds named under its field. The Projects
-// page's milestone dialog draws the same fields.
+// Adding a customer, proposal, project, workstream, or milestone in the panel beside its table: a
+// form field for each column a new record has, with any problem Add finds named under its field.
+// The Projects page's milestone dialog draws the same fields.
 
 import { Checkbox, MultiSelect, Select, Textarea } from "@mantine/core";
 import { isLink } from "@fathom/shared";

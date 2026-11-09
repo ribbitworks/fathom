@@ -11,11 +11,22 @@ import {
   projectRequestSchema,
   projectSubjects,
   proposalRequestSchema,
+  recordTypeOf,
   sameDates,
 } from "./projects.ts";
 
 const first = "00000000-0000-4000-8000-000000000001";
 const second = "00000000-0000-4000-8000-000000000002";
+
+describe("the type a kind of plan record is drafted as", () => {
+  it("is a project for a workstream", () => {
+    expect(recordTypeOf("workstream")).toBe("project");
+  });
+
+  it("is the kind itself for any other", () => {
+    expect(recordTypeOf("proposal")).toBe("proposal");
+  });
+});
 
 describe("a project's dates", () => {
   it("are none without milestones", () => {

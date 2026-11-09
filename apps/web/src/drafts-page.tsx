@@ -29,6 +29,7 @@ import {
   type ProjectPlan,
   type RecordDraft,
   type RecordType,
+  recordTypeOf,
   type ReleaseStream,
   searchWords,
 } from "@fathom/shared";
@@ -475,7 +476,7 @@ function teamEntries(
   });
 }
 
-// Every draft of a customer, proposal, project, or milestone, as entries.
+// Every draft of the plan's records, as entries.
 function planEntries(
   plan: ProjectPlan,
   picks: PlanChoices,
@@ -485,7 +486,7 @@ function planEntries(
   return listedPlanRecords(plan).flatMap(({ kind, record, subject }) => {
     const { draft, heldBy } = record;
     if (draft === undefined) return [];
-    const ref = { type: kind, id: record.id };
+    const ref = { type: recordTypeOf(kind), id: record.id };
     return [
       entry(
         recordKey(ref),

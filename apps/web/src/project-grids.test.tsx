@@ -16,7 +16,8 @@ import {
   proposalColumns,
 } from "./project-grids.tsx";
 import type { TableChoices } from "./projects.ts";
-import { cycleChoices } from "./projects.ts";
+import { cycleChoices, planNodes } from "./projects.ts";
+import { usedRecords } from "./record-drafts.ts";
 import {
   featureDraft,
   fictionalStream,
@@ -389,7 +390,52 @@ describe("the columns' values", () => {
   });
 });
 
+describe("the records a draft uses", () => {
+  it("finds a drafted workstream as the project it is kept as", () => {
+    const drafted = { type: "project", id: "w" } as const;
+    const nodes = planNodes({
+      customers: [],
+      projects: [],
+      proposals: [],
+      workstreams: [
+        {
+          id: "w",
+          name: "Fictional Workstream",
+          ownerId: null,
+          draft: recordDraft({ action: "created" }),
+        },
+      ],
+      features: [
+        feature({ id: "f", draft: featureDraft({ uses: [drafted] }) }),
+      ],
+    });
+    expect(usedRecords([{ type: "feature", id: "f" }], nodes)).toEqual([
+      drafted,
+    ]);
+  });
+});
+
 describe("what a draft changes, in words", () => {
+  it("names a workstream's changed name", () => {
+    expect(
+      planDraftFields(
+        "workstream",
+        {
+          id: "w",
+          name: "After",
+          ownerId: null,
+          draft: recordDraft({ changed: ["name"], live: { name: "Before" } }),
+        },
+        choices(),
+      ),
+    ).toEqual([
+      {
+        key: "name",
+        field: { field: "Name", oldValue: "Before", newValue: "After" },
+      },
+    ]);
+  });
+
   const given = choices({
     people: [{ id: "o1", label: "Owner One", description: "", retired: false }],
     statuses: [{ id: "s1", label: "Open", description: "", retired: false }],

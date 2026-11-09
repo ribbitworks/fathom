@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, and proposals, as the Decisions Log sets out. Each is
-// one of the plan's records, changed through drafts, and shown as its draft makes it, with the
-// draft beside. A project's dates are not entered: they come from its milestones.
+// Customers, projects with their milestones, workstreams, and proposals, as the Decisions Log sets
+// out. Each is one of the plan's records, changed through drafts, and shown as its draft makes it,
+// with the draft beside. A project's dates are not entered: they come from its milestones.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
+import type { RecordType } from "./drafts.ts";
 import { featureSchema } from "./features.ts";
 import { listSchema, meaningSchema } from "./lists.ts";
 import { addressProblem, linkLengths, webAddress } from "./links.ts";
@@ -33,6 +34,11 @@ export const projectSubjects = {
   proposal: (proposal: string) => `the proposal ${proposal}`,
   feature: (feature: string) => `the feature ${feature}`,
 };
+
+// The type a kind of the plan's records is drafted and approved as: a workstream is kept as a
+// project.
+export const recordTypeOf = (kind: RecordType | "workstream"): RecordType =>
+  kind === "workstream" ? "project" : kind;
 
 // The first and last days of a project's milestones, and the day of its next customer delivery
 // from today, each null when it has no such milestone.

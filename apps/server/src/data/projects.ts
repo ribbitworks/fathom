@@ -28,6 +28,7 @@ import {
   type ProposalRequest,
   projectDates,
   type RecordType,
+  recordTypeOf,
   sameDates,
   type Workstream,
   type WorkstreamRequest,
@@ -410,10 +411,6 @@ export type PlanRecordRequest =
 export type PlanKind = PlanRecordRequest["type"];
 
 type ProjectRowKind = Extract<PlanKind, "project" | "workstream">;
-
-// The kind of the plan's records a request is to: a workstream is kept as a project.
-export const recordTypeOf = (kind: PlanKind): RecordType =>
-  kind === "workstream" ? "project" : kind;
 
 // A project or workstream to change, refusing a row of the other kind.
 function changeableProjectRow(

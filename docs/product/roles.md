@@ -8,7 +8,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 ## Starting Roles
 
 - **Team Member:** Sees the plan, including everyone's work assignments, and the org chart.
-- **Product Manager:** Edits projects, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, and approves or rejects drafts of the plan.
+- **Product Manager:** Edits projects, workstreams, proposals, features, milestones, releases, products, customers, and estimates across the whole plan, and approves or rejects drafts of the plan.
 - **Feature Lead:** Sees the plan and people's General details, edits features, estimates, and allocations, and proposes feature teams.
 - **Project Manager:** Edits the plan, sees people and the hiring plan, and approves or rejects drafts of the data the role sees, including feature teams.
 - **Engineering Manager:** Edits the plan and allocations, sees people, with everyone's Restricted details, because people move between managers over time, and the hiring plan, colours teams on the org chart, and proposes feature teams.
@@ -22,7 +22,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 
 | Area | Team Member | Product Manager | Feature Lead | Project Manager | Engineering Manager | Engineering Director | Workforce Administrator | Executive | Resource Planner | Administrator |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Plan: projects, proposals, milestones, releases and the cycles they include (**proposal**), and products and customers (**proposal**) | View | Edit | View | Edit | Edit | Edit | View | View | View | None |
+| Plan: projects, workstreams, proposals, milestones, releases and the cycles they include (**proposal**), and products and customers (**proposal**) | View | Edit | View | Edit | Edit | Edit | View | View | View | None |
 | Features and their estimates, with Edit Features apart from Edit Plan, decided by the owner on 2026-11-07 | View | Edit | Edit | Edit | Edit | Edit | View | View | View | None |
 | Allocations | View | View | Edit | View | Edit | Edit | View | View | Edit | None |
 | People, teams, and reporting lines (General) | None | None | View | View | View | Edit | Edit | View | View | None |
@@ -35,7 +35,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | View | None |
 | Lists of choices, and the columns added to People and Features (everyone with View Plan also sees the columns on Features and their values) | None | None | None | View lists, decided by the owner on 2026-11-01 | None | Edit | Edit | View lists | None | None |
 | Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | Edit | None |
-| Approving drafts of the plan: features, projects, proposals, and the roadmap | None | Approve | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts of the plan: features, projects, workstreams, proposals, and the roadmap | None | Approve | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of releases, release streams, and cycle patterns | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of people, teams, and reporting lines | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of planned hires | None | None | None | Approve | None | Approve | None | None | None | None |

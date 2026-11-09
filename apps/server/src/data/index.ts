@@ -51,7 +51,7 @@ import type {
   TimeZoneSetting,
   Unpublished,
 } from "@fathom/shared";
-import { draftsRequestSchema } from "@fathom/shared";
+import { draftsRequestSchema, recordTypeOf } from "@fathom/shared";
 import { sql } from "drizzle-orm";
 import {
   type Actor,
@@ -759,7 +759,7 @@ function createProjectAccess(database: Database): ProjectAccess {
         // eslint-disable-next-line security/detect-object-injection
         planChanges[type].add(
           database,
-          recordEditor(actor, projectData.recordTypeOf(type)),
+          recordEditor(actor, recordTypeOf(type)),
           request as never,
         ),
       ),
@@ -769,7 +769,7 @@ function createProjectAccess(database: Database): ProjectAccess {
         // eslint-disable-next-line security/detect-object-injection
         planChanges[type].change(
           database,
-          recordEditor(actor, projectData.recordTypeOf(type)),
+          recordEditor(actor, recordTypeOf(type)),
           id,
           request as never,
         ),
@@ -777,7 +777,7 @@ function createProjectAccess(database: Database): ProjectAccess {
     remove: async (actor, type, id) =>
       projectData.removeRecord(
         database,
-        recordEditor(actor, projectData.recordTypeOf(type)),
+        recordEditor(actor, recordTypeOf(type)),
         type,
         id,
       ),

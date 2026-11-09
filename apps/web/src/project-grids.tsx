@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Projects page's tables: customers, projects, proposals, and milestones, each the table of
-// records record-grid.tsx sets out, with what is particular to its kind. A record's fields are its
-// columns, and its draft's live values are kept by the same names. A project's dates follow from its
-// milestones, so are read only. A milestone belongs to the project it was added to, so its project
-// is picked only on a new row.
+// The Projects page's tables: customers, projects, workstreams, proposals, and milestones, each the
+// table of records record-grid.tsx sets out, with what is particular to its kind. A record's fields
+// are its columns, and its draft's live values are kept by the same names. A project's dates follow
+// from its milestones, so are read only. A milestone belongs to the project it was added to, so its
+// project is picked only on a new row.
 
 import {
   type Choice,
@@ -22,6 +22,9 @@ import {
   projectLengths,
   type Proposal,
   type ProposalRequest,
+  recordTypeOf,
+  type Workstream,
+  type WorkstreamRequest,
 } from "@fathom/shared";
 import { Menu, VisuallyHidden } from "@mantine/core";
 import type { ReactNode } from "react";
@@ -104,6 +107,7 @@ const recordWords: Readonly<
   Record<PlanTab, { label: string; one: string; noun: string }>
 > = {
   projects: { label: "Projects", one: "project", noun: "projects" },
+  workstreams: { label: "Workstreams", one: "workstream", noun: "workstreams" },
   proposals: { label: "Proposals", one: "proposal", noun: "proposals" },
   customers: { label: "Customers", one: "customer", noun: "customers" },
   milestones: { label: "Milestones", one: "milestone", noun: "milestones" },
@@ -177,7 +181,7 @@ function draftFieldsOf<Rec extends PlanRecord>(
 
 const drafts = (type: PlanRecordKind) => (ids: string[]) => ({
   ...noDrafts(),
-  records: ids.map((id) => ({ type, id })),
+  records: ids.map((id) => ({ type: recordTypeOf(type), id })),
 });
 
 // What a kind of record's table needs besides its columns.
@@ -360,6 +364,27 @@ export function projectTable(
           )}
         </>
       ),
+  });
+}
+
+export const workstreamColumns = (
+  choices: TableChoices,
+  onOpen?: (workstream: Workstream) => void,
+): Column<Workstream, PlanChange>[] => [
+  nameColumn(onOpen),
+  ownerColumn<Workstream>(choices.people),
+];
+
+export function workstreamTable(
+  choices: TableChoices,
+  onOpen?: (workstream: Workstream) => void,
+): RecordTable<Workstream, PlanChange, WorkstreamRequest> {
+  return planTable<Workstream, WorkstreamRequest>({
+    type: "workstream",
+    ...wordsOf("workstreams"),
+    columns: () => workstreamColumns(choices, onOpen),
+    request: (changes) => merged(changes) as WorkstreamRequest,
+    menuItems: detailsItem(onOpen),
   });
 }
 
@@ -625,6 +650,7 @@ const draftColumns: Readonly<
 > = {
   customer: () => [nameColumn<Customer>(undefined)],
   project: projectColumns,
+  workstream: workstreamColumns,
   proposal: proposalColumns,
   milestone: (choices) => milestoneColumns(choices.projects),
   feature: (choices) => featureColumns(choices),

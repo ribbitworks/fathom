@@ -1,29 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The plan's records, each a table edited like People's: the Projects page, with its projects,
-// proposals, customers, and milestones, a tab each, a record's details beside it, and a project's
-// milestones there too; and the Features page, grouped by cycle. Every change is a draft, shown in
-// place until an Approver approves it, from a record's menu or the Draft menu. Those who only see
-// the plan see the same tables, read only. The tab, the table's view, and the record shown are kept
-// in the page address.
+// workstreams, proposals, customers, and milestones, a tab each, a record's details beside it, and
+// a project's milestones there too; and the Features page, grouped by cycle. Every change is a
+// draft, shown in place until an Approver approves it, from a record's menu or the Draft menu.
+// Those who only see the plan see the same tables, read only. The tab, the table's view, and the
+// record shown are kept in the page address.
 
 import type {
   Asking,
-  Customer,
-  CustomerRequest,
   DraftKind,
   Feature,
   Milestone,
   MilestoneRequest,
   Project,
   ProjectPlan,
-  ProjectRequest,
-  Proposal,
-  ProposalRequest,
   RecordRef,
   Show,
 } from "@fathom/shared";
-import { allOf } from "@fathom/shared";
+import { allOf, recordTypeOf } from "@fathom/shared";
 import {
   Button,
   Group,
@@ -87,6 +82,8 @@ import {
   proposalColumns,
   proposalTable,
   wordsOf,
+  workstreamColumns,
+  workstreamTable,
 } from "./project-grids.tsx";
 import {
   addMilestone,
@@ -353,7 +350,8 @@ export function ProjectsPage({
     const gone = record.draft?.action === "created";
     save({
       next: (plan) => withRecord(plan, type, record.id, discarded),
-      save: () => discardRecordDraft({ type, id: record.id }),
+      save: () =>
+        discardRecordDraft({ type: recordTypeOf(type), id: record.id }),
       failure: `Fathom could not discard the draft of ${record.name}.`,
       onSaved: (changeSetId, before) => {
         if (gone) {
@@ -372,7 +370,8 @@ export function ProjectsPage({
   const resubmit = (type: PlanRecordKind, record: PlanRecord) => {
     save({
       next: (plan) => withRecord(plan, type, record.id, draftSentAgain),
-      save: () => resubmitRecordDraft({ type, id: record.id }),
+      save: () =>
+        resubmitRecordDraft({ type: recordTypeOf(type), id: record.id }),
       failure: `Fathom could not send the draft of ${record.name} for approval again.`,
       onSaved: undoable,
     });
@@ -578,6 +577,22 @@ export function ProjectsPage({
         },
       ];
     }
+    function gridOf<Rec extends PlanRecord, Request>(
+      type: PlanRecordKind,
+      table: RecordTable<Rec, PlanChange, Request>,
+      records: Rec[],
+    ): ReactElement {
+      const actions = actionsFor<Rec, Request>(type);
+      return (
+        <PlanGrid
+          {...shared}
+          panels={panelsWith(type, table, records, actions)}
+          records={records}
+          table={table}
+          actions={actions}
+        />
+      );
+    }
     const filteredTo = view.filters.projectId?.any?.at(0);
     const grids: Readonly<Record<PlanTab, () => ReactElement>> = {
       features: () => {
@@ -622,63 +637,32 @@ export function ProjectsPage({
           </>
         );
       },
-      customers: () => {
-        const table = customerTable(openRecord);
-        const actions = actionsFor<Customer, CustomerRequest>("customer");
-        return (
-          <PlanGrid
-            {...shared}
-            panels={panelsWith("customer", table, plan.customers, actions)}
-            records={plan.customers}
-            table={table}
-            actions={actions}
-          />
-        );
-      },
-      proposals: () => {
-        const table = proposalTable(choices, openRecord);
-        const actions = actionsFor<Proposal, ProposalRequest>("proposal");
-        return (
-          <PlanGrid
-            {...shared}
-            panels={panelsWith("proposal", table, plan.proposals, actions)}
-            records={plan.proposals}
-            table={table}
-            actions={actions}
-          />
-        );
-      },
-      milestones: () => {
-        const table = milestoneTable(plan.projects, filteredTo, (milestone) => {
-          leave(() => {
-            onTab?.("projects", milestone.projectId);
-          });
-        });
-        const records = allMilestones(plan);
-        const actions = actionsFor<Milestone, MilestoneAdding>("milestone");
-        return (
-          <PlanGrid
-            {...shared}
-            panels={panelsWith("milestone", table, records, actions)}
-            records={records}
-            table={table}
-            actions={actions}
-          />
-        );
-      },
-      projects: () => {
-        const table = projectTable(choices, openRecord, showMilestonesOf);
-        const actions = actionsFor<Project, ProjectRequest>("project");
-        return (
-          <PlanGrid
-            {...shared}
-            panels={panelsWith("project", table, plan.projects, actions)}
-            records={plan.projects}
-            table={table}
-            actions={actions}
-          />
-        );
-      },
+      customers: () =>
+        gridOf("customer", customerTable(openRecord), plan.customers),
+      proposals: () =>
+        gridOf("proposal", proposalTable(choices, openRecord), plan.proposals),
+      milestones: () =>
+        gridOf(
+          "milestone",
+          milestoneTable(plan.projects, filteredTo, (milestone) => {
+            leave(() => {
+              onTab?.("projects", milestone.projectId);
+            });
+          }),
+          allMilestones(plan),
+        ),
+      projects: () =>
+        gridOf(
+          "project",
+          projectTable(choices, openRecord, showMilestonesOf),
+          plan.projects,
+        ),
+      workstreams: () =>
+        gridOf(
+          "workstream",
+          workstreamTable(choices, openRecord),
+          plan.workstreams,
+        ),
     };
     // The tab is always one of the fixed tabs.
     // eslint-disable-next-line security/detect-object-injection
@@ -937,40 +921,38 @@ function recordPanel({
   const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
     show === "live" ? livePlanRecords(records) : records;
   const projects = asShown(plan.projects);
+  const shownOf = (
+    type: PlanRecordKind,
+    records: readonly PlanRecord[],
+    columns: readonly Column<never, PlanChange>[],
+  ) => ({
+    type,
+    record: asShown(records).find(({ id }) => id === open),
+    columns,
+  });
   const shownOnTab: Readonly<
-    Record<
-      PlanTab,
-      | {
-          type: PlanRecordKind;
-          record: PlanRecord | undefined;
-          columns: readonly Column<never, PlanChange>[];
-        }
-      | undefined
-    >
+    Record<PlanTab, ReturnType<typeof shownOf> | undefined>
   > = {
-    projects: {
-      type: "project",
-      record: projects.find(({ id }) => id === open),
-      columns: projectColumns(choices).filter(
+    projects: shownOf(
+      "project",
+      plan.projects,
+      projectColumns(choices).filter(
         ({ key }) => !projectDateColumns.some(([date]) => date === key),
       ),
-    },
-    proposals: {
-      type: "proposal",
-      record: asShown(plan.proposals).find(({ id }) => id === open),
-      columns: proposalColumns(choices),
-    },
-    customers: {
-      type: "customer",
-      record: asShown(plan.customers).find(({ id }) => id === open),
-      columns: customerTable().columnsFor([], [], [], []),
-    },
+    ),
+    workstreams: shownOf(
+      "workstream",
+      plan.workstreams,
+      workstreamColumns(choices),
+    ),
+    proposals: shownOf("proposal", plan.proposals, proposalColumns(choices)),
+    customers: shownOf(
+      "customer",
+      plan.customers,
+      customerTable().columnsFor([], [], [], []),
+    ),
     milestones: undefined,
-    features: {
-      type: "feature",
-      record: asShown(plan.features).find(({ id }) => id === open),
-      columns: featureColumns(choices),
-    },
+    features: shownOf("feature", plan.features, featureColumns(choices)),
   };
   // The tab is always one of the fixed tabs.
   // eslint-disable-next-line security/detect-object-injection

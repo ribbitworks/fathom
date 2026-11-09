@@ -294,6 +294,7 @@ export {
   workstreamRequestSchema,
   projectSchema,
   projectSubjects,
+  recordTypeOf,
   type Proposal,
   type ProposalRequest,
   proposalRequestSchema,

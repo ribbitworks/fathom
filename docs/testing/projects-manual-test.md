@@ -1,17 +1,17 @@
 ---
-title: "Manual Test: Projects, Proposals, Customers and Milestones"
+title: "Manual Test: Projects, Workstreams, Proposals, Customers and Milestones"
 category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-08"
+last_updated: "2026-11-09"
 ---
 
-# Manual Test: Projects, Proposals, Customers and Milestones
+# Manual Test: Projects, Workstreams, Proposals, Customers and Milestones
 
 ## Scope
 
-Verifies the Projects page: its four tabs and their tables, a record's side panel, a project's milestones and the dates they give it, what a Team Member, a Product Manager and a Project Manager can do there, and how drafts of these records are approved and removed.
+Verifies the Projects page: its five tabs and their tables, a record's side panel, a project's milestones and the dates they give it, workstreams, what a Team Member, a Product Manager and a Project Manager can do there, and how drafts of these records are approved and removed.
 
 ## Test Environment
 
@@ -75,7 +75,7 @@ Use only to run the test again after finishing it, since the records it adds sta
 
 ## Terms
 
-- **Tabs:** **Projects**, **Proposals**, **Customers** and **Milestones**, in a row under the page's heading. The tab chosen is underlined.
+- **Tabs:** **Projects**, **Workstreams**, **Proposals**, **Customers** and **Milestones**, in a row under the page's heading. The tab chosen is underlined.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft: added**, shown after a record's name. A hollow dot means the change is still unpublished.
 - **Draft row and live row:** a record with a draft is tinted light blue; under it, a light green row marked **Live** shows the record as it is now.
 - **⋯ menu:** the menu that opens from the **⋯** button at the end of a table row, or at the end of a milestone in a project's side panel.
@@ -98,43 +98,47 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Expected:** The **Projects** page opens, with no **Later** tag beside **Projects** in the menu. The **Projects** tab is chosen. The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **First milestone**, **Last milestone** and **Next delivery**, with a row for each seeded project. There is no **New project** button.
   - **Notes:**
 
-- [ ] **Step 2.** Select the **Proposals** tab.
+- [ ] **Step 2.** Select the **Workstreams** tab.
+  - **Expected:** A table with **Name** and **Owner**, with a row for each workstream in the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data). The **Owner** cell of a workstream with no owner is empty. There is no **New workstream** button. The address bar changes.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the **Proposals** tab.
   - **Expected:** A table with **Name**, **Proposal ID**, **Link**, **Owner**, **Customers** and **Status**. The address bar changes.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Customers** tab.
+- [ ] **Step 4.** Select the **Customers** tab.
   - **Expected:** A table with **Name**.
   - **Notes:**
 
-- [ ] **Step 4.** Select the **Milestones** tab.
+- [ ] **Step 5.** Select the **Milestones** tab.
   - **Expected:** A table with **Name**, **Project**, **Date** and **Customer delivery**.
   - **Notes:**
 
-- [ ] **Step 5.** Select the browser's back button.
+- [ ] **Step 6.** Select the browser's back button.
   - **Expected:** The **Customers** tab shows again.
   - **Notes:**
 
-- [ ] **Step 6.** Select the **Projects** tab.
+- [ ] **Step 7.** Select the **Projects** tab.
   - **Expected:** The table of projects shows again.
   - **Notes:**
 
-- [ ] **Step 7.** On **Projects**, double-click the **Name** cell of any project.
+- [ ] **Step 8.** On **Projects**, double-click the **Name** cell of any project.
   - **Expected:** Nothing changes: the cell does not open for editing.
   - **Notes:**
 
-- [ ] **Step 8.** Type a letter.
+- [ ] **Step 9.** Type a letter.
   - **Expected:** Nothing changes.
   - **Notes:**
 
-- [ ] **Step 9.** Open the project's ⋯ menu and select **Show details**.
+- [ ] **Step 10.** Open the project's ⋯ menu and select **Show details**.
   - **Expected:** The side panel opens, headed with the project's name, listing **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date. There is no **Add milestone** button, and no milestone has a ⋯ button.
   - **Notes:**
 
-- [ ] **Step 10.** Select **Light** in the Appearance menu.
+- [ ] **Step 11.** Select **Light** in the Appearance menu.
   - **Expected:** Text, marks and tabs on the page and side panel are easy to read.
   - **Notes:**
 
-- [ ] **Step 11.** Select **Dark** in the Appearance menu.
+- [ ] **Step 12.** Select **Dark** in the Appearance menu.
   - **Expected:** Text, marks and tabs on the page and side panel are easy to read.
   - **Notes:**
 
@@ -369,7 +373,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Notes:**
 
 - [ ] **Step 5.** In the ⋯ menu of **Testing Customer**, select **Approve draft**.
-  - **Expected:** A dialog asks to approve the draft, naming **the customer Testing Customer**.
+  - **Expected:** A dialog asks **Approve 1 draft?**.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Approve** in the dialog.
@@ -530,4 +534,56 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
 
 - [ ] **Step 6.** Open the **Draft** menu and select **Live only**.
   - **Expected:** The panel shows no pencil buttons, and **Proposal ID** shows its earlier value.
+  - **Notes:**
+
+### PROJ-11: The Product Manager Adds a Workstream
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-10.
+
+**Preconditions:** Signed in with this account. Run after PROJ-10.
+
+- [ ] **Step 1.** In the left-hand menu, select **Projects**.
+  - **Expected:** The **Projects** page opens.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the **Workstreams** tab.
+  - **Expected:** A table with **Name** and **Owner**, and a **New workstream** button at the top right of the page.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **New workstream**.
+  - **Expected:** The side panel opens, headed **New workstream**, with **Name** and **Owner** and no other field.
+  - **Notes:**
+
+- [ ] **Step 4.** Type `Testing Workstream` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] **Step 5.** In **Owner**, pick any person.
+  - **Expected:** **Owner** shows the name picked.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Add**.
+  - **Expected:** The side panel shows the new workstream's details, headed **Testing Workstream**, with a hollow yellow dot and **Draft: added**. Its row in the table shows the same mark.
+  - **Notes:**
+
+- [ ] **Step 7.** Publish ([P1](#p1-publish)).
+  - **Expected:** The marks become solid yellow dots.
+  - **Notes:**
+
+- [ ] **Step 8.** Select the **Projects** tab, and look for **Testing Workstream**.
+  - **Expected:** It is not listed.
+  - **Notes:**
+
+### PROJ-12: The Project Manager Sees the Workstream's Draft
+
+**Account:** Project Manager, `project.manager@fathom.test`, changed from PROJ-11.
+
+**Preconditions:** Signed in with this account. Run after PROJ-11.
+
+- [ ] **Step 1.** In the left-hand menu, select **Drafts**.
+  - **Expected:** The **Drafts** page opens.
+  - **Notes:**
+
+- [ ] **Step 2.** Type `Testing Workstream` in the search box.
+  - **Expected:** An entry for **the workstream Testing Workstream**, saying **Product Manager** made it, with a box to select it.
   - **Notes:**
