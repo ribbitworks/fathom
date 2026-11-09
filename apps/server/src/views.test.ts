@@ -307,6 +307,53 @@ describe("saved views", () => {
     ).toEqual({ widths: { preferredName: 300, startDate: 120 } });
   });
 
+  it("keep the order of their columns, sending each reader only the places of columns they may see", async () => {
+    const maker = await test.signedIn("workforce-administrator");
+    const viewer = await test.signedIn("resource-planner");
+    const order = ["startDate", "preferredName", "gone"];
+    const { view } = (
+      await share(maker.cookie, "Moved round", { order })
+    ).json<Saved>();
+    expect(view.definition).toEqual({ order });
+    expect(
+      (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
+        ?.definition,
+    ).toEqual({ order: ["preferredName", "gone"] });
+  });
+
+  it("keep the places of columns a reader may not see when that reader updates them", async () => {
+    const maker = await test.signedIn("workforce-administrator");
+    const { view } = (
+      await share(maker.cookie, "Start first", {
+        order: ["startDate", "preferredName", "employeeId"],
+      })
+    ).json<Saved>();
+    await demote(maker.id);
+    expect(
+      (
+        await change(maker.cookie, view.id, {
+          definition: { order: ["employeeId", "preferredName"] },
+        })
+      ).statusCode,
+    ).toBe(200);
+    const other = await test.signedIn("engineering-manager");
+    expect(
+      (await viewsOf(other.cookie)).find(({ id }) => id === view.id)
+        ?.definition,
+    ).toEqual({ order: ["startDate", "employeeId", "preferredName"] });
+  });
+
+  it("take an order of columns when updated without one before", async () => {
+    const { cookie } = await test.signedIn("resource-planner");
+    const { view } = (await save(cookie, "Plain order", {})).json<Saved>();
+    const updated = await change(cookie, view.id, {
+      definition: { order: ["employeeId", "preferredName"] },
+    });
+    expect(updated.json<Saved>().view.definition).toEqual({
+      order: ["employeeId", "preferredName"],
+    });
+  });
+
   it("keep what they show and the columns they break down by, and are kept from readers who may not see those columns", async () => {
     const sharer = await test.signedIn("workforce-administrator");
     const viewer = await test.signedIn("resource-planner");

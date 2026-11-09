@@ -51,7 +51,7 @@ const marks: [string, ReactNode, string][] = [
   [
     "moved",
     <StatusMark tone="draft">Draft: moved</StatusMark>,
-    "A moved column or choice, waiting for approval.",
+    "A moved choice, waiting for approval.",
   ],
   [
     "reordered",

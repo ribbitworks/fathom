@@ -508,9 +508,9 @@ describe("what a draft changes, in words", () => {
 });
 
 describe("the plan's tables' columns", () => {
-  it("ignores moving or editing one", () => {
+  it("ignores editing one", () => {
     expect(() => {
-      noColumnActions.moveColumn();
+      noColumnActions.editColumn();
     }).not.toThrow();
   });
 });

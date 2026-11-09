@@ -17,6 +17,7 @@ import {
   type SavedViewRequest,
   type Tier,
   draftFilterKey,
+  inPlacesOf,
   type ViewDefinition,
   viewColumnKeys,
   viewDefinitionSchema,
@@ -144,8 +145,8 @@ function widthsSeen(
 }
 
 // The view as a reader is sent it: without filters, sorts, and breakdowns on columns deleted since
-// it was saved, nor widths of columns the reader may not see. A width reveals no value, so a view
-// keeps widths of columns others may not see, and of any the table no longer has.
+// it was saved, nor the widths or places of columns the reader may not see. Neither reveals a value,
+// so a view keeps those of columns others may not see, and of any the table no longer has.
 function sentTo(
   actor: Actor,
   tiers: ReadonlyMap<string, Tier>,
@@ -164,6 +165,7 @@ function sentTo(
     sort: sort.length === 0 ? undefined : sort,
     breakdown: definition.breakdown?.filter((key) => tiers.has(key)),
     frozen: definition.frozen,
+    order: definition.order?.filter((key) => seesColumn(actor, tiers, key)),
     widths:
       definition.widths && widthsSeen(actor, tiers, definition.widths, true),
   });
@@ -327,14 +329,26 @@ export async function updateView(
       ) {
         throw new ForbiddenError(notSharer);
       }
-      // The actor was not sent the widths of columns they may not see, so keeps those already set.
+      // The actor was not sent the widths or places of columns they may not see, so keeps those
+      // already set.
       const keepingHidden = (row: ViewRow, definition: ViewDefinition) => {
+        const kept = definitionOf(row);
         const widths = {
-          ...widthsSeen(actor, tiers, definitionOf(row).widths, false),
+          ...widthsSeen(actor, tiers, kept.widths, false),
           ...definition.widths,
         };
         return {
           ...definition,
+          order:
+            definition.order &&
+            inPlacesOf(
+              (kept.order ?? []).filter(
+                (key) =>
+                  definition.order?.includes(key) === true ||
+                  !seesColumn(actor, tiers, key),
+              ),
+              definition.order,
+            ),
           widths: Object.keys(widths).length === 0 ? undefined : widths,
         };
       };

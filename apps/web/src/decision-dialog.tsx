@@ -51,7 +51,6 @@ export const drafts = (total: number) =>
 function DecisionDialog({
   asking,
   selection,
-  together,
   included,
   leftOut,
   onDone,
@@ -60,7 +59,6 @@ function DecisionDialog({
 }: {
   asking: Asking;
   selection: DraftSelection;
-  together: string[];
   included: string[];
   leftOut: number;
   onDone: () => void;
@@ -112,20 +110,6 @@ function DecisionDialog({
             ? "Approving cannot be undone."
             : "The drafts go back to whoever made them, with your reason. Rejecting cannot be undone."}
         </Text>
-        {together.length > 0 && (
-          <div>
-            <Text fz="sm">
-              {asking === "approve"
-                ? "These drafts are approved together:"
-                : "These drafts are rejected together:"}
-            </Text>
-            <List size="sm" mt={4}>
-              {together.map((name) => (
-                <List.Item key={name}>{name}</List.Item>
-              ))}
-            </List>
-          </div>
-        )}
         {included.length > 0 && (
           <div>
             <Text fz="sm">
@@ -256,7 +240,6 @@ export function DecisionModal({
           <DecisionDialog
             asking={decision.asking}
             selection={decision.selection}
-            together={decision.together ?? []}
             included={decision.included ?? []}
             leftOut={decision.leftOut ?? 0}
             onDone={onDone}

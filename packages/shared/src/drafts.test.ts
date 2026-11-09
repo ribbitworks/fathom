@@ -20,10 +20,7 @@ const message = (result: { error?: { issues: { message: string }[] } }) =>
   result.error?.issues[0]?.message;
 
 describe("draftsRequestSchema", () => {
-  it("accepts drafts of any kind, counting the column order as one", () => {
-    expect(draftsRequestSchema.safeParse({ columnOrder: true }).success).toBe(
-      true,
-    );
+  it("accepts drafts of any kind", () => {
     expect(draftsRequestSchema.parse({ people: [randomUUID()] }).lists).toEqual(
       [],
     );
@@ -37,13 +34,12 @@ describe("draftsRequestSchema", () => {
     expect(message(draftsRequestSchema.safeParse({}))).toBe(tooFewOrMany);
   });
 
-  it("refuses more drafts than are approved at once, counting the column order", () => {
+  it("refuses more drafts than are approved at once", () => {
     expect(
       message(
         draftsRequestSchema.safeParse({
-          people: ids(draftsAtOnce / 2),
+          people: ids(draftsAtOnce / 2 + 1),
           lists: ids(draftsAtOnce / 2),
-          columnOrder: true,
         }),
       ),
     ).toBe(tooFewOrMany);
@@ -105,7 +101,6 @@ describe("approving by area", () => {
     choices: [randomUUID()],
     orders: [randomUUID()],
     columns: [randomUUID()],
-    columnOrder: true,
     records: [
       release,
       stream,
@@ -152,7 +147,6 @@ describe("approving by area", () => {
         choices: [],
         orders: [],
         columns: [],
-        columnOrder: false,
         records: [stream],
       },
     );

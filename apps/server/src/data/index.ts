@@ -10,7 +10,6 @@ import type {
   ChangeHistory,
   Choice,
   ChoiceRequest,
-  ColumnOrderDraft,
   CycleLengthRequest,
   CyclePatternRequest,
   CyclesUntilRequest,
@@ -63,7 +62,7 @@ import {
 import { approveDrafts, rejectDrafts } from "./approvals.ts";
 import { readGreeting } from "./greeting.ts";
 import * as columnDrafts from "./column-drafts.ts";
-import { type ColumnDraftTarget, readColumnsOut } from "./column-drafts.ts";
+import { readColumnsOut } from "./column-drafts.ts";
 import { readChangeHistory } from "./change-history.ts";
 import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
@@ -293,7 +292,6 @@ export interface RecordAccess {
 export type ChangeSetId = string | null;
 
 export type { Saved } from "./changes.ts";
-export type { ColumnDraftTarget } from "./column-drafts.ts";
 
 export interface DraftAccess {
   approve(actor: Actor, asked: DraftsAsked): Promise<ChangeSetId>;
@@ -366,8 +364,6 @@ export interface PeopleAccess {
     people: Person[];
     fields: Field[];
     order: string[];
-    orderDraft?: ColumnOrderDraft;
-    orderHeldBy?: string;
     positionHidden?: true;
     views: SavedView[];
   }>;
@@ -398,23 +394,10 @@ export interface PeopleAccess {
     id: string,
     request: FieldRequest,
   ): Promise<Saved<Field>>;
-  // Moves a column, built-in or added, to just after another, or to the start when there is none.
-  moveColumn(
-    actor: Actor,
-    key: string,
-    after: string | null,
-  ): Promise<ChangeSetId>;
   deleteField(actor: Actor, id: string): Promise<ChangeSetId>;
-  // Discards a draft of a column or of the column order, or sends a rejected one for approval
-  // again.
-  discardColumnDraft(
-    actor: Actor,
-    target: ColumnDraftTarget,
-  ): Promise<ChangeSetId>;
-  resubmitColumnDraft(
-    actor: Actor,
-    target: ColumnDraftTarget,
-  ): Promise<ChangeSetId>;
+  // Discards a draft of a column, or sends a rejected one for approval again.
+  discardColumnDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+  resubmitColumnDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   // Saved views of the People table, which anyone who sees people may save, and only their maker,
   // or someone who may change planning configuration, may change or delete.
   createView(
@@ -765,13 +748,11 @@ function createProjectAccess(database: Database): ProjectAccess {
       columnDrafts.deleteField(database, editor(actor), id, "features"),
     discardFeatureColumnDraft: async (actor, id) =>
       columnDrafts.discardColumnDraft(database, editor(actor), {
-        kind: "column",
         id,
         table: "features",
       }),
     resubmitFeatureColumnDraft: async (actor, id) =>
       columnDrafts.resubmitColumnDraft(database, editor(actor), {
-        kind: "column",
         id,
         table: "features",
       }),
@@ -915,16 +896,14 @@ function createPeopleAccess(database: Database): PeopleAccess {
       editor(actor);
       return columnDrafts.updateField(database, actor, id, request);
     },
-    moveColumn: async (actor, key, after) =>
-      columnDrafts.moveColumn(database, editor(actor), key, after),
     deleteField: async (actor, id) => {
       editor(actor);
       return columnDrafts.deleteField(database, actor, id);
     },
-    discardColumnDraft: async (actor, target) =>
-      columnDrafts.discardColumnDraft(database, editor(actor), target),
-    resubmitColumnDraft: async (actor, target) =>
-      columnDrafts.resubmitColumnDraft(database, editor(actor), target),
+    discardColumnDraft: async (actor, id) =>
+      columnDrafts.discardColumnDraft(database, editor(actor), { id }),
+    resubmitColumnDraft: async (actor, id) =>
+      columnDrafts.resubmitColumnDraft(database, editor(actor), { id }),
     createView: async (actor, request) => {
       requirePermission(actor, "people:view");
       return views.createView(database, actor, request);

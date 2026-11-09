@@ -316,14 +316,10 @@ export {
 } from "./org-chart.ts";
 export {
   changeSetIdSchema,
-  columnKeySchema,
-  type ColumnOrderDraft,
-  columnOrderDraftSchema,
   type Field,
   type FieldDraft,
   fieldDraftSchema,
   type FieldRequest,
-  fieldMoveSchema,
   type ColumnTable,
   fieldRequestSchema,
   fieldSchema,
@@ -367,6 +363,7 @@ export {
   type ViewDefinition,
   draftFilterKey,
   viewColumnKeys,
+  inPlacesOf,
   viewDefinitionSchema,
   viewScopeSchema,
   type ViewScope,

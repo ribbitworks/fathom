@@ -8,9 +8,7 @@
 
 import {
   changeSetIdSchema,
-  columnKeySchema,
   dayQuerySchema,
-  fieldMoveSchema,
   fieldRequestSchema,
   fieldSchema,
   orgChartSchema,
@@ -25,7 +23,7 @@ import {
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
-import type { ColumnDraftTarget, PeopleAccess } from "../data/index.ts";
+import type { PeopleAccess } from "../data/index.ts";
 
 const created = 201;
 const noContent = 204;
@@ -188,25 +186,6 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
       },
     );
 
-    // Built-in columns move too, so a column is named by its key.
-    app.put(
-      "/api/people/columns/:key/position",
-      {
-        schema: {
-          params: z.object({ key: columnKeySchema }),
-          body: fieldMoveSchema,
-          response: saved,
-        },
-      },
-      async (request) => ({
-        changeSetId: await people.moveColumn(
-          request.actor,
-          request.params.key,
-          request.body.after,
-        ),
-      }),
-    );
-
     app.delete(
       "/api/people/columns/:fieldId",
       { schema: { params: fieldParams, response: saved } },
@@ -218,43 +197,25 @@ export function peopleRoutes(people: PeopleAccess): FastifyPluginCallbackZod {
       }),
     );
 
-    // Discarding a draft of a column or of the column order, and sending a rejected one for approval
-    // again unchanged.
-    const columnDraftRoutes = <Params extends z.ZodType>(
-      path: string,
-      params: Params,
-      target: (params: z.infer<Params>) => ColumnDraftTarget,
-    ) => {
-      app.delete(
-        `${path}/draft`,
-        { schema: { params, response: saved } },
-        async (request) => ({
-          changeSetId: await people.discardColumnDraft(
-            request.actor,
-            target(request.params as z.infer<Params>),
-          ),
-        }),
-      );
-      app.delete(
-        `${path}/draft/rejection`,
-        { schema: { params, response: saved } },
-        async (request) => ({
-          changeSetId: await people.resubmitColumnDraft(
-            request.actor,
-            target(request.params as z.infer<Params>),
-          ),
-        }),
-      );
-    };
-    columnDraftRoutes("/api/people/columns/order", z.object({}), () => ({
-      kind: "order",
-    }));
-    columnDraftRoutes(
-      "/api/people/columns/:fieldId",
-      fieldParams,
-      ({ fieldId }) => ({
-        kind: "column",
-        id: fieldId,
+    // Discarding a draft of a column, and sending a rejected one for approval again unchanged.
+    app.delete(
+      "/api/people/columns/:fieldId/draft",
+      { schema: { params: fieldParams, response: saved } },
+      async (request) => ({
+        changeSetId: await people.discardColumnDraft(
+          request.actor,
+          request.params.fieldId,
+        ),
+      }),
+    );
+    app.delete(
+      "/api/people/columns/:fieldId/draft/rejection",
+      { schema: { params: fieldParams, response: saved } },
+      async (request) => ({
+        changeSetId: await people.resubmitColumnDraft(
+          request.actor,
+          request.params.fieldId,
+        ),
       }),
     );
 

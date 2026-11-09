@@ -204,17 +204,11 @@ export function PersonPanel({
     );
   }
   const kind = person.kind ?? personKind;
-  const schema = shownSchema(
-    show,
-    query.data.fields,
-    lists.data,
-    query.data.order,
-    query.data.orderDraft,
-  );
+  const schema = shownSchema(show, query.data.fields, lists.data);
   const allColumns = columnsFor(
     schema.fields,
     schema.lists,
-    schema.order,
+    query.data.order,
     showDates,
     asShown,
     query.data.positionHidden !== true,

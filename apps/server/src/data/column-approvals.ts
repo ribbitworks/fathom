@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Approving and rejecting drafts of the People table's columns and of their order. Part of the data
-// access layer; approvals.ts runs these with the drafts of lists and people approved or rejected at
-// the same time, in one change set. Approving checks again that each column's settings fit the
-// people's values, and approving a removal deletes the column's values, so the Approver must see
-// them. A draft of the order that places a column drafted to be added uses the column's draft, so
-// approving the order approves the column too, and the column is rejected only together with it.
+// Approving and rejecting drafts of the People table's columns. Part of the data access layer;
+// approvals.ts runs these with the drafts of lists and people approved or rejected at the same
+// time, in one change set. Approving checks again that each column's settings fit the people's
+// values, and approving a removal deletes the column's values, so the Approver must see them.
 
 import { fields, lists } from "@fathom/db";
 import type { DraftsRequest } from "@fathom/shared";
@@ -14,22 +12,13 @@ import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import type { Change, Transaction } from "./changes.ts";
 import {
-  columnOrderChanges,
-  columnOrderId,
   refuseSensitiveOnFeatures,
   columnRow,
   columnTier,
   draftedField,
-  fieldsOrderUses,
-  heldColumnOrder,
   readColumnsState,
-  removeEmptyColumnOrder,
 } from "./column-drafts.ts";
-import {
-  appendColumn,
-  readColumnOrder,
-  writeColumnOrder,
-} from "./column-order.ts";
+import { appendColumn } from "./column-order.ts";
 import {
   deleteDrafts,
   type Draft,
@@ -41,32 +30,25 @@ import {
 } from "./drafts.ts";
 import { checkValuesFit, deleteLiveField, fieldChanges } from "./fields.ts";
 
-export type ColumnSelection = Pick<DraftsRequest, "columns" | "columnOrder">;
+export type ColumnSelection = Pick<DraftsRequest, "columns">;
 
 const gone = "One of these drafts no longer exists; refresh to see the latest";
 
 export const asksForColumns = (asked: ColumnSelection) =>
-  asked.columns.length > 0 || asked.columnOrder;
+  asked.columns.length > 0;
 
-// Reads the columns with the drafts asked for, refusing drafts that do not exist, and columns, among
-// those asked for and those the order places, whose values the actor may not see, live or drafted.
+// Reads the columns with the drafts asked for, refusing drafts that do not exist, and columns whose
+// values the actor may not see, live or drafted.
 async function stateWithDrafts(
   transaction: Transaction,
   actor: Actor,
   asked: ColumnSelection,
 ) {
   const state = await readColumnsState(transaction);
-  if (
-    asked.columns.some((id) => !state.fieldDrafts.has(id)) ||
-    (asked.columnOrder && heldColumnOrder(state) === undefined)
-  ) {
+  if (asked.columns.some((id) => !state.fieldDrafts.has(id))) {
     throw new NotFoundError(gone);
   }
-  const deciding = [
-    ...asked.columns,
-    ...(asked.columnOrder ? fieldsOrderUses(state) : []),
-  ];
-  for (const id of deciding) {
+  for (const id of asked.columns) {
     const versions = [state.fields.get(id), draftedField(state, id)].filter(
       (version) => version !== undefined,
     );
@@ -81,29 +63,22 @@ async function stateWithDrafts(
       );
     }
   }
-  await refuseHeldDecision(transaction, "field", deciding);
-  if (asked.columnOrder) {
-    await refuseHeldDecision(transaction, "column-order", [columnOrderId]);
-  }
+  await refuseHeldDecision(transaction, "field", asked.columns);
   return state;
 }
 
-// Approves the drafts of columns asked for, and of the order, with the columns it places, applying
-// them to the live columns, and returns the changes made, for approvals.ts to record.
+// Approves the drafts of columns asked for, applying them to the live columns, and returns the
+// changes made, for approvals.ts to record.
 export async function approveColumnDrafts(
   transaction: Transaction,
   actor: Actor,
   asked: ColumnSelection,
 ): Promise<Change[]> {
   const state = await stateWithDrafts(transaction, actor, asked);
-  const used = asked.columnOrder ? fieldsOrderUses(state) : [];
-  const approved = [...state.fieldDrafts.keys()].filter(
-    (id) => asked.columns.includes(id) || used.includes(id),
+  const approved = [...state.fieldDrafts.keys()].filter((id) =>
+    asked.columns.includes(id),
   );
-  refuseRejected([
-    ...approved.map((id) => state.fieldDrafts.get(id)),
-    ...(asked.columnOrder ? [state.orderDraft] : []),
-  ]);
+  refuseRejected(approved.map((id) => state.fieldDrafts.get(id)));
   const made: Change[] = [];
   for (const id of approved) {
     const live = state.fields.get(id);
@@ -154,25 +129,11 @@ export async function approveColumnDrafts(
       made.push(...fieldChanges(id, "changed", before, after));
     }
   }
-  if (asked.columnOrder) {
-    const before = await readColumnOrder(transaction);
-    // Asked for only when the order has a draft, as stateWithDrafts checks.
-    const held = (heldColumnOrder(state) as string[]).filter((key) =>
-      before.includes(key),
-    );
-    const after = [...held, ...before.filter((key) => !held.includes(key))];
-    await writeColumnOrder(transaction, after);
-    made.push(...columnOrderChanges(before, after));
-  }
   await deleteDrafts(transaction, "field", approved);
-  if (asked.columnOrder)
-    await deleteDrafts(transaction, "column-order", [columnOrderId]);
-  await removeEmptyColumnOrder(transaction);
   return made;
 }
 
-// Rejects the drafts of columns asked for, and of the order, with a reason, refusing a column the
-// order uses unless the order is rejected too, and returns the changes to record.
+// Rejects the drafts of columns asked for, with a reason, and returns the changes to record.
 export async function rejectColumnDrafts(
   transaction: Transaction,
   actor: Actor,
@@ -180,37 +141,13 @@ export async function rejectColumnDrafts(
   reason: string,
 ): Promise<Change[]> {
   const state = await stateWithDrafts(transaction, actor, asked);
-  if (
-    !asked.columnOrder &&
-    fieldsOrderUses(state).some((id) => asked.columns.includes(id))
-  ) {
-    throw new ConflictError(
-      "Other drafts depend on these drafts. Reject them together, or wait until those drafts no longer depend on these.",
-    );
-  }
   const made: Change[] = [];
-  const rejecting = [
-    ...asked.columns.map((id) => ({
-      recordType: "field" as const,
-      id,
-      draft: state.fieldDrafts.get(id),
-    })),
-    ...(asked.columnOrder
-      ? [
-          {
-            recordType: "column-order" as const,
-            id: columnOrderId,
-            draft: state.orderDraft,
-          },
-        ]
-      : []),
-  ];
-  for (const { recordType, id, draft: found } of rejecting) {
+  for (const id of asked.columns) {
     // Every draft asked for exists, as stateWithDrafts checks.
-    const draft = found as Draft;
+    const draft = state.fieldDrafts.get(id) as Draft;
     if (!(draft.state === "rejected" && draft.reason === reason)) {
       made.push({
-        recordType,
+        recordType: "field",
         recordId: id,
         action: "changed",
         field: rejectedField,
@@ -220,7 +157,7 @@ export async function rejectColumnDrafts(
         draft: true,
       });
     }
-    await setRejection(transaction, recordType, [id], {
+    await setRejection(transaction, "field", [id], {
       state: "rejected",
       reason,
     });

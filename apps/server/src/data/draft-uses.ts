@@ -15,7 +15,6 @@ import type { Transaction } from "./changes.ts";
 import {
   type ColumnsState,
   draftedField,
-  fieldsOrderUses,
   readColumnsState,
   usesAddedList,
 } from "./column-drafts.ts";
@@ -55,8 +54,8 @@ function usedByRecord(state: ColumnsState, draft: Draft) {
 }
 
 // The drafts asked for, with the columns and choices only drafted to be added that the people and
-// planned hires asked for are given, and the lists only drafted to be added that those columns, the
-// columns asked for, and those the draft of the column order places, draw on.
+// planned hires asked for are given, and the lists only drafted to be added that those columns and
+// the columns asked for draw on.
 export async function withUsedAcross(
   transaction: Transaction,
   asked: DraftsRequest,
@@ -72,13 +71,9 @@ export async function withUsedAcross(
     for (const id of used.columns) columns.add(id);
     for (const id of used.choices) choices.add(id);
   }
-  const placed = asked.columnOrder ? fieldsOrderUses(state) : [];
   const lists = new Set(asked.lists);
   for (const { id, field } of draftedColumns(state)) {
-    if (
-      (columns.has(id) || placed.includes(id)) &&
-      usesAddedList(state, field)
-    ) {
+    if (columns.has(id) && usesAddedList(state, field)) {
       lists.add(String(field.listId));
     }
   }

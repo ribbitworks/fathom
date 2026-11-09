@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import {
   columnWidths,
+  inPlacesOf,
   savedViewChangeSchema,
   savedViewRequestSchema,
   textLimit,
@@ -88,6 +89,30 @@ describe("viewDefinitionSchema", () => {
     const view = viewDefinitionSchema.parse({ filters, sort });
     expect(Object.keys(view.filters ?? {})).toHaveLength(100);
     expect(view.sort).toHaveLength(10);
+  });
+});
+
+describe("a view's order of columns", () => {
+  it("puts the keys wanted into their places, leaving the others, and adds new ones last", () => {
+    expect(inPlacesOf(["a", "x", "b"], ["b", "a"])).toEqual(["b", "x", "a"]);
+    expect(inPlacesOf(["a"], ["n", "a"])).toEqual(["a", "n"]);
+    expect(inPlacesOf([], ["a"])).toEqual(["a"]);
+  });
+
+  it("drops a repeat or a key that does not fit from an address", () => {
+    expect(
+      viewDefinitionSchema.parse({ order: ["a", "a", "not a key", "b"] }).order,
+    ).toEqual(["a", "b"]);
+  });
+
+  it("refuses a repeat in a request", () => {
+    expect(
+      savedViewRequestSchema.safeParse({
+        name: "Fictional View",
+        scope: "personal",
+        definition: { order: ["a", "a"] },
+      }).success,
+    ).toBe(false);
   });
 });
 

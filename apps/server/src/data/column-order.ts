@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The order of the People table's columns, built-in and added alike, which is the same for everyone.
-// Part of the data access layer. Moving a column is a draft of the whole order, as column-drafts.ts
-// sets out, which approving writes here.
+// The People table's own order of its columns, built-in and added alike, which each view starts from.
+// Part of the data access layer. Moving a column changes the view, not this order; approving a new
+// column adds it at the end.
 
 import { columnOrders, type Database, fields } from "@fathom/db";
 import { builtInColumnNames } from "@fathom/shared";
@@ -52,7 +52,7 @@ async function currentOrder(
 
 // An order with every built-in column: one it does not name, such as one added since it was stored,
 // goes just after the built-in column it follows in their starting order.
-export function withBuiltIns(stored: readonly string[]): string[] {
+function withBuiltIns(stored: readonly string[]): string[] {
   const order = [...stored];
   for (const [index, key] of builtInColumns.entries()) {
     if (order.includes(key)) continue;
@@ -64,7 +64,7 @@ export function withBuiltIns(stored: readonly string[]): string[] {
 }
 
 // Saves the order of the People table's columns.
-export async function writeColumnOrder(
+async function writeColumnOrder(
   transaction: Pick<Database, "insert">,
   keys: readonly string[],
 ): Promise<void> {

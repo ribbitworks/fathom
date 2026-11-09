@@ -10,7 +10,6 @@
 import { LoadProblem } from "./load-problem.tsx";
 import {
   type Asking,
-  builtInColumnNames,
   type ChangeValue,
   type Choice,
   type DraftKind,
@@ -18,7 +17,6 @@ import {
   type FeatureTeam,
   type FeatureTeamDraft,
   type FeatureTeams,
-  type Field,
   type List,
   isNoteField,
   matchesWords,
@@ -301,23 +299,12 @@ function listEntries(lists: readonly List[]): Entry[] {
   ]);
 }
 
-// Every draft of a People column, or of the column order, as entries.
+// Every draft of a People column, as entries.
 function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
   // A choice column's list is always among the lists, and every key in an order names a column
   // shown. A web link column has no list.
   const listName = (id: unknown) =>
     id === null ? null : (lists.find((list) => list.id === id) as List).name;
-  const fieldOf = (key: string) =>
-    data.fields.find(({ id }) => id === key) as Field;
-  const columnName = (key: string) =>
-    builtInColumnNames.get(key) ?? fieldOf(key).name;
-  // A column's name as it is live, on the live side of a new order, as a list's choices are named.
-  const liveColumnName = (key: string) => {
-    const name = builtInColumnNames.get(key);
-    if (name !== undefined) return name;
-    const { draft, name: drafted } = fieldOf(key);
-    return draft?.action === "changed" ? (draft.live.name ?? drafted) : drafted;
-  };
   return [
     ...data.fields.flatMap((field) =>
       field.draft
@@ -345,23 +332,6 @@ function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
           ]
         : [],
     ),
-    ...(data.orderDraft
-      ? [
-          entry(
-            "column order",
-            data.orderDraft,
-            "People's columns",
-            [
-              orderPhrase(
-                data.orderDraft.live.map(liveColumnName),
-                data.order.map(columnName),
-              ),
-            ],
-            { columnOrder: true },
-            data.orderHeldBy,
-          ),
-        ]
-      : []),
   ];
 }
 
@@ -698,7 +668,7 @@ export function DraftsPage({
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
     // Loaded, or empty for those who see only lists.
-    const { fields, orderDraft, people } = peopleData as PeopleData;
+    const { fields, people } = peopleData as PeopleData;
     const records = [
       ...recordNodes(streams as ReleaseStream[]),
       ...(seesProjects && plan.data !== undefined ? planNodes(plan.data) : []),
@@ -708,7 +678,6 @@ export function DraftsPage({
       state === "waiting" &&
       waitsForRejected(selects, lists.data as List[], {
         fields,
-        orderDraft,
         people,
         records,
       });
@@ -736,7 +705,6 @@ export function DraftsPage({
       setDecision(
         decisionFor(asking, selection, approves, lists.data as List[], {
           fields,
-          orderDraft,
           people,
           records,
         }),

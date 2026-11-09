@@ -188,6 +188,9 @@ export function viewParts(
             value: frozenUpTo(view.frozen, columns, "Up to", "None"),
           },
         ]),
+    ...(view.order === undefined
+      ? []
+      : [{ name: "Column order", value: "Moved" }]),
     ...(widths.length === 0
       ? []
       : [{ name: "Widths", value: widths.join(", ") }]),
@@ -496,6 +499,20 @@ export function ViewsMenu({
           }}
         >
           {frozenUpTo(view.frozen, columns, "Frozen to", "Unfrozen")}
+          <VisuallyHidden>, reset</VisuallyHidden>
+        </Menu.Item>
+      ),
+    },
+    {
+      key: "order",
+      items: view.order !== undefined && (
+        <Menu.Item
+          rightSection={<Icon name="close" size={12} />}
+          onClick={() => {
+            onView({ ...view, order: undefined });
+          }}
+        >
+          Columns moved
           <VisuallyHidden>, reset</VisuallyHidden>
         </Menu.Item>
       ),

@@ -261,7 +261,6 @@ describe("the Drafts page", () => {
           choices: ["c3"],
           orders: [],
           columns: [],
-          columnOrder: false,
           records: [],
         },
       ]);
@@ -343,7 +342,6 @@ describe("the Drafts page", () => {
           choices: ["c4"],
           orders: [],
           columns: ["f2"],
-          columnOrder: false,
           records: [],
         },
       ]);
@@ -441,7 +439,7 @@ describe("the Drafts page", () => {
     expect(within(dialog).getByText("Finley Fictional")).toBeDefined();
   });
 
-  it("puts drafts of columns, web link columns included, and of the column order in words, and approves the order with the columns it places", async () => {
+  it("puts drafts of columns, web link columns included, in words, and approves one", async () => {
     const levels = {
       ...sites,
       id: "l2",
@@ -493,10 +491,6 @@ describe("the Drafts page", () => {
             },
           ],
           order: ["preferredName", "f2", "employeeId", "f1", "f3", "f4"],
-          orderDraft: draft({
-            live: ["preferredName", "employeeId", "f1", "f3", "f4"],
-            uses: ["f2"],
-          }),
           views: [],
         }),
       "POST /api/drafts/approval": () => Response.json({ changeSetId: s1 }),
@@ -508,23 +502,13 @@ describe("the Drafts page", () => {
     ).toBeDefined();
     expect(screen.getByText("the column Previous site")).toBeDefined();
     expect(screen.getByText("the column Wiki")).toBeDefined();
-    expect(
-      screen.getByText(
-        wholeText(
-          /From Name, ID, Site, Level, Team to Name, Previous site, ID, Site, Grade, Team/,
-        ),
-      ),
-    ).toBeDefined();
     await userEvent.click(
       screen.getByRole("checkbox", {
-        name: "Select the draft of People's columns",
+        name: "Select the draft of the column Previous site",
       }),
     );
     await userEvent.click(screen.getByRole("button", { name: /^Approve/ }));
     const dialog = await screen.findByRole("dialog");
-    expect(
-      within(dialog).getByText("Also approves the drafts these depend on:"),
-    ).toBeDefined();
     await userEvent.click(
       within(dialog).getByRole("button", { name: "Approve" }),
     );
@@ -538,7 +522,6 @@ describe("the Drafts page", () => {
           choices: [],
           orders: [],
           columns: ["f2"],
-          columnOrder: true,
           records: [],
         },
       ]);
@@ -993,7 +976,6 @@ describe("the Drafts page", () => {
         choices: [],
         orders: [],
         columns: [],
-        columnOrder: false,
         records: [],
       },
     ]);
@@ -1079,7 +1061,6 @@ describe("the Drafts page", () => {
         choices: [],
         orders: [],
         columns: [],
-        columnOrder: false,
         records: [],
       },
     ]);
@@ -1182,7 +1163,6 @@ describe("the Drafts page", () => {
           choices: [],
           orders: [],
           columns: [],
-          columnOrder: false,
           records: [],
         },
       ]);
@@ -1223,7 +1203,6 @@ describe("the Drafts page", () => {
         choices: [],
         orders: [],
         columns: [],
-        columnOrder: false,
         records: [],
         reason: "Fictional reason",
       },

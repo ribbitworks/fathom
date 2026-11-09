@@ -309,38 +309,6 @@ describe("the entries", () => {
           ),
         ]),
         entry([
-          record("column-order", "changed", [
-            {
-              field: "order",
-              oldValue: ["Name", "Employee ID", "Site"],
-              newValue: ["Site", "Name", "Employee ID"],
-            },
-          ]),
-        ]),
-        entry([
-          record("column-order", "changed", [
-            {
-              field: "order",
-              oldValue: ["Name", "Site", "Employee ID", "Level"],
-              newValue: ["Name", "Employee ID", "Level", "Site"],
-            },
-          ]),
-        ]),
-        entry([
-          record("column-order", "changed", [
-            {
-              field: "order",
-              oldValue: ["Name", "Site", "Employee ID", "Level"],
-              newValue: ["Site", "Name", "Level", "Employee ID"],
-            },
-          ]),
-        ]),
-        entry([
-          record("column-order", "changed", [
-            { field: "order", oldValue: null, newValue: ["Name"] },
-          ]),
-        ]),
-        entry([
           record(
             "saved-view",
             "changed",
@@ -364,14 +332,28 @@ describe("the entries", () => {
       "Fictional Person moved the choice North in Sites to the top",
       "Fictional Person moved the choice North in Sites after South",
       "Fictional Person changed the column Site: Several choices from No to Yes; List from Sites to Places; someday from a to b",
-      "Fictional Person moved the column Site to the start",
-      "Fictional Person moved the column Site after Level",
-      "Fictional Person changed the order of People's columns",
-      "Fictional Person changed the order of People's columns",
       "Fictional Person changed the view Leaving: View settings changed",
       "Fictional Person added the view without a name",
       "Fictional Person added a record",
     ]);
+  });
+
+  it("say a list's order was drafted when no one choice can be said to have moved", async () => {
+    serverAnswers({
+      "GET /api/session": changesViewer,
+      "GET /api/changes": page([
+        entry([
+          record(
+            "choice-order",
+            "changed",
+            [{ field: "order", oldValue: null, newValue: ["North"] }],
+            "Sites",
+          ),
+        ]),
+      ]),
+    });
+    renderApp("/changes");
+    expect((await lines())[0]).toContain("a new order for Sites");
   });
 
   it("say in words when a view is shared or taken back", async () => {

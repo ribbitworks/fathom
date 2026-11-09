@@ -208,28 +208,13 @@ export const personSchema = z.object({
 
 export type Person = z.infer<typeof personSchema>;
 
-// A draft of the order of the People table's columns, holding the whole order, with the live order
-// beside.
-export const columnOrderDraftSchema = z.object({
-  live: z.array(z.string()),
-  // The columns only drafted to be added that the draft places, whose drafts approving it approves.
-  uses: z.array(z.string()).optional(),
-  ...draftShape,
-});
-
-export type ColumnOrderDraft = z.infer<typeof columnOrderDraftSchema>;
-
 // Everyone the user may see, by preferred name, with the added columns whose values they may see,
 // the order of the columns they see: built-in ones by name, such as "employeeId", and added ones
 // by identifier, and the saved views of the People table they may see, by name.
 export const peopleSchema = z.object({
   people: z.array(personSchema),
   fields: z.array(fieldSchema),
-  // In order, as a draft of the order makes it.
   order: z.array(z.string()),
-  orderDraft: columnOrderDraftSchema.optional(),
-  // Who holds the order of the columns, as heldBy does a person.
-  orderHeldBy: heldBySchema,
   // Set for users who cannot see the Positions list's tier, who see no Position column.
   positionHidden: z.literal(true).optional(),
   views: z.array(savedViewSchema),
@@ -355,13 +340,6 @@ export const fieldRequestSchema = z
   );
 
 export type FieldRequest = z.infer<typeof fieldRequestSchema>;
-
-// The key of a column on the People table: a built-in column's name, or an added column's
-// identifier.
-export const columnKeySchema = z.string().min(1).max(64);
-
-// Moves a column to just after another, or to the start when there is none.
-export const fieldMoveSchema = z.object({ after: columnKeySchema.nullable() });
 
 // The change set a change was saved in, which undoing it names; null when nothing changed.
 export const changeSetIdSchema = z.uuid().nullable();

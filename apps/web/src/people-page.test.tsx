@@ -1392,7 +1392,6 @@ describe("drafts", () => {
         choices: [],
         orders: [],
         columns: [],
-        columnOrder: false,
         records: [],
       },
     ]);
@@ -1405,7 +1404,6 @@ describe("drafts", () => {
         choices: [],
         orders: [],
         columns: [],
-        columnOrder: false,
         records: [],
         reason: "Fictional reason",
       },
@@ -1765,71 +1763,65 @@ describe("columns", () => {
   });
 
   it("moves any column from its menu, with Alt and the arrow keys, and by dragging, but not past either end", async () => {
-    const fetch = await openPeople({
-      "PUT /api/people/columns/f1/position": savedAs(),
-      "PUT /api/people/columns/f2/position": savedAs(),
-      "PUT /api/people/columns/preferredName/position": savedAs(),
-      "PUT /api/people/columns/endDate/position": savedAs(),
-      "PUT /api/people/columns/employeeId/position": savedAs(),
-    });
+    await openPeople();
     const header = (label: string) =>
       screen.getByRole("button", { name: `${label} column` });
-    const moves = (key: string) =>
-      bodyOf(fetch, "PUT", `/api/people/columns/${key}/position`);
+    const labels = () =>
+      screen
+        .getAllByRole("button", { name: / column$/ })
+        .map((button) => button.getAttribute("aria-label"));
+    const place = (label: string) => labels().indexOf(`${label} column`);
 
+    // Given the Role on team column somewhere after the first
+    const rolePlace = place("Role on team");
     await userEvent.click(header("Role on team"));
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /^Move left/ }),
     );
     await waitFor(() => {
-      expect(moves("f2")).toEqual([{ after: "positionId" }]);
+      expect(place("Role on team")).toBe(rolePlace - 1);
     });
 
-    // Built-in columns move too, to the very start.
+    // Built-in columns move too, to the very start, and no further.
+    const start = place("Name");
+    await settle();
     act(() => {
       header("ID").focus();
     });
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
     await waitFor(() => {
-      expect(moves("employeeId")).toEqual([{ after: null }]);
-    });
-    act(() => {
-      header("Name").focus();
-    });
-    await userEvent.keyboard("{Alt>}{ArrowRight}{/Alt}");
-    await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}{ArrowLeft}");
-    await waitFor(() => {
-      expect(moves("preferredName")).toHaveLength(1);
+      expect(place("ID")).toBe(start);
     });
     await settle();
     act(() => {
-      header("Name").focus();
+      header("ID").focus();
     });
     await userEvent.keyboard("{Alt>}{ArrowLeft}{/Alt}");
-    await userEvent.click(header("Expected"));
-    // Role on team's menu may still be closing, so its items are looked for only in Expected's own
-    // menu.
-    const endMenu = await screen.findByRole("menu", {
-      name: /^Expected column/,
-    });
-    await userEvent.click(
-      within(endMenu).getByRole("menuitem", { name: /^Move right/ }),
-    );
+    expect(place("ID")).toBe(start);
 
+    // A column at the end stays there.
+    const last = String(labels().at(-1)).replace(/ column$/, "");
+    const before = labels();
+    await userEvent.click(header(last));
+    await userEvent.click(
+      within(await screen.findByRole("menu")).getByRole("menuitem", {
+        name: /^Move right/,
+      }),
+    );
+    expect(labels()).toEqual(before);
+
+    // Dragging onto itself or without starting moves nothing, and onto another moves it.
     const th = (label: string) => header(label).closest("th") as HTMLElement;
     fireEvent.drop(th("Role on team"));
     fireEvent.dragStart(th("Site"));
+    fireEvent.drop(th("Site"));
+    expect(labels()).toEqual(before);
+    fireEvent.dragStart(th("Site"));
     fireEvent.dragOver(th("Role on team"));
     fireEvent.drop(th("Role on team"));
-    fireEvent.dragStart(th("Site"));
-    fireEvent.drop(th("Site"));
     await waitFor(() => {
-      expect(moves("f1")).toHaveLength(1);
+      expect(labels()).not.toEqual(before);
     });
-    // Moves save one after another, so once Site's has been sent, any from Expected's menu has been
-    // too.
-    expect(moves("expected")).toEqual([]);
-    expect(moves("f2")).toHaveLength(1);
   });
 });
 
@@ -2616,7 +2608,7 @@ describe("searching, sorting, and filtering", () => {
     await userEvent.click(header("Name"));
     const sort = await screen.findByRole("menuitem", { name: "Sort Z to A" });
     expect(screen.queryByRole("menuitem", { name: "Edit column" })).toBeNull();
-    expect(screen.queryByRole("menuitem", { name: /^Move left/ })).toBeNull();
+    expect(screen.getByRole("menuitem", { name: /^Move left/ })).toBeDefined();
     await userEvent.click(sort);
     expect(shownNames()).toEqual(["Blake Fictional", "Avery Fictional"]);
     // Changing the view leaves out what the viewer may not see.
@@ -2639,8 +2631,8 @@ describe("searching, sorting, and filtering", () => {
         .getAllByRole("columnheader")
         .map((th) => th.textContent),
     ).toEqual([
-      "Name",
       "ID",
+      "Name",
       "Position",
       "Site",
       "Manager",
@@ -2974,6 +2966,63 @@ describe("searching, sorting, and filtering", () => {
       expect(within(dialog).queryByText("Already a view")).toBeNull();
     });
 
+    it("saves a moved column in the view", async () => {
+      const { fetch } = await openAt("/people", {
+        "GET /api/people": withViews([]),
+        "POST /api/people/views": () =>
+          Response.json({ view: harbour, changeSetId: s1 }, { status: 201 }),
+      });
+      await userEvent.click(
+        screen.getByRole("button", { name: /^Preferred name|^Name/ }),
+      );
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: /Move right/ }),
+      );
+      await chooseView("Save view…");
+      const dialog = await screen.findByRole("dialog", { name: "Save view" });
+      await userEvent.type(
+        within(dialog).getByRole("textbox", { name: "Name" }),
+        "Moved",
+      );
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Save view" }),
+      );
+      await waitFor(() => {
+        expect(bodyOf(fetch, "POST", "/api/people/views")).toEqual([
+          {
+            name: "Moved",
+            scope: "personal",
+            definition: expect.objectContaining({
+              order: expect.arrayContaining([
+                "preferredName",
+              ]) as unknown as string[],
+            }) as unknown,
+          },
+        ]);
+      });
+    });
+
+    it("clears moved columns with Clear all", async () => {
+      const { history } = await openAt(
+        '/people?order=["employeeId","preferredName"]',
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Clear all" }));
+      await waitFor(() => {
+        expect(address(history)).not.toContain("order=");
+      });
+    });
+
+    it("names moved columns in the menu, and puts them back from it", async () => {
+      const { history } = await openAt(
+        '/people?order=["employeeId","preferredName"]',
+        { "GET /api/people": withViews([]) },
+      );
+      await chooseView(/^Columns moved/);
+      await waitFor(() => {
+        expect(address(history)).not.toContain("order=");
+      });
+    });
+
     it("lets a new view, which is personal, take the name of a shared one", async () => {
       await openAt("/people?search=avery", {
         "GET /api/people": withViews([harbour]),
@@ -3127,7 +3176,6 @@ describe("drafts of columns", () => {
       people: [avery, blake],
       fields: [site, renamed, added],
       order: draftedOrder,
-      orderDraft: { ...waiting, live: order, uses: [] },
       views: [],
     });
 
@@ -3155,9 +3203,6 @@ describe("drafts of columns", () => {
       within(header("Previous site")).getByText("Draft: added"),
     ).toBeDefined();
     expect(within(header("Team roles")).getByText("Rejected")).toBeDefined();
-    expect(
-      within(header("Team roles")).getByText("Draft: moved"),
-    ).toBeDefined();
     // The renamed column is tinted, with the column as it is live beside it, hidden from assistive
     // technology as a live row is.
     expect(header("Team roles").closest("th")?.className).toMatch(
@@ -3207,65 +3252,8 @@ describe("drafts of columns", () => {
     ).toBeDefined();
   });
 
-  it("approves and restores the column order from the Draft menu, and counts the column drafts waiting", async () => {
-    const fetch = await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [site, renamed, added],
-          order: draftedOrder,
-          orderDraft: { ...waiting, live: order, uses: ["f3"] },
-          views: [],
-        }),
-      "POST /api/drafts/approval": savedAs(),
-      "DELETE /api/people/columns/order/draft": savedAs(),
-    });
-    let menu = await draftMenu();
-    expect(
-      within(menu).getByText("Reordered by Fictional Editor"),
-    ).toBeDefined();
-    await userEvent.click(
-      within(menu).getByRole("menuitem", { name: "Approve new order…" }),
-    );
-    const dialog = await screen.findByRole("dialog");
-    expect(
-      within(dialog).getByText("Also approves the drafts these depend on:"),
-    ).toBeDefined();
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Approve" }),
-    );
-    await waitFor(() => {
-      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
-        {
-          people: [],
-          plannedHires: [],
-          featureTeams: [],
-          lists: [],
-          choices: [],
-          orders: [],
-          columns: ["f3"],
-          columnOrder: true,
-          records: [],
-        },
-      ]);
-    });
-    menu = await draftMenu();
-    await userEvent.click(
-      within(menu).getByRole("menuitem", { name: "Discard new order" }),
-    );
-    expect(
-      await screen.findByText("Discarded the draft of the column order."),
-    ).toBeDefined();
-    expect(
-      within(await draftMenu()).getByRole("menuitem", {
-        name: "Approve 2 drafts…",
-      }),
-    ).toBeDefined();
-  });
-
-  it("decides a column's draft from its menu, and sends a rejected column order again", async () => {
-    const fetch = await openPeople({
+  it("decides a column's draft from its menu", async () => {
+    await openPeople({
       "GET /api/session": approverEditor,
       "GET /api/people": () =>
         Response.json({
@@ -3294,17 +3282,8 @@ describe("drafts of columns", () => {
             "startDate",
             "endDate",
           ],
-          orderDraft: {
-            ...waiting,
-            madeBy: null,
-            state: "rejected",
-            reason: "Keep the order",
-            live: order,
-            uses: [],
-          },
           views: [],
         }),
-      "DELETE /api/people/columns/order/draft/rejection": savedAs(),
     });
     const header = (name: string) =>
       screen.getByRole("button", {
@@ -3313,7 +3292,7 @@ describe("drafts of columns", () => {
     expect(within(header("Site")).getByText("Draft: removed")).toBeDefined();
     expect(header("Site").closest("th")?.className).toMatch(/removedColumn/);
     await userEvent.click(header("Role on team"));
-    let menu = await screen.findByRole("menu");
+    const menu = await screen.findByRole("menu");
     expect(
       within(menu).getByText(
         wholeText(
@@ -3334,25 +3313,6 @@ describe("drafts of columns", () => {
         }),
       );
     }
-    menu = await draftMenu();
-    expect(within(menu).getByText("Reordered by Fathom")).toBeDefined();
-    expect(within(menu).getByText("Reason: Keep the order")).toBeDefined();
-    // A rejected order is back with its makers, so Approvers have nothing to decide.
-    expect(
-      within(menu).queryByRole("menuitem", { name: "Reject new order…" }),
-    ).toBeNull();
-    await userEvent.click(
-      within(menu).getByRole("menuitem", {
-        name: "Resubmit",
-      }),
-    );
-    await waitFor(() => {
-      expect(
-        fetch.mock.calls.some(([url]) =>
-          url.endsWith("/api/people/columns/order/draft/rejection"),
-        ),
-      ).toBe(true);
-    });
   });
 
   it("shows each person's live value in a changed column's live copy", async () => {
@@ -3391,83 +3351,7 @@ describe("drafts of columns", () => {
     ]);
   });
 
-  it("offers nothing for the column order to those who may neither move columns nor approve", async () => {
-    await openPeople({
-      "GET /api/session": viewer,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [site, role],
-          order: draftedOrder.filter((key) => key !== "f3"),
-          orderDraft: { ...waiting, live: order, uses: [] },
-          views: [],
-        }),
-    });
-    expect(within(await draftMenu()).queryByText(/Reordered by/)).toBeNull();
-    await userEvent.keyboard("{Escape}");
-    await waitFor(() => {
-      expect(screen.queryByRole("menu")).toBeNull();
-    });
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: (shown) => shown.startsWith("Role on team column"),
-      }),
-    );
-    expect(
-      within(await screen.findByRole("menu")).queryByText(/Reordered by/),
-    ).toBeNull();
-  });
-
-  it("disables approving a column order that places a column whose addition was rejected, and decides a moved column apart from it", async () => {
-    await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [
-            site,
-            { ...renamed, draft: { ...renamed.draft, state: "waiting" } },
-            {
-              ...added,
-              draft: { ...added.draft, state: "rejected", reason: "Not yet" },
-            },
-          ],
-          order: draftedOrder,
-          orderDraft: { ...waiting, live: order, uses: ["f3"] },
-          views: [],
-        }),
-    });
-    const menu = await openDraftMenu();
-    expect(
-      within(menu)
-        .getByRole("menuitem", { name: "Approve new order…" })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
-    expect(
-      within(menu).getByText("Waiting for a rejected draft to be resubmitted"),
-    ).toBeDefined();
-    await userEvent.keyboard("{Escape}");
-    await waitFor(() => {
-      expect(screen.queryByRole("menu")).toBeNull();
-    });
-    // The order waits, so a moved column's own draft is decided apart from it.
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: (shown) => shown.startsWith("Team roles column"),
-      }),
-    );
-    const column = await screen.findByRole("menu");
-    expect(
-      within(column).getByRole("menuitem", { name: "Approve…" }),
-    ).toBeDefined();
-    expect(
-      within(column)
-        .getByRole("menuitem", { name: "Approve new order…" })
-        .hasAttribute("data-disabled"),
-    ).toBe(true);
-  });
-
-  it("offers no approval of a person's, a column's, or the order's draft this account changed", async () => {
+  it("offers no approval of a person's or a column's draft this account changed", async () => {
     const note = "Changed by this account, so another approver must approve it";
     const disabled = (menu: HTMLElement, name: string) =>
       within(menu)
@@ -3502,7 +3386,6 @@ describe("drafts of columns", () => {
             },
           ],
           order: draftedOrder.filter((key) => key !== "f3"),
-          orderDraft: { ...waiting, live: order, needsOtherApprover: true },
           views: [],
         }),
     });
@@ -3526,294 +3409,6 @@ describe("drafts of columns", () => {
     const column = await screen.findByRole("menu");
     expect(disabled(column, "Approve…")).toBe(true);
     expect(within(column).getAllByText(note).length).toBeGreaterThan(0);
-    await userEvent.keyboard("{Escape}");
-    await waitFor(() => {
-      expect(screen.queryByRole("menu")).toBeNull();
-    });
-    const draftMenu = await openDraftMenu();
-    expect(disabled(draftMenu, "Approve new order…")).toBe(true);
-    expect(within(draftMenu).getByText(note)).toBeDefined();
-  });
-
-  it("skips, when approving all shown, a column order that places a column whose addition was rejected", async () => {
-    const fetch = await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [
-            {
-              ...site,
-              draft: {
-                ...waiting,
-                action: "changed",
-                changed: ["required"],
-                live: { required: false },
-              },
-            },
-            role,
-            {
-              ...added,
-              draft: { ...added.draft, state: "rejected", reason: "Not yet" },
-            },
-          ],
-          order: draftedOrder,
-          orderDraft: { ...waiting, live: order, uses: ["f3"] },
-          views: [],
-        }),
-      "POST /api/drafts/approval": savedAs(),
-    });
-    await chooseInDraftMenu(/^Approve \d+ drafts?…$/);
-    const dialog = await screen.findByRole("dialog", {
-      name: "Approve 1 draft?",
-    });
-    expect(
-      within(dialog).getByText(
-        "1 draft is skipped because it depends on a rejected draft.",
-      ),
-    ).toBeDefined();
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: "Approve" }),
-    );
-    await waitFor(() => {
-      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
-        {
-          people: [],
-          plannedHires: [],
-          featureTeams: [],
-          lists: [],
-          choices: [],
-          orders: [],
-          columns: ["f1"],
-          columnOrder: false,
-          records: [],
-        },
-      ]);
-    });
-  });
-
-  it("decides a new column order from the menu of a column it moves", async () => {
-    const fetch = await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [site, role],
-          order: draftedOrder.filter((key) => key !== "f3"),
-          orderDraft: { ...waiting, live: order, uses: [] },
-          views: [],
-        }),
-      "POST /api/drafts/approval": savedAs(),
-    });
-    const header = () =>
-      screen.getByRole("button", {
-        name: (shown) => shown.startsWith("Role on team column"),
-      });
-    await userEvent.click(header());
-    await userEvent.click(
-      within(await screen.findByRole("menu")).getByRole("menuitem", {
-        name: "Reject new order…",
-      }),
-    );
-    await userEvent.click(
-      within(
-        await screen.findByRole("dialog", { name: "Reject 1 draft?" }),
-      ).getByRole("button", { name: "Cancel" }),
-    );
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog")).toBeNull();
-      expect(screen.queryByRole("menu")).toBeNull();
-    });
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: (shown) => shown.startsWith("Role on team column"),
-      }),
-    );
-    await userEvent.click(
-      within(await screen.findByRole("menu")).getByRole("menuitem", {
-        name: "Approve new order…",
-      }),
-    );
-    await userEvent.click(
-      within(await screen.findByRole("dialog")).getByRole("button", {
-        name: "Approve",
-      }),
-    );
-    await waitFor(() => {
-      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
-        expect.objectContaining({ columns: [], columnOrder: true }),
-      ]);
-    });
-  });
-
-  it("decides a moved column's own waiting draft and its order at once", async () => {
-    const fetch = await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [
-            site,
-            { ...renamed, draft: { ...renamed.draft, state: "waiting" } },
-          ],
-          order: draftedOrder.filter((key) => key !== "f3"),
-          orderDraft: { ...waiting, live: order, uses: [] },
-          views: [],
-        }),
-      "POST /api/drafts/approval": savedAs(),
-    });
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: (shown) => shown.startsWith("Team roles column"),
-      }),
-    );
-    const menu = await screen.findByRole("menu");
-    expect(
-      within(menu).getByText(wholeText("Moved by Fictional Editor")),
-    ).toBeDefined();
-    expect(
-      within(menu).queryByRole("menuitem", { name: "Approve new order…" }),
-    ).toBeNull();
-    expect(
-      within(menu).getByRole("menuitem", { name: "Discard new order" }),
-    ).toBeDefined();
-    const together = (dialog: HTMLElement, words: string) =>
-      [
-        ...(within(dialog).getByText(words).nextElementSibling?.children ?? []),
-      ].map(({ textContent }) => textContent);
-    await userEvent.click(
-      within(menu).getByRole("menuitem", { name: "Reject…" }),
-    );
-    const rejecting = await screen.findByRole("dialog", {
-      name: "Reject 2 drafts?",
-    });
-    expect(together(rejecting, "These drafts are rejected together:")).toEqual([
-      "the column Team roles",
-      "the new order for People's columns",
-    ]);
-    await userEvent.click(
-      within(rejecting).getByRole("button", { name: "Cancel" }),
-    );
-    await waitFor(() => {
-      expect(screen.queryByRole("dialog")).toBeNull();
-    });
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: (shown) => shown.startsWith("Team roles column"),
-      }),
-    );
-    await userEvent.click(
-      within(await screen.findByRole("menu")).getByRole("menuitem", {
-        name: "Approve…",
-      }),
-    );
-    const approving = await screen.findByRole("dialog", {
-      name: "Approve 2 drafts?",
-    });
-    expect(together(approving, "These drafts are approved together:")).toEqual([
-      "the column Team roles",
-      "the new order for People's columns",
-    ]);
-    await userEvent.click(
-      within(approving).getByRole("button", { name: "Approve" }),
-    );
-    await waitFor(() => {
-      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
-        expect.objectContaining({ columns: ["f2"], columnOrder: true }),
-      ]);
-    });
-  });
-
-  it("keeps a rejected order apart in the menu of a moved column whose own draft waits", async () => {
-    const fetch = await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [
-            site,
-            { ...renamed, draft: { ...renamed.draft, state: "waiting" } },
-          ],
-          order: draftedOrder.filter((key) => key !== "f3"),
-          orderDraft: {
-            ...waiting,
-            state: "rejected",
-            reason: "Keep the order",
-            live: order,
-            uses: [],
-          },
-          views: [],
-        }),
-      "POST /api/drafts/approval": savedAs(),
-    });
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: (shown) => shown.startsWith("Team roles column"),
-      }),
-    );
-    const menu = await screen.findByRole("menu");
-    expect(within(menu).queryByText(/^Moved by/)).toBeNull();
-    expect(
-      within(menu).getByText("Reordered by Fictional Editor"),
-    ).toBeDefined();
-    expect(within(menu).getByText("Reason: Keep the order")).toBeDefined();
-    await userEvent.click(
-      within(menu).getByRole("menuitem", { name: "Approve…" }),
-    );
-    await userEvent.click(
-      within(await screen.findByRole("dialog")).getByRole("button", {
-        name: "Approve",
-      }),
-    );
-    await waitFor(() => {
-      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
-        expect.objectContaining({ columns: ["f2"], columnOrder: false }),
-      ]);
-    });
-  });
-
-  it("keeps the order apart in the menu of a moved column whose own draft was rejected", async () => {
-    await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": peopleWithDrafts,
-    });
-    await userEvent.click(
-      screen.getByRole("button", {
-        name: (shown) => shown.startsWith("Team roles column"),
-      }),
-    );
-    const menu = await screen.findByRole("menu");
-    // Nothing reads as approving the rejected rename; the order is decided under its own name.
-    expect(
-      within(menu).queryByRole("menuitem", { name: "Approve…" }),
-    ).toBeNull();
-    expect(
-      within(menu).getByText("Reordered by Fictional Editor"),
-    ).toBeDefined();
-    expect(
-      within(menu).getByRole("menuitem", { name: "Approve new order…" }),
-    ).toBeDefined();
-  });
-
-  it("marks a column moved by a rejected order as rejected", async () => {
-    await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [site, role],
-          order: draftedOrder.filter((key) => key !== "f3"),
-          orderDraft: { ...waiting, state: "rejected", live: order, uses: [] },
-          views: [],
-        }),
-    });
-    expect(
-      within(
-        screen.getByRole("button", {
-          name: (shown) => shown.startsWith("Role on team column"),
-        }),
-      ).getByText("Rejected: moved"),
-    ).toBeDefined();
   });
 
   it("leaves out people and columns drafted to be removed with Drafts applied", async () => {
@@ -3846,9 +3441,9 @@ describe("drafts of columns", () => {
       "GET /api/session": approverEditor,
       "GET /api/people": peopleWithDrafts,
     });
-    // Team roles has its own draft and is moved, so two lines of marks sit under its name.
+    // Team roles has a draft of its own, so a line of marks sits under its name.
     const scroller = screen.getByRole("grid", { name: "People" }).parentElement;
-    expect(scroller?.style.scrollPaddingTop).toContain("3 * 1.125rem");
+    expect(scroller?.style.scrollPaddingTop).toContain("2 * 1.125rem");
   });
 
   it("shows a changed column's live copy before its live list has loaded", async () => {
@@ -3940,7 +3535,6 @@ describe("drafts of columns", () => {
           ],
           fields: [site, renamed],
           order: draftedOrder.filter((key) => key !== "f3"),
-          orderDraft: { ...waiting, state: "rejected", live: order, uses: [] },
           views: [],
         }),
       "GET /api/lists": listsAnswer,
@@ -3952,14 +3546,12 @@ describe("drafts of columns", () => {
     expect(screen.queryByText("Avery Renamed")).toBeNull();
     expect(screen.getByText("Role on team")).toBeDefined();
     expect(screen.queryByText("Team roles")).toBeNull();
-    expect(screen.queryByText("Draft: moved")).toBeNull();
     const menu = await draftMenu();
     expect(
       within(menu)
         .getByRole("menuitem", { name: /Rejected/ })
         .hasAttribute("data-disabled"),
     ).toBe(true);
-    expect(within(menu).queryByText(/Reordered by/)).toBeNull();
   });
 
   it("shows only the live columns, in their live order, with Live only", async () => {
@@ -3976,7 +3568,6 @@ describe("drafts of columns", () => {
       .map((header) => header.textContent);
     expect(headers.some((text) => text.includes("Previous site"))).toBe(false);
     expect(headers.some((text) => text.includes("Role on team"))).toBe(true);
-    expect(within(await draftMenu()).queryByText(/Reordered by/)).toBeNull();
   });
 });
 
@@ -4087,7 +3678,7 @@ describe("unpublished and held changes", () => {
     expect(within(await openDraftMenu()).queryByText(/drafts/)).toBeNull();
   });
 
-  it("holds columns and the column order someone else is changing, and keeps one's own from Approvers", async () => {
+  it("holds columns someone else is changing, and keeps one's own from Approvers", async () => {
     await openPeople({
       "GET /api/session": approverEditor,
       "GET /api/people": () =>
@@ -4105,14 +3696,6 @@ describe("unpublished and held changes", () => {
             "startDate",
             "endDate",
           ],
-          orderDraft: {
-            live: order,
-            uses: [],
-            state: "waiting",
-            madeBy: "Fictional Editor",
-            madeAt: "2026-10-30T15:00:00.000Z",
-          },
-          orderHeldBy: holder,
           views: [],
         }),
     });
@@ -4121,16 +3704,8 @@ describe("unpublished and held changes", () => {
       within(header("Role on team")).getByText(", unpublished"),
     ).toBeDefined();
     let menu = await menuOf(header("Site"));
-    // Both the column and the order that moves it are held.
-    expect(within(menu).getAllByText(held)).toHaveLength(2);
-    for (const item of [
-      "Approve…",
-      "Edit column",
-      "Discard draft",
-      "Move left",
-      "Discard new order",
-      "Approve new order…",
-    ]) {
+    expect(within(menu).getAllByText(held)).toHaveLength(1);
+    for (const item of ["Approve…", "Edit column", "Discard draft"]) {
       expect(within(menu).queryByRole("menuitem", { name: item })).toBeNull();
     }
     await userEvent.keyboard("{Escape}");
@@ -4141,55 +3716,6 @@ describe("unpublished and held changes", () => {
     ).toBeNull();
     expect(
       within(menu).getByRole("menuitem", { name: "Edit column" }),
-    ).toBeDefined();
-    expect(
-      within(menu).queryByRole("menuitem", { name: "Move left" }),
-    ).toBeNull();
-    await userEvent.keyboard("{Escape}");
-    menu = await openDraftMenu();
-    expect(within(menu).getByText(held)).toBeDefined();
-    expect(
-      within(menu).queryByRole("menuitem", { name: "Approve new order…" }),
-    ).toBeNull();
-    expect(
-      within(menu).queryByRole("menuitem", { name: "Discard new order" }),
-    ).toBeNull();
-    expect(header("Site").getAttribute("draggable")).toBeNull();
-  });
-
-  it("keeps one's own unpublished column order from Approvers", async () => {
-    await openPeople({
-      "GET /api/session": approverEditor,
-      "GET /api/people": () =>
-        Response.json({
-          people: [avery, blake],
-          fields: [site, role],
-          order: [
-            "preferredName",
-            "employeeId",
-            "f2",
-            "f1",
-            "startDate",
-            "endDate",
-          ],
-          orderDraft: {
-            live: order,
-            uses: [],
-            state: "waiting",
-            madeBy: "Fictional Editor",
-            madeAt: "2026-10-30T15:00:00.000Z",
-            unpublished: true,
-          },
-          views: [],
-        }),
-    });
-    const menu = await openDraftMenu();
-    expect(within(menu).getByText(mine)).toBeDefined();
-    expect(
-      within(menu).queryByRole("menuitem", { name: "Approve new order…" }),
-    ).toBeNull();
-    expect(
-      within(menu).getByRole("menuitem", { name: "Discard new order" }),
     ).toBeDefined();
   });
 });

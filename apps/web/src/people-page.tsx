@@ -102,7 +102,6 @@ import {
   discardDraft,
   resubmitColumnDraft,
   resubmitDraft,
-  moveColumn,
   type PeopleData,
   peopleQuery,
   updateView,
@@ -168,17 +167,6 @@ function drafted(person: Person): Person {
     ...person,
     draft: pendingDraft("deleted", { values: {}, links: {} }),
   };
-}
-
-// The column order with one column taken out and put back just after another, or at the start.
-function reordered(
-  order: readonly string[],
-  key: string,
-  after: string | null,
-): string[] {
-  const others = order.filter((other) => other !== key);
-  const at = after === null ? 0 : others.indexOf(after) + 1;
-  return [...others.slice(0, at), key, ...others.slice(at)];
 }
 
 const cannotAddId = "people-cannot-add";
@@ -319,19 +307,15 @@ export function PeoplePage({
       : row.preferredName;
 
   const actions: PeopleActions = {
-    decide: (asking, chosen, naming) => {
+    decide: (asking, chosen) => {
       // Approving names the drafts the choice uses, and rejecting those that use it.
       // Drafts are only decided once the people and lists are loaded.
-      const { fields, orderDraft, people } = query.data as PeopleData;
+      const { fields, people } = query.data as PeopleData;
       setDecision(
-        decisionFor(
-          asking,
-          chosen,
-          approves,
-          lists.data as List[],
-          { fields, orderDraft, people },
-          naming,
-        ),
+        decisionFor(asking, chosen, approves, lists.data as List[], {
+          fields,
+          people,
+        }),
       );
       setDeciding(true);
     },
@@ -466,16 +450,6 @@ export function PeoplePage({
           } else {
             undoable(changeSetId, before);
           }
-        },
-      });
-    },
-    moveColumn: (key, label, after) => {
-      save({
-        next: (data) => ({ ...data, order: reordered(data.order, key, after) }),
-        save: () => moveColumn(key, after),
-        failure: `Fathom could not move ${label}.`,
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
         },
       });
     },
@@ -823,8 +797,7 @@ export function PeoplePage({
           people={query.data.people}
           fields={query.data.fields}
           order={query.data.order}
-          orderDraft={query.data.orderDraft}
-          orderHeldBy={query.data.orderHeldBy}
+          canMoveColumns
           lists={lists.data}
           canEdit={canEdit}
           canEditHires={canEditHires}

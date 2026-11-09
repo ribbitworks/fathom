@@ -552,10 +552,9 @@ export function featureTable(
   });
 }
 
-// The plan's tables have no columns that can be moved or edited.
+// The plan's tables have no columns that can be edited.
 const ignoreColumn = () => undefined;
 export const noColumnActions = {
-  moveColumn: ignoreColumn,
   editColumn: ignoreColumn,
   discardColumn: ignoreColumn,
   resubmitColumn: ignoreColumn,

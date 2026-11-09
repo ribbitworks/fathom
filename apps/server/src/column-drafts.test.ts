@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for drafts of the People table's columns and of their order, against a PostgreSQL server of
-// their own: drafting columns added, changed, removed, and moved; the refusals that keep drafts
-// fitting the people; approving them, with the columns an order uses, and rejecting them only
-// together with the drafts that use them; discarding and sending again; undoing edits to them; and
+// Tests for drafts of the People table's columns, against a PostgreSQL server of their own: drafting
+// columns added, changed, and removed; the refusals that keep drafts fitting the people; approving
+// and rejecting them; discarding and sending again; undoing edits to them; and
 // reading them in place.
 
 import { columnOrders, drafts, fields, fieldValues, lists } from "@fathom/db";
@@ -59,7 +58,6 @@ interface PeopleRead {
   people: Person[];
   fields: Field[];
   order: string[];
-  orderDraft?: { live: string[]; uses?: string[]; state: string };
 }
 
 async function readPeople(cookie = editor.cookie): Promise<PeopleRead> {
@@ -486,95 +484,6 @@ describe("drafting columns", () => {
   });
 });
 
-describe("drafting the order of the columns", () => {
-  it("drafts a new order, approves it, and approves the columns it places with it", async () => {
-    const { list } = await liveList(["A"]);
-    const first = await liveColumn(list.id);
-    expect(
-      (
-        await send("PUT", `/api/people/columns/${first.id}/position`, {
-          after: null,
-        })
-      ).statusCode,
-    ).toBe(200);
-    const read = await readPeople();
-    expect(read.order[0]).toBe(first.id);
-    expect(read.orderDraft).toMatchObject({ state: "waiting", uses: [] });
-    expect((await decide("approval", { columnOrder: true })).statusCode).toBe(
-      200,
-    );
-    expect((await liveOrder())[0]).toBe(first.id);
-
-    const { field: added } = await draftColumn(list.id);
-    await send("PUT", `/api/people/columns/${added.id}/position`, {
-      after: null,
-    });
-    expect((await readPeople()).orderDraft?.uses).toEqual([added.id]);
-    expect(
-      (await decide("rejection", { columns: [added.id], reason: "Not yet" }))
-        .statusCode,
-    ).toBe(409);
-    expect(
-      (
-        await decide("rejection", {
-          columns: [added.id],
-          columnOrder: true,
-          reason: "Not yet",
-        })
-      ).statusCode,
-    ).toBe(200);
-    expect(
-      (
-        await decide("rejection", {
-          columns: [added.id],
-          columnOrder: true,
-          reason: "Not yet",
-        })
-      ).statusCode,
-    ).toBe(200);
-    // Rejected drafts are back with their makers, so are approved only once sent again.
-    expect((await decide("approval", { columnOrder: true })).statusCode).toBe(
-      409,
-    );
-    await send("DELETE", `/api/people/columns/${added.id}/draft/rejection`);
-    expect((await decide("approval", { columnOrder: true })).statusCode).toBe(
-      409,
-    );
-    await send("DELETE", "/api/people/columns/order/draft/rejection");
-    expect((await decide("approval", { columnOrder: true })).statusCode).toBe(
-      200,
-    );
-    expect(await liveField(added.id)).toBeDefined();
-    expect((await liveOrder())[0]).toBe(added.id);
-  });
-
-  it("refuses moves that make no sense, and records nothing for a move to where a column is", async () => {
-    const { list } = await liveList(["A"]);
-    const field = await liveColumn(list.id);
-    const at = (key: string, after: string | null) =>
-      send("PUT", `/api/people/columns/${key}/position`, { after });
-    expect((await at(field.id, field.id)).statusCode).toBe(400);
-    expect((await at("unknown", null)).statusCode).toBe(404);
-    expect((await at(field.id, "unknown")).statusCode).toBe(400);
-    const order = (await readPeople()).order;
-    const before = order[order.indexOf(field.id) - 1] ?? null;
-    expect((await at(field.id, before)).json()).toEqual({ changeSetId: null });
-  });
-
-  it("drops a draft of the order once the column it placed is discarded", async () => {
-    const { list } = await liveList(["A"]);
-    const { field } = await draftColumn(list.id);
-    await send("PUT", `/api/people/columns/${field.id}/position`, {
-      after: null,
-    });
-    expect((await readPeople()).orderDraft).toBeDefined();
-    expect(
-      (await send("DELETE", `/api/people/columns/${field.id}`)).statusCode,
-    ).toBe(200);
-    expect(await readPeople()).not.toHaveProperty("orderDraft");
-  });
-});
-
 describe("discarding and sending drafts of columns again", () => {
   it("sends a rejected draft again, discards it, and refuses drafts that do not exist", async () => {
     const { list } = await liveList(["A"]);
@@ -604,27 +513,11 @@ describe("discarding and sending drafts of columns again", () => {
     expect((await decide("approval", { columns: [field.id] })).statusCode).toBe(
       404,
     );
-    expect((await decide("approval", { columnOrder: true })).statusCode).toBe(
-      404,
-    );
-
-    await send("PUT", `/api/people/columns/${field.id}/position`, {
-      after: null,
-    });
-    await decide("rejection", { columnOrder: true, reason: "Keep it" });
-    expect(
-      (await send("DELETE", "/api/people/columns/order/draft/rejection"))
-        .statusCode,
-    ).toBe(200);
-    expect(
-      (await send("DELETE", "/api/people/columns/order/draft")).statusCode,
-    ).toBe(200);
-    expect(await readPeople()).not.toHaveProperty("orderDraft");
   });
 });
 
 describe("undoing edits to drafts of columns", () => {
-  it("puts back a column's draft, its order, and a removal, and takes out a draft adding it", async () => {
+  it("puts back a column's draft and a removal, and takes out a draft adding it", async () => {
     const { list } = await liveList(["A"]);
     const field = await liveColumn(list.id);
     const renamed = await send("PUT", `/api/people/columns/${field.id}`, {
@@ -637,14 +530,6 @@ describe("undoing edits to drafts of columns", () => {
     expect(
       (await readPeople()).fields.find(({ id }) => id === field.id),
     ).not.toHaveProperty("draft");
-
-    const moved = await send(
-      "PUT",
-      `/api/people/columns/${field.id}/position`,
-      { after: null },
-    );
-    await send("POST", `/api/undo/${changeSet(moved)}`);
-    expect(await readPeople()).not.toHaveProperty("orderDraft");
 
     const removed = await send("DELETE", `/api/people/columns/${field.id}`);
     await send("POST", `/api/undo/${changeSet(removed)}`);
@@ -694,7 +579,7 @@ describe("orders stored before the reporting columns", () => {
     "teamName",
   ];
 
-  it("put each built-in column an order does not name just after the one it follows, live and drafted", async () => {
+  it("put each built-in column an order does not name just after the one it follows", async () => {
     const stored = await liveOrder();
     const added = stored.filter(
       (key) =>
@@ -736,49 +621,14 @@ describe("orders stored before the reporting columns", () => {
         "teamName",
         ...added.filter((key) => seen.fields.some(({ id }) => id === key)),
       ]);
-
-      await send("PUT", "/api/people/columns/employeeId/position", {
-        after: null,
-      });
-      await test.connection
-        .update(drafts)
-        .set({
-          fields: {
-            order: [
-              "employeeId",
-              "preferredName",
-              "startDate",
-              "endDate",
-              ...added,
-            ],
-          },
-        })
-        .where(eq(drafts.recordType, "column-order"));
-      const read = await readPeople();
-      expect(read.order).toEqual([
-        "employeeId",
-        "positionId",
-        "stateId",
-        "preferredName",
-        "startDate",
-        "expected",
-        "endDate",
-        ...reporting,
-        ...added,
-      ]);
-      expect(read.orderDraft?.live).toEqual(shown);
-      const seenDrafted = await readPeople(general.cookie);
-      expect(seenDrafted.order).not.toContain("managerFrom");
-      expect(seenDrafted.orderDraft?.live).toEqual(seen.order);
     } finally {
-      await send("DELETE", "/api/people/columns/order/draft");
       await write(stored);
     }
   });
 });
 
 describe("rejected drafts of columns", () => {
-  it("are waiting again once changed, discarded, or moved, and show their reasons meanwhile", async () => {
+  it("are waiting again once changed or discarded, and show their reasons meanwhile", async () => {
     const { list } = await liveList(["A"]);
     const field = await liveColumn(list.id);
     await send("PUT", `/api/people/columns/${field.id}`, {
@@ -798,33 +648,12 @@ describe("rejected drafts of columns", () => {
       (await readPeople()).fields.find(({ id }) => id === field.id),
     ).toMatchObject({ draft: { state: "waiting" } });
     await decide("rejection", { columns: [field.id], reason: "Third" });
+    // Rejecting it again for the same reason changes nothing.
+    expect(
+      (await decide("rejection", { columns: [field.id], reason: "Third" }))
+        .statusCode,
+    ).toBe(200);
     await send("DELETE", `/api/people/columns/${field.id}/draft`);
-
-    await send("PUT", `/api/people/columns/${field.id}/position`, {
-      after: null,
-    });
-    await decide("rejection", { columnOrder: true, reason: "Keep the order" });
-    expect((await readPeople()).orderDraft).toMatchObject({
-      state: "rejected",
-      reason: "Keep the order",
-    });
-    await send("PUT", `/api/people/columns/${field.id}/position`, {
-      after: "preferredName",
-    });
-    expect((await readPeople()).orderDraft).toMatchObject({ state: "waiting" });
-    await decide("rejection", { columnOrder: true, reason: "Keep the order" });
-    // Undoing sending it again puts the rejection back.
-    const resent = await send(
-      "DELETE",
-      "/api/people/columns/order/draft/rejection",
-    );
-    await send("POST", `/api/undo/${changeSet(resent)}`);
-    expect((await readPeople()).orderDraft).toMatchObject({
-      state: "rejected",
-      reason: "Keep the order",
-    });
-    await send("DELETE", "/api/people/columns/order/draft");
-    expect(await readPeople()).not.toHaveProperty("orderDraft");
   });
 });
 
@@ -832,20 +661,12 @@ describe("drafts of columns written without the change history", () => {
   it("are shown without who made them", async () => {
     const { list } = await liveList(["A"]);
     const field = await liveColumn(list.id);
-    await test.connection.insert(drafts).values([
-      {
-        recordType: "field",
-        recordId: field.id,
-        action: "changed",
-        fields: { name: unique("Fictional Unrecorded") },
-      },
-      {
-        recordType: "column-order",
-        recordId: "people",
-        action: "changed",
-        fields: { order: [field.id] },
-      },
-    ]);
+    await test.connection.insert(drafts).values({
+      recordType: "field",
+      recordId: field.id,
+      action: "changed",
+      fields: { name: unique("Fictional Unrecorded") },
+    });
     const read = await readPeople();
     expect(read.fields.find(({ id }) => id === field.id)?.draft).toMatchObject({
       madeBy: null,
@@ -853,25 +674,11 @@ describe("drafts of columns written without the change history", () => {
       editors: [],
       changedBy: { name: null },
     });
-    expect(read.orderDraft).toMatchObject({ madeBy: null, editors: [] });
     await send("DELETE", `/api/people/columns/${field.id}/draft`);
-    await send("DELETE", "/api/people/columns/order/draft");
   });
 });
 
 describe("more refusals", () => {
-  it("keeps added columns that end the order in the order drafted out of a draft of the order", async () => {
-    const { list } = await liveList(["A"]);
-    const { field: x } = await draftColumn(list.id);
-    const { field: y } = await draftColumn(list.id);
-    await send("PUT", `/api/people/columns/${y.id}/position`, {
-      after: (await readPeople()).order.at(-3) ?? null,
-    });
-    expect((await readPeople()).orderDraft?.uses).toEqual([y.id]);
-    await send("DELETE", `/api/people/columns/${x.id}`);
-    await send("DELETE", `/api/people/columns/${y.id}`);
-  });
-
   it("refuses approving a removal while drafts of people give the column values, and lists that are missing or retired", async () => {
     const { list, choices } = await liveList(["A"]);
     const field = await liveColumn(list.id);
@@ -967,20 +774,20 @@ describe("undoing changes to columns saved before columns had drafts", () => {
     );
   });
 
-  it("puts back a column's settings and the order, and takes out a column added, unless values or drafts hold it", async () => {
+  it("puts back a column's settings, and takes out a column added, unless values or drafts hold it", async () => {
     const { list, choices } = await liveList(["A"]);
     const field = await liveColumn(list.id);
-    const before = await liveOrder();
+    const other = await liveColumn(list.id);
     const renamed = unique("Fictional Renamed");
+    const otherRenamed = unique("Fictional Other Renamed");
     await test.connection
       .update(fields)
       .set({ name: renamed })
       .where(eq(fields.id, field.id));
-    const moved = [...before].reverse();
     await test.connection
-      .update(columnOrders)
-      .set({ keys: moved })
-      .where(eq(columnOrders.tableName, "people"));
+      .update(fields)
+      .set({ name: otherRenamed })
+      .where(eq(fields.id, other.id));
     const changed = await test.connection.transaction((transaction) =>
       recordChanges(transaction, editorActor(), [
         {
@@ -993,13 +800,13 @@ describe("undoing changes to columns saved before columns had drafts", () => {
           newValue: renamed,
         },
         {
-          recordType: "column-order",
-          recordId: "people",
+          recordType: "field",
+          recordId: other.id,
           action: "changed",
-          field: "order",
+          field: "name",
           tier: "general",
-          oldValue: before,
-          newValue: moved,
+          oldValue: other.name,
+          newValue: otherRenamed,
         },
       ]),
     );
@@ -1007,7 +814,7 @@ describe("undoing changes to columns saved before columns had drafts", () => {
       (await send("POST", `/api/undo/${String(changed)}`)).statusCode,
     ).toBe(200);
     expect((await liveField(field.id))?.name).toBe(field.name);
-    expect(await liveOrder()).toEqual(before);
+    expect((await liveField(other.id))?.name).toBe(other.name);
 
     const addLegacy = async () => {
       const id = randomUUID();
@@ -1291,18 +1098,6 @@ describe("columns drawing on lists drafted to be added", () => {
     expect(await test.historyOf(list.id)).toContainEqual(
       expect.objectContaining({ action: "created", madeBy: approver.id }),
     );
-  });
-
-  it("approves the list with a column the order of the columns places", async () => {
-    const { list } = await addedList();
-    const { field } = await draftColumn(list.id);
-    await send("PUT", `/api/people/columns/${field.id}/position`, {
-      after: null,
-    });
-    const approved = await decide("approval", { columnOrder: true });
-    expect(approved.statusCode, approved.body).toBe(200);
-    expect(await liveListRow(list.id)).toBeDefined();
-    expect((await liveOrder())[0]).toBe(field.id);
   });
 
   it("moves a column's draft onto a list drafted to be added", async () => {

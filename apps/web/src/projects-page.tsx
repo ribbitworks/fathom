@@ -304,17 +304,13 @@ export function ProjectsPage({
   });
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
 
-  const decide = (asking: Asking, chosen: DraftSelection, naming?: boolean) => {
+  const decide = (asking: Asking, chosen: DraftSelection) => {
     const plan = query.data as ProjectPlan;
     setDecision(
-      decisionFor(
-        asking,
-        chosen,
-        approves,
-        [],
-        { fields: [], records: planNodes(plan) },
-        naming,
-      ),
+      decisionFor(asking, chosen, approves, [], {
+        fields: [],
+        records: planNodes(plan),
+      }),
     );
     setDeciding(true);
   };

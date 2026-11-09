@@ -263,7 +263,6 @@ export async function startTestApp({
             "list-item",
             "choice-order",
             "field",
-            "column-order",
           ]),
         );
       if (waiting.length === 0) return;
@@ -282,7 +281,6 @@ export async function startTestApp({
           choices: of("list-item"),
           orders: of("choice-order"),
           columns: of("field"),
-          columnOrder: of("column-order").length > 0,
         },
       );
     },

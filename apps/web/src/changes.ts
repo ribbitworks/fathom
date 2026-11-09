@@ -184,8 +184,6 @@ function thing({ kind, name, list }: ChangedRecord): string {
         : `the choice ${called} in ${list}`;
     case "field":
       return `the column ${called}`;
-    case "column-order":
-      return "People's columns";
     case "choice-order":
       return `the order of ${called}`;
     case "saved-view":
@@ -209,19 +207,19 @@ function thing({ kind, name, list }: ChangedRecord): string {
   }
 }
 
-// The column that moved between two orders of columns, and the one it now follows, if it is the
-// only one that moved.
-function movedColumn(
+// The choice that moved between two orders of a list's choices, and the one it now follows, if it
+// is the only one that moved.
+function movedChoice(
   before: ChangeValue,
   after: ChangeValue,
-): { column: string; follows: string | null } | null {
+): { choice: string; follows: string | null } | null {
   if (!Array.isArray(before) || !Array.isArray(after)) return null;
-  for (const column of after) {
+  for (const choice of after) {
     const without = (order: string[]) =>
-      order.filter((other) => other !== column).join("\u0000");
+      order.filter((other) => other !== choice).join("\u0000");
     if (without(before) === without(after) && before.join() !== after.join()) {
-      const at = after.indexOf(column);
-      return { column, follows: at === 0 ? null : (after[at - 1] as string) };
+      const at = after.indexOf(choice);
+      return { choice, follows: at === 0 ? null : (after[at - 1] as string) };
     }
   }
   return null;
@@ -357,13 +355,13 @@ function recordWords(
     const [order] = record.fields as [ChangedField];
     const done = kind === "approval" ? "approved" : "drafted";
     const list = record.name ?? "a list";
-    const moved = movedColumn(order.oldValue, order.newValue);
+    const moved = movedChoice(order.oldValue, order.newValue);
     if (moved !== null && kind !== "approval") {
       return {
         sentence:
           moved.follows === null
-            ? `drafted moving ${moved.column} in ${list} to the top`
-            : `drafted moving ${moved.column} in ${list} after ${moved.follows}`,
+            ? `drafted moving ${moved.choice} in ${list} to the top`
+            : `drafted moving ${moved.choice} in ${list} after ${moved.follows}`,
         details: [],
       };
     }
@@ -391,19 +389,6 @@ function recordWords(
             : `moved ${named} after ${String(only.newValue)}`,
         details: [],
       };
-    }
-    if (only.field === "order" && record.kind === "column-order") {
-      const moved = movedColumn(only.oldValue, only.newValue);
-      if (moved !== null) {
-        return {
-          sentence:
-            moved.follows === null
-              ? `moved the column ${moved.column} to the start`
-              : `moved the column ${moved.column} after ${moved.follows}`,
-          details: [],
-        };
-      }
-      return { sentence: "changed the order of People's columns", details: [] };
     }
   }
   return {

@@ -241,7 +241,6 @@ describe("who may read and change people", () => {
       { name: "Fictional", listId: randomUUID() },
     ],
     ["PUT", column, { name: "Fictional", listId: randomUUID() }],
-    ["PUT", `${column}/position`, { after: null }],
     ["DELETE", column, undefined],
   ];
   const refused = (permission: "people:edit" | "configuration:edit") =>
@@ -331,7 +330,6 @@ describe("signed-out requests", () => {
     ["POST", "/api/people/columns"],
     ["PUT", `/api/people/columns/${randomUUID()}`],
     ["DELETE", `/api/people/columns/${randomUUID()}`],
-    ["PUT", "/api/people/columns/employeeId/position"],
     ["POST", "/api/people/views"],
     ["PUT", `/api/people/views/${randomUUID()}`],
     ["DELETE", `/api/people/views/${randomUUID()}`],
@@ -835,7 +833,7 @@ describe("positions and IDs", () => {
 });
 
 describe("columns", () => {
-  it("adds columns at the end, moves them, and changes their settings", async () => {
+  it("adds columns at the end, and changes their settings", async () => {
     const { cookie } = await editor();
     const { list } = await listWith(cookie, ["A"]);
     const first = (await addColumn(cookie, list.id)).field;
@@ -845,23 +843,6 @@ describe("columns", () => {
         [first.id, second.id].includes(key),
       );
     expect(await order()).toEqual([first.id, second.id]);
-    const moved = await send(
-      cookie,
-      "PUT",
-      `/api/people/columns/${second.id}/position`,
-      { after: null },
-    );
-    expect(moved.json()).toEqual({
-      changeSetId: expect.any(String) as unknown,
-    });
-    expect(await order()).toEqual([second.id, first.id]);
-    expect(
-      (
-        await send(cookie, "PUT", `/api/people/columns/${second.id}/position`, {
-          after: null,
-        })
-      ).json(),
-    ).toEqual({ changeSetId: null });
     const renamed = await send(
       cookie,
       "PUT",
@@ -886,39 +867,16 @@ describe("columns", () => {
     expect(same.json<{ changeSetId: null }>().changeSetId).toBeNull();
   });
 
-  it("moves built-in columns like added ones, and shows each user only the columns they see", async () => {
+  it("shows each user only the columns they see, in the table's own order", async () => {
     const { cookie } = await editor();
     const { field } = await columnWith(cookie, ["A"]);
-    const moved = await send(
-      cookie,
-      "PUT",
-      "/api/people/columns/preferredName/position",
-      { after: field.id },
-    );
-    expect(moved.statusCode).toBe(200);
     const order = (await readPeople(cookie)).order;
-    expect(order.indexOf("preferredName")).toBe(order.indexOf(field.id) + 1);
+    expect(order.at(-1)).toBe(field.id);
     expect(order).toEqual(expect.arrayContaining(["startDate", "endDate"]));
-    for (const [key, after, status] of [
-      ["unknown", null, 404],
-      ["employeeId", "unknown", 400],
-      ["employeeId", "employeeId", 400],
-    ] as const) {
-      const refused = await send(
-        cookie,
-        "PUT",
-        `/api/people/columns/${key}/position`,
-        { after },
-      );
-      expect(refused.statusCode).toBe(status);
-    }
     const viewer = await test.signedIn("resource-planner");
     const seen = (await readPeople(viewer.cookie)).order;
     expect(seen).not.toContain("startDate");
     expect(seen).toContain("employeeId");
-    await send(cookie, "PUT", "/api/people/columns/preferredName/position", {
-      after: null,
-    });
   });
 
   it("refuses a column name already used, ignoring letter case, and lists that are missing or retired", async () => {
@@ -1013,24 +971,11 @@ describe("columns", () => {
     const unknown = `/api/people/columns/${randomUUID()}`;
     for (const [method, url, payload] of [
       ["PUT", unknown, { name: "Fictional", listId: list.id }],
-      ["PUT", `${unknown}/position`, { after: null }],
       ["DELETE", unknown, undefined],
-      [
-        "PUT",
-        `/api/people/columns/${field.id}/position`,
-        { after: randomUUID() },
-      ],
     ] as [Method, string, object | undefined][]) {
       const response = await send(cookie, method, url, payload);
       expect(response.statusCode).toBeGreaterThanOrEqual(400);
     }
-    const itself = await send(
-      cookie,
-      "PUT",
-      `/api/people/columns/${field.id}/position`,
-      { after: field.id },
-    );
-    expect(itself.json()).toEqual({ error: "A column cannot follow itself" });
   });
 
   it("deletes a column with its values once approved, recording them on each person", async () => {
@@ -1240,15 +1185,6 @@ describe("undo", () => {
     const { id: personId } = await addPerson(cookie, {
       values: { [first.field.id]: [String(choices[0]?.id)] },
     });
-
-    const moved = await send(
-      cookie,
-      "PUT",
-      `/api/people/columns/${second.field.id}/position`,
-      { after: null },
-    );
-    await undo(cookie, moved.json<{ changeSetId: string }>().changeSetId);
-    expect(await order()).toEqual(ids);
 
     const renamed = await send(
       cookie,

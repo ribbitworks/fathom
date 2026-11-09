@@ -10,7 +10,6 @@
 
 import {
   type Asking,
-  type ColumnOrderDraft,
   type DraftKind,
   draftsWhere,
   type Field,
@@ -41,15 +40,9 @@ export interface DraftSelection {
   choices: string[];
   orders: string[];
   columns: string[];
-  // The draft of the order of the People table's columns.
-  columnOrder: boolean;
   // The plan's records, such as release streams, by kind.
   records: RecordRef[];
 }
-
-// Which draft of a table's columns: a column's, or that of the column order.
-export type ColumnDraftTarget =
-  { kind: "column"; id: string } | { kind: "order" };
 
 export const noDrafts = (): DraftSelection => ({
   people: [],
@@ -59,7 +52,6 @@ export const noDrafts = (): DraftSelection => ({
   choices: [],
   orders: [],
   columns: [],
-  columnOrder: false,
   records: [],
 });
 
@@ -71,8 +63,7 @@ export const draftTotal = (selection: DraftSelection) =>
   selection.choices.length +
   selection.orders.length +
   selection.columns.length +
-  selection.records.length +
-  (selection.columnOrder ? 1 : 0);
+  selection.records.length;
 
 // Whether a user who approves drafts of some kinds approves drafts of every kind given.
 export const approvesAll = (
@@ -120,11 +111,10 @@ function placedByOrder(list: List): string[] {
   return list.orderDraft?.uses ?? [];
 }
 
-// The People table's columns, the draft of their order, and its people, and the plan's records,
-// where the selection may hold them.
+// The People table's columns and its people, and the plan's records, where the selection may hold
+// them.
 export interface Columns {
   fields: readonly Field[];
-  orderDraft?: ColumnOrderDraft | undefined;
   people?: readonly Person[] | undefined;
   records?: readonly RecordNode[] | undefined;
 }
@@ -160,9 +150,8 @@ function usedByPerson(
 }
 
 // The other drafts approving the selection approves too: the columns and choices only drafted to be
-// added that people are given, the choices an order places that are only drafted to be added, the
-// columns only drafted to be added that the column order places, and the lists only drafted to be
-// added that any of those choices are added to or columns draw on.
+// added that people are given, the choices an order places that are only drafted to be added, and
+// the lists only drafted to be added that any of those choices are added to or columns draw on.
 export function usedDrafts(
   selection: DraftSelection,
   lists: readonly List[],
@@ -182,9 +171,6 @@ export function usedDrafts(
     for (const id of list === undefined ? [] : placedByOrder(list)) {
       choices.add(id);
     }
-  }
-  if (selection.columnOrder) {
-    for (const id of columns?.orderDraft?.uses ?? []) fieldIds.add(id);
   }
   const listIds = new Set<string>();
   for (const { list, choice } of choicesOf(lists)) {
@@ -261,7 +247,6 @@ export function heldBack(
     choices: selection.choices.filter((id) => held({ choices: [id] })),
     orders: selection.orders.filter((id) => held({ orders: [id] })),
     columns: selection.columns.filter((id) => held({ columns: [id] })),
-    columnOrder: selection.columnOrder && held({ columnOrder: true }),
     records: selection.records.filter((ref) => held({ records: [ref] })),
   };
 }
@@ -282,7 +267,6 @@ export const without = (
   choices: selection.choices.filter((id) => !other.choices.includes(id)),
   orders: selection.orders.filter((id) => !other.orders.includes(id)),
   columns: selection.columns.filter((id) => !other.columns.includes(id)),
-  columnOrder: selection.columnOrder && !other.columnOrder,
   records: recordsWithout(selection.records, other.records),
 });
 
@@ -350,11 +334,6 @@ export function usingDrafts(
     choices: [...choices].filter((id) => !selection.choices.includes(id)),
     orders: [...orders].filter((id) => !selection.orders.includes(id)),
     columns: [...fieldIds],
-    columnOrder:
-      !selection.columnOrder &&
-      (columns?.orderDraft?.uses ?? []).some(
-        (id) => selection.columns.includes(id) || fieldIds.has(id),
-      ),
     records: usingRecords(selection.records, columns?.records ?? []),
   };
 }
@@ -371,7 +350,6 @@ export const joined = (
   choices: [...new Set([...first.choices, ...second.choices])],
   orders: [...new Set([...first.orders, ...second.orders])],
   columns: [...new Set([...first.columns, ...second.columns])],
-  columnOrder: first.columnOrder || second.columnOrder,
   records: recordsJoined(first.records, second.records),
 });
 
@@ -396,7 +374,6 @@ export function draftNames(
       .filter(({ id }) => selection.columns.includes(id))
       .map(({ name }) => `the column ${name}`),
   );
-  if (selection.columnOrder) names.push("the new order for People's columns");
   for (const list of lists) {
     if (selection.lists.includes(list.id)) names.push(`the list ${list.name}`);
     for (const choice of list.choices) {
@@ -424,8 +401,6 @@ export const waitsForRejected = (
 export interface Decision {
   asking: Asking;
   selection: DraftSelection;
-  // The drafts chosen, named, when one menu item decides several together, so it is clear which.
-  together?: string[];
   // The other drafts included, named: those the chosen ones use, when approving, or those that use
   // the ones rejected.
   included?: string[];
@@ -483,7 +458,6 @@ function needingOthers(
         ({ id, draft }) => selection.columns.includes(id) && flagged(draft),
       )
       .map(({ id }) => id),
-    columnOrder: selection.columnOrder && flagged(columns?.orderDraft),
     records: (columns?.records ?? [])
       .filter(
         ({ ref, draft }) =>
@@ -550,13 +524,10 @@ export function decisionFor(
   approves: readonly DraftKind[],
   lists: readonly List[],
   columns?: Columns,
-  naming = false,
 ): Decision {
   const fields = columns?.fields ?? [];
   const names = (decided: DraftSelection) =>
     draftNames(decided, lists, fields, columns?.people, columns?.records);
-  const named = (decided: DraftSelection) =>
-    naming && draftTotal(decided) > 1 ? { together: names(decided) } : {};
   const beyond = (selection: DraftSelection) =>
     draftsWhere(selection, (kind) => !approves.includes(kind));
   if (asking === "reject") {
@@ -572,7 +543,6 @@ export function decisionFor(
     return {
       asking,
       selection,
-      ...named(chosen),
       ...(draftTotal(dependents) > 0 ? { included: names(dependents) } : {}),
     };
   }
@@ -596,7 +566,6 @@ export function decisionFor(
   return {
     asking,
     selection,
-    ...named(ready),
     ...(draftTotal(used) > 0 ? { included: names(used) } : {}),
     ...(draftTotal(held) > 0 ? { leftOut: draftTotal(held) } : {}),
   };

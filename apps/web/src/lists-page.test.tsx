@@ -2219,7 +2219,6 @@ describe("drafts on the Lists page", () => {
           choices: ["c8"],
           orders: [],
           columns: [],
-          columnOrder: false,
           records: [],
         },
       ]);
@@ -3001,7 +3000,6 @@ describe("drafts on the Lists page", () => {
           choices: ["c8"],
           orders: [],
           columns: [],
-          columnOrder: false,
           records: [],
         },
       ]);
@@ -3083,7 +3081,6 @@ describe("drafts on the Lists page", () => {
           choices: ["c8"],
           orders: [],
           columns: [],
-          columnOrder: false,
           records: [],
         },
       ]);
@@ -3133,7 +3130,6 @@ describe("drafts on the Lists page", () => {
           choices: [],
           orders: [],
           columns: [],
-          columnOrder: false,
           records: [],
         },
       ]);

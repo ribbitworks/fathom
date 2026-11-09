@@ -17,6 +17,7 @@ import {
   searchWords,
   type Show,
   type ViewDefinition,
+  inPlacesOf,
   viewDefinitionSchema,
 } from "@fathom/shared";
 import { useState } from "react";
@@ -83,6 +84,8 @@ export interface View {
   // How many columns, from the first, stay in view while the table scrolls sideways, when not the
   // table's own default.
   frozen?: number | undefined;
+  // The keys of the columns in the order the view puts them, when moved from the table's own.
+  order?: string[] | undefined;
   // The width set for each column, in pixels, by key, for those not left to fit what they hold.
   widths?: Record<string, number> | undefined;
 }
@@ -120,9 +123,13 @@ export function viewFrom(search: ViewDefinition): View {
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
     ...(search.grouping === undefined ? {} : { grouping: search.grouping }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
+    ...(hasOrder(search.order) ? { order: search.order } : {}),
     ...(hasWidths(search.widths) ? { widths: search.widths } : {}),
   };
 }
+
+const hasOrder = (order: readonly string[] | undefined): order is string[] =>
+  order !== undefined && order.length > 0;
 
 const hasWidths = (
   widths: Record<string, number> | undefined,
@@ -203,6 +210,7 @@ export function searchFor(view: View): ViewDefinition {
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
+    ...(hasOrder(view.order) ? { order: view.order } : {}),
     ...(hasWidths(view.widths) ? { widths: view.widths } : {}),
   };
 }
@@ -265,13 +273,14 @@ export function activeGrouping<Grouping extends { key: string }>(
   );
 }
 
-// Whether the view sorts the rows, or sets which columns are frozen or how wide they are, which the
-// Views menu names and Clear all clears with the filters.
+// Whether the view sorts the rows, or sets which columns are frozen, their order, or how wide they
+// are, which the Views menu names and Clear all clears with the filters.
 export function setsApart(view: View): boolean {
   return (
     view.sort.length > 0 ||
     view.grouping !== undefined ||
     view.frozen !== undefined ||
+    view.order !== undefined ||
     view.widths !== undefined
   );
 }
@@ -316,8 +325,46 @@ export function knownView(
         }),
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
+    ...orderOf(view.order, known),
     ...widthsOf(view.widths, known),
   };
+}
+
+// The order as asked while it places any column the table has now, keeping the places of columns the
+// Draft menu's choice leaves out for now.
+function orderOf(
+  order: string[] | undefined,
+  known: ReadonlySet<string>,
+): { order?: string[] } {
+  return order?.some((key) => known.has(key)) === true ? { order } : {};
+}
+
+// A copy with the item at one place taken out and put back at another.
+export function movedItem<Item>(
+  items: readonly Item[],
+  from: number,
+  to: number,
+): Item[] {
+  const others = [...items.slice(0, from), ...items.slice(from + 1)];
+  return [
+    ...others.slice(0, to),
+    ...items.slice(from, from + 1),
+    ...others.slice(to),
+  ];
+}
+
+// The view's order once a column shown moves: the columns shown as moved, in the places they hold
+// in the view's order or the table's own, every column not shown staying where it is. None once that
+// is the table's own order again.
+export function orderAfterMove(
+  shown: readonly string[],
+  from: number,
+  to: number,
+  tableOrder: readonly string[],
+  viewOrder: readonly string[] | undefined,
+): string[] | undefined {
+  const moved = inPlacesOf(viewOrder ?? tableOrder, movedItem(shown, from, to));
+  return moved.join() === tableOrder.join() ? undefined : moved;
 }
 
 function widthsOf(

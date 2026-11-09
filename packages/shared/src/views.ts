@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// A table's view, its search, filters, sort, breakdown, frozen columns, and the widths set for its
-// columns, as the page address holds it and as a saved view keeps it, and the saved views
-// themselves. A saved view is personal, seen and changed only by its maker, or shared: seen by
-// everyone who sees the table, except those it filters, sorts, or breaks down by a column they may
-// not see, and changed by its maker and those who may change planning configuration.
+// A table's view, its search, filters, sort, breakdown, frozen columns, the order of its columns,
+// and the widths set for them, as the page address holds it and as a saved view keeps it, and the
+// saved views themselves. A saved view is personal, seen and changed only by its maker, or shared:
+// seen by everyone who sees the table, except those it filters, sorts, or breaks down by a column
+// they may not see, and changed by its maker and those who may change planning configuration.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -48,8 +48,34 @@ export type Filter = z.infer<typeof filterSchema>;
 
 const sortLevel = z.string().regex(/^-?[\w-]{1,64}$/);
 const columnKey = z.string().regex(/^[\w-]{1,64}$/);
-// More widths than any table has columns, as only a hand-made address reaches.
-const widthsLimit = 100;
+// More than any table has columns, as only a hand-made address reaches.
+const columnsLimit = 100;
+
+// Column keys as an address or saved view holds them: each that does not fit is dropped, as is any
+// repeat.
+const looseColumnKeys = (limit: number) =>
+  z
+    .array(z.unknown())
+    .optional()
+    .catch(undefined)
+    .transform((raw) =>
+      raw === undefined
+        ? undefined
+        : [
+            ...new Set(
+              raw.filter(
+                (name): name is string => columnKey.safeParse(name).success,
+              ),
+            ),
+          ].slice(0, limit),
+    );
+
+// Column keys as a request sends them, which must fit as a whole.
+const columnKeys = (limit: number) =>
+  z
+    .array(columnKey)
+    .max(limit)
+    .refine((keys) => new Set(keys).size === keys.length, "Repeated column");
 
 // Which version of each record a table shows: its draft beside its live row, the draft alone, as
 // everything will be once approved, or the live record alone, as everything is now.
@@ -60,7 +86,8 @@ export type Show = z.infer<typeof showSchema>;
 // The view: the search, each column's filter by key, the sort as keys, each with a leading "-" when
 // descending, the keys of the columns the rows are broken down by, which is set, even when empty,
 // while the metrics show, and how many columns, from the first, stay in view while the table
-// scrolls sideways, when not the table's own default, and the width set for each column, in pixels,
+// scrolls sideways, when not the table's own default, the keys of the columns in the order the view
+// puts them, when moved from the table's own order, and the width set for each column, in pixels,
 // by key, for those not left to fit what they hold. Each filter, sort level, breakdown column, and
 // width that does not fit is dropped on its own, keeping the others, as is anything else that does
 // not fit.
@@ -94,23 +121,10 @@ export const viewDefinitionSchema = z.object({
         ?.filter((level): level is string => sortLevel.safeParse(level).success)
         .slice(0, levelsLimit),
     ),
-  breakdown: z
-    .array(z.unknown())
-    .optional()
-    .catch(undefined)
-    .transform((raw) =>
-      raw === undefined
-        ? undefined
-        : [
-            ...new Set(
-              raw.filter(
-                (name): name is string => columnKey.safeParse(name).success,
-              ),
-            ),
-          ].slice(0, breakdownLimit),
-    ),
+  breakdown: looseColumnKeys(breakdownLimit),
   grouping: columnKey.optional().catch(undefined),
   frozen: frozen.optional().catch(undefined),
+  order: looseColumnKeys(columnsLimit),
   widths: z
     .record(z.string(), z.unknown())
     .optional()
@@ -126,7 +140,7 @@ export const viewDefinitionSchema = z.object({
                   ? [[name, set.data] as const]
                   : [];
               })
-              .slice(0, widthsLimit),
+              .slice(0, columnsLimit),
           ),
     ),
 });
@@ -140,6 +154,7 @@ export interface ViewDefinition {
   breakdown?: string[] | undefined;
   grouping?: string | undefined;
   frozen?: number | undefined;
+  order?: string[] | undefined;
   widths?: Record<string, number> | undefined;
 }
 
@@ -155,17 +170,14 @@ const strictDefinitionSchema = z.object({
     )
     .optional(),
   sort: z.array(sortLevel).max(levelsLimit).optional(),
-  breakdown: z
-    .array(columnKey)
-    .max(breakdownLimit)
-    .refine((keys) => new Set(keys).size === keys.length, "Repeated column")
-    .optional(),
+  breakdown: columnKeys(breakdownLimit).optional(),
   grouping: columnKey.optional(),
   frozen: frozen.optional(),
+  order: columnKeys(columnsLimit).optional(),
   widths: z
     .record(columnKey, width)
     .refine(
-      (widths) => Object.keys(widths).length <= widthsLimit,
+      (widths) => Object.keys(widths).length <= columnsLimit,
       "Too many widths",
     )
     .optional(),
@@ -174,6 +186,22 @@ const strictDefinitionSchema = z.object({
 // The key of the People table's filter on drafts, which filters people by whether they have a
 // draft, waiting or rejected, but is not a column, so is neither searched nor sorted on.
 export const draftFilterKey = "draft";
+
+// The keys wanted, put into the places those keys hold in the current order, every other key staying
+// where it is; a key the current order does not name goes at the end.
+export function inPlacesOf(
+  current: readonly string[],
+  wanted: readonly string[],
+): string[] {
+  const placed = wanted.filter((key) => current.includes(key));
+  let next = 0;
+  return [
+    ...current.map((key) =>
+      wanted.includes(key) ? (placed[next++] as string) : key,
+    ),
+    ...wanted.filter((key) => !current.includes(key)),
+  ];
+}
 
 // The keys of the columns a view filters, sorts, or breaks down on, and of any filter that is not a
 // column.

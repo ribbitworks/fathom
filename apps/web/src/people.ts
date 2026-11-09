@@ -20,7 +20,6 @@ import {
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
-import type { ColumnDraftTarget } from "./drafts.ts";
 
 export type PeopleData = z.infer<typeof peopleSchema>;
 
@@ -86,42 +85,17 @@ export async function updateField(
   return sendJsonFor("PUT", columnPath(id), request, fieldResponse);
 }
 
-// Moves a column, built-in or added, by its key, to just after another, or to the start when there
-// is none.
-export async function moveColumn(
-  key: string,
-  after: string | null,
-): Promise<string | null> {
-  return (
-    await sendJsonFor(
-      "PUT",
-      `${columnPath(key)}/position`,
-      { after },
-      savedSchema,
-    )
-  ).changeSetId;
+const columnDraftPath = (id: string) => `${columnPath(id)}/draft`;
+
+// Discards a draft of a column.
+export async function discardColumnDraft(id: string): Promise<string | null> {
+  return (await sendDeleteFor(columnDraftPath(id), savedSchema)).changeSetId;
 }
 
-const columnDraftPath = (target: ColumnDraftTarget) =>
-  target.kind === "order"
-    ? "/api/people/columns/order/draft"
-    : `${columnPath(target.id)}/draft`;
-
-// Discards a draft of a column or of the column order.
-export async function discardColumnDraft(
-  target: ColumnDraftTarget,
-): Promise<string | null> {
-  return (await sendDeleteFor(columnDraftPath(target), savedSchema))
+// Sends a rejected draft of a column for approval again, unchanged.
+export async function resubmitColumnDraft(id: string): Promise<string | null> {
+  return (await sendDeleteFor(`${columnDraftPath(id)}/rejection`, savedSchema))
     .changeSetId;
-}
-
-// Sends a rejected draft of a column or of the column order for approval again, unchanged.
-export async function resubmitColumnDraft(
-  target: ColumnDraftTarget,
-): Promise<string | null> {
-  return (
-    await sendDeleteFor(`${columnDraftPath(target)}/rejection`, savedSchema)
-  ).changeSetId;
 }
 
 export async function deleteField(id: string): Promise<string | null> {

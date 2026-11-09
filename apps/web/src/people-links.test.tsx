@@ -407,18 +407,22 @@ describe("a web link column", () => {
   });
 
   it("moves like any other column", async () => {
-    const fetch = await openPeople({
-      "PUT /api/people/columns/f1/position": saved,
-    });
+    await openPeople();
+    const place = () =>
+      screen
+        .getAllByRole("button", { name: / column$/ })
+        .map((button) => button.getAttribute("aria-label"))
+        .indexOf("Profile column");
+    const before = place();
     await userEvent.click(
       await screen.findByRole("button", { name: "Profile column" }),
     );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: /Move left/ }),
     );
-    expect(bodyOf(fetch, "PUT", "/api/people/columns/f1/position")).toEqual([
-      { after: "preferredName" },
-    ]);
+    await waitFor(() => {
+      expect(place()).toBe(before - 1);
+    });
   });
 
   it("keeps its type once added", async () => {

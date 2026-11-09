@@ -660,7 +660,7 @@ describe("the seed command", () => {
     // removed; then the Skills column added, and a person given Rust in it; and of planned hires,
     // one moved to an open state, one added, and one given no target date, which is rejected.
     expect(made.map(({ action }) => action).sort()).toEqual([
-      ...Array<string>(18).fill("changed"),
+      ...Array<string>(17).fill("changed"),
       ...Array<string>(9).fill("created"),
       ...Array<string>(4).fill("deleted"),
     ]);
@@ -711,7 +711,7 @@ describe("the seed command", () => {
     );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     expect(await totalOf(people)).toBe(150);
-    expect(await connection.select().from(drafts)).toHaveLength(31);
+    expect(await connection.select().from(drafts)).toHaveLength(30);
     const reportingDrafts = made.filter(
       ({ recordType, fields }) =>
         recordType === "person" &&
@@ -778,8 +778,8 @@ describe("the seed command", () => {
     );
     expect(await seedCommand(["seed"], environment())).toBe(0);
     // The two rejected drafts of people, the one being changed, the one given a skill, the one made
-    // by hand, the fourteen of lists, the five of columns, and the three of planned hires.
-    expect(await connection.select().from(drafts)).toHaveLength(27);
+    // by hand, the fourteen of lists, the four of columns, and the three of planned hires.
+    expect(await connection.select().from(drafts)).toHaveLength(26);
     expect(await holders()).toHaveLength(4);
     const levels = fictionalOrganization({ size: 1 }).lists[1];
     await connection.insert(listItems).values({
@@ -830,7 +830,7 @@ describe("the seed command", () => {
       "Discarded 5 unpublished changes made by the personas",
       "Discarded 3 drafts of planned hires",
       "Discarded 5 drafts made by the personas",
-      "Discarded 17 drafts of lists and columns made by the personas",
+      "Discarded 16 drafts of lists and columns made by the personas",
       "Removed the fictional data",
       "Kept: The Levels list, which has choices added by hand",
       ...addresses.map((email) => `Deactivated the account ${email}`),
@@ -865,7 +865,6 @@ describe("the seed command", () => {
             "list-item",
             "choice-order",
             "field",
-            "column-order",
           ]),
         );
     // The Positions list kept by the test before, for the choice added to it by hand.
@@ -874,11 +873,11 @@ describe("the seed command", () => {
       .where(eq(listItems.label, "Fictional Hand Choice"));
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(19);
+    expect(await ofLists()).toHaveLength(18);
     expect(await seedCommand(["unseed"], environment())).toBe(0);
     expect(await ofLists()).toHaveLength(0);
     expect(await seedCommand(["seed"], environment())).toBe(0);
-    expect(await ofLists()).toHaveLength(19);
+    expect(await ofLists()).toHaveLength(18);
     // Publishing the changes the seed leaves unpublished, as a manual test does, publishes the list
     // it drafts adding, which removing the seed data takes back too.
     await createDataAccess(connection).unpublished.publish(

@@ -11,7 +11,7 @@ last_updated: "2026-11-08"
 
 ## Scope
 
-Verifies how drafts of people, columns, lists, choices, and column and choice orders are shown on the People, Lists and Drafts pages, and what a Workforce Administrator, an Engineering Director and a Project Manager can do with them, including drafts that use drafts of another kind, and that nobody approves drafts they changed unless their role grants it, as [Roles](../product/roles.md#what-each-role-can-do) sets out, shown here with a release's draft.
+Verifies how drafts of people, columns, lists, choices, and choice orders are shown on the People, Lists and Drafts pages, and what a Workforce Administrator, an Engineering Director and a Project Manager can do with them, including drafts that use drafts of another kind, and that nobody approves drafts they changed unless their role grants it, as [Roles](../product/roles.md#what-each-role-can-do) sets out, shown here with a release's draft.
 
 ## Test Environment
 
@@ -86,7 +86,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Look at the **Grade** column header.
-  - **Expected:** The column is tinted blue. Under its name are two marks: a yellow dot and **Draft**, and a yellow dot and **Draft: moved**.
+  - **Expected:** The column is tinted blue. Under its name is a yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the column to the right of **Grade**.
@@ -108,15 +108,15 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** Select the **Grade** column name to open its column menu.
-  - **Expected:** Under **Grade** and a divider, a yellow dot and **Draft** heads three lines: **Name** from **Level** to **Grade**, by Engineering Operations Manager; **Required** from **No** to **Yes**, by Second Engineering Operations Manager; **Moved** by Engineering Operations Manager.
+  - **Expected:** Under **Grade** and a divider, a yellow dot and **Draft** heads two lines: **Name** from **Level** to **Grade**, by Engineering Operations Manager; **Required** from **No** to **Yes**, by Second Engineering Operations Manager.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the actions in the menu.
-  - **Expected:** **Discard draft** and **Discard new order** are among them. **Approve…** and **Reject…** are not.
+  - **Expected:** **Discard draft** is among them. **Approve…** and **Reject…** are not.
   - **Notes:**
 
 - [ ] **Step 3.** Press Esc. Select the **Draft** button above the table.
-  - **Expected:** The Draft menu has a **Show** section, a **Filter** section, and a **Reordered by Engineering Operations Manager** section with only **Discard new order**.
+  - **Expected:** The Draft menu has a **Show** section and a **Filter** section.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Show** heading in the menu.
@@ -130,7 +130,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** As DRAFT-01.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Drafts applied**.
-  - **Expected:** The columns are Name, ID, Grade, Position, Site, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name, Skills. No row or column has a green dot and **Live**.
+  - **Expected:** The columns are Name, ID, Position, Site, Grade, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name, Skills. No row or column has a green dot and **Live**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Drafts beside live**.
@@ -165,27 +165,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Under a red dot and **Rejected**, it shows **Reason: Fictional reason: a previous site is not needed yet.** It has no **Approve…** or **Reject…**.
   - **Notes:**
 
-### DRAFT-06: A Moved Column Is Decided Together With Its New Order
-
-**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-05.
-
-**Preconditions:** As DRAFT-05.
-
-- [ ] **Step 1.** Open the **Grade** column menu.
-  - **Expected:** It has the three lines from DRAFT-02, step 1, and among its actions one **Approve…** and one **Reject…**.
-  - **Notes:**
-
-- [ ] **Step 2.** Select **Approve…**.
-  - **Expected:** A dialog titled **Approve 2 drafts?** opens. Under **These drafts are approved together:** it lists *the column Grade* and *the new order for People's columns*.
-  - **Notes:**
-
-- [ ] **Step 3.** Select **Cancel**.
-  - **Expected:** The dialog closes. **Grade** still has its yellow **Draft** mark.
-  - **Notes:**
-
 ### DRAFT-07: A Rejected Person's Draft Offers Nothing to Decide
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-06.
+**Account:** Engineering Director, `engineering.director@fathom.test`, the same as DRAFT-05.
 
 **Preconditions:** As DRAFT-05.
 
@@ -268,7 +250,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account. **Drafts** page open from the left-hand menu.
 
 - [ ] **Step 1.** Type **new order** in the search box.
-  - **Expected:** Four entries are shown, ending **drafted a new order for People's columns**, **drafted a new order for Levels**, **drafted a new order for Positions** and **drafted a new order for Sites**.
+  - **Expected:** Three entries are shown: **drafted a new order for Levels**, **drafted a new order for Positions** and **drafted a new order for Sites**.
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Sites** entry.
@@ -297,19 +279,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** All drafts are shown again.
   - **Notes:**
 
-### DRAFT-14: A Workforce Administrator Can Discard the New Column Order
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-13.
-
-**Preconditions:** Signed in with this account. **People** page open.
-
-- [ ] **Step 1.** Open the Draft menu, and select **Discard new order**.
-  - **Expected:** The columns are Name, ID, Position, Site, Grade, Level, Role on team, Onboarding, State, Start, Expected, End, Manager, Manager?, Manager since, Team, Team name, Previous site, Skills. **Grade** has a yellow dot and **Draft**, without **Draft: moved**.
-  - **Notes:**
-
 ### DRAFT-15: Unpublished Changes Are Seen Only by the Person Who Made Them
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as DRAFT-14. Step 4 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-13. Step 4 signs in as another account.
 
 **Preconditions:** R1. Signed in with this account. **People** page open.
 
@@ -398,11 +370,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** R2. Signed in with this account. **Drafts** page open.
 
 - [ ] **Step 1.** Select **Select all waiting**.
-  - **Expected:** The button at the top right reads **Approve 20 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
+  - **Expected:** The button at the top right reads **Approve 19 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Approve 20 drafts**, then **Approve** in the dialog titled **Approve 20 drafts?**.
-  - **Expected:** The dialog closes, and a notice reads **Approved 20 drafts.**
+- [ ] **Step 2.** Select **Approve 19 drafts**, then **Approve** in the dialog titled **Approve 19 drafts?**.
+  - **Expected:** The dialog closes, and a notice reads **Approved 19 drafts.**
   - **Notes:**
 
 ### DRAFT-21: A Resubmitted Choice Is Approved With the New Order That Depends on It

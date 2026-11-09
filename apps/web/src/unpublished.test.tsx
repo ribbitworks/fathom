@@ -55,7 +55,7 @@ describe("unpublished changes", () => {
             { subject: "the list Equipment", action: "created" },
             { subject: "Fictional Person", action: "deleted" },
             { subject: "the new order for Sites" },
-            { subject: "the new order for People's columns", discarded: true },
+            { subject: "the new order for Levels", discarded: true },
             { subject: "Fictional Other", discarded: true },
           ],
         }),
@@ -68,7 +68,7 @@ describe("unpublished changes", () => {
       "Added the list Equipment",
       "Removed Fictional Person",
       "Reordered Sites",
-      "Discarded the new order for People's columns",
+      "Discarded the new order for Levels",
       "Discarded the draft of Fictional Other",
     ]) {
       expect(within(menu).getByText(wholeText(line))).toBeDefined();

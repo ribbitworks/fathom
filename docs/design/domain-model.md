@@ -117,7 +117,7 @@ Fields are assigned to tiers as set in the Decisions Log, and tier checks happen
 Built-in tables and custom fields and tables are set out in the [Decisions Log](../product/decisions.md#configuration), and how they are stored is proposed in [ADR 0005](../adr/0005-flexible-data-model.md).
 
 - **Field definition:** A custom field on a built-in or custom table, with a name, field type, sensitivity tier, and whether it must be filled in or be unique. A Person or Link field also names the table it links to. A "Choice from a list" field, the first built, names its list, takes its tier from the list's visibility, and says whether it takes one choice or several. A "Web link" field holds one link for each record, an address and the text shown for it, and has a visibility of its own as its tier. A "Note" field holds one rich-text note for each record, and a "Number" field one number, and each has a visibility of its own as its tier too. A field on People also says whether planned hires have it too.
-- **Column order:** The order of a table's columns, built-in and custom alike, the same for every user.
+- **Column order:** A table's own order of its columns, built-in and custom alike, which every view starts from. A view may hold an order of its own.
 - **Saved view:** A table's search, filters, sort, what its Draft menu shows, and the columns its metrics break down by, saved under a name, with the user who saved it and whether it is personal to them or shared. A name is unique, ignoring letter case, among the table's shared views and among each user's personal views. Its sensitivity is that of the most sensitive column it filters, sorts, or breaks down by; a People view may also filter on drafts, which is General, since each user is sent only the drafts they may see.
 - **Custom table:** A table users define, with a name, a sensitivity tier, and its field definitions.
 - **Custom record:** One row of a custom table, holding values for its fields.
@@ -129,10 +129,10 @@ Built-in tables and custom fields and tables are set out in the [Decisions Log](
 
 - **Change set:** Changes saved together, with who made them and when, and what they did: saved changes, or approved, rejected, or discarded drafts.
 - **Change:** One field of one record changed in a change set, with its sensitivity tier, its old and new values, and whether it changed the record's draft or the live record.
-- **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason. People, lists, choices, and People's columns have drafts, and so do the order of each list's choices and the order of People's columns, each held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
+- **Draft row:** The values a record is to have once approved: all of them for a record to be added, those that differ from the live record for a change, or none for a removal. Each record has at most one, waiting or rejected with a reason. People, lists, choices, and People's columns have drafts, and so does the order of each list's choices, held whole, as [ADR 0007](../adr/0007-draft-rows.md) sets out.
 - **Snapshot:** A point-in-time copy of part of the plan. Its contents are set in the Decisions Log.
 
-Approving drafts, whether one or several at once, applies them all to the live records as one change set, or none of them. Approving a draft applies the drafts it uses with it, such as a choice added to a list that is itself drafted to be added, or a column drafted to be added that a draft of the column order places, and, **proposal**, a person given a choice that is itself a draft, once columns and people can use drafts.
+Approving drafts, whether one or several at once, applies them all to the live records as one change set, or none of them. Approving a draft applies the drafts it uses with it, such as a choice added to a list that is itself drafted to be added, and, **proposal**, a person given a choice that is itself a draft, once columns and people can use drafts.
 
 ## Not Yet Modeled
 

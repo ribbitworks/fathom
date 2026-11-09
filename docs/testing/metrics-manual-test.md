@@ -245,7 +245,7 @@ Run the test cases in order. Start with R0, then R1, then sign in as the Workfor
   - **Expected:** Only the first column stays in place again.
   - **Notes:**
 
-**Afterwards:** Run R1, which puts the column order back.
+**Afterwards:** Open **Views** and select **Columns moved**, which puts the columns back.
 
 ### METRICS-10: Columns Are Made Wider and Narrower
 

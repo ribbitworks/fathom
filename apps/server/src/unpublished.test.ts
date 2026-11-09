@@ -36,8 +36,6 @@ interface PeopleRead {
   people: Person[];
   fields: Field[];
   order: string[];
-  orderDraft?: { unpublished?: boolean };
-  orderHeldBy?: string;
 }
 
 let test: TestApp;
@@ -753,7 +751,7 @@ describe("drafts of lists and choices, until published", () => {
 });
 
 describe("drafts of People's columns, until published", () => {
-  it("hold the column and the order, and hide columns only drafted", async () => {
+  it("hold the column, and hide columns only drafted", async () => {
     const { list } = await liveList(["Fictional Level"]);
     const column = (
       await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
@@ -768,9 +766,6 @@ describe("drafts of People's columns, until published", () => {
       name: renamed,
       listId: list.id,
     });
-    await saved(alice, "PUT", `/api/people/columns/${column.id}/position`, {
-      after: null,
-    });
     const hidden = (
       await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
         name: unique("Fictional Hidden Column"),
@@ -779,14 +774,11 @@ describe("drafts of People's columns, until published", () => {
     ).field;
 
     const mine = await readPeople(alice);
-    expect(mine.orderDraft).toMatchObject({ unpublished: true });
     expect(mine.fields.find(({ id }) => id === column.id)).toMatchObject({
       name: renamed,
       draft: { unpublished: true },
     });
     const theirs = await readPeople(bob);
-    expect(theirs).toMatchObject({ orderHeldBy: alice.name });
-    expect(theirs).not.toHaveProperty("orderDraft");
     expect(theirs.fields.find(({ id }) => id === column.id)).toMatchObject({
       name: column.name,
       heldBy: alice.name,
@@ -794,7 +786,6 @@ describe("drafts of People's columns, until published", () => {
     expect(theirs.fields.some(({ id }) => id === hidden.id)).toBe(false);
     expect(await unpublished(alice)).toEqual([
       { subject: `the column ${hidden.name}`, action: "created" },
-      { subject: "the new order for People's columns" },
       { subject: `the column ${renamed}`, action: "changed" },
     ]);
     const base = `/api/people/columns/${column.id}`;
@@ -802,33 +793,24 @@ describe("drafts of People's columns, until published", () => {
       ["PUT", base, { name: "Fictional", listId: list.id }],
       ["DELETE", base, undefined],
       ["DELETE", `${base}/draft`, undefined],
-      ["PUT", `${base}/position`, { after: "preferredName" }],
-      ["DELETE", "/api/people/columns/order/draft", undefined],
     ] as [Method, string, object | undefined][]) {
       await refused(bob, method, url, payload, held(alice));
     }
 
-    expect(await publish(alice)).toBe(3);
+    expect(await publish(alice)).toBe(2);
     await saved(bob, "PUT", base, {
       name: unique("Fictional Bob's"),
       listId: list.id,
     });
-    await saved(bob, "PUT", `${base}/position`, { after: "preferredName" });
-    for (const asked of [
-      { columns: [column.id] },
-      { columnOrder: true },
-      { columns: [hidden.id], columnOrder: true },
-    ]) {
-      for (const asking of ["approval", "rejection"] as const) {
-        const response = await decide(asking, {
-          ...asked,
-          reason: "Fictional reason",
-        });
-        expect(response.statusCode).toBe(409);
-        expect(response.json()).toEqual({ error: heldDecision(bob) });
-      }
+    for (const asking of ["approval", "rejection"] as const) {
+      const response = await decide(asking, {
+        columns: [column.id],
+        reason: "Fictional reason",
+      });
+      expect(response.statusCode).toBe(409);
+      expect(response.json()).toEqual({ error: heldDecision(bob) });
     }
-    expect(await discard(bob)).toBe(2);
+    expect(await discard(bob)).toBe(1);
     await test.approveLists();
   });
 });
@@ -881,24 +863,6 @@ describe("a list a column only drafted draws on", () => {
     );
     await discard(alice);
     await discard(bob);
-  });
-});
-
-describe("drafts of People's columns, discarded", () => {
-  it("drop the user's own order once the added column it placed is discarded", async () => {
-    const column = (
-      await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
-        name: unique("Fictional Brief Column"),
-        listId: siteList.id,
-      })
-    ).field;
-    await saved(alice, "PUT", `/api/people/columns/${column.id}/position`, {
-      after: null,
-    });
-    expect((await readPeople(alice)).orderDraft).toBeDefined();
-    await saved(alice, "DELETE", `/api/people/columns/${column.id}`);
-    expect(await readPeople(alice)).not.toHaveProperty("orderDraft");
-    expect(await unpublished(alice)).toEqual([]);
   });
 });
 
@@ -982,12 +946,10 @@ describe("publishing and discarding", () => {
   it("discards changes of every kind, putting back what everyone sees", async () => {
     const { list, choices } = await liveList(["One", "Two"]);
     const [person = ""] = await livePeople(1);
-    const column = (
-      await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
-        name: unique("Fictional Discarded Column"),
-        listId: list.id,
-      })
-    ).field;
+    await saved<{ field: Field }>(alice, "POST", "/api/people/columns", {
+      name: unique("Fictional Discarded Column"),
+      listId: list.id,
+    });
     await saved(alice, "PUT", `/api/lists/${list.id}`, {
       name: unique("Fictional Discarded List"),
     });
@@ -1002,18 +964,14 @@ describe("publishing and discarding", () => {
       `/api/lists/${list.id}/choices/${String(choices[1]?.id)}/position`,
       { after: null },
     );
-    await saved(alice, "PUT", `/api/people/columns/${column.id}/position`, {
-      after: null,
-    });
     await saved(alice, "DELETE", `/api/people/${person}`);
-    expect(await discard(alice)).toBe(6);
+    expect(await discard(alice)).toBe(5);
     expect(await listOf(bob, list.id)).toMatchObject({ name: list.name });
     expect(await personOf(alice, person)).not.toHaveProperty("draft");
     const [withdrawal] = await history(alice);
     expect(withdrawal).toMatchObject({ kind: "discard", madeBy: alice.name });
     expect(withdrawal?.records.map(({ kind }) => kind).sort()).toEqual([
       "choice-order",
-      "column-order",
       "field",
       "list",
       "list-item",

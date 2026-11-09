@@ -13,6 +13,7 @@
 // when it is added or edited, and the last choice offered for a meaning cannot be retired, removed,
 // or given another meaning.
 
+import { movedItem } from "./table-view.ts";
 import {
   DragDropContext,
   Draggable,
@@ -121,10 +122,7 @@ export function followingAfterMove(
   from: number,
   to: number,
 ): string | null {
-  const moved = items.slice(from, from + 1);
-  const others = [...items.slice(0, from), ...items.slice(from + 1)];
-  const ordered = [...others.slice(0, to), ...moved, ...others.slice(to)];
-  return ordered.slice(0, to).at(-1)?.id ?? null;
+  return movedItem(items, from, to).slice(0, to).at(-1)?.id ?? null;
 }
 
 // The move a drop asks for, if the choice was dropped somewhere new.

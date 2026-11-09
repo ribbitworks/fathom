@@ -24,14 +24,11 @@ import {
 import { ConflictError } from "../errors.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
 import {
-  columnOrderChanges,
   columnRow,
   type ColumnsState,
-  draftedColumnOrder,
   draftedField,
   nameTaken,
   readColumnsState,
-  removeEmptyColumnOrder,
 } from "./column-drafts.ts";
 import {
   asDraft,
@@ -272,13 +269,10 @@ function subjectOf(versions: Versions, row: Row, actor: Actor): string {
   if (row.recordType === "choice-order") {
     return `the new order for ${listName(id)}`;
   }
-  if (row.recordType === "field") {
-    return `the column ${String(versionOf(versions, "field", id)?.name)}`;
-  }
-  return "the new order for People's columns";
+  return `the column ${String(versionOf(versions, "field", id)?.name)}`;
 }
 
-const orders = new Set(["choice-order", "column-order"]);
+const orders = new Set(["choice-order"]);
 
 // The user's unpublished changes, newest first: by the last change made to each record.
 export async function readUnpublished(
@@ -342,7 +336,7 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
       return false;
     }
   }
-  if (row.recordType === "column-order" || wantsNoDraft(row)) return true;
+  if (wantsNoDraft(row)) return true;
   if (isRecordType(row.recordType)) {
     return recordFits(versions.records, row.recordType, id);
   }
@@ -455,7 +449,6 @@ export async function publishUnpublished(
       .set({ unpublished: false })
       .where(openChangeSets(userId));
     await removeEmptyOrders(transaction);
-    await removeEmptyColumnOrder(transaction);
     return rows.length;
   });
 }
@@ -517,19 +510,13 @@ function takingBack(versions: Versions, row: Row): Change[] {
       draftedOrder(theirs.lists, id),
     );
   }
-  if (row.recordType === "field") {
-    const before = draftedField(mine.columns, id);
-    const after = draftedField(theirs.columns, id);
-    return fieldChanges(
-      id,
-      actionTo(before, after),
-      before && columnRow(id, before),
-      after && columnRow(id, after),
-    );
-  }
-  return columnOrderChanges(
-    draftedColumnOrder(mine.columns),
-    draftedColumnOrder(theirs.columns),
+  const before = draftedField(mine.columns, id);
+  const after = draftedField(theirs.columns, id);
+  return fieldChanges(
+    id,
+    actionTo(before, after),
+    before && columnRow(id, before),
+    after && columnRow(id, after),
   );
 }
 

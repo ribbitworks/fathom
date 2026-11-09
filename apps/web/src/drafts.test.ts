@@ -99,7 +99,6 @@ describe("drafts an approval includes", () => {
       choices: ["b", "c"],
       orders: ["l1"],
       columns: [],
-      columnOrder: false,
     });
     expect(
       usingDrafts({ ...noDrafts(), choices: ["f"], orders: ["l2"] }, lists),
@@ -119,7 +118,6 @@ describe("drafts an approval includes", () => {
       choices: ["b"],
       orders: ["l2"],
       columns: [],
-      columnOrder: false,
       records: [],
     });
     expect(draftTotal(both)).toBe(4);
@@ -180,56 +178,16 @@ describe("drafts of columns an approval or rejection includes", () => {
         onPlannedHires: true,
       },
     ],
-    orderDraft: {
-      live: [],
-      uses: ["f1"],
-      state: "waiting" as const,
-      madeBy: null,
-      madeAt: null,
-    },
   };
-  it("approves the columns the order places, and rejects the order with them", () => {
-    expect(
-      usedDrafts({ ...noDrafts(), columnOrder: true }, [], columns),
-    ).toEqual({ ...noDrafts(), columns: ["f1"] });
-    expect(usedDrafts({ ...noDrafts(), columnOrder: true }, [])).toEqual(
-      noDrafts(),
-    );
-    expect(
-      usingDrafts({ ...noDrafts(), columns: ["f1"] }, [], columns),
-    ).toEqual({ ...noDrafts(), columnOrder: true });
-    expect(
-      draftNames(
-        { ...noDrafts(), columns: ["f1"], columnOrder: true },
-        [],
-        columns.fields,
-      ),
-    ).toEqual([
-      "the column Previous site",
-      "the new order for People's columns",
-    ]);
-  });
-
-  it("names the drafts a decision covers whose areas the approver's role does not approve, deciding none", () => {
-    const order = { ...noDrafts(), columnOrder: true };
+  it("names the drafts a decision covers whose areas the approver's role does not approve", () => {
     const column = { ...noDrafts(), columns: ["f1"] };
-    expect(mayDecide(["column-order"], order)).toBe(true);
-    expect(mayDecide(["column-order"], column)).toBe(false);
+    expect(mayDecide(["field"], column)).toBe(true);
+    expect(mayDecide(["list"], column)).toBe(false);
     expect(
-      decisionFor("approve", order, ["column-order"], [], columns),
-    ).toEqual({
-      asking: "approve",
-      selection: { ...order, columns: ["f1"] },
-      beyondRole: ["the column Previous site"],
-    });
+      decisionFor("approve", column, ["list"], [], columns).beyondRole,
+    ).toEqual(["the column Previous site"]);
     expect(
-      decisionFor("reject", column, ["field"], [], columns).beyondRole,
-    ).toEqual(["the new order for People's columns"]);
-    expect(
-      decisionFor("approve", order, draftKinds, [], columns).beyondRole,
-    ).toBeUndefined();
-    expect(
-      decisionFor("reject", column, draftKinds, [], columns).beyondRole,
+      decisionFor("approve", column, draftKinds, [], columns).beyondRole,
     ).toBeUndefined();
   });
 });
@@ -283,7 +241,6 @@ describe("drafts that wait on rejected ones", () => {
         },
       },
     ],
-    orderDraft: { ...waiting, live: [], uses: ["f1"] },
   };
   const everything = {
     people: ["p1"],
@@ -293,7 +250,6 @@ describe("drafts that wait on rejected ones", () => {
     choices: ["b", "e", "f"],
     orders: ["l1", "l2"],
     columns: ["f1"],
-    columnOrder: true,
     records: [],
   };
 
@@ -317,7 +273,6 @@ describe("drafts that wait on rejected ones", () => {
       ...noDrafts(),
       choices: ["b"],
       orders: ["l1", "l2"],
-      columnOrder: true,
     });
     expect(heldBack(everything, lists)).toEqual(noDrafts());
     expect(without(everything, held)).toEqual({
@@ -328,7 +283,6 @@ describe("drafts that wait on rejected ones", () => {
       choices: ["e", "f"],
       orders: [],
       columns: ["f1"],
-      columnOrder: false,
       records: [],
     });
   });
@@ -418,26 +372,7 @@ describe("drafts of people and columns that use drafts of another kind", () => {
     ).toEqual({ ...noDrafts(), people: ["ada"], orders: [] });
     expect(
       usingDrafts({ ...noDrafts(), choices: ["d"] }, lists, columns).people,
-    ).toEqual([]); // The column order placing a column rejected, chosen or on a new list rejected, is rejected too.
-    const placing = {
-      ...columns,
-      orderDraft: { uses: ["f2"] } as Columns["orderDraft"],
-    };
-    expect(
-      usingDrafts({ ...noDrafts(), columns: ["f2"] }, lists, placing)
-        .columnOrder,
-    ).toBe(true);
-    expect(
-      usingDrafts({ ...noDrafts(), lists: ["l1"] }, lists, placing).columnOrder,
-    ).toBe(true);
-    // A column order already rejected with them is not added again.
-    expect(
-      usingDrafts(
-        { ...noDrafts(), columns: ["f2"], columnOrder: true },
-        lists,
-        { ...columns, orderDraft: { uses: ["f2"] } as Columns["orderDraft"] },
-      ).columnOrder,
-    ).toBe(false);
+    ).toEqual([]);
   });
 
   it("finds nothing used by a person with no draft", () => {
@@ -560,7 +495,6 @@ describe("drafts the approver changed", () => {
     };
     const columns: Columns = {
       fields: [field],
-      orderDraft: { ...marked, live: ["f9"], uses: [] },
       people: [hire],
       records: [
         {
@@ -584,7 +518,6 @@ describe("drafts the approver changed", () => {
       choices: ["z"],
       orders: ["l9"],
       columns: ["f9"],
-      columnOrder: true,
       records: [ref],
     };
     expect(
@@ -593,7 +526,6 @@ describe("drafts the approver changed", () => {
     ).toEqual([
       "the planned hire Fictional h9",
       "the column Own column",
-      "the new order for People's columns",
       "the list Own",
       "the choice Z in Own",
       "the new order for Own",

@@ -18,15 +18,13 @@ import { ConflictError } from "../errors.ts";
 export type Transaction = Parameters<Parameters<Database["transaction"]>[0]>[0];
 
 // The kinds of record whose changes are recorded. A person's column values are recorded on the
-// person, one field for each column, so the person's history holds all of their details. A table's
-// column order is one record, named after its table. The plan's records, such as release streams,
+// person, one field for each column, so the person's history holds all of their details. The plan's records, such as release streams,
 // are recorded field by field.
 export type RecordType =
   | "list"
   | "list-item"
   | "choice-order"
   | "field"
-  | "column-order"
   | "person"
   | "planned-hire"
   | "feature-team"

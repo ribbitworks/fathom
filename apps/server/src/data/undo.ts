@@ -10,7 +10,6 @@
 import {
   changes,
   changeSets,
-  columnOrders,
   type Database,
   databaseCodes,
   fields,
@@ -47,7 +46,6 @@ import {
   recordChanges,
   type Transaction,
 } from "./changes.ts";
-import { writeColumnOrder } from "./column-order.ts";
 import {
   drafted,
   draftsUse,
@@ -70,8 +68,6 @@ import {
   refuseSensitiveOnFeatures,
   nameTaken,
   readColumnsState,
-  removeEmptyColumnOrder,
-  writeColumnOrderDraft,
 } from "./column-drafts.ts";
 import { checkLiveList, checkValuesFit, lockFields } from "./fields.ts";
 import {
@@ -132,7 +128,6 @@ const editPermissions = {
   "list-item": ["configuration:edit"],
   "choice-order": ["configuration:edit"],
   field: ["configuration:edit"],
-  "column-order": ["configuration:edit"],
   person: ["people:edit"],
   "planned-hire": ["people:edit", "hiring-plan:edit"],
   // Proposing or editing them is checked for the teams themselves.
@@ -148,16 +143,14 @@ const kindOrder: readonly RecordType[] = [
   "list-item",
   "choice-order",
   "field",
-  "column-order",
   "person",
   "planned-hire",
   "feature-team",
   "saved-view",
 ];
 
-// The table each kind of record is kept in. A column order is only ever changed, never created or
-// deleted, and is put back as a whole, so it has no columns to set here. A list's choice order is
-// only ever changed live by approving, which cannot be undone.
+// The table each kind of record is kept in. A list's choice order is only ever changed live by
+// approving, which cannot be undone.
 const tables = {
   list: lists,
   "list-item": listItems,
@@ -185,7 +178,7 @@ const asStored: Convert = (value) => value;
 // read each column's value from the history. Other fields, such as a record's place in its order or
 // a person's values for a column, are put back separately.
 const columnsOf: Record<
-  Exclude<RecordType, "column-order" | "choice-order" | PlanRecordType>,
+  Exclude<RecordType, "choice-order" | PlanRecordType>,
   Readonly<Record<string, Convert>>
 > = {
   list: { name: text, description: text, visibility: tier, retired: flag },
@@ -268,12 +261,6 @@ function recordsOf(rows: readonly StoredChange[]): Undone[] {
 
 // The record's database columns as they were before the change.
 function columnValues(record: Undone): Record<string, unknown> {
-  if (
-    record.recordType === "column-order" ||
-    record.recordType === "choice-order"
-  ) {
-    return {};
-  }
   // Changes to the plan's records are refused before any is put back.
   const columns = columnsOf[record.recordType as keyof typeof columnsOf];
   return Object.fromEntries(
@@ -333,7 +320,7 @@ function placeFor(
     : "end";
 }
 
-// Puts back a choice's place, a table's column order, and a person's values for each column.
+// Puts back a choice's place and a person's values for each column.
 async function putBackPlaceAndValues(
   transaction: Transaction,
   record: Undone,
@@ -352,9 +339,6 @@ async function putBackPlaceAndValues(
         placeFor(old.get("order"), await lockChoices(transaction, listId)),
       );
     }
-  }
-  if (record.recordType === "column-order") {
-    await writeColumnOrder(transaction, ids(old.get("order")));
   }
   for (const [field, value] of old) {
     const fieldId = fieldOfValue(field);
@@ -715,30 +699,19 @@ async function undoListDrafts(
   }
 }
 
-// Puts back the drafts of the columns and the column order a change set changed in their drafts, as
-// for lists: the column it drafted adding taken out, the one it drafted removing put back as it
-// was, the settings it changed put back, and an order as it was. Each must still have a name no one
-// else has taken since, and draw on a list that is there.
+// Puts back the drafts of the columns a change set changed in their drafts, as for lists: the
+// column it drafted adding taken out, the one it drafted removing put back as it was, and the
+// settings it changed put back. Each must still have a name no one else has taken since, and draw
+// on a list that is there.
 async function undoColumnDrafts(
   transaction: Transaction,
   actor: Actor,
   records: readonly Undone[],
 ): Promise<void> {
-  // Columns before the order, which may place them.
-  const ordered = [
-    ...records.filter(({ recordType }) => recordType === "field"),
-    ...records.filter(({ recordType }) => recordType === "column-order"),
-  ];
   const editor = actor.user.id;
-  for (const record of ordered) {
+  for (const record of records) {
     const state = await readColumnsState(transaction, editor);
     const old = withoutRejection(record.old);
-    if (record.recordType === "column-order") {
-      // Every change to the draft of the order records the whole order.
-      const wanted = ids(old.get("order"));
-      await writeColumnOrderDraft(transaction, editor, state, wanted);
-      continue;
-    }
     const live = state.fields.get(record.id);
     const draft = state.fieldDrafts.get(record.id);
     let wanted: Recorded | undefined;
@@ -801,9 +774,8 @@ const idsOf = (records: readonly Undone[], kind: RecordType) =>
   records.filter((record) => record.recordType === kind).map(({ id }) => id);
 
 // Locks every record the undo changes that still exists, in the order other changes lock them:
-// lists, then their choices, then columns, then the column order, then people, then saved views. A
-// change saved at the same moment either finishes first, and is then seen as a change since, or
-// waits for the undo.
+// lists, then their choices, then columns, then people, then saved views. A change saved at the
+// same moment either finishes first, and is then seen as a change since, or waits for the undo.
 async function lockRecords(
   transaction: Transaction,
   records: readonly Undone[],
@@ -837,12 +809,6 @@ async function lockRecords(
     .orderBy(asc(listItems.id))
     .for("update");
   await lockFields(transaction);
-  if (idsOf(records, "column-order").length > 0) {
-    await transaction
-      .select({ tableName: columnOrders.tableName })
-      .from(columnOrders)
-      .for("update");
-  }
   await transaction
     .select({ id: people.id })
     .from(people)
@@ -1048,9 +1014,8 @@ async function undoIn(
   if (teamDrafts.length > 0) {
     await undoTeamDrafts(transaction, actor, teamDrafts, changedSince);
   }
-  const columnKinds: readonly RecordType[] = ["field", "column-order"];
-  const columnDrafts = draftRecords.filter(({ recordType }) =>
-    columnKinds.includes(recordType),
+  const columnDrafts = draftRecords.filter(
+    ({ recordType }) => recordType === "field",
   );
   const listKinds: readonly RecordType[] = [
     "list",
@@ -1066,7 +1031,6 @@ async function undoIn(
   }
   if (columnDrafts.length > 0) {
     await undoColumnDrafts(transaction, actor, columnDrafts);
-    await removeEmptyColumnOrder(transaction, actor.user.id);
   }
   // Hires come before people, so undoing a fill puts a planned manager's hires back under it before
   // its person's Manager? mark comes off.

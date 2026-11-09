@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts of the columns added to tables, and of the order of the People table's columns: reading the columns as their drafts make
-// them, drafting columns added, changed, and removed, and a new order of the columns, built-in and
-// added alike, as one draft holding the whole order; and discarding drafts and sending rejected ones
-// for approval again. Part of the data access layer; the caller checks the actor may change planning
+// Drafts of the columns added to tables: reading the columns as their drafts make them, drafting
+// columns added, changed, and removed, and discarding drafts and sending rejected ones for approval
+// again. Part of the data access layer; the caller checks the actor may change planning
 // configuration. Every change is a draft, as drafts.ts sets out, which reaches the live columns only
 // once approved, as column-approvals.ts sets out, and is recorded in the change history.
 
 import { type Database, fields, lists } from "@fathom/db";
 import {
-  type ColumnOrderDraft,
   type ColumnTable,
   featureColumnKeys,
   type Field,
@@ -33,15 +31,10 @@ import {
   type Saved,
   type Transaction,
 } from "./changes.ts";
-import {
-  builtInColumns,
-  readColumnOrder,
-  withBuiltIns,
-} from "./column-order.ts";
+import { readColumnOrder } from "./column-order.ts";
 import {
   asDraft,
   clearedRejection,
-  deleteDrafts,
   discardDrafts,
   type Draft,
   drafted,
@@ -76,9 +69,8 @@ import { builtInColumnTiers, builtInTier, type FieldRow } from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 
-// The table whose columns these are, which also names the draft of their order.
-export const columnOrderId = "people";
-const table = columnOrderId;
+// The table whose columns these are.
+const table = "people";
 const noField = "There is no such column";
 
 // What differs between the tables that can have columns added: whether a column can be offered on
@@ -118,16 +110,14 @@ export const fieldRecord = (row: FieldRow): Recorded => ({
   onPlannedHires: row.onPlannedHires,
 });
 
-// Every table's added columns, live and in drafts, the live order of the People table's columns, and the draft of
-// the order, read together, with the lists they draw on, as the viewer sees them, with the records
-// others hold.
+// Every table's added columns, live and in drafts, and the live order of the People table's columns,
+// read together, with the lists they draw on, as the viewer sees them, with the records others hold.
 export interface ColumnsState {
   fields: Map<string, Recorded>;
   fieldDrafts: Map<string, Draft>;
   liveOrder: string[];
-  orderDraft: Draft | undefined;
   lists: ListsState;
-  held: { fields: Map<string, Held>; order: Held | undefined };
+  held: { fields: Map<string, Held> };
 }
 
 export async function readColumnsState(
@@ -140,15 +130,9 @@ export async function readColumnsState(
     fields: new Map(rows.map((row) => [row.id, fieldRecord(row)])),
     fieldDrafts: await readDrafts(reader, "field", undefined, viewer),
     liveOrder: await readColumnOrder(reader),
-    orderDraft: (await readDrafts(reader, "column-order", [table], viewer)).get(
-      table,
-    ),
     lists: await readState(reader, viewer),
     held: {
       fields: await readHeld(reader, "field", viewer),
-      order: (await readHeld(reader, "column-order", viewer, [table])).get(
-        table,
-      ),
     },
   };
 }
@@ -178,112 +162,6 @@ export const addedFields = (
         draft.fields.tableName === tableName,
     )
     .map(([id]) => id);
-
-const keyExists = (state: ColumnsState, key: string) =>
-  builtInColumns.includes(key) || fieldExists(state, key);
-
-// The order a draft of the column order holds, of columns that still exist.
-export function heldColumnOrder(state: ColumnsState): string[] | undefined {
-  if (state.orderDraft === undefined) return undefined;
-  // Written only by writeColumnOrderDraft, which always holds an order.
-  return withBuiltIns(
-    (state.orderDraft.fields.order as string[]).filter((key) =>
-      keyExists(state, key),
-    ),
-  );
-}
-
-// Every column in order, as a draft of the order, if any, makes it: those it places, then the live
-// ones it does not, in their live order, then those drafted to be added, in the order drafted.
-export function draftedColumnOrder(state: ColumnsState): string[] {
-  const held = heldColumnOrder(state) ?? [];
-  const rest = [...state.liveOrder, ...addedFields(state)].filter(
-    (key) => !held.includes(key),
-  );
-  return [...held, ...rest];
-}
-
-// The order to hold in a draft for the columns to be in the order wanted, leaving out the columns
-// drafted to be added that end it in the order drafted, as for a list's choices. Undefined when the
-// order wanted is the live one.
-export function columnOrderToHold(
-  state: ColumnsState,
-  wanted: readonly string[],
-): string[] | undefined {
-  const added = addedFields(state);
-  let kept = wanted.length;
-  let next = Infinity;
-  for (const key of [...wanted].reverse()) {
-    const at = added.indexOf(key);
-    if (at === -1 || at > next) break;
-    next = at;
-    kept -= 1;
-  }
-  const held = wanted.slice(0, kept);
-  return held.join() === state.liveOrder.join() ? undefined : held;
-}
-
-// The columns drafted to be added that the draft of the order uses, by placing them.
-export const fieldsOrderUses = (state: ColumnsState): string[] =>
-  (heldColumnOrder(state) ?? []).filter((key) =>
-    addedFields(state).includes(key),
-  );
-
-export async function writeColumnOrderDraft(
-  transaction: Transaction,
-  editor: string,
-  state: ColumnsState,
-  wanted: readonly string[],
-): Promise<void> {
-  const held = columnOrderToHold(state, wanted);
-  await writeDraft(
-    transaction,
-    editor,
-    "column-order",
-    table,
-    { order: state.liveOrder },
-    { order: held ?? state.liveOrder },
-  );
-}
-
-// The change that records a new order of the columns: the whole order before and after.
-export function columnOrderChanges(
-  before: readonly string[],
-  after: readonly string[],
-): Change[] {
-  return before.join() === after.join()
-    ? []
-    : [
-        {
-          recordType: "column-order",
-          recordId: table,
-          action: "changed",
-          field: "order",
-          tier: "general",
-          oldValue: [...before],
-          newValue: [...after],
-        },
-      ];
-}
-
-// Removes a draft of the order that no longer changes anything: the published draft, or the
-// editor's own unpublished one, as for lists' orders. It holds nothing to approve, so nothing is
-// recorded.
-export async function removeEmptyColumnOrder(
-  transaction: Transaction,
-  editor?: string,
-): Promise<void> {
-  const state = await readColumnsState(transaction, editor);
-  if (
-    state.orderDraft !== undefined &&
-    (editor === undefined || state.orderDraft.unpublished === true) &&
-    columnOrderToHold(state, draftedColumnOrder(state)) === undefined
-  ) {
-    if (editor === undefined) {
-      await deleteDrafts(transaction, "column-order", [table]);
-    } else await discardDrafts(transaction, editor, "column-order", [table]);
-  }
-}
 
 const lower = (value: unknown) => String(value).trim().toLowerCase();
 
@@ -607,25 +485,6 @@ function discardingField(state: ColumnsState, id: string): Change[] {
   ];
 }
 
-// Called only when the order has a draft.
-function discardingOrder(state: ColumnsState): Change[] {
-  return [
-    ...asDraft(
-      columnOrderChanges(draftedColumnOrder(state), [
-        ...state.liveOrder,
-        ...addedFields(state),
-      ]),
-    ),
-    ...clearedRejection(
-      table,
-      () => "general",
-      undefined,
-      state.orderDraft,
-      "column-order",
-    ),
-  ];
-}
-
 // Refuses discarding a column drafted to be added while people's drafts, published or not, give
 // anyone a value in it, as the editor sees the drafts.
 async function refuseIfDraftsFill(
@@ -671,7 +530,6 @@ export async function deleteField(
       await refuseIfDraftsFill(transaction, actor.user.id, id, field);
       const made = discardingField(state, id);
       await discardDrafts(transaction, actor.user.id, "field", [id]);
-      await removeEmptyColumnOrder(transaction, actor.user.id);
       return recordChanges(transaction, actor, made, "discard");
     }
     if (await draftsUse(transaction, { column: id }, actor.user.id)) {
@@ -697,118 +555,61 @@ export async function deleteField(
   });
 }
 
-// Drafts moving a column, built-in or added, to just after another, or to the start when there is
-// none, as a new order of the columns.
-export async function moveColumn(
-  database: Database,
-  maker: Actor,
-  key: string,
-  after: string | null,
-): Promise<string | null> {
-  if (after === key) {
-    throw new BadRequestError("A column cannot follow itself");
-  }
-  return drafting(database, maker.user.id, async (transaction, state) => {
-    refuseHeldIn(state.held.order);
-    const before = draftedColumnOrder(state);
-    if (!before.includes(key)) throw new NotFoundError(noField);
-    if (after !== null && !before.includes(after)) {
-      throw new BadRequestError("Choose a column on the same table to follow");
-    }
-    const others = before.filter((other) => other !== key);
-    const at = after === null ? 0 : others.indexOf(after) + 1;
-    const wanted = [...others.slice(0, at), key, ...others.slice(at)];
-    const made = asDraft(columnOrderChanges(before, wanted));
-    if (made.length === 0) return null;
-    await writeColumnOrderDraft(transaction, maker.user.id, state, wanted);
-    return recordChanges(transaction, maker, [
-      ...made,
-      ...clearedRejection(
-        table,
-        () => "general",
-        undefined,
-        state.orderDraft,
-        "column-order",
-      ),
-    ]);
-  });
+// Which draft of an added column, by its identifier and table, which is People unless given.
+export interface ColumnDraftTarget {
+  id: string;
+  table?: ColumnTable;
 }
 
-export type ColumnDraftTarget =
-  { kind: "column"; id: string; table?: ColumnTable } | { kind: "order" };
-
 function draftOf(state: ColumnsState, target: ColumnDraftTarget): Draft {
-  if (
-    target.kind === "column" &&
-    !isOnTable(state, target.id, target.table ?? table)
-  ) {
+  if (!isOnTable(state, target.id, target.table ?? table)) {
     throw new NotFoundError("There is no such draft");
   }
-  refuseHeldIn(
-    target.kind === "order"
-      ? state.held.order
-      : state.held.fields.get(target.id),
-  );
-  const draft =
-    target.kind === "order"
-      ? state.orderDraft
-      : state.fieldDrafts.get(target.id);
+  refuseHeldIn(state.held.fields.get(target.id));
+  const draft = state.fieldDrafts.get(target.id);
   if (draft === undefined) throw new NotFoundError("There is no such draft");
   return draft;
 }
 
-// Discards a draft of a column or of the column order.
+// Discards a draft of a column.
 export async function discardColumnDraft(
   database: Database,
   maker: Actor,
   target: ColumnDraftTarget,
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
+    const { id } = target;
     const draft = draftOf(state, target);
     // A column not live is only drafted to be added, so its draft holds all its settings.
-    if (target.kind === "column" && !state.fields.has(target.id)) {
-      await refuseIfDraftsFill(
-        transaction,
-        maker.user.id,
-        target.id,
-        draft.fields,
-      );
+    if (!state.fields.has(id)) {
+      await refuseIfDraftsFill(transaction, maker.user.id, id, draft.fields);
     }
-    const made =
-      target.kind === "order"
-        ? discardingOrder(state)
-        : discardingField(state, target.id);
-    if (target.kind === "order") {
-      await discardDrafts(transaction, maker.user.id, "column-order", [table]);
-    } else {
-      await discardDrafts(transaction, maker.user.id, "field", [target.id]);
-      await removeEmptyColumnOrder(transaction, maker.user.id);
-    }
+    const made = discardingField(state, id);
+    await discardDrafts(transaction, maker.user.id, "field", [id]);
     return recordChanges(transaction, maker, made, "discard");
   });
 }
 
-// Sends a rejected draft of a column or of the column order for approval again, unchanged.
+// Sends a rejected draft of a column for approval again, unchanged.
 export async function resubmitColumnDraft(
   database: Database,
   maker: Actor,
   target: ColumnDraftTarget,
 ): Promise<string | null> {
   return drafting(database, maker.user.id, async (transaction, state) => {
+    const { id } = target;
     const draft = draftOf(state, target);
     if (draft.state !== "rejected") {
       throw new ConflictError("Only a rejected draft can be resubmitted");
     }
-    const recordType = target.kind === "order" ? "column-order" : "field";
-    const id = target.kind === "order" ? table : target.id;
-    await setRejection(transaction, recordType, [id], {
+    await setRejection(transaction, "field", [id], {
       state: "waiting",
       reason: null,
     });
     return recordChanges(
       transaction,
       maker,
-      clearedRejection(id, () => "general", undefined, draft, recordType),
+      clearedRejection(id, () => "general", undefined, draft, "field"),
       "resubmission",
     );
   });
@@ -849,10 +650,10 @@ function draftOut(
   };
 }
 
-// A table's columns as the actor may see them, as their drafts make them, with the drafts
-// beside, the order of the columns they see, as a draft of the order makes it, and that draft. A
-// column whose values are more sensitive than the actor may see is left out, as are built-in dates
-// for those without Restricted details.
+// A table's columns as the actor may see them, as their drafts make them, with the drafts beside,
+// and the order of the columns they see, those drafted to be added last. A column whose values are
+// more sensitive than the actor may see is left out, as are built-in dates for those without
+// Restricted details.
 export async function readColumnsOut(
   reader: Reader,
   actor: Actor,
@@ -860,8 +661,6 @@ export async function readColumnsOut(
 ): Promise<{
   fields: Field[];
   order: string[];
-  orderDraft?: ColumnOrderDraft;
-  orderHeldBy?: string;
 }> {
   const viewer = actor.user.id;
   const state = await readColumnsState(reader, viewer);
@@ -917,36 +716,10 @@ export async function readColumnsOut(
       .map(([key]) => key),
     ...shown.map(({ id }) => id),
   ]);
-  const orderMaker = (
-    await draftMakers(reader, "column-order", [table], everything, actor)
-  ).get(table);
-  const showsOrder =
-    state.orderDraft !== undefined &&
-    columnOrderToHold(state, draftedColumnOrder(state)) !== undefined;
   return {
     fields: shown,
-    order: draftedColumnOrder(state).filter((key) => visible.has(key)),
-    ...(showsOrder && state.orderDraft
-      ? {
-          orderDraft: {
-            live: state.liveOrder.filter((key) => visible.has(key)),
-            uses: fieldsOrderUses(state).filter((key) => visible.has(key)),
-            state: state.orderDraft.state,
-            ...(state.orderDraft.state === "rejected" &&
-            state.orderDraft.reason !== null
-              ? { reason: state.orderDraft.reason }
-              : {}),
-            ...unpublishedMark(state.orderDraft),
-            madeBy: orderMaker?.madeBy ?? null,
-            madeAs: orderMaker?.madeAs ?? null,
-            madeAt: orderMaker?.madeAt.toISOString() ?? null,
-            editors: orderMaker?.editors ?? [],
-            ...otherApprover(orderMaker),
-          },
-        }
-      : {}),
-    ...(state.held.order === undefined
-      ? {}
-      : { orderHeldBy: state.held.order.holder }),
+    order: [...state.liveOrder, ...addedFields(state)].filter((key) =>
+      visible.has(key),
+    ),
   };
 }

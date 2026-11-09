@@ -11,7 +11,7 @@ last_updated: "2026-11-08"
 
 ## Scope
 
-Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, and sharing a view and taking it back, as seen from more than one account.
+Verifies how personal and shared views look and work on the People page: the Views menu's two groups, saving a view as personal or shared, sharing a view and taking it back, and moving columns as part of a view, as seen from more than one account.
 
 ## Test Environment
 
@@ -60,6 +60,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 - **Views menu:** the menu that opens from the last of the buttons after the search box above the People table. The button says **Views**, or the name of the view applied.
 - **Main window:** the browser window the test starts in.
 - **Second window:** the second browser or private window.
+- **Column menu:** the menu that opens when a column's name in the People table's header is selected.
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from the account's name and initials at the top right.
 
 ## Test Cases
@@ -340,9 +341,81 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** The dialog closes.
   - **Notes:**
 
-### VIEW-07: The Views Saved Are Removed
+### VIEW-07: A Column Moves for One Account Only
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as VIEW-06.
+**Account:** Resource Planner, `resource.planner@fathom.test`, in the second window, changed from VIEW-06.
+
+**Preconditions:** In the second window, this account is signed in on **People**, with no view applied. In the main window, Workforce Administrator, `engineering.operations.manager@fathom.test` is signed in on **People**, with no view applied.
+
+- [ ] **Step 1.** In the second window, select **Position** in the People table's header.
+  - **Expected:** The Column menu opens, offering **Move left** and **Move right**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Move right**.
+  - **Expected:** **Position** moves one place to the right. No **Draft: moved** mark shows under its name, and no **Publish** button is in the top bar.
+  - **Notes:**
+
+- [ ] **Step 3.** Open the Views menu.
+  - **Expected:** **Columns moved** is listed, with an × at its right.
+  - **Notes:**
+
+- [ ] **Step 4.** Press Esc to close the menu.
+  - **Expected:** The menu closes.
+  - **Notes:**
+
+- [ ] **Step 5.** Reload the page.
+  - **Expected:** **Position** is still in the place it moved to.
+  - **Notes:**
+
+- [ ] **Step 6.** In the main window, reload the page.
+  - **Expected:** **Position** is in its original place.
+  - **Notes:**
+
+- [ ] **Step 7.** In the second window, open the Views menu and select **Columns moved**.
+  - **Expected:** **Position** is back in its original place.
+  - **Notes:**
+
+### VIEW-08: A Moved Column Is Kept in a Saved View and Cleared
+
+**Account:** Resource Planner, `resource.planner@fathom.test`, in the second window, the same as VIEW-07.
+
+**Preconditions:** In the second window, this account is signed in on **People**, with **Position** in its original place.
+
+- [ ] **Step 1.** Select **Position** in the People table's header, then **Move right** in the Column menu.
+  - **Expected:** **Position** moves one place to the right.
+  - **Notes:**
+
+- [ ] **Step 2.** Open the Views menu.
+  - **Expected:** **Save view…** is offered.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Save view…**.
+  - **Expected:** Under **Includes**, the dialog shows **Column order** and **Moved**.
+  - **Notes:**
+
+- [ ] **Step 4.** Type `Fictional moved columns` in **Name**.
+  - **Expected:** The name shows in **Name**, with no message under it.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Save view** in the dialog.
+  - **Expected:** The dialog closes, and the Views menu's button says **Fictional moved columns**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Clear all** above the table.
+  - **Expected:** **Position** is back in its original place.
+  - **Notes:**
+
+- [ ] **Step 7.** Open the Views menu and select **Fictional moved columns**.
+  - **Expected:** **Position** moves one place to the right again.
+  - **Notes:**
+
+- [ ] **Step 8.** Open the Views menu and select **Clear view**.
+  - **Expected:** **Position** is back in its original place.
+  - **Notes:**
+
+### VIEW-09: The Views Saved Are Removed
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from VIEW-08.
 
 **Preconditions:** In the main window, this account is signed in on **People**. In the second window, Resource Planner, `resource.planner@fathom.test` is signed in on **People**.
 
@@ -380,4 +453,12 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 - [ ] **Step 9.** In the second window, open the Views menu and select **Delete view**.
   - **Expected:** **Fictional planner view** is gone from the Views menu.
+  - **Notes:**
+
+- [ ] **Step 10.** In the second window, open the Views menu and select **Fictional moved columns**.
+  - **Expected:** The Views menu's button says **Fictional moved columns**.
+  - **Notes:**
+
+- [ ] **Step 11.** In the second window, open the Views menu and select **Delete view**.
+  - **Expected:** **Fictional moved columns** is gone from the Views menu.
   - **Notes:**

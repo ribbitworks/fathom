@@ -212,8 +212,7 @@ const columnCalled = (organization: FictionalOrganization, name: string) =>
 
 // Drafts of the People table's columns: the first Engineering Operations Manager drafts adding a
 // Previous site column, which the Engineering Director rejects, renaming Level to Grade, which the
-// second makes required, so one draft holds two people's changes, removing Role on team, and moving
-// Level before Site.
+// second makes required, so one draft holds two people's changes, and removing Role on team.
 async function seedColumnDrafts(
   database: Database,
   organization: FictionalOrganization,
@@ -255,7 +254,6 @@ async function seedColumnDrafts(
     editor,
     columnCalled(organization, "Role on team"),
   );
-  await data.people.moveColumn(editor, level, "employeeId");
   await data.unpublished.publish(editor);
   await data.drafts.reject(
     approver,
@@ -312,8 +310,8 @@ export async function seedUnpublishedList(
   return true;
 }
 
-// Discards the drafts of the seed data's lists and columns, the column order's, and those of the list
-// and column it drafted adding, those made by hand included, since removing the seed data removes
+// Discards the drafts of the seed data's lists and columns, and those of the list and column it
+// drafted adding, those made by hand included, since removing the seed data removes
 // the lists and columns they change, and returns how many.
 export async function unseedListDrafts(
   database: Database,
@@ -409,28 +407,17 @@ async function unseedColumnDrafts(
       fields: drafts.fields,
     })
     .from(drafts)
-    .where(inArray(drafts.recordType, ["field", "column-order"]));
+    .where(eq(drafts.recordType, "field"));
   let discarded = 0;
-  // The order first, since discarding a column can leave it changing nothing, which removes it.
-  const ordered = [
-    ...found.filter(({ recordType }) => recordType === "column-order"),
-    ...found.filter(({ recordType }) => recordType === "field"),
-  ];
-  for (const draft of ordered) {
+  for (const draft of found) {
     const seeded =
-      draft.recordType === "column-order" ||
       columnIds.has(draft.recordId) ||
       (draft.action === "created" &&
         ["Previous site", skillsColumnName].includes(
           String(draft.fields.name),
         ));
     if (!seeded) continue;
-    await data.people.discardColumnDraft(
-      editor,
-      draft.recordType === "column-order"
-        ? { kind: "order" }
-        : { kind: "column", id: draft.recordId },
-    );
+    await data.people.discardColumnDraft(editor, draft.recordId);
     discarded += 1;
   }
   return discarded;

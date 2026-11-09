@@ -103,7 +103,7 @@ export function movedChoices(list: List): Map<string, number> {
 
 // The records an order moves, by key, each with its place in the live order, counted from one:
 // those outside the longest run still in their live order, so moving one marks only that one.
-export function movedKeys(
+function movedKeys(
   live: readonly string[],
   now: readonly string[],
 ): Map<string, number> {

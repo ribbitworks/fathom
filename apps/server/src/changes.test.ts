@@ -140,15 +140,10 @@ describe("the change history", () => {
       `/api/lists/${made.list.id}/choices/${made.north.id}/retired`,
       { retired: true },
     );
-    const column = await send(
-      "PUT",
-      `/api/people/columns/${made.field.id}/position`,
-      { after: null },
-    );
 
     const { entries } = await history(admin.cookie);
     const ids = entries.map(({ id }) => id);
-    expect(ids.indexOf(String(column.changeSetId))).toBeLessThan(
+    expect(ids.indexOf(String(retired.changeSetId))).toBeLessThan(
       ids.indexOf(String(changed.changeSetId)),
     );
     const named = (changeSetId: string | null) =>
@@ -213,12 +208,6 @@ describe("the change history", () => {
     expect(named(retired.changeSetId)?.records[0]?.fields).toEqual([
       { field: "retired", oldValue: false, newValue: true },
     ]);
-    const order = named(column.changeSetId)?.records[0];
-    expect(order).toMatchObject({ kind: "column-order", action: "changed" });
-    expect(order?.fields[0]?.newValue).toEqual(
-      expect.arrayContaining(["Alpha site", "Name", "ID", "Start", "End"]),
-    );
-    expect((order?.fields[0]?.newValue as string[])[0]).toBe("Alpha site");
   });
 
   it("keeps the names of records deleted since, and names the list a column draws on", async () => {

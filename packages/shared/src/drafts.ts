@@ -118,7 +118,6 @@ const draftsAsked = z.object({
   choices: ids("choice"),
   orders: ids("list"),
   columns: ids("column"),
-  columnOrder: z.boolean().default(false),
   records: z
     .array(recordRefSchema)
     .max(draftsAtOnce)
@@ -143,8 +142,7 @@ const fewEnough = (asked: Asked) => {
     asked.choices.length +
     asked.orders.length +
     asked.columns.length +
-    asked.records.length +
-    (asked.columnOrder ? 1 : 0);
+    asked.records.length;
   return total > 0 && total <= draftsAtOnce;
 };
 const fewEnoughMessage = `Choose from 1 to ${String(draftsAtOnce)} drafts`;
@@ -169,7 +167,6 @@ export const draftKinds = [
   "list-item",
   "choice-order",
   "field",
-  "column-order",
   ...recordTypeSchema.options,
 ] as const;
 
@@ -185,7 +182,6 @@ export const approvePermissions = {
   "list-item": "configuration:approve",
   "choice-order": "configuration:approve",
   field: "configuration:approve",
-  "column-order": "configuration:approve",
   "release-stream": "releases:approve",
   "cycle-pattern": "releases:approve",
   release: "releases:approve",
@@ -232,7 +228,6 @@ export function draftsWhere(
     choices: kept("list-item") ? asked.choices : [],
     orders: kept("choice-order") ? asked.orders : [],
     columns: kept("field") ? asked.columns : [],
-    columnOrder: asked.columnOrder && kept("column-order"),
     records: asked.records.filter(({ type }) => kept(type)),
   };
 }
@@ -248,7 +243,6 @@ export function kindsAsked(asked: DraftsRequest): DraftKind[] {
     "list-item": asked.choices.length > 0,
     "choice-order": asked.orders.length > 0,
     field: asked.columns.length > 0,
-    "column-order": asked.columnOrder,
     "release-stream": records.has("release-stream"),
     "cycle-pattern": records.has("cycle-pattern"),
     release: records.has("release"),

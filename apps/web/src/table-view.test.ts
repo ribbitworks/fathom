@@ -29,6 +29,7 @@ import {
   viewSearchSchema,
   widthWithin,
   withWidth,
+  orderAfterMove,
 } from "./table-view.ts";
 import { decimal } from "./numbers.ts";
 
@@ -516,6 +517,50 @@ describe("the view in the page address", () => {
         sort: ["a b"],
       }),
     ).toEqual({ sort: [] });
+  });
+});
+
+describe("a view's order of columns", () => {
+  const known = [{ key: "a" }, { key: "b" }];
+
+  it("is read from and written to the address, leaving out an empty one", () => {
+    expect(viewFrom({ order: ["b", "a"] }).order).toEqual(["b", "a"]);
+    expect(viewFrom({ order: [] })).not.toHaveProperty("order");
+    expect(searchFor({ ...emptyView, order: ["b", "a"] }).order).toEqual([
+      "b",
+      "a",
+    ]);
+    expect(searchFor(emptyView)).not.toHaveProperty("order");
+  });
+
+  it("counts as set apart", () => {
+    expect(setsApart({ ...emptyView, order: ["b", "a"] })).toBe(true);
+  });
+
+  it("keeps the places of columns not shown for now, and goes once it names none the table has", () => {
+    expect(
+      knownView({ ...emptyView, order: ["hidden", "b", "a"] }, known).order,
+    ).toEqual(["hidden", "b", "a"]);
+    expect(
+      knownView({ ...emptyView, order: ["gone"] }, known),
+    ).not.toHaveProperty("order");
+    expect(knownView(emptyView, known)).not.toHaveProperty("order");
+  });
+
+  it("moves a column shown, leaving those not shown where they are", () => {
+    expect(
+      orderAfterMove(["a", "c"], 1, 0, ["a", "b", "c"], undefined),
+    ).toEqual(["c", "b", "a"]);
+    expect(
+      orderAfterMove(["c", "a"], 0, 1, ["a", "b", "c"], ["c", "b", "a"]),
+    ).toBeUndefined();
+  });
+
+  it("puts a column the order does not name after the rest", () => {
+    expect(orderAfterMove(["n", "a"], 0, 1, ["a"], undefined)).toEqual([
+      "a",
+      "n",
+    ]);
   });
 });
 

@@ -15,26 +15,24 @@
 // is wrong as it is filled in, and a refused value keeps its editor open, marked. Every change to a
 // record is a draft, shown in place and marked, until an Approver approves it; a cell a draft
 // changes is marked, and names its live value. Each record's menu, also opened with Shift+F10,
-// drafts removing it or discards its draft. Every column can be dragged by its header, moved with
-// Alt and the arrow keys, or moved from its menu, and columns drawing on lists are changed from
-// there too. Everyone can change a column's width, kept in the view, by dragging its header's right
-// edge, with Shift, Alt and the arrow keys, or from its menu. Everyone, viewers included, can
-// search the table and sort and filter it by any column they see, as table-controls.tsx sets out;
-// rows keep their place while they are edited, until the view next changes. Viewers see the same
-// table, read only. Changes to columns and their order are drafts too, marked under the columns'
-// names, with each column's draft in its menu, and the order's in the Draft menu and the menu of
-// each column it moves; the Draft menu also chooses what to show and decides every draft waiting
-// among those shown. What is particular to a kind of record, such as its built-in columns and what
-// adding one asks for, comes from its table, as people-grid.tsx sets out for People.
-//
-// A cell whose kind is edited in the side panel, such as a note, opens there on a click, Enter, or
-// F2, read only where the cell may not change. While it is being changed, only the panel's own
-// buttons close it, and the table changes nothing else until then.
+// drafts removing it or discards its draft. Where the table lets columns move, as People does, each
+// can be dragged by its header, moved with Alt and the arrow keys, or moved from its menu, which
+// the view keeps, and columns drawing on lists are changed from that menu too. Everyone can change
+// a column's width, kept in the view, by dragging its header's right edge, with Shift, Alt and the
+// arrow keys, or from its menu. Everyone, viewers included, can search the table and sort and
+// filter it by any column they see, as table-controls.tsx sets out; rows keep their place while
+// they are edited, until the view next changes. Viewers see the same table, read only. Changes to
+// columns are drafts too, marked under the columns' names, with each column's draft in its menu;
+// the Draft menu also chooses what to show and decides every draft waiting among those shown. What
+// is particular to a kind of record, such as its built-in columns and what adding one asks for,
+// comes from its table, as people-grid.tsx sets out for People.  A cell whose kind is edited in the
+// side panel, such as a note, opens there on a click, Enter, or F2, read only where the cell may
+// not change. While it is being changed, only the panel's own buttons close it, and the table
+// changes nothing else until then.
 
 import type {
   Asking,
   Choice,
-  ColumnOrderDraft,
   DraftKind,
   Field,
   FieldDraft,
@@ -76,16 +74,13 @@ import {
   MenuTitle,
   UnpublishedNote,
   OtherApproverNote,
-  WaitingNote,
 } from "./draft-details.tsx";
 import {
-  type ColumnDraftTarget,
   decidable,
   type DraftSelection,
   draftTotal,
   mayDecide,
   noDrafts,
-  waitsForRejected,
 } from "./drafts.ts";
 import { useColumnWidths } from "./column-widths.ts";
 import { focusSoon } from "./focus.ts";
@@ -94,16 +89,14 @@ import {
   cellKey,
   frozenByDefault,
   frozenLayout,
-  useFrozenMoves,
+  frozenAfterMove,
   frozenLeft,
   frozenVariables,
   useMeasured,
 } from "./frozen-columns.ts";
 import { shortcutsFor } from "./list-panel.tsx";
 import { Icon } from "./icons.tsx";
-import { movedKeys } from "./list-drafts.tsx";
 import { draftedLists, liveLists } from "./lists.ts";
-import { nameAs } from "./names.ts";
 import {
   type ChangeView,
   ColumnViewItems,
@@ -125,6 +118,7 @@ import {
   useSteadyOrder,
   valueOrStandIn,
   type View,
+  orderAfterMove,
 } from "./table-view.ts";
 import { AppMenu, closesOnBlankClick } from "./app-menu.tsx";
 import { metricsButtonId, metricsPanelId } from "./metrics.ts";
@@ -168,19 +162,16 @@ export interface RecordActions<Rec extends GridRecord, Change, Request> {
     onFailed: () => void,
   ) => void;
   update: (record: Rec, change: Change) => void;
-  // Asks to approve or reject the drafts chosen, of records, columns, or the column order, naming
-  // them when one menu item decides several together.
-  decide: (asking: Asking, selection: DraftSelection, naming?: boolean) => void;
+  // Asks to approve or reject the drafts chosen, of records or columns.
+  decide: (asking: Asking, selection: DraftSelection) => void;
   remove: (record: Rec) => void;
   discard: (record: Rec, draft: DraftOf<Rec>) => void;
   // Sends a rejected draft for approval again, unchanged.
   resubmit: (record: Rec) => void;
-  // Moves a column, by its key, to just after another, or to the start when there is none.
-  moveColumn: (key: string, label: string, after: string | null) => void;
   editColumn: (field: Field) => void;
-  // Discards a draft of a column or of the column order, or sends a rejected one again.
-  discardColumn: (target: ColumnDraftTarget, name: string) => void;
-  resubmitColumn: (target: ColumnDraftTarget) => void;
+  // Discards a draft of a column, or sends a rejected one again.
+  discardColumn: (id: string, name: string) => void;
+  resubmitColumn: (id: string) => void;
 }
 
 // A record's built-in detail, keyed by its name, or an added column, keyed by its identifier, with
@@ -943,29 +934,19 @@ export function liveFields(fields: readonly Field[]): Field[] {
   });
 }
 
-// The columns, their lists, and their order as a choice of the Draft menu shows them. Live only
-// shows the live columns, in their live order, with their lists as they are live. Drafts applied
-// shows the columns as they will be once approved: a rejected draft, not on its way to approval, is
-// taken back, and a column drafted to be removed is left out, as are the choices drafted away from
-// their lists.
+// The columns and their lists as a choice of the Draft menu shows them. Live only shows the live
+// columns, with their lists as they are live. Drafts applied shows the columns as they will be once
+// approved: a rejected draft, not on its way to approval, is taken back, and a column drafted to be
+// removed is left out, as are the choices drafted away from their lists.
 export function shownSchema(
   show: Show,
   fields: readonly Field[],
   lists: readonly List[],
-  order: readonly string[],
-  orderDraft: ColumnOrderDraft | undefined,
 ): {
   fields: Field[];
   lists: List[];
-  order: readonly string[];
-  // The draft of the order, when it is shown.
-  orderDraft: ColumnOrderDraft | undefined;
 } {
   const applied = show === "drafts";
-  const orderShown =
-    orderDraft !== undefined &&
-    show !== "live" &&
-    !(applied && orderDraft.state === "rejected");
   return {
     fields:
       show === "live"
@@ -982,8 +963,6 @@ export function shownSchema(
         : applied
           ? draftedLists(lists)
           : [...lists],
-    order: orderDraft === undefined || orderShown ? order : orderDraft.live,
-    orderDraft: orderShown ? orderDraft : undefined,
   };
 }
 
@@ -1026,103 +1005,6 @@ function fieldDraftLines(field: Field, lists: readonly List[]): Phrase[] {
   );
 }
 
-// Who drafted the column order, as the heading of its section in a menu, and as a line of a moved
-// column's draft.
-const orderMaker = (draft: ColumnOrderDraft) =>
-  draft.madeBy === null ? "Fathom" : nameAs(draft.madeBy, draft.madeAs);
-const movedLine = (draft: ColumnOrderDraft): Phrase => [
-  { strong: "Moved" },
-  ` by ${orderMaker(draft)}`,
-];
-
-// What may be done with a draft of the order of the table's columns, which the table shows,
-// in the Draft menu above the table and in the menu of each column it moves.
-function OrderItems({
-  draft,
-  canEdit,
-  canApprove,
-  actions,
-  waits,
-  heldBy,
-  withColumnDraft = false,
-}: {
-  draft: ColumnOrderDraft;
-  // Who else has unpublished changes to the order, which hold it.
-  heldBy?: string | undefined;
-  canEdit: boolean;
-  canApprove: boolean;
-  actions: Pick<
-    RecordActions<never, never, never>,
-    "decide" | "discardColumn" | "resubmitColumn"
-  >;
-  // Whether the order places a column whose addition was rejected, so cannot be approved yet.
-  waits: boolean;
-  // Part of the draft section of a moved column with a draft of its own, which names the move and
-  // decides both drafts at once, leaving only what undoes the move.
-  withColumnDraft?: boolean;
-}) {
-  const order = { ...noDrafts(), columnOrder: true };
-  return (
-    <>
-      {!withColumnDraft && (
-        <>
-          <Menu.Divider />
-          <MenuDraftLines
-            draft={draft}
-            lines={[[`Reordered by ${orderMaker(draft)}`]]}
-            divider={false}
-          />
-          {heldBy !== undefined && <HeldNote by={heldBy} />}
-          {draft.unpublished === true && <UnpublishedNote />}
-        </>
-      )}
-      {canApprove && decidable({ draft, heldBy }) && !withColumnDraft && (
-        <>
-          <Menu.Item
-            closeMenuOnClick
-            disabled={waits || draft.needsOtherApprover === true}
-            onClick={() => {
-              actions.decide("approve", order);
-            }}
-          >
-            Approve new order…
-          </Menu.Item>
-          {waits && <WaitingNote />}
-          {!waits && draft.needsOtherApprover === true && <OtherApproverNote />}
-          <Menu.Item
-            closeMenuOnClick
-            onClick={() => {
-              actions.decide("reject", order);
-            }}
-          >
-            Reject new order…
-          </Menu.Item>
-        </>
-      )}
-      {canEdit && heldBy === undefined && draft.state === "rejected" && (
-        <Menu.Item
-          closeMenuOnClick
-          onClick={() => {
-            actions.resubmitColumn({ kind: "order" });
-          }}
-        >
-          Resubmit
-        </Menu.Item>
-      )}
-      {canEdit && heldBy === undefined && (
-        <Menu.Item
-          closeMenuOnClick
-          onClick={() => {
-            actions.discardColumn({ kind: "order" }, "the column order");
-          }}
-        >
-          Discard new order
-        </Menu.Item>
-      )}
-    </>
-  );
-}
-
 // The props a table of one kind of record takes, which its own component passes on.
 export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // Every record the user may see; the view decides which are shown, and in what order.
@@ -1131,11 +1013,8 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   panels?: readonly SidePanel[] | undefined;
   table: RecordTable<Rec, Change, Request>;
   fields: Field[];
-  // The keys of the columns, in order, as a draft of the order makes it, and that draft.
+  // The keys of the columns, in the table's own order.
   order: string[];
-  orderDraft?: ColumnOrderDraft | undefined;
-  // Who else has unpublished changes to the column order, which hold it.
-  orderHeldBy?: string | undefined;
   lists: List[];
   canEdit: boolean;
   // Whether new records can be added, for those who may edit; true unless told otherwise.
@@ -1146,6 +1025,7 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   // draft not saved yet.
   saving?: boolean;
   canEditColumns: boolean;
+  canMoveColumns?: boolean;
   actions: RecordActions<Rec, Change, Request>;
   view: View;
   onView: ChangeView;
@@ -1185,15 +1065,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   records: everyone,
   table,
   fields: draftedFields,
-  order: draftedOrder,
-  orderDraft,
-  orderHeldBy,
+  order: tableOrder,
   lists,
   canEdit: mayEdit,
   canAdd = true,
   approves: mayApprove = [],
   saving = false,
   canEditColumns,
+  canMoveColumns = false,
   actions,
   view: asked,
   onView,
@@ -1201,19 +1080,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   panels = [],
 }: RecordGridProps<Rec, Change, Request>) {
   const applied = asked.show === "drafts";
-  // A new column order that places a column whose addition was rejected waits for it.
-  const orderWaits = waitsForRejected(
-    { ...noDrafts(), columnOrder: true },
+  const { fields, lists: listsShown } = shownSchema(
+    asked.show,
+    draftedFields,
     lists,
-    { fields: draftedFields, orderDraft },
   );
-  const {
-    fields,
-    lists: listsShown,
-    order,
-    orderDraft: shownOrderDraft,
-  } = shownSchema(asked.show, draftedFields, lists, draftedOrder, orderDraft);
-  const orderShown = shownOrderDraft !== undefined;
+  const askedHere = canMoveColumns ? asked : { ...asked, order: undefined };
+  const order = askedHere.order ?? tableOrder;
   // The columns with their lists as they are live, for the live records and each live row, so a
   // choice's drafted name is not shown as live.
   const listsLive = liveLists(lists);
@@ -1231,7 +1104,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
       ? liveColumns
       : table.columnsFor(fields, listsShown, order, everyone);
   const known = knownView(
-    asked,
+    askedHere,
     columns,
     [draftColumn],
     columns.filter(breaksDown),
@@ -1266,7 +1139,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const records = recordsAsShown(known.show, everyone, table.liveRecords);
   const canEdit = mayEdit && !liveOnly;
   const approves = liveOnly ? [] : mayApprove;
-  const approvesOrder = approves.includes("column-order");
   // Whether the user's role approves a record's draft, and those it decides with it.
   const approvesRecord = (record: Rec) =>
     mayDecide(approves, table.drafts([record.id]));
@@ -1301,20 +1173,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const liveBeside = (column: Column<Rec, Change>) =>
     liveCopies.get(column.key);
   const besides = columns.filter((column) => liveCopies.has(column.key));
-  // The columns a draft of the order moves, marked under their names, unless drafted to be removed,
-  // since where such a column goes matters to no one.
-  const movedColumns = orderShown
-    ? movedKeys(shownOrderDraft.live, draftedOrder)
-    : new Map<string, number>();
-  const isMoved = (column: Column<Rec, Change>) =>
-    movedColumns.has(column.key) && column.field?.draft?.action !== "deleted";
   // The most lines of marks under any column's name, which the header grows to hold.
   const markLines = Math.max(
     0,
     ...columns.map(
       (column) =>
         (column.field?.draft === undefined ? 0 : 1) +
-        (isMoved(column) ? 1 : 0) +
         (column.field?.draft?.unpublished === true ? 1 : 0) +
         (column.field?.heldBy === undefined ? 0 : 1),
     ),
@@ -1373,8 +1237,13 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     new Map(),
   );
   const stableId = (record: Rec) => shownAs.get(record.id) ?? record.id;
-  // Freezing columns and setting their widths move no rows.
-  const rowView = { ...view, frozen: undefined, widths: undefined };
+  // Freezing, moving, and setting the widths of columns move no rows.
+  const rowView = {
+    ...view,
+    frozen: undefined,
+    order: undefined,
+    widths: undefined,
+  };
   const groupOf = useSteadyGroups(
     records,
     rowView,
@@ -1490,13 +1359,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           style: { left: `var(${frozenLeft(cellKey(index, copy))})` },
         }
       : { className: "", style: undefined };
+  const frozenView = (count: number) =>
+    count === frozenByDefault ? undefined : count;
   const freeze = (count: number) => {
-    onView({
-      ...view,
-      frozen: count === frozenByDefault ? undefined : count,
-    });
+    onView({ ...view, frozen: frozenView(count) });
   };
-  const refreeze = useFrozenMoves(keys, freeze);
   // The table's panel, holding its columns and where its frozen columns sit.
   const panelRef = useRef<HTMLDivElement>(null);
   const widths = useColumnWidths({
@@ -2038,13 +1905,19 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     submitNewRows([...kept, ...made]);
   };
 
+  const moveColumn = (from: number, to: number) => {
+    onView({
+      ...view,
+      order: orderAfterMove(keys, from, to, tableOrder, view.order),
+      frozen: frozenView(frozenAfterMove(frozenAsked, from, to)),
+    });
+  };
+
   const moveColumnBy = (column: Column<Rec, Change>, step: -1 | 1) => {
     const index = keys.indexOf(column.key);
     const to = index + step;
     if (to < 0 || to >= keys.length) return;
-    const others = keys.filter((key) => key !== column.key);
-    refreeze(frozenAsked, index, to);
-    actions.moveColumn(column.key, column.label, others[to - 1] ?? null);
+    moveColumn(index, to);
     focusSoon(headerId(column));
   };
 
@@ -2056,34 +1929,22 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const after = droppedAfter(keys, moved.key, onto.key);
     if (after === undefined) return;
     const others = keys.filter((key) => key !== moved.key);
-    refreeze(
-      frozenAsked,
+    moveColumn(
       keys.indexOf(moved.key),
       after === null ? 0 : others.indexOf(after) + 1,
     );
-    actions.moveColumn(moved.key, moved.label, after);
   };
 
   const header = (column: Column<Rec, Change>, index: number) => {
     const { field } = column;
-    const moved = orderShown && isMoved(column);
-    // A moved column's own waiting draft is decided together with the waiting order that moves it;
-    // once either is rejected, the order keeps a section of its own.
     const ownWaiting = field !== undefined && decidable(field);
-    const joinedOrder =
-      moved &&
-      ownWaiting &&
-      decidable({ draft: orderDraft, heldBy: orderHeldBy }) &&
-      !orderWaits;
-    // Someone else's unpublished changes to the column, or to the order, hold it.
+    // Someone else's unpublished changes to the column hold it.
     const changesColumn = canEditColumns && field?.heldBy === undefined;
-    const movesColumns = canEditColumns && orderHeldBy === undefined;
     const deciding: DraftSelection = {
       ...noDrafts(),
       columns: ownWaiting ? [field.id] : [],
-      columnOrder: joinedOrder,
     };
-    const dragProps = movesColumns
+    const dragProps = canMoveColumns
       ? {
           draggable: true,
           // A press on the column's edge resizes it, which the browser would otherwise take as
@@ -2138,7 +1999,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     widths.step(column.key, index, step);
                     return;
                   }
-                  if (!movesColumns || !event.altKey) return;
+                  if (!canMoveColumns || !event.altKey) return;
                   if (event.key === "ArrowLeft") {
                     event.preventDefault();
                     moveColumnBy(column, -1);
@@ -2154,20 +2015,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     <DraftMark draft={field.draft} />
                   )}
                   {field && !liveOnly && <HoldMarks heldBy={field.heldBy} />}
-                  {moved && (
-                    <StatusMark
-                      tone={
-                        shownOrderDraft.state === "rejected"
-                          ? "rejected"
-                          : "draft"
-                      }
-                      spaced
-                    >
-                      {shownOrderDraft.state === "rejected"
-                        ? "Rejected: moved"
-                        : "Draft: moved"}
-                    </StatusMark>
-                  )}
                 </span>
                 <HeaderMarks column={column} view={view} />
               </button>
@@ -2184,23 +2031,19 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                 <>
                   <MenuDraftLines
                     draft={field.draft}
-                    lines={[
-                      ...fieldDraftLines(field, lists),
-                      ...(joinedOrder ? [movedLine(shownOrderDraft)] : []),
-                    ]}
+                    lines={fieldDraftLines(field, lists)}
                     divider={
                       (ownWaiting && mayDecide(approves, deciding)) ||
                       changesColumn
                     }
                   />
-                  {/* One decision for the column's draft and the order that moves it, among those
-                      waiting: a rejected draft is back with its makers until they send it again. */}
+                  {/* A rejected draft is back with its makers until they send it again. */}
                   {ownWaiting && mayDecide(approves, deciding) && (
                     <>
                       <Menu.Item
                         disabled={field.draft.needsOtherApprover === true}
                         onClick={() => {
-                          actions.decide("approve", deciding, true);
+                          actions.decide("approve", deciding);
                         }}
                       >
                         Approve…
@@ -2210,7 +2053,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                       )}
                       <Menu.Item
                         onClick={() => {
-                          actions.decide("reject", deciding, true);
+                          actions.decide("reject", deciding);
                         }}
                       >
                         Reject…
@@ -2220,10 +2063,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   {changesColumn && field.draft.state === "rejected" && (
                     <Menu.Item
                       onClick={() => {
-                        actions.resubmitColumn({
-                          kind: "column",
-                          id: field.id,
-                        });
+                        actions.resubmitColumn(field.id);
                       }}
                     >
                       Resubmit
@@ -2232,24 +2072,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   {changesColumn && (
                     <Menu.Item
                       onClick={() => {
-                        actions.discardColumn(
-                          { kind: "column", id: field.id },
-                          field.name,
-                        );
+                        actions.discardColumn(field.id, field.name);
                       }}
                     >
                       Discard draft
                     </Menu.Item>
-                  )}
-                  {joinedOrder && (
-                    <OrderItems
-                      draft={shownOrderDraft}
-                      canEdit={movesColumns}
-                      canApprove={approvesOrder}
-                      actions={actions}
-                      waits={false}
-                      withColumnDraft
-                    />
                   )}
                   <Menu.Divider />
                 </>
@@ -2311,7 +2138,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   Reset width
                 </Menu.Item>
               )}
-              {canEditColumns && (changesColumn || movesColumns) && (
+              {(changesColumn || canMoveColumns) && (
                 <>
                   <Menu.Divider />
                   {changesColumn &&
@@ -2325,7 +2152,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                         Edit column
                       </Menu.Item>
                     )}
-                  {movesColumns && (
+                  {canMoveColumns && (
                     <>
                       <Menu.Item
                         rightSection={<kbd>{shortcuts.left}</kbd>}
@@ -2346,17 +2173,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     </>
                   )}
                 </>
-              )}
-              {/* A moved column's menu decides the order that moves it, as a drafted record's does. */}
-              {moved && !joinedOrder && (canEditColumns || approvesOrder) && (
-                <OrderItems
-                  draft={shownOrderDraft}
-                  canEdit={canEditColumns}
-                  canApprove={approvesOrder}
-                  actions={actions}
-                  waits={orderWaits}
-                  heldBy={orderHeldBy}
-                />
               )}
             </AppMenu.Dropdown>
           </AppMenu>
@@ -2645,10 +2461,6 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           )
           .map(({ id }) => id)
       : [],
-    columnOrder:
-      approvesOrder &&
-      orderDraft !== undefined &&
-      decidable({ draft: orderDraft, heldBy: orderHeldBy }),
   };
   const waitingTotal = draftTotal(waitingShown);
 
@@ -2776,23 +2588,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                     .length +
                   draftedFields.filter(
                     ({ draft }) => draft?.state === "waiting",
-                  ).length +
-                  (orderDraft?.state === "waiting" ? 1 : 0)
+                  ).length
                 }
                 disabled={saving}
                 onDecide={(asking) => {
                   actions.decide(asking, waitingShown);
                 }}
-              />
-            )}
-            {orderShown && (canEditColumns || approvesOrder) && (
-              <OrderItems
-                draft={shownOrderDraft}
-                canEdit={canEditColumns}
-                canApprove={approvesOrder}
-                actions={actions}
-                waits={orderWaits}
-                heldBy={orderHeldBy}
               />
             )}
           </>

@@ -162,11 +162,6 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ columns: [id()] }),
   },
   {
-    variant: "column order",
-    needs: allOf("configuration:approve", "people:view"),
-    asked: () => ({ columnOrder: true }),
-  },
-  {
     // The plan's records are seen with the plan or with planning configuration.
     variant: "records",
     needs: {
@@ -446,24 +441,15 @@ const routes: Route[] = [
     body: () => ({ ...named(), type: "link", visibility: "general" }),
   },
   {
-    method: "PUT",
-    pattern: "/api/people/columns/:key/position",
-    needs: allOf("configuration:edit"),
-    body: first,
-  },
-  {
     method: "DELETE",
     pattern: "/api/people/columns/:fieldId",
     needs: allOf("configuration:edit"),
   },
-  ...["/api/people/columns/order", "/api/people/columns/:fieldId"].flatMap(
-    (path): Route[] =>
-      ["/draft", "/draft/rejection"].map((end) => ({
-        method: "DELETE",
-        pattern: `${path}${end}`,
-        needs: allOf("configuration:edit"),
-      })),
-  ),
+  ...["/draft", "/draft/rejection"].map((end): Route => ({
+    method: "DELETE",
+    pattern: `/api/people/columns/:fieldId${end}`,
+    needs: allOf("configuration:edit"),
+  })),
 
   {
     method: "GET",

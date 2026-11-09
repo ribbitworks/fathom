@@ -137,7 +137,6 @@ const actions = {
   discard: noop,
   resubmit: noop,
   decide: noop,
-  moveColumn: noop,
   editColumn: noop,
   discardColumn: noop,
   resubmitColumn: noop,
