@@ -15,6 +15,8 @@ import {
   features,
   releaseStreams,
   runMigrations,
+  fields,
+  fieldValues,
   listItems,
   lists,
 } from "@fathom/db";
@@ -86,6 +88,90 @@ const addHandFeature = async (featureTeamId: string | null = null) => {
 };
 
 const everyFeature = () => connection.select().from(features);
+
+describe("Complexity", () => {
+  it("adds its list, a column on Features, and sizes on some features", async () => {
+    await seedReleases(connection, today);
+    await seedFeatures(connection, today, []);
+    const [column] = await connection
+      .select()
+      .from(fields)
+      .where(eq(fields.tableName, "features"));
+    expect(column?.name).toBe("Complexity");
+    expect(await connection.select().from(fieldValues)).not.toEqual([]);
+  });
+
+  it("is removed with the features, with its list", async () => {
+    await seedReleases(connection, today);
+    await seedFeatures(connection, today, []);
+    expect(await unseedFeatures(connection, [])).toEqual([]);
+    expect(
+      await connection
+        .select()
+        .from(fields)
+        .where(eq(fields.tableName, "features")),
+    ).toEqual([]);
+  });
+
+  it("keeps its list when another column uses it, or it has a choice added by hand", async () => {
+    await seedReleases(connection, today);
+    await seedFeatures(connection, today, []);
+    const [column] = await connection
+      .select()
+      .from(fields)
+      .where(eq(fields.tableName, "features"));
+    const listId = String(column?.listId);
+    const handColumn = randomUUID();
+    await connection.insert(fields).values({
+      id: handColumn,
+      tableName: "features",
+      name: "Fictional Hand Column",
+      listId,
+    });
+    expect(await unseedFeatures(connection, [])).toEqual([
+      "The Complexity list, which a column uses",
+    ]);
+    await connection.delete(fields).where(eq(fields.id, handColumn));
+    await connection.delete(listItems).where(eq(listItems.listId, listId));
+    await connection.delete(lists).where(eq(lists.id, listId));
+    await seedFeatures(connection, today, []);
+    const [again] = await connection
+      .select()
+      .from(fields)
+      .where(eq(fields.tableName, "features"));
+    await connection.insert(listItems).values({
+      listId: String(again?.listId),
+      label: "Fictional Hand Size",
+      position: 100,
+    });
+    expect(await unseedFeatures(connection, [])).toEqual([
+      "The Complexity list, which has choices added by hand",
+    ]);
+    await connection
+      .delete(listItems)
+      .where(eq(listItems.listId, String(again?.listId)));
+    await connection.delete(lists).where(eq(lists.id, String(again?.listId)));
+  });
+
+  it("records a value given to a feature added by hand when the column goes", async () => {
+    await seedReleases(connection, today);
+    await seedFeatures(connection, today, []);
+    const [held] = await connection.select().from(fieldValues);
+    const handFeature = await addHandFeature();
+    await connection.insert(fieldValues).values({
+      fieldId: String(held?.fieldId),
+      featureId: handFeature,
+      choiceId: held?.choiceId,
+    });
+    await unseedFeatures(connection, []);
+    expect(
+      await connection
+        .select()
+        .from(fieldValues)
+        .where(eq(fieldValues.featureId, handFeature)),
+    ).toEqual([]);
+  });
+});
 
 describe("seeding features", () => {
   it("adds them once, recorded as made by Fathom itself", async () => {

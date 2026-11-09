@@ -183,5 +183,5 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
 - [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
-  - **Expected:** The table shows only **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**, and the count reads **4 of 11**.
+  - **Expected:** The table shows only **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**, and the count reads **4 of 12**.
   - **Notes:**

@@ -23,6 +23,7 @@ import {
   setRejection,
 } from "./drafts.ts";
 import {
+  refuseSensitiveFeatureList,
   choiceChanges,
   choicesOrderUses,
   heldOrder,
@@ -182,6 +183,7 @@ export async function approveListDrafts(
         await refuseIfUsed(transaction, id, "retired");
       }
       const { name, description, visibility, retired } = asList(id, list);
+      await refuseSensitiveFeatureList(transaction, id, visibility);
       await transaction
         .update(listTable)
         .set({ name, description, visibility, retired })

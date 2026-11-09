@@ -896,6 +896,8 @@ describe("the dialog changing one cycle's length", () => {
       neededBy: null,
       customerIds: [],
       note: null,
+      values: {},
+      links: {},
       estimateHours: null,
       featureTeamId: null,
       description: null,

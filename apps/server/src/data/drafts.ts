@@ -858,6 +858,13 @@ export async function draftsUse(
                   ? notReplacedBy("planned-hire", table.recordId, editor)
                   : undefined,
               ),
+              and(
+                eq(table.recordType, "feature"),
+                holdsChoice(table.fields, use.choice),
+                table === drafts && editor !== undefined
+                  ? notReplacedBy("feature", table.recordId, editor)
+                  : undefined,
+              ),
             ),
       )
       .limit(1);
@@ -866,8 +873,8 @@ export async function draftsUse(
   return false;
 }
 
-// The kinds of record whose drafts give values in People's columns.
-const valueOwners = ["person", "planned-hire"] as const;
+// The kinds of record whose drafts give values in added columns.
+const valueOwners = ["person", "planned-hire", "feature"] as const;
 
 // Whether a draft's fields give a column's value holding the choice.
 const holdsChoice = (fields: AnyColumn, choiceId: string) =>
@@ -919,12 +926,13 @@ export function valueCount(value: unknown): number | undefined {
 }
 
 // A column's values as drafts hold them, for checking that the column's settings fit the drafts
-// too: for each draft, published or not, that adds or changes a person or planned hire, whether it
+// too: for each draft, published or not, that adds or changes a record of the column's table, whether it
 // is a hire's, how many values it gives the column, or undefined when it leaves the column as it
 // is.
 export async function draftedValues(
   reader: Reader,
   columnId: string,
+  onTable: unknown,
 ): Promise<{ hire: boolean; adds: boolean; held: number | undefined }[]> {
   const rows = [];
   for (const table of [drafts, unpublishedDrafts]) {
@@ -938,7 +946,10 @@ export async function draftedValues(
         .from(table)
         .where(
           and(
-            inArray(table.recordType, ["person", "planned-hire"]),
+            inArray(
+              table.recordType,
+              onTable === "features" ? ["feature"] : ["person", "planned-hire"],
+            ),
             inArray(table.action, ["created", "changed"]),
           ),
         )),

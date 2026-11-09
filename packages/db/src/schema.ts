@@ -785,6 +785,9 @@ export const fieldValues = fathomSchema.table(
     plannedHireId: uuid("planned_hire_id").references(() => plannedHires.id, {
       onDelete: "cascade",
     }),
+    featureId: uuid("feature_id").references(() => features.id, {
+      onDelete: "cascade",
+    }),
     choiceId: uuid("choice_id").references(() => listItems.id, {
       onDelete: "restrict",
     }),
@@ -831,6 +834,25 @@ export const fieldValues = fathomSchema.table(
       .where(
         sql`${table.plannedHireId} IS NOT NULL AND ${table.number} IS NOT NULL`,
       ),
+    uniqueIndex("field_values_feature_choice_index")
+      .on(table.fieldId, table.featureId, table.choiceId)
+      .where(sql`${table.featureId} IS NOT NULL`),
+    uniqueIndex("field_values_feature_link_index")
+      .on(table.fieldId, table.featureId)
+      .where(
+        sql`${table.featureId} IS NOT NULL AND ${table.linkAddress} IS NOT NULL`,
+      ),
+    uniqueIndex("field_values_feature_note_index")
+      .on(table.fieldId, table.featureId)
+      .where(sql`${table.featureId} IS NOT NULL AND ${table.note} IS NOT NULL`),
+    uniqueIndex("field_values_feature_number_index")
+      .on(table.fieldId, table.featureId)
+      .where(
+        sql`${table.featureId} IS NOT NULL AND ${table.number} IS NOT NULL`,
+      ),
+    index("field_values_feature_index")
+      .on(table.featureId)
+      .where(sql`${table.featureId} IS NOT NULL`),
     index("field_values_person_index")
       .on(table.personId)
       .where(sql`${table.personId} IS NOT NULL`),
@@ -840,7 +862,7 @@ export const fieldValues = fathomSchema.table(
     index("field_values_choice_index").on(table.choiceId),
     check(
       "field_values_one_owner",
-      sql`num_nonnulls(${table.personId}, ${table.plannedHireId}) = 1`,
+      sql`num_nonnulls(${table.personId}, ${table.plannedHireId}, ${table.featureId}) = 1`,
     ),
     check(
       "field_values_one_kind",

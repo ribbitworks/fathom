@@ -1137,13 +1137,57 @@ async function changeList(
   });
 }
 
+const featuresGeneralOnly =
+  "A column on Features draws on this list, and columns on Features are General, so its visibility must stay General";
+
+// Whether a column on Features draws on the list, live or in a draft, published or not.
+export async function featureColumnDrawsOn(
+  reader: Reader,
+  listId: string,
+): Promise<boolean> {
+  const live = await reader
+    .select({ id: fields.id })
+    .from(fields)
+    .where(and(eq(fields.listId, listId), eq(fields.tableName, "features")));
+  if (live.length > 0) return true;
+  for (const table of [drafts, unpublishedDrafts]) {
+    const drafted = await reader
+      .select({ id: table.recordId })
+      .from(table)
+      .where(
+        and(
+          eq(table.recordType, "field"),
+          sql`${table.fields}->>'listId' = ${listId}`,
+          sql`${table.fields}->>'tableName' = 'features'`,
+        ),
+      );
+    if (drafted.length > 0) return true;
+  }
+  return false;
+}
+
+// Refuses a visibility other than General for a list a column on Features draws on.
+export async function refuseSensitiveFeatureList(
+  reader: Reader,
+  listId: string,
+  visibility: string,
+): Promise<void> {
+  if (
+    visibility !== "general" &&
+    (await featureColumnDrawsOn(reader, listId))
+  ) {
+    throw new ConflictError(featuresGeneralOnly);
+  }
+}
+
 export async function updateList(
   database: Database,
   actor: Actor,
   id: string,
   request: ListRequest,
 ): Promise<Saved<List>> {
-  return changeList(database, actor, id, async (_transaction, state, list) => {
+  return changeList(database, actor, id, async (transaction, state, list) => {
+    await refuseSensitiveFeatureList(transaction, id, request.visibility);
     refuseUnseenVisibility(
       actor,
       listTier(state, id),

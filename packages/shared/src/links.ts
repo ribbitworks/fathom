@@ -14,7 +14,7 @@ export const linkLengths = { address: 2000, text: 200 } as const;
 
 // Empty text shows the address's host instead. Only the shape is checked here, so a link already
 // kept is always recognised as one; linkProblems checks what may be kept.
-const linkShape = z.object({ address: z.string(), text: z.string() });
+export const linkShape = z.object({ address: z.string(), text: z.string() });
 
 export type Link = z.infer<typeof linkShape>;
 

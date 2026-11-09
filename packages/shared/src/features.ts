@@ -7,6 +7,16 @@
 
 import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
+import {
+  linksSchema,
+  notesSchema,
+  numbersSchema,
+  requestedLinksSchema,
+  requestedNotesSchema,
+  requestedNumbersSchema,
+  requestedValuesSchema,
+  valuesSchema,
+} from "./people.ts";
 import type { Meaning } from "./lists.ts";
 import {
   optionalText,
@@ -14,6 +24,18 @@ import {
   recordName,
   recordShape,
 } from "./record-fields.ts";
+
+// The keys of Features' built-in columns, in the order they start in.
+export const featureColumnKeys = [
+  "name",
+  "statusId",
+  "neededBy",
+  "customerIds",
+  "description",
+  "note",
+  "targetCycle",
+  "featureTeamId",
+] as const;
 
 export const featureLengths = { description: 200 } as const;
 
@@ -42,6 +64,10 @@ export const featureSchema = z.object({
   featureTeamId: z.string().nullable(),
   description: z.string().nullable(),
   note: z.string().nullable(),
+  values: valuesSchema,
+  links: linksSchema.default({}),
+  notes: notesSchema.optional(),
+  numbers: numbersSchema.optional(),
 });
 
 export type Feature = z.infer<typeof featureSchema>;
@@ -71,6 +97,10 @@ export const featureRequestSchema = z.object({
   featureTeamId: z.uuid().nullable().default(null),
   description: optionalText(featureLengths.description),
   note: z.string().nullable().default(null),
+  values: requestedValuesSchema.default({}),
+  links: requestedLinksSchema.default({}),
+  notes: requestedNotesSchema.default({}),
+  numbers: requestedNumbersSchema.default({}),
 });
 
 export type FeatureRequest = z.infer<typeof featureRequestSchema>;

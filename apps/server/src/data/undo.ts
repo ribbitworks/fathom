@@ -66,6 +66,8 @@ import {
   checkList,
   columnRow,
   columnTier,
+  mayRemoveValuesOf,
+  refuseSensitiveOnFeatures,
   nameTaken,
   readColumnsState,
   removeEmptyColumnOrder,
@@ -752,9 +754,10 @@ async function undoColumnDrafts(
     }
     // What drafting checks, checked again, since the data may have changed since.
     if (wanted !== undefined) {
-      if (nameTaken(state, String(wanted.name), record.id)) {
+      if (nameTaken(state, String(wanted.name), record.id, wanted.tableName)) {
         throw new ConflictError(changedSince);
       }
+      refuseSensitiveOnFeatures(state, wanted);
       const { listId } = typeOf(wanted).settings(wanted);
       if (listId !== null && listId !== live?.listId) {
         await checkList(
@@ -775,8 +778,7 @@ async function undoColumnDrafts(
       const tier = columnTier(state, live);
       if (
         (await draftsUse(transaction, { column: record.id }, editor)) ||
-        !actor.permissions.includes("people:edit") ||
-        !seesSensitivity(actor, tier)
+        !mayRemoveValuesOf(actor, live, tier)
       ) {
         throw new ConflictError(changedSince);
       }

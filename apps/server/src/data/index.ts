@@ -235,6 +235,22 @@ export interface ProjectAccess {
   // What the plan's records can be given, which everyone who sees the plan may read, though they
   // may not see People or Lists.
   readChoices(actor: Actor): Promise<PlanChoices>;
+  // The columns added to Features, and drafts adding, changing, and removing them.
+  readFeatureColumns(
+    actor: Actor,
+  ): Promise<Awaited<ReturnType<typeof readColumnsOut>>>;
+  createFeatureColumn(
+    actor: Actor,
+    request: FieldRequest,
+  ): Promise<Saved<Field>>;
+  updateFeatureColumn(
+    actor: Actor,
+    id: string,
+    request: FieldRequest,
+  ): Promise<Saved<Field>>;
+  deleteFeatureColumn(actor: Actor, id: string): Promise<ChangeSetId>;
+  discardFeatureColumnDraft(actor: Actor, id: string): Promise<ChangeSetId>;
+  resubmitFeatureColumnDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   add(actor: Actor, added: PlanRecordRequest): Promise<Saved<ProjectPlan>>;
   change(
     actor: Actor,
@@ -728,6 +744,37 @@ function createProjectAccess(database: Database): ProjectAccess {
       requirePermission(actor, "plan:view");
       return projectData.readPlanChoices(database);
     },
+    readFeatureColumns: async (actor) => {
+      requirePermission(actor, "plan:view");
+      return database.transaction(
+        (transaction) => readColumnsOut(transaction, actor, "features"),
+        { isolationLevel: "repeatable read", accessMode: "read only" },
+      );
+    },
+    createFeatureColumn: async (actor, request) =>
+      columnDrafts.createField(database, editor(actor), request, "features"),
+    updateFeatureColumn: async (actor, id, request) =>
+      columnDrafts.updateField(
+        database,
+        editor(actor),
+        id,
+        request,
+        "features",
+      ),
+    deleteFeatureColumn: async (actor, id) =>
+      columnDrafts.deleteField(database, editor(actor), id, "features"),
+    discardFeatureColumnDraft: async (actor, id) =>
+      columnDrafts.discardColumnDraft(database, editor(actor), {
+        kind: "column",
+        id,
+        table: "features",
+      }),
+    resubmitFeatureColumnDraft: async (actor, id) =>
+      columnDrafts.resubmitColumnDraft(database, editor(actor), {
+        kind: "column",
+        id,
+        table: "features",
+      }),
     // The kind is one of the fixed kinds above, and the request the one it takes, as
     // PlanRecordRequest pairs them.
     add: async (actor, { type, request }) =>

@@ -16,6 +16,7 @@ import type { Change, Transaction } from "./changes.ts";
 import {
   columnOrderChanges,
   columnOrderId,
+  refuseSensitiveOnFeatures,
   columnRow,
   columnTier,
   draftedField,
@@ -110,13 +111,14 @@ export async function approveColumnDrafts(
     if (field === undefined) {
       if (await draftsUse(transaction, { column: id })) {
         throw new ConflictError(
-          "Drafts of people change a column drafted to be deleted; approve or discard them first",
+          "Drafts change a column drafted to be deleted; approve or discard them first",
         );
       }
       // The values deleted are as sensitive as the column, which the Approver sees, as checked above.
       made.push(...(await deleteLiveField(transaction, id)));
       continue;
     }
+    refuseSensitiveOnFeatures(state, field);
     const after = columnRow(id, field);
     if (after.listId !== null) {
       // The list is locked, so it cannot be retired while the column comes to draw on it.
@@ -139,7 +141,8 @@ export async function approveColumnDrafts(
     await checkValuesFit(transaction, before, after);
     if (live === undefined) {
       await transaction.insert(fields).values(after);
-      await appendColumn(transaction, id);
+      // Only People's columns have an order kept yet.
+      if (after.tableName === "people") await appendColumn(transaction, id);
       made.push(...fieldChanges(id, "created", undefined, after));
     } else {
       const { name, listId, visibility, multiple, required, onPlannedHires } =

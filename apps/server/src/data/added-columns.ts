@@ -22,7 +22,10 @@ type Reader = Pick<Database, "select">;
 
 const added = (drafts: ReadonlyMap<string, Draft>, live: ReadonlySet<string>) =>
   [...drafts].filter(
-    ([id, draft]) => draft.action === "created" && !live.has(id),
+    ([id, draft]) =>
+      draft.action === "created" &&
+      !live.has(id) &&
+      draft.fields.tableName !== "features",
   );
 
 // The People table's live columns, then those drafted to be added that the viewer sees, as their

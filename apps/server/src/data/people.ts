@@ -116,7 +116,9 @@ import {
   inListOrder,
   readColumns,
   readValues,
+  recordedValues,
   valueField,
+  valueFieldsIn,
 } from "./values.ts";
 
 type PersonRow = typeof people.$inferSelect;
@@ -236,21 +238,6 @@ async function readStates(reader: Pick<Database, "select">) {
   };
 }
 
-// A person's or planned hire's values, by column, as recorded: a column with no choices is left
-// out.
-export function recordedValues(
-  values: ReadonlyMap<string, FieldValue>,
-): Recorded {
-  const record: Recorded = {};
-  for (const [fieldId, value] of values) {
-    if (isLink(value)) record[valueField(fieldId)] = { ...value };
-    else if (isNote(value) || isNumber(value)) {
-      record[valueField(fieldId)] = value;
-    } else if (value.length > 0) record[valueField(fieldId)] = [...value];
-  }
-  return record;
-}
-
 // A person as recorded, with Manager? left out unless checked, or unchecked from a live check,
 // since only a check is recorded: so unchecking what the live person does not have changes nothing.
 export function withMark(
@@ -263,7 +250,7 @@ export function withMark(
   );
 }
 
-// A person's or planned hire's choices, by column, as recorded.
+// A record's choices, by column, as recorded.
 export function valuesOf(person: Recorded): Map<string, string[]> {
   return new Map(
     Object.entries(person).flatMap(([field, value]) => {
@@ -315,11 +302,7 @@ export function personChanges(
 ): Change[] {
   const fieldNames = [
     ...personFields,
-    ...new Set(
-      [...Object.keys(before ?? {}), ...Object.keys(after ?? {})].filter(
-        (field) => fieldOfValue(field) !== null,
-      ),
-    ),
+    ...new Set(valueFieldsIn(before, after)),
   ];
   return changesBetween(
     "person",

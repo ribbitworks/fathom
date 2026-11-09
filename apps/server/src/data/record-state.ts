@@ -7,7 +7,12 @@
 // approving it approves them, and they are rejected only together with it, as the Decisions Log
 // sets out. Part of the data access layer; records.ts reads and changes the records.
 
-import type { Permission, RecordRef, RecordType } from "@fathom/shared";
+import type {
+  ColumnTable,
+  Permission,
+  RecordRef,
+  RecordType,
+} from "@fathom/shared";
 import type { PgTable } from "drizzle-orm/pg-core";
 import {
   draftBetween,
@@ -16,6 +21,7 @@ import {
   type Held,
   type Recorded,
 } from "./drafts.ts";
+import type { ValueOwner } from "./values.ts";
 
 export interface RecordKind {
   type: RecordType;
@@ -37,6 +43,9 @@ export interface RecordKind {
   refers?: Readonly<Record<string, Referred>>;
   // The permissions any of which lets someone read records of the kind, and their history.
   readWith: readonly Permission[];
+  // The kind of owner holding values in the columns added to the kind's table, for a kind that can
+  // have them, and the table.
+  addedColumns?: { owner: ValueOwner; table: ColumnTable };
   // The record as the Drafts page names it, such as "the release stream Major".
   subject: (state: RecordsState, id: string) => string;
   // The drafts the record's draft uses beyond the records it links to, such as the cycle patterns

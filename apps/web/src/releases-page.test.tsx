@@ -1119,6 +1119,8 @@ describe("drafts in a stream's panel", () => {
                 neededBy: null,
                 customerIds: [],
                 note: null,
+                values: {},
+                links: {},
                 targetStreamId: streamId,
                 targetCycle: "2027-07-01",
                 estimateHours: null,

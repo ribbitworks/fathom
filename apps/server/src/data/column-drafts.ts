@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Drafts of the People table's columns and of their order: reading the columns as their drafts make
+// Drafts of the columns added to tables, and of the order of the People table's columns: reading the columns as their drafts make
 // them, drafting columns added, changed, and removed, and a new order of the columns, built-in and
 // added alike, as one draft holding the whole order; and discarding drafts and sending rejected ones
 // for approval again. Part of the data access layer; the caller checks the actor may change planning
@@ -10,9 +10,12 @@
 import { type Database, fields, lists } from "@fathom/db";
 import {
   type ColumnOrderDraft,
+  type ColumnTable,
+  featureColumnKeys,
   type Field,
   type FieldDraft,
   type FieldRequest,
+  type Permission,
   type Tier,
 } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
@@ -77,6 +80,29 @@ type Reader = Pick<Database, "select">;
 export const columnOrderId = "people";
 const table = columnOrderId;
 const noField = "There is no such column";
+
+// What differs between the tables that can have columns added: whether a column can be offered on
+// planned hires too, whether its values must be General, and what removing its values takes.
+const tablePolicies: Readonly<
+  Record<
+    ColumnTable,
+    { onPlannedHires: boolean; generalOnly: boolean; removalNeeds: Permission }
+  >
+> = {
+  people: {
+    onPlannedHires: true,
+    generalOnly: false,
+    removalNeeds: "people:edit",
+  },
+  features: {
+    onPlannedHires: false,
+    generalOnly: true,
+    removalNeeds: "features:edit",
+  },
+};
+
+const policyOf = (tableName: unknown) =>
+  tablePolicies[tableName === "features" ? "features" : "people"];
 const duplicateField = "There is already a column with that name";
 const toBeRemoved =
   "This column's draft removes it; discard the draft to change it";
@@ -92,7 +118,7 @@ export const fieldRecord = (row: FieldRow): Recorded => ({
   onPlannedHires: row.onPlannedHires,
 });
 
-// The People table's columns, live and in drafts, the live order of every column, and the draft of
+// Every table's added columns, live and in drafts, the live order of the People table's columns, and the draft of
 // the order, read together, with the lists they draw on, as the viewer sees them, with the records
 // others hold.
 export interface ColumnsState {
@@ -108,11 +134,8 @@ export async function readColumnsState(
   reader: Reader,
   viewer?: Viewer,
 ): Promise<ColumnsState> {
-  const rows = await reader
-    .select()
-    .from(fields)
-    .where(eq(fields.tableName, table))
-    .orderBy(asc(fields.id));
+  // Every table's columns, since a column's draft is decided the same way whichever table it is on.
+  const rows = await reader.select().from(fields).orderBy(asc(fields.id));
   return {
     fields: new Map(rows.map((row) => [row.id, fieldRecord(row)])),
     fieldDrafts: await readDrafts(reader, "field", undefined, viewer),
@@ -133,14 +156,26 @@ export async function readColumnsState(
 export const draftedField = (state: ColumnsState, id: string) =>
   drafted(state.fields.get(id), state.fieldDrafts.get(id));
 
+// Whether a column is on a table; a draft written before columns had tables is on People.
+const isOnTable = (state: ColumnsState, id: string, tableName: ColumnTable) =>
+  (state.fields.get(id)?.tableName ??
+    state.fieldDrafts.get(id)?.fields.tableName ??
+    table) === tableName;
+
 const fieldExists = (state: ColumnsState, id: string) =>
   state.fields.has(id) || state.fieldDrafts.get(id)?.action === "created";
 
 // The columns drafted to be added, in the order they were drafted.
-export const addedFields = (state: ColumnsState): string[] =>
+export const addedFields = (
+  state: ColumnsState,
+  tableName: ColumnTable = table,
+): string[] =>
   [...state.fieldDrafts]
     .filter(
-      ([id, draft]) => draft.action === "created" && !state.fields.has(id),
+      ([id, draft]) =>
+        draft.action === "created" &&
+        !state.fields.has(id) &&
+        draft.fields.tableName === tableName,
     )
     .map(([id]) => id);
 
@@ -252,16 +287,25 @@ export async function removeEmptyColumnOrder(
 
 const lower = (value: unknown) => String(value).trim().toLowerCase();
 
-// Whether another column has the name, live or in a draft, published or not, as for lists' names.
+// The table a column is on, live or only drafted to be added.
+const tableOfField = (state: ColumnsState, id: string, draft?: Draft) =>
+  state.fields.get(id)?.tableName ?? draft?.fields.tableName;
+
+// Whether another column on the same table has the name, live or in a draft, published or not, as
+// for lists' names.
 export function nameTaken(
   state: ColumnsState,
   name: string,
   except?: string,
+  within: unknown = table,
 ): boolean {
   const wanted = lower(name);
   return (
     [...state.fields].some(
-      ([id, field]) => id !== except && lower(field.name) === wanted,
+      ([id, field]) =>
+        id !== except &&
+        field.tableName === within &&
+        lower(field.name) === wanted,
     ) ||
     [
       ...state.fieldDrafts,
@@ -269,6 +313,7 @@ export function nameTaken(
     ].some(
       ([id, draft]) =>
         id !== except &&
+        tableOfField(state, id, draft) === within &&
         draft.fields.name !== undefined &&
         lower(draft.fields.name) === wanted,
     )
@@ -363,15 +408,15 @@ export const toFieldOut = (id: string, field: Recorded): Field => {
 };
 
 // A column's settings as a request asks for them, as recorded.
-const requested = (request: FieldRequest): Recorded => ({
-  tableName: table,
+const requested = (request: FieldRequest, tableName: unknown): Recorded => ({
+  tableName,
   name: request.name,
   type: request.type,
   listId: request.listId ?? null,
   visibility: request.visibility ?? null,
   multiple: request.multiple,
   required: request.required,
-  onPlannedHires: request.onPlannedHires,
+  onPlannedHires: policyOf(tableName).onPlannedHires && request.onPlannedHires,
 });
 
 const sameType = "A column's type cannot change";
@@ -423,26 +468,48 @@ function refuseUnseenTier(
   field: Recorded,
   message = unseenTier,
 ) {
+  // Columns on Features are General, which refuseSensitiveOnFeatures holds them to.
+  if (policyOf(field.tableName).generalOnly) return;
   if (!seesSensitivity(actor, columnTier(state, field))) {
     throw new ForbiddenError(message);
   }
 }
 
-// Drafts adding a column at the end of the People table. It can be required only while there is no
-// one yet.
+// Refuses a column on Features whose values are not General, since everyone who sees the plan is
+// sent them.
+export function refuseSensitiveOnFeatures(
+  state: ColumnsState,
+  field: Recorded,
+) {
+  if (
+    policyOf(field.tableName).generalOnly &&
+    columnTier(state, field) !== "general"
+  ) {
+    throw new BadRequestError(
+      "Everyone who sees the plan sees columns on Features, so choose a General list or visibility",
+    );
+  }
+}
+
+// Drafts adding a column at the end of a table. It can be required only while the table has no
+// records yet.
 export async function createField(
   database: Database,
   actor: Actor,
   request: FieldRequest,
+  tableName: ColumnTable = table,
 ): Promise<Saved<Field>> {
   return drafting(database, actor.user.id, async (transaction, state) => {
-    if (nameTaken(state, request.name)) throw new ConflictError(duplicateField);
+    if (nameTaken(state, request.name, undefined, tableName)) {
+      throw new ConflictError(duplicateField);
+    }
     if (request.listId !== undefined) {
       await checkList(transaction, state, request.listId, badRequest);
     }
     const id = randomUUID();
-    const field = requested(request);
+    const field = requested(request, tableName);
     refuseUnseenTier(actor, state, field);
+    refuseSensitiveOnFeatures(state, field);
     // A new column has no values, so it can be required only while there is no one yet.
     await checkValuesFit(
       transaction,
@@ -462,23 +529,30 @@ export async function createField(
 }
 
 // A column as its draft makes it, refusing one that does not exist or is drafted to be removed.
-function changeableField(state: ColumnsState, id: string): Recorded {
-  if (!fieldExists(state, id)) throw new NotFoundError(noField);
+function changeableField(
+  state: ColumnsState,
+  id: string,
+  tableName: ColumnTable,
+): Recorded {
+  if (!fieldExists(state, id) || !isOnTable(state, id, tableName)) {
+    throw new NotFoundError(noField);
+  }
   refuseHeldIn(state.held.fields.get(id));
   const field = draftedField(state, id);
   if (field === undefined) throw new ConflictError(toBeRemoved);
   return field;
 }
 
-// Drafts a change to a column's settings, which must fit the people's values, live and in drafts.
+// Drafts a change to a column's settings, which must fit the records' values, live and in drafts.
 export async function updateField(
   database: Database,
   actor: Actor,
   id: string,
   request: FieldRequest,
+  tableName: ColumnTable = table,
 ): Promise<Saved<Field>> {
   return drafting(database, actor.user.id, async (transaction, state) => {
-    const field = changeableField(state, id);
+    const field = changeableField(state, id, tableName);
     const live = state.fields.get(id);
     const unseen = `${String(field.name)} holds people's details your role does not let you see, so someone who may must change it`;
     refuseUnseenTier(actor, state, field, unseen);
@@ -486,7 +560,7 @@ export async function updateField(
     if (columnRow(id, field).type !== request.type) {
       throw new BadRequestError(sameType);
     }
-    if (nameTaken(state, request.name, id)) {
+    if (nameTaken(state, request.name, id, field.tableName)) {
       throw new ConflictError(duplicateField);
     }
     // The live values are checked against the live column, so a change already drafted is checked
@@ -496,8 +570,9 @@ export async function updateField(
     if (request.listId !== undefined && request.listId !== current.listId) {
       await checkList(transaction, state, request.listId, badRequest);
     }
-    const after = { ...field, ...requested(request) };
+    const after = { ...field, ...requested(request, field.tableName) };
     refuseUnseenTier(actor, state, after);
+    refuseSensitiveOnFeatures(state, after);
     const changeSetId = await saveFieldDraft(
       transaction,
       actor,
@@ -566,6 +641,20 @@ async function refuseIfDraftsFill(
   }
 }
 
+// Whether the actor may remove a column's values: those who can change the table's records, and,
+// on People, who see how sensitive the values are.
+export function mayRemoveValuesOf(
+  actor: Actor,
+  field: Recorded,
+  tier: Tier,
+): boolean {
+  const { generalOnly, removalNeeds } = policyOf(field.tableName);
+  return (
+    actor.permissions.includes(removalNeeds) &&
+    (generalOnly || seesSensitivity(actor, tier))
+  );
+}
+
 // Drafts removing a column and its values; removing a column only drafted to be added discards its
 // draft. Its values are people's data, so the actor must also be able to change people, and the
 // tier of the column's values, and drafts of people must not change it.
@@ -573,9 +662,10 @@ export async function deleteField(
   database: Database,
   actor: Actor,
   id: string,
+  tableName: ColumnTable = table,
 ): Promise<string | null> {
   return drafting(database, actor.user.id, async (transaction, state) => {
-    const field = changeableField(state, id);
+    const field = changeableField(state, id, tableName);
     const live = state.fields.get(id);
     if (live === undefined) {
       await refuseIfDraftsFill(transaction, actor.user.id, id, field);
@@ -593,10 +683,12 @@ export async function deleteField(
       columnTier(state, field),
       columnTier(state, live),
     ]);
-    if (
-      !actor.permissions.includes("people:edit") ||
-      !seesSensitivity(actor, tier)
-    ) {
+    if (!mayRemoveValuesOf(actor, field, tier)) {
+      if (field.tableName === "features") {
+        throw new ForbiddenError(
+          `Removing ${String(field.name)} removes its values from features, so it takes someone who can change features`,
+        );
+      }
       throw new ForbiddenError(
         `${String(field.name)} holds people's details your role does not let you change, so someone who may must delete it`,
       );
@@ -643,9 +735,15 @@ export async function moveColumn(
 }
 
 export type ColumnDraftTarget =
-  { kind: "column"; id: string } | { kind: "order" };
+  { kind: "column"; id: string; table?: ColumnTable } | { kind: "order" };
 
 function draftOf(state: ColumnsState, target: ColumnDraftTarget): Draft {
+  if (
+    target.kind === "column" &&
+    !isOnTable(state, target.id, target.table ?? table)
+  ) {
+    throw new NotFoundError("There is no such draft");
+  }
   refuseHeldIn(
     target.kind === "order"
       ? state.held.order
@@ -751,13 +849,14 @@ function draftOut(
   };
 }
 
-// The People table's columns as the actor may see them, as their drafts make them, with the drafts
+// A table's columns as the actor may see them, as their drafts make them, with the drafts
 // beside, the order of the columns they see, as a draft of the order makes it, and that draft. A
 // column whose values are more sensitive than the actor may see is left out, as are built-in dates
 // for those without Restricted details.
 export async function readColumnsOut(
   reader: Reader,
   actor: Actor,
+  tableName: ColumnTable = table,
 ): Promise<{
   fields: Field[];
   order: string[];
@@ -766,7 +865,12 @@ export async function readColumnsOut(
 }> {
   const viewer = actor.user.id;
   const state = await readColumnsState(reader, viewer);
-  const ids = [...state.fields.keys(), ...addedFields(state)];
+  const ids = [
+    ...[...state.fields]
+      .filter(([, field]) => field.tableName === tableName)
+      .map(([id]) => id),
+    ...addedFields(state, tableName),
+  ];
   const makers = await draftMakers(
     reader,
     "field",
@@ -783,7 +887,10 @@ export async function readColumnsOut(
       columnTier(state, field),
       ...(live === undefined ? [] : [columnTier(state, live)]),
     ]);
-    if (!seesSensitivity(actor, tier)) return [];
+    // Columns on Features are General, and shown to everyone who sees the plan.
+    if (!policyOf(tableName).generalOnly && !seesSensitivity(actor, tier)) {
+      return [];
+    }
     return [
       {
         ...toFieldOut(id, field),
@@ -794,6 +901,12 @@ export async function readColumnsOut(
       },
     ];
   });
+  if (tableName === "features") {
+    return {
+      fields: shown,
+      order: [...featureColumnKeys, ...shown.map(({ id }) => id)],
+    };
+  }
   const builtIn = builtInColumnTiers({
     positionTier: await builtInTier(reader, "positions"),
     stateTier: await builtInTier(reader, "hiring-states"),

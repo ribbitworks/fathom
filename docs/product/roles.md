@@ -33,13 +33,13 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Confidential data | None | None | None | None | None | Edit | Edit | View | None | None |
 | The hiring plan: every planned hire, with its target date, drafts, and history (decided by the owner on 2026-11-07) | None | None | None | View | View | Edit | Edit | View | None | None |
 | Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | View | None |
-| Lists of choices, and People's columns and their order | None | None | None | View lists, decided by the owner on 2026-11-01 | None | Edit | Edit | View lists | None | None |
+| Lists of choices, the columns added to People and Features, and the order of People's columns (everyone with View Plan also sees the columns on Features and their values) | None | None | None | View lists, decided by the owner on 2026-11-01 | None | Edit | Edit | View lists | None | None |
 | Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | Edit | None |
 | Approving drafts of the plan: features, projects, proposals, and the roadmap | None | Approve | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of releases, release streams, and cycle patterns | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of people, teams, and reporting lines | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of planned hires | None | None | None | Approve | None | Approve | None | None | None | None |
-| Approving drafts of lists of choices, and of People's columns and their order | None | None | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts of lists of choices, of the columns added to People and Features, and of the order of People's columns | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts they changed themselves, in the areas they approve, which otherwise need another approver (decided by the owner on 2026-11-07) | None | None | None | None | None | Approve | None | None | None | None |
 | Change history, for the data the role sees (**proposal**) | None | View | View | View | View | View | View | View | View | None |
 | Saved views of tables the role sees | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal views, and change their own | Save personal and shared views, share their own or take them back, and change their own and any shared view | Save personal and shared views, share their own or take them back, and change their own and any shared view | Save personal views, and change their own | Save personal views, and change their own | None |

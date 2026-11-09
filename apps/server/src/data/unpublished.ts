@@ -369,7 +369,7 @@ function fits(versions: Versions, row: Row, taken: Set<string>): boolean {
   }
   const field = draftedField(columns, id);
   if (field === undefined) return true;
-  if (nameTaken(columns, String(field.name), id)) return false;
+  if (nameTaken(columns, String(field.name), id, field.tableName)) return false;
   const { listId } = typeOf(field).settings(field);
   return (
     listId === null ||

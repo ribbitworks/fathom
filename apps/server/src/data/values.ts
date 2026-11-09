@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The values of columns on people and planned hires: one row for each record, column, and chosen
+// The values of columns on people, planned hires, and features: one row for each record, column, and chosen
 // choice, or for each record and web link, note, or number column, as ADR 0005 sets out. Part of
 // the data access layer. In the change history, a record's values for a column are one field of
 // the record, named after the column, holding the chosen choices in the list's order, the link,
@@ -16,23 +16,34 @@ import {
   listItems,
   lists,
 } from "@fathom/db";
-import { isLink, type Link, type Tier } from "@fathom/shared";
+import { type ColumnTable, isLink, type Link, type Tier } from "@fathom/shared";
 import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 
 type Reader = Pick<Database, "select">;
 export type FieldRow = typeof fields.$inferSelect;
 
+import { fieldOfValue, valueField } from "@fathom/db";
 export { fieldOfValue, valueField } from "@fathom/db";
 
-// The kinds of record that hold values in People's columns, each in its own owner column.
-export type ValueOwner = "person" | "planned-hire";
+// The kinds of record that hold values in added columns, each in its own owner column.
+export type ValueOwner = "person" | "planned-hire" | "feature";
+
+const ownerColumns = {
+  person: { column: fieldValues.personId, key: "personId" },
+  "planned-hire": { column: fieldValues.plannedHireId, key: "plannedHireId" },
+  feature: { column: fieldValues.featureId, key: "featureId" },
+} as const;
 
 const ownerColumn = (owner: ValueOwner) =>
-  owner === "person" ? fieldValues.personId : fieldValues.plannedHireId;
+  // The owner is always one of the fixed kinds above.
+  // eslint-disable-next-line security/detect-object-injection
+  ownerColumns[owner].column;
 
 const ownerKey = (owner: ValueOwner) =>
-  owner === "person" ? "personId" : "plannedHireId";
+  // The owner is always one of the fixed kinds above.
+  // eslint-disable-next-line security/detect-object-injection
+  ownerColumns[owner].key;
 
 // A column with the tier of its values, which is its list's visibility, or a web link column's own,
 // and whether its list is retired.
@@ -79,18 +90,19 @@ export async function builtInTier(reader: Reader, key: string): Promise<Tier> {
   return storedTier(list?.visibility);
 }
 
-// Every column on people, with the tier of its values. A change to people's values locks the columns
-// against change until it is saved, so a column cannot become required, or take one choice, while
-// values that would not fit are being saved.
+// Every column on a table, people's by default, with the tier of its values. A change to the
+// records' values locks the columns against change until it is saved, so a column cannot become
+// required, or take one choice, while values that would not fit are being saved.
 export async function readColumns(
   reader: Reader,
   lock = false,
+  table: ColumnTable = "people",
 ): Promise<PeopleColumns> {
   if (lock) {
     await reader
       .select({ id: fields.id })
       .from(fields)
-      .where(eq(fields.tableName, "people"))
+      .where(eq(fields.tableName, table))
       .for("share");
   }
   const rows = await reader
@@ -101,7 +113,7 @@ export async function readColumns(
     })
     .from(fields)
     .leftJoin(lists, eq(lists.id, fields.listId))
-    .where(eq(fields.tableName, "people"))
+    .where(eq(fields.tableName, table))
     .orderBy(asc(fields.id));
   const columns = rows.map(({ field, visibility, retired }) => ({
     ...field,
@@ -264,6 +276,34 @@ const readerOf =
 
 const readNotes = readerOf(fieldValues.note, String);
 const readNumbers = readerOf(fieldValues.number, Number);
+
+// The names of the added columns' values any version of a record holds.
+export const valueFieldsIn = (
+  ...versions: (Record<string, unknown> | undefined)[]
+): string[] => [
+  ...new Set(
+    versions.flatMap((version) =>
+      Object.keys(version ?? {}).filter(
+        (field) => fieldOfValue(field) !== null,
+      ),
+    ),
+  ),
+];
+
+// Values as a record holds them, by the name of each column's field, leaving out those with nothing
+// chosen.
+export function recordedValues(
+  values: ReadonlyMap<string, FieldValue>,
+): Record<string, unknown> {
+  const record: Record<string, unknown> = {};
+  for (const [fieldId, value] of values) {
+    if (isLink(value)) record[valueField(fieldId)] = { ...value };
+    else if (isNote(value) || isNumber(value)) {
+      record[valueField(fieldId)] = value;
+    } else if (value.length > 0) record[valueField(fieldId)] = [...value];
+  }
+  return record;
+}
 
 // The rows that hold a value as the change history records it: one for each choice, or one for a
 // link, a note, or a number. Anything else holds nothing.

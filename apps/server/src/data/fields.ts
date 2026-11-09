@@ -1,15 +1,31 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The columns people add to the People table, each drawing on a list: checking that a column's
-// settings fit the people's values, and deleting a live column with its values. Changes to columns
+// The columns people add to People and Features, each drawing on a list or holding a link or note: checking that a column's
+// settings fit the records' values, and deleting a live column with its values. Changes to columns
 // are drafts, as column-drafts.ts sets out, and their order is kept with the built-in columns', in
 // column-order.ts. Part of the data access layer. A column's settings are General data, recorded in
 // the change history field by field. Deleting a column deletes its values, which are recorded as
 // changes to each person and planned hire who had one.
 
-import { fields, fieldValues, lists, people, plannedHires } from "@fathom/db";
+import {
+  features,
+  fields,
+  fieldValues,
+  lists,
+  people,
+  plannedHires,
+} from "@fathom/db";
 import type { FieldRequest } from "@fathom/shared";
-import { and, asc, count, countDistinct, eq, gt, isNull } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  eq,
+  gt,
+  isNotNull,
+  isNull,
+} from "drizzle-orm";
 import { BadRequestError, ConflictError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftedValues } from "./drafts.ts";
@@ -70,13 +86,15 @@ async function totalOf(query: Promise<{ total: number }[]>): Promise<number> {
   return (await query).reduce((sum, { total }) => sum + total, 0);
 }
 
-// A number of people in words, with the verb that follows.
-export const peopleHave = (total: number) =>
-  total === 1 ? "1 person has" : `${String(total)} people have`;
+// A number of records in words, with the verb that follows.
+const have = (total: number, one: string, several: string) =>
+  total === 1 ? `1 ${one} has` : `${String(total)} ${several} have`;
 
-// A number of planned hires in words, with the verb that follows.
+export const peopleHave = (total: number) => have(total, "person", "people");
 export const hiresHave = (total: number) =>
-  total === 1 ? "1 planned hire has" : `${String(total)} planned hires have`;
+  have(total, "planned hire", "planned hires");
+export const featuresHave = (total: number) =>
+  have(total, "feature", "features");
 
 // Refuses settings that the people and planned hires already in Fathom, live or in drafts, do not
 // meet: a required column that someone has no value for, one choice where anyone has several, or a
@@ -93,7 +111,7 @@ export async function checkValuesFit(
     onPlannedHires?: boolean | undefined;
   },
 ): Promise<void> {
-  const inDrafts = await draftedValues(transaction, field.id);
+  const inDrafts = await draftedValues(transaction, field.id, field.tableName);
   const listChanges = (request.listId ?? null) !== field.listId;
   if (
     request.required &&
@@ -127,36 +145,63 @@ export async function checkValuesFit(
     );
   }
   if (request.required && !field.required) {
+    const onFeatures = field.tableName === "features";
     const everyone = await totalOf(
-      transaction.select({ total: count() }).from(people),
+      onFeatures
+        ? transaction
+            .select({ total: count() })
+            .from(features)
+            // A project's general feature has no name, and is never shown with these columns.
+            .where(isNotNull(features.name))
+        : transaction.select({ total: count() }).from(people),
     );
     const filled = await totalOf(
       transaction
-        .select({ total: countDistinct(fieldValues.personId) })
+        .select({
+          total: countDistinct(
+            onFeatures ? fieldValues.featureId : fieldValues.personId,
+          ),
+        })
         .from(fieldValues)
         .where(eq(fieldValues.fieldId, field.id)),
     );
     const missing = everyone - filled;
     if (missing > 0) {
+      const have = onFeatures ? featuresHave(missing) : peopleHave(missing);
       throw new ConflictError(
-        `${peopleHave(missing)} no ${field.name}, so it cannot be required yet`,
+        `${have} no ${field.name}, so it cannot be required yet`,
       );
     }
   }
   if (!request.multiple && field.multiple) {
     const several = await transaction
-      .select({ personId: fieldValues.personId })
+      .select({
+        personId: fieldValues.personId,
+        featureId: fieldValues.featureId,
+      })
       .from(fieldValues)
       .leftJoin(plannedHires, eq(plannedHires.id, fieldValues.plannedHireId))
       .where(
         and(eq(fieldValues.fieldId, field.id), isNull(plannedHires.filledBy)),
       )
-      .groupBy(fieldValues.personId, fieldValues.plannedHireId)
+      .groupBy(
+        fieldValues.personId,
+        fieldValues.plannedHireId,
+        fieldValues.featureId,
+      )
       .having(gt(count(), 1));
     const people = several.filter(({ personId }) => personId !== null).length;
     if (people > 0) {
       throw new ConflictError(
         `${peopleHave(people)} several choices for ${field.name}, so it cannot take only one yet`,
+      );
+    }
+    const featuresHolding = several.filter(
+      ({ featureId }) => featureId !== null,
+    ).length;
+    if (featuresHolding > 0) {
+      throw new ConflictError(
+        `${featuresHave(featuresHolding)} several choices for ${field.name}, so it cannot take only one yet`,
       );
     }
     if (several.length > 0) {
@@ -207,17 +252,29 @@ export async function deleteLiveField(
   id: string,
 ): Promise<Change[]> {
   // Approved only for a live column.
-  const before = (await lockFields(transaction)).find(
-    (row) => row.id === id,
-  ) as FieldRow;
+  const [before] = (await transaction
+    .select()
+    .from(fields)
+    .where(eq(fields.id, id))
+    .for("update")) as [FieldRow];
   const columns = await readColumns(transaction);
   const holders = await transaction
     .selectDistinct({
       personId: fieldValues.personId,
       plannedHireId: fieldValues.plannedHireId,
+      featureId: fieldValues.featureId,
     })
     .from(fieldValues)
     .where(eq(fieldValues.fieldId, id));
+  const featureIds = holders.flatMap(({ featureId }) =>
+    featureId === null ? [] : [featureId],
+  );
+  const featureValues = await readValues(
+    transaction,
+    featureIds,
+    [id],
+    "feature",
+  );
   const personIds = holders.flatMap(({ personId }) =>
     personId === null ? [] : [personId],
   );
@@ -233,6 +290,16 @@ export async function deleteLiveField(
   );
   const hireTier = await readHireTier(transaction, columns);
   const valueChanges = [
+    ...featureIds.flatMap((featureId) =>
+      changesBetween(
+        "feature",
+        featureId,
+        "changed",
+        { [valueField(id)]: featureValues.get(featureId)?.get(id) },
+        {},
+        [valueField(id)],
+      ),
+    ),
     ...personIds.flatMap((personId) =>
       personChanges(
         columns,

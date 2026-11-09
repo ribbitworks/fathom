@@ -10,6 +10,7 @@
 // discarding the record discards the drafts of records only drafted to be added that belong to it,
 // and the record's draft is rejected only together with the drafts that use it.
 
+import { fields } from "@fathom/db";
 import type { Database } from "@fathom/db";
 import type { RecordDraft, RecordRef, RecordType } from "@fathom/shared";
 import { noteProblem, recordTypeSchema } from "@fathom/shared";
@@ -75,6 +76,13 @@ import {
   versionOf,
   withVersion,
 } from "./record-state.ts";
+import {
+  fieldOfValue,
+  readValues,
+  recordedValues,
+  valueFieldsIn,
+  writeValues,
+} from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 
@@ -180,6 +188,29 @@ export async function refuseRemovingNamedPeople(
   }
 }
 
+// The values each record holds in the columns added to its kind's table, for a kind that has them.
+async function addedValues(
+  reader: Reader,
+  kind: RecordKind,
+  rows: readonly Recorded[],
+): Promise<Map<string, Recorded>> {
+  if (kind.addedColumns === undefined) return new Map();
+  const { owner, table } = kind.addedColumns;
+  const columns = await reader
+    .select({ id: fields.id })
+    .from(fields)
+    .where(eq(fields.tableName, table));
+  const values = await readValues(
+    reader,
+    rows.map(({ id }) => String(id)),
+    columns.map(({ id }) => id),
+    owner,
+  );
+  return new Map(
+    [...values].map(([id, held]) => [id, recordedValues(held) as Recorded]),
+  );
+}
+
 // Every record of every kind, live and in drafts, as the viewer sees them, with the records others
 // hold, or, with no viewer, the published drafts, as Approvers decide them.
 export async function readRecordsState(
@@ -192,11 +223,15 @@ export async function readRecordsState(
       .select()
       .from(kind.table)
       .orderBy(idOf(kind.table))) as unknown as Recorded[];
+    const added = await addedValues(reader, kind, rows);
     entries.push([
       kind.type,
       {
         live: new Map(
-          rows.map((row) => [String(row.id), ownFields(kind, row)]),
+          rows.map((row) => [
+            String(row.id),
+            { ...ownFields(kind, row), ...added.get(String(row.id)) },
+          ]),
         ),
         rows: new Map(rows.map((row) => [String(row.id), row])),
         drafts: await readDrafts(reader, kind.type, undefined, viewer),
@@ -243,7 +278,7 @@ export function recordDraftOut(
   const live = stateOf(state, kind.type).live.get(id);
   const touched = draftFields(live, draft);
   const together = kind.changedTogether ?? [];
-  const changed = kind.fields.filter(
+  const changed = [...kind.fields, ...valueFieldsIn(live, draft.fields)].filter(
     (name) =>
       touched.includes(name) ||
       (together.includes(name) &&
@@ -261,7 +296,7 @@ export function recordDraftOut(
               name,
               // The fields are the kind's own, named just above.
               // eslint-disable-next-line security/detect-object-injection
-              live[name] as string | number | boolean | null,
+              (live[name] ?? null) as string | number | boolean | null,
             ]),
           ),
     uses: usesOf(kind, state, id),
@@ -357,14 +392,10 @@ const kindChanges = (
   before: Recorded | undefined,
   after: Recorded | undefined,
 ) =>
-  changesBetween(
-    kind.type,
-    id,
-    actionTo(before, after),
-    before,
-    after,
-    kind.fields,
-  );
+  changesBetween(kind.type, id, actionTo(before, after), before, after, [
+    ...kind.fields,
+    ...valueFieldsIn(before, after),
+  ]);
 
 // Why a record as wanted breaks a rule, or undefined when it keeps them all: a unique value someone
 // else has, a link to a record that does not exist or is drafted to be removed, or a rule across
@@ -827,6 +858,27 @@ export async function approveRecordDrafts(
           .update(table)
           .set(values)
           .where(eq(idOf(table), id));
+      }
+      if (kind.addedColumns !== undefined) {
+        for (const field of valueFieldsIn(before, after)) {
+          // The field names an added column's value.
+          /* eslint-disable security/detect-object-injection */
+          const same =
+            JSON.stringify(before?.[field]) === JSON.stringify(after[field]);
+          /* eslint-enable security/detect-object-injection */
+          if (same) {
+            continue;
+          }
+          await writeValues(
+            transaction,
+            id,
+            String(fieldOfValue(field)),
+            // The field names an added column's value.
+            // eslint-disable-next-line security/detect-object-injection
+            after[field],
+            kind.addedColumns.owner,
+          );
+        }
       }
       made.push(...kindChanges(kind, id, before, after));
     }

@@ -465,6 +465,29 @@ const routes: Route[] = [
       })),
   ),
 
+  {
+    method: "GET",
+    pattern: "/api/features/columns",
+    needs: allOf("plan:view"),
+  },
+  {
+    method: "POST",
+    pattern: "/api/features/columns",
+    needs: allOf("configuration:edit"),
+    body: () => ({ ...named(), type: "link", visibility: "general" }),
+  },
+  {
+    method: "PUT",
+    pattern: "/api/features/columns/:fieldId",
+    needs: allOf("configuration:edit"),
+    body: () => ({ ...named(), type: "link", visibility: "general" }),
+  },
+  ...["", "/draft", "/draft/rejection"].map((end): Route => ({
+    method: "DELETE",
+    pattern: `/api/features/columns/:fieldId${end}`,
+    needs: allOf("configuration:edit"),
+  })),
+
   // Changing or deleting someone else's view also needs configuration:edit, as the views tests
   // check.
   {

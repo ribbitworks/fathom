@@ -10,6 +10,8 @@ import {
   changeSetIdSchema,
   customerRequestSchema,
   featureRequestSchema,
+  fieldRequestSchema,
+  fieldSchema,
   milestoneRequestSchema,
   planChoicesSchema,
   projectPlanSchema,
@@ -95,6 +97,91 @@ export function projectRoutes(
     recordRoutes("projects", "project", projectRequestSchema);
     recordRoutes("proposals", "proposal", proposalRequestSchema);
     recordRoutes("features", "feature", featureRequestSchema);
+
+    // The columns added to Features.
+    const columnParams = z.object({ fieldId: z.uuid() });
+    const columnResponse = z.object({
+      field: fieldSchema,
+      changeSetId: z.string().nullable(),
+    });
+    app.get(
+      "/api/features/columns",
+      {
+        schema: {
+          response: {
+            200: z.object({
+              fields: z.array(fieldSchema),
+              order: z.array(z.string()),
+            }),
+          },
+        },
+      },
+      async (request) => projects.readFeatureColumns(request.actor),
+    );
+    app.post(
+      "/api/features/columns",
+      {
+        schema: {
+          body: fieldRequestSchema,
+          response: { [created]: columnResponse },
+        },
+      },
+      async (request, reply) => {
+        const { result, changeSetId } = await projects.createFeatureColumn(
+          request.actor,
+          request.body,
+        );
+        return reply.status(created).send({ field: result, changeSetId });
+      },
+    );
+    app.put(
+      "/api/features/columns/:fieldId",
+      {
+        schema: {
+          params: columnParams,
+          body: fieldRequestSchema,
+          response: { 200: columnResponse },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await projects.updateFeatureColumn(
+          request.actor,
+          request.params.fieldId,
+          request.body,
+        );
+        return { field: result, changeSetId };
+      },
+    );
+    app.delete(
+      "/api/features/columns/:fieldId",
+      { schema: { params: columnParams, response: saved } },
+      async (request) => ({
+        changeSetId: await projects.deleteFeatureColumn(
+          request.actor,
+          request.params.fieldId,
+        ),
+      }),
+    );
+    app.delete(
+      "/api/features/columns/:fieldId/draft",
+      { schema: { params: columnParams, response: saved } },
+      async (request) => ({
+        changeSetId: await projects.discardFeatureColumnDraft(
+          request.actor,
+          request.params.fieldId,
+        ),
+      }),
+    );
+    app.delete(
+      "/api/features/columns/:fieldId/draft/rejection",
+      { schema: { params: columnParams, response: saved } },
+      async (request) => ({
+        changeSetId: await projects.resubmitFeatureColumnDraft(
+          request.actor,
+          request.params.fieldId,
+        ),
+      }),
+    );
 
     app.post(
       "/api/projects/:projectId/milestones",

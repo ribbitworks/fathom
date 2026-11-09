@@ -297,6 +297,7 @@ export {
 export {
   type Feature,
   type FeatureRequest,
+  featureColumnKeys,
   featureLengths,
   featureRequestSchema,
   featureSchema,
@@ -323,6 +324,7 @@ export {
   fieldDraftSchema,
   type FieldRequest,
   fieldMoveSchema,
+  type ColumnTable,
   fieldRequestSchema,
   fieldSchema,
   type FieldType,

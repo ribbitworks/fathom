@@ -322,6 +322,9 @@ const heldAlone = {
   number: { kind: "number", value: "number" },
 };
 
+// The tables that can have columns added.
+export type ColumnTable = "people" | "features";
+
 // A choice column names its list, and takes its visibility from it; a web link, note, or number
 // column names its visibility, no list, and takes one value.
 export const fieldRequestSchema = z

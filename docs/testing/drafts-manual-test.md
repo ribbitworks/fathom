@@ -254,7 +254,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** As DRAFT-08.
 
 - [ ] **Step 1.** Open the Draft menu, and select **Drafts applied**.
-  - **Expected:** The count beside the search box reads **8 lists**. Certifications and Languages are not in the table. No row has a green dot and **Live**.
+  - **Expected:** The count beside the search box reads **9 lists**. Certifications and Languages are not in the table. No row has a green dot and **Live**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Drafts beside live**.

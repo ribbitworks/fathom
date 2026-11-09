@@ -37,9 +37,26 @@ import {
   listChoices,
 } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
-import type { Recorded } from "./drafts.ts";
+import { type Recorded, tidy } from "./drafts.ts";
 import { checkTeamForFeature, readTeamDrafts } from "./feature-teams.ts";
+import { typeOf } from "./column-types.ts";
+import {
+  checkedLinks,
+  checkedNotes,
+  checkedNumbers,
+  checkedValues,
+  linksOf,
+  notesOf,
+  numbersOf,
+  valuesOf,
+} from "./people.ts";
 import { milestonesOf } from "./project-kinds.ts";
+import {
+  fieldOfValue,
+  inListOrder,
+  readColumns,
+  valueField,
+} from "./values.ts";
 import {
   addedOnly,
   linkedIds,
@@ -185,6 +202,10 @@ function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
     featureTeamId: text(feature.featureTeamId),
     description: text(feature.description),
     note: text(feature.note),
+    values: Object.fromEntries(valuesOf(feature)),
+    links: linksOf(feature),
+    notes: notesOf(feature),
+    numbers: numbersOf(feature),
     ...extras(state, makers, "feature", id),
   };
 }
@@ -450,19 +471,60 @@ export async function changeProposal(
   });
 }
 
+// A feature's values in the columns added to Features: those a request names replace those it has,
+// each checked against its column, and every required column must then hold one.
+async function featureValues(
+  transaction: Transaction,
+  request: FeatureRequest,
+  current: Recorded | undefined,
+): Promise<Recorded> {
+  const columns = await readColumns(transaction, true, "features");
+  const known = await inListOrder(
+    transaction,
+    Object.values(request.values).flat(),
+  );
+  const had = current === undefined ? undefined : valuesOf(current);
+  const chosen = checkedValues(columns, known, request.values, had);
+  const kept = Object.fromEntries(
+    Object.entries(current ?? {}).filter(
+      ([field]) => fieldOfValue(field) !== null,
+    ),
+  );
+  const values: Recorded = {
+    ...kept,
+    ...Object.fromEntries(
+      [...chosen].map(([fieldId, ids]) => [valueField(fieldId), ids]),
+    ),
+    ...checkedLinks(columns, request.links),
+    ...checkedNotes(columns, request.notes),
+    ...checkedNumbers(columns, request.numbers),
+  };
+  for (const column of columns) {
+    if (
+      column.required &&
+      typeOf(column).count(values[valueField(column.id)]) === 0
+    ) {
+      throw new BadRequestError(`${column.name} must be filled in`);
+    }
+  }
+  return tidy(values);
+}
+
 async function featureRecord(
   transaction: Transaction,
   request: FeatureRequest,
-  had?: unknown,
+  current?: Recorded,
 ) {
   await checkTeamForFeature(transaction, request.featureTeamId);
+  const added = await featureValues(transaction, request, current);
   return {
+    ...added,
     name: request.name,
     statusId: await statusFor(
       transaction,
       "feature-statuses",
       request.statusId,
-      had,
+      current?.statusId,
     ),
     neededBy: request.neededBy,
     customerIds: request.customerIds,
@@ -506,7 +568,7 @@ export async function changeFeature(
       state,
       "feature",
       id,
-      await featureRecord(transaction, request, feature.statusId),
+      await featureRecord(transaction, request, feature),
     );
   });
 }

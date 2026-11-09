@@ -62,6 +62,8 @@ import {
   readValues,
   valueField,
   valueRows,
+  recordedValues,
+  valueFieldsIn,
 } from "./values.ts";
 import {
   type Change,
@@ -105,7 +107,6 @@ import {
   linksOf,
   notesOf,
   numbersOf,
-  recordedValues,
   valuesOf,
 } from "./people.ts";
 import { notMarked, readManagers, reassignReports } from "./reporting.ts";
@@ -312,11 +313,7 @@ export function hireChanges(
   after: Recorded | undefined,
   tierOf: HireTier,
 ): Change[] {
-  const valueFields = new Set(
-    [...Object.keys(before ?? {}), ...Object.keys(after ?? {})].filter(
-      (field) => fieldOfValue(field) !== null,
-    ),
-  );
+  const valueFields = new Set(valueFieldsIn(before, after));
   return changesBetween(
     recordType,
     id,

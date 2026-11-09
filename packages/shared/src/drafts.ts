@@ -6,6 +6,7 @@
 // Approver approves or rejects, several kinds at once.
 
 import { z } from "zod";
+import { linkShape } from "./links.ts";
 import type { Permission } from "./access.ts";
 
 // A draft waits for approval until an Approver approves or rejects it; a rejected draft keeps its
@@ -84,6 +85,7 @@ export const recordDraftSchema = z.object({
       z.boolean(),
       z.null(),
       z.array(z.string()),
+      linkShape,
     ]),
   ),
   uses: z.array(recordRefSchema),

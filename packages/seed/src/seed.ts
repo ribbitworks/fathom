@@ -809,11 +809,12 @@ export async function seedCommand(
       }
       // Features before the release streams and feature teams they name, and projects and proposals
       // before people, whom they name as owners.
-      await unseedFeatures(
+      const keptWithFeatures = await unseedFeatures(
         database,
         organization.featureTeams.map(({ id }) => id),
       );
       const kept = [
+        ...keptWithFeatures,
         ...(await unseedProjects(database)),
         ...(await unseedReleases(database)),
         ...(await unseed(database, organization)),

@@ -673,6 +673,8 @@ describe("the Drafts page", () => {
               neededBy: null,
               customerIds: [],
               note: null,
+              values: {},
+              links: {},
               targetStreamId: streamOfCycles.id,
               targetCycle: second?.startsOn,
               estimateHours: null,

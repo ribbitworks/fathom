@@ -206,6 +206,7 @@ export const featureKind: RecordKind = {
   ],
   links: { targetStreamId: "release-stream", customerIds: "customer" },
   refers: { featureTeamId: "feature-team", statusId: "choice" },
+  addedColumns: { owner: "feature", table: "features" },
   changedTogether: ["targetStreamId", "targetCycle"],
   unique: [
     { field: "name", message: "There is already a feature with that name" },

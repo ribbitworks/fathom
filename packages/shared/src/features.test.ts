@@ -25,6 +25,10 @@ describe("a feature request", () => {
       featureTeamId: null,
       description: null,
       note: null,
+      values: {},
+      links: {},
+      notes: {},
+      numbers: {},
     });
   });
 

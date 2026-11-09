@@ -185,6 +185,10 @@ export const featureRequest = ({
   featureTeamId,
   description,
   note,
+  values: {},
+  links: {},
+  notes: {},
+  numbers: {},
   target:
     targetStreamId === null || targetCycle === null
       ? null
@@ -378,6 +382,8 @@ const planRecordOperations: Readonly<
       featureTeamId: null,
       description: null,
       note: null,
+      values: {},
+      links: {},
     },
     all: (plan) => plan.features,
     withAll: (plan, records) => ({ ...plan, features: records as Feature[] }),

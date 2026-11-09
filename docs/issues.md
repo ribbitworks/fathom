@@ -34,6 +34,8 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 - **Metrics on dates, and across the plan's tables:** Breaking Features down by Needed by shows only Populated and Empty, where the owner wants the months themselves. The owner asked on 2026-11-08 for a review of every metric offered on Features, Projects, Proposals, Customers, and Milestones.
 
+- **Values in a Features column only drafted to be added:** A feature's draft can hold values only in columns already approved, where a person's draft can also use a column drafted to be added. Allowing it would make approving a feature, with Approve Plan, also approve the column, which needs Approve Configuration. The Features table must not offer those cells until then. Deferred on 2026-11-08 at the code review.
+
 ## Account Administration
 
 - **Two administrators choosing the same email address at once:** Two accounts given the same email address at the same moment, by creating or changing them, can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.

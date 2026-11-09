@@ -1531,6 +1531,8 @@ describe("the Features page", () => {
     featureTeamId: null,
     description: null,
     note: null,
+    values: {},
+    links: {},
   });
   const later = feature("Fictional Later", null);
   const second = feature("Fictional Second", cycleTwo);
@@ -1764,6 +1766,10 @@ describe("the Features page", () => {
         featureTeamId: null,
         description: null,
         note: null,
+        values: {},
+        links: {},
+        notes: {},
+        numbers: {},
         target: null,
       },
     ]);
@@ -1797,6 +1803,10 @@ describe("the Features page", () => {
         featureTeamId: null,
         description: null,
         note: null,
+        values: {},
+        links: {},
+        notes: {},
+        numbers: {},
         target: null,
       },
     ]);
