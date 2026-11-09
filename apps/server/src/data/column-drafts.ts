@@ -6,17 +6,17 @@
 // configuration. Every change is a draft, as drafts.ts sets out, which reaches the live columns only
 // once approved, as column-approvals.ts sets out, and is recorded in the change history.
 
-import { type Database, fields, lists } from "@fathom/db";
+import { changes, type Database, fields, lists } from "@fathom/db";
 import {
   type ColumnTable,
+  columnTablePolicies,
   featureColumnKeys,
   type Field,
   type FieldDraft,
   type FieldRequest,
-  type Permission,
   type Tier,
 } from "@fathom/shared";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, min } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
 import {
@@ -75,26 +75,8 @@ const noField = "There is no such column";
 
 // What differs between the tables that can have columns added: whether a column can be offered on
 // planned hires too, whether its values must be General, and what removing its values takes.
-const tablePolicies: Readonly<
-  Record<
-    ColumnTable,
-    { onPlannedHires: boolean; generalOnly: boolean; removalNeeds: Permission }
-  >
-> = {
-  people: {
-    onPlannedHires: true,
-    generalOnly: false,
-    removalNeeds: "people:edit",
-  },
-  features: {
-    onPlannedHires: false,
-    generalOnly: true,
-    removalNeeds: "features:edit",
-  },
-};
-
 const policyOf = (tableName: unknown) =>
-  tablePolicies[tableName === "features" ? "features" : "people"];
+  columnTablePolicies[tableName === "features" ? "features" : "people"];
 const duplicateField = "There is already a column with that name";
 const toBeRemoved =
   "This column's draft removes it; discard the draft to change it";
@@ -650,8 +632,26 @@ function draftOut(
   };
 }
 
+// The columns given, in the order they were first added, which approving one leaves alone.
+// Features' columns have no stored order to keep them in until they can be moved.
+async function columnsAsAdded(
+  reader: Reader,
+  ids: readonly string[],
+): Promise<string[]> {
+  const rows = await reader
+    .select({ id: changes.recordId })
+    .from(changes)
+    .where(
+      and(eq(changes.recordType, "field"), inArray(changes.recordId, [...ids])),
+    )
+    .groupBy(changes.recordId)
+    .orderBy(min(changes.id));
+  return rows.map(({ id }) => id);
+}
+
 // A table's columns as the actor may see them, as their drafts make them, with the drafts beside,
-// and the order of the columns they see, those drafted to be added last. A column whose values are
+// and the order of the columns they see: on People, those drafted to be added last, and on Features,
+// the order they were first added in. A column whose values are
 // more sensitive than the actor may see is left out, as are built-in dates for those without
 // Restricted details.
 export async function readColumnsOut(
@@ -670,13 +670,7 @@ export async function readColumnsOut(
       .map(([id]) => id),
     ...addedFields(state, tableName),
   ];
-  const makers = await draftMakers(
-    reader,
-    "field",
-    [...state.fieldDrafts.keys()],
-    everything,
-    actor,
-  );
+  const makers = await draftMakers(reader, "field", ids, everything, actor);
   const shown = ids.flatMap((id): Field[] => {
     const live = state.fields.get(id);
     const draft = state.fieldDrafts.get(id);
@@ -701,9 +695,13 @@ export async function readColumnsOut(
     ];
   });
   if (tableName === "features") {
+    const shownIds = new Set(shown.map(({ id }) => id));
     return {
       fields: shown,
-      order: [...featureColumnKeys, ...shown.map(({ id }) => id)],
+      order: [
+        ...featureColumnKeys,
+        ...(await columnsAsAdded(reader, [...shownIds])),
+      ],
     };
   }
   const builtIn = builtInColumnTiers({

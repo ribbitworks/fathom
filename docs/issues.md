@@ -34,6 +34,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 - **Metrics on dates, and across the plan's tables:** Breaking Features down by Needed by shows only Populated and Empty, where the owner wants the months themselves. The owner asked on 2026-11-08 for a review of every metric offered on Features, Projects, Proposals, Customers, and Milestones.
 
+- **Required Note columns in the New feature form:** A Note column that must be filled in is entered in New feature as Markdown in a plain text box, rather than People's note editor. The server refuses a note holding anything it may not. Moving the form to the editor means making its panel work for the plan's records as well as people.
 - **Values in a Features column only drafted to be added:** A feature's draft can hold values only in columns already approved, where a person's draft can also use a column drafted to be added. Allowing it would make approving a feature, with Approve Plan, also approve the column, which needs Approve Configuration. The Features table must not offer those cells until then. Deferred on 2026-11-08 at the code review.
 
 ## Account Administration

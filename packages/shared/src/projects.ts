@@ -7,8 +7,9 @@
 import { z } from "zod";
 import { daySchema } from "./days.ts";
 import { featureSchema } from "./features.ts";
-import { meaningSchema } from "./lists.ts";
+import { listSchema, meaningSchema } from "./lists.ts";
 import { addressProblem, linkLengths, webAddress } from "./links.ts";
+import { fieldSchema } from "./people.ts";
 import {
   optionalText,
   picked,
@@ -119,6 +120,16 @@ export const proposalSchema = z.object({
 
 export type Proposal = z.infer<typeof proposalSchema>;
 
+// The columns added to Features, the order of Features' columns, and the lists those columns draw
+// on, which everyone who sees the plan is sent, though they may not see Lists.
+export const featureColumnsSchema = z.object({
+  fields: z.array(fieldSchema),
+  order: z.array(z.string()),
+  lists: z.array(listSchema),
+});
+
+export type FeatureColumns = z.infer<typeof featureColumnsSchema>;
+
 // Every customer, project, proposal, and feature, the live ones by name, then those drafted to be
 // added, in the order drafted, with whether the user may change them: features apart from the rest,
 // since Edit Features is a permission of its own.
@@ -127,6 +138,7 @@ export const projectPlanSchema = z.object({
   projects: z.array(projectSchema),
   proposals: z.array(proposalSchema),
   features: z.array(featureSchema),
+  featureColumns: featureColumnsSchema,
   canEdit: z.boolean(),
   canEditFeatures: z.boolean(),
 });

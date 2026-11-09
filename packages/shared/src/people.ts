@@ -8,7 +8,7 @@
 // What a user receives leaves out what their role does not let them see.
 
 import { z } from "zod";
-import { tierSchema } from "./access.ts";
+import { type Permission, tierSchema } from "./access.ts";
 import { daySchema, monthSchema } from "./days.ts";
 import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
 import { type Link, linkValueSchema } from "./links.ts";
@@ -309,6 +309,26 @@ const heldAlone = {
 
 // The tables that can have columns added.
 export type ColumnTable = "people" | "features";
+
+// What sets each table's added columns apart: whether planned hires are offered them, whether they
+// must be General, and what removing one needs besides changing configuration.
+export const columnTablePolicies: Readonly<
+  Record<
+    ColumnTable,
+    { onPlannedHires: boolean; generalOnly: boolean; removalNeeds: Permission }
+  >
+> = {
+  people: {
+    onPlannedHires: true,
+    generalOnly: false,
+    removalNeeds: "people:edit",
+  },
+  features: {
+    onPlannedHires: false,
+    generalOnly: true,
+    removalNeeds: "features:edit",
+  },
+};
 
 // A choice column names its list, and takes its visibility from it; a web link, note, or number
 // column names its visibility, no list, and takes one value.

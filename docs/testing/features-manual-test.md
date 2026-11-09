@@ -11,7 +11,7 @@ last_updated: "2026-11-08"
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, and how feature drafts show on the Drafts page and when a cycle changes length.
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, and columns added to Features.
 
 ## Test Environment
 
@@ -27,6 +27,7 @@ R1 creates these accounts, with every other development account. They share one 
 - **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Project Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
 
@@ -59,6 +60,7 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown in a row's first cell.
 - **⋯ menu:** the menu that opens from the **⋯** button at the end of a row.
 - **Group heading:** the full-width row above each group of features, naming its cycle or **Later** or, grouped by the month needed, its month or **No date**.
+- **Column menu:** the menu that opens when you select a column's name in the table's header.
 
 ## Test Cases
 
@@ -71,7 +73,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select **Features** in the left-hand menu.
-  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle** and **Feature team**. Beside the search box, the count reads **11 features**.
+  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle**, **Feature team** and **Complexity**. Beside the search box, the count reads **11 features**.
   - **Notes:**
 
 - [ ] **Step 2.** Look down the **Status** column.
@@ -325,9 +327,149 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Run R1 first. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Point at the row **Offline Sync**, then select the small button with an arrow at the right of its **Name** cell.
-  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle** and **Feature team**.
+  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle**, **Feature team** and **Complexity**.
   - **Notes:**
 
 - [ ] **Step 2.** In the side panel, select a customer's name under **Customers**.
   - **Expected:** The **Projects** page opens on its **Customers** tab, with that customer's details in the side panel.
   - **Notes:**
+
+### FEAT-15: Those Who Only See the Plan See Added Columns
+
+**Account:** Team Member, `team.member@fathom.test`, changed from FEAT-14.
+
+**Preconditions:** Run R1 first. Signed in with this account.
+
+- [ ] **Step 1.** Select **Features** in the left-hand menu, and scroll right to the **Complexity** column.
+  - **Expected:** There is no **New column** button. The row **Offline Sync** shows **L**, **Mobile Approvals** shows **M**, **Data Retention Controls** shows **S** and **Report Builder** shows **XL**. **Usage Alerts** is empty.
+  - **Notes:**
+
+- [ ] **Step 2.** Open the **Complexity** column menu.
+  - **Expected:** The menu offers sorting and filtering, with no **Edit column**, **Move left** or **Move right**.
+  - **Notes:**
+
+- [ ] **Step 3.** Switch Fathom between light and dark mode, and look at the **Complexity** column.
+  - **Expected:** The header and values read as clearly as the columns beside them in both modes.
+  - **Notes:**
+
+### FEAT-16: A Column Is Added to Features as a Draft
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FEAT-15.
+
+**Preconditions:** Signed in with this account. **Features** page open.
+
+- [ ] **Step 1.** Select **New column**.
+  - **Expected:** The **New column** dialog opens, with the fields **Name**, **Type**, **List**, **Several choices** and **Must be filled in**. There is no **Offered on planned hires**.
+  - **Notes:**
+
+- [ ] **Step 2.** Open the **List** box.
+  - **Expected:** **Complexity** is offered. No list marked **Restricted** or **Confidential** is offered.
+  - **Notes:**
+
+- [ ] **Step 3.** Set **Type** to **Number**.
+  - **Expected:** The **List** box and **Several choices** go, and no box asking who may see the values appears.
+  - **Notes:**
+
+- [ ] **Step 4.** Type `Fictional Risk` in **Name**, then select **Add column**.
+  - **Expected:** The dialog closes. A **Fictional Risk** column is added at the right end of the table, tinted blue, with a yellow dot and **Draft** under its name.
+  - **Notes:**
+
+- [ ] **Step 5.** Double-click the **Fictional Risk** cell of any row.
+  - **Expected:** The cell does not open for editing while the column is a draft.
+  - **Notes:**
+
+- [ ] **Step 6.** Open the **Fictional Risk** column menu.
+  - **Expected:** The menu offers **Edit column** and has no **Move left** or **Move right**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Edit column**.
+  - **Expected:** The **Edit column** dialog opens, with **Type** greyed out and no **Delete column** button.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Cancel**.
+  - **Expected:** The dialog closes and nothing has changed.
+  - **Notes:**
+
+- [ ] **Step 9.** Select **Publish** in the top bar.
+  - **Expected:** The dot beside **Draft** under **Fictional Risk** is filled.
+  - **Notes:**
+
+### FEAT-17: An Approver Approves a Column on Features
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from FEAT-16.
+
+**Preconditions:** Signed in with this account.
+
+- [ ] **Step 1.** Select **Drafts** in the left-hand menu.
+  - **Expected:** The list has an entry naming **the column Fictional Risk on Features**, drafted by **Engineering Operations Manager**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Features** in the left-hand menu, then open the **Fictional Risk** column menu.
+  - **Expected:** The menu offers **Approve…** and **Reject…**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Approve…**, then **Approve**.
+  - **Expected:** The **Draft** mark goes from the **Fictional Risk** header and the blue tint goes from the column. **Fictional Risk** stays at the right end of the table, after **Complexity**.
+  - **Notes:**
+
+### FEAT-18: A Value in an Added Column Is Part of a Feature's Draft
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-17.
+
+**Preconditions:** Signed in with this account. **Features** page open.
+
+- [ ] **Step 1.** Double-click the **Fictional Risk** cell of the row **Usage Alerts**, type `3.5` and press Enter.
+  - **Expected:** The cell shows **3.5**, and the row has a yellow dot and **Draft**, with a **Live** row under it whose **Fictional Risk** cell is empty.
+  - **Notes:**
+
+- [ ] **Step 2.** Double-click the **Complexity** cell of the same row, and choose **XS**.
+  - **Expected:** The cell shows **XS**, and the **Live** row's **Complexity** cell stays empty.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Drafts** in the left-hand menu, and find **the feature Usage Alerts**.
+  - **Expected:** Its entry names both changes, **Fictional Risk** to **3.5** and **Complexity** to **XS**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Features** in the left-hand menu, and point at the row **Usage Alerts**. Select the small button with an arrow at the right of its **Name** cell.
+  - **Expected:** The side panel lists **Fictional Risk** and **Complexity**, each with the drafted value and the live value under it.
+  - **Notes:**
+
+- [ ] **Step 5.** Close the side panel, then select **Publish** in the top bar.
+  - **Expected:** The dot beside **Draft** on the row **Usage Alerts** is filled.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **New feature**.
+  - **Expected:** The form offers **Complexity** and **Fictional Risk**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Cancel**.
+  - **Expected:** The form closes.
+  - **Notes:**
+
+- [ ] **Step 8.** Sign in as the Project Manager account, `project.manager@fathom.test`, open **Features**, open the **⋯** menu of the row **Usage Alerts**, and select **Approve…**, then **Approve**.
+  - **Expected:** The row has no mark and no **Live** row, and still shows **3.5** and **XS**.
+  - **Notes:**
+
+### FEAT-19: Deleting a Column Removes It From Features
+
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from FEAT-18.
+
+**Preconditions:** Signed in with this account. **Features** page open.
+
+- [ ] **Step 1.** Open the **Fictional Risk** column menu and select **Edit column**.
+  - **Expected:** The **Edit column** dialog opens with a red **Delete column** button.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Delete column**.
+  - **Expected:** The dialog closes, and a notice reads **Deleted the Fictional Risk column.** The column stays in the table, with a yellow dot and **Draft** under its name.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Publish** in the top bar.
+  - **Expected:** The dot beside **Draft** under **Fictional Risk** is filled.
+  - **Notes:**
+
+- [ ] **Step 4.** Open the **Fictional Risk** column menu, and select **Approve…**, then **Approve**.
+  - **Expected:** The **Fictional Risk** column is gone, and the table ends with **Complexity**.
+  - **Notes:**
+
+**Afterwards:** Run R1.

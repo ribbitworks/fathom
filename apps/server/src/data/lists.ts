@@ -980,12 +980,17 @@ export async function readLists(
   // Lists and their drafts are read as of one moment, so an approval saved meanwhile is seen whole
   // or not at all.
   return database.transaction(
-    async (transaction) => {
-      const state = await readState(transaction, viewer.user.id);
-      return listsOut(state, await readMakers(transaction, state, viewer));
-    },
+    (transaction) => readListsWithin(transaction, viewer),
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
+}
+
+export async function readListsWithin(
+  transaction: Transaction,
+  viewer: Actor,
+): Promise<List[]> {
+  const state = await readState(transaction, viewer.user.id);
+  return listsOut(state, await readMakers(transaction, state, viewer));
 }
 
 // The list as the editor now sees it, with its drafts.

@@ -7,6 +7,7 @@
 
 import { z } from "zod";
 import { daySchema, monthSchema } from "./days.ts";
+import { recordDraftSchema } from "./drafts.ts";
 import {
   linksSchema,
   notesSchema,
@@ -51,9 +52,25 @@ export const needsFeatureTeam = (
   featureTeamId === null &&
   (meaning === "planned" || meaning === "in-progress");
 
+// A feature's draft, naming added columns as a person's draft does: by column, with their live
+// values held by type beside the live values of the feature's own fields.
+export const featureDraftSchema = recordDraftSchema.extend({
+  live: z
+    .object({
+      values: valuesSchema,
+      links: linksSchema,
+      notes: notesSchema,
+      numbers: numbersSchema,
+    })
+    .loose(),
+});
+
+export type FeatureDraft = z.infer<typeof featureDraftSchema>;
+
 // A feature as its draft makes it. A target cycle is known by its stream and the day it starts.
 export const featureSchema = z.object({
   ...recordShape,
+  draft: featureDraftSchema.optional(),
   name: z.string(),
   statusId: z.string(),
   neededBy: z.string().nullable(),

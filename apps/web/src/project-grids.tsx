@@ -12,6 +12,7 @@ import {
   type Customer,
   type CustomerRequest,
   type Feature,
+  featureColumnKeys,
   featureLengths,
   type Meaning,
   type Milestone,
@@ -21,17 +22,22 @@ import {
   projectLengths,
   type Proposal,
   type ProposalRequest,
-  type RecordDraft,
 } from "@fathom/shared";
 import { Menu, VisuallyHidden } from "@mantine/core";
 import type { ReactNode } from "react";
-import { cellKinds, flagChoice } from "./cell-kinds.tsx";
+import {
+  addedColumn,
+  type AddedColumns,
+  cellRequest,
+} from "./added-columns.ts";
+import { type CellChange, cellKinds, flagChoice } from "./cell-kinds.tsx";
 import type { DraftField } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
 import { choice, offered } from "./lists.ts";
 import {
   cycleChoiceId,
   type FeatureFields,
+  isFeature,
   type MilestoneAdding,
   type PlanRecord,
   type PlanRecordKind,
@@ -43,7 +49,9 @@ import { ShowDetailsButton } from "./show-details-button.tsx";
 import { StatusMark } from "./status-mark.tsx";
 import {
   fieldColumn,
+  inOrder,
   liveRecordsBy,
+  liveRecordsOf,
   type Column,
   isPending,
   RecordGrid,
@@ -63,19 +71,30 @@ const withLiveDates = <Rec extends PlanRecord>(record: Rec): Rec =>
     ? { ...record, dates: record.liveDates }
     : record;
 
+// What a feature's draft names that is the feature's own, rather than an added column's.
+const featureDetailKeys: readonly string[] = [
+  ...featureColumnKeys,
+  "targetStreamId",
+  "estimateHours",
+];
+
 // Records as they are live, without drafts: those only drafted to be added are left out, and each
 // field a draft changes has its live value back.
 export function livePlanRecords<Rec extends PlanRecord>(
   records: readonly Rec[],
 ): Rec[] {
-  return liveRecordsBy(records.map(withLiveDates), (_record, draft, rest) => ({
-    ...rest,
-    ...Object.fromEntries(
-      Object.entries(draft.live as object).filter(([key]) =>
-        draft.changed.includes(key),
-      ),
-    ),
-  }));
+  return records.flatMap((record) =>
+    isFeature(record)
+      ? (liveRecordsOf([record], featureDetailKeys) as Rec[])
+      : liveRecordsBy([withLiveDates(record)], (_record, draft, rest) => ({
+          ...rest,
+          ...Object.fromEntries(
+            Object.entries(draft.live as object).filter(([key]) =>
+              draft.changed.includes(key),
+            ),
+          ),
+        })),
+  );
 }
 
 type Kinds = "text" | "date" | "month" | "choice" | "link" | "note" | "flag";
@@ -139,7 +158,7 @@ const named = (
 function draftFieldsOf<Rec extends PlanRecord>(
   columns: readonly Column<Rec, PlanChange>[],
   record: Rec,
-  draft: RecordDraft,
+  draft: NonNullable<PlanRecord["draft"]>,
 ): DraftField[] {
   if (draft.action !== "changed") return [];
   const words = (column: Column<Rec, PlanChange>, value: CellValue) =>
@@ -181,7 +200,7 @@ function planTable<Rec extends PlanRecord, Request>({
   label: string;
   one: string;
   noun: string;
-  columns: (records: readonly Rec[]) => Column<Rec, PlanChange>[];
+  columns: (shown: AddedColumns) => Column<Rec, PlanChange>[];
   request: (changes: PlanChange[]) => Request;
   menuItems: (record: Rec) => ReactNode;
   kinds?: readonly string[];
@@ -197,9 +216,10 @@ function planTable<Rec extends PlanRecord, Request>({
     newRowLabel: () => `New ${one}`,
     removeLabel: () => `Remove ${one}`,
     nameOf,
-    columnsFor: (_fields, _lists, _order, records) => columns(records),
+    columnsFor: (fields, lists, order) => columns({ fields, lists, order }),
     liveRecords: livePlanRecords,
-    draftFields: (record, draft) => draftFieldsOf(columns([]), record, draft),
+    draftFields: (record, draft, fields, lists) =>
+      draftFieldsOf(columns({ fields, lists, order: [] }), record, draft),
     recordProblem: noRecordProblem,
     request: (changes) => request(changes),
     drafts: drafts(type),
@@ -457,11 +477,12 @@ const cycleOf = (target: {
 export function featureColumns(
   choices: TableChoices,
   onOpen?: (feature: Feature) => void,
+  { fields, lists, order }: AddedColumns = choices.featureColumns,
 ): Column<Feature, PlanChange>[] {
   const meaningOf = new Map(
     choices.featureStatuses.map(({ id, meaning }) => [id, meaning]),
   );
-  return [
+  const builtIn: Column<Feature, PlanChange>[] = [
     nameColumn<Feature>(onOpen),
     {
       ...field<Feature>("statusId", "Status", "choice", {
@@ -482,7 +503,7 @@ export function featureColumns(
         emptyLabel: "Later",
       }),
       value: cycleOf,
-      live: (draft) => cycleOf(draft.live),
+      live: (draft) => cycleOf(draft.live as Partial<Feature>),
       change: (value) => targetOf((value as string[]).at(0)),
     },
     {
@@ -502,6 +523,17 @@ export function featureColumns(
         ),
     },
   ];
+  return inOrder(
+    [
+      ...builtIn,
+      // A value can be given only in a column already approved.
+      ...fields.map((added) => ({
+        ...addedColumn<Feature, CellChange>(added, lists),
+        readOnly: added.draft?.action === "created",
+      })),
+    ],
+    order,
+  );
 }
 
 const laterGroup = "later";
@@ -545,9 +577,15 @@ export function featureTable(
   return planTable<Feature, FeatureFields>({
     type: "feature",
     ...wordsOf("features"),
-    columns: () => featureColumns(choices, onOpen),
+    columns: (shown) => featureColumns(choices, onOpen, shown),
     groupings: [byCycle(choices.cycles), byNeededBy],
-    request: (changes) => merged(changes) as FeatureFields,
+    request: (changes) => {
+      const request: PlanChange = {
+        ...merged(changes),
+        ...cellRequest(changes),
+      };
+      return request as FeatureFields;
+    },
     menuItems: detailsItem(onOpen),
   });
 }
@@ -589,7 +627,7 @@ const draftColumns: Readonly<
   project: projectColumns,
   proposal: proposalColumns,
   milestone: (choices) => milestoneColumns(choices.projects),
-  feature: featureColumns,
+  feature: (choices) => featureColumns(choices),
 };
 
 export function planDraftFields(

@@ -80,7 +80,7 @@ async function liveColumn(body: FieldBody = {}) {
   expect(response.statusCode).toBe(201);
   const { field } = response.json<{ field: Field }>();
   await approveColumn(field.id);
-  return { field, choices };
+  return { field, choices, listId };
 }
 
 async function addLive(body: FieldBody) {
@@ -126,10 +126,11 @@ const change = (feature: Feature, body: FieldBody) =>
   });
 
 const columns = async (cookie = planner.cookie) =>
-  (await test.request(cookie, "GET", "/api/features/columns")).json<{
-    fields: Field[];
-    order: string[];
-  }>();
+  (await test.request(cookie, "GET", "/api/projects")).json<ProjectPlan>()
+    .featureColumns;
+
+// Enough that columns in any other order would not pass by chance.
+const columnsToOrder = 6;
 
 describe("the columns on Features", () => {
   it("drafts a column, shown only on Features until approved and after", async () => {
@@ -155,6 +156,63 @@ describe("the columns on Features", () => {
     const { order } = await columns();
     expect(order.at(0)).toBe("name");
     expect(order).toContain(field.id);
+  });
+
+  it("leaves who drafted a list out for those who only see the plan", async () => {
+    const { listId } = await liveColumn();
+    const reason = "Fictional reason";
+    await test.connection.insert(drafts).values({
+      recordType: "list",
+      recordId: listId,
+      action: "changed",
+      fields: { name: unique("Fictional Drafted") },
+      state: "rejected",
+      reason,
+    });
+    const listOf = async (cookie: string) =>
+      (await columns(cookie)).lists.find(({ id }) => id === listId);
+    try {
+      expect((await listOf(viewer.cookie))?.draft).toBeUndefined();
+      expect(JSON.stringify(await columns(viewer.cookie))).not.toContain(
+        reason,
+      );
+      expect((await listOf(editor.cookie))?.draft?.reason).toBe(reason);
+    } finally {
+      await test.connection
+        .delete(drafts)
+        .where(and(eq(drafts.recordType, "list"), eq(drafts.recordId, listId)));
+    }
+  });
+
+  it("keeps columns in the order added once they are approved", async () => {
+    const added: string[] = [];
+    for (let count = 0; count < columnsToOrder; count += 1) {
+      added.push((await liveColumn()).field.id);
+    }
+    const { order } = await columns();
+    expect(order.filter((key) => added.includes(key))).toEqual(added);
+  });
+
+  it("sends those who only see the plan the General lists columns draw on", async () => {
+    const { field, listId } = await liveColumn();
+    const { listId: unused } = await addList();
+    const { lists: sent } = await columns(viewer.cookie);
+    expect(sent.map(({ id }) => id)).toContain(listId);
+    expect(sent.map(({ id }) => id)).not.toContain(unused);
+    await test.connection
+      .update(lists)
+      .set({ visibility: "restricted" })
+      .where(eq(lists.id, listId));
+    try {
+      const after = await columns(viewer.cookie);
+      expect(after.fields.map(({ id }) => id)).toContain(field.id);
+      expect(after.lists.map(({ id }) => id)).not.toContain(listId);
+    } finally {
+      await test.connection
+        .update(lists)
+        .set({ visibility: "general" })
+        .where(eq(lists.id, listId));
+    }
   });
 
   it("refuses those who may not change configuration", async () => {
@@ -246,8 +304,9 @@ describe("a feature's values", () => {
     await change(feature, { values: { [field.id]: [second] } });
     const drafted = await shown(feature.id);
     expect(drafted.values[field.id]).toEqual([second]);
-    expect(drafted.draft?.changed).toContain(`value:${field.id}`);
-    expect(drafted.draft?.live[`value:${field.id}`]).toEqual([first]);
+    expect(drafted.draft?.changed).toContain(field.id);
+    expect(drafted.draft?.live.values[field.id]).toEqual([first]);
+    expect(Object.keys(drafted.draft?.changedBy ?? {})).toContain(field.id);
   });
 
   it("keeps values a change does not name", async () => {
@@ -371,8 +430,8 @@ describe("a feature's values", () => {
       notes: { [note.id]: "**Second**" },
     });
     const { draft } = await shown(feature.id);
-    expect(draft?.live[`value:${note.id}`]).toBe("**First**");
-    expect(draft?.live[`value:${link.id}`]).toMatchObject({
+    expect(draft?.live.notes[note.id]).toBe("**First**");
+    expect(draft?.live.links[link.id]).toMatchObject({
       address: expect.stringContaining("/a") as string,
     });
     await change(feature, {

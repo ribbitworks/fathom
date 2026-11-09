@@ -104,20 +104,6 @@ export function projectRoutes(
       field: fieldSchema,
       changeSetId: z.string().nullable(),
     });
-    app.get(
-      "/api/features/columns",
-      {
-        schema: {
-          response: {
-            200: z.object({
-              fields: z.array(fieldSchema),
-              order: z.array(z.string()),
-            }),
-          },
-        },
-      },
-      async (request) => projects.readFeatureColumns(request.actor),
-    );
     app.post(
       "/api/features/columns",
       {

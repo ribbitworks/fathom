@@ -1,13 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The dialog for adding a column to the People table or changing one: its name, its type, which is
-// set once, whether it must be filled in, which planned hires never must, whether planned hires are
-// offered it too, and, for a choice column, the list it draws on and whether several choices can be
-// picked, or, for a web link, note, or number column, who may see its values. Changing a column
-// also offers deleting it. The name is checked against the other columns as it is typed. The dialog
+// The dialog for adding a column to a table or changing one: its name, its type, which is set once,
+// whether it must be filled in, and, for a choice column, the list it draws on and whether several
+// choices can be picked. On People, it also sets whether planned hires, which never must fill it
+// in, are offered it, and, for a web link, note, or number column, who may see its values; a column
+// on Features is General, so it offers only General lists. Changing a column also offers deleting
+// it, to those who may. The name is checked against the other columns as it is typed. The dialog
 // cannot be closed while a change is being saved.
 
 import {
+  type ColumnTable,
+  columnTablePolicies,
   type Field,
   type FieldRequest,
   type FieldType,
@@ -30,7 +33,7 @@ import { useState } from "react";
 import { ApiError, describeProblem } from "./api.ts";
 import { Count, nameProblem, VisibleTo } from "./list-dialog.tsx";
 import { sameName, visibilityName } from "./lists.ts";
-import { createField, updateField } from "./people.ts";
+import { createField, updateField } from "./column-requests.ts";
 
 const conflict = 409;
 const duplicate = "Already a column";
@@ -44,6 +47,7 @@ const typeNames: Record<FieldType, string> = {
 };
 
 export function ColumnDialog({
+  table,
   field,
   fields,
   lists,
@@ -52,13 +56,15 @@ export function ColumnDialog({
   onCancel,
   onBusy,
 }: {
+  table: ColumnTable;
   // The column being changed; absent when adding one.
   field?: Field;
   fields: Field[];
   lists: List[];
   // Given the column as saved, and the change set it was saved in.
   onSaved: (saved: Field, changeSetId: string | null) => void;
-  onDelete: (field: Field) => void;
+  // Absent for those who may not delete the column.
+  onDelete?: ((field: Field) => void) | undefined;
   onCancel: () => void;
   onBusy: (busy: boolean) => void;
 }) {
@@ -70,8 +76,11 @@ export function ColumnDialog({
   const [listId, setListId] = useState<string | null>(field?.listId ?? null);
   const [multiple, setMultiple] = useState(field?.multiple ?? false);
   const [required, setRequired] = useState(field?.required ?? false);
+  // The table is always one of the fixed tables.
+  // eslint-disable-next-line security/detect-object-injection
+  const policy = columnTablePolicies[table];
   const [onPlannedHires, setOnPlannedHires] = useState(
-    field?.onPlannedHires ?? true,
+    field?.onPlannedHires ?? policy.onPlannedHires,
   );
   const [tried, setTried] = useState(false);
   // The name last sent, so a refusal of it as taken no longer applies once the name changes.
@@ -79,8 +88,8 @@ export function ColumnDialog({
   const saving = useMutation({
     mutationFn: (request: FieldRequest) =>
       field === undefined
-        ? createField(request)
-        : updateField(field.id, request),
+        ? createField(request, table)
+        : updateField(field.id, request, table),
     onMutate: () => {
       onBusy(true);
     },
@@ -107,11 +116,13 @@ export function ColumnDialog({
   const shownProblem = tried || name !== "" ? problem : undefined;
   // Retired lists, and lists drafted to be removed, are not offered, except the one the column
   // already draws on. A list only drafted to be added is offered, and is approved with the column.
-  const offered = lists.filter(
-    (list) =>
-      (!list.retired && list.draft?.action !== "deleted") ||
-      list.id === field?.listId,
-  );
+  const offered = lists
+    .filter((list) => !policy.generalOnly || list.visibility === "general")
+    .filter(
+      (list) =>
+        (!list.retired && list.draft?.action !== "deleted") ||
+        list.id === field?.listId,
+    );
   const needsList = type === "choice" && listId === null;
   const listProblem = tried && needsList ? "List needed" : undefined;
 
@@ -177,11 +188,13 @@ export function ColumnDialog({
           }}
         />
         {type !== "choice" ? (
-          <VisibleTo
-            id="column-visibility"
-            value={visibility}
-            onChange={setVisibility}
-          />
+          !policy.generalOnly && (
+            <VisibleTo
+              id="column-visibility"
+              value={visibility}
+              onChange={setVisibility}
+            />
+          )
         ) : (
           <>
             <NativeSelect
@@ -231,13 +244,15 @@ export function ColumnDialog({
             setRequired(event.currentTarget.checked);
           }}
         />
-        <Checkbox
-          label="Offered on planned hires"
-          checked={onPlannedHires}
-          onChange={(event) => {
-            setOnPlannedHires(event.currentTarget.checked);
-          }}
-        />
+        {policy.onPlannedHires && (
+          <Checkbox
+            label="Offered on planned hires"
+            checked={onPlannedHires}
+            onChange={(event) => {
+              setOnPlannedHires(event.currentTarget.checked);
+            }}
+          />
+        )}
         {saving.error && !refusedAsTaken && (
           <Text fz="sm" c="red" role="alert">
             {describeProblem(
@@ -247,7 +262,7 @@ export function ColumnDialog({
           </Text>
         )}
         <Group gap="xs" mt="xs">
-          {field && (
+          {field && onDelete && (
             <Button
               variant="outline"
               color="red"

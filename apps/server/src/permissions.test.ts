@@ -452,11 +452,6 @@ const routes: Route[] = [
   })),
 
   {
-    method: "GET",
-    pattern: "/api/features/columns",
-    needs: allOf("plan:view"),
-  },
-  {
     method: "POST",
     pattern: "/api/features/columns",
     needs: allOf("configuration:edit"),

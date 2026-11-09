@@ -4,7 +4,7 @@
 // each column a new record has, with any problem Add finds named under its field. The Projects
 // page's milestone dialog draws the same fields.
 
-import { Checkbox, MultiSelect, Select } from "@mantine/core";
+import { Checkbox, MultiSelect, Select, Textarea } from "@mantine/core";
 import { isLink } from "@fathom/shared";
 import { type ReactElement, useState } from "react";
 import { toggledFlag } from "./cell-kinds.tsx";
@@ -16,6 +16,7 @@ import {
   newRecordFields,
   NewRecordPanel,
 } from "./new-record-panel.tsx";
+import type { AddedColumns } from "./added-columns.ts";
 import type { PlanChange } from "./project-grids.tsx";
 import type { Column, GridRecord, RecordTable } from "./record-grid.tsx";
 import type { CellValue } from "./table-view.ts";
@@ -24,6 +25,8 @@ type FieldColumn = Pick<
   Column<GridRecord, PlanChange>,
   "key" | "label" | "kind" | "required" | "multiple" | "choices" | "maxLength"
 >;
+
+const noteRows = 3;
 
 const fieldId = (column: Pick<FieldColumn, "key">) =>
   `new-plan-record-${column.key}`;
@@ -137,8 +140,20 @@ export function PlanField({
           }}
         />
       );
+    // A required note cannot wait for the record's details, which come once it is added.
     case "note":
-      return null;
+      return column.required ? (
+        <Textarea
+          {...common}
+          autosize
+          minRows={noteRows}
+          value={value as string}
+          error={problem}
+          onChange={(event) => {
+            onChange(event.currentTarget.value);
+          }}
+        />
+      ) : null;
   }
 }
 
@@ -150,6 +165,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   saving,
   narrow,
   panelId,
+  added = { fields: [], lists: [], order: [] },
   onValues,
   onAdd,
   onCancel,
@@ -161,6 +177,8 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   saving: boolean;
   narrow: boolean;
   panelId: string;
+  // The columns added to the table, for a table that has them.
+  added?: AddedColumns;
   onValues: (values: FormValues) => void;
   onAdd: (request: Request) => void;
   onCancel: () => void;
@@ -170,7 +188,11 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
     columns,
     valueOf,
     values: shown,
-  } = newRecordFields(table.columnsFor([], [], [], records), kind, values);
+  } = newRecordFields(
+    table.columnsFor(added.fields, added.lists, added.order, records),
+    kind,
+    values,
+  );
   const [problems, setProblems] = useState<ReadonlyMap<string, string>>(
     new Map(),
   );

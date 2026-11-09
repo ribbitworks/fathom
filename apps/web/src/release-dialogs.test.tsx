@@ -28,6 +28,8 @@ import {
   serverAnswers,
   streamId,
   testTheme,
+  noFeatureColumns,
+  featureDraft,
 } from "./test-support.tsx";
 
 const changeSetId = "00000000-0000-4000-8000-000000000001";
@@ -915,11 +917,12 @@ describe("the dialog changing one cycle's length", () => {
             featureOf("Fictional Moved", {}),
             featureOf("Fictional Elsewhere", { targetStreamId: "other" }),
             featureOf("Fictional Removed", {
-              draft: recordDraft({ action: "deleted" }),
+              draft: featureDraft({ action: "deleted" }),
             }),
           ],
           canEdit: false,
           canEditFeatures: false,
+          featureColumns: noFeatureColumns,
         }),
     });
     show((handlers) => (

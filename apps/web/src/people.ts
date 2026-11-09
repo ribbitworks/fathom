@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// People, the columns on the People table, and its saved views, through the server's API, with the
-// drafts of people and their approval. Each change returns the change set it was saved in, which
+// People and the People table's saved views, through the server's API, with the drafts of people
+// and their approval. Each change returns the change set it was saved in, which
 // undoing it names, or null when nothing changed.
 
 import {
   changeSetIdSchema,
-  type Field,
-  type FieldRequest,
-  fieldSchema,
   type PersonChange,
   type PersonRequest,
   peopleSchema,
@@ -29,12 +26,6 @@ export const peopleQuery = queryOptions({
 });
 
 const personPath = (id: string) => `/api/people/${encodeURIComponent(id)}`;
-const columnPath = (id: string) =>
-  `/api/people/columns/${encodeURIComponent(id)}`;
-const fieldResponse = z.object({
-  field: fieldSchema,
-  changeSetId: changeSetIdSchema,
-});
 
 // Adds people, all saved together, and gives their identifiers and the change set they were saved in.
 export async function createPeople(
@@ -70,36 +61,6 @@ export async function discardDraft(id: string): Promise<string | null> {
 export async function resubmitDraft(id: string): Promise<string | null> {
   return (await sendDeleteFor(`${personPath(id)}/draft/rejection`, savedSchema))
     .changeSetId;
-}
-
-export async function createField(
-  request: FieldRequest,
-): Promise<{ field: Field; changeSetId: string | null }> {
-  return sendJsonFor("POST", "/api/people/columns", request, fieldResponse);
-}
-
-export async function updateField(
-  id: string,
-  request: FieldRequest,
-): Promise<{ field: Field; changeSetId: string | null }> {
-  return sendJsonFor("PUT", columnPath(id), request, fieldResponse);
-}
-
-const columnDraftPath = (id: string) => `${columnPath(id)}/draft`;
-
-// Discards a draft of a column.
-export async function discardColumnDraft(id: string): Promise<string | null> {
-  return (await sendDeleteFor(columnDraftPath(id), savedSchema)).changeSetId;
-}
-
-// Sends a rejected draft of a column for approval again, unchanged.
-export async function resubmitColumnDraft(id: string): Promise<string | null> {
-  return (await sendDeleteFor(`${columnDraftPath(id)}/rejection`, savedSchema))
-    .changeSetId;
-}
-
-export async function deleteField(id: string): Promise<string | null> {
-  return (await sendDeleteFor(columnPath(id), savedSchema)).changeSetId;
 }
 
 const viewPath = (id: string) => `/api/people/views/${encodeURIComponent(id)}`;

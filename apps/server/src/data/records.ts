@@ -267,12 +267,17 @@ export async function readRecordMakers(
 }
 
 // A record's draft as the API sends it, or undefined when it has none.
+// A record's draft as read, which always says who last changed each field.
+export type RecordDraftOut = RecordDraft & {
+  changedBy: NonNullable<RecordDraft["changedBy"]>;
+};
+
 export function recordDraftOut(
   kind: RecordKind,
   state: RecordsState,
   makers: Makers,
   id: string,
-): RecordDraft | undefined {
+): RecordDraftOut | undefined {
   const draft = stateOf(state, kind.type).drafts.get(id);
   if (draft === undefined) return undefined;
   const live = stateOf(state, kind.type).live.get(id);

@@ -11,8 +11,11 @@ import {
   type CustomerRequest,
   type Customer,
   type Feature,
+  type FeatureColumns,
+  type FeatureDraft,
   type FeatureRequest,
   type BuiltInList,
+  type List,
   type Meaning,
   meaningSchema,
   type Milestone,
@@ -39,7 +42,9 @@ import {
 import type { Saved, Transaction } from "./changes.ts";
 import { type Recorded, tidy } from "./drafts.ts";
 import { checkTeamForFeature, readTeamDrafts } from "./feature-teams.ts";
-import { typeOf } from "./column-types.ts";
+import { readColumnsOut } from "./column-drafts.ts";
+import { liveValuesOf, typeOf } from "./column-types.ts";
+import { readListsWithin } from "./lists.ts";
 import {
   checkedLinks,
   checkedNotes,
@@ -76,6 +81,7 @@ import {
   readRecordMakers,
   readRecordsState,
   recordDraftOut,
+  type RecordDraftOut,
   recordHeldBy,
   saveRecordDraft,
   saveRecordDrafts,
@@ -99,6 +105,82 @@ const extras = (
 };
 
 const text = (value: unknown) => (typeof value === "string" ? value : null);
+
+// A draft of a feature, naming its added columns as a person's draft does.
+function featureDraftOf(draft: RecordDraftOut): FeatureDraft {
+  const columnOf = (field: string) => fieldOfValue(field) ?? field;
+  const inColumns = Object.entries(draft.live).flatMap(
+    ([field, value]): [string, unknown][] => {
+      const column = fieldOfValue(field);
+      return column === null ? [] : [[column, value]];
+    },
+  );
+  return {
+    ...draft,
+    changed: draft.changed.map(columnOf),
+    live: {
+      ...Object.fromEntries(
+        Object.entries(draft.live).filter(
+          ([field]) => fieldOfValue(field) === null,
+        ),
+      ),
+      ...liveValuesOf(new Map(inColumns)),
+    },
+    changedBy: Object.fromEntries(
+      Object.entries(draft.changedBy).map(([field, editor]) => [
+        columnOf(field),
+        editor,
+      ]),
+    ),
+  };
+}
+
+// Who drafted and holds a list and its choices is for those who may see Lists, or People, whose
+// columns draw on them, as the Decisions Log's "Who changed what" sets out.
+const seesListDrafts = ({ permissions }: Actor) =>
+  permissions.includes("configuration:view") ||
+  permissions.includes("people:view");
+
+function withoutDrafts(list: List): List {
+  const plain: List = {
+    ...list,
+    choices: list.choices.map((listed) => {
+      const choice = { ...listed };
+      delete choice.draft;
+      delete choice.heldBy;
+      return choice;
+    }),
+  };
+  delete plain.draft;
+  delete plain.orderDraft;
+  delete plain.heldBy;
+  delete plain.orderHeldBy;
+  return plain;
+}
+
+// The columns added to Features as the viewer sees them, and the lists they draw on. Those lists'
+// choices go to everyone who sees the plan, so only General ones are sent, as a column on Features
+// may draw only on those.
+async function featureColumnsOut(
+  transaction: Transaction,
+  viewer: Actor,
+): Promise<FeatureColumns> {
+  const { fields, order } = await readColumnsOut(
+    transaction,
+    viewer,
+    "features",
+  );
+  const drawnOn = new Set(
+    fields.flatMap((field) => [field.listId, field.draft?.live.listId]),
+  );
+  return {
+    fields,
+    order,
+    lists: (await readListsWithin(transaction, viewer))
+      .filter((list) => drawnOn.has(list.id) && list.visibility === "general")
+      .map((list) => (seesListDrafts(viewer) ? list : withoutDrafts(list))),
+  };
+}
 
 // The records of a kind shown: the live ones by name, then those drafted to be added, in the order
 // drafted.
@@ -189,6 +271,7 @@ function proposalOut(
 
 function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
   const feature = shownVersion(state, "feature", id) as Recorded;
+  const { draft, ...heldBy } = extras(state, makers, "feature", id);
   return {
     id,
     name: String(feature.name),
@@ -206,15 +289,18 @@ function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
     links: linksOf(feature),
     notes: notesOf(feature),
     numbers: numbersOf(feature),
-    ...extras(state, makers, "feature", id),
+    ...(draft === undefined ? {} : { draft: featureDraftOf(draft) }),
+    ...heldBy,
   };
 }
 
-export function planOut(
+async function planOut(
+  transaction: Transaction,
+  viewer: Actor,
   state: RecordsState,
-  makers: Makers,
   today: string,
-): PlanRecords {
+): Promise<PlanRecords> {
+  const makers = await readRecordMakers(transaction, state, viewer);
   return {
     customers: inOrder(state, "customer").map((id): Customer => ({
       id,
@@ -230,6 +316,7 @@ export function planOut(
     features: inOrder(state, "feature").map((id) =>
       featureOut(state, makers, id),
     ),
+    featureColumns: await featureColumnsOut(transaction, viewer),
   };
 }
 
@@ -244,11 +331,7 @@ export async function readPlanRecords(
   return database.transaction(
     async (transaction) => {
       const state = await readRecordsState(transaction, viewer.user.id);
-      return planOut(
-        state,
-        await readRecordMakers(transaction, state, viewer),
-        today,
-      );
+      return planOut(transaction, viewer, state, today);
     },
     { isolationLevel: "repeatable read", accessMode: "read only" },
   );
@@ -269,11 +352,7 @@ async function changingPlan(
     const changeSetId = await change(transaction, state);
     const now = await readRecordsState(transaction, editor.user.id);
     return {
-      result: planOut(
-        now,
-        await readRecordMakers(transaction, now, editor),
-        today,
-      ),
+      result: await planOut(transaction, editor, now, today),
       changeSetId,
     };
   });

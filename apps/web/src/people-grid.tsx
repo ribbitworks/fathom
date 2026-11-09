@@ -19,6 +19,7 @@ import {
   temporaryIdPrefix,
 } from "@fathom/shared";
 import { Menu, VisuallyHidden } from "@mantine/core";
+import { addedColumn, cellRequest } from "./added-columns.ts";
 import { notShown, personDraftFields } from "./draft-details.tsx";
 import { canFill } from "./hire-fill.ts";
 import { noDrafts } from "./drafts.ts";
@@ -413,13 +414,7 @@ export function columnsFor(
       // A column's type is the kind of its cells. Planned hires have the columns offered on them,
       // where nothing is required.
       ...fields.map((field): Column => ({
-        ...cellColumn<Person, RowChange>(field.id, field.type, {
-          label: field.name,
-          required: field.required,
-          field,
-          choices: lists.find(({ id }) => id === field.listId)?.choices ?? [],
-          multiple: field.multiple,
-        }),
+        ...addedColumn<Person, RowChange>(field, lists),
         ...(offeredOnHires(field)
           ? { requiredOn: (kind: string) => field.required && peopleOnly(kind) }
           : { offeredOn: peopleOnly }),
@@ -614,8 +609,6 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
     isManager,
     stateId,
   } = Object.assign({}, ...parts) as RowRequest;
-  const notes = askedOf(parts.map((part) => part.notes));
-  const numbers = askedOf(parts.map((part) => part.numbers));
   return {
     preferredName,
     employeeId,
@@ -627,28 +620,8 @@ function requestFor(parts: readonly RowChange[]): RowRequest {
       : { managerId, ...(managerFrom === undefined ? {} : { managerFrom }) }),
     ...(teamName == null || teamName === "" ? {} : { teamName }),
     ...(isManager === true ? { isManager } : {}),
-    values: Object.assign({}, ...parts.map((part) => part.values)) as Record<
-      string,
-      string[]
-    >,
-    links: Object.fromEntries(
-      parts.flatMap((part) =>
-        Object.entries(part.links ?? {}).flatMap(([key, held]) =>
-          held === null ? [] : [[key, held]],
-        ),
-      ),
-    ),
-    ...(notes === undefined ? {} : { notes }),
-    ...(numbers === undefined ? {} : { numbers }),
+    ...cellRequest(parts),
   };
-}
-
-// What a new person is given in columns of one value, left out when they are given none.
-function askedOf<Held>(
-  parts: readonly (Record<string, Held> | undefined)[],
-): Record<string, Held> | undefined {
-  const entries = parts.flatMap((part) => Object.entries(part ?? {}));
-  return entries.length === 0 ? undefined : Object.fromEntries(entries);
 }
 
 function peopleTable(

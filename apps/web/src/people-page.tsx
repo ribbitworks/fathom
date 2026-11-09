@@ -14,7 +14,6 @@
 import { LoadProblem } from "./load-problem.tsx";
 import type {
   DraftKind,
-  Field,
   HireFill,
   List,
   Person,
@@ -34,7 +33,12 @@ import {
 import { useIsMutating, useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { ColumnDialog } from "./column-dialog.tsx";
+import { kept } from "./added-columns.ts";
+import {
+  columnDraftActions,
+  ColumnModal,
+  useColumnDialog,
+} from "./column-editing.tsx";
 import { DecisionModal } from "./decision-dialog.tsx";
 import { listsQuery } from "./lists.ts";
 import { focusSoon } from "./focus.ts";
@@ -47,7 +51,7 @@ import {
   recordQuestion,
 } from "./new-person-panel.tsx";
 import { entered } from "./new-record-panel.tsx";
-import { kept, personUpdate } from "./person-change.ts";
+import { personUpdate } from "./person-change.ts";
 import { noteQuestion, useNoteEditing, useShownId } from "./person-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
@@ -95,12 +99,9 @@ import {
 import {
   createPeople,
   createView,
-  deleteField,
   deletePerson,
   deleteView,
-  discardColumnDraft,
   discardDraft,
-  resubmitColumnDraft,
   resubmitDraft,
   type PeopleData,
   peopleQuery,
@@ -113,8 +114,6 @@ import { type View, savedFor } from "./table-view.ts";
 import { type SavedViewResult, ViewDialog } from "./view-dialog.tsx";
 
 const newColumnId = "column-new";
-
-type Dialog = { kind: "new" } | { kind: "edit"; field: Field };
 
 // Naming a saved view: a new one for the view shown, or one to rename.
 interface Naming {
@@ -220,9 +219,7 @@ export function PeoplePage({
     disabled: !query.isSuccess || !lists.isSuccess || positionHidden,
     "aria-describedby": positionHidden ? cannotAddId : undefined,
   };
-  // The dialog stays set while it closes, so its content does not vanish mid-animation.
-  const [dialog, setDialog] = useState<Dialog>();
-  const [opened, setOpened] = useState(false);
+  const columnDialog = useColumnDialog();
   const [busy, setBusy] = useState(false);
   // Like the column dialog, the naming dialog stays set while it closes.
   const [naming, setNaming] = useState<Naming>();
@@ -296,8 +293,9 @@ export function PeoplePage({
   const { save, undoable, done } = useSaving<PeopleData>({
     queryKey: peopleQuery.queryKey,
     removed: "Someone else has removed this. The people have been refreshed.",
-    blocked: opened || namingOpened || deciding,
+    blocked: columnDialog.opened || namingOpened || deciding,
   });
+  const columnSaving = { save, undoable, done };
 
   // A row by name, as menus and notices name it, once the lists, which a row's actions wait for,
   // are loaded.
@@ -319,26 +317,7 @@ export function PeoplePage({
       );
       setDeciding(true);
     },
-    discardColumn: (target, name) => {
-      save({
-        next: (data) => data,
-        save: () => discardColumnDraft(target),
-        failure: `Fathom could not discard the draft of ${name}.`,
-        onSaved: (changeSetId, before) => {
-          done(`Discarded the draft of ${name}.`, changeSetId, before);
-        },
-      });
-    },
-    resubmitColumn: (target) => {
-      save({
-        next: (data) => data,
-        save: () => resubmitColumnDraft(target),
-        failure: "Fathom could not send the draft for approval again.",
-        onSaved: (changeSetId, before) => {
-          undoable(changeSetId, before);
-        },
-      });
-    },
+    ...columnDraftActions("people", columnSaving),
     add: (added, onAdded, onFailed) => {
       save({
         next: (data) => ({
@@ -454,8 +433,7 @@ export function PeoplePage({
       });
     },
     editColumn: (field) => {
-      setDialog({ kind: "edit", field });
-      setOpened(true);
+      columnDialog.open({ kind: "edit", field });
     },
   };
 
@@ -488,43 +466,6 @@ export function PeoplePage({
             ? employeeId === request.employeeId
             : id === request.personId;
         undoable(changeSetId, before);
-      },
-    });
-  };
-
-  // The dialog saved the column itself, so the page shows it at once, then reloads the people once
-  // no other change is saving.
-  const saved = (field: Field, changeSetId: string | null) => {
-    setOpened(false);
-    save({
-      next: (data) => ({
-        ...data,
-        fields: data.fields.some((other) => other.id === field.id)
-          ? data.fields.map((other) => (other.id === field.id ? field : other))
-          : [...data.fields, field],
-        order: data.order.includes(field.id)
-          ? data.order
-          : [...data.order, field.id],
-      }),
-      save: () => Promise.resolve(changeSetId),
-      failure: "",
-      onSaved: (_saved, before) => {
-        undoable(changeSetId, before, newColumnId);
-      },
-    });
-  };
-
-  const removeColumn = (field: Field) => {
-    setOpened(false);
-    save({
-      next: (data) => ({
-        ...data,
-        fields: data.fields.filter((other) => other.id !== field.id),
-      }),
-      save: () => deleteField(field.id),
-      failure: `Fathom could not delete ${field.name}.`,
-      onSaved: (changeSetId, before) => {
-        done(`Deleted the ${field.name} column.`, changeSetId, before);
       },
     });
   };
@@ -871,30 +812,15 @@ export function PeoplePage({
             />
           )}
         </Modal>
-        <Modal
-          opened={opened}
-          onClose={() => {
-            setOpened(false);
-          }}
-          closeOnEscape={!busy}
-          closeOnClickOutside={!busy}
-          withCloseButton={!busy}
-          title={dialog?.kind === "edit" ? "Edit column" : "New column"}
-        >
-          {dialog && (
-            <ColumnDialog
-              {...(dialog.kind === "edit" ? { field: dialog.field } : {})}
-              fields={query.data.fields}
-              lists={lists.data}
-              onSaved={saved}
-              onDelete={removeColumn}
-              onCancel={() => {
-                setOpened(false);
-              }}
-              onBusy={setBusy}
-            />
-          )}
-        </Modal>
+        <ColumnModal<PeopleData>
+          state={columnDialog}
+          table="people"
+          fields={query.data.fields}
+          lists={lists.data}
+          saving={columnSaving}
+          withColumns={(data, change) => ({ ...data, ...change(data) })}
+          newColumnButton={newColumnId}
+        />
       </>
     );
   }
@@ -911,8 +837,7 @@ export function PeoplePage({
                   id={newColumnId}
                   variant={canEdit ? "default" : "filled"}
                   onClick={() => {
-                    setDialog({ kind: "new" });
-                    setOpened(true);
+                    columnDialog.open({ kind: "new" });
                   }}
                 >
                   New column

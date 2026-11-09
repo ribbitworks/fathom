@@ -6,11 +6,14 @@
 
 import type { RecordDraft, RecordRef } from "@fathom/shared";
 
+// What decisions need of a record's draft, whatever its live values hold.
+type NodeDraft = Omit<RecordDraft, "live"> & { live: object };
+
 export interface RecordNode {
   ref: RecordRef;
   // The record as the Drafts page names it, such as "the release stream Platform".
   subject: string;
-  draft: RecordDraft | undefined;
+  draft: NodeDraft | undefined;
   heldBy: string | undefined;
 }
 
@@ -18,7 +21,7 @@ export const recordNode = (
   type: RecordRef["type"],
   record: {
     id: string;
-    draft?: RecordDraft | undefined;
+    draft?: NodeDraft | undefined;
     heldBy?: string | undefined;
   },
   subject: string,

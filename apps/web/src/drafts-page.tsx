@@ -299,12 +299,15 @@ function listEntries(lists: readonly List[]): Entry[] {
   ]);
 }
 
-// Every draft of a People column, as entries.
-function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
-  // A choice column's list is always among the lists, and every key in an order names a column
-  // shown. A web link column has no list.
+// Every draft of a table's column, as entries, each named as its table's columns are.
+function columnEntries(
+  data: Pick<PeopleData, "fields">,
+  lists: readonly List[],
+  columnSubject: (name: string) => string = (name) => `the column ${name}`,
+): Entry[] {
+  // A web link column has no list, and a list not sent to the reader goes unnamed.
   const listName = (id: unknown) =>
-    id === null ? null : (lists.find((list) => list.id === id) as List).name;
+    id === null ? null : (lists.find((list) => list.id === id)?.name ?? null);
   return [
     ...data.fields.flatMap((field) =>
       field.draft
@@ -312,7 +315,7 @@ function columnEntries(data: PeopleData, lists: readonly List[]): Entry[] {
             entry(
               `column ${field.id}`,
               field.draft,
-              `the column ${field.name}`,
+              columnSubject(field.name),
               // Lists are named, not identified, on both sides of a change.
               configFields(
                 {
@@ -658,6 +661,13 @@ export function DraftsPage({
           )
         : []),
       ...(seesProjects && plan.data !== undefined
+        ? columnEntries(
+            plan.data.featureColumns,
+            plan.data.featureColumns.lists,
+            (name) => `the column ${name} on Features`,
+          )
+        : []),
+      ...(seesProjects && plan.data !== undefined
         ? // The page shows its entries once both have loaded.
           planEntries(
             plan.data,
@@ -668,7 +678,13 @@ export function DraftsPage({
     ].sort((a, b) => (b.madeAt ?? "").localeCompare(a.madeAt ?? ""));
     const shown = all.filter(({ text }) => matchesWords(text, words));
     // Loaded, or empty for those who see only lists.
-    const { fields, people } = peopleData as PeopleData;
+    const { fields: peopleFields, people } = peopleData as PeopleData;
+    const fields = [
+      ...peopleFields,
+      ...(seesProjects && plan.data !== undefined
+        ? plan.data.featureColumns.fields
+        : []),
+    ];
     const records = [
       ...recordNodes(streams as ReleaseStream[]),
       ...(seesProjects && plan.data !== undefined ? planNodes(plan.data) : []),

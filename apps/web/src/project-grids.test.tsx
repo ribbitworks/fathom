@@ -17,7 +17,12 @@ import {
 } from "./project-grids.tsx";
 import type { TableChoices } from "./projects.ts";
 import { cycleChoices } from "./projects.ts";
-import { fictionalStream, recordDraft } from "./test-support.tsx";
+import {
+  featureDraft,
+  fictionalStream,
+  noFeatureColumns,
+  recordDraft,
+} from "./test-support.tsx";
 
 function milestoneColumn(key: string) {
   const column = milestoneColumns([]).find((each) => each.key === key);
@@ -51,6 +56,7 @@ const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
   ],
   featureTeams: [],
   cycles: [],
+  featureColumns: noFeatureColumns,
   ...more,
 });
 
@@ -124,7 +130,7 @@ describe("the Features table", () => {
   it("reads a draft's live target", () => {
     expect(
       target?.live(
-        recordDraft({
+        featureDraft({
           changed: ["targetCycle"],
           live: { targetStreamId: "s1", targetCycle: "2027-01-01" },
         }),
@@ -138,7 +144,7 @@ describe("the Features table", () => {
         [{ name: "Fictional" }, { status: "planned" }],
         "",
       ),
-    ).toEqual({ name: "Fictional", status: "planned" });
+    ).toEqual({ name: "Fictional", status: "planned", values: {}, links: {} });
   });
 
   it("names a cycle only live, kept from being picked, in date order", () => {
@@ -269,7 +275,7 @@ describe("the Features table", () => {
       feature({
         targetStreamId: "s1",
         targetCycle: "2027-04-01",
-        draft: recordDraft({
+        draft: featureDraft({
           changed: ["targetCycle", "targetStreamId"],
           live: { targetStreamId: "s1", targetCycle: "2027-01-01" },
         }),
@@ -541,5 +547,137 @@ describe("a month cell", () => {
 
   it("takes a pasted month", () => {
     expect(month.pasted(column, " 202703 ")).toEqual({ value: "2027-03" });
+  });
+});
+
+describe("columns added to Features", () => {
+  const sizes = {
+    id: "sizes",
+    name: "Fictional Sizes",
+    description: "",
+    visibility: "general" as const,
+    retired: false,
+    choices: [cycleChoice("small", "Small"), cycleChoice("large", "Large")],
+  };
+  const size = {
+    id: "size",
+    name: "Fictional Size",
+    type: "choice" as const,
+    listId: "sizes",
+    visibility: null,
+    multiple: false,
+    required: true,
+    onPlannedHires: false,
+  };
+  const score = {
+    ...size,
+    id: "score",
+    name: "Fictional Score",
+    type: "number" as const,
+    listId: null,
+    visibility: "general" as const,
+    required: false,
+  };
+  const added = choices({
+    featureColumns: {
+      fields: [size, score],
+      order: ["name", "size", "score"],
+      lists: [sizes],
+    },
+  });
+  const column = (key: string) =>
+    featureColumns(added).find((one) => one.key === key);
+
+  it("come in the order given, after the built-in columns it does not name", () => {
+    expect(
+      featureColumns(added)
+        .map(({ key }) => key)
+        .slice(0, 3),
+    ).toEqual(["name", "size", "score"]);
+  });
+
+  it("offer their list's choices and say whether they are required", () => {
+    expect(column("size")).toMatchObject({
+      label: "Fictional Size",
+      required: true,
+      choices: sizes.choices,
+    });
+  });
+
+  it("hold no value while only drafted to be added", () => {
+    const [column] = featureColumns(
+      choices({
+        featureColumns: {
+          fields: [
+            {
+              ...size,
+              draft: { ...recordDraft({ action: "created" }), live: {} },
+            },
+          ],
+          order: ["size", "name"],
+          lists: [sizes],
+        },
+      }),
+    );
+    expect(column?.readOnly).toBe(true);
+  });
+
+  it("save a value by its column", () => {
+    expect(column("size")?.change(["large"])).toEqual({
+      values: { size: ["large"] },
+    });
+  });
+
+  it("make one request from several columns' values in a new row", () => {
+    const request = featureTable(added).request(
+      [
+        { name: "Fictional Feature" },
+        { values: { size: ["small"] } },
+        { numbers: { score: 4 } },
+        { links: { gone: null } },
+      ],
+      "",
+    );
+    expect(request).toMatchObject({
+      name: "Fictional Feature",
+      values: { size: ["small"] },
+      numbers: { score: 4 },
+      links: {},
+    });
+  });
+
+  it("put a value a draft changes back as it is live", () => {
+    const [live] = livePlanRecords([
+      feature({
+        values: { size: ["large"], other: ["kept"] },
+        description: "Now",
+        draft: featureDraft({
+          changed: ["size", "description"],
+          live: { values: { size: ["small"] }, description: "Before" },
+        }),
+      }),
+    ]);
+    expect(live).toMatchObject({
+      values: { size: ["small"], other: ["kept"] },
+      description: "Before",
+    });
+    expect(live?.draft).toBeUndefined();
+  });
+
+  it("are named in words in a draft", () => {
+    const fields = planDraftFields(
+      "feature",
+      feature({
+        values: { size: ["large"] },
+        draft: featureDraft({
+          changed: ["size"],
+          live: { values: { size: ["small"] } },
+        }),
+      }),
+      added,
+    );
+    expect(fields.map(({ field }) => field)).toEqual([
+      { field: "Fictional Size", oldValue: ["Small"], newValue: ["Large"] },
+    ]);
   });
 });

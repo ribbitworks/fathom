@@ -9,6 +9,7 @@ import {
   type Customer,
   type CustomerRequest,
   type Feature,
+  type FeatureColumns,
   type FeatureRequest,
   type Milestone,
   type MilestoneRequest,
@@ -28,6 +29,7 @@ import {
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
+import type { CellChange } from "./cell-kinds.tsx";
 import { choice } from "./lists.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 
@@ -164,19 +166,23 @@ export type FeatureFields = Pick<
   | "note"
 >;
 
-// What saving a feature sends: its target as a stream and a cycle together.
-export const featureRequest = ({
-  name,
-  statusId,
-  neededBy,
-  customerIds,
-  estimateHours,
-  featureTeamId,
-  description,
-  note,
-  targetStreamId,
-  targetCycle,
-}: FeatureFields): FeatureRequest => ({
+// What saving a feature sends: its target as a stream and a cycle together, and only the added
+// columns' values it changes, since the server keeps those not named.
+export const featureRequest = (
+  {
+    name,
+    statusId,
+    neededBy,
+    customerIds,
+    estimateHours,
+    featureTeamId,
+    description,
+    note,
+    targetStreamId,
+    targetCycle,
+  }: FeatureFields,
+  { values = {}, links = {}, notes = {}, numbers = {} }: CellChange = {},
+): FeatureRequest => ({
   name,
   ...(statusId === "" ? {} : { statusId }),
   neededBy,
@@ -185,10 +191,10 @@ export const featureRequest = ({
   featureTeamId,
   description,
   note,
-  values: {},
-  links: {},
-  notes: {},
-  numbers: {},
+  values,
+  links,
+  notes,
+  numbers,
   target:
     targetStreamId === null || targetCycle === null
       ? null
@@ -257,6 +263,9 @@ export type ProjectTab = (typeof projectTabs)[number];
 export type PlanTab = ProjectTab | "features";
 
 export type PlanRecord = Customer | Project | Proposal | Milestone | Feature;
+export const isFeature = (record: PlanRecord): record is Feature =>
+  "featureTeamId" in record;
+
 export type PlanRecordKind =
   "customer" | "project" | "proposal" | "milestone" | "feature";
 
@@ -278,7 +287,7 @@ interface PlanRecordOperations {
   all: (plan: ProjectPlan) => readonly PlanRecord[];
   withAll: (plan: ProjectPlan, records: readonly PlanRecord[]) => ProjectPlan;
   add: (request: unknown) => Promise<SavedPlan>;
-  change: (record: PlanRecord, change: object) => Promise<SavedPlan>;
+  change: (record: PlanRecord, change: CellChange) => Promise<SavedPlan>;
   remove: (record: PlanRecord) => Promise<string | null>;
 }
 
@@ -299,7 +308,7 @@ const planRecordOperations: Readonly<
     change: (record, change) =>
       changeRecord(record.id, {
         type: "customer",
-        request: { ...customerRequest(record), ...change },
+        request: { ...customerRequest(record as Customer), ...change },
       }),
     remove: (record) => removeRecord("customer", record.id),
   },
@@ -390,15 +399,18 @@ const planRecordOperations: Readonly<
     add: (request) =>
       addRecord({
         type: "feature",
-        request: featureRequest({
-          ...planRecordOperations.feature.blank,
-          ...(request as object),
-        } as FeatureFields),
+        request: featureRequest(
+          {
+            ...planRecordOperations.feature.blank,
+            ...(request as object),
+          } as FeatureFields,
+          request as CellChange,
+        ),
       }),
     change: (record, change) =>
       changeRecord(record.id, {
         type: "feature",
-        request: featureRequest({ ...(record as Feature), ...change }),
+        request: featureRequest({ ...(record as Feature), ...change }, change),
       }),
     remove: (record) => removeRecord("feature", record.id),
   },
@@ -421,6 +433,7 @@ export interface TableChoices {
   featureTeams: Choice[];
   // Every cycle a feature can target.
   cycles: Choice[];
+  featureColumns: FeatureColumns;
 }
 
 // A cycle a feature targets, as a value in a cell.
@@ -459,7 +472,7 @@ export const cycleChoices = (streams: readonly ReleaseStream[]): Choice[] =>
   });
 
 export const tableChoices = (
-  plan: PlanLists,
+  plan: PlanLists & Pick<ProjectPlan, "featureColumns">,
   picks: PlanChoices,
   streams: readonly ReleaseStream[],
 ): TableChoices => ({
@@ -476,4 +489,5 @@ export const tableChoices = (
   customers: plan.customers,
   proposals: plan.proposals,
   projects: plan.projects,
+  featureColumns: plan.featureColumns,
 });

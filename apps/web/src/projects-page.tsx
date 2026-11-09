@@ -45,7 +45,13 @@ import {
   useState,
 } from "react";
 import { z } from "zod";
-import { cellKinds } from "./cell-kinds.tsx";
+import { withCellChange } from "./added-columns.ts";
+import { type CellChange, cellKinds } from "./cell-kinds.tsx";
+import {
+  columnDraftActions,
+  ColumnModal,
+  useColumnDialog,
+} from "./column-editing.tsx";
 import { DecisionModal } from "./decision-dialog.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
 import {
@@ -57,6 +63,7 @@ import {
   type DraftSelection,
 } from "./drafts.ts";
 import { Icon } from "./icons.tsx";
+import { listsQuery } from "./lists.ts";
 import { LoadProblem } from "./load-problem.tsx";
 import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
@@ -86,6 +93,7 @@ import {
   allMilestones,
   changeMilestone,
   type FeatureFields,
+  isFeature,
   type MilestoneAdding,
   operationsOf,
   listedPlanRecords,
@@ -106,6 +114,7 @@ import {
   heldBack,
   newRecordProblems,
   pendingId,
+  RecordGrid,
   type RecordActions,
   type RecordTable,
 } from "./record-grid.tsx";
@@ -143,14 +152,21 @@ import { type CellValue, formatDay, type View } from "./table-view.ts";
 export const projectTabSchema = z.enum(projectTabs);
 
 const newButtonId = "projects-new";
+const newColumnId = "features-new-column";
 const panelId = "project-record-panel";
 const panelTitleId = "project-record-panel-title";
 
 // A record being added, as the table shows it before it is saved: a draft adding it.
-function adding(kind: PlanRecordKind, id: string, request: object): PlanRecord {
+function adding(
+  kind: PlanRecordKind,
+  id: string,
+  request: CellChange,
+): PlanRecord {
+  const blank = operationsOf(kind).blank;
   return {
-    ...operationsOf(kind).blank,
+    ...blank,
     ...request,
+    ...("values" in blank ? withCellChange(blank, request) : {}),
     id,
     draft: { ...pendingDraft("created", {}), uses: [] },
   };
@@ -183,6 +199,13 @@ function withAdded(
   return withAll(plan, [...all(plan), ...added]);
 }
 
+// A record with a change applied, as the table shows it before it is saved.
+const withChange = (record: PlanRecord, change: PlanChange): PlanRecord => ({
+  ...record,
+  ...change,
+  ...(isFeature(record) ? withCellChange(record, change) : {}),
+});
+
 const removing = (record: PlanRecord): PlanRecord => ({
   ...record,
   draft: { ...pendingDraft("deleted", {}), uses: [] },
@@ -213,6 +236,7 @@ export function ProjectsPage({
   tab,
   onTab,
   approves = [],
+  canEditColumns = false,
   view,
   onView,
   open,
@@ -223,6 +247,8 @@ export function ProjectsPage({
   onTab?: (tab: ProjectTab, open?: string) => void;
   // The kinds of draft the user's role approves and rejects.
   approves?: readonly DraftKind[];
+  // Whether the user may add and change the columns on Features.
+  canEditColumns?: boolean;
   view: View;
   onView: ChangeView;
   // The record whose details are shown beside the table, by its identifier.
@@ -239,6 +265,13 @@ export function ProjectsPage({
     enabled: page.loadsStreams,
   });
   const streamsPending = page.loadsStreams && streamsQuery.isPending;
+  const editsFeatureColumns = tab === "features" && canEditColumns;
+  // Every list a new column could draw on; the plan holds only those columns already do.
+  const listsToOffer = useQuery({
+    ...listsQuery,
+    enabled: editsFeatureColumns,
+  });
+  const columnDialog = useColumnDialog();
   const choicesSettled = choicesQuery.isSuccess && !streamsPending;
   const narrow = useNarrow();
   const saving =
@@ -300,15 +333,16 @@ export function ProjectsPage({
   const { save, undoable, done } = useSaving<ProjectPlan>({
     queryKey: projectPlanQuery.queryKey,
     removed: "Someone else has removed this. The plan has been refreshed.",
-    blocked: deciding || dialogOpened,
+    blocked: deciding || dialogOpened || columnDialog.opened,
   });
+  const columnSaving = { save, undoable, done };
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
 
   const decide = (asking: Asking, chosen: DraftSelection) => {
     const plan = query.data as ProjectPlan;
     setDecision(
-      decisionFor(asking, chosen, approves, [], {
-        fields: [],
+      decisionFor(asking, chosen, approves, plan.featureColumns.lists, {
+        fields: plan.featureColumns.fields,
         records: planNodes(plan),
       }),
     );
@@ -355,7 +389,7 @@ export function ProjectsPage({
               plan,
               type,
               added.map(({ id, request }) =>
-                adding(type, id, request as object),
+                adding(type, id, request as CellChange),
               ),
             ),
           save: async () => {
@@ -384,10 +418,9 @@ export function ProjectsPage({
       update: (record, change) => {
         save({
           next: (plan) =>
-            withRecord(plan, type, record.id, (shown) => ({
-              ...shown,
-              ...change,
-            })),
+            withRecord(plan, type, record.id, (shown) =>
+              withChange(shown, change),
+            ),
           save: async () =>
             (await operationsOf(type).change(record, change)).changeSetId,
           failure: `Fathom could not change ${record.name}.`,
@@ -419,7 +452,8 @@ export function ProjectsPage({
   } else if (
     query.isError ||
     choicesQuery.isError ||
-    (page.loadsStreams && streamsQuery.isError)
+    (page.loadsStreams && streamsQuery.isError) ||
+    listsToOffer.isError
   ) {
     content = (
       <LoadProblem
@@ -428,6 +462,7 @@ export function ProjectsPage({
           void query.refetch();
           void choicesQuery.refetch();
           if (page.loadsStreams) void streamsQuery.refetch();
+          if (editsFeatureColumns) void listsToOffer.refetch();
         }}
       />
     );
@@ -513,6 +548,7 @@ export function ProjectsPage({
               saving={form.saving === true}
               narrow={narrow}
               panelId={panelId}
+              {...(type === "feature" ? { added: plan.featureColumns } : {})}
               onValues={(values) => {
                 setBeingAdded({ ...form, values });
               }}
@@ -546,15 +582,44 @@ export function ProjectsPage({
     const grids: Readonly<Record<PlanTab, () => ReactElement>> = {
       features: () => {
         const table = featureTable(choices, openRecord);
-        const actions = actionsFor<Feature, FeatureFields>("feature");
+        const actions: RecordActions<Feature, PlanChange, FeatureFields> = {
+          ...actionsFor<Feature, FeatureFields>("feature"),
+          ...columnDraftActions("features", columnSaving),
+          editColumn: (field) => {
+            columnDialog.open({ kind: "edit", field });
+          },
+        };
+        const { fields, order, lists } = plan.featureColumns;
         return (
-          <PlanGrid
-            {...shared}
-            panels={panelsWith("feature", table, plan.features, actions)}
-            records={plan.features}
-            table={table}
-            actions={actions}
-          />
+          <>
+            <RecordGrid
+              {...shared}
+              panels={panelsWith("feature", table, plan.features, actions)}
+              records={plan.features}
+              table={table}
+              actions={actions}
+              fields={fields}
+              order={order}
+              lists={lists}
+              canEditColumns={canEditColumns}
+            />
+            <ColumnModal<ProjectPlan>
+              state={columnDialog}
+              table="features"
+              fields={fields}
+              lists={listsToOffer.data ?? lists}
+              canDelete={plan.canEditFeatures}
+              saving={columnSaving}
+              withColumns={(shown, change) => ({
+                ...shown,
+                featureColumns: {
+                  ...shown.featureColumns,
+                  ...change(shown.featureColumns),
+                },
+              })}
+              newColumnButton={newColumnId}
+            />
+          </>
         );
       },
       customers: () => {
@@ -625,24 +690,37 @@ export function ProjectsPage({
       <PageHeader
         title={page.title}
         action={
-          // The live records alone are read only.
-          canEdit &&
-          view.show !== "live" && (
-            <Button
-              id={newButtonId}
-              variant="filled"
-              disabled={!query.isSuccess || !choicesSettled}
-              onClick={() => {
-                leave(() => {
-                  onOpen?.(undefined);
-                  setForms((count) => count + 1);
-                  setBeingAdded({ tab, values: {} });
-                });
-              }}
-            >
-              New {wordsOf(tab).one}
-            </Button>
-          )
+          <Group gap="xs">
+            {editsFeatureColumns && (
+              <Button
+                id={newColumnId}
+                variant={canEdit ? "default" : "filled"}
+                disabled={!query.isSuccess || !listsToOffer.isSuccess}
+                onClick={() => {
+                  columnDialog.open({ kind: "new" });
+                }}
+              >
+                New column
+              </Button>
+            )}
+            {/* The live records alone are read only. */}
+            {canEdit && view.show !== "live" && (
+              <Button
+                id={newButtonId}
+                variant="filled"
+                disabled={!query.isSuccess || !choicesSettled}
+                onClick={() => {
+                  leave(() => {
+                    onOpen?.(undefined);
+                    setForms((count) => count + 1);
+                    setBeingAdded({ tab, values: {} });
+                  });
+                }}
+              >
+                New {wordsOf(tab).one}
+              </Button>
+            )}
+          </Group>
         }
       />
       {page.tabbed && (

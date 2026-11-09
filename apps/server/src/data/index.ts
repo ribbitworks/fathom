@@ -234,10 +234,7 @@ export interface ProjectAccess {
   // What the plan's records can be given, which everyone who sees the plan may read, though they
   // may not see People or Lists.
   readChoices(actor: Actor): Promise<PlanChoices>;
-  // The columns added to Features, and drafts adding, changing, and removing them.
-  readFeatureColumns(
-    actor: Actor,
-  ): Promise<Awaited<ReturnType<typeof readColumnsOut>>>;
+  // Drafts adding, changing, and removing the columns added to Features.
   createFeatureColumn(
     actor: Actor,
     request: FieldRequest,
@@ -726,13 +723,6 @@ function createProjectAccess(database: Database): ProjectAccess {
     readChoices: async (actor) => {
       requirePermission(actor, "plan:view");
       return projectData.readPlanChoices(database);
-    },
-    readFeatureColumns: async (actor) => {
-      requirePermission(actor, "plan:view");
-      return database.transaction(
-        (transaction) => readColumnsOut(transaction, actor, "features"),
-        { isolationLevel: "repeatable read", accessMode: "read only" },
-      );
     },
     createFeatureColumn: async (actor, request) =>
       columnDrafts.createField(database, editor(actor), request, "features"),

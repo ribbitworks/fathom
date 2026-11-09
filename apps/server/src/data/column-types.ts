@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// What each type of column on People keeps and holds, so a new type is added in one place: a choice
+// What each type of added column keeps and holds, so a new type is added in one place: a choice
 // column draws on a list, takes its tier from the list, and holds choices from it, one or several; a
 // web link column has a visibility of its own as its tier and holds one link, and a note or
 // number column likewise holds one note or number. Values are as the change history records
@@ -27,7 +27,7 @@ export interface TypeSettings {
   multiple: boolean;
 }
 
-// A person's values as a draft shows them live: choices, links, notes, and numbers, by column.
+// A record's values as a draft shows them live: choices, links, notes, and numbers, by column.
 export interface LiveValues {
   values: Record<string, string[]>;
   links: Links;
@@ -50,7 +50,7 @@ export interface ColumnType {
     value: unknown,
     listOf: ReadonlyMap<string, string>,
   ) => boolean;
-  // Adds a person's live value, or that they have none, to what their draft shows.
+  // Adds a record's live value, or that it has none, to what its draft shows.
   showLive: (live: LiveValues, columnId: string, value: unknown) => void;
 }
 
@@ -154,6 +154,19 @@ export const columnTypes: Readonly<Record<FieldType, ColumnType>> = {
   note,
   number,
 };
+
+// Fields' live values, by the type of column each holds, which the value as recorded says.
+export function liveValuesOf(
+  recorded: ReadonlyMap<string, unknown>,
+): LiveValues {
+  const live: LiveValues = { values: {}, links: {}, notes: {}, numbers: {} };
+  for (const [columnId, value] of recorded) {
+    Object.values(columnTypes)
+      .find(({ count }) => count(value) > 0)
+      ?.showLive(live, columnId, value);
+  }
+  return live;
+}
 
 // A column's type. Columns recorded before web link columns hold no type, and choose from a list. A
 // type Fathom does not know is refused rather than read as another.

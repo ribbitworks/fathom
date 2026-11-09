@@ -29,6 +29,8 @@ import {
   signedIn,
   streamId,
   testTheme,
+  noFeatureColumns,
+  featureDraft,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -1126,11 +1128,12 @@ describe("drafts in a stream's panel", () => {
                 estimateHours: null,
                 featureTeamId: null,
                 description: null,
-                draft: recordDraft({ action: "changed" }),
+                draft: featureDraft({ action: "changed" }),
               },
             ],
             canEdit: false,
             canEditFeatures: false,
+            featureColumns: noFeatureColumns,
           }),
       },
     });

@@ -19,6 +19,8 @@ import {
   serverAnswers,
   streamId,
   wholeText,
+  noFeatureColumns,
+  featureDraft,
 } from "./test-support.tsx";
 
 // No release streams, for drafts of other kinds.
@@ -126,6 +128,7 @@ const noPlan = () =>
     features: [],
     canEdit: false,
     canEditFeatures: false,
+    featureColumns: noFeatureColumns,
   });
 const noPlanChoices = () =>
   Response.json({
@@ -616,6 +619,7 @@ describe("the Drafts page", () => {
           features: [],
           canEdit: false,
           canEditFeatures: false,
+          featureColumns: noFeatureColumns,
         }),
     });
     renderApp("/drafts");
@@ -627,6 +631,58 @@ describe("the Drafts page", () => {
       "the milestone Fictional Kickoff of Fictional Project",
     );
     expect(listed).not.toContain("Settled");
+  });
+
+  it("names a draft of a column on Features as being on Features", async () => {
+    serverAnswers({
+      "GET /api/session": session(["configuration:approve", "plan:view"]),
+      "GET /api/release-streams": () =>
+        Response.json({
+          streams: [],
+          canEditStreams: false,
+          canEditReleases: false,
+        }),
+      "GET /api/people": peopleWith([]),
+      "GET /api/lists": () => Response.json({ lists: [] }),
+      "GET /api/projects/choices": noPlanChoices,
+      "GET /api/projects": () =>
+        Response.json({
+          customers: [],
+          projects: [],
+          proposals: [],
+          features: [],
+          featureColumns: {
+            fields: [
+              {
+                id: "f1",
+                name: "Fictional Size",
+                type: "choice",
+                listId: "also-not-sent",
+                visibility: "general",
+                multiple: false,
+                required: false,
+                onPlannedHires: false,
+                draft: {
+                  action: "changed",
+                  changed: ["listId"],
+                  live: { listId: "not-sent" },
+                  state: "waiting",
+                  madeBy: "Fictional Editor",
+                  madeAt: "2026-10-30T15:00:00.000Z",
+                },
+              },
+            ],
+            order: ["name", "f1"],
+            lists: [],
+          },
+          canEdit: false,
+          canEditFeatures: false,
+        }),
+    });
+    renderApp("/drafts");
+    expect(
+      await screen.findByText(/the column Fictional Size on Features/),
+    ).toBeDefined();
   });
 
   it("lists a feature's draft, naming the cycle in words", async () => {
@@ -663,7 +719,7 @@ describe("the Drafts page", () => {
               estimateHours: null,
               featureTeamId: null,
               description: null,
-              draft: recordDraft({
+              draft: featureDraft({
                 changed: ["targetStreamId", "targetCycle"],
                 live: {
                   targetStreamId: streamOfCycles.id,
@@ -674,6 +730,7 @@ describe("the Drafts page", () => {
           ],
           canEdit: false,
           canEditFeatures: false,
+          featureColumns: noFeatureColumns,
         }),
     });
     renderApp("/drafts");

@@ -5,6 +5,7 @@
 // the test's choosing.
 
 import type {
+  FeatureDraft,
   Cycle,
   CyclePattern,
   RecordDraft,
@@ -111,6 +112,19 @@ export const recordDraft = (
   madeBy: "Fictional Editor",
   madeAt: "2026-10-30T15:00:00.000Z",
   ...fields,
+});
+
+export const noFeatureColumns = { fields: [], order: [], lists: [] };
+
+// A draft of a feature, whose added columns' live values are held by type.
+export const featureDraft = ({
+  live = {},
+  ...fields
+}: Omit<Partial<RecordDraft>, "live"> & {
+  live?: Record<string, unknown>;
+} = {}): FeatureDraft => ({
+  ...recordDraft(fields),
+  live: { values: {}, links: {}, notes: {}, numbers: {}, ...live },
 });
 
 export const fictionalPattern = (

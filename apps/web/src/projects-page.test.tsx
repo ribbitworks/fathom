@@ -15,6 +15,7 @@ import {
   recordDraft,
   renderApp,
   serverAnswers,
+  noFeatureColumns,
 } from "./test-support.tsx";
 import { operationsOf } from "./projects.ts";
 
@@ -74,6 +75,7 @@ const plan = (more: Partial<Plan> = {}): Plan => ({
   projects: [project()],
   proposals: [proposal()],
   features: [],
+  featureColumns: noFeatureColumns,
   canEdit: true,
   canEditFeatures: false,
   ...more,
@@ -1747,6 +1749,354 @@ describe("the Features page", () => {
   it("offers one who edits features but not the plan the New button", async () => {
     await open();
     expect(await newButton("feature")).not.toBeNull();
+  });
+
+  describe("added columns", () => {
+    const sizes = {
+      id: "10000000-0000-4000-8000-0000000000a1",
+      name: "Fictional Sizes",
+      description: "",
+      visibility: "general",
+      retired: false,
+      choices: [
+        {
+          id: "10000000-0000-4000-8000-0000000000b1",
+          label: "Small",
+          description: "",
+          retired: false,
+        },
+      ],
+    };
+    const hidden = {
+      ...sizes,
+      id: "10000000-0000-4000-8000-0000000000a2",
+      name: "Fictional Hidden",
+      visibility: "restricted",
+    };
+    const size = {
+      id: "10000000-0000-4000-8000-0000000000c1",
+      name: "Fictional Size",
+      type: "choice" as const,
+      listId: sizes.id,
+      visibility: null,
+      multiple: false,
+      required: false,
+      onPlannedHires: false,
+    };
+    const columnsOf = (fields: Plan["featureColumns"]["fields"] = [size]) =>
+      ({
+        fields,
+        order: ["name", ...fields.map(({ id }) => id)],
+        lists: [sizes],
+      }) as Plan["featureColumns"];
+    const withColumns = (more: Partial<Plan> = {}) =>
+      featurePlan({ featureColumns: columnsOf(), ...more });
+    const columnEditor = [
+      "plan:view",
+      "features:edit",
+      "configuration:view",
+      "configuration:edit",
+    ];
+    const lists = () => Response.json({ lists: [sizes, hidden] });
+    const openWith = (
+      start: Plan,
+      more: object = {},
+      permissions = columnEditor,
+    ) =>
+      openPage(
+        "/features",
+        start,
+        { ...answers, "GET /api/lists": lists, ...more },
+        permissions,
+      );
+    const newColumn = async () => {
+      await waitFor(() => {
+        expect(
+          screen.getByRole<HTMLButtonElement>("button", { name: "New column" })
+            .disabled,
+        ).toBe(false);
+      });
+      await userEvent.click(screen.getByRole("button", { name: "New column" }));
+      return screen.findByRole("dialog", { name: "New column" });
+    };
+    const editColumn = async () => {
+      await userEvent.click(
+        screen.getByRole("button", { name: "Fictional Size column" }),
+      );
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: "Edit column" }),
+      );
+      return screen.findByRole("dialog", { name: "Edit column" });
+    };
+
+    it("shows a value in its column", async () => {
+      await openWith(
+        withColumns({
+          features: [
+            { ...later, values: { [size.id]: [String(sizes.choices[0]?.id)] } },
+          ],
+        }),
+        {},
+        featureEditor,
+      );
+      expect(screen.getByRole("grid").textContent).toContain("Small");
+    });
+
+    it("offers no new column to those who may not change columns", async () => {
+      await openWith(withColumns(), {}, featureEditor);
+      expect(screen.queryByRole("button", { name: "New column" })).toBeNull();
+    });
+
+    it("adds a column to Features, offering only General lists and no planned hires", async () => {
+      const path = "POST /api/features/columns";
+      const added = { ...size, id: "new", name: "Fictional New" };
+      const { fetch, held } = await openWith(withColumns(), {
+        [path]: () => {
+          held.plan = withColumns({ featureColumns: columnsOf([size, added]) });
+          return Response.json({ field: added, changeSetId }, { status: 201 });
+        },
+      });
+      const dialog = await newColumn();
+      expect(
+        within(dialog).queryByLabelText("Offered on planned hires"),
+      ).toBeNull();
+      const options = within(
+        within(dialog).getByLabelText("List"),
+      ).getAllByRole("option");
+      expect(options.map(({ textContent }) => textContent)).toEqual([
+        "",
+        "Fictional Sizes",
+      ]);
+      await userEvent.type(
+        within(dialog).getByLabelText("Name"),
+        "Fictional New",
+      );
+      await userEvent.selectOptions(
+        within(dialog).getByLabelText("List"),
+        sizes.id,
+      );
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Add column" }),
+      );
+      await waitFor(() => {
+        expect(sent(fetch, path)).toEqual([
+          {
+            name: "Fictional New",
+            type: "choice",
+            listId: sizes.id,
+            multiple: false,
+            required: false,
+            onPlannedHires: false,
+          },
+        ]);
+      });
+      expect(
+        await screen.findByRole("button", { name: "Fictional New column" }),
+      ).toBeDefined();
+    });
+
+    it("asks no visibility for a column that holds its own values", async () => {
+      await openWith(withColumns());
+      const dialog = await newColumn();
+      await userEvent.selectOptions(
+        within(dialog).getByLabelText("Type"),
+        "number",
+      );
+      expect(within(dialog).queryByLabelText("List")).toBeNull();
+      expect(within(dialog).queryByRole("radiogroup")).toBeNull();
+      expect(within(dialog).queryByLabelText(/visible|see/i)).toBeNull();
+    });
+
+    it("offers no moving of a column", async () => {
+      await openWith(withColumns());
+      await userEvent.click(
+        screen.getByRole("button", { name: "Fictional Size column" }),
+      );
+      await screen.findByRole("menuitem", { name: "Edit column" });
+      expect(screen.queryByRole("menuitem", { name: /Move/ })).toBeNull();
+    });
+
+    it("deletes a column for those who may change features", async () => {
+      const path = `DELETE /api/features/columns/${size.id}`;
+      const { fetch, held } = await openWith(withColumns(), {
+        [path]: () => {
+          held.plan = withColumns({ featureColumns: columnsOf([]) });
+          return deleted();
+        },
+      });
+      const dialog = await editColumn();
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Delete column" }),
+      );
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("button", { name: "Fictional Size column" }),
+        ).toBeNull();
+      });
+      expect(sentTo(fetch)).toContain(path);
+    });
+
+    it("offers no deleting to those who may not change features", async () => {
+      await openWith(withColumns({ canEditFeatures: false }));
+      const dialog = await editColumn();
+      expect(
+        within(dialog).queryByRole("button", { name: "Delete column" }),
+      ).toBeNull();
+    });
+
+    it("discards a column's draft through Features' columns", async () => {
+      const path = `DELETE /api/features/columns/${size.id}/draft`;
+      const drafted = {
+        ...size,
+        draft: recordDraft({
+          action: "changed",
+          changed: ["name"],
+          live: { name: "Before" },
+        }),
+      };
+      const { fetch } = await openWith(
+        withColumns({ featureColumns: columnsOf([drafted]) }),
+        { [path]: deleted },
+      );
+      await userEvent.click(
+        screen.getByRole("button", { name: /^Fictional Size column/ }),
+      );
+      await userEvent.click(
+        await screen.findByRole("menuitem", { name: /Discard/ }),
+      );
+      await waitFor(() => {
+        expect(sentTo(fetch)).toContain(path);
+      });
+    });
+
+    it("shows a new feature with an empty optional number while it saves", async () => {
+      const score = {
+        ...size,
+        id: "10000000-0000-4000-8000-0000000000c3",
+        name: "Fictional Points",
+        type: "number" as const,
+        listId: null,
+        visibility: "general" as const,
+      };
+      const start = withColumns({
+        features: [],
+        featureColumns: columnsOf([score]),
+      });
+      const path = "POST /api/features";
+      let answer: (response: Response) => void = () => undefined;
+      await openWith(
+        start,
+        {
+          [path]: () =>
+            new Promise<Response>((resolve) => {
+              answer = resolve;
+            }),
+        },
+        featureEditor,
+      );
+      await userEvent.click(await newButton("feature"));
+      await userEvent.type(
+        await screen.findByRole("textbox", { name: /^Name/ }),
+        "Fictional Pending{Enter}",
+      );
+      expect(await screen.findByText("Fictional Pending")).toBeDefined();
+      expect(screen.getByRole("grid").textContent).not.toContain("null");
+      answer(Response.json({ plan: start, changeSetId }));
+    });
+
+    it("says so when the lists to offer could not be loaded, and tries again", async () => {
+      let available = false;
+      await openPage(
+        "/features",
+        withColumns(),
+        {
+          ...answers,
+          "GET /api/lists": () =>
+            available ? lists() : new Response(null, { status: 500 }),
+        },
+        columnEditor,
+      ).catch(() => undefined);
+      const again = await screen.findByRole("button", { name: /Try again/ });
+      available = true;
+      await userEvent.click(again);
+      expect(await screen.findByRole("grid")).toBeDefined();
+    });
+
+    it("saves a value typed in an added column's cell", async () => {
+      const score = {
+        ...size,
+        id: "10000000-0000-4000-8000-0000000000c2",
+        name: "Fictional Score",
+        type: "number" as const,
+        listId: null,
+        visibility: "general" as const,
+      };
+      const start = withColumns({
+        features: [later],
+        featureColumns: columnsOf([score]),
+      });
+      const path = `PUT /api/features/${later.id}`;
+      const { fetch } = await openWith(
+        start,
+        { [path]: saved(() => start) },
+        featureEditor,
+      );
+      await userEvent.dblClick(
+        document.getElementById(`cell-${later.id}-${score.id}`) as HTMLElement,
+      );
+      await userEvent.keyboard("7{Enter}");
+      await waitFor(() => {
+        expect(sent(fetch, path)).toMatchObject([
+          { numbers: { [score.id]: 7 } },
+        ]);
+      });
+    });
+
+    it("sends only the added column's value a change gives", async () => {
+      const path = `PUT /api/features/${later.id}`;
+      const { fetch } = await open(withColumns(), {
+        [path]: saved(withColumns),
+      });
+      await operationsOf("feature").change(
+        { ...later, values: { other: ["kept"] } },
+        { values: { [size.id]: ["picked"] } },
+      );
+      expect(sent(fetch, path)).toMatchObject([
+        { values: { [size.id]: ["picked"] }, links: {} },
+      ]);
+    });
+
+    it("offers an added column in the new feature's form", async () => {
+      await openWith(withColumns(), {}, featureEditor);
+      await userEvent.click(await newButton("feature"));
+      await screen.findByRole("heading", { name: "New feature" });
+      expect(
+        within(sidePanel()).getAllByLabelText("Fictional Size").length,
+      ).toBeGreaterThan(0);
+    });
+
+    it("asks a required note in the new feature's form", async () => {
+      const note = {
+        ...size,
+        id: "note",
+        name: "Fictional Why",
+        type: "note" as const,
+        listId: null,
+        visibility: "general" as const,
+        required: true,
+      };
+      await openWith(
+        withColumns({ featureColumns: columnsOf([note]) }),
+        {},
+        featureEditor,
+      );
+      await userEvent.click(await newButton("feature"));
+      const field = await screen.findByRole("textbox", {
+        name: /Fictional Why/,
+      });
+      await userEvent.type(field, "Because");
+      expect((field as HTMLTextAreaElement).value).toBe("Because");
+    });
   });
 
   it("sends a change of status with the feature's other values", async () => {

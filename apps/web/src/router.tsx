@@ -361,6 +361,7 @@ const featuresRoute = createRoute({
     return (
       <ProjectsPage
         tab="features"
+        canEditColumns={permissions.includes("configuration:edit")}
         onTab={(next, record) => {
           void navigate({
             to: "/projects",

@@ -282,6 +282,8 @@ export {
   type ProjectDates,
   projectDatesSchema,
   projectLengths,
+  type FeatureColumns,
+  featureColumnsSchema,
   type ProjectPlan,
   projectPlanSchema,
   type ProjectRequest,
@@ -296,8 +298,10 @@ export {
 } from "./projects.ts";
 export {
   type Feature,
+  type FeatureDraft,
   type FeatureRequest,
   featureColumnKeys,
+  featureDraftSchema,
   featureLengths,
   featureRequestSchema,
   featureSchema,
@@ -321,6 +325,7 @@ export {
   fieldDraftSchema,
   type FieldRequest,
   type ColumnTable,
+  columnTablePolicies,
   fieldRequestSchema,
   fieldSchema,
   type FieldType,
