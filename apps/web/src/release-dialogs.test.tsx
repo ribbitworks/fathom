@@ -902,6 +902,7 @@ describe("the dialog changing one cycle's length", () => {
       links: {},
       estimateHours: null,
       featureTeamId: null,
+      workstreamId: null,
       description: null,
       targetStreamId: streamId,
       targetCycle: "2027-07-01",
@@ -912,6 +913,7 @@ describe("the dialog changing one cycle's length", () => {
         Response.json({
           customers: [],
           projects: [],
+          workstreams: [],
           proposals: [],
           features: [
             featureOf("Fictional Moved", {}),

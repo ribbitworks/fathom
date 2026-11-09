@@ -14,6 +14,7 @@ import type {
   RecordType,
 } from "@fathom/shared";
 import type { PgTable } from "drizzle-orm/pg-core";
+import type { Transaction } from "./changes.ts";
 import {
   draftBetween,
   type Draft,
@@ -56,6 +57,11 @@ export interface RecordKind {
   // Values a record added is given beside its fields, such as its place at the end of an order,
   // from the kind's rows, including those added before it in the same approval.
   added?: (rows: ReadonlyMap<string, Recorded>) => Recorded;
+  // Whether Fathom keeps the record itself, so nobody can change or remove it through a draft.
+  keptByFathom?: (state: RecordsState, id: string) => boolean;
+  // What approving does beyond a record's own row, once the row is added and before it is removed.
+  onAdded?: (transaction: Transaction, id: string) => Promise<void>;
+  onRemoving?: (transaction: Transaction, id: string) => Promise<void>;
 }
 
 export type Referred = "person" | "choice" | "feature-team";

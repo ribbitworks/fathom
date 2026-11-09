@@ -96,17 +96,28 @@ export async function firstOffered(
   return choice?.id;
 }
 
+// The first choice offered, of a meaning when one is named, refusing with the message given when
+// none is.
+export async function firstOfferedOrRefused(
+  reader: Reader,
+  key: BuiltInList,
+  meaning: Meaning | undefined,
+  missing: string,
+): Promise<string> {
+  const id = await firstOffered(reader, key, meaning);
+  if (id === undefined) throw new ConflictError(missing);
+  return id;
+}
+
 // The first choice offered for a meaning, in the list's order, refusing when none is.
-export async function firstChoiceMeaning(
+export const firstChoiceMeaning = (
   reader: Reader,
   key: BuiltInList,
   meaning: HiringMeaning,
-): Promise<string> {
-  const id = await firstOffered(reader, key, meaning);
-  if (id === undefined) {
-    throw new ConflictError(
-      `No ${columnName(key)} means ${meaningName(meaning)}. Choose one for the hire.`,
-    );
-  }
-  return id;
-}
+): Promise<string> =>
+  firstOfferedOrRefused(
+    reader,
+    key,
+    meaning,
+    `No ${columnName(key)} means ${meaningName(meaning)}. Choose one for the hire.`,
+  );

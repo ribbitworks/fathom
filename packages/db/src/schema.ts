@@ -419,11 +419,13 @@ export const proposals = fathomSchema.table(
 // Projects. A project's name is unique, ignoring letter case, and so is its Project ID when it has
 // one. Its dates are not kept: they come from its milestones. Its customers, the proposals it links
 // to, and the features it needs are kept as lists of identifiers, which the server checks name
-// records.
+// records. A workstream is standing work kept as a project of its own kind, with no Project ID,
+// customers, or proposals.
 export const projects = fathomSchema.table(
   "projects",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    kind: text("kind").notNull().default("project"),
     name: text("name").notNull(),
     externalId: text("external_id"),
     ownerId: uuid("owner_id").references(() => people.id, {
@@ -448,6 +450,11 @@ export const projects = fathomSchema.table(
       sql`lower(${table.externalId})`,
     ),
     index("projects_owner_index").on(table.ownerId),
+    check("projects_kind", sql`${table.kind} IN ('project', 'workstream')`),
+    check(
+      "projects_workstream_unlinked",
+      sql`${table.kind} = 'project' OR (${table.externalId} IS NULL AND ${table.customerIds} = '{}' AND ${table.proposalIds} = '{}')`,
+    ),
   ],
 );
 
@@ -479,7 +486,8 @@ export const milestones = fathomSchema.table(
 // Features: the planned work on the roadmap. A feature's name is unique, ignoring letter case. A
 // project's general feature has no name of its own, since it shows its project's and follows it. A
 // target cycle is known by its stream and start date, as cycles are worked out rather than stored;
-// a feature with none is in Later. Its status is a choice of the built-in list of feature statuses.
+// a feature with none is in Later. A feature of a workstream is on that workstream's roadmap and
+// no other. Its status is a choice of the built-in list of feature statuses.
 // The month it is needed by is kept as text such as 2027-03. Its note is Markdown checked by the
 // server. The estimate is one value, in hours, whichever unit it is shown in; PostgreSQL ranks NaN
 // above every number, so it must be refused by name.
@@ -515,12 +523,16 @@ export const features = fathomSchema.table(
       () => projects.id,
       { onDelete: "restrict" },
     ),
+    workstreamId: uuid("workstream_id").references(() => projects.id, {
+      onDelete: "restrict",
+    }),
   },
   (table) => [
     uniqueIndex("features_name_index").on(sql`lower(${table.name})`),
     uniqueIndex("features_general_for_project_index").on(
       table.generalForProjectId,
     ),
+    index("features_workstream_index").on(table.workstreamId),
     index("features_target_index").on(table.targetStreamId, table.targetCycle),
     index("features_feature_team_index").on(table.featureTeamId),
     index("features_status_index").on(table.statusId),

@@ -371,7 +371,12 @@ export function changeableRecord(
   type: RecordType,
   id: string,
 ): Recorded {
-  if (!recordExists(state, type, id)) throw new NotFoundError(noRecord);
+  if (
+    !recordExists(state, type, id) ||
+    kindOf(type).keptByFathom?.(state, id) === true
+  ) {
+    throw new NotFoundError(noRecord);
+  }
   refuseHeldIn(state, type, id);
   const version = versionOf(state, type, id);
   if (version === undefined) {
@@ -858,6 +863,7 @@ export async function approveRecordDrafts(
         const row = { ...values, ...kind.added?.(rows) };
         await transaction.insert(table).values({ id, ...row } as never);
         rows.set(id, row);
+        await kind.onAdded?.(transaction, id);
       } else {
         await transaction
           .update(table)
@@ -888,6 +894,16 @@ export async function approveRecordDrafts(
       made.push(...kindChanges(kind, id, before, after));
     }
   }
+  // Judged before anything is deleted, so a record still linked to is refused by name rather than
+  // by the database.
+  const problem = ruleProblem(
+    removed.reduce(
+      (left, { kind, id }) => withVersion(left, kind.type, id, undefined),
+      liveOnly(await readRecordsState(transaction)),
+    ),
+    touched,
+  );
+  if (problem !== undefined) throw new ConflictError(problem);
   for (const { kind, id } of removed.reverse()) {
     made.push(
       ...kindChanges(
@@ -897,6 +913,7 @@ export async function approveRecordDrafts(
         undefined,
       ),
     );
+    await kind.onRemoving?.(transaction, id);
     await transaction.delete(kind.table).where(eq(idOf(kind.table), id));
   }
   for (const kind of recordKinds) {
@@ -906,11 +923,6 @@ export async function approveRecordDrafts(
       approved.filter(({ type }) => type === kind.type).map(({ id }) => id),
     );
   }
-  const problem = ruleProblem(
-    liveOnly(await readRecordsState(transaction)),
-    touched,
-  );
-  if (problem !== undefined) throw new ConflictError(problem);
   return made;
 }
 

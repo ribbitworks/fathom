@@ -70,6 +70,7 @@ const feature = (more: Partial<Feature> = {}): Feature => ({
   targetCycle: null,
   estimateHours: null,
   featureTeamId: "t1",
+  workstreamId: null,
   description: null,
   note: null,
   values: {},

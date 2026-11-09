@@ -22,7 +22,7 @@ import {
   features,
 } from "@fathom/db";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
-import { eq, isNull } from "drizzle-orm";
+import { eq, isNotNull, isNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -31,6 +31,7 @@ import {
   proposalId,
   seededCustomers,
   seededProjects,
+  seededWorkstreams,
   seedProjects,
   unseedProjects,
 } from "./projects.ts";
@@ -64,6 +65,7 @@ beforeAll(async () => {
 afterEach(async () => {
   await connection.delete(drafts);
   await connection.delete(milestones);
+  await connection.delete(features);
   await connection.delete(projects);
   await connection.delete(proposals);
   await connection.delete(customers);
@@ -236,6 +238,59 @@ describe("removing projects", () => {
       recordId: randomUUID(),
       action: "created",
       fields: { customerIds: [customerId("air")] },
+    });
+    await unseedProjects(connection);
+    expect(await connection.select().from(drafts)).toEqual([]);
+  });
+
+  it("adds the workstreams, and a general feature in progress for every project and workstream", async () => {
+    await seed();
+    const kept = await connection.select().from(projects);
+    expect(
+      kept.filter(({ kind }) => kind === "workstream").map(({ name }) => name),
+    ).toEqual(
+      expect.arrayContaining(seededWorkstreams.map(({ name }) => name)),
+    );
+    const general = await connection
+      .select({
+        project: features.generalForProjectId,
+        meaning: listItems.meaning,
+      })
+      .from(features)
+      .innerJoin(listItems, eq(listItems.id, features.statusId))
+      .where(isNotNull(features.generalForProjectId));
+    expect(general.map(({ project }) => project).sort()).toEqual(
+      kept.map(({ id }) => id).sort(),
+    );
+    expect(new Set(general.map(({ meaning }) => meaning))).toEqual(
+      new Set(["in-progress"]),
+    );
+  });
+
+  it("keeps a workstream with features added by hand", async () => {
+    await seed();
+    const [status] = await connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(eq(lists.builtIn, "feature-statuses"));
+    await connection.insert(features).values({
+      name: "Fictional Hand Feature",
+      statusId: String(status?.id),
+      workstreamId: projectId("devops"),
+    });
+    expect(await unseedProjects(connection)).toContain(
+      "The workstream DevOps, which has features added by hand",
+    );
+  });
+
+  it("discards a feature's draft on a workstream removed", async () => {
+    await seed();
+    await connection.insert(drafts).values({
+      recordType: "feature",
+      recordId: randomUUID(),
+      action: "created",
+      fields: { workstreamId: projectId("devops") },
     });
     await unseedProjects(connection);
     expect(await connection.select().from(drafts)).toEqual([]);

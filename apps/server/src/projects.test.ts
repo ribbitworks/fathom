@@ -343,7 +343,9 @@ describe("projects", () => {
     const sameName = await send("POST", "/api/projects", {
       name: project.name.toLowerCase(),
     });
-    expect(errorOf(sameName)).toBe("There is already a project with that name");
+    expect(errorOf(sameName)).toBe(
+      "There is already a project or workstream with that name",
+    );
     await addProject({ externalId: "" });
     expect((await addProject()).externalId).toBeNull();
   });

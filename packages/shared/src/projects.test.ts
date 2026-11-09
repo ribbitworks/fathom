@@ -126,6 +126,9 @@ describe("subjects", () => {
       "the customer Fictional",
     );
     expect(projectSubjects.project("Fictional")).toBe("the project Fictional");
+    expect(projectSubjects.workstream("Fictional")).toBe(
+      "the workstream Fictional",
+    );
     expect(projectSubjects.milestone("Kickoff", "Fictional")).toBe(
       "the milestone Kickoff of Fictional",
     );

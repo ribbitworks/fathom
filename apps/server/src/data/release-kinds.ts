@@ -188,6 +188,25 @@ export const releaseKind: RecordKind = {
   },
 };
 
+// Whether a feature is a project's general feature, which exists only live, made and removed as
+// its project is approved, and stays off every roadmap.
+const generalForProject = (state: RecordsState, id: string): unknown =>
+  stateOf(state, "feature").rows.get(id)?.generalForProjectId;
+
+export const isGeneralFeature = (state: RecordsState, id: string): boolean =>
+  typeof generalForProject(state, id) === "string";
+
+export const isWorkstream = (state: RecordsState, id: string): boolean =>
+  shownVersion(state, "project", id)?.kind === "workstream";
+
+// How drafts and refusals name a project or workstream.
+export const projectRowSubject = (state: RecordsState, id: string): string =>
+  (isWorkstream(state, id)
+    ? projectSubjects.workstream
+    : projectSubjects.project)(
+    String(shownVersion(state, "project", id)?.name),
+  );
+
 // A feature's stream is the one it targets, so a target cycle's stream cannot be removed.
 export const featureKind: RecordKind = {
   type: "feature",
@@ -201,19 +220,31 @@ export const featureKind: RecordKind = {
     "targetCycle",
     "estimateHours",
     "featureTeamId",
+    "workstreamId",
     "description",
     "note",
   ],
-  links: { targetStreamId: "release-stream", customerIds: "customer" },
+  links: {
+    targetStreamId: "release-stream",
+    customerIds: "customer",
+    workstreamId: "project",
+  },
   refers: { featureTeamId: "feature-team", statusId: "choice" },
+  keptByFathom: (state, id) => isGeneralFeature(state, id),
   addedColumns: { owner: "feature", table: "features" },
   changedTogether: ["targetStreamId", "targetCycle"],
   unique: [
     { field: "name", message: "There is already a feature with that name" },
   ],
   readWith: ["plan:view"],
-  subject: (state, id) =>
-    projectSubjects.feature(String(shownVersion(state, "feature", id)?.name)),
+  subject: (state, id) => {
+    const project = generalForProject(state, id);
+    return typeof project === "string"
+      ? projectRowSubject(state, project)
+      : projectSubjects.feature(
+          String(shownVersion(state, "feature", id)?.name),
+        );
+  },
   // A feature drafted onto another cycle, or onto one only the stream's drafted patterns make, uses
   // those patterns' drafts, as a release does.
   alsoUses: (state, id) => {
@@ -228,12 +259,7 @@ export const featureKind: RecordKind = {
   },
 };
 
-export const releaseKinds = [
-  streamKind,
-  patternKind,
-  releaseKind,
-  featureKind,
-] as const;
+export const releaseKinds = [streamKind, patternKind, releaseKind] as const;
 
 // A pattern as the cycles are worked out from it.
 const asPattern = (record: Recorded): CyclePatternLike => ({

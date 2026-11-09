@@ -1,4 +1,4 @@
-# Fathom — Domain Model
+# Fathom: Domain Model
 
 **Status:** Draft
 **Last updated:** 2026-11-08
@@ -13,6 +13,7 @@ The diagram shows the core relationships only. Dashed lines are proposals or rel
 erDiagram
     PROJECT }o--o{ FEATURE : needs
     PROJECT ||--|| FEATURE : "general feature"
+    PROJECT |o--o{ FEATURE : "workstream of"
     PROJECT |o--o{ MILESTONE : has
     FEATURE |o--o{ MILESTONE : has
     PROJECT }o--o{ CUSTOMER : "driven by"
@@ -52,9 +53,9 @@ erDiagram
 
 ## Planning Entities
 
-- **Project:** Has a name, and optionally a Project ID, an owner, who is a person, and customers. Has milestones, which give it its dates, and links to the features it needs, which its draft holds whichever side they are edited from. Has one general feature, which takes allocations made to the project directly. Links to one or more proposals; nothing else ties them.
+- **Project:** Has a name, and optionally a Project ID, an owner, who is a person, and customers. Has milestones, which give it its dates, and links to the features it needs, which its draft holds whichever side they are edited from. Has one general feature, which takes allocations made to the project directly and is added and removed as the project is approved. Links to one or more proposals; nothing else ties them. Is of the kind project or workstream: a workstream has a name and optionally an owner, with no Project ID, customers, proposals, or milestones.
 - **Proposal:** Work offered or requested that may become a project, such as a bid or a customer request. Has a name, a status, and optionally a Proposal ID, a web link, an owner, who is a person, and customers. Links to the features it proposes. Projects link to proposals; a proposal is not made into a project.
-- **Feature:** Has a name, a status, a choice of the built-in list of feature statuses, and optionally the month it is needed by, customers, a description, a note, a target cycle, an estimate, and the feature team that owns and delivers it. Has no owner of its own; ownership comes from its feature team. A project's general feature has no name of its own and shows its project's. Can be needed by several projects. Ships in the release that includes its target cycle, and its start and end months follow from its allocations. Holds values in the columns added to Features, which are part of its draft.
+- **Feature:** Has a name, a status, a choice of the built-in list of feature statuses, and optionally the month it is needed by, customers, a description, a note, a target cycle, an estimate, and the feature team that owns and delivers it. Has no owner of its own; ownership comes from its feature team. A project's general feature has no name of its own and shows its project's, has the first status meaning In progress, has no draft, and is on no roadmap. May belong to one workstream, whose roadmap it is then on. Can be needed by several projects. Ships in the release that includes its target cycle, and its start and end months follow from its allocations. Holds values in the columns added to Features, which are part of its draft.
 - **Milestone:** A dated point in one project or one feature, with a name, which says whether it is a customer delivery date. Milestones are kept in a table of their own. Proposal milestones are decided but not built, as the [Decisions Log](../product/decisions.md#planning) records.
 - **Allocation:** Puts one person or planned hire on one feature from a month, with a percentage, or with none when it stops the allocation. It is in force until the next allocation for the same person or planned hire and feature, as reporting lines are kept from a date. It points to a person or a planned hire, never both. Filling a planned hire moves its allocations to the person, as set out below.
 - **Estimate:** A feature's one estimate, its total effort, kept as one value in hours and shown in the unit the reader picks.

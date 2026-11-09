@@ -124,6 +124,7 @@ const noPlan = () =>
   Response.json({
     customers: [],
     projects: [],
+    workstreams: [],
     proposals: [],
     features: [],
     canEdit: false,
@@ -591,6 +592,7 @@ describe("the Drafts page", () => {
               draft: recordDraft({ action: "deleted" }),
             },
           ],
+          workstreams: [],
           projects: [
             {
               id: projectId,
@@ -649,6 +651,7 @@ describe("the Drafts page", () => {
         Response.json({
           customers: [],
           projects: [],
+          workstreams: [],
           proposals: [],
           features: [],
           featureColumns: {
@@ -703,6 +706,7 @@ describe("the Drafts page", () => {
         Response.json({
           customers: [],
           projects: [],
+          workstreams: [],
           proposals: [],
           features: [
             {
@@ -718,6 +722,7 @@ describe("the Drafts page", () => {
               targetCycle: second?.startsOn,
               estimateHours: null,
               featureTeamId: null,
+              workstreamId: null,
               description: null,
               draft: featureDraft({
                 changed: ["targetStreamId", "targetCycle"],

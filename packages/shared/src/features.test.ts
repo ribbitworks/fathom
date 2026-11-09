@@ -23,6 +23,7 @@ describe("a feature request", () => {
       target: null,
       estimateHours: null,
       featureTeamId: null,
+      workstreamId: null,
       description: null,
       note: null,
       values: {},

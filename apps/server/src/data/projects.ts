@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, proposals, and features: reading them as the viewer
-// sees them, each project with its dates from its milestones, and drafting each added, changed, and
-// removed.
+// Customers, projects with their milestones, workstreams, proposals, and features: reading them as
+// the viewer sees them, each project with its dates from its milestones, and drafting each added,
+// changed, and removed.
 // Part of the data access layer; the caller checks the actor's permissions. Every change is a
 // draft of a plan record, as records.ts sets out, with the kinds project-kinds.ts describes.
 
@@ -29,6 +29,8 @@ import {
   projectDates,
   type RecordType,
   sameDates,
+  type Workstream,
+  type WorkstreamRequest,
 } from "@fathom/shared";
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -36,7 +38,7 @@ import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import {
   checkBuiltInChoice,
-  firstOffered,
+  firstOfferedOrRefused,
   listChoices,
 } from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
@@ -56,6 +58,7 @@ import {
   valuesOf,
 } from "./people.ts";
 import { milestonesOf } from "./project-kinds.ts";
+import { isGeneralFeature, isWorkstream } from "./release-kinds.ts";
 import {
   fieldOfValue,
   inListOrder,
@@ -193,6 +196,11 @@ function inOrder(state: RecordsState, type: RecordType): string[] {
   ];
 }
 
+const projectRowsOfKind = (state: RecordsState, kind: ProjectRowKind) =>
+  inOrder(state, "project").filter(
+    (id) => shownVersion(state, "project", id)?.kind === kind,
+  );
+
 function milestoneOut(
   state: RecordsState,
   makers: Makers,
@@ -251,6 +259,20 @@ function projectOut(
   };
 }
 
+function workstreamOut(
+  state: RecordsState,
+  makers: Makers,
+  id: string,
+): Workstream {
+  const workstream = shownVersion(state, "project", id) as Recorded;
+  return {
+    id,
+    name: String(workstream.name),
+    ownerId: text(workstream.ownerId),
+    ...extras(state, makers, "project", id),
+  };
+}
+
 function proposalOut(
   state: RecordsState,
   makers: Makers,
@@ -283,6 +305,7 @@ function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
     estimateHours:
       typeof feature.estimateHours === "number" ? feature.estimateHours : null,
     featureTeamId: text(feature.featureTeamId),
+    workstreamId: text(feature.workstreamId),
     description: text(feature.description),
     note: text(feature.note),
     values: Object.fromEntries(valuesOf(feature)),
@@ -307,15 +330,18 @@ async function planOut(
       name: String(shownVersion(state, "customer", id)?.name),
       ...extras(state, makers, "customer", id),
     })),
-    projects: inOrder(state, "project").map((id) =>
+    projects: projectRowsOfKind(state, "project").map((id) =>
       projectOut(state, makers, id, today),
+    ),
+    workstreams: projectRowsOfKind(state, "workstream").map((id) =>
+      workstreamOut(state, makers, id),
     ),
     proposals: inOrder(state, "proposal").map((id) =>
       proposalOut(state, makers, id),
     ),
-    features: inOrder(state, "feature").map((id) =>
-      featureOut(state, makers, id),
-    ),
+    features: inOrder(state, "feature")
+      .filter((id) => !isGeneralFeature(state, id))
+      .map((id) => featureOut(state, makers, id)),
     featureColumns: await featureColumnsOut(transaction, viewer),
   };
 }
@@ -373,14 +399,45 @@ async function checkOwner(
   }
 }
 
-// A customer, project, proposal, or feature, as a request adds or changes it.
+// A customer, project, workstream, proposal, or feature, as a request adds or changes it.
 export type PlanRecordRequest =
   | { type: "customer"; request: CustomerRequest }
   | { type: "project"; request: ProjectRequest }
+  | { type: "workstream"; request: WorkstreamRequest }
   | { type: "proposal"; request: ProposalRequest }
   | { type: "feature"; request: FeatureRequest };
 
 export type PlanKind = PlanRecordRequest["type"];
+
+type ProjectRowKind = Extract<PlanKind, "project" | "workstream">;
+
+// The kind of the plan's records a request is to: a workstream is kept as a project.
+export const recordTypeOf = (kind: PlanKind): RecordType =>
+  kind === "workstream" ? "project" : kind;
+
+// A project or workstream to change, refusing a row of the other kind.
+function changeableProjectRow(
+  state: RecordsState,
+  kind: ProjectRowKind,
+  id: string,
+): Recorded {
+  const shown = shownVersion(state, "project", id);
+  if (shown !== undefined && shown.kind !== kind) {
+    throw new NotFoundError(`There is no such ${kind}`);
+  }
+  return changeableRecord(state, "project", id);
+}
+
+// What refuses removing each kind of record that can't be changed.
+const refuseUnchangeable: Readonly<
+  Record<PlanKind, (state: RecordsState, id: string) => void>
+> = {
+  customer: (state, id) => changeableRecord(state, "customer", id),
+  project: (state, id) => changeableProjectRow(state, "project", id),
+  workstream: (state, id) => changeableProjectRow(state, "workstream", id),
+  proposal: (state, id) => changeableRecord(state, "proposal", id),
+  feature: (state, id) => changeableRecord(state, "feature", id),
+};
 
 export async function addCustomer(
   database: Database,
@@ -408,7 +465,13 @@ export async function changeCustomer(
   );
 }
 
-const projectRecord = (request: ProjectRequest) => ({
+type ProjectRow = Recorded & {
+  kind: ProjectRowKind;
+  ownerId: string | null;
+};
+
+const projectRecord = (request: ProjectRequest): ProjectRow => ({
+  kind: "project",
   name: request.name,
   externalId: request.externalId,
   ownerId: request.ownerId,
@@ -416,43 +479,69 @@ const projectRecord = (request: ProjectRequest) => ({
   proposalIds: request.proposalIds,
 });
 
-export async function addProject(
+const workstreamRecord = (request: WorkstreamRequest): ProjectRow => ({
+  kind: "workstream",
+  name: request.name,
+  externalId: null,
+  ownerId: request.ownerId,
+  customerIds: [],
+  proposalIds: [],
+});
+
+const addProjectRow = (
   database: Database,
   maker: Actor,
-  request: ProjectRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, async (transaction, state) => {
-    await checkOwner(transaction, request.ownerId);
+  record: ProjectRow,
+): Promise<Saved<PlanRecords>> =>
+  changingPlan(database, maker, async (transaction, state) => {
+    await checkOwner(transaction, record.ownerId);
     return saveRecordDraft(
       transaction,
       maker,
       state,
       "project",
       randomUUID(),
-      projectRecord(request),
+      record,
     );
   });
-}
 
-export async function changeProject(
+const changeProjectRow = (
+  database: Database,
+  maker: Actor,
+  id: string,
+  record: ProjectRow,
+): Promise<Saved<PlanRecords>> =>
+  changingPlan(database, maker, async (transaction, state) => {
+    changeableProjectRow(state, record.kind, id);
+    await checkOwner(transaction, record.ownerId);
+    return saveRecordDraft(transaction, maker, state, "project", id, record);
+  });
+
+export const addProject = (
+  database: Database,
+  maker: Actor,
+  request: ProjectRequest,
+) => addProjectRow(database, maker, projectRecord(request));
+
+export const changeProject = (
   database: Database,
   maker: Actor,
   id: string,
   request: ProjectRequest,
-): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, async (transaction, state) => {
-    changeableRecord(state, "project", id);
-    await checkOwner(transaction, request.ownerId);
-    return saveRecordDraft(
-      transaction,
-      maker,
-      state,
-      "project",
-      id,
-      projectRecord(request),
-    );
-  });
-}
+) => changeProjectRow(database, maker, id, projectRecord(request));
+
+export const addWorkstream = (
+  database: Database,
+  maker: Actor,
+  request: WorkstreamRequest,
+) => addProjectRow(database, maker, workstreamRecord(request));
+
+export const changeWorkstream = (
+  database: Database,
+  maker: Actor,
+  id: string,
+  request: WorkstreamRequest,
+) => changeProjectRow(database, maker, id, workstreamRecord(request));
 
 type StatusList = Extract<
   BuiltInList,
@@ -488,9 +577,7 @@ async function statusFor(
   // The list is always one of the two above.
   // eslint-disable-next-line security/detect-object-injection
   const { meaning, missing } = startingStatus[list];
-  const first = await firstOffered(transaction, list, meaning);
-  if (first === undefined) throw new ConflictError(missing);
-  return first;
+  return firstOfferedOrRefused(transaction, list, meaning, missing);
 }
 
 async function proposalRecord(
@@ -591,9 +678,16 @@ async function featureValues(
 
 async function featureRecord(
   transaction: Transaction,
+  state: RecordsState,
   request: FeatureRequest,
   current?: Recorded,
 ) {
+  if (
+    request.workstreamId !== null &&
+    !isWorkstream(state, request.workstreamId)
+  ) {
+    throw new BadRequestError("Choose a workstream");
+  }
   await checkTeamForFeature(transaction, request.featureTeamId);
   const added = await featureValues(transaction, request, current);
   return {
@@ -611,6 +705,7 @@ async function featureRecord(
     targetCycle: request.target?.cycle ?? null,
     estimateHours: request.estimateHours,
     featureTeamId: request.featureTeamId,
+    workstreamId: request.workstreamId,
     description: request.description,
     note: keptNote(request.note),
   };
@@ -628,7 +723,7 @@ export async function addFeature(
       state,
       "feature",
       randomUUID(),
-      await featureRecord(transaction, request),
+      await featureRecord(transaction, state, request),
     ),
   );
 }
@@ -647,7 +742,7 @@ export async function changeFeature(
       state,
       "feature",
       id,
-      await featureRecord(transaction, request, feature),
+      await featureRecord(transaction, state, request, feature),
     );
   });
 }
@@ -679,16 +774,19 @@ export async function addMilestone(
   projectId: string,
   request: MilestoneRequest,
 ): Promise<Saved<PlanRecords>> {
-  return changingPlan(database, maker, (transaction, state) =>
-    saveRecordDraft(
+  return changingPlan(database, maker, (transaction, state) => {
+    if (isWorkstream(state, projectId)) {
+      throw new ConflictError("A workstream has no milestones");
+    }
+    return saveRecordDraft(
       transaction,
       maker,
       state,
       "milestone",
       randomUUID(),
       milestoneRecord(projectId, request),
-    ),
-  );
+    );
+  });
 }
 
 export async function changeMilestone(
@@ -748,11 +846,13 @@ async function removing(
 export async function removeRecord(
   database: Database,
   maker: Actor,
-  type: PlanKind,
+  kind: PlanKind,
   id: string,
 ): Promise<string | null> {
-  return removing(database, maker, type, id, (state) => {
-    changeableRecord(state, type, id);
+  return removing(database, maker, recordTypeOf(kind), id, (state) => {
+    // The kind is always one of the fixed kinds.
+    // eslint-disable-next-line security/detect-object-injection
+    refuseUnchangeable[kind](state, id);
   });
 }
 

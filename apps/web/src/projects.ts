@@ -162,6 +162,7 @@ export type FeatureFields = Pick<
   | "targetCycle"
   | "estimateHours"
   | "featureTeamId"
+  | "workstreamId"
   | "description"
   | "note"
 >;
@@ -176,6 +177,7 @@ export const featureRequest = (
     customerIds,
     estimateHours,
     featureTeamId,
+    workstreamId,
     description,
     note,
     targetStreamId,
@@ -189,6 +191,7 @@ export const featureRequest = (
   customerIds,
   estimateHours,
   featureTeamId,
+  workstreamId,
   description,
   note,
   values,
@@ -389,6 +392,7 @@ const planRecordOperations: Readonly<
       targetCycle: null,
       estimateHours: null,
       featureTeamId: null,
+      workstreamId: null,
       description: null,
       note: null,
       values: {},

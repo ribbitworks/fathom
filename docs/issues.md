@@ -21,6 +21,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Planning
 
+- **Change history wording for plan records:** The history names a project, and any other kind of plan record it has no wording for, as "a record", in `apps/web/src/changes.ts`. Workstreams need their own wording when they reach the screens.
 - **Cycles from the 29th to the 31st:** A monthly cycle that starts on one of these days starts on the last day of shorter months. Changing one such cycle's length counts the cycles after it from that cycle's own start, so they can stay on the 28th from then on. Deferred by the owner on 2026-11-05 as rare in practice.
 - **Freezes between cycles:** A stream's cycles follow one another with no gap, so a freeze, such as the end of December, can only be a short cycle with a name and number of its own. Deferred by the owner on 2026-11-04 until a stream needs one; a cycle marked as a gap, unnamed and not counted, would fit the cycle patterns.
 - **Undoing changes to the plan's records:** The change history refuses undoing a change to a release stream, cycle pattern, or release, since undoing one can break the rules for cycles and releases that approving checks. Deferred until undo is wanted for them.

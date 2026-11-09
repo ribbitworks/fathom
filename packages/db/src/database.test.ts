@@ -1206,6 +1206,39 @@ describe("features", () => {
     });
   });
 
+  it("refuses a workstream with customers, proposals, or a Project ID", async () => {
+    await withClient(database.app, async (client) => {
+      const addWorkstream = (columns: string, values: string) =>
+        client.query(
+          `INSERT INTO projects (kind, name${columns}) VALUES ('workstream', '${prefix} Workstream'${values})`,
+        );
+      const listed = "'{00000000-0000-4000-8000-000000000001}'";
+      for (const [column, value] of [
+        ["customer_ids", listed],
+        ["proposal_ids", listed],
+        ["external_id", "'W-1'"],
+      ]) {
+        expect(
+          await errorCodeOf(
+            addWorkstream(`, ${String(column)}`, `, ${String(value)}`),
+          ),
+        ).toBe(checkViolation);
+      }
+    });
+  });
+
+  it("refuses a project row of no known kind", async () => {
+    await withClient(database.app, async (client) => {
+      expect(
+        await errorCodeOf(
+          client.query(
+            `INSERT INTO projects (kind, name) VALUES ('other', '${prefix} Other')`,
+          ),
+        ),
+      ).toBe(checkViolation);
+    });
+  });
+
   it("gives a project at most one general feature", async () => {
     await withClient(database.app, async (client) => {
       const projectId = await addProject(client);
@@ -1379,6 +1412,19 @@ describe("features", () => {
       expect(
         await errorCodeOf(removeRow(client, "feature_teams", teamId)),
       ).toBe(restrictViolation);
+    });
+  });
+
+  it("keeps a workstream with features from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      const projectId = await addProject(client);
+      await client.query(
+        `INSERT INTO features (status_id, name, workstream_id) VALUES (${anyFeatureStatus}, $1, $2)`,
+        [`${prefix} On Workstream`, projectId],
+      );
+      expect(await errorCodeOf(removeRow(client, "projects", projectId))).toBe(
+        restrictViolation,
+      );
     });
   });
 

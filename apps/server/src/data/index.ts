@@ -225,6 +225,7 @@ export interface ReleaseAccess {
 }
 
 export type { PlanKind, PlanRecordRequest } from "./projects.ts";
+export { firstOffered } from "./built-in-lists.ts";
 
 // Every change to customers, projects, milestones, proposals, and features is a draft, made by those
 // who edit the plan, or, for features, those who edit features. Each answers with every record as
@@ -704,6 +705,10 @@ const planChanges = {
     change: projectData.changeCustomer,
   },
   project: { add: projectData.addProject, change: projectData.changeProject },
+  workstream: {
+    add: projectData.addWorkstream,
+    change: projectData.changeWorkstream,
+  },
   proposal: {
     add: projectData.addProposal,
     change: projectData.changeProposal,
@@ -754,7 +759,7 @@ function createProjectAccess(database: Database): ProjectAccess {
         // eslint-disable-next-line security/detect-object-injection
         planChanges[type].add(
           database,
-          recordEditor(actor, type),
+          recordEditor(actor, projectData.recordTypeOf(type)),
           request as never,
         ),
       ),
@@ -764,13 +769,18 @@ function createProjectAccess(database: Database): ProjectAccess {
         // eslint-disable-next-line security/detect-object-injection
         planChanges[type].change(
           database,
-          recordEditor(actor, type),
+          recordEditor(actor, projectData.recordTypeOf(type)),
           id,
           request as never,
         ),
       ),
     remove: async (actor, type, id) =>
-      projectData.removeRecord(database, recordEditor(actor, type), type, id),
+      projectData.removeRecord(
+        database,
+        recordEditor(actor, projectData.recordTypeOf(type)),
+        type,
+        id,
+      ),
     addMilestone: async (actor, projectId, request) =>
       edited(
         actor,
