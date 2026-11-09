@@ -121,12 +121,10 @@ import {
   useRecordEditing,
 } from "./record-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
-import { entered, type FormValues } from "./new-record-panel.tsx";
-import {
-  NewPlanRecordPanel,
-  noOthers,
-  PlanField,
-} from "./new-plan-record-panel.tsx";
+import { entered, type FormValues, newRecordId } from "./new-record-panel.tsx";
+import { afterNote, noteQuestion, useNoteEditing } from "./note-editing.tsx";
+import { isMilestoneField, MilestoneField } from "./milestone-field.tsx";
+import { NewPlanRecordPanel, noOthers } from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
 import { type RecordNode, recordNode } from "./record-drafts.ts";
 import { RecordMenu } from "./record-menu.tsx";
@@ -283,6 +281,8 @@ export function ProjectsPage({
   // Each New starts a form afresh, with none of a discarded one's fields.
   const [forms, setForms] = useState(0);
   const form = beingAdded?.tab === tab ? beingAdded : undefined;
+  const notes = useNoteEditing(panelTitleId);
+  const note = notes.note(form === undefined ? undefined : newRecordId);
   // The record just added, whose details show once the plan has it.
   const [justAdded, setJustAdded] = useState<string>();
   const openedAdded = useRef<string>(undefined);
@@ -296,8 +296,11 @@ export function ProjectsPage({
             title: `Discard the ${wordsOf(beingAdded.tab).one} you're adding?`,
             keep: "Keep adding",
           }
-        : undefined,
+        : notes.changing
+          ? noteQuestion
+          : undefined,
       () => {
+        notes.discard();
         setBeingAdded(undefined);
         go();
       },
@@ -531,7 +534,10 @@ export function ProjectsPage({
       records: readonly Rec[],
       actions: RecordActions<Rec, PlanChange, Request>,
     ): SidePanel[] {
-      if (form === undefined) return panel === undefined ? [] : [panel];
+      const writing = note === undefined ? [] : [note];
+      if (form === undefined) {
+        return [...(panel === undefined ? [] : [panel]), ...writing];
+      }
       return [
         {
           key: "record",
@@ -548,24 +554,33 @@ export function ProjectsPage({
               narrow={narrow}
               panelId={panelId}
               {...(type === "feature" ? { added: plan.featureColumns } : {})}
-              onValues={(values) => {
-                setBeingAdded({ ...form, values });
+              notes={notes}
+              onValue={(key, value) => {
+                setBeingAdded(
+                  (current) =>
+                    current && {
+                      ...current,
+                      values: { ...current.values, [key]: value },
+                    },
+                );
               }}
               onAdd={(request) => {
-                const pending = { ...form, saving: true };
-                setBeingAdded(pending);
-                actions.add(
-                  [{ id: pendingId(), request }],
-                  ([saved]) => {
-                    setBeingAdded(undefined);
-                    if (type === "milestone") {
-                      focusSoon(newButtonId);
-                    } else setJustAdded(saved);
-                  },
-                  () => {
-                    setBeingAdded({ ...pending, saving: false });
-                  },
-                );
+                afterNote(notes, question.ask, () => {
+                  const pending = { ...form, saving: true };
+                  setBeingAdded(pending);
+                  actions.add(
+                    [{ id: pendingId(), request }],
+                    ([saved]) => {
+                      setBeingAdded(undefined);
+                      if (type === "milestone") {
+                        focusSoon(newButtonId);
+                      } else setJustAdded(saved);
+                    },
+                    () => {
+                      setBeingAdded({ ...pending, saving: false });
+                    },
+                  );
+                });
               }}
               onCancel={() => {
                 leave(() => {
@@ -575,6 +590,7 @@ export function ProjectsPage({
             />
           ),
         },
+        ...writing,
       ];
     }
     function gridOf<Rec extends PlanRecord, Request>(
@@ -789,9 +805,7 @@ const newestId = (
 // The kind of a record in a table of one kind.
 const onlyKind = "";
 
-const milestoneFields = milestoneColumns([]).filter(
-  ({ key }) => key !== "projectId",
-);
+const milestoneFields = milestoneColumns([]).filter(isMilestoneField);
 
 // A milestone's name, date, and whether it is a delivery to customers, added to a project or
 // changed, saved as a draft.
@@ -846,7 +860,7 @@ function MilestoneForm({
     <form onSubmit={submit} noValidate>
       <Stack gap="md">
         {milestoneFields.map((column) => (
-          <PlanField
+          <MilestoneField
             key={column.key}
             column={column}
             value={values[column.key] as CellValue}
@@ -855,7 +869,6 @@ function MilestoneForm({
                 ? problems.find((one) => one.column === column.key)?.message
                 : undefined
             }
-            firstInDialog={column.key === "name"}
             onChange={(value) => {
               setValues({ ...values, [column.key]: value });
             }}

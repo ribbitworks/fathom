@@ -125,6 +125,77 @@ function bodyOf(
 const panel = () => screen.findByRole("region", { name: "Background" });
 
 describe("a Note column", () => {
+  it("asks before Add discards a new person's note being changed", async () => {
+    await openPeople();
+    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await userEvent.type(
+      await screen.findByRole("textbox", { name: "Name" }),
+      "Fictional Starter",
+    );
+    await userEvent.type(screen.getByRole("textbox", { name: "ID" }), "E9");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change Position" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("option", { name: "Fictional Engineer" }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change Background" }),
+    );
+    const opened = await screen.findByRole("region", {
+      name: "Background for New person",
+    });
+    await userEvent.click(within(opened).getByText("Markdown"));
+    await userEvent.type(
+      within(opened).getByRole("textbox", { name: "Markdown" }),
+      "Words",
+    );
+    await userEvent.click(
+      within(screen.getByRole("region", { name: "New person" })).getByRole(
+        "button",
+        { name: "Add" },
+      ),
+    );
+    expect(
+      await screen.findByText("Discard the note you're writing?"),
+    ).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Keep writing" }));
+    expect(
+      screen.getByRole("region", { name: "Background for New person" }),
+    ).toBeTruthy();
+  });
+
+  it("keeps what is entered in a new person's form while its note is written", async () => {
+    await openPeople();
+    await userEvent.click(screen.getByRole("button", { name: "New" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Change Background" }),
+    );
+    const opened = await screen.findByRole("region", {
+      name: "Background for New person",
+    });
+    await userEvent.click(within(opened).getByText("Markdown"));
+    await userEvent.type(
+      within(opened).getByRole("textbox", { name: "Markdown" }),
+      "Words",
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change Position" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("option", { name: "Fictional Engineer" }),
+    );
+    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("region", { name: "Background for New person" }),
+      ).toBeNull();
+    });
+    const details = screen.getByRole("region", { name: "New person" });
+    expect(within(details).getByText("Words")).toBeTruthy();
+    expect(within(details).getByText("Fictional Engineer")).toBeTruthy();
+  });
+
   it("previews each note's words in its cell", () => {
     return openPeople().then(() => {
       expect(cell("p1").textContent).toBe("Joined from the platform team");

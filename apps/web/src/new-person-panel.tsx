@@ -19,19 +19,19 @@ import { positionLabel, type RowRequest } from "./people-rows.ts";
 import {
   type EditingContext,
   personPanelId,
-  type NoteEditing,
   usePersonEditing,
 } from "./person-editing.tsx";
+import type { NoteEditing } from "./note-editing.tsx";
 import { detailKeys, reportingKeys } from "./person-panel.tsx";
 import classes from "./record-details.module.css";
-import { newRecordFields, NewRecordPanel } from "./new-record-panel.tsx";
-import { Row } from "./record-details.tsx";
+import {
+  newRecordFields,
+  newRecordId,
+  NewRecordPanel,
+} from "./new-record-panel.tsx";
+import { RecordSection, Row } from "./record-details.tsx";
 import { keptForKind } from "./record-grid.tsx";
 import type { CellValue } from "./table-view.ts";
-
-// What the record being added is known by, until it is added and has an ID of its own.
-export const newRecordId = "new-record";
-const formId = newRecordId;
 
 const table = { recordProblem, request: requestFromChanges };
 
@@ -70,7 +70,8 @@ export function NewPersonPanel({
   onCancel,
 }: {
   record: NewRecord;
-  onRecord: (record: NewRecord) => void;
+  // Changes what has been entered so far, since a note's panel saves long after the form was drawn.
+  onRecord: (update: (current: NewRecord) => NewRecord) => void;
   // Everyone and every planned hire People shows, whose IDs a new one may not share and whom it may
   // report to.
   people: readonly Person[];
@@ -81,7 +82,8 @@ export function NewPersonPanel({
   onAdd: (request: RowRequest) => void;
   onCancel: () => void;
 }) {
-  const { editingOf, refuseEntered } = usePersonEditing(notes);
+  const { editingOf, refuseEntered, withRefused, unfinished } =
+    usePersonEditing(notes);
   const { kind } = record;
   const { columns, valueOf, values } = newRecordFields(
     allColumns,
@@ -97,7 +99,7 @@ export function NewPersonPanel({
     );
   const title = kind === hireKind ? "New planned hire" : "New person";
   const context: EditingContext = {
-    id: formId,
+    id: newRecordId,
     kind,
     name: title,
     values,
@@ -114,21 +116,26 @@ export function NewPersonPanel({
       return hireCalled(null, id, position);
     },
     save: (_change, column, value) => {
-      const next = { ...record.values, [column.key]: value };
-      const nextKind =
-        column.key === "stateId"
-          ? // A new record is offered only states that make a person or a planned hire.
-            (kindOfState(lists, (value as string[])[0]) as string)
-          : kind;
-      if (nextKind === kind) {
-        onRecord({ ...record, values: next, cleared: [] });
-        return;
-      }
-      const kept = keptForKind(allColumns, next, nextKind);
-      onRecord({
-        kind: nextKind,
-        values: kept.values,
-        cleared: kept.lost.map(({ label }) => label),
+      onRecord((current) => {
+        const next = keptForKind(
+          allColumns,
+          { ...current.values, [column.key]: value },
+          current.kind,
+        ).values;
+        const nextKind =
+          column.key === "stateId"
+            ? // A new record is offered only states that make a person or a planned hire.
+              (kindOfState(lists, (value as string[])[0]) as string)
+            : current.kind;
+        if (nextKind === current.kind) {
+          return { ...current, values: next, cleared: [] };
+        }
+        const kept = keptForKind(allColumns, next, nextKind);
+        return {
+          kind: nextKind,
+          values: kept.values,
+          cleared: kept.lost.map(({ label }) => label),
+        };
       });
     },
   };
@@ -163,15 +170,15 @@ export function NewPersonPanel({
       title={title}
       narrow={narrow}
       saving={record.saving === true}
-      gap="lg"
-      enterAdds={false}
       table={table}
       columns={columns}
       kind={kind}
       values={values}
       others={others}
+      unfinished={unfinished(newRecordId)}
+      withRefused={(found) => withRefused(newRecordId, shownColumns, found)}
       onRefused={(found) => {
-        refuseEntered(formId, found, shownColumns);
+        refuseEntered(newRecordId, found, shownColumns);
       }}
       onAdd={onAdd}
       onCancel={onCancel}
@@ -185,25 +192,16 @@ export function NewPersonPanel({
             `${allOf(record.cleared)} ${record.cleared.length === 1 ? "was" : "were"} cleared, since a ${kind === hireKind ? "planned hire" : "person"} doesn't have ${record.cleared.length === 1 ? "it" : "them"}.`}
         </Text>
       </div>
-      <section aria-labelledby="new-record-details">
-        <h3 className={classes.heading} id="new-record-details">
-          Details
-        </h3>
-        <dl className={classes.list}>{details.map(rowOf)}</dl>
-      </section>
-      <section aria-labelledby="new-record-reporting">
-        <h3 className={classes.heading} id="new-record-reporting">
-          Reporting
-        </h3>
-        <dl className={classes.list}>{reporting.map(rowOf)}</dl>
-      </section>
+      <RecordSection id="new-record-details" title="Details">
+        {details.map(rowOf)}
+      </RecordSection>
+      <RecordSection id="new-record-reporting" title="Reporting">
+        {reporting.map(rowOf)}
+      </RecordSection>
       {added.length > 0 && (
-        <section aria-labelledby="new-record-columns">
-          <h3 className={classes.heading} id="new-record-columns">
-            Columns
-          </h3>
-          <dl className={classes.list}>{added.map(rowOf)}</dl>
-        </section>
+        <RecordSection id="new-record-columns" title="Columns">
+          {added.map(rowOf)}
+        </RecordSection>
       )}
     </NewRecordPanel>
   );

@@ -222,6 +222,7 @@ describe("adding a record in the side panel", () => {
       screen.getByRole("textbox", { name: "Name" }),
       "Added Customer",
     );
+    await userEvent.tab();
     expect(screen.queryByText("Name needed")).toBeNull();
     held.plan = after;
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
@@ -2116,8 +2117,9 @@ describe("the Features page", () => {
       await userEvent.click(await newButton("feature"));
       await userEvent.type(
         await screen.findByRole("textbox", { name: /^Name/ }),
-        "Fictional Pending{Enter}",
+        "Fictional Pending",
       );
+      await userEvent.click(screen.getByRole("button", { name: "Add" }));
       expect(await screen.findByText("Fictional Pending")).toBeDefined();
       expect(screen.getByRole("grid").textContent).not.toContain("null");
       answer(Response.json({ plan: start, changeSetId }));
@@ -2189,32 +2191,187 @@ describe("the Features page", () => {
       await openWith(withColumns(), {}, featureEditor);
       await userEvent.click(await newButton("feature"));
       await screen.findByRole("heading", { name: "New feature" });
-      expect(
-        within(sidePanel()).getAllByLabelText("Fictional Size").length,
-      ).toBeGreaterThan(0);
+      const columns = within(sidePanel()).getByRole("region", {
+        name: "Columns",
+      });
+      expect(within(columns).getByText("Fictional Size")).toBeTruthy();
     });
 
-    it("asks a required note in the new feature's form", async () => {
-      const note = {
-        ...size,
-        id: "note",
-        name: "Fictional Why",
-        type: "note" as const,
-        listId: null,
-        visibility: "general" as const,
-        required: true,
-      };
+    const requiredNote = {
+      ...size,
+      id: "10000000-0000-4000-8000-0000000000c4",
+      name: "Fictional Why",
+      type: "note" as const,
+      listId: null,
+      visibility: "general" as const,
+      required: true,
+    };
+    const startWriting = async () => {
+      await userEvent.click(await newButton("feature"));
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Change Fictional Why" }),
+      );
+      const opened = await screen.findByRole("region", {
+        name: "Fictional Why for New feature",
+      });
+      await userEvent.click(within(opened).getByText("Markdown"));
+      await userEvent.type(
+        within(opened).getByRole("textbox", { name: "Markdown" }),
+        "Because",
+      );
+      return opened;
+    };
+
+    it("writes a new feature's note in the note's own panel, and sends it", async () => {
+      const start = withColumns({ featureColumns: columnsOf([requiredNote]) });
+      const path = "POST /api/features";
+      const { fetch } = await openWith(
+        start,
+        { [path]: saved(() => start) },
+        featureEditor,
+      );
+      const opened = await startWriting();
+      await userEvent.type(
+        screen.getByRole("textbox", { name: "Name" }),
+        "Fictional Noted",
+      );
+      await userEvent.click(
+        within(opened).getByRole("button", { name: "Save" }),
+      );
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("region", {
+            name: "Fictional Why for New feature",
+          }),
+        ).toBeNull();
+      });
+      await userEvent.click(screen.getByRole("button", { name: "Add" }));
+      await waitFor(() => {
+        expect(sent(fetch, path)).toMatchObject([
+          { name: "Fictional Noted", notes: { [requiredNote.id]: "Because" } },
+        ]);
+      });
+    });
+
+    it("names a required note left empty under its row", async () => {
       await openWith(
-        withColumns({ featureColumns: columnsOf([note]) }),
+        withColumns({ featureColumns: columnsOf([requiredNote]) }),
         {},
         featureEditor,
       );
       await userEvent.click(await newButton("feature"));
-      const field = await screen.findByRole("textbox", {
-        name: /Fictional Why/,
+      await userEvent.type(
+        await screen.findByRole("textbox", { name: "Name" }),
+        "Fictional Noted",
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Add" }));
+      expect(
+        await within(sidePanel()).findByText("Fictional Why needed"),
+      ).toBeTruthy();
+      const change = screen.getByRole("button", {
+        name: "Change Fictional Why",
       });
-      await userEvent.type(field, "Because");
-      expect((field as HTMLTextAreaElement).value).toBe("Because");
+      await waitFor(() => {
+        expect(document.activeElement).toBe(change);
+      });
+    });
+
+    it("asks before Add discards a note being written", async () => {
+      const start = withColumns({ featureColumns: columnsOf([requiredNote]) });
+      const path = "POST /api/features";
+      const { fetch } = await openWith(
+        start,
+        { [path]: saved(() => start) },
+        featureEditor,
+      );
+      const opened = await startWriting();
+      await userEvent.type(
+        screen.getByRole("textbox", { name: "Name" }),
+        "Fictional Noted",
+      );
+      await userEvent.click(
+        within(opened).getByRole("button", { name: "Save" }),
+      );
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Change Fictional Why" }),
+      );
+      const again = await screen.findByRole("region", {
+        name: "Fictional Why for New feature",
+      });
+      await userEvent.click(within(again).getByText("Markdown"));
+      await userEvent.type(
+        within(again).getByRole("textbox", { name: "Markdown" }),
+        " more",
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Add" }));
+      await screen.findByText("Discard the note you're writing?");
+      expect(sent(fetch, path)).toEqual([]);
+      await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+      await waitFor(() => {
+        expect(sent(fetch, path)).toMatchObject([
+          { notes: { [requiredNote.id]: "Because" } },
+        ]);
+      });
+    });
+
+    it("keeps writing when Add's question says so, adding nothing", async () => {
+      const start = withColumns({ featureColumns: columnsOf([requiredNote]) });
+      const path = "POST /api/features";
+      const { fetch } = await openWith(
+        start,
+        { [path]: saved(() => start) },
+        featureEditor,
+      );
+      const opened = await startWriting();
+      await userEvent.type(
+        screen.getByRole("textbox", { name: "Name" }),
+        "Fictional Noted",
+      );
+      await userEvent.click(
+        within(opened).getByRole("button", { name: "Save" }),
+      );
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Change Fictional Why" }),
+      );
+      const again = await screen.findByRole("region", {
+        name: "Fictional Why for New feature",
+      });
+      await userEvent.click(within(again).getByText("Markdown"));
+      await userEvent.type(
+        within(again).getByRole("textbox", { name: "Markdown" }),
+        " more",
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Add" }));
+      await screen.findByText("Discard the note you're writing?");
+      await userEvent.click(
+        screen.getByRole("button", { name: "Keep writing" }),
+      );
+      expect(sent(fetch, path)).toEqual([]);
+      expect(
+        screen.getByRole("region", { name: "Fictional Why for New feature" }),
+      ).toBeTruthy();
+    });
+
+    it("asks before Cancel discards a note being written", async () => {
+      await openWith(
+        withColumns({ featureColumns: columnsOf([requiredNote]) }),
+        {},
+        featureEditor,
+      );
+      await startWriting();
+      await userEvent.click(
+        within(screen.getByRole("region", { name: "New feature" })).getByRole(
+          "button",
+          { name: "Cancel" },
+        ),
+      );
+      await screen.findByText("Discard the note you're writing?");
+      await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("heading", { name: "New feature" }),
+        ).toBeNull();
+      });
     });
   });
 

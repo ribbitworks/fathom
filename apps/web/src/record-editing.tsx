@@ -55,9 +55,13 @@ function TextEditor({
   value,
   problem,
   hint,
+  asTyped,
   onDone,
   onCancel,
-}: EditorProps & { hint?: string | undefined }) {
+}: EditorProps & {
+  hint?: string | undefined;
+  asTyped?: ((text: string) => string) | undefined;
+}) {
   // Text and dates are held as text.
   const [text, setText] = useState(value as string);
   return (
@@ -74,7 +78,8 @@ function TextEditor({
       value={text}
       autoComplete="off"
       onChange={(event) => {
-        setText(event.currentTarget.value);
+        const typed = event.currentTarget.value;
+        setText(asTyped?.(typed) ?? typed);
       }}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
@@ -129,6 +134,20 @@ export interface NoteStarter<Rec extends GridRecord, Change, Context> {
 
 type Checked<Change> = { change: Change } | { problem: string } | undefined;
 
+interface ValueProblem {
+  id: string;
+  key: string;
+  message: string;
+}
+
+// A list of what is wrong with values, with one value's message set, or, with none, taken away.
+const withProblem =
+  (id: string, key: string, message?: string) =>
+  (current: readonly ValueProblem[]): readonly ValueProblem[] => [
+    ...current.filter((one) => one.id !== id || one.key !== key),
+    ...(message === undefined ? [] : [{ id, key, message }]),
+  ];
+
 // What putting a value in a record's column comes to, as its cell would find: nothing, when it is
 // the value already there, the change that saves it, or why it will not do.
 export function checked<Rec extends GridRecord, Change>(
@@ -157,12 +176,12 @@ export function useRecordEditing<
   const [problems, setProblems] = useState<
     readonly { id: string; key: string; message: string }[]
   >([]);
+  // Values being entered that were refused, so never saved: Add names them rather than taking them
+  // as empty.
+  const [refused, setRefused] = useState<readonly ValueProblem[]>([]);
   // Names what is wrong with one value, or, with no message, takes back what was.
   const setProblem = (id: string, key: string, message?: string) => {
-    setProblems((current) => [
-      ...current.filter((one) => one.id !== id || one.key !== key),
-      ...(message === undefined ? [] : [{ id, key, message }]),
-    ]);
+    setProblems(withProblem(id, key, message));
   };
   const clearProblems = () => {
     setProblems([]);
@@ -178,9 +197,11 @@ export function useRecordEditing<
     const made = checked(context, column, value);
     if (made !== undefined && "problem" in made) {
       setProblem(context.id, column.key, made.problem);
+      setRefused(withProblem(context.id, column.key, made.problem));
       return false;
     }
     setProblem(context.id, column.key);
+    setRefused(withProblem(context.id, column.key));
     if (made !== undefined) save(made.change, column, value);
     return true;
   };
@@ -188,6 +209,7 @@ export function useRecordEditing<
   const stop = (id: string, column: Column<Rec, Change>) => {
     setOpen(undefined);
     setProblem(id, column.key);
+    setRefused(withProblem(id, column.key));
     focusSoon(changeId(column));
   };
 
@@ -258,9 +280,10 @@ export function useRecordEditing<
           open: false,
           editor: undefined,
           onStart: () => {
+            setProblem(id, column.key);
             notes.start({ ...context, save }, column);
           },
-          problem: undefined,
+          problem: wrong,
         };
       }
       const isOpen =
@@ -275,7 +298,9 @@ export function useRecordEditing<
         editor: isOpen && (
           <div className={ownField ? undefined : classes.cellEditor}>
             <Editor
-              {...(ownField ? { hint: context.hint?.(column) } : {})}
+              {...(ownField
+                ? { hint: context.hint?.(column), asTyped: kind.asTyped }
+                : {})}
               id={editorId(column)}
               column={column}
               value={value}
@@ -326,7 +351,37 @@ export function useRecordEditing<
     focusValue(shown.find(({ key }) => keys.has(key)) as Column<Rec, Change>);
   };
 
-  return { closeStale, editingOf, refuse, refuseEntered };
+  // What Add finds with the values being entered: each one refused, under its row, in place of
+  // whatever else is found for that row.
+  const withRefused = (
+    id: string,
+    shown: readonly Pick<Column<never>, "key">[],
+    found: readonly { column: string; message: string }[],
+  ) => {
+    const entered = refused
+      .filter(
+        (one) => one.id === id && shown.some(({ key }) => key === one.key),
+      )
+      .map(({ key, message }) => ({ column: key, message }));
+    return [
+      ...entered,
+      ...found.filter(
+        ({ column }) => !entered.some((one) => one.column === column),
+      ),
+    ];
+  };
+
+  // Whether an editor stays open for the record, as one holding a value it will not give up does.
+  const unfinished = (id: string) => open?.id === id;
+
+  return {
+    closeStale,
+    editingOf,
+    refuse,
+    refuseEntered,
+    withRefused,
+    unfinished,
+  };
 }
 
 // Whether a column's values are changed with an editor of their kind's own, rather than as text.

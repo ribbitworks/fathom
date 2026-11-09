@@ -46,13 +46,13 @@ import { PageHeader } from "./page-header.tsx";
 import {
   type NewRecord,
   newRecord,
-  newRecordId,
   NewPersonPanel,
   recordQuestion,
 } from "./new-person-panel.tsx";
-import { entered } from "./new-record-panel.tsx";
+import { entered, newRecordId } from "./new-record-panel.tsx";
 import { personUpdate } from "./person-change.ts";
-import { noteQuestion, useNoteEditing, useShownId } from "./person-editing.tsx";
+import { afterNote, noteQuestion } from "./note-editing.tsx";
+import { usePersonNotes, useShownId } from "./person-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { useNarrow } from "./side-panel.tsx";
@@ -228,7 +228,7 @@ export function PeoplePage({
   const [decision, setDecision] = useState<Decision>();
   const [deciding, setDeciding] = useState(false);
   // A record's details, or one being added, and a note of its being written, beside the table.
-  const notes = useNoteEditing();
+  const notes = usePersonNotes();
   const [beingAdded, setBeingAdded] = useState<NewRecord>();
   // Each New starts a form afresh, with none of a discarded one's fields.
   const [forms, setForms] = useState(0);
@@ -254,12 +254,12 @@ export function PeoplePage({
   // What showing another record, or adding one, would discard, if anything: a note changed, or a
   // record being added that holds something.
   const leaving = () =>
-    notes.changing
-      ? noteQuestion
-      : beingAdded !== undefined && entered(beingAdded)
-        ? recordQuestion(beingAdded.kind)
-        : filling !== undefined && entered(filling)
-          ? fillQuestion
+    beingAdded !== undefined && entered(beingAdded)
+      ? recordQuestion(beingAdded.kind)
+      : filling !== undefined && entered(filling)
+        ? fillQuestion
+        : notes.changing
+          ? noteQuestion
           : undefined;
   const leave = (go: () => void) => {
     question.ask(leaving(), () => {
@@ -589,7 +589,11 @@ export function PeoplePage({
                       <NewPersonPanel
                         key={forms}
                         record={beingAdded}
-                        onRecord={setBeingAdded}
+                        onRecord={(update) => {
+                          setBeingAdded(
+                            (current) => current && update(current),
+                          );
+                        }}
                         people={query.data.people}
                         lists={lists.data}
                         allColumns={columnsFor(
@@ -605,24 +609,26 @@ export function PeoplePage({
                         narrow={narrow}
                         notes={notes}
                         onAdd={(request) => {
-                          const id = pendingId();
-                          const saving = { ...beingAdded, saving: true };
-                          submitted.current = saving;
-                          setBeingAdded(saving);
-                          actions.add(
-                            [{ id, request }],
-                            ([saved]) => {
-                              if (submitted.current !== saving) return;
-                              submitted.current = undefined;
-                              setBeingAdded(undefined);
-                              justAdded.current = ({ id }) => id === saved;
-                            },
-                            () => {
-                              if (submitted.current !== saving) return;
-                              submitted.current = undefined;
-                              setBeingAdded({ ...saving, saving: false });
-                            },
-                          );
+                          afterNote(notes, question.ask, () => {
+                            const id = pendingId();
+                            const saving = { ...beingAdded, saving: true };
+                            submitted.current = saving;
+                            setBeingAdded(saving);
+                            actions.add(
+                              [{ id, request }],
+                              ([saved]) => {
+                                if (submitted.current !== saving) return;
+                                submitted.current = undefined;
+                                setBeingAdded(undefined);
+                                justAdded.current = ({ id }) => id === saved;
+                              },
+                              () => {
+                                if (submitted.current !== saving) return;
+                                submitted.current = undefined;
+                                setBeingAdded({ ...saving, saving: false });
+                              },
+                            );
+                          });
                         }}
                         onCancel={() => {
                           leave(() => {
@@ -684,10 +690,16 @@ export function PeoplePage({
                                     lists={lists.data}
                                     columns={columns}
                                     filling={filling}
-                                    onFilling={setFilling}
+                                    onFilling={(update) => {
+                                      setFilling(
+                                        (current) => current && update(current),
+                                      );
+                                    }}
                                     notes={notes}
                                     onFill={(request) => {
-                                      fill(hire, request);
+                                      afterNote(notes, question.ask, () => {
+                                        fill(hire, request);
+                                      });
                                     }}
                                     onCancel={() => {
                                       question.ask(

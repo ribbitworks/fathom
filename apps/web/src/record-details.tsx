@@ -54,6 +54,26 @@ function Value({ column, value }: { column: DetailColumn; value: unknown }) {
   );
 }
 
+// A headed list of a record's rows.
+export function RecordSection({
+  id,
+  title,
+  children,
+}: {
+  id: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <section aria-labelledby={id}>
+      <h3 className={classes.heading} id={id}>
+        {title}
+      </h3>
+      <dl className={classes.list}>{children}</dl>
+    </section>
+  );
+}
+
 export function RecordLink({
   name,
   onShow,

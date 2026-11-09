@@ -2,12 +2,12 @@
 
 // Adding a record in the panel beside its table, driven by the table's columns: the columns a new
 // record has and their starting values, the panel's frame with Add and Cancel at its foot, and the
-// checks Add makes, as adding a new row does. Each page draws its own fields inside it and names the
-// problems Add finds. The page holds what has been entered, so it can ask before discarding it.
+// checks Add makes, as adding a new row does. Each page draws its fields inside it, as rows in
+// sections, and names the problems Add finds. The page holds what has been entered, so it can ask
+// before discarding it.
 
-import { isLink, linkProblems } from "@fathom/shared";
 import { Button, Group, Stack } from "@mantine/core";
-import { type ReactNode, type SubmitEvent, useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { focusSoon } from "./focus.ts";
 import {
@@ -25,6 +25,9 @@ import type { CellValue } from "./table-view.ts";
 export type FormValues = Readonly<Record<string, CellValue>>;
 
 const titleId = "new-record-title";
+
+// What the record being added is known by, until it is added and has an ID of its own.
+export const newRecordId = "new-record";
 
 // Whether anything has been entered, so discarding it asks first.
 export const entered = ({ values }: { values: FormValues }) =>
@@ -60,13 +63,13 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
   title,
   narrow,
   saving,
-  gap,
-  enterAdds,
   table,
   columns,
   kind,
   values,
   others,
+  unfinished,
+  withRefused,
   onRefused,
   onAdd,
   onCancel,
@@ -76,14 +79,16 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
   title: string;
   narrow: boolean;
   saving: boolean;
-  gap: "md" | "lg";
-  // Whether Enter in a field adds the record, rather than finishing that field.
-  enterAdds: boolean;
   table: Pick<RecordTable<Rec, Change, Request>, "recordProblem" | "request">;
   columns: readonly Column<Rec, Change>[];
   kind: string;
   values: FormValues;
   others: () => Record<string, CellValue>[];
+  // Whether an editor stays open, holding a value it will not give up, which says why itself.
+  unfinished: boolean;
+  withRefused: (
+    found: readonly { column: string; message: string }[],
+  ) => readonly { column: string; message: string }[];
   onRefused: (found: readonly { column: string; message: string }[]) => void;
   onAdd: (request: Request) => void;
   onCancel: () => void;
@@ -93,14 +98,10 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
     focusSoon(titleId);
   }, []);
   const add = () => {
-    const found = [
-      ...newRecordProblems(columns, kind, values, table.recordProblem, others),
-      ...columns.flatMap((column) => {
-        const value = values[column.key];
-        const message = isLink(value) ? linkProblems(value).address : undefined;
-        return message === undefined ? [] : [{ column: column.key, message }];
-      }),
-    ];
+    if (unfinished) return;
+    const found = withRefused(
+      newRecordProblems(columns, kind, values, table.recordProblem, others),
+    );
     if (found.length > 0) {
       onRefused(found);
       return;
@@ -113,16 +114,13 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
     );
   };
   const body = (
-    <Stack gap={gap}>
+    <Stack gap="lg">
       {children}
       <Group justify="flex-end" gap="xs">
         <Button variant="default" onClick={onCancel} disabled={saving}>
           Cancel
         </Button>
-        <Button
-          {...(enterAdds ? { type: "submit" } : { onClick: add })}
-          loading={saving}
-        >
+        <Button onClick={add} loading={saving}>
           Add
         </Button>
       </Group>
@@ -141,23 +139,9 @@ export function NewRecordPanel<Rec extends GridRecord, Change, Request>({
         },
       }}
     >
-      {enterAdds ? (
-        <form
-          className={sidePanelScroll}
-          inert={saving}
-          noValidate
-          onSubmit={(event: SubmitEvent) => {
-            event.preventDefault();
-            add();
-          }}
-        >
-          {body}
-        </form>
-      ) : (
-        <div className={sidePanelScroll} inert={saving}>
-          {body}
-        </div>
-      )}
+      <div className={sidePanelScroll} inert={saving}>
+        {body}
+      </div>
     </SidePanelFrame>
   );
 }

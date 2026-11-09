@@ -232,15 +232,15 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Expected:** Each box shows what was typed.
   - **Notes:**
 
-- [ ] **Step 3.** In **Owner**, pick any person, and write the name in the notes.
+- [ ] **Step 3.** Select the pencil button in the **Owner** row, and pick any person, and write the name in the notes.
   - **Expected:** **Owner** shows the name picked.
   - **Notes:**
 
-- [ ] **Step 4.** In **Customers**, pick **Testing Customer**.
+- [ ] **Step 4.** Select the pencil button in the **Customers** row, and pick **Testing Customer**.
   - **Expected:** **Customers** shows **Testing Customer**.
   - **Notes:**
 
-- [ ] **Step 5.** In **Proposals**, pick **Testing Proposal**.
+- [ ] **Step 5.** Select the pencil button in the **Proposals** row, and pick **Testing Proposal**.
   - **Expected:** **Proposals** shows **Testing Proposal**.
   - **Notes:**
 

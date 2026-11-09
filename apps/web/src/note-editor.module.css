@@ -3,6 +3,12 @@
 /* Styles for a note: as it reads, and in the panel's three views, which start their text in the same
    place and are at least the same height, so switching between them moves little. */
 
+/* The toolbar sits under the text, where its square lower corners would cover the box's rounded
+   ones. Mantine clips only a sticky toolbar. */
+.editor {
+  overflow: clip;
+}
+
 .editor :global(.ProseMirror) {
   min-height: 15rem;
 }
@@ -20,8 +26,15 @@
 }
 
 .view {
-  font-size: var(--mantine-font-size-sm);
   overflow-wrap: anywhere;
+}
+
+.view > :first-child {
+  margin-top: 0;
+}
+
+.view > :last-child {
+  margin-bottom: 0;
 }
 
 .view :where(h1, h2, h3) {

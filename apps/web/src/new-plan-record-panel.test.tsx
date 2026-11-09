@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for the panel that adds a record of the plan: a field for each kind of column, what is
-// checked before adding, and what it sends.
+// Tests for the panel that adds a record of the plan: a row for each kind of column, what is checked
+// before adding, and what it sends.
 
 import { addressProblem } from "@fathom/shared";
 import { MantineProvider } from "@mantine/core";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { NewPlanRecordPanel } from "./new-plan-record-panel.tsx";
-import type { FormValues } from "./new-record-panel.tsx";
+import { type FormValues, newRecordId } from "./new-record-panel.tsx";
+import { useNoteEditing } from "./note-editing.tsx";
 import type { PlanChange } from "./project-grids.tsx";
 import {
   cellColumn,
@@ -62,19 +63,26 @@ function Harness({
   onCancel?: () => void;
 }) {
   const [values, setValues] = useState<FormValues>({});
+  const notes = useNoteEditing("panel-title");
   return (
-    <NewPlanRecordPanel
-      title="New thing"
-      table={given}
-      records={[]}
-      values={values}
-      saving={saving}
-      narrow={false}
-      panelId="panel"
-      onValues={setValues}
-      onAdd={onAdd}
-      onCancel={onCancel}
-    />
+    <>
+      <NewPlanRecordPanel
+        title="New thing"
+        table={given}
+        records={[]}
+        values={values}
+        saving={saving}
+        narrow={false}
+        panelId="panel"
+        notes={notes}
+        onValue={(key, value) => {
+          setValues((current) => ({ ...current, [key]: value }));
+        }}
+        onAdd={onAdd}
+        onCancel={onCancel}
+      />
+      {notes.note(newRecordId)?.node}
+    </>
   );
 }
 
@@ -85,28 +93,21 @@ const renderPanel = (props: Parameters<typeof Harness>[0]) =>
     </MantineProvider>,
   );
 
-const field = (key: string) => {
-  const found = document.getElementById(`new-plan-record-${key}`);
-  if (found === null) throw new Error(`No ${key} field`);
-  return found;
-};
-
 const add = () => userEvent.click(screen.getByRole("button", { name: "Add" }));
 
-describe("the fields for each kind of column", () => {
-  it("sends a picked choice, offering only those not retired, and none once cleared", async () => {
+const change = (key: string) =>
+  userEvent.click(screen.getByRole("button", { name: `Change ${key}` }));
+
+describe("the rows for each kind of column", () => {
+  it("sends a picked choice, offering only those not retired", async () => {
     const onAdd = vi.fn();
     renderPanel({ given: table([column("owner", "choice")]), onAdd });
-    await userEvent.click(field("owner"));
+    await change("owner");
     const offered = await screen.findByRole("option", { name: "Alpha" });
     expect(screen.queryByRole("option", { name: "Gone" })).toBeNull();
     await userEvent.click(offered);
     await add();
     expect(onAdd).toHaveBeenLastCalledWith({ values: { owner: ["a"] } });
-    await userEvent.click(field("owner"));
-    await userEvent.click(await screen.findByRole("option", { name: "Alpha" }));
-    await add();
-    expect(onAdd).toHaveBeenLastCalledWith({ values: { owner: [] } });
   });
 
   it("sends several picked choices", async () => {
@@ -115,88 +116,76 @@ describe("the fields for each kind of column", () => {
       given: table([column("tags", "choice", { multiple: true })]),
       onAdd,
     });
-    await userEvent.click(field("tags"));
+    await change("tags");
     await userEvent.click(await screen.findByRole("option", { name: "Alpha" }));
     await add();
     expect(onAdd).toHaveBeenCalledWith({ values: { tags: ["a"] } });
   });
 
-  it("sends a web link by its address, and none once emptied", async () => {
+  it("sends a web link by its address", async () => {
     const onAdd = vi.fn();
     renderPanel({ given: table([column("site", "link")]), onAdd });
-    const box = screen.getByRole<HTMLInputElement>("textbox", { name: "site" });
-    await userEvent.type(box, "https://example.test");
-    expect(box.value).toBe("https://example.test");
-    await add();
-    expect(onAdd).toHaveBeenLastCalledWith({
-      links: {
-        site: { address: "https://example.test", text: "" },
-      },
-    });
-    await userEvent.clear(box);
-    await add();
-    expect(onAdd).toHaveBeenLastCalledWith({ links: { site: null } });
-  });
-
-  it("names a web address it cannot keep, adding nothing", async () => {
-    const onAdd = vi.fn();
-    renderPanel({ given: table([column("site", "link")]), onAdd });
+    await change("site");
     await userEvent.type(
-      screen.getByRole("textbox", { name: "site" }),
-      "not an address",
+      await screen.findByRole("textbox", { name: "Address" }),
+      "https://example.test{Enter}",
     );
     await add();
-    expect(screen.getByText(addressProblem)).toBeTruthy();
-    expect(onAdd).not.toHaveBeenCalled();
+    expect(onAdd).toHaveBeenLastCalledWith({
+      links: { site: { address: "https://example.test/", text: "" } },
+    });
   });
 
-  it("empties a field from its clear button", async () => {
-    renderPanel({
-      given: table([column("name", "text"), column("site", "link")]),
-      onAdd: vi.fn(),
-    });
+  it("empties a text field from its clear button", async () => {
+    renderPanel({ given: table([column("name", "text")]), onAdd: vi.fn() });
     const name = screen.getByRole<HTMLInputElement>("textbox", {
       name: "name",
     });
-    const site = screen.getByRole<HTMLInputElement>("textbox", {
-      name: "site",
-    });
     await userEvent.type(name, "Words");
-    await userEvent.type(site, "https://example.test");
     await userEvent.click(screen.getByRole("button", { name: "Clear name" }));
-    await userEvent.click(screen.getByRole("button", { name: "Clear site" }));
     expect(name.value).toBe("");
-    expect(site.value).toBe("");
   });
 
   it("sends a tick, and takes it away", async () => {
     const onAdd = vi.fn();
     renderPanel({ given: table([column("done", "flag")]), onAdd });
-    const box = screen.getByRole("checkbox", { name: "done" });
-    await userEvent.click(box);
+    await userEvent.click(screen.getByRole("checkbox", { name: /^done/ }));
     await add();
     expect(onAdd).toHaveBeenLastCalledWith({ done: true });
-    await userEvent.click(box);
+    await userEvent.click(screen.getByRole("checkbox", { name: /^done/ }));
     await add();
     expect(onAdd).toHaveBeenLastCalledWith({ done: false });
   });
 
-  it("says an unfinished date is not a date", async () => {
+  it("lays a date out as it is typed, and says an unfinished one is not a date", async () => {
     const onAdd = vi.fn();
     renderPanel({
       given: table([column("when", "date", { required: true })]),
       onAdd,
     });
-    await userEvent.type(screen.getByRole("textbox", { name: /^when/ }), "20");
+    const box = screen.getByRole<HTMLInputElement>("textbox", { name: "when" });
+    await userEvent.type(box, "20300901");
+    expect(box.value).toBe("2030-09-01");
+    await userEvent.clear(box);
+    await userEvent.type(box, "20");
+    await userEvent.tab();
     await add();
-    expect(screen.getByText("Invalid YYYY-MM-DD date")).toBeTruthy();
+    expect(screen.getByText(/^when: use/)).toBeTruthy();
+    expect(screen.queryByText("when needed")).toBeNull();
     expect(onAdd).not.toHaveBeenCalled();
   });
 
-  it("shows no field for a kind a new record cannot be given here", async () => {
+  it("offers a note that is not required, written in the note's own panel", async () => {
     const onAdd = vi.fn();
     renderPanel({ given: table([column("words", "note")]), onAdd });
     expect(screen.queryByRole("textbox")).toBeNull();
+    await change("words");
+    expect(await screen.findByRole("textbox", { name: "Note" })).toBeTruthy();
+    await userEvent.click(
+      within(
+        screen.getByRole("region", { name: "words for New thing" }),
+      ).getByRole("button", { name: "Cancel" }),
+    );
     await add();
     expect(onAdd).toHaveBeenCalled();
   });
@@ -219,13 +208,43 @@ describe("adding", () => {
     expect(onAdd).not.toHaveBeenCalled();
   });
 
-  it("adds the record when Enter is pressed in a field", async () => {
+  it("adds nothing while a value is refused, and adds once it is put right", async () => {
+    const onAdd = vi.fn();
+    renderPanel({ given: table([column("when", "date")]), onAdd });
+    const box = screen.getByRole<HTMLInputElement>("textbox", { name: "when" });
+    await userEvent.type(box, "20");
+    await userEvent.tab();
+    await add();
+    expect(onAdd).not.toHaveBeenCalled();
+    await userEvent.clear(box);
+    await userEvent.type(box, "20300901");
+    await userEvent.tab();
+    await add();
+    expect(onAdd).toHaveBeenCalledOnce();
+  });
+
+  it("adds nothing while a web link it cannot keep is still being entered", async () => {
+    const onAdd = vi.fn();
+    renderPanel({ given: table([column("site", "link")]), onAdd });
+    await change("site");
+    await userEvent.type(
+      await screen.findByRole("textbox", { name: "Address" }),
+      "not an address",
+    );
+    await add();
+    expect(screen.getByText(addressProblem)).toBeTruthy();
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it("finishes a field with Enter, without adding the record", async () => {
     const onAdd = vi.fn();
     renderPanel({ given: table([column("name", "text")]), onAdd });
     await userEvent.type(
       screen.getByRole("textbox", { name: "name" }),
       "Words{Enter}",
     );
+    expect(onAdd).not.toHaveBeenCalled();
+    await add();
     expect(onAdd).toHaveBeenCalledOnce();
   });
 

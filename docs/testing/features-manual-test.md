@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-08"
+last_updated: "2026-11-09"
 ---
 
 # Manual Test: Features
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, and columns added to Features.
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, and writing a note in New feature.
 
 ## Test Environment
 
@@ -470,6 +470,70 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 4.** Open the **Fictional Risk** column menu, and select **Approve…**, then **Approve**.
   - **Expected:** The **Fictional Risk** column is gone, and the table ends with **Complexity**.
+  - **Notes:**
+
+**Afterwards:** Run R1.
+
+### FEAT-20: New Feature Writes a Note in Its Own Panel
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-19.
+
+**Preconditions:** R1 run after FEAT-19. Signed in with this account. **Features** page open.
+
+- [ ] **Step 1.** Select **New feature**.
+  - **Expected:** The **New feature** panel opens beside the table, laid out as the **New person** panel on **People** is: each label at the left of its row, under the headings **Details** and **Columns**. The **Notes** row has **None** as its value and a pencil button at its right. There is no text box for the note.
+  - **Notes:**
+
+- [ ] **Step 2.** Type `Fictional Atlas` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the pencil button in the **Notes** row.
+  - **Expected:** A second panel opens under **New feature**, titled **Notes for New feature**, with **Note**, **Editor** and **Markdown** at its top, on **Editor**, and a toolbar under the text. **Fictional Atlas** is still in **Name**.
+  - **Notes:**
+
+- [ ] **Step 4.** Switch the page to dark mode and back to light mode.
+  - **Expected:** Both panels are easy to read in both modes.
+  - **Notes:**
+
+- [ ] **Step 5.** Type `First words` in the editor, and select them.
+  - **Expected:** The words are highlighted.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Bold** in the toolbar.
+  - **Expected:** **First words** is bold in the editor.
+  - **Notes:**
+
+- [ ] **Step 7.** In the **New feature** panel, change **Name** to `Fictional Atlas Two`.
+  - **Expected:** **Name** shows what was typed, and the note's panel stays open.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Save** in the note's panel.
+  - **Expected:** The note's panel closes. The **Notes** row shows **First words** in bold, and **Name** still reads **Fictional Atlas Two**.
+  - **Notes:**
+
+- [ ] **Step 9.** Select the pencil button in the **Notes** row.
+  - **Expected:** The note's panel opens, showing the note as it reads.
+  - **Notes:**
+
+- [ ] **Step 10.** Select **Editor**, and type more words.
+  - **Expected:** The words appear in the editor.
+  - **Notes:**
+
+- [ ] **Step 11.** Select **Cancel** in the **New feature** panel.
+  - **Expected:** A box asks **Discard the feature you're adding?**, with **Keep adding** and **Discard**.
+  - **Notes:**
+
+- [ ] **Step 12.** Select **Keep adding**.
+  - **Expected:** The box closes, and both panels stay open.
+  - **Notes:**
+
+- [ ] **Step 13.** Select **Cancel** in the note's panel.
+  - **Expected:** The note's panel closes, and the **Notes** row still shows only **First words**.
+  - **Notes:**
+
+- [ ] **Step 14.** Select **Add** at the foot of the **New feature** panel.
+  - **Expected:** The feature is added as a draft, and its details show beside the table, with **First words** in bold under **Notes**.
   - **Notes:**
 
 **Afterwards:** Run R1.

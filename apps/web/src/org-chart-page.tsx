@@ -98,7 +98,8 @@ import classes from "./org-chart.module.css";
 import { focusSoon } from "./focus.ts";
 import { PageHeader } from "./page-header.tsx";
 import { personUpdate } from "./person-change.ts";
-import { noteQuestion, useNoteEditing, useShownId } from "./person-editing.tsx";
+import { noteQuestion } from "./note-editing.tsx";
+import { usePersonNotes, useShownId } from "./person-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
 import { PersonPanel, personPanelId } from "./person-panel.tsx";
 import { type PeopleData, peopleQuery } from "./people.ts";
@@ -871,7 +872,7 @@ export function OrgChartPage({
   const query = useQuery(orgChartQueryOn(showDates ? day : undefined));
   const narrow = useNarrow();
   // A person's details and a note of theirs being written, beside the chart.
-  const notes = useNoteEditing();
+  const notes = usePersonNotes();
   const people = useQuery({ ...peopleQuery, enabled: seesPeople });
   const shownId = useShownId(
     seesPeople ? search.open : undefined,

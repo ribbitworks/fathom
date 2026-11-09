@@ -192,6 +192,141 @@ describe("filling a planned hire with a new person", () => {
     });
   });
 
+  it("keeps what is typed while a note is written", async () => {
+    const fetch = answers([robin, hire()], {
+      fields: [
+        {
+          id: "background",
+          name: "Background",
+          type: "note",
+          listId: null,
+          visibility: "general",
+          multiple: false,
+          required: true,
+          onPlannedHires: false,
+        },
+      ],
+    });
+    renderApp("/people");
+    await openForm();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change Background" }),
+    );
+    const opened = await screen.findByRole("region", {
+      name: /^Background for/u,
+    });
+    await userEvent.click(within(opened).getByText("Markdown"));
+    await userEvent.type(
+      within(opened).getByRole("textbox", { name: "Markdown" }),
+      "Words",
+    );
+    await type("Name", "Fictional Starter");
+    await type("ID", "E9");
+    await userEvent.tab();
+    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("region", { name: /^Background for/u }),
+      ).toBeNull();
+    });
+
+    await fillNow();
+
+    expect(await sent(fetch)).toMatchObject({
+      preferredName: "Fictional Starter",
+      employeeId: "E9",
+      notes: { background: "Words" },
+    });
+  });
+
+  it("asks before Fill discards a note being changed", async () => {
+    const fetch = answers([robin, hire()], {
+      fields: [
+        {
+          id: "background",
+          name: "Background",
+          type: "note",
+          listId: null,
+          visibility: "general",
+          multiple: false,
+          required: true,
+          onPlannedHires: false,
+        },
+      ],
+    });
+    renderApp("/people");
+    await openForm();
+    await type("Name", "Fictional Starter");
+    await type("ID", "E9");
+    await userEvent.click(
+      screen.getByRole("button", { name: "Change Background" }),
+    );
+    const opened = await screen.findByRole("region", {
+      name: /^Background for/u,
+    });
+    await userEvent.click(within(opened).getByText("Markdown"));
+    await userEvent.type(
+      within(opened).getByRole("textbox", { name: "Markdown" }),
+      "Words",
+    );
+    await userEvent.click(within(opened).getByRole("button", { name: "Save" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Change Background" }),
+    );
+    const again = await screen.findByRole("region", {
+      name: /^Background for/u,
+    });
+    await userEvent.click(within(again).getByText("Markdown"));
+    await userEvent.type(
+      within(again).getByRole("textbox", { name: "Markdown" }),
+      " more",
+    );
+    await userEvent.click(
+      within(
+        screen
+          .getByRole("heading", { name: "Fill this planned hire" })
+          .closest("section") as HTMLElement,
+      ).getByRole("button", { name: "Fill" }),
+    );
+    expect(
+      await screen.findByText("Discard the note you're writing?"),
+    ).toBeTruthy();
+    await userEvent.click(screen.getByRole("button", { name: "Keep writing" }));
+    expect(fetch.mock.calls.some(([, init]) => init?.method === "POST")).toBe(
+      false,
+    );
+  });
+
+  it("fills nothing while a web link it cannot keep is still being entered", async () => {
+    const fetch = answers([robin, hire()], {
+      fields: [
+        {
+          id: "site",
+          name: "Site",
+          type: "link",
+          listId: null,
+          visibility: "general",
+          multiple: false,
+          required: true,
+          onPlannedHires: false,
+        },
+      ],
+    });
+    renderApp("/people");
+    await openForm();
+    await type("Name", "Fictional Starter");
+    await type("ID", "E9");
+    await userEvent.click(screen.getByRole("button", { name: "Change Site" }));
+    await userEvent.type(
+      await screen.findByRole("textbox", { name: "Address" }),
+      "not an address",
+    );
+    await fillNow();
+    expect(fetch.mock.calls.some(([, init]) => init?.method === "POST")).toBe(
+      false,
+    );
+  });
+
   it("sends no start date when the hire has none", async () => {
     const fetch = answers([robin, hire({ startDate: null })]);
     renderApp("/people");

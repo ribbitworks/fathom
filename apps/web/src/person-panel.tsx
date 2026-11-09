@@ -30,16 +30,16 @@ import {
   recordProblem,
 } from "./people-grid.tsx";
 import { isHire, rowName, type RowChange } from "./people-rows.ts";
+import type { NoteEditing } from "./note-editing.tsx";
 import { peopleQuery } from "./people.ts";
 import {
   personPanelId,
   type EditingContext,
-  type NoteEditing,
   usePersonEditing,
   useShownId,
 } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
-import { RecordLink, Row } from "./record-details.tsx";
+import { RecordLink, RecordSection, Row } from "./record-details.tsx";
 import { heldBack, onRow, shownSchema } from "./record-grid.tsx";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { DraftMark, StatusMark } from "./status-mark.tsx";
@@ -355,66 +355,56 @@ export function PersonPanel({
       {fill?.form ?? (
         <>
           {teams === "feature-teams" && (
-            <section aria-labelledby="person-reporting">
-              <h3 className={classes.heading} id="person-reporting">
-                Reporting
-              </h3>
-              <dl className={classes.list}>
-                {section(["managerId"]).map(rowOf)}
-              </dl>
-            </section>
+            <RecordSection id="person-reporting" title="Reporting">
+              {section(["managerId"]).map(rowOf)}
+            </RecordSection>
           )}
           {teams === "reporting" && (
-            <section aria-labelledby="person-reporting">
-              <h3 className={classes.heading} id="person-reporting">
-                Reporting
-              </h3>
-              <dl className={classes.list}>
-                {section(reportingKeys).map(reportingLabel).map(rowOf)}
-                <div className={classes.row}>
-                  <dt className={classes.label}>Direct reports</dt>
-                  <dd className={classes.value}>
-                    {reports.length === 0 ? (
-                      <Text c="dimmed">None</Text>
-                    ) : (
-                      <ul className={classes.reports}>
-                        {reports.map((report) => (
-                          <li
-                            key={report.id}
-                            className={
-                              shownIds.has(report.id) ? undefined : classes.live
-                            }
-                          >
-                            <RecordLink
-                              name={nameOf(report)}
-                              onShow={() => {
-                                onPerson(report.employeeId);
-                              }}
-                            />
-                            {typeof report.startDate === "string" &&
-                              report.startDate > day && (
-                                <Text span c="dimmed" size="sm" ml={8}>
-                                  Starts {formatDay(report.startDate)}
-                                </Text>
-                              )}
-                            {show === "both" &&
-                              !liveIds.has(report.id) &&
-                              report.draft !== undefined && (
-                                <DraftMark draft={report.draft} />
-                              )}
-                            {!shownIds.has(report.id) && (
-                              <StatusMark tone="live" spaced>
-                                Live
-                              </StatusMark>
+            <RecordSection id="person-reporting" title="Reporting">
+              {section(reportingKeys).map(reportingLabel).map(rowOf)}
+              <div className={classes.row}>
+                <dt className={classes.label}>Direct reports</dt>
+                <dd className={classes.value}>
+                  {reports.length === 0 ? (
+                    <Text c="dimmed">None</Text>
+                  ) : (
+                    <ul className={classes.reports}>
+                      {reports.map((report) => (
+                        <li
+                          key={report.id}
+                          className={
+                            shownIds.has(report.id) ? undefined : classes.live
+                          }
+                        >
+                          <RecordLink
+                            name={nameOf(report)}
+                            onShow={() => {
+                              onPerson(report.employeeId);
+                            }}
+                          />
+                          {typeof report.startDate === "string" &&
+                            report.startDate > day && (
+                              <Text span c="dimmed" size="sm" ml={8}>
+                                Starts {formatDay(report.startDate)}
+                              </Text>
                             )}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </dd>
-                </div>
-              </dl>
-            </section>
+                          {show === "both" &&
+                            !liveIds.has(report.id) &&
+                            report.draft !== undefined && (
+                              <DraftMark draft={report.draft} />
+                            )}
+                          {!shownIds.has(report.id) && (
+                            <StatusMark tone="live" spaced>
+                              Live
+                            </StatusMark>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </dd>
+              </div>
+            </RecordSection>
           )}
           {!isHire(person) && (
             <PersonFeatureTeams
@@ -423,19 +413,13 @@ export function PersonPanel({
               seesChart={seesChart}
             />
           )}
-          <section aria-labelledby="person-details">
-            <h3 className={classes.heading} id="person-details">
-              Details
-            </h3>
-            <dl className={classes.list}>{section(detailKeys).map(rowOf)}</dl>
-          </section>
+          <RecordSection id="person-details" title="Details">
+            {section(detailKeys).map(rowOf)}
+          </RecordSection>
           {added.length > 0 && (
-            <section aria-labelledby="person-columns">
-              <h3 className={classes.heading} id="person-columns">
-                Columns
-              </h3>
-              <dl className={classes.list}>{added.map(rowOf)}</dl>
-            </section>
+            <RecordSection id="person-columns" title="Columns">
+              {added.map(rowOf)}
+            </RecordSection>
           )}
         </>
       )}

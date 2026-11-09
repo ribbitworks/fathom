@@ -42,11 +42,8 @@ import {
   rowName,
   type RowChange,
 } from "./people-rows.ts";
-import {
-  type EditingContext,
-  type NoteEditing,
-  usePersonEditing,
-} from "./person-editing.tsx";
+import type { NoteEditing } from "./note-editing.tsx";
+import { type EditingContext, usePersonEditing } from "./person-editing.tsx";
 import classes from "./record-details.module.css";
 import { RecordLink, Row } from "./record-details.tsx";
 import { focusValue } from "./record-editing.tsx";
@@ -146,12 +143,14 @@ export function HireFillForm({
   lists: readonly List[];
   columns: readonly Column[];
   filling: HireFilling;
-  onFilling: (filling: HireFilling) => void;
+  // Changes what has been entered so far, since a note's panel saves long after the form was drawn.
+  onFilling: (update: (current: HireFilling) => HireFilling) => void;
   notes: Pick<NoteEditing, "start">;
   onFill: (request: HireFill) => void;
   onCancel: () => void;
 }) {
-  const { editingOf, refuse, refuseEntered } = usePersonEditing(notes);
+  const { editingOf, refuse, refuseEntered, withRefused, unfinished } =
+    usePersonEditing(notes);
   // A note is written in the page's panel, which stays open for the record shown.
   const formId = hire.id;
   const day = today();
@@ -299,10 +298,10 @@ export function HireFillForm({
     others,
     recordProblem,
     save: (_change, column, value) => {
-      onFilling({
-        ...filling,
-        values: { ...filling.values, [column.key]: value },
-      });
+      onFilling((current) => ({
+        ...current,
+        values: { ...current.values, [column.key]: value },
+      }));
     },
   };
   const editing = editingOf(context);
@@ -315,12 +314,17 @@ export function HireFillForm({
   }, [isNew]);
 
   const fill = () => {
-    const found = newRecordProblems(
+    if (unfinished(formId)) return;
+    const found = withRefused(
+      formId,
       fields,
-      personKind,
-      values,
-      isNew ? recordProblem : () => undefined,
-      others,
+      newRecordProblems(
+        fields,
+        personKind,
+        values,
+        isNew ? recordProblem : () => undefined,
+        others,
+      ),
     );
     if (found.length > 0) {
       refuseEntered(formId, found, fields);
@@ -368,7 +372,7 @@ export function HireFillForm({
           value={filling.by}
           onChange={(by) => {
             refuse(formId, []);
-            onFilling({ ...filling, by });
+            onFilling((current) => ({ ...current, by }));
           }}
           data={[
             { value: "new person", label: "New person" },

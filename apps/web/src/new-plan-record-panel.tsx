@@ -1,161 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Adding a customer, proposal, project, workstream, or milestone in the panel beside its table: a
-// form field for each column a new record has, with any problem Add finds named under its field.
-// The Projects page's milestone dialog draws the same fields.
+// Adding a customer, proposal, project, workstream, milestone, or feature in the panel beside its
+// table, as a person is added: a row for each column a new record has, each entered as its table's
+// cell is, and any problem Add finds named under its row.
 
-import { Checkbox, MultiSelect, Select, Textarea } from "@mantine/core";
-import { isLink } from "@fathom/shared";
-import { type ReactElement, useState } from "react";
-import { toggledFlag } from "./cell-kinds.tsx";
-import { ClearableInput } from "./clearable-input.tsx";
-import { DayInput } from "./day-input.tsx";
-import { focusSoon } from "./focus.ts";
 import {
   type FormValues,
   newRecordFields,
+  newRecordId,
   NewRecordPanel,
 } from "./new-record-panel.tsx";
+import type { NoteContext, NoteEditing } from "./note-editing.tsx";
 import type { AddedColumns } from "./added-columns.ts";
 import type { PlanChange } from "./project-grids.tsx";
-import type { Column, GridRecord, RecordTable } from "./record-grid.tsx";
+import classes from "./record-details.module.css";
+import { RecordSection, Row } from "./record-details.tsx";
+import { type SaveChange, useRecordEditing } from "./record-editing.tsx";
+import type { GridRecord, RecordTable } from "./record-grid.tsx";
 import type { CellValue } from "./table-view.ts";
-
-type FieldColumn = Pick<
-  Column<GridRecord, PlanChange>,
-  "key" | "label" | "kind" | "required" | "multiple" | "choices" | "maxLength"
->;
-
-const noteRows = 3;
-
-const fieldId = (column: Pick<FieldColumn, "key">) =>
-  `new-plan-record-${column.key}`;
 
 // The plan's records are checked on their own, not beside each other.
 export const noOthers = () => [];
-
-export function PlanField({
-  column,
-  value,
-  problem,
-  firstInDialog = false,
-  onChange,
-}: {
-  column: FieldColumn;
-  value: CellValue;
-  problem: string | undefined;
-  // Set for a text field first in a dialog: it takes focus, and stops at its column's length.
-  firstInDialog?: boolean | undefined;
-  onChange: (value: CellValue) => void;
-}): ReactElement | null {
-  const id = fieldId(column);
-  const common = { id, label: column.label, required: column.required };
-  const offered = column.choices
-    .filter(({ retired }) => !retired)
-    .map((choice) => ({ value: choice.id, label: choice.label }));
-  switch (column.kind) {
-    case "text":
-    case "month":
-    case "number":
-      return (
-        <ClearableInput
-          {...common}
-          {...(firstInDialog
-            ? { "data-autofocus": true, maxLength: column.maxLength }
-            : {})}
-          clearLabel={`Clear ${column.label}`}
-          onClear={() => {
-            onChange("");
-          }}
-          autoComplete="off"
-          value={value as string}
-          error={problem}
-          onChange={(event) => {
-            onChange(event.currentTarget.value);
-          }}
-        />
-      );
-    case "date":
-      return (
-        <DayInput
-          id={id}
-          label={column.label}
-          required={column.required}
-          value={value === "" ? undefined : (value as string)}
-          problem={problem}
-          shown={problem !== undefined}
-          onChange={(day) => {
-            onChange(day ?? "");
-          }}
-        />
-      );
-    case "choice":
-      return column.multiple ? (
-        <MultiSelect
-          {...common}
-          searchable
-          data={offered}
-          value={value as string[]}
-          error={problem}
-          onChange={onChange}
-        />
-      ) : (
-        <Select
-          {...common}
-          searchable
-          clearable={!column.required}
-          data={offered}
-          value={(value as string[]).at(0) ?? null}
-          error={problem}
-          onChange={(chosen) => {
-            onChange(chosen === null ? [] : [chosen]);
-          }}
-        />
-      );
-    case "link":
-      return (
-        <ClearableInput
-          {...common}
-          clearLabel={`Clear ${column.label}`}
-          onClear={() => {
-            onChange(null);
-          }}
-          autoComplete="off"
-          value={isLink(value) ? value.address : ""}
-          error={problem}
-          onChange={(event) => {
-            const address = event.currentTarget.value;
-            onChange(address === "" ? null : { address, text: "" });
-          }}
-        />
-      );
-    case "flag":
-      return (
-        <Checkbox
-          id={id}
-          label={column.label}
-          checked={(value as string[]).length > 0}
-          onChange={() => {
-            onChange(toggledFlag(value));
-          }}
-        />
-      );
-    // A required note cannot wait for the record's details, which come once it is added.
-    case "note":
-      return column.required ? (
-        <Textarea
-          {...common}
-          autosize
-          minRows={noteRows}
-          value={value as string}
-          error={problem}
-          onChange={(event) => {
-            onChange(event.currentTarget.value);
-          }}
-        />
-      ) : null;
-  }
-}
 
 export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   title,
@@ -166,7 +31,8 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   narrow,
   panelId,
   added = { fields: [], lists: [], order: [] },
-  onValues,
+  notes,
+  onValue,
   onAdd,
   onCancel,
 }: {
@@ -179,7 +45,10 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   panelId: string;
   // The columns added to the table, for a table that has them.
   added?: AddedColumns;
-  onValues: (values: FormValues) => void;
+  notes: Pick<NoteEditing, "start">;
+  // Takes one value, on top of whatever else has been entered, since a note's panel saves long after
+  // the form was drawn.
+  onValue: (key: string, value: CellValue) => void;
   onAdd: (request: Request) => void;
   onCancel: () => void;
 }) {
@@ -193,52 +62,62 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
     kind,
     values,
   );
-  const [problems, setProblems] = useState<ReadonlyMap<string, string>>(
-    new Map(),
+  const { editingOf, refuseEntered, withRefused, unfinished } =
+    useRecordEditing<Rec, PlanChange, NoteContext<Rec, PlanChange>>(notes);
+  const save: SaveChange<Rec, PlanChange> = (_change, column, value) => {
+    onValue(column.key, value);
+  };
+  const editing = editingOf({
+    id: newRecordId,
+    kind,
+    name: title,
+    values: shown,
+    adding: true,
+    others: noOthers,
+    recordProblem: table.recordProblem,
+    save,
+  });
+  const rowOf = (column: (typeof columns)[number]) => (
+    <Row
+      key={column.key}
+      column={column}
+      value={valueOf(column)}
+      editing={editing(column)}
+    />
   );
+  const details = columns.filter((column) => column.field === undefined);
+  const addedColumns = columns.filter((column) => column.field !== undefined);
   return (
     <NewRecordPanel
       panelId={panelId}
       title={title}
       narrow={narrow}
       saving={saving}
-      gap="md"
-      enterAdds
       table={table}
       columns={columns}
       kind={kind}
       values={shown}
       others={noOthers}
+      unfinished={unfinished(newRecordId)}
+      withRefused={(found) => withRefused(newRecordId, columns, found)}
       onRefused={(found) => {
-        setProblems(
-          new Map(found.map(({ column, message }) => [column, message])),
-        );
-        // Every problem is in one of the columns shown.
-        const first = columns.find(({ key }) =>
-          found.some(({ column }) => column === key),
-        ) as (typeof columns)[number];
-        focusSoon(fieldId(first));
+        refuseEntered(newRecordId, found, [...details, ...addedColumns]);
       }}
-      onAdd={(request) => {
-        setProblems(new Map());
-        onAdd(request);
-      }}
+      onAdd={onAdd}
       onCancel={onCancel}
     >
-      {columns.map((column) => (
-        <PlanField
-          key={column.key}
-          column={column}
-          value={valueOf(column)}
-          problem={problems.get(column.key)}
-          onChange={(value) => {
-            setProblems(
-              new Map([...problems].filter(([key]) => key !== column.key)),
-            );
-            onValues({ ...values, [column.key]: value });
-          }}
-        />
-      ))}
+      {addedColumns.length > 0 ? (
+        <>
+          <RecordSection id="new-record-details" title="Details">
+            {details.map(rowOf)}
+          </RecordSection>
+          <RecordSection id="new-record-columns" title="Columns">
+            {addedColumns.map(rowOf)}
+          </RecordSection>
+        </>
+      ) : (
+        <dl className={classes.list}>{details.map(rowOf)}</dl>
+      )}
     </NewRecordPanel>
   );
 }
