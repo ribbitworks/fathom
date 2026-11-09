@@ -11,7 +11,7 @@ last_updated: "2026-11-07"
 
 ## Scope
 
-Verifies the Lists page's built-in lists, Positions, Hiring states and Proposal statuses: their mark, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
+Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal statuses and Feature statuses: their mark, the line telling those who may change them that they are theirs to change, the switch that narrows the table to built-in or custom lists, changing their visibility, which sets who sees the Position column, each hiring state's meaning, giving new choices a meaning, and the rules that keep a choice offered for every meaning, when drafting and when approving.
 
 ## Test Environment
 
@@ -72,16 +72,16 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read the **Name** column of the **Hiring states**, **Positions** and **Proposal statuses** rows.
+- [ ] **Step 1.** Read the **Name** column of the **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses** rows.
   - **Expected:** Each name has a grey **Built in** label beside it. No other list has one.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Positions**.
-  - **Expected:** The panel opens with **Positions** at the top and **Built in** beside it. Under the choices, in grey, it reads three lines: **Rename these, add your own, or retire any you don't use.**, **Every person and planned hire has one of these positions.** and **Keep at least one.**
+  - **Expected:** The panel opens with **Positions** at the top and **Built in** beside it. Under the choices, in grey, it reads three lines: **These can be renamed, added to, or retired.**, **Every person and planned hire has one of these positions.** and **Keep at least one.**
   - **Notes:**
 
 - [ ] **Step 3.** Select **Hiring states**.
-  - **Expected:** The panel opens with **Hiring states** at the top and **Built in** beside it. No description is shown under the name. Under the choices, in grey, it reads four lines: **Rename these, add your own, or retire any you don't use.**, **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
+  - **Expected:** The panel opens with **Hiring states** at the top and **Built in** beside it. No description is shown under the name. Under the choices, in grey, it reads four lines: **These can be renamed, added to, or retired.**, **Proposed: the request to hire is not yet approved.**, **Open: the request to hire is approved.** and **Keep at least one choice for each.**
   - **Notes:**
 
 ### LIST-02: Each Hiring State Shows Its Meaning
@@ -183,5 +183,5 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 **Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
 - [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
-  - **Expected:** The table shows only **Hiring states**, **Positions** and **Proposal statuses**, and the count reads **3 of 10**.
+  - **Expected:** The table shows only **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**, and the count reads **4 of 11**.
   - **Notes:**

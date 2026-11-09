@@ -39,6 +39,8 @@ import { Icon } from "./icons.tsx";
 import { metricsButtonId, metricsPanelId, metricsTitleId } from "./metrics.ts";
 import { focusSoon } from "./focus.ts";
 import {
+  activeGrouping,
+  notGrouped,
   type ColumnChoice,
   type Filter,
   folded,
@@ -77,6 +79,7 @@ type AnyColumn = Pick<
 const sortNames: Record<Kind, [string, string]> = {
   text: ["Sort A to Z", "Sort Z to A"],
   date: ["Oldest first", "Newest first"],
+  month: ["Earliest first", "Latest first"],
   choice: ["List order", "Reverse list order"],
   link: ["Sort A to Z", "Sort Z to A"],
   note: ["Sort A to Z", "Sort Z to A"],
@@ -226,6 +229,7 @@ export function describeFilter(column: AnyColumn, filter: Filter): string {
       return `${column.label}: ${parts.join(" or ")}`;
     }
     case "text":
+    case "month":
     case "link":
     case "note": {
       const contains = (filter.contains ?? "").trim();
@@ -758,7 +762,43 @@ function DraftFilterItems({
   );
 }
 
-// The bar above a table: its search, its Views menu, the Draft menu, Metrics, a pill for each
+// Chooses what the rows are grouped by, or that they show as one list.
+function GroupingMenu({
+  groupings,
+  view,
+  onView,
+}: {
+  groupings: readonly { key: string; label: string }[];
+  view: View;
+  onView: ChangeView;
+}) {
+  const inUse = activeGrouping(view, groupings);
+  const none = { key: notGrouped, label: "None" };
+  const shown = inUse ?? none;
+  return (
+    <AppMenu position="bottom-start" hideDetached={false}>
+      <AppMenu.Target>
+        <Button variant="default">Group by: {shown.label}</Button>
+      </AppMenu.Target>
+      <AppMenu.Dropdown>
+        {[...groupings, none].map(({ key, label }, place) => (
+          <Menu.Item
+            key={key}
+            leftSection={check(key === shown.key)}
+            onClick={() => {
+              onView({ ...view, grouping: place === 0 ? undefined : key });
+            }}
+          >
+            {label}
+            {key === shown.key && <VisuallyHidden>, on</VisuallyHidden>}
+          </Menu.Item>
+        ))}
+      </AppMenu.Dropdown>
+    </AppMenu>
+  );
+}
+
+// The bar above a table: its search, the Draft menu, Metrics, the grouping, its Views menu, a pill for each
 // filter, since filters hide rows, how many rows there are, or how many are shown while some are
 // hidden, and Clear all.
 export function ViewBar({
@@ -774,7 +814,7 @@ export function ViewBar({
   onLeave,
   saved,
   draftItems,
-  groupLabel,
+  groupings,
 }: {
   // What the rows are, one and several, such as "person" and "people".
   one: string;
@@ -790,9 +830,8 @@ export function ViewBar({
   // For rows of several kinds, how many of each there are in all, such as "150 people and 6
   // planned hires".
   counted?: string | undefined;
-  // What the button that groups the rows, or shows them as one list, is called, for a table that
-  // groups them.
-  groupLabel?: string | undefined;
+  // What the rows can be grouped by, for a table that groups them, its own grouping first.
+  groupings?: readonly { key: string; label: string }[] | undefined;
   // Goes back to the table from the search field.
   onLeave: () => void;
   saved?: SavedViews | undefined;
@@ -814,17 +853,6 @@ export function ViewBar({
           onView({ ...view, search }, replace);
         }}
         onLeave={onLeave}
-      />
-      {/* After the search, so it never moves the field being typed in when it appears. */}
-      <ViewsMenu
-        saved={saved}
-        columns={shownColumns}
-        filterOnly={filterOnly}
-        view={view}
-        onView={onView}
-        onClear={() => {
-          onView(emptyView);
-        }}
       />
       <DraftMenu
         show={view.show}
@@ -852,20 +880,20 @@ export function ViewBar({
       >
         Metrics
       </Button>
-      {groupLabel !== undefined && (
-        <Button
-          variant={view.ungrouped === true ? "default" : "light"}
-          aria-pressed={view.ungrouped !== true}
-          onClick={() => {
-            onView({
-              ...view,
-              ungrouped: view.ungrouped === true ? undefined : true,
-            });
-          }}
-        >
-          {groupLabel}
-        </Button>
+      {groupings !== undefined && (
+        <GroupingMenu groupings={groupings} view={view} onView={onView} />
       )}
+      {/* Last of the buttons, so it moves none of them when it appears. */}
+      <ViewsMenu
+        saved={saved}
+        columns={shownColumns}
+        filterOnly={filterOnly}
+        view={view}
+        onView={onView}
+        onClear={() => {
+          onView(emptyView);
+        }}
+      />
       {filters.map(({ column, filter }) => (
         <Pill
           key={column.key}
@@ -1125,6 +1153,7 @@ function FilterForm({
         </Stack>
       );
     case "text":
+    case "month":
     case "link":
     case "note":
       return (

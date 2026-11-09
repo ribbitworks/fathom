@@ -64,6 +64,7 @@ import details from "./record-details.module.css";
 import {
   customerTable,
   dayOrEmpty,
+  featureColumns,
   featureTable,
   livePlanRecords,
   milestoneColumns,
@@ -526,7 +527,7 @@ export function ProjectsPage({
                   [{ id: pendingId(), request }],
                   ([saved]) => {
                     setBeingAdded(undefined);
-                    if (type === "milestone" || type === "feature") {
+                    if (type === "milestone") {
                       focusSoon(newButtonId);
                     } else setJustAdded(saved);
                   },
@@ -548,7 +549,7 @@ export function ProjectsPage({
     const filteredTo = view.filters.projectId?.any?.at(0);
     const grids: Readonly<Record<PlanTab, () => ReactElement>> = {
       features: () => {
-        const table = featureTable(choices);
+        const table = featureTable(choices, openRecord);
         const actions = actionsFor<Feature, FeatureFields>("feature");
         return (
           <PlanGrid
@@ -891,7 +892,11 @@ function recordPanel({
       columns: customerTable().columnsFor([], [], [], []),
     },
     milestones: undefined,
-    features: undefined,
+    features: {
+      type: "feature",
+      record: asShown(plan.features).find(({ id }) => id === open),
+      columns: featureColumns(choices),
+    },
   };
   // The tab is always one of the fixed tabs.
   // eslint-disable-next-line security/detect-object-injection

@@ -32,6 +32,8 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 - **Adding several rows to a Projects table:** Each row is saved by its own request, so if one fails partway, the earlier ones stay saved and trying again is refused, or for milestones repeats them, and Undo reverses only the last. The new record's identifier is found by looking for the one not seen before, so someone else adding a record of that kind at the same moment could name the wrong one. Deferred with the owner's agreement on 2026-11-08, to a small change of its own after the features server work merges: one batch request per kind, returning the new identifiers and one change set, as adding people does.
 
+- **Metrics on dates, and across the plan's tables:** Breaking Features down by Needed by shows only Populated and Empty, where the owner wants the months themselves. The owner asked on 2026-11-08 for a review of every metric offered on Features, Projects, Proposals, Customers, and Milestones.
+
 ## Account Administration
 
 - **Two administrators choosing the same email address at once:** Two accounts given the same email address at the same moment, by creating or changing them, can give a server error instead of the "already exists" message. Accepted by the owner as unlikely with 20 to 30 users.
@@ -44,6 +46,8 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Splitting the lists module:** `apps/server/src/data/lists.ts` holds both reading lists with their drafts and drafting changes to them, and is large enough to split. Deferred by the owner on 2026-11-01 as low risk at Fathom's size.
 - **Reading drafts' history:** Reading lists or people reads each draft's whole history of changes, to name who changed it, and undoing changes to drafts of lists reads every list again for each record undone. Both are fast at Fathom's size; deferred by the owner on 2026-11-01 until tables grow.
 - **Undoing a list's creation:** Undoing a change set that created a live list deletes the list without checking that nothing draws on it, so undoing an old change set that created what is now the built-in Positions list, in a database with no people, would remove it. Such change sets predate drafts, so few databases hold one; found by review on 2026-11-04, older than the built-in lists.
+
+- **Visibility of feature and proposal statuses:** The Decisions Log says a list's visibility sets who sees its column's values, but everyone who sees the plan is sent the names of feature statuses and proposal statuses, whatever visibility those lists are set to. Neither holds sensitive data today. Either apply the list's tier or treat the plan's lists as General and stop offering another tier. Deferred by the owner on 2026-11-08, to settle both lists together.
 
 ## People
 

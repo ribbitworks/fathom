@@ -25,3 +25,9 @@ export const optionalText = (longest: number) =>
     .nullable()
     .default(null)
     .transform((value) => (value === "" ? null : value));
+
+// The records picked, each once, in a stable order, so the same set is the same value.
+export const picked = z
+  .array(z.uuid())
+  .default([])
+  .transform((ids) => [...new Set(ids)].sort());

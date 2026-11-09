@@ -940,9 +940,29 @@ th.liveColumn {
   scroll-margin-left: var(--frozen-width, 0);
 }
 
+/* A sticky cell paints over the row lines the table draws, at some row positions, so it draws its
+   own. */
+.recordTable tr:not(:last-child) td.frozen {
+  --frozen-row-line: var(--table-border-color);
+}
+
+.recordTable tr:has(> .recordGroup) + tr td.frozen {
+  --frozen-heading-line: var(--table-border-color);
+}
+
 .recordTable td.frozen {
   position: sticky;
   background:
+    linear-gradient(
+        var(--frozen-row-line, transparent),
+        var(--frozen-row-line, transparent)
+      )
+      bottom / 100% 1px no-repeat,
+    linear-gradient(
+        var(--frozen-heading-line, transparent),
+        var(--frozen-heading-line, transparent)
+      )
+      top / 100% 1px no-repeat,
     linear-gradient(
       var(--cell-tint, transparent),
       var(--cell-tint, transparent)

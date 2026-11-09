@@ -128,7 +128,12 @@ const noPlan = () =>
     canEditFeatures: false,
   });
 const noPlanChoices = () =>
-  Response.json({ owners: [], statuses: [], featureTeams: [] });
+  Response.json({
+    owners: [],
+    statuses: [],
+    featureStatuses: [],
+    featureTeams: [],
+  });
 
 type Answers = Parameters<typeof serverAnswers>[0];
 
@@ -664,7 +669,10 @@ describe("the Drafts page", () => {
             {
               id: "00000000-0000-4000-8000-0000000000f1",
               name: "Fictional Moving",
-              status: "planned",
+              statusId: "s1",
+              neededBy: null,
+              customerIds: [],
+              note: null,
               targetStreamId: streamOfCycles.id,
               targetCycle: second?.startsOn,
               estimateHours: null,

@@ -15,15 +15,12 @@ import {
   drafts,
   fieldOfValue,
   inChunks,
-  listItems,
-  lists,
   people,
 } from "@fathom/db";
 import {
   isLink,
   type Link,
   type Links,
-  noteProblem,
   type Notes,
   type Person,
   type PersonChange,
@@ -76,7 +73,11 @@ import {
   columnsWithAdded,
   refuseHeldColumns,
 } from "./added-columns.ts";
-import { checkBuiltInChoice, firstOffered } from "./built-in-lists.ts";
+import {
+  checkBuiltInChoice,
+  firstOffered,
+  listChoices,
+} from "./built-in-lists.ts";
 import { isNote, type LiveValues, typeOf } from "./column-types.ts";
 import { recordEvents } from "./history.ts";
 import { readToday } from "./settings.ts";
@@ -89,7 +90,7 @@ import {
   refuseRemovingHiresPeople,
   refuseUnmarkingHireManagers,
 } from "./hires.ts";
-import { refuseRemovingNamedPeople } from "./records.ts";
+import { keptNote, refuseRemovingNamedPeople } from "./records.ts";
 import {
   changedReporting,
   checkLine,
@@ -216,11 +217,7 @@ async function checkState(
 // a person shows their own state while it has the meaning their end date gives them, and otherwise
 // the first of that meaning.
 async function readStates(reader: Pick<Database, "select">) {
-  const choices = await reader
-    .select({ id: listItems.id, meaning: listItems.meaning })
-    .from(listItems)
-    .innerJoin(lists, eq(lists.id, listItems.listId))
-    .where(eq(lists.builtIn, "hiring-states"));
+  const choices = await listChoices(reader, "hiring-states");
   const meanings = new Map(choices.map(({ id, meaning }) => [id, meaning]));
   const first = {
     hired: await firstOffered(reader, "hiring-states", "hired"),
@@ -456,10 +453,7 @@ export function checkedNotes(
       if (column?.type !== "note") {
         throw new BadRequestError("There is no such column");
       }
-      if (note === null || note.trim() === "") return [valueField(fieldId), []];
-      const problem = noteProblem(note);
-      if (problem !== undefined) throw new BadRequestError(problem);
-      return [valueField(fieldId), note];
+      return [valueField(fieldId), keptNote(note) ?? []];
     }),
   );
 }

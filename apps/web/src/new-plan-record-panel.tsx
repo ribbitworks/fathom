@@ -52,6 +52,7 @@ export function PlanField({
     .map((choice) => ({ value: choice.id, label: choice.label }));
   switch (column.kind) {
     case "text":
+    case "month":
       return (
         <ClearableInput
           {...common}

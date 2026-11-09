@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The lists Fathom builds in, which its built-in columns draw on: Positions, for people and planned
-// hires, the hiring states, a list with meanings, and proposals' statuses. Part of the data access
-// layer. A built-in column takes only a live choice of its list, since the database refers to the
-// choice itself.
+// hires, the hiring states and the feature statuses, lists with meanings, and proposals' statuses.
+// Part of the data access layer. A built-in column takes only a live choice of its list, since the
+// database refers to the choice itself.
 
 import { type Database, listItems, lists } from "@fathom/db";
 import {
@@ -23,6 +23,7 @@ export const builtInColumns: ReadonlyMap<string, string> = new Map([
   ["positions", "Position"],
   ["hiring-states", "State"],
   ["proposal-statuses", "Status"],
+  ["feature-statuses", "Status"],
 ]);
 
 const columnName = (key: BuiltInList) =>
@@ -58,6 +59,20 @@ export async function checkBuiltInChoice(
   }
   return choice.meaning;
 }
+
+// A built-in list's choices, in its order.
+export const listChoices = (reader: Reader, key: BuiltInList) =>
+  reader
+    .select({
+      id: listItems.id,
+      name: listItems.label,
+      retired: listItems.retired,
+      meaning: listItems.meaning,
+    })
+    .from(listItems)
+    .innerJoin(lists, eq(lists.id, listItems.listId))
+    .where(eq(lists.builtIn, key))
+    .orderBy(asc(listItems.position), asc(listItems.id));
 
 // The first choice offered, for a meaning when one is given, in the list's order, if any is.
 export async function firstOffered(

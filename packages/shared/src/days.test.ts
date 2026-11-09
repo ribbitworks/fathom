@@ -8,8 +8,10 @@ import {
   defaultLineFrom,
   isDay,
   isFirstOfMonth,
+  isMonth,
   monthOf,
   typedDay,
+  typedMonth,
 } from "./days.ts";
 
 describe("monthOf", () => {
@@ -67,5 +69,29 @@ describe("the day a new reporting line starts", () => {
 
   it("is their start date for someone who has not started", () => {
     expect(defaultLineFrom("2027-01-01", "2026-11-08")).toBe("2027-01-01");
+  });
+});
+
+describe("months", () => {
+  it.each(["2027-01", "2027-12"])("takes %s as a month", (text) => {
+    expect(isMonth(text)).toBe(true);
+  });
+
+  it.each(["2027-00", "2027-13", "2027", "Mar 2027"])(
+    "does not take %s as a month",
+    (text) => {
+      expect(isMonth(text)).toBe(false);
+    },
+  );
+
+  it.each([
+    ["202703", "2027-03"],
+    ["2027", "2027"],
+    [" 2027-03 ", "2027-03"],
+    ["2027031", "2027-03"],
+    ["", ""],
+    ["March", "March"],
+  ])("lays out %s as typed", (typed, shown) => {
+    expect(typedMonth(typed)).toBe(shown);
   });
 });

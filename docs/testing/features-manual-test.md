@@ -11,7 +11,7 @@ last_updated: "2026-11-08"
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, editing features as drafts, who may change them, and how feature drafts show on the Drafts page and when a cycle changes length.
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, and how feature drafts show on the Drafts page and when a cycle changes length.
 
 ## Test Environment
 
@@ -58,7 +58,7 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown in a row's first cell.
 - **⋯ menu:** the menu that opens from the **⋯** button at the end of a row.
-- **Group heading:** the full-width row above each group of features, naming its cycle or **Later**.
+- **Group heading:** the full-width row above each group of features, naming its cycle or **Later** or, grouped by the month needed, its month or **No date**.
 
 ## Test Cases
 
@@ -71,7 +71,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select **Features** in the left-hand menu.
-  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Target cycle**, **Feature team** and **Description**. Beside the search box, the count reads **11 features**.
+  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle** and **Feature team**. Beside the search box, the count reads **11 features**.
   - **Notes:**
 
 - [ ] **Step 2.** Look down the **Status** column.
@@ -104,7 +104,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Every heading and row is back, as in Step 1.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Group by cycle** above the table.
+- [ ] **Step 5.** Select **Group by: Cycle** above the table, then **None**.
   - **Expected:** The headings are gone and the 11 rows show as one list.
   - **Notes:**
 
@@ -112,7 +112,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The rows still show as one list.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Group by cycle** again.
+- [ ] **Step 7.** Select **Group by: None**, then **Cycle**.
   - **Expected:** The headings are back, as in Step 1.
   - **Notes:**
 
@@ -123,7 +123,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** **Features** page open.
 
 - [ ] **Step 1.** Look at the **Feature team** cell of the row **Scheduler API**.
-  - **Expected:** The cell has a red dot and **No team**.
+  - **Expected:** The cell has a red dot and **No team**, starting in line with the text of the cells above and below.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the **Feature team** cell of the row **Voice Notes**.
@@ -173,7 +173,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select **Drafts** in the left-hand menu.
-  - **Expected:** The list has an entry that names **the feature Fictional Reports**, with a filled yellow dot and **Draft: added**.
+  - **Expected:** The list has an entry reading **Product Manager as Product Manager drafted adding the feature Fictional Reports**.
   - **Notes:**
 
 ### FEAT-07: Those Who Only See the Plan Cannot Change Features
@@ -196,12 +196,12 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Run R1 first. Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
-- [ ] **Step 1.** In the side panel's **Cycles** table, select the **⋯** button at the end of next quarter's cycle, then **Change length…**.
+- [ ] **Step 1.** In the side panel's **Cycles** table, find the row whose dates include today. Select the **⋯** button at the end of the row directly below it, then **Change length…**.
   - **Expected:** A dialog titled **Change the length of** that cycle opens.
   - **Notes:**
 
 - [ ] **Step 2.** Replace **3** in **Length** with `2`.
-  - **Expected:** Below **New dates**, the dialog says that **Harbor 3**, **Data Retention Controls** and **Report Builder** move with their cycles.
+  - **Expected:** Below **New dates**, **Releases that move** names **Harbor 3**, and **Features that move** names **Data Retention Controls** and **Report Builder**.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Change length**.
@@ -232,4 +232,102 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 1.** Select the **Name** cell of the last row under a group heading, then press the Down arrow.
   - **Expected:** The selection moves to the **Name** cell of the first row under the next heading, without stopping on the heading.
+  - **Notes:**
+
+### FEAT-10: Needed By Takes a Month and Shows Its Name
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-09 ended with.
+
+**Preconditions:** **Features** page open.
+
+- [ ] **Step 1.** In the row **Voice Notes**, select the **Needed by** cell, type `203003`, then press Enter.
+  - **Expected:** While typing, the cell reads **2030-03**. Afterwards it reads **Mar 2030**, and the cell turns yellow, with a light green row under it, marked **Live**, showing an empty **Needed by**.
+  - **Notes:**
+
+- [ ] **Step 2.** In the row **Scheduler API**, select the **Needed by** cell, type `203013`, then press Enter.
+  - **Expected:** The value is refused, and the message reads **Needed by: use a month such as 2027-03**.
+  - **Notes:**
+
+- [ ] **Step 3.** Press Escape.
+  - **Expected:** The cell is empty again.
+  - **Notes:**
+
+### FEAT-11: Customers, the Description and the Note
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-10 ended with.
+
+**Preconditions:** **Features** page open.
+
+- [ ] **Step 1.** In the row **Scheduler API**, select the **Customers** cell and pick the first two customers offered.
+  - **Expected:** The cell shows both customers' names, and turns yellow as a draft.
+  - **Notes:**
+
+- [ ] **Step 2.** In the row **Scheduler API**, select the **Description** cell, replace its text with 201 letters, then press Enter.
+  - **Expected:** The value is refused, and the message reads **Description too long**.
+  - **Notes:**
+
+- [ ] **Step 3.** Press Escape.
+  - **Expected:** The description is back as it was.
+  - **Notes:**
+
+- [ ] **Step 4.** In the row **Offline Sync**, select the **Notes** cell.
+  - **Expected:** A side panel titled **Notes** opens beside the table, showing the note with bold words and a bulleted list, formatted as written.
+  - **Notes:**
+
+- [ ] **Step 5.** Close the side panel, then look at the **Notes** cell of the row **Offline Sync** in light and dark mode.
+  - **Expected:** The cell shows the start of the note as plain words, easy to read in both modes.
+  - **Notes:**
+
+### FEAT-12: Features Group by the Month They Are Needed
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-11 ended with.
+
+**Preconditions:** Run R1 first. Signed in with this account. **Features** page open.
+
+- [ ] **Step 1.** Select **Group by: Cycle** above the table, then **Needed by**.
+  - **Expected:** The button reads **Group by: Needed by**. Each heading names a month and year, such as **Mar 2027**, with how many features it holds. The headings run from the earliest month to the latest, and the last heading is **No date**.
+  - **Notes:**
+
+- [ ] **Step 2.** Reload the page.
+  - **Expected:** The headings are still by month.
+  - **Notes:**
+
+- [ ] **Step 3.** Select **Group by: Needed by**, then **None**.
+  - **Expected:** The headings are gone and the rows show as one list. The button reads **Group by: None**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Group by: None**, then **Cycle**.
+  - **Expected:** The headings name cycles again, with **Later** last.
+  - **Notes:**
+
+### FEAT-13: Feature Statuses Are a List With Meanings
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FEAT-12.
+
+**Preconditions:** Signed in with this account.
+
+- [ ] **Step 1.** Select **Lists** in the left-hand menu, then select **Feature statuses** in the table.
+  - **Expected:** The list is marked **Built in**. Its choices are, in order, **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**, each beside a meaning of the same name.
+  - **Notes:**
+
+- [ ] **Step 2.** Read the lines under the choices.
+  - **Expected:** They invite renaming, adding and retiring, say what each of the five meanings is, and end with **Keep at least one choice for each.**
+  - **Notes:**
+
+- [ ] **Step 3.** In the empty row of the choices, type `Long shot`, choose the meaning **Possible**, then press Enter.
+  - **Expected:** **Long shot** is added as a draft, with **Possible** as its meaning.
+  - **Notes:**
+
+### FEAT-14: A Feature's Details Open Beside the Table
+
+**Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-13.
+
+**Preconditions:** Run R1 first. Signed in with this account. **Features** page open.
+
+- [ ] **Step 1.** Point at the row **Offline Sync**, then select the small button with an arrow at the right of its **Name** cell.
+  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle** and **Feature team**.
+  - **Notes:**
+
+- [ ] **Step 2.** In the side panel, select a customer's name under **Customers**.
+  - **Expected:** The **Projects** page opens on its **Customers** tab, with that customer's details in the side panel.
   - **Notes:**

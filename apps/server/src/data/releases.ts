@@ -14,7 +14,6 @@ import {
   longestCycle,
   movedCycles,
   movedReleases,
-  noteProblem,
   patternsForLength,
   type CycleLengthRequest,
   type CyclePattern,
@@ -28,7 +27,7 @@ import {
 } from "@fathom/shared";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
-import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
+import { ConflictError, NotFoundError } from "../errors.ts";
 import type { Saved } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
 import {
@@ -42,6 +41,7 @@ import {
   changeableRecord,
   discardRecordDraft,
   drafting,
+  keptNote,
   kindOf,
   type Makers,
   readRecordMakers,
@@ -325,11 +325,7 @@ export async function changeReleaseNote(
   id: string,
   note: string | null,
 ): Promise<Saved<ReleaseStream>> {
-  const kept = note === null || note.trim() === "" ? null : note;
-  if (kept !== null) {
-    const problem = noteProblem(kept);
-    if (problem !== undefined) throw new BadRequestError(problem);
-  }
+  const kept = keptNote(note);
   return changingStream(database, maker, streamId, (transaction, state) => {
     const release = inStreamRecord(state, "release", streamId, id);
     return saveRecordDraft(transaction, maker, state, "release", id, {

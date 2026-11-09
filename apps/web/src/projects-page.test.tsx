@@ -101,6 +101,7 @@ async function openPage(
       Response.json({
         owners: [{ id: ownerId, name: "Fictional Owner", retired: false }],
         statuses: [{ id: statusId, name: "Open", retired: false }],
+        featureStatuses: [],
         featureTeams: [],
       }),
     ...answers,
@@ -172,7 +173,12 @@ describe("the page's tabs", () => {
           ? Response.json(plan())
           : Response.json({ error: "Down" }, { status: 500 }),
       "GET /api/projects/choices": () =>
-        Response.json({ owners: [], statuses: [], featureTeams: [] }),
+        Response.json({
+          owners: [],
+          statuses: [],
+          featureStatuses: [],
+          featureTeams: [],
+        }),
     });
     renderApp("/projects");
     expect(
@@ -1491,21 +1497,40 @@ describe("the Features page", () => {
       canEditStreams: true,
       canEditReleases: true,
     });
+  const possibleId = crypto.randomUUID();
+  const plannedId = crypto.randomUUID();
   const choices = () =>
     Response.json({
       owners: [],
       statuses: [],
+      featureStatuses: [
+        {
+          id: possibleId,
+          name: "Possible",
+          retired: false,
+          meaning: "possible",
+        },
+        {
+          id: plannedId,
+          name: "Planned",
+          retired: false,
+          meaning: "planned",
+        },
+      ],
       featureTeams: [{ id: teamId, name: "Fictional Team", retired: false }],
     });
   const feature = (name: string, targetCycle: string | null) => ({
     id: crypto.randomUUID(),
     name,
-    status: "possible" as const,
+    statusId: possibleId,
+    neededBy: null,
+    customerIds: [],
     targetStreamId: targetCycle === null ? null : streamId,
     targetCycle,
     estimateHours: 40,
     featureTeamId: null,
     description: null,
+    note: null,
   });
   const later = feature("Fictional Later", null);
   const second = feature("Fictional Second", cycleTwo);
@@ -1533,8 +1558,12 @@ describe("the Features page", () => {
       .queryAllByRole("rowheader")
       .map((cell) => cell.textContent)
       .filter((text) => groupHeading.test(text));
-  const groupButton = () =>
-    screen.getByRole("button", { name: "Group by cycle" });
+  const groupButton = (shown: string) =>
+    screen.getByRole("button", { name: `Group by: ${shown}` });
+  const groupBy = async (shown: string, next: string) => {
+    await userEvent.click(groupButton(shown));
+    await userEvent.click(await screen.findByRole("menuitem", { name: next }));
+  };
   const rowNames = () =>
     screen
       .getAllByRole("row")
@@ -1543,6 +1572,44 @@ describe("the Features page", () => {
           /Fictional (Later|Second|First)/.exec(textContent)?.[0],
       )
       .filter((name) => name !== undefined);
+
+  it("opens a feature's details beside the table from its Name cell", async () => {
+    const { history } = await open();
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Show details of Fictional First",
+        hidden: true,
+      }),
+    );
+    await waitFor(() => {
+      expect(history.location.search).toContain(`open=${first.id}`);
+    });
+    expect(
+      await screen.findByRole("button", { name: "Close details" }),
+    ).not.toBeNull();
+  });
+
+  it("marks a feature whose status means Planned and that has no feature team", async () => {
+    await open(featurePlan({ features: [{ ...first, statusId: plannedId }] }));
+    expect(await screen.findByText("No team")).not.toBeNull();
+  });
+
+  it("follows a customer from a feature's details to the Customers tab", async () => {
+    const buyer = customer();
+    const start = featurePlan({
+      customers: [buyer],
+      features: [{ ...first, customerIds: [buyer.id] }],
+    });
+    const { history } = await open(start, {}, `/features?open=${first.id}`);
+    await userEvent.click(
+      await screen.findByRole("button", { name: buyer.name }),
+    );
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/projects");
+    });
+    expect(history.location.search).toContain("tab=customers");
+    expect(history.location.search).toContain(`open=${buyer.id}`);
+  });
 
   it("titles the page Features, with no tabs", async () => {
     await open();
@@ -1617,20 +1684,49 @@ describe("the Features page", () => {
 
   it("shows one list once grouping is turned off, kept in the address", async () => {
     const { history } = await open();
-    await userEvent.click(groupButton());
+    await groupBy("Cycle", "None");
     await waitFor(() => {
       expect(headings()).toEqual([]);
     });
-    expect(history.location.search).toContain("ungrouped");
+    expect(history.location.search).toContain("grouping=none");
+  });
+
+  it("groups features by the month they are needed by, with No date last, kept in the address", async () => {
+    const start = featurePlan({
+      features: [
+        { ...later, neededBy: "2027-11" },
+        { ...second, neededBy: "2027-03" },
+        first,
+      ],
+    });
+    const { history } = await open(start);
+    await groupBy("Cycle", "Needed by");
+    await waitFor(() => {
+      expect(
+        screen
+          .queryAllByRole("rowheader")
+          .map((cell) => /^[A-Za-z ]*\d*/.exec(cell.textContent)?.[0])
+          .filter((text) => /Mar|Nov|No date/.test(String(text))),
+      ).toHaveLength(3);
+    });
+    const shownHeadings = screen
+      .queryAllByRole("rowheader")
+      .map((cell) => cell.textContent)
+      .filter((text) => /Mar|Nov|No date/.test(text));
+    expect(shownHeadings.at(0)).toContain("Mar");
+    expect(shownHeadings.at(1)).toContain("Nov");
+    expect(shownHeadings.at(2)).toContain("No date");
+    expect(history.location.search).toContain("grouping=neededBy");
+    expect(groupButton("Needed by")).not.toBeNull();
   });
 
   it("groups them again when turned back on", async () => {
     await open();
-    await userEvent.click(groupButton());
+    await groupBy("Cycle", "None");
     await waitFor(() => {
       expect(headings()).toEqual([]);
     });
-    await userEvent.click(groupButton());
+    await groupBy("None", "Cycle");
     await waitFor(() => {
       expect(headings()).toHaveLength(3);
     });
@@ -1657,14 +1753,17 @@ describe("the Features page", () => {
       [path]: saved(featurePlan),
     });
     const operations = operationsOf("feature");
-    await operations.change(later, { status: "planned" });
+    await operations.change(later, { statusId: plannedId });
     expect(sent(fetch, path)).toEqual([
       {
         name: "Fictional Later",
-        status: "planned",
+        statusId: plannedId,
+        neededBy: null,
+        customerIds: [],
         estimateHours: 40,
         featureTeamId: null,
         description: null,
+        note: null,
         target: null,
       },
     ]);
@@ -1692,10 +1791,12 @@ describe("the Features page", () => {
     expect(sent(fetch, "POST /api/features")).toEqual([
       {
         name: "Fictional New",
-        status: "possible",
+        neededBy: null,
+        customerIds: [],
         estimateHours: null,
         featureTeamId: null,
         description: null,
+        note: null,
         target: null,
       },
     ]);

@@ -13,8 +13,13 @@ import { useState } from "react";
 export const dayProblem = "Use a date such as 2026-10-31";
 export const dayNeeded = "Date needed";
 
-export const dayAsTyped = (text: string): string =>
-  typedDay(text.replace(/[^\d-]/g, ""));
+// What a box shows as it is typed in: only digits and dashes, laid out as the given form lays them.
+export const digitsAsTyped =
+  (layOut: (text: string) => string) =>
+  (text: string): string =>
+    layOut(text.replace(/[^\d-]/g, ""));
+
+export const dayAsTyped = digitsAsTyped(typedDay);
 
 export function DayInput({
   id,

@@ -6,7 +6,6 @@ import { describe, expect, it } from "vitest";
 import {
   featureLengths,
   featureRequestSchema,
-  firstFeatureStatus,
   largestEstimateHours,
   needsFeatureTeam,
 } from "./features.ts";
@@ -19,11 +18,40 @@ describe("a feature request", () => {
   it("leaves out everything but a name, as Later with no estimate or team", () => {
     expect(parse({}).data).toEqual({
       name: "Fictional Feature",
+      neededBy: null,
+      customerIds: [],
       target: null,
       estimateHours: null,
       featureTeamId: null,
       description: null,
+      note: null,
     });
+  });
+
+  it("takes a month it is needed by that exists", () => {
+    expect(parse({ neededBy: "2027-03" }).data?.neededBy).toBe("2027-03");
+  });
+
+  it.each(["2027-13", "2027-00", "2027-3", "March"])(
+    "refuses %s as the month it is needed by",
+    (neededBy) => {
+      expect(parse({ neededBy }).success).toBe(false);
+    },
+  );
+
+  it("keeps each customer once, in a stable order", () => {
+    const [first, second] = [
+      "018f3a10-0000-4000-8000-000000000001",
+      "018f3a10-0000-4000-8000-000000000002",
+    ];
+    expect(
+      parse({ customerIds: [second, first, second] }).data?.customerIds,
+    ).toEqual([first, second]);
+  });
+
+  it("limits a description to 200 characters", () => {
+    expect(parse({ description: "a".repeat(200) }).success).toBe(true);
+    expect(parse({ description: "a".repeat(201) }).success).toBe(false);
   });
 
   it("needs a name", () => {
@@ -64,31 +92,29 @@ describe("a feature request", () => {
         .success,
     ).toBe(false);
   });
-
-  it("starts a feature as Possible", () => {
-    expect(firstFeatureStatus).toBe("possible");
-  });
 });
 
 describe("which features need a feature team", () => {
   it.each(["planned", "in-progress"] as const)(
     "needs one for a %s feature with none",
-    (status) => {
-      expect(needsFeatureTeam({ status, featureTeamId: null })).toBe(true);
+    (meaning) => {
+      expect(needsFeatureTeam(meaning, null)).toBe(true);
     },
   );
 
   it.each(["possible", "done", "cancelled"] as const)(
     "does not need one for a %s feature",
-    (status) => {
-      expect(needsFeatureTeam({ status, featureTeamId: null })).toBe(false);
+    (meaning) => {
+      expect(needsFeatureTeam(meaning, null)).toBe(false);
     },
   );
 
   it("does not need one for a planned feature that has one", () => {
-    expect(needsFeatureTeam({ status: "planned", featureTeamId: "t1" })).toBe(
-      false,
-    );
+    expect(needsFeatureTeam("planned", "t1")).toBe(false);
+  });
+
+  it("does not need one for a status whose meaning is not known", () => {
+    expect(needsFeatureTeam(undefined, null)).toBe(false);
   });
 });
 

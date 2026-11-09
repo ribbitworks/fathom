@@ -880,9 +880,9 @@ describe("the dialog changing one cycle's length", () => {
       "27.32027-06-01 to 2027-08-31",
       "27.42027-09-01 to 2027-11-30",
     ]);
-    expect(
-      screen.queryByText("Fictional Later moves with its cycles."),
-    ).not.toBeNull();
+    expect(screen.queryByText("Releases that move")).not.toBeNull();
+    expect(screen.queryByText("Fictional Later")).not.toBeNull();
+    expect(screen.queryByText("Features that move")).toBeNull();
     expect(
       screen.queryByText("Fictional Later ships 2027-11-30."),
     ).not.toBeNull();
@@ -892,7 +892,10 @@ describe("the dialog changing one cycle's length", () => {
     const featureOf = (name: string, more: object) => ({
       id: name,
       name,
-      status: "planned",
+      statusId: "s1",
+      neededBy: null,
+      customerIds: [],
+      note: null,
       estimateHours: null,
       featureTeamId: null,
       description: null,
@@ -924,9 +927,8 @@ describe("the dialog changing one cycle's length", () => {
       expect(lengthBox().value).toBe("3");
     });
     await typeLength("2");
-    expect(
-      await screen.findByText("Fictional Moved moves with its cycles."),
-    ).not.toBeNull();
+    expect(await screen.findByText("Features that move")).not.toBeNull();
+    expect(screen.queryByText("Fictional Moved")).not.toBeNull();
   });
 
   it("names no features to one the server refuses the plan", async () => {
@@ -937,9 +939,8 @@ describe("the dialog changing one cycle's length", () => {
       <CycleLengthDialog stream={withLater} cycle={second} {...handlers} />
     ));
     await typeLength("2");
-    expect(
-      await screen.findByText("Fictional Later moves with its cycles."),
-    ).not.toBeNull();
+    expect(await screen.findByText("Releases that move")).not.toBeNull();
+    expect(screen.queryByText("Features that move")).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 
@@ -1019,9 +1020,7 @@ describe("the dialog changing one cycle's length", () => {
     ));
     await typeLength("2");
     expect(
-      screen.queryByText(
-        "Fictional Third and Fictional Fourth move with their cycles.",
-      ),
+      screen.queryByText("Fictional Third and Fictional Fourth"),
     ).not.toBeNull();
   });
 

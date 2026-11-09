@@ -9,12 +9,15 @@ import {
   cyclePatterns,
   features,
   featureTeams,
+  listItems,
   recordChanges,
   releaseStreams,
 } from "@fathom/db";
+import { noteLength } from "@fathom/shared";
 import type {
   ChangeHistory,
   Feature,
+  Meaning,
   PlanChoices,
   ProjectPlan,
   ReleaseStream,
@@ -23,6 +26,7 @@ import { eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  builtInChoice,
   errorOf,
   missingRecord,
   startTestApp,
@@ -88,6 +92,9 @@ async function readPlan(cookie = planner.cookie): Promise<ProjectPlan> {
   expect(response.statusCode).toBe(200);
   return response.json<ProjectPlan>();
 }
+
+const statusMeaning = (meaning: Meaning) =>
+  builtInChoice(test.connection, "feature-statuses", meaning);
 
 const post = (body: object, cookie = planner.cookie) =>
   test.request(cookie, "POST", "/api/features", body);
@@ -173,35 +180,163 @@ describe("reading", () => {
 });
 
 describe("adding and changing", () => {
-  it("starts a feature as Possible, in Later, with nothing else filled in", async () => {
+  it("starts a feature in the first status meaning Possible, in Later, with nothing else filled in", async () => {
     expect(await draftFeature()).toMatchObject({
-      status: "possible",
+      statusId: await statusMeaning("possible"),
+      neededBy: null,
+      customerIds: [],
       targetStreamId: null,
       targetCycle: null,
       estimateHours: null,
       featureTeamId: null,
       description: null,
+      note: null,
     });
+  });
+
+  it("keeps the month a feature is needed by", async () => {
+    expect((await draftFeature({ neededBy: "2027-03" })).neededBy).toBe(
+      "2027-03",
+    );
+  });
+
+  it("refuses a month that does not exist", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      neededBy: "2027-13",
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("keeps a feature's customers, approved with it", async () => {
+    const created = await test.request(
+      planner.cookie,
+      "POST",
+      "/api/customers",
+      { name: unique("Fictional Customer") },
+    );
+    const customer = created.json<Saved>().plan.customers.at(-1);
+    const { id: customerId } = customer as { id: string };
+    const response = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/approval",
+      {
+        records: [{ type: "customer", id: customerId }],
+      },
+    );
+    expect(response.statusCode).toBe(200);
+    const feature = await liveFeature({ customerIds: [customerId] });
+    expect(feature.customerIds).toEqual([customerId]);
+  });
+
+  it("refuses a customer that does not exist", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      customerIds: [missingRecord],
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("keeps a feature's note as Markdown", async () => {
+    expect((await draftFeature({ note: "**Fictional** note" })).note).toBe(
+      "**Fictional** note",
+    );
+  });
+
+  it("keeps an empty note as none", async () => {
+    expect((await draftFeature({ note: "  " })).note).toBeNull();
+  });
+
+  it("refuses a note a note may not hold", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      note: "a".repeat(noteLength + 1),
+    });
+    expect(response.statusCode).toBe(400);
+  });
+
+  it("offers the feature statuses in their list's order, with their meanings", async () => {
+    const response = await test.request(
+      planner.cookie,
+      "GET",
+      "/api/projects/choices",
+    );
+    const { featureStatuses } = response.json<PlanChoices>();
+    expect(
+      featureStatuses
+        .filter(({ retired }) => !retired)
+        .map(({ meaning }) => meaning),
+    ).toEqual(["possible", "planned", "in-progress", "done", "cancelled"]);
   });
 
   it("keeps a feature's status when a change does not name one", async () => {
-    const feature = await liveFeature({ status: "planned" });
+    const planned = await statusMeaning("planned");
+    const feature = await liveFeature({ statusId: planned });
     await put(feature.id, { name: feature.name });
-    expect((await shown(feature.id)).status).toBe("planned");
+    expect((await shown(feature.id)).statusId).toBe(planned);
   });
 
   it("moves a feature to any status", async () => {
-    const feature = await liveFeature({ status: "done" });
-    await put(feature.id, { name: feature.name, status: "possible" });
-    expect((await shown(feature.id)).status).toBe("possible");
+    const possible = await statusMeaning("possible");
+    const feature = await liveFeature({
+      statusId: await statusMeaning("done"),
+    });
+    await put(feature.id, { name: feature.name, statusId: possible });
+    expect((await shown(feature.id)).statusId).toBe(possible);
   });
 
-  it("refuses a status outside the fixed set", async () => {
+  async function retiredStatus(): Promise<string> {
+    const possible = await statusMeaning("possible");
+    const [choice] = await test.connection
+      .select({ listId: listItems.listId })
+      .from(listItems)
+      .where(eq(listItems.id, possible));
+    const [added] = await test.connection
+      .insert(listItems)
+      .values({
+        listId: String(choice?.listId),
+        label: unique("Fictional Status"),
+        position: 100,
+        meaning: "possible",
+        retired: false,
+      })
+      .returning({ id: listItems.id });
+    return String(added?.id);
+  }
+
+  const retire = (statusId: string) =>
+    test.connection
+      .update(listItems)
+      .set({ retired: true })
+      .where(eq(listItems.id, statusId));
+
+  it("keeps a retired status a feature already has", async () => {
+    const statusId = await retiredStatus();
+    const feature = await liveFeature({ statusId });
+    await retire(statusId);
+    const response = await put(feature.id, { name: feature.name, statusId });
+    expect(response.statusCode).toBe(200);
+  });
+
+  it("refuses a retired status a feature does not have", async () => {
+    const statusId = await retiredStatus();
+    await retire(statusId);
     const response = await post({
       name: unique("Fictional Feature"),
-      status: "paused",
+      statusId,
     });
     expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe("Choose a status that is offered");
+  });
+
+  it("refuses a status from another list", async () => {
+    const response = await post({
+      name: unique("Fictional Feature"),
+      statusId: await builtInChoice(test.connection, "proposal-statuses"),
+    });
+    expect(response.statusCode).toBe(400);
+    expect(errorOf(response)).toBe("Choose a status from its list");
   });
 
   it("refuses a name another feature has, ignoring letter case", async () => {

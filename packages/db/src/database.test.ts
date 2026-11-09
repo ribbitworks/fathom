@@ -838,6 +838,11 @@ describe("planned hires", () => {
       );
       expect(lists.rows).toEqual([
         {
+          name: "Feature statuses",
+          built_in: "feature-statuses",
+          visibility: "general",
+        },
+        {
           name: "Hiring states",
           built_in: "hiring-states",
           visibility: "general",
@@ -1033,6 +1038,8 @@ describe("planned hires", () => {
 describe("features", () => {
   const { uniqueViolation, checkViolation, restrictViolation } = databaseCodes;
   const prefix = "Fictional Feature Test";
+  const anyFeatureStatus =
+    "(SELECT i.id FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'feature-statuses' LIMIT 1)";
 
   afterEach(async () => {
     await withClient(database.app, async (client) => {
@@ -1078,12 +1085,17 @@ describe("features", () => {
     );
 
   const addFeature = (client: Client, name: string | null = `${prefix} One`) =>
-    client.query("INSERT INTO features (name) VALUES ($1)", [name]);
+    client.query(
+      `INSERT INTO features (status_id, name) VALUES (${anyFeatureStatus}, $1)`,
+      [name],
+    );
 
   const addFeatureId = (client: Client) =>
-    firstId(client, "INSERT INTO features (name) VALUES ($1) RETURNING id", [
-      `${prefix} One`,
-    ]);
+    firstId(
+      client,
+      `INSERT INTO features (status_id, name) VALUES (${anyFeatureStatus}, $1) RETURNING id`,
+      [`${prefix} One`],
+    );
 
   const addGeneralFeature = (
     client: Client,
@@ -1091,7 +1103,7 @@ describe("features", () => {
     name: string | null = null,
   ) =>
     client.query(
-      "INSERT INTO features (name, general_for_project_id) VALUES ($1, $2)",
+      `INSERT INTO features (status_id, name, general_for_project_id) VALUES (${anyFeatureStatus}, $1, $2)`,
       [name, projectId],
     );
 
@@ -1101,13 +1113,13 @@ describe("features", () => {
     cycle: string | null,
   ) =>
     client.query(
-      "INSERT INTO features (name, target_stream_id, target_cycle) VALUES ($1, $2, $3)",
+      `INSERT INTO features (status_id, name, target_stream_id, target_cycle) VALUES (${anyFeatureStatus}, $1, $2, $3)`,
       [`${prefix} One`, stream, cycle],
     );
 
   const addEstimate = (client: Client, hours: string) =>
     client.query(
-      "INSERT INTO features (name, estimate_hours) VALUES ($1, $2)",
+      `INSERT INTO features (status_id, name, estimate_hours) VALUES (${anyFeatureStatus}, $1, $2)`,
       [`${prefix} One`, hours],
     );
 
@@ -1131,15 +1143,17 @@ describe("features", () => {
     return counted.rows;
   };
 
-  it("starts a feature as Possible, with nothing else filled in", async () => {
+  it("starts a feature with nothing but its status filled in", async () => {
     await withClient(database.app, async (client) => {
       await addFeature(client);
       const added = await client.query(
-        `SELECT status, target_stream_id, target_cycle, estimate_hours, feature_team_id, description, general_for_project_id FROM features WHERE name = '${prefix} One'`,
+        `SELECT needed_by, customer_ids, note, target_stream_id, target_cycle, estimate_hours, feature_team_id, description, general_for_project_id FROM features WHERE name = '${prefix} One'`,
       );
       expect(added.rows).toEqual([
         {
-          status: "possible",
+          needed_by: null,
+          customer_ids: [],
+          note: null,
           target_stream_id: null,
           target_cycle: null,
           estimate_hours: null,
@@ -1201,30 +1215,58 @@ describe("features", () => {
     });
   });
 
-  it.each(["possible", "planned", "in-progress", "done", "cancelled"])(
-    "accepts the status %s",
-    async (status) => {
+  it("starts with one feature status for each meaning, in order", async () => {
+    await withClient(database.app, async (client) => {
+      const statuses = await client.query(
+        "SELECT i.label, i.meaning FROM list_items i JOIN lists l ON l.id = i.list_id WHERE l.built_in = 'feature-statuses' ORDER BY i.position",
+      );
+      expect(statuses.rows).toEqual([
+        { label: "Possible", meaning: "possible" },
+        { label: "Planned", meaning: "planned" },
+        { label: "In progress", meaning: "in-progress" },
+        { label: "Done", meaning: "done" },
+        { label: "Cancelled", meaning: "cancelled" },
+      ]);
+    });
+  });
+
+  it("keeps a status a feature has from being deleted", async () => {
+    await withClient(database.app, async (client) => {
+      await addFeature(client);
+      expect(
+        await errorCodeOf(
+          client.query(
+            `DELETE FROM list_items WHERE id = (SELECT status_id FROM features WHERE name = '${prefix} One')`,
+          ),
+        ),
+      ).toBe(restrictViolation);
+    });
+  });
+
+  it.each(["2027-13", "2027-00", "2027-3", "March"])(
+    "refuses %s as the month a feature is needed by",
+    async (month) => {
       await withClient(database.app, async (client) => {
-        await client.query(
-          "INSERT INTO features (name, status) VALUES ($1, $2)",
-          [`${prefix} ${status}`, status],
-        );
-        const added = await client.query(
-          `SELECT status FROM features WHERE name = '${prefix} ${status}'`,
-        );
-        expect(added.rows).toEqual([{ status }]);
+        expect(
+          await errorCodeOf(
+            client.query(
+              `INSERT INTO features (status_id, name, needed_by) VALUES (${anyFeatureStatus}, $1, $2)`,
+              [`${prefix} One`, month],
+            ),
+          ),
+        ).toBe(checkViolation);
       });
     },
   );
 
-  it("refuses a status outside the fixed set", async () => {
+  it("holds no empty note", async () => {
     await withClient(database.app, async (client) => {
       expect(
         await errorCodeOf(
-          client.query("INSERT INTO features (name, status) VALUES ($1, $2)", [
-            `${prefix} One`,
-            "paused",
-          ]),
+          client.query(
+            `INSERT INTO features (status_id, name, note) VALUES (${anyFeatureStatus}, $1, '')`,
+            [`${prefix} One`],
+          ),
         ),
       ).toBe(checkViolation);
     });
@@ -1291,7 +1333,7 @@ describe("features", () => {
       expect(
         await errorCodeOf(
           client.query(
-            "INSERT INTO features (name, description) VALUES ($1, '')",
+            `INSERT INTO features (status_id, name, description) VALUES (${anyFeatureStatus}, $1, '')`,
             [`${prefix} One`],
           ),
         ),
@@ -1313,7 +1355,7 @@ describe("features", () => {
     await withClient(database.app, async (client) => {
       const teamId = await addTeam(client);
       await client.query(
-        "INSERT INTO features (name, feature_team_id) VALUES ($1, $2)",
+        `INSERT INTO features (status_id, name, feature_team_id) VALUES (${anyFeatureStatus}, $1, $2)`,
         [`${prefix} One`, teamId],
       );
       expect(

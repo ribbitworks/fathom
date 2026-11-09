@@ -19,6 +19,7 @@ import {
   projects,
   proposals,
   runMigrations,
+  features,
 } from "@fathom/db";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { eq, isNull } from "drizzle-orm";
@@ -180,8 +181,8 @@ describe("removing projects", () => {
     expect(kept).toEqual([
       "The project Crane Control, which has milestones added by hand",
       "The proposal Harbour Cranes Upgrade, which a project kept uses",
-      "The customer Bluefin Harbour Authority, which a project or proposal kept uses",
-      "The customer Kestrel Mining Cooperative, which a project or proposal kept uses",
+      "The customer Bluefin Harbour Authority, which a project, proposal, or feature kept uses",
+      "The customer Kestrel Mining Cooperative, which a project, proposal, or feature kept uses",
     ]);
     expect(
       (await connection.select().from(projects)).map(({ name }) => name),
@@ -208,6 +209,36 @@ describe("removing projects", () => {
     expect(
       (await connection.select().from(drafts)).map(({ recordId }) => recordId),
     ).toEqual([keptId]);
+  });
+
+  it("keeps a customer a feature added by hand names", async () => {
+    await seed();
+    const [status] = await connection
+      .select({ id: listItems.id })
+      .from(listItems)
+      .innerJoin(lists, eq(lists.id, listItems.listId))
+      .where(eq(lists.builtIn, "feature-statuses"));
+    await connection.insert(features).values({
+      name: "Fictional Hand Feature",
+      statusId: String(status?.id),
+      customerIds: [customerId("air")],
+    });
+    expect(await unseedProjects(connection)).toContain(
+      "The customer Orchid Regional Air, which a project, proposal, or feature kept uses",
+    );
+    await connection.delete(features);
+  });
+
+  it("discards a feature's draft that names a customer removed", async () => {
+    await seed();
+    await connection.insert(drafts).values({
+      recordType: "feature",
+      recordId: randomUUID(),
+      action: "created",
+      fields: { customerIds: [customerId("air")] },
+    });
+    await unseedProjects(connection);
+    expect(await connection.select().from(drafts)).toEqual([]);
   });
 
   it("removes nothing when nothing was seeded", async () => {

@@ -125,7 +125,9 @@ export {
   isDay,
   isFirstOfMonth,
   monthOf,
+  isMonth,
   monthSchema,
+  typedMonth,
   typedDay,
 } from "./days.ts";
 export { byName } from "./text.ts";
@@ -297,9 +299,6 @@ export {
   featureLengths,
   featureRequestSchema,
   featureSchema,
-  type FeatureStatus,
-  featureStatusSchema,
-  firstFeatureStatus,
   largestEstimateHours,
   needsFeatureTeam,
 } from "./features.ts";

@@ -288,7 +288,7 @@ describe("the table of lists", () => {
     builtIn: "positions",
     name: "Positions",
   };
-  const invitation = "Rename these, add your own, or retire any you don't use.";
+  const invitation = "These can be renamed, added to, or retired.";
 
   it("shows all lists, those built in, or the custom ones, as chosen, kept in the address", async () => {
     serverAnswers({
@@ -459,6 +459,32 @@ describe("the table of lists", () => {
     expect(
       screen.getByText(
         /Every proposal has one of these statuses\.\s+Keep at least one\./,
+      ),
+    ).toBeTruthy();
+  });
+
+  it("says what each feature status means", async () => {
+    serverAnswers({
+      "GET /api/session": viewer,
+      "GET /api/lists": () =>
+        Response.json({
+          lists: [
+            {
+              ...locations,
+              builtIn: "feature-statuses",
+              name: "Feature statuses",
+            },
+          ],
+        }),
+    });
+    renderApp("/lists/l1");
+    await screen.findByRole("heading", {
+      name: "Feature statuses",
+      level: 2,
+    });
+    expect(
+      screen.getByText(
+        /Possible: the feature may come, and needs no feature team yet\.[\s\S]+Keep at least one choice for each\./,
       ),
     ).toBeTruthy();
   });

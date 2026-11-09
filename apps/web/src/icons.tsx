@@ -34,6 +34,12 @@ const paths = {
     </>
   ),
   capacity: <path d="M2.5 13.5V9M6.2 13.5V5.5M9.8 13.5V7.5M13.5 13.5V2.5" />,
+  features: (
+    <>
+      <path d="M8 2 14 5 8 8 2 5z" />
+      <path d="M2 8l6 3 6-3M2 11l6 3 6-3" />
+    </>
+  ),
   lists: (
     <>
       <path d="M6 4h8M6 8h8M6 12h8" />

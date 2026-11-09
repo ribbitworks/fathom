@@ -12,11 +12,12 @@
 
 import type { Database } from "@fathom/db";
 import type { RecordDraft, RecordRef, RecordType } from "@fathom/shared";
-import { recordTypeSchema } from "@fathom/shared";
+import { noteProblem, recordTypeSchema } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 import type { Actor } from "../access.ts";
 import {
+  BadRequestError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
@@ -294,6 +295,16 @@ export const recordHeldBy = (
   const holder = stateOf(state, type).held.get(id)?.holder;
   return holder === undefined ? {} : { heldBy: holder };
 };
+
+// A record's note as it is kept: null when empty, refusing one a note may not hold.
+export function keptNote(note: string | null): string | null {
+  const kept = note === null || note.trim() === "" ? null : note;
+  if (kept !== null) {
+    const problem = noteProblem(kept);
+    if (problem !== undefined) throw new BadRequestError(problem);
+  }
+  return kept;
+}
 
 // Runs a change to the editor's drafts of the plan's records, after every other change to drafts,
 // with the records as they see them.

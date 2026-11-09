@@ -18,12 +18,14 @@ import {
   linkLabel,
   notePlainText,
   noteProblem,
+  isMonth,
   typedDay,
+  typedMonth,
   webAddress,
 } from "@fathom/shared";
 import type { ReactNode } from "react";
 import { ChoicePicker, type Finish } from "./choice-picker.tsx";
-import { dayAsTyped } from "./day-input.tsx";
+import { digitsAsTyped } from "./day-input.tsx";
 import { FlagCell } from "./flag-field.tsx";
 import { LinkCell, LinkEditor, LinkMenuItem } from "./link-field.tsx";
 import {
@@ -36,6 +38,7 @@ import { offered, sameName } from "./lists.ts";
 import {
   type CellValue,
   formatDay,
+  formatMonth,
   type Kind,
   type TableColumn,
 } from "./table-view.ts";
@@ -161,36 +164,65 @@ const text: CellKind = {
   breaksDownWhenRequired: false,
 };
 
-// The 28th is in every month, so this tries each month's name.
-const longestDay = Math.max(
-  ...Array.from(
-    { length: 12 },
-    (_, month) =>
-      formatDay(`2026-${String(month + 1).padStart(2, "0")}-28`).length,
-  ),
+const twelveMonths = Array.from(
+  { length: 12 },
+  (_, month) => `2026-${String(month + 1).padStart(2, "0")}`,
 );
 
-const date: CellKind = {
-  ...text,
-  inWords: (_column, value) =>
-    isDay(asText(value)) ? formatDay(asText(value)) : asText(value),
-  problem: (column, value) => {
-    const day = typedDay(asText(value));
-    return day !== "" && !isDay(day)
-      ? `${column.label}: use a date such as 2026-10-31`
-      : undefined;
-  },
-  // A day typed as digits alone, such as 20261031, is kept as 2026-10-31.
-  change: (key, value) => {
-    const day = typedDay(asText(value));
-    return { [key]: day === "" ? null : day };
-  },
-  width: () => longestDay,
-  measured: false,
-  breaksDownWhenRequired: false,
-  asTyped: dayAsTyped,
-  pasted: (_column, content) => ({ value: typedDay(content) }),
-};
+// A cell of a calendar value, kept as text in the form typed, such as 2027-03, and shown in words.
+function calendarKind({
+  layOut,
+  isWhole,
+  inWords,
+  example,
+  samples,
+}: {
+  layOut: (typed: string) => string;
+  isWhole: (typed: string) => boolean;
+  inWords: (value: string) => string;
+  example: string;
+  // Values among which the longest in words is found.
+  samples: readonly string[];
+}): CellKind {
+  const longest = Math.max(...samples.map((sample) => inWords(sample).length));
+  return {
+    ...text,
+    inWords: (_column, value) =>
+      isWhole(asText(value)) ? inWords(asText(value)) : asText(value),
+    problem: (column, value) => {
+      const typed = layOut(asText(value));
+      return typed !== "" && !isWhole(typed)
+        ? `${column.label}: use ${example}`
+        : undefined;
+    },
+    change: (key, value) => {
+      const typed = layOut(asText(value));
+      return { [key]: typed === "" ? null : typed };
+    },
+    width: () => longest,
+    measured: false,
+    breaksDownWhenRequired: false,
+    asTyped: digitsAsTyped(layOut),
+    pasted: (_column, content) => ({ value: layOut(content) }),
+  };
+}
+
+// The 28th is in every month, so the longest name of a month is among these.
+const date = calendarKind({
+  layOut: typedDay,
+  isWhole: isDay,
+  inWords: formatDay,
+  example: "a date such as 2026-10-31",
+  samples: twelveMonths.map((month) => `${month}-28`),
+});
+
+const month = calendarKind({
+  layOut: typedMonth,
+  isWhole: isMonth,
+  inWords: formatMonth,
+  example: "a month such as 2027-03",
+  samples: twelveMonths,
+});
 
 // Whether a cell may be given a choice: one offered in its list that the column lets be picked.
 const pickable = (column: AnyColumn, option: Choice) =>
@@ -344,6 +376,10 @@ const note: CellKind = {
   inWords: (_column, value) => notePreview(noteOf(value)),
   inDetail: (_column, value) => notePlainText(noteOf(value)),
   problem: (_column, value) => noteProblem(noteOf(value)),
+  ownField: {
+    read: (held) => (typeof held === "string" ? held : ""),
+    save: (value) => (noteOf(value) === "" ? null : noteOf(value)),
+  },
   pasted: (_column, content) => ({ value: cleanNote(content) }),
   change: (key, value) => ({
     notes: { [key]: noteOf(value) === "" ? null : noteOf(value) },
@@ -413,6 +449,7 @@ const flag: CellKind = {
 export const cellKinds: Readonly<Record<Kind, CellKind>> = {
   text,
   date,
+  month,
   choice,
   link,
   note,

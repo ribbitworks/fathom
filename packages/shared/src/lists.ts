@@ -28,7 +28,17 @@ const configDraft = <Live extends z.ZodRawShape>(live: Live) =>
   });
 
 // Every meaning Fathom fixes for the choices of a list with meanings, with its name.
-export const meaningSchema = z.enum(["proposed", "open", "hired", "left"]);
+export const meaningSchema = z.enum([
+  "proposed",
+  "open",
+  "hired",
+  "left",
+  "possible",
+  "planned",
+  "in-progress",
+  "done",
+  "cancelled",
+]);
 
 export type Meaning = z.infer<typeof meaningSchema>;
 
@@ -37,6 +47,11 @@ export const meaningNames: Readonly<Record<Meaning, string>> = {
   open: "Open",
   hired: "Hired",
   left: "Left",
+  possible: "Possible",
+  planned: "Planned",
+  "in-progress": "In progress",
+  done: "Done",
+  cancelled: "Cancelled",
 };
 
 export function meaningName(meaning: Meaning): string {
@@ -92,11 +107,12 @@ export const orderDraftSchema = z.object({
 export type OrderDraft = z.infer<typeof orderDraftSchema>;
 
 // The lists Fathom builds in, each drawn on by a built-in column: Positions, for people and planned
-// hires, the hiring states, a list with meanings, and proposals' statuses.
+// hires, the hiring states and the feature statuses, lists with meanings, and proposals' statuses.
 export const builtInListSchema = z.enum([
   "positions",
   "hiring-states",
   "proposal-statuses",
+  "feature-statuses",
 ]);
 
 export type BuiltInList = z.infer<typeof builtInListSchema>;
@@ -107,6 +123,13 @@ export const listMeanings: Readonly<Record<BuiltInList, readonly Meaning[]>> = {
   positions: [],
   "hiring-states": ["proposed", "open", "hired", "left"],
   "proposal-statuses": [],
+  "feature-statuses": [
+    "possible",
+    "planned",
+    "in-progress",
+    "done",
+    "cancelled",
+  ],
 };
 
 // The meanings a list's choices are tied to, by its built-in key: none for any other list.

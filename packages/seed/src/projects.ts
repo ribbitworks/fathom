@@ -10,6 +10,7 @@
 
 import {
   customers,
+  features,
   type Database,
   drafts,
   listItems,
@@ -363,6 +364,9 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       .select({ customerIds: proposals.customerIds })
       .from(proposals)
       .where(notInArray(proposals.id, proposalIds));
+    const otherFeatures = await transaction
+      .select({ customerIds: features.customerIds })
+      .from(features);
     const removingCustomers = keep(
       await transaction
         .select()
@@ -374,11 +378,12 @@ export async function unseedProjects(database: Database): Promise<string[]> {
           ),
         ),
       new Set(
-        [...otherProjects, ...otherProposals].flatMap(
+        [...otherProjects, ...otherProposals, ...otherFeatures].flatMap(
           (record) => record.customerIds,
         ),
       ),
-      (name) => `The customer ${name}, which a project or proposal kept uses`,
+      (name) =>
+        `The customer ${name}, which a project, proposal, or feature kept uses`,
     );
     const customerIdsRemoved = removingCustomers.map(({ id }) => id);
     const milestoneRows = await transaction
@@ -416,7 +421,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
             linking === undefined
               ? undefined
               : and(
-                  inArray(table.recordType, ["project", "proposal"]),
+                  inArray(table.recordType, ["project", "proposal", "feature"]),
                   linking,
                 ),
           ),

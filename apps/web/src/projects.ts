@@ -10,7 +10,6 @@ import {
   type CustomerRequest,
   type Feature,
   type FeatureRequest,
-  firstFeatureStatus,
   type Milestone,
   type MilestoneRequest,
   type PlanChoice,
@@ -154,29 +153,38 @@ export const milestoneRequest = (milestone: Milestone): MilestoneRequest => ({
 export type FeatureFields = Pick<
   Feature,
   | "name"
-  | "status"
+  | "statusId"
+  | "neededBy"
+  | "customerIds"
   | "targetStreamId"
   | "targetCycle"
   | "estimateHours"
   | "featureTeamId"
   | "description"
+  | "note"
 >;
 
 // What saving a feature sends: its target as a stream and a cycle together.
 export const featureRequest = ({
   name,
-  status,
+  statusId,
+  neededBy,
+  customerIds,
   estimateHours,
   featureTeamId,
   description,
+  note,
   targetStreamId,
   targetCycle,
 }: FeatureFields): FeatureRequest => ({
   name,
-  status,
+  ...(statusId === "" ? {} : { statusId }),
+  neededBy,
+  customerIds,
   estimateHours,
   featureTeamId,
   description,
+  note,
   target:
     targetStreamId === null || targetCycle === null
       ? null
@@ -361,12 +369,15 @@ const planRecordOperations: Readonly<
   feature: {
     blank: {
       name: "",
-      status: firstFeatureStatus,
+      statusId: "",
+      neededBy: null,
+      customerIds: [],
       targetStreamId: null,
       targetCycle: null,
       estimateHours: null,
       featureTeamId: null,
       description: null,
+      note: null,
     },
     all: (plan) => plan.features,
     withAll: (plan, records) => ({ ...plan, features: records as Feature[] }),
@@ -399,6 +410,8 @@ export interface TableChoices {
   proposals: readonly Proposal[];
   projects: readonly Project[];
   statuses: Choice[];
+  // In their list's order, each with its meaning.
+  featureStatuses: Choice[];
   featureTeams: Choice[];
   // Every cycle a feature can target.
   cycles: Choice[];
@@ -446,6 +459,12 @@ export const tableChoices = (
 ): TableChoices => ({
   people: asChoices(picks.owners),
   statuses: asChoices(picks.statuses),
+  featureStatuses: picks.featureStatuses.map(
+    ({ id, name, retired, meaning }) => ({
+      ...choice(id, name, retired),
+      meaning,
+    }),
+  ),
   featureTeams: asChoices(picks.featureTeams),
   cycles: cycleChoices(streams),
   customers: plan.customers,

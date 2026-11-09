@@ -27,7 +27,8 @@ import { z } from "zod";
 // nothing when not.
 export type CellValue = string | string[] | Link | null;
 
-export type Kind = "text" | "date" | "choice" | "link" | "note" | "flag";
+export type Kind =
+  "text" | "date" | "month" | "choice" | "link" | "note" | "flag";
 
 export interface ColumnChoice {
   id: string;
@@ -76,8 +77,8 @@ export interface View {
   sort: SortLevel[];
   // The keys of the columns the metrics break the rows down by, set while the metrics show.
   breakdown?: string[] | undefined;
-  // Set when a table that groups its rows shows them as one list.
-  ungrouped?: true | undefined;
+  // Which of a table's groupings the rows are under, when not its first, or notGrouped for one list.
+  grouping?: string | undefined;
   // How many columns, from the first, stay in view while the table scrolls sideways, when not the
   // table's own default.
   frozen?: number | undefined;
@@ -116,7 +117,7 @@ export function viewFrom(search: ViewDefinition): View {
         : { key: level, descending: false },
     ),
     ...(search.breakdown === undefined ? {} : { breakdown: search.breakdown }),
-    ...(search.ungrouped === undefined ? {} : { ungrouped: search.ungrouped }),
+    ...(search.grouping === undefined ? {} : { grouping: search.grouping }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
     ...(hasWidths(search.widths) ? { widths: search.widths } : {}),
   };
@@ -199,7 +200,7 @@ export function searchFor(view: View): ViewDefinition {
           ),
         }),
     ...(view.breakdown === undefined ? {} : { breakdown: view.breakdown }),
-    ...(view.ungrouped === undefined ? {} : { ungrouped: view.ungrouped }),
+    ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...(hasWidths(view.widths) ? { widths: view.widths } : {}),
   };
@@ -247,12 +248,26 @@ export function isActive(filter: Filter | undefined): boolean {
   );
 }
 
+// What a view's grouping is when the rows show as one list.
+export const notGrouped = "none";
+
+// The grouping a view puts the rows under: the one it names, or else the table's first.
+export function activeGrouping<Grouping extends { key: string }>(
+  view: Pick<View, "grouping">,
+  groupings: readonly Grouping[] | undefined,
+): Grouping | undefined {
+  if (view.grouping === notGrouped) return undefined;
+  return (
+    groupings?.find(({ key }) => key === view.grouping) ?? groupings?.at(0)
+  );
+}
+
 // Whether the view sorts the rows, or sets which columns are frozen or how wide they are, which the
 // Views menu names and Clear all clears with the filters.
 export function setsApart(view: View): boolean {
   return (
     view.sort.length > 0 ||
-    view.ungrouped === true ||
+    view.grouping !== undefined ||
     view.frozen !== undefined ||
     view.widths !== undefined
   );
@@ -296,7 +311,7 @@ export function knownView(
             (key) => known.has(key) && counted.has(key),
           ),
         }),
-    ...(view.ungrouped === undefined ? {} : { ungrouped: view.ungrouped }),
+    ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...widthsOf(view.widths, known),
   };
@@ -379,11 +394,26 @@ const noteRules: Rules = {
     textRules.matches(notePlainText(asText(value)), filter),
 };
 
-const dateRules: Rules = {
+// A calendar value is searched by its digits and its name, and sorts as it is kept.
+const calendarWords = (format: (value: string) => string, value: string) =>
+  value === "" ? "" : `${value} ${format(value)}`;
+
+const calendarRules = (
+  format: (value: string) => string,
+): Pick<Rules, "isEmpty" | "words" | "compare"> => ({
   isEmpty: (value) => asText(value) === "",
-  words: (_column, value) =>
-    asText(value) === "" ? "" : `${asText(value)} ${formatDay(asText(value))}`,
+  words: (_column, value) => calendarWords(format, asText(value)),
   compare: (_column, a, b) => asText(a).localeCompare(asText(b)),
+});
+
+const monthRules: Rules = {
+  ...calendarRules(formatMonth),
+  matches: (value, filter) =>
+    textRules.matches(calendarWords(formatMonth, asText(value)), filter),
+};
+
+const dateRules: Rules = {
+  ...calendarRules(formatDay),
   matches: (value, { from, to }) =>
     (from !== undefined || to !== undefined) &&
     (from === undefined || asText(value) >= from) &&
@@ -458,6 +488,7 @@ const flagRules: Rules = {
 const rules: Record<Kind, Rules> = {
   text: textRules,
   date: dateRules,
+  month: monthRules,
   choice: choiceRules,
   link: linkRules,
   note: noteRules,

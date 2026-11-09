@@ -137,6 +137,14 @@ export const changeCycleLength = (
     streamResponse,
   );
 
+// The names of what moves with its cycles.
+export interface MovedNames {
+  releases: string[];
+  features: string[];
+}
+
+const nothingMoved: MovedNames = { releases: [], features: [] };
+
 // What a new length for one cycle makes of its stream, as the server would draft it: the cycles
 // from that one on, the names of the releases and features that move with their cycles, the new ship dates of
 // releases that ship when their last cycle ends, and why it cannot be made, if it cannot. Cycles
@@ -148,7 +156,7 @@ export function lengthChangeOf(
   features: readonly Feature[] = [],
 ): {
   cycles: Cycle[];
-  moved: string[];
+  moved: MovedNames;
   ships: { name: string; on: string }[];
   problem?: string;
 } {
@@ -161,7 +169,7 @@ export function lengthChangeOf(
   if ("problem" in made) {
     return {
       cycles: from(stream.cycles),
-      moved: [],
+      moved: nothingMoved,
       ships: [],
       problem: made.problem,
     };
@@ -193,7 +201,7 @@ export function lengthChangeOf(
   if ("problem" in moving) {
     return {
       cycles: from(cycles),
-      moved: [],
+      moved: nothingMoved,
       ships: [],
       problem: moving.problem,
     };
@@ -207,9 +215,15 @@ export function lengthChangeOf(
       ? [{ name, on }]
       : [];
   });
+  const { moves } = moving;
+  const names = (wanted: (move: (typeof moves)[number]) => boolean) =>
+    moves.filter(wanted).map(({ release }) => release.name);
   return {
     cycles: from(cycles),
-    moved: moving.moves.map(({ release }) => release.name),
+    moved: {
+      releases: names(({ release }) => kept.some((one) => one === release)),
+      features: names(({ release }) => !kept.some((one) => one === release)),
+    },
     ships,
   };
 }

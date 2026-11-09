@@ -9,6 +9,8 @@ import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { isDay } from "@fathom/shared";
 import {
+  activeGrouping,
+  notGrouped,
   applyView,
   emptyView,
   folded,
@@ -373,9 +375,9 @@ describe("the view in the page address", () => {
 
   it("reads and writes the columns the metrics break down by, kept while the metrics show with none", () => {
     expect(viewFrom({ breakdown: [] })).toEqual(view({ breakdown: [] }));
-    expect(viewFrom({ ungrouped: true })).toEqual(view({ ungrouped: true }));
-    expect(searchFor(view({ ungrouped: true }))).toEqual({ ungrouped: true });
-    expect(setsApart(view({ ungrouped: true }))).toBe(true);
+    expect(viewFrom({ grouping: "none" })).toEqual(view({ grouping: "none" }));
+    expect(searchFor(view({ grouping: "none" }))).toEqual({ grouping: "none" });
+    expect(setsApart(view({ grouping: "none" }))).toBe(true);
     expect(searchFor(view({ breakdown: ["level", "start"] }))).toEqual({
       breakdown: ["level", "start"],
     });
@@ -762,5 +764,70 @@ describe("note columns", () => {
     expect(shown({ sort: [{ key: "background", descending: false }] })).toEqual(
       ["b", "a", "c"],
     );
+  });
+});
+
+describe("which grouping a view uses", () => {
+  const groupings = [{ key: "cycle" }, { key: "month" }];
+
+  it("uses the table's first when the view names none", () => {
+    expect(activeGrouping({}, groupings)).toEqual({ key: "cycle" });
+  });
+
+  it("uses the one the view names", () => {
+    expect(activeGrouping({ grouping: "month" }, groupings)).toEqual({
+      key: "month",
+    });
+  });
+
+  it("uses the table's first for a grouping it does not have", () => {
+    expect(activeGrouping({ grouping: "gone" }, groupings)).toEqual({
+      key: "cycle",
+    });
+  });
+
+  it("uses none for a view showing one list", () => {
+    expect(activeGrouping({ grouping: notGrouped }, groupings)).toBeUndefined();
+  });
+
+  it("uses none for a table that has no groupings", () => {
+    expect(activeGrouping({}, undefined)).toBeUndefined();
+  });
+});
+
+describe("a month column", () => {
+  const [row = {} as Row] = rows;
+  const months = ["2027-03", "2027-11", ""].map((start, place) => ({
+    ...row,
+    id: `m${String(place)}`,
+    start,
+  }));
+  const monthColumn: TableColumn<Row> = {
+    key: "start",
+    label: "Needed by",
+    kind: "month",
+    choices: [],
+    multiple: false,
+    value: (shown) => shown.start,
+  };
+  const shownIds = (changes: Partial<View>) =>
+    applyView(months, [monthColumn], view(changes)).map(({ id }) => id);
+
+  it("is found by its name", () => {
+    expect(shownIds({ search: "Mar 2027" })).toEqual(["m0"]);
+  });
+
+  it("is found by its digits", () => {
+    expect(shownIds({ filters: { start: { contains: "2027-11" } } })).toEqual([
+      "m1",
+    ]);
+  });
+
+  it("sorts by date, with no month last", () => {
+    expect(shownIds({ sort: [{ key: "start", descending: true }] })).toEqual([
+      "m1",
+      "m0",
+      "m2",
+    ]);
   });
 });

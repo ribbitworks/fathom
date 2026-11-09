@@ -14,6 +14,13 @@ describe("lists with meanings", () => {
       "hired",
       "left",
     ]);
+    expect(meaningsOf("feature-statuses")).toEqual([
+      "possible",
+      "planned",
+      "in-progress",
+      "done",
+      "cancelled",
+    ]);
     expect(meaningsOf("positions")).toEqual([]);
     expect(meaningsOf(null)).toEqual([]);
     expect(meaningsOf(undefined)).toEqual([]);
@@ -25,6 +32,11 @@ describe("lists with meanings", () => {
       "Open",
       "Hired",
       "Left",
+      "Possible",
+      "Planned",
+      "In progress",
+      "Done",
+      "Cancelled",
     ]);
   });
 

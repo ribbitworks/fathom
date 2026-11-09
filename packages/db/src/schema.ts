@@ -206,9 +206,13 @@ const builtInListList = sqlList([
   "positions",
   "hiring-states",
   "proposal-statuses",
+  "feature-statuses",
 ]);
-const meaningList = sqlList(["proposed", "open", "hired", "left"]);
-const featureStatusList = sqlList([
+const meaningList = sqlList([
+  "proposed",
+  "open",
+  "hired",
+  "left",
   "possible",
   "planned",
   "in-progress",
@@ -475,14 +479,23 @@ export const milestones = fathomSchema.table(
 // Features: the planned work on the roadmap. A feature's name is unique, ignoring letter case. A
 // project's general feature has no name of its own, since it shows its project's and follows it. A
 // target cycle is known by its stream and start date, as cycles are worked out rather than stored;
-// a feature with none is in Later. The estimate is one value, in hours, whichever unit it is shown
-// in; PostgreSQL ranks NaN above every number, so it must be refused by name.
+// a feature with none is in Later. Its status is a choice of the built-in list of feature statuses.
+// The month it is needed by is kept as text such as 2027-03. Its note is Markdown checked by the
+// server. The estimate is one value, in hours, whichever unit it is shown in; PostgreSQL ranks NaN
+// above every number, so it must be refused by name.
 export const features = fathomSchema.table(
   "features",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name"),
-    status: text("status").notNull().default("possible"),
+    statusId: uuid("status_id")
+      .notNull()
+      .references(() => listItems.id, { onDelete: "restrict" }),
+    neededBy: text("needed_by"),
+    customerIds: uuid("customer_ids")
+      .array()
+      .notNull()
+      .default(sql`'{}'`),
     targetStreamId: uuid("target_stream_id").references(
       () => releaseStreams.id,
       { onDelete: "restrict" },
@@ -497,6 +510,7 @@ export const features = fathomSchema.table(
       onDelete: "restrict",
     }),
     description: text("description"),
+    note: text("note"),
     generalForProjectId: uuid("general_for_project_id").references(
       () => projects.id,
       { onDelete: "restrict" },
@@ -509,10 +523,12 @@ export const features = fathomSchema.table(
     ),
     index("features_target_index").on(table.targetStreamId, table.targetCycle),
     index("features_feature_team_index").on(table.featureTeamId),
+    index("features_status_index").on(table.statusId),
     check(
-      "features_status_known",
-      sql`${table.status} IN (${sql.raw(featureStatusList)})`,
+      "features_needed_by_month",
+      sql`${table.neededBy} ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'`,
     ),
+    check("features_note_not_empty", sql`${table.note} <> ''`),
     check(
       "features_named_or_general",
       sql`(${table.name} IS NULL) = (${table.generalForProjectId} IS NOT NULL)`,

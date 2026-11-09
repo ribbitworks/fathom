@@ -19,14 +19,14 @@ import {
   roles as roleTable,
   runMigrations,
 } from "@fathom/db";
-import type { Permission, Role } from "@fathom/shared";
+import type { BuiltInList, Meaning, Permission, Role } from "@fathom/shared";
 import {
   createTestCertificate,
   startTestDatabase,
   type TestCertificate,
   type TestDatabase,
 } from "@fathom/test-utils";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { actorFor } from "./access.ts";
 import { type App, buildApp } from "./app.ts";
@@ -59,6 +59,26 @@ export const errorOf = (response: { json: () => unknown }) =>
 // The positions every test app's Positions list offers, for the people and planned hires tests add.
 export const testPosition = "00000000-0000-4000-8000-00000000f001";
 export const otherTestPosition = "00000000-0000-4000-8000-00000000f002";
+
+// A choice of a built-in list, of a meaning when one is named, for a record added straight to its
+// table.
+export async function builtInChoice(
+  connection: Database,
+  list: BuiltInList,
+  meaning?: Meaning,
+): Promise<string> {
+  const [found] = await connection
+    .select({ id: listItems.id })
+    .from(listItems)
+    .innerJoin(lists, eq(lists.id, listItems.listId))
+    .where(
+      and(
+        eq(lists.builtIn, list),
+        meaning === undefined ? undefined : eq(listItems.meaning, meaning),
+      ),
+    );
+  return String(found?.id);
+}
 
 export interface TestApp {
   app: App;

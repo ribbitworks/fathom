@@ -8,7 +8,11 @@ import { z } from "zod";
 
 export const daySchema = z.iso.date();
 
-export const monthSchema = z.string().regex(/^\d{4}-\d{2}$/);
+export const monthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+
+// Whether text is a whole month, such as 2026-10, that exists.
+export const isMonth = (text: string): boolean =>
+  monthSchema.safeParse(text).success;
 
 // Whether text is a whole day, such as 2026-10-31, that exists.
 export const isDay = (text: string): boolean =>
@@ -21,16 +25,27 @@ const monthLength = "YYYY-MM".length;
 // The month a day is in, such as 2026-10 for 2026-10-31.
 export const monthOf = (day: string): string => day.slice(0, monthLength);
 
-// Text typed as a day, with digits alone, or digits and dashes, laid out as the digits fill a day:
-// 2026, 2026-10 and 2026-10-31 as they are typed. Anything else is left as typed.
-export function typedDay(text: string): string {
+// Text with digits alone, or digits and dashes, laid out in parts of the lengths given as the digits
+// fill them. Anything else is left as typed.
+function laidOut(text: string, lengths: readonly number[]): string {
   const trimmed = text.trim();
   if (!/^[\d-]*$/.test(trimmed)) return trimmed;
-  const digits = trimmed.replaceAll("-", "").slice(0, 8);
-  return [digits.slice(0, 4), digits.slice(4, 6), digits.slice(6)]
+  let digits = trimmed.replaceAll("-", "");
+  return lengths
+    .map((length) => {
+      const part = digits.slice(0, length);
+      digits = digits.slice(length);
+      return part;
+    })
     .filter((part) => part !== "")
     .join("-");
 }
+
+// A day as it is typed: 2026, 2026-10 and 2026-10-31.
+export const typedDay = (text: string): string => laidOut(text, [4, 2, 2]);
+
+// A month as it is typed: 2026 and 2026-10.
+export const typedMonth = (text: string): string => laidOut(text, [4, 2]);
 
 // The day a new reporting line starts unless another is given: today, or the person's start date if
 // that is later.

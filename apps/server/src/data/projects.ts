@@ -6,20 +6,15 @@
 // Part of the data access layer; the caller checks the actor's permissions. Every change is a
 // draft of a plan record, as records.ts sets out, with the kinds project-kinds.ts describes.
 
-import {
-  type Database,
-  featureTeams,
-  listItems,
-  lists,
-  people,
-} from "@fathom/db";
+import { type Database, featureTeams, people } from "@fathom/db";
 import {
   type CustomerRequest,
   type Customer,
   type Feature,
   type FeatureRequest,
-  featureStatusSchema,
-  firstFeatureStatus,
+  type BuiltInList,
+  type Meaning,
+  meaningSchema,
   type Milestone,
   type MilestoneRequest,
   type PlanChoices,
@@ -36,7 +31,11 @@ import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
-import { checkBuiltInChoice, firstOffered } from "./built-in-lists.ts";
+import {
+  checkBuiltInChoice,
+  firstOffered,
+  listChoices,
+} from "./built-in-lists.ts";
 import type { Saved, Transaction } from "./changes.ts";
 import type { Recorded } from "./drafts.ts";
 import { checkTeamForFeature, readTeamDrafts } from "./feature-teams.ts";
@@ -54,6 +53,7 @@ import {
   changeableRecord,
   discardRecordDraft,
   drafting,
+  keptNote,
   kindOf,
   type Makers,
   readRecordMakers,
@@ -175,13 +175,16 @@ function featureOut(state: RecordsState, makers: Makers, id: string): Feature {
   return {
     id,
     name: String(feature.name),
-    status: featureStatusSchema.parse(feature.status),
+    statusId: String(feature.statusId),
+    neededBy: text(feature.neededBy),
+    customerIds: linkedIds(feature, "customerIds"),
     targetStreamId: text(feature.targetStreamId),
     targetCycle: text(feature.targetCycle),
     estimateHours:
       typeof feature.estimateHours === "number" ? feature.estimateHours : null,
     featureTeamId: text(feature.featureTeamId),
     description: text(feature.description),
+    note: text(feature.note),
     ...extras(state, makers, "feature", id),
   };
 }
@@ -351,24 +354,42 @@ export async function changeProject(
   });
 }
 
-// The status a proposal is given: the one asked for, if it is offered or the proposal already has
-// it, or, for a proposal added without one, the first status offered.
+type StatusList = Extract<
+  BuiltInList,
+  "proposal-statuses" | "feature-statuses"
+>;
+
+// How a record with no status starts: in the first status offered, of a meaning when one is named.
+const startingStatus: Readonly<
+  Record<StatusList, { meaning?: Meaning; missing: string }>
+> = {
+  "proposal-statuses": {
+    missing: "No proposal status is offered. Add one to the list first.",
+  },
+  "feature-statuses": {
+    meaning: "possible",
+    missing: "No feature status means Possible. Add one to the list first.",
+  },
+};
+
+// The status a record is given: the one asked for, if it is offered or the record already has it,
+// or, for a record added without one, the first status it can start in.
 async function statusFor(
   transaction: Transaction,
+  list: StatusList,
   asked: string | undefined,
   had: unknown,
 ): Promise<string> {
   if (asked !== undefined) {
-    await checkBuiltInChoice(transaction, "proposal-statuses", asked, had);
+    await checkBuiltInChoice(transaction, list, asked, had);
     return asked;
   }
   if (typeof had === "string") return had;
-  const first = await firstOffered(transaction, "proposal-statuses");
-  if (first === undefined) {
-    throw new ConflictError(
-      "No proposal status is offered. Add one to the list first.",
-    );
-  }
+  // The list is always one of the two above.
+  // eslint-disable-next-line security/detect-object-injection
+  const { meaning, missing } = startingStatus[list];
+  const first = await firstOffered(transaction, list, meaning);
+  if (first === undefined) throw new ConflictError(missing);
   return first;
 }
 
@@ -384,7 +405,12 @@ async function proposalRecord(
     link: request.link,
     ownerId: request.ownerId,
     customerIds: request.customerIds,
-    statusId: await statusFor(transaction, request.statusId, had),
+    statusId: await statusFor(
+      transaction,
+      "proposal-statuses",
+      request.statusId,
+      had,
+    ),
   };
 }
 
@@ -427,17 +453,25 @@ export async function changeProposal(
 async function featureRecord(
   transaction: Transaction,
   request: FeatureRequest,
-  status: unknown,
+  had?: unknown,
 ) {
   await checkTeamForFeature(transaction, request.featureTeamId);
   return {
     name: request.name,
-    status: request.status ?? status,
+    statusId: await statusFor(
+      transaction,
+      "feature-statuses",
+      request.statusId,
+      had,
+    ),
+    neededBy: request.neededBy,
+    customerIds: request.customerIds,
     targetStreamId: request.target?.streamId ?? null,
     targetCycle: request.target?.cycle ?? null,
     estimateHours: request.estimateHours,
     featureTeamId: request.featureTeamId,
     description: request.description,
+    note: keptNote(request.note),
   };
 }
 
@@ -453,7 +487,7 @@ export async function addFeature(
       state,
       "feature",
       randomUUID(),
-      await featureRecord(transaction, request, firstFeatureStatus),
+      await featureRecord(transaction, request),
     ),
   );
 }
@@ -472,7 +506,7 @@ export async function changeFeature(
       state,
       "feature",
       id,
-      await featureRecord(transaction, request, feature.status),
+      await featureRecord(transaction, request, feature.statusId),
     );
   });
 }
@@ -592,8 +626,9 @@ export async function removeMilestone(
   });
 }
 
-// People as owners, by name alone, those whose end date has passed retired, the proposal statuses,
-// in their list's order, and the live feature teams by name, those drafted to be removed retired.
+// People as owners, by name alone, those whose end date has passed retired, the proposal and feature
+// statuses, in their lists' order, and the live feature teams by name, those drafted to be removed
+// retired.
 export async function readPlanChoices(
   database: Database,
   asOf?: string,
@@ -607,16 +642,8 @@ export async function readPlanChoices(
     })
     .from(people)
     .orderBy(asc(people.preferredName), asc(people.id));
-  const statuses = await database
-    .select({
-      id: listItems.id,
-      name: listItems.label,
-      retired: listItems.retired,
-    })
-    .from(listItems)
-    .innerJoin(lists, eq(lists.id, listItems.listId))
-    .where(eq(lists.builtIn, "proposal-statuses"))
-    .orderBy(asc(listItems.position), asc(listItems.id));
+  const statuses = await listChoices(database, "proposal-statuses");
+  const featureStatuses = await listChoices(database, "feature-statuses");
   const teams = await database
     .select({ id: featureTeams.id, name: featureTeams.name })
     .from(featureTeams)
@@ -628,7 +655,11 @@ export async function readPlanChoices(
       name,
       retired: endDate !== null && endDate < today,
     })),
-    statuses,
+    statuses: statuses.map(({ id, name, retired }) => ({ id, name, retired })),
+    featureStatuses: featureStatuses.map((status) => ({
+      ...status,
+      meaning: meaningSchema.parse(status.meaning),
+    })),
     featureTeams: teams.map((team) => ({
       ...team,
       retired: teamDrafts.get(team.id)?.action === "deleted",

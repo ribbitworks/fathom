@@ -115,7 +115,7 @@ const sections: { label: string; items: Item[] }[] = [
       },
       {
         label: "Features",
-        icon: "projects",
+        icon: "features",
         to: "/features",
         permission: "plan:view",
       },

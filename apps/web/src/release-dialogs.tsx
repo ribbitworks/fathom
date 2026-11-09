@@ -466,8 +466,23 @@ export function PatternDialog({
 const unitWords = (length: number, unit: CycleUnit) =>
   `${unit === "weeks" ? "week" : "month"}${length === 1 ? "" : "s"}`;
 
-const movedWords = (moved: readonly string[]) =>
-  `${allOf(moved)} ${moved.length === 1 ? "moves with its" : "move with their"} cycles.`;
+function MovedList({
+  title,
+  names,
+}: {
+  title: string;
+  names: readonly string[];
+}) {
+  if (names.length === 0) return null;
+  return (
+    <Stack gap={2}>
+      <Text fz="sm" fw={500}>
+        {title}
+      </Text>
+      <Text fz="sm">{allOf(names)}</Text>
+    </Stack>
+  );
+}
 
 export function CycleLengthDialog({
   stream,
@@ -555,7 +570,8 @@ export function CycleLengthDialog({
           title="New dates"
           cycles={cycles.slice(0, 3)}
         />
-        {moved.length > 0 && <Text fz="sm">{movedWords(moved)}</Text>}
+        <MovedList title="Releases that move" names={moved.releases} />
+        <MovedList title="Features that move" names={moved.features} />
         {ships.map(({ name, on }) => (
           <Text key={name} fz="sm">
             {name} ships {on}.

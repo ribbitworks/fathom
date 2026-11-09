@@ -28,7 +28,10 @@ export const noteLength = 10_000;
 
 // The fields of the plan's records that hold a note, by kind of record, which drafts and the change
 // history show as the note's words without their formatting.
-const noteFields = new Map<string, readonly string[]>([["release", ["note"]]]);
+const noteFields = new Map<string, readonly string[]>([
+  ["release", ["note"]],
+  ["feature", ["note"]],
+]);
 
 export const isNoteField = (recordType: string, field: string): boolean =>
   noteFields.get(recordType)?.includes(field) === true;

@@ -149,7 +149,7 @@ export function liftedWhileDragging(base: string, dragging: boolean): string {
 // Fathom filled the list in, so those who may change it are first told it is theirs to change.
 function builtInNote(key: BuiltInList, mayChange: boolean): string {
   const invitation = mayChange
-    ? "Rename these, add your own, or retire any you don't use.\n"
+    ? "These can be renamed, added to, or retired.\n"
     : "";
   switch (key) {
     case "hiring-states":
@@ -158,6 +158,8 @@ function builtInNote(key: BuiltInList, mayChange: boolean): string {
       return `${invitation}Every person and planned hire has one of these positions.\nKeep at least one.`;
     case "proposal-statuses":
       return `${invitation}Every proposal has one of these statuses.\nKeep at least one.`;
+    case "feature-statuses":
+      return `${invitation}Possible: the feature may come, and needs no feature team yet.\nPlanned: the feature is planned, and needs a feature team.\nIn progress: work has started, and the feature needs a feature team.\nDone: the feature is finished.\nCancelled: the feature won't be built.\nKeep at least one choice for each.`;
   }
 }
 

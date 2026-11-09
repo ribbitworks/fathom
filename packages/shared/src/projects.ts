@@ -7,9 +7,11 @@
 import { z } from "zod";
 import { daySchema } from "./days.ts";
 import { featureSchema } from "./features.ts";
+import { meaningSchema } from "./lists.ts";
 import { addressProblem, linkLengths, webAddress } from "./links.ts";
 import {
   optionalText,
+  picked,
   recordName,
   recordNameLength,
   recordShape,
@@ -132,8 +134,9 @@ export const projectPlanSchema = z.object({
 export type ProjectPlan = z.infer<typeof projectPlanSchema>;
 
 // What a record of the plan can be given: people as owners, by name alone, those who have left
-// retired, the proposal statuses, in their list's order, and the feature teams, so those who see the
-// plan can choose them without seeing People, Lists, or the org chart.
+// retired, the proposal and feature statuses, in their lists' order, the feature statuses with their
+// meanings, and the feature teams, so those who see the plan can choose them without seeing People,
+// Lists, or the org chart.
 const planChoiceSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -145,18 +148,13 @@ export type PlanChoice = z.infer<typeof planChoiceSchema>;
 export const planChoicesSchema = z.object({
   owners: z.array(planChoiceSchema),
   statuses: z.array(planChoiceSchema),
+  featureStatuses: z.array(planChoiceSchema.extend({ meaning: meaningSchema })),
   featureTeams: z.array(planChoiceSchema),
 });
 
 export type PlanChoices = z.infer<typeof planChoicesSchema>;
 
 const externalId = optionalText(projectLengths.externalId);
-
-// The records picked, each once, in a stable order, so the same set is the same value.
-const picked = z
-  .array(z.uuid())
-  .default([])
-  .transform((ids) => [...new Set(ids)].sort());
 
 export const customerRequestSchema = z.object({ name: recordName });
 

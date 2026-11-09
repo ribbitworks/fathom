@@ -76,7 +76,7 @@ Use only where this test says so. This deletes every account and record in the d
 - **Metrics panel:** the panel titled **Metrics** that opens on the right of the People table.
 - **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as **150 people and 8 planned hires**.
 - **Draft menu:** the menu that opens from the **Draft** button above the table, next to the search box.
-- **Views menu:** the menu that opens from the **Views** button, next to the search box.
+- **Views menu:** the menu that opens from the **Views** button, the last of the buttons after the search box.
 - **Column menu:** the menu that opens when you select a column's name in the People table's header.
 - **Panel edge:** the strip between the table and the Metrics panel. A blue line shows on it when the pointer is over it.
 - **Column edge:** the right edge of a column's name in the People table's header. A short blue line shows on it when the pointer is over it.

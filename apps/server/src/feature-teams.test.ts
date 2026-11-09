@@ -27,7 +27,12 @@ import { and, asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { readToday } from "./data/settings.ts";
-import { startTestApp, type TestApp, testPosition } from "./test-app.ts";
+import {
+  builtInChoice,
+  startTestApp,
+  type TestApp,
+  testPosition,
+} from "./test-app.ts";
 
 interface User {
   id: string;
@@ -1912,9 +1917,11 @@ describe("a team a feature names", () => {
     const { changeSetId } = await ok<{ changeSetId: string }>(
       await send(editor, "DELETE", `/api/feature-teams/${team}/draft`),
     );
-    await test.connection
-      .insert(features)
-      .values({ name: unique("Fictional Feature"), featureTeamId: team });
+    await test.connection.insert(features).values({
+      name: unique("Fictional Feature"),
+      featureTeamId: team,
+      statusId: await builtInChoice(test.connection, "feature-statuses"),
+    });
     const undone = await send(editor, "POST", `/api/undo/${changeSetId}`);
     expect(undone.statusCode).toBe(409);
   });

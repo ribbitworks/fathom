@@ -1115,7 +1115,10 @@ describe("drafts in a stream's panel", () => {
               {
                 id: featureId,
                 name: "Fictional Moving",
-                status: "planned",
+                statusId: "s1",
+                neededBy: null,
+                customerIds: [],
+                note: null,
                 targetStreamId: streamId,
                 targetCycle: "2027-07-01",
                 estimateHours: null,

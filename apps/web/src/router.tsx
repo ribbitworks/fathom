@@ -327,28 +327,51 @@ const releasesRoute = createRoute({
   },
 });
 
-// The Projects page's address: its tab, the tab's view, and the record whose details are shown
-// beside it. Changing the tab starts its view afresh.
-const projectsSearch = viewSearchSchema.extend({
-  tab: projectTabSchema.optional().catch(undefined),
+// A plan page's address: its view, and the record whose details are shown beside it.
+const planRecordSearch = viewSearchSchema.extend({
   open: z.uuid().optional().catch(undefined),
+});
+
+// The Projects page's address adds its tab. Changing the tab starts its view afresh.
+const projectsSearch = planRecordSearch.extend({
+  tab: projectTabSchema.optional().catch(undefined),
+});
+
+// The Projects page's address for a tab, with a record's details open if one is named.
+const projectsTabSearch = (
+  next: z.infer<typeof projectTabSchema>,
+  record?: string,
+) => ({
+  ...(next === "projects" ? {} : { tab: next }),
+  ...(record === undefined ? {} : { open: record }),
 });
 
 const featuresRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/features",
-  validateSearch: viewSearchSchema,
+  validateSearch: planRecordSearch,
   beforeLoad: requiring("plan:view"),
   component: function Features() {
     const { permissions } = signedIn.useRouteContext();
     const navigate = featuresRoute.useNavigate();
+    const { open, ...search } = featuresRoute.useSearch();
     return (
       <ProjectsPage
         tab="features"
+        onTab={(next, record) => {
+          void navigate({
+            to: "/projects",
+            search: projectsTabSearch(next, record),
+          });
+        }}
         approves={approvableKinds(permissions)}
-        {...viewProps(featuresRoute.useSearch(), (next, replace) => {
-          void navigate({ search: next, replace });
+        {...viewProps(search, (next, replace) => {
+          void navigate({ search: { ...next, open }, replace });
         })}
+        open={open}
+        onOpen={(next) => {
+          void navigate({ search: { ...search, open: next } });
+        }}
       />
     );
   },
@@ -367,12 +390,7 @@ const projectsRoute = createRoute({
       <ProjectsPage
         tab={tab ?? "projects"}
         onTab={(next, record) => {
-          void navigate({
-            search: {
-              ...(next === "projects" ? {} : { tab: next }),
-              ...(record === undefined ? {} : { open: record }),
-            },
-          });
+          void navigate({ search: projectsTabSearch(next, record) });
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(search, (next, replace) => {

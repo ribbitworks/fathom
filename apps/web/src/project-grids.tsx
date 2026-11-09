@@ -13,7 +13,7 @@ import {
   type CustomerRequest,
   type Feature,
   featureLengths,
-  type FeatureStatus,
+  type Meaning,
   type Milestone,
   needsFeatureTeam,
   type Project,
@@ -28,7 +28,7 @@ import type { ReactNode } from "react";
 import { cellKinds, flagChoice } from "./cell-kinds.tsx";
 import type { DraftField } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
-import { choice } from "./lists.ts";
+import { choice, offered } from "./lists.ts";
 import {
   cycleChoiceId,
   type FeatureFields,
@@ -51,7 +51,7 @@ import {
   type RecordTable,
   type RowGrouping,
 } from "./record-grid.tsx";
-import type { CellValue } from "./table-view.ts";
+import { type CellValue, formatMonth } from "./table-view.ts";
 
 // A change to one or more of a record's fields, by name.
 export type PlanChange = Record<string, unknown>;
@@ -78,7 +78,7 @@ export function livePlanRecords<Rec extends PlanRecord>(
   }));
 }
 
-type Kinds = "text" | "date" | "choice" | "link" | "flag";
+type Kinds = "text" | "date" | "month" | "choice" | "link" | "note" | "flag";
 
 // What each tab's records are called.
 const recordWords: Readonly<
@@ -174,7 +174,7 @@ function planTable<Rec extends PlanRecord, Request>({
   request,
   menuItems,
   kinds,
-  grouping,
+  groupings,
   nameOf = (record) => (record as { name: string }).name,
 }: {
   type: PlanRecordKind;
@@ -185,7 +185,7 @@ function planTable<Rec extends PlanRecord, Request>({
   request: (changes: PlanChange[]) => Request;
   menuItems: (record: Rec) => ReactNode;
   kinds?: readonly string[];
-  grouping?: RowGrouping<Rec>;
+  groupings?: readonly RowGrouping<Rec>[];
   nameOf?: (record: Rec) => string;
 }): RecordTable<Rec, PlanChange, Request> {
   return {
@@ -193,7 +193,7 @@ function planTable<Rec extends PlanRecord, Request>({
     one,
     noun,
     ...(kinds === undefined ? {} : { kinds, kindOf: () => savedKind }),
-    ...(grouping === undefined ? {} : { grouping }),
+    ...(groupings === undefined ? {} : { groupings }),
     newRowLabel: () => `New ${one}`,
     removeLabel: () => `Remove ${one}`,
     nameOf,
@@ -343,6 +343,15 @@ export function projectTable(
   });
 }
 
+// The first status offered, of a meaning when one is named, as a value in a cell.
+function firstStatus(statuses: readonly Choice[], meaning?: Meaning): string[] {
+  const first = statuses.find(
+    (status) =>
+      offered(status) && (meaning === undefined || status.meaning === meaning),
+  );
+  return first === undefined ? [] : [first.id];
+}
+
 export function proposalColumns(
   choices: TableChoices,
   onOpen?: (proposal: Proposal) => void,
@@ -359,10 +368,7 @@ export function proposalColumns(
         choices: choices.statuses,
       }),
       // A new proposal starts in the first status offered.
-      newRowValue: () => {
-        const first = choices.statuses.find(({ retired }) => !retired);
-        return first === undefined ? [] : [first.id];
-      },
+      newRowValue: () => firstStatus(choices.statuses),
     },
   ];
 }
@@ -439,14 +445,6 @@ export function milestoneTable(
   });
 }
 
-const featureStatuses: readonly (readonly [FeatureStatus, string])[] = [
-  ["possible", "Possible"],
-  ["planned", "Planned"],
-  ["in-progress", "In progress"],
-  ["done", "Done"],
-  ["cancelled", "Cancelled"],
-];
-
 const cycleOf = (target: {
   targetStreamId?: string | null | undefined;
   targetCycle?: string | null | undefined;
@@ -458,16 +456,26 @@ const cycleOf = (target: {
 
 export function featureColumns(
   choices: TableChoices,
+  onOpen?: (feature: Feature) => void,
 ): Column<Feature, PlanChange>[] {
+  const meaningOf = new Map(
+    choices.featureStatuses.map(({ id, meaning }) => [id, meaning]),
+  );
   return [
-    nameColumn<Feature>(undefined),
+    nameColumn<Feature>(onOpen),
     {
-      ...field<Feature>("status", "Status", "choice", {
+      ...field<Feature>("statusId", "Status", "choice", {
         required: true,
-        choices: featureStatuses.map(([id, label]) => choice(id, label, false)),
+        choices: choices.featureStatuses,
       }),
-      newRowValue: () => ["possible"],
+      newRowValue: () => firstStatus(choices.featureStatuses, "possible"),
     },
+    field<Feature>("neededBy", "Needed by", "month"),
+    customersColumn<Feature>(choices.customers),
+    field<Feature>("description", "Description", "text", {
+      maxLength: featureLengths.description,
+    }),
+    field<Feature>("note", "Notes", "note"),
     {
       ...field<Feature>("targetCycle", "Target cycle", "choice", {
         choices: choices.cycles,
@@ -483,16 +491,16 @@ export function featureColumns(
         emptyLabel: "No feature team",
       }),
       mark: (feature) =>
-        needsFeatureTeam(feature) && (
-          <StatusMark tone="warning" spaced>
+        needsFeatureTeam(
+          meaningOf.get(feature.statusId),
+          feature.featureTeamId,
+        ) && (
+          <StatusMark tone="warning">
             No team
             <VisuallyHidden>: it needs a feature team to own it</VisuallyHidden>
           </StatusMark>
         ),
     },
-    field<Feature>("description", "Description", "text", {
-      maxLength: featureLengths.description,
-    }),
   ];
 }
 
@@ -504,7 +512,8 @@ function byCycle(cycles: readonly Choice[]): RowGrouping<Feature> {
     cycles.map((offered, rank) => [offered.id, { offered, rank }]),
   );
   return {
-    label: "Group by cycle",
+    key: "targetCycle",
+    label: "Cycle",
     of: (feature) => {
       const [cycle = ""] = cycleOf(feature);
       const place = placeOf.get(cycle);
@@ -515,16 +524,31 @@ function byCycle(cycles: readonly Choice[]): RowGrouping<Feature> {
   };
 }
 
+// The rows' groups: each month a feature is needed by, earliest first, then those with none.
+const byNeededBy: RowGrouping<Feature> = {
+  key: "neededBy",
+  label: "Needed by",
+  of: ({ neededBy }) =>
+    neededBy === null
+      ? { key: "no-date", label: "No date", rank: Number.MAX_SAFE_INTEGER }
+      : {
+          key: neededBy,
+          label: formatMonth(neededBy),
+          rank: Number(neededBy.replace("-", "")),
+        },
+};
+
 export function featureTable(
   choices: TableChoices,
+  onOpen?: (feature: Feature) => void,
 ): RecordTable<Feature, PlanChange, FeatureFields> {
   return planTable<Feature, FeatureFields>({
     type: "feature",
     ...wordsOf("features"),
-    columns: () => featureColumns(choices),
-    grouping: byCycle(choices.cycles),
+    columns: () => featureColumns(choices, onOpen),
+    groupings: [byCycle(choices.cycles), byNeededBy],
     request: (changes) => merged(changes) as FeatureFields,
-    menuItems: () => false,
+    menuItems: detailsItem(onOpen),
   });
 }
 

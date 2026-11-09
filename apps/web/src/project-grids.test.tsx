@@ -45,6 +45,10 @@ const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
   proposals: [],
   projects: [],
   statuses: [],
+  featureStatuses: [
+    { ...cycleChoice("possible-first", "Long shot"), meaning: "possible" },
+    { ...cycleChoice("planned", "Planned"), meaning: "planned" },
+  ],
   featureTeams: [],
   cycles: [],
   ...more,
@@ -53,12 +57,15 @@ const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
 const feature = (more: Partial<Feature> = {}): Feature => ({
   id: "f1",
   name: "Fictional Feature",
-  status: "planned",
+  statusId: "planned",
+  neededBy: null,
+  customerIds: [],
   targetStreamId: null,
   targetCycle: null,
   estimateHours: null,
   featureTeamId: "t1",
   description: null,
+  note: null,
   ...more,
 });
 
@@ -78,9 +85,13 @@ describe("the Features table", () => {
   const columns = featureColumns(choices({ cycles }));
   const target = columns.find(({ key }) => key === "targetCycle");
   const team = columns.find(({ key }) => key === "featureTeamId");
-  const status = columns.find(({ key }) => key === "status");
+  const status = columns.find(({ key }) => key === "statusId");
+  const neededBy = columns.find(({ key }) => key === "neededBy");
+  const note = columns.find(({ key }) => key === "note");
   const groupOf = (more: Partial<Feature>) =>
-    featureTable(choices({ cycles })).grouping?.of(feature(more));
+    featureTable(choices({ cycles })).groupings?.at(0)?.of(feature(more));
+  const monthGroupOf = (more: Partial<Feature>) =>
+    featureTable(choices({ cycles })).groupings?.at(1)?.of(feature(more));
 
   it("shows a feature's target as its stream and cycle together", () => {
     expect(
@@ -161,18 +172,73 @@ describe("the Features table", () => {
     ]);
   });
 
-  it("starts a new feature as Possible", () => {
-    expect(status?.newRowValue?.("")).toEqual(["possible"]);
-  });
-
   it("marks a planned feature with no feature team", () => {
     expect(team?.mark?.(feature({ featureTeamId: null }))).toBeTruthy();
   });
 
   it("does not mark a possible feature with no feature team", () => {
     expect(
-      team?.mark?.(feature({ status: "possible", featureTeamId: null })),
+      team?.mark?.(
+        feature({ statusId: "possible-first", featureTeamId: null }),
+      ),
     ).toBe(false);
+  });
+
+  it("puts the columns entered first ahead of those of planning", () => {
+    expect(columns.map(({ key }) => key)).toEqual([
+      "name",
+      "statusId",
+      "neededBy",
+      "customerIds",
+      "description",
+      "note",
+      "targetCycle",
+      "featureTeamId",
+    ]);
+  });
+
+  it("starts a new feature in the first status offered that means Possible", () => {
+    expect(status?.newRowValue?.("")).toEqual(["possible-first"]);
+  });
+
+  it("starts a new feature with no status when none means Possible", () => {
+    const none = featureColumns(choices({ featureStatuses: [] }));
+    expect(
+      none.find(({ key }) => key === "statusId")?.newRowValue?.(""),
+    ).toEqual([]);
+  });
+
+  it("saves a month typed as digits laid out as a month", () => {
+    expect(neededBy?.change("202703")).toEqual({ neededBy: "2027-03" });
+  });
+
+  it("saves an emptied month as none", () => {
+    expect(neededBy?.change("")).toEqual({ neededBy: null });
+  });
+
+  it("reads and saves a note held as the feature's own field", () => {
+    expect(note?.value(feature({ note: "**Fictional**" }))).toBe(
+      "**Fictional**",
+    );
+    expect(note?.value(feature())).toBe("");
+    expect(note?.change("**Fictional**")).toEqual({ note: "**Fictional**" });
+    expect(note?.change("")).toEqual({ note: null });
+  });
+
+  it("groups a feature under the month it is needed by, earlier months first", () => {
+    const march = monthGroupOf({ neededBy: "2027-03" });
+    expect(march).toMatchObject({ key: "2027-03", label: "Mar 2027" });
+    expect(Number(march?.rank)).toBeLessThan(
+      Number(monthGroupOf({ neededBy: "2027-11" })?.rank),
+    );
+  });
+
+  it("groups a feature needed by no month last, under No date", () => {
+    const none = monthGroupOf({});
+    expect(none).toMatchObject({ key: "no-date", label: "No date" });
+    expect(Number(none?.rank)).toBeGreaterThan(
+      Number(monthGroupOf({ neededBy: "2099-12" })?.rank),
+    );
   });
 
   it("groups a feature under its cycle, in the cycles' order", () => {
@@ -444,5 +510,34 @@ describe("the plan's tables' columns", () => {
     expect(() => {
       noColumnActions.moveColumn();
     }).not.toThrow();
+  });
+});
+
+describe("a month cell", () => {
+  const { month } = cellKinds;
+  const column = { label: "Needed by" } as never;
+
+  it("shows a month by its name, and anything else as it is", () => {
+    expect(month.inWords(column, "2027-03")).toBe("Mar 2027");
+    expect(month.inWords(column, "soon")).toBe("soon");
+  });
+
+  it("says what to type for what is not a month", () => {
+    expect(month.problem(column, "2027-13")).toBe(
+      "Needed by: use a month such as 2027-03",
+    );
+  });
+
+  it("finds nothing wrong with a month, or with none", () => {
+    expect(month.problem(column, "202703")).toBeUndefined();
+    expect(month.problem(column, "")).toBeUndefined();
+  });
+
+  it("lays out digits as they are typed, ignoring anything else", () => {
+    expect(month.asTyped?.("2027a03")).toBe("2027-03");
+  });
+
+  it("takes a pasted month", () => {
+    expect(month.pasted(column, " 202703 ")).toEqual({ value: "2027-03" });
   });
 });

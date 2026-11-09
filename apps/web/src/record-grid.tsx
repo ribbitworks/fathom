@@ -115,6 +115,7 @@ import {
   ViewBar,
 } from "./table-controls.tsx";
 import {
+  activeGrouping,
   applyView,
   type CellValue,
   type Kind,
@@ -282,8 +283,9 @@ export interface RecordTable<Rec extends GridRecord, Change, Request> {
   drafts: (ids: string[]) => DraftSelection;
   // What else a record's menu offers, after its columns' own items, such as showing its details.
   menuItems?: (record: Rec) => ReactNode;
-  // How the rows are grouped under headings, for a table that groups them.
-  grouping?: RowGrouping<Rec>;
+  // The ways the rows can be grouped under headings, the first of which is the table's own, for a
+  // table that groups them.
+  groupings?: readonly RowGrouping<Rec>[];
 }
 
 // The group a row is in: the groups follow in order of rank, and each is headed with its label.
@@ -294,7 +296,8 @@ export interface RowGroup {
 }
 
 export interface RowGrouping<Rec> {
-  // What the button that groups the rows is called.
+  key: string;
+  // What the choice of this grouping is called.
   label: string;
   of: (record: Rec) => RowGroup;
 }
@@ -1366,7 +1369,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const groupOf = useSteadyGroups(
     records,
     rowView,
-    view.ungrouped === true ? undefined : table.grouping,
+    activeGrouping(view, table.groupings),
     stableId,
   );
   const shownRecords = useSteadyOrder(
@@ -2749,7 +2752,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         shown={shownRecords.length}
         total={records.length}
         counted={table.counted?.counted(records)}
-        groupLabel={table.grouping?.label}
+        groupings={table.groupings}
         onLeave={() => {
           moveTo(active.row, active.column);
         }}
