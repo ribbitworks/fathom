@@ -109,7 +109,6 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Long labels wrap in the details panel:** A row label in a person's details, such as Reporting team name, wraps onto a second line. Labels should stay on one line.
 - **Someone who has not started, on the org chart:** The chart draws only people current today, so to readers who see Restricted details a filled role disappears until its person starts, and Show on org chart goes nowhere for them. Agreed by the owner on 2026-11-08: draw them under their manager on a dashed card, with Starts and the date, as a follow-up.
 - **The other columns when filling a planned hire:** The fill form shows Position and any value People requires that the hire lacks, but not the rest of the hire's columns, such as Site, which a person's details show. Follow-up to filling a planned hire.
-- **Doubled row lines in frozen columns:** A frozen cell draws its own row line, because at some row positions it paints over the one the table draws. Where it does not, both show, so a frozen column such as Name has a heavier line than the columns beside it, in `apps/web/src/pages.module.css`. It stands out most in a short table. Found by the owner on 2026-11-09, to be fixed separately for every table.
 
 ## Drafts
 

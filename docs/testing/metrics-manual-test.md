@@ -222,7 +222,7 @@ Run the test cases in order. Start with R0, then R1, then sign in as the Workfor
   - **Notes:**
 
 - [ ] **Step 3.** Scroll the table sideways to the right, then down.
-  - **Expected:** **Name** and **ID** stay in place, with the shadow beside it, and the header row stays at the top. Rows tinted blue or yellow for a draft keep their tint in the frozen columns.
+  - **Expected:** **Name** and **ID** stay in place, with the shadow beside it, and the header row stays at the top. Rows tinted blue or yellow for a draft keep their tint in the frozen columns. Each line between rows is one thin line running straight across the frozen columns into the others, no heavier under **Name** and **ID**, and the dashed line between a draft row and its light green **Live** row is dashed all the way across.
   - **Notes:**
 
 - [ ] **Step 4.** In the Appearance menu, select **Dark**, then repeat step 3.

@@ -208,18 +208,48 @@ function renderGadgets({
   );
 }
 
-describe("Tab across a new row", () => {
-  const nameThen = (next: Column<Gadget, GadgetChange>) => ({
-    ...gadgetTable(),
-    columnsFor: () => [...gadgetColumns([], [], []).slice(0, 1), next],
+const nameThen = (next: Column<Gadget, GadgetChange>) => ({
+  ...gadgetTable(),
+  columnsFor: () => [...gadgetColumns([], [], []).slice(0, 1), next],
+});
+const nextColumn = (kind: "date" | "flag" | "text") =>
+  cellColumn<Gadget, GadgetChange>("next", kind, {
+    label: "Next",
+    required: false,
+    choices: [],
+    multiple: false,
   });
-  const nextColumn = (kind: "date" | "flag" | "text") =>
-    cellColumn<Gadget, GadgetChange>("next", kind, {
-      label: "Next",
-      required: false,
-      choices: [],
-      multiple: false,
+
+describe("the empty row", () => {
+  it("shows no starting value until something is typed in it, then shows and adds it", async () => {
+    // Given a column that starts new rows on a value
+    const add =
+      vi.fn<RecordActions<Gadget, GadgetChange, GadgetChange>["add"]>();
+    renderGadgets({
+      gadgets: [],
+      fields: [],
+      table: nameThen({ ...nextColumn("text"), newRowValue: () => "Starter" }),
+      given: actions({ add }),
     });
+    const next = () => document.getElementById("cell-new-0-next");
+    expect(next()?.textContent).toBe("");
+
+    // When a name is typed in the empty row
+    act(() => {
+      document.getElementById("cell-new-0-name")?.focus();
+    });
+    await userEvent.keyboard("Widget{Tab}{Escape}");
+
+    // Then the starting value shows, and is added with the record
+    expect(next()?.textContent).toBe("Starter");
+    await userEvent.keyboard("{Enter}");
+    expect(add.mock.calls.at(0)?.[0].map(({ request }) => request)).toEqual([
+      { name: "Widget", next: "Starter" },
+    ]);
+  });
+});
+
+describe("Tab across a new row", () => {
   const typeNameAndTab = async () => {
     act(() => {
       document.getElementById("cell-new-0-name")?.focus();

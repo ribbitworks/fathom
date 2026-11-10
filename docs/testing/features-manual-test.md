@@ -80,8 +80,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Each row reads one of **Possible**, **Planned**, **In progress**, **Done** or **Cancelled**.
   - **Notes:**
 
-- [ ] **Step 3.** Switch Fathom between light and dark mode, and look at the group headings, the rows and the column headers.
-  - **Expected:** In both modes every word is easy to read, and the group headings are clearly set apart from the rows.
+- [ ] **Step 3.** Switch Fathom between light and dark mode, and look at the group headings, the rows, the column headers and the lines between the rows.
+  - **Expected:** In both modes every word is easy to read, and the group headings are clearly set apart from the rows. Each line between rows, above and below the group headings too, is one thin line running straight across the whole table, no heavier under **Name** than under the other columns.
   - **Notes:**
 
 ### FEAT-02: Features Are Grouped by Cycle, With Later Last
@@ -138,19 +138,23 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** **Features** page open.
 
-- [ ] **Step 1.** In the empty row at the end of the table, type `Fictional Reports` in **Name**, then press Enter.
+- [ ] **Step 1.** Look at the empty row at the end of the table.
+  - **Expected:** Every cell of the empty row is blank.
+  - **Notes:**
+
+- [ ] **Step 2.** In the empty row at the end of the table, type `Fictional Reports` in **Name**, then press Enter.
   - **Expected:** The row is tinted as a draft, with a hollow yellow dot and **Draft: added**, and its **Status** reads **Possible**. It stays where it is until the view next changes.
   - **Notes:**
 
-- [ ] **Step 2.** Reload the page.
+- [ ] **Step 3.** Reload the page.
   - **Expected:** **Fictional Reports** is under the heading **Later**, with the same mark.
   - **Notes:**
 
-- [ ] **Step 3.** In the row **Report Builder**, select the **Target cycle** cell and choose another cycle from the list.
+- [ ] **Step 4.** In the row **Report Builder**, select the **Target cycle** cell and choose another cycle from the list.
   - **Expected:** Each choice names its stream and cycle. The cell turns yellow, with a light green row under it, marked **Live**, showing the old cycle. The row keeps its place until the view next changes.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Publish** in the top bar.
+- [ ] **Step 5.** Select **Publish** in the top bar.
   - **Expected:** The dots on both rows are filled.
   - **Notes:**
 

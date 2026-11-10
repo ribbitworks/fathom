@@ -3905,7 +3905,7 @@ describe("planned hires", () => {
         Response.json({ ids: ["h3", "h4"], changeSetId: s1 }, { status: 201 }),
     });
     const newRow = screen.getByRole("row", { name: "New person" });
-    expect(inRow(newRow, "State").textContent).toBe("Hired");
+    expect(inRow(newRow, "State").textContent).toBe("");
     await paste(
       inRow(newRow, "Name"),
       "\tREQ-9\tEngineer\tRequest to hire\nFictional opening\tREQ-10\tTester\tRequest to hire",

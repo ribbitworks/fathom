@@ -1468,6 +1468,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     emptyValue(column);
   const valueAt = (row: Row<Rec>, column: Column<Rec, Change>) =>
     row.newRow ? newValue(row.newRow, column) : column.value(row.record);
+  // An empty row's starting values stay hidden until something is typed in it, so it is not taken
+  // for a record.
+  const shownAt = (row: Row<Rec>, column: Column<Rec, Change>) =>
+    row.newRow && emptyNewRow(row.newRow)
+      ? emptyValue(column)
+      : valueAt(row, column);
   // What an empty cell of a record shows in grey, if anything.
   const standInAt = (row: Row<Rec>, column: Column<Rec, Change>) =>
     row.newRow || column.standIn === undefined || valueAt(row, column) !== ""
@@ -1526,7 +1532,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
     const value = valueAt(row, column);
     setActive(cell);
     if (toggled !== undefined) {
-      if (typed === undefined) save(cell, toggled(value));
+      if (typed === undefined) save(cell, toggled(shownAt(row, column)));
       return;
     }
     setEditing(cell);
@@ -2896,7 +2902,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                                 row.record && column.content ? (
                                   column.content(row.record)
                                 ) : (
-                                  cellContent(column, valueAt(row, column))
+                                  cellContent(column, shownAt(row, column))
                                 )
                               ) : (
                                 <Text

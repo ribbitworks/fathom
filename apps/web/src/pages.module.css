@@ -472,12 +472,21 @@ select.cellInput {
 .recordTable {
   /* Room beside the first column's value for the widest mark, "Draft: removed". */
   --record-mark-room: 7rem;
+  --record-row-line-width: calc(0.0625rem * var(--mantine-scale));
 
   /* As wide as its columns say, never as wide as what their cells hold, as a width of max-content
      would make it, so no column is held wider than it is set to; and at least as wide as its
      panel. */
   width: 0;
   min-width: 100%;
+
+  /* Each cell draws its row's line, not the row, since a frozen cell paints over a line its row
+     draws at some row positions and not at others. */
+  border-collapse: separate;
+}
+
+.recordTable > tbody > tr:not(:last-child) > :is(td, th) {
+  border-bottom: var(--record-row-line-width) solid var(--table-border-color);
 }
 
 .recordHeadButton {
@@ -599,13 +608,22 @@ th[data-centred] .recordHeadButton {
 }
 
 .recordCell {
-  height: 36px;
-  padding: 4px var(--table-horizontal-spacing, var(--mantine-spacing-sm));
+  --record-cell-padding-block: 4px;
+
+  height: calc(
+    var(--fathom-cell-editor-height) + 2 * var(--record-cell-padding-block) +
+      var(--record-row-line-width)
+  );
+  padding: var(--record-cell-padding-block)
+    var(--table-horizontal-spacing, var(--mantine-spacing-sm));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: top;
   outline: none;
+
+  /* As tall as the editor, so a value sits in the middle of its row, where its editor opens. */
+  line-height: var(--fathom-cell-editor-height);
 }
 
 .recordCell[data-shaded] {
@@ -622,6 +640,7 @@ th[data-centred] .recordHeadButton {
   font-size: 12px;
   font-weight: 500;
   white-space: normal;
+  line-height: var(--mantine-line-height);
 }
 
 /* A cell a draft changes, and the mark beside a person with a draft: yellow, or red once
@@ -789,7 +808,7 @@ th[data-centred] .recordHeadButton {
 
 /* A person's live row, under their draft row: light green, dimmed, marked Live like the Draft mark
    above it, and joined to the draft row. */
-.draftRow:has(+ .recordLiveRow) {
+.recordTable .draftRow:has(+ .recordLiveRow) > td {
   border-bottom-style: dashed;
 }
 
@@ -949,29 +968,9 @@ th.liveColumn {
   scroll-margin-left: var(--frozen-width, 0);
 }
 
-/* A sticky cell paints over the row lines the table draws, at some row positions, so it draws its
-   own. */
-.recordTable tr:not(:last-child) td.frozen {
-  --frozen-row-line: var(--table-border-color);
-}
-
-.recordTable tr:has(> .recordGroup) + tr td.frozen {
-  --frozen-heading-line: var(--table-border-color);
-}
-
 .recordTable td.frozen {
   position: sticky;
   background:
-    linear-gradient(
-        var(--frozen-row-line, transparent),
-        var(--frozen-row-line, transparent)
-      )
-      bottom / 100% 1px no-repeat,
-    linear-gradient(
-        var(--frozen-heading-line, transparent),
-        var(--frozen-heading-line, transparent)
-      )
-      top / 100% 1px no-repeat,
     linear-gradient(
       var(--cell-tint, transparent),
       var(--cell-tint, transparent)
@@ -1015,7 +1014,7 @@ th.liveColumn {
   display: block;
   box-sizing: border-box;
   width: calc(100% + 2 * var(--fathom-cell-editor-bleed));
-  height: 28px;
+  height: var(--fathom-cell-editor-height);
   margin: 0 calc(-1 * var(--fathom-cell-editor-bleed));
   padding: 3px 7px;
   border: 1px solid var(--mantine-color-default-border);
@@ -1273,6 +1272,9 @@ th.liveColumn {
   color: var(--mantine-color-red-7);
   font-size: var(--mantine-font-size-xs);
   font-weight: 600;
+
+  /* Short enough to stay inside its row, clear of the line under it. */
+  line-height: 16px;
 }
 
 /* A password Fathom made, shown as text that cannot be changed, though it can be selected. */

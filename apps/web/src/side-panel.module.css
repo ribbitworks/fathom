@@ -237,6 +237,11 @@
   margin: calc(-1 * var(--fathom-focus-room));
 }
 
+/* What it holds scrolls rather than shrinking, which would clip a panel that hides its overflow. */
+.scroll > * {
+  flex-shrink: 0;
+}
+
 /* A side panel's frame, with its title at the top, a foot at the bottom, and what it holds
    scrolling between them. */
 .frame,
