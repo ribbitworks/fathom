@@ -32,7 +32,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Restricted employee details | None | None | None | None | View | Edit | Edit | View | None | None |
 | Confidential data | None | None | None | None | None | Edit | Edit | View | None | None |
 | The hiring plan: every planned hire, with its target date, drafts, and history (decided by the owner on 2026-11-07) | None | None | None | View | View | Edit | Edit | View | None | None |
-| Planning configuration: release streams, their cycles and cycle names, estimate conversions (**proposal**), and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | View | None |
+| Planning configuration: release streams, their cycles and cycle names, effort conversions, seen by everyone who sees the plan and changed live, decided by the owner on 2026-11-09, and composition targets, with seeing them coming with seeing the plan (**proposal**) | View | View | View | View | View | Edit | Edit | View | View | None |
 | Lists of choices, and the columns added to People and Features (everyone with View Plan also sees the columns on Features and their values) | None | None | None | View lists, decided by the owner on 2026-11-01 | None | Edit | Edit | View lists | None | None |
 | Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | Edit | None |
 | Approving drafts of the plan: features, projects, workstreams, proposals, and the roadmap | None | Approve | None | Approve | None | Approve | None | None | None | None |

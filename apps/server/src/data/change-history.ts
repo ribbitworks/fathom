@@ -33,6 +33,7 @@ import {
   isNoteField,
   notePlainText,
   recordSearchText,
+  type Permission,
   recordTypeSchema,
   searchWords,
   hireCalled,
@@ -92,13 +93,23 @@ const hiringKinds: readonly RecordType[] = ["planned-hire"];
 // The fields a planned hire is named by: its position and its ID.
 const hireNameFields = ["name", "positionId", "requisition", "temporaryNumber"];
 
-// The plan's records, such as release streams.
-const planKinds: readonly RecordType[] = recordTypeSchema.options;
+// Planning configuration changed live rather than drafted, seen with the permissions each kind is
+// read with, as the plan's records are.
+const livePlanKinds: readonly {
+  type: RecordType;
+  readWith: readonly Permission[];
+}[] = [{ type: "effort-conversions", readWith: ["plan:view"] }];
+
+// The plan's records, such as release streams, and its configuration changed live.
+const planKinds: readonly RecordType[] = [
+  ...recordTypeSchema.options,
+  ...livePlanKinds.map(({ type }) => type),
+];
 
 // The kinds of the plan's records the actor sees: General plan data, seen with the permissions each
 // kind is read with rather than through the tiers of people's data.
 const seenPlanKinds = (actor: Actor): RecordType[] =>
-  recordKinds
+  [...recordKinds, ...livePlanKinds]
     .filter((kind) =>
       kind.readWith.some((permission) =>
         actor.permissions.includes(permission),

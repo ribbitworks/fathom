@@ -16,6 +16,7 @@ import {
   impliedPermissions,
   type Permission,
   permissionSchema,
+  startingEffortConversions,
 } from "@fathom/shared";
 import { users } from "@fathom/db";
 import { eq } from "drizzle-orm";
@@ -292,6 +293,17 @@ const routes: Route[] = [
     pattern: "/api/settings/passwords",
     needs: allOf("settings:edit"),
     body: () => defaultPasswordSettings,
+  },
+  {
+    method: "GET",
+    pattern: "/api/effort-conversions",
+    needs: allOf("plan:view"),
+  },
+  {
+    method: "PUT",
+    pattern: "/api/effort-conversions",
+    needs: allOf("configuration:edit"),
+    body: () => startingEffortConversions,
   },
   { method: "GET", pattern: "/api/greeting", needs: allOf("plan:view") },
 

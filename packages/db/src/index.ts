@@ -33,6 +33,8 @@ export {
   featureTeams,
   fieldValues,
   fathomSchema,
+  effortConversions,
+  effortConversionsId,
   features,
   listItems,
   lists,

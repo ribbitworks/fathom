@@ -59,6 +59,7 @@ erDiagram
 - **Milestone:** A dated point in one project or one feature, with a name, which says whether it is a customer delivery date. Milestones are kept in a table of their own. Proposal milestones are decided but not built, as the [Decisions Log](../product/decisions.md#planning) records.
 - **Allocation:** Puts one person or planned hire on one feature from a month, with a percentage, or with none when it stops the allocation. It is in force until the next allocation for the same person or planned hire and feature, as reporting lines are kept from a date. It points to a person or a planned hire, never both. Filling a planned hire moves its allocations to the person, as set out below.
 - **Estimate:** A feature's one estimate, its total effort, kept as one value in hours and shown in the unit the reader picks.
+- **Effort conversions:** The one set of conversions between units of effort for the whole of Fathom: hours in a person-day, and person-days in a person-week and in a person-month, as the [Decisions Log](../product/decisions.md#planning) sets out. Changed live, without drafts, and recorded in the change history.
 - **Customer:** A row of the built-in Customers table, with a name, picked directly by projects, proposals, and features.
 - **Product:** A built-in table with a name. Features are part of products through a column users add.
 

@@ -557,6 +557,42 @@ export const features = fathomSchema.table(
   ],
 );
 
+// The one row of conversions between units of effort, for the whole of Fathom, which the migrations
+// add with the starting conversions. Its fixed identifier names it in the change history.
+export const effortConversionsId = "effort-conversions";
+
+export const effortConversions = fathomSchema.table(
+  "effort_conversions",
+  {
+    id: text("id").primaryKey().default(effortConversionsId),
+    hoursPerDay: numeric("hours_per_day", {
+      mode: "number",
+      precision: 3,
+      scale: 1,
+    }).notNull(),
+    daysPerWeek: integer("days_per_week").notNull(),
+    daysPerMonth: integer("days_per_month").notNull(),
+  },
+  (table) => [
+    check(
+      "effort_conversions_one_row",
+      sql`${table.id} = ${sql.raw(`'${effortConversionsId}'`)}`,
+    ),
+    check(
+      "effort_conversions_hours_per_day",
+      sql`${table.hoursPerDay} BETWEEN 0.5 AND 24 AND ${table.hoursPerDay} * 2 = trunc(${table.hoursPerDay} * 2)`,
+    ),
+    check(
+      "effort_conversions_days_per_week",
+      sql`${table.daysPerWeek} BETWEEN 1 AND 7`,
+    ),
+    check(
+      "effort_conversions_days_per_month",
+      sql`${table.daysPerMonth} BETWEEN 1 AND 31`,
+    ),
+  ],
+);
+
 // The change history: every change made to Fathom's data, with its old and new values, grouped into
 // the change sets that were saved together. Who created and last changed a record is read from it.
 // Like the access history, it can only be added to. Changes to drafts are recorded as they are saved,

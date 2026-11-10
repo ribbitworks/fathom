@@ -12,6 +12,7 @@ import {
   changeSets,
   type Database,
   databaseCodes,
+  effortConversions,
   fields,
   fieldValues,
   hasDatabaseCode,
@@ -134,6 +135,7 @@ const editPermissions = {
   "feature-team": ["org-chart:view"],
   // Who may change each view is checked for the view itself.
   "saved-view": ["people:view"],
+  "effort-conversions": ["configuration:edit"],
 } as const;
 
 // The order kinds of record are put back in, so a record comes back before those that belong to it.
@@ -147,6 +149,7 @@ const kindOrder: readonly RecordType[] = [
   "planned-hire",
   "feature-team",
   "saved-view",
+  "effort-conversions",
 ];
 
 // The table each kind of record is kept in. A list's choice order is only ever changed live by
@@ -158,6 +161,7 @@ const tables = {
   person: people,
   "planned-hire": plannedHires,
   "saved-view": savedViews,
+  "effort-conversions": effortConversions,
 } as const;
 const tableOf = (record: Undone) =>
   tables[record.recordType as keyof typeof tables];
@@ -226,6 +230,11 @@ const columnsOf: Record<
     scope: text,
     definition: asStored,
     createdBy: text,
+  },
+  "effort-conversions": {
+    hoursPerDay: asStored,
+    daysPerWeek: asStored,
+    daysPerMonth: asStored,
   },
 };
 
@@ -774,7 +783,8 @@ const idsOf = (records: readonly Undone[], kind: RecordType) =>
   records.filter((record) => record.recordType === kind).map(({ id }) => id);
 
 // Locks every record the undo changes that still exists, in the order other changes lock them:
-// lists, then their choices, then columns, then people, then saved views. A change saved at the
+// lists, then their choices, then columns, then people, then saved views, then the effort
+// conversions. A change saved at the
 // same moment either finishes first, and is then seen as a change since, or waits for the undo.
 async function lockRecords(
   transaction: Transaction,
@@ -820,6 +830,11 @@ async function lockRecords(
     .from(savedViews)
     .where(inArray(savedViews.id, idsOf(records, "saved-view")))
     .orderBy(asc(savedViews.id))
+    .for("update");
+  await transaction
+    .select({ id: effortConversions.id })
+    .from(effortConversions)
+    .where(inArray(effortConversions.id, idsOf(records, "effort-conversions")))
     .for("update");
 }
 
