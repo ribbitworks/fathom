@@ -20,6 +20,7 @@ import {
   noteProblem,
   isMonth,
   numberProblem,
+  roundedUpTo,
   typedDay,
   typedMonth,
   typedNumber,
@@ -37,16 +38,20 @@ import {
   notePreview,
 } from "./note-editor.tsx";
 import { offered, sameName } from "./lists.ts";
-import { decimal } from "./numbers.ts";
+import { decimal, decimalUpTo } from "./numbers.ts";
 import {
   type CellValue,
   formatDay,
   formatMonth,
   type Kind,
   type TableColumn,
+  unitAmountWords,
 } from "./table-view.ts";
 
-type AnyColumn = Pick<TableColumn<never>, "key" | "label" | "multiple"> & {
+type AnyColumn = Pick<
+  TableColumn<never>,
+  "key" | "label" | "multiple" | "unit" | "places"
+> & {
   choices: readonly Choice[];
   // Whether a choice may be put in a cell, apart from being offered in its list: any may, unless
   // told otherwise.
@@ -54,10 +59,13 @@ type AnyColumn = Pick<TableColumn<never>, "key" | "label" | "multiple"> & {
   required: boolean;
   // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
+  // For number columns: the least and most a value may be.
+  least?: number | undefined;
+  most?: number | undefined;
 };
 
-// The choices a column's values may name.
-type Choices = Pick<AnyColumn, "choices">;
+// The choices a column's values may name, and the unit its numbers are in.
+type Choices = Pick<AnyColumn, "choices" | "unit" | "places">;
 
 // A record's details and its values in added columns, as it is or as its draft shows it live.
 export interface CellSource {
@@ -231,6 +239,27 @@ const month = calendarKind({
 
 const typedOf = (value: CellValue) => typedNumber(asText(value));
 
+// A number as the reader's language writes it, rounded up to the column's decimal places, if any.
+const numberShown = (column: Choices, held: number) =>
+  column.places === undefined
+    ? decimal(held)
+    : decimalUpTo(held, column.places);
+
+// The text a cell's editor opens with: its value, or, for a number shown to fewer decimal places
+// than it holds, the number as shown, which, left unchanged, keeps the value as it is.
+export function startingText(column: Choices, value: string): string {
+  const held = typedOf(value);
+  return held === undefined || column.places === undefined
+    ? value
+    : String(roundedUpTo(held, column.places));
+}
+
+// A number in words, followed by its unit's code, if any.
+const numberInWords = (column: Choices, held: number) =>
+  column.unit === undefined
+    ? numberShown(column, held)
+    : `${numberShown(column, held)} ${column.unit.code}`;
+
 const number: CellKind = {
   ...text,
   read: (source, key) => {
@@ -239,18 +268,30 @@ const number: CellKind = {
     const held = source.numbers?.[key];
     return held === undefined ? "" : String(held);
   },
-  inWords: (_column, value) => {
+  inWords: (column, value) => {
     const held = typedOf(value);
-    return held === undefined ? asText(value) : decimal(held);
+    return held === undefined ? asText(value) : numberInWords(column, held);
   },
-  inDetail: (_column, value) => asText(value),
+  // As typed, followed by the unit's words, if any, such as 40 hours or 1 hour.
+  inDetail: (column, value) =>
+    column.unit === undefined || asText(value) === ""
+      ? asText(value)
+      : unitAmountWords(asText(value), Number(value), column.unit),
   ownField: {
     read: (held) => (typeof held === "number" ? String(held) : ""),
     save: (value) => typedOf(value) ?? null,
   },
   problem: (column, value) => {
     const problem = numberProblem(asText(value));
-    return problem === undefined ? undefined : `${column.label}: ${problem}`;
+    if (problem !== undefined) return `${column.label}: ${problem}`;
+    const held = typedOf(value);
+    if (held === undefined) return undefined;
+    if (column.least !== undefined && held < column.least) {
+      return `${column.label}: use ${decimal(column.least)} or more`;
+    }
+    return column.most !== undefined && held > column.most
+      ? `${column.label}: use ${decimal(column.most)} or less`
+      : undefined;
   },
   pasted: (_column, content) => ({ value: content.trim() }),
   change: (key, value) => ({ numbers: { [key]: typedOf(value) ?? null } }),

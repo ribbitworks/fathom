@@ -110,13 +110,3 @@
   outline: 2px solid var(--fathom-sidebar-accent);
   outline-offset: 1px;
 }
-
-/* Hidden ticks keep their space, so the choices' names line up. */
-.choiceTick {
-  display: flex;
-  visibility: hidden;
-}
-
-.choiceTick[data-chosen] {
-  visibility: visible;
-}

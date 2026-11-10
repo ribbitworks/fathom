@@ -3,7 +3,21 @@
 // Tests for counts, written as the language settings the tests fix write them.
 
 import { describe, expect, it } from "vitest";
-import { count } from "./numbers.ts";
+import { count, decimalUpTo } from "./numbers.ts";
+
+describe("decimalUpTo", () => {
+  it("rounds a number up to the places given, as the language settings write it", () => {
+    expect(decimalUpTo(2 / 3, 2)).toBe("0.67");
+    expect(decimalUpTo(2.65, 1)).toBe("2.7");
+    expect(decimalUpTo(2.01, 0)).toBe("3");
+    expect(decimalUpTo(1234.5, 2)).toBe("1,234.5");
+  });
+
+  it("leaves a number already at the places given as it is", () => {
+    expect(decimalUpTo(1.975, 3)).toBe("1.975");
+    expect(decimalUpTo(2, 0)).toBe("2");
+  });
+});
 
 describe("counts", () => {
   it("group thousands as the language settings do", () => {

@@ -202,6 +202,7 @@ describe("the Features table", () => {
       "description",
       "note",
       "targetCycle",
+      "estimateHours",
       "featureTeamId",
     ]);
   });
@@ -290,6 +291,40 @@ describe("the Features table", () => {
         newValue: ["Fictional Stream: 27.2"],
       },
     ]);
+  });
+});
+
+describe("a feature's estimate in a draft", () => {
+  it("is given in hours, as kept, whatever unit the table shows", () => {
+    const fields = planDraftFields(
+      "feature",
+      feature({
+        estimateHours: 16,
+        draft: featureDraft({
+          changed: ["estimateHours"],
+          live: { estimateHours: 8 },
+        }),
+      }),
+      choices(),
+    );
+    expect(fields.map(({ field }) => field)).toEqual([
+      { field: "Effort", oldValue: "8 hours", newValue: "16 hours" },
+    ]);
+  });
+
+  it("is given as none when there is none", () => {
+    const fields = planDraftFields(
+      "feature",
+      feature({
+        estimateHours: null,
+        draft: featureDraft({
+          changed: ["estimateHours"],
+          live: { estimateHours: 8 },
+        }),
+      }),
+      choices(),
+    );
+    expect(fields.map(({ field }) => field.newValue)).toEqual([""]);
   });
 });
 

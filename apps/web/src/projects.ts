@@ -8,6 +8,7 @@ import {
   type Choice,
   type Customer,
   type CustomerRequest,
+  type EffortConversions,
   type Feature,
   type FeatureColumns,
   type FeatureRequest,
@@ -427,6 +428,9 @@ export interface TableChoices {
   // Every cycle a feature can target.
   cycles: Choice[];
   featureColumns: FeatureColumns;
+  // The conversions between units of effort, where the page has them, without which effort is
+  // offered in hours alone.
+  effortConversions?: EffortConversions | undefined;
 }
 
 // A cycle a feature targets, as a value in a cell.
@@ -468,6 +472,7 @@ export const tableChoices = (
   plan: PlanLists & Pick<ProjectPlan, "featureColumns">,
   picks: PlanChoices,
   streams: readonly ReleaseStream[],
+  effortConversions?: EffortConversions,
 ): TableChoices => ({
   people: asChoices(picks.owners),
   statuses: asChoices(picks.statuses),
@@ -483,4 +488,5 @@ export const tableChoices = (
   proposals: plan.proposals,
   projects: plan.projects,
   featureColumns: plan.featureColumns,
+  effortConversions,
 });

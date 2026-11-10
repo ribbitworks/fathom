@@ -30,6 +30,8 @@ import {
   Text,
 } from "@mantine/core";
 import { useIsMutating, useMutation, useQuery } from "@tanstack/react-query";
+import { effortConversionsQuery } from "./effort.ts";
+import { TableTips } from "./table-tips.tsx";
 import {
   Fragment,
   type SubmitEvent,
@@ -103,10 +105,11 @@ import {
   type TableChoices,
   tableChoices,
 } from "./projects.ts";
-import { RecordLink, Row } from "./record-details.tsx";
+import { inUnitsWords, RecordLink, Row } from "./record-details.tsx";
 import {
   type Column,
   heldBack,
+  inViewUnits,
   newRecordProblems,
   pendingId,
   RecordGrid,
@@ -116,6 +119,7 @@ import {
 import {
   type Editing,
   type RecordEditingContext,
+  useChosenUnits,
   useRecordEditing,
 } from "./record-editing.tsx";
 import { useDiscardQuestion } from "./discard-question.tsx";
@@ -215,12 +219,14 @@ const planPages = {
     title: "Projects",
     tabbed: true,
     loadsStreams: false,
+    loadsEffort: false,
     mayEdit: (plan: ProjectPlan) => plan.canEdit,
   },
   features: {
     title: "Features",
     tabbed: false,
     loadsStreams: true,
+    loadsEffort: true,
     mayEdit: (plan: ProjectPlan) => plan.canEditFeatures,
   },
 };
@@ -257,7 +263,13 @@ export function ProjectsPage({
     ...releaseStreamsQuery,
     enabled: page.loadsStreams,
   });
-  const streamsPending = page.loadsStreams && streamsQuery.isPending;
+  const effortQuery = useQuery({
+    ...effortConversionsQuery,
+    enabled: page.loadsEffort,
+  });
+  const settingsPending =
+    (page.loadsStreams && streamsQuery.isPending) ||
+    (page.loadsEffort && effortQuery.isPending);
   const editsFeatureColumns = tab === "features" && canEditColumns;
   // Every list a new column could draw on; the plan holds only those columns already do.
   const listsToOffer = useQuery({
@@ -265,7 +277,7 @@ export function ProjectsPage({
     enabled: editsFeatureColumns,
   });
   const columnDialog = useColumnDialog();
-  const choicesSettled = choicesQuery.isSuccess && !streamsPending;
+  const choicesSettled = choicesQuery.isSuccess && !settingsPending;
   const narrow = useNarrow();
   const saving =
     useIsMutating({ mutationKey: [...projectPlanQuery.queryKey, "change"] }) >
@@ -445,12 +457,13 @@ export function ProjectsPage({
   }
 
   let content: ReactNode;
-  if (query.isPending || choicesQuery.isPending || streamsPending) {
+  if (query.isPending || choicesQuery.isPending || settingsPending) {
     content = <Loader role="status" aria-label="Loading" />;
   } else if (
     query.isError ||
     choicesQuery.isError ||
     (page.loadsStreams && streamsQuery.isError) ||
+    (page.loadsEffort && effortQuery.isError) ||
     listsToOffer.isError
   ) {
     content = (
@@ -460,6 +473,7 @@ export function ProjectsPage({
           void query.refetch();
           void choicesQuery.refetch();
           if (page.loadsStreams) void streamsQuery.refetch();
+          if (page.loadsEffort) void effortQuery.refetch();
           if (editsFeatureColumns) void listsToOffer.refetch();
         }}
       />
@@ -470,6 +484,7 @@ export function ProjectsPage({
       plan,
       choicesQuery.data,
       streamsQuery.data?.streams ?? [],
+      effortQuery.data,
     );
     const nodes = planNodes(plan);
     const openRecord = (record: { id: string }) => {
@@ -489,6 +504,7 @@ export function ProjectsPage({
       open,
       narrow,
       show: view.show,
+      units: view,
       canEdit: canEdit && view.show !== "live",
       approves,
       nodes,
@@ -551,6 +567,7 @@ export function ProjectsPage({
               panelId={panelId}
               {...(type === "feature" ? { added: plan.featureColumns } : {})}
               notes={notes}
+              units={view.units}
               onValue={(key, value) => {
                 setBeingAdded(
                   (current) =>
@@ -619,17 +636,19 @@ export function ProjectsPage({
         const { fields, order, lists } = plan.featureColumns;
         return (
           <>
-            <RecordGrid
-              {...shared}
-              panels={panelsWith("feature", table, plan.features, actions)}
-              records={plan.features}
-              table={table}
-              actions={actions}
-              fields={fields}
-              order={order}
-              lists={lists}
-              canEditColumns={canEditColumns}
-            />
+            <TableTips>
+              <RecordGrid
+                {...shared}
+                panels={panelsWith("feature", table, plan.features, actions)}
+                records={plan.features}
+                table={table}
+                actions={actions}
+                fields={fields}
+                order={order}
+                lists={lists}
+                canEditColumns={canEditColumns}
+              />
+            </TableTips>
             <ColumnModal<ProjectPlan>
               state={columnDialog}
               table="features"
@@ -892,6 +911,7 @@ function recordPanel({
   open,
   narrow,
   show,
+  units,
   canEdit,
   approves,
   nodes,
@@ -907,6 +927,8 @@ function recordPanel({
   open: string | undefined;
   narrow: boolean;
   show: Show;
+  // The units and decimal places the table shows its columns in.
+  units: Pick<View, "units" | "places">;
   canEdit: boolean;
   approves: readonly DraftKind[];
   nodes: readonly RecordNode[];
@@ -992,7 +1014,10 @@ function recordPanel({
       >
         <Stack gap="lg" className={sidePanelScroll}>
           <PlanRecordDetails
+            // Each record's details start in the units the table shows.
+            key={shown.id}
             columns={columns}
+            units={units}
             record={shown}
             beside={show === "both"}
             canEdit={canEdit}
@@ -1047,6 +1072,7 @@ function RecordLinks({
 // A record's values, as its table shows them, each changed in place as in its cell by those who may.
 function PlanRecordDetails({
   columns,
+  units,
   record,
   beside,
   canEdit,
@@ -1054,6 +1080,7 @@ function PlanRecordDetails({
   onChange,
 }: {
   columns: readonly Column<never, PlanChange>[];
+  units: Pick<View, "units" | "places">;
   record: PlanRecord;
   beside: boolean;
   canEdit: boolean;
@@ -1061,8 +1088,15 @@ function PlanRecordDetails({
   onChange: (change: PlanChange) => void;
 }) {
   const { closeStale, editingOf } = useRecordEditing<never, PlanChange>();
+  // A column that offers units is edited in the unit the table shows at first, as a new record's
+  // is, and the unit can be changed while editing without changing the table.
+  const editUnits = useChosenUnits(units.units);
+  const rows = columns.map((column) => ({
+    column,
+    edited: inViewUnits(column, { units: editUnits.units }),
+  }));
   const values = Object.fromEntries(
-    columns.map((column) => [column.key, column.value(record as never)]),
+    rows.map(({ edited }) => [edited.key, edited.value(record as never)]),
   );
   const context: RecordEditingContext<never, PlanChange> = {
     id: record.id,
@@ -1076,19 +1110,23 @@ function PlanRecordDetails({
         : undefined,
     others: noOthers,
     recordProblem: noRecordProblem,
+    onUnit: (column, unit) => {
+      editUnits.choose(column.key, unit);
+    },
   };
   closeStale(context);
   const editing = editingOf(context);
   return (
     <dl className={details.list}>
-      {columns.map((column) => (
+      {rows.map(({ column, edited }) => (
         <DetailRow
           key={column.key}
           column={column}
+          units={units}
           record={record}
-          value={values[column.key] as CellValue}
+          value={column.value(record as never)}
           beside={beside}
-          editing={editing(column)}
+          editing={editing(edited)}
           showRecord={showRecord}
         />
       ))}
@@ -1098,6 +1136,7 @@ function PlanRecordDetails({
 
 function DetailRow({
   column,
+  units,
   record,
   value,
   beside,
@@ -1105,6 +1144,8 @@ function DetailRow({
   showRecord,
 }: {
   column: Column<never, PlanChange>;
+  // The units and decimal places the table shows its columns in.
+  units: Pick<View, "units" | "places">;
   record: PlanRecord;
   value: CellValue;
   beside: boolean;
@@ -1115,6 +1156,7 @@ function DetailRow({
   const changed =
     beside && draft?.action === "changed" && draft.changed.includes(column.key);
   const linkedTab = linkedTabs.get(column.key);
+  const also = inUnitsWords(column, units, record);
   return (
     <Row
       column={column}
@@ -1130,6 +1172,8 @@ function DetailRow({
             showRecord(linkedTab, id);
           }}
         />
+      ) : also !== undefined ? (
+        <Text>{also}</Text>
       ) : undefined}
     </Row>
   );

@@ -15,9 +15,17 @@ import type { AddedColumns } from "./added-columns.ts";
 import type { PlanChange } from "./project-grids.tsx";
 import classes from "./record-details.module.css";
 import { RecordSection, Row } from "./record-details.tsx";
-import { type SaveChange, useRecordEditing } from "./record-editing.tsx";
-import type { GridRecord, RecordTable } from "./record-grid.tsx";
-import type { CellValue } from "./table-view.ts";
+import {
+  type SaveChange,
+  useChosenUnits,
+  useRecordEditing,
+} from "./record-editing.tsx";
+import {
+  type GridRecord,
+  inViewUnits,
+  type RecordTable,
+} from "./record-grid.tsx";
+import type { CellValue, View } from "./table-view.ts";
 
 // The plan's records are checked on their own, not beside each other.
 export const noOthers = () => [];
@@ -32,6 +40,7 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   panelId,
   added = { fields: [], lists: [], order: [] },
   notes,
+  units: tableUnits,
   onValue,
   onAdd,
   onCancel,
@@ -46,6 +55,9 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   // The columns added to the table, for a table that has them.
   added?: AddedColumns;
   notes: Pick<NoteEditing, "start">;
+  // The units the table shows its columns in, which a column that offers units is entered in at
+  // first; the form may change them without changing the table.
+  units?: View["units"];
   // Takes one value, on top of whatever else has been entered, since a note's panel saves long after
   // the form was drawn.
   onValue: (key: string, value: CellValue) => void;
@@ -53,12 +65,15 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
   onCancel: () => void;
 }) {
   const kind = table.kinds?.[0] ?? "";
+  const units = useChosenUnits(tableUnits);
   const {
     columns,
     valueOf,
     values: shown,
   } = newRecordFields(
-    table.columnsFor(added.fields, added.lists, added.order, records),
+    table
+      .columnsFor(added.fields, added.lists, added.order, records)
+      .map((column) => inViewUnits(column, { units: units.units })),
     kind,
     values,
   );
@@ -76,6 +91,9 @@ export function NewPlanRecordPanel<Rec extends GridRecord, Request>({
     others: noOthers,
     recordProblem: table.recordProblem,
     save,
+    onUnit: (column, unit) => {
+      units.choose(column.key, unit);
+    },
   });
   const rowOf = (column: (typeof columns)[number]) => (
     <Row

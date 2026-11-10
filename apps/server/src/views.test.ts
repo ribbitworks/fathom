@@ -280,6 +280,23 @@ describe("saved views", () => {
     ).toEqual({ widths: { preferredName: 240, gone: 300 } });
   });
 
+  it("keep the unit and decimal places each column is shown in, sending them to every reader", async () => {
+    const sharer = await test.signedIn("workforce-administrator");
+    const viewer = await test.signedIn("resource-planner");
+    const shown = {
+      units: { effort: "person-weeks" },
+      places: { effort: 1 },
+    };
+    const { view } = (
+      await share(sharer.cookie, "In weeks", shown)
+    ).json<Saved>();
+    expect(view.definition).toEqual(shown);
+    expect(
+      (await viewsOf(viewer.cookie)).find(({ id }) => id === view.id)
+        ?.definition,
+    ).toEqual(shown);
+  });
+
   it("keep the widths of columns a reader may not see when that reader updates them", async () => {
     const maker = await test.signedIn("workforce-administrator");
     const { view } = (

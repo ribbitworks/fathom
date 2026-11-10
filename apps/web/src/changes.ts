@@ -24,7 +24,8 @@ import { infiniteQueryOptions, keepPreviousData } from "@tanstack/react-query";
 import { getJson } from "./api.ts";
 import { visibilityName } from "./lists.ts";
 import type { Phrase } from "./phrase.tsx";
-import { formatDay } from "./table-view.ts";
+import { effortColumnUnits } from "./effort.ts";
+import { formatDay, unitAmountWords } from "./table-view.ts";
 import { count } from "./numbers.ts";
 import { nameAs } from "./names.ts";
 import { colourName } from "./releases.ts";
@@ -93,6 +94,7 @@ const fieldNames = new Map([
   ["members", "Members"],
   ["memberFrom", "Joining and leaving dates"],
   ["leadFrom", "Date the feature lead changes"],
+  ["estimateHours", "Effort"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {
@@ -112,20 +114,38 @@ function valueText(field: string, value: ChangeValue): string | null {
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (isDay(value)) return formatDay(value);
-  if (field === "scope") {
-    const scope = viewScopeSchema.safeParse(value);
-    if (scope.success) return scopeNames[scope.data];
-  }
-  if (field === "visibility") {
-    const tier = tierSchema.safeParse(value);
-    if (tier.success) return visibilityName(tier.data);
-  }
-  if (field === "meaning") {
-    const meaning = meaningSchema.safeParse(value);
-    if (meaning.success) return meaningName(meaning.data);
-  }
-  return value;
+  return valueWords.get(field)?.(value) ?? value;
 }
+
+// How the fields whose values need words of their own put them, or nothing for a value they do not
+// know, which shows as recorded.
+const valueWords = new Map<string, (value: string) => string | undefined>([
+  [
+    "scope",
+    (value) => {
+      const scope = viewScopeSchema.safeParse(value);
+      return scope.success ? scopeNames[scope.data] : undefined;
+    },
+  ],
+  [
+    "visibility",
+    (value) => {
+      const tier = tierSchema.safeParse(value);
+      return tier.success ? visibilityName(tier.data) : undefined;
+    },
+  ],
+  [
+    "meaning",
+    (value) => {
+      const meaning = meaningSchema.safeParse(value);
+      return meaning.success ? meaningName(meaning.data) : undefined;
+    },
+  ],
+  [
+    "estimateHours",
+    (value) => unitAmountWords(value, Number(value), effortColumnUnits[0]),
+  ],
+]);
 
 // What changed in one field of a record of the kind given, such as "Name from Sites to Locations",
 // with the field and its values marked.

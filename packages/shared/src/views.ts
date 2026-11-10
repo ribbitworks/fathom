@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A table's view, its search, filters, sort, breakdown, frozen columns, the order of its columns,
-// and the widths set for them, as the page address holds it and as a saved view keeps it, and the
-// saved views themselves. A saved view is personal, seen and changed only by its maker, or shared:
-// seen by everyone who sees the table, except those it filters, sorts, or breaks down by a column
-// they may not see, and changed by its maker and those who may change planning configuration.
+// the widths set for them, and the unit and decimal places each column that offers units is shown
+// in, as the page address holds it and as a saved view keeps it, and the saved views themselves. A
+// saved view is personal, seen and changed only by its maker, or shared: seen by everyone who sees
+// the table, except those it filters, sorts, or breaks down by a column they may not see, and
+// changed by its maker and those who may change planning configuration.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
-import { numberValueSchema } from "./numbers.ts";
+import { numberDigits, numberValueSchema } from "./numbers.ts";
 
 export const viewLengths = { name: 80 } as const;
 
@@ -29,6 +30,10 @@ export const columnWidths = { least: 64, most: 1600 } as const;
 const key = z.string().min(1).max(keyLimit);
 const frozen = z.number().int().min(0).max(frozenLimit);
 const width = z.number().int().min(columnWidths.least).max(columnWidths.most);
+// The unit a column is shown in, such as person-weeks, by its key among the units the column offers.
+const unit = z.string().regex(/^[a-z-]{1,64}$/);
+// The most decimal places a column's numbers show, as far as a number can be typed with.
+const places = z.number().int().min(0).max(numberDigits.afterPoint);
 
 // A column's filter. A row matches when its value matches any part that is set: for text, when it
 // contains the text; for dates, when it falls between from and to, and for numbers, between
@@ -70,6 +75,28 @@ const looseColumnKeys = (limit: number) =>
           ].slice(0, limit),
     );
 
+// A value for each column, by key, as an address or saved view holds them: each that does not fit
+// is dropped on its own, keeping the others.
+const looseByColumn = <Value>(valueSchema: z.ZodType<Value>) =>
+  z
+    .record(z.string(), z.unknown())
+    .optional()
+    .catch(undefined)
+    .transform((raw) =>
+      raw === undefined
+        ? undefined
+        : Object.fromEntries(
+            Object.entries(raw)
+              .flatMap(([name, value]) => {
+                const set = valueSchema.safeParse(value);
+                return columnKey.safeParse(name).success && set.success
+                  ? [[name, set.data] as const]
+                  : [];
+              })
+              .slice(0, columnsLimit),
+          ),
+    );
+
 // Column keys as a request sends them, which must fit as a whole.
 const columnKeys = (limit: number) =>
   z
@@ -87,10 +114,11 @@ export type Show = z.infer<typeof showSchema>;
 // descending, the keys of the columns the rows are broken down by, which is set, even when empty,
 // while the metrics show, and how many columns, from the first, stay in view while the table
 // scrolls sideways, when not the table's own default, the keys of the columns in the order the view
-// puts them, when moved from the table's own order, and the width set for each column, in pixels,
-// by key, for those not left to fit what they hold. Each filter, sort level, breakdown column, and
-// width that does not fit is dropped on its own, keeping the others, as is anything else that does
-// not fit.
+// puts them, when moved from the table's own order, the width set for each column, in pixels, by
+// key, for those not left to fit what they hold, and the unit and decimal places each column that
+// offers units is shown in, by key, for those not shown as they start. Each filter, sort level,
+// breakdown column, width, unit, and number of places that does not fit is dropped on its own,
+// keeping the others, as is anything else that does not fit.
 export const viewDefinitionSchema = z.object({
   search: z.string().max(textLimit).optional().catch(undefined),
   show: showSchema.optional().catch(undefined),
@@ -125,24 +153,9 @@ export const viewDefinitionSchema = z.object({
   grouping: columnKey.optional().catch(undefined),
   frozen: frozen.optional().catch(undefined),
   order: looseColumnKeys(columnsLimit),
-  widths: z
-    .record(z.string(), z.unknown())
-    .optional()
-    .catch(undefined)
-    .transform((raw) =>
-      raw === undefined
-        ? undefined
-        : Object.fromEntries(
-            Object.entries(raw)
-              .flatMap(([name, value]) => {
-                const set = width.safeParse(value);
-                return columnKey.safeParse(name).success && set.success
-                  ? [[name, set.data] as const]
-                  : [];
-              })
-              .slice(0, columnsLimit),
-          ),
-    ),
+  widths: looseByColumn(width),
+  units: looseByColumn(unit),
+  places: looseByColumn(places),
 });
 
 // The view as read from the address or a saved view, and as written to them.
@@ -156,6 +169,8 @@ export interface ViewDefinition {
   frozen?: number | undefined;
   order?: string[] | undefined;
   widths?: Record<string, number> | undefined;
+  units?: Record<string, string> | undefined;
+  places?: Record<string, number> | undefined;
 }
 
 // A view as a request sends it, which must fit as a whole, since a page sends only views it made.
@@ -179,6 +194,20 @@ const strictDefinitionSchema = z.object({
     .refine(
       (widths) => Object.keys(widths).length <= columnsLimit,
       "Too many widths",
+    )
+    .optional(),
+  units: z
+    .record(columnKey, unit)
+    .refine(
+      (units) => Object.keys(units).length <= columnsLimit,
+      "Too many units",
+    )
+    .optional(),
+  places: z
+    .record(columnKey, places)
+    .refine(
+      (byColumn) => Object.keys(byColumn).length <= columnsLimit,
+      "Too many places",
     )
     .optional(),
 });

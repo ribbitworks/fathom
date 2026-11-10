@@ -35,13 +35,14 @@ export const featureColumnKeys = [
   "description",
   "note",
   "targetCycle",
+  "estimateHours",
   "featureTeamId",
 ] as const;
 
 export const featureLengths = { description: 200 } as const;
 
-// The largest estimate the database holds, in hours.
-export const largestEstimateHours = 9_999_999_999.99;
+// The largest estimate, in hours: about 125,000 person-days, more than any feature needs.
+export const largestEstimateHours = 999_999;
 
 // A feature being planned or worked on needs a feature team to own it, as the Decisions Log sets
 // out; a possible one need not have one yet, and a done or cancelled one raises no warnings.

@@ -146,7 +146,8 @@ function widthsSeen(
 
 // The view as a reader is sent it: without filters, sorts, and breakdowns on columns deleted since
 // it was saved, nor the widths or places of columns the reader may not see. Neither reveals a value,
-// so a view keeps those of columns others may not see, and of any the table no longer has.
+// so a view keeps those of columns others may not see, and of any the table no longer has, as it
+// keeps the unit and decimal places each column is shown in.
 function sentTo(
   actor: Actor,
   tiers: ReadonlyMap<string, Tier>,
@@ -168,6 +169,8 @@ function sentTo(
     order: definition.order?.filter((key) => seesColumn(actor, tiers, key)),
     widths:
       definition.widths && widthsSeen(actor, tiers, definition.widths, true),
+    units: definition.units,
+    places: definition.places,
   });
 }
 

@@ -1,126 +1,93 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Tests for how the controls above a table describe each filter in words, and how sorting by a
-// column adds it to the sort or changes its direction. The controls themselves are tested on the
-// People page.
+// Tests for the parts of a view the Save view dialog names, for those the table's other tests do
+// not reach: the units and decimal places columns are shown in.
 
 import { describe, expect, it } from "vitest";
-import { describeFilter, sortedBy, viewParts } from "./table-controls.tsx";
-import { emptyView } from "./table-view.ts";
+import { viewParts } from "./table-controls.tsx";
+import { type ColumnUnit, emptyView } from "./table-view.ts";
 
-const column = (kind: "text" | "date" | "choice") => ({
-  key: "k",
-  label: "Level",
-  kind,
-  choices: [
-    { id: "a", label: "P1" },
-    { id: "b", label: "P2" },
-  ],
+const weeks: ColumnUnit = {
+  key: "person-weeks",
+  label: "Person-weeks",
+  code: "PW",
+  name: "person-weeks",
+  one: "person-week",
+};
+
+const column = (more: object) => ({
+  key: "effort",
+  label: "Effort",
+  kind: "number" as const,
+  choices: [],
   multiple: false,
+  ...more,
 });
 
-describe("what saving a view keeps", () => {
-  const level = { ...column("choice"), key: "level" };
-  const site = { ...column("choice"), key: "site", label: "Site" };
-
-  it("names each part that is set, what the Draft menu shows and the metrics included", () => {
+describe("viewParts", () => {
+  it("names each part of a view, in order", () => {
+    const name = column({ key: "name", label: "Name", kind: "text" });
+    const effort = column({ unit: weeks, places: 2 });
     expect(
       viewParts(
         {
           search: " fictional ",
-          show: "live",
-          filters: { level: { any: ["a"] }, site: {}, gone: { empty: true } },
+          show: "drafts",
+          filters: { name: { contains: "Atlas" } },
           sort: [
-            { key: "level", descending: true },
-            { key: "gone", descending: false },
-            { key: "site", descending: false },
+            { key: "name", descending: false },
+            { key: "effort", descending: true },
           ],
-          breakdown: ["level", "site"],
+          breakdown: ["name"],
+          frozen: 1,
+          order: ["effort", "name"],
+          widths: { name: 240 },
+          units: { effort: "person-weeks" },
         },
-        [level, site],
+        [name, effort],
       ),
     ).toEqual([
       { name: "Search", value: "“fictional”" },
-      { name: "Filter", value: "Level: P1" },
-      { name: "Sort", value: "Level ↓, Site ↑" },
-      { name: "Draft", value: "Live only" },
-      { name: "Metrics", value: "Level by Site" },
+      { name: "Filter", value: "Name contains “Atlas”" },
+      { name: "Sort", value: "Name ↑, Effort ↓" },
+      { name: "Draft", value: "Drafts applied" },
+      { name: "Metrics", value: "Name" },
+      { name: "Frozen", value: "Up to Name" },
+      { name: "Column order", value: "Moved" },
+      { name: "Widths", value: "Name" },
+      { name: "Units", value: "Effort in person-weeks" },
     ]);
   });
 
-  it("names the last column frozen, or none, once they differ from the table's own", () => {
-    expect(viewParts({ ...emptyView, frozen: 2 }, [level, site])).toEqual([
-      { name: "Frozen", value: "Up to Site" },
-    ]);
-    expect(viewParts({ ...emptyView, frozen: 0 }, [level, site])).toEqual([
-      { name: "Frozen", value: "None" },
-    ]);
-  });
-
-  it("names the columns whose widths are set, in the table's order, leaving out those it lacks", () => {
+  it("names a text filter on empty values alone", () => {
     expect(
-      viewParts({ ...emptyView, widths: { site: 200, gone: 120, level: 90 } }, [
-        level,
-        site,
+      viewParts({ ...emptyView, filters: { name: { empty: true } } }, [
+        column({ key: "name", label: "Name", kind: "text" }),
       ]),
-    ).toEqual([{ name: "Widths", value: "Level, Site" }]);
+    ).toEqual([{ name: "Filter", value: "Name empty" }]);
   });
 
-  it("leaves out what is not set, and metrics that break down by nothing yet", () => {
-    expect(viewParts(emptyView, [level])).toEqual([]);
+  it("names the unit and decimal places a column is shown in", () => {
     expect(
-      viewParts({ ...emptyView, show: "drafts", breakdown: [] }, [level]),
-    ).toEqual([{ name: "Draft", value: "Drafts applied" }]);
-  });
-});
-
-describe("filters in words", () => {
-  it("name the choices picked, in their list's order, and empty values", () => {
-    expect(describeFilter(column("choice"), { any: ["b", "a"] })).toBe(
-      "Level: P1, P2",
-    );
-    expect(describeFilter(column("choice"), { empty: true })).toBe(
-      "Level: Empty",
-    );
-    expect(
-      describeFilter(
-        { ...column("choice"), emptyLabel: "No level" },
-        { any: ["a"], empty: true },
+      viewParts(
+        {
+          ...emptyView,
+          units: { effort: "person-weeks" },
+          places: { effort: 1 },
+        },
+        [column({ unit: weeks, places: 1 })],
       ),
-    ).toBe("Level: P1, No level");
-  });
-
-  it("give the dates between, from, or until, and no date", () => {
-    expect(
-      describeFilter(column("date"), { from: "2026-01-01", to: "2026-06-30" }),
-    ).toMatch(/^Level: .*2026 to .*2026$/);
-    expect(describeFilter(column("date"), { from: "2026-01-01" })).toMatch(
-      /^Level: from /,
-    );
-    expect(
-      describeFilter(column("date"), { to: "2026-01-01", empty: true }),
-    ).toMatch(/^Level: until .* or no date$/);
-  });
-
-  it("say what text contains, and empty text", () => {
-    expect(describeFilter(column("text"), { contains: " x " })).toBe(
-      "Level contains “x”",
-    );
-    expect(describeFilter(column("text"), { empty: true })).toBe("Level empty");
-  });
-});
-
-describe("sorting by a column", () => {
-  it("adds it as the next level, or changes its direction in place", () => {
-    const first = sortedBy(emptyView, "a", false);
-    const both = sortedBy(first, "b", true);
-    expect(both.sort).toEqual([
-      { key: "a", descending: false },
-      { key: "b", descending: true },
+    ).toEqual([
+      { name: "Units", value: "Effort in person-weeks to 1 decimal place" },
     ]);
-    expect(sortedBy(both, "a", true).sort).toEqual([
-      { key: "a", descending: true },
-      { key: "b", descending: true },
-    ]);
+  });
+
+  it("names decimal places alone, and nothing for a unit a column does not take", () => {
+    expect(
+      viewParts(
+        { ...emptyView, units: { effort: "hours" }, places: { effort: 0 } },
+        [column({ places: 0 })],
+      ),
+    ).toEqual([{ name: "Units", value: "Effort to 0 decimal places" }]);
   });
 });

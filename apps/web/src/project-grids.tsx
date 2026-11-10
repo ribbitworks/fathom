@@ -11,6 +11,12 @@ import {
   type ChangeValue,
   type Customer,
   type CustomerRequest,
+  type EffortConversions,
+  effortUnitSchema,
+  enteredHours,
+  exactEffort,
+  largestEstimateHours,
+  largestIn,
   type Feature,
   featureColumnKeys,
   featureLengths,
@@ -22,6 +28,10 @@ import {
   projectLengths,
   type Proposal,
   type ProposalRequest,
+  roundedUpTo,
+  shownEffort,
+  startingEffortConversions,
+  typedNumber,
 } from "@fathom/shared";
 import { Menu, VisuallyHidden } from "@mantine/core";
 import type { ReactNode } from "react";
@@ -31,6 +41,9 @@ import {
   cellRequest,
 } from "./added-columns.ts";
 import { type CellChange, cellKinds, flagChoice } from "./cell-kinds.tsx";
+import { EffortCell } from "./effort-cell.tsx";
+import { effortColumnUnits, hoursWords } from "./effort.ts";
+import { decimalUpTo } from "./numbers.ts";
 import type { DraftField } from "./draft-details.tsx";
 import { noDrafts } from "./drafts.ts";
 import { choice, offered } from "./lists.ts";
@@ -59,7 +72,7 @@ import {
   type RecordTable,
   type RowGrouping,
 } from "./record-grid.tsx";
-import { type CellValue, formatMonth } from "./table-view.ts";
+import { type CellValue, type ColumnUnit, formatMonth } from "./table-view.ts";
 
 // A change to one or more of a record's fields, by name.
 export type PlanChange = Record<string, unknown>;
@@ -75,7 +88,6 @@ const withLiveDates = <Rec extends PlanRecord>(record: Rec): Rec =>
 const featureDetailKeys: readonly string[] = [
   ...featureColumnKeys,
   "targetStreamId",
-  "estimateHours",
 ];
 
 // Records as they are live, without drafts: those only drafted to be added are left out, and each
@@ -97,7 +109,8 @@ export function livePlanRecords<Rec extends PlanRecord>(
   );
 }
 
-type Kinds = "text" | "date" | "month" | "choice" | "link" | "note" | "flag";
+type Kinds =
+  "text" | "date" | "month" | "number" | "choice" | "link" | "note" | "flag";
 
 // What each tab's records are called.
 const recordWords: Readonly<
@@ -474,6 +487,74 @@ const cycleOf = (target: {
     ? [cycleChoiceId(target.targetStreamId, target.targetCycle)]
     : [];
 
+// Estimates are rough, so their amounts show no more than two decimal places, rounded up.
+const effortPlaces = [0, 1, 2];
+const effortPlacesAtFirst = 2;
+// What floating point leaves of an amount that was not rounded, far below any place shown.
+const roundingLeft = 1e-9;
+
+// A feature's estimate, kept in hours and shown in the unit the view names, in which it is typed.
+// Without the conversions, as for a draft's details, it is offered in hours alone, which need none.
+function effortColumn(
+  conversions: EffortConversions | undefined,
+): Column<Feature, PlanChange> {
+  const [hours, ...others] = effortColumnUnits;
+  const converting = conversions ?? startingEffortConversions;
+  const shownIn = (
+    unit: ColumnUnit,
+    places: number,
+  ): Column<Feature, PlanChange> => {
+    const effortUnit = effortUnitSchema.catch(hours.key).parse(unit.key);
+    const amountOf = (estimate: number) =>
+      shownEffort(estimate, effortUnit, converting);
+    const inUnit = (estimate: unknown) =>
+      typeof estimate === "number" ? String(amountOf(estimate)) : "";
+    return {
+      ...field<Feature>("estimateHours", "Effort", "number"),
+      unit,
+      least: 0,
+      most: largestIn(largestEstimateHours, effortUnit, converting),
+      value: (feature) => inUnit(feature.estimateHours),
+      live: (draft) => inUnit((draft.live as Partial<Feature>).estimateHours),
+      change: (value) => {
+        const typed = typedNumber(value as string);
+        return {
+          estimateHours:
+            typed === undefined
+              ? null
+              : enteredHours(typed, effortUnit, converting),
+        };
+      },
+      content: ({ estimateHours }) => {
+        if (estimateHours === null) return null;
+        const amount = roundedUpTo(amountOf(estimateHours), places);
+        const exact = exactEffort(estimateHours, effortUnit, converting);
+        return (
+          <EffortCell
+            shown={decimalUpTo(amount, places)}
+            amount={amount}
+            unit={unit}
+            hours={hoursWords(
+              estimateHours,
+              Math.abs(amount - exact) > roundingLeft,
+            )}
+          />
+        );
+      },
+    };
+  };
+  return {
+    ...shownIn(hours, effortPlacesAtFirst),
+    // Breaking down by effort counts only whether features have an estimate, which says little.
+    breaksDown: false,
+    units: {
+      offered: conversions === undefined ? [hours] : [hours, ...others],
+      places: { offered: effortPlaces, starting: effortPlacesAtFirst },
+      shownIn,
+    },
+  };
+}
+
 export function featureColumns(
   choices: TableChoices,
   onOpen?: (feature: Feature) => void,
@@ -506,6 +587,7 @@ export function featureColumns(
       live: (draft) => cycleOf(draft.live as Partial<Feature>),
       change: (value) => targetOf((value as string[]).at(0)),
     },
+    effortColumn(choices.effortConversions),
     {
       ...field<Feature>("featureTeamId", "Feature team", "choice", {
         choices: choices.featureTeams,

@@ -64,6 +64,7 @@ import {
   cellKinds,
   type CellSource,
   type EditorProps,
+  startingText,
 } from "./cell-kinds.tsx";
 import {
   configDraftFields,
@@ -113,6 +114,8 @@ import {
   activeGrouping,
   applyView,
   type CellValue,
+  type ColumnUnit,
+  fieldLabel,
   type Kind,
   knownView,
   narrows,
@@ -197,6 +200,9 @@ export interface Column<
   ) => boolean;
   // For text columns: the most characters a value may hold.
   maxLength?: number | undefined;
+  // For number columns: the least and most a value may be.
+  least?: number;
+  most?: number;
   // Set for a column whose values follow from another's, which is edited instead.
   readOnly?: boolean;
   // The key of the column whose drafts change this one's values, when another's do.
@@ -225,6 +231,59 @@ export interface Column<
   readOnlyOn?: (kind: string) => boolean;
   // What a new row of a kind shows before anything is put in it, such as its kind.
   newRowValue?: (kind: string) => CellValue;
+  // For a column the reader may show in one of several units: the units offered, the first of which
+  // it starts in, the decimal places offered and those it starts with, and the column as shown in
+  // each unit.
+  units?: ColumnUnits & {
+    shownIn: (unit: ColumnUnit, places: number) => Column<Rec, Change>;
+  };
+}
+
+// The units a column offers, the first of which it starts in, and the decimal places it offers, with
+// those it starts with.
+export interface ColumnUnits {
+  offered: readonly [ColumnUnit, ...ColumnUnit[]];
+  places: { offered: readonly number[]; starting: number };
+}
+
+// The unit the view names for a column, or the column's first when the view names none it offers.
+export function unitInView(
+  key: string,
+  { offered }: ColumnUnits,
+  view: Pick<View, "units">,
+): ColumnUnit {
+  const named = new Map(Object.entries(view.units ?? {})).get(key);
+  return offered.find((unit) => unit.key === named) ?? offered[0];
+}
+
+// The column as shown in the unit and to the decimal places the view names, or as it starts where
+// the view names none it offers.
+export function inViewUnits<Rec extends GridRecord, Change>(
+  column: Column<Rec, Change>,
+  view: Pick<View, "units" | "places">,
+): Column<Rec, Change> {
+  return column.units === undefined
+    ? column
+    : shownInView(column, column.units, view).column;
+}
+
+// A column that offers units as the view shows it, and the unit it is shown in.
+export function shownInView<Rec extends GridRecord, Change>(
+  column: Column<Rec, Change>,
+  units: NonNullable<Column<Rec, Change>["units"]>,
+  view: Pick<View, "units" | "places">,
+): { unit: ColumnUnit; column: Column<Rec, Change> } {
+  const { places, shownIn } = units;
+  const unit = unitInView(column.key, units, view);
+  const asked = new Map(Object.entries(view.places ?? {})).get(column.key);
+  const shownTo =
+    asked !== undefined && places.offered.includes(asked)
+      ? asked
+      : places.starting;
+  return {
+    unit,
+    column: { ...shownIn(unit, shownTo), units, places: shownTo },
+  };
 }
 
 // What is particular to a kind of record: what its table and rows are called, its columns, how its
@@ -1121,19 +1180,18 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // The columns with their lists as they are live, for the live records and each live row, so a
   // choice's drafted name is not shown as live.
   const listsLive = liveLists(lists);
-  const liveColumns = table.columnsFor(
-    fields,
-    listsLive,
-    order,
-    table.liveRecords(everyone),
-  );
+  const liveColumns = table
+    .columnsFor(fields, listsLive, order, table.liveRecords(everyone))
+    .map((column) => inViewUnits(column, asked));
   // Both are made from the same fields, so every column has its live one.
   const liveColumn = (column: Column<Rec, Change>) =>
     liveColumns.find(({ key }) => key === column.key) as Column<Rec, Change>;
   const columns =
     asked.show === "live"
       ? liveColumns
-      : table.columnsFor(fields, listsShown, order, everyone);
+      : table
+          .columnsFor(fields, listsShown, order, everyone)
+          .map((column) => inViewUnits(column, asked));
   const known = knownView(
     askedHere,
     columns,
@@ -1334,6 +1392,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   const [panelWriting, setPanelWriting] = useState(false);
   // What is typed in the cell being edited: its text, or what narrows its choices.
   const [text, setText] = useState("");
+  // What the open editor started with: its text, and the value that text stands for.
+  const [openedWith, setOpenedWith] = useState<{
+    text: string;
+    value: CellValue;
+  }>();
   const [problem, setProblem] = useState<ShownProblem>();
   const [menuFor, setMenuFor] = useState<string>();
   const [dragging, setDragging] = useState<string>();
@@ -1543,8 +1606,11 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         : undefined,
     );
     setMenuFor(undefined);
-    const startingText = typed ?? (typeof value === "string" ? value : "");
-    setText(asTyped?.(startingText) ?? startingText);
+    const opening =
+      typeof value === "string" ? startingText(column, value) : "";
+    setOpenedWith({ text: opening, value });
+    const starting = typed ?? opening;
+    setText(asTyped?.(starting) ?? starting);
     focusSoon(`${cellId(cell.row, cell.column)}-editor`);
   };
 
@@ -1782,7 +1848,12 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // the next cell opens an editor; and
   // leaving the cell stays put. A refused value keeps the cell open, with the problem named; once
   // the cell is left, the cell shows its own value again.
-  const finish = (cell: Cell, value: CellValue, how: Finish) => {
+  const finish = (cell: Cell, given: CellValue, how: Finish) => {
+    // Text left as the editor opened with it keeps the value, which may hold more than it showed.
+    const value =
+      openedWith !== undefined && given === openedWith.text
+        ? openedWith.value
+        : given;
     if (!save(cell, value)) {
       // Only a record's value is refused, since a new row keeps what is typed until it is added.
       if (how === "leave") {
@@ -2138,6 +2209,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   setFiltering(column.key);
                 }}
                 breaksDown={breaksDown(column)}
+                units={column.units}
               />
               <Menu.Divider />
               {index + 1 !== frozenAsked && (
@@ -2339,14 +2411,14 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
         />
       );
     }
-    return (
+    const input = (
       <input
         id={id}
         className={[
           classes.recordEditor,
           invalid ? classes.recordEditorInvalid : "",
         ].join(" ")}
-        aria-label={column.label}
+        aria-label={fieldLabel(column)}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         value={text}
@@ -2362,6 +2434,15 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
           finish(cell, text, "leave");
         }}
       />
+    );
+    // A number in a unit names the unit's code beside it, as its cell does.
+    return column.unit === undefined ? (
+      input
+    ) : (
+      <span className={classes.recordUnitEditor}>
+        {input}
+        <span className={classes.recordUnitCode}>{column.unit.code}</span>
+      </span>
     );
   };
 

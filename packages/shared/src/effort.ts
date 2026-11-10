@@ -7,7 +7,7 @@
 // hour, which the database keeps exactly, so an estimate always reads back as it was entered.
 
 import { z } from "zod";
-import { numberDigits } from "./numbers.ts";
+import { numberDigits, roundedUpTo } from "./numbers.ts";
 import { changeSetIdSchema } from "./people.ts";
 
 export const effortUnits = [
@@ -91,7 +91,7 @@ const fromHundredths = (hundredths: number): number =>
   hundredths / hundredthsInHour;
 
 const roundedUp = (steps: number): number =>
-  Math.ceil(Number(steps.toFixed(placesCounted)));
+  roundedUpTo(steps, 0, placesCounted);
 
 // How many hundredths of an hour a unit holds.
 function unitHundredths(
@@ -139,6 +139,26 @@ export function enteredHours(
   const step = stepHundredths(conversions, unit);
   const steps = roundedUp((amount * unitHundredths(conversions, unit)) / step);
   return fromHundredths(steps * step);
+}
+
+// An estimate's hours as an amount in a unit, exactly, before any rounding.
+export const exactEffort = (
+  hours: number,
+  unit: EffortUnit,
+  conversions: EffortConversions,
+): number => (hours * hundredthsInHour) / unitHundredths(conversions, unit);
+
+// The largest amount of a unit kept as no more than a number of hours, such as the largest estimate.
+export function largestIn(
+  hours: number,
+  unit: EffortUnit,
+  conversions: EffortConversions,
+): number {
+  const step = stepHundredths(conversions, unit);
+  const steps = Math.floor(toHundredths(hours) / step);
+  return Number(
+    ((steps * step) / unitHundredths(conversions, unit)).toFixed(placesShown),
+  );
 }
 
 // An estimate's hours as an amount in a unit, rounded up to the unit's step, to as many places as

@@ -13,7 +13,7 @@ import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { RecordGrid } from "./record-grid.tsx";
 import { activeGrouping, type View } from "./table-view.ts";
-import { TeamLabelTips } from "./team-labels.tsx";
+import { TableTips } from "./table-tips.tsx";
 import {
   gridMonthsAround,
   noTeamMonthActions,
@@ -76,7 +76,7 @@ export function FeatureAssignmentsPage({
           <Loader aria-label="Loading" />
         </Center>
       ) : (
-        <TeamLabelTips>
+        <TableTips>
           <RecordGrid
             records={records}
             table={table}
@@ -91,7 +91,7 @@ export function FeatureAssignmentsPage({
             opensAtColumn={monthOf(now)}
             withDrafts={seesPeople}
           />
-        </TeamLabelTips>
+        </TableTips>
       )}
     </Stack>
   );

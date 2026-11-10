@@ -18,9 +18,15 @@ import {
   problemId,
 } from "./record-editing.tsx";
 import classes from "./record-details.module.css";
-import type { Column } from "./record-grid.tsx";
+import { roundedUpTo } from "@fathom/shared";
+import { type Column, shownInView } from "./record-grid.tsx";
 import { type DraftLike, DraftMark, StatusMark } from "./status-mark.tsx";
-import type { CellValue } from "./table-view.ts";
+import {
+  type CellValue,
+  type ColumnUnit,
+  unitAmountWords,
+  type View,
+} from "./table-view.ts";
 
 type DetailColumn = Pick<
   Column<never>,
@@ -52,6 +58,44 @@ function Value({ column, value }: { column: DetailColumn; value: unknown }) {
   ) : (
     <Text>{words}</Text>
   );
+}
+
+// A value with a unit in words, the unit spelled out, as a panel has room to, such as 1 person-week,
+// one or several as the amount is shown, rounded up to the column's places, if any.
+function spelledOut(
+  column: DetailColumn & Pick<Column<never>, "places">,
+  unit: ColumnUnit,
+  value: string,
+): string {
+  const shown = cellKinds[column.kind].inWords(
+    { ...column, unit: undefined },
+    value,
+  );
+  const amount =
+    column.places === undefined
+      ? Number(value)
+      : roundedUpTo(Number(value), column.places);
+  return unitAmountWords(shown, amount, unit);
+}
+
+// For a column that offers units, a record's value as its row shows it, with the units spelled out:
+// in the unit the table shows, when that is another and the value is more than 0, followed by the
+// value in the column's first unit, as kept, such as 2.5 person-days (20 hours).
+export function inUnitsWords(
+  column: Column<never>,
+  view: Pick<View, "units" | "places">,
+  record: object,
+): string | undefined {
+  const { units } = column;
+  if (units === undefined) return undefined;
+  const value = column.value(record as never) as string;
+  if (value === "") return undefined;
+  const kept = spelledOut(column, units.offered[0], value);
+  const shown = shownInView(column, units, view);
+  const shownValue = shown.column.value(record as never) as string;
+  return shown.unit.key === units.offered[0].key || Number(shownValue) <= 0
+    ? kept
+    : `${spelledOut(shown.column, shown.unit, shownValue)} (${kept})`;
 }
 
 // A headed list of a record's rows.

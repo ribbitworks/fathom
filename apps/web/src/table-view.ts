@@ -4,8 +4,8 @@
 // sent, as ADR 0006 sets out. A table describes its columns, each of a kind, and how to read a
 // row's value in each; each kind says how its values are searched, sorted, and filtered, so a new
 // kind is added in one place. The view a table shows, its search, filters, sort, metrics, frozen
-// columns, and columns' widths, is kept in the page address, with the saved view it started from,
-// if any.
+// columns, and columns' widths and units, is kept in the page address, with the saved view it
+// started from, if any.
 
 import {
   columnWidths,
@@ -39,6 +39,25 @@ export interface ColumnChoice {
   retired?: boolean;
 }
 
+// A unit a column's numbers may be shown in: its key, as the view names it; its name in the column's
+// menu, such as Person-weeks; and the code its cells show, such as PW, with the words it stands for,
+// such as person-weeks, and for one, such as person-week.
+export interface ColumnUnit {
+  key: string;
+  label: string;
+  code: string;
+  name: string;
+  one: string;
+}
+
+// An amount of a unit in words, such as 2.5 person-weeks or 1 person-week, given the amount as
+// shown.
+export const unitAmountWords = (
+  shown: string,
+  amount: number,
+  unit: ColumnUnit,
+) => `${shown} ${amount === 1 ? unit.one : unit.name}`;
+
 export interface TableColumn<Row> {
   // Unique among the table's columns, and how the address names the column.
   key: string;
@@ -52,10 +71,21 @@ export interface TableColumn<Row> {
   // For choice columns: what a filter calls the choices no longer offered, when not "Retired".
   retiredLabel?: string;
   value: (row: Row) => CellValue;
+  // For number columns: the unit the numbers are in, which each cell names by its code, and the most
+  // decimal places shown, each number rounded up to them, as estimates are.
+  unit?: ColumnUnit | undefined;
+  places?: number | undefined;
   // For text columns: what an empty cell shows in grey in its place, such as a name made from other
   // details, which sorting, filtering, and searching take as its value.
   standIn?: (row: Row) => string;
 }
+
+// What a field editing a column's value is called: its label, and its unit's words, if any.
+export const fieldLabel = ({
+  label,
+  unit,
+}: Pick<TableColumn<never>, "label" | "unit">): string =>
+  unit === undefined ? label : `${label} in ${unit.name}`;
 
 // A row's value in a column, or, when empty, what stands in for it.
 export function valueOrStandIn<Row>(column: TableColumn<Row>, row: Row) {
@@ -88,6 +118,10 @@ export interface View {
   order?: string[] | undefined;
   // The width set for each column, in pixels, by key, for those not left to fit what they hold.
   widths?: Record<string, number> | undefined;
+  // The unit each column that offers units is shown in, by key, for those not in their first, and
+  // the decimal places, for those not shown to as many as they start with.
+  units?: Record<string, string> | undefined;
+  places?: Record<string, number> | undefined;
 }
 
 export const emptyView: View = {
@@ -124,17 +158,32 @@ export function viewFrom(search: ViewDefinition): View {
     ...(search.grouping === undefined ? {} : { grouping: search.grouping }),
     ...(search.frozen === undefined ? {} : { frozen: search.frozen }),
     ...(hasOrder(search.order) ? { order: search.order } : {}),
-    ...(hasWidths(search.widths) ? { widths: search.widths } : {}),
+    ...(hasEntries(search.widths) ? { widths: search.widths } : {}),
+    ...(hasEntries(search.units) ? { units: search.units } : {}),
+    ...(hasEntries(search.places) ? { places: search.places } : {}),
   };
 }
 
 const hasOrder = (order: readonly string[] | undefined): order is string[] =>
   order !== undefined && order.length > 0;
 
-const hasWidths = (
-  widths: Record<string, number> | undefined,
-): widths is Record<string, number> =>
-  widths !== undefined && Object.keys(widths).length > 0;
+const hasEntries = <Value>(
+  byColumn: Record<string, Value> | undefined,
+): byColumn is Record<string, Value> =>
+  byColumn !== undefined && Object.keys(byColumn).length > 0;
+
+// A value for each column with one column's set, or, given none, taken out; none once none is left.
+function withEntry<Value>(
+  byColumn: Record<string, Value> | undefined,
+  key: string,
+  value: Value | undefined,
+): Record<string, Value> | undefined {
+  const entries = Object.fromEntries([
+    ...Object.entries(byColumn ?? {}).filter(([other]) => other !== key),
+    ...(value === undefined ? [] : [[key, value] as const]),
+  ]);
+  return hasEntries(entries) ? entries : undefined;
+}
 
 // How far one step from the keyboard or a column's menu widens or narrows a column, in pixels.
 export const widthStep = 16;
@@ -153,11 +202,26 @@ export function withWidth(
   key: string,
   width: number | undefined,
 ): View {
-  const widths = Object.fromEntries([
-    ...Object.entries(view.widths ?? {}).filter(([other]) => other !== key),
-    ...(width === undefined ? [] : [[key, width] as const]),
-  ]);
-  return { ...view, widths: hasWidths(widths) ? widths : undefined };
+  return { ...view, widths: withEntry(view.widths, key, width) };
+}
+
+// The view with a column's numbers shown to a number of decimal places, or, given none, to as many
+// as it starts with.
+export function withPlaces(
+  view: View,
+  key: string,
+  places: number | undefined,
+): View {
+  return { ...view, places: withEntry(view.places, key, places) };
+}
+
+// The view with a column shown in a unit, or, given none, in its first.
+export function withUnit(
+  view: View,
+  key: string,
+  unit: string | undefined,
+): View {
+  return { ...view, units: withEntry(view.units, key, unit) };
 }
 
 // A table's view as its page's address holds it, the saved view it started from, and how to change
@@ -211,7 +275,9 @@ export function searchFor(view: View): ViewDefinition {
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...(hasOrder(view.order) ? { order: view.order } : {}),
-    ...(hasWidths(view.widths) ? { widths: view.widths } : {}),
+    ...(hasEntries(view.widths) ? { widths: view.widths } : {}),
+    ...(hasEntries(view.units) ? { units: view.units } : {}),
+    ...(hasEntries(view.places) ? { places: view.places } : {}),
   };
 }
 
@@ -273,15 +339,18 @@ export function activeGrouping<Grouping extends { key: string }>(
   );
 }
 
-// Whether the view sorts the rows, or sets which columns are frozen, their order, or how wide they
-// are, which the Views menu names and Clear all clears with the filters.
+// Whether the view sorts the rows, or sets which columns are frozen, their order, how wide they are,
+// or the units and decimal places they are shown in, which the Views menu names and Clear all clears
+// with the filters.
 export function setsApart(view: View): boolean {
   return (
     view.sort.length > 0 ||
     view.grouping !== undefined ||
     view.frozen !== undefined ||
     view.order !== undefined ||
-    view.widths !== undefined
+    view.widths !== undefined ||
+    view.units !== undefined ||
+    view.places !== undefined
   );
 }
 
@@ -295,7 +364,8 @@ export function narrows(view: View): boolean {
 
 // The view with only the filters, sorts, and breakdown on columns the table has, and the filters it
 // offers that are not columns, leaving out those on columns the user may not see, such as in a link
-// from someone who may, and with its frozen columns and the widths of the columns the table has.
+// from someone who may, and with its frozen columns and the widths, units, and decimal places of
+// the columns the table has.
 // The breakdown keeps only the columns the metrics offer, when given.
 export function knownView(
   view: View,
@@ -326,7 +396,9 @@ export function knownView(
     ...(view.grouping === undefined ? {} : { grouping: view.grouping }),
     ...(view.frozen === undefined ? {} : { frozen: view.frozen }),
     ...orderOf(view.order, known),
-    ...widthsOf(view.widths, known),
+    ...knownEntries("widths", view.widths, known),
+    ...knownEntries("units", view.units, known),
+    ...knownEntries("places", view.places, known),
   };
 }
 
@@ -367,14 +439,19 @@ export function orderAfterMove(
   return moved.join() === tableOrder.join() ? undefined : moved;
 }
 
-function widthsOf(
-  widths: Record<string, number> | undefined,
+// A view's value for each column the table has, under its name in the view, or nothing when none
+// is left.
+function knownEntries<Name extends "widths" | "units" | "places", Value>(
+  name: Name,
+  byColumn: Record<string, Value> | undefined,
   known: ReadonlySet<string>,
-): { widths?: Record<string, number> } {
+): Partial<Record<Name, Record<string, Value>>> {
   const kept = Object.fromEntries(
-    Object.entries(widths ?? {}).filter(([key]) => known.has(key)),
+    Object.entries(byColumn ?? {}).filter(([key]) => known.has(key)),
   );
-  return hasWidths(kept) ? { widths: kept } : {};
+  return hasEntries(kept)
+    ? ({ [name]: kept } as Partial<Record<Name, Record<string, Value>>>)
+    : {};
 }
 
 // Text folded for matching, shared with the server so searches match alike everywhere.

@@ -383,6 +383,7 @@ export {
   numberDigits,
   numberProblem,
   numberValueSchema,
+  roundedUpTo,
   typedNumber,
 } from "./numbers.ts";
 export {
@@ -394,6 +395,8 @@ export {
   effortUnitSchema,
   effortUnits,
   enteredHours,
+  exactEffort,
+  largestIn,
   monthsInQuarter,
   type SavedEffortConversions,
   savedEffortConversionsSchema,

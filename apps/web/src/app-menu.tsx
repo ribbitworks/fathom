@@ -2,16 +2,25 @@
 
 // Fathom's menus: a click in a menu that is not on one of its items or fields, such as on its title,
 // a draft's details, or empty space, closes it, as a click outside it does. AppMenu keeps its own
-// open state for that; a menu that keeps its own uses closesOnBlankClick on its dropdown.
+// open state for that; a menu that keeps its own uses closesOnBlankClick on its dropdown. A group
+// of choices in a menu ticks the chosen one.
 
-import { Menu, type MenuDropdownProps, type MenuProps } from "@mantine/core";
+import {
+  Menu,
+  type MenuDropdownProps,
+  type MenuProps,
+  VisuallyHidden,
+} from "@mantine/core";
 import {
   createContext,
   type MouseEvent,
   type ReactNode,
   useContext,
+  useId,
   useState,
 } from "react";
+import classes from "./app-menu.module.css";
+import { Icon } from "./icons.tsx";
 
 export const closesOnBlankClick =
   (close: () => void) => (event: MouseEvent<HTMLElement>) => {
@@ -47,3 +56,47 @@ function AppMenuDropdown(props: MenuDropdownProps) {
 
 AppMenu.Target = Menu.Target;
 AppMenu.Dropdown = AppMenuDropdown;
+
+// A group of choices in a menu, under a label, the chosen one ticked.
+export function MenuChoices<Value extends string>({
+  label,
+  choices,
+  chosen,
+  onChoose,
+}: {
+  label: string;
+  choices: readonly { value: Value; label: string }[];
+  chosen: Value | undefined;
+  onChoose: (value: Value) => void;
+}) {
+  const labelId = useId();
+  return (
+    <>
+      <Menu.Divider />
+      <Menu.Label id={labelId}>{label}</Menu.Label>
+      <div role="group" aria-labelledby={labelId}>
+        {choices.map((choice) => (
+          <Menu.Item
+            key={choice.value}
+            leftSection={
+              <span
+                className={classes.choiceTick}
+                data-chosen={chosen === choice.value || undefined}
+              >
+                <Icon name="check" />
+              </span>
+            }
+            onClick={() => {
+              onChoose(choice.value);
+            }}
+          >
+            {choice.label}
+            {chosen === choice.value && (
+              <VisuallyHidden>, chosen</VisuallyHidden>
+            )}
+          </Menu.Item>
+        ))}
+      </div>
+    </>
+  );
+}

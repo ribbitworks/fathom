@@ -4,9 +4,9 @@
 // cells do: which value's editor is open, and what is wrong with the value last given. Each value is
 // saved and checked as its cell saves and checks it.
 
-import { Checkbox, Group, Text } from "@mantine/core";
+import { Checkbox, Group, NativeSelect, Text } from "@mantine/core";
 import { type ReactNode, useState } from "react";
-import { cellKinds, type EditorProps } from "./cell-kinds.tsx";
+import { cellKinds, type EditorProps, startingText } from "./cell-kinds.tsx";
 import type { Finish } from "./choice-picker.tsx";
 import { ClearableInput } from "./clearable-input.tsx";
 import { focusSoon } from "./focus.ts";
@@ -18,7 +18,13 @@ import {
   valueChange,
 } from "./record-grid.tsx";
 import classes from "./record-details.module.css";
-import type { CellValue } from "./table-view.ts";
+import {
+  type CellValue,
+  type ColumnUnit,
+  emptyView,
+  fieldLabel,
+  withUnit,
+} from "./table-view.ts";
 
 type Keyed = Pick<Column<never>, "key">;
 
@@ -56,30 +62,45 @@ function TextEditor({
   problem,
   hint,
   asTyped,
+  units,
+  onUnit,
   onDone,
   onCancel,
 }: EditorProps & {
   hint?: string | undefined;
   asTyped?: ((text: string) => string) | undefined;
+  // In a form or panel, for a column that offers units: the units, and how to enter it in one.
+  units?: readonly ColumnUnit[] | undefined;
+  onUnit?: ((unit: string) => void) | undefined;
 }) {
-  // Text and dates are held as text.
-  const [text, setText] = useState(value as string);
-  return (
+  // Text and dates are held as text. A number shown to fewer places than it holds opens as shown,
+  // and, left so, keeps the value.
+  const opened = startingText(column, value as string);
+  // Until something is typed, the field follows the value, so choosing another unit shows the same
+  // value in it rather than reading the number shown in the new unit.
+  const [typed, setTyped] = useState<string>();
+  const text = typed ?? opened;
+  const given = (entered: string) => (entered === opened ? value : entered);
+  const choosesUnit = units !== undefined && onUnit !== undefined;
+  const leave = () => {
+    onDone(given(text), "leave");
+  };
+  const field = (
     <ClearableInput
       id={id}
       size="sm"
-      aria-label={column.label}
+      aria-label={fieldLabel(column)}
       clearLabel={`Clear ${column.label}`}
       placeholder={hint}
       onClear={() => {
-        setText("");
+        setTyped("");
       }}
       error={problem}
       value={text}
       autoComplete="off"
       onChange={(event) => {
         const typed = event.currentTarget.value;
-        setText(asTyped?.(typed) ?? typed);
+        setTyped(asTyped?.(typed) ?? typed);
       }}
       onKeyDown={(event) => {
         if (event.key === "Escape") {
@@ -87,14 +108,69 @@ function TextEditor({
           onCancel();
         } else if (event.key === "Enter") {
           event.preventDefault();
-          onDone(text, "enter");
+          onDone(given(text), "enter");
         }
       }}
-      onBlur={() => {
-        onDone(text, "leave");
-      }}
+      // With a menu of units beside it, the field is left only once neither has focus.
+      onBlur={choosesUnit ? undefined : leave}
     />
   );
+  const { unit } = column;
+  if (unit === undefined || !choosesUnit) return field;
+  // A number in a form or panel offers the units to enter it in, beside the field.
+  return (
+    <Group
+      gap={6}
+      wrap="nowrap"
+      align="flex-start"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) leave();
+      }}
+      onKeyDown={(event) => {
+        // The field handles its own keys; Esc in the menu of units cancels as it does.
+        if (event.key === "Escape" && !event.defaultPrevented) {
+          event.preventDefault();
+          onCancel();
+        }
+      }}
+    >
+      <div className={classes.unitField}>{field}</div>
+      <NativeSelect
+        size="sm"
+        aria-label={`${column.label} unit`}
+        value={unit.key}
+        data={units.map(({ key, name }) => ({ value: key, label: name }))}
+        onChange={(event) => {
+          onUnit(event.currentTarget.value);
+        }}
+      />
+    </Group>
+  );
+}
+
+// The units a form or panel enters columns in: those its table shows, until one is chosen there,
+// which holds until the table shows another.
+export function useChosenUnits(
+  tableUnits: Readonly<Record<string, string>> | undefined,
+): {
+  units: Record<string, string> | undefined;
+  choose: (key: string, unit: string) => void;
+} {
+  const [chosen, setChosen] = useState<{
+    from: string;
+    units: Record<string, string> | undefined;
+  }>();
+  const from = JSON.stringify(tableUnits ?? {});
+  const units = chosen?.from === from ? chosen.units : tableUnits;
+  return {
+    units,
+    choose: (key, unit) => {
+      setChosen({
+        from,
+        units: withUnit({ ...emptyView, units }, key, unit).units,
+      });
+    },
+  };
 }
 
 // How a row's value may be changed: by its editor, started from the button beside the value and
@@ -122,6 +198,8 @@ export interface RecordEditingContext<Rec extends GridRecord, Change> {
   // What an empty text field shows in grey, if anything, such as the name a record goes by while it
   // has none of its own.
   hint?: (column: Column<Rec, Change>) => string | undefined;
+  // In a form or panel: changes the unit a column that offers units is entered in.
+  onUnit?: (column: Column<Rec, Change>, unit: string) => void;
 }
 
 // Opens a note, for tables that have them, which is written in a panel of its own.
@@ -299,7 +377,16 @@ export function useRecordEditing<
           <div className={ownField ? undefined : classes.cellEditor}>
             <Editor
               {...(ownField
-                ? { hint: context.hint?.(column), asTyped: kind.asTyped }
+                ? {
+                    hint: context.hint?.(column),
+                    asTyped: kind.asTyped,
+                    units: column.units?.offered,
+                    onUnit:
+                      context.onUnit &&
+                      ((unit: string) => {
+                        context.onUnit?.(column, unit);
+                      }),
+                  }
                 : {})}
               id={editorId(column)}
               column={column}

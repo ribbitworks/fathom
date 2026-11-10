@@ -39,6 +39,21 @@ export function typedNumber(text: string): number | undefined {
     : Number(text.trim());
 }
 
+// A number rounded up to a number of decimal places, such as 0.67 for two thirds to two places,
+// first dropping what lies past a number of places, such as what floating point adds to
+// 0.30000000000000004, so it rounds nothing up: by default, past those a number is typed with. The
+// places kept are always more than the places rounded to, as every caller's are.
+export function roundedUpTo(
+  value: number,
+  places: number,
+  keptPlaces: number = numberDigits.afterPoint,
+): number {
+  const scale = 10 ** places;
+  return (
+    Math.ceil(Number((value * scale).toFixed(keptPlaces - places))) / scale
+  );
+}
+
 export const isNumberValue = (value: unknown): value is number =>
   typeof value === "number" && typedNumber(String(value)) === value;
 

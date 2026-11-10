@@ -56,6 +56,16 @@ describe("viewDefinitionSchema", () => {
     });
   });
 
+  it("reads each column's unit and decimal places, dropping those that do not fit", () => {
+    const read = viewDefinitionSchema.parse({
+      units: { effort: "person-weeks", other: "Weeks!", "bad key!": "hours" },
+      places: { effort: 1, other: 7, more: 1.5, fewer: -1, none: 0 },
+    });
+    expect(read.units).toEqual({ effort: "person-weeks" });
+    expect(read.places).toEqual({ effort: 1, none: 0 });
+    expect(viewDefinitionSchema.parse({ units: "x" }).units).toBe(undefined);
+  });
+
   it("reads widths whole and within their limits, and drops those that are not", () => {
     const widths = (set: unknown) =>
       viewDefinitionSchema.parse({ widths: { note: set } }).widths;
@@ -171,6 +181,26 @@ describe("savedViewRequestSchema", () => {
     );
     expect(request({ widths }).error?.issues[0]?.message).toBe(
       "Too many widths",
+    );
+  });
+
+  it("accepts units and decimal places that fit, and refuses those that do not", () => {
+    expect(
+      request({ units: { effort: "person-weeks" }, places: { effort: 0 } })
+        .success,
+    ).toBe(true);
+    expect(request({ units: { effort: "Weeks" } }).success).toBe(false);
+    expect(request({ places: { effort: 7 } }).success).toBe(false);
+    expect(request({ places: { effort: 0.5 } }).success).toBe(false);
+    const many = <Value>(value: Value) =>
+      Object.fromEntries(
+        Array.from({ length: 101 }, (_, index) => [`c${String(index)}`, value]),
+      );
+    expect(request({ units: many("hours") }).error?.issues[0]?.message).toBe(
+      "Too many units",
+    );
+    expect(request({ places: many(1) }).error?.issues[0]?.message).toBe(
+      "Too many places",
     );
   });
 

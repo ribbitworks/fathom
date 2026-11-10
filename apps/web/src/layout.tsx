@@ -9,7 +9,7 @@
 // from a menu button instead.
 
 import { AboutBox, build } from "./about.tsx";
-import { AppMenu } from "./app-menu.tsx";
+import { AppMenu, MenuChoices } from "./app-menu.tsx";
 import type { AccountRole, PasswordRules, Permission } from "@fathom/shared";
 import {
   Alert,
@@ -36,7 +36,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 import { Brand } from "./brand.tsx";
 import { DevBadge, devLabel } from "./dev-label.tsx";
 import { Icon, type IconName } from "./icons.tsx";
@@ -229,50 +229,6 @@ const appearances: readonly { scheme: MantineColorScheme; label: string }[] = [
   { scheme: "light", label: "Light" },
   { scheme: "dark", label: "Dark" },
 ];
-
-// A group of choices in the account menu, the chosen one ticked.
-function MenuChoices<Value extends string>({
-  label,
-  choices,
-  chosen,
-  onChoose,
-}: {
-  label: string;
-  choices: readonly { value: Value; label: string }[];
-  chosen: Value | undefined;
-  onChoose: (value: Value) => void;
-}) {
-  const labelId = useId();
-  return (
-    <>
-      <Menu.Divider />
-      <Menu.Label id={labelId}>{label}</Menu.Label>
-      <div role="group" aria-labelledby={labelId}>
-        {choices.map((choice) => (
-          <Menu.Item
-            key={choice.value}
-            leftSection={
-              <span
-                className={classes.choiceTick}
-                data-chosen={chosen === choice.value || undefined}
-              >
-                <Icon name="check" />
-              </span>
-            }
-            onClick={() => {
-              onChoose(choice.value);
-            }}
-          >
-            {choice.label}
-            {chosen === choice.value && (
-              <VisuallyHidden>, chosen</VisuallyHidden>
-            )}
-          </Menu.Item>
-        ))}
-      </div>
-    </>
-  );
-}
 
 function AppearanceChoices() {
   const { colorScheme, setColorScheme } = useMantineColorScheme();

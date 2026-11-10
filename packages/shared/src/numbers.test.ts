@@ -7,8 +7,23 @@ import {
   isNumberValue,
   numberProblem,
   numberValueSchema,
+  roundedUpTo,
   typedNumber,
 } from "./numbers.ts";
+
+describe("roundedUpTo", () => {
+  it("rounds up to the places given", () => {
+    expect(roundedUpTo(2 / 3, 2)).toBe(0.67);
+    expect(roundedUpTo(1.01, 0)).toBe(2);
+    expect(roundedUpTo(-1.5, 0)).toBe(-1);
+  });
+
+  it("rounds up nothing that floating point adds past the places kept", () => {
+    expect(roundedUpTo(0.1 + 0.2, 1)).toBe(0.3);
+    expect(roundedUpTo(1.975 * 100, 0)).toBe(198);
+    expect(roundedUpTo(6.000000000000001, 0, 4)).toBe(6);
+  });
+});
 
 describe("typedNumber", () => {
   it.each([

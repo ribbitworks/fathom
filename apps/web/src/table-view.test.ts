@@ -13,6 +13,7 @@ import {
   notGrouped,
   applyView,
   emptyView,
+  fieldLabel,
   folded,
   isActive,
   knownView,
@@ -28,6 +29,8 @@ import {
   viewProps,
   viewSearchSchema,
   widthWithin,
+  withPlaces,
+  withUnit,
   withWidth,
   orderAfterMove,
 } from "./table-view.ts";
@@ -445,6 +448,56 @@ describe("the view in the page address", () => {
         emptyView,
       ),
     ).toBe(true);
+  });
+
+  it("sets a column's unit and decimal places, keeping the others, and drops them once back as they start", () => {
+    const shown = withPlaces(
+      withUnit(view({ units: { other: "hours" } }), "effort", "person-weeks"),
+      "effort",
+      1,
+    );
+    expect(shown.units).toEqual({ other: "hours", effort: "person-weeks" });
+    expect(shown.places).toEqual({ effort: 1 });
+    expect(searchFor(shown)).toEqual({
+      units: { other: "hours", effort: "person-weeks" },
+      places: { effort: 1 },
+    });
+    expect(viewFrom(searchFor(shown))).toEqual(shown);
+    expect(setsApart(shown)).toBe(true);
+    const back = withPlaces(
+      withUnit(withUnit(shown, "effort", undefined), "other", undefined),
+      "effort",
+      undefined,
+    );
+    expect(sameView(back, emptyView)).toBe(true);
+  });
+
+  it("keeps only the units and decimal places of columns the table has", () => {
+    const known = knownView(
+      view({
+        units: { effort: "person-weeks", gone: "hours" },
+        places: { gone: 1 },
+      }),
+      [{ key: "effort" }],
+    );
+    expect(known.units).toEqual({ effort: "person-weeks" });
+    expect(known.places).toBeUndefined();
+  });
+
+  it("names a field for a column in a unit by the unit's words", () => {
+    expect(fieldLabel({ label: "Effort" })).toBe("Effort");
+    expect(
+      fieldLabel({
+        label: "Effort",
+        unit: {
+          key: "person-days",
+          label: "Person-days",
+          code: "PD",
+          name: "person-days",
+          one: "person-day",
+        },
+      }),
+    ).toBe("Effort in person-days");
   });
 
   it("sets things apart from the rows it shows when it sorts, freezes, or sets widths", () => {

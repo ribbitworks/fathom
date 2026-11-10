@@ -82,3 +82,9 @@
 .filledBy {
   margin-top: var(--mantine-spacing-md);
 }
+
+/* A number in a unit: the field takes the room, with the menu of units beside it. */
+.unitField {
+  flex: 1;
+  min-width: 0;
+}

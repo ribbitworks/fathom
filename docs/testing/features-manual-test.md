@@ -11,7 +11,7 @@ last_updated: "2026-11-09"
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, and writing a note in New feature.
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, and a feature's effort, shown and typed in the unit chosen.
 
 ## Test Environment
 
@@ -73,7 +73,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select **Features** in the left-hand menu.
-  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle**, **Feature team** and **Complexity**. Beside the search box, the count reads **11 features**.
+  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle**, **Effort**, **Feature team** and **Complexity**. Beside the search box, the count reads **11 features**.
   - **Notes:**
 
 - [ ] **Step 2.** Look down the **Status** column.
@@ -331,7 +331,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Run R1 first. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Point at the row **Offline Sync**, then select the small button with an arrow at the right of its **Name** cell.
-  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle**, **Feature team** and **Complexity**.
+  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle**, **Effort**, **Feature team** and **Complexity**.
   - **Notes:**
 
 - [ ] **Step 2.** In the side panel, select a customer's name under **Customers**.
@@ -538,6 +538,232 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 - [ ] **Step 14.** Select **Add** at the foot of the **New feature** panel.
   - **Expected:** The feature is added as a draft, and its details show beside the table, with **First words** in bold under **Notes**.
+  - **Notes:**
+
+**Afterwards:** Run R1.
+
+### FEAT-21: Effort Shows in the Unit Chosen
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-20 ended with.
+
+**Preconditions:** R1 run after FEAT-20. **Features** page open.
+
+- [ ] **Step 1.** Find the **Effort** column, after **Target cycle**, and look at the rows **Audit Export**, **Usage Alerts** and **Scheduler API**.
+  - **Expected:** **Audit Export** reads **316 h**, **Usage Alerts** reads **424 h**, and **Scheduler API** is empty.
+  - **Notes:**
+
+- [ ] **Step 2.** Rest the pointer on **316 h**.
+  - **Expected:** A tooltip reads **316 hours**, and nothing more.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the **Target cycle** cell of **Audit Export**, then press the Right arrow key once.
+  - **Expected:** The **Effort** cell of **Audit Export** is selected, and a tooltip beside it reads **316 hours**.
+  - **Notes:**
+
+- [ ] **Step 4.** Open the column menu of **Effort**.
+  - **Expected:** Under **Show in**, the menu lists **Hours**, **Person-days**, **Person-weeks**, **Person-months** and **Person-quarters**, in that order, with a tick beside **Hours** only. Under **Decimal places**, it lists **0**, **1** and **2**, with a tick beside **2** only. It has no **Break down by**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Person-days**.
+  - **Expected:** The menu closes. **Audit Export** reads **39.5 PD**, and **Usage Alerts** reads **53 PD**.
+  - **Notes:**
+
+- [ ] **Step 6.** Rest the pointer on **39.5 PD**.
+  - **Expected:** A tooltip reads **316 hours**.
+  - **Notes:**
+
+- [ ] **Step 7.** Open the column menu of **Effort**, and select **Person-weeks**.
+  - **Expected:** **Audit Export** reads **8 PW**, and **Usage Alerts** reads **10.6 PW**.
+  - **Notes:**
+
+- [ ] **Step 8.** Rest the pointer on **8 PW**.
+  - **Expected:** A tooltip reads **316 hours, rounded up**.
+  - **Notes:**
+
+- [ ] **Step 9.** Open the column menu of **Effort**, and select **Person-months**.
+  - **Expected:** **Audit Export** reads **2 PM**, **Usage Alerts** reads **2.65 PM**, and **Bulk Import** reads **1.5 PM**.
+  - **Notes:**
+
+- [ ] **Step 10.** Open the column menu of **Effort**, and select **Person-quarters**.
+  - **Expected:** **Audit Export** reads **0.67 PQ**, **Usage Alerts** reads **0.89 PQ**, and **Bulk Import** reads **0.5 PQ**.
+  - **Notes:**
+
+- [ ] **Step 11.** Open the column menu of **Effort**, and select **Person-months**.
+  - **Expected:** **Usage Alerts** reads **2.65 PM**.
+  - **Notes:**
+
+- [ ] **Step 12.** Open the column menu of **Effort**, and select **1** under **Decimal places**.
+  - **Expected:** **Audit Export** reads **2 PM**, **Usage Alerts** reads **2.7 PM**, and **Bulk Import** reads **1.5 PM**.
+  - **Notes:**
+
+- [ ] **Step 13.** Rest the pointer on **2.7 PM**.
+  - **Expected:** A tooltip reads **424 hours, rounded up**.
+  - **Notes:**
+
+- [ ] **Step 14.** Open the column menu of **Effort**, and select **0** under **Decimal places**.
+  - **Expected:** **Usage Alerts** reads **3 PM**, and **Bulk Import** reads **2 PM**.
+  - **Notes:**
+
+- [ ] **Step 15.** Reload the page.
+  - **Expected:** **Effort** still shows person-months with no decimal places: **Usage Alerts** reads **3 PM**.
+  - **Notes:**
+
+- [ ] **Step 16.** Open the **Views** menu.
+  - **Expected:** It lists **Units: Effort in person-months to 0 decimal places**.
+  - **Notes:**
+
+- [ ] **Step 17.** Press Escape, then switch the page to dark mode.
+  - **Expected:** The page turns dark.
+  - **Notes:**
+
+- [ ] **Step 18.** Rest the pointer on **3 PM**.
+  - **Expected:** The cells and the tooltip are easy to read.
+  - **Notes:**
+
+- [ ] **Step 19.** Open the column menu of **Effort**.
+  - **Expected:** The column menu is easy to read.
+  - **Notes:**
+
+- [ ] **Step 20.** Press Escape, then switch the page back to light mode.
+  - **Expected:** The page turns light.
+  - **Notes:**
+
+- [ ] **Step 21.** Open the **Views** menu, and select **Units: Effort in person-months to 0 decimal places**.
+  - **Expected:** **Audit Export** reads **316 h** again.
+  - **Notes:**
+
+### FEAT-22: Effort Is Typed in the Unit Shown and Rounded Up
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-21 ended with.
+
+**Preconditions:** **Features** page open, **Effort** shown in hours to 2 decimal places, as the column menu of **Effort** shows with ticks beside **Hours** and **2**.
+
+- [ ] **Step 1.** Open the column menu of **Effort**, and select **Person-days**.
+  - **Expected:** **Audit Export** reads **39.5 PD**.
+  - **Notes:**
+
+- [ ] **Step 2.** In the row **Scheduler API**, select the **Effort** cell, type `2.2`, then press Enter.
+  - **Expected:** The cell reads **2.5 PD** and turns yellow, with a light green row under it, marked **Live**, showing an empty **Effort**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the yellow **Effort** cell of **Scheduler API**, the one reading **2.5 PD**, and press Enter.
+  - **Expected:** A field opens in the cell holding **2.5**, with **PD** after it.
+  - **Notes:**
+
+- [ ] **Step 4.** Press Enter without changing the field.
+  - **Expected:** The field closes, and the cell still reads **2.5 PD**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the yellow **Effort** cell of **Scheduler API** again, type `-1`, then press Enter.
+  - **Expected:** The value is refused, and the message reads **Effort: use 0 or more**.
+  - **Notes:**
+
+- [ ] **Step 6.** Press Escape.
+  - **Expected:** The cell reads **2.5 PD** again.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Show details** in the **⋯** menu of **Scheduler API**.
+  - **Expected:** The details panel opens beside the table, with an **Effort** row reading **2.5 person-days (20 hours)**.
+  - **Notes:**
+
+- [ ] **Step 8.** Select the pencil button in the **Effort** row.
+  - **Expected:** A field opens holding **2.5**, with a menu beside it reading **person-days**.
+  - **Notes:**
+
+- [ ] **Step 9.** Press Tab twice, past the field's **×**.
+  - **Expected:** The menu beside the field has focus, and the field stays open.
+  - **Notes:**
+
+- [ ] **Step 10.** Press Escape.
+  - **Expected:** The field closes, and the **Effort** row still reads **2.5 person-days (20 hours)**.
+  - **Notes:**
+
+- [ ] **Step 11.** Select the pencil button in the **Effort** row.
+  - **Expected:** A field opens holding **2.5**, with a menu beside it reading **person-days**.
+  - **Notes:**
+
+- [ ] **Step 12.** Select **hours** in the menu beside the field.
+  - **Expected:** The field now holds **20**, and the menu reads **hours**.
+  - **Notes:**
+
+- [ ] **Step 13.** Change the field to `28`, then press Enter.
+  - **Expected:** The **Effort** row reads **3.5 person-days (28 hours)**, and in the table **Scheduler API** reads **3.5 PD**.
+  - **Notes:**
+
+- [ ] **Step 14.** Select the pencil button in the **Effort** row, then press Tab twice.
+  - **Expected:** The field holds **3.5**, and the menu beside it, reading **person-days**, has focus.
+  - **Notes:**
+
+- [ ] **Step 15.** Using only the keyboard, choose **person-weeks** in the menu.
+  - **Expected:** The menu reads **person-weeks**, and the field holds **0.8**.
+  - **Notes:**
+
+- [ ] **Step 16.** Press Shift+Tab twice, then type `1` in place of what the field holds.
+  - **Expected:** The field holds **1**.
+  - **Notes:**
+
+- [ ] **Step 17.** Press Tab three times, until neither the field nor the menu has focus.
+  - **Expected:** The field closes, and the **Effort** row reads **5 person-days (40 hours)**.
+  - **Notes:**
+
+- [ ] **Step 18.** Close the details panel.
+  - **Expected:** The panel closes, and **Scheduler API** reads **5 PD**.
+  - **Notes:**
+
+- [ ] **Step 19.** Open the column menu of **Effort**.
+  - **Expected:** It ticks **Person-days**.
+  - **Notes:**
+
+- [ ] **Step 20.** Select **Hours**.
+  - **Expected:** **Scheduler API** reads **40 h**.
+  - **Notes:**
+
+- [ ] **Step 21.** Select **Show details** in the **⋯** menu of **Scheduler API**.
+  - **Expected:** The panel's **Effort** row reads **40 hours**, with nothing after it.
+  - **Notes:**
+
+- [ ] **Step 22.** Close the details panel.
+  - **Expected:** The panel closes.
+  - **Notes:**
+
+- [ ] **Step 23.** Select **Drafts** in the left-hand menu, and find the draft of **Scheduler API**.
+  - **Expected:** Its details read **Effort** set to **40 hours**.
+  - **Notes:**
+
+**Afterwards:** Run R1.
+
+### FEAT-23: New Feature Takes Effort in a Unit Chosen
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-22 ended with.
+
+**Preconditions:** R1 run after FEAT-22. **Features** page open.
+
+- [ ] **Step 1.** Open the column menu of **Effort**, and select **Person-weeks**.
+  - **Expected:** **Audit Export** reads **8 PW**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **New feature**.
+  - **Expected:** The **New feature** panel opens. Its **Effort** row has an empty field, with a menu beside it reading **person-weeks**.
+  - **Notes:**
+
+- [ ] **Step 3.** Type `Fictional Effort` in **Name**.
+  - **Expected:** **Name** shows what was typed.
+  - **Notes:**
+
+- [ ] **Step 4.** Type `2` in **Effort**.
+  - **Expected:** **Effort** shows **2**.
+  - **Notes:**
+
+- [ ] **Step 5.** Open the menu beside **Effort**.
+  - **Expected:** It lists **hours**, **person-days**, **person-weeks**, **person-months** and **person-quarters**.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **person-days**.
+  - **Expected:** The menu reads **person-days**, and **Effort** still holds **2**. The table's **Effort** column still shows person-weeks.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Add** at the foot of the **New feature** panel.
+  - **Expected:** The feature is added as a draft, and its details show beside the table, with an **Effort** row reading **0.4 person-weeks (16 hours)**. In the table, **Fictional Effort** reads **0.4 PW**.
   - **Notes:**
 
 **Afterwards:** Run R1.

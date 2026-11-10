@@ -62,8 +62,11 @@ import {
   type TableColumn,
   type View,
   viewFrom,
+  withPlaces,
+  withUnit,
 } from "./table-view.ts";
-import { AppMenu } from "./app-menu.tsx";
+import { AppMenu, MenuChoices } from "./app-menu.tsx";
+import type { ColumnUnits } from "./record-grid.tsx";
 import classes from "./pages.module.css";
 import { ClearableInput } from "./clearable-input.tsx";
 import { count, decimal } from "./numbers.ts";
@@ -81,6 +84,8 @@ type AnyColumn = Pick<
   | "multiple"
   | "emptyLabel"
   | "retiredLabel"
+  | "unit"
+  | "places"
 >;
 
 // Each kind's sorts, ascending then descending.
@@ -170,6 +175,7 @@ export function viewParts(
   );
   const breakdown = (view.breakdown ?? []).flatMap(labelOf);
   const widths = widened(view, columns);
+  const shownIn = unitsShown(view, columns);
   return [
     ...(view.search.trim() === ""
       ? []
@@ -194,7 +200,28 @@ export function viewParts(
     ...(widths.length === 0
       ? []
       : [{ name: "Widths", value: widths.join(", ") }]),
+    ...(shownIn.length === 0
+      ? []
+      : [{ name: "Units", value: shownIn.join(", ") }]),
   ];
+}
+
+// The columns the view shows in a unit or to decimal places of their own, such as Effort in
+// person-weeks to 1 decimal place.
+function unitsShown(view: View, columns: readonly AnyColumn[]): string[] {
+  const units = new Map(Object.entries(view.units ?? {}));
+  const places = new Map(Object.entries(view.places ?? {}));
+  return columns.flatMap(({ key, label, unit, places: shownTo }) => {
+    const words = [
+      ...(units.has(key) && unit !== undefined ? [`in ${unit.name}`] : []),
+      ...(places.has(key) && shownTo !== undefined
+        ? [
+            `to ${String(shownTo)} decimal ${shownTo === 1 ? "place" : "places"}`,
+          ]
+        : []),
+    ];
+    return words.length === 0 ? [] : [`${label} ${words.join(" ")}`];
+  });
 }
 
 // The names of the columns whose widths the view sets, in the table's order.
@@ -465,6 +492,7 @@ export function ViewsMenu({
   const empty = sameView(view, emptyView);
   const changed = current ? !sameView(shownAs(current), view) : !empty;
   const widths = widened(view, columns);
+  const shownIn = unitsShown(view, columns);
   // What the view sets beyond the rows it shows, each part set apart, removing what it names.
   const sections = [
     {
@@ -527,6 +555,20 @@ export function ViewsMenu({
           }}
         >
           Widths: {widths.join(", ")}
+          <VisuallyHidden>, reset</VisuallyHidden>
+        </Menu.Item>
+      ),
+    },
+    {
+      key: "units",
+      items: shownIn.length > 0 && (
+        <Menu.Item
+          rightSection={<Icon name="close" size={12} />}
+          onClick={() => {
+            onView({ ...view, units: undefined, places: undefined });
+          }}
+        >
+          Units: {shownIn.join(", ")}
           <VisuallyHidden>, reset</VisuallyHidden>
         </Menu.Item>
       ),
@@ -1064,6 +1106,7 @@ export function ColumnViewItems({
   onView,
   onFilter,
   breaksDown = false,
+  units,
 }: {
   column: AnyColumn;
   view: View;
@@ -1072,6 +1115,9 @@ export function ColumnViewItems({
   onFilter: () => void;
   // Whether the metrics may break the rows down by the column.
   breaksDown?: boolean;
+  // The units the column may be shown in, the first of which it starts in, and the decimal places
+  // offered with those it starts with, if it offers several units.
+  units?: ColumnUnits | undefined;
 }) {
   const sorted = view.sort.some((level) => level.key === column.key);
 
@@ -1124,6 +1170,50 @@ export function ColumnViewItems({
         >
           Break down by
         </Menu.Item>
+      )}
+      {units !== undefined && (
+        <>
+          <MenuChoices
+            label="Show in"
+            choices={units.offered.map(({ key, label }) => ({
+              value: key,
+              label,
+            }))}
+            chosen={column.unit?.key}
+            onChoose={(key) => {
+              // A filter's numbers are in the unit it was set in, so it goes with the unit.
+              onView(
+                withFilter(
+                  withUnit(
+                    view,
+                    column.key,
+                    key === units.offered[0].key ? undefined : key,
+                  ),
+                  column.key,
+                  undefined,
+                ),
+              );
+            }}
+          />
+          <MenuChoices
+            label="Decimal places"
+            choices={units.places.offered.map((places) => ({
+              value: String(places),
+              label: String(places),
+            }))}
+            chosen={String(column.places)}
+            onChoose={(chosen) => {
+              const places = Number(chosen);
+              onView(
+                withPlaces(
+                  view,
+                  column.key,
+                  places === units.places.starting ? undefined : places,
+                ),
+              );
+            }}
+          />
+        </>
       )}
     </>
   );

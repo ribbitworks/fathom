@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Labels naming feature teams, each in its team's colour, and the one tooltip that gives a label's
-// whole name, since a tooltip for each of thousands of labels would slow a large table down.
+// Labels naming feature teams, each in its team's colour, each offering its whole name as a tip to
+// the table's one tooltip, in table-tips.tsx.
 
 import type { PaletteColour } from "@fathom/shared";
-import { Tooltip, VisuallyHidden } from "@mantine/core";
-import { type MouseEvent, type ReactNode, useState } from "react";
+import { VisuallyHidden } from "@mantine/core";
 import { colourVariable } from "./colours.ts";
 import pages from "./pages.module.css";
 import { DraftDot, type DraftLike } from "./status-mark.tsx";
+import { tipAttribute } from "./table-tips.tsx";
 import styles from "./team-labels.module.css";
-
-const tipAttribute = "data-label-tip";
 
 // Whether a draft adds someone to a team or takes them off it, when it does either.
 export type DraftedLabel = "added" | "removed";
@@ -60,41 +58,6 @@ export function TeamLabels({
           )}
         </span>
       ))}
-    </div>
-  );
-}
-
-export function TeamLabelTips({ children }: { children: ReactNode }) {
-  const [tip, setTip] = useState<{ element: HTMLElement; text: string }>();
-  const showTip = (event: MouseEvent<HTMLElement>) => {
-    const element = (event.target as HTMLElement).closest<HTMLElement>(
-      `[${tipAttribute}]`,
-    );
-    setTip((current) =>
-      element === null
-        ? undefined
-        : current?.element === element
-          ? current
-          : { element, text: element.getAttribute(tipAttribute) as string },
-    );
-  };
-  return (
-    <div
-      className={styles.tips}
-      onMouseOver={showTip}
-      onMouseLeave={() => {
-        setTip(undefined);
-      }}
-    >
-      {tip !== undefined && (
-        <Tooltip
-          opened
-          label={tip.text}
-          target={tip.element}
-          className={styles.tip}
-        />
-      )}
-      {children}
     </div>
   );
 }

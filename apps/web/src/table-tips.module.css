@@ -1,0 +1,20 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+
+/* The one tooltip a table shows for whatever offers a tip in it. */
+
+/* Listens for the pointer and focus without taking part in the page's layout. */
+.tips {
+  display: contents;
+}
+
+/* Held back briefly, so passing over a cell on the way elsewhere shows nothing. Moving the pointer
+   from one cell to the next keeps the tooltip open, so it follows at once. */
+.tip {
+  animation: tip-appears 1ms 350ms backwards;
+}
+
+@keyframes tip-appears {
+  from {
+    opacity: 0;
+  }
+}

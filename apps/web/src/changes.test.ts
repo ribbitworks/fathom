@@ -147,6 +147,20 @@ describe("a release's colour in the change history", () => {
   });
 });
 
+describe("a feature's estimate in the change history", () => {
+  it("is named Effort and given in hours, as kept", () => {
+    expect(
+      describeField({ field: "estimateHours", oldValue: "8", newValue: "16" }),
+    ).toEqual([
+      { strong: "Effort" },
+      " from ",
+      { value: "8 hours" },
+      " to ",
+      { value: "16 hours" },
+    ]);
+  });
+});
+
 describe("a feature team's changes in the change history", () => {
   it("names its lead, members, and the days they join or leave", () => {
     expect([

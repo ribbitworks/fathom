@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: Apache-2.0 */
 
-/* Labels naming feature teams in a table's cells, and the tooltip giving a label's whole name. */
+/* Labels naming feature teams in a table's cells. */
 
 .labels {
   display: flex;
@@ -28,21 +28,4 @@ tr:has(.labels) > td {
 .labelNoColour {
   color: var(--mantine-color-text);
   background: var(--mantine-color-default-border);
-}
-
-/* Listens for the pointer without taking part in the page's layout. */
-.tips {
-  display: contents;
-}
-
-/* Held back briefly, so passing over a label on the way elsewhere shows nothing. Moving from one
-   label to the next keeps the tooltip open, so it follows at once. */
-.tip {
-  animation: tip-appears 1ms 350ms backwards;
-}
-
-@keyframes tip-appears {
-  from {
-    opacity: 0;
-  }
 }

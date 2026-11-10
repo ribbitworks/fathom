@@ -9,6 +9,8 @@ import {
   type EffortUnit,
   effortUnits,
   enteredHours,
+  exactEffort,
+  largestIn,
   shownEffort,
   startingEffortConversions,
 } from "./effort.ts";
@@ -133,6 +135,23 @@ describe("shownEffort", () => {
     expect(
       shownEffort(8, "person-weeks", { ...starting, daysPerWeek: 7 }),
     ).toBe(0.142857);
+  });
+});
+
+describe("exactEffort", () => {
+  it("gives an estimate's hours in a unit before any rounding", () => {
+    expect(exactEffort(316, "person-weeks", starting)).toBe(7.9);
+    expect(exactEffort(1, "person-days", starting)).toBe(0.125);
+    expect(exactEffort(37.5, "person-weeks", shortDays)).toBe(1);
+  });
+});
+
+describe("largestIn", () => {
+  it("gives the largest amount of a unit, kept to its step, within a number of hours", () => {
+    expect(largestIn(999_999, "hours", starting)).toBe(999_999);
+    expect(largestIn(999_999, "person-days", starting)).toBe(124_999.5);
+    expect(largestIn(999_999, "person-weeks", starting)).toBe(24_999.8);
+    expect(largestIn(999_999, "person-quarters", starting)).toBe(2083.316667);
   });
 });
 
