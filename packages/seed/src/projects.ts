@@ -4,11 +4,10 @@
 // and dated from the day they are added, each recorded in the change history as made by Fathom
 // itself. Proposals are in every status, some linked from projects; projects have customer
 // deliveries before and after that day, and one has no milestones. Owners are people the seed data
-// adds, left out when they are not there. Workstreams are added with them, and each project and
-// workstream has its general feature, in the first status meaning In progress, as approving gives
-// one. Removing them first discards every draft, published or not, of their records, and keeps any
-// that something added by hand uses. A development-only package, never included in the runtime
-// image.
+// adds, left out when they are not there. Each project has its general feature, in the first status
+// meaning In progress, as approving gives one. Removing them first discards every draft, published
+// or not, of their records, and keeps any that something added by hand uses. A development-only
+// package, never included in the runtime image.
 
 import {
   customers,
@@ -27,16 +26,7 @@ import {
 import { fictionalId } from "@fathom/fixtures";
 import { firstOffered } from "@fathom/server/data";
 import { addDays } from "@fathom/shared";
-import {
-  and,
-  asc,
-  eq,
-  inArray,
-  isNotNull,
-  notInArray,
-  or,
-  sql,
-} from "drizzle-orm";
+import { and, asc, eq, inArray, notInArray, or, sql } from "drizzle-orm";
 import { recorded, type SeededChange } from "./recorded.ts";
 
 // Each record has a key of its own, which its identifier is made from.
@@ -106,15 +96,6 @@ export const seededProposals: readonly {
     customers: ["mining"],
     owner: null,
   },
-];
-
-export const seededWorkstreams: readonly {
-  key: string;
-  name: string;
-  owner: number | null;
-}[] = [
-  { key: "devops", name: "DevOps", owner: 0 },
-  { key: "test-automation", name: "Test Automation", owner: null },
 ];
 
 // Each milestone's date is some days from the seed day: before it when negative.
@@ -322,17 +303,6 @@ export async function seedProjects(
         made.push(...recorded("milestone", recordId, "created", values));
       }
     }
-    for (const workstream of seededWorkstreams) {
-      const id = projectId(workstream.key);
-      const row = {
-        kind: "workstream",
-        name: workstream.name,
-        ownerId: owner(workstream.owner),
-      };
-      await transaction.insert(projects).values({ id, ...row });
-      await addGeneralFeature(id);
-      made.push(...recorded("project", id, "created", row));
-    }
     await recordChanges(transaction, null, made);
     return true;
   });
@@ -378,32 +348,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       ),
       (name) => `The project ${name}, which has milestones added by hand`,
     );
-    const handFeatures = await transaction
-      .select({ workstreamId: features.workstreamId })
-      .from(features)
-      .where(isNotNull(features.workstreamId));
-    const removingWorkstreams = keep(
-      await transaction
-        .select()
-        .from(projects)
-        .where(
-          inArray(
-            projects.id,
-            seededWorkstreams.map(({ key }) => projectId(key)),
-          ),
-        ),
-      new Set(
-        handFeatures
-          .map(({ workstreamId }) => workstreamId)
-          .filter((id) => id !== null),
-      ),
-      (name) => `The workstream ${name}, which has features added by hand`,
-    );
-    const workstreamIds = removingWorkstreams.map(({ id }) => id);
-    const projectIds = [
-      ...removingProjects.map(({ id }) => id),
-      ...workstreamIds,
-    ];
+    const projectIds = removingProjects.map(({ id }) => id);
     const otherProjects = await transaction
       .select({
         customerIds: projects.customerIds,
@@ -473,7 +418,6 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       const linking = or(
         linksAny(table.fields, "customerIds", customerIdsRemoved),
         linksAny(table.fields, "proposalIds", proposalIds),
-        linksAny(table.fields, "workstreamId", workstreamIds),
       );
       await transaction
         .delete(table)
@@ -496,7 +440,7 @@ export async function unseedProjects(database: Database): Promise<string[]> {
     const made: SeededChange[] = [];
     for (const [type, rows] of [
       ["milestone", milestoneRows],
-      ["project", [...removingProjects, ...removingWorkstreams]],
+      ["project", removingProjects],
       ["proposal", removingProposals],
       ["customer", removingCustomers],
     ] as const) {

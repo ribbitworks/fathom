@@ -196,16 +196,8 @@ const generalForProject = (state: RecordsState, id: string): unknown =>
 export const isGeneralFeature = (state: RecordsState, id: string): boolean =>
   typeof generalForProject(state, id) === "string";
 
-export const isWorkstream = (state: RecordsState, id: string): boolean =>
-  shownVersion(state, "project", id)?.kind === "workstream";
-
-// How drafts and refusals name a project or workstream.
-export const projectRowSubject = (state: RecordsState, id: string): string =>
-  (isWorkstream(state, id)
-    ? projectSubjects.workstream
-    : projectSubjects.project)(
-    String(shownVersion(state, "project", id)?.name),
-  );
+export const projectSubject = (state: RecordsState, id: string): string =>
+  projectSubjects.project(String(shownVersion(state, "project", id)?.name));
 
 // A feature's stream is the one it targets, so a target cycle's stream cannot be removed.
 export const featureKind: RecordKind = {
@@ -220,15 +212,10 @@ export const featureKind: RecordKind = {
     "targetCycle",
     "estimateHours",
     "featureTeamId",
-    "workstreamId",
     "description",
     "note",
   ],
-  links: {
-    targetStreamId: "release-stream",
-    customerIds: "customer",
-    workstreamId: "project",
-  },
+  links: { targetStreamId: "release-stream", customerIds: "customer" },
   refers: { featureTeamId: "feature-team", statusId: "choice" },
   keptByFathom: (state, id) => isGeneralFeature(state, id),
   addedColumns: { owner: "feature", table: "features" },
@@ -240,7 +227,7 @@ export const featureKind: RecordKind = {
   subject: (state, id) => {
     const project = generalForProject(state, id);
     return typeof project === "string"
-      ? projectRowSubject(state, project)
+      ? projectSubject(state, project)
       : projectSubjects.feature(
           String(shownVersion(state, "feature", id)?.name),
         );

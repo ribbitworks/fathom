@@ -11,22 +11,11 @@ import {
   projectRequestSchema,
   projectSubjects,
   proposalRequestSchema,
-  recordTypeOf,
   sameDates,
 } from "./projects.ts";
 
 const first = "00000000-0000-4000-8000-000000000001";
 const second = "00000000-0000-4000-8000-000000000002";
-
-describe("the type a kind of plan record is drafted as", () => {
-  it("is a project for a workstream", () => {
-    expect(recordTypeOf("workstream")).toBe("project");
-  });
-
-  it("is the kind itself for any other", () => {
-    expect(recordTypeOf("proposal")).toBe("proposal");
-  });
-});
 
 describe("a project's dates", () => {
   it("are none without milestones", () => {
@@ -137,9 +126,6 @@ describe("subjects", () => {
       "the customer Fictional",
     );
     expect(projectSubjects.project("Fictional")).toBe("the project Fictional");
-    expect(projectSubjects.workstream("Fictional")).toBe(
-      "the workstream Fictional",
-    );
     expect(projectSubjects.milestone("Kickoff", "Fictional")).toBe(
       "the milestone Kickoff of Fictional",
     );

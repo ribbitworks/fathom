@@ -6,7 +6,7 @@
 // drafts, approved with the drafts they use, removed together where they belong together, and named
 // in the change history and among unpublished changes.
 
-import { listItems, lists, people, projects } from "@fathom/db";
+import { listItems, lists, milestones, people, projects } from "@fathom/db";
 import type {
   ChangeHistory,
   Permission,
@@ -287,6 +287,27 @@ describe("customers", () => {
 });
 
 describe("projects", () => {
+  it("cannot be approved removed while a live milestone not removed with it still links", async () => {
+    const project = await addProject();
+    await approve([{ type: "project", id: project.id }]);
+    await send("DELETE", `/api/projects/${project.id}`);
+    // Added after the removal was drafted, so the removal does not take it, and the database's own
+    // link would refuse deleting the project if the rule were judged after the deletes.
+    await test.connection.insert(milestones).values({
+      projectId: project.id,
+      name: "Fictional Late Milestone",
+      date: "2030-01-01",
+    });
+    const response = await test.request(
+      approver.cookie,
+      "POST",
+      "/api/drafts/approval",
+      { records: [{ type: "project", id: project.id }] },
+    );
+    expect(response.statusCode).toBe(409);
+    expect(errorOf(response)).toContain("Fictional Late Milestone");
+  });
+
   it("use the drafts of customers and proposals only drafted to be added, approved with them", async () => {
     const customer = await addCustomer();
     const proposal = await addProposal();
@@ -343,9 +364,7 @@ describe("projects", () => {
     const sameName = await send("POST", "/api/projects", {
       name: project.name.toLowerCase(),
     });
-    expect(errorOf(sameName)).toBe(
-      "There is already a project or workstream with that name",
-    );
+    expect(errorOf(sameName)).toBe("There is already a project with that name");
     await addProject({ externalId: "" });
     expect((await addProject()).externalId).toBeNull();
   });

@@ -682,7 +682,6 @@ const routes: Route[] = [
     [
       ["customers", "plan:edit"],
       ["projects", "plan:edit"],
-      ["workstreams", "plan:edit"],
       ["proposals", "plan:edit"],
       ["features", "features:edit"],
     ] as const

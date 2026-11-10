@@ -4,10 +4,10 @@
 // order approving adds them, so each comes after the records it links to. A project and its
 // milestones are removed together: the draft removing a project uses the drafts removing its
 // milestones, and each of those uses the project's, so they are approved, rejected, and discarded
-// together. Workstreams are projects of their own kind. Each project has a general feature, which
-// takes people assigned to the project itself: it follows the project's approval rather than having
-// a draft, and nobody chooses anything in it, so the project's own history covers it. Part of the
-// data access layer; records.ts applies the rules every kind shares.
+// together. Each project has a general feature, which takes people assigned to the project itself:
+// it follows the project's approval rather than having a draft, and nobody chooses anything in it,
+// so the project's own history covers it. Part of the data access layer; records.ts applies the
+// rules every kind shares.
 
 import {
   customers,
@@ -19,7 +19,7 @@ import {
 import { projectSubjects, type RecordRef } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { firstOfferedOrRefused } from "./built-in-lists.ts";
-import { featureKind, projectRowSubject } from "./release-kinds.ts";
+import { featureKind, projectSubject } from "./release-kinds.ts";
 import {
   type RecordKind,
   type RecordsState,
@@ -80,28 +80,18 @@ export const proposalKind: RecordKind = {
 export const projectKind: RecordKind = {
   type: "project",
   table: projects,
-  fields: [
-    "kind",
-    "name",
-    "externalId",
-    "ownerId",
-    "customerIds",
-    "proposalIds",
-  ],
+  fields: ["name", "externalId", "ownerId", "customerIds", "proposalIds"],
   links: { customerIds: "customer", proposalIds: "proposal" },
   refers: { ownerId: "person" },
   unique: [
-    {
-      field: "name",
-      message: "There is already a project or workstream with that name",
-    },
+    { field: "name", message: "There is already a project with that name" },
     {
       field: "externalId",
       message: "There is already a project with that Project ID",
     },
   ],
   readWith: ["plan:view"],
-  subject: projectRowSubject,
+  subject: projectSubject,
   onAdded: async (transaction, id) => {
     const statusId = await firstOfferedOrRefused(
       transaction,

@@ -1112,7 +1112,6 @@ describe("drafts in a stream's panel", () => {
           Response.json({
             customers: [],
             projects: [],
-            workstreams: [],
             proposals: [],
             features: [
               {
@@ -1128,7 +1127,6 @@ describe("drafts in a stream's panel", () => {
                 targetCycle: "2027-07-01",
                 estimateHours: null,
                 featureTeamId: null,
-                workstreamId: null,
                 description: null,
                 draft: featureDraft({ action: "changed" }),
               },

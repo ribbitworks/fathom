@@ -31,7 +31,6 @@ import {
   proposalId,
   seededCustomers,
   seededProjects,
-  seededWorkstreams,
   seedProjects,
   unseedProjects,
 } from "./projects.ts";
@@ -243,14 +242,9 @@ describe("removing projects", () => {
     expect(await connection.select().from(drafts)).toEqual([]);
   });
 
-  it("adds the workstreams, and a general feature in progress for every project and workstream", async () => {
+  it("adds a general feature in progress for every project", async () => {
     await seed();
     const kept = await connection.select().from(projects);
-    expect(
-      kept.filter(({ kind }) => kind === "workstream").map(({ name }) => name),
-    ).toEqual(
-      expect.arrayContaining(seededWorkstreams.map(({ name }) => name)),
-    );
     const general = await connection
       .select({
         project: features.generalForProjectId,
@@ -265,35 +259,6 @@ describe("removing projects", () => {
     expect(new Set(general.map(({ meaning }) => meaning))).toEqual(
       new Set(["in-progress"]),
     );
-  });
-
-  it("keeps a workstream with features added by hand", async () => {
-    await seed();
-    const [status] = await connection
-      .select({ id: listItems.id })
-      .from(listItems)
-      .innerJoin(lists, eq(lists.id, listItems.listId))
-      .where(eq(lists.builtIn, "feature-statuses"));
-    await connection.insert(features).values({
-      name: "Fictional Hand Feature",
-      statusId: String(status?.id),
-      workstreamId: projectId("devops"),
-    });
-    expect(await unseedProjects(connection)).toContain(
-      "The workstream DevOps, which has features added by hand",
-    );
-  });
-
-  it("discards a feature's draft on a workstream removed", async () => {
-    await seed();
-    await connection.insert(drafts).values({
-      recordType: "feature",
-      recordId: randomUUID(),
-      action: "created",
-      fields: { workstreamId: projectId("devops") },
-    });
-    await unseedProjects(connection);
-    expect(await connection.select().from(drafts)).toEqual([]);
   });
 
   it("removes nothing when nothing was seeded", async () => {

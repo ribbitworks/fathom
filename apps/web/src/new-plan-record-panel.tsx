@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Adding a customer, proposal, project, workstream, milestone, or feature in the panel beside its
-// table, as a person is added: a row for each column a new record has, each entered as its table's
-// cell is, and any problem Add finds named under its row.
+// Adding a customer, proposal, project, milestone, or feature in the panel beside its table, as a
+// person is added: a row for each column a new record has, each entered as its table's cell is, and
+// any problem Add finds named under its row.
 
 import {
   type FormValues,

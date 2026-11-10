@@ -7,7 +7,6 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 
 ## Planning Terms
 
-- **Workstream:** Standing work with no customers, proposals, or end date, such as DevOps, with its own roadmap of features apart from the product roadmap.
 - **Project:** Work delivered to its customers, identified by its name and, optionally, a Project ID. A project's scope is the features it needs.
 - **Proposal:** Work offered or requested that may become a project, such as a bid or a customer request, with the features it proposes.
 - **Customer:** Who a project's work is for, external or internal.

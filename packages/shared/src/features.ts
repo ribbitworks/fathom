@@ -79,8 +79,6 @@ export const featureSchema = z.object({
   targetCycle: z.string().nullable(),
   estimateHours: z.number().nullable(),
   featureTeamId: z.string().nullable(),
-  // The workstream whose roadmap it is on, or null when it is on the product roadmap.
-  workstreamId: z.string().nullable(),
   description: z.string().nullable(),
   note: z.string().nullable(),
   values: valuesSchema,
@@ -114,7 +112,6 @@ export const featureRequestSchema = z.object({
       hours === null ? null : Math.round(hours * hundredths) / hundredths,
     ),
   featureTeamId: z.uuid().nullable().default(null),
-  workstreamId: z.uuid().nullable().default(null),
   description: optionalText(featureLengths.description),
   note: z.string().nullable().default(null),
   values: requestedValuesSchema.default({}),

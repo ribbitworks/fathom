@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, workstreams, and proposals through the server's API:
-// reading them, with what they pick from, every change to them, each a draft, and each record as
-// decisions on its draft name it.
+// Customers, projects with their milestones, and proposals through the server's API: reading them,
+// with what they pick from, every change to them, each a draft, and each record as decisions on its
+// draft name it.
 
 import {
   type Choice,
@@ -23,11 +23,8 @@ import {
   projectSubjects,
   type Proposal,
   type ProposalRequest,
-  recordTypeOf,
   type ReleaseStream,
   savedSchema,
-  type Workstream,
-  type WorkstreamRequest,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
@@ -50,20 +47,17 @@ export const planChoicesQuery = queryOptions({
 export const asChoices = (choices: readonly PlanChoice[]): Choice[] =>
   choices.map(({ id, name, retired }) => choice(id, name, retired));
 
-export type PlanKind =
-  "customer" | "project" | "workstream" | "proposal" | "feature";
+export type PlanKind = "customer" | "project" | "proposal" | "feature";
 
 export type PlanRequest =
   | { type: "customer"; request: CustomerRequest }
   | { type: "project"; request: ProjectRequest }
-  | { type: "workstream"; request: WorkstreamRequest }
   | { type: "proposal"; request: ProposalRequest }
   | { type: "feature"; request: FeatureRequest };
 
 const paths: Readonly<Record<PlanKind, string>> = {
   customer: "/api/customers",
   project: "/api/projects",
-  workstream: "/api/workstreams",
   proposal: "/api/proposals",
   feature: "/api/features",
 };
@@ -142,13 +136,6 @@ export const projectRequest = (project: Project): ProjectRequest => ({
   proposalIds: project.proposalIds,
 });
 
-export const workstreamRequest = (
-  workstream: Workstream,
-): WorkstreamRequest => ({
-  name: workstream.name,
-  ownerId: workstream.ownerId,
-});
-
 export const proposalRequest = (proposal: Proposal): ProposalRequest => ({
   name: proposal.name,
   externalId: proposal.externalId,
@@ -175,7 +162,6 @@ export type FeatureFields = Pick<
   | "targetCycle"
   | "estimateHours"
   | "featureTeamId"
-  | "workstreamId"
   | "description"
   | "note"
 >;
@@ -190,7 +176,6 @@ export const featureRequest = (
     customerIds,
     estimateHours,
     featureTeamId,
-    workstreamId,
     description,
     note,
     targetStreamId,
@@ -204,7 +189,6 @@ export const featureRequest = (
   customerIds,
   estimateHours,
   featureTeamId,
-  workstreamId,
   description,
   note,
   values,
@@ -223,11 +207,10 @@ export const allMilestones = (plan: Pick<ProjectPlan, "projects">) =>
 
 type PlanLists = Pick<
   ProjectPlan,
-  "customers" | "projects" | "workstreams" | "proposals" | "features"
+  "customers" | "projects" | "proposals" | "features"
 >;
 
-// Every customer, proposal, project, milestone, workstream, and feature, named as the Drafts page
-// names them.
+// Every customer, proposal, project, milestone, and feature, named as the Drafts page names them.
 export function listedPlanRecords(
   plan: PlanLists,
 ): { kind: PlanRecordKind; record: PlanRecord; subject: string }[] {
@@ -259,22 +242,16 @@ export function listedPlanRecords(
         subject: projectSubjects.milestone(record.name, project.name),
       })),
     ]),
-    ...plan.workstreams.map((record) => ({
-      kind: "workstream" as const,
-      record,
-      subject: projectSubjects.workstream(record.name),
-    })),
   ];
 }
 
 export const planNodes = (plan: PlanLists): RecordNode[] =>
   listedPlanRecords(plan).map(({ kind, record, subject }) =>
-    recordNode(recordTypeOf(kind), record, subject),
+    recordNode(kind, record, subject),
   );
 
 export const projectTabs = [
   "projects",
-  "workstreams",
   "proposals",
   "customers",
   "milestones",
@@ -285,13 +262,12 @@ export type ProjectTab = (typeof projectTabs)[number];
 // What the plan's page shows: one of the Projects page's tabs, or the Features page.
 export type PlanTab = ProjectTab | "features";
 
-export type PlanRecord =
-  Customer | Project | Workstream | Proposal | Milestone | Feature;
+export type PlanRecord = Customer | Project | Proposal | Milestone | Feature;
 export const isFeature = (record: PlanRecord): record is Feature =>
   "featureTeamId" in record;
 
 export type PlanRecordKind =
-  "customer" | "project" | "workstream" | "proposal" | "milestone" | "feature";
+  "customer" | "project" | "proposal" | "milestone" | "feature";
 
 // A milestone being added, with the project it is added to.
 export type MilestoneAdding = MilestoneRequest & { projectId: string };
@@ -305,7 +281,6 @@ interface PlanRecordOperations {
   blank:
     | Blank<Customer>
     | Blank<Project>
-    | Blank<Workstream>
     | Blank<Proposal>
     | Blank<Milestone>
     | Blank<Feature>;
@@ -358,15 +333,6 @@ const planRecordOperations: Readonly<
     withAll: (plan, records) => ({ ...plan, projects: records as Project[] }),
     ...savedAs("project", projectRequest),
   },
-  workstream: {
-    blank: { name: "", ownerId: null },
-    all: (plan) => plan.workstreams,
-    withAll: (plan, records) => ({
-      ...plan,
-      workstreams: records as Workstream[],
-    }),
-    ...savedAs("workstream", workstreamRequest),
-  },
   proposal: {
     blank: {
       name: "",
@@ -416,7 +382,6 @@ const planRecordOperations: Readonly<
       targetCycle: null,
       estimateHours: null,
       featureTeamId: null,
-      workstreamId: null,
       description: null,
       note: null,
       values: {},

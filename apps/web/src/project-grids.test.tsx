@@ -71,7 +71,6 @@ const feature = (more: Partial<Feature> = {}): Feature => ({
   targetCycle: null,
   estimateHours: null,
   featureTeamId: "t1",
-  workstreamId: null,
   description: null,
   note: null,
   values: {},
@@ -391,20 +390,18 @@ describe("the columns' values", () => {
 });
 
 describe("the records a draft uses", () => {
-  it("finds a drafted workstream as the project it is kept as", () => {
-    const drafted = { type: "project", id: "w" } as const;
+  it("finds a drafted customer a feature's draft uses", () => {
+    const drafted = { type: "customer", id: "c" } as const;
     const nodes = planNodes({
-      customers: [],
-      projects: [],
-      proposals: [],
-      workstreams: [
+      customers: [
         {
-          id: "w",
-          name: "Fictional Workstream",
-          ownerId: null,
+          id: "c",
+          name: "Fictional Customer",
           draft: recordDraft({ action: "created" }),
         },
       ],
+      projects: [],
+      proposals: [],
       features: [
         feature({ id: "f", draft: featureDraft({ uses: [drafted] }) }),
       ],
@@ -416,14 +413,13 @@ describe("the records a draft uses", () => {
 });
 
 describe("what a draft changes, in words", () => {
-  it("names a workstream's changed name", () => {
+  it("names a customer's changed name", () => {
     expect(
       planDraftFields(
-        "workstream",
+        "customer",
         {
-          id: "w",
+          id: "c",
           name: "After",
-          ownerId: null,
           draft: recordDraft({ changed: ["name"], live: { name: "Before" } }),
         },
         choices(),

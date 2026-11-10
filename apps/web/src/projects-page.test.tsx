@@ -22,7 +22,6 @@ import { operationsOf } from "./projects.ts";
 const customerId = "c0000000-0000-4000-8000-000000000001";
 const proposalId = "b0000000-0000-4000-8000-000000000001";
 const projectId = "a0000000-0000-4000-8000-000000000001";
-const workstreamId = "a0000000-0000-4000-8000-000000000002";
 const milestoneId = "d0000000-0000-4000-8000-000000000001";
 const ownerId = "e0000000-0000-4000-8000-000000000001";
 const statusId = "f0000000-0000-4000-8000-000000000001";
@@ -71,17 +70,9 @@ const customer = (more: Partial<Plan["customers"][number]> = {}) => ({
   ...more,
 });
 
-const workstream = (more: Partial<Plan["workstreams"][number]> = {}) => ({
-  id: workstreamId,
-  name: "Fictional Workstream",
-  ownerId,
-  ...more,
-});
-
 const plan = (more: Partial<Plan> = {}): Plan => ({
   customers: [customer()],
   projects: [project()],
-  workstreams: [workstream()],
   proposals: [proposal()],
   features: [],
   featureColumns: noFeatureColumns,
@@ -165,7 +156,6 @@ describe("the page's tabs", () => {
     expect(screen.getByRole("grid", { name: "Projects" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^New/ })).toBeNull();
     for (const [tab, address] of [
-      ["Workstreams", "tab=workstreams"],
       ["Proposals", "tab=proposals"],
       ["Customers", "tab=customers"],
       ["Milestones", "tab=milestones"],
@@ -291,33 +281,6 @@ describe("adding a record in the side panel", () => {
         },
       ]);
     });
-  });
-
-  it("adds a workstream with only a name and an owner, then shows it", async () => {
-    const after = plan({
-      workstreams: [
-        workstream(),
-        workstream({ id: newId, name: "Added Workstream", ownerId: null }),
-      ],
-    });
-    const { fetch, held, history } = await openPage(
-      "/projects?tab=workstreams",
-      plan(),
-      { "POST /api/workstreams": saved(() => after) },
-    );
-    await userEvent.click(await newButton("workstream"));
-    await userEvent.type(
-      screen.getByRole("textbox", { name: "Name" }),
-      "Added Workstream",
-    );
-    held.plan = after;
-    await userEvent.click(screen.getByRole("button", { name: "Add" }));
-    await waitFor(() => {
-      expect(history.location.search).toContain(newId);
-    });
-    expect(sent(fetch, "POST /api/workstreams")).toEqual([
-      { name: "Added Workstream", ownerId: null },
-    ]);
   });
 
   it("adds a milestone to the project the table is filtered to, then closes", async () => {
@@ -592,14 +555,6 @@ describe("the side panel", () => {
     await waitFor(() => {
       expect(history.location.search).not.toContain("open");
     });
-  });
-
-  it("shows a workstream's name and owner, and no milestones", async () => {
-    await openPage(`/projects?tab=workstreams&open=${workstreamId}`, plan());
-    await screen.findByRole("heading", { name: /Fictional Workstream/ });
-    const panel = sidePanel();
-    expect(within(panel).getByText("Fictional Owner")).toBeTruthy();
-    expect(within(panel).queryByText("Milestones")).toBeNull();
   });
 
   it("shows a proposal's and a customer's details from their rows", async () => {
@@ -1172,13 +1127,6 @@ describe("changing a record in its panel", () => {
       "Name",
       "name",
     ],
-    [
-      `/projects?tab=workstreams&open=${workstreamId}`,
-      /Fictional Workstream/,
-      `PUT /api/workstreams/${workstreamId}`,
-      "Name",
-      "name",
-    ],
   ])(
     "saves a value changed from its pencil at %s",
     async (address, name, request, label, key) => {
@@ -1391,72 +1339,6 @@ describe("changing a record from its row", () => {
     });
   });
 
-  it("removes a workstream through its own address, then marks it", async () => {
-    const { fetch, held } = await openPage(
-      "/projects?tab=workstreams",
-      plan(),
-      {
-        [`DELETE /api/workstreams/${workstreamId}`]: deleted,
-      },
-    );
-    held.plan = plan({
-      workstreams: [workstream({ draft: recordDraft({ action: "deleted" }) })],
-    });
-    await chooseFrom(
-      await rowMenu("Fictional Workstream"),
-      "Remove workstream",
-    );
-    await waitFor(() => {
-      expect(sentTo(fetch)).toContain(
-        `DELETE /api/workstreams/${workstreamId}`,
-      );
-    });
-    expect(await screen.findByText("Draft: removed")).toBeTruthy();
-  });
-
-  it("discards a draft adding a workstream as the project it is kept as", async () => {
-    const start = plan({
-      workstreams: [workstream({ draft: recordDraft({ action: "created" }) })],
-    });
-    const { fetch, held } = await openPage("/projects?tab=workstreams", start, {
-      [`DELETE /api/records/project/${workstreamId}/draft`]: deleted,
-    });
-    held.plan = plan({ workstreams: [] });
-    await chooseFrom(await rowMenu("Fictional Workstream"), "Discard draft");
-    await waitFor(() => {
-      expect(sentTo(fetch)).toContain(
-        `DELETE /api/records/project/${workstreamId}/draft`,
-      );
-    });
-    await waitFor(() => {
-      expect(screen.queryByText("Fictional Workstream")).toBeNull();
-    });
-  });
-
-  it("approves a workstream's draft as the project it is kept as", async () => {
-    const start = plan({
-      workstreams: [workstream({ draft: recordDraft() })],
-    });
-    const { fetch } = await openPage(
-      "/projects?tab=workstreams",
-      start,
-      { "POST /api/drafts/approval": deleted },
-      approver,
-    );
-    await chooseFrom(await rowMenu("Fictional Workstream"), "Approve draft");
-    const dialog = await screen.findByRole("dialog");
-    await userEvent.click(
-      within(dialog).getByRole("button", { name: /^Approve/ }),
-    );
-    await waitFor(() => {
-      expect(sent(fetch, "POST /api/drafts/approval")).toEqual([
-        expect.objectContaining({
-          records: [{ type: "project", id: workstreamId }],
-        }),
-      ]);
-    });
-  });
-
   it("removes a project and a proposal", async () => {
     const { fetch } = await openPage("/projects", plan(), {
       [`DELETE /api/projects/${projectId}`]: deleted,
@@ -1650,7 +1532,6 @@ describe("the Features page", () => {
     targetCycle,
     estimateHours: 40,
     featureTeamId: null,
-    workstreamId: null,
     description: null,
     note: null,
     values: {},
@@ -2390,7 +2271,6 @@ describe("the Features page", () => {
         customerIds: [],
         estimateHours: 40,
         featureTeamId: null,
-        workstreamId: null,
         description: null,
         note: null,
         values: {},
@@ -2428,7 +2308,6 @@ describe("the Features page", () => {
         customerIds: [],
         estimateHours: null,
         featureTeamId: null,
-        workstreamId: null,
         description: null,
         note: null,
         values: {},

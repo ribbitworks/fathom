@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, workstreams, and proposals, as the Decisions Log sets
-// out. Each is one of the plan's records, changed through drafts, and shown as its draft makes it,
-// with the draft beside. A project's dates are not entered: they come from its milestones.
+// Customers, projects with their milestones, and proposals, as the Decisions Log sets out. Each is
+// one of the plan's records, changed through drafts, and shown as its draft makes it, with the
+// draft beside. A project's dates are not entered: they come from its milestones.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
-import type { RecordType } from "./drafts.ts";
 import { featureSchema } from "./features.ts";
 import { listSchema, meaningSchema } from "./lists.ts";
 import { addressProblem, linkLengths, webAddress } from "./links.ts";
@@ -28,17 +27,11 @@ export const projectLengths = {
 export const projectSubjects = {
   customer: (customer: string) => `the customer ${customer}`,
   project: (project: string) => `the project ${project}`,
-  workstream: (workstream: string) => `the workstream ${workstream}`,
   milestone: (milestone: string, project: string) =>
     `the milestone ${milestone} of ${project}`,
   proposal: (proposal: string) => `the proposal ${proposal}`,
   feature: (feature: string) => `the feature ${feature}`,
 };
-
-// The type a kind of the plan's records is drafted and approved as: a workstream is kept as a
-// project.
-export const recordTypeOf = (kind: RecordType | "workstream"): RecordType =>
-  kind === "workstream" ? "project" : kind;
 
 // The first and last days of a project's milestones, and the day of its next customer delivery
 // from today, each null when it has no such milestone.
@@ -112,15 +105,6 @@ export const projectSchema = z.object({
 
 export type Project = z.infer<typeof projectSchema>;
 
-// Standing work with no customers, proposals, or end date, kept with the projects.
-export const workstreamSchema = z.object({
-  ...recordShape,
-  name: z.string(),
-  ownerId: z.string().nullable(),
-});
-
-export type Workstream = z.infer<typeof workstreamSchema>;
-
 export const proposalSchema = z.object({
   ...recordShape,
   name: z.string(),
@@ -146,13 +130,12 @@ export const featureColumnsSchema = z.object({
 
 export type FeatureColumns = z.infer<typeof featureColumnsSchema>;
 
-// Every customer, project, workstream, proposal, and feature, the live ones by name, then those
-// drafted to be added, in the order drafted, with whether the user may change them: features apart
-// from the rest, since Edit Features is a permission of its own.
+// Every customer, project, proposal, and feature, the live ones by name, then those drafted to be
+// added, in the order drafted, with whether the user may change them: features apart from the rest,
+// since Edit Features is a permission of its own.
 export const projectPlanSchema = z.object({
   customers: z.array(customerSchema),
   projects: z.array(projectSchema),
-  workstreams: z.array(workstreamSchema),
   proposals: z.array(proposalSchema),
   features: z.array(featureSchema),
   featureColumns: featureColumnsSchema,
@@ -198,13 +181,6 @@ export const projectRequestSchema = z.object({
 });
 
 export type ProjectRequest = z.infer<typeof projectRequestSchema>;
-
-export const workstreamRequestSchema = projectRequestSchema.pick({
-  name: true,
-  ownerId: true,
-});
-
-export type WorkstreamRequest = z.infer<typeof workstreamRequestSchema>;
 
 export const milestoneRequestSchema = z.object({
   name: recordName,

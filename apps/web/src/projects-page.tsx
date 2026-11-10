@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The plan's records, each a table edited like People's: the Projects page, with its projects,
-// workstreams, proposals, customers, and milestones, a tab each, a record's details beside it, and
-// a project's milestones there too; and the Features page, grouped by cycle. Every change is a
-// draft, shown in place until an Approver approves it, from a record's menu or the Draft menu.
-// Those who only see the plan see the same tables, read only. The tab, the table's view, and the
-// record shown are kept in the page address.
+// proposals, customers, and milestones, a tab each, a record's details beside it, and a project's
+// milestones there too; and the Features page, grouped by cycle. Every change is a draft, shown in
+// place until an Approver approves it, from a record's menu or the Draft menu. Those who only see
+// the plan see the same tables, read only. The tab, the table's view, and the record shown are kept
+// in the page address.
 
 import type {
   Asking,
@@ -18,7 +18,7 @@ import type {
   RecordRef,
   Show,
 } from "@fathom/shared";
-import { allOf, recordTypeOf } from "@fathom/shared";
+import { allOf } from "@fathom/shared";
 import {
   Button,
   Group,
@@ -82,8 +82,6 @@ import {
   proposalColumns,
   proposalTable,
   wordsOf,
-  workstreamColumns,
-  workstreamTable,
 } from "./project-grids.tsx";
 import {
   addMilestone,
@@ -353,8 +351,7 @@ export function ProjectsPage({
     const gone = record.draft?.action === "created";
     save({
       next: (plan) => withRecord(plan, type, record.id, discarded),
-      save: () =>
-        discardRecordDraft({ type: recordTypeOf(type), id: record.id }),
+      save: () => discardRecordDraft({ type, id: record.id }),
       failure: `Fathom could not discard the draft of ${record.name}.`,
       onSaved: (changeSetId, before) => {
         if (gone) {
@@ -373,8 +370,7 @@ export function ProjectsPage({
   const resubmit = (type: PlanRecordKind, record: PlanRecord) => {
     save({
       next: (plan) => withRecord(plan, type, record.id, draftSentAgain),
-      save: () =>
-        resubmitRecordDraft({ type: recordTypeOf(type), id: record.id }),
+      save: () => resubmitRecordDraft({ type, id: record.id }),
       failure: `Fathom could not send the draft of ${record.name} for approval again.`,
       onSaved: undoable,
     });
@@ -673,12 +669,6 @@ export function ProjectsPage({
           projectTable(choices, openRecord, showMilestonesOf),
           plan.projects,
         ),
-      workstreams: () =>
-        gridOf(
-          "workstream",
-          workstreamTable(choices, openRecord),
-          plan.workstreams,
-        ),
     };
     // The tab is always one of the fixed tabs.
     // eslint-disable-next-line security/detect-object-injection
@@ -952,11 +942,6 @@ function recordPanel({
       projectColumns(choices).filter(
         ({ key }) => !projectDateColumns.some(([date]) => date === key),
       ),
-    ),
-    workstreams: shownOf(
-      "workstream",
-      plan.workstreams,
-      workstreamColumns(choices),
     ),
     proposals: shownOf("proposal", plan.proposals, proposalColumns(choices)),
     customers: shownOf(

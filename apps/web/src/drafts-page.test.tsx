@@ -124,7 +124,6 @@ const noPlan = () =>
   Response.json({
     customers: [],
     projects: [],
-    workstreams: [],
     proposals: [],
     features: [],
     canEdit: false,
@@ -592,14 +591,6 @@ describe("the Drafts page", () => {
               draft: recordDraft({ action: "deleted" }),
             },
           ],
-          workstreams: [
-            {
-              id: "a0000000-0000-4000-8000-000000000009",
-              name: "Fictional Workstream",
-              ownerId: null,
-              draft: recordDraft({ action: "created" }),
-            },
-          ],
           projects: [
             {
               id: projectId,
@@ -636,7 +627,6 @@ describe("the Drafts page", () => {
     expect(listed).toContain("the customer Fictional Customer");
     expect(listed).toContain("the proposal Fictional Proposal");
     expect(listed).toContain("the project Fictional Project");
-    expect(listed).toContain("the workstream Fictional Workstream");
     expect(listed).toContain(
       "the milestone Fictional Kickoff of Fictional Project",
     );
@@ -659,7 +649,6 @@ describe("the Drafts page", () => {
         Response.json({
           customers: [],
           projects: [],
-          workstreams: [],
           proposals: [],
           features: [],
           featureColumns: {
@@ -714,7 +703,6 @@ describe("the Drafts page", () => {
         Response.json({
           customers: [],
           projects: [],
-          workstreams: [],
           proposals: [],
           features: [
             {
@@ -730,7 +718,6 @@ describe("the Drafts page", () => {
               targetCycle: second?.startsOn,
               estimateHours: null,
               featureTeamId: null,
-              workstreamId: null,
               description: null,
               draft: featureDraft({
                 changed: ["targetStreamId", "targetCycle"],

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, projects with their milestones, workstreams, proposals, and features: reading them all at once,
-// with what they can be given, and drafting each added, changed, and removed. Every change answers with the
-// change set it was saved in, and every change but a removal with every record as the editor now
-// sees them. Discarding and resubmitting their drafts goes through the routes for every plan
-// record's draft. The data access layer checks the actor's permissions.
+// Customers, projects with their milestones, proposals, and features: reading them all at once,
+// with what they can be given, and drafting each added, changed, and removed. Every change answers
+// with the change set it was saved in, and every change but a removal with every record as the
+// editor now sees them. Discarding and resubmitting their drafts goes through the routes for every
+// plan record's draft. The data access layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
@@ -18,7 +18,6 @@ import {
   projectRequestSchema,
   proposalRequestSchema,
   savedSchema,
-  workstreamRequestSchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -54,7 +53,7 @@ export function projectRoutes(
       async (request) => projects.readChoices(request.actor),
     );
 
-    // Adding, changing, and removing customers, projects, workstreams, proposals, and features.
+    // Adding, changing, and removing customers, projects, proposals, and features.
     const recordRoutes = (path: string, type: PlanKind, body: z.ZodType) => {
       const asked = (request: unknown) =>
         // The body is parsed against the schema the kind takes.
@@ -96,7 +95,6 @@ export function projectRoutes(
     };
     recordRoutes("customers", "customer", customerRequestSchema);
     recordRoutes("projects", "project", projectRequestSchema);
-    recordRoutes("workstreams", "workstream", workstreamRequestSchema);
     recordRoutes("proposals", "proposal", proposalRequestSchema);
     recordRoutes("features", "feature", featureRequestSchema);
 

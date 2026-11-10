@@ -21,8 +21,8 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 
 ## Planning
 
-- **Change history wording for plan records:** The history names a project, and any other kind of plan record it has no wording for, as "a record", in `apps/web/src/changes.ts`. Workstreams read the same way, and the history calls them projects underneath, so naming them needs the server to tell the two apart.
-- **"You" in the question before discarding a new record:** The dialog asks "Discard the customer you're adding?", and likewise on People and every tab of Projects, which breaks the rule that nothing on screen says "you" or "your". Found on 2026-11-09 while adding the Workstreams tab, which shows it too.
+- **Change history wording for plan records:** The history names a project, and any other kind of plan record it has no wording for, as "a record", in `apps/web/src/changes.ts`.
+- **"You" in the question before discarding a new record:** The dialog asks "Discard the customer you're adding?", and likewise on People and every tab of Projects, which breaks the rule that nothing on screen says "you" or "your". Found on 2026-11-09.
 - **Cycles from the 29th to the 31st:** A monthly cycle that starts on one of these days starts on the last day of shorter months. Changing one such cycle's length counts the cycles after it from that cycle's own start, so they can stay on the 28th from then on. Deferred by the owner on 2026-11-05 as rare in practice.
 - **Freezes between cycles:** A stream's cycles follow one another with no gap, so a freeze, such as the end of December, can only be a short cycle with a name and number of its own. Deferred by the owner on 2026-11-04 until a stream needs one; a cycle marked as a gap, unnamed and not counted, would fit the cycle patterns.
 - **Undoing changes to the plan's records:** The change history refuses undoing a change to a release stream, cycle pattern, or release, since undoing one can break the rules for cycles and releases that approving checks. Deferred until undo is wanted for them.
@@ -109,7 +109,7 @@ Known problems and deferred work that are not yet scheduled in the [Implementati
 - **Long labels wrap in the details panel:** A row label in a person's details, such as Reporting team name, wraps onto a second line. Labels should stay on one line.
 - **Someone who has not started, on the org chart:** The chart draws only people current today, so to readers who see Restricted details a filled role disappears until its person starts, and Show on org chart goes nowhere for them. Agreed by the owner on 2026-11-08: draw them under their manager on a dashed card, with Starts and the date, as a follow-up.
 - **The other columns when filling a planned hire:** The fill form shows Position and any value People requires that the hire lacks, but not the rest of the hire's columns, such as Site, which a person's details show. Follow-up to filling a planned hire.
-- **Doubled row lines in frozen columns:** A frozen cell draws its own row line, because at some row positions it paints over the one the table draws. Where it does not, both show, so a frozen column such as Name has a heavier line than the columns beside it, in `apps/web/src/pages.module.css`. It stands out most in a short table such as Workstreams. Found by the owner on 2026-11-09, to be fixed separately for every table.
+- **Doubled row lines in frozen columns:** A frozen cell draws its own row line, because at some row positions it paints over the one the table draws. Where it does not, both show, so a frozen column such as Name has a heavier line than the columns beside it, in `apps/web/src/pages.module.css`. It stands out most in a short table. Found by the owner on 2026-11-09, to be fixed separately for every table.
 
 ## Drafts
 
