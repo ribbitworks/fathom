@@ -49,12 +49,30 @@ export const draftMarkChars = (draft: DraftLike): number =>
 // The mark beside a record with a draft, in words after a dot: yellow, hollow while the draft is
 // the user's own and unpublished, or red once rejected. A rejection's reason is in the record's
 // menu, not in the table, and is read aloud with the mark.
+// A draft's tone: red once rejected, otherwise hollow while it holds the user's unpublished changes,
+// and yellow.
+const draftTone = (draft: DraftLike) =>
+  draft.state === "rejected"
+    ? "rejected"
+    : draft.unpublished === true
+      ? "unpublished"
+      : "draft";
+
+// A draft's dot alone, in its tone, for a mark too small for words, such as inside a label.
+export function DraftDot({ draft }: { draft: DraftLike }) {
+  return (
+    <span className={toneClass.get(draftTone(draft))}>
+      <span className={classes.statusDot} aria-hidden="true" />{" "}
+    </span>
+  );
+}
+
 export function DraftMark({ draft }: { draft: DraftLike }) {
   const rejected = draft.state === "rejected";
   const unpublished = draft.unpublished === true;
   if (!rejected) {
     return (
-      <StatusMark tone={unpublished ? "unpublished" : "draft"} spaced>
+      <StatusMark tone={draftTone(draft)} spaced>
         {draftWords(draft)}
         {unpublished && <VisuallyHidden>, unpublished</VisuallyHidden>}
       </StatusMark>

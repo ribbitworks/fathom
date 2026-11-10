@@ -261,6 +261,95 @@ export const readTeamDrafts = (
   viewer?: string,
 ) => readDrafts(reader, recordType, ids, viewer);
 
+// A record approving a team's draft would make: someone joining or leaving the team from the day the
+// draft gives them, or from today.
+export interface DraftedMembership {
+  teamId: string;
+  personId: string;
+  member: boolean;
+  fromDate: string;
+}
+
+export interface DraftedTeam {
+  teamId: string;
+  name: string;
+  action: Draft["action"];
+  state: Draft["state"];
+  unpublished: boolean;
+}
+
+// The team drafts a viewer sees, and the membership records approving them would make, judged
+// against the teams as they are today, as a draft is made. Approving a team's removal takes its
+// past records with it.
+export async function readDraftedMemberships(
+  reader: Reader,
+  viewer: string,
+  today: string,
+): Promise<{ teams: DraftedTeam[]; records: DraftedMembership[] }> {
+  const draftsNow = await readTeamDrafts(reader, undefined, viewer);
+  const live = await readLiveTeams(reader, today, {
+    ids: [...draftsNow.keys()],
+  });
+  const versions = [...draftsNow].map(([teamId, draft]) => {
+    const before = live.teams.get(teamId);
+    return { teamId, draft, before, after: drafted(before, draft) };
+  });
+  const everyone = await peopleOf(
+    reader,
+    versions.flatMap(({ after }) => peopleNamed(after)),
+    today,
+  );
+  const teams: DraftedTeam[] = [];
+  const records: DraftedMembership[] = [];
+  for (const { teamId, draft, before, after } of versions) {
+    // A draft adds a team, or changes or removes a live one.
+    const named = (after ?? before) as Recorded;
+    teams.push({
+      teamId,
+      name: String(named.name),
+      action: draft.action,
+      state: draft.state,
+      unpublished: draft.unpublished === true,
+    });
+    if (after === undefined) continue;
+    records.push(
+      ...membershipChanges(
+        teamId,
+        before,
+        withoutLeavers(after, everyone),
+        today,
+      ).records,
+    );
+  }
+  return { teams, records };
+}
+
+// The records approving a team's draft makes: each member it adds joins, and each it removes
+// leaves, from the day the draft gives them, or from today, with the days it gives.
+function membershipChanges(
+  teamId: string,
+  before: Recorded | undefined,
+  team: Recorded,
+  today: string,
+): { records: DraftedMembership[]; days: MemberDay[] } {
+  const members = membersOf(team);
+  const was = membersOf(before);
+  const dates = new Map(Object.entries(datesOf(team)));
+  const records: DraftedMembership[] = [];
+  const days: MemberDay[] = [];
+  for (const [personIds, member] of [
+    [members.filter((one) => !was.includes(one)), true],
+    [was.filter((one) => !members.includes(one)), false],
+  ] as const) {
+    for (const personId of personIds) {
+      const from = dates.get(personId);
+      records.push({ teamId, personId, member, fromDate: from ?? today });
+      if (from !== undefined) days.push({ teamId, personId, from });
+    }
+  }
+  return { records, days };
+}
+
 // Whether someone's end date has passed by a day.
 const leftBy = (person: Recorded, day: string): boolean =>
   !notStarted(person, day) && !currentOn(person, day);
@@ -1437,7 +1526,6 @@ export async function approveTeamsIn(
       await transaction.delete(featureTeams).where(eq(featureTeams.id, id));
       continue;
     }
-    const members = membersOf(team);
     const row = { name: String(team.name) };
     teamNames.set(id, row.name);
     if (before === undefined) {
@@ -1448,7 +1536,6 @@ export async function approveTeamsIn(
         .set(row)
         .where(eq(featureTeams.id, id));
     }
-    const dates = new Map(Object.entries(datesOf(team)));
     const leadId = textOrNull(team.leadId);
     const wasLead = textOrNull(before?.leadId);
     if (leadId !== wasLead) {
@@ -1458,22 +1545,9 @@ export async function approveTeamsIn(
         leadDays.push({ teamId: id, personId: leadId, from: leadDay });
       }
     }
-    const was = membersOf(before);
-    for (const [personIds, member] of [
-      [members.filter((one) => !was.includes(one)), true],
-      [was.filter((one) => !members.includes(one)), false],
-    ] as const) {
-      for (const personId of personIds) {
-        const from = dates.get(personId);
-        records.push({
-          teamId: id,
-          personId,
-          member,
-          fromDate: from ?? today,
-        });
-        if (from !== undefined) days.push({ teamId: id, personId, from });
-      }
-    }
+    const joiningAndLeaving = membershipChanges(id, before, team, today);
+    records.push(...joiningAndLeaving.records);
+    days.push(...joiningAndLeaving.days);
   }
   const refusals = refusalsWhenApproving(teamNames, everyone);
   await refuseDaysOutOfOrder(transaction, days, everyone, refusals, true);

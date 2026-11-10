@@ -2904,6 +2904,186 @@ describe("feature teams month by month", () => {
     });
   });
 
+  describe("as drafts would make them", () => {
+    it("shows a draft's change from the month it reaches, naming its team and draft", async () => {
+      const member = await person();
+      const id = await liveTeam({ from: "2025-01-15" });
+      await changed(id, { add: [member], from: "2025-02-15" });
+
+      const read = await monthsOf("2025-02", "2025-03");
+      const row = read.people.find((one) => one.id === member);
+
+      expect(row?.teams).toEqual({});
+      expect(row?.drafted).toEqual({ teams: { "2025-03": [id] }, by: [id] });
+      expect(read.drafts).toContainEqual({
+        teamId: id,
+        action: "changed",
+        state: "waiting",
+      });
+    });
+
+    it("shows someone leaving only in the months they would be gone", async () => {
+      const member = await person();
+      const id = await liveTeam({ members: [member], from: "2025-01-15" });
+      await changed(id, { remove: [member], from: "2025-03-01" });
+
+      const row = await rowOf(member, "2025-02", "2025-03");
+
+      expect(row?.teams).toEqual({ "2025-02": [id], "2025-03": [id] });
+      expect(row?.drafted?.teams).toEqual({ "2025-03": [] });
+    });
+
+    it("takes effect from today when the draft gives no day", async () => {
+      const member = await person();
+      const id = await liveTeam();
+      await changed(id, { add: [member] });
+      const month = monthOf(today);
+
+      expect((await rowOf(member, month, month))?.drafted?.teams).toEqual({
+        [month]: [id],
+      });
+    });
+
+    it("lists a team drafted to be added by its name, with no colour", async () => {
+      const member = await person();
+      const name = unique("Fictional Drafted Team");
+      const { id } = await drafted({
+        name,
+        members: [member],
+        from: "2025-01-15",
+      });
+
+      const read = await monthsOf("2025-02", "2025-02");
+
+      expect(read.teams).toContainEqual({ id, name, colour: null });
+      expect(
+        read.people.find((one) => one.id === member)?.drafted?.teams,
+      ).toEqual({ "2025-02": [id] });
+      expect(read.drafts).toContainEqual({
+        teamId: id,
+        action: "created",
+        state: "waiting",
+      });
+    });
+
+    it("takes a team drafted to be removed out of every month", async () => {
+      const member = await person();
+      const id = await liveTeam({ members: [member], from: "2025-01-15" });
+      await ok(await remove(id));
+
+      const read = await monthsOf("2025-02", "2025-03");
+
+      expect(
+        read.people.find((one) => one.id === member)?.drafted?.teams,
+      ).toEqual({ "2025-02": [], "2025-03": [] });
+      expect(read.drafts).toContainEqual({
+        teamId: id,
+        action: "deleted",
+        state: "waiting",
+      });
+    });
+
+    it("gives a rejected draft's state", async () => {
+      const member = await person();
+      const id = await liveTeam({ from: "2025-01-15" });
+      await changed(id, { add: [member], from: "2025-02-15" });
+      await ok(await reject(id));
+
+      expect(
+        (await monthsOf("2025-03", "2025-03")).drafts?.find(
+          ({ teamId }) => teamId === id,
+        )?.state,
+      ).toBe("rejected");
+    });
+
+    it("shows unpublished changes only to their maker, marked as theirs", async () => {
+      const maker = await test.signedIn("workforce-administrator");
+      const member = await person();
+      const id = await liveTeam({ from: "2025-01-15" });
+      await ok(
+        await change(id, { add: [member], from: "2025-02-15" }, maker, {
+          publish: false,
+        }),
+      );
+
+      expect(
+        (await monthsOf("2025-03", "2025-03", maker)).drafts?.find(
+          ({ teamId }) => teamId === id,
+        ),
+      ).toEqual({
+        teamId: id,
+        action: "changed",
+        state: "waiting",
+        unpublished: true,
+      });
+      expect(
+        (await rowOf(member, "2025-03", "2025-03"))?.drafted,
+      ).toBeUndefined();
+      await ok(await send(maker, "POST", "/api/unpublished/discard"));
+    });
+
+    it("lets a draft's record win over an approved one on the same day", async () => {
+      const member = await person();
+      const id = await liveTeam({ members: [member], from: today });
+      await changed(id, { remove: [member] });
+      const month = monthOf(today);
+
+      expect((await rowOf(member, month, month))?.drafted?.teams).toEqual({
+        [month]: [],
+      });
+    });
+
+    it("leaves out someone in a draft who has since left, as approving does", async () => {
+      const member = await person();
+      const id = await liveTeam({ from: "2025-01-10" });
+      await changed(id, { add: [member], from: "2025-01-15" });
+      await endDated(member, "2025-06-30");
+
+      expect(
+        (await rowOf(member, "2025-02", "2025-03"))?.drafted,
+      ).toBeUndefined();
+    });
+
+    describe("for readers who do not see Restricted details", () => {
+      it("shows a draft's day from the first month it is in force on the first", async () => {
+        const member = await person();
+        const id = await liveTeam({ from: "2025-01-15" });
+        await changed(id, { add: [member], from: "2025-02-15" });
+
+        expect(
+          (await rowOf(member, "2025-02", "2025-03", planner))?.drafted,
+        ).toEqual({ teams: { "2025-03": [id] }, by: [id] });
+      });
+
+      it("sends nothing of a draft about someone who has not started", async () => {
+        const newcomer = await person({ startDate: "2099-01-15" });
+        const { id } = await drafted({
+          members: [newcomer],
+          from: "2099-01-15",
+        });
+
+        const read = await monthsOf("2099-02", "2099-02", planner);
+
+        expect(read.people.some((one) => one.id === newcomer)).toBe(false);
+        expect(read.drafts?.some(({ teamId }) => teamId === id)).toBe(false);
+        expect(read.teams.some((team) => team.id === id)).toBe(false);
+      });
+    });
+
+    it("sends no drafts to those who do not see people", async () => {
+      const member = await person();
+      const id = await liveTeam({ from: "2025-01-15" });
+      await changed(id, { add: [member], from: "2025-02-15" });
+
+      const read = await monthsOf("2025-03", "2025-03", chartOnly);
+
+      expect(read.drafts).toBeUndefined();
+      expect(
+        read.people.find((one) => one.id === member)?.drafted,
+      ).toBeUndefined();
+    });
+  });
+
   it.each([
     ["the first month after the last", "from=2025-03&to=2025-01"],
     ["more months than a grid shows", "from=2020-01&to=2025-01"],

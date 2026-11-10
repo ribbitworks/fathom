@@ -1553,6 +1553,23 @@ describe("what a table can ask of its columns and rows", () => {
     expect(screen.queryByText("A")).toBeNull();
   });
 
+  it("draws the record as it is live with a column's own content in the Live row", () => {
+    renderTable(noted({ content: (one) => <b>Made from {one.name}</b> }), [
+      gadget("a", {
+        name: "Renamed",
+        draft: {
+          ...waiting,
+          action: "changed",
+          changed: ["name"],
+          live: { name: "Gadget a", values: {}, links: {} },
+        },
+      }),
+    ]);
+
+    expect(screen.getByText("Made from Renamed")).toBeDefined();
+    expect(screen.getByText("Made from Gadget a")).toBeDefined();
+  });
+
   it("centres only the headings a column says to", () => {
     const table = gadgetTable();
     renderTable(

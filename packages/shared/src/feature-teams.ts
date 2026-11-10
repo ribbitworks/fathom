@@ -10,7 +10,12 @@
 import { z } from "zod";
 import { addDays, addMonths } from "./cycles.ts";
 import { daySchema, isFirstOfMonth, monthOf, monthSchema } from "./days.ts";
-import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
+import {
+  draftActionSchema,
+  draftShape,
+  draftStateSchema,
+  heldBySchema,
+} from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
 
 // At most as many members as a team could hold.
@@ -88,8 +93,29 @@ export const teamMonthsSchema = z.object({
       // Each month with a team, and the teams then, by identifier.
       teams: z.record(monthSchema, z.array(z.string())),
       outside: z.array(monthSchema).optional(),
+      // For readers who see drafts: each month whose teams a draft changes, with the teams then, and
+      // the teams whose drafts change those months.
+      drafted: z
+        .object({
+          teams: z.record(monthSchema, z.array(z.string())),
+          by: z.array(z.string()),
+        })
+        .optional(),
     }),
   ),
+  // For readers who see drafts, each team draft changing someone's months: whether it adds or
+  // removes the team, whether it waits or was rejected, and whether it holds the reader's own
+  // changes, not yet published.
+  drafts: z
+    .array(
+      z.object({
+        teamId: z.string(),
+        action: draftActionSchema,
+        state: draftStateSchema,
+        unpublished: z.boolean().optional(),
+      }),
+    )
+    .optional(),
 });
 
 export type TeamMonths = z.infer<typeof teamMonthsSchema>;

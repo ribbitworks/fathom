@@ -2,7 +2,7 @@
 
 // Tests for the Feature assignments page: people as rows and months as columns, their teams shown as
 // labels, the three ways of grouping them, each person counted once, months outside someone's
-// employment, a label's tooltip, and what it shows when it cannot load.
+// employment, a label's tooltip, drafts and the Draft menu, and what it shows when it cannot load.
 
 import { monthsBetween, type TeamMonths } from "@fathom/shared";
 import { fireEvent, screen, waitFor, within } from "@testing-library/react";
@@ -108,10 +108,101 @@ describe("the Feature assignments page", () => {
     expect(screen.getByText("Platform reliability").style.background).toBe("");
   });
 
-  it("offers no drafts, since it only shows what is approved", async () => {
+  it("offers the Draft menu to those who see people", async () => {
     await openPage();
+    expect(screen.getByRole("button", { name: /^Draft/u })).toBeDefined();
+  });
+
+  it("offers no Draft menu to those who do not see people", async () => {
+    await openPage("", { session: session(["org-chart:view"]) });
 
     expect(screen.queryByRole("button", { name: /^Draft/u })).toBeNull();
+  });
+
+  describe("with a draft changing someone's months", () => {
+    const drafted: TeamMonths = {
+      ...months,
+      people: months.people.map((person) =>
+        person.id === "p-casey"
+          ? {
+              ...person,
+              drafted: {
+                teams: { "2027-03": [mobile.id] },
+                by: [mobile.id, platform.id],
+              },
+            }
+          : person,
+      ),
+      drafts: [
+        { teamId: mobile.id, action: "changed", state: "waiting" },
+        { teamId: platform.id, action: "changed", state: "waiting" },
+      ],
+    };
+    const draftRow = () =>
+      screen
+        .getAllByText("Casey Fictional")
+        .map((name) => name.closest("tr") as HTMLElement)
+        .find((row) => row.getAttribute("aria-hidden") === null) as HTMLElement;
+
+    it("marks the row as a draft, and the teams the draft adds and takes away", async () => {
+      await openPage("?grouping=none", {
+        months: () => Response.json(drafted),
+      });
+
+      const row = draftRow();
+      expect(within(row).getByText("Draft")).toBeDefined();
+      expect(within(row).getByText(", added")).toBeDefined();
+      expect(within(row).getByText(", removed")).toBeDefined();
+    });
+
+    it("shows the person's teams as approved in a Live row under it, as labels", async () => {
+      await openPage("?grouping=none", {
+        months: () => Response.json(drafted),
+      });
+
+      const live = draftRow().nextElementSibling as HTMLElement;
+      expect(live.getAttribute("aria-hidden")).toBe("true");
+      expect(within(live).getByText("Platform reliability")).toBeDefined();
+      expect(within(live).queryByText("Mobile apps")).toBeNull();
+    });
+
+    it.each([
+      [
+        "red once the draft is rejected",
+        { state: "rejected" },
+        "draftRejected",
+      ],
+      [
+        "hollow for the reader's own unpublished changes",
+        { state: "waiting", unpublished: true },
+        "unpublishedMark",
+      ],
+      ["yellow otherwise", { state: "waiting" }, "draftMark"],
+    ] as const)(
+      "gives an added team's dot the draft's tone: %s",
+      async (_, tone, toneClass) => {
+        await openPage("?grouping=none", {
+          months: () =>
+            Response.json({
+              ...drafted,
+              drafts: drafted.drafts?.map((draft) => ({ ...draft, ...tone })),
+            }),
+        });
+
+        const added = within(draftRow()).getByText(", added")
+          .parentElement as HTMLElement;
+        expect(added.querySelector(`[class*=${toneClass}]`)).not.toBeNull();
+      },
+    );
+
+    it("leaves out the team a draft takes away once drafts are applied", async () => {
+      await openPage("?grouping=none&show=drafts", {
+        months: () => Response.json(drafted),
+      });
+
+      expect(within(draftRow()).queryByText("Platform reliability")).toBeNull();
+      expect(within(draftRow()).getByText("Mobile apps")).toBeDefined();
+    });
   });
 
   it("groups by manager at first, for those who see people", async () => {

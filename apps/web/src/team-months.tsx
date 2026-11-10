@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Who is on which feature team, month by month, through the server's API, as a read-only table of
-// records: a row for each person and a column for each month. Grouped by feature team, someone who
-// was on two teams has a row under each.
+// records: a row for each person and a column for each month, with the months team drafts change
+// shown as a draft of the person's row. Grouped by feature team, someone who was on two teams has a
+// row under each.
 
 import {
   addToMonth,
   byName,
   type MonthRange,
   monthOf,
+  type Show,
   type TeamMonths,
   teamMonthsSchema,
 } from "@fathom/shared";
@@ -26,9 +28,16 @@ import {
   type RowGrouping,
 } from "./record-grid.tsx";
 import { formatMonth } from "./table-view.ts";
-import { TeamLabels } from "./team-labels.tsx";
+import type { DraftLike } from "./status-mark.tsx";
+import { type DraftedLabel, TeamLabels } from "./team-labels.tsx";
 
 type MonthTeam = TeamMonths["teams"][number];
+type TeamDraft = NonNullable<TeamMonths["drafts"]>[number];
+
+export type MonthLabel = MonthTeam & {
+  drafted?: DraftedLabel;
+  addedBy?: DraftLike;
+};
 
 export interface PersonMonths extends CellRecord {
   personId: string;
@@ -36,8 +45,10 @@ export interface PersonMonths extends CellRecord {
   manager: TeamMonths["people"][number]["manager"];
   // The feature team this row is grouped under, when grouped by feature team.
   group?: MonthTeam | undefined;
-  teamsIn: ReadonlyMap<string, MonthTeam[]>;
+  teamsIn: ReadonlyMap<string, MonthLabel[]>;
   outside: ReadonlySet<string>;
+  // The person as approved, when a draft changes their months.
+  live?: PersonMonths | undefined;
 }
 
 type Table = RecordTable<PersonMonths, CellChange, CellChange>;
@@ -112,7 +123,17 @@ const groupedByFeatureTeam = (data: TeamMonths): RowGrouping<PersonMonths> => {
   };
 };
 
-export function teamMonthsTable(data: TeamMonths, seesPeople: boolean): Table {
+// With drafts applied, a team a draft takes someone off is gone, rather than struck through.
+const labelsShown = (labels: readonly MonthLabel[], show: Show) =>
+  show === "drafts"
+    ? labels.filter(({ drafted }) => drafted !== "removed")
+    : labels;
+
+export function teamMonthsTable(
+  data: TeamMonths,
+  seesPeople: boolean,
+  show: Show,
+): Table {
   const choices = [...data.teams].sort(byName).map(({ id, name }) => ({
     id,
     label: name,
@@ -128,7 +149,9 @@ export function teamMonthsTable(data: TeamMonths, seesPeople: boolean): Table {
         multiple: true,
       }),
       content: (person) => (
-        <TeamLabels teams={person.teamsIn.get(month) ?? []} />
+        <TeamLabels
+          teams={labelsShown(person.teamsIn.get(month) ?? [], show)}
+        />
       ),
       shaded: (person) => person.outside.has(month),
       mark: (person) =>
@@ -157,7 +180,7 @@ export function teamMonthsTable(data: TeamMonths, seesPeople: boolean): Table {
     nameOf: ({ name }) => name,
     countedAs: ({ personId }) => personId,
     columnsFor: () => columns,
-    liveRecords: (records) => [...records],
+    liveRecords: (records) => records.map((record) => record.live ?? record),
     draftFields: () => [],
     recordProblem: () => undefined,
     request: () => ({}),
@@ -188,46 +211,138 @@ export const noTeamMonthActions: RecordActions<
   resubmitColumn: nothing,
 };
 
+// The draft a person's row shows for the team drafts changing their months: rejected while any is,
+// so it is seen to, otherwise the reader's own while any holds their unpublished changes.
+export function personDraft(
+  drafts: readonly TeamDraft[],
+): Pick<TeamDraft, "state" | "unpublished"> {
+  return {
+    state: drafts.some(({ state }) => state === "rejected")
+      ? "rejected"
+      : "waiting",
+    ...(drafts.some(({ unpublished }) => unpublished === true)
+      ? { unpublished: true }
+      : {}),
+  };
+}
+
+// A month's teams as a draft makes them, with those it adds and those it takes away marked.
+function draftedLabels(
+  live: readonly MonthTeam[],
+  drafted: readonly MonthTeam[],
+  draft: DraftLike,
+): MonthLabel[] {
+  const liveIds = new Set(live.map(({ id }) => id));
+  const draftedIds = new Set(drafted.map(({ id }) => id));
+  return [
+    ...drafted.map((team): MonthLabel =>
+      liveIds.has(team.id)
+        ? team
+        : { ...team, drafted: "added", addedBy: draft },
+    ),
+    ...live
+      .filter(({ id }) => !draftedIds.has(id))
+      .map((team): MonthLabel => ({ ...team, drafted: "removed" })),
+  ].sort(byName);
+}
+
+// A person's row as drafts change their months, with the teams added and taken away marked, and
+// the person as approved kept for the Live row.
+function draftOf(
+  live: PersonMonths,
+  drafted: NonNullable<TeamMonths["people"][number]["drafted"]>,
+  teamsOf: (teamIds: readonly string[]) => MonthTeam[],
+  drafts: ReadonlyMap<string, TeamDraft>,
+): PersonMonths {
+  const draftedMonths = Object.entries(drafted.teams);
+  // The server lists each team draft a person's drafted months name.
+  const draft = personDraft(
+    drafted.by.map((teamId) => drafts.get(teamId) as TeamDraft),
+  );
+  return {
+    ...live,
+    values: { ...live.values, ...drafted.teams },
+    teamsIn: new Map([
+      ...live.teamsIn,
+      ...draftedMonths.map(([month, teamIds]): [string, MonthLabel[]] => [
+        month,
+        draftedLabels(live.teamsIn.get(month) ?? [], teamsOf(teamIds), draft),
+      ]),
+    ]),
+    draft: {
+      action: "changed",
+      changed: draftedMonths.map(([month]) => month),
+      live: { values: live.values, links: {} },
+      ...draft,
+      madeBy: null,
+    },
+    live,
+  };
+}
+
 // A row for each person by name, or, grouped by feature team, one under each team they were on in
-// the months shown and one under none for those on no team.
+// the months shown, as the Draft menu shows them, and one under none for those on no team.
 export function teamMonthRecords(
   data: TeamMonths,
   grouping: string | undefined,
+  show: Show,
 ): PersonMonths[] {
   const teams = new Map(data.teams.map((team) => [team.id, team]));
+  const drafts = new Map(
+    (data.drafts ?? []).map((draft) => [draft.teamId, draft]),
+  );
+  // The server lists every team a person's months name.
+  const teamsOf = (teamIds: readonly string[]) =>
+    teamIds.map((teamId) => teams.get(teamId) as MonthTeam).sort(byName);
   const people = [...data.people].sort((first, second) =>
     byName({ name: first.preferredName }, { name: second.preferredName }),
   );
   return people.flatMap((person) => {
-    const teamsIn = new Map(
+    const liveTeamsIn = new Map(
       Object.entries(person.teams).map(([month, teamIds]) => [
         month,
-        // The server lists every team a person's months name.
-        teamIds.map((teamId) => teams.get(teamId) as MonthTeam).sort(byName),
+        teamsOf(teamIds),
       ]),
     );
-    const teamsInAnyMonth = [
-      ...new Map(
-        [...teamsIn.values()].flat().map((team) => [team.id, team]),
-      ).values(),
-    ].sort(byName);
-    const record: PersonMonths = {
+    const live: PersonMonths = {
       id: person.id,
       personId: person.id,
       name: person.preferredName,
       manager: person.manager,
       values: person.teams,
       links: {},
-      teamsIn,
+      teamsIn: liveTeamsIn,
       outside: new Set(person.outside),
     };
+    const { drafted } = person;
+    const record: PersonMonths =
+      drafted === undefined ? live : draftOf(live, drafted, teamsOf, drafts);
     if (grouping !== featureTeamGrouping) return [record];
+    const teamsInAnyMonth = [
+      ...new Map(
+        [...(show === "live" ? live : record).teamsIn.values()]
+          .flatMap((labels) => labelsShown(labels, show))
+          .map((team) => [team.id, team]),
+      ).values(),
+    ].sort(byName);
     return teamsInAnyMonth.length === 0
       ? [record]
-      : teamsInAnyMonth.map((group) => ({
-          ...record,
-          id: `${group.id} ${person.id}`,
-          group,
-        }));
+      : teamsInAnyMonth.map(({ id, name, colour }) => {
+          const group = { id, name, colour };
+          return {
+            ...record,
+            id: `${id} ${person.id}`,
+            group,
+            ...(record.live === undefined
+              ? {}
+              : {
+                  live: {
+                    ...record.live,
+                    id: `${id} ${person.id}`,
+                    group,
+                  },
+                }),
+          };
+        });
   });
 }

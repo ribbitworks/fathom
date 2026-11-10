@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Feature assignments page: people as rows and months as columns, each cell holding the feature
-// teams someone is on that month, as approved. Allocations join as a second mode.
+// teams someone is on that month, as approved, and as drafted for those who see drafts. Allocations
+// join as a second mode.
 
 import { monthOf } from "@fathom/shared";
 import { Center, Group, Loader, SegmentedControl, Stack } from "@mantine/core";
@@ -35,13 +36,17 @@ export function FeatureAssignmentsPage({
   const query = useQuery(teamMonthsQuery(gridMonthsAround(now)));
   const { data } = query;
   const table = useMemo(
-    () => (data === undefined ? undefined : teamMonthsTable(data, seesPeople)),
-    [data, seesPeople],
+    () =>
+      data === undefined
+        ? undefined
+        : teamMonthsTable(data, seesPeople, view.show),
+    [data, seesPeople, view.show],
   );
   const grouping = activeGrouping(view, table?.groupings)?.key;
   const records = useMemo(
-    () => (data === undefined ? [] : teamMonthRecords(data, grouping)),
-    [data, grouping],
+    () =>
+      data === undefined ? [] : teamMonthRecords(data, grouping, view.show),
+    [data, grouping, view.show],
   );
   return (
     <Stack gap="md" className={classes.tablePage}>
@@ -84,7 +89,7 @@ export function FeatureAssignmentsPage({
             view={view}
             onView={onView}
             opensAtColumn={monthOf(now)}
-            withDrafts={false}
+            withDrafts={seesPeople}
           />
         </TeamLabelTips>
       )}

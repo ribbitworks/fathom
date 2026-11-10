@@ -203,7 +203,8 @@ export interface Column<
   changesWith?: string;
   // Set false for a column not worth breaking down by, such as one with a choice for each record.
   breaksDown?: boolean;
-  // What a record's cell shows in place of its value in words, such as labels in a team's colours.
+  // What a record's cell shows in place of its value in words, such as labels in a team's colours,
+  // in its Live row too, given the record as it is live.
   content?: (record: Rec) => ReactNode;
   // Whether a record's cell is shaded, such as a month outside someone's employment.
   shaded?: (record: Rec) => boolean;
@@ -2766,6 +2767,10 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                   problem?.row === key ? problem.message : row.newRow?.problem;
                 const record = row.record;
                 const draft = record?.draft as DraftOf<Rec> | undefined;
+                const liveRecord =
+                  record && draft?.action === "changed"
+                    ? table.liveRecords([record])[0]
+                    : undefined;
                 // A row with a draft is tinted, and one a draft removes is struck through too.
                 let rowClass: string | undefined;
                 const filling = row.newRow && !emptyNewRow(row.newRow);
@@ -2999,12 +3004,17 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
                               style={frozenAt.style}
                             >
                               {standIn === undefined ? (
+                                // Drawn only under a record whose draft changes it, which the
+                                // table gives a live record for.
+                                (liveColumn(column).content?.(
+                                  liveRecord as Rec,
+                                ) ??
                                 liveContent(
                                   liveColumn(column),
                                   changedIn(draft, column)
                                     ? column.live(draft)
                                     : column.value(record),
-                                )
+                                ))
                               ) : (
                                 <Text
                                   component="span"

@@ -11,7 +11,7 @@ last_updated: "2026-11-09"
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, what a reader without Restricted details sees, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, what a reader without Restricted details or without people sees, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -57,6 +57,10 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 - **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from the name and initials at the top right of every page.
 - **Group by menu:** the button above the table that starts **Group by:** and names the grouping in use.
+- **Draft menu:** the menu that opens from the **Draft** button above the table, next to the search box.
+- **Feature teams button:** on the **Org chart**, the button reading **Feature teams** above the chart, at its right, once the chart shows feature teams.
+- **Team panel:** on the **Org chart**, the panel titled **Feature team** that opens to the right of the chart.
+- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a person's name.
 
 ## Test Cases
 
@@ -67,7 +71,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 **Preconditions:** R1 has been run. Signed in with this account.
 
 - [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
-  - **Expected:** The page is headed **Feature assignments**. Above the table are a switch reading **Teams** and a greyed-out **Allocations, later**, then a search box, **Metrics**, and **Group by: Manager**. There is no **Draft** button. The table has a **Person** column on the left and a column for each month.
+  - **Expected:** The page is headed **Feature assignments**. Above the table are a switch reading **Teams** and a greyed-out **Allocations, later**, then a search box, a **Draft** button, **Metrics**, and **Group by: Manager**. The table has a **Person** column on the left and a column for each month.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the month headings without scrolling.
@@ -191,7 +195,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 **Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] **Step 1.** Select **Metrics**.
-  - **Expected:** The Metrics panel opens, offers the months to break down by, and gives the number of people with no mention of drafts.
+  - **Expected:** The Metrics panel opens, offers the months to break down by, and gives the number of people.
   - **Notes:**
 
 ### FA-10: The Table Agrees With the Org Chart
@@ -269,9 +273,79 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
-  - **Expected:** The button reads **Group by: Feature team**.
+  - **Expected:** The button reads **Group by: Feature team**. There is no **Draft** button.
   - **Notes:**
 
 - [ ] **Step 2.** Open the Group by menu.
   - **Expected:** It offers **Feature team** and **None**.
   - **Notes:**
+
+### FA-15: A Draft Shows From the Month It Takes Effect
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-14.
+
+**Preconditions:** R1 has been run. Signed in with this account. **Light** selected in the Appearance menu. **Org chart** open, with **Feature teams** chosen in the switch at the top right.
+
+- [ ] **Step 1.** Select the Feature teams button, then **Platform reliability**.
+  - **Expected:** The team panel opens with **Team** reading **Platform reliability**, and its members listed.
+  - **Notes:**
+
+- [ ] **Step 2.** Open **Add member** and choose the first person listed. Note their name: the joiner.
+  - **Expected:** The joiner is listed among the members with a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the **×** at the right of the first member listed before step 2. Note their name: the leaver.
+  - **Expected:** A line reading the leaver's name and **leaving** is shown under the members, marked **Live**.
+  - **Notes:**
+
+- [ ] **Step 4.** Clear **Takes effect from**, type the first day of last month as digits alone, such as `20261001` in November 2026, and press Enter.
+  - **Expected:** A notice reads **Date changed**, with **Undo**.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Feature assignments** in the left-hand menu. Select **None** in the Group by menu, and type the joiner's name in the search box.
+  - **Expected:** The joiner's row is tinted blue, with a hollow yellow dot and **Draft** beside their name, and a light green row under it marked **Live**.
+  - **Notes:**
+
+- [ ] **Step 6.** Look along the joiner's tinted row, from two months ago to the right.
+  - **Expected:** The cell two months ago holds the same labels as the light green row under it, and is not yellow. From last month on, each cell is yellow and holds a **Platform reliability** label with a hollow yellow dot inside it, beside any other labels.
+  - **Notes:**
+
+- [ ] **Step 7.** Look along the light green row under it.
+  - **Expected:** Its cells hold no **Platform reliability** label, and any other labels in their colours.
+  - **Notes:**
+
+- [ ] **Step 8.** Empty the search box and type the leaver's name.
+  - **Expected:** From last month on, the leaver's cells are yellow, and the **Platform reliability** label in them is struck through.
+  - **Notes:**
+
+- [ ] **Step 9.** Select **Dark** in the Appearance menu, then **Light**.
+  - **Expected:** In both modes the yellow cells, the dots in the labels and the struck-through label are easy to make out, and every label is easy to read.
+  - **Notes:**
+
+### FA-16: The Draft Menu Shows Drafts or Leaves Them Out
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-15.
+
+**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the leaver's name from FA-15 in the search box, after FA-15.
+
+- [ ] **Step 1.** Open the Draft menu and select **Live only**.
+  - **Expected:** The leaver's row has no mark, no yellow cells and no light green row; **Platform reliability** is in every month it was in before FA-15, with nothing struck through.
+  - **Notes:**
+
+- [ ] **Step 2.** Open the Draft menu and select **Drafts applied**.
+  - **Expected:** From last month on, the leaver's cells hold no **Platform reliability** label, and there is no light green row.
+  - **Notes:**
+
+- [ ] **Step 3.** Empty the search box. Select **Feature team** in the Group by menu, and scroll to the **Platform reliability** group.
+  - **Expected:** The joiner is listed under **Platform reliability**.
+  - **Notes:**
+
+- [ ] **Step 4.** Open the Draft menu and select **Live only**.
+  - **Expected:** The leaver is listed under **Platform reliability**, and the joiner is not.
+  - **Notes:**
+
+- [ ] **Step 5.** Open the Draft menu and select **Drafts beside live**.
+  - **Expected:** The joiner and the leaver are both listed under **Platform reliability**, with the yellow cells, the struck-through label and the light green rows, as in FA-15.
+  - **Notes:**
+
+**Afterwards:** R1.
