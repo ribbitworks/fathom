@@ -32,6 +32,7 @@ export const permissionSchema = z.enum([
   "releases:approve",
   "allocations:view",
   "allocations:edit",
+  "allocations:approve",
   "people:view",
   "people:edit",
   "people:approve",
@@ -120,6 +121,11 @@ export const permissionDescriptions: Record<
   "allocations:edit": {
     allows: "Changes allocations across the whole plan.",
     without: "Cannot change allocations.",
+  },
+  "allocations:approve": {
+    allows: "Approves or rejects drafts of allocations.",
+    without: "Cannot approve drafts of allocations.",
+    needs: ["allocations:view"],
   },
   "people:view": {
     allows:
@@ -240,6 +246,7 @@ export const permissionDescriptions: Record<
     needs: [
       "plan:approve",
       "releases:approve",
+      "allocations:approve",
       "people:approve",
       "hiring-plan:approve",
       "feature-teams:approve",
@@ -286,14 +293,23 @@ export const permissionDescriptions: Record<
   },
 };
 
+// The permissions that let a user make drafts, any of which gives them unpublished changes to
+// publish or discard.
+export const draftingPermissions: readonly Permission[] = [
+  "people:edit",
+  "configuration:edit",
+  "plan:edit",
+  "features:edit",
+  "allocations:edit",
+  "feature-teams:propose",
+  "feature-teams:edit",
+  "hiring-plan:edit",
+];
+
 // Permissions a role can grant before Fathom has the features they govern, so they do nothing yet.
 // The Roles page marks them, as the Decisions Log sets out, so roles can be set up ahead of the
 // features. Building a feature takes its permissions out of this list.
-export const unbuiltPermissions: readonly Permission[] = [
-  "allocations:view",
-  "allocations:edit",
-  "drafts:submit",
-];
+export const unbuiltPermissions: readonly Permission[] = ["drafts:submit"];
 
 // The sensitivity tiers of Fathom's data. Roles grant access to tiers, not to screens.
 export const tierSchema = z.enum(["general", "restricted", "confidential"]);
@@ -362,7 +378,11 @@ export const permissionGrid: readonly {
   { area: "Releases", actions: { approve: "releases:approve" } },
   {
     area: "Allocations",
-    actions: { view: "allocations:view", edit: "allocations:edit" },
+    actions: {
+      view: "allocations:view",
+      approve: "allocations:approve",
+      edit: "allocations:edit",
+    },
   },
   {
     area: "People",
@@ -498,6 +518,7 @@ export const startingRoles: Record<
       "features:edit",
       "releases:approve",
       "allocations:view",
+      "allocations:approve",
       "org-chart:view",
       "people:view",
       "people:approve",
@@ -538,6 +559,7 @@ export const startingRoles: Record<
       "features:edit",
       "releases:approve",
       "allocations:edit",
+      "allocations:approve",
       "people:edit",
       "people:approve",
       "org-chart:view",

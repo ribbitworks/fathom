@@ -46,6 +46,7 @@ const recordsState = (parts: Partial<RecordsState>): RecordsState => ({
   proposal: kindState(),
   project: kindState(),
   milestone: kindState(),
+  allocation: kindState(),
   ...parts,
 });
 

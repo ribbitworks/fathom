@@ -173,13 +173,15 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ records: [{ type: "release", id: id() }] }),
   },
   {
+    // Projects and features are seen with the plan.
     variant: "plan records",
-    needs: {
-      kind: "permissions",
-      all: ["plan:approve"],
-      any: ["plan:view", "configuration:view"],
-    },
+    needs: allOf("plan:approve", "plan:view"),
     asked: () => ({ records: [{ type: "project", id: id() }] }),
+  },
+  {
+    variant: "allocations",
+    needs: allOf("allocations:approve", "allocations:view"),
+    asked: () => ({ records: [{ type: "allocation", id: id() }] }),
   },
 ];
 
@@ -200,6 +202,7 @@ const recordKinds: { type: string; needs: Needs }[] = [
   { type: "proposal", needs: allOf("plan:edit") },
   { type: "project", needs: allOf("plan:edit") },
   { type: "milestone", needs: allOf("plan:edit") },
+  { type: "allocation", needs: allOf("allocations:edit") },
 ];
 
 // Every API route, with what it needs. The web routes are left out: the test app serves no front
@@ -306,6 +309,22 @@ const routes: Route[] = [
     body: () => startingEffortConversions,
   },
   { method: "GET", pattern: "/api/greeting", needs: allOf("plan:view") },
+  {
+    method: "GET",
+    pattern: "/api/allocations",
+    needs: allOf("allocations:view"),
+  },
+  {
+    method: "POST",
+    pattern: "/api/allocations/changes",
+    needs: allOf("allocations:edit"),
+    body: () => ({
+      personId: randomUUID(),
+      featureId: randomUUID(),
+      percentage: 50,
+      from: "2027-01",
+    }),
+  },
 
   {
     method: "GET",
@@ -746,8 +765,11 @@ const routes: Route[] = [
       "people:edit",
       "configuration:edit",
       "plan:edit",
+      "features:edit",
+      "allocations:edit",
       "feature-teams:propose",
       "feature-teams:edit",
+      "hiring-plan:edit",
     ),
   })),
 ];

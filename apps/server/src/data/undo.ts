@@ -874,7 +874,7 @@ async function undoIn(
   const records = recordsOf(rows);
   if (records.some(({ recordType }) => planRecordTypes.has(recordType))) {
     throw new ConflictError(
-      "Changes to release streams and releases cannot be undone yet; change or discard the draft instead",
+      "Changes to the plan and allocations can't be undone yet; change or discard the draft instead",
     );
   }
   for (const record of records) {

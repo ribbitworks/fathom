@@ -196,6 +196,16 @@ const generalForProject = (state: RecordsState, id: string): unknown =>
 export const isGeneralFeature = (state: RecordsState, id: string): boolean =>
   typeof generalForProject(state, id) === "string";
 
+// A feature's name as shown, a project's general feature taking its project's.
+export function featureCalled(state: RecordsState, id: string): string {
+  const project = generalForProject(state, id);
+  return String(
+    typeof project === "string"
+      ? shownVersion(state, "project", project)?.name
+      : shownVersion(state, "feature", id)?.name,
+  );
+}
+
 export const projectSubject = (state: RecordsState, id: string): string =>
   projectSubjects.project(String(shownVersion(state, "project", id)?.name));
 
@@ -224,14 +234,10 @@ export const featureKind: RecordKind = {
     { field: "name", message: "There is already a feature with that name" },
   ],
   readWith: ["plan:view"],
-  subject: (state, id) => {
-    const project = generalForProject(state, id);
-    return typeof project === "string"
-      ? projectSubject(state, project)
-      : projectSubjects.feature(
-          String(shownVersion(state, "feature", id)?.name),
-        );
-  },
+  subject: (state, id) =>
+    (isGeneralFeature(state, id)
+      ? projectSubjects.project
+      : projectSubjects.feature)(featureCalled(state, id)),
   // A feature drafted onto another cycle, or onto one only the stream's drafted patterns make, uses
   // those patterns' drafts, as a release does.
   alsoUses: (state, id) => {

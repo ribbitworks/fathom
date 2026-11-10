@@ -1,7 +1,7 @@
 # Fathom — Use Cases
 
 **Status:** Draft
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-09
 
 The core scenarios Fathom must support in v1, derived from the [Product Brief](brief.md) and the [Decisions Log](decisions.md). Each use case names the main actor, their goal, and the outcome. Steps and detail are added when each feature is designed.
 
@@ -40,7 +40,7 @@ flowchart TD
 
 - **Actor:** Engineering Manager
 - **Goal:** Staff a project or feature for the coming months, using current staff or planned hires and a monthly allocation percentage.
-- **Outcome:** The assignments are saved as draft rows. Fathom warns when someone has more than two assignments in a month, and does not allow allocations outside a person's employment dates.
+- **Outcome:** The assignments are saved as drafts, one for each person's work on each feature, for an Approver to approve. Fathom warns when someone has more than two assignments in a month, and refuses allocations outside a person's employment dates to those who see the dates; the Approver is told of the rest.
 
 ### Resolve Over-Allocation
 

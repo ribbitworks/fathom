@@ -112,6 +112,7 @@ describe("approving by area", () => {
           "proposal",
           "project",
           "milestone",
+          "allocation",
         ] as const
       ).map((type) => ({ type, id: randomUUID() })),
     ],

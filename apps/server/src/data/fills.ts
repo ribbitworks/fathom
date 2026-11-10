@@ -7,6 +7,7 @@
 // it, drafted to report to the person instead. Approving, rejecting, or resubmitting any of them
 // does so for the whole fill, and discarding any of them takes the fill out of the rest.
 
+import { refuseFillingAllocated } from "./allocations.ts";
 import { type Database, plannedHires } from "@fathom/db";
 import {
   approvePermissions,
@@ -246,6 +247,7 @@ export async function fillHire(
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const { before, hire } = await fillableHire(transaction, actor, hireId);
+    await refuseFillingAllocated(transaction, hireId);
     // Someone already in Fathom given no manager keeps the one they have; a new person needs one.
     const keepsOwn = fill.managerId === null && fill.by === "existing person";
     if (

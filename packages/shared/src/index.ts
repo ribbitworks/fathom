@@ -28,6 +28,7 @@ export {
   samePasswordMessage,
 } from "./accounts.ts";
 export {
+  draftingPermissions,
   type GridAction,
   gridActions,
   impliedPermissions,
@@ -134,7 +135,7 @@ export {
   typedMonth,
   typedDay,
 } from "./days.ts";
-export { byName } from "./text.ts";
+export { byName, capitalized } from "./text.ts";
 export {
   cleanNote,
   colourClosing,
@@ -481,3 +482,21 @@ export {
   monthsBetween,
   mostGridMonths,
 } from "./monthly-grid.ts";
+export {
+  type AllocatedFeature,
+  allocatedFeatureSchema,
+  type Allocation,
+  type AllocationChange,
+  allocationChangeSchema,
+  type AllocationDraft,
+  allocationDraftSchema,
+  type AllocationMonths,
+  allocationMonthsSchema,
+  type Allocations,
+  allocationSchema,
+  allocationsSchema,
+  changedSpans,
+  type MonthSpan,
+  percentageIn,
+  withChange,
+} from "./allocations.ts";

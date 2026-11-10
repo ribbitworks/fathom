@@ -82,6 +82,7 @@ import { recordEvents } from "./history.ts";
 import { bySubject, inForceOn, inForceOrLater } from "./in-force.ts";
 import { currentOn, notStarted } from "./people.ts";
 import { recordNaming } from "./records.ts";
+import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
 type Reader = Pick<Database, "select">;
@@ -111,9 +112,6 @@ export const featureTeamTier = (field: string): Tier =>
 // Everyone who sees the org chart sees a team's General details, whether or not they see people.
 const seesTeamField = (actor: Actor) => (field: string) =>
   featureTeamTier(field) === "general" || seesRestrictedDetails(actor);
-
-const textOrNull = (value: unknown): string | null =>
-  typeof value === "string" ? value : null;
 
 const membersOf = (team: Recorded | undefined): string[] =>
   Array.isArray(team?.members) ? team.members.map(String) : [];
@@ -429,7 +427,7 @@ function peopleDraftChanges(
     ...will.filter((one) => !was.includes(one)),
     ...(before?.leadId === after?.leadId
       ? []
-      : [textOrNull(before?.leadId), textOrNull(after?.leadId)].filter(
+      : [text(before?.leadId), text(after?.leadId)].filter(
           (one) => one !== null,
         )),
   ];
@@ -1170,7 +1168,7 @@ export async function updateFeatureTeam(
         ? change.leadId
         : removed.includes(String(team.leadId))
           ? null
-          : textOrNull(team.leadId);
+          : text(team.leadId);
     // A request giving only a day moves everything the draft changes to that day.
     const moving =
       change.from !== undefined &&
@@ -1206,11 +1204,9 @@ export async function updateFeatureTeam(
     );
     // A change of lead keeps its own day, set only by the edit that changes the lead, and held
     // under the new lead, or the old one when none replaces them.
-    const wasLead = textOrNull(before?.leadId);
+    const wasLead = text(before?.leadId);
     const setsLead =
-      moving ||
-      change.leadId !== undefined ||
-      leadId !== textOrNull(team.leadId);
+      moving || change.leadId !== undefined || leadId !== text(team.leadId);
     const leadChanges = setsLead && leadId !== wasLead;
     const [keptLeadDay] = Object.values(leadDatesOf(team));
     const leadDay = setsLead ? from : keptLeadDay;
@@ -1536,8 +1532,8 @@ export async function approveTeamsIn(
         .set(row)
         .where(eq(featureTeams.id, id));
     }
-    const leadId = textOrNull(team.leadId);
-    const wasLead = textOrNull(before?.leadId);
+    const leadId = text(team.leadId);
+    const wasLead = text(before?.leadId);
     if (leadId !== wasLead) {
       const [leadDay] = Object.values(leadDatesOf(team));
       leadRecords.push({ teamId: id, leadId, fromDate: leadDay ?? today });

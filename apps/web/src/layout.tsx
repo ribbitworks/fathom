@@ -10,7 +10,12 @@
 
 import { AboutBox, build } from "./about.tsx";
 import { AppMenu, MenuChoices } from "./app-menu.tsx";
-import type { AccountRole, PasswordRules, Permission } from "@fathom/shared";
+import {
+  type AccountRole,
+  draftingPermissions,
+  type PasswordRules,
+  type Permission,
+} from "@fathom/shared";
 import {
   Alert,
   AppShell,
@@ -453,10 +458,9 @@ export function Layout({
 }) {
   const queryClient = useQueryClient();
   // Those who may make drafts have unpublished changes to publish.
-  const makesDrafts =
-    permissions.includes("people:edit") ||
-    permissions.includes("configuration:edit") ||
-    permissions.includes("plan:edit");
+  const makesDrafts = draftingPermissions.some((permission) =>
+    permissions.includes(permission),
+  );
   const navigate = useNavigate();
   const router = useRouter();
   const pathname = useRouterState({

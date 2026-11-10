@@ -29,6 +29,7 @@ import { authRoutes, readActor } from "./routes/auth.ts";
 import { draftRoutes } from "./routes/drafts.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
 import { settingsRoutes } from "./routes/settings.ts";
+import { allocationRoutes } from "./routes/allocations.ts";
 import { effortRoutes } from "./routes/effort.ts";
 import { historyRoutes } from "./routes/history.ts";
 import { listRoutes } from "./routes/lists.ts";
@@ -211,6 +212,7 @@ export async function buildApp(options: AppOptions) {
   await app.register(greetingRoutes(options.data));
   await app.register(settingsRoutes(options.data));
   await app.register(effortRoutes(options.data));
+  await app.register(allocationRoutes(options.data));
   if (options.webRoot !== undefined) {
     await app.register(webRoutes(options.webRoot));
   }

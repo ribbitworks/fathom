@@ -55,6 +55,7 @@ import {
   wantsNoDraft,
   writeDraft,
 } from "./drafts.ts";
+import { allocationKind, allocationProblem } from "./allocation-kinds.ts";
 import { projectKinds } from "./project-kinds.ts";
 import { releaseKinds, releaseProblem } from "./release-kinds.ts";
 import {
@@ -91,6 +92,7 @@ type Reader = Pick<Database, "select">;
 export const recordKinds: readonly RecordKind[] = [
   ...releaseKinds,
   ...projectKinds,
+  allocationKind,
 ];
 
 // A record removed while another, as shown, still links to it, such as a customer a project names.
@@ -119,11 +121,11 @@ function linkedProblem(
 }
 
 // The rules across records of several kinds, checked for each change drafted, published, and
-// approved: each gives the first way the records break it, if any.
+// approved: each gives the first way the records break it, if any, the more telling first.
 const recordRules: readonly ((
   state: RecordsState,
   touched: readonly Touched[],
-) => string | undefined)[] = [linkedProblem, releaseProblem];
+) => string | undefined)[] = [allocationProblem, linkedProblem, releaseProblem];
 
 const ruleProblem = (state: RecordsState, touched: readonly Touched[]) =>
   recordRules
@@ -138,7 +140,8 @@ export const isRecordType = (type: string): type is RecordType =>
 
 const noRecord = "There is no such record; refresh to see the latest";
 const noDraft = "There is no such draft";
-const gone = "One of these drafts no longer exists; refresh to see the latest";
+export const gone =
+  "One of these drafts no longer exists; refresh to see the latest";
 
 // The table's id column, which every kind's table has.
 const idOf = (table: PgTable) => (table as unknown as { id: PgColumn }).id;

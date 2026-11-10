@@ -69,6 +69,7 @@ import {
   unseedListDrafts,
 } from "./list-drafts.ts";
 import { defaultPasswordSettings, passwordLength } from "@fathom/shared";
+import { seedAllocations, unseedAllocations } from "./allocations.ts";
 import { seedFeatures, unseedFeatures } from "./features.ts";
 import { seedProjects, unseedProjects } from "./projects.ts";
 import {
@@ -764,6 +765,9 @@ export async function seedCommand(
           "Added fictional customers, proposals, and projects with their milestones",
         );
       }
+      if (await seedAllocations(database, organization)) {
+        console.log("Added fictional allocations");
+      }
       const accounts = await seedAccounts(auth, database, password);
       for (const email of accounts) console.log(`Account ready: ${email}`);
       if (await seedDrafts(database, organization)) {
@@ -807,8 +811,10 @@ export async function seedCommand(
           `Discarded ${String(discardedLists)} drafts of lists and columns made by the personas`,
         );
       }
-      // Features before the release streams and feature teams they name, and projects and proposals
-      // before people, whom they name as owners.
+      // Allocations before the people, planned hires, and features they name, features before the
+      // release streams and feature teams they name, and projects and proposals before people, whom
+      // they name as owners.
+      await unseedAllocations(database, organization);
       const keptWithFeatures = await unseedFeatures(
         database,
         organization.featureTeams.map(({ id }) => id),

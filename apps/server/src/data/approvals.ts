@@ -9,6 +9,7 @@
 // needs roles that see every value in the drafts they approve or reject, and that approve drafts of
 // every area those drafts, and those approved with them, belong to. Neither can be undone.
 
+import { checkAllocationsAsked, removeAllocationsOf } from "./allocations.ts";
 import {
   type Database,
   databaseCodes,
@@ -87,6 +88,7 @@ import {
 } from "./list-approvals.ts";
 import {
   approveRecordDrafts,
+  kindOf,
   refuseRemovingNamedPeople,
   rejectRecordDrafts,
 } from "./records.ts";
@@ -323,6 +325,7 @@ async function approvePeopleIn(
   await refuseRemovingHiresPeople(transaction, removed);
   await refuseRemovingNamedPeople(transaction, removed);
   await refuseRemovingPeopleOnTeams(transaction, removed);
+  made.push(...(await removeAllocationsOf(transaction, "personId", removed)));
   await apply(transaction, wanted);
   await applyReporting(transaction, wanted, today);
   const unmarked = ids.filter(
@@ -344,6 +347,9 @@ async function approvePeopleIn(
   }
   return made;
 }
+
+const allocationIds = (asked: DraftsRequest): string[] =>
+  asked.records.flatMap(({ type, id }) => (type === "allocation" ? [id] : []));
 
 // Refuses deciding drafts of a kind whose area the actor's role does not approve.
 function refuseBeyondRole(
@@ -387,9 +393,10 @@ async function deciding(
     requirePermission(actor, "org-chart:view");
     requirePermission(actor, "people:view");
   }
-  // The plan's records, such as release streams, are seen with the plan or planning configuration.
-  if (asked.records.length > 0) {
-    requireAnyPermission(actor, ["plan:view", "configuration:view"]);
+  // The plan's records are each seen with the permissions their kind is read with, such as release
+  // streams with the plan or planning configuration.
+  for (const type of new Set(asked.records.map((record) => record.type))) {
+    requireAnyPermission(actor, kindOf(type).readWith);
   }
   await lockDrafts(transaction);
 }
@@ -414,6 +421,13 @@ export async function approveDrafts(
       }
       await checkHiresAsked(transaction, actor, requested.plannedHires);
       await checkTeamsAsked(transaction, actor, requested.featureTeams, today);
+      await checkAllocationsAsked(
+        transaction,
+        actor,
+        allocationIds(requested),
+        today,
+        "approve",
+      );
       const asked = await withUsedAcross(
         transaction,
         await withFills(transaction, actor, requested),
@@ -501,6 +515,13 @@ export async function rejectDrafts(
       asked.people.length > 0
         ? await seenAsked(transaction, actor, asked.people, today)
         : undefined;
+    await checkAllocationsAsked(
+      transaction,
+      actor,
+      allocationIds(asked),
+      today,
+      "reject",
+    );
     await refuseUsedAcross(transaction, asked);
     const made = await rejectRecordDrafts(transaction, asked.records, reason);
     if (asksForLists(asked)) {

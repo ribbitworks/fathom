@@ -59,6 +59,7 @@ export const recordTypeSchema = z.enum([
   "proposal",
   "project",
   "milestone",
+  "allocation",
 ]);
 
 export type RecordType = z.infer<typeof recordTypeSchema>;
@@ -190,6 +191,7 @@ export const approvePermissions = {
   proposal: "plan:approve",
   project: "plan:approve",
   milestone: "plan:approve",
+  allocation: "allocations:approve",
 } as const satisfies Record<DraftKind, Permission>;
 
 export type ApprovePermission = (typeof approvePermissions)[DraftKind];
@@ -202,6 +204,7 @@ export const approvedAreaNames: Record<ApprovePermission, string> = {
   "configuration:approve": "configuration",
   "releases:approve": "releases",
   "plan:approve": "the plan",
+  "allocations:approve": "allocations",
 };
 
 // Whether drafts are being approved or rejected.
@@ -251,6 +254,7 @@ export function kindsAsked(asked: DraftsRequest): DraftKind[] {
     proposal: records.has("proposal"),
     project: records.has("project"),
     milestone: records.has("milestone"),
+    allocation: records.has("allocation"),
   };
   // The kind is always one of the fixed list above.
   // eslint-disable-next-line security/detect-object-injection

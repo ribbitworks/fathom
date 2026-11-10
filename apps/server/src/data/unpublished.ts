@@ -14,7 +14,12 @@ import {
   drafts,
   unpublishedDrafts,
 } from "@fathom/db";
-import { type DraftKind, hireCalled, type Unpublished } from "@fathom/shared";
+import {
+  type DraftKind,
+  draftingPermissions,
+  hireCalled,
+  type Unpublished,
+} from "@fathom/shared";
 import { and, asc, eq, max } from "drizzle-orm";
 import {
   type Actor,
@@ -92,13 +97,7 @@ type Row = typeof unpublishedDrafts.$inferSelect;
 
 // Anyone who may make drafts may publish or discard their own changes.
 const requireDrafting = (actor: Actor) => {
-  requireAnyPermission(actor, [
-    "people:edit",
-    "configuration:edit",
-    "plan:edit",
-    "feature-teams:propose",
-    "feature-teams:edit",
-  ]);
+  requireAnyPermission(actor, draftingPermissions);
 };
 
 // The user's unpublished drafts, in the order they were made.

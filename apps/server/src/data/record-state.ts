@@ -59,6 +59,21 @@ export interface RecordKind {
   added?: (rows: ReadonlyMap<string, Recorded>) => Recorded;
   // Whether Fathom keeps the record itself, so nobody can change or remove it through a draft.
   keptByFathom?: (state: RecordsState, id: string) => boolean;
+  // How the change history names a record with no name of its own: from the records its addition
+  // named in these fields, each as the history names it, such as an allocation by who it puts on
+  // which feature.
+  historyName?: {
+    fields: readonly string[];
+    name: (
+      named: Readonly<Record<string, string | undefined>>,
+    ) => string | undefined;
+  };
+  // The field naming the person a record is about, so the history hides the record from readers who
+  // do not see them yet.
+  aboutPerson?: string;
+  // A field's value as the history says it, for a field it cannot show as it is kept, such as an
+  // allocation's months.
+  valueInWords?: (field: string, value: unknown) => string[] | undefined;
   // What approving does beyond a record's own row, once the row is added and before it is removed.
   onAdded?: (transaction: Transaction, id: string) => Promise<void>;
   onRemoving?: (transaction: Transaction, id: string) => Promise<void>;

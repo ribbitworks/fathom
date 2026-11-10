@@ -8,6 +8,10 @@ const notPlain = /[\p{Cc}\u200E\u200F\u202A-\u202E\u2066-\u2069]/u;
 
 export const isPlainText = (text: string): boolean => !notPlain.test(text);
 
+// Text starting with a capital letter, as a sentence does.
+export const capitalized = (text: string): string =>
+  `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
+
 // Orders records by their names, ignoring letter case.
 export const byName = (
   first: { name: string },

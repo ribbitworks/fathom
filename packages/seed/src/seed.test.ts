@@ -820,6 +820,7 @@ describe("the seed command", () => {
       "Added fictional release streams, with their cycles and releases",
       "Added fictional features",
       "Added fictional customers, proposals, and projects with their milestones",
+      "Added fictional allocations",
       ...addresses.map((email) => `Account ready: ${email}`),
       "Added drafts made by the personas",
       "Added drafts of planned hires made by the personas",

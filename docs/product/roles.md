@@ -1,7 +1,7 @@
 # Fathom — Roles
 
 **Status:** Starting roles, with open points marked **proposal**
-**Last updated:** 2026-11-08
+**Last updated:** 2026-11-09
 
 The roles Fathom starts with, for controlling what each user can see, edit, and approve, built on the access decisions in the [Decisions Log](decisions.md). Roles are editable sets of permissions, as the Decisions Log records, decided by the owner on 2026-11-04, so these are a starting set: they can be edited and copied to make new roles, within the safeguards below, and each keeps what it grants today until it is changed. An account holds one or more roles, any roles, starting or made later, one of them its default, and acts as one of them at a time: what a user may do reads from the role they act as alone, never from their roles added up. Signing in acts as the role last chosen on that browser, or else the default, and a user switches role from their account's menu, as the [Decisions Log](decisions.md#people-and-privacy) records, decided by the owner on 2026-11-07. There is one starting role for each persona, granting what that persona's roles granted together when accounts held several building-block roles, decided by the owner on 2026-11-06. The owner has confirmed that Engineering Managers and the Executive see Restricted data, that the Engineering Director plans, and the split between planning the plan and planning allocations. Items marked **proposal** are not yet agreed.
 
@@ -36,6 +36,7 @@ The roles Fathom starts with, for controlling what each user can see, edit, and 
 | Lists of choices, and the columns added to People and Features (everyone with View Plan also sees the columns on Features and their values) | None | None | None | View lists, decided by the owner on 2026-11-01 | None | Edit | Edit | View lists | None | None |
 | Draft rows of the data the role sees, made by editing it | View | Edit | Edit | Edit | Edit | Edit | Edit | View (**proposal**: none) | Edit | None |
 | Approving drafts of the plan: features, projects, proposals, and the roadmap | None | Approve | None | Approve | None | Approve | None | None | None | None |
+| Approving drafts of allocations (decided by the owner on 2026-11-09) | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of releases, release streams, and cycle patterns | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of people, teams, and reporting lines | None | None | None | Approve | None | Approve | None | None | None | None |
 | Approving drafts of planned hires | None | None | None | Approve | None | Approve | None | None | None | None |

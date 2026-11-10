@@ -17,6 +17,7 @@ import {
   inChunks,
   people,
 } from "@fathom/db";
+import { monthOf } from "@fathom/shared";
 import {
   isLink,
   type FieldType,
@@ -582,6 +583,21 @@ export interface PeopleRead {
 }
 
 const byName = new Intl.Collator("en", { sensitivity: "base" });
+
+// A person's start and end dates, as the database keeps them.
+export type Employment = {
+  startDate: string | null;
+  endDate: string | null;
+};
+
+// The first and last months a person is employed in, as far as their dates set them.
+export const employedMonths = ({
+  startDate,
+  endDate,
+}: Employment): { first?: string; last?: string } => ({
+  ...(startDate === null ? {} : { first: monthOf(startDate) }),
+  ...(endDate === null ? {} : { last: monthOf(endDate) }),
+});
 
 // Whether a person has a start date still to come on a day.
 export const notStarted = (person: Recorded, today: string): boolean =>

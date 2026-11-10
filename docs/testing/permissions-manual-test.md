@@ -590,7 +590,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 
 **Account:** Team Member, `team.member@fathom.test`, changed by P2 from the Administrator, the account PERM-25 ended with.
 
-**Preconditions:** Team Member granted only **View** and **Edit** on **Allocations**, and **Draft** on **Drafts** (P2), signed in with this account.
+**Preconditions:** Team Member granted only **View** on **Allocations** and **Draft** on **Drafts** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The Help **Roles** page is open. The menu shows **Capacity** tagged **Later** in the **People** section, and the **Help** section, and nothing else. There is no Publish button.

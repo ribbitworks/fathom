@@ -106,7 +106,7 @@ describe("what a role allows", () => {
 
   it("names every permission one could do something with, and is content with any of them", () => {
     expect(consequences(["drafts:approve-own"]).ineffective).toEqual([
-      "Approve Their own drafts does nothing without Approve Plan, Approve Releases, Approve People, Approve Hiring plan, Approve Feature teams, or Approve Configuration.",
+      "Approve Their own drafts does nothing without Approve Plan, Approve Releases, Approve Allocations, Approve People, Approve Hiring plan, Approve Feature teams, or Approve Configuration.",
     ]);
     expect(
       consequences(["drafts:approve-own", "releases:approve", "plan:view"])

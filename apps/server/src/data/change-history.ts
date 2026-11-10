@@ -11,6 +11,7 @@ import {
   changeSets,
   type Database,
   drafts,
+  features,
   fieldOfValue,
   inChunks,
   listItems,
@@ -69,6 +70,7 @@ import { readToday } from "./settings.ts";
 import { personTier } from "./people.ts";
 import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
+import type { RecordKind } from "./record-state.ts";
 import { recordKinds } from "./records.ts";
 import { readKeptViewChanges, viewTiersNow } from "./views.ts";
 
@@ -153,6 +155,16 @@ const referencesOne = (field: string) =>
     field,
   );
 
+// The plan's kinds of record, by type.
+const planKindOf = new Map<string, RecordKind>(
+  recordKinds.map((kind) => [kind.type, kind]),
+);
+
+// A field of a record named by the records its addition named, which names one of them.
+const namesPart = (row: { recordType: string; field: string }) =>
+  planKindOf.get(row.recordType)?.historyName?.fields.includes(row.field) ===
+  true;
+
 // A feature team's members are named, person by person.
 const namesMembers = (row: { recordType: string; field: string }) =>
   row.recordType === "feature-team" && row.field === "members";
@@ -188,6 +200,7 @@ function referencedIds(row: StoredChange): string[] {
   }
   if (
     referencesOne(row.field) ||
+    namesPart(row) ||
     (row.recordType === "planned-hire" && row.field === "filledBy")
   ) {
     return values.filter((value) => typeof value === "string");
@@ -425,12 +438,17 @@ function shown(
     return value === null ? null : named(strings(value));
   }
   if (row.field === "definition") return null;
+  const words = planKindOf
+    .get(row.recordType)
+    ?.valueInWords?.(row.field, value);
+  if (words !== undefined) return words;
   if (isNoteField(row.recordType, row.field)) {
     return typeof value === "string" ? notePlainText(value) : null;
   }
   if (
     referencesOne(row.field) ||
     referencesPlan(row) ||
+    namesPart(row) ||
     (row.recordType === "planned-hire" && row.field === "filledBy")
   ) {
     return typeof value === "string" ? (name(value) ?? null) : null;
@@ -569,6 +587,108 @@ async function visibleRows(
     return seen ? [{ row, tier }] : [];
   });
 }
+
+// The records named in the parts of each record changed among the rows whose kind is named by
+// them, by field, from the change that added it, since later changes record only what changed.
+async function partsOf(
+  database: Database,
+  rows: readonly StoredChange[],
+): Promise<Map<string, Record<string, string>>> {
+  const parts = new Map<string, Record<string, string>>();
+  for (const kind of recordKinds) {
+    if (kind.historyName === undefined) continue;
+    const ids = [
+      ...new Set(
+        rows
+          .filter((row) => row.recordType === kind.type)
+          .map((row) => row.recordId),
+      ),
+    ];
+    for (const chunk of inChunks(ids)) {
+      for (const { recordId, field, oldValue, newValue } of await database
+        .select({
+          recordId: changes.recordId,
+          field: changes.field,
+          oldValue: changes.oldValue,
+          newValue: changes.newValue,
+        })
+        .from(changes)
+        .where(
+          and(
+            eq(changes.recordType, kind.type),
+            inArray(changes.field, [...kind.historyName.fields]),
+            inArray(changes.recordId, chunk),
+          ),
+        )) {
+        // Each part is recorded once, as an identifier, when the record is added or removed.
+        parts.set(recordId, {
+          ...parts.get(recordId),
+          [field]: String(newValue ?? oldValue),
+        });
+      }
+    }
+  }
+  return parts;
+}
+
+// Names each record named by its parts, as its kind puts their names together, each part named as
+// the history names it: a person or feature by its latest name, a planned hire as nameHires does,
+// and a project's general feature, which has no name of its own, by its project's.
+async function nameByParts(
+  database: Database,
+  actor: Actor,
+  rows: readonly StoredChange[],
+  parts: ReadonlyMap<string, Record<string, string>>,
+  facts: Facts,
+): Promise<void> {
+  const named = () =>
+    [
+      ...new Set(
+        [...parts.values()].flatMap((recorded) => Object.values(recorded)),
+      ),
+    ].filter((id) => !facts.names.has(id));
+  await readFacts(database, actor, named(), facts);
+  await nameHires(database, actor, named(), facts);
+  const generals = new Map<string, string>();
+  for (const chunk of inChunks(named())) {
+    for (const { id, projectId } of await database
+      .select({ id: features.id, projectId: features.generalForProjectId })
+      .from(features)
+      .where(inArray(features.id, chunk))) {
+      // Only a general feature goes unnamed by the history.
+      generals.set(id, String(projectId));
+    }
+  }
+  await readFacts(database, actor, [...generals.values()], facts);
+  for (const row of rows) {
+    const naming = planKindOf.get(row.recordType)?.historyName;
+    const recorded = parts.get(row.recordId);
+    if (naming === undefined || recorded === undefined) continue;
+    const name = naming.name(
+      Object.fromEntries(
+        Object.entries(recorded).map(([field, partId]) => [
+          field,
+          facts.names.get(generals.get(partId) ?? partId),
+        ]),
+      ),
+    );
+    if (name !== undefined) facts.names.set(row.recordId, name);
+  }
+}
+
+// The person each record changed among the rows is about, for kinds that name one.
+const personAbout = (
+  row: StoredChange,
+  parts: ReadonlyMap<string, Record<string, string>>,
+): string | undefined => {
+  const field = planKindOf.get(row.recordType)?.aboutPerson;
+  // Every record of such a kind recorded its parts when it was added.
+  return field === undefined
+    ? undefined
+    : new Map(
+        Object.entries(parts.get(row.recordId) as Record<string, string>),
+      ).get(field);
+};
 
 // Which of the people and planned hires given are people who have not started yet: by their start
 // date when live, by the draft adding them when only drafted, and otherwise by the last start date
@@ -786,6 +906,8 @@ async function readBatch(
     ],
     facts,
   );
+  const parts = await partsOf(database, rows);
+  await nameByParts(database, actor, rows, parts, facts);
   // Lists named only through their choices and columns.
   await readFacts(
     database,
@@ -794,7 +916,8 @@ async function readBatch(
     facts,
   );
   // Readers who do not see Restricted details see nobody who has not started, as People hides them:
-  // neither a person's own changes nor a hire's manager or filler naming them.
+  // neither a person's own changes, nor records about them, nor a hire's manager or filler naming
+  // them.
   const restricted = seesRestrictedDetails(actor);
   const hidden = restricted
     ? new Set<string>()
@@ -804,6 +927,8 @@ async function readBatch(
           ...new Set(
             rows.flatMap((row) => {
               if (row.recordType === "person") return [row.recordId];
+              const about = personAbout(row, parts);
+              if (about !== undefined) return [about];
               if (namesMembers(row)) {
                 return [row.oldValue, row.newValue].flatMap(strings);
               }
@@ -822,7 +947,9 @@ async function readBatch(
   const seenRows = (
     await visibleRows(database, actor, rows, facts, tierNow)
   ).filter(
-    ({ row }) => !(row.recordType === "person" && hidden.has(row.recordId)),
+    ({ row }) =>
+      !(row.recordType === "person" && hidden.has(row.recordId)) &&
+      !hidden.has(personAbout(row, parts) ?? ""),
   );
   // A change to a team's members or lead that only those the reader does not see are part of shows
   // nothing to them, and neither does the rejection cleared with it.

@@ -9,6 +9,7 @@
 // those who see its column's tier. Every change is a draft, as drafts.ts sets out, and changing the
 // hiring plan is recorded in the access history, without naming the hire.
 
+import { refuseFillingAllocated, removeAllocationsOf } from "./allocations.ts";
 import {
   type Database,
   drafts,
@@ -109,7 +110,7 @@ import {
   numbersOf,
   valuesOf,
 } from "./people.ts";
-import { notMarked, readManagers, reassignReports } from "./reporting.ts";
+import { notMarked, readManagers, reassignReports, text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
 type Reader = Pick<Database, "select">;
@@ -122,6 +123,16 @@ const toBeRemoved =
 const noDraft =
   "One of these planned hires has no draft; refresh to see the latest";
 const duplicateId = "Someone already has that ID";
+
+// The month a planned hire is expected, from its person's start date once filled, or its target
+// date, or, with neither, the current month, so it is counted from now.
+export const expectedMonth = (
+  {
+    fillerStart,
+    targetDate,
+  }: { fillerStart: string | null; targetDate: string | null },
+  today: string,
+): string => monthOf(fillerStart ?? targetDate ?? today);
 
 export const hireFields = [
   "name",
@@ -278,15 +289,12 @@ export function recordedHire(
   };
 }
 
-const textOrNull = (value: unknown): string | null =>
-  typeof value === "string" ? value : null;
-
 // The hire's ID, as the ID column shows it: its requisition, or its temporary ID.
 export function hireIdOf(hire: Recorded): {
   requisition: string | null;
   temporaryId: string | null;
 } {
-  const requisition = textOrNull(hire.requisition);
+  const requisition = text(hire.requisition);
   return {
     requisition,
     temporaryId:
@@ -300,7 +308,7 @@ export function hireIdOf(hire: Recorded): {
 function nameOfHire(hire: Recorded, position: string | undefined): string {
   const { requisition, temporaryId: temporary } = hireIdOf(hire);
   return hireCalled(
-    textOrNull(hire.name),
+    text(hire.name),
     String(requisition ?? temporary),
     position,
   );
@@ -519,9 +527,8 @@ export async function readHiresIn(
       ];
     }),
   );
-  const thisMonth = monthOf(today);
   const hires = versions.flatMap(({ id, before, draft, hire }): Hire[] => {
-    const filledBy = textOrNull(before?.filledBy);
+    const filledBy = text(before?.filledBy);
     const filler = filledBy === null ? undefined : named.get(filledBy);
     // A filled hire gives way to its person once they have started, or to readers who see them; one
     // only drafted as filled stays until the fill is approved.
@@ -534,25 +541,27 @@ export async function readHiresIn(
     ) {
       return [];
     }
-    const managerId = textOrNull(hire.managerId);
+    const managerId = text(hire.managerId);
     const managingHire =
       managerId === null ? undefined : hireManagers.get(managerId);
     const manager = managerId === null ? undefined : named.get(managerId);
     const shownPerson =
       manager !== undefined && (restricted || manager.started);
     const shown = managingHire !== undefined || shownPerson;
-    const targetDate = textOrNull(hire.targetDate);
-    const expectedOn = filler?.startDate ?? targetDate;
+    const targetDate = text(hire.targetDate);
     return [
       {
         id,
-        name: textOrNull(hire.name),
+        name: text(hire.name),
         ...hireIdOf(hire),
         ...(seesPositions ? { positionId: String(hire.positionId) } : {}),
         managerId: shown ? managerId : null,
         managerName: managingHire ?? (shownPerson ? manager.name : null),
         isManager: hire.isManager === true,
-        expected: expectedOn === null ? thisMonth : monthOf(expectedOn),
+        expected: expectedMonth(
+          { fillerStart: filler?.startDate ?? null, targetDate },
+          today,
+        ),
         ...(seesStates ? { stateId: String(hire.stateId) } : {}),
         values: shownValues(valuesOf(hire)),
         links: shownValues(Object.entries(linksOf(hire))),
@@ -576,7 +585,7 @@ export async function readHiresIn(
     hire: Recorded,
     filledBy: string | null,
   ): Pick<Hire, "filler"> {
-    const personId = textOrNull(hire.filledBy);
+    const personId = text(hire.filledBy);
     if (personId === null || personId === filledBy) return {};
     return { filler: restricted ? personId : null };
   }
@@ -622,7 +631,7 @@ export async function readHiresIn(
           // eslint-disable-next-line security/detect-object-injection
           typeOf(column).showLive(liveValues, fieldId, before[field]);
         }
-        if (field === "name") liveValues.name = textOrNull(before.name);
+        if (field === "name") liveValues.name = text(before.name);
         if (field === "requisition") {
           Object.assign(liveValues, hireIdOf(before));
         }
@@ -630,11 +639,11 @@ export async function readHiresIn(
           liveValues.positionId = String(before.positionId);
         }
         if (field === "targetDate") {
-          liveValues.targetDate = textOrNull(before.targetDate);
+          liveValues.targetDate = text(before.targetDate);
         }
         if (field === "stateId") liveValues.stateId = String(before.stateId);
         if (field === "managerId") {
-          liveValues.managerId = textOrNull(before.managerId);
+          liveValues.managerId = text(before.managerId);
         }
         if (field === "isManager") {
           liveValues.isManager = before.isManager === true;
@@ -996,7 +1005,7 @@ async function idAsChanged(
   hire: Recorded,
   requisition: string | null | undefined,
 ): Promise<Pick<Recorded, "requisition" | "temporaryNumber">> {
-  const current = textOrNull(hire.requisition);
+  const current = text(hire.requisition);
   if (requisition === undefined || requisition === current) {
     return {
       requisition: current,
@@ -1756,8 +1765,10 @@ export async function approveHiresIn(
       removed.push(id);
       continue;
     }
-    // Whoever fills it may have been given an end date that has passed since the fill was drafted.
+    // Whoever fills it may have been given an end date that has passed since the fill was drafted,
+    // and the hire allocations since, which filling can't move yet.
     if (unfilled(before ?? {}) && typeof hire.filledBy === "string") {
+      await refuseFillingAllocated(transaction, id);
       const [left] = await transaction
         .select({ name: people.preferredName })
         .from(people)
@@ -1777,16 +1788,16 @@ export async function approveHiresIn(
       if (peoplesMeaning(state?.meaning)) throw new ConflictError(hiredState);
     }
     const row = {
-      name: textOrNull(hire.name),
-      requisition: textOrNull(hire.requisition),
+      name: text(hire.name),
+      requisition: text(hire.requisition),
       temporaryNumber:
         typeof hire.temporaryNumber === "number" ? hire.temporaryNumber : null,
       positionId: String(hire.positionId),
-      targetDate: textOrNull(hire.targetDate),
+      targetDate: text(hire.targetDate),
       stateId: String(hire.stateId),
-      ...managerColumns(textOrNull(hire.managerId)),
+      ...managerColumns(text(hire.managerId)),
       isManager: hire.isManager === true,
-      filledBy: textOrNull(hire.filledBy),
+      filledBy: text(hire.filledBy),
     };
     if (before === undefined) {
       await transaction.insert(plannedHires).values({ id, ...row });
@@ -1814,6 +1825,9 @@ export async function approveHiresIn(
   if (await hiresReportTo(transaction, unmarked, { drafted: false })) {
     throw new ConflictError(reassignReports);
   }
+  made.push(
+    ...(await removeAllocationsOf(transaction, "plannedHireId", removed)),
+  );
   for (const chunk of inChunks(removed)) {
     await transaction
       .delete(plannedHires)

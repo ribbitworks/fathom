@@ -390,12 +390,13 @@ describe("the grid of permissions", () => {
     });
     const area = (name: string) =>
       within(grid).getByText(name).closest("td")?.textContent;
-    expect(area("Allocations")).toBe("Allocations, Not built yet");
+    expect(area("Allocations")).toBe("Allocations");
     expect(area("Feature teams")).toBe("Feature teams");
     expect(area("Drafts")).toBe("Drafts, Not built yet");
     expect(area("Plan")).toBe("Plan");
     expect(area("Releases")).toBe("Releases");
-    expect(box(dialog, "Edit Allocations, not built yet")).toBeDefined();
+    expect(box(dialog, "Draft Drafts, not built yet")).toBeDefined();
+    expect(box(dialog, "Approve Allocations")).toBeDefined();
     expect(box(dialog, "Approve Plan")).toBeDefined();
     expect(box(dialog, "Approve Releases")).toBeDefined();
     expect(
@@ -417,18 +418,22 @@ describe("the summary of what a role allows", () => {
     expect(summaryLines(dialog, "Cannot")).toEqual(
       expect.arrayContaining([
         "The Capacity page does not appear., Not built yet",
-        `${permissionDescriptions["allocations:view"].without}, Not built yet`,
+        `${permissionDescriptions["drafts:submit"].without}, Not built yet`,
         "The People page does not appear.",
       ]),
     );
     // When
-    await userEvent.click(box(dialog, "Edit Allocations, not built yet"));
+    await userEvent.click(box(dialog, "Edit Allocations"));
+    await userEvent.click(box(dialog, "Draft Drafts, not built yet"));
     // Then
     expect(summaryLines(dialog, "Pages its holders see")).toContain(
       "Capacity, Not built yet",
     );
-    expect(summaryLines(dialog, "Can")).toContain(
-      `${permissionDescriptions["allocations:edit"].allows}, Not built yet`,
+    expect(summaryLines(dialog, "Can")).toEqual(
+      expect.arrayContaining([
+        permissionDescriptions["allocations:edit"].allows,
+        `${permissionDescriptions["drafts:submit"].allows}, Not built yet`,
+      ]),
     );
     expect(summaryLines(dialog, "Cannot")).toContain(
       "The People page does not appear.",
@@ -833,7 +838,7 @@ describe("confirming a change to what is not built yet", () => {
       "Edit Fictional Auditors",
       "Edit Fictional Auditors",
     );
-    await userEvent.click(box(dialog, "Edit Allocations, not built yet"));
+    await userEvent.click(box(dialog, "Edit Allocations"));
     // When
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     // Then
@@ -847,7 +852,7 @@ describe("confirming a change to what is not built yet", () => {
           .parentElement?.querySelectorAll("li") ?? []),
       ].map((item) => item.textContent);
     expect(lines("Gains")).toEqual([
-      `${permissionDescriptions["allocations:edit"].allows}, Not built yet`,
+      permissionDescriptions["allocations:edit"].allows,
     ]);
     expect(lines("Loses")).toEqual([
       `${permissionDescriptions["drafts:submit"].without}, Not built yet`,
@@ -948,7 +953,7 @@ describe("restoring a starting role", () => {
         .value,
     ).toBe(teamMemberRole.description);
     expect(box(dialog, "View Plan").checked).toBe(true);
-    expect(box(dialog, "View Allocations, not built yet").checked).toBe(true);
+    expect(box(dialog, "View Allocations").checked).toBe(true);
     expect(box(dialog, "View Org chart").checked).toBe(true);
     expect(box(dialog, "View Change history").checked).toBe(false);
     expect(box(dialog, "View People").checked).toBe(false);

@@ -3,7 +3,19 @@
 // Tests for plain text, as Fathom keeps names and a link's text.
 
 import { describe, expect, it } from "vitest";
-import { byName, isPlainText } from "./text.ts";
+import { byName, capitalized, isPlainText } from "./text.ts";
+
+describe("capitalized", () => {
+  it("starts text with a capital letter, leaving the rest as it is", () => {
+    expect(capitalized("the feature Offline Sync")).toBe(
+      "The feature Offline Sync",
+    );
+  });
+
+  it("leaves empty text empty", () => {
+    expect(capitalized("")).toBe("");
+  });
+});
 
 describe("byName", () => {
   it("orders by name, ignoring letter case", () => {

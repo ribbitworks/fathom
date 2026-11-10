@@ -106,18 +106,37 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-02.
 
-**Preconditions:** As ROLE-02.
+**Preconditions:** Signed in with this account. **Roles** page open from the left-hand menu.
 
 - [ ] **Step 1.** Open the **Project Manager** role (P1).
-  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid. The ticked boxes are **View**, **Approve** and **Edit** on **Plan**, with **View** greyed; **Edit** on **Features**; **Approve** on **Releases**; **View** on **Allocations**; **View** and **Approve** on **People**; **View** on **Org chart**; **View** and **Approve** on **Hiring plan**; **Approve** on **Feature teams**; **Draft** on **Drafts**; **View** and **Approve** on **Configuration**; and **View** on **Change history**. Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
+  - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid, with these boxes ticked:
+    - **Plan:** **View**, greyed, **Approve** and **Edit**
+    - **Features:** **Edit**
+    - **Releases:** **Approve**
+    - **Allocations:** **View** and **Approve**
+    - **People:** **View** and **Approve**
+    - **Org chart:** **View**
+    - **Hiring plan:** **View** and **Approve**
+    - **Feature teams:** **Approve**
+    - **Drafts:** **Draft**
+    - **Configuration:** **View** and **Approve**
+    - **Change history:** **View**
+    - **Features**, **Releases**, **Team colours**, **Feature teams**, **Drafts** and **Their own drafts** have no box under **View**.
+    - Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Area** column, and the lines under the grid.
-  - **Expected:** **Allocations** and **Drafts** each carry a small grey **Not built yet** tag. No other area is tagged. A line under the grid reads **Fathom doesn't have what is marked Not built yet. A role can grant it now, and it works once it is built.**
+  - **Expected:** **Drafts** carries a small grey **Not built yet** tag. No other area is tagged. A line under the grid reads **Fathom doesn't have what is marked Not built yet. A role can grant it now, and it works once it is built.**
   - **Notes:**
 
 - [ ] **Step 3.** Read the summary.
-  - **Expected:** **Pages its holders see** lists Overview, Projects, Features, Releases, People, Org chart, Drafts, Capacity, Lists and Change history, with Capacity tagged **Not built yet**. **Can** names seeing allocations and making drafts of changes to the plan and allocations, each tagged **Not built yet**, and changing features and estimates and approving feature teams, neither tagged, and seeing the plan, changing the plan, approving drafts of the plan, approving drafts of releases, seeing people, approving drafts of people, seeing the org chart, seeing the hiring plan, approving drafts of planned hires, seeing configuration, approving drafts of configuration, and seeing the change history. Under **Cannot**, **Cannot change allocations.** is tagged **Not built yet**, and **Cannot propose feature teams.** and **Cannot change feature teams.** are not. **Cannot** includes **Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**, with the tier colours, and not **The People page does not appear.**
+  - **Expected:** The summary reads:
+    - **Pages its holders see:** Overview, Projects, Features, Releases, People, Org chart, Drafts, Capacity, Lists and Change history, with Capacity tagged **Not built yet**.
+    - **Can**, tagged **Not built yet:** making drafts of changes to the plan and allocations.
+    - **Can**, not tagged: seeing the plan, changing the plan, approving drafts of the plan, changing features and estimates, approving drafts of releases, seeing allocations, approving drafts of allocations, seeing people, approving drafts of people, seeing the org chart, seeing the hiring plan, approving drafts of planned hires, approving feature teams, seeing configuration, approving drafts of configuration, and seeing the change history.
+    - **Cannot**, not tagged: **Cannot change allocations.**, **Cannot propose feature teams.** and **Cannot change feature teams.**
+    - **Cannot** also includes, with the tier colours: **Restricted details are hidden wherever they appear, and people who haven't started yet aren't listed.** and **Confidential data is hidden wherever it appears.**
+    - **Cannot** does not include **The People page does not appear.**
   - **Notes:**
 
 - [ ] **Step 4.** Look at the foot of the dialog.
@@ -128,7 +147,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-03.
 
-**Preconditions:** The **Project Manager** dialog open, as at the end of ROLE-03.
+**Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-03 left it.
 
 - [ ] **Step 1.** Tick **Edit** on the **Configuration** row.
   - **Expected:** **View** on the **Configuration** row stays ticked, becomes greyed, and cannot be unticked.
@@ -142,7 +161,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-04.
 
-**Preconditions:** The **Project Manager** dialog open, as at the end of ROLE-04.
+**Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-04 left it.
 
 - [ ] **Step 1.** Untick **View** on the **People** row, and watch the summary.
   - **Expected:** **People** under **Pages its holders see**, and the sentence about seeing people under **Can**, are struck through in red and fade away over about three seconds, then go. Under **Cannot**, **The People page does not appear.** appears in bold teal, turning to plain text after about three seconds. A yellow box at the top of the summary reads **View Hiring plan does nothing without View People.**
@@ -164,7 +183,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as ROLE-05. Steps 4 and 5 sign in as other accounts.
 
-**Preconditions:** The **Project Manager** dialog open, as at the end of ROLE-05.
+**Preconditions:** Signed in with this account. **Roles** page open, with the **Edit Project Manager** dialog still open, unsaved, as ROLE-05 left it.
 
 - [ ] **Step 1.** Tick **View** on the **Access history** row, and select **Save**.
   - **Expected:** The dialog says **This change affects 1 account.** and lists **Project Manager**, with its email address, and under **Gains**: **Sees the Access history page.** and a sentence about seeing the access history. **Back** is on the left, **Cancel** and **Save changes** on the right.
@@ -190,7 +209,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as the account ROLE-06 ended with.
 
-**Preconditions:** Signed in with this account, after ROLE-06.
+**Preconditions:** Signed in with this account, after ROLE-06. **Roles** page open from the left-hand menu.
 
 - [ ] **Step 1.** Open the **Project Manager** role (P1).
   - **Expected:** **Restore template** is turned on, since the role no longer matches its template.

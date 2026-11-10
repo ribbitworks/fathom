@@ -1,0 +1,172 @@
+// SPDX-License-Identifier: Apache-2.0
+
+// Allocations: one person or planned hire on one feature, kept as the percentage of a month that
+// takes effect from each month it changes, until the next, as the Decisions Log sets out, so a range
+// or ongoing work needs few records. A month with no percentage stops the allocation. Each person's
+// or planned hire's allocation to one feature is one draft, holding every month it changes.
+
+import { z } from "zod";
+import { addToMonth } from "./cycles.ts";
+import { monthSchema } from "./days.ts";
+import { draftActionSchema, draftShape, heldBySchema } from "./drafts.ts";
+import { meaningSchema } from "./lists.ts";
+
+// The percentages of a month offered when allocating; filling a planned hire can make others, such
+// as 35%, by adding two together.
+export const allocationPercentages = [10, 25, 50, 75, 90, 100] as const;
+
+// A whole month, the most one allocation can hold.
+const wholeMonth = 100;
+
+const keptPercentage = z.number().int().min(1).max(wholeMonth);
+
+// The month each percentage takes effect from, by month; null stops the allocation.
+export const allocationMonthsSchema = z.record(
+  monthSchema,
+  keptPercentage.nullable(),
+);
+
+export type AllocationMonths = z.infer<typeof allocationMonthsSchema>;
+
+// A change to one allocation: a percentage, or none to stop it, from a month, until a month or with
+// no end.
+export const allocationChangeSchema = z
+  .object({
+    personId: z.uuid().optional(),
+    plannedHireId: z.uuid().optional(),
+    featureId: z.uuid(),
+    percentage: z.literal(allocationPercentages).nullable(),
+    from: monthSchema,
+    to: monthSchema.optional(),
+  })
+  .refine(
+    ({ personId, plannedHireId }) =>
+      (personId === undefined) !== (plannedHireId === undefined),
+    "Choose a person or a planned hire",
+  )
+  .refine(
+    ({ from, to }) => to === undefined || from <= to,
+    "Choose a last month from the first month on",
+  );
+
+export type AllocationChange = z.infer<typeof allocationChangeSchema>;
+
+// The percentage in force in a month: the last given from then or before, or none.
+export function percentageIn(
+  months: AllocationMonths,
+  month: string,
+): number | null {
+  const from = Object.keys(months)
+    .filter((key) => key <= month)
+    .sort()
+    .at(-1);
+  // The key is one of the allocation's own months.
+  // eslint-disable-next-line security/detect-object-injection
+  return from === undefined ? null : (months[from] ?? null);
+}
+
+// The months in order, leaving out any that changes nothing, such as a stop with nothing before it.
+export function tidiedMonths(months: AllocationMonths): AllocationMonths {
+  const kept: [string, number | null][] = [];
+  for (const month of Object.keys(months).sort()) {
+    // The key is one of the allocation's own months.
+    // eslint-disable-next-line security/detect-object-injection
+    const percentage = months[month] ?? null;
+    if (percentage !== (kept.at(-1)?.[1] ?? null)) {
+      kept.push([month, percentage]);
+    }
+  }
+  return Object.fromEntries(kept);
+}
+
+// The months as a change makes them: its percentage from its first month, and, when it has a last
+// month, what was in force after that month from the month after it, so the months around keep
+// their percentage. Months it covers lose what they held.
+export function withChange(
+  months: AllocationMonths,
+  {
+    percentage,
+    from,
+    to,
+  }: Pick<AllocationChange, "percentage" | "from" | "to">,
+): AllocationMonths {
+  const after = to === undefined ? undefined : addToMonth(to, 1);
+  const kept = Object.entries(months).filter(
+    ([month]) => month < from || (after !== undefined && month >= after),
+  );
+  const resumed =
+    after === undefined || after in months
+      ? []
+      : [[after, percentageIn(months, after)] as const];
+  return tidiedMonths(
+    Object.fromEntries([...kept, [from, percentage], ...resumed]),
+  );
+}
+
+// A run of months, with no last month when it runs on, and the percentage in force through it.
+export interface MonthSpan {
+  from: string;
+  to?: string;
+  percentage: number | null;
+}
+
+// The runs of months whose percentage differs between two versions of an allocation, with the
+// percentage the second gives them.
+export function changedSpans(
+  before: AllocationMonths,
+  after: AllocationMonths,
+): MonthSpan[] {
+  const starts = [
+    ...new Set([...Object.keys(before), ...Object.keys(after)]),
+  ].sort();
+  return starts.flatMap((from, index): MonthSpan[] => {
+    const percentage = percentageIn(after, from);
+    if (percentage === percentageIn(before, from)) return [];
+    const next = starts[index + 1];
+    return [
+      next === undefined
+        ? { from, percentage }
+        : { from, to: addToMonth(next, -1), percentage },
+    ];
+  });
+}
+
+// A feature as allocations name it: a project's general feature by its project's name, and the
+// meaning of its status, which decides whether it counts toward over-allocation.
+export const allocatedFeatureSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  meaning: meaningSchema.nullable(),
+});
+
+export type AllocatedFeature = z.infer<typeof allocatedFeatureSchema>;
+
+export const allocationDraftSchema = z.object({
+  action: draftActionSchema,
+  months: allocationMonthsSchema,
+  ...draftShape,
+});
+
+export type AllocationDraft = z.infer<typeof allocationDraftSchema>;
+
+// An allocation as approved, with its draft, if any, beside it; one only drafted to be added has
+// no months yet.
+export const allocationSchema = z.object({
+  id: z.string(),
+  personId: z.string().nullable(),
+  plannedHireId: z.string().nullable(),
+  featureId: z.string(),
+  months: allocationMonthsSchema,
+  draft: allocationDraftSchema.optional(),
+  heldBy: heldBySchema,
+});
+
+export type Allocation = z.infer<typeof allocationSchema>;
+
+// The allocations the reader sees, and the features they name.
+export const allocationsSchema = z.object({
+  allocations: z.array(allocationSchema),
+  features: z.array(allocatedFeatureSchema),
+});
+
+export type Allocations = z.infer<typeof allocationsSchema>;

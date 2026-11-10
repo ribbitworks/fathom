@@ -1116,3 +1116,45 @@ export const featureTeamMemberships = fathomSchema.table(
     index("feature_team_memberships_person_index").on(table.personId),
   ],
 );
+
+// Allocations: one person or planned hire on one feature, as the Decisions Log sets out, holding the
+// percentage of a month that takes effect from each month it changes, such as {"2027-01": 50,
+// "2027-07": null}, in force until the next, where null stops it; the server checks its shape. A
+// person or planned hire has at most one allocation to a feature, so each is one draft. Removing a
+// person or planned hire removes their allocations, which the server records; a feature with
+// allocations is refused removal by name before the database refuses it.
+export const allocations = fathomSchema.table(
+  "allocations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    personId: uuid("person_id").references(() => people.id, {
+      onDelete: "cascade",
+    }),
+    plannedHireId: uuid("planned_hire_id").references(() => plannedHires.id, {
+      onDelete: "cascade",
+    }),
+    featureId: uuid("feature_id")
+      .notNull()
+      .references(() => features.id, { onDelete: "restrict" }),
+    months: jsonb("months").$type<Record<string, number | null>>().notNull(),
+  },
+  (table) => [
+    uniqueIndex("allocations_person_feature_index").on(
+      table.personId,
+      table.featureId,
+    ),
+    uniqueIndex("allocations_planned_hire_feature_index").on(
+      table.plannedHireId,
+      table.featureId,
+    ),
+    index("allocations_feature_index").on(table.featureId),
+    check(
+      "allocations_one_assignee",
+      sql`(${table.personId} IS NULL) <> (${table.plannedHireId} IS NULL)`,
+    ),
+    check(
+      "allocations_months_object",
+      sql`jsonb_typeof(${table.months}) = 'object'`,
+    ),
+  ],
+);

@@ -18,7 +18,6 @@ import {
   dayReadingMonth,
   knownColour,
   type MonthRange,
-  monthOf,
   monthsBetween,
   type TeamMonths,
 } from "@fathom/shared";
@@ -32,18 +31,17 @@ import {
   readDraftedMemberships,
 } from "./feature-teams.ts";
 import { bySubject, currentRecordOn, inForceOn } from "./in-force.ts";
-import { currentOn } from "./people.ts";
+import { currentOn, employedMonths, type Employment } from "./people.ts";
 import { readLines } from "./reporting.ts";
 import { readToday } from "./settings.ts";
 
-interface Employment {
-  startDate: string | null;
-  endDate: string | null;
+function employedIn(person: Employment, month: string): boolean {
+  const { first, last } = employedMonths(person);
+  return (
+    (first === undefined || first <= month) &&
+    (last === undefined || last >= month)
+  );
 }
-
-const employedIn = ({ startDate, endDate }: Employment, month: string) =>
-  (startDate === null || monthOf(startDate) <= month) &&
-  (endDate === null || monthOf(endDate) >= month);
 
 interface Membership {
   teamId: string;

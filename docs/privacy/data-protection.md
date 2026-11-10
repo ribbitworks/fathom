@@ -2,7 +2,7 @@
 
 **Status:** Draft for HR review
 **Prepared by:** Director, software organization
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-09
 
 ## Purpose of This Document
 
@@ -34,7 +34,7 @@ Each employee's preferred name, Employee ID, position, start and end dates, and 
 | Level (for example P1–P5, M1–M5, co-op) | To plan the experience mix on teams and the roles to hire | General |
 | Role on the team (for example Team Lead, Design Authority) | To see who leads and who holds design responsibility on each team | General |
 | Start date and end date | To avoid planning work for someone before they join or after they leave | Restricted |
-| Whether the employee has left, shown as their state, such as Hired or Left, in the organization's own words | To leave people who have left out of plans, filters, and counts | General, unless the hiring states list is marked otherwise; when they left stays Restricted |
+| Whether the employee has left, shown as their state, such as Hired or Left, in the organization's own words | To leave people who have left out of plans, filters, and counts | General, unless the hiring states list is marked otherwise; the day they left stays Restricted, though work assignments show the month they left once it has passed, and can hint at the month they started |
 | Past managers, and the date each change of manager took effect | To count each manager's team for past months | Restricted |
 | Which feature teams each person is on, and who leads them, month by month, past and planned | To see who works together when, and to plan ahead. The month someone first appears on a team can hint at the month they started | General |
 | The exact dates each person joins and leaves feature teams, and each feature lead changes | To count each feature team's capacity for past months, kept Restricted because a person's first feature team usually starts on their start date | Restricted |

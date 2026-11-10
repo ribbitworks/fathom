@@ -25,7 +25,6 @@ import {
   type OrgChartDraft,
   type OrgChartPerson,
   type PaletteColour,
-  monthOf,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { ForbiddenError, NotFoundError } from "../errors.ts";
@@ -40,7 +39,12 @@ import {
   readPersonDrafts,
   type Recorded,
 } from "./drafts.ts";
-import { hireIdOf, readHireDrafts, readLiveHires } from "./hires.ts";
+import {
+  expectedMonth,
+  hireIdOf,
+  readHireDrafts,
+  readLiveHires,
+} from "./hires.ts";
 import { inForceOn } from "./in-force.ts";
 import { currentOn, notStarted, restrictedPersonFields } from "./people.ts";
 import { readLines, readTeams, text } from "./reporting.ts";
@@ -407,7 +411,6 @@ function placeholderOf(
     const { requisition, temporaryId } = hireIdOf(hire);
     const shownId = String(requisition ?? temporaryId);
     const name = text(hire.name);
-    const expectedOn = fillerStart ?? text(hire.targetDate);
     return {
       kind: "planned-hire",
       preferredName: hireCalled(
@@ -419,7 +422,10 @@ function placeholderOf(
       positionId,
       position,
       managerId: managerShown(text(hire.managerId)),
-      expected: monthOf(expectedOn ?? today),
+      expected: expectedMonth(
+        { fillerStart: fillerStart ?? null, targetDate: text(hire.targetDate) },
+        today,
+      ),
     };
   };
 }

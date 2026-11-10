@@ -57,6 +57,7 @@ import {
 } from "./people.ts";
 import { milestonesOf } from "./project-kinds.ts";
 import { isGeneralFeature } from "./release-kinds.ts";
+import { text } from "./reporting.ts";
 import {
   fieldOfValue,
   inListOrder,
@@ -104,8 +105,6 @@ const extras = (
     ...recordHeldBy(state, type, id),
   };
 };
-
-const text = (value: unknown) => (typeof value === "string" ? value : null);
 
 // A draft of a feature, naming its added columns as a person's draft does.
 function featureDraftOf(draft: RecordDraftOut): FeatureDraft {

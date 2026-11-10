@@ -54,7 +54,11 @@ import type {
   TimeZoneSetting,
   Unpublished,
 } from "@fathom/shared";
-import { draftsRequestSchema } from "@fathom/shared";
+import {
+  type AllocationChange,
+  type Allocations,
+  draftsRequestSchema,
+} from "@fathom/shared";
 import { sql } from "drizzle-orm";
 import {
   type Actor,
@@ -64,6 +68,7 @@ import {
 } from "../access.ts";
 import { approveDrafts, rejectDrafts } from "./approvals.ts";
 import { changeEffortConversions, readEffortConversions } from "./effort.ts";
+import { changeAllocation, readAllocations } from "./allocations.ts";
 import { readGreeting } from "./greeting.ts";
 import * as columnDrafts from "./column-drafts.ts";
 import { readColumnsOut } from "./column-drafts.ts";
@@ -171,6 +176,9 @@ export interface DataAccess {
   projects: ProjectAccess;
   // Discarding and resubmitting drafts of the plan's records, whatever their kind.
   records: RecordAccess;
+  // Who is put on which feature, month by month, seen by those who see allocations, and changed as
+  // drafts by those who edit them.
+  allocations: AllocationAccess;
   // Undoes a change set the actor made, returning the change set that undid it.
   undo(actor: Actor, changeSetId: string): Promise<ChangeSetId>;
 }
@@ -283,6 +291,11 @@ export interface ProjectAccess {
     projectId: string,
     id: string,
   ): Promise<ChangeSetId>;
+}
+
+export interface AllocationAccess {
+  read(actor: Actor): Promise<Allocations>;
+  change(actor: Actor, change: AllocationChange): Promise<ChangeSetId>;
 }
 
 export interface RecordAccess {
@@ -626,6 +639,7 @@ const recordEditors: Record<RecordType, Permission> = {
   proposal: "plan:edit",
   project: "plan:edit",
   milestone: "plan:edit",
+  allocation: "allocations:edit",
 };
 
 function recordEditor(actor: Actor, type: RecordType): Actor {
@@ -972,6 +986,25 @@ export function createDataAccess(database: Database): DataAccess {
     lists: createListAccess(database),
     releases: createReleaseAccess(database),
     projects: createProjectAccess(database),
+    allocations: {
+      read: async (actor) => {
+        const { includedRestricted, ...read } = await readAllocations(
+          database,
+          actor,
+        );
+        // Allocations of someone who has not started tell of their start date, which is Restricted.
+        if (includedRestricted) {
+          await recordRestrictedView(
+            database,
+            actor.user.id,
+            await readTimeZone(database),
+          );
+        }
+        return read;
+      },
+      change: async (actor, change) =>
+        changeAllocation(database, recordEditor(actor, "allocation"), change),
+    },
     records: {
       discardDraft: async (actor, type, id) =>
         discardRecordDraft(
