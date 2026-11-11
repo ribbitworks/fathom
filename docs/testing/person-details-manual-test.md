@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Person Details
@@ -15,56 +15,32 @@ Verifies a person's or planned hire's details in the side panel beside the org c
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser with a mouse or trackpad.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
+- A mouse or trackpad.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Engineering Manager account:** `engineering.manager@fathom.test`, shown in Fathom as **Engineering Manager**. It holds the Engineering Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Manager:** `engineering.manager@fathom.test`
+- **Resource Planner:** `resource.planner@fathom.test`
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case. Fathom keeps running. This removes the seed data and every draft of it, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks and the Draft menu. This test adds:
+
 - **Details panel:** the panel that slides out on the right of the org chart or the **People** table, headed with a person's or planned hire's name, with the sections **Reporting**, **Details** and **Columns**, each a list of labels on the left and values on the right, and an **×** at its top right.
 - **New:** the button at the top right of the **People** page, which opens the details panel to add a person or planned hire.
-- **Change button:** a small pencil at the right of a value in the details panel, shown to accounts that may change people.
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a name or a value.
-- **Draft menu:** the menu opened by the **Draft** button above the chart or the table.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### DETAILS-01: A Person's Details Open Beside the Org Chart
 
@@ -308,7 +284,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Tanushree's note opens under her details, headed **Onboarding for Tanushree Patel-Singh** and showing her checklist; once Silje is chosen, nothing asks, the details show Silje, and the note panel closes.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Lorenza Thiel** under **Direct reports**, then run R1.
+- [ ] **Step 9.** Select **Lorenza Thiel** under **Direct reports**, then run Restore the Seed Data.
   - **Expected:** After the reload, her details show no **Draft** mark, and **Team name** reads **None**.
   - **Notes:**
 
@@ -338,7 +314,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** **Name** reads **Fictional test lead**, followed by a yellow dot and **Draft**, and the heading reads **Fictional test lead**. Its row in the table reads **Fictional test lead** too.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### DETAILS-11: A Person Is Added From New
 
@@ -362,7 +338,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The panel shows **Fictional Newcomer**, with **Software Engineer** under the heading, followed by a hollow yellow dot and **Draft: added**, and change buttons beside its values. Her row is in the table with the same mark.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### DETAILS-12: State Decides Whether a Person or a Planned Hire Is Added
 

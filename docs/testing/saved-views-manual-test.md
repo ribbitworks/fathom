@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-08"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Saved Views
@@ -15,61 +15,38 @@ Verifies how personal and shared views look and work on the People page: the Vie
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place and the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) added.
-- Roles as Fathom starts them: no change made to what any role grants in this clone's database.
-- A desktop web browser.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
 - A second browser, or a private window, for signing in as a second account while the first stays signed in.
-- Two terminals open at the repository root: the first runs Fathom ([R0](#r0-start-fathom)), the second the data commands ([R1](#r1-restore-the-seed-data)).
 
 ## Test Accounts
 
-[R1](#r1-restore-the-seed-data) creates these accounts, so they exist once it has run. They share one password, which it prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Second Workforce Administrator account:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Second Workforce Administrator:** `engineering.operations.manager.2@fathom.test`, shown in Fathom as **Second Engineering Operations Manager**
+- **Resource Planner:** `resource.planner@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address `pnpm dev` prints, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case. Fathom keeps running. This removes the seed data and every draft of it, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
 
 ## Terms
 
-- **Views menu:** the menu that opens from the last of the buttons after the search box above the People table. The button says **Views**, or the name of the view applied.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu and the column menu. This test adds:
+
 - **Main window:** the browser window the test starts in.
 - **Second window:** the second browser or private window.
-- **Column menu:** the menu that opens when a column's name in the People table's header is selected.
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from the account's name and initials at the top right.
 
 ## Test Cases
+
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### VIEW-01: A Personal View Is Kept to Its Maker
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, the first account of this test.
 
-**Preconditions:** R1 has been run. Signed in with this account in the main window. Select **People** in the left-hand menu.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account in the main window. Select the **People** page in the left-hand menu.
 
 - [ ] **Step 1.** Type `an` in the search box above the table.
   - **Expected:** The table shows only the rows matching **an**, and a **Views** button shows above the table.
@@ -99,7 +76,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** Fathom opens, signed in as **Second Engineering Operations Manager**.
   - **Notes:**
 
-- [ ] **Step 8.** In the second window, select **People** in the left-hand menu.
+- [ ] **Step 8.** In the second window, select the **People** page in the left-hand menu.
   - **Expected:** The People table shows, with no view applied.
   - **Notes:**
 
@@ -115,7 +92,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from VIEW-01.
 
-**Preconditions:** The second window is signed in as Second Workforce Administrator, as VIEW-01 leaves it. In the main window, sign out, sign in with this case's account, and select **People** in the left-hand menu.
+**Preconditions:** The second window is signed in as Second Workforce Administrator, as VIEW-01 leaves it. In the main window, sign out, sign in with this case's account, and select the **People** page in the left-hand menu.
 
 - [ ] **Step 1.** In the main window, type `el` in the search box above the table.
   - **Expected:** The table shows only the rows matching **el**.
@@ -149,7 +126,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
   - **Expected:** Fathom opens, signed in as **Resource Planner**.
   - **Notes:**
 
-- [ ] **Step 9.** In the second window, select **People** in the left-hand menu.
+- [ ] **Step 9.** In the second window, select the **People** page in the left-hand menu.
   - **Expected:** The People table shows.
   - **Notes:**
 

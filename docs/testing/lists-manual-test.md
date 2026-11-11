@@ -15,56 +15,31 @@ Verifies the Lists page's built-in lists, Positions, Hiring states, Proposal sta
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R2).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
-R2 creates these accounts, with every other development account. They share one password, which R2 prints when it finishes. Every account holds its role as Fathom starts it.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Engineering Director:** `engineering.director@fathom.test`
+- **Resource Planner:** `resource.planner@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address the terminal prints, such as `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R2: Reset the Database
-
-Use before the first test case and after the last, so every list and role is as Fathom starts it. This deletes every account and record in the development database, including anything added by hand, and puts every role back as Fathom starts it; restoring only the seed data does not. Ask the owner before running it on a database others use.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again (R0).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the Database](manual-test-basics.md#reset-the-database).
 
 ## Terms
+
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Publish button and the ⋯ menu. This test adds:
 
 - **Panel:** the area that opens beside the table of lists when you select a list's name, showing the list's choices.
 - **Empty row:** the last row of the panel's choices, starting with a **+**, where new choices are typed.
 - **Meaning menu:** the drop-down at the end of a choice's row while it is being edited, and at the end of the empty row.
-- **⋯ menu:** the menu that opens from the **⋯** button at the end of a choice's row.
-- **Publish button:** the button in the top bar, beside your name, that reads **Publish** followed by a number of changes.
 
 ## Test Cases
 
-Run the test cases in order. Start with R2. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
 
 ### LIST-01: Built-in Lists Are Marked
 
@@ -172,7 +147,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The table has a **Position** column, and **New** can be selected.
   - **Notes:**
 
-- [ ] **Step 6.** Reset the database (R2).
+- [ ] **Step 6.** Run Reset the Database.
   - **Expected:** The last line printed gives the shared password, with no error above it.
   - **Notes:**
 
@@ -180,8 +155,10 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as the account LIST-07 ended with.
 
-**Preconditions:** LIST-07 done, so the database is as R2 leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
+**Preconditions:** LIST-07 done, so the database is as Reset the Database leaves it. Signed in with this account. **Lists** page open from the left-hand menu, with no list's panel open.
 
 - [ ] **Step 1.** In the switch beside **Search lists**, select **Built in**.
   - **Expected:** The table shows only **Feature statuses**, **Hiring states**, **Positions** and **Proposal statuses**, and the count reads **4 of 12**.
   - **Notes:**
+
+**Afterwards:** Run Reset the Database.

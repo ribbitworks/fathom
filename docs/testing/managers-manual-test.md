@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Managers and Teams on People
@@ -15,56 +15,29 @@ Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **T
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Engineering Director:** `engineering.director@fathom.test`
+- **Resource Planner:** `resource.planner@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
 
 ## Terms
 
-- **Search for:** type the person's name in the search box above the People table, so only their row is shown.
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a person's name or under a column's name.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks, the Publish button and searching for a person. This test adds:
+
 - **Manager picker:** the list of people that opens when you select a **Manager** cell and press Enter.
-- **Column menu:** the menu that opens when you select a column's name in the People table's header.
-- **Publish button:** the button in the top bar, beside your name, that reads **Publish** followed by a number of changes.
-- **⋯ menu:** the menu that opens from the **⋯** button at the end of a row.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### MGR-01: Manager? Shows Who Is Marked as a Manager
 
@@ -138,7 +111,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The picker closes, and the row's **Manager** cell still reads **Atmananda Ganaka**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### MGR-05: Manager? Cannot Be Cleared While People Report to Someone
 
@@ -206,7 +179,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The rows with a checked **Manager?** box come first.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### MGR-10: A Resource Planner Sees Managers and Teams but Cannot Change Them
 

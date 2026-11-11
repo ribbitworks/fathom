@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/shared/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/product/decisions.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Note Columns on People
@@ -15,60 +15,33 @@ Verifies what only a person can judge of Note columns on the People table: how t
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser, and a word processor or web page to copy formatted text from.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
+- A word processor or web page to copy formatted text from.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Engineering Director:** `engineering.director@fathom.test`
+- **Resource Planner:** `resource.planner@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address `pnpm dev` prints, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case. Fathom keeps running. This removes the seed data and every draft of it, then adds the seed data again; it keeps accounts and anything else added by hand, such as a column added in an earlier run of this test.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
-
-### P1: Publish
-
-1. Select the **Publish** button in the top bar, followed by the number of changes waiting.
-2. Confirm that a notification says **Published**, and that the button is gone.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, searching for a person and the column menu. This test adds:
+
 - **Background cell:** the cell in a person's row under the **Background** column, which NOTE-01 adds at the right end of the People table; scroll right to reach it.
-- **Search for:** type the person's name in the search box above the People table, so only their row is shown.
 - **Panel:** the side panel that opens beside the table from a **Background** cell, headed **Background**.
 - **Toolbar:** the row of buttons under the text in the panel's editor, for headings 1 to 3, bold, italic, strikethrough, code, colour, bullet list, checkbox list, link, and removing a link.
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
 
 ### NOTE-01: A Note Column Is Added
 
@@ -76,11 +49,11 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
-- [ ] **Step 1.** Select **New column**. Type `Background` in **Name**, choose **Note** in **Type**, leave **General** chosen, select **Add column**, then publish (P1).
+- [ ] **Step 1.** Select **New column**. Type `Background` in **Name**, choose **Note** in **Type**, leave **General** chosen, select **Add column**, then run Publish.
   - **Expected:** A **Background** column is at the end of the table, its name marked **Draft: added**.
   - **Notes:**
 
-- [ ] **Step 2.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Open **Drafts** from the left-hand menu and approve the **Background** column.
+- [ ] **Step 2.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Open the **Drafts** page from the left-hand menu and approve the **Background** column.
   - **Expected:** A notification says the draft is approved.
   - **Notes:**
 
@@ -182,12 +155,12 @@ Run the test cases in order, in about 30 minutes. Start with R0, then R1. Check 
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from NOTE-04. Step 2 signs in as another account.
 
-**Preconditions:** Run after NOTE-04. Publish (P1) as the Workforce Administrator, then sign in with this account. **People** page open, with **Max Munk** searched for.
+**Preconditions:** Run after NOTE-04. Run Publish as the Workforce Administrator, then sign in with this account. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
   - **Expected:** The panel shows the note as it reads, with a close button, and nothing to change it with.
   - **Notes:**
 
-- [ ] **Step 2.** Press Esc. Sign in as the Engineering Director, `engineering.director@fathom.test`, open **Drafts** from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
+- [ ] **Step 2.** Press Esc. Sign in as the Engineering Director, `engineering.director@fathom.test`, open the **Drafts** page from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
   - **Expected:** The draft and the history show the note's words without formatting, and read clearly.
   - **Notes:**

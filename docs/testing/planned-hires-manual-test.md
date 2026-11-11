@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Planned Hires on People
@@ -15,57 +15,31 @@ Verifies planned hires shown as rows of the People table: how their rows look be
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
 - A plain text editor, for copying rows to paste.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Engineering Director:** `engineering.director@fathom.test`
+- **Resource Planner:** `resource.planner@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test and anyone added by filling a seeded hire, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data). Restore the Seed Data also removes anyone added by filling a seeded hire.
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
-- **Search for:** type the text in the search box above the People table, so only the matching rows are shown.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks, the Publish button, searching for text and the ⋯ menu. This test adds:
+
 - **Hire rows:** the rows at the bottom of the People table whose **ID** is a requisition, such as **REQ-2042**, or starts with **TBD-**.
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a row's name.
-- **Publish button:** the button in the top bar, beside your name, that reads **Publish** followed by a number of changes.
-- **⋯ menu:** the menu that opens from the **⋯** button at the end of a row.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### HIRE-01: Hire Rows Sit Under the People and Read Well in Light and Dark Mode
 
@@ -111,7 +85,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The cell reads **SDET, REQ-2042** in grey italics again.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-03: Hired Is Not Offered for a Hire, and States Are Filtered Together
 
@@ -131,7 +105,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Only people are shown, with no hire rows, and every **State** cell reads **Hired**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-04: A Planned Hire Is Added With the Keyboard Alone
 
@@ -147,7 +121,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The row is added with an ID starting with **TBD-**, and a **Name** of **SDET, TBD-** followed by the same number, in grey italics. The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-05: Planned Hires Are Pasted From a Text Editor
 
@@ -162,7 +136,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Two hire rows are added: **Fictional pasted hire** with ID **REQ-3001**, and **Software Engineer, REQ-3002** in grey italics. Each reads **Request to hire** in **State** and has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-06: A Planned Hire Is Added, Approved, and Seen by a Resource Planner
 
@@ -190,7 +164,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** One hire row, with no **Draft** mark, reading **REQ-3100** in **ID**, **Software Engineer** in **Position**, and **Request to hire** in **State**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-07: A Resource Planner Sees Placeholders Only
 
@@ -228,7 +202,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The cell reads **Ashgrove** and turns yellow, and the row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-09: A Column Switched Off for Planned Hires Leaves Their Cells Blank
 
@@ -272,7 +246,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The page returns to its light colours.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-10: A Person Who Has Left Shows Left, to Everyone Who Sees People
 
@@ -292,13 +266,13 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The same people are shown, **Viktoria Holmberg** among them, each with **Left** in **State**. There are no **Start** or **End** columns.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-11: A View of Planned Hires Alone Is Saved and Applied
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, the same as the account HIRE-10 ended with.
 
-**Preconditions:** R1 run after HIRE-10. Signed in with this account. **People** page open, with no filters.
+**Preconditions:** Restore the Seed Data run after HIRE-10. Signed in with this account. **People** page open, with no filters.
 
 - [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire** only, and press Esc.
   - **Expected:** Only hire rows are shown.
@@ -354,7 +328,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A message reads **Reassign direct reports first**. The box stays checked, and the row has no **Draft** mark.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-13: A Planned Hire Is Filled With a New Person
 
@@ -398,7 +372,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** One row, with no **Draft** mark, reading **Software Engineer** in **Position**, a name in **Manager**, and **Ashgrove** in **Site**. Searching for **Backend engineer 2** shows no row named **Backend engineer 2**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-14: A Planned Hire Is Filled With Someone Already in Fathom
 
@@ -426,7 +400,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The form closes and the panel is headed with the person you chose. Its **Manager** row reads the name you chose in Step 4, and its **Position** row the planned hire's position, each with a yellow dot and **Draft** beside it.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-15: Filling a Planned Manager Moves Its Planned Hires
 
@@ -458,7 +432,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The **Manager** cell of **Platform engineer** reads **Fictional new lead**, and the row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### HIRE-16: The Fill Form Reads Well in Dark Mode, and Leaving It Asks First
 
@@ -500,4 +474,4 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The form closes and the panel is headed **Fictional platform starter**. Its **Manager** row reads the name you chose.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.

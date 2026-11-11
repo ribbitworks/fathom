@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/views.ts", "packages/shared/src/views.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Metrics, Frozen Columns, and Column Widths on the People Table
@@ -15,57 +15,21 @@ Verifies the People table's Metrics panel: breaking people down by one column or
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser whose window can be made narrower than 768 pixels.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1 and R2).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
+- A browser window that can be made narrower than 768 pixels.
 
 ## Test Accounts
 
-R1 creates this account, with every other development account, so it exists once R1 has run. The accounts share one password, which R1 prints when it finishes. Each account must hold its role as Fathom starts it: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 
 ## Common Procedures
 
-### R0: Start Fathom
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), and one of its own.
 
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address the terminal prints, such as `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts, saved views and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
-
-### R2: Reset the Database
-
-Use only where this test says so. This deletes every account and record in the development database, including anything added by hand, and puts every role back as Fathom starts it. Ask the owner before running it on a database others use.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again (R0).
-
-### P1: Show Live Only
+### Show Live Only
 
 1. Select the **Draft** button above the table, next to the search box.
 2. Select **Live only**.
@@ -73,19 +37,16 @@ Use only where this test says so. This deletes every account and record in the d
 
 ## Terms
 
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, the Draft menu and the column menu. This test adds:
+
 - **Metrics panel:** the panel titled **Metrics** that opens on the right of the People table.
 - **Count line:** the line under the panel's title saying how many people and planned hires it counts, such as **150 people and 8 planned hires**.
-- **Draft menu:** the menu that opens from the **Draft** button above the table, next to the search box.
-- **Views menu:** the menu that opens from the **Views** button, the last of the buttons after the search box.
-- **Column menu:** the menu that opens when you select a column's name in the People table's header.
 - **Panel edge:** the strip between the table and the Metrics panel. A blue line shows on it when the pointer is over it.
 - **Column edge:** the right edge of a column's name in the People table's header. A short blue line shows on it when the pointer is over it.
-- **Details button:** the small button with an arrow out of a box at the right end of a person's **Name** cell, shown while the pointer is over their row.
-- **Appearance menu:** the **Appearance** items in the account menu, which opens from the account button at the top right, showing the account's name.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1, then sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data, then sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Check each step whose expected result you see, and write anything else under its notes.
 
 ### METRICS-01: The Panel Opens and Closes
 
@@ -113,7 +74,7 @@ Run the test cases in order. Start with R0, then R1, then sign in as the Workfor
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-01.
 
-**Preconditions:** **People** page open. Live only shown (P1).
+**Preconditions:** **People** page open. Live only shown: run Show Live Only.
 
 - [ ] **Step 1.** Select **Metrics**, then set **Break down by** to **Position**.
   - **Expected:** The count line says **150 people and 8 planned hires**. The figures are headed **Count**. The rows are Employee 0 (0%), Manager 0 (0%), Software Engineer 73 (46.2%), Test Engineer 36 (22.8%), SDET 32 (20.3%), Engineering Manager 17 (10.8%) and Architect 0 (0%). No row shows **Live**.
@@ -175,7 +136,7 @@ Run the test cases in order. Start with R0, then R1, then sign in as the Workfor
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as METRICS-06.
 
-**Preconditions:** **People** page open. Live only shown (P1). Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
+**Preconditions:** **People** page open. Live only shown: run Show Live Only. Metrics panel open, with **Break down by** set to **Position** and **and by** to **Site**.
 
 - [ ] **Step 1.** Open the Views menu, select **Save view…**, type `Fictional positions by site`, and select **Save view**.
   - **Expected:** The Views button is named **Fictional positions by site**.

@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/db/migrations/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-08"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Number Columns
@@ -15,51 +15,27 @@ Verifies what only a person can judge of Number columns on the People table: how
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
-R1 creates this account, with every other development account. The accounts share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address the terminal prints, such as `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Reset the Database
-
-Use before the first test case and after the last. This deletes every account and record in the development database, including anything added by hand.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again (R0).
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the Database](manual-test-basics.md#reset-the-database).
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu and the column menu. This test adds:
+
 - **Score cell:** a cell in the **Score** column, which NUM-01 adds at the right end of the People table; scroll right to reach it.
 
 ## Test Cases
 
-Run R1 first.
+Run the test cases in order. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
 
 ### NUM-01: The Dialog Offers a Number Column
 
@@ -135,4 +111,4 @@ Run R1 first.
   - **Expected:** **At most** reads **Use a number such as 1234.5** under it, in red, and the rows shown do not change.
   - **Notes:**
 
-Run R1 after the last test case.
+**Afterwards:** Run Reset the Database.

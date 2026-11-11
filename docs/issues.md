@@ -1,7 +1,7 @@
 # Fathom: Issues
 
 **Status:** Working list
-**Last updated:** 2026-11-10
+**Last updated:** 2026-11-11
 
 Known problems and deferred work that are not yet scheduled in the [Implementation Plan](design/implementation-plan.md). Each item says why it was deferred. When an item is scheduled or resolved, it moves to the document that owns it, or is removed.
 
@@ -158,7 +158,7 @@ Each item starts with a label, such as **Bug · P3** or **Debt · Next**. A **Bu
 - **Bug · P4** **Esc does not always close the Metrics panel:** In [Metrics](testing/metrics-manual-test.md) METRICS-01 step 2, Esc sometimes left the panel open in the browser, though the automated test of Esc passes. Found by the Metrics manual test on 2026-11-07; not yet looked into.
 - **Feature · Maybe** **Counting dates before and after a day:** A tester asked for the Metrics panel to count a date column, such as **End**, as on or before a chosen day and after it, not only as **Populated** and **Empty**. Found by the Metrics manual test on 2026-11-07; deferred until the owner decides.
 - **Debt · Maybe** **Manual tests longer than 30 minutes:** [Permissions](testing/permissions-manual-test.md) (44 steps, a role change before and after each of 17 cases), [Releases](testing/releases-manual-test.md) (71 steps, four accounts, two data restores) and [Drafts](testing/drafts-manual-test.md) (61 steps, three database resets) may take longer than the 30 minutes the testing standard aims for. Deferred by the owner on 2026-11-07, since 30 minutes is a guideline.
-- **Debt · Next** **Manual tests not yet on Manual Test Basics:** Every manual test but [Features](testing/features-manual-test.md) still repeats its environment, accounts, common procedures and terms, and names procedures by codes such as R1 and P1, rather than linking to [Manual Test Basics](testing/manual-test-basics.md) and naming them, as [Testing Standards § Manual Tests](standards/testing.md#manual-tests) now asks. Decided by the owner on 2026-11-10, starting with Features; the others move as each is next changed, or all at once in a change of their own.
+- **Debt · Next** **Manual tests not yet on Manual Test Basics:** [Acceptance](testing/acceptance-manual-test.md), [Feature Assignments](testing/feature-assignments-manual-test.md), [Feature Links](testing/feature-links-manual-test.md), [Feature Teams](testing/feature-teams-manual-test.md), [Projects](testing/projects-manual-test.md) and [Releases](testing/releases-manual-test.md) still repeat its environment, accounts, common procedures and terms, and names procedures by codes such as R1 and P1, rather than linking to [Manual Test Basics](testing/manual-test-basics.md) and naming them, as [Testing Standards § Manual Tests](standards/testing.md#manual-tests) now asks. Decided by the owner on 2026-11-10, starting with Features; the others move as each is next changed, or all at once in a change of their own.
 
 ## Dependencies
 

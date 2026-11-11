@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -15,69 +15,27 @@ Verifies how drafts of people, columns, lists, choices, and choice orders are sh
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1 and R2).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes. Each account must hold its role as Fathom starts it: if any role has been changed on the **Roles** page, reset the database (R2) before the first test case, since restoring the seed data (R1) does not put roles back.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Project Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Engineering Director:** `engineering.director@fathom.test`
+- **Project Manager:** `project.manager@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand. It cannot restore the seed data once its drafts have been approved, as in DRAFT-20, DRAFT-21 and DRAFT-24; use R2 then.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
-
-### R2: Reset the Database
-
-Use only where a test case says so. This deletes every account and record in the development database, including anything added by hand. Ask the owner before running it on a database others use.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again (R0).
-5. Sign in again with the account the test case names.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Reset the Database](manual-test-basics.md#reset-the-database).
 
 ## Terms
 
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a record's name or under a column's name.
-- **Draft menu:** the menu that opens from the **Draft** button above a table, next to the search box.
-- **Column menu:** the menu that opens when you select a column's name in the People table's header.
-- **⋯ menu:** the menu that opens from a **⋯** button, at the end of a row, or beside a list's name at the top of its panel.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms this test uses.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### DRAFT-01: Column Drafts Are Marked in the People Table
 
@@ -283,7 +241,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-13. Step 4 signs in as another account.
 
-**Preconditions:** R1. Signed in with this account. **People** page open.
+**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Look at the top bar, beside your name.
   - **Expected:** It shows **Publish 3 changes**, with a **⋯** button beside it.
@@ -347,7 +305,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Her row has a yellow dot and **Draft**, and her **Site** cell is yellow.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### DRAFT-19: Discard All Removes Every Unpublished Change
 
@@ -367,7 +325,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Engineering Director, `engineering.director@fathom.test`, changed from DRAFT-19.
 
-**Preconditions:** R2. Signed in with this account. **Drafts** page open.
+**Preconditions:** Run Reset the Database first. Signed in with this account. **Drafts** page open.
 
 - [ ] **Step 1.** Select **Select all waiting**.
   - **Expected:** The button at the top right reads **Approve 19 drafts**. The **Sites** new order entry, and the **Viktoria Holmberg** entry, are not selected.
@@ -381,7 +339,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-20. Step 2 signs in as another account.
 
-**Preconditions:** R2. Signed in with this account.
+**Preconditions:** Run Reset the Database first. Signed in with this account.
 
 - [ ] **Step 1.** Open **Lists**, then **Sites**. Select the **⋯** button at the end of the **Harbourside** row, then **Resubmit**.
   - **Expected:** **Harbourside** has a yellow dot and **Draft: added**.
@@ -395,13 +353,13 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** **Harbourside** is the first choice, with no mark. The **Draft: reordered** mark under **Sites** is gone.
   - **Notes:**
 
-**Afterwards:** R2.
+**Afterwards:** Run Reset the Database.
 
 ### DRAFT-22: Drafts That Others Use Cannot Be Discarded
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from DRAFT-21.
 
-**Preconditions:** R2 done after DRAFT-21. Signed in with this account. **Lists** page open.
+**Preconditions:** Reset the Database run after DRAFT-21. Signed in with this account. **Lists** page open.
 
 - [ ] **Step 1.** Select **Skills** in the row with the yellow dot.
   - **Expected:** A panel opens. **Rust** and **TypeScript** each have a yellow dot and **Draft: added**.
@@ -443,13 +401,13 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The dialog closes, and a notice reads **Approved 4 drafts.** The page says **No drafts match the search.**
   - **Notes:**
 
-**Afterwards:** R2.
+**Afterwards:** Run Reset the Database.
 
 ### DRAFT-25: Drafts This Account Changed Need Another Approver
 
 **Account:** Project Manager, `project.manager@fathom.test`, changed from DRAFT-24. Step 7 signs in as another account.
 
-**Preconditions:** R2. Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
+**Preconditions:** Run Reset the Database first. Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Under **Releases** in the side panel, select the **⋯** button at the end of the **Harbor 3** row, then **Change…**.
   - **Expected:** A dialog titled **Change Harbor 3** opens, with **Harbor 3** in **Name**.
@@ -467,7 +425,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** **Approve…** is greyed out, with **Changed by this account, so another approver must approve it** under it, easy to read. **Reject…** is not greyed out.
   - **Notes:**
 
-- [ ] **Step 5.** Press Escape, then select **Drafts** in the left-hand menu.
+- [ ] **Step 5.** Press Escape, then select the **Drafts** page in the left-hand menu.
   - **Expected:** An entry names **Harbor Three**, drafted by **Project Manager**.
   - **Notes:**
 
@@ -479,11 +437,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Fathom opens.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Drafts** in the left-hand menu, select the **Harbor Three** entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog.
+- [ ] **Step 8.** Select the **Drafts** page in the left-hand menu, select the **Harbor Three** entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
-**Afterwards:** R2.
+**Afterwards:** Run Reset the Database.
 
 ### DRAFT-26: A Row With a Draft Ends With One Menu Button
 

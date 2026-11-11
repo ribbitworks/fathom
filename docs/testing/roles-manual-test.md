@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/roles*.ts*", "apps/web/src/accounts-page.tsx", "apps/web/src/settings-page.tsx", "apps/server/src/data/settings.ts", "apps/server/src/data/role-administration.ts", "apps/server/src/routes/roles.ts", "packages/shared/src/access.ts", "packages/shared/src/roles.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Editing Roles
@@ -15,60 +15,31 @@ Verifies the Roles page: who sees it, the list of roles, the dialog that sets wh
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R2).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
-R2 creates these accounts, with every other development account, each holding one role, as [Development Setup](../design/development-setup.md#development-accounts) lists. They share one password, which R2 prints when it finishes. Every role is as Fathom starts it.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds the Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Project Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Project Manager:** `project.manager@fathom.test`
+- **Team Member:** `team.member@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address the terminal prints, such as `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R2: Reset the Database
-
-Use before the first test case and after the last, so every role is as Fathom starts it. This deletes every account and record in the development database, including anything added by hand, and puts every role back as Fathom starts it; restoring only the seed data does not. Ask the owner before running it on a database others use.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again (R0).
-
-### P1: Open a Role
-
-1. Select **Roles** in the left-hand menu.
-2. Select **Edit** in the role's row.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Open a Role](manual-test-basics.md#open-a-role).
 
 ## Terms
 
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu and the account menu. This test adds:
+
 - **Summary:** the panel on the right of the role dialog, headed **Pages its holders see**, **Can** and **Cannot**.
-- **Grid:** the table on the left of the role dialog, with an area in each row and the columns **View**, **Draft**, **Approve** and **Edit**.
 - **Tier colours:** the word **Restricted** in bold orange and the word **Confidential** in bold red.
 
 ## Test Cases
 
-Run the test cases in order. Start with R2. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
 
 ### ROLE-01: Only Those Who May See Roles See the Roles Page
 
@@ -108,7 +79,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** Signed in with this account. **Roles** page open from the left-hand menu.
 
-- [ ] **Step 1.** Open the **Project Manager** role (P1).
+- [ ] **Step 1.** Open the **Project Manager** role, as Open a Role describes.
   - **Expected:** A dialog titled **Edit Project Manager** shows **Name**, **What it is for**, and the grid, with these boxes ticked:
     - **Plan:** **View**, greyed, **Approve** and **Edit**
     - **Features:** **Edit**
@@ -175,7 +146,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The sentence about seeing the hiring plan under **Can** is struck through in red and fades away; under **Cannot**, **Planned hires appear only as placeholders.** appears in bold teal.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Cancel**, then open the **Project Manager** role again (P1).
+- [ ] **Step 4.** Select **Cancel**, then open the **Project Manager** role again, as Open a Role describes.
   - **Expected:** The dialog shows the boxes as in ROLE-03 Step 1; nothing was saved.
   - **Notes:**
 
@@ -201,7 +172,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The left-hand menu shows **Access history** in the **History** section.
   - **Notes:**
 
-- [ ] **Step 5.** Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`. Select **Access history** in the left-hand menu.
+- [ ] **Step 5.** Sign out, and sign in as the Administrator, `fathom.administrator@fathom.test`. Select the **Access history** page in the left-hand menu.
   - **Expected:** The latest entry says Fathom Administrator **changed the role** Project Manager, granting View Access history, and is marked as worth checking.
   - **Notes:**
 
@@ -211,7 +182,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** Signed in with this account, after ROLE-06. **Roles** page open from the left-hand menu.
 
-- [ ] **Step 1.** Open the **Project Manager** role (P1).
+- [ ] **Step 1.** Open the **Project Manager** role, as Open a Role describes.
   - **Expected:** **Restore template** is turned on, since the role no longer matches its template.
   - **Notes:**
 
@@ -229,7 +200,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** **Roles** page open.
 
-- [ ] **Step 1.** Open the **Executive** role (P1), and tick **Edit** on the **Plan** row.
+- [ ] **Step 1.** Open the **Executive** role, as Open a Role describes, and tick **Edit** on the **Plan** row.
   - **Expected:** **What it is for** is empty, with a line under it reading **What the role grants changed, so its old summary is gone.** **Restore template** is turned on.
   - **Notes:**
 
@@ -259,11 +230,11 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The dialog closes, a green banner says **The role has been created.**, and **Copy of Team Member** is in the list with 0 accounts.
   - **Notes:**
 
-- [ ] **Step 3.** Open **Copy of Team Member** (P1), tick **View** on **People**, and select **Save**.
+- [ ] **Step 3.** Open **Copy of Team Member**, as Open a Role describes, tick **View** on **People**, and select **Save**.
   - **Expected:** The dialog closes with **The role has been changed.**, with no confirmation, since no account holds the role. There is no **Restore template** button.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Access history** in the left-hand menu.
+- [ ] **Step 4.** Select the **Access history** page in the left-hand menu.
   - **Expected:** The entry before the latest says **created the role** Copy of Team Member, granting View Plan, View Allocations, View Org chart. The latest says **changed the role** Copy of Team Member, granting View People.
   - **Notes:**
 
@@ -273,7 +244,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** Signed in with this account, after ROLE-09.
 
-- [ ] **Step 1.** Select **Accounts** in the left-hand menu, and read the **Roles** column.
+- [ ] **Step 1.** Select the **Accounts** page in the left-hand menu, and read the **Roles** column.
   - **Expected:** **Team Member** in the **Team Member** row, **Product Manager** in the **Product Manager** row, **Feature Lead (default)** and **Engineering Manager** in the **Feature Lead** row, and **Administrator** in the **Fathom Administrator** row.
   - **Notes:**
 
@@ -289,11 +260,11 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The dialog closes, a green banner says **Saved the account for Team Member.**, and the **Team Member** row shows **Copy of Team Member** in **Roles**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Roles** in the left-hand menu.
+- [ ] **Step 5.** Select the **Roles** page in the left-hand menu.
   - **Expected:** **Copy of Team Member** has 1 account and **Team Member** has 0.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Access history** in the left-hand menu.
+- [ ] **Step 6.** Select the **Access history** page in the left-hand menu.
   - **Expected:** The latest entry says Fathom Administrator **changed the role of** Team Member: from Team Member to Copy of Team Member, and is marked as worth checking.
   - **Notes:**
 
@@ -301,7 +272,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The left-hand menu shows **People** and **Org chart** in the **People** section.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Roles** under **Help** in the left-hand menu.
+- [ ] **Step 8.** Select the **Roles** page under **Help** in the left-hand menu.
   - **Expected:** The first row is **Copy of Team Member**, with a sea-blue check before its name, and its description beside it. No other row has a check.
   - **Notes:**
 
@@ -333,7 +304,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** **Roles** page open, signed in with this account.
 
-- [ ] **Step 1.** Open the **Superuser** role (P1), untick **Edit** on **Roles**, and select **Save**.
+- [ ] **Step 1.** Open the **Superuser** role, as Open a Role describes, untick **Edit** on **Roles**, and select **Save**.
   - **Expected:** The confirmation says **This change affects 1 account.** It lists **Superuser**, under **Loses** with **The Roles page no longer appears.**
   - **Notes:**
 
@@ -341,7 +312,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** The dialog closes and a green banner says **The role has been changed.**, since the Administrator role still edits roles.
   - **Notes:**
 
-- [ ] **Step 3.** Open the **Administrator** role (P1), untick **Edit** on **Roles**, and select **Save**.
+- [ ] **Step 3.** Open the **Administrator** role, as Open a Role describes, untick **Edit** on **Roles**, and select **Save**.
   - **Expected:** The confirmation says **This change affects 1 account.** It lists **Fathom Administrator**, marked **(this account)**, under **Loses** with **The Roles page no longer appears.**
   - **Notes:**
 
@@ -349,7 +320,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** A red box says **Some active account must keep the permissions to manage accounts and to edit roles**, and the dialog stays open.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Cancel**, and open the **Administrator** role again (P1).
+- [ ] **Step 5.** Select **Cancel**, and open the **Administrator** role again, as Open a Role describes.
   - **Expected:** **Edit** on **Roles** is still ticked; nothing changed.
   - **Notes:**
 
@@ -359,7 +330,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Settings** in the left-hand menu.
+- [ ] **Step 1.** Select the **Settings** page in the left-hand menu.
   - **Expected:** The **Settings** page shows **Time zone** set to **America/Vancouver**, with the day and time there under it, such as **It is Thursday, November 5, 2026 at 6:06 AM there.**, matching a clock in Vancouver. **Save** is turned off.
   - **Notes:**
 
@@ -371,7 +342,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Expected:** A green banner says **Fathom's time zone is now** followed by the time zone chosen, and **Save** is turned off again.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Access history** in the left-hand menu.
+- [ ] **Step 4.** Select the **Access history** page in the left-hand menu.
   - **Expected:** The newest entry says **Fathom Administrator changed Fathom's time zone: from America/Vancouver to** the time zone chosen.
   - **Notes:**
 
@@ -389,6 +360,6 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
 
 **Preconditions:** All the test cases above run.
 
-- [ ] **Step 1.** Reset the database (R2), sign in as the Administrator, `fathom.administrator@fathom.test`, and select **Roles** in the left-hand menu.
+- [ ] **Step 1.** Run Reset the Database, sign in as the Administrator, `fathom.administrator@fathom.test`, and select the **Roles** page in the left-hand menu.
   - **Expected:** The **Roles** page lists the roles as in ROLE-02, with no **Copy of Team Member**.
   - **Notes:**

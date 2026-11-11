@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/server/src/data/org-chart.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: Org Chart
@@ -15,60 +15,35 @@ Verifies the **Org chart** page: the levels it opens on, each person's card, sho
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser with a mouse or trackpad.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
+- A mouse or trackpad.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account, so they exist once R1 has run. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Engineering Manager account:** `engineering.manager@fathom.test`, shown in Fathom as **Engineering Manager**. It holds the Engineering Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Engineering Manager:** `engineering.manager@fathom.test`
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Resource Planner:** `resource.planner@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks and the Publish button. This test adds:
+
 - **Card:** the box for one person on the chart, showing their name, their position under it, and, for a manager whose team has a name, the team's name under that.
 - **Band:** the strip of colour along the top edge of a card.
 - **Chart:** the large panel under the **Org chart** heading that holds the cards.
 - **Finder:** the box reading **Find a person or team** at the top left of the page, above the chart.
-- **Mark:** a coloured dot followed by a word, such as a red dot and **Left**, shown beside a person's name.
-- **Draft menu:** the menu opened by the **Draft** button just right of the finder.
-- **Publish button:** the button in the top bar, beside your name, that reads **Publish** followed by a number of changes.
 - **Date row:** the row between the page's heading and the chart, holding a **Date** box, a left arrow, a timeline, a right arrow and **Today**.
-- **Change button:** a small pencil at the right of a value in the details panel, shown to accounts that may change people.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### ORG-01: The Org Chart Page Opens
 
@@ -76,7 +51,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Org chart** in the **People** section of the left-hand menu.
+- [ ] **Step 1.** Select the **Org chart** page in the **People** section of the left-hand menu.
   - **Expected:** The page's heading reads **Org chart**. The top bar reads **People / Org chart**. Above the chart are the finder, **Draft** and **Teams** on the left, and **Show levels**, **+**, **−** and **Fit to screen** on the right.
   - **Notes:**
 
@@ -254,7 +229,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A small dashed circle comes before **Billing team** on his card.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### ORG-11: A Team Is Named on the Chart as a Draft
 
@@ -278,7 +253,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A **Teams** panel opens on the right, listing the named teams by name, each with a square button holding its colour dot, or a dashed circle where it has none, then **Led by** and its manager's name, then the unnamed ones, with no square button, each reading **Add a name**, among them the team led by **Lorenza Thiel**. **Platform crew** is followed by a hollow yellow dot and **Draft**, with **Platform team** under it, in grey, followed by a green dot and **Live**. **Observability team** has no square button and is followed by a yellow dot and **Draft**. The card for **Lorenza Thiel** shows no team.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### ORG-12: A Person Drafted to Another Manager Is Drawn in Both Places
 
@@ -387,7 +362,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Read the two cards under it.
-  - **Expected:** **Platform engineer**, with **Software Engineer** under the name, and **TBD-5**, in grey italics, with **SDET** under it, each with a dashed edge and joined to **TBD-3** by a line. **Platform engineer** reads **Planned, expected** and the month six months after the month R1 was run, such as **May 2027** for a run in November 2026.
+  - **Expected:** **Platform engineer**, with **Software Engineer** under the name, and **TBD-5**, in grey italics, with **SDET** under it, each with a dashed edge and joined to **TBD-3** by a line. **Platform engineer** reads **Planned, expected** and the month six months after the month Restore the Seed Data was run, such as **May 2027** for a run in November 2026.
   - **Notes:**
 
 - [ ] **Step 3.** On the card for **TBD-3**, select the small org chart button at the top right.
@@ -402,7 +377,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ORG-16.
 
-**Preconditions:** R1 has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today.
+**Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today.
 
 - [ ] **Step 1.** Select **Reporting teams** in the switch at the top right, then **Show levels**, then **All levels**. In the date row, select the left arrow once.
   - **Expected:** The chart shows managers and their reports. The **Date** box shows the first day of last month. Below the row, text reads **Showing** with that date, then **Changes take effect from this date.** **Draft** stays just right of the finder, and **Teams** is gone.
@@ -424,4 +399,4 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The text below the row ends **Changes take effect from this date.** The card for **Candice Swift** is under **Lorenza Thiel**, untinted and with no mark, and there is no card for her under **Max Munk**.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
