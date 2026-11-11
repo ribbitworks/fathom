@@ -409,7 +409,7 @@ describe("the side panel", () => {
     await screen.findByRole("heading", { name: "Fictional Customer" });
   });
 
-  it("links to a project's proposals, separated when there are several", async () => {
+  it("links to a project's proposals, one to a line", async () => {
     const other = "b0000000-0000-4000-8000-000000000002";
     const { history } = await openPage(
       `/projects?open=${projectId}`,
@@ -421,11 +421,26 @@ describe("the side panel", () => {
     expect(
       (await screen.findByRole("button", { name: "Fictional Proposal" }))
         .parentElement?.textContent,
-    ).toBe("Fictional Proposal,");
+    ).toBe("Fictional Proposal");
     await userEvent.click(screen.getByRole("button", { name: "Second" }));
     await waitFor(() => {
       expect(history.location.search).toContain("tab=proposals");
     });
+  });
+
+  it("separates a project's customers with commas", async () => {
+    const other = "c0000000-0000-4000-8000-000000000002";
+    await openPage(
+      `/projects?open=${projectId}`,
+      plan({
+        projects: [project({ customerIds: [customerId, other] })],
+        customers: [customer(), customer({ id: other, name: "Second" })],
+      }),
+    );
+    expect(
+      (await screen.findByRole("button", { name: "Fictional Customer" }))
+        .parentElement?.textContent,
+    ).toBe("Fictional Customer,");
   });
 
   it("leaves out a linked record it cannot name, and says None when there are none", async () => {
@@ -1607,6 +1622,149 @@ describe("the Features page", () => {
     });
     expect(history.location.search).toContain(first.id);
     await screen.findByRole("heading", { name: "Fictional First" });
+  });
+
+  describe("the projects and proposals that name a feature", () => {
+    const named = () =>
+      featurePlan({
+        canEdit: true,
+        projects: [project({ featureIds: [first.id] })],
+        proposals: [proposal({ featureIds: [first.id] })],
+      });
+    const planEditor = [...featureEditor, "plan:edit"];
+    const openNamed = (path = "/features", more: object = {}) =>
+      openPage(path, named(), { ...answers, ...more }, planEditor);
+    const cell = (feature: { id: string }, key: string) =>
+      document.getElementById(`cell-${feature.id}-${key}`);
+
+    it("names each by its ID, dimmed, then its name", async () => {
+      await openNamed();
+      const projects = cell(first, "projectIds");
+      expect(projects?.textContent).toBe("FP-1 Fictional Project");
+      expect(within(projects as HTMLElement).getByText("FP-1")).toBeTruthy();
+      expect(cell(first, "proposalIds")?.textContent).toBe(
+        "Fictional Proposal",
+      );
+      expect(cell(second, "projectIds")?.textContent).toBe("");
+    });
+
+    it("shows a project's details beside Features, and its features there too", async () => {
+      // Given a feature's details on Features
+      const { history } = await openNamed(`/features?open=${first.id}`);
+      // When its project is chosen
+      await userEvent.click(
+        await within(sidePanel()).findByRole("button", {
+          name: "FP-1 Fictional Project",
+        }),
+      );
+      // Then the project's details show, on Features still
+      await screen.findByRole("heading", { name: "Fictional Project" });
+      expect(history.location.pathname).toBe("/features");
+      expect(history.location.search).toContain(`open=${projectId}`);
+      expect(
+        within(sidePanel()).getByRole("heading", { name: "Milestones" }),
+      ).toBeTruthy();
+      // And the feature it names opens in place
+      await userEvent.click(
+        within(sidePanel()).getByRole("button", { name: "Fictional First" }),
+      );
+      await screen.findByRole("heading", { name: "Fictional First" });
+      expect(history.location.pathname).toBe("/features");
+    });
+
+    it("shows a proposal's details beside Features", async () => {
+      await openNamed(`/features?open=${proposalId}`);
+      await screen.findByRole("heading", { name: "Fictional Proposal" });
+      expect(within(sidePanel()).getByText("Proposal ID")).toBeTruthy();
+    });
+
+    it("drafts the project a feature is added to, not the feature", async () => {
+      const path = `/api/features/${second.id}/projects-and-proposals`;
+      const after = () =>
+        featurePlan({
+          canEdit: true,
+          projects: [project({ featureIds: [first.id, second.id] })],
+          proposals: [proposal({ featureIds: [first.id] })],
+        });
+      const { fetch, held } = await openNamed("/features", {
+        [`PUT ${path}`]: saved(after),
+      });
+      held.plan = after();
+      act(() => {
+        cell(second, "projectIds")?.focus();
+      });
+      await userEvent.keyboard("{Enter}");
+      await userEvent.click(
+        await screen.findByRole("option", { name: "FP-1 Fictional Project" }),
+      );
+      await userEvent.keyboard("{Enter}");
+      await waitFor(() => {
+        expect(sent(fetch, `PUT ${path}`)).toEqual([
+          { projectIds: [projectId] },
+        ]);
+      });
+      await waitFor(() => {
+        expect(cell(second, "projectIds")?.textContent).toBe(
+          "FP-1 Fictional Project",
+        );
+      });
+      expect(sentTo(fetch)).not.toContain(`PUT /api/features/${second.id}`);
+    });
+
+    it("keeps them read only for those who edit features but not the plan", async () => {
+      await open({ ...named(), canEdit: false });
+      expect(cell(first, "projectIds")?.getAttribute("aria-readonly")).toBe(
+        "true",
+      );
+    });
+
+    it("leaves them out of New feature", async () => {
+      await openNamed();
+      await userEvent.click(
+        await screen.findByRole("button", { name: "New feature" }),
+      );
+      await screen.findByRole("heading", { name: "New feature" });
+      expect(within(sidePanel()).getByText("Customers")).toBeTruthy();
+      expect(within(sidePanel()).queryByText("Projects")).toBeNull();
+      expect(within(sidePanel()).queryByText("Proposals")).toBeNull();
+    });
+
+    it("shows them as they are live beside Live only", async () => {
+      await openPage(
+        "/features?show=live",
+        featurePlan({
+          projects: [
+            project({
+              featureIds: [first.id],
+              draft: recordDraft({
+                changed: ["featureIds"],
+                live: { featureIds: [] },
+              }),
+            }),
+          ],
+        }),
+        answers,
+        featureEditor,
+      );
+      expect(cell(first, "projectIds")?.textContent).toBe("");
+    });
+
+    it.each([
+      ["project", "/projects", "Fictional Project"],
+      ["proposal", "/projects?tab=proposals", "Fictional Proposal"],
+    ])(
+      "opens Features filtered to a %s's features from its menu",
+      async (_kind, path, name) => {
+        const { history } = await openNamed(path);
+        await chooseFrom(await rowMenu(name), "Show features");
+        await waitFor(() => {
+          expect(history.location.pathname).toBe("/features");
+        });
+        await waitFor(() => {
+          expect(rowNames()).toEqual(["Fictional First"]);
+        });
+      },
+    );
   });
 
   it("opens a feature's details beside the table from its Name cell", async () => {

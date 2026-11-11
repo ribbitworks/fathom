@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-09"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Features
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, and a feature's effort, shown and typed in the unit chosen.
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, and a feature's effort, shown and typed in the unit chosen. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
 
 ## Test Environment
 
@@ -73,7 +73,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select **Features** in the left-hand menu.
-  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle**, **Effort**, **Feature team** and **Complexity**. Beside the search box, the count reads **11 features**.
+  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Projects**, **Proposals**, **Description**, **Notes**, **Target cycle**, **Effort**, **Feature team** and **Complexity**. Beside the search box, the count reads **11 features**.
   - **Notes:**
 
 - [ ] **Step 2.** Look down the **Status** column.
@@ -331,7 +331,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Run R1 first. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Point at the row **Offline Sync**, then select the small button with an arrow at the right of its **Name** cell.
-  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Description**, **Notes**, **Target cycle**, **Effort**, **Feature team** and **Complexity**.
+  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Projects**, **Proposals**, **Description**, **Notes**, **Target cycle**, **Effort**, **Feature team** and **Complexity**.
   - **Notes:**
 
 - [ ] **Step 2.** In the side panel, select a customer's name under **Customers**.

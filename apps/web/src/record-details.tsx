@@ -122,7 +122,7 @@ export function RecordLink({
   name,
   onShow,
 }: {
-  name: string;
+  name: ReactNode;
   onShow: () => void;
 }) {
   return (

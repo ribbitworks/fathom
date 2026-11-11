@@ -658,7 +658,7 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Notes:**
 
 - [ ] **Step 4.** Select it, then **Approve** in the dialog.
-  - **Expected:** **Pilot** and **Go live** have no marks, and each has **Fictional Harbour Lights** under **Project**.
+  - **Expected:** **Pilot** and **Go live** have no marks, and each has **Fictional Harbour Lights** under **Project**, after **FHL-1** in grey.
   - **Notes:**
 
 - [ ] **Step 5.** Choose **Dark** in the Appearance menu, look over the tabs and the table, then choose **Light**.

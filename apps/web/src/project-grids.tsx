@@ -33,19 +33,14 @@ import {
   startingEffortConversions,
   typedNumber,
 } from "@fathom/shared";
-import { Menu, VisuallyHidden } from "@mantine/core";
-import type { ReactNode } from "react";
+import { Menu, Text, VisuallyHidden } from "@mantine/core";
+import { Fragment, type ReactNode } from "react";
 import {
   addedColumn,
   type AddedColumns,
   cellRequest,
 } from "./added-columns.ts";
-import {
-  type CellChange,
-  cellKinds,
-  flagChoice,
-  labels,
-} from "./cell-kinds.tsx";
+import { type CellChange, cellKinds, flagChoice } from "./cell-kinds.tsx";
 import { EffortCell } from "./effort-cell.tsx";
 import { effortColumnUnits, hoursWords } from "./effort.ts";
 import { decimalUpTo } from "./numbers.ts";
@@ -57,6 +52,7 @@ import {
   type FeatureFields,
   isFeature,
   type MilestoneAdding,
+  namersOf,
   type PlanRecord,
   type PlanRecordKind,
   type PlanTab,
@@ -162,16 +158,46 @@ function field<Rec extends PlanRecord>(
   });
 }
 
-const named = (
-  records: readonly {
-    id: string;
-    name: string;
-    draft?: { action: string } | undefined;
-  }[],
-): Choice[] =>
-  records.map(({ id, name, draft }) =>
-    choice(id, name, draft?.action === "deleted"),
+// A record that may have an ID of its own, such as a Project ID, beside its name.
+export interface Identified {
+  id: string;
+  name: string;
+  externalId?: string | null;
+  draft?: { action: string } | undefined;
+}
+
+const identifiedLabel = ({ externalId, name }: Identified) =>
+  externalId == null ? name : `${externalId} ${name}`;
+
+// Records offered by their ID, if they have one, then their name, so similar names are told apart.
+const identified = (records: readonly Identified[]): Choice[] =>
+  records.map((record) =>
+    choice(
+      record.id,
+      identifiedLabel(record),
+      record.draft?.action === "deleted",
+    ),
   );
+
+export function RecordName({ record }: { record: Identified }) {
+  return (
+    <>
+      {record.externalId != null && (
+        <>
+          <Text span inherit c="dimmed">
+            {record.externalId}
+          </Text>{" "}
+        </>
+      )}
+      {record.name}
+    </>
+  );
+}
+
+// A new row is of its own kind, so what is set only on a saved record, such as a milestone's
+// project, can be told apart.
+const newKind = "new";
+const savedKind = "saved";
 
 // What a record's draft changes, field by field, with each value as the table shows it.
 function draftFieldsOf<Rec extends PlanRecord>(
@@ -271,19 +297,37 @@ const nameColumn = <Rec extends PlanRecord>(
       }),
 });
 
-const detailsItem =
-  <Rec extends PlanRecord>(onOpen: ((record: Rec) => void) | undefined) =>
-  (record: Rec): ReactNode =>
-    onOpen !== undefined &&
-    !isPending(record) && (
+function menuItem<Rec extends PlanRecord>(
+  label: string,
+  onClick: ((record: Rec) => void) | undefined,
+  record: Rec,
+): ReactNode {
+  return (
+    onClick !== undefined && (
       <Menu.Item
         onClick={() => {
-          onOpen(record);
+          onClick(record);
         }}
       >
-        Show details
+        {label}
       </Menu.Item>
-    );
+    )
+  );
+}
+
+const recordMenu =
+  <Rec extends PlanRecord>(
+    items: readonly [string, ((record: Rec) => void) | undefined][],
+  ) =>
+  (record: Rec): ReactNode =>
+    !isPending(record) &&
+    items.map(([label, onClick]) => (
+      <Fragment key={label}>{menuItem(label, onClick, record)}</Fragment>
+    ));
+
+const detailsItem = <Rec extends PlanRecord>(
+  onOpen: ((record: Rec) => void) | undefined,
+) => recordMenu<Rec>([["Show details", onOpen]]);
 
 export function customerTable(
   onOpen?: (customer: Customer) => void,
@@ -312,31 +356,63 @@ const customersColumn = <Rec extends PlanRecord>(
   customers: readonly Customer[],
 ) =>
   field<Rec>("customerIds", "Customers", "choice", {
-    choices: named(customers),
+    choices: identified(customers),
     multiple: true,
   });
 
-// A column of records picked by name, several in one cell, which cuts a long list short, so its
-// tip gives every name, one to a line.
+// The records a cell names, in the order they are listed, each by its ID, dimmed, and its name. A
+// long list is cut short, so its tip gives every one, one to a line.
+function namesCell(records: readonly Identified[]) {
+  return (ids: readonly string[]): ReactNode => {
+    const picked = records.filter(({ id }) => ids.includes(id));
+    if (picked.length === 0) return null;
+    return (
+      <span {...{ [tipAttribute]: picked.map(identifiedLabel).join("\n") }}>
+        {picked.map((one, index) => (
+          <Fragment key={one.id}>
+            {index > 0 && ", "}
+            <RecordName record={one} />
+          </Fragment>
+        ))}
+      </span>
+    );
+  };
+}
+
+// A column of records picked by ID and name, several in one cell.
 function pickedColumn<Rec extends PlanRecord>(
   key: string,
   label: string,
-  records: Parameters<typeof named>[0],
+  records: readonly Identified[],
+  // The records a row names, when they are not its own field.
+  namedBy?: (record: Rec) => string[],
 ): Column<Rec, PlanChange> {
   const column = field<Rec>(key, label, "choice", {
-    choices: named(records),
+    choices: identified(records),
     multiple: true,
   });
+  const value = namedBy ?? ((record: Rec) => column.value(record) as string[]);
+  const names = namesCell(records);
   return {
     ...column,
-    content: (record) => {
-      const names = labels(column, column.value(record));
-      return names.length === 0 ? null : (
-        <span {...{ [tipAttribute]: names.join("\n") }}>
-          {names.join(", ")}
-        </span>
-      );
-    },
+    value,
+    content: (record) => names(value(record)),
+  };
+}
+
+// A column of the projects or proposals that name a feature, which those records hold, so a change
+// to it is a draft of each record added or taken away. It is set on a feature once it is added.
+function namersColumn(
+  key: "projectIds" | "proposalIds",
+  label: string,
+  records: readonly (Identified & { featureIds: readonly string[] })[],
+  editable: boolean,
+): Column<Feature, PlanChange> {
+  return {
+    ...pickedColumn<Feature>(key, label, records, (feature) =>
+      namersOf(records, feature.id),
+    ),
+    readOnlyOn: (kind) => !editable || kind === newKind,
   };
 }
 
@@ -376,31 +452,30 @@ export function projectColumns(
   ];
 }
 
+// What a project's or proposal's menu opens: its details, and the features it names, on Features.
+interface NamerMenu<Rec> {
+  onOpen?: ((record: Rec) => void) | undefined;
+  onFeatures?: ((record: Rec) => void) | undefined;
+}
+
 export function projectTable(
   choices: TableChoices,
-  onOpen?: (project: Project) => void,
-  onMilestones?: (project: Project) => void,
+  {
+    onOpen,
+    onMilestones,
+    onFeatures,
+  }: NamerMenu<Project> & { onMilestones?: (project: Project) => void } = {},
 ): RecordTable<Project, PlanChange, ProjectRequest> {
   return planTable<Project, ProjectRequest>({
     type: "project",
     ...wordsOf("projects"),
     columns: () => projectColumns(choices, onOpen),
     request: (changes) => merged(changes) as ProjectRequest,
-    menuItems: (project) =>
-      !isPending(project) && (
-        <>
-          {detailsItem(onOpen)(project)}
-          {onMilestones !== undefined && (
-            <Menu.Item
-              onClick={() => {
-                onMilestones(project);
-              }}
-            >
-              Show milestones
-            </Menu.Item>
-          )}
-        </>
-      ),
+    menuItems: recordMenu<Project>([
+      ["Show details", onOpen],
+      ["Show milestones", onMilestones],
+      ["Show features", onFeatures],
+    ]),
   });
 }
 
@@ -437,20 +512,19 @@ export function proposalColumns(
 
 export function proposalTable(
   choices: TableChoices,
-  onOpen?: (proposal: Proposal) => void,
+  { onOpen, onFeatures }: NamerMenu<Proposal> = {},
 ): RecordTable<Proposal, PlanChange, ProposalRequest> {
   return planTable<Proposal, ProposalRequest>({
     type: "proposal",
     ...wordsOf("proposals"),
     columns: () => proposalColumns(choices, onOpen),
     request: (changes) => merged(changes) as ProposalRequest,
-    menuItems: detailsItem(onOpen),
+    menuItems: recordMenu<Proposal>([
+      ["Show details", onOpen],
+      ["Show features", onFeatures],
+    ]),
   });
 }
-
-// A new row is of its own kind, so its project can be picked; a milestone saved keeps its project.
-const newKind = "new";
-const savedKind = "saved";
 
 export function milestoneColumns(
   projects: readonly Project[],
@@ -464,8 +538,9 @@ export function milestoneColumns(
     {
       ...field<Milestone>("projectId", "Project", "choice", {
         required: true,
-        choices: named(projects),
+        choices: identified(projects),
       }),
+      content: ({ projectId }) => namesCell(projects)([projectId]),
       readOnlyOn: (kind) => kind === savedKind,
       ...(filteredTo === undefined ? {} : { newRowValue: () => [filteredTo] }),
     },
@@ -586,8 +661,16 @@ function effortColumn(
 
 export function featureColumns(
   choices: TableChoices,
-  onOpen?: (feature: Feature) => void,
-  { fields, lists, order }: AddedColumns = choices.featureColumns,
+  {
+    onOpen,
+    shown: { fields, lists, order } = choices.featureColumns,
+    editsNamers = false,
+  }: {
+    onOpen?: ((feature: Feature) => void) | undefined;
+    shown?: AddedColumns;
+    // Whether the projects and proposals that name a feature can be changed here.
+    editsNamers?: boolean;
+  } = {},
 ): Column<Feature, PlanChange>[] {
   const meaningOf = new Map(
     choices.featureStatuses.map(({ id, meaning }) => [id, meaning]),
@@ -603,6 +686,8 @@ export function featureColumns(
     },
     field<Feature>("neededBy", "Needed by", "month"),
     customersColumn<Feature>(choices.customers),
+    namersColumn("projectIds", "Projects", choices.projects, editsNamers),
+    namersColumn("proposalIds", "Proposals", choices.proposals, editsNamers),
     field<Feature>("description", "Description", "text", {
       maxLength: featureLengths.description,
     }),
@@ -684,11 +769,13 @@ const byNeededBy: RowGrouping<Feature> = {
 export function featureTable(
   choices: TableChoices,
   onOpen?: (feature: Feature) => void,
+  editsNamers = false,
 ): RecordTable<Feature, PlanChange, FeatureFields> {
   return planTable<Feature, FeatureFields>({
     type: "feature",
     ...wordsOf("features"),
-    columns: (shown) => featureColumns(choices, onOpen, shown),
+    kinds: [newKind, savedKind],
+    columns: (shown) => featureColumns(choices, { onOpen, shown, editsNamers }),
     groupings: [byCycle(choices.cycles), byNeededBy],
     request: (changes) => {
       const request: PlanChange = {

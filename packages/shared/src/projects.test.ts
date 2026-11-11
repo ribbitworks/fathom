@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for projects' dates from their milestones, and the requests that add and change customers,
-// projects, milestones, and proposals.
+// projects, milestones, and proposals, and a feature's projects and proposals.
 
 import { describe, expect, it } from "vitest";
 import {
   customerRequestSchema,
+  featureProjectsRequestSchema,
   milestoneRequestSchema,
   projectDates,
   projectRequestSchema,
@@ -118,6 +119,30 @@ describe("requests", () => {
     expect(parse(`https://example.com/${"a".repeat(2000)}`).success).toBe(
       false,
     );
+  });
+});
+
+describe("a feature's projects and proposals", () => {
+  it("are each kept once, in a stable order", () => {
+    expect(
+      featureProjectsRequestSchema.parse({
+        projectIds: [second, first, second],
+        proposalIds: [],
+      }),
+    ).toEqual({ projectIds: [first, second], proposalIds: [] });
+  });
+
+  it("leave a kind not named out, rather than empty", () => {
+    expect(
+      featureProjectsRequestSchema.parse({ proposalIds: [first] }),
+    ).toEqual({ proposalIds: [first] });
+  });
+
+  it("refuse what is not an identifier", () => {
+    expect(
+      featureProjectsRequestSchema.safeParse({ projectIds: ["not-an-id"] })
+        .success,
+    ).toBe(false);
   });
 });
 

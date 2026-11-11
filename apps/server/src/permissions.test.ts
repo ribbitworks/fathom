@@ -729,6 +729,13 @@ const routes: Route[] = [
       needs: allOf(permission),
     },
   ]),
+  // A feature's projects and proposals are drafts of those projects and proposals.
+  {
+    method: "PUT",
+    pattern: "/api/features/:id/projects-and-proposals",
+    needs: allOf("plan:edit"),
+    body: () => ({ projectIds: [] }),
+  },
   {
     method: "POST",
     pattern: "/api/projects/:projectId/milestones",

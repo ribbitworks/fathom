@@ -46,7 +46,7 @@ import { setTimeZone } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
-import type { PlanTab } from "./projects.ts";
+import { featureNamers, type PlanTab } from "./projects.ts";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { RolesPage } from "./roles-page.tsx";
 import { sessionQuery } from "./session.ts";
@@ -418,6 +418,20 @@ const projectsRoute = createRoute({
             search: {
               tab: "milestones",
               filters: { projectId: { any: [project.id] } },
+            },
+          });
+        }}
+        onFeaturesOf={({ type, id }) => {
+          void navigate({
+            to: "/features",
+            search: {
+              filters: {
+                // The kind is always one of the fixed kinds.
+                // eslint-disable-next-line security/detect-object-injection
+                [featureNamers[type].key]: {
+                  any: [id],
+                },
+              },
             },
           });
         }}

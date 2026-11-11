@@ -17,6 +17,7 @@ import type {
   DraftsAsked,
   Field,
   FieldRequest,
+  FeatureProjectsRequest,
   FeatureTeamChange,
   MemberTeamsChange,
   FeatureTeamRequest,
@@ -276,6 +277,13 @@ export interface ProjectAccess {
     changed: PlanRecordRequest,
   ): Promise<Saved<ProjectPlan>>;
   remove(actor: Actor, type: PlanKind, id: string): Promise<ChangeSetId>;
+  // Changes which projects need a feature and which proposals propose it, drafting each project
+  // and proposal, so it takes those who edit the plan.
+  changeFeatureProjects(
+    actor: Actor,
+    featureId: string,
+    request: FeatureProjectsRequest,
+  ): Promise<Saved<ProjectPlan>>;
   addMilestone(
     actor: Actor,
     projectId: string,
@@ -817,6 +825,16 @@ function createProjectAccess(database: Database): ProjectAccess {
       ),
     remove: async (actor, type, id) =>
       projectData.removeRecord(database, recordEditor(actor, type), type, id),
+    changeFeatureProjects: async (actor, featureId, request) =>
+      edited(
+        actor,
+        projectData.changeFeatureProjects(
+          database,
+          recordEditor(actor, "project"),
+          featureId,
+          request,
+        ),
+      ),
     addMilestone: async (actor, projectId, request) =>
       edited(
         actor,

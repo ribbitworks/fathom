@@ -813,6 +813,146 @@ describe("the features projects and proposals name", () => {
   });
 });
 
+describe("a feature's projects and proposals", () => {
+  const changeNamers = (
+    featureId: string,
+    body: object,
+    cookie = planner.cookie,
+  ) =>
+    test.request(
+      cookie,
+      "PUT",
+      `/api/features/${featureId}/projects-and-proposals`,
+      body,
+    );
+
+  async function liveRecords() {
+    const feature = await addFeature();
+    const kept = await addProject({ featureIds: [feature.id] });
+    const dropped = await addProject({ featureIds: [feature.id] });
+    const added = await addProject();
+    const proposal = await addProposal();
+    await approve([
+      { type: "feature", id: feature.id },
+      ...[kept, dropped, added].map(({ id }) => ({ type: "project", id })),
+      { type: "proposal", id: proposal.id },
+    ]);
+    return { feature, kept, dropped, added, proposal };
+  }
+
+  it("are changed as drafts of each project and proposal added or taken away, in one change", async () => {
+    // Given a feature two live projects need
+    const { feature, kept, dropped, added, proposal } = await liveRecords();
+    // When it is moved from one project to another, and added to a proposal
+    const response = await changeNamers(feature.id, {
+      projectIds: [kept.id, added.id],
+      proposalIds: [proposal.id],
+    });
+    // Then each record that changes has a draft, and the one kept has none
+    expect(response.statusCode).toBe(200);
+    const { plan, changeSetId } = response.json<Saved>();
+    expect(byName(plan.projects, kept.name).draft).toBeUndefined();
+    expect(byName(plan.projects, dropped.name)).toMatchObject({
+      featureIds: [],
+      draft: { changed: ["featureIds"] },
+    });
+    expect(byName(plan.projects, added.name)).toMatchObject({
+      featureIds: [feature.id],
+      draft: { changed: ["featureIds"] },
+    });
+    expect(byName(plan.proposals, proposal.name).featureIds).toEqual([
+      feature.id,
+    ]);
+    expect(byName(plan.features, feature.name).draft).toBeUndefined();
+    // And all of them are one change
+    expect(changeSetId).not.toBeNull();
+  });
+
+  it("leave a kind not named as it is, and save nothing when nothing changes", async () => {
+    const { feature, kept } = await liveRecords();
+    const response = await changeNamers(feature.id, { proposalIds: [] });
+    expect(response.statusCode).toBe(200);
+    const { plan, changeSetId } = response.json<Saved>();
+    expect(changeSetId).toBeNull();
+    expect(byName(plan.projects, kept.name).featureIds).toEqual([feature.id]);
+  });
+
+  it("refuse a feature that does not exist, or a project's general feature", async () => {
+    const project = await addProject();
+    await approve([{ type: "project", id: project.id }]);
+    const [general] = await test.connection
+      .select({ id: features.id })
+      .from(features)
+      .where(eq(features.generalForProjectId, project.id));
+    for (const featureId of [missing, String(general?.id)]) {
+      const response = await changeNamers(featureId, {
+        projectIds: [project.id],
+      });
+      expect(response.statusCode).toBe(404);
+      expect(errorOf(response)).toBe("There is no such feature");
+    }
+  });
+
+  it("leave a project drafted to be removed as it is, and refuse adding the feature to one", async () => {
+    // Given a project needing the feature, drafted to be removed, and another drafted to be removed
+    const { feature, kept, dropped, added } = await liveRecords();
+    for (const project of [dropped, added]) {
+      expect(
+        (await send("DELETE", `/api/projects/${project.id}`)).statusCode,
+      ).toBe(200);
+    }
+    // When a view of the drafts applied, which shows neither, names only the project kept
+    const unchanged = await changeNamers(feature.id, {
+      projectIds: [kept.id],
+    });
+    // Then nothing changes
+    expect(unchanged.statusCode).toBe(200);
+    expect(unchanged.json<Saved>().changeSetId).toBeNull();
+    // And adding the feature to a project drafted to be removed is refused, naming it
+    const refused = await changeNamers(feature.id, {
+      projectIds: [kept.id, added.id],
+    });
+    expect(refused.statusCode).toBe(409);
+    expect(errorOf(refused)).toBe(
+      `The project ${added.name} is drafted to be removed, so it can't be changed`,
+    );
+  });
+
+  it("refuse a project that does not exist", async () => {
+    const { feature } = await liveRecords();
+    const response = await changeNamers(feature.id, { projectIds: [missing] });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("refuse a project another planner is changing", async () => {
+    const { feature, added } = await liveRecords();
+    const other = await test.signedIn("product-manager");
+    const held = await test.request(
+      other.cookie,
+      "PUT",
+      `/api/projects/${added.id}`,
+      { name: unique("Fictional Renamed") },
+      { publish: false },
+    );
+    expect(held.statusCode).toBe(200);
+    const response = await changeNamers(feature.id, {
+      projectIds: [added.id],
+    });
+    expect(response.statusCode).toBe(409);
+  });
+
+  it("are refused to those who edit features but not the rest of the plan", async () => {
+    const { feature } = await liveRecords();
+    const lead = await test.signedIn("feature-lead");
+    const response = await changeNamers(
+      feature.id,
+      { projectIds: [] },
+      lead.cookie,
+    );
+    expect(response.statusCode).toBe(403);
+  });
+});
+
 describe("owners", () => {
   it("cannot be removed from People while they own a project or proposal", async () => {
     const editor = await test.signedIn("workforce-administrator");

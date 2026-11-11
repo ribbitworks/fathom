@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Customers, projects with their milestones, proposals, and features: reading them all at once,
-// with what they can be given, and drafting each added, changed, and removed. Every change answers
+// with what they can be given, and drafting each added, changed, and removed, and a feature's
+// projects and proposals, as drafts of those projects and proposals. Every change answers
 // with the change set it was saved in, and every change but a removal with every record as the
 // editor now sees them. Discarding and resubmitting their drafts goes through the routes for every
 // plan record's draft. The data access layer checks the actor's permissions.
@@ -9,6 +10,7 @@
 import {
   changeSetIdSchema,
   customerRequestSchema,
+  featureProjectsRequestSchema,
   featureRequestSchema,
   fieldRequestSchema,
   fieldSchema,
@@ -97,6 +99,24 @@ export function projectRoutes(
     recordRoutes("projects", "project", projectRequestSchema);
     recordRoutes("proposals", "proposal", proposalRequestSchema);
     recordRoutes("features", "feature", featureRequestSchema);
+    app.put(
+      "/api/features/:id/projects-and-proposals",
+      {
+        schema: {
+          params: idParams,
+          body: featureProjectsRequestSchema,
+          response: { 200: planResponse },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await projects.changeFeatureProjects(
+          request.actor,
+          request.params.id,
+          request.body,
+        );
+        return { plan: result, changeSetId };
+      },
+    );
 
     // The columns added to Features.
     const columnParams = z.object({ fieldId: z.uuid() });

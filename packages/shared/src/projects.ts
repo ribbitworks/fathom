@@ -14,6 +14,7 @@ import { fieldSchema } from "./people.ts";
 import {
   optionalText,
   picked,
+  pickedIfNamed,
   recordName,
   recordNameLength,
   recordShape,
@@ -224,3 +225,21 @@ export const proposalRequestSchema = z.object({
 });
 
 export type ProposalRequest = z.infer<typeof proposalRequestSchema>;
+
+// The projects that need a feature and the proposals that propose it, changed from the feature's
+// side: each project or proposal it is added to or taken from gets a draft, and a kind not named
+// is left as it is.
+export const featureProjectsRequestSchema = z.object({
+  projectIds: pickedIfNamed,
+  proposalIds: pickedIfNamed,
+});
+
+export type FeatureProjectsRequest = z.infer<
+  typeof featureProjectsRequestSchema
+>;
+
+// The kinds of record that name features, each by the request's field of its records.
+export const featureNamerKeys = {
+  project: "projectIds",
+  proposal: "proposalIds",
+} as const satisfies Record<string, keyof FeatureProjectsRequest>;

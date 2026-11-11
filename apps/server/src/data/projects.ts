@@ -13,6 +13,8 @@ import {
   type Feature,
   type FeatureColumns,
   type FeatureDraft,
+  featureNamerKeys,
+  type FeatureProjectsRequest,
   type FeatureRequest,
   type BuiltInList,
   type List,
@@ -33,7 +35,7 @@ import {
 import { asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import type { Actor } from "../access.ts";
-import { BadRequestError, NotFoundError } from "../errors.ts";
+import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import {
   checkBuiltInChoice,
   firstOfferedOrRefused,
@@ -67,6 +69,7 @@ import {
 import {
   addedOnly,
   linkedIds,
+  recordExists,
   type RecordsState,
   shownIds,
   shownVersion,
@@ -665,6 +668,64 @@ export async function changeFeature(
       id,
       await featureRecord(transaction, request, feature),
     );
+  });
+}
+
+// Adds a feature to, or takes it from, each project and proposal whose naming of it the request
+// changes, as their drafts, in one change set. Those whose naming it keeps are left as they are, and
+// so is one drafted to be removed that the request leaves out, since a view of the drafts applied
+// does not show it.
+export async function changeFeatureProjects(
+  database: Database,
+  maker: Actor,
+  featureId: string,
+  request: FeatureProjectsRequest,
+): Promise<Saved<PlanRecords>> {
+  return changingPlan(database, maker, async (transaction, state) => {
+    if (
+      shownVersion(state, "feature", featureId) === undefined ||
+      isGeneralFeature(state, featureId)
+    ) {
+      throw new NotFoundError("There is no such feature");
+    }
+    const wanted = Object.entries(featureNamerKeys).flatMap(([kind, key]) => {
+      const type = kind as keyof typeof featureNamerKeys;
+      // The key is always one of the fixed keys.
+      // eslint-disable-next-line security/detect-object-injection
+      const named = request[key];
+      if (named === undefined) return [];
+      const asked = new Set(named);
+      const naming = shownIds(state, type).filter((id) =>
+        linkedIds(versionOf(state, type, id), "featureIds").includes(featureId),
+      );
+      const changing = [
+        ...naming.filter((id) => !asked.has(id)),
+        ...[...asked].filter((id) => !naming.includes(id)),
+      ];
+      return changing.map((id) => {
+        if (
+          recordExists(state, type, id) &&
+          versionOf(state, type, id) === undefined
+        ) {
+          throw new ConflictError(
+            `The ${type} ${String(shownVersion(state, type, id)?.name)} is drafted to be removed, so it can't be changed`,
+          );
+        }
+        const record = changeableRecord(state, type, id);
+        const others = linkedIds(record, "featureIds").filter(
+          (other) => other !== featureId,
+        );
+        return {
+          type,
+          id,
+          record: {
+            ...record,
+            featureIds: asked.has(id) ? [...others, featureId].sort() : others,
+          },
+        };
+      });
+    });
+    return saveRecordDrafts(transaction, maker, state, wanted);
   });
 }
 

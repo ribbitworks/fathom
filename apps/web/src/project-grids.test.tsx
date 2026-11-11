@@ -201,6 +201,8 @@ describe("the Features table", () => {
       "statusId",
       "neededBy",
       "customerIds",
+      "projectIds",
+      "proposalIds",
       "description",
       "note",
       "targetCycle",

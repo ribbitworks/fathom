@@ -27,7 +27,11 @@ export const optionalText = (longest: number) =>
     .transform((value) => (value === "" ? null : value));
 
 // The records picked, each once, in a stable order, so the same set is the same value.
-export const picked = z
+const pickedIds = z
   .array(z.uuid())
-  .default([])
   .transform((ids) => [...new Set(ids)].sort());
+
+export const picked = pickedIds.default([]);
+
+// Records picked, or none named, for a request that leaves them as they are when not named.
+export const pickedIfNamed = pickedIds.optional();

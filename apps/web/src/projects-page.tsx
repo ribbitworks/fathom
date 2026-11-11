@@ -70,6 +70,7 @@ import {
   dayOrEmpty,
   featureColumns,
   featureTable,
+  type Identified,
   livePlanRecords,
   milestoneColumns,
   milestoneTable,
@@ -83,6 +84,7 @@ import {
   projectTable,
   proposalColumns,
   proposalTable,
+  RecordName,
   wordsOf,
 } from "./project-grids.tsx";
 import {
@@ -90,8 +92,10 @@ import {
   allMilestones,
   changeMilestone,
   type FeatureFields,
+  type FeatureNamer,
   isFeature,
   type MilestoneAdding,
+  namersIn,
   operationsOf,
   listedPlanRecords,
   planChoicesQuery,
@@ -103,6 +107,7 @@ import {
   projectTabs,
   type TableChoices,
   tableChoices,
+  withNamers,
 } from "./projects.ts";
 import { inUnitsWords, RecordLink, Row } from "./record-details.tsx";
 import {
@@ -112,6 +117,7 @@ import {
   newRecordProblems,
   pendingId,
   RecordGrid,
+  recordsAsShown,
   type RecordActions,
   type RecordTable,
 } from "./record-grid.tsx";
@@ -202,6 +208,22 @@ const withChange = (record: PlanRecord, change: PlanChange): PlanRecord => ({
   ...(isFeature(record) ? withCellChange(record, change) : {}),
 });
 
+// The plan with a change to a record applied, as the table shows it before it is saved: the
+// projects and proposals that name a feature hold it, rather than the feature.
+function withRecordChange(
+  plan: ProjectPlan,
+  type: PlanRecordKind,
+  id: string,
+  change: PlanChange,
+): ProjectPlan {
+  const { namers, own } = namersIn(change);
+  return withNamers(
+    withRecord(plan, type, id, (shown) => withChange(shown, own)),
+    id,
+    namers,
+  );
+}
+
 const removing = (record: PlanRecord): PlanRecord => ({
   ...record,
   draft: { ...pendingDraft("deleted", {}), uses: [] },
@@ -240,6 +262,7 @@ export function ProjectsPage({
   open,
   onOpen,
   onMilestonesOf,
+  onFeaturesOf,
 }: {
   tab: PlanTab;
   // Shows another of the plan's pages or tabs, with a record's details open if one is named.
@@ -255,6 +278,8 @@ export function ProjectsPage({
   onOpen?: (id: string | undefined) => void;
   // Shows the Milestones tab with only a project's milestones.
   onMilestonesOf?: (project: Project) => void;
+  // Shows Features with only those a project or proposal names.
+  onFeaturesOf?: (namer: FeatureNamer) => void;
 }) {
   const page = planPages[tab === "features" ? "features" : "projects"];
   const query = useQuery(projectPlanQuery);
@@ -427,10 +452,7 @@ export function ProjectsPage({
       },
       update: (record, change) => {
         save({
-          next: (plan) =>
-            withRecord(plan, type, record.id, (shown) =>
-              withChange(shown, change),
-            ),
+          next: (plan) => withRecordChange(plan, type, record.id, change),
           save: async () =>
             (await operationsOf(type).change(record, change)).changeSetId,
           failure: `Fathom could not change ${record.name}.`,
@@ -480,12 +502,19 @@ export function ProjectsPage({
     );
   } else {
     const plan = query.data;
-    const choices = tableChoices(
-      plan,
-      choicesQuery.data,
-      streamsQuery.data?.streams ?? [],
-      effortQuery.data,
-    );
+    const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
+      recordsAsShown(view.show, records, livePlanRecords);
+    // Projects and proposals as the view shows them, so the features they name follow the view.
+    const choices = {
+      ...tableChoices(
+        plan,
+        choicesQuery.data,
+        streamsQuery.data?.streams ?? [],
+        effortQuery.data,
+      ),
+      projects: asShown(plan.projects),
+      proposals: asShown(plan.proposals),
+    };
     const nodes = planNodes(plan);
     const openRecord = (record: { id: string }) => {
       leave(() => {
@@ -497,6 +526,12 @@ export function ProjectsPage({
         onMilestonesOf?.(project);
       });
     };
+    const showFeaturesOf =
+      (type: FeatureNamer["type"]) => (record: { id: string }) => {
+        leave(() => {
+          onFeaturesOf?.({ type, id: record.id });
+        });
+      };
     const panel = recordPanel({
       tab,
       plan,
@@ -505,7 +540,9 @@ export function ProjectsPage({
       narrow,
       show: view.show,
       units: view,
-      canEdit: canEdit && view.show !== "live",
+      editsKind: (type) =>
+        view.show !== "live" &&
+        (type === "feature" ? plan.canEditFeatures : plan.canEdit),
       approves,
       nodes,
       onClose: () => {
@@ -532,7 +569,11 @@ export function ProjectsPage({
       },
       showMilestones: showMilestonesOf,
       showRecord: (next, id) => {
-        onTab?.(next, id);
+        // The tab is always one of the fixed tabs.
+        // eslint-disable-next-line security/detect-object-injection
+        if (detailTabs[tab].some((one) => one === next)) {
+          openRecord({ id });
+        } else onTab?.(next, id);
       },
       onChange: (type, record, change) => {
         actionsFor<PlanRecord, unknown>(type).update(record, change);
@@ -627,7 +668,7 @@ export function ProjectsPage({
     const filteredTo = view.filters.projectId?.any?.at(0);
     const grids: Readonly<Record<PlanTab, () => ReactElement>> = {
       features: () => {
-        const table = featureTable(choices, openRecord);
+        const table = featureTable(choices, openRecord, plan.canEdit);
         const actions: RecordActions<Feature, PlanChange, FeatureFields> = {
           ...actionsFor<Feature, FeatureFields>("feature"),
           ...columnDraftActions("features", columnSaving),
@@ -673,7 +714,14 @@ export function ProjectsPage({
       customers: () =>
         gridOf("customer", customerTable(openRecord), plan.customers),
       proposals: () =>
-        gridOf("proposal", proposalTable(choices, openRecord), plan.proposals),
+        gridOf(
+          "proposal",
+          proposalTable(choices, {
+            onOpen: openRecord,
+            onFeatures: showFeaturesOf("proposal"),
+          }),
+          plan.proposals,
+        ),
       milestones: () =>
         gridOf(
           "milestone",
@@ -687,7 +735,11 @@ export function ProjectsPage({
       projects: () =>
         gridOf(
           "project",
-          projectTable(choices, openRecord, showMilestonesOf),
+          projectTable(choices, {
+            onOpen: openRecord,
+            onMilestones: showMilestonesOf,
+            onFeatures: showFeaturesOf("project"),
+          }),
           plan.projects,
         ),
     };
@@ -896,6 +948,18 @@ function MilestoneForm({
   );
 }
 
+// The tabs whose records each page or tab shows the details of beside its table: Features shows the
+// projects and proposals that name its features too, so the roadmap stays in view.
+type DetailTab = Exclude<PlanTab, "milestones">;
+
+const detailTabs: Readonly<Record<PlanTab, readonly DetailTab[]>> = {
+  projects: ["projects"],
+  proposals: ["proposals"],
+  customers: ["customers"],
+  milestones: [],
+  features: ["features", "projects", "proposals"],
+};
+
 interface MilestoneMenu {
   decide: (asking: Asking, ref: RecordRef) => void;
   discard: (milestone: Milestone) => void;
@@ -914,7 +978,7 @@ function recordPanel({
   narrow,
   show,
   units,
-  canEdit,
+  editsKind,
   approves,
   nodes,
   onClose,
@@ -931,7 +995,8 @@ function recordPanel({
   show: Show;
   // The units and decimal places the table shows its columns in.
   units: Pick<View, "units" | "places">;
-  canEdit: boolean;
+  // Whether the user may change a kind of record here.
+  editsKind: (type: PlanRecordKind) => boolean;
   approves: readonly DraftKind[];
   nodes: readonly RecordNode[];
   onClose: () => void;
@@ -947,44 +1012,50 @@ function recordPanel({
   if (open === undefined) return undefined;
   const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
     show === "live" ? livePlanRecords(records) : records;
-  const projects = asShown(plan.projects);
   const shownOf = (
     type: PlanRecordKind,
     records: readonly PlanRecord[],
-    columns: readonly Column<never, PlanChange>[],
-  ) => ({
-    type,
-    record: asShown(records).find(({ id }) => id === open),
-    columns,
-  });
-  const shownOnTab: Readonly<
-    Record<PlanTab, ReturnType<typeof shownOf> | undefined>
+    columns: () => readonly Column<never, PlanChange>[],
+  ) => {
+    const record = asShown(records).find(({ id }) => id === open);
+    return record === undefined ? undefined : { type, record, columns };
+  };
+  const shownFrom: Readonly<
+    Record<DetailTab, () => ReturnType<typeof shownOf>>
   > = {
-    projects: shownOf(
-      "project",
-      plan.projects,
-      projectColumns(choices).filter(
-        ({ key }) => !projectDateColumns.some(([date]) => date === key),
+    projects: () =>
+      shownOf("project", plan.projects, () =>
+        projectColumns(choices).filter(
+          ({ key }) => !projectDateColumns.some(([date]) => date === key),
+        ),
       ),
-    ),
-    proposals: shownOf("proposal", plan.proposals, proposalColumns(choices)),
-    customers: shownOf(
-      "customer",
-      plan.customers,
-      customerTable().columnsFor([], [], [], []),
-    ),
-    milestones: undefined,
-    features: shownOf("feature", plan.features, featureColumns(choices)),
+    proposals: () =>
+      shownOf("proposal", plan.proposals, () => proposalColumns(choices)),
+    customers: () =>
+      shownOf("customer", plan.customers, () =>
+        customerTable().columnsFor([], [], [], []),
+      ),
+    features: () =>
+      shownOf("feature", plan.features, () =>
+        featureColumns(choices, { editsNamers: editsKind("project") }),
+      ),
   };
   // The tab is always one of the fixed tabs.
   // eslint-disable-next-line security/detect-object-injection
-  const onTab = shownOnTab[tab];
-  const record = onTab?.record;
-  const project = projects.find(({ id }) => id === open);
+  const found = detailTabs[tab]
+    .map((one) =>
+      // eslint-disable-next-line security/detect-object-injection
+      shownFrom[one](),
+    )
+    .find((one) => one !== undefined);
+  if (found === undefined) return undefined;
+  const { type, record: shown } = found;
+  const columns = found.columns();
+  const canEdit = editsKind(type);
   const extra =
-    tab === "projects" && project !== undefined ? (
+    type === "project" ? (
       <ProjectExtras
-        project={project}
+        project={shown as Project}
         show={show}
         canEdit={canEdit}
         approves={approves}
@@ -993,9 +1064,13 @@ function recordPanel({
         showMilestones={showMilestones}
       />
     ) : null;
-  if (onTab === undefined || record === undefined) return undefined;
-  const shown = record;
-  const { type, columns } = onTab;
+  const identified = new Map<string, Identified>(
+    [
+      ...asShown(plan.customers),
+      ...asShown(plan.projects),
+      ...asShown(plan.proposals),
+    ].map((one) => [one.id, one]),
+  );
   return {
     key: "record",
     id: panelId,
@@ -1023,6 +1098,7 @@ function recordPanel({
             record={shown}
             beside={show === "both"}
             canEdit={canEdit}
+            identified={identified}
             showRecord={showRecord}
             onChange={(change) => {
               onChange(type, shown, change);
@@ -1038,20 +1114,26 @@ function recordPanel({
 // The tab whose records a column's values name, for those that can be followed.
 const linkedTabs = new Map<string, PlanTab>([
   ["customerIds", "customers"],
+  ["projectIds", "projects"],
   ["proposalIds", "proposals"],
   ["featureIds", "features"],
 ]);
 
 // Columns whose records the panel lists one to a line, as there can be many.
-const listedOnLines = new Set(["featureIds"]);
+const listedOnLines = new Set(["featureIds", "projectIds", "proposalIds"]);
+
+// The records a panel's links can name with an ID of their own, by identifier.
+type IdentifiedRecords = ReadonlyMap<string, Identified>;
 
 function RecordLinks({
   column,
   ids,
+  identified,
   onShow,
 }: {
   column: Column<never, PlanChange>;
   ids: readonly string[];
+  identified: IdentifiedRecords;
   onShow: (id: string) => void;
 }) {
   const named = ids.flatMap((id) => {
@@ -1062,7 +1144,7 @@ function RecordLinks({
   const links = named.map(({ id, label }, index) => (
     <span key={id}>
       <RecordLink
-        name={label}
+        name={<RecordName record={identified.get(id) ?? { id, name: label }} />}
         onShow={() => {
           onShow(id);
         }}
@@ -1086,6 +1168,7 @@ function PlanRecordDetails({
   record,
   beside,
   canEdit,
+  identified,
   showRecord,
   onChange,
 }: {
@@ -1094,6 +1177,7 @@ function PlanRecordDetails({
   record: PlanRecord;
   beside: boolean;
   canEdit: boolean;
+  identified: IdentifiedRecords;
   showRecord: (tab: PlanTab, id: string) => void;
   onChange: (change: PlanChange) => void;
 }) {
@@ -1137,6 +1221,7 @@ function PlanRecordDetails({
           value={column.value(record as never)}
           beside={beside}
           editing={editing(edited)}
+          identified={identified}
           showRecord={showRecord}
         />
       ))}
@@ -1151,6 +1236,7 @@ function DetailRow({
   value,
   beside,
   editing,
+  identified,
   showRecord,
 }: {
   column: Column<never, PlanChange>;
@@ -1160,6 +1246,7 @@ function DetailRow({
   value: CellValue;
   beside: boolean;
   editing: Editing | undefined;
+  identified: IdentifiedRecords;
   showRecord: (tab: PlanTab, id: string) => void;
 }) {
   const draft = record.draft;
@@ -1178,6 +1265,7 @@ function DetailRow({
         <RecordLinks
           column={column}
           ids={value}
+          identified={identified}
           onShow={(id) => {
             showRecord(linkedTab, id);
           }}

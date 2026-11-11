@@ -307,7 +307,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
 **Preconditions:** Signed in with this account. Run after PROJ-04. **Projects** tab open.
 
 - [ ] **Step 1.** Select the **Milestones** tab.
-  - **Expected:** Every project's milestones are listed, among them **Pilot** and **Go live**, each with **Testing Project** under **Project**. **Pilot**'s **Customer delivery** box is ticked.
+  - **Expected:** Every project's milestones are listed, among them **Pilot** and **Go live**, each with **Testing Project** under **Project**, after **TP-1** in grey. **Pilot**'s **Customer delivery** box is ticked.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Projects** tab.
@@ -315,11 +315,11 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Notes:**
 
 - [ ] **Step 3.** In the ⋯ menu of **Testing Project**, select **Show milestones**.
-  - **Expected:** The **Milestones** tab opens showing only **Pilot** and **Go live**, with a pill above the table reading **Project: Testing Project**, and beside it **2 of** followed by the number of all milestones.
+  - **Expected:** The **Milestones** tab opens showing only **Pilot** and **Go live**, with a pill above the table reading **Project: TP-1 Testing Project**, and beside it **2 of** followed by the number of all milestones.
   - **Notes:**
 
 - [ ] **Step 4.** Select **New milestone**.
-  - **Expected:** The side panel opens, headed **New milestone**, and **Project** already reads **Testing Project**.
+  - **Expected:** The side panel opens, headed **New milestone**, and **Project** already reads **TP-1 Testing Project**.
   - **Notes:**
 
 - [ ] **Step 5.** Type `Handover` in **Name**.
@@ -334,7 +334,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Expected:** The side panel closes, and **Handover** is added with a hollow yellow dot and **Draft: added**.
   - **Notes:**
 
-- [ ] **Step 8.** Select the **×** on the **Project: Testing Project** pill.
+- [ ] **Step 8.** Select the **×** on the **Project: TP-1 Testing Project** pill.
   - **Expected:** Every project's milestones show again.
   - **Notes:**
 

@@ -11,6 +11,9 @@ import {
   type EffortConversions,
   type Feature,
   type FeatureColumns,
+  featureNamerKeys,
+  type FeatureProjectsRequest,
+  featureProjectsRequestSchema,
   type FeatureRequest,
   type Milestone,
   type MilestoneRequest,
@@ -92,6 +95,92 @@ export async function removeRecord(
 ): Promise<string | null> {
   return (await sendDeleteFor(recordPath(type, id), savedSchema)).changeSetId;
 }
+
+// The kinds of record that name features: the field a feature's row shows them in, and where the
+// plan holds them.
+export const featureNamers = {
+  project: { key: featureNamerKeys.project, records: "projects" },
+  proposal: { key: featureNamerKeys.proposal, records: "proposals" },
+} as const satisfies Record<
+  keyof typeof featureNamerKeys,
+  {
+    key: keyof FeatureProjectsRequest;
+    records: keyof Pick<ProjectPlan, "projects" | "proposals">;
+  }
+>;
+
+const namerKinds = Object.values(featureNamers);
+const namerKeys: readonly string[] = Object.values(featureNamerKeys);
+
+// A project or proposal, as one that names features.
+export interface FeatureNamer {
+  type: keyof typeof featureNamers;
+  id: string;
+}
+
+// The records among those given that name a feature.
+export const namersOf = (
+  records: readonly { id: string; featureIds: readonly string[] }[],
+  featureId: string,
+): string[] =>
+  records
+    .filter(({ featureIds }) => featureIds.includes(featureId))
+    .map(({ id }) => id);
+
+// A change to a feature split into the projects and proposals that name it, and its own fields.
+export function namersIn(change: CellChange & Record<string, unknown>): {
+  namers: Partial<FeatureProjectsRequest>;
+  own: CellChange & Record<string, unknown>;
+} {
+  const entries = Object.entries(change);
+  return {
+    namers: featureProjectsRequestSchema.parse(
+      Object.fromEntries(entries.filter(([key]) => namerKeys.includes(key))),
+    ),
+    own: Object.fromEntries(
+      entries.filter(([key]) => !namerKeys.includes(key)),
+    ),
+  };
+}
+
+// The plan with a feature named by the projects and proposals a change gives, and by no others of
+// those kinds.
+export function withNamers(
+  plan: ProjectPlan,
+  featureId: string,
+  namers: Partial<FeatureProjectsRequest>,
+): ProjectPlan {
+  return namerKinds.reduce((next, { key, records }) => {
+    // The key is always one of the fixed keys above.
+    // eslint-disable-next-line security/detect-object-injection
+    const named = namers[key];
+    if (named === undefined) return next;
+    return {
+      ...next,
+      // eslint-disable-next-line security/detect-object-injection
+      [records]: next[records].map((record) => {
+        const others = record.featureIds.filter((id) => id !== featureId);
+        return {
+          ...record,
+          featureIds: named.includes(record.id)
+            ? [...others, featureId].sort()
+            : others,
+        };
+      }),
+    };
+  }, plan);
+}
+
+export const changeFeatureProjects = (
+  featureId: string,
+  request: Partial<FeatureProjectsRequest>,
+): Promise<SavedPlan> =>
+  sendJsonFor(
+    "PUT",
+    `${recordPath("feature", featureId)}/projects-and-proposals`,
+    request,
+    savedPlan,
+  );
 
 const milestonesPath = (projectId: string) =>
   `/api/projects/${encodeURIComponent(projectId)}/milestones`;
@@ -405,11 +494,21 @@ const planRecordOperations: Readonly<
           request as CellChange,
         ),
       }),
-    change: (record, change) =>
-      changeRecord(record.id, {
-        type: "feature",
-        request: featureRequest({ ...(record as Feature), ...change }, change),
-      }),
+    // The projects and proposals that name a feature are changed as their own drafts, saved before
+    // any change to the feature's own fields.
+    change: async (record, change) => {
+      const { namers, own } = namersIn(change);
+      const namersSaved =
+        Object.keys(namers).length > 0
+          ? await changeFeatureProjects(record.id, namers)
+          : undefined;
+      return Object.keys(own).length === 0 && namersSaved !== undefined
+        ? namersSaved
+        : changeRecord(record.id, {
+            type: "feature",
+            request: featureRequest({ ...(record as Feature), ...own }, own),
+          });
+    },
     remove: (record) => removeRecord("feature", record.id),
   },
 };
