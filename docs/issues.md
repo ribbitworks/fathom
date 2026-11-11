@@ -150,6 +150,7 @@ Each item starts with a label, such as **Bug · P3** or **Debt · Next**. A **Bu
 - **Bug · P4** **A draft's changer counted after it ends unapproved:** whoever changed a draft counts as its changer until the record's draft is approved or discarded. A draft can also end without either, such as one published back to the live value, approved with no change left, or an emptied order. Then someone who changed it earlier still counts as having changed the record's next draft, so another approver must approve it. This errs on the safe side. Found in review on 2026-11-07, while building no self-approval.
 - **Bug · P3** **The Drafts page is slow to open:** It took noticeably long to load in development with the seed data, with the people's data taking up to about 2 seconds. Not yet investigated.
 - **Bug · P4** **Undoing the discard of a fill:** Undoing a discarded fill looks to be refused when the person's draft held a manager, since the hires come back before the person is checked. Found by reading the code, not reproduced.
+- **Quality of life · Next** **Who is changing a record, on screen:** The Being changed mark names who is changing the record only to screen readers and in the record's menu. The owner decided on 2026-11-11 that it also names them in a tooltip; `HoldMarks` in `apps/web/src/status-mark.tsx` draws the mark. The coming change to how drafts are marked, which shows each mark's words as a tooltip, may cover it.
 
 ## Error Pages
 

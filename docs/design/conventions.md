@@ -145,3 +145,84 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **The principles:** Every word on screen follows Visual Design's [Principles](visual-design.md#principles): words people say, never the second person, and no instructional text. On top of those, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off".
   - **Drawn by:** the words themselves, with `draftWords` and `DraftedWords` in `apps/web/src/status-mark.tsx` for drafts.
   - **Example:** Draft: removed.
+
+## Entering Data
+
+- **From the keyboard:** Wherever items are added or changed, everything works from the keyboard. Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items. Leaving an item by clicking or tabbing elsewhere saves it too, and pasting several lines adds one item for each.
+  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx` for tables, and `apps/web/src/list-panel.tsx` for a list's choices.
+  - **Example:** on the Lists page, select Sites and type a new choice in its empty row.
+- **Like a spreadsheet:** Tables where many records are entered work like a spreadsheet. Arrow keys, Home, End and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last. Enter, F2 or typing edits a cell; Enter saves and moves down, Tab saves and moves across, Esc cancels, and Delete clears. Pasting rows copied from a spreadsheet into an empty row adds one record for each.
+  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
+  - **Example:** People, Features, and each table on Projects.
+- **The empty row:** Empty rows at the end take new records, their cells blank until something is typed in one, so they aren't taken for records. A row being filled in is tinted as the draft it will be and marked New, not saved yet, after an open dot, naming in red what is wrong so far, or in grey any required column still empty. Its menu, also opened with Shift+F10, offers Clear row, which takes the row and what it holds away.
+  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`.
+  - **Example:** type a name in the empty row at the end of Features.
+- **Moving items:** Where people set an order, items have a grip for dragging on wide screens, shown on hover or focus, and Alt with the arrow keys moves the selected one. Its menu offers the same moves and shows each one's keys.
+  - **Drawn by:** `apps/web/src/list-panel.tsx` for a list's choices, and the column menu in `apps/web/src/table-controls.tsx` for moving a column.
+  - **Example:** the choices of Sites on the Lists page.
+
+## Saving and Undo
+
+- **Saved at once:** Changes save at once, without asking. The latest can be undone with Cmd+Z or Ctrl+Z, except in a field with something typed in it, the note editor included, where the keys undo the typing alone. Changes seen in place show no notification. A change that takes something out of view, such as retiring or removing it, shows a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made.
+  - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
+  - **Example:** on the Lists page, retire a choice of Sites.
+- **Asking first:** Only approving and rejecting drafts ask first, since they can't be undone.
+  - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`.
+  - **Example:** Approve… in a seeded person's draft menu on People.
+- **Failures:** A change that fails says so in plain words, saying what to do next, never as a raw error, and its notification stays until closed. The record goes back to how it was.
+  - **Drawn by:** `notifyFailure` in `apps/web/src/notices.tsx`, with the words from `describeProblem` in `apps/web/src/api.ts`.
+  - **Example:** none in the seed data; a lost connection while saving shows one.
+
+## Leaving Unsaved Work
+
+- **Asking before discarding:** Leaving a form or a note with anything changed in it, by Cancel, the close button, another tab or another record, asks first, such as Discard the new customer? with Keep adding and Discard, or Discard changes to the note? with Keep writing and Discard. A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
+  - **Drawn by:** `useDiscardQuestion` and `newRecordQuestion` in `apps/web/src/discard-question.tsx`.
+  - **Example:** on Projects' Customers tab, select New customer, type a name, then Cancel.
+
+## Refusals
+
+- **A value refused:** A value refused when saved keeps its editor open, outlined in red, with the reason in red under it; in a table, the reason is under the row, in its first cell. Esc leaves the value as it was. Where a cell puts its old value back instead, as when Delete or leaving the cell is refused, the row is as it was and names nothing.
+  - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `RecordGrid` in `apps/web/src/record-grid.tsx` for a table.
+  - **Example:** type 203013 in a Needed by cell on Features: Needed by: use a month such as 2027-03.
+- **Controls turned off:** A control for a change the server would refuse is turned off, with a line saying why wherever the reason isn't plain to see.
+  - **Drawn by:** each page; no shared piece yet.
+  - **Example:** in a list with meanings, such as Feature statuses, Retire and Remove are greyed out on the only choice that means Possible, with a line saying why.
+
+## Staying Put
+
+- **Nothing moves while it's being changed:** A row keeps its place and its group while it is edited, until the view next changes, so a sorted or filtered table doesn't jump. No column's width follows what is typed, and a line that comes and goes keeps its space while empty.
+  - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx`, and `apps/web/src/org-chart-date.tsx` for the line under the date row.
+  - **Example:** on Features, change Report Builder's Target cycle: it stays under its heading until the page is reloaded.
+
+## The Address
+
+- **Kept in the address:** Everything a page shows is kept in its address: the tab, the mode, the view (its search, filters, sort, grouping, metrics, frozen columns, column order, widths and units), the record shown in a panel, and the date shown. So reloading shows the same, a link shared shows it to others who may see it, and the browser's Back goes back through what was shown. A page opened from the menu starts afresh.
+  - **Drawn by:** each page's search parameters in `apps/web/src/router.tsx`, with a table's view in `apps/web/src/table-view.ts`.
+  - **Example:** on Projects, select the Customers tab and reload.
+- **Back to another page:** The browser's Back is the way back. A Back to button is offered only where Fathom itself jumps to another page.
+  - **Drawn by:** no shared piece yet.
+  - **Example:** none yet.
+- **Kept in this browser:** A person's own settings for how Fathom looks are kept in the browser, not the address: Light or Dark, the collapsed sidebar, side panel widths and shares, the timeline's zoom, and, remembered by the server for each browser, the role last acted as.
+  - **Drawn by:** the piece that owns each, such as `apps/web/src/side-panel.tsx` for panel widths.
+  - **Example:** on the Releases page, choose Quarter on the timeline and reload.
+
+## Panels and Focus
+
+- **Opening and closing:** Choosing a record opens its details in a side panel, at its own address. Esc, the close button, or a click on the page outside the panel, the rows and the controls closes it. On a narrow screen, the panel covers the screen and keeps focus until it is closed.
+  - **Drawn by:** `WithSidePanel` and `SidePanelFrame` in `apps/web/src/side-panel.tsx`.
+  - **Example:** Offline Sync's details on Features.
+- **Focus goes where expected:** Opening a panel or dialog puts focus on its first thing to read or change, such as the record's name. Closing it puts focus back where it was opened from, such as the record's Name cell. Choosing the × in a field keeps focus in the field.
+  - **Drawn by:** `focusSoon` in `apps/web/src/focus.ts`, with `SidePanelFrame` in `apps/web/src/side-panel.tsx`.
+  - **Example:** close Offline Sync's details: focus is back on its Name cell.
+
+## Publishing
+
+- **Private until published:** A person's changes are theirs alone until they publish them. While they have any, the top bar shows Publish with how many, such as Publish 3 changes, which publishes them all, beside a menu listing them, with Discard all…, which asks first. A record someone else is changing is held, as [Drafts](#drafts) sets out.
+  - **Drawn by:** `UnpublishedControl` in `apps/web/src/unpublished.tsx`.
+  - **Example:** change any value on Features: Publish 1 change shows in the top bar.
+
+## Search
+
+- **Finding rows:** A search field above a table finds rows with every word typed anywhere in them, ignoring letter case and accents. Cmd+F on a Mac, or Ctrl+F elsewhere, goes to it from anywhere but a dialog, and Esc clears it, then leaves it, going back to the table where it can. When nothing matches, the table says so.
+  - **Drawn by:** `TableSearch` in `apps/web/src/table-controls.tsx`.
+  - **Example:** type offline in the search field on Features.
