@@ -432,14 +432,13 @@ export function allocationMonthsTable({
   teamMonths,
   features,
   managers,
-  seesPeople,
   currentMonth,
   show,
 }: {
   teamMonths: TeamMonths;
   features: readonly AllocatedFeature[];
-  managers: readonly { id: string; name: string }[];
-  seesPeople: boolean;
+  // The managers to group by, for roles that may group by manager.
+  managers: readonly { id: string; name: string }[] | undefined;
   currentMonth: string;
   show: Show;
 }): RecordTable<AllocationRow, CellChange, CellChange> {
@@ -460,7 +459,7 @@ export function allocationMonthsTable({
         ),
       readOnly: () => true,
       standIn: ({ madeName }) => madeName ?? "",
-      groupings: monthGroupings(seesPeople, managers, teamMonths),
+      groupings: monthGroupings(managers, teamMonths),
     }),
     counted: peopleAndHires((row) => row.plannedHire === true),
     totals: capacityTotals(show),

@@ -88,7 +88,6 @@ const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 export function FeatureTeamPanel({
   team,
   day,
-  seesDays,
   people,
   edits,
   show,
@@ -103,7 +102,6 @@ export function FeatureTeamPanel({
   team: FeatureTeam | undefined;
   // The day the chart shows, which changes take effect from, or undefined for today.
   day: string | undefined;
-  seesDays: boolean;
   // Every team, to choose another from.
   teams: readonly FeatureTeam[];
   onTeam: (id: string) => void;
@@ -178,7 +176,6 @@ export function FeatureTeamPanel({
     .filter(
       (person) =>
         person.planned === undefined &&
-        person.nameOnly !== true &&
         person.left !== true &&
         !shown.members.includes(person.id),
     )
@@ -231,7 +228,7 @@ export function FeatureTeamPanel({
   const from = (personId: string | undefined) =>
     draft === undefined
       ? undefined
-      : takesEffect(draft, personId, day ?? today(), seesDays);
+      : takesEffect(draft, personId, day ?? today());
   const leadFrom = from(undefined);
   return frame(
     "Feature team",

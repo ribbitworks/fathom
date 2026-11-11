@@ -18,7 +18,7 @@ import {
   FeatureTeamPanel,
   noFeatureTeamEdits,
 } from "./feature-team-panel.tsx";
-import { formatDay, formatMonth } from "./table-view.ts";
+import { formatDay } from "./table-view.ts";
 import { testTheme, wholeText } from "./test-support.tsx";
 
 const person = (
@@ -51,7 +51,6 @@ const people = [
   person("p1", "Casey Fictional", { managerId: "other-boss" }),
   person("p2", "Drew Fictional", { managerId: "nobody", position: "" }),
   person("hire", "Ellis Fictional", { planned: { expected: "2027-06" } }),
-  person("hidden", "Fin Fictional", { nameOnly: true }),
   person("departed", "Gale Fictional", { left: true }),
 ] as OrgChartPerson[];
 
@@ -100,7 +99,6 @@ function openPanel({
   edits = everything,
   show = "both",
   day,
-  seesDays = true,
 }: {
   // None for a new team.
   shown?: FeatureTeam | null;
@@ -108,7 +106,6 @@ function openPanel({
   show?: Show;
   // The day the chart shows, when not today.
   day?: string;
-  seesDays?: boolean;
 } = {}) {
   const asked = actions();
   const onTeam = vi.fn();
@@ -120,7 +117,6 @@ function openPanel({
         <FeatureTeamPanel
           team={shown ?? undefined}
           day={day}
-          seesDays={seesDays}
           teams={[team(), team({ id: "t2", name: "Fictional Quay" })]}
           onTeam={onTeam}
           onNew={onNew}
@@ -502,45 +498,11 @@ describe("a feature team's draft in its panel", () => {
     ).toBeDefined();
   });
 
-  it("says the month a change takes effect to readers who do not see days", () => {
-    openPanel({
-      shown: team({
-        ...drafted,
-        draft: { ...drafted.draft, months: { p1: "2027-05" } },
-      } as FeatureTeam),
-      seesDays: false,
-    });
-    expect(
-      screen.getByText(`Draft, from ${formatMonth("2027-05")}`),
-    ).toBeDefined();
-  });
-
-  it("says nothing more of a change in the month shown, to readers who do not see days", () => {
-    openPanel({
-      shown: team({
-        ...drafted,
-        draft: { ...drafted.draft, months: { p1: "2027-05" } },
-      } as FeatureTeam),
-      day: "2027-05-01",
-      seesDays: false,
-    });
-    expect(screen.getAllByText("Draft").length).toBe(2);
-  });
-
   it("gives the day of a change given no day, on another day shown, to readers who see days", () => {
     openPanel({ shown: drafted, day: "2027-06-01" });
     expect(
       screen.getByText(
         `Avery Fictional, leaving from ${formatDay("2027-03-10")}`,
-      ),
-    ).toBeDefined();
-  });
-
-  it("says a change given no day takes effect today, on another day shown", () => {
-    openPanel({ shown: drafted, day: "2027-06-01", seesDays: false });
-    expect(
-      screen.getByText(
-        `Avery Fictional, leaving from ${formatMonth("2027-03")}`,
       ),
     ).toBeDefined();
   });

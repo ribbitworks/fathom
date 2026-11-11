@@ -21,7 +21,7 @@ export interface HeldRow extends MonthRow {
   holds?: ReadonlySet<string>;
 }
 
-type MonthManagers = TeamMonths["people"][number]["managers"];
+type MonthManagers = TeamMonths["people"][number]["managers"] | undefined;
 
 interface MonthGroup {
   key: string;

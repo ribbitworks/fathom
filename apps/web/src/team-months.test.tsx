@@ -14,6 +14,7 @@ import {
   gridMonthsAround,
   monthChange,
   noWholeRecordActions,
+  peopleManagers,
   type PersonMonths,
   personDraft,
   teamMonthRecords,
@@ -36,10 +37,10 @@ describe("gridMonthsAround", () => {
 
 describe("the table", () => {
   const table = teamMonthsTable(
-    { months: [], teams: [], people: [] },
-    false,
+    { months: [], teams: [], people: [], drafts: [] },
     "both",
     edits,
+    [],
   );
 
   it("is never asked to add or remove records, and has nothing to say if it were", () => {
@@ -98,6 +99,7 @@ describe("a person's months as drafts change them", () => {
         id: "p-casey",
         preferredName: "Casey Fictional",
         manager: null,
+        managers: {},
         teams: { "2027-03": [search.id], "2027-04": [search.id] },
         drafted: {
           teams: { "2027-04": [mobile.id] },
@@ -140,6 +142,7 @@ describe("a person's months as drafts change them", () => {
             id: "p-dana",
             preferredName: "Dana Fictional",
             manager: null,
+            managers: {},
             teams: { "2027-04": [search.id] },
             drafted: {
               teams: {
@@ -166,7 +169,7 @@ describe("a person's months as drafts change them", () => {
 
   it("keeps the person as approved for the Live row", () => {
     const [record] = teamMonthRecords(data, undefined, "both");
-    const table = teamMonthsTable(data, true, "both", edits);
+    const table = teamMonthsTable(data, "both", edits, peopleManagers(data));
 
     const [live] = table.liveRecords(record === undefined ? [] : [record]);
 
@@ -184,6 +187,7 @@ describe("a person's months as drafts change them", () => {
           id: "p-casey",
           preferredName: "Casey Fictional",
           manager: null,
+          managers: {},
           teams: { "2027-04": [search.id] },
           drafted: {
             teams: { "2027-04": [mobile.id] },
@@ -220,7 +224,7 @@ describe("a person's months as drafts change them", () => {
   it("leaves out a team a draft removes once drafts are applied, striking it through beside live", () => {
     const [record] = teamMonthRecords(data, undefined, "both");
     const month = (show: "both" | "drafts") =>
-      teamMonthsTable(data, true, show, edits)
+      teamMonthsTable(data, show, edits, peopleManagers(data))
         .columnsFor([], [], [], [])
         .find(({ key }) => key === "2027-04");
 
@@ -242,10 +246,16 @@ describe("the months that can be changed", () => {
   const data: TeamMonths = {
     months: ["2027-02", "2027-03", "2027-04"],
     teams: [],
+    drafts: [],
     people: [],
   };
   const readOnly = (changesDates: boolean) =>
-    teamMonthsTable(data, true, "both", { ...edits, changesDates })
+    teamMonthsTable(
+      data,
+      "both",
+      { ...edits, changesDates },
+      peopleManagers(data),
+    )
       .columnsFor([], [], [], [])
       .map(({ key, readOnly: fixed }) => [key, fixed]);
 
@@ -354,6 +364,7 @@ describe("the months shown at once while a change saves", () => {
         id: "p-casey",
         preferredName: "Casey Fictional",
         manager: null,
+        managers: {},
         teams: { "2027-03": ["t-search"], "2027-04": ["t-search"] },
         drafted: { teams: { "2027-05": [] }, by: ["t-search"] },
       },
@@ -361,6 +372,7 @@ describe("the months shown at once while a change saves", () => {
         id: "p-avery",
         preferredName: "Avery Fictional",
         manager: null,
+        managers: {},
         teams: { "2027-04": ["t-web"] },
       },
     ],
@@ -391,7 +403,12 @@ describe("the months shown at once while a change saves", () => {
 
   it("starts a draft for someone with none", () => {
     const shown = withMonthChange(
-      { months: data.months, teams: data.teams, people: data.people },
+      {
+        months: data.months,
+        teams: data.teams,
+        people: data.people,
+        drafts: [],
+      },
       "p-avery",
       "2027-05",
       { add: [], remove: ["t-web"] },

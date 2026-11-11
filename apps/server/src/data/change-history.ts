@@ -24,6 +24,7 @@ import {
 import {
   builtInColumnNames,
   type ChangedField,
+  type ClassifiedView,
   type ChangedRecord,
   type ChangeEntry,
   changeKindSchema,
@@ -35,6 +36,7 @@ import {
   notePlainText,
   recordSearchText,
   type Permission,
+  seesView,
   recordTypeSchema,
   searchWords,
   hireCalled,
@@ -67,7 +69,7 @@ import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
 import { hireSensitivities, hiringPlanFields, readHireTier } from "./hires.ts";
 import { readToday } from "./settings.ts";
-import { personTier } from "./people.ts";
+import { currentOn, personTier } from "./people.ts";
 import { builtInTier } from "./values.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import type { RecordKind } from "./record-state.ts";
@@ -100,6 +102,7 @@ const hireNameFields = ["name", "positionId", "requisition", "temporaryNumber"];
 const livePlanKinds: readonly {
   type: RecordType;
   readWith: readonly Permission[];
+  view?: ClassifiedView;
 }[] = [{ type: "effort-conversions", readWith: ["plan:view"] }];
 
 // The plan's records, such as release streams, and its configuration changed live.
@@ -109,13 +112,16 @@ const planKinds: readonly RecordType[] = [
 ];
 
 // The kinds of the plan's records the actor sees: General plan data, seen with the permissions each
-// kind is read with rather than through the tiers of people's data.
+// kind is read with rather than through the tiers of people's data, and, for a kind that needs one,
+// with every class of data its view needs.
 const seenPlanKinds = (actor: Actor): RecordType[] =>
   [...recordKinds, ...livePlanKinds]
-    .filter((kind) =>
-      kind.readWith.some((permission) =>
-        actor.permissions.includes(permission),
-      ),
+    .filter(
+      (kind) =>
+        kind.readWith.some((permission) =>
+          actor.permissions.includes(permission),
+        ) &&
+        (kind.view === undefined || seesView(kind.view, actor.permissions)),
     )
     .map((kind) => kind.type);
 
@@ -676,38 +682,29 @@ async function nameByParts(
   }
 }
 
-// The person each record changed among the rows is about, for kinds that name one.
-const personAbout = (
-  row: StoredChange,
-  parts: ReadonlyMap<string, Record<string, string>>,
-): string | undefined => {
-  const field = planKindOf.get(row.recordType)?.aboutPerson;
-  // Every record of such a kind recorded its parts when it was added.
-  return field === undefined
-    ? undefined
-    : new Map(
-        Object.entries(parts.get(row.recordId) as Record<string, string>),
-      ).get(field);
-};
-
-// Which of the people and planned hires given are people who have not started yet: by their start
-// date when live, by the draft adding them when only drafted, and otherwise by the last start date
-// recorded for them, such as for someone removed. Planned hires are never among them.
-async function notStartedAmong(
+// Which of the people and planned hires given are people not current today, who have not started
+// or have left: by their dates when live, by the draft adding them when only drafted, and otherwise
+// by the last dates recorded for them, such as for someone removed. Planned hires are never among
+// them.
+async function notCurrentAmong(
   database: Database,
   ids: readonly string[],
   today: string,
 ): Promise<Set<string>> {
-  const starts = new Map<string, unknown>();
+  const dates = new Map<string, { startDate?: unknown; endDate?: unknown }>();
   for (const chunk of inChunks([...ids])) {
-    for (const { id, startDate } of await database
-      .select({ id: people.id, startDate: people.startDate })
+    for (const { id, startDate, endDate } of await database
+      .select({
+        id: people.id,
+        startDate: people.startDate,
+        endDate: people.endDate,
+      })
       .from(people)
       .where(inArray(people.id, chunk))) {
-      starts.set(id, startDate);
+      dates.set(id, { startDate, endDate });
     }
   }
-  const unknown = () => ids.filter((id) => !starts.has(id));
+  const unknown = () => ids.filter((id) => !dates.has(id));
   for (const chunk of inChunks(unknown())) {
     for (const { recordId, fields } of await database
       .select({ recordId: drafts.recordId, fields: drafts.fields })
@@ -719,13 +716,15 @@ async function notStartedAmong(
           inArray(drafts.recordId, chunk),
         ),
       )) {
-      starts.set(recordId, fields.startDate ?? null);
+      dates.set(recordId, fields);
     }
   }
   for (const chunk of inChunks(unknown())) {
-    for (const { recordId, oldValue, newValue } of await database
+    for (const { recordId, action, field, oldValue, newValue } of await database
       .select({
         recordId: changes.recordId,
+        action: changes.action,
+        field: changes.field,
         oldValue: changes.oldValue,
         newValue: changes.newValue,
       })
@@ -733,17 +732,21 @@ async function notStartedAmong(
       .where(
         and(
           eq(changes.recordType, "person"),
-          eq(changes.field, "startDate"),
+          inArray(changes.field, ["startDate", "endDate"]),
           inArray(changes.recordId, chunk),
         ),
       )
       .orderBy(asc(changes.id))) {
-      starts.set(recordId, newValue ?? oldValue);
+      // Removing someone records the dates they had; any other change records the dates it set.
+      dates.set(recordId, {
+        ...dates.get(recordId),
+        [field]: action === "deleted" ? oldValue : newValue,
+      });
     }
   }
   return new Set(
-    [...starts].flatMap(([id, start]) =>
-      typeof start === "string" && start > today ? [id] : [],
+    [...dates].flatMap(([id, recorded]) =>
+      currentOn(recorded, today) ? [] : [id],
     ),
   );
 }
@@ -915,20 +918,18 @@ async function readBatch(
     [...facts.lists.values()].filter((id) => !facts.names.has(id)),
     facts,
   );
-  // Readers who do not see Personal details see nobody who has not started, as People hides them:
-  // neither a person's own changes, nor records about them, nor a hire's manager or filler naming
-  // them.
+  // Readers who do not see Personal details see nobody who has not started or has left, as People
+  // hides them: neither a person's own changes, nor records about them, nor a hire's manager or
+  // filler naming them.
   const seesPersonal = seesPersonalDetails(actor);
   const hidden = seesPersonal
     ? new Set<string>()
-    : await notStartedAmong(
+    : await notCurrentAmong(
         database,
         [
           ...new Set(
             rows.flatMap((row) => {
               if (row.recordType === "person") return [row.recordId];
-              const about = personAbout(row, parts);
-              if (about !== undefined) return [about];
               if (namesMembers(row)) {
                 return [row.oldValue, row.newValue].flatMap(strings);
               }
@@ -947,9 +948,7 @@ async function readBatch(
   const seenRows = (
     await visibleRows(database, actor, rows, facts, tierNow)
   ).filter(
-    ({ row }) =>
-      !(row.recordType === "person" && hidden.has(row.recordId)) &&
-      !hidden.has(personAbout(row, parts) ?? ""),
+    ({ row }) => !(row.recordType === "person" && hidden.has(row.recordId)),
   );
   // A change to a team's members or lead that only those the reader does not see are part of shows
   // nothing to them, and neither does the rejection cleared with it.

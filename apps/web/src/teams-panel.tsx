@@ -26,10 +26,7 @@ const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 function teamsOf(tree: OrgTree): ChartPerson[] {
   return [...tree.people.values()]
     .filter(
-      (person) =>
-        person.nameOnly !== true &&
-        person.planned === undefined &&
-        tree.reports.has(person.id),
+      (person) => person.planned === undefined && tree.reports.has(person.id),
     )
     .sort((a, b) =>
       a.teamName === null || b.teamName === null

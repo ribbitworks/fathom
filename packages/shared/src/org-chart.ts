@@ -47,9 +47,6 @@ export const orgChartPersonSchema = z.object({
   teamColour: paletteColourSchema.nullable(),
   managerId: z.string().nullable(),
   left: z.boolean().optional(),
-  // A manager who has left, shown by name and team only to readers who do not see Personal
-  // details, who cannot be kept in the chart's address or have their team changed.
-  nameOnly: z.boolean().optional(),
   // Set for a planned hire: the month it is expected, never the day, and, for one with no name of
   // its own, whose name is made from its position and ID, that ID, which its card shows in place of
   // the made name, with the position under it, so the card's name fits.

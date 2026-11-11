@@ -23,6 +23,7 @@ import {
   type ChangeHistory,
   type FeatureTeam,
   type FeatureTeams,
+  startingRoles,
   type TeamMonths,
   type Unpublished,
 } from "@fathom/shared";
@@ -54,6 +55,8 @@ let editor: User;
 let approver: User;
 // A Feature Lead, who proposes feature teams but does not edit them or see Personal details.
 let proposer: User;
+// A Feature Lead given Personal details, which choosing another day needs, but not changing them.
+let datedProposer: User;
 // A Project Manager, who approves feature teams but does not see Personal details.
 let projectManager: User;
 // A Resource Planner, who sees the org chart and people, but not Personal details.
@@ -67,6 +70,10 @@ beforeAll(async () => {
   editor = await test.signedIn("workforce-administrator");
   approver = await test.signedIn("engineering-director");
   proposer = await test.signedIn("feature-lead");
+  datedProposer = await test.signedIn([
+    ...startingRoles["feature-lead"].permissions,
+    "personal:view",
+  ]);
   projectManager = await test.signedIn("project-manager");
   planner = await test.signedIn("resource-planner");
   chartOnly = await test.signedIn([
@@ -289,7 +296,7 @@ describe("reading feature teams", () => {
     );
   });
 
-  it("sends the days a draft gives only to readers who see Personal details, and records that they saw them", async () => {
+  it("sends a dated draft, with its days, only to readers who see Personal details, and records that they saw them", async () => {
     const member = await person();
     const { id } = await drafted({ members: [member], from: "2025-02-03" });
     const reader = await test.signedIn("engineering-director");
@@ -298,7 +305,7 @@ describe("reading feature teams", () => {
       [member]: "2025-02-03",
     });
     expect(await accessRecords("personal-viewed", reader.id)).not.toEqual([]);
-    expect((await teamSeen(id, planner))?.draft).not.toHaveProperty("days");
+    expect((await teamSeen(id, planner))?.draft).toBeUndefined();
   });
 
   describe("a reader who sees the org chart with Personal details but not people", () => {
@@ -453,7 +460,7 @@ describe("reading feature teams", () => {
     expect((await teamSeen(id))?.draft).toBeUndefined();
   });
 
-  it("shows why a draft was rejected only to readers who see all it changes", async () => {
+  it("shows why a dated draft was rejected only to readers who see its days", async () => {
     const member = await person();
     const id = await liveTeam();
     await changed(id, { add: [member], from: "2025-05-05" });
@@ -463,9 +470,7 @@ describe("reading feature teams", () => {
       state: "rejected",
       reason: "Fictional reason",
     });
-    const seen = (await teamSeen(id, planner))?.draft;
-    expect(seen?.state).toBe("rejected");
-    expect(seen).not.toHaveProperty("reason");
+    expect((await teamSeen(id, planner))?.draft).toBeUndefined();
   });
 
   it("shows who else is changing a team, and the maker's unpublished draft as theirs", async () => {
@@ -632,7 +637,7 @@ describe("adding a feature team", () => {
         members: [member],
         from: "2025-01-15",
       },
-      proposer,
+      datedProposer,
     );
     expect(response.statusCode).toBe(403);
   });
@@ -764,29 +769,6 @@ describe("changing a feature team", () => {
     expect(refusal(response)).not.toMatch(/approved change/);
   });
 
-  it("does not tell a proposer who does not see Personal details about an end date still to come, from a later month", async () => {
-    // Given members on a team, one of whom leaves the company before the month tried
-    const leaving = await person();
-    const staying = await person();
-    const id = await liveTeam({
-      members: [leaving, staying],
-      from: "2025-01-01",
-    });
-    await endDated(leaving, "2026-12-31");
-
-    // When a proposer adds each again from a later month
-    const answers = await Promise.all(
-      [leaving, staying].map(
-        async (member) =>
-          (await change(id, { add: [member], from: "2027-02-01" }, proposer))
-            .statusCode,
-      ),
-    );
-
-    // Then both get the same answer
-    expect(answers).toEqual([200, 200]);
-  });
-
   it("records members joining and leaving from the day given, and keeps it for the members it still adds or removes", async () => {
     const leaving = await person();
     const joining = await person();
@@ -810,56 +792,41 @@ describe("changing a feature team", () => {
     ]);
   });
 
+  it("answers someone who has left as no one to a proposer who does not see Personal details", async () => {
+    const gone = await person();
+    await endDated(gone, "2026-01-31");
+    const id = await liveTeam();
+
+    const response = await change(id, { add: [gone] }, proposer);
+
+    expect(response.statusCode).toBe(400);
+    expect(refusal(response)).toBe("Choose members from People");
+  });
+
+  it("refuses another day, saying why, to a proposer who does not see Personal details", async () => {
+    const member = await person();
+    const id = await liveTeam();
+    const response = await change(
+      id,
+      { add: [member], from: "2099-01-15" },
+      proposer,
+    );
+    expect(response.statusCode).toBe(403);
+    expect(refusal(response)).toBe("Other dates need Personal access.");
+  });
+
   it("is refused an earlier day by someone who may not change Personal details", async () => {
     const member = await person();
     const id = await liveTeam();
     const response = await change(
       id,
       { add: [member], from: "2025-01-01" },
-      proposer,
+      datedProposer,
     );
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
       "This role can't choose an earlier date. Use today or a later date.",
     );
-  });
-
-  it("lets a proposer who does not see Personal details choose today or the first of a later month", async () => {
-    const member = await person();
-    const other = await person();
-    const id = await liveTeam();
-
-    await changed(id, { add: [member], from: today }, proposer);
-    await changed(id, { add: [other], from: "2099-02-01" }, proposer);
-    await approved(id);
-
-    expect(await memberships(id)).toEqual([
-      { personId: member, member: true, fromDate: today },
-      { personId: other, member: true, fromDate: "2099-02-01" },
-    ]);
-  });
-
-  it("refuses a proposer who does not see Personal details any other later day", async () => {
-    const member = await person();
-    const id = await liveTeam();
-    const response = await change(
-      id,
-      { add: [member], from: "2099-02-11" },
-      proposer,
-    );
-    expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose the first day of a month");
-  });
-
-  it("does not tell a proposer who does not see Personal details about an end date, which the Approver is told of", async () => {
-    const member = await person({ endDate: "2098-06-30" });
-    const id = await liveTeam();
-
-    await changed(id, { add: [member], from: "2099-02-01" }, proposer);
-
-    const response = await approve(id);
-    expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toContain("is now after their end date");
   });
 
   it("changes the lead from the day given, keeping the lead before it", async () => {
@@ -908,41 +875,6 @@ describe("changing a feature team", () => {
     }
   });
 
-  it("does not tell a proposer who does not see Personal details the day the lead last changed", async () => {
-    const first = await person();
-    const second = await person();
-    const id = await liveTeam({ leadId: first, members: [second] });
-    await changed(id, { leadId: second, from: "2099-03-01" });
-    await approved(id);
-
-    const response = await change(
-      id,
-      { leadId: null, from: "2099-03-01" },
-      proposer,
-    );
-
-    expect(refusal(response)).toBe(
-      "This team's lead changed on that date or later. Choose a later date.",
-    );
-  });
-
-  it("does not tell a proposer who does not see Personal details the day someone last joined or left", async () => {
-    const member = await person();
-    const id = await liveTeam({ members: [member] });
-    await changed(id, { remove: [member], from: "2099-03-01" });
-    await approved(id);
-
-    const response = await change(
-      id,
-      { remove: [member], from: "2099-03-01" },
-      proposer,
-    );
-
-    expect(refusal(response)).toBe(
-      "This person joined or left this team on that date or later. Choose a later date.",
-    );
-  });
-
   it("sends its maker the day of a change not yet published", async () => {
     const member = await person();
     const id = await liveTeam();
@@ -978,22 +910,6 @@ describe("changing a feature team", () => {
     expect(refusal(response)).toMatch(
       /has an approved change on .* before this date\. This date can change once it takes effect\.$/,
     );
-  });
-
-  it("words the same refusal by month to a proposer who does not see Personal details", async () => {
-    const member = await person();
-    const id = await liveTeam({ members: [member], from: "2025-01-01" });
-    await changed(id, { remove: [member], from: "2026-09-01" });
-    await approved(id);
-
-    const response = await change(
-      id,
-      { add: [member], from: "2026-10-01" },
-      proposer,
-    );
-
-    expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toMatch(/before this month\. This month can/);
   });
 
   it("is refused taking back a change the draft makes from another date", async () => {
@@ -1081,7 +997,7 @@ describe("changing a feature team", () => {
     expect((await teamSeen(id))?.draft).toBeUndefined();
   });
 
-  it("sends a change of lead's day apart from the days members join, only to readers who see Personal details", async () => {
+  it("sends a change of lead's day apart from the days members join, only to readers who see Personal details, and the dated draft to no one else", async () => {
     const joining = await person();
     const id = await liveTeam();
     await changed(id, { add: [joining], from: "2099-02-01" });
@@ -1094,27 +1010,7 @@ describe("changing a feature team", () => {
     expect((await teamSeen(id, approver))?.draft?.changed).toContain(
       "leadFrom",
     );
-    expect((await teamSeen(id, planner))?.draft?.leadDay).toBeUndefined();
-    expect((await teamSeen(id, planner))?.draft?.changed).not.toContain(
-      "leadFrom",
-    );
-  });
-
-  it("gives a hidden member already on the team the same answer whatever day a proposer tries", async () => {
-    const hidden = await person({ startDate: "2098-01-01" });
-    const id = await liveTeam({ members: [hidden] });
-
-    for (const body of [
-      { remove: [hidden], from: "2097-01-01" },
-      { remove: [hidden], from: "2099-01-01" },
-      { leadId: hidden, from: "2097-01-01" },
-      { leadId: hidden, from: "2099-01-01" },
-    ]) {
-      const response = await change(id, body, proposer);
-
-      expect(response.statusCode).toBe(400);
-      expect(refusal(response)).toBe("Choose members from People");
-    }
+    expect((await teamSeen(id, planner))?.draft).toBeUndefined();
   });
 
   it("changes the lead from an earlier day given by someone who may change Personal details", async () => {
@@ -1228,40 +1124,6 @@ describe("changing a feature team", () => {
     expect(refusal(response)).toBe(
       "Someone can't join or leave a team after their end date",
     );
-  });
-
-  it("tells the Approver, not a proposer who does not see Personal details, when a new lead's day is after their end date", async () => {
-    const member = await person({ endDate: "2098-06-30" });
-    const id = await liveTeam({ members: [member] });
-
-    await changed(id, { leadId: member, from: "2099-01-01" }, proposer);
-
-    const response = await approve(id);
-    expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toContain("is now after their end date");
-  });
-
-  it("gives a hidden person the same answer whatever day a proposer tries", async () => {
-    const hidden = await person({ startDate: "2098-01-01" });
-    const id = await liveTeam();
-
-    for (const from of ["2097-01-01", "2099-01-01"]) {
-      const response = await change(id, { add: [hidden], from }, proposer);
-
-      expect(response.statusCode).toBe(400);
-      expect(refusal(response)).toBe("Choose members from People");
-    }
-  });
-
-  it("lets a proposer who does not see Personal details resubmit a draft they planned ahead", async () => {
-    const member = await person();
-    const id = await liveTeam();
-    await changed(id, { add: [member], from: "2099-02-01" }, proposer);
-    await ok(await reject(id));
-
-    await ok(await resubmit(id, proposer));
-
-    expect((await teamSeen(id))?.draft?.state).toBe("waiting");
   });
 
   it("keeps a day for a change of lead only while the lead is changed", async () => {
@@ -1466,31 +1328,6 @@ describe("changing the teams someone is on from a month", () => {
     );
   });
 
-  it("does not tell a proposer who does not see Personal details about an end date still to come", async () => {
-    const leaving = await person();
-    const staying = await person();
-    const team = await namedTeam({
-      members: [leaving, staying],
-      from: "2025-01-01",
-    });
-    await endDated(leaving, "2026-12-31");
-
-    const answers = [];
-    for (const member of [leaving, staying]) {
-      answers.push(
-        (
-          await changeTeams(
-            member,
-            { add: [team.id], from: "2027-02-01" },
-            proposer,
-          )
-        ).statusCode,
-      );
-    }
-
-    expect(answers).toEqual([200, 200]);
-  });
-
   it("is refused a month after an approved change still to come", async () => {
     const { id: member, name } = await named();
     const team = await namedTeam({ members: [member], from: "2025-01-01" });
@@ -1546,9 +1383,13 @@ describe("changing the teams someone is on from a month", () => {
     const member = await person();
     const id = await liveTeam();
 
-    await teamsChanged(member, { add: [id], from: "2026-08-01" }, proposer);
+    await teamsChanged(
+      member,
+      { add: [id], from: "2026-08-01" },
+      datedProposer,
+    );
 
-    expect((await teamSeen(id, proposer))?.members).toContain(member);
+    expect((await teamSeen(id, datedProposer))?.members).toContain(member);
   });
 
   it("is refused for someone who is not a person, or has left", async () => {
@@ -1575,20 +1416,6 @@ describe("changing the teams someone is on from a month", () => {
     const response = await changeTeams(member, { remove: [id] });
 
     expect(response.statusCode).toBe(409);
-  });
-
-  it("is refused, as for no one, for someone who hasn't started, to a proposer who doesn't see them", async () => {
-    const id = await liveTeam();
-    const starting = await person({ startDate: "2026-09-01" });
-
-    const response = await changeTeams(
-      starting,
-      { add: [id], from: "2026-10-01" },
-      proposer,
-    );
-
-    expect(response.statusCode).toBe(404);
-    expect(refusal(response)).toBe("There is no such person");
   });
 
   it.each([
@@ -2454,7 +2281,7 @@ describe("undoing a change to a team", () => {
 
   it("is made by a proposer for a change of members from a later month", async () => {
     const member = await person();
-    const maker = await test.signedIn("feature-lead");
+    const maker = datedProposer;
     const id = await liveTeam();
     const added = await changed(
       id,
@@ -2469,7 +2296,7 @@ describe("undoing a change to a team", () => {
 
   it("is made by a proposer for a change of lead from a later month", async () => {
     const member = await person();
-    const maker = await test.signedIn("feature-lead");
+    const maker = datedProposer;
     const id = await liveTeam({ members: [member] });
     const led = await changed(
       id,
@@ -2808,6 +2635,21 @@ describe("teams on a chosen day", () => {
   const teamOn = async (id: string, day: string, who = editor) =>
     (await teamsOn(day, who)).find((team) => team.id === id);
 
+  it("is refused, saying why, to readers who do not see Personal details", async () => {
+    for (const who of [
+      planner,
+      await test.signedIn(["org-chart:view", "personal:view"]),
+    ]) {
+      const response = await send(
+        who,
+        "GET",
+        "/api/feature-teams?on=2025-03-01",
+      );
+      expect(response.statusCode).toBe(403);
+      expect(refusal(response)).toBe("Other dates need Personal access.");
+    }
+  });
+
   it("shows the members and lead of that day, as approved", async () => {
     const lead = await person();
     const joinsLater = await person();
@@ -2869,37 +2711,6 @@ describe("teams on a chosen day", () => {
     });
   });
 
-  it("gives readers who do not see Personal details the months of a draft's changes, not their days", async () => {
-    const lead = await person();
-    const newcomer = await person();
-    const id = await liveTeam({ leadId: lead, from: "2025-01-15" });
-    await changed(id, {
-      add: [newcomer],
-      leadId: newcomer,
-      from: "2099-03-04",
-    });
-
-    const draft = (await teamOn(id, "2099-02-01", planner))?.draft;
-
-    expect(draft).toMatchObject({
-      months: { [newcomer]: "2099-03" },
-      leadMonth: "2099-03",
-    });
-    expect(draft).not.toHaveProperty("days");
-    expect(draft).not.toHaveProperty("leadDay");
-    expect((await teamOn(id, "2099-02-01"))?.draft).not.toHaveProperty(
-      "months",
-    );
-  });
-
-  it("sends no drafts to readers who do not see people", async () => {
-    const member = await person();
-    const id = await liveTeam({ members: [member], from: "2025-01-15" });
-    await changed(id, { name: unique("Fictional Renamed Team") });
-
-    expect((await teamOn(id, "2025-02-01", chartOnly))?.draft).toBeUndefined();
-  });
-
   it("lists a team with no members that day while it has a draft", async () => {
     const member = await person();
     const id = await liveTeam({ members: [member], from: "2099-02-01" });
@@ -2908,7 +2719,32 @@ describe("teams on a chosen day", () => {
     expect(await teamOn(id, "2099-01-31")).toMatchObject({ members: [] });
   });
 
-  it("hides why a draft was rejected from readers who do not see Personal details, when it holds someone who has not started, on any day", async () => {
+  it("shows people as they are today on a later day to readers who do not see Confidential data", async () => {
+    const current = await person();
+    const starter = await person({ startDate: "2098-06-01" });
+    const id = await liveTeam({ members: [current, starter] });
+    const manager = await test.signedIn("engineering-manager");
+
+    expect((await teamOn(id, "2099-01-01"))?.members).toEqual(
+      [current, starter].sort(),
+    );
+    expect((await teamOn(id, "2099-01-01", manager))?.members).toEqual([
+      current,
+    ]);
+  });
+
+  it("keeps a draft dated from a later day from readers who do not see Personal details", async () => {
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member], from: "2099-03-01" });
+
+    expect((await teamSeen(id))?.draft).toBeDefined();
+    const seen = await teamSeen(id, planner);
+    expect(seen?.draft).toBeUndefined();
+    expect(seen?.members).not.toContain(member);
+  });
+
+  it("hides why a draft was rejected from readers who do not see Personal details, when it holds someone who has not started", async () => {
     const starter = await person({ startDate: "2098-01-01" });
     const id = await liveTeam({
       members: [await person()],
@@ -2917,7 +2753,7 @@ describe("teams on a chosen day", () => {
     await changed(id, { add: [starter], name: unique("Fictional Renamed") });
     await ok(await reject(id));
 
-    const seen = (await teamOn(id, "2025-02-01", planner))?.draft;
+    const seen = (await teamSeen(id, planner))?.draft;
 
     expect(seen?.state).toBe("rejected");
     expect(seen).not.toHaveProperty("reason");
@@ -3050,97 +2886,6 @@ describe("teams on a chosen day", () => {
     ).toBe(400);
   });
 
-  describe("for readers who do not see Personal details", () => {
-    it("is refused any day but the first of a month", async () => {
-      const response = await send(
-        planner,
-        "GET",
-        "/api/feature-teams?on=2025-02-11",
-      );
-
-      expect(response.statusCode).toBe(400);
-      expect(refusal(response)).toBe("Choose the first day of a month");
-    });
-
-    it("leaves out someone who has left since, whom those who see Personal details see", async () => {
-      const leaver = await person();
-      const staying = await person();
-      const id = await liveTeam({
-        members: [leaver, staying],
-        from: "2025-01-15",
-      });
-      await endDated(leaver, "2025-06-30");
-
-      expect((await teamOn(id, "2025-03-01", planner))?.members).toEqual([
-        staying,
-      ]);
-      expect((await teamOn(id, "2025-03-01"))?.members).toEqual(
-        sorted(leaver, staying),
-      );
-    });
-
-    it("shows no lead who has not started", async () => {
-      const starter = await person({ startDate: "2098-01-01" });
-      const staying = await person();
-      const id = await liveTeam({ members: [staying], from: "2025-01-15" });
-      await changed(id, { add: [starter], from: "2098-02-01" });
-      await changed(id, { leadId: starter, from: "2098-03-01" });
-      await approved(id);
-
-      expect((await teamOn(id, "2099-01-01", planner))?.leadId).toBeNull();
-      expect((await teamOn(id, "2099-01-01"))?.leadId).toBe(starter);
-    });
-
-    it("shows no lead who has left since", async () => {
-      const lead = await person();
-      const staying = await person();
-      const id = await liveTeam({
-        leadId: lead,
-        members: [staying],
-        from: "2025-01-15",
-      });
-      await endDated(lead, "2025-06-30");
-
-      expect((await teamOn(id, "2025-03-01", planner))?.leadId).toBeNull();
-      expect((await teamOn(id, "2025-03-01"))?.leadId).toBe(lead);
-    });
-
-    it("leaves out someone who has not started, whom those who see Personal details see", async () => {
-      const starter = await person({ startDate: "2098-01-01" });
-      const staying = await person();
-      const id = await liveTeam({ members: [staying], from: "2025-01-15" });
-      await changed(id, { add: [starter], from: "2098-02-01" });
-      await approved(id);
-
-      expect((await teamOn(id, "2099-01-01", planner))?.members).toEqual([
-        staying,
-      ]);
-      expect((await teamOn(id, "2099-01-01"))?.members).toEqual(
-        sorted(starter, staying),
-      );
-    });
-
-    it("keeps showing someone past an end date still to come, so no date reveals it", async () => {
-      const leaving = await person({ endDate: "2098-06-30" });
-      const id = await liveTeam({ members: [leaving], from: "2025-01-15" });
-
-      expect((await teamOn(id, "2099-01-01", planner))?.members).toEqual([
-        leaving,
-      ]);
-      expect(await teamOn(id, "2099-01-01")).toBeUndefined();
-    });
-
-    it("records no view of Personal details", async () => {
-      const before = await accessRecords("personal-viewed", planner.id);
-
-      await teamsOn("2025-02-01", planner);
-
-      expect(await accessRecords("personal-viewed", planner.id)).toHaveLength(
-        before.length,
-      );
-    });
-  });
-
   it("records a view of Personal details by a reader who sees them", async () => {
     const reader = await test.signedIn("engineering-director");
 
@@ -3158,6 +2903,35 @@ describe("feature teams month by month", () => {
 
   const rowOf = async (id: string, from: string, to: string, who = editor) =>
     (await monthsOf(from, to, who)).people.find((one) => one.id === id);
+
+  it("sends each month's managers only to those who see Confidential data, since later lines are future reorganizations", async () => {
+    const manager = await test.signedIn("engineering-manager");
+    const read = await monthsOf("2026-05", "2026-07", manager);
+    expect(read.people.length).toBeGreaterThan(0);
+    expect(read.people.every((one) => one.managers === undefined)).toBe(true);
+    expect(
+      (await monthsOf("2026-05", "2026-07")).people.every(
+        (one) => one.managers !== undefined,
+      ),
+    ).toBe(true);
+  });
+
+  it("is refused, saying why, to readers who do not see Personal details", async () => {
+    for (const who of [
+      planner,
+      await test.signedIn(["org-chart:view", "personal:view"]),
+    ]) {
+      const response = await send(
+        who,
+        "GET",
+        "/api/feature-teams/months?from=2025-01&to=2025-03",
+      );
+      expect(response.statusCode).toBe(403);
+      expect(refusal(response)).toBe(
+        "Feature assignments needs Personal access.",
+      );
+    }
+  });
 
   it("lists the months asked for and the live teams, with their colours", async () => {
     const id = await liveTeam();
@@ -3268,15 +3042,6 @@ describe("feature teams month by month", () => {
     );
   });
 
-  it("is open to those who see the org chart but not people", async () => {
-    const member = await person();
-    const id = await liveTeam({ members: [member], from: "2025-01-15" });
-
-    expect(
-      (await rowOf(member, "2025-02", "2025-02", chartOnly))?.teams,
-    ).toEqual({ "2025-02": [id] });
-  });
-
   describe("for readers who see Personal details", () => {
     it("lists the months outside someone's employment, and no teams then", async () => {
       const member = await person({ startDate: "2025-02-10" });
@@ -3337,86 +3102,6 @@ describe("feature teams month by month", () => {
       await monthsOf("2025-01", "2025-01", reader);
 
       expect(await accessRecords("personal-viewed", reader.id)).toHaveLength(1);
-    });
-  });
-
-  it("sends no managers to those who do not see people", async () => {
-    const manager = await person({ isManager: true });
-    const report = await person({ managerId: manager });
-    const reader = await test.signedIn(["org-chart:view"]);
-
-    const row = await rowOf(report, "2025-01", "2025-01", reader);
-
-    expect(row?.manager).toBeNull();
-    expect(row?.managers).toBeUndefined();
-  });
-
-  describe("for readers given Personal details without people", () => {
-    it("treats them as not seeing Personal details, and records nothing", async () => {
-      const gone = await person();
-      await endDated(gone, "2025-02-15");
-      const startsLater = await person({ startDate: "2025-02-10" });
-      const reader = await test.signedIn(["org-chart:view", "personal:view"]);
-
-      const read = await monthsOf("2025-01", "2025-03", reader);
-
-      expect(read.people.some(({ id }) => id === gone)).toBe(false);
-      const later = read.people.find(({ id }) => id === startsLater);
-      expect(later?.outside).toBeUndefined();
-      expect(later?.managers).toBeUndefined();
-      expect(await accessRecords("personal-viewed", reader.id)).toEqual([]);
-    });
-  });
-
-  describe("for readers who do not see Personal details", () => {
-    it("lists no one who has left, on any month", async () => {
-      const gone = await person();
-      await liveTeam({ members: [gone], from: "2025-01-15" });
-      await endDated(gone, "2025-02-15");
-
-      expect(await rowOf(gone, "2025-01", "2025-02", planner)).toBeUndefined();
-    });
-
-    it("lists no one who has not started, on any month", async () => {
-      const newcomer = await person({ startDate: "2099-01-15" });
-
-      expect(
-        await rowOf(newcomer, "2099-02", "2099-03", planner),
-      ).toBeUndefined();
-    });
-
-    it("gives no sign of an end date still to come", async () => {
-      const member = await person({ endDate: "2099-01-31" });
-      const id = await liveTeam({ members: [member], from: "2025-01-15" });
-
-      expect(await rowOf(member, "2099-01", "2099-03", planner)).toEqual(
-        expect.objectContaining({
-          teams: { "2099-01": [id], "2099-02": [id], "2099-03": [id] },
-        }),
-      );
-      expect(
-        (await rowOf(member, "2099-01", "2099-03", planner))?.outside,
-      ).toBeUndefined();
-    });
-
-    it("names only today's manager, in no month", async () => {
-      const manager = await person({ isManager: true });
-      const report = await person({ managerId: manager });
-
-      const row = await rowOf(report, "2025-01", "2025-01", planner);
-
-      expect(row?.manager?.id).toBe(manager);
-      expect(row?.managers).toBeUndefined();
-    });
-
-    it("records nothing in the access history", async () => {
-      const before = await accessRecords("personal-viewed", planner.id);
-
-      await monthsOf("2025-01", "2025-01", planner);
-
-      expect((await accessRecords("personal-viewed", planner.id)).length).toBe(
-        before.length,
-      );
     });
   });
 
@@ -3506,7 +3191,7 @@ describe("feature teams month by month", () => {
       await ok(await reject(id));
 
       expect(
-        (await monthsOf("2025-03", "2025-03")).drafts?.find(
+        (await monthsOf("2025-03", "2025-03")).drafts.find(
           ({ teamId }) => teamId === id,
         )?.state,
       ).toBe("rejected");
@@ -3523,7 +3208,7 @@ describe("feature teams month by month", () => {
       );
 
       expect(
-        (await monthsOf("2025-03", "2025-03", maker)).drafts?.find(
+        (await monthsOf("2025-03", "2025-03", maker)).drafts.find(
           ({ teamId }) => teamId === id,
         ),
       ).toEqual({
@@ -3557,45 +3242,6 @@ describe("feature teams month by month", () => {
 
       expect(
         (await rowOf(member, "2025-02", "2025-03"))?.drafted,
-      ).toBeUndefined();
-    });
-
-    describe("for readers who do not see Personal details", () => {
-      it("shows a draft's day from the first month it is in force on the first", async () => {
-        const member = await person();
-        const id = await liveTeam({ from: "2025-01-15" });
-        await changed(id, { add: [member], from: "2025-02-15" });
-
-        expect(
-          (await rowOf(member, "2025-02", "2025-03", planner))?.drafted,
-        ).toEqual({ teams: { "2025-03": [id] }, by: [id] });
-      });
-
-      it("sends nothing of a draft about someone who has not started", async () => {
-        const newcomer = await person({ startDate: "2099-01-15" });
-        const { id } = await drafted({
-          members: [newcomer],
-          from: "2099-01-15",
-        });
-
-        const read = await monthsOf("2099-02", "2099-02", planner);
-
-        expect(read.people.some((one) => one.id === newcomer)).toBe(false);
-        expect(read.drafts?.some(({ teamId }) => teamId === id)).toBe(false);
-        expect(read.teams.some((team) => team.id === id)).toBe(false);
-      });
-    });
-
-    it("sends no drafts to those who do not see people", async () => {
-      const member = await person();
-      const id = await liveTeam({ from: "2025-01-15" });
-      await changed(id, { add: [member], from: "2025-02-15" });
-
-      const read = await monthsOf("2025-03", "2025-03", chartOnly);
-
-      expect(read.drafts).toBeUndefined();
-      expect(
-        read.people.find((one) => one.id === member)?.drafted,
       ).toBeUndefined();
     });
   });
@@ -3698,47 +3344,11 @@ describe("a team disbanding", () => {
     expect(await disbandedFrom(id, planner)).toBeUndefined();
   });
 
-  describe("with someone hidden from a reader who does not see Personal details", () => {
-    const joins = (id: string, who: string) =>
-      changed(id, { add: [who] }).then(() => approved(id));
+  it("is told only to readers who see Personal details", async () => {
+    const id = await teamWhoseMemberLeaves("2025-03-15");
 
-    const leaves = (id: string, who: string, from: string) =>
-      changed(id, { remove: [who], from }).then(() => approved(id));
-
-    const notStarted = () => person({ startDate: "2098-01-01" });
-
-    it("is not told of a hidden sole member", async () => {
-      const hidden = await notStarted();
-      const id = await liveTeam();
-      await joins(id, hidden);
-      await leaves(id, hidden, "2099-03-15");
-
-      expect(await disbandedFrom(id)).toBe("2099-04");
-      expect(await disbandedFrom(id, planner)).toBeUndefined();
-    });
-
-    it("counts a visible member's leaving, whoever hidden stays", async () => {
-      const visible = await person();
-      const hidden = await notStarted();
-      const id = await liveTeam({ members: [visible], from: "2025-01-15" });
-      await joins(id, hidden);
-      await leaves(id, visible, "2025-03-15");
-
-      expect(await disbandedFrom(id)).toBeUndefined();
-      expect(await disbandedFrom(id, planner)).toBe("2025-04");
-    });
-
-    it("counts a visible member's leaving, whenever someone hidden leaves later", async () => {
-      const visible = await person();
-      const hidden = await notStarted();
-      const id = await liveTeam({ members: [visible], from: "2025-01-15" });
-      await joins(id, hidden);
-      await leaves(id, visible, "2025-03-15");
-      await leaves(id, hidden, "2099-03-15");
-
-      expect(await disbandedFrom(id)).toBe("2099-04");
-      expect(await disbandedFrom(id, planner)).toBe("2025-04");
-    });
+    expect(await disbandedFrom(id)).toBe("2025-04");
+    expect(await disbandedFrom(id, planner)).toBeUndefined();
   });
 
   it("records a view of Personal details by a reader who sees when a team disbands", async () => {
@@ -3750,12 +3360,11 @@ describe("a team disbanding", () => {
     expect(await accessRecords("personal-viewed", reader.id)).not.toEqual([]);
   });
 
-  it("counts an end date still to come only for readers who see Personal details", async () => {
+  it("counts an end date still to come", async () => {
     const member = await person({ endDate: "2098-06-15" });
     const id = await liveTeam({ members: [member], from: "2025-01-15" });
 
     expect(await disbandedFrom(id)).toBe("2098-07");
-    expect(await disbandedFrom(id, planner)).toBeUndefined();
   });
 });
 

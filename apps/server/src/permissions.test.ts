@@ -179,8 +179,14 @@ const draftKinds: { variant: string; needs: Needs; asked: () => object }[] = [
     asked: () => ({ records: [{ type: "project", id: id() }] }),
   },
   {
+    // Allocations need Personal details, which show only with people.
     variant: "allocations",
-    needs: allOf("allocations:approve", "allocations:view"),
+    needs: allOf(
+      "allocations:approve",
+      "allocations:view",
+      "people:view",
+      "personal:view",
+    ),
     asked: () => ({ records: [{ type: "allocation", id: id() }] }),
   },
 ];
@@ -312,12 +318,12 @@ const routes: Route[] = [
   {
     method: "GET",
     pattern: "/api/allocations",
-    needs: allOf("allocations:view"),
+    needs: allOf("allocations:view", "people:view", "personal:view"),
   },
   {
     method: "POST",
     pattern: "/api/allocations/changes",
-    needs: allOf("allocations:edit"),
+    needs: allOf("allocations:edit", "people:view", "personal:view"),
     body: () => ({
       personId: randomUUID(),
       featureId: randomUUID(),
@@ -530,6 +536,27 @@ const routes: Route[] = [
     needs: allOf("org-chart:view"),
   },
   {
+    // Other dates need Personal details, which show only with people.
+    method: "GET",
+    pattern: "/api/org-chart",
+    variant: "on another day",
+    url: "/api/org-chart?on=2020-01-01",
+    needs: allOf("org-chart:view", "people:view", "personal:view"),
+  },
+  {
+    // Later dates of reporting lines are future reorganizations, which are Confidential.
+    method: "GET",
+    pattern: "/api/org-chart",
+    variant: "on a later day",
+    url: "/api/org-chart?on=2099-01-01",
+    needs: allOf(
+      "org-chart:view",
+      "people:view",
+      "personal:view",
+      "confidential:view",
+    ),
+  },
+  {
     method: "PUT",
     pattern: "/api/org-chart/teams/:personId/colour",
     needs: allOf("org-chart:view", "team-colours:edit"),
@@ -580,8 +607,15 @@ const routes: Route[] = [
   },
   {
     method: "GET",
+    pattern: "/api/feature-teams",
+    variant: "on another day",
+    url: "/api/feature-teams?on=2099-01-01",
+    needs: allOf("org-chart:view", "people:view", "personal:view"),
+  },
+  {
+    method: "GET",
     pattern: "/api/feature-teams/months",
-    needs: allOf("org-chart:view"),
+    needs: allOf("org-chart:view", "people:view", "personal:view"),
     url: "/api/feature-teams/months?from=2025-01&to=2025-03",
   },
   {
@@ -591,6 +625,16 @@ const routes: Route[] = [
     body: () => ({ name: unique("Fictional Feature Team") }),
   },
   {
+    method: "POST",
+    pattern: "/api/feature-teams",
+    variant: "from another day",
+    needs: { ...changingTeams, all: [...changingTeams.all, "personal:view"] },
+    body: () => ({
+      name: unique("Fictional Feature Team"),
+      from: "2099-01-01",
+    }),
+  },
+  {
     method: "PATCH",
     pattern: "/api/feature-teams/:teamId",
     needs: changingTeams,
@@ -598,8 +642,10 @@ const routes: Route[] = [
   },
   {
     method: "PATCH",
+    // Changing someone's teams month by month is part of Feature assignments, which needs
+    // Personal details.
     pattern: "/api/feature-teams/members/:personId",
-    needs: changingTeams,
+    needs: { ...changingTeams, all: [...changingTeams.all, "personal:view"] },
     body: () => ({}),
   },
   {

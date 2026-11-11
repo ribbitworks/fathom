@@ -382,7 +382,7 @@ describe("who is listed and what each user sees", () => {
   // Today in Fathom's time zone, which decides who is current.
   const today = () => dayIn(defaultTimeZone);
 
-  it("shows users who cannot see Personal details everyone who has started, without dates or Personal values", async () => {
+  it("shows users who cannot see Personal details only people current today, without dates or Personal values", async () => {
     const { cookie } = await editor();
     const general = await columnWith(cookie, ["Fictional General"]);
     const personalColumn = await columnWith(cookie, ["Fictional Personal"], {
@@ -403,10 +403,10 @@ describe("who is listed and what each user sees", () => {
     const seen = await readPeople(viewer.cookie);
     const listed = seen.people.filter((person) => ids.includes(person.id));
     expect(listed.map((person) => ids.indexOf(person.id)).sort()).toEqual([
-      0, 1, 2, 3,
+      0, 1, 2,
     ]);
     expect(listed[0]).not.toHaveProperty("startDate");
-    expect(listed.find(({ id }) => id === ids[3])).not.toHaveProperty(
+    expect(listed.find(({ id }) => id === ids[2])).not.toHaveProperty(
       "endDate",
     );
     expect(listed.find(({ id }) => id === ids[0])?.values).toEqual({

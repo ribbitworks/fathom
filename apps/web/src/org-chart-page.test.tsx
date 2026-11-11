@@ -1434,44 +1434,6 @@ describe("the org chart", () => {
     expect(screen.getByRole("link", { name: "Uma Fictional" })).toBeDefined();
   });
 
-  it("shows a manager People does not show the reader by name alone, opening nothing, and finds them without keeping them in the address", async () => {
-    const history = await openChart(() =>
-      chartJson({
-        people: [
-          person("g", "Gale Fictional", null, {
-            employeeId: null,
-            position: null,
-            nameOnly: true,
-          }),
-          person("h", "Harper Fictional", "g"),
-        ],
-      }),
-    );
-    await screen.findByRole("link", { name: "Harper Fictional" });
-    expect(screen.queryByRole("link", { name: "Gale Fictional" })).toBeNull();
-    const gale = screen
-      .getAllByText("Gale Fictional")
-      .map((name) => name.closest("div.react-flow__node"))
-      .find((node) => node !== null) as HTMLElement;
-    expect(within(gale).queryByText("Fictional Engineer")).toBeNull();
-    expect(
-      screen.queryByRole("button", {
-        name: "Show only the team of Gale Fictional",
-      }),
-    ).toBeNull();
-    fireEvent.click(gale);
-    expect(history.location.pathname).toBe("/org-chart");
-    await userEvent.type(
-      screen.getByRole("combobox", { name: "Find a person or team" }),
-      "Gale",
-    );
-    await userEvent.click(
-      await screen.findByRole("option", { name: /Gale Fictional/ }),
-    );
-    expect(gale.querySelector("[data-found]")).not.toBeNull();
-    expect(history.location.search).toBe("");
-  });
-
   it("offers no Draft menu to those who do not see People, whatever the address says", async () => {
     serverAnswers({
       "GET /api/session": chartOnly,
@@ -1671,11 +1633,13 @@ describe("feature teams on the org chart", () => {
 
   const session = (permissions: string[]) => () =>
     Response.json({ ...fictionalUser, permissions });
+  // The server sends the permissions editing implies, as here viewing Personal details.
   const editor = session([
     "people:view",
     "org-chart:view",
     "feature-teams:edit",
     "team-colours:edit",
+    "personal:view",
     "personal:edit",
   ]);
   const saved =
@@ -2155,7 +2119,6 @@ describe("feature teams on the org chart", () => {
         answers: {
           [`GET /api/feature-teams?on=${later}`]: () =>
             Response.json({ teams }),
-          [`GET /api/org-chart?on=${later}`]: chartAnswer,
           [`PATCH /api/feature-teams/${lighthouse}`]: saved(),
         },
       });
@@ -2164,6 +2127,8 @@ describe("feature teams on the org chart", () => {
           "Showing Mar 1, 2099. Changes take effect from this date.",
         ),
       ).toBeDefined();
+      // People are drawn as today, since later reporting lines need Confidential data.
+      expect(urls(fetch)).not.toContain(`/api/org-chart?on=${later}`);
       expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
       const panel = await openTeamPanel("Fictional Lighthouse");
       expect(
@@ -2219,29 +2184,28 @@ describe("feature teams on the org chart", () => {
       ).toBeDefined();
     });
 
-    it("shows feature teams by month, with today's people, to those who do not", async () => {
+    it("says why there is no other date, and draws today, for those who do not see Personal details", async () => {
       const { fetch } = await openFeatureTeams({
         path: `/org-chart?view=feature-teams&day=${onDay}`,
         signedInAs: seesChart,
-        answers: teamsOnDay,
       });
       expect(
-        await screen.findByText(
-          "Showing Mar 2025. Nothing can be changed on this date.",
-        ),
+        await screen.findByText("Other dates need Personal access."),
       ).toBeDefined();
-      expect(urls(fetch)).toContain("/api/org-chart");
-      expect(urls(fetch)).not.toContain(`/api/org-chart?on=${onDay}`);
-      expect(screen.queryByRole("textbox", { name: "Date" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Today" })).toBeNull();
+      expect(screen.queryByText(/^Showing/)).toBeNull();
+      expect(urls(fetch).join(" ")).not.toContain("?on=");
     });
 
-    it("ignores a day within a month for those who do not see Personal details", async () => {
+    it("says why there is no later date, and draws today, for those who do not see Confidential data", async () => {
       const { fetch } = await openFeatureTeams({
-        path: "/org-chart?view=feature-teams&day=2025-03-15",
-        signedInAs: seesChart,
+        path: "/org-chart?day=2099-03-01",
+        signedInAs: seesDetails,
       });
-      await screen.findByRole("button", { name: "Today" });
-      expect(screen.queryByText(/^Showing/)).toBeNull();
+      expect(
+        await screen.findByText("Future dates need Confidential access."),
+      ).toBeDefined();
+      expect(screen.getByRole("button", { name: "Today" })).toBeDefined();
       expect(urls(fetch).join(" ")).not.toContain("?on=");
     });
 
@@ -2278,6 +2242,7 @@ describe("feature teams on the org chart", () => {
           "org-chart:view",
           "personal:view",
           "personal:edit",
+          "confidential:view",
         ]),
         answers: chartOnDay,
       });
@@ -2303,6 +2268,7 @@ describe("feature teams on the org chart", () => {
           "org-chart:view",
           "personal:view",
           "personal:edit",
+          "confidential:view",
         ]),
         answers: { [`GET /api/org-chart?on=${later}`]: chartAnswer },
       });

@@ -28,8 +28,13 @@ import {
   type PaletteColour,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { ForbiddenError, NotFoundError } from "../errors.ts";
-import { type Actor, seesPersonalDetails, seesSensitivity } from "../access.ts";
+import { NotFoundError } from "../errors.ts";
+import {
+  type Actor,
+  requireView,
+  seesPersonalDetails,
+  seesSensitivity,
+} from "../access.ts";
 import {
   type Draft,
   drafted,
@@ -103,8 +108,8 @@ interface Reader {
 }
 
 // The chart the records give: everyone current today, with each manager they still report to, up
-// the chain, even one whose end date has passed. A reader who does not see Personal details sees
-// no further up than such a manager, and only their name and team.
+// the chain, even one whose end date has passed, marked as having left only for readers who see
+// end dates.
 function chartOf(
   records: ReadonlyMap<string, ChartRecord>,
   colours: ReadonlyMap<string, string | null>,
@@ -124,8 +129,6 @@ function chartOf(
         return true;
     }
   };
-  // Someone not current today, shown only as the manager of someone who is.
-  const hidden = (id: string) => !seesPersonal && !current(recordOf(id));
   const shown = new Set<string>();
   for (const [first, record] of records) {
     if (!current(record)) continue;
@@ -133,7 +136,7 @@ function chartOf(
     let id: string | null = first;
     while (id !== null && !shown.has(id) && records.has(id)) {
       shown.add(id);
-      id = hidden(id) ? null : recordOf(id).managerId;
+      id = recordOf(id).managerId;
     }
   }
   const card = (id: string, record: ChartRecord): OrgChartPerson => {
@@ -163,33 +166,36 @@ function chartOf(
     return {
       id,
       preferredName: record.preferredName,
-      employeeId: hidden(id) || !seesPeople ? null : record.employeeId,
-      position: hidden(id) || !seesPositions ? null : record.position,
+      // People hides someone who has left from those who do not see end dates, so their card
+      // names no one there.
+      employeeId:
+        seesPeople && (seesPersonal || !gone) ? record.employeeId : null,
+      position: seesPositions ? record.position : null,
       teamName: record.teamName,
       // A team whose name comes off loses its colour.
       teamColour:
         record.teamName === null ? null : knownColour(colours.get(id)),
-      managerId: hidden(id) ? null : record.managerId,
-      ...(hidden(id) ? { nameOnly: true } : {}),
+      managerId: record.managerId,
       ...(seesPersonal && gone ? { left: true } : {}),
     };
   };
   return [...shown].map((id) => card(id, recordOf(id)));
 }
 
-// The chart on a chosen day, for readers who see Personal details, since past managers are
-// Personal: as approved, without planned hires, which belong to today, and with drafts laid over
+// The chart on a chosen day, for readers who see every class of data other dates need, and future
+// ones too: as approved, without planned hires, which belong to today, and with drafts laid over
 // it only for those who may change reporting lines from that day.
 export async function readOrgChartOn(
   database: Database,
   actor: Actor,
   day: string,
 ): Promise<OrgChartRead> {
-  if (!seesPersonalDetails(actor)) {
-    throw new ForbiddenError(
-      "This role can't see reporting lines on another date",
-    );
-  }
+  requireView(
+    actor,
+    day > (await readToday(database))
+      ? "orgChartFutureDates"
+      : "orgChartOtherDates",
+  );
   return {
     ...(await readOrgChart(database, actor, { day })),
     includedPersonal: true,

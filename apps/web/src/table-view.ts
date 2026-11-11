@@ -18,7 +18,6 @@ import {
   type Show,
   type ViewDefinition,
   inPlacesOf,
-  monthOf,
   viewDefinitionSchema,
 } from "@fathom/shared";
 import { useState } from "react";
@@ -496,10 +495,6 @@ const month = new Intl.DateTimeFormat(undefined, {
 export function formatMonth(value: string): string {
   return month.format(new Date(`${value}-01T00:00:00Z`));
 }
-
-// A day as people read it, or only its month for readers who may not see the exact day.
-export const formatDayOrMonth = (value: string, seesDays: boolean): string =>
-  seesDays ? formatDay(value) : formatMonth(monthOf(value));
 
 // Each kind's values are of one type: text and dates are strings, choices are lists, and links are
 // links or null.

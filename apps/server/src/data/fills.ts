@@ -52,6 +52,7 @@ import {
   notesOf,
   numbersOf,
   notStarted,
+  currentOn,
   readLive,
   recordSensitiveChanges,
   resubmitPersonDraftIn,
@@ -199,7 +200,7 @@ async function fillingPerson(
     await readPersonDrafts(transaction, [personId], actor.user.id)
   ).get(personId);
   const seesPersonal = seesSensitivity(actor, "personal");
-  if (live === undefined || (!seesPersonal && notStarted(live, today))) {
+  if (live === undefined || (!seesPersonal && !currentOn(live, today))) {
     throw new NotFoundError(noPerson);
   }
   const name = String(live.preferredName);

@@ -11,7 +11,7 @@ last_updated: "2026-11-11"
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, how the table of allocations by month reads, with its over- and under-allocated months, planned hires, and the capacity totals of each group and of the organization, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, what a reader without Personal details or without people sees, and moving around it from the keyboard. The seeded feature teams and allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, how the table of allocations by month reads, with its over- and under-allocated months, planned hires, and the capacity totals of each group and of the organization, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, the line a role without Personal details sees in its place, and moving around it from the keyboard. The seeded feature teams and allocations are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -24,9 +24,9 @@ As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
 As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
 - **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
-- **Resource Planner:** `resource.planner@fathom.test`
+- **Engineering Manager:** `engineering.manager@fathom.test`
 - **Engineering Director:** `engineering.director@fathom.test`
-- **Feature Lead:** `feature.lead@fathom.test`
+- **Executive:** `executive@fathom.test`
 - **Team Member:** `team.member@fathom.test`
 
 ## Common Procedures
@@ -209,21 +209,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Some people have shaded cells at the start or end of their row, for the months before they started or after they left. Shaded cells hold no labels.
   - **Notes:**
 
-### FA-12: Readers Without Personal Details See No Shading
+### FA-12: A Role Without Personal Details Is Told Why
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, changed from FA-11.
+**Account:** Team Member, `team.member@fathom.test`, changed from FA-11.
 
-**Preconditions:** Signed in with this account. **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Scroll sideways and down through the table.
-  - **Expected:** No cells are shaded.
+- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
+  - **Expected:**
+    - Under the **Feature assignments** heading, a line in grey reads **Feature assignments needs Personal access.**
+    - There is no table, no **Teams** and **Allocations** switch, and no **Draft** button.
   - **Notes:**
 
 ### FA-13: The Table Works From the Keyboard
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-12.
+**Account:** Executive, `executive@fathom.test`, changed from FA-12.
 
-**Preconditions:** **Feature assignments** open.
+**Preconditions:** Signed in with this account. **Feature assignments** open from the left-hand menu.
 
 - [ ] **Step 1.** Select a cell in the current month's column that holds a label.
   - **Expected:** The cell has a blue outline.
@@ -245,23 +247,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** Nothing is typed or changed in the cell.
   - **Notes:**
 
-### FA-14: Readers Who Do Not See People Cannot Group by Manager
+### FA-14: A Draft Shows From the Month It Takes Effect
 
-**Account:** Team Member, `team.member@fathom.test`, changed from FA-13.
-
-**Preconditions:** Signed in with this account.
-
-- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The button reads **Group by: Feature team**. There is no **Draft** button.
-  - **Notes:**
-
-- [ ] **Step 2.** Open the Group by menu.
-  - **Expected:** It offers **Feature team** and **None**.
-  - **Notes:**
-
-### FA-15: A Draft Shows From the Month It Takes Effect
-
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-14.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-13.
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Org chart** open, with **Feature teams** chosen in the switch at the top right, showing today.
 
@@ -301,14 +289,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** In both modes the yellow cells, the dots in the labels and the struck-through label are easy to make out, and every label is easy to read.
   - **Notes:**
 
-### FA-16: The Draft Menu Shows Drafts or Leaves Them Out
+### FA-15: The Draft Menu Shows Drafts or Leaves Them Out
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-15.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as FA-14.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the leaver's name from FA-15 in the search box, after FA-15.
+**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the leaver's name from FA-14 in the search box, after FA-14.
 
 - [ ] **Step 1.** Open the Draft menu and select **Live only**.
-  - **Expected:** The leaver's row has no mark, no yellow cells and no light green row; **Platform reliability** is in every month it was in before FA-15, with nothing struck through.
+  - **Expected:** The leaver's row has no mark, no yellow cells and no light green row; **Platform reliability** is in every month it was in before FA-14, with nothing struck through.
   - **Notes:**
 
 - [ ] **Step 2.** Open the Draft menu and select **Drafts applied**.
@@ -324,14 +312,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Open the Draft menu and select **Drafts beside live**.
-  - **Expected:** The joiner and the leaver are both listed under **Platform reliability**, with the yellow cells, the struck-through label and the light green rows, as in FA-15.
+  - **Expected:** The joiner and the leaver are both listed under **Platform reliability**, with the yellow cells, the struck-through label and the light green rows, as in FA-14.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
 
-### FA-17: A Month's Teams Change From That Month On
+### FA-16: A Month's Teams Change From That Month On
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from FA-16.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from FA-15.
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -359,9 +347,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The team panel opens for the new team, with the person listed among the members with a hollow yellow dot and **Draft**.
   - **Notes:**
 
-### FA-18: The Current Month Changes From Today
+### FA-17: The Current Month Changes From Today
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the same as FA-17.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-16.
 
 **Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -373,21 +361,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The row is as it was before step 1.
   - **Notes:**
 
-### FA-19: A Change the Draft Can't Hold Is Explained
+### FA-18: A Change the Draft Can't Hold Is Explained
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, the same as FA-18.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-17.
 
-**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the person's name from FA-17 in the search box, after FA-17.
+**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the person's name from FA-16 in the search box, after FA-16.
 
-- [ ] **Step 1.** Select the person's cell four months after the current month, and press Enter. Type the first letters of the new team from FA-17 and press Enter to take it out, then select the person's name with the mouse.
+- [ ] **Step 1.** Select the person's cell four months after the current month, and press Enter. Type the first letters of the new team from FA-16 and press Enter to take it out, then select the person's name with the mouse.
   - **Expected:** A notice reads that the draft of the new team already changes the person from another month, and to approve or discard that draft first. The cell still holds the new team's label.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
 
-### FA-20: Allocations Show Each Feature With Its Percentage
+### FA-19: Allocations Show Each Feature With Its Percentage
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, changed from FA-19.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-18.
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -411,9 +399,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The cells show feature teams as labels again, still grouped by **Feature team**.
   - **Notes:**
 
-### FA-21: Over- and Under-Allocated Months Stand Out
+### FA-20: Over- and Under-Allocated Months Stand Out
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-20.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-19.
 
 **Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -425,9 +413,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** In both modes the feature names, the percentages, and the **Over** and **Under** lines are easy to read and to tell apart.
   - **Notes:**
 
-### FA-22: Planned Hires Have Rows of Their Own
+### FA-21: Planned Hires Have Rows of Their Own
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-21.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-20.
 
 **Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -443,17 +431,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The cells before the month noted in step 1 are empty. From that month on, cells list a feature with **100%**.
   - **Notes:**
 
-- [ ] **Step 4.** Empty the search box. Select **Manager** in the Group by menu, and type **TBD** in the search box.
-  - **Expected:** Planned hires with no name and a temporary ID are listed by their position and ID, such as **SDET, TBD-** and a number, in grey, under their managers.
+- [ ] **Step 4.** Empty the search box. Select **Feature team** in the Group by menu, and type **TBD** in the search box.
+  - **Expected:** Planned hires with no name and a temporary ID are listed by their position and ID, such as **SDET, TBD-** and a number, in grey, under **No feature team**.
   - **Notes:**
 
 - [ ] **Step 5.** Empty the search box and select **Teams** in the mode switch. Type **Payments tester** in the search box.
   - **Expected:** No rows are listed.
   - **Notes:**
 
-### FA-23: Each Group and the Organization Total Their Capacity
+### FA-22: Each Group and the Organization Total Their Capacity
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-22.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-21.
 
 **Preconditions:** **Light** selected in the Appearance menu. **Feature assignments** open, with **Allocations** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -473,9 +461,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** No group ends with a total row; the **Organization** row is still at the foot.
   - **Notes:**
 
-### FA-24: The Totals Count Only the Rows Shown
+### FA-23: The Totals Count Only the Rows Shown
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-23.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-22.
 
 **Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -487,9 +475,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** One row is listed, named **Payments tester**. In the **Organization** row, the cells before the month its allocations start are empty, and from that month on each reads **1 of 1** and **100%**.
   - **Notes:**
 
-### FA-25: Someone Who Left a Team Has a Row for Each Part
+### FA-24: Someone Who Left a Team Has a Row for Each Part
 
-**Account:** Resource Planner, `resource.planner@fathom.test`, the same as FA-24.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, the same as FA-23.
 
 **Preconditions:** **Feature assignments** open, with **Allocations** chosen in the mode switch, **Feature team** chosen in the Group by menu, nothing in the search box and no filters.
 
@@ -501,9 +489,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The person has a row under **Mobile apps** and a row under another group, or **No feature team**, each followed by a total row. The total row under **Mobile apps** has figures only in the months the person was on **Mobile apps**, up to the month noted; the other total row has figures only in the months before and after those. The person has no allocations, so each figure reads **0 of 1** and **0%**.
   - **Notes:**
 
-### FA-26: Someone Has a Row Under Each Manager They Reported To
+### FA-25: Someone Has a Row Under Each Manager They Reported To
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-25. Step 3 signs in as another account, and step 4 signs in as this one again.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-24. Step 3 signs in as another account, and step 4 signs in as this one again.
 
 **Preconditions:** Restore the Seed Data has been run. Signed in with this account. **People** open from the left-hand menu.
 

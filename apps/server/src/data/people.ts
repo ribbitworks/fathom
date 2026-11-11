@@ -613,9 +613,9 @@ export function currentOn(person: Recorded, today: string): boolean {
 // Everyone the actor may see, by preferred name, as their drafts make them, with the columns whose
 // values they may see, and each draft as they may see it, followed by the planned hires they see,
 // as readHires sets out, by ID. A person a draft removes is shown as they are, with the draft.
-// Users who cannot see Personal details see only those who have started, current staff and those
-// who have left, so the list does not reveal anyone's start date before it arrives, and receive no
-// dates. Each person's state means Hired, or Left once their end date has passed.
+// Users who cannot see Personal details see only those current today, so the list reveals no start
+// or end date, and receive no dates. Each person's state means Hired, or Left once their end date
+// has passed.
 export async function readPeople(
   database: Database,
   actor: Actor,
@@ -692,11 +692,11 @@ async function readPeopleIn(
     const draft = draftsNow.get(id);
     // A draft that removes someone shows them as they are; one that adds nobody is never kept.
     const person = drafted(before, draft) ?? before;
-    // Who has started comes from the live dates while a draft waits, so a draft changing only
-    // Personal dates reveals nothing. Those who have left are no longer kept from anyone.
+    // Those who do not see start and end dates see only people current today, judged by the live
+    // dates while a draft waits, so a draft changing only Personal dates reveals nothing.
     if (
       person === undefined ||
-      (!seesPersonal && notStarted(before ?? person, today))
+      (!seesPersonal && !currentOn(before ?? person, today))
     ) {
       return [];
     }

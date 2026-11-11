@@ -357,15 +357,13 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Choose **Feature teams** in the teams switch.
-  - **Expected:** The chart shows four feature teams side by side, each first card naming its team: **Mobile apps**, **Payments core**, **Search** and **Platform reliability**. Above the chart are a left arrow, a timeline, a right arrow and a greyed-out **Today**, with no **Date** box.
+  - **Expected:**
+    - The chart shows four feature teams side by side, each first card naming its team: **Mobile apps**, **Payments core**, **Search** and **Platform reliability**.
+    - Above the chart, a line in grey reads **Other dates need Personal access.**, with no date control.
   - **Notes:**
 
-- [ ] **Step 5.** Select the left arrow once.
-  - **Expected:** Text below the row reads **Showing** with last month and its year, such as **Showing Oct 2026.**, then **Nothing can be changed on this date.** No day of the month is shown.
-  - **Notes:**
-
-- [ ] **Step 6.** Select **Today**, then choose **Reporting teams** in the teams switch.
-  - **Expected:** The text below the row goes, and the chart shows managers' teams again.
+- [ ] **Step 5.** Choose **Reporting teams** in the teams switch.
+  - **Expected:** The chart shows managers' teams again, with the same line above it.
   - **Notes:**
 
 #### ACC-12: An Engineering Manager Reads a Note Beside the Chart and Colours a Team
@@ -538,11 +536,11 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The cells show feature teams as labels again, still grouped by **Feature team**.
   - **Notes:**
 
-#### ACC-19: A Feature Lead Plans a Team Change in Feature Assignments
+#### ACC-19: The Feature Lead, Acting as Engineering Manager, Plans a Team Change in Feature Assignments
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-18.
 
-**Preconditions:** ACC-16 done. Signed in with this account, acting as **Feature Lead**. **Light** chosen in the Appearance menu. **Feature assignments** open from the left-hand menu, with **Teams** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+**Preconditions:** ACC-16 done. Signed in with this account, acting as **Engineering Manager**. **Light** chosen in the Appearance menu. **Feature assignments** open from the left-hand menu, with **Teams** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
 
 - [ ] **Step 1.** Type `Branson` in the search box.
   - **Expected:** Only **Branson O'Keefe**'s row is listed, with a **Search** label in the current month's cell.
@@ -557,25 +555,19 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button and **Payments core**.
-  - **Expected:** The team panel lists **Branson O'Keefe** among the members, marked **Draft, from** and the month two months after the current one, such as **Draft, from Jan 2027**.
+  - **Expected:** The team panel lists **Branson O'Keefe** among the members, marked **Draft, from** and the first day of the month two months after the current one, such as **Draft, from Jan 1, 2027**.
   - **Notes:**
 
-#### ACC-20: A Team Member Groups Feature Assignments Only by Feature Team
+#### ACC-20: A Team Member Is Told Why Feature Assignments Is Missing
 
 **Account:** Team Member, `team.member@fathom.test`, changed from ACC-19.
 
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The button reads **Group by: Feature team**.
-  - **Notes:**
-
-- [ ] **Step 2.** Open the Group by menu.
-  - **Expected:** It offers **Feature team** and **None**, and no **Manager**.
-  - **Notes:**
-
-- [ ] **Step 3.** Select a cell holding a label, press Enter, then type a letter.
-  - **Expected:** No box for editing opens, and nothing in the cell changes.
+  - **Expected:**
+    - Under the **Feature assignments** heading, a line in grey reads **Feature assignments needs Personal access.**
+    - There is no table.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -1407,14 +1399,14 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** A notice reads **Approved 3 drafts.**
   - **Notes:**
 
-#### ACC-54: A Feature Lead Plans Team Changes Months Ahead
+#### ACC-54: The Feature Lead, Acting as Engineering Manager, Plans Team Changes Months Ahead
 
 **Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-53. Step 6 signs in as another account.
 
-**Preconditions:** ACC-53 done. Signed in with this account, acting as **Feature Lead**. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
+**Preconditions:** ACC-53 done. Signed in with this account, acting as **Engineering Manager**. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
 
 - [ ] **Step 1.** Select the right arrow once.
-  - **Expected:** There is no date box. Text below the row reads **Showing** with next month and its year, such as **Showing Dec 2026.**, then **Changes take effect from this date.**
+  - **Expected:** Text below the row reads **Showing** with the first day of next month, such as **Showing Dec 1, 2026.**, then **Changes take effect from this date.**
   - **Notes:**
 
 - [ ] **Step 2.** Select the Feature teams button, then **Tide team**. Choose **Ada Quill** in **Feature lead**, and select the **×** at the right of **Bram Oakes**.
@@ -1426,11 +1418,16 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Notes:**
 
 - [ ] **Step 4.** Select the right arrow twice. Open **Beacon team** from the Feature teams button, and select the **×** at the right of **Cleo Marsh**, then of **Freya Holt**.
-  - **Expected:** Text below the row reads **Showing** with the month three months from now, such as **Showing Feb 2027.** No members are listed. Lines read **Cleo Marsh, leaving** and **Freya Holt, leaving**, each marked **Live**.
+  - **Expected:**
+    - Text below the row reads **Showing** with the first day of the month three months from now, such as **Showing Feb 1, 2027.**
+    - No members are listed.
+    - Lines read **Cleo Marsh, leaving** and **Freya Holt, leaving**, each marked **Live**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Today**, and open **Tide team** from the Feature teams button.
-  - **Expected:** The text below the row goes. The line for the member leaving gives next month, such as **Bram Oakes, leaving from Dec 2026**.
+  - **Expected:**
+    - The text below the row goes.
+    - The line for the member leaving gives the first day of next month, such as **Bram Oakes, leaving from Dec 1, 2026**.
   - **Notes:**
 
 - [ ] **Step 6.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
@@ -1465,12 +1462,12 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 #### ACC-56: Feature Assignments Show the Changes by Month
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACC-55.
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACC-55.
 
 **Preconditions:** ACC-54 done. Signed in with this account.
 
-- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
-  - **Expected:** The button reads **Group by: Feature team**. The groups are **Beacon team**, **Harbour team**, **Tide team** and **No feature team**, in that order, and **Odile Brandt** is under **No feature team**.
+- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu, then **Feature team** in the Group by menu.
+  - **Expected:** The groups are **Beacon team**, **Harbour team**, **Tide team** and **No feature team**, in that order, and **Odile Brandt** is under **No feature team**.
   - **Notes:**
 
 - [ ] **Step 2.** Open the **Person** column menu, select **Filter…**, type `Bram`, and press Esc.

@@ -161,12 +161,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **Org chart** page open from the left-hand menu.
 
-- [ ] **Step 1.** Read the top of the chart.
-  - **Expected:** Four cards are at the top, side by side, with no line between them: **Silje Holm-Schrøder**, ending with **Hide 6 reports**, **Viktoria Holmberg**, and, with dashed edges, **TBD-3** and **REQ-2047**.
+- [ ] **Step 1.** Look at the area between the page's heading and the chart.
+  - **Expected:**
+    - A line in grey reads **Other dates need Personal access.**
+    - There is no date control.
   - **Notes:**
 
-- [ ] **Step 2.** Read the card for **Viktoria Holmberg**.
-  - **Expected:** It shows the name and **Search team** after a yellow dot, with no position, no red dot and no **Left** after the name, and no org chart button, and ends with **Hide 3 reports**. **Simone Jean**, **우아현** and **西尾 亮** are in a column under it, each joined to it by a line.
+- [ ] **Step 2.** Type `Viktoria` in **Find a person or team**, and choose **Viktoria Holmberg**.
+  - **Expected:**
+    - The chart centres on the card for **Viktoria Holmberg**, which shows her name, position and **Search team** after a yellow dot.
+    - There is no red dot and no **Left** after the name.
+    - The card is joined by a line to the manager above it, and ends with **Hide 3 reports**.
+    - **Simone Jean**, **우아현** and **西尾 亮** are in a column under it, each joined to it by a line.
   - **Notes:**
 
 ### ORG-09: Each Team Is Drawn in Its Colour, Reaching Down to Teams With None

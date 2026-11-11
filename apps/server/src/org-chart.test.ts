@@ -321,6 +321,21 @@ describe("the org chart on a chosen day", () => {
     ).toBe(400);
   });
 
+  it("is refused on a later day to readers who do not see Confidential data", async () => {
+    const reader = await test.signedIn("engineering-manager");
+
+    const response = await test.request(
+      reader.cookie,
+      "GET",
+      "/api/org-chart?on=2099-06-01",
+    );
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json<{ error: string }>().error).toBe(
+      "Future dates need Confidential access.",
+    );
+  });
+
   it("is refused to readers who do not see Personal details", async () => {
     const reader = await test.signedIn("resource-planner");
 
@@ -332,7 +347,7 @@ describe("the org chart on a chosen day", () => {
 
     expect(response.statusCode).toBe(403);
     expect(response.json<{ error: string }>().error).toBe(
-      "This role can't see reporting lines on another date",
+      "Other dates need Personal access.",
     );
   });
 
@@ -705,13 +720,12 @@ describe("the org chart", () => {
   });
 
   it("gives Personal details on the chart only to those who also see people", async () => {
-    const { middle } = await leftChain();
+    const { top, middle } = await leftChain();
     const viewer = await test.signedIn(["org-chart:view", "personal:view"]);
     const shown = await chart(viewer.cookie);
     expect(shown.get(middle)).toMatchObject({
       employeeId: null,
-      managerId: null,
-      nameOnly: true,
+      managerId: top,
     });
     expect(shown.get(middle)?.left).toBeUndefined();
     expect(await personalViews(viewer.id)).toHaveLength(0);
@@ -740,36 +754,17 @@ describe("the org chart", () => {
     expect(await personalViews(viewer.id)).toHaveLength(0);
   });
 
-  it("shows anyone else only a report's own manager who has left, by name, at the top", async () => {
+  it("draws the whole chain for anyone else, without saying who has left", async () => {
     const { top, middle, report } = await leftChain();
     const planner = await test.signedIn("resource-planner");
     const shown = await chart(planner.cookie);
     expect(shown.get(report)?.managerId).toBe(middle);
-    expect(shown.get(middle)).toEqual({
-      id: middle,
-      preferredName: expect.stringMatching(/^Fictional Person/) as unknown,
-      employeeId: null,
-      position: null,
-      teamName: expect.stringMatching(/^Fictional Team/) as unknown,
-      teamColour: null,
-      managerId: null,
-      nameOnly: true,
-    });
-    expect(shown.has(top)).toBe(false);
+    expect(shown.get(middle)?.managerId).toBe(top);
+    expect(shown.get(middle)).not.toHaveProperty("left");
+    expect(shown.get(middle)?.employeeId).toBeNull();
+    expect(shown.get(report)?.employeeId).not.toBeNull();
+    expect(shown.has(top)).toBe(true);
     expect(await personalViews(planner.id)).toHaveLength(0);
-  });
-
-  it("sends no drafted position for a manager shown by name alone", async () => {
-    const { middle } = await leftChain();
-    await changed(middle, { positionId: otherTestPosition });
-    const planner = await test.signedIn("resource-planner");
-    expect((await chart(planner.cookie)).get(middle)).not.toHaveProperty(
-      "draft",
-    );
-    const executive = await test.signedIn("executive");
-    expect((await chart(executive.cookie)).get(middle)?.draft).toMatchObject({
-      position: "Fictional Lead",
-    });
   });
 
   it("leaves out a manager who has left once nobody current reports to them", async () => {
@@ -842,7 +837,9 @@ describe("the org chart", () => {
         const shown = everyone.find((one) => one.id === middle);
         const seesPersonal = rolesGranting("personal:view").includes(role);
         expect(shown?.left).toBe(seesPersonal ? true : undefined);
-        expect(shown?.employeeId === null).toBe(!seesPersonal);
+        expect(shown?.employeeId === null).toBe(
+          !rolesGranting("people:view").includes(role) || !seesPersonal,
+        );
         // Those who do not see people see names, positions, and teams, but no Employee IDs.
         if (!rolesGranting("people:view").includes(role)) {
           expect(everyone.every((one) => one.employeeId === null)).toBe(true);

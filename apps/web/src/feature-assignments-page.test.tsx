@@ -45,17 +45,20 @@ const platform = {
 const months: TeamMonths = {
   months: monthsBetween("2026-03", "2028-02"),
   teams: [payments, platform, mobile],
+  drafts: [],
   people: [
     {
       id: "p-casey",
       preferredName: "Casey Fictional",
       manager: { id: "p-blair", name: "Blair Fictional" },
+      managers: {},
       teams: { "2027-03": [platform.id] },
     },
     {
       id: "p-avery",
       preferredName: "Avery Fictional",
       manager: { id: "p-blair", name: "Blair Fictional" },
+      managers: {},
       teams: { "2027-03": [payments.id, mobile.id] },
       outside: ["2026-03"],
     },
@@ -63,15 +66,26 @@ const months: TeamMonths = {
       id: "p-blair",
       preferredName: "Blair Fictional",
       manager: null,
+      managers: {},
       teams: {},
     },
   ],
 };
 
+// The page needs people's Personal details, and grouping by manager Confidential data, so every role
+// here sees them.
 const session = (permissions: string[]) => () =>
-  Response.json({ ...fictionalUser, permissions });
+  Response.json({
+    ...fictionalUser,
+    permissions: [
+      ...permissions,
+      "people:view",
+      "personal:view",
+      "confidential:view",
+    ],
+  });
 
-const seesPeople = session(["org-chart:view", "people:view"]);
+const reader = session(["org-chart:view"]);
 
 function openPage(
   search = "",
@@ -81,7 +95,7 @@ function openPage(
   } = {},
 ) {
   serverAnswers({
-    "GET /api/session": answers.session ?? seesPeople,
+    "GET /api/session": answers.session ?? reader,
     [monthsUrl]: answers.months ?? (() => Response.json(months)),
   });
   renderApp(`/feature-assignments${search}`);
@@ -191,7 +205,7 @@ describe("changing a month's teams", () => {
   });
 
   it("changes nothing for those who may not propose team changes", async () => {
-    const fetch = await openEditing(seesPeople);
+    const fetch = await openEditing(reader);
     act(() => {
       cell("2027-03").focus();
     });
@@ -227,15 +241,25 @@ describe("the Feature assignments page", () => {
     expect(screen.getByText("Platform reliability").style.background).toBe("");
   });
 
-  it("offers the Draft menu to those who see people", async () => {
+  it("offers the Draft menu", async () => {
     await openPage();
     expect(screen.getByRole("button", { name: /^Draft/u })).toBeDefined();
   });
 
-  it("offers no Draft menu to those who do not see people", async () => {
-    await openPage("", { session: session(["org-chart:view"]) });
+  it("says only why, to those who do not see Personal details", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["org-chart:view", "people:view"],
+        }),
+    });
+    renderApp("/feature-assignments");
 
-    expect(screen.queryByRole("button", { name: /^Draft/u })).toBeNull();
+    expect(
+      await screen.findByText("Feature assignments needs Personal access."),
+    ).toBeDefined();
+    expect(screen.queryByRole("grid")).toBeNull();
   });
 
   describe("with a draft changing someone's months", () => {
@@ -304,7 +328,7 @@ describe("the Feature assignments page", () => {
           months: () =>
             Response.json({
               ...drafted,
-              drafts: drafted.drafts?.map((draft) => ({ ...draft, ...tone })),
+              drafts: drafted.drafts.map((draft) => ({ ...draft, ...tone })),
             }),
         });
 
@@ -324,7 +348,31 @@ describe("the Feature assignments page", () => {
     });
   });
 
-  it("groups by manager at first, for those who see people", async () => {
+  it("groups only by feature team, saying why, for those who do not see Confidential data", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: ["org-chart:view", "people:view", "personal:view"],
+        }),
+      [monthsUrl]: () => Response.json(months),
+    });
+    renderApp("/feature-assignments");
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+
+    expect(
+      screen.getByText("Grouping by manager needs Confidential access."),
+    ).toBeDefined();
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: Feature team" }),
+    );
+    expect(
+      await screen.findByRole("menuitem", { name: /None/u }),
+    ).toBeDefined();
+    expect(screen.queryByRole("menuitem", { name: /Manager/u })).toBeNull();
+  });
+
+  it("groups by manager at first", async () => {
     await openPage();
 
     expect(
@@ -367,19 +415,6 @@ describe("the Feature assignments page", () => {
     ).toBeDefined();
   });
 
-  it("does not offer grouping by manager to those who do not see people", async () => {
-    await openPage("", { session: session(["org-chart:view"]) });
-
-    await userEvent.click(
-      screen.getByRole("button", { name: "Group by: Feature team" }),
-    );
-
-    expect(
-      await screen.findByRole("menuitem", { name: /None/u }),
-    ).toBeDefined();
-    expect(screen.queryByRole("menuitem", { name: /Manager/u })).toBeNull();
-  });
-
   it("marks the months outside someone's employment", async () => {
     await openPage();
 
@@ -417,7 +452,7 @@ describe("the Feature assignments page", () => {
   it("says when it could not load, and tries again", async () => {
     let answers = 0;
     serverAnswers({
-      "GET /api/session": seesPeople,
+      "GET /api/session": reader,
       [monthsUrl]: () => {
         answers += 1;
         return answers === 1
@@ -512,6 +547,34 @@ describe("the Allocations mode", () => {
   const address = (history: ReturnType<typeof renderApp>) =>
     decodeURIComponent(history.location.search);
 
+  it("groups only by feature team for those who do not see Confidential data", async () => {
+    serverAnswers({
+      "GET /api/session": () =>
+        Response.json({
+          ...fictionalUser,
+          permissions: [
+            "org-chart:view",
+            "people:view",
+            "personal:view",
+            "allocations:view",
+          ],
+        }),
+      [monthsUrl]: () => Response.json(months),
+      "GET /api/allocations": () => Response.json(allocations),
+      "GET /api/org-chart": () => Response.json(chart),
+    });
+    renderApp("/feature-assignments?mode=allocations");
+    await screen.findByRole("grid", { name: "Allocations by month" });
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Group by: Feature team" }),
+    );
+    expect(
+      await screen.findByRole("menuitem", { name: /None/u }),
+    ).toBeDefined();
+    expect(screen.queryByRole("menuitem", { name: /Manager/u })).toBeNull();
+  });
+
   it("shows each person's and planned hire's features with their percentages", async () => {
     // Given Casey on Checkout at 50% in March and April 2027, and Payments tester at 100% from
     // April 2027, the month it is expected
@@ -559,19 +622,6 @@ describe("the Allocations mode", () => {
     await waitFor(() => {
       expect(address(history)).toBe("?search=Casey&mode=allocations");
     });
-  });
-
-  it("offers the Draft menu to those who see allocations but not people", async () => {
-    serverAnswers({
-      "GET /api/session": session(["org-chart:view", "allocations:view"]),
-      [monthsUrl]: () => Response.json(months),
-      "GET /api/allocations": () => Response.json(allocations),
-      "GET /api/org-chart": () => Response.json(chart),
-    });
-    renderApp("/feature-assignments?mode=allocations");
-    await screen.findByRole("grid", { name: "Allocations by month" });
-
-    expect(screen.getByRole("button", { name: /^Draft/u })).toBeDefined();
   });
 
   it("greys out Allocations, saying why, for those who do not see allocations", async () => {
@@ -623,7 +673,7 @@ describe("the Allocations mode", () => {
   it("keeps no mode in the address for those who do not see allocations", async () => {
     // Given an address asking for allocations, from a role that sees only Teams
     serverAnswers({
-      "GET /api/session": seesPeople,
+      "GET /api/session": reader,
       [monthsUrl]: () => Response.json(months),
     });
     const history = renderApp("/feature-assignments?mode=allocations");

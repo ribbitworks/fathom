@@ -36,11 +36,13 @@ const search = { id: "t-search", name: "Search", colour: null };
 const teamMonths: TeamMonths = {
   months,
   teams: [search],
+  drafts: [],
   people: [
     {
       id: "p-casey",
       preferredName: "Casey Fictional",
       manager: { id: "p-blair", name: "Blair Fictional" },
+      managers: {},
       teams: { "2027-03": [search.id] },
       outside: ["2027-02"],
     },
@@ -356,6 +358,24 @@ describe("planned hires' allocations", () => {
     ]);
   });
 
+  it("lists today's managers alone when no month's managers are given", () => {
+    const today = {
+      ...teamMonths,
+      people: teamMonths.people.map(
+        ({ id, preferredName, manager, teams }) => ({
+          id,
+          preferredName,
+          manager,
+          teams,
+        }),
+      ),
+    };
+    expect(allocationManagers(today, chart)).toEqual([
+      { id: "p-blair", name: "Blair Fictional" },
+      { id: "p-blair", name: "Blair Fictional" },
+    ]);
+  });
+
   it("names a planned hire with no name by its position and ID, in place of a name", () => {
     const unnamed = rowsOf([], { chart }).find(
       ({ id }) => id === "h-unnamed",
@@ -589,16 +609,13 @@ describe("a month's cell", () => {
 
 describe("the table", () => {
   const rows = rowsOf([allocation()]);
-  const tableFor = (seesPeople: boolean) =>
-    allocationMonthsTable({
-      teamMonths,
-      features,
-      managers: [{ id: "p-blair", name: "Blair Fictional" }],
-      seesPeople,
-      currentMonth: "2027-03",
-      show: "both",
-    });
-  const table = tableFor(true);
+  const table = allocationMonthsTable({
+    teamMonths,
+    features,
+    managers: [{ id: "p-blair", name: "Blair Fictional" }],
+    currentMonth: "2027-03",
+    show: "both",
+  });
 
   it("is read only, offering the allocated features to filter a month by", () => {
     const columns = table.columnsFor([], [], [], rows);
@@ -615,12 +632,9 @@ describe("the table", () => {
     expect(monthColumns.map(({ key }) => key)).toEqual(months);
   });
 
-  it("groups by manager or feature team for those who see people, and otherwise by feature team", () => {
+  it("groups by manager or feature team", () => {
     expect(table.groupings?.map(({ label }) => label)).toEqual([
       "Manager",
-      "Feature team",
-    ]);
-    expect(tableFor(false).groupings?.map(({ label }) => label)).toEqual([
       "Feature team",
     ]);
   });

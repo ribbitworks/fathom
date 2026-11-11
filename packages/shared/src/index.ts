@@ -47,6 +47,14 @@ export {
   withImplied,
 } from "./access.ts";
 export {
+  classNames,
+  classPermissions,
+  type ClassifiedView,
+  seesClass,
+  seesView,
+  whyMissing,
+} from "./data-classes.ts";
+export {
   type RoleChange,
   roleChangeSchema,
   roleEffectsRequestSchema,

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who was on which feature team, month by month, as approved, for the monthly grid, and, for readers
-// who see drafts, as the team drafts they see would make it. Part of the data access layer. Each
-// month is read as of its first day, or today during the current month, so a draft's exact days
-// show only as the months they fall in. Readers who do not see Personal details see only people
-// current today, on every month, so no month reveals who has yet to start or an end date still to
-// come. Readers who do see them see everyone employed during the months asked for, which of those
-// months fall outside their employment, and whom each person reported to each month.
+// Who was on which feature team, month by month, as approved, for the monthly grid, and as the team
+// drafts the reader sees would make it. Part of the data access layer. Each month is read as of its
+// first day, or today during the current month, so a draft's exact days show only as the months
+// they fall in. It needs every class of data Feature assignments needs, so its readers see everyone
+// employed during the months asked for and which of those months fall outside their employment;
+// whom each person reported to each month goes only to those who may group by manager, since later
+// months' lines are future reorganizations.
 
 import {
   type Database,
@@ -19,13 +19,10 @@ import {
   knownColour,
   type MonthRange,
   monthsBetween,
+  seesView,
   type TeamMonths,
 } from "@fathom/shared";
-import {
-  type Actor,
-  requirePermission,
-  seesPersonalDetails,
-} from "../access.ts";
+import { type Actor, requirePermission, requireView } from "../access.ts";
 import {
   type DraftedMembership,
   readDraftedMemberships,
@@ -100,18 +97,14 @@ export async function readTeamMonths(
   { from, to }: MonthRange,
 ): Promise<TeamMonths> {
   requirePermission(actor, "org-chart:view");
-  const seesPersonal = seesPersonalDetails(actor);
-  const seesPeople = actor.permissions.includes("people:view");
+  requireView(actor, "featureAssignments");
+  const byManager = seesView("groupingByManager", actor.permissions);
   const today = await readToday(database);
   const months = monthsBetween(from, to);
-  // Drafts are details of people, so only those who see people see them.
-  const seesDrafts = seesPeople;
   const { rows, lines, teams, memberships, drafts } =
     await database.transaction(
       async (transaction) => ({
-        drafts: seesDrafts
-          ? await readDraftedMemberships(transaction, actor.user.id, today)
-          : { teams: [], records: [] },
+        drafts: await readDraftedMemberships(transaction, actor.user.id, today),
         rows: await transaction
           .select({
             id: people.id,
@@ -148,9 +141,7 @@ export async function readTeamMonths(
       .map(({ teamId }) => teamId),
   );
   const shown = rows.filter((person) =>
-    seesPersonal
-      ? months.some((month) => employedIn(person, month))
-      : currentOn(person, today),
+    months.some((month) => employedIn(person, month)),
   );
   const managerOn = (personId: string, day: string) => {
     const managerId =
@@ -173,9 +164,7 @@ export async function readTeamMonths(
     const outside = months.filter((month) => !employedIn(person, month));
     const shownMonths = months.flatMap((month) => {
       const day = dayReadingMonth(month, today);
-      return currentOn(person, seesPersonal ? day : today)
-        ? [{ month, day }]
-        : [];
+      return currentOn(person, day) ? [{ month, day }] : [];
     });
     const teamsIn = (of: ReadonlyMap<string, Membership[]>) =>
       shownMonths.flatMap(({ month, day }): [string, string[]][] => {
@@ -191,8 +180,10 @@ export async function readTeamMonths(
     return {
       id: person.id,
       preferredName: person.preferredName,
-      manager: seesPeople ? managerOn(person.id, today) : null,
-      ...(seesPersonal
+      manager: managerOn(person.id, today),
+      // Later months' managers are future reorganizations, so only those who group by manager get
+      // each month's.
+      ...(byManager
         ? {
             managers: Object.fromEntries(
               months.map((month) => [
@@ -203,7 +194,7 @@ export async function readTeamMonths(
           }
         : {}),
       teams: Object.fromEntries(approved),
-      ...(seesPersonal && outside.length > 0 ? { outside } : {}),
+      ...(outside.length > 0 ? { outside } : {}),
       ...(drafted === undefined ? {} : { drafted }),
     };
   });
@@ -225,17 +216,13 @@ export async function readTeamMonths(
       })),
     ],
     people: shownPeople,
-    ...(seesDrafts
-      ? {
-          drafts: drafts.teams
-            .filter(({ teamId }) => draftedBy.has(teamId))
-            .map(({ teamId, action, state, unpublished }) => ({
-              teamId,
-              action,
-              state,
-              ...(unpublished ? { unpublished } : {}),
-            })),
-        }
-      : {}),
+    drafts: drafts.teams
+      .filter(({ teamId }) => draftedBy.has(teamId))
+      .map(({ teamId, action, state, unpublished }) => ({
+        teamId,
+        action,
+        state,
+        ...(unpublished ? { unpublished } : {}),
+      })),
   };
 }

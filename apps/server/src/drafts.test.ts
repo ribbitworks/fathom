@@ -290,7 +290,7 @@ describe("drafts as people see them", () => {
     );
   });
 
-  it("shows readers without Personal details everyone who has started, as live dates say while a draft waits", async () => {
+  it("shows readers without Personal details only people current today, as live dates say while a draft waits", async () => {
     const starting = await draftPerson({ startDate: "2099-01-01" });
     const future = await livePerson({ startDate: "2099-02-01" });
     const leaving = await livePerson({ startDate: "2020-01-01" });
@@ -309,12 +309,10 @@ describe("drafts as people see them", () => {
       endDate: "2011-01-01",
     });
     await saved("PATCH", `/api/people/${former.id}`, { endDate: null });
-    const formerSeen = await seen(planner.cookie, former.id);
-    expect(formerSeen?.draft).toBeUndefined();
-    expect(formerSeen).not.toHaveProperty("endDate");
+    expect(await seen(planner.cookie, former.id)).toBeUndefined();
     expect(await seen(editor.cookie, starting.id)).toBeDefined();
     await approve([leaving.id]);
-    expect(await seen(planner.cookie, leaving.id)).toBeDefined();
+    expect(await seen(planner.cookie, leaving.id)).toBeUndefined();
   });
 
   it("names Fathom as who made a draft the history does not hold", async () => {
@@ -583,8 +581,8 @@ describe("approving and rejecting", () => {
       error:
         "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     });
-    // A former employee's draft of General details is decided by one who sees only those who have
-    // started, but a future starter's is not.
+    // Neither a former employee's draft of General details nor a future starter's is decided by one
+    // who sees only people current today.
     const former = await livePerson({
       startDate: "2010-01-01",
       endDate: "2011-01-01",
@@ -592,7 +590,8 @@ describe("approving and rejecting", () => {
     await saved("PATCH", `/api/people/${former.id}`, {
       preferredName: unique("Fictional"),
     });
-    expect((await approve([former.id], planner.cookie)).statusCode).toBe(200);
+    expect((await approve([former.id], planner.cookie)).statusCode).toBe(404);
+    expect((await approve([former.id])).statusCode).toBe(200);
     const starter = await livePerson({ startDate: "2099-01-01" });
     await saved("PATCH", `/api/people/${starter.id}`, {
       preferredName: unique("Fictional"),

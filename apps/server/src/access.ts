@@ -7,11 +7,14 @@
 // without reading the database. Adding a permission changes the shared list in packages/shared,
 // with its plain-English description.
 
-import type { Permission, Role, Tier } from "@fathom/shared";
+import type { ClassifiedView, Permission, Role, Tier } from "@fathom/shared";
 import {
+  classPermissions,
   roleSchema,
+  seesClass,
   startingRoles,
   tierSchema,
+  whyMissing,
   withImplied,
 } from "@fathom/shared";
 import { ForbiddenError } from "./errors.ts";
@@ -85,8 +88,7 @@ const sensitivityPermissions: Record<
   { view: Permission; edit: Permission }
 > = {
   general: { view: "people:view", edit: "people:edit" },
-  personal: { view: "personal:view", edit: "personal:edit" },
-  confidential: { view: "confidential:view", edit: "confidential:edit" },
+  ...classPermissions,
   "hiring-plan": { view: "hiring-plan:view", edit: "hiring-plan:edit" },
 };
 
@@ -114,22 +116,28 @@ export function mostSensitive(tiers: readonly Tier[]): Tier {
   );
 }
 
+// Personal and Confidential data are seen as their classes are, the rest with their own permission.
 export function seesSensitivity(
   actor: Actor,
   sensitivity: Sensitivity,
 ): boolean {
-  return actor.permissions.includes(permissionsOf(sensitivity).view);
+  return sensitivity === "personal" || sensitivity === "confidential"
+    ? seesClass(actor.permissions, sensitivity)
+    : actor.permissions.includes(permissionsOf(sensitivity).view);
 }
 
-// Personal details are details of people, so they show only with people, as the Roles page says;
-// a role can be given them without people, but then they do nothing.
 export const seesPersonalDetails = (actor: Actor): boolean =>
-  actor.permissions.includes("people:view") &&
-  seesSensitivity(actor, "personal");
+  seesClass(actor.permissions, "personal");
 
 export function requireSensitivityEdit(
   actor: Actor,
   sensitivity: Sensitivity,
 ): void {
   requirePermission(actor, permissionsOf(sensitivity).edit);
+}
+
+// Refuses a page or view the actor's role does not see every class of data for, saying why.
+export function requireView(actor: Actor, view: ClassifiedView): void {
+  const why = whyMissing(view, actor.permissions);
+  if (why !== undefined) throw new ForbiddenError(why);
 }

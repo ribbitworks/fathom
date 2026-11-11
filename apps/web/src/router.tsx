@@ -9,6 +9,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   approvableKinds,
   historySearchLength,
+  seesView,
+  whyMissing,
   type Permission,
   personLengths,
   showSchema,
@@ -517,6 +519,8 @@ const orgChartRoute = createRoute({
       <OrgChartPage
         seesPeople={permissions.includes("people:view")}
         showDates={permissions.includes("personal:view")}
+        whyNoOtherDates={whyMissing("orgChartOtherDates", permissions)}
+        whyNoFutureDates={whyMissing("orgChartFutureDates", permissions)}
         canEdit={permissions.includes("people:edit")}
         changesDates={permissions.includes("personal:edit")}
         teamEdits={teamEdits}
@@ -544,7 +548,9 @@ const featureAssignmentsRoute = createRoute({
     const { permissions } = signedIn.useRouteContext();
     const navigate = featureAssignmentsRoute.useNavigate();
     const { mode = "teams", ...search } = featureAssignmentsRoute.useSearch();
-    const seesAllocations = permissions.includes("allocations:view");
+    const seesAllocations =
+      permissions.includes("allocations:view") &&
+      seesView("allocations", permissions);
     const kept = (next: GridMode) =>
       seesAllocations && next === "allocations" ? { mode: next } : {};
     const { view, onView } = viewProps(search, (next, replace) => {
@@ -552,7 +558,8 @@ const featureAssignmentsRoute = createRoute({
     });
     return (
       <FeatureAssignmentsPage
-        seesPeople={permissions.includes("people:view")}
+        whyMissing={whyMissing("featureAssignments", permissions)}
+        whyNoManagerGrouping={whyMissing("groupingByManager", permissions)}
         seesAllocations={seesAllocations}
         proposesTeams={proposesFeatureTeams(permissions)}
         changesDates={permissions.includes("personal:edit")}

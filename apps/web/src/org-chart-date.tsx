@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// The Org chart's date control: a timeline to step through by month, and, for readers who see
-// Personal details, a box for typing any day. Readers who do not see those details move by whole
-// months, since the exact days people join and leave are Personal. While the chart shows another
+// The Org chart's date control: a timeline to step through by month, and a box for typing any day,
+// reaching days after today only for roles that see future dates. While the chart shows another
 // date, the control says whether changes made there take effect from it, or nothing can be changed.
 
 import {
@@ -15,7 +14,7 @@ import { ActionIcon, Button, Group, Slider, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
-import { formatDayOrMonth, formatMonth } from "./table-view.ts";
+import { formatDay, formatMonth } from "./table-view.ts";
 import { today } from "./today.ts";
 
 const dateBoxId = "org-chart-date";
@@ -36,13 +35,14 @@ function dayOfMonthFromNow(months: number): string {
 
 export function OrgChartDate({
   day,
-  seesDays,
+  laterDays,
   changes,
   onDay,
 }: {
   // The day shown, or undefined for today.
   day: string | undefined;
-  seesDays: boolean;
+  // Whether days after today can be shown.
+  laterDays: boolean;
   // Whether changes can be made on the day shown.
   changes: boolean;
   onDay: (day: string | undefined) => void;
@@ -69,47 +69,53 @@ export function OrgChartDate({
     setBoxCount((count) => count + 1);
   };
   const choose = (next: string) => {
+    // A later day typed by a role that may not see one puts the box back to the day shown.
+    if (!laterDays && next > today()) {
+      restartBox();
+      return;
+    }
     onDay(next === today() ? undefined : next);
   };
   const stepTo = (months: number) => {
     choose(dayOfMonthFromNow(months));
   };
-  const marks = Array.from({ length: 2 * monthsEachWay + 1 }, (_, index) => {
-    const value = index - monthsEachWay;
-    return value % monthsBetweenLabels === 0
-      ? { value, label: formatMonth(monthOf(dayOfMonthFromNow(value))) }
-      : { value };
-  });
-  const belowLabel = seesDays ? dayBoxLabelHeight : 0;
+  const latest = laterDays ? monthsEachWay : 0;
+  const marks = Array.from(
+    { length: monthsEachWay + latest + 1 },
+    (_, index) => {
+      const value = index - monthsEachWay;
+      return value % monthsBetweenLabels === 0
+        ? { value, label: formatMonth(monthOf(dayOfMonthFromNow(value))) }
+        : { value };
+    },
+  );
   return (
     <Stack gap={0} mb="xs">
       <Group gap="sm" align="flex-start" wrap="nowrap">
-        {seesDays && (
-          <DayInput
-            key={boxCount}
-            id={dateBoxId}
-            label="Date"
-            size="xs"
-            required={false}
-            value={shown}
-            onChange={(typed) => {
-              setIncomplete(typed === undefined);
-              if (typed !== undefined) choose(typed);
-            }}
-            onBlur={() => {
-              if (incomplete) restartBox();
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                restartBox();
-                focusSoon(dateBoxId);
-              }
-            }}
-          />
-        )}
+        <DayInput
+          key={boxCount}
+          id={dateBoxId}
+          label="Date"
+          size="xs"
+          required={false}
+          value={shown}
+          onChange={(typed) => {
+            setIncomplete(typed === undefined);
+            if (typed !== undefined) choose(typed);
+          }}
+          onBlur={() => {
+            if (incomplete) restartBox();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              restartBox();
+              focusSoon(dateBoxId);
+            }
+          }}
+        />
         <ActionIcon
           variant="default"
-          mt={belowLabel}
+          mt={dayBoxLabelHeight}
           aria-label="Previous month"
           disabled={fromNow <= -monthsEachWay}
           onClick={() => {
@@ -125,11 +131,11 @@ export function OrgChartDate({
           }
           styles={{ markLabel: { color: "var(--mantine-color-text)" } }}
           style={{ flex: 1 }}
-          mt={belowLabel + handleOffset}
+          mt={dayBoxLabelHeight + handleOffset}
           mb="lg"
           mx="lg"
           min={-monthsEachWay}
-          max={monthsEachWay}
+          max={latest}
           step={1}
           marks={marks}
           value={handleAt}
@@ -144,9 +150,9 @@ export function OrgChartDate({
         />
         <ActionIcon
           variant="default"
-          mt={belowLabel}
+          mt={dayBoxLabelHeight}
           aria-label="Next month"
-          disabled={fromNow >= monthsEachWay}
+          disabled={fromNow >= latest}
           onClick={() => {
             stepTo(fromNow + 1);
           }}
@@ -156,7 +162,7 @@ export function OrgChartDate({
         <Button
           variant="default"
           size="xs"
-          mt={belowLabel}
+          mt={dayBoxLabelHeight}
           disabled={day === undefined}
           onClick={() => {
             choose(today());
@@ -171,7 +177,7 @@ export function OrgChartDate({
           noBreakSpace
         ) : (
           <>
-            Showing {formatDayOrMonth(day, seesDays)}.{" "}
+            Showing {formatDay(day)}.{" "}
             {changes
               ? "Changes take effect from this date."
               : "Nothing can be changed on this date."}

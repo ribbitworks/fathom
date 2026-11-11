@@ -56,7 +56,7 @@ import {
   unseenDraft,
 } from "./drafts.ts";
 import {
-  notStarted,
+  currentOn,
   personChanges,
   personTier,
   readLive,
@@ -131,10 +131,10 @@ async function seenAsked(
   const seen = (field: string) =>
     (fieldOfValue(field) === null || shown.has(field)) &&
     seesSensitivity(actor, tierOf(field));
-  // Those without Personal details see everyone who has started, as the live dates say.
+  // Those without Personal details see only people current today, as the live dates say.
   const listed = (id: string, draft: Draft) =>
     seesSensitivity(actor, "personal") ||
-    !notStarted(live.get(id) ?? draft.fields, today);
+    currentOn(live.get(id) ?? draft.fields, today);
   for (const [id, draft] of found) {
     const fields = draftFields(live.get(id), draft);
     if (!fields.some(seen) || !listed(id, draft)) {

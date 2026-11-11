@@ -371,6 +371,26 @@ describe("filling a planned hire with someone already in Fathom", () => {
     expect((await rowOf(starter))?.managerFrom).toBe("2099-01-01");
   });
 
+  it("answers someone who has left as no one to an actor who does not see Personal details", async () => {
+    const id = await hire();
+    const former = await person({
+      startDate: "2020-01-01",
+      endDate: "2021-01-01",
+      isManager: false,
+    });
+    const actor = await test.signedIn([
+      "people:view",
+      "people:edit",
+      "hiring-plan:view",
+      "hiring-plan:edit",
+    ]);
+
+    const response = await fill(id, existing(former), actor);
+
+    expect(response.statusCode).toBe(404);
+    expect(refusal(response)).toBe("There is no such person");
+  });
+
   it("answers someone who has not started as no one to an actor who does not see Personal details", async () => {
     const id = await hire();
     const starter = await person({ startDate: "2099-01-01", isManager: false });

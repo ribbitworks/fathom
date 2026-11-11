@@ -19,6 +19,8 @@ import {
   type ChangeHistory,
   type Meaning,
   monthOf,
+  type Role,
+  startingRoles,
 } from "@fathom/shared";
 import { and, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -37,15 +39,25 @@ let test: TestApp;
 let today: string;
 let current: string;
 type Account = { id: string; cookie: string };
-// Edits allocations without seeing Personal details.
+// Allocations need Personal details, so each role here is given them: a Resource Planner edits
+// allocations, an Engineering Manager edits them too, the Director and a Project Manager approve
+// them, and a Team Member sees them.
 let planner: Account;
-// Edits allocations, seeing Personal details.
 let manager: Account;
-// Approves allocations, seeing Personal details.
 let director: Account;
-// Approves allocations without seeing Personal details.
 let projectManager: Account;
 let viewer: Account;
+
+const withPersonal = (role: Role) =>
+  test.signedIn([
+    ...new Set([
+      // The role is always one of the fixed roles.
+      // eslint-disable-next-line security/detect-object-injection
+      ...startingRoles[role].permissions,
+      "people:view" as const,
+      "personal:view" as const,
+    ]),
+  ]);
 
 const month = (offset: number) => addToMonth(current, offset);
 
@@ -53,11 +65,11 @@ beforeAll(async () => {
   test = await startTestApp();
   today = await readToday(test.connection);
   current = monthOf(today);
-  planner = await test.signedIn("resource-planner");
+  planner = await withPersonal("resource-planner");
   manager = await test.signedIn("engineering-manager");
   director = await test.signedIn("engineering-director");
-  projectManager = await test.signedIn("project-manager");
-  viewer = await test.signedIn("team-member");
+  projectManager = await withPersonal("project-manager");
+  viewer = await withPersonal("team-member");
 });
 
 afterAll(async () => {
@@ -585,16 +597,6 @@ describe("employment dates", () => {
     );
   });
 
-  it("does not tell an editor who does not see Personal details of an end date still to come", async () => {
-    const personId = await addPerson({ endDate: dayIn(3) });
-    await changed({
-      personId,
-      featureId: await addFeature(),
-      percentage: 50,
-      from: month(0),
-    });
-  });
-
   it("refuses, to any editor, months after an end date that has passed", async () => {
     const personId = await addPerson({ endDate: dayIn(-2) });
     const response = await change({
@@ -604,17 +606,6 @@ describe("employment dates", () => {
       from: month(-1),
     });
     expect(response.statusCode).toBe(400);
-  });
-
-  it("refuses someone who has not started to an editor who does not see them", async () => {
-    const personId = await addPerson({ startDate: dayIn(2) });
-    const response = await change({
-      personId,
-      featureId: await addFeature(),
-      percentage: 50,
-      from: month(2),
-    });
-    expect(response.statusCode).toBe(404);
   });
 
   it("lets a stop be drafted outside someone's employment", async () => {
@@ -660,7 +651,7 @@ describe("reading", () => {
     });
   });
 
-  it("shows someone who has not started only to readers who see Personal details", async () => {
+  it("shows someone who has not started, recording a view of Personal details", async () => {
     const personId = await addPerson({ startDate: dayIn(2) });
     const featureId = await addFeature();
     await changed(
@@ -679,10 +670,6 @@ describe("reading", () => {
           ),
         ),
     ).not.toEqual([]);
-    expect(await allocationOf({ personId }, featureId, viewer)).toBeUndefined();
-    expect(
-      await allocationOf({ personId }, featureId, planner),
-    ).toBeUndefined();
   });
 });
 
@@ -719,9 +706,6 @@ describe("approving", () => {
     expect(refused.statusCode).toBe(409);
     expect(errorOf(refused)).toBe(
       `The draft of ${String(name)} on ${await nameOfFeature(featureId)} runs past their last month, ${month(2)}. Reject the draft so it can be changed.`,
-    );
-    expect((await decide(projectManager, "approval", [id])).statusCode).toBe(
-      200,
     );
   });
 
@@ -778,26 +762,39 @@ describe("approving", () => {
     ).toBe(404);
   });
 
-  it("does not let an Approver decide a draft naming someone they do not see", async () => {
-    const personId = await addPerson({ startDate: dayIn(2) });
+  it("refuses reading, changing and deciding allocations, saying why, to roles that do not see Personal details", async () => {
+    const personId = await addPerson();
     const featureId = await addFeature();
-    await changed(
-      { personId, featureId, percentage: 50, from: month(2) },
-      manager,
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const id = String((await allocationOf({ personId }, featureId))?.id);
+    const why = "Allocations needs Personal access.";
+    const reader = await test.signedIn("team-member");
+    const read = await test.request(reader.cookie, "GET", "/api/allocations");
+    expect(read.statusCode).toBe(403);
+    expect(errorOf(read)).toBe(why);
+    const editor = await test.signedIn("resource-planner");
+    const edited = await change(
+      { personId, featureId, percentage: 25, from: month(0) },
+      editor,
     );
-    const id = String(
-      (await allocationOf({ personId }, featureId, manager))?.id,
-    );
-    expect((await decide(projectManager, "approval", [id])).statusCode).toBe(
-      404,
-    );
-    expect((await decide(projectManager, "rejection", [id])).statusCode).toBe(
-      404,
-    );
+    expect(edited.statusCode).toBe(403);
+    expect(errorOf(edited)).toBe(why);
+    const approver = await test.signedIn("project-manager");
+    const decided = await decide(approver, "approval", [id]);
+    expect(decided.statusCode).toBe(403);
+    expect(errorOf(decided)).toBe(why);
+  });
+
+  it("rejects a draft, which keeps its months and says why", async () => {
+    const personId = await addPerson();
+    const featureId = await addFeature();
+    await changed({ personId, featureId, percentage: 50, from: month(0) });
+    const id = String((await allocationOf({ personId }, featureId))?.id);
     expect((await decide(director, "rejection", [id])).statusCode).toBe(200);
-    expect(
-      (await allocationOf({ personId }, featureId, manager))?.draft?.state,
-    ).toBe("rejected");
+    expect((await allocationOf({ personId }, featureId))?.draft).toMatchObject({
+      state: "rejected",
+      reason: "Fictional reason",
+    });
   });
 
   it("can be discarded by its editor", async () => {
@@ -1022,15 +1019,15 @@ describe("the change history", () => {
     ).toContain(`${await nameOf(personId)} on ${String(project?.name)}`);
   });
 
-  it("hides the allocations of someone who has not started from readers who do not see Personal details", async () => {
-    const personId = await addPerson({ startDate: dayIn(2) });
+  it("keeps every allocation from readers who do not see Personal details, even of someone employed today", async () => {
+    const personId = await addPerson();
     await changed(
       {
         personId,
         featureId: await addFeature(),
         percentage: 50,
-        from: month(2),
-        to: month(2),
+        from: month(0),
+        to: month(0),
       },
       manager,
     );
@@ -1038,6 +1035,7 @@ describe("the change history", () => {
     const naming = (records: { name: string | null }[]) =>
       records.filter((record) => record.name?.startsWith(`${name} on `));
     expect(naming(await allocationRecords(director))).not.toHaveLength(0);
-    expect(naming(await allocationRecords(planner))).toHaveLength(0);
+    const reader = await test.signedIn("resource-planner");
+    expect(naming(await allocationRecords(reader))).toHaveLength(0);
   });
 });

@@ -47,13 +47,14 @@ const monthsInWords = (months: AllocationMonths): string[] =>
 
 // Named by its feature, as the Drafts page and refusals name records, a general feature by its
 // project, and, in the change history, by who it puts on which feature, such as "Alex Kim on
-// Offline Sync", hidden there from readers who do not see its person yet.
+// Offline Sync", seen there only by roles that get Allocations.
 export const allocationKind: RecordKind = {
   type: "allocation",
   table: allocations,
   fields: allocationFields,
   links: { featureId: "feature" },
   readWith: ["allocations:view"],
+  view: "allocations",
   historyName: {
     fields: ["personId", "plannedHireId", "featureId"],
     name: ({ personId, plannedHireId, featureId }) => {
@@ -63,7 +64,6 @@ export const allocationKind: RecordKind = {
         : `${assignee} on ${featureId}`;
     },
   },
-  aboutPerson: "personId",
   // Only a change shows its fields, and a change to an allocation always holds its months.
   valueInWords: (field, value) =>
     field === "months" ? monthsInWords(value as AllocationMonths) : undefined,

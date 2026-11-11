@@ -8,6 +8,7 @@
 // sets out. Part of the data access layer; records.ts reads and changes the records.
 
 import type {
+  ClassifiedView,
   ColumnTable,
   Permission,
   RecordRef,
@@ -44,6 +45,8 @@ export interface RecordKind {
   refers?: Readonly<Record<string, Referred>>;
   // The permissions any of which lets someone read records of the kind, and their history.
   readWith: readonly Permission[];
+  // The view whose classes of data reading the kind also needs, for a kind that needs one.
+  view?: ClassifiedView;
   // The kind of owner holding values in the columns added to the kind's table, for a kind that can
   // have them, and the table.
   addedColumns?: { owner: ValueOwner; table: ColumnTable };
@@ -68,9 +71,6 @@ export interface RecordKind {
       named: Readonly<Record<string, string | undefined>>,
     ) => string | undefined;
   };
-  // The field naming the person a record is about, so the history hides the record from readers who
-  // do not see them yet.
-  aboutPerson?: string;
   // A field's value as the history says it, for a field it cannot show as it is kept, such as an
   // allocation's months.
   valueInWords?: (field: string, value: unknown) => string[] | undefined;

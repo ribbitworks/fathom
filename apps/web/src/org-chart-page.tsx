@@ -85,7 +85,7 @@ import {
   heightOf,
   stackIndent,
   type ChartSearch,
-  chartDay,
+  chartDays,
   collapsedBelow,
   levelsOf,
   findFieldId,
@@ -116,6 +116,7 @@ import { DraftMark, LiveLine, StatusMark } from "./status-mark.tsx";
 import { formatMonth } from "./table-view.ts";
 import { DraftMenu } from "./table-controls.tsx";
 import { today } from "./today.ts";
+import { WhyMissing } from "./why-missing.tsx";
 
 interface CardData extends Record<string, unknown> {
   person: ChartPerson;
@@ -443,10 +444,10 @@ const openLevels = 2;
 
 // How the address names a person, for the team shown alone and the person found. A reader who sees
 // people has each person's Employee ID; one who does not has Fathom's own ID for them, which means
-// nothing outside Fathom, as a planned hire has for everyone. Null for someone shown by name only,
-// who cannot be kept there, and for a Live copy, which the person themselves stands for.
+// nothing outside Fathom, as a planned hire has for everyone. Null for a Live copy, which the person
+// themselves stands for.
 function addressOf(person: ChartPerson, seesPeople: boolean): string | null {
-  if (person.nameOnly === true || person.liveCopyOf !== undefined) return null;
+  if (person.liveCopyOf !== undefined) return null;
   return seesPeople && person.planned === undefined
     ? person.employeeId
     : person.id;
@@ -596,7 +597,7 @@ function Chart({
             collapsed: collapsed.has(id),
             found: id === found,
             opened,
-            teamEdits: person.nameOnly === true ? noTeamEdits : teamEdits,
+            teamEdits,
             members: teamId !== undefined,
             onFeatureTeam:
               teamId === undefined || person.teamName === null
@@ -872,6 +873,8 @@ export function OrgChartPage({
   onSearch,
   seesPeople,
   showDates = false,
+  whyNoOtherDates,
+  whyNoFutureDates,
   canEdit = false,
   changesDates = false,
   teamEdits,
@@ -886,15 +889,22 @@ export function OrgChartPage({
   changesDates?: boolean;
   // Whether the reader sees Personal details, such as dates, in a person's details.
   showDates?: boolean;
+  // Why the role does not get the chart on other dates, or on future ones, when it does not see
+  // every class of data they need.
+  whyNoOtherDates?: string | undefined;
+  whyNoFutureDates?: string | undefined;
   teamEdits: TeamEdits;
   onSearch: (search: ChartSearch, replace: boolean) => void;
 }) {
   const featureView = search.view === "feature-teams";
-  const day = chartDay(search.day, featureView, showDates);
-  // Those who do not see Personal details see feature teams on another day, with people as they
-  // are today, since reporting lines on another day are Personal. Feature teams and reporting
-  // lines change from the day shown for those who may date changes then; people's other details
-  // change only today.
+  const futureLines = whyNoFutureDates === undefined;
+  const { day, peopleDay } = chartDays(search.day, {
+    otherDates: whyNoOtherDates === undefined,
+    futureLines,
+    featureTeams: featureView,
+  });
+  // Feature teams and reporting lines change from the day shown for those who may date changes
+  // then; people's other details change only today.
   const dated = day !== undefined;
   const linesChangeOnDay =
     day !== undefined &&
@@ -907,7 +917,7 @@ export function OrgChartPage({
         mayDateChange(featureTeamEdits.dates, day, today())
       : linesChangeOnDay);
   const fixedDay = dated && !changesOnDay;
-  const query = useQuery(orgChartQueryOn(showDates ? day : undefined));
+  const query = useQuery(orgChartQueryOn(peopleDay));
   const narrow = useNarrow();
   // A person's details and a note of theirs being written, beside the chart.
   const notes = usePersonNotes();
@@ -1047,17 +1057,22 @@ export function OrgChartPage({
           </Group>
         }
       />
-      {(featureView || showDates) && (
+      {whyNoOtherDates === undefined ? (
         <OrgChartDate
           day={day}
-          seesDays={showDates}
+          laterDays={featureView || futureLines}
           changes={changesOnDay}
           onDay={(next) => {
             setCreating(false);
             go({ ...search, day: next }, true);
           }}
         />
+      ) : (
+        <WhyMissing why={whyNoOtherDates} />
       )}
+      {whyNoOtherDates === undefined &&
+        !featureView &&
+        whyNoFutureDates !== undefined && <WhyMissing why={whyNoFutureDates} />}
       {query.isPending || (featureView && teamsQuery.isPending) ? (
         <Loader role="status" aria-label="Loading" />
       ) : query.isError || tree === undefined || everyone === undefined ? (
@@ -1169,7 +1184,6 @@ export function OrgChartPage({
                         key={openedTeam?.id ?? "new"}
                         team={creating ? undefined : openedTeam}
                         day={day}
-                        seesDays={showDates}
                         people={query.data.people}
                         edits={
                           readOnly

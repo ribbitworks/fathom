@@ -248,7 +248,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Afterwards:** Run Restore the Seed Data.
 
-### HIRE-10: A Person Who Has Left Shows Left, to Everyone Who Sees People
+### HIRE-10: A Person Who Has Left Shows Left, Only to Those Who See Personal Details
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as HIRE-09. Step 3 signs in as another account.
 
@@ -263,7 +263,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Sign in as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People**, and filter **State** to **Left** only, as in Step 1.
-  - **Expected:** The same people are shown, **Viktoria Holmberg** among them, each with **Left** in **State**. There are no **Start** or **End** columns.
+  - **Expected:**
+    - No one is shown; **Viktoria Holmberg** is not listed.
+    - There are no **Start** or **End** columns.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

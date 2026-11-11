@@ -67,9 +67,6 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **Months:** A month shows as a short month and its year, such as Mar 2027.
   - **Drawn by:** `formatMonth` in `apps/web/src/table-view.ts`.
   - **Example:** Offline Sync's Needed by.
-- **Only the month:** Where a reader may not see an exact Personal day, only its month shows.
-  - **Drawn by:** `formatDayOrMonth` in `apps/web/src/table-view.ts`.
-  - **Example:** the line under the Org chart's date row, for those who don't see Personal details.
 - **Typing a day or month:** Days and months are typed as their digits, laid out as typed, such as 2026-10-31 and 2027-03, whatever the reader's language.
   - **Drawn by:** `DayInput` in `apps/web/src/day-input.tsx`. People's date cells and Person details still have their own fields, as [Issues](../issues.md#development) records.
   - **Example:** a milestone's Date.
@@ -133,9 +130,9 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Access
 
-- **A page without its data:** A page a role reaches, but whose data the role can't see, stays in the menu and opens to a short line saying why. The data classes change adds it.
-  - **Drawn by:** no shared piece yet.
-  - **Example:** none until that change; the greyed-out Allocations switch on Feature assignments already says why in the same way, "This role doesn't see allocations".
+- **A page without its data:** A page or view a role reaches, but whose classes of data the role can't see, is never shown cut down: the page stays in the menu and opens to a short line saying why, and a view, such as another date, gives way to one where it would be.
+  - **Drawn by:** `WhyMissing` in `apps/web/src/why-missing.tsx`, with the words from `whyMissing` in `packages/shared/src/data-classes.ts`, which the server's refusals use too.
+  - **Example:** Feature assignments for the Team Member, which reads Feature assignments needs Personal access., and the Org chart for the Resource Planner, where Other dates need Personal access. stands in place of the date row.
 - **Columns a role can't see:** A column a role can't see isn't shown, and nothing says it's missing. A column whose values belong to a class of data shows a lock with the class's name. The data classes change adds the lock.
   - **Drawn by:** no shared piece yet.
   - **Example:** none until that change.

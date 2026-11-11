@@ -40,6 +40,7 @@ import { TableTips } from "./table-tips.tsx";
 import {
   gridMonthsAround,
   type MonthRow,
+  peopleManagers,
   readOnlyMonthActions,
   teamMonthRecords,
   teamMonthsQuery,
@@ -47,6 +48,7 @@ import {
   useTeamMonthActions,
 } from "./team-months.tsx";
 import { today } from "./today.ts";
+import { WhyMissing } from "./why-missing.tsx";
 
 export const gridModeSchema = z.enum(["teams", "allocations"]);
 
@@ -63,7 +65,8 @@ const withoutMonthFilters = (view: View): View =>
   withoutFilters(view, (key) => !monthSchema.safeParse(key).success);
 
 export function FeatureAssignmentsPage({
-  seesPeople,
+  whyMissing,
+  whyNoManagerGrouping,
   seesAllocations,
   proposesTeams,
   changesDates,
@@ -72,7 +75,10 @@ export function FeatureAssignmentsPage({
   view,
   onView,
 }: {
-  seesPeople: boolean;
+  // Why the role does not get the page, when it does not see every class of data the page needs.
+  whyMissing?: string | undefined;
+  // Why the role may not group rows by manager, when it may not.
+  whyNoManagerGrouping?: string | undefined;
   seesAllocations: boolean;
   proposesTeams: boolean;
   // Whether the reader may change Personal details, and so months before the current one.
@@ -84,7 +90,20 @@ export function FeatureAssignmentsPage({
 }) {
   const [now] = useState(today);
   const mode = seesAllocations ? asked : "teams";
-  const grid = { seesPeople, now, view, onView };
+  const grid = {
+    byManager: whyNoManagerGrouping === undefined,
+    now,
+    view,
+    onView,
+  };
+  if (whyMissing !== undefined) {
+    return (
+      <Stack gap="md">
+        <PageHeader title="Feature assignments" />
+        <WhyMissing why={whyMissing} />
+      </Stack>
+    );
+  }
   return (
     <Stack gap="md" className={classes.tablePage}>
       <PageHeader title="Feature assignments" />
@@ -115,6 +134,9 @@ export function FeatureAssignmentsPage({
           ]}
         />
       </Group>
+      {whyNoManagerGrouping !== undefined && (
+        <WhyMissing why={whyNoManagerGrouping} />
+      )}
       {mode === "teams" ? (
         <TeamsGrid
           {...grid}
@@ -129,14 +151,14 @@ export function FeatureAssignmentsPage({
 }
 
 interface GridProps {
-  seesPeople: boolean;
+  byManager: boolean;
   now: string;
   view: View;
   onView: (view: View, replace?: boolean) => void;
 }
 
 function TeamsGrid({
-  seesPeople,
+  byManager,
   proposesTeams,
   changesDates,
   now,
@@ -151,11 +173,13 @@ function TeamsGrid({
     () =>
       data === undefined
         ? undefined
-        : teamMonthsTable(data, seesPeople, view.show, {
-            today: now,
-            changesDates,
-          }),
-    [data, seesPeople, view.show, now, changesDates],
+        : teamMonthsTable(
+            data,
+            view.show,
+            { today: now, changesDates },
+            byManager ? peopleManagers(data) : undefined,
+          ),
+    [data, view.show, now, changesDates, byManager],
   );
   const grouping = activeGrouping(view, table?.groupings)?.key;
   const records = useMemo(
@@ -173,12 +197,12 @@ function TeamsGrid({
       now={now}
       view={view}
       onView={onView}
-      withDrafts={seesPeople}
+      withDrafts
     />
   );
 }
 
-function AllocationsGrid({ seesPeople, now, view, onView }: GridProps) {
+function AllocationsGrid({ byManager, now, view, onView }: GridProps) {
   const [range] = useState(() => gridMonthsAround(now));
   const monthsRead = useQuery(teamMonthsQuery(range));
   const allocationsRead = useQuery(allocationsQuery);
@@ -203,12 +227,13 @@ function AllocationsGrid({ seesPeople, now, view, onView }: GridProps) {
         : allocationMonthsTable({
             teamMonths: sources.teamMonths,
             features: sources.allocations.features,
-            managers: allocationManagers(sources.teamMonths, sources.chart),
-            seesPeople,
+            managers: byManager
+              ? allocationManagers(sources.teamMonths, sources.chart)
+              : undefined,
             currentMonth,
             show: view.show,
           }),
-    [sources, seesPeople, currentMonth, view.show],
+    [sources, byManager, currentMonth, view.show],
   );
   const grouping = activeGrouping(view, table?.groupings)?.key;
   const records = useMemo(

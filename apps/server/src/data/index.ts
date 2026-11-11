@@ -498,7 +498,7 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
               ({ draft, disbandedFrom }) =>
                 draft?.days !== undefined ||
                 draft?.leadDay !== undefined ||
-                (disbandedFrom !== undefined && seesPersonalDetails(actor)),
+                disbandedFrom !== undefined,
             )
           : seesPersonalDetails(actor);
       if (sawDays) {
@@ -513,13 +513,11 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
     readMonths: async (actor, range) => {
       const read = await readTeamMonths(database, actor, range);
       // Rows and shaded months follow employment dates, which are Personal.
-      if (seesPersonalDetails(actor)) {
-        await recordPersonalView(
-          database,
-          actor.user.id,
-          await readTimeZone(database),
-        );
-      }
+      await recordPersonalView(
+        database,
+        actor.user.id,
+        await readTimeZone(database),
+      );
       return read;
     },
     create: async (actor, request) => {
@@ -1016,7 +1014,7 @@ export function createDataAccess(database: Database): DataAccess {
           database,
           actor,
         );
-        // Allocations of someone who has not started tell of their start date, which is Personal.
+        // Allocations of someone not current today tell of their start or end date, which is Personal.
         if (includedPersonal) {
           await recordPersonalView(
             database,

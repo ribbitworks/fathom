@@ -3,10 +3,9 @@
 // Allocations, as part of the data access layer: who is put on which feature, from which month, and
 // at what percentage of their month, as the Decisions Log sets out. Every change is a draft of one
 // person's or planned hire's allocation to one feature, holding every month it changes, approved
-// with Approve allocations. Readers who do not see Personal details see nobody who has not
-// started, nor allocations naming them. A person cannot be allocated outside their employment, nor
-// a planned hire before the month it is expected, as far as the editor sees those dates; an editor
-// who does not see someone's dates is not told of them, and an Approver who does is, on approving.
+// with Approve allocations. Reading, changing, and approving them needs Personal details, since
+// they are judged against employment dates. A person cannot be allocated outside their employment,
+// nor a planned hire before the month it is expected.
 // Removing a person or planned hire removes their allocations. Filling a planned hire does not move
 // its allocations yet, so a hire with allocations is not filled, and a filled hire is not allocated.
 
@@ -32,20 +31,15 @@ import {
 } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import {
-  type Actor,
-  requirePermission,
-  seesPersonalDetails,
-} from "../access.ts";
+import { type Actor, requirePermission, requireView } from "../access.ts";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import { type Change, changesBetween, type Transaction } from "./changes.ts";
 import { draftMakers, everything, type Recorded } from "./drafts.ts";
 import { allocationFields, allocationKind } from "./allocation-kinds.ts";
 import { expectedMonth, hireIdOf } from "./hires.ts";
-import { employedMonths, type Employment, notStarted } from "./people.ts";
+import { currentOn, employedMonths, type Employment } from "./people.ts";
 import {
   drafting,
-  gone,
   readRecordsState,
   recordDraftOut,
   recordHeldBy,
@@ -71,28 +65,12 @@ const type = "allocation";
 const monthsOf = (record: Recorded | undefined): AllocationMonths =>
   (record?.months ?? {}) as AllocationMonths;
 
-// The first and last months someone can be allocated, as far as a reader knows them: a person's
-// start and end months to readers who see Personal details, and otherwise only an end month that
-// has passed; a planned hire's month it is expected, which every reader sees.
+// The first and last months someone can be allocated: a person's start and end months, which every
+// reader of allocations sees, and a planned hire's month it is expected.
 interface Bounds {
   first?: string;
   last?: string;
 }
-
-function personBounds(
-  person: Employment,
-  seesPersonal: boolean,
-  today: string,
-): Bounds {
-  if (seesPersonal) return employedMonths(person);
-  const { last } = employedMonths(person);
-  return last !== undefined && String(person.endDate) < today ? { last } : {};
-}
-
-// Whether a reader sees a person: those who see Personal details see everyone, and others only
-// those who have started.
-const seesPerson = (person: Employment, seesPersonal: boolean, today: string) =>
-  seesPersonal || !notStarted(person, today);
 
 // Where a change puts someone on a feature outside the months they can be allocated in, if it does.
 type Outside = { before: string } | { after: string };
@@ -210,14 +188,14 @@ async function hiresOf(
 }
 
 // Every allocation the actor sees, live and as drafts make them, and the features they name, and
-// whether any names someone who has not started, which only readers who see Personal details see.
+// whether any names someone not current today, which tells of their start or end date.
 export async function readAllocations(
   database: Database,
   actor: Actor,
 ): Promise<Allocations & { includedPersonal: boolean }> {
   requirePermission(actor, "allocations:view");
+  requireView(actor, "allocations");
   const today = await readToday(database);
-  const seesPersonal = seesPersonalDetails(actor);
   return database.transaction(
     async (transaction) => {
       const state = await readRecordsState(transaction, actor.user.id);
@@ -232,17 +210,13 @@ export async function readAllocations(
       );
       const personOf = (record: Recorded) =>
         employment.get(String(record.personId));
-      const seen = records.filter(({ record }) => {
-        const person = personOf(record);
-        return person === undefined || seesPerson(person, seesPersonal, today);
-      });
       const makers = new Map([
         [
           type,
           await draftMakers(
             transaction,
             type,
-            seen
+            records
               .map(({ id }) => id)
               .filter((id) => stateOf(state, type).drafts.has(id)),
             everything,
@@ -251,7 +225,7 @@ export async function readAllocations(
         ],
       ] as const);
       const featureIds = [
-        ...new Set(seen.map(({ record }) => String(record.featureId))),
+        ...new Set(records.map(({ record }) => String(record.featureId))),
       ];
       const statusOf = (featureId: string) =>
         String(shownVersion(state, "feature", featureId)?.statusId);
@@ -268,7 +242,7 @@ export async function readAllocations(
             ).map(({ id, meaning }) => [id, meaning]),
       );
       return {
-        allocations: seen.map(({ id, record }) => {
+        allocations: records.map(({ id, record }) => {
           const draft = recordDraftOut(allocationKind, state, makers, id);
           return {
             id,
@@ -307,9 +281,9 @@ export async function readAllocations(
           name: featureCalled(state, id),
           meaning: meaningSchema.nullable().parse(meanings.get(statusOf(id))),
         })),
-        includedPersonal: seen.some(({ record }) => {
+        includedPersonal: records.some(({ record }) => {
           const person = personOf(record);
-          return person !== undefined && notStarted(person, today);
+          return person !== undefined && !currentOn(person, today);
         }),
       };
     },
@@ -348,24 +322,19 @@ function checkFeature(state: RecordsState, featureId: string): void {
   }
 }
 
-// The months the editor knows someone can be allocated in, refusing someone they cannot allocate: a
-// person they do not see, or a planned hire that does not exist or is filled. A filled hire is seen,
-// as its placeholder, only by readers who do not see its person, who are not told it is filled.
+// The months someone can be allocated in, refusing someone who cannot be: a person who does not exist,
+// or a planned hire that does not exist or is filled.
 async function boundsFor(
   reader: Reader,
-  editor: Actor,
   change: AllocationChange,
   today: string,
 ): Promise<Bounds> {
-  const seesPersonal = seesPersonalDetails(editor);
   if (change.personId !== undefined) {
     const person = (await employmentOf(reader, [change.personId])).get(
       change.personId,
     );
-    if (person === undefined || !seesPerson(person, seesPersonal, today)) {
-      throw new NotFoundError(chooseSomeone);
-    }
-    return personBounds(person, seesPersonal, today);
+    if (person === undefined) throw new NotFoundError(chooseSomeone);
+    return employedMonths(person);
   }
   const hireId = String(change.plannedHireId);
   const hire = (await hiresOf(reader, [hireId], today)).get(hireId);
@@ -382,10 +351,11 @@ export async function changeAllocation(
   editor: Actor,
   change: AllocationChange,
 ): Promise<string | null> {
+  requireView(editor, "allocations");
   const today = await readToday(database);
   return drafting(database, editor.user.id, async (transaction, state) => {
     checkFeature(state, change.featureId);
-    const bounds = await boundsFor(transaction, editor, change, today);
+    const bounds = await boundsFor(transaction, change, today);
     // Someone else's unpublished changes to it, if any, refuse the change as they hold it.
     const id = allocationFor(state, change) ?? randomUUID();
     const before = monthsOf(versionOf(state, type, id));
@@ -425,7 +395,7 @@ export async function checkAllocationsAsked(
   asking: Asking,
 ): Promise<void> {
   if (ids.length === 0) return;
-  const seesPersonal = seesPersonalDetails(approver);
+  requireView(approver, "allocations");
   const state = await readRecordsState(transaction);
   // A draft asked for that no longer exists is refused when its records are approved or rejected.
   const wanted = ids.flatMap((id) => {
@@ -443,9 +413,6 @@ export async function checkAllocationsAsked(
   );
   for (const { id, record } of wanted) {
     const person = employment.get(String(record.personId));
-    if (person !== undefined && !seesPerson(person, seesPersonal, today)) {
-      throw new NotFoundError(gone);
-    }
     if (asking === "reject") continue;
     // An allocation names a person or a planned hire that exists, since removing either removes it.
     const hire =
@@ -461,7 +428,7 @@ export async function checkAllocationsAsked(
         monthsOf(versionOf(state, type, id)),
       ),
       hire === undefined
-        ? personBounds(person as Employment, seesPersonal, today)
+        ? employedMonths(person as Employment)
         : { first: hire.expected },
     );
     if (outside !== undefined) {

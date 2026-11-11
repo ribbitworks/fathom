@@ -43,9 +43,6 @@ export const featureTeamDraftSchema = z.object({
   days: z.record(z.string(), daySchema).optional(),
   // The day the draft's change of lead takes effect, for readers who see Personal details.
   leadDay: daySchema.optional(),
-  // The months of those days, for readers who do not see them.
-  months: z.record(z.string(), monthSchema).optional(),
-  leadMonth: monthSchema.optional(),
   ...draftShape,
 });
 
@@ -95,13 +92,13 @@ export const teamMonthsSchema = z.object({
       id: z.string(),
       preferredName: z.string(),
       manager: managerSchema.nullable(),
-      // For readers who see Personal details: whom the person reported to each month.
+      // Whom the person reported to each month, for roles that group by manager.
       managers: z.record(monthSchema, managerSchema.nullable()).optional(),
       // Each month with a team, and the teams then, by identifier.
       teams: z.record(monthSchema, z.array(z.string())),
       outside: z.array(monthSchema).optional(),
-      // For readers who see drafts: each month whose teams a draft changes, with the teams then, and
-      // the teams whose drafts change those months.
+      // Each month whose teams a draft changes, with the teams then, and the teams whose drafts
+      // change those months.
       drafted: z
         .object({
           teams: z.record(monthSchema, z.array(z.string())),
@@ -110,19 +107,16 @@ export const teamMonthsSchema = z.object({
         .optional(),
     }),
   ),
-  // For readers who see drafts, each team draft changing someone's months: whether it adds or
-  // removes the team, whether it waits or was rejected, and whether it holds the reader's own
-  // changes, not yet published.
-  drafts: z
-    .array(
-      z.object({
-        teamId: z.string(),
-        action: draftActionSchema,
-        state: draftStateSchema,
-        unpublished: z.boolean().optional(),
-      }),
-    )
-    .optional(),
+  // Each team draft changing someone's months: whether it adds or removes the team, whether it waits
+  // or was rejected, and whether it holds the reader's own changes, not yet published.
+  drafts: z.array(
+    z.object({
+      teamId: z.string(),
+      action: draftActionSchema,
+      state: draftStateSchema,
+      unpublished: z.boolean().optional(),
+    }),
+  ),
 });
 
 export type TeamMonths = z.infer<typeof teamMonthsSchema>;

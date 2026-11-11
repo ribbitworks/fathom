@@ -230,22 +230,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** The row is easy to read in both, and the timeline's month labels do not overlap each other or the chart.
   - **Notes:**
 
-### FT-07: Readers Without Personal Details Move by Month
+### FT-07: Readers Without Personal Details Are Told Why There Is No Other Date
 
 **Account:** Resource Planner, `resource.planner@fathom.test`, changed from FT-06.
 
 **Preconditions:** Signed in with this account. **Org chart** open, with **Reporting teams** chosen in the teams switch.
 
 - [ ] **Step 1.** Look at the area between the page's heading and the chart.
-  - **Expected:** There is no date control.
+  - **Expected:**
+    - A line in grey reads **Other dates need Personal access.**
+    - There is no date control.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Feature teams** in the teams switch.
-  - **Expected:** The arrows, timeline and **Today** appear, with no **Date** box.
-  - **Notes:**
-
-- [ ] **Step 3.** Select the left arrow once.
-  - **Expected:** Text below the row reads **Showing** with last month and its year, such as **Showing Oct 2026.**, then **Nothing can be changed on this date.** No day of the month is shown.
+  - **Expected:** The same line is there, still with no date control.
   - **Notes:**
 
 ### FT-08: Changes Take Effect From the Date Shown
@@ -290,6 +288,12 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 3.** Select the right arrow twice.
   - **Expected:** The text below the row ends **Changes take effect from this date.** The **Draft** menu is back, and the team's panel shows an **×** beside each member and an **Add member** box.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Today**, then choose **Reporting teams** in the teams switch.
+  - **Expected:**
+    - The right arrow is greyed out.
+    - A line in grey under the row reads **Future dates need Confidential access.**
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

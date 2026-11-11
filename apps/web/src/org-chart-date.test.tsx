@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for the Org chart's date control: which day a chart is drawn as of, stepping by month, typing
-// a day for readers who see Personal details, and what it says while the chart shows another day.
+// a day, stopping at today for roles that do not see future dates, and what it says while the chart
+// shows another day.
 
 import { MantineProvider } from "@mantine/core";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { OrgChartDate } from "./org-chart-date.tsx";
-import { chartDay } from "./org-chart.ts";
+import { chartDay, chartDays } from "./org-chart.ts";
 import { testTheme } from "./test-support.tsx";
 
 const now = "2027-03-10";
@@ -23,37 +24,65 @@ afterEach(() => {
 });
 
 describe("chartDay", () => {
+  const every = { otherDates: true, futureDates: true };
   it.each([
-    ["none asked", undefined, true, true, undefined],
-    ["today", now, true, true, undefined],
+    ["none asked", undefined, every, undefined],
+    ["today", now, every, undefined],
+    ["an earlier day", "2025-03-15", every, "2025-03-15"],
+    ["a later day", "2028-03-15", every, "2028-03-15"],
     [
-      "any day for readers who see the days",
+      "no other day without other dates",
       "2025-03-15",
-      false,
-      true,
+      { otherDates: false, futureDates: false },
+      undefined,
+    ],
+    [
+      "an earlier day without future dates",
+      "2025-03-15",
+      { otherDates: true, futureDates: false },
       "2025-03-15",
     ],
     [
-      "the first of a month on feature teams",
-      "2025-03-01",
-      true,
-      false,
-      "2025-03-01",
+      "no later day without future dates",
+      "2028-03-15",
+      { otherDates: true, futureDates: false },
+      undefined,
     ],
-    ["no other day on feature teams", "2025-03-15", true, false, undefined],
-    ["no day on reporting teams", "2025-03-01", false, false, undefined],
-  ])("%s", (_, asked, featureTeams, seesDays, expected) => {
-    expect(chartDay(asked, featureTeams, seesDays)).toBe(expected);
+  ])("%s", (_, asked, sees, expected) => {
+    expect(chartDay(asked, sees)).toBe(expected);
   });
 });
 
-function control(day: string | undefined, seesDays = true, changes = false) {
+describe("chartDays", () => {
+  const later = "2028-03-15";
+  it.each([
+    [
+      "draws people on a later day for a role that sees future lines",
+      { otherDates: true, futureLines: true, featureTeams: false },
+      { day: later, peopleDay: later },
+    ],
+    [
+      "draws people as today on feature teams' later day without future lines",
+      { otherDates: true, futureLines: false, featureTeams: true },
+      { day: later, peopleDay: undefined },
+    ],
+    [
+      "draws no later day on reporting teams without future lines",
+      { otherDates: true, futureLines: false, featureTeams: false },
+      { day: undefined, peopleDay: undefined },
+    ],
+  ])("%s", (_, sees, expected) => {
+    expect(chartDays(later, sees)).toEqual(expected);
+  });
+});
+
+function control(day: string | undefined, laterDays = true, changes = false) {
   const onDay = vi.fn();
   render(
     <MantineProvider theme={testTheme}>
       <OrgChartDate
         day={day}
-        seesDays={seesDays}
+        laterDays={laterDays}
         changes={changes}
         onDay={onDay}
       />
@@ -118,6 +147,17 @@ describe("the date control", () => {
     expect(onDay.mock.calls).toEqual([["2025-03-15"]]);
   });
 
+  it("puts the day shown back when a later day is typed by a role that does not see one", async () => {
+    const onDay = control(undefined, false);
+    const box = screen.getByRole<HTMLInputElement>("textbox", { name: "Date" });
+    await userEvent.clear(box);
+    await userEvent.type(box, "20280315");
+    expect(onDay).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole<HTMLInputElement>("textbox", { name: "Date" }).value,
+    ).not.toContain("2028");
+  });
+
   it("goes back to today when today is typed", async () => {
     const onDay = control("2027-02-01");
     const box = screen.getByRole("textbox", { name: "Date" });
@@ -171,7 +211,7 @@ describe("the date control", () => {
   it("moves the handle with the date once it has been dragged and let go", () => {
     const shown = (day: string | undefined) => (
       <MantineProvider theme={testTheme}>
-        <OrgChartDate day={day} seesDays changes={false} onDay={vi.fn()} />
+        <OrgChartDate day={day} laterDays changes={false} onDay={vi.fn()} />
       </MantineProvider>
     );
     const { rerender } = render(shown(undefined));
@@ -208,11 +248,9 @@ describe("the date control", () => {
     expect(screen.getByRole("status").textContent).toBe("\u00a0");
   });
 
-  it("offers months alone to readers who do not see the days", () => {
-    control("2025-03-01", false);
-    expect(screen.queryByRole("textbox", { name: "Date" })).toBeNull();
-    expect(screen.getByRole("status").textContent).toBe(
-      "Showing Mar 2025. Nothing can be changed on this date.",
-    );
+  it("stops at today for roles that do not see future dates", () => {
+    control(undefined, false);
+    expect(document.querySelectorAll(".mantine-Slider-mark")).toHaveLength(25);
+    expect(button("Next month").disabled).toBe(true);
   });
 });

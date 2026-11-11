@@ -7,6 +7,7 @@
 
 import {
   changeSetIdSchema,
+  classNames,
   type Choice,
   type ChoiceRequest,
   choiceSchema,
@@ -21,18 +22,11 @@ import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
 import { getJson, sendDeleteFor, sendJsonFor } from "./api.ts";
 
-// Every tier must be named, which the compiler checks.
-const visibilityNames: Record<Tier, string> = {
-  general: "Everyone",
-  personal: "Personal",
-  confidential: "Confidential",
-};
-
-export function visibilityName(tier: Tier): string {
-  // The tier is always one of the fixed tiers named above.
+// Who sees what is chosen from a list: everyone for General, and otherwise the class's name.
+export const visibilityName = (tier: Tier): string =>
+  // The tier is always one of the fixed classes.
   // eslint-disable-next-line security/detect-object-injection
-  return visibilityNames[tier];
-}
+  tier === "general" ? "Everyone" : classNames[tier];
 
 // Which lists the Lists page shows: every one, those Fathom builds in, or those people added.
 export const listKindSchema = z.enum(["all", "built-in", "custom"]);

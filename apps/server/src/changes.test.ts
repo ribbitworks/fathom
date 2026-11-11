@@ -298,8 +298,8 @@ describe("the change history", () => {
     }
   });
 
-  it("shows someone added before they start only to readers who see Personal details, until they start", async () => {
-    // Given someone added to start in the future, and someone who has started
+  it("shows someone added before they start, or who has left, only to readers who see Personal details", async () => {
+    // Given someone added to start in the future, someone who has started, and someone who has left
     const added = await send("POST", "/api/people", {
       people: [
         {
@@ -314,6 +314,13 @@ describe("the change history", () => {
           positionId: testPosition,
           startDate: "2020-01-06",
         },
+        {
+          preferredName: "Kappa Former",
+          employeeId: "KAPPA-3",
+          positionId: testPosition,
+          startDate: "2020-01-06",
+          endDate: "2021-01-08",
+        },
       ],
     });
     const named = async (role: Role) => {
@@ -324,10 +331,11 @@ describe("the change history", () => {
       return (entry?.records ?? []).map(({ name }) => name);
     };
 
-    // Then only readers who see Personal details see the future starter
+    // Then only readers who see Personal details see the future starter and the former colleague
     expect(await named("workforce-administrator")).toEqual([
       "Kappa Starter",
       "Kappa Current",
+      "Kappa Former",
     ]);
     expect(await named("resource-planner")).toEqual(["Kappa Current"]);
   });
@@ -362,6 +370,30 @@ describe("the change history", () => {
     expect((await search(planner, "Lambda")).entries).toEqual([]);
     expect(
       (await search(admin.cookie, "Lambda")).entries.length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("finds no one who had left for readers who do not see Personal details, even once their draft is discarded", async () => {
+    // Given someone drafted to be added who had already left, then discarded
+    const drafted = await send("POST", "/api/people", {
+      people: [
+        {
+          preferredName: "Mu Former",
+          employeeId: "MU-1",
+          positionId: testPosition,
+          startDate: "2019-01-07",
+          endDate: "2020-01-06",
+        },
+      ],
+    });
+    const [discardedId] = drafted.ids as string[];
+    await send("DELETE", `/api/people/${String(discardedId)}/draft`);
+    const planner = (await test.signedIn("resource-planner")).cookie;
+
+    // Then they are not found by a reader who does not see Personal details
+    expect((await search(planner, "Mu Former")).entries).toEqual([]);
+    expect(
+      (await search(admin.cookie, "Mu Former")).entries.length,
     ).toBeGreaterThan(0);
   });
 

@@ -231,9 +231,10 @@ export function monthGridTable<
 
 export function teamMonthsTable(
   data: TeamMonths,
-  seesPeople: boolean,
   show: Show,
   edits: TeamMonthEdits,
+  // The managers to group by, for roles that may group by manager.
+  managers: readonly { id: string; name: string }[] | undefined,
 ): Table {
   return monthGridTable<PersonMonths>({
     months: data.months,
@@ -243,21 +244,21 @@ export function teamMonthsTable(
       <TeamLabels teams={labelsShown(person.teamsIn.get(month) ?? [], show)} />
     ),
     readOnly: (month) => !editableMonth(month, edits),
-    groupings: monthGroupings(seesPeople, peopleManagers(data), data),
+    groupings: monthGroupings(managers, data),
   });
 }
 
 export const peopleManagers = (data: TeamMonths) =>
   data.people.flatMap(({ manager }) => (manager === null ? [] : [manager]));
 
-// The ways the grid's rows group: by manager, for those who see people, and by feature team.
+// The ways the grid's rows group: by manager, given the managers for roles that may, and by feature
+// team.
 export function monthGroupings<Rec extends MonthRow>(
-  seesPeople: boolean,
-  managers: readonly { id: string; name: string }[],
+  managers: readonly { id: string; name: string }[] | undefined,
   data: TeamMonths,
 ): RowGrouping<Rec>[] {
   return [
-    ...(seesPeople ? [groupedByManager<Rec>(managers)] : []),
+    ...(managers === undefined ? [] : [groupedByManager<Rec>(managers)]),
     groupedByFeatureTeam<Rec>(data),
   ];
 }
@@ -294,7 +295,7 @@ export function withMonthChange(
   { add, remove }: MemberTeamsChange,
 ): TeamMonths {
   const changed = [...add, ...remove];
-  const knownDrafts = new Set((data.drafts ?? []).map(({ teamId }) => teamId));
+  const knownDrafts = new Set(data.drafts.map(({ teamId }) => teamId));
   return {
     ...data,
     people: data.people.map((person) => {
@@ -317,7 +318,7 @@ export function withMonthChange(
       };
     }),
     drafts: [
-      ...(data.drafts ?? []),
+      ...data.drafts,
       ...changed
         .filter((teamId) => !knownDrafts.has(teamId))
         .map((teamId) => ({
@@ -483,9 +484,7 @@ export function teamMonthRecords(
   show: Show,
 ): PersonMonths[] {
   const teams = new Map(data.teams.map((team) => [team.id, team]));
-  const drafts = new Map(
-    (data.drafts ?? []).map((draft) => [draft.teamId, draft]),
-  );
+  const drafts = new Map(data.drafts.map((draft) => [draft.teamId, draft]));
   // The server lists every team a person's months name.
   const teamsOf = (teamIds: readonly string[]) =>
     teamIds.map((teamId) => teams.get(teamId) as MonthTeam).sort(byName);

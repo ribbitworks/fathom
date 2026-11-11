@@ -30,12 +30,12 @@ import {
   type FeatureTeamDraft,
   type FeatureTeamRequest,
   type FeatureTeams,
-  isFirstOfMonth,
   knownColour,
   mayDateChange,
   type MemberTeamsChange,
   monthOf,
   type PaletteColour,
+  seesView,
   type Tier,
 } from "@fathom/shared";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
@@ -44,6 +44,7 @@ import {
   type Actor,
   requireAnyPermission,
   requirePermission,
+  requireView,
   seesPersonalDetails,
 } from "../access.ts";
 import {
@@ -131,6 +132,11 @@ const datesOf = (team: Recorded | undefined): Record<string, string> =>
 const leadDatesOf = (team: Recorded | undefined): Record<string, string> =>
   daysIn(team?.leadFrom);
 
+// Whether a team's draft changes anyone's team, or its lead, from a day of its own.
+const dated = (team: Recorded): boolean =>
+  Object.keys(datesOf(team)).length > 0 ||
+  Object.keys(leadDatesOf(team)).length > 0;
+
 // Who joins and who leaves from one team to another.
 function memberChanges(
   before: Recorded | undefined,
@@ -176,8 +182,8 @@ interface LiveTeams {
 }
 
 // The live teams given, or every team, with their members and lead as of a day, leaving out those
-// who have left by the day their employment is judged on, which is that same day unless a reader
-// may not learn employment dates from it. A lead who is not a member on the day is no lead.
+// who have left by the day their employment is judged on, which is that same day unless the reader
+// is shown people as they are today. A lead who is not a member on the day is no lead.
 export async function readLiveTeams(
   reader: Reader,
   day: string,
@@ -476,13 +482,10 @@ const seenBy =
     return person?.left === false && (seesPersonal || person.started);
   };
 
-// The month each team disbands from, as the reader may know it. Those who do not see Personal
-// details are told nothing that depends on someone hidden from them, or on anyone's end date: only
-// people who are current today count, and only by when they join and leave.
+// The month each team disbands from, which depends on when people join and leave teams and on end
+// dates, so only those who see Personal details are told it.
 async function readDisbandedMonths(
   reader: Reader,
-  seesPersonal: boolean,
-  today: string,
 ): Promise<Map<string, string>> {
   const records = await reader
     .select({
@@ -495,13 +498,8 @@ async function readDisbandedMonths(
     })
     .from(featureTeamMemberships)
     .innerJoin(people, eq(people.id, featureTeamMemberships.personId));
-  const countable = seesPersonal
-    ? records
-    : records
-        .filter((record) => currentOn(record, today))
-        .map((record) => ({ ...record, endDate: null }));
   const disbanded = new Map<string, string>();
-  for (const [teamId, rows] of bySubject(countable, ({ teamId }) => teamId)) {
+  for (const [teamId, rows] of bySubject(records, ({ teamId }) => teamId)) {
     const month = disbandedMonth([
       ...bySubject(rows, ({ personId }) => personId).values(),
     ]);
@@ -541,11 +539,9 @@ function draftedOn(
 // Every feature team on a day, today unless another is given, as the reader's drafts make it, with
 // its draft beside, for those who see the org chart. Members and a lead who have not started are
 // left out for readers who do not see Personal details, and those who have left for everyone.
-// Those who do not see people get teams as approved, with no drafts. Readers who do not see
-// Personal details ask only for the first day of a month, so no exact day anyone joined or left
-// can be worked out, and whether someone has started or left is judged today for them, so that no
-// date reveals who has yet to start or an end date still to come. On another day, only teams with
-// members then, or with a draft, are listed.
+// Those who do not see people get teams as approved, with no drafts. Another day needs every class
+// of data other dates need. On another day, only teams with members then, or with a draft, are
+// listed.
 export async function readFeatureTeams(
   database: Database,
   actor: Actor,
@@ -553,18 +549,28 @@ export async function readFeatureTeams(
 ): Promise<FeatureTeams> {
   requirePermission(actor, "org-chart:view");
   const seesPersonal = seesPersonalDetails(actor);
-  if (on !== undefined && !seesPersonal && !isFirstOfMonth(on)) {
-    throw new BadRequestError("Choose the first day of a month");
-  }
   const today = await readToday(database);
+  if (on !== undefined && on !== today) {
+    requireView(actor, "orgChartOtherDates");
+  }
   const day = on ?? today;
-  const employmentDay = seesPersonal ? day : today;
+  // A role that does not see future reorganizations is shown people as they are today on a future
+  // day, as the org chart draws them, so their employment is judged today.
+  const peopleAsToday =
+    day > today && !seesView("orgChartFutureDates", actor.permissions);
+  const employmentDay = peopleAsToday ? today : day;
   const seesDrafts = actor.permissions.includes("people:view");
   return database.transaction(
     async (transaction) => {
       const live = await readLiveTeams(transaction, day, { employmentDay });
+      // A draft dated from another day is held only for those who see the days changes take
+      // effect from, so no one sees a later change drawn as if it were today's.
       const draftsNow = seesDrafts
-        ? await readTeamDrafts(transaction, undefined, actor.user.id)
+        ? new Map(
+            [
+              ...(await readTeamDrafts(transaction, undefined, actor.user.id)),
+            ].filter(([, draft]) => seesPersonal || !dated(draft.fields)),
+          )
         : new Map<string, Draft>();
       const liveToday =
         day === today
@@ -603,12 +609,10 @@ export async function readFeatureTeams(
         ]),
         employmentDay,
       );
-      const shown = seenBy(everyone, seesPersonal);
-      const disbanded = await readDisbandedMonths(
-        transaction,
-        seesPersonal,
-        today,
-      );
+      const shown = seenBy(everyone, seesPersonal && !peopleAsToday);
+      const disbanded = seesPersonal
+        ? await readDisbandedMonths(transaction)
+        : new Map<string, string>();
       // The names of those on a team, as drafted or live, whom the reader sees.
       const namesOn = (team: Recorded, before: Recorded | undefined) => {
         const named = new Set([...peopleNamed(team), ...peopleNamed(before)]);
@@ -657,7 +661,7 @@ export async function readFeatureTeams(
       return { teams };
 
       // A team's draft as the reader sees it, or none when it changes nothing they may see. Readers
-      // who do not see the days changes take effect from are told their months.
+      // who do not see the days changes take effect from are not told them.
       // A draft holding someone who has not started is judged as it was made, against the team today.
       function shownDraft(
         id: string,
@@ -698,13 +702,6 @@ export async function readFeatureTeams(
         // who has not started.
         if (changed.length === 0 && !seesPersonal) return {};
         const maker = makers.get(id);
-        const months = seesPersonal
-          ? []
-          : memberDays.map(([personId, from]): [string, string] => [
-              personId,
-              monthOf(from),
-            ]);
-        const leadFrom = seesPersonal ? undefined : leadDays[0]?.[1];
         return {
           draft: {
             action: draft.action,
@@ -727,10 +724,6 @@ export async function readFeatureTeams(
                   },
             ...(days.length === 0 ? {} : { days: Object.fromEntries(days) }),
             ...(leadDay === undefined ? {} : { leadDay }),
-            ...(months.length === 0
-              ? {}
-              : { months: Object.fromEntries(months) }),
-            ...(leadFrom === undefined ? {} : { leadMonth: monthOf(leadFrom) }),
             state: draft.state,
             ...(draft.state === "rejected" &&
             draft.reason !== null &&
@@ -816,7 +809,11 @@ function membersRefusal(
   const seesPersonal = seesPersonalDetails(actor);
   for (const personId of added) {
     const person = everyone.get(personId);
-    if (person === undefined || (!seesPersonal && !person.started)) {
+    // Someone hidden from the actor is not there for them, as People hides them.
+    if (
+      person === undefined ||
+      (!seesPersonal && (!person.started || person.left))
+    ) {
       return chooseFromPeople;
     }
     if (person.left) return "Someone who has left can't join a team";
@@ -840,18 +837,15 @@ function checkMembers(
 const changesDates = (actor: Actor) =>
   actor.permissions.includes("personal:edit");
 
-// The day members join or leave from: today or later, an earlier day needing the right to change
-// Personal details. Those who do not see Personal details plan by whole months, so that a day
-// they try can tell them no more than a month.
+// The day members join or leave from: today, or another day for those who see the classes of data
+// other dates need, an earlier day needing the right to change Personal details too.
 function fromDay(actor: Actor, from: string | undefined, today: string) {
   if (from === undefined || from === today) return undefined;
+  requireView(actor, "orgChartOtherDates");
   if (!mayDateChange(changesDates(actor), from, today)) {
     throw new ForbiddenError(
       "This role can't choose an earlier date. Use today or a later date.",
     );
-  }
-  if (from > today && !seesPersonalDetails(actor) && !isFirstOfMonth(from)) {
-    throw new BadRequestError("Choose the first day of a month");
   }
   return from;
 }
@@ -895,16 +889,14 @@ interface DayRefusals {
   afterEnd: DayRefusal;
 }
 
-// The exact day is Personal, so only those who see it are told it.
-const refusalsWhenDrafting = (seesDays: boolean): DayRefusals => ({
+// Only those who see the exact days choose another day, so they are told them.
+const draftingRefusals: DayRefusals = {
   outOfOrder: (_, last) =>
-    seesDays
-      ? `This person last joined or left this team on ${last}. Choose a later date.`
-      : "This person joined or left this team on that date or later. Choose a later date.",
+    `This person last joined or left this team on ${last}. Choose a later date.`,
   beforeStart: () =>
     "Someone can't join or leave a team before their start date",
   afterEnd: () => "Someone can't join or leave a team after their end date",
-});
+};
 
 // An Approver has no day to choose, so is told which day no longer fits, and what to do about it.
 function refusalsWhenApproving(
@@ -929,7 +921,6 @@ async function refuseLeadDayOutOfOrder(
   reader: Reader,
   teamId: string,
   from: string,
-  seesDays: boolean,
 ): Promise<void> {
   const records = await reader
     .select({ fromDate: featureTeamLeads.fromDate })
@@ -941,9 +932,7 @@ async function refuseLeadDayOutOfOrder(
     .at(-1);
   if (last !== undefined && from <= last) {
     throw new BadRequestError(
-      seesDays
-        ? `This team's lead last changed on ${last}. Choose a later date.`
-        : "This team's lead changed on that date or later. Choose a later date.",
+      `This team's lead last changed on ${last}. Choose a later date.`,
     );
   }
 }
@@ -995,14 +984,12 @@ function refuseOutsideEmployment(
 }
 
 // Refuses days that would never take effect: each must be after the person's latest record on that
-// team, and, when the employment dates may be used, between their start and end dates. A proposer
-// who does not see those dates is not told of them here; the Approver who does is, on approving.
+// team, and between their start and end dates.
 async function refuseDaysOutOfOrder(
   reader: Reader,
   days: readonly MemberDay[],
   everyone: Everyone,
   refusals: DayRefusals,
-  usesEmployment: boolean,
 ): Promise<void> {
   const latest = new Map<string, string>();
   const key = (teamId: string, personId: string) => `${teamId} ${personId}`;
@@ -1025,7 +1012,7 @@ async function refuseDaysOutOfOrder(
     if (last !== undefined && from <= last) {
       throw new BadRequestError(refusals.outOfOrder(day, last));
     }
-    if (usesEmployment) refuseOutsideEmployment(day, everyone, refusals);
+    refuseOutsideEmployment(day, everyone, refusals);
   }
 }
 
@@ -1095,8 +1082,7 @@ export async function createFeatureTeam(
         transaction,
         members.map((personId) => ({ teamId: id, personId, from })),
         everyone,
-        refusalsWhenDrafting(seesPersonalDetails(actor)),
-        seesPersonalDetails(actor),
+        draftingRefusals,
       );
     }
     // A team added with no members records none, rather than an empty list.
@@ -1202,7 +1188,6 @@ export async function updateFeatureTeam(
   if (change.name !== undefined) requirePermission(actor, "feature-teams:edit");
   const today = asOf ?? (await readToday(database));
   const from = fromDay(actor, change.from, today);
-  const seesDays = seesPersonalDetails(actor);
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const now = await draftedTeam(transaction, actor, id, today);
@@ -1217,13 +1202,12 @@ export async function updateFeatureTeam(
             : await heldMembers(transaction, now, id, change, {
                 day: from,
                 today,
-                seesDays,
               }),
         from,
         today,
       },
       now,
-      refusalsWhenDrafting(seesDays),
+      draftingRefusals,
     );
     return made.length === 0 ? null : saved(transaction, actor, made);
   });
@@ -1314,18 +1298,7 @@ async function draftTeamChange(
   const leadChanges = setsLead && leadId !== wasLead;
   const [keptLeadDay] = Object.values(leadDatesOf(team));
   const leadDay = setsLead ? from : keptLeadDay;
-  const usesEmployment = seesPersonalDetails(actor);
-  // Someone hidden from the actor gets the same answer whatever day is tried, so no day can tell
-  // them about that person's records.
-  if (
-    from !== undefined &&
-    !usesEmployment &&
-    [...dayPeople, ...(leadChanges && leadId !== null ? [leadId] : [])].some(
-      (one) => everyone.get(one)?.started === false,
-    )
-  ) {
-    throw new BadRequestError(chooseFromPeople);
-  }
+  // A day other than today is chosen only by those who see employment dates, as fromDay requires.
   if (from !== undefined) {
     await refuseDaysOutOfOrder(
       transaction,
@@ -1334,10 +1307,9 @@ async function draftTeamChange(
         .map((personId) => ({ teamId: id, personId, from })),
       everyone,
       dayRefusals,
-      usesEmployment,
     );
     if (leadChanges) {
-      await refuseLeadDayOutOfOrder(transaction, id, from, usesEmployment);
+      await refuseLeadDayOutOfOrder(transaction, id, from);
     }
   }
   if (leadChanges && leadId !== null) {
@@ -1349,11 +1321,11 @@ async function draftTeamChange(
       from ?? today,
       joinsInDraft ? (dates.get(leadId) ?? today) : undefined,
     );
-    if (from !== undefined && usesEmployment) {
+    if (from !== undefined) {
       refuseOutsideEmployment(
         { teamId: id, personId: leadId, from },
         everyone,
-        refusalsWhenDrafting(usesEmployment),
+        draftingRefusals,
       );
     }
   }
@@ -1381,13 +1353,9 @@ async function draftTeamChange(
 
 // Refusals for a change of someone's teams from a month, naming the person and the team, by month
 // alone, as the monthly grid shows them.
-function monthRefusals(
-  personName: string,
-  teamName: string,
-  seesDays: boolean,
-): DayRefusals {
+function monthRefusals(personName: string, teamName: string): DayRefusals {
   return {
-    ...refusalsWhenDrafting(seesDays),
+    ...draftingRefusals,
     outOfOrder: () =>
       `${personName} has an approved change on ${teamName} in this month or later, so this month can't change here.`,
   };
@@ -1435,41 +1403,34 @@ function changesHeldTeam(
 }
 
 // A change of a team's members from another day than today, without those it changes nothing about,
-// refusing those the team's draft can't hold, as changesHeldTeam sets out. Someone hidden from the
-// actor, or who has left, is left for drafting to refuse, so no refusal names them wrongly.
+// refusing those the team's draft can't hold, as changesHeldTeam sets out. Someone who has left is
+// left for drafting to refuse, so no refusal names them wrongly. Only those who see employment dates
+// choose another day, as fromDay requires.
 async function heldMembers(
   transaction: Transaction,
   now: DraftedTeamNow,
   id: string,
   change: FeatureTeamChange,
-  { seesDays, ...when }: { day: string; today: string; seesDays: boolean },
+  when: { day: string; today: string },
 ): Promise<FeatureTeamChange> {
   const asked = [...(change.add ?? []), ...(change.remove ?? [])];
   const { team } = now;
   // A team its draft removes is refused when the change is drafted.
   if (asked.length === 0 || team === undefined) return change;
   const everyone = await peopleOf(transaction, asked, when.today);
-  // Whether someone has left by the day is judged today for those who may not learn end dates.
   const onDay = membersOf(
-    (
-      await readLiveTeams(transaction, when.day, {
-        ids: [id],
-        employmentDay: seesDays ? when.day : when.today,
-      })
-    ).teams.get(id),
+    (await readLiveTeams(transaction, when.day, { ids: [id] })).teams.get(id),
   );
   const teamName = String(team.name);
-  const period = seesDays ? "date" : "month";
   const changes = (personIds: readonly string[], member: boolean) =>
     personIds.filter(
       (personId) =>
-        (!seesDays && everyone.get(personId)?.started !== true) ||
         everyone.get(personId)?.left !== false ||
         changesHeldTeam(
           now,
           personId,
           { member, liveOnDay: onDay.includes(personId) },
-          { ...when, period },
+          { ...when, period: "date" },
           {
             personName: String(everyone.get(personId)?.preferredName),
             teamName,
@@ -1495,16 +1456,15 @@ export async function changeMemberTeams(
   asOf?: string,
 ): Promise<string | null> {
   requireChanging(actor);
+  requireView(actor, "featureAssignments");
   const today = asOf ?? (await readToday(database));
   const from = fromDay(actor, change.from, today);
-  const seesDays = seesPersonalDetails(actor);
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
     const person = (await peopleOf(transaction, [personId], today)).get(
       personId,
     );
-    // Someone the actor may not see is not there for them.
-    if (person === undefined || (!seesDays && !person.started)) {
+    if (person === undefined) {
       throw new NotFoundError(noPerson);
     }
     if (person.left) {
@@ -1524,13 +1484,8 @@ export async function changeMemberTeams(
           teamName: String((now.team ?? now.before)?.name),
         };
         const day = from ?? today;
-        // Whether someone has left by the day is judged today for those who may not learn end dates.
-        const onDay = (
-          await readLiveTeams(transaction, day, {
-            ids: [id],
-            employmentDay: seesDays ? day : today,
-          })
-        ).teams;
+        const onDay = (await readLiveTeams(transaction, day, { ids: [id] }))
+          .teams;
         const liveOnDay = membersOf(onDay.get(id)).includes(personId);
         if (
           !changesHeldTeam(
@@ -1554,7 +1509,7 @@ export async function changeMemberTeams(
               today,
             },
             now,
-            monthRefusals(names.personName, names.teamName, seesDays),
+            monthRefusals(names.personName, names.teamName),
           )),
         );
       }
@@ -1832,7 +1787,7 @@ export async function approveTeamsIn(
     days.push(...joiningAndLeaving.days);
   }
   const refusals = refusalsWhenApproving(teamNames, everyone);
-  await refuseDaysOutOfOrder(transaction, days, everyone, refusals, true);
+  await refuseDaysOutOfOrder(transaction, days, everyone, refusals);
   for (const day of leadDays) refuseOutsideEmployment(day, everyone, refusals);
   for (const chunk of inChunks(records)) {
     await transaction
