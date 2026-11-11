@@ -27,7 +27,6 @@ import {
   type RecordType as PlanRecordType,
   recordTypeSchema,
   type Tier,
-  tierSchema,
 } from "@fathom/shared";
 import { and, asc, count, eq, gt, inArray, or, sql } from "drizzle-orm";
 import {
@@ -177,7 +176,6 @@ const text: Convert = (value) => String(value);
 const flag: Convert = (value) => value === true;
 const textOrNull: Convert = (value) =>
   typeof value === "string" ? value : null;
-const tier: Convert = (value) => tierSchema.catch("general").parse(value);
 // A tier the server no longer knows is put back as the most sensitive.
 const sensitiveTier: Convert = (value) => storedTier(value);
 // Put back as recorded: a hire's temporary number, a number or none, and a view's definition,
@@ -191,7 +189,12 @@ const columnsOf: Record<
   Exclude<RecordType, "choice-order" | PlanRecordType>,
   Readonly<Record<string, Convert>>
 > = {
-  list: { name: text, description: text, visibility: tier, retired: flag },
+  list: {
+    name: text,
+    description: text,
+    visibility: sensitiveTier,
+    retired: flag,
+  },
   "list-item": {
     listId: text,
     label: text,
@@ -273,6 +276,14 @@ function recordsOf(rows: readonly StoredChange[]): Undone[] {
   }
   return [...records.values()];
 }
+
+// Lists and columns change class live only when moved, which needs Classify data now, so a move is
+// moved back rather than undone.
+const isClassMove = ({ recordType, draft, action, old }: Undone): boolean =>
+  (recordType === "list" || recordType === "field") &&
+  !draft &&
+  action === "changed" &&
+  old.has("visibility");
 
 // The record's database columns as they were before the change.
 function columnValues(record: Undone): Record<string, unknown> {
@@ -878,6 +889,11 @@ async function undoIn(
     .where(eq(changes.changeSetId, changeSetId))
     .orderBy(asc(changes.id));
   const records = recordsOf(rows);
+  if (records.some(isClassMove)) {
+    throw new ConflictError(
+      "A move to another class can't be undone; move it back instead",
+    );
+  }
   if (records.some(({ recordType }) => planRecordTypes.has(recordType))) {
     throw new ConflictError(
       "Changes to the plan and allocations can't be undone yet; change or discard the draft instead",

@@ -171,18 +171,19 @@ describe("adding web link columns", () => {
     });
   });
 
-  it("changes a web link column's visibility once approved, even while people have links", async () => {
+  it("moves a web link column to another class, even while people have links", async () => {
     const { cookie } = await editor();
     const field = await linkColumn(cookie);
     await approve([await addedId(cookie, { [field.id]: proposal })]);
     const response = await send(
       cookie,
       "PUT",
-      `/api/people/columns/${field.id}`,
-      { name: field.name, type: "link", visibility: "confidential" },
+      `/api/columns/${field.id}/class`,
+      {
+        dataClass: "confidential",
+      },
     );
     expect(response.statusCode, response.body).toBe(200);
-    await test.approveLists();
     const column = (await readPeople(cookie)).fields.find(
       ({ id }) => id === field.id,
     );
@@ -426,11 +427,14 @@ describe("a web link column's settings over time", () => {
     field: Field,
     visibility: string,
   ) {
+    await test.approveLists();
     const response = await send(
       cookie,
       "PUT",
-      `/api/people/columns/${field.id}`,
-      { name: field.name, type: "link", visibility },
+      `/api/columns/${field.id}/class`,
+      {
+        dataClass: visibility,
+      },
     );
     expect(response.statusCode, response.body).toBe(200);
     return response.json<{ changeSetId: string }>().changeSetId;
@@ -450,7 +454,6 @@ describe("a web link column's settings over time", () => {
     });
     await approve([id]);
     await setVisibility(cookie, field, "confidential");
-    await test.approveLists();
     const deleted = await send(
       cookie,
       "DELETE",
@@ -468,17 +471,16 @@ describe("a web link column's settings over time", () => {
     expect(await reads("executive")).toBe(true);
   });
 
-  it("puts a changed visibility back when the change is undone", async () => {
+  it("is moved back rather than undone", async () => {
     const { cookie } = await editor();
     const field = await linkColumn(cookie);
     const changeSetId = await setVisibility(cookie, field, "personal");
     const undone = await send(cookie, "POST", `/api/undo/${changeSetId}`);
-    expect(undone.statusCode, undone.body).toBe(200);
+    expect(undone.statusCode).toBe(409);
     const column = (await readPeople(cookie)).fields.find(
       ({ id }) => id === field.id,
     );
-    expect(column).toMatchObject({ visibility: "general" });
-    expect(column?.draft).toBeUndefined();
+    expect(column).toMatchObject({ visibility: "personal" });
   });
 
   it("brings a column drafted to be deleted back when the deletion is undone", async () => {
@@ -499,22 +501,26 @@ describe("a web link column's settings over time", () => {
     expect(column?.draft).toBeUndefined();
   });
 
-  it("cannot be lowered by an Approver who may not see its links", async () => {
+  it("cannot be lowered by a role that may not see its links", async () => {
     const { cookie } = await editor();
     const field = await linkColumn(cookie, { visibility: "confidential" });
-    await setVisibility(cookie, field, "general");
-    const approver = await test.signedIn("project-manager");
+    await test.approveLists();
+    const mover = await test.signedIn([
+      "people:view",
+      "personal:view",
+      "data:classify",
+    ]);
     const response = await send(
-      approver.cookie,
-      "POST",
-      "/api/drafts/approval",
-      { columns: [field.id] },
+      mover.cookie,
+      "PUT",
+      `/api/columns/${field.id}/class`,
+      { dataClass: "general" },
     );
-    expect(response.statusCode).not.toBe(200);
+    expect(response.statusCode).toBe(403);
     const column = (await readPeople(cookie)).fields.find(
       ({ id }) => id === field.id,
     );
-    expect(column?.draft?.live).toEqual({ visibility: "confidential" });
+    expect(column?.visibility).toBe("confidential");
   });
 });
 
@@ -603,7 +609,7 @@ describe("undoing live changes", () => {
     ]);
   });
 
-  it("puts a live column's visibility back", async () => {
+  it("refuses to put back a live column's class, which is moved back instead", async () => {
     const { id: userId, cookie } = await editor();
     const field = await linkColumn(cookie);
     const changeSetId = await test.connection.transaction(
@@ -630,10 +636,10 @@ describe("undoing live changes", () => {
       "POST",
       `/api/undo/${String(changeSetId)}`,
     );
-    expect(undone.statusCode, undone.body).toBe(200);
+    expect(undone.statusCode).toBe(409);
     const column = (await readPeople(cookie)).fields.find(
       ({ id }) => id === field.id,
     );
-    expect(column?.visibility).toBe("general");
+    expect(column?.visibility).toBe("personal");
   });
 });

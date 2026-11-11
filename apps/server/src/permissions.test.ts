@@ -299,6 +299,25 @@ const routes: Route[] = [
   },
   {
     method: "PUT",
+    pattern: "/api/data-classes/:field",
+    url: "/api/data-classes/startDate",
+    needs: allOf("data:classify", "people:view", "personal:view"),
+    body: () => ({ dataClass: "general" }),
+  },
+  {
+    method: "PUT",
+    pattern: "/api/lists/:listId/class",
+    needs: allOf("data:classify"),
+    body: () => ({ dataClass: "general" }),
+  },
+  {
+    method: "PUT",
+    pattern: "/api/columns/:fieldId/class",
+    needs: allOf("data:classify"),
+    body: () => ({ dataClass: "general" }),
+  },
+  {
+    method: "PUT",
     pattern: "/api/settings/passwords",
     needs: allOf("settings:edit"),
     body: () => defaultPasswordSettings,

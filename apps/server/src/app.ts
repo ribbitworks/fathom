@@ -26,6 +26,7 @@ import { createRoleAdministration } from "./data/role-administration.ts";
 import { accountRoutes } from "./routes/accounts.ts";
 import { roleRoutes } from "./routes/roles.ts";
 import { authRoutes, readActor } from "./routes/auth.ts";
+import { dataClassRoutes } from "./routes/data-classes.ts";
 import { draftRoutes } from "./routes/drafts.ts";
 import { greetingRoutes } from "./routes/greeting.ts";
 import { settingsRoutes } from "./routes/settings.ts";
@@ -211,6 +212,7 @@ export async function buildApp(options: AppOptions) {
   await app.register(unpublishedRoutes(options.data.unpublished));
   await app.register(greetingRoutes(options.data));
   await app.register(settingsRoutes(options.data));
+  await app.register(dataClassRoutes(options.data));
   await app.register(effortRoutes(options.data));
   await app.register(allocationRoutes(options.data));
   if (options.webRoot !== undefined) {

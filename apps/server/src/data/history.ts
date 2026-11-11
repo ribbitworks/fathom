@@ -99,6 +99,9 @@ const storedDetailsSchema = z
     previousTimeZone: z.string().optional(),
     passwords: passwordSettingsSchema.optional(),
     previousPasswords: passwordSettingsSchema.optional(),
+    moved: z.string().optional(),
+    dataClass: z.string().optional(),
+    previousDataClass: z.string().optional(),
   })
   .catch({});
 

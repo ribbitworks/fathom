@@ -18,7 +18,12 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq, inArray, min } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { type Actor, mostSensitive, seesSensitivity } from "../access.ts";
+import {
+  type Actor,
+  mostSensitive,
+  seesSensitivity,
+  storedTier,
+} from "../access.ts";
 import {
   BadRequestError,
   ConflictError,
@@ -32,6 +37,12 @@ import {
   type Transaction,
 } from "./changes.ts";
 import { readColumnOrder } from "./column-order.ts";
+import {
+  classifyDraft,
+  recordMove,
+  requireClassify,
+  requireMove,
+} from "./data-classes.ts";
 import {
   asDraft,
   clearedRejection,
@@ -66,7 +77,11 @@ import {
   unpublishedMark,
   unseenDetails,
 } from "./lists.ts";
-import { builtInColumnTiers, builtInTier, type FieldRow } from "./values.ts";
+import {
+  builtInColumnTiers,
+  type FieldRow,
+  readBuiltInTiers,
+} from "./values.ts";
 
 type Reader = Pick<Database, "select">;
 
@@ -371,6 +386,13 @@ export async function createField(
     const field = requested(request, tableName);
     refuseUnseenTier(actor, state, field);
     refuseSensitiveOnFeatures(state, field);
+    await classifyDraft(transaction, actor, {
+      live: false,
+      name: request.name,
+      moved: columnMoved(request.name),
+      from: "general",
+      to: ownClass(id, field),
+    });
     // A new column has no values, so it can be required only while there is no one yet.
     await checkValuesFit(
       transaction,
@@ -434,6 +456,13 @@ export async function updateField(
     const after = { ...field, ...requested(request, field.tableName) };
     refuseUnseenTier(actor, state, after);
     refuseSensitiveOnFeatures(state, after);
+    await classifyDraft(transaction, actor, {
+      live: live !== undefined,
+      name: String(field.name),
+      moved: columnMoved(request.name),
+      from: ownClass(id, field),
+      to: ownClass(id, after),
+    });
     const changeSetId = await saveFieldDraft(
       transaction,
       actor,
@@ -443,6 +472,60 @@ export async function updateField(
       after,
     );
     return { result: toFieldOut(id, after), changeSetId };
+  });
+}
+
+const columnMoved = (name: unknown) => `the ${String(name)} column`;
+
+// The class a column holds of its own, General for one that takes its list's.
+const ownClass = (id: string, field: Recorded): Tier =>
+  storedTier(columnRow(id, field).visibility ?? "general");
+
+// Moves a column with a class of its own, rather than its list's, to another class.
+export async function moveColumnClass(
+  database: Database,
+  actor: Actor,
+  id: string,
+  to: Tier,
+): Promise<string | null> {
+  requireClassify(actor);
+  return database.transaction(async (transaction) => {
+    await lockDrafts(transaction);
+    const [row] = await transaction
+      .select()
+      .from(fields)
+      .where(eq(fields.id, id))
+      .for("update");
+    if (row === undefined) throw new NotFoundError(noField);
+    if (row.visibility === null) {
+      throw new BadRequestError(
+        "This column takes the class of its list, so move the list instead",
+      );
+    }
+    const from = storedTier(row.visibility);
+    requireMove(actor, from, to);
+    if (from === to) return null;
+    if (policyOf(row.tableName).generalOnly) {
+      throw new ConflictError(
+        "Everyone who sees the plan sees columns on Features, so they stay General",
+      );
+    }
+    await transaction
+      .update(fields)
+      .set({ visibility: to })
+      .where(eq(fields.id, id));
+    await recordMove(transaction, actor, columnMoved(row.name), from, to);
+    const before = fieldRecord(row);
+    return recordChanges(
+      transaction,
+      actor,
+      fieldChanges(
+        id,
+        "changed",
+        columnRow(id, before),
+        columnRow(id, { ...before, visibility: to }),
+      ),
+    );
   });
 }
 
@@ -705,10 +788,7 @@ export async function readColumnsOut(
       ],
     };
   }
-  const builtIn = builtInColumnTiers({
-    positionTier: await builtInTier(reader, "positions"),
-    stateTier: await builtInTier(reader, "hiring-states"),
-  });
+  const builtIn = builtInColumnTiers(await readBuiltInTiers(reader));
   const visible = new Set([
     ...[...builtIn]
       .filter(([, tier]) => seesSensitivity(actor, tier))

@@ -40,6 +40,9 @@ export const accessActionSchema = z.enum([
   "time-zone-changed",
   // Someone changed the password settings, naming them before and after.
   "password-settings-changed",
+  // Someone moved a built-in detail, a list, or a column to another class, naming it and its class
+  // before and after.
+  "data-class-moved",
 ]);
 
 export type AccessAction = z.infer<typeof accessActionSchema>;
@@ -61,6 +64,10 @@ export const historyDetailsSchema = z.object({
   previousTimeZone: z.string().optional(),
   passwords: passwordSettingsSchema.optional(),
   previousPasswords: passwordSettingsSchema.optional(),
+  // For data moved to another class: what moved, as it was named then, and its classes, as stored.
+  moved: z.string().optional(),
+  dataClass: z.string().optional(),
+  previousDataClass: z.string().optional(),
 });
 
 export type HistoryDetails = z.infer<typeof historyDetailsSchema>;

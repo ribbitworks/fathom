@@ -14,10 +14,11 @@ import {
   userRoles,
   users,
 } from "@fathom/db";
-import type { AccountRole } from "@fathom/shared";
+import type { AccountRole, DataClasses } from "@fathom/shared";
 import { and, asc, eq, isNull, notInArray, sql } from "drizzle-orm";
 import { BadRequestError, ConflictError, NotFoundError } from "../errors.ts";
 import type { Transaction } from "./changes.ts";
+import { readDataClasses } from "./data-classes.ts";
 import { recordEvent, recordEvents } from "./history.ts";
 
 // A role a user holds, with the key of the starting role it is, if any, and what it is for.
@@ -140,6 +141,7 @@ export interface ActorAccess extends Omit<HeldRoles, "roles"> {
   role: HeldRole | null;
   roles: AccountRole[];
   permissions: string[];
+  dataClasses: DataClasses;
   mustChangePassword: boolean;
 }
 
@@ -226,6 +228,7 @@ export async function readActorAccess(
     roles: held.roles.map(({ id, name }) => ({ id, name })),
     defaultRoleId: held.defaultRoleId,
     permissions: granted.map(({ permission }) => permission),
+    dataClasses: await readDataClasses(database),
     mustChangePassword: user.mustChangePassword,
   };
 }

@@ -27,6 +27,7 @@ export {
   columnOrders,
   customers,
   cyclePatterns,
+  dataClasses,
   drafts,
   fields,
   featureTeamLeads,

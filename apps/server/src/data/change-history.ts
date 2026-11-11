@@ -24,22 +24,24 @@ import {
 import {
   builtInColumnNames,
   type ChangedField,
-  type ClassifiedView,
   type ChangedRecord,
   type ChangeEntry,
   changeKindSchema,
   type ChangeValue,
+  type ClassifiedView,
+  hireCalled,
   isLink,
+  isNoteField,
   linkInWords,
   matchesWords,
-  isNoteField,
   notePlainText,
-  recordSearchText,
   type Permission,
-  seesView,
+  recordSearchText,
   recordTypeSchema,
   searchWords,
-  hireCalled,
+  seesClass,
+  seesEmployment,
+  seesView,
   temporaryId,
   type Tier,
   tierSchema,
@@ -59,7 +61,6 @@ import {
 import {
   type Actor,
   mostSensitive,
-  seesPersonalDetails,
   seesSensitivity,
   type Sensitivity,
   storedTier,
@@ -67,6 +68,7 @@ import {
 } from "../access.ts";
 import type { RecordType } from "./changes.ts";
 import { rejectedField } from "./drafts.ts";
+import { featureTeamTier } from "./feature-teams.ts";
 import { hireSensitivities, hiringPlanFields, readHireTier } from "./hires.ts";
 import { readToday } from "./settings.ts";
 import { currentOn, personTier } from "./people.ts";
@@ -121,7 +123,7 @@ const seenPlanKinds = (actor: Actor): RecordType[] =>
         kind.readWith.some((permission) =>
           actor.permissions.includes(permission),
         ) &&
-        (kind.view === undefined || seesView(kind.view, actor.permissions)),
+        (kind.view === undefined || seesView(kind.view, actor)),
     )
     .map((kind) => kind.type);
 
@@ -487,7 +489,7 @@ function seesRowOfKind(
   if (row.recordType === "feature-team") {
     return (
       (!row.draft || actor.permissions.includes("people:view")) &&
-      (tier === "general" || seesPersonalDetails(actor))
+      seesClass(actor.permissions, tier)
     );
   }
   if (planKinds.includes(row.recordType as RecordType)) {
@@ -571,6 +573,9 @@ async function visibleRows(
     const tiers = [
       recorded,
       ...(row.recordType === "person" ? valueTiers(row) : []),
+      ...(row.recordType === "feature-team"
+        ? [featureTeamTier(actor.dataClasses)(row.field)]
+        : []),
       ...(row.recordType === "planned-hire"
         ? [
             hireTierNow(row.field),
@@ -924,10 +929,10 @@ async function readBatch(
     [...facts.lists.values()].filter((id) => !facts.names.has(id)),
     facts,
   );
-  // Readers who do not see Personal details see nobody who has not started or has left, as People
+  // Readers who do not see start and end dates see nobody who has not started or has left, as People
   // hides them: neither a person's own changes, nor records about them, nor a hire's manager or
   // filler naming them.
-  const seesPersonal = seesPersonalDetails(actor);
+  const seesPersonal = seesEmployment(actor);
   const hidden = seesPersonal
     ? new Set<string>()
     : await notCurrentAmong(

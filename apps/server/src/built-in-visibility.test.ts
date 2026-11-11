@@ -145,19 +145,13 @@ const viewsRecorded = async (who: User) =>
   ).filter(({ action }) => action === "personal-viewed").length;
 
 describe("the visibility of a built-in list", () => {
-  it("can be changed and approved like any list's", async () => {
+  it("is moved to another class like any list's", async () => {
     for (const key of ["positions", "hiring-states"]) {
       const list = await builtInList(key);
-      const changed = await send(editor, "PUT", `/api/lists/${list.id}`, {
-        name: list.name,
-        description: "",
-        visibility: "personal",
+      const moved = await send(editor, "PUT", `/api/lists/${list.id}/class`, {
+        dataClass: "personal",
       });
-      expect(changed.statusCode, changed.body).toBe(200);
-      const approved = await send(approver, "POST", "/api/drafts/approval", {
-        lists: [list.id],
-      });
-      expect(approved.statusCode, approved.body).toBe(200);
+      expect(moved.statusCode, moved.body).toBe(200);
       expect((await builtInList(key)).visibility).toBe("personal");
     }
   });

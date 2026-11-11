@@ -17,7 +17,7 @@ import {
   inChunks,
   people,
 } from "@fathom/db";
-import { monthOf } from "@fathom/shared";
+import { monthOf, seesEmployment, seesField } from "@fathom/shared";
 import {
   isLink,
   type FieldType,
@@ -141,9 +141,7 @@ const detailFields = [
 ] as const;
 const personFields = [...detailFields, ...reportingFields];
 
-// The tier of each field of a person: dates are Personal, and so are changes to their manager,
-// which name past managers, the position, state, and each column's values are as sensitive as their
-// list, and the rest is General. Every value field recorded is for one of the columns given.
+// The fields of a person kept in classes of their own: their dates, and changes to their manager.
 export const personalDetailFields = [
   "startDate",
   "endDate",
@@ -151,11 +149,19 @@ export const personalDetailFields = [
   "managerFrom",
 ] as const;
 
+// The tier of each field of a person: dates are in their own classes, and changes to their manager
+// in past managers', since they name them; the position, state, and each column's values are as
+// sensitive as their list, and the rest is General. Every value field recorded is for one of the
+// columns given.
 export function personTier(columns: PeopleColumns) {
+  const { startDate, endDate, managerHistory } = columns.dataClasses;
   const tiers = new Map<string, Tier>([
     ["positionId", columns.positionTier],
     ["stateId", columns.stateTier],
-    ...personalDetailFields.map((field): [string, Tier] => [field, "personal"]),
+    ["startDate", startDate],
+    ["endDate", endDate],
+    ["managerId", managerHistory],
+    ["managerFrom", managerHistory],
     ...columns.map((column): [string, Tier] => [
       valueField(column.id),
       column.tier,
@@ -635,8 +641,13 @@ async function readPeopleIn(
   actor: Actor,
   today: string,
 ): Promise<PeopleRead> {
-  const seesPersonal = seesSensitivity(actor, "personal");
   const allColumns = await columnsWithAdded(database, actor.user.id);
+  // Judged by the classes read with the columns, so rows and their fields follow the same classes.
+  const access = {
+    permissions: actor.permissions,
+    dataClasses: allColumns.dataClasses,
+  };
+  const seesPersonal = seesEmployment(access);
   const columns = allColumns.filter((column) =>
     seesSensitivity(actor, column.tier),
   );
@@ -648,7 +659,9 @@ async function readPeopleIn(
     ...(seesSensitivity(actor, allColumns.stateTier) ? ["stateId"] : []),
     "teamName",
     "isManager",
-    ...(seesPersonal ? personalDetailFields : []),
+    ...personalDetailFields.filter((field) =>
+      seesSensitivity(actor, tierOf(field)),
+    ),
     ...columns.map(({ id }) => valueField(id)),
   ]);
   const live = await readLive(database, allColumns, { asOf: today });
@@ -719,7 +732,7 @@ async function readPeopleIn(
         ...shownReporting(person, before, {
           everyone,
           live,
-          seesPersonal,
+          seesPersonal: seesPersonal && seesField(access, "managerHistory"),
           today,
         }),
         values: Object.fromEntries(
@@ -1104,9 +1117,7 @@ export async function draftPersonChange(
     // Those who see no dates are offered states from the live end date, so their choice is
     // checked against it, and a draft's end date is never revealed by a refusal; a state that
     // stops fitting once the draft is approved shows the first of the meaning instead.
-    const dates = seesSensitivity(actor, "personal")
-      ? after
-      : (before ?? after);
+    const dates = seesField(actor, "endDate") ? after : (before ?? after);
     await checkState(
       transaction,
       { ...after, endDate: dates.endDate },

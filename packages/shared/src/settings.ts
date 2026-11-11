@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Settings for the whole of Fathom: the time zone that decides which day is today, for everyone,
-// on every screen and in the server, and the password settings.
+// on every screen and in the server, the password settings, and the classes of built-in details.
 
 import { z } from "zod";
+import { dataClassesSchema } from "./data-classes.ts";
 import { passwordSettingsSchema } from "./passwords.ts";
 
 export const defaultTimeZone = "America/Vancouver";
@@ -72,8 +73,11 @@ export const timeZoneSettingSchema = z.object({ timeZone: z.string() });
 
 export type TimeZoneSetting = z.infer<typeof timeZoneSettingSchema>;
 
+// The classes the organization keeps its built-in details in travel with the settings, since every
+// screen needs them to know which pages and views a role gets.
 export const settingsSchema = timeZoneSettingSchema.extend({
   passwords: passwordSettingsSchema,
+  dataClasses: dataClassesSchema,
 });
 
 export type Settings = z.infer<typeof settingsSchema>;

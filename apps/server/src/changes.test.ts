@@ -402,11 +402,9 @@ describe("the change history", () => {
     const chosen = await send("PATCH", `/api/people/${made.personId}`, {
       values: { [made.field.id]: [made.south.id] },
     });
-    await send("PUT", `/api/lists/${made.list.id}`, {
-      name: "Kappa sites",
-      visibility: "confidential",
+    await send("PUT", `/api/lists/${made.list.id}/class`, {
+      dataClass: "confidential",
     });
-    await test.approveLists();
     await approve(made.personId);
     await send("DELETE", `/api/people/columns/${made.field.id}`);
     const planner = await test.signedIn("resource-planner");
@@ -477,11 +475,9 @@ describe("the change history", () => {
     });
     const planner = await test.signedIn("resource-planner");
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeDefined();
-    await send("PUT", `/api/lists/${made.list.id}`, {
-      name: "Delta sites",
-      visibility: "confidential",
+    await send("PUT", `/api/lists/${made.list.id}/class`, {
+      dataClass: "confidential",
     });
-    await test.approveLists();
     expect(await entryFor(planner.cookie, chosen.changeSetId)).toBeUndefined();
     const leader = await test.signedIn("executive");
     expect(await entryFor(leader.cookie, chosen.changeSetId)).toBeDefined();
@@ -555,11 +551,9 @@ describe("the change history", () => {
     ).json<{ changeSetId: string }>();
     const planner = await test.signedIn("resource-planner");
     expect(await entryFor(planner.cookie, renamed.changeSetId)).toBeDefined();
-    await send("PUT", `/api/lists/${made.list.id}`, {
-      name: "Eta sites",
-      visibility: "confidential",
+    await send("PUT", `/api/lists/${made.list.id}/class`, {
+      dataClass: "confidential",
     });
-    await test.approveLists();
     expect(await entryFor(planner.cookie, renamed.changeSetId)).toBeUndefined();
     expect(await entryFor(manager.cookie, renamed.changeSetId)).toBeDefined();
     const reader = await test.signedIn("executive");
@@ -885,11 +879,9 @@ describe("the change history", () => {
     await send("PATCH", `/api/people/${made.personId}`, {
       values: { [made.field.id]: [made.south.id] },
     });
-    await send("PUT", `/api/lists/${made.list.id}`, {
-      name: "Omicron sites",
-      visibility: "personal",
+    await send("PUT", `/api/lists/${made.list.id}/class`, {
+      dataClass: "personal",
     });
-    await test.approveLists();
     const viewed = (actorId: string) =>
       test.connection
         .select({ id: accessHistory.id })
@@ -944,11 +936,9 @@ describe("the change history", () => {
       SELECT id, 'person', ${made.personId}, 'changed', ${`value:${made.field.id}`}, 'general',
         ${JSON.stringify([made.north.id])}::jsonb, ${JSON.stringify([made.south.id])}::jsonb
       FROM made`);
-    await send("PUT", `/api/lists/${made.list.id}`, {
-      name: "Pi places",
-      visibility: "confidential",
+    await send("PUT", `/api/lists/${made.list.id}/class`, {
+      dataClass: "confidential",
     });
-    await test.approveLists();
     const planner = await test.signedIn("resource-planner");
     const { entries } = await history(planner.cookie);
     expect(entries.length).toBeGreaterThan(0);

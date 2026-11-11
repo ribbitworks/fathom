@@ -540,15 +540,11 @@ describe("saved views", () => {
         await test.request(
           administrator.cookie,
           "PUT",
-          `/api/lists/${list.id}`,
-          {
-            name: "Fictional Teams",
-            visibility: "personal",
-          },
+          `/api/lists/${list.id}/class`,
+          { dataClass: "personal" },
         )
       ).statusCode,
     ).toBe(200);
-    await test.approveLists();
     expect(
       (await viewsOf(viewer.cookie)).some(({ id }) => id === view.id),
     ).toBe(false);

@@ -874,7 +874,7 @@ describe("a fill's draft", () => {
     expect(await rowNamed(body.preferredName)).toBeUndefined();
   });
 
-  it("needs an Approver who sees Personal details, since it holds a start date or a reporting line", async () => {
+  it("needs an Approver who sees start and end dates, since it holds a start date or a reporting line", async () => {
     const id = await hire();
     await filled(id, newPerson());
     const projectManager = await test.signedIn("project-manager");
@@ -883,7 +883,7 @@ describe("a fill's draft", () => {
 
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "A fill names who fills the hire, so an Approver who sees Personal details must decide it",
+      "A fill names who fills the hire, so an Approver who sees start and end dates must decide it",
     );
     expect((await liveHire(id))?.filledBy).toBeNull();
   });

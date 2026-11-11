@@ -59,6 +59,10 @@ describe("permissionLabel", () => {
     expect(permissionLabel("accounts:manage")).toBe("Edit Accounts");
   });
 
+  it("names a permission whose row gives it a name of its own by that name", () => {
+    expect(permissionLabel("data:classify")).toBe("Classify data");
+  });
+
   it("shows a permission it does not know as stored", () => {
     expect(permissionLabel("retired:permission")).toBe("retired:permission");
   });

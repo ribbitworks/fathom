@@ -7,11 +7,22 @@
 // without reading the database. Adding a permission changes the shared list in packages/shared,
 // with its plain-English description.
 
-import type { ClassifiedView, Permission, Role, Tier } from "@fathom/shared";
+import type {
+  ClassifiedField,
+  ClassifiedView,
+  DataClasses,
+  Permission,
+  Role,
+  Tier,
+} from "@fathom/shared";
 import {
   classPermissions,
+  defaultClasses,
+  editsField,
   roleSchema,
   seesClass,
+  seesEmployment,
+  seesField,
   startingRoles,
   tierSchema,
   whyMissing,
@@ -25,12 +36,14 @@ export interface SignedInUser {
   email: string;
 }
 
-// Who is making a request, the role they act as, and what it lets them do. The role is null for an
-// actor made without reading the database, as for tests.
+// Who is making a request, the role they act as, what it lets them do, and the classes the
+// organization keeps its built-in details in, which decide what those permissions reach. The role is
+// null for an actor made without reading the database, as for tests.
 export interface Actor {
   user: SignedInUser;
   roleId: string | null;
   permissions: Permission[];
+  dataClasses: DataClasses;
 }
 
 // An actor whose active role grants the permissions given, as read from the database. A permission
@@ -39,11 +52,13 @@ export function actorWith(
   user: SignedInUser,
   grantedPermissions: readonly string[],
   roleId: string | null = null,
+  dataClasses: DataClasses = defaultClasses,
 ): Actor {
   return {
     user,
     roleId,
     permissions: withImplied(grantedPermissions).sort(),
+    dataClasses,
   };
 }
 
@@ -126,8 +141,16 @@ export function seesSensitivity(
     : actor.permissions.includes(permissionsOf(sensitivity).view);
 }
 
+// Whether the actor sees people's employment and their past managers, as the org chart draws them.
 export const seesPersonalDetails = (actor: Actor): boolean =>
-  seesClass(actor.permissions, "personal");
+  seesEmployment(actor) && seesField(actor, "managerHistory");
+
+// Refuses changing a built-in detail to an actor who cannot see and change its class.
+export function requireFieldEdit(actor: Actor, field: ClassifiedField): void {
+  if (!seesField(actor, field) || !editsField(actor, field)) {
+    throw new ForbiddenError();
+  }
+}
 
 export function requireSensitivityEdit(
   actor: Actor,
@@ -138,6 +161,6 @@ export function requireSensitivityEdit(
 
 // Refuses a page or view the actor's role does not see every class of data for, saying why.
 export function requireView(actor: Actor, view: ClassifiedView): void {
-  const why = whyMissing(view, actor.permissions);
+  const why = whyMissing(view, actor);
   if (why !== undefined) throw new ForbiddenError(why);
 }

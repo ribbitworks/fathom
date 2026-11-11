@@ -97,7 +97,8 @@ async function rememberRole(
   );
 }
 
-export interface SignedInActor extends Actor, Omit<ActorAccess, "permissions"> {
+export interface SignedInActor
+  extends Actor, Omit<ActorAccess, "permissions" | "dataClasses"> {
   sessionId: string;
 }
 
@@ -119,10 +120,10 @@ export async function readActor(
     await readRememberedRole(auth, request),
   );
   if (access === null) return null;
-  const { permissions, ...held } = access;
+  const { permissions, dataClasses, ...held } = access;
   return {
     ...held,
-    ...actorWith(session.user, permissions, held.role?.id ?? null),
+    ...actorWith(session.user, permissions, held.role?.id ?? null, dataClasses),
     sessionId: session.sessionId,
   };
 }

@@ -8,10 +8,12 @@ import {
   type AccessAction,
   accessActionSchema,
   characterKinds,
+  classNames,
   type HistoryEntry,
   historyListSchema,
   type PasswordSettings,
   permissionLabel,
+  tierSchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { getJson } from "./api.ts";
@@ -112,6 +114,11 @@ const actionWords: Record<AccessAction, ActionWords> = {
   // Worth checking, since weaker rules or recipes make passwords easier to guess.
   "password-settings-changed": {
     verb: "changed Fathom's password settings",
+    caution: true,
+  },
+  // Worth checking, since a move can show data to more people.
+  "data-class-moved": {
+    verb: "moved",
     caution: true,
   },
 };
@@ -258,7 +265,17 @@ export function describeDetails({ action, details }: HistoryEntry): string {
   ) {
     return describePasswords(details.passwords, details.previousPasswords);
   }
+  if (details.moved !== undefined) {
+    return `${details.moved} from ${className(details.previousDataClass)} to ${className(details.dataClass)}`;
+  }
   return "";
+}
+
+// A class's name as stored, as people read it, or as stored when this version does not know it.
+function className(stored: string | undefined): string {
+  if (stored === undefined) return "an unrecorded class";
+  const known = tierSchema.safeParse(stored);
+  return known.success ? classNames[known.data] : stored;
 }
 
 // The words an entry shows, which a search on the page looks in.

@@ -9,6 +9,8 @@ import type { QueryClient } from "@tanstack/react-query";
 import {
   approvableKinds,
   historySearchLength,
+  editsField,
+  seesEmployment,
   seesView,
   whyMissing,
   type Permission,
@@ -112,6 +114,10 @@ const signedInRoute = createRoute({
       role: session.role,
       roles: session.roles,
       permissions: session.permissions,
+      access: {
+        permissions: session.permissions,
+        dataClasses: session.settings.dataClasses,
+      },
       mustChangePassword: session.mustChangePassword,
       timeZone: session.settings.timeZone,
       passwords: session.settings.passwords,
@@ -456,7 +462,7 @@ const peopleRoute = createRoute({
   validateSearch: peopleSearch,
   beforeLoad: requiring("people:view"),
   component: function People() {
-    const { permissions } = signedIn.useRouteContext();
+    const { permissions, access } = signedIn.useRouteContext();
     const navigate = people.useNavigate();
     const { open, ...search } = people.useSearch();
     return (
@@ -468,7 +474,7 @@ const peopleRoute = createRoute({
         }
         approves={approvableKinds(permissions)}
         canEditColumns={permissions.includes("configuration:edit")}
-        showDates={permissions.includes("personal:view")}
+        showDates={seesEmployment(access)}
         showHireDates={permissions.includes("hiring-plan:view")}
         {...viewProps(search, (next, replace) => {
           void navigate({ search: { ...next, open }, replace });
@@ -495,7 +501,7 @@ const orgChartRoute = createRoute({
   validateSearch: chartSearch,
   beforeLoad: requiring("org-chart:view"),
   component: function OrgChart() {
-    const { permissions } = signedIn.useRouteContext();
+    const { permissions, access } = signedIn.useRouteContext();
     const navigate = orgChartRoute.useNavigate();
     const teamEdits = useMemo(
       () => ({
@@ -512,18 +518,18 @@ const orgChartRoute = createRoute({
           permissions.includes("people:view") &&
           permissions.includes("feature-teams:edit"),
         colours: permissions.includes("team-colours:edit"),
-        dates: permissions.includes("personal:edit"),
+        dates: editsField(access, "featureTeamDates"),
       }),
-      [permissions],
+      [permissions, access],
     );
     return (
       <OrgChartPage
         seesPeople={permissions.includes("people:view")}
-        showDates={permissions.includes("personal:view")}
-        whyNoOtherDates={whyMissing("orgChartOtherDates", permissions)}
-        whyNoFutureDates={whyMissing("orgChartFutureDates", permissions)}
+        showDates={seesEmployment(access)}
+        whyNoOtherDates={whyMissing("orgChartOtherDates", access)}
+        whyNoFutureDates={whyMissing("orgChartFutureDates", access)}
         canEdit={permissions.includes("people:edit")}
-        changesDates={permissions.includes("personal:edit")}
+        changesDates={editsField(access, "managerHistory")}
         teamEdits={teamEdits}
         featureTeamEdits={featureTeamEdits}
         search={orgChartRoute.useSearch()}
@@ -546,12 +552,12 @@ const featureAssignmentsRoute = createRoute({
   validateSearch: featureAssignmentsSearch,
   beforeLoad: requiring("org-chart:view"),
   component: function FeatureAssignments() {
-    const { permissions } = signedIn.useRouteContext();
+    const { permissions, access } = signedIn.useRouteContext();
     const navigate = featureAssignmentsRoute.useNavigate();
     const { mode = "teams", ...search } = featureAssignmentsRoute.useSearch();
     const seesAllocations =
       permissions.includes("allocations:view") &&
-      seesView("allocations", permissions);
+      seesView("allocations", access);
     const kept = (next: GridMode) =>
       seesAllocations && next === "allocations" ? { mode: next } : {};
     const { view, onView } = viewProps(search, (next, replace) => {
@@ -559,11 +565,11 @@ const featureAssignmentsRoute = createRoute({
     });
     return (
       <FeatureAssignmentsPage
-        whyMissing={whyMissing("featureAssignments", permissions)}
-        whyNoManagerGrouping={whyMissing("groupingByManager", permissions)}
+        whyMissing={whyMissing("featureAssignments", access)}
+        whyNoManagerGrouping={whyMissing("groupingByManager", access)}
         seesAllocations={seesAllocations}
         proposesTeams={proposesFeatureTeams(permissions)}
-        changesDates={permissions.includes("personal:edit")}
+        changesDates={editsField(access, "featureTeamDates")}
         mode={mode}
         onMode={(next, nextView) => {
           void navigate({ search: { ...searchFor(nextView), ...kept(next) } });

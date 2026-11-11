@@ -13,6 +13,7 @@ import {
   releaseStreams,
 } from "@fathom/db";
 import {
+  defaultClasses,
   type ChangeHistory,
   dayIn,
   defaultTimeZone,
@@ -1304,6 +1305,7 @@ describe("drafts of streams, patterns, and releases", () => {
     const actor = {
       user: { id: viewer.id, name: "Fictional", email: "" },
       roleId: null,
+      dataClasses: defaultClasses,
       permissions: ["changes:view" as const],
     };
     expect(await readChangeHistory(test.connection, actor)).toEqual({

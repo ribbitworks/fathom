@@ -8,6 +8,7 @@
 
 import { storedTier } from "../access.ts";
 import { isNote, isNumber, typeOf } from "./column-types.ts";
+import { readDataClasses } from "./data-classes.ts";
 import {
   type Database,
   fields,
@@ -16,7 +17,13 @@ import {
   listItems,
   lists,
 } from "@fathom/db";
-import { type ColumnTable, isLink, type Link, type Tier } from "@fathom/shared";
+import {
+  type ColumnTable,
+  type DataClasses,
+  isLink,
+  type Link,
+  type Tier,
+} from "@fathom/shared";
 import { and, asc, eq, inArray, isNotNull } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 
@@ -52,29 +59,49 @@ export interface ColumnInfo extends FieldRow {
   listRetired: boolean;
 }
 
-// The People table's columns, carrying the tiers of the built-in Position and State columns with
-// them, so every tier worked out from the columns read has them.
-export type PeopleColumns = readonly ColumnInfo[] & {
+// The tiers of the People table's built-in details: the Position and State columns', and the
+// classes of the rest, read together so every tier worked out from them agrees.
+export interface BuiltInTiers {
   readonly positionTier: Tier;
   readonly stateTier: Tier;
-};
+  readonly dataClasses: DataClasses;
+}
+
+// The People table's columns, carrying the tiers of its built-in details with them, so every tier
+// worked out from the columns read has them.
+export type PeopleColumns = readonly ColumnInfo[] & BuiltInTiers;
+
+export async function readBuiltInTiers(reader: Reader): Promise<BuiltInTiers> {
+  return {
+    positionTier: await builtInTier(reader, "positions"),
+    stateTier: await builtInTier(reader, "hiring-states"),
+    dataClasses: await readDataClasses(reader),
+  };
+}
+
+// The tiers of the built-in details a column set carries, apart from the columns.
+export const builtInTiersOf = ({
+  positionTier,
+  stateTier,
+  dataClasses,
+}: BuiltInTiers): BuiltInTiers => ({ positionTier, stateTier, dataClasses });
 
 // The tier of each of the People table's built-in columns, by key, as readers are sent them: the
-// manager is General, though a drafted one is Personal, since everyone is sent each live manager.
-export function builtInColumnTiers(
-  columns: Pick<PeopleColumns, "positionTier" | "stateTier">,
-): Map<string, Tier> {
+// manager is General, though a drafted one is as past managers are, since everyone is sent each
+// live manager.
+export function builtInColumnTiers(tiers: BuiltInTiers): Map<string, Tier> {
+  const { startDate, endDate, managerHistory } = tiers.dataClasses;
   return new Map<string, Tier>([
     ["preferredName", "general"],
     ["employeeId", "general"],
-    ["positionId", columns.positionTier],
-    ["stateId", columns.stateTier],
-    ["startDate", "personal"],
+    ["positionId", tiers.positionTier],
+    ["stateId", tiers.stateTier],
+    ["startDate", startDate],
     ["expected", "general"],
-    ["endDate", "personal"],
+    ["endDate", endDate],
     ["managerId", "general"],
     ["isManager", "general"],
-    ["managerFrom", "personal"],
+    ["managerFrom", managerHistory],
     ["team", "general"],
     ["teamName", "general"],
   ]);
@@ -120,10 +147,7 @@ export async function readColumns(
     tier: valuesTier(field, visibility),
     listRetired: retired ?? false,
   }));
-  return Object.assign(columns, {
-    positionTier: await builtInTier(reader, "positions"),
-    stateTier: await builtInTier(reader, "hiring-states"),
-  });
+  return Object.assign(columns, await readBuiltInTiers(reader));
 }
 
 // A live column's tier, given the visibility of its own list, read with it.

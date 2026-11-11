@@ -7,6 +7,7 @@
 
 import { columnOrders, drafts, fields, fieldValues, lists } from "@fathom/db";
 import {
+  defaultClasses,
   type Choice,
   type Field,
   fieldRequestSchema,
@@ -308,6 +309,7 @@ describe("drafting columns", () => {
     const configurationOnly: Actor = {
       user: { id: editor.id, name: "Fictional Editor", email: "" },
       roleId: null,
+      dataClasses: defaultClasses,
       permissions: ["configuration:edit", "configuration:view"],
     };
     const refusal = createDataAccess(test.connection).people.deleteField(
@@ -323,6 +325,7 @@ describe("drafting columns", () => {
   const generalOnly = (): Actor => ({
     user: { id: editor.id, name: "Fictional Editor", email: "" },
     roleId: null,
+    dataClasses: defaultClasses,
     permissions: ["configuration:edit", "configuration:view", "people:view"],
   });
   const choice = (listId: string, name = unique("Fictional Column")) =>
@@ -350,25 +353,17 @@ describe("drafting columns", () => {
     }
     expect(await draftCount()).toBe(before);
 
-    // A list only drafted to be added, and a General list drafted to become Personal.
+    // A list only drafted to be added.
     const draftedOnly = (
       await send("POST", "/api/lists", {
         name: unique("Fictional List"),
         visibility: "personal",
       })
     ).json<{ list: List }>().list;
-    const raised = (await liveList(["C"])).list;
-    await send("PUT", `/api/lists/${raised.id}`, {
-      name: raised.name,
-      visibility: "personal",
-    });
-    for (const list of [draftedOnly, raised]) {
-      await expect(
-        people.createField(generalOnly(), choice(list.id)),
-      ).rejects.toThrow(/whose details this role can see/);
-    }
+    await expect(
+      people.createField(generalOnly(), choice(draftedOnly.id)),
+    ).rejects.toThrow(/whose details this role can see/);
     await send("DELETE", `/api/lists/${draftedOnly.id}/draft`);
-    await send("DELETE", `/api/lists/${raised.id}/draft`);
 
     const { result } = await people.createField(
       generalOnly(),
@@ -998,6 +993,7 @@ describe("undoing changes to column drafts", () => {
     const configurationOnly = {
       user: { id: remover.id, name: "Fictional Remover", email: "" },
       roleId: null,
+      dataClasses: defaultClasses,
       permissions: ["configuration:edit", "configuration:view"] as Permission[],
     };
     await expect(
@@ -1024,6 +1020,7 @@ describe("undoing changes to column drafts", () => {
     const withoutConfidential = {
       user: { id: remover.id, name: "Fictional Remover", email: "" },
       roleId: null,
+      dataClasses: defaultClasses,
       permissions: [
         "configuration:edit",
         "configuration:view",

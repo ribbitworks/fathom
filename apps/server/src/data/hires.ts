@@ -23,15 +23,16 @@ import {
 } from "@fathom/db";
 import {
   type Hire,
+  hireCalled,
   type HireChange,
   type HireDraft,
   type HireRequest,
   type Hires,
-  hireCalled,
+  monthOf,
   type Person,
+  seesEmployment,
   temporaryId,
   type Tier,
-  monthOf,
 } from "@fathom/shared";
 import { and, eq, inArray, isNull, lt, notInArray, or, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
@@ -39,8 +40,8 @@ import {
   type Actor,
   requirePermission,
   requireSensitivityEdit,
-  type Sensitivity,
   seesSensitivity,
+  type Sensitivity,
 } from "../access.ts";
 import {
   BadRequestError,
@@ -489,9 +490,9 @@ export async function readHiresIn(
     const hire = (drafted(before, draft) ?? before) as Recorded;
     return { id, before, draft, hire };
   });
-  // Readers who cannot see Personal data see only people who have started, so a hire names its
+  // Readers who cannot see start and end dates see only people who have started, so a hire names its
   // manager to them only once the manager has started, as People shows them.
-  const seesPersonal = seesSensitivity(actor, "personal");
+  const seesPersonal = seesEmployment(actor);
   const named = await peopleNamed(
     transaction,
     versions.flatMap(({ hire, before }) =>

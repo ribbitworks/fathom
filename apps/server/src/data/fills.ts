@@ -13,9 +13,10 @@ import {
   approvePermissions,
   type DraftsRequest,
   type HireFill,
+  seesEmployment,
 } from "@fathom/shared";
 import { eq } from "drizzle-orm";
-import { type Actor, requirePermission, seesSensitivity } from "../access.ts";
+import { type Actor, requirePermission } from "../access.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors.ts";
 import { columnsWithAdded } from "./added-columns.ts";
 import { type Change, recordChanges, type Transaction } from "./changes.ts";
@@ -157,9 +158,9 @@ export async function withFills(
   const hires = new Set(asked.plannedHires);
   for (const fill of await readFills(reader)) {
     if (!inFill(fill, asked)) continue;
-    if (fill.people.length > 0 && !seesSensitivity(actor, "personal")) {
+    if (fill.people.length > 0 && !seesEmployment(actor)) {
       throw new ForbiddenError(
-        "A fill names who fills the hire, so an Approver who sees Personal details must decide it",
+        "A fill names who fills the hire, so an Approver who sees start and end dates must decide it",
       );
     }
     if (
@@ -199,8 +200,10 @@ async function fillingPerson(
   const draft = (
     await readPersonDrafts(transaction, [personId], actor.user.id)
   ).get(personId);
-  const seesPersonal = seesSensitivity(actor, "personal");
-  if (live === undefined || (!seesPersonal && !currentOn(live, today))) {
+  if (
+    live === undefined ||
+    (!seesEmployment(actor) && !currentOn(live, today))
+  ) {
     throw new NotFoundError(noPerson);
   }
   const name = String(live.preferredName);

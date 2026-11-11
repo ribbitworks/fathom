@@ -104,7 +104,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
     - **Drafts:** **Draft**
     - **Configuration:** **View** and **Approve**
     - **Change history:** **View**
-    - **Features**, **Releases**, **Team colours**, **Feature teams**, **Drafts** and **Their own drafts** have no box under **View**.
+    - **Features**, **Releases**, **Team colours**, **Classify data**, **Feature teams**, **Drafts** and **Their own drafts** have no box under **View**.
     - Under the grid: **A greyed tick comes with another action on the same area, such as View with Edit.**
   - **Notes:**
 

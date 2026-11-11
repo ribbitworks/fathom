@@ -50,6 +50,8 @@ export const permissionSchema = z.enum([
   "personal:edit",
   "confidential:view",
   "confidential:edit",
+  // Moving built-in details, lists, and columns between the classes the role sees.
+  "data:classify",
   // The hiring plan is Confidential, but has a permission area of its own, apart from other
   // Confidential data.
   "hiring-plan:view",
@@ -195,6 +197,13 @@ export const permissionDescriptions: Record<
     allows: "Changes Confidential data, such as columns marked Confidential.",
     without: "Cannot change Confidential data.",
     needs: ["people:edit"],
+  },
+
+  "data:classify": {
+    allows:
+      "Moves built-in details, lists, and columns to another class, between the classes the role sees.",
+    without: "Cannot move data to another class.",
+    needs: ["personal:view", "confidential:view"],
   },
 
   "hiring-plan:view": {
@@ -369,6 +378,8 @@ export type GridAction = (typeof gridActions)[number];
 export const permissionGrid: readonly {
   area: string;
   actions: Partial<Record<GridAction, Permission>>;
+  // The name of a row's only permission, when the action and area together do not read as one.
+  name?: string;
 }[] = [
   {
     area: "Plan",
@@ -401,6 +412,11 @@ export const permissionGrid: readonly {
   {
     area: "Confidential data",
     actions: { view: "confidential:view", edit: "confidential:edit" },
+  },
+  {
+    area: "Classify data",
+    actions: { edit: "data:classify" },
+    name: "Classify data",
   },
   {
     area: "Hiring plan",
@@ -453,12 +469,12 @@ const actionNames: Record<GridAction, string> = {
 
 // A permission's short name, such as "Edit People", for lists of what changed.
 export function permissionLabel(permission: string): string {
-  for (const { area, actions } of permissionGrid) {
+  for (const { area, actions, name: own } of permissionGrid) {
     for (const action of gridActions) {
       // The action is always one of the fixed list above.
       // eslint-disable-next-line security/detect-object-injection
       const [granted, name] = [actions[action], actionNames[action]];
-      if (granted === permission) return `${name} ${area}`;
+      if (granted === permission) return own ?? `${name} ${area}`;
     }
   }
   return permission;
@@ -552,7 +568,7 @@ export const startingRoles: Record<
   "engineering-director": {
     name: "Engineering Director",
     description:
-      "Edits and approves the plan, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Personal and Confidential data, and sees accounts, roles, settings, and the access history without changing them.",
+      "Edits and approves the plan, features, allocations, people, feature teams, the hiring plan, and configuration, sees all Personal and Confidential data and moves data between classes, and sees accounts, roles, settings, and the access history without changing them.",
     permissions: [
       "plan:edit",
       "plan:approve",
@@ -569,6 +585,7 @@ export const startingRoles: Record<
       "feature-teams:approve",
       "personal:edit",
       "confidential:edit",
+      "data:classify",
       "hiring-plan:edit",
       "hiring-plan:approve",
       "configuration:edit",
@@ -585,7 +602,7 @@ export const startingRoles: Record<
   "workforce-administrator": {
     name: "Workforce Administrator",
     description:
-      "Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Personal and Confidential data.",
+      "Sees the plan, maintains people, teams, reporting lines, feature teams, the hiring plan, and planning configuration, and sees all Personal and Confidential data and moves data between classes.",
     permissions: [
       "plan:view",
       "allocations:view",
@@ -595,6 +612,7 @@ export const startingRoles: Record<
       "feature-teams:edit",
       "personal:edit",
       "confidential:edit",
+      "data:classify",
       "hiring-plan:edit",
       "configuration:edit",
       "changes:view",

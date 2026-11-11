@@ -98,7 +98,7 @@ export async function readTeamMonths(
 ): Promise<TeamMonths> {
   requirePermission(actor, "org-chart:view");
   requireView(actor, "featureAssignments");
-  const byManager = seesView("groupingByManager", actor.permissions);
+  const byManager = seesView("groupingByManager", actor);
   const today = await readToday(database);
   const months = monthsBetween(from, to);
   const { rows, lines, teams, memberships, drafts } =

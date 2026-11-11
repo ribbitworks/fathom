@@ -32,6 +32,13 @@ export const appInfo = fathomSchema.table("app_info", {
   value: text("value").notNull(),
 });
 
+// The class the organization keeps each of Fathom's built-in details in, such as start dates, by
+// the detail's name; both checked by the server. A detail with no row is in its default class.
+export const dataClasses = fathomSchema.table("data_classes", {
+  field: text("field").primaryKey(),
+  dataClass: text("data_class").notNull(),
+});
+
 const createdAt = () =>
   timestamp("created_at", { withTimezone: true }).notNull().defaultNow();
 const updatedAt = () =>

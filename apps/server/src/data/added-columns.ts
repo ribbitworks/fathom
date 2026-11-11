@@ -12,6 +12,7 @@ import { type Draft, readDrafts, refuseHeld, type Viewer } from "./drafts.ts";
 import { typeOf } from "./column-types.ts";
 import { draftedList, listTier, readState } from "./lists.ts";
 import {
+  builtInTiersOf,
   type ColumnInfo,
   inListOrder,
   type PeopleColumns,
@@ -76,10 +77,7 @@ export async function columnsWithAdded(
       };
     }),
   ];
-  return Object.assign(all, {
-    positionTier: live.positionTier,
-    stateTier: live.stateTier,
-  });
+  return Object.assign(all, builtInTiersOf(live));
 }
 
 // The choices given that are live, in list order, then those drafted to be added that the editor

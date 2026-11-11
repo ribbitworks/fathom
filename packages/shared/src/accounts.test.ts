@@ -14,6 +14,7 @@ import {
 } from "./accounts.ts";
 import { greetingResponseSchema } from "./greeting.ts";
 import { historyListSchema } from "./history.ts";
+import { defaultClasses } from "./data-classes.ts";
 import { defaultPasswordSettings } from "./passwords.ts";
 import {
   roleSwitchSchema,
@@ -165,6 +166,7 @@ describe("responses", () => {
         settings: {
           timeZone: "America/Vancouver",
           passwords: defaultPasswordSettings,
+          dataClasses: defaultClasses,
         },
       }).success,
     ).toBe(true);

@@ -810,15 +810,36 @@ describe("undoing changes to lists saved before lists had drafts", () => {
     expect((await liveChoices(list.id)).at(-1)?.label).toBe("A");
     const restored = await legacy([
       field("list", list.id, "changed", "retired", true, false),
-      field("list", list.id, "changed", "visibility", "personal", "general"),
     ]);
     expect((await undo(String(restored))).statusCode).toBe(200);
     expect(
       await test.connection
-        .select({ visibility: lists.visibility, retired: lists.retired })
+        .select({ retired: lists.retired })
         .from(lists)
         .where(eq(lists.id, list.id)),
-    ).toEqual([{ visibility: "personal", retired: true }]);
+    ).toEqual([{ retired: true }]);
+  });
+
+  it("brings back a deleted list in the class it had, the most sensitive when unknown", async () => {
+    for (const [stored, expected] of [
+      ["personal", "personal"],
+      ["secret", "confidential"],
+    ]) {
+      const id = randomUUID();
+      const deleted = await legacy([
+        field("list", id, "deleted", "name", unique("Fictional List"), null),
+        field("list", id, "deleted", "description", "", null),
+        field("list", id, "deleted", "visibility", stored, null),
+        field("list", id, "deleted", "retired", false, null),
+      ]);
+      expect((await undo(String(deleted))).statusCode).toBe(200);
+      expect(
+        await test.connection
+          .select({ visibility: lists.visibility })
+          .from(lists)
+          .where(eq(lists.id, id)),
+      ).toEqual([{ visibility: expected }]);
+    }
   });
 
   it("refuses taking out a list that has choices, a choice a draft has, and a name taken since", async () => {

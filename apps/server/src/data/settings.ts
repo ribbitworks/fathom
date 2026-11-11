@@ -21,6 +21,7 @@ import { isGuessable } from "@fathom/shared/guessable-passwords";
 import { eq, sql } from "drizzle-orm";
 import { type Actor, requirePermission } from "../access.ts";
 import { BadRequestError } from "../errors.ts";
+import { readDataClasses } from "./data-classes.ts";
 import { recordEvent } from "./history.ts";
 
 const timeZoneKey = "time-zone";
@@ -69,6 +70,7 @@ export async function readSettings(
   return {
     timeZone: await readTimeZone(reader),
     passwords: await readPasswordSettings(reader),
+    dataClasses: await readDataClasses(reader),
   };
 }
 

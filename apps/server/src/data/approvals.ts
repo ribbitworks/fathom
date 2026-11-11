@@ -28,6 +28,7 @@ import {
   draftKinds,
   type DraftsRequest,
   kindsAsked,
+  seesEmployment,
 } from "@fathom/shared";
 import { and, eq, inArray, or } from "drizzle-orm";
 import {
@@ -131,10 +132,9 @@ async function seenAsked(
   const seen = (field: string) =>
     (fieldOfValue(field) === null || shown.has(field)) &&
     seesSensitivity(actor, tierOf(field));
-  // Those without Personal details see only people current today, as the live dates say.
+  // Those who do not see start and end dates see only people current today, as the live dates say.
   const listed = (id: string, draft: Draft) =>
-    seesSensitivity(actor, "personal") ||
-    currentOn(live.get(id) ?? draft.fields, today);
+    seesEmployment(actor) || currentOn(live.get(id) ?? draft.fields, today);
   for (const [id, draft] of found) {
     const fields = draftFields(live.get(id), draft);
     if (!fields.some(seen) || !listed(id, draft)) {

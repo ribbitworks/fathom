@@ -24,7 +24,9 @@ import {
 } from "@fathom/db";
 import {
   byName,
+  type DataClasses,
   disbandedMonth,
+  editsField,
   type FeatureTeam,
   type FeatureTeamChange,
   type FeatureTeamDraft,
@@ -35,6 +37,9 @@ import {
   type MemberTeamsChange,
   monthOf,
   type PaletteColour,
+  seesClass,
+  seesEmployment,
+  seesField,
   seesView,
   type Tier,
 } from "@fathom/shared";
@@ -42,10 +47,11 @@ import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import {
   type Actor,
+  mostSensitive,
   requireAnyPermission,
+  requireFieldEdit,
   requirePermission,
   requireView,
-  seesPersonalDetails,
 } from "../access.ts";
 import {
   BadRequestError,
@@ -109,14 +115,18 @@ export const featureTeamFields = [
   "leadFrom",
 ] as const;
 
-// The days members join and leave and leads change are Personal, as reporting lines' are; the
-// rest is General.
-export const featureTeamTier = (field: string): Tier =>
-  field === "memberFrom" || field === "leadFrom" ? "personal" : "general";
+// The days members join and leave and leads change are in Feature team dates' class; the rest is
+// General.
+export const featureTeamTier =
+  (classes: DataClasses) =>
+  (field: string): Tier =>
+    field === "memberFrom" || field === "leadFrom"
+      ? classes.featureTeamDates
+      : "general";
 
 // Everyone who sees the org chart sees a team's General details, whether or not they see people.
 const seesTeamField = (actor: Actor) => (field: string) =>
-  featureTeamTier(field) === "general" || seesPersonalDetails(actor);
+  seesClass(actor.permissions, featureTeamTier(actor.dataClasses)(field));
 
 const membersOf = (team: Recorded | undefined): string[] =>
   Array.isArray(team?.members) ? team.members.map(String) : [];
@@ -155,6 +165,7 @@ export function teamChanges(
   action: Change["action"],
   before: Recorded | undefined,
   after: Recorded | undefined,
+  classes: DataClasses,
 ): Change[] {
   return changesBetween(
     recordType,
@@ -163,7 +174,7 @@ export function teamChanges(
     before,
     after,
     featureTeamFields,
-    featureTeamTier,
+    featureTeamTier(classes),
   );
 }
 
@@ -548,7 +559,8 @@ export async function readFeatureTeams(
   on?: string,
 ): Promise<FeatureTeams> {
   requirePermission(actor, "org-chart:view");
-  const seesPersonal = seesPersonalDetails(actor);
+  const seesPeople = seesEmployment(actor);
+  const seesDays = seesField(actor, "featureTeamDates");
   const today = await readToday(database);
   if (on !== undefined && on !== today) {
     requireView(actor, "orgChartOtherDates");
@@ -556,8 +568,7 @@ export async function readFeatureTeams(
   const day = on ?? today;
   // A role that does not see future reorganizations is shown people as they are today on a future
   // day, as the org chart draws them, so their employment is judged today.
-  const peopleAsToday =
-    day > today && !seesView("orgChartFutureDates", actor.permissions);
+  const peopleAsToday = day > today && !seesView("orgChartFutureDates", actor);
   const employmentDay = peopleAsToday ? today : day;
   const seesDrafts = actor.permissions.includes("people:view");
   return database.transaction(
@@ -569,7 +580,7 @@ export async function readFeatureTeams(
         ? new Map(
             [
               ...(await readTeamDrafts(transaction, undefined, actor.user.id)),
-            ].filter(([, draft]) => seesPersonal || !dated(draft.fields)),
+            ].filter(([, draft]) => seesDays || !dated(draft.fields)),
           )
         : new Map<string, Draft>();
       const liveToday =
@@ -609,10 +620,12 @@ export async function readFeatureTeams(
         ]),
         employmentDay,
       );
-      const shown = seenBy(everyone, seesPersonal && !peopleAsToday);
-      const disbanded = seesPersonal
-        ? await readDisbandedMonths(transaction)
-        : new Map<string, string>();
+      const shown = seenBy(everyone, seesPeople && !peopleAsToday);
+      // Disbanded months are worked out from the days members leave.
+      const disbanded =
+        seesPeople && seesDays
+          ? await readDisbandedMonths(transaction)
+          : new Map<string, string>();
       // The names of those on a team, as drafted or live, whom the reader sees.
       const namesOn = (team: Recorded, before: Recorded | undefined) => {
         const named = new Set([...peopleNamed(team), ...peopleNamed(before)]);
@@ -687,8 +700,8 @@ export async function readFeatureTeams(
           Object.entries(held).filter(([personId]) => shown(personId));
         const memberDays = shownDays(datesOf(team));
         const leadDays = shownDays(leadDatesOf(team));
-        const days = seesPersonal ? memberDays : [];
-        const leadDay = seesPersonal ? leadDays[0]?.[1] : undefined;
+        const days = seesDays ? memberDays : [];
+        const leadDay = seesDays ? leadDays[0]?.[1] : undefined;
         const fields = draftFields(before, draft);
         const changed = fields.filter(
           (field) =>
@@ -697,10 +710,10 @@ export async function readFeatureTeams(
             (field !== "memberFrom" || days.length > 0) &&
             (field !== "leadFrom" || leadDay !== undefined),
         );
-        // Nothing left to show those who see Personal details means only people who have left
+        // Nothing left to show those who see start and end dates means only people who have left
         // remain in the draft, so it stays listed for them to clear. For others it may hide someone
         // who has not started.
-        if (changed.length === 0 && !seesPersonal) return {};
+        if (changed.length === 0 && !seesPeople) return {};
         const maker = makers.get(id);
         return {
           draft: {
@@ -728,7 +741,7 @@ export async function readFeatureTeams(
             ...(draft.state === "rejected" &&
             draft.reason !== null &&
             fields.every(seen) &&
-            (seesPersonal ||
+            (seesPeople ||
               !draftHoldsNotStarted(
                 teamToday,
                 drafted(teamToday, draft),
@@ -806,13 +819,13 @@ function membersRefusal(
   leadId: unknown,
   everyone: Everyone,
 ): string | undefined {
-  const seesPersonal = seesPersonalDetails(actor);
+  const seesPeople = seesEmployment(actor);
   for (const personId of added) {
     const person = everyone.get(personId);
     // Someone hidden from the actor is not there for them, as People hides them.
     if (
       person === undefined ||
-      (!seesPersonal && (!person.started || person.left))
+      (!seesPeople && (!person.started || person.left))
     ) {
       return chooseFromPeople;
     }
@@ -834,11 +847,10 @@ function checkMembers(
   if (refusal !== undefined) throw new BadRequestError(refusal);
 }
 
-const changesDates = (actor: Actor) =>
-  actor.permissions.includes("personal:edit");
+const changesDates = (actor: Actor) => editsField(actor, "featureTeamDates");
 
 // The day members join or leave from: today, or another day for those who see the classes of data
-// other dates need, an earlier day needing the right to change Personal details too.
+// other dates need, an earlier day needing the right to change feature team dates' class too.
 function fromDay(actor: Actor, from: string | undefined, today: string) {
   if (from === undefined || from === today) return undefined;
   requireView(actor, "orgChartOtherDates");
@@ -858,7 +870,7 @@ function refuseDaysPutBack(
   now: Recorded | undefined,
   today: string,
 ): void {
-  const seesDays = seesPersonalDetails(actor);
+  const seesDays = seesField(actor, "featureTeamDates");
   for (const days of [datesOf, leadDatesOf]) {
     const before = new Map(Object.entries(days(now)));
     for (const [personId, day] of Object.entries(days(wanted))) {
@@ -1112,7 +1124,9 @@ export async function createFeatureTeam(
       changeSetId: await saved(
         transaction,
         actor,
-        asDraft(teamChanges(id, "created", undefined, after)),
+        asDraft(
+          teamChanges(id, "created", undefined, after, actor.dataClasses),
+        ),
       ),
     };
   });
@@ -1158,6 +1172,7 @@ async function clearedTeamRejection(
   before: Recorded | undefined,
   draft: Draft | undefined,
   today: string,
+  classes: DataClasses,
 ): Promise<Change[]> {
   if (draft?.state !== "rejected") return [];
   const after = drafted(before, draft);
@@ -1168,7 +1183,7 @@ async function clearedTeamRejection(
   );
   return clearedRejection(
     id,
-    holdsNotStarted ? () => "personal" : featureTeamTier,
+    holdsNotStarted ? () => classes.startDate : featureTeamTier(classes),
     before,
     draft,
     recordType,
@@ -1337,7 +1352,7 @@ async function draftTeamChange(
       ? {}
       : { leadFrom: { [String(leadId ?? wasLead)]: leadDay } }),
   });
-  const made = teamChanges(id, "changed", team, after);
+  const made = teamChanges(id, "changed", team, after, actor.dataClasses);
   if (made.length === 0) return [];
   const cleared = await clearedTeamRejection(
     transaction,
@@ -1345,6 +1360,7 @@ async function draftTeamChange(
     before,
     draft,
     today,
+    actor.dataClasses,
   );
   await writeDraft(transaction, actor.user.id, recordType, id, before, after);
   return [...asDraft(made), ...cleared];
@@ -1544,6 +1560,7 @@ export async function deleteFeatureTeam(
       before,
       draft,
       today,
+      actor.dataClasses,
     );
     await writeDraft(
       transaction,
@@ -1556,7 +1573,12 @@ export async function deleteFeatureTeam(
     return saved(
       transaction,
       actor,
-      [...asDraft(teamChanges(id, "deleted", team, undefined)), ...cleared],
+      [
+        ...asDraft(
+          teamChanges(id, "deleted", team, undefined, actor.dataClasses),
+        ),
+        ...cleared,
+      ],
       before === undefined ? "discard" : undefined,
     );
   });
@@ -1591,6 +1613,7 @@ export async function discardFeatureTeamDraft(
       before,
       draft,
       today,
+      actor.dataClasses,
     );
     await writeDraft(
       transaction,
@@ -1603,7 +1626,10 @@ export async function discardFeatureTeamDraft(
     return saved(
       transaction,
       actor,
-      [...asDraft(teamChanges(id, action, team, before)), ...cleared],
+      [
+        ...asDraft(teamChanges(id, action, team, before, actor.dataClasses)),
+        ...cleared,
+      ],
       "discard",
     );
   });
@@ -1636,7 +1662,7 @@ export async function resubmitFeatureTeamDraft(
         ...Object.values(leadDatesOf(team)),
       ].some((day) => day < today)
     ) {
-      requirePermission(actor, "personal:edit");
+      requireFieldEdit(actor, "featureTeamDates");
     }
     // Removing a team needs the right to edit teams, whoever first drafted it.
     if (draft.action === "deleted") {
@@ -1648,6 +1674,7 @@ export async function resubmitFeatureTeamDraft(
       before,
       draft,
       today,
+      actor.dataClasses,
     );
     await transaction
       .update(drafts)
@@ -1700,12 +1727,12 @@ async function seenTeams(
     ]),
     today,
   );
-  const seesPersonal = seesPersonalDetails(actor);
+  const seesPeople = seesEmployment(actor);
   for (const [id, draft] of found) {
     const before = live.get(id);
     if (
       !draftFields(before, draft).every(seesTeamField(actor)) ||
-      (!seesPersonal &&
+      (!seesPeople &&
         draftHoldsNotStarted(before, drafted(before, draft), everyone))
     ) {
       throw new ForbiddenError(unseenDraft);
@@ -1753,7 +1780,9 @@ export async function approveTeamsIn(
     const draft = found.get(id) as Draft;
     const after = drafted(before, draft);
     const team = after && withoutLeavers(after, everyone);
-    made.push(...teamChanges(id, draft.action, before, team));
+    made.push(
+      ...teamChanges(id, draft.action, before, team, actor.dataClasses),
+    );
     if (team === undefined) {
       await transaction.delete(featureTeams).where(eq(featureTeams.id, id));
       continue;
@@ -1836,15 +1865,18 @@ export async function rejectTeamsIn(
     const draft = found.get(id) as Draft;
     if (draft.state === "rejected" && draft.reason === reason) continue;
     const before = live.get(id);
-    const personalDetails =
-      draftTier(featureTeamTier, before, draft) === "personal" ||
-      draftHoldsNotStarted(before, drafted(before, draft), everyone);
+    const tier = mostSensitive([
+      draftTier(featureTeamTier(actor.dataClasses), before, draft),
+      draftHoldsNotStarted(before, drafted(before, draft), everyone)
+        ? actor.dataClasses.startDate
+        : "general",
+    ]);
     made.push({
       recordType,
       recordId: id,
       action: "changed",
       field: rejectedField,
-      tier: personalDetails ? "personal" : "general",
+      tier,
       oldValue: draft.state === "rejected" ? draft.reason : null,
       newValue: reason,
       draft: true,

@@ -237,6 +237,15 @@ async function teamSeen(
   return (await teamsSeen(who)).find((team) => team.id === id);
 }
 
+// Moves the days members join and leave to another class, as the Engineering Director may.
+async function moveTeamDates(dataClass: string): Promise<void> {
+  await ok(
+    await send(approver, "PUT", "/api/data-classes/featureTeamDates", {
+      dataClass,
+    }),
+  );
+}
+
 async function liveRow(id: string) {
   const [row] = await test.connection
     .select()
@@ -827,6 +836,22 @@ describe("changing a feature team", () => {
     expect(refusal(response)).toBe(
       "This role can't choose an earlier date. Use today or a later date.",
     );
+  });
+
+  it("is given an earlier day by someone who may change the class the days are in", async () => {
+    const member = await person();
+    const id = await liveTeam();
+    await moveTeamDates("general");
+    try {
+      const response = await change(
+        id,
+        { add: [member], from: "2025-01-01" },
+        datedProposer,
+      );
+      expect(response.statusCode).toBe(200);
+    } finally {
+      await moveTeamDates("personal");
+    }
   });
 
   it("changes the lead from the day given, keeping the lead before it", async () => {
@@ -2381,6 +2406,27 @@ describe("the change history of a team", () => {
     expect(valueOf(record, "leadId")).toBe(leadName);
   });
 
+  it("hides the days members joined from readers once those days move out of their sight", async () => {
+    const holdsDays = async (changeSetId: string | null) =>
+      (await recordOf(changeSetId, planner))?.fields.some(
+        ({ field }) => field === "memberFrom",
+      ) === true;
+    // Given
+    const member = await person();
+    const id = await liveTeam();
+    await moveTeamDates("general");
+    let changeSetId: string | null;
+    try {
+      changeSetId = await changed(id, { add: [member], from: "2025-02-03" });
+      expect(await holdsDays(changeSetId)).toBe(true);
+    } finally {
+      // When
+      await moveTeamDates("personal");
+    }
+    // Then
+    expect(await holdsDays(changeSetId)).toBe(false);
+  });
+
   it("shows nothing of a draft adding someone who has not started to readers who do not see Personal details", async () => {
     const starting = await person({ startDate: "2099-01-01" });
     const started = await person();
@@ -3305,6 +3351,26 @@ describe("a team disbanding", () => {
     expect(await disbandedFrom(await teamWhoseMemberLeaves("2099-03-15"))).toBe(
       "2099-04",
     );
+  });
+
+  it("is not shown once the days members leave move out of the reader's sight", async () => {
+    // Given
+    const id = await teamWhoseMemberLeaves("2025-03-15");
+    const reader = await test.signedIn([
+      "org-chart:view",
+      "people:view",
+      "personal:view",
+    ]);
+    expect(await disbandedFrom(id, reader)).toBe("2025-04");
+    // When
+    await moveTeamDates("confidential");
+    // Then
+    try {
+      expect(await disbandedFrom(id, reader)).toBeUndefined();
+      expect(await disbandedFrom(id, approver)).toBe("2025-04");
+    } finally {
+      await moveTeamDates("personal");
+    }
   });
 
   it("is on the teams of a chosen day too", async () => {

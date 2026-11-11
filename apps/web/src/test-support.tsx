@@ -12,7 +12,7 @@ import type {
   Release,
   ReleaseStream,
 } from "@fathom/shared";
-import { defaultPasswordSettings } from "@fathom/shared";
+import { defaultClasses, defaultPasswordSettings } from "@fathom/shared";
 import { mergeThemeOverrides } from "@mantine/core";
 import { QueryClient } from "@tanstack/react-query";
 import { createMemoryHistory } from "@tanstack/react-router";
@@ -66,6 +66,7 @@ export const fictionalUser = {
   settings: {
     timeZone: "America/Vancouver",
     passwords: defaultPasswordSettings,
+    dataClasses: defaultClasses,
   },
 };
 export const signedIn = () => Response.json(fictionalUser);

@@ -90,6 +90,12 @@ import {
   writeDraft,
 } from "./drafts.ts";
 import { builtInColumns } from "./built-in-lists.ts";
+import {
+  classifyDraft,
+  recordMove,
+  requireClassify,
+  requireMove,
+} from "./data-classes.ts";
 import { recordNaming } from "./records.ts";
 
 type ListRow = typeof lists.$inferSelect;
@@ -1102,6 +1108,13 @@ export async function createList(
     if (listNameTaken(state, request.name)) {
       throw new ConflictError(duplicateList);
     }
+    await classifyDraft(transaction, actor, {
+      live: false,
+      name: request.name,
+      moved: listMoved(request.name),
+      from: "general",
+      to: request.visibility,
+    });
     const id = randomUUID();
     const changeSetId = await saveDraft(
       transaction,
@@ -1205,7 +1218,50 @@ export async function updateList(
     if (listNameTaken(state, request.name, id)) {
       throw new ConflictError(duplicateList);
     }
-    return Promise.resolve({ ...list, ...request });
+    await classifyDraft(transaction, actor, {
+      live: state.lists.has(id),
+      name: String(list.name),
+      moved: listMoved(request.name),
+      from: storedTier(list.visibility),
+      to: request.visibility,
+    });
+    return { ...list, ...request };
+  });
+}
+
+const listMoved = (name: unknown) => `the ${String(name)} list`;
+
+// Moves a list, and so the values chosen from it, to another class.
+export async function moveListClass(
+  database: Database,
+  actor: Actor,
+  id: string,
+  to: Tier,
+): Promise<string | null> {
+  requireClassify(actor);
+  return database.transaction(async (transaction) => {
+    await lockDrafts(transaction);
+    const [row] = await transaction
+      .select()
+      .from(lists)
+      .where(eq(lists.id, id))
+      .for("update");
+    if (row === undefined) throw new NotFoundError(noList);
+    const from = storedTier(row.visibility);
+    requireMove(actor, from, to);
+    if (from === to) return null;
+    await refuseSensitiveFeatureList(transaction, id, to);
+    await transaction
+      .update(lists)
+      .set({ visibility: to })
+      .where(eq(lists.id, id));
+    await recordMove(transaction, actor, listMoved(row.name), from, to);
+    const before = listRecord(row);
+    return recordChanges(
+      transaction,
+      actor,
+      listChanges(id, "changed", before, { ...before, visibility: to }),
+    );
   });
 }
 

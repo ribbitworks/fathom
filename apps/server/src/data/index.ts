@@ -9,6 +9,9 @@ import type { Database } from "@fathom/db";
 import type {
   EffortConversions,
   ChangeHistory,
+  ClassifiedField,
+  DataClasses,
+  Tier,
   Choice,
   ChoiceRequest,
   CycleLengthRequest,
@@ -62,13 +65,13 @@ import {
   type AllocationChange,
   type Allocations,
   draftsRequestSchema,
+  seesField,
 } from "@fathom/shared";
 import { sql } from "drizzle-orm";
 import {
   type Actor,
   requireAnyPermission,
   requirePermission,
-  seesPersonalDetails,
 } from "../access.ts";
 import { approveDrafts, rejectDrafts } from "./approvals.ts";
 import { changeEffortConversions, readEffortConversions } from "./effort.ts";
@@ -77,6 +80,7 @@ import { readGreeting } from "./greeting.ts";
 import * as columnDrafts from "./column-drafts.ts";
 import { readColumnsOut } from "./column-drafts.ts";
 import { readChangeHistory } from "./change-history.ts";
+import { moveFieldClass } from "./data-classes.ts";
 import * as lists from "./lists.ts";
 import * as peopleData from "./people.ts";
 import { readOrgChart, readOrgChartOn, setTeamColour } from "./org-chart.ts";
@@ -135,6 +139,15 @@ export interface DataAccess {
   // checks no permission.
   readSettings(): Promise<Settings>;
   changeTimeZone(actor: Actor, timeZone: string): Promise<TimeZoneSetting>;
+  // Moves data to another class at once, with Classify data and sight of both classes, recording
+  // the move in the access history: a built-in detail, a list, or a column with a class of its own.
+  moveFieldClass(
+    actor: Actor,
+    field: ClassifiedField,
+    to: Tier,
+  ): Promise<DataClasses>;
+  moveListClass(actor: Actor, id: string, to: Tier): Promise<ChangeSetId>;
+  moveColumnClass(actor: Actor, id: string, to: Tier): Promise<ChangeSetId>;
   changePasswordSettings(
     actor: Actor,
     passwords: PasswordSettings,
@@ -506,18 +519,19 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
   return {
     read: async (actor, on) => {
       const read = await featureTeamData.readFeatureTeams(database, actor, on);
-      // The days members join or leave are Personal, so seeing them is recorded: those a draft
-      // gives, and those a reader who sees Personal details can tell from teams on a chosen day, or
-      // from the month a team disbands, which may draw on end dates.
+      // Seeing the days members join or leave is recorded while their class is above General: those
+      // a draft gives, and those a reader who sees them can tell from teams on a chosen day, or from
+      // the month a team disbands.
       const sawDays =
-        on === undefined
+        actor.dataClasses.featureTeamDates !== "general" &&
+        (on === undefined
           ? read.teams.some(
               ({ draft, disbandedFrom }) =>
                 draft?.days !== undefined ||
                 draft?.leadDay !== undefined ||
                 disbandedFrom !== undefined,
             )
-          : seesPersonalDetails(actor);
+          : seesField(actor, "featureTeamDates"));
       if (sawDays) {
         await recordPersonalView(
           database,
@@ -529,7 +543,7 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
     },
     readMonths: async (actor, range) => {
       const read = await readTeamMonths(database, actor, range);
-      // Rows and shaded months follow employment dates, which are Personal.
+      // Rows and shaded months follow employment dates, in their classes.
       await recordPersonalView(
         database,
         actor.user.id,
@@ -1098,6 +1112,12 @@ export function createDataAccess(database: Database): DataAccess {
       changeEffortConversions(database, actor, conversions),
     changeTimeZone: async (actor, timeZone) =>
       changeTimeZone(database, actor, timeZone),
+    moveFieldClass: async (actor, field, to) =>
+      moveFieldClass(database, actor, field, to),
+    moveListClass: async (actor, id, to) =>
+      lists.moveListClass(database, actor, id, to),
+    moveColumnClass: async (actor, id, to) =>
+      columnDrafts.moveColumnClass(database, actor, id, to),
     changePasswordSettings: async (actor, passwords) =>
       changePasswordSettings(database, actor, passwords),
     checkChosenPassword: async (password, owner) =>

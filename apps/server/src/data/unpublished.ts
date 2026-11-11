@@ -15,6 +15,7 @@ import {
   unpublishedDrafts,
 } from "@fathom/db";
 import {
+  type DataClasses,
   type DraftKind,
   draftingPermissions,
   hireCalled,
@@ -454,7 +455,11 @@ export async function publishUnpublished(
 
 // The changes that take a record back from the user's draft to the published one, or the live
 // record.
-function takingBack(versions: Versions, row: Row): Change[] {
+function takingBack(
+  versions: Versions,
+  row: Row,
+  classes: DataClasses,
+): Change[] {
   const id = row.recordId;
   const { mine, theirs } = versions;
   if (isRecordType(row.recordType)) {
@@ -488,7 +493,7 @@ function takingBack(versions: Versions, row: Row): Change[] {
     const live = versions.teams.live.get(id);
     const before = drafted(live, versions.teams.mine.get(id));
     const after = drafted(live, versions.teams.theirs.get(id));
-    return teamChanges(id, actionTo(before, after), before, after);
+    return teamChanges(id, actionTo(before, after), before, after, classes);
   }
   if (row.recordType === "list" || row.recordType === "list-item") {
     const isList = row.recordType === "list";
@@ -532,7 +537,9 @@ export async function discardUnpublished(
     const rows = await ownRows(transaction, userId);
     if (rows.length === 0) return 0;
     const versions = await readVersions(transaction, userId, rows);
-    const made = asDraft(rows.flatMap((row) => takingBack(versions, row)));
+    const made = asDraft(
+      rows.flatMap((row) => takingBack(versions, row, actor.dataClasses)),
+    );
     await transaction
       .delete(unpublishedDrafts)
       .where(eq(unpublishedDrafts.userId, userId));

@@ -108,8 +108,9 @@ flowchart LR
 - **Session:** A signed-in user's visit, which records the network address and browser it started from, for investigating security problems, and ends as set in [ADR 0002](../adr/0002-libraries.md).
 - **Role:** A named set of permissions, kept in the database so it can be edited and copied, which grants view or edit access to data tiers, and permissions such as approving plan changes. The roles Fathom starts with keep a key, so setup and seed data find them whatever they are renamed, and a role held by any account cannot be deleted.
 - **Access record:** Records who did what, when, and to whom, without the values: a change to a user account, or a view or change of sensitive data. Records can only be added, never changed or removed.
+- **Data class:** The class, General, Personal or Confidential, the organization keeps one of Fathom's built-in details in, such as start dates or the hiring plan, stored once moved from its default. Lists and columns hold their own class as their visibility.
 
-Fields are assigned to tiers as set in the Decisions Log, and tier checks happen in the data access layer, as set in [ADR 0001](../adr/0001-tech-stack.md).
+Fields are assigned to tiers as set in the Decisions Log, built-in details through their data classes, and tier checks happen in the data access layer, as set in [ADR 0001](../adr/0001-tech-stack.md).
 
 **Proposal:** Allow a user account to be linked to the person record for the same employee, so Fathom can tell who a user is in the org chart and give them access to their own record and their reports, as proposed in [Roles](../product/roles.md), which also sets out how links are made. Not every user needs one.
 

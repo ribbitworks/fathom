@@ -1522,11 +1522,9 @@ describe("undo", () => {
     const changed = await send(cookie, "PATCH", `/api/people/${id}`, {
       values: { [field.id]: [String(choices[1]?.id)] },
     });
-    await send(cookie, "PUT", `/api/lists/${list.id}`, {
-      name: list.name,
-      visibility: "personal",
+    await send(cookie, "PUT", `/api/lists/${list.id}/class`, {
+      dataClass: "personal",
     });
-    await test.approveLists();
     const undone = await undo(
       cookie,
       changed.json<{ changeSetId: string }>().changeSetId,

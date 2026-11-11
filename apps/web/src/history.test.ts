@@ -151,4 +151,38 @@ describe("describeDetails", () => {
       caution: true,
     });
   });
+
+  it("names what moved to another class, and the classes, marked worth checking", () => {
+    const moved = entry("data-class-moved", {
+      moved: "Start date",
+      dataClass: "general",
+      previousDataClass: "personal",
+    });
+    expect(describeAction("data-class-moved")).toEqual({
+      verb: "moved",
+      caution: true,
+    });
+    expect(describeDetails(moved)).toBe("Start date from Personal to General");
+  });
+
+  it("names a class this version does not know as it was stored", () => {
+    const moved = entry("data-class-moved", {
+      moved: "the Fictional Sites list",
+      dataClass: "secret",
+      previousDataClass: "general",
+    });
+    expect(describeDetails(moved)).toBe(
+      "the Fictional Sites list from General to secret",
+    );
+  });
+
+  it("says a class was not recorded when an entry lacks it", () => {
+    const moved = entry("data-class-moved", {
+      moved: "End date",
+      dataClass: "general",
+    });
+    expect(describeDetails(moved)).toBe(
+      "End date from an unrecorded class to General",
+    );
+  });
 });
