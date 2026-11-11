@@ -187,12 +187,18 @@ const planReferences = new Map(
 const referencesPlan = (row: StoredChange) =>
   planReferences.get(row.recordType)?.has(row.field) === true;
 
-const strings = (value: unknown): string[] =>
+// The text in a value as stored that holds a list, or none.
+export const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
 
 // The identifiers a change's values refer to, which are named in its place.
 function referencedIds(row: StoredChange): string[] {
   const values = [row.oldValue, row.newValue];
+  const inValue = values.flatMap(
+    (value) =>
+      planKindOf.get(row.recordType)?.idsInValue?.(row.field, value) ?? [],
+  );
+  if (inValue.length > 0) return inValue;
   if (fieldOfValue(row.field) !== null) {
     return [fieldOfValue(row.field) as string, ...values.flatMap(strings)];
   }
@@ -446,7 +452,7 @@ function shown(
   if (row.field === "definition") return null;
   const words = planKindOf
     .get(row.recordType)
-    ?.valueInWords?.(row.field, value);
+    ?.valueInWords?.(row.field, value, name);
   if (words !== undefined) return words;
   if (isNoteField(row.recordType, row.field)) {
     return typeof value === "string" ? notePlainText(value) : null;

@@ -384,6 +384,8 @@ export const customers = fathomSchema.table(
 // choice in the built-in proposal statuses list, which the server checks. Its customers are kept
 // as a list of identifiers, which the server checks name customers, since a proposal picks several
 // and its draft changes them together. The features it proposes are kept and checked the same way.
+// The reasons given for taking features off it are kept by feature, each only while that feature is
+// off it, so approving a removal records its reason in the change history beside it.
 export const proposals = fathomSchema.table(
   "proposals",
   {
@@ -405,6 +407,10 @@ export const proposals = fathomSchema.table(
       .array()
       .notNull()
       .default(sql`'{}'`),
+    removalReasons: jsonb("removal_reasons")
+      .$type<Record<string, string>>()
+      .notNull()
+      .default({}),
   },
   (table) => [
     uniqueIndex("proposals_name_index").on(sql`lower(${table.name})`),

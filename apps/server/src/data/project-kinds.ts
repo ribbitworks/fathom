@@ -16,7 +16,11 @@ import {
   projects,
   proposals,
 } from "@fathom/db";
-import { projectSubjects, type RecordRef } from "@fathom/shared";
+import {
+  projectSubjects,
+  type RecordRef,
+  removalReasonsIn,
+} from "@fathom/shared";
 import { eq } from "drizzle-orm";
 import { firstOfferedOrRefused } from "./built-in-lists.ts";
 import { featureKind, projectSubject } from "./release-kinds.ts";
@@ -59,6 +63,9 @@ export const customerKind: RecordKind = {
     projectSubjects.customer(nameOf(state, "customer", id)),
 };
 
+const removalReasonsOf = (field: string, value: unknown) =>
+  field === "removalReasons" ? Object.entries(removalReasonsIn(value)) : [];
+
 export const proposalKind: RecordKind = {
   type: "proposal",
   table: proposals,
@@ -70,6 +77,7 @@ export const proposalKind: RecordKind = {
     "customerIds",
     "statusId",
     "featureIds",
+    "removalReasons",
   ],
   links: { customerIds: "customer", featureIds: "feature" },
   refers: { ownerId: "person", statusId: "choice" },
@@ -83,6 +91,16 @@ export const proposalKind: RecordKind = {
   readWith: ["plan:view"],
   subject: (state, id) =>
     projectSubjects.proposal(nameOf(state, "proposal", id)),
+  // Each reason for removing a feature, after the feature's name.
+  idsInValue: (field, value) =>
+    removalReasonsOf(field, value).map(([featureId]) => featureId),
+  valueInWords: (field, value, name) =>
+    field === "removalReasons"
+      ? removalReasonsOf(field, value).map(
+          ([featureId, reason]) =>
+            `${name(featureId) ?? "A removed feature"}: ${reason}`,
+        )
+      : undefined,
 };
 
 export const projectKind: RecordKind = {

@@ -22,6 +22,16 @@ What every manual test in `docs/testing/` shares: the environment, where the acc
 
 [Restore the Seed Data](#restore-the-seed-data), [Reset the Database](#reset-the-database) and [Start From an Empty Database](#start-from-an-empty-database) create every account [Development Accounts](../design/development-setup.md#development-accounts) lists, with the name Fathom shows for each and the roles it holds, as [Roles](../product/roles.md#starting-roles) sets out. They share one password, which each of them prints when it finishes. Each test names the accounts it uses by role and email address.
 
+## Recording Results
+
+Mark each step's checkbox as you run it, and write anything else under its **Notes:**:
+
+- `- [x]`: the step passes.
+- `- [?]`: the step passes, with questions or suggestions in its notes.
+- `- [!]`: the step fails; its notes say what was seen instead.
+
+Marks and notes are kept while a test is being run and changed, and cleared before the test is committed, so every committed test starts unmarked.
+
 ## Common Procedures
 
 Test cases refer to these by name, such as "Run Restore the Seed Data".

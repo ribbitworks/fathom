@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Customers, projects with their milestones, and proposals through the server's API: reading them,
-// with what they pick from, every change to them, each a draft, and each record as decisions on its
-// draft name it.
+// with what they pick from, every change to them, each a draft, each record as decisions on its
+// draft name it, and each project's and proposal's scope history.
 
 import {
   type Choice,
@@ -28,7 +28,9 @@ import {
   type Proposal,
   type ProposalRequest,
   type ReleaseStream,
+  type RemovalReasonRequest,
   savedSchema,
+  scopeHistorySchema,
 } from "@fathom/shared";
 import { queryOptions } from "@tanstack/react-query";
 import { z } from "zod";
@@ -112,7 +114,11 @@ export const featureNamers = {
 >;
 
 const namerKinds = Object.values(featureNamers);
-const namerKeys: readonly string[] = Object.values(featureNamerKeys);
+// The reason for removing a feature from proposals goes with the change to them.
+const namerKeys: readonly string[] = [
+  ...Object.values(featureNamerKeys),
+  "removalReason",
+];
 
 // A project or proposal, as one that names features.
 export interface FeatureNamer {
@@ -184,6 +190,35 @@ export const changeFeatureProjects = (
     savedPlan,
   );
 
+// The features a project or proposal was given and had removed, read again with the plan.
+export const scopeHistoryQuery = (type: "project" | "proposal", id: string) =>
+  queryOptions({
+    queryKey: [...projectPlanQuery.queryKey, "scope-history", type, id],
+    queryFn: async () =>
+      getJson(`${recordPath(type, id)}/scope-history`, scopeHistorySchema),
+  });
+
+export const changeRemovalReason = (
+  featureId: string,
+  proposalId: string,
+  request: RemovalReasonRequest,
+): Promise<SavedPlan> =>
+  sendJsonFor(
+    "PUT",
+    `${recordPath("feature", featureId)}/proposals/${encodeURIComponent(proposalId)}/removal-reason`,
+    request,
+    savedPlan,
+  );
+
+// The names of the records given whose identifiers are given, in the records' order.
+export const namesOf = (
+  records: readonly { id: string; name: string }[],
+  ids: readonly string[],
+) => records.filter(({ id }) => ids.includes(id)).map(({ name }) => name);
+
+export const isProposal = (record: PlanRecord): record is Proposal =>
+  "removalReasons" in record;
+
 const milestonesPath = (projectId: string) =>
   `/api/projects/${encodeURIComponent(projectId)}/milestones`;
 
@@ -237,6 +272,7 @@ export const proposalRequest = (proposal: Proposal): ProposalRequest => ({
   customerIds: proposal.customerIds,
   statusId: proposal.statusId,
   featureIds: proposal.featureIds,
+  removalReason: null,
 });
 
 export const milestoneRequest = (milestone: Milestone): MilestoneRequest => ({

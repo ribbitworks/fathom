@@ -690,6 +690,34 @@ function releaseColumn(
   };
 }
 
+// A feature's built-in columns in the headed groups its details show them in, in order: the order
+// the table starts its columns in too, so the two read alike.
+export const featureColumnGroups: readonly {
+  title: string;
+  keys: readonly string[];
+}[] = [
+  { title: "Details", keys: ["name", "statusId", "description", "note"] },
+  {
+    title: "Customers and commitments",
+    keys: ["customerIds", "projectIds", "proposalIds"],
+  },
+  {
+    title: "Planning",
+    keys: [
+      "neededBy",
+      "estimateHours",
+      releaseColumnKey,
+      "targetCycle",
+      "featureTeamId",
+    ],
+  },
+];
+
+// The title of the group of columns an organization added, after the others, as on a person.
+export const addedColumnsTitle = "Columns";
+
+const featureColumnOrder = featureColumnGroups.flatMap(({ keys }) => keys);
+
 export function featureColumns(
   choices: TableChoices,
   {
@@ -751,9 +779,13 @@ export function featureColumns(
         ),
     },
   ];
+  const inGroups = [...builtIn].sort(
+    (a, b) =>
+      featureColumnOrder.indexOf(a.key) - featureColumnOrder.indexOf(b.key),
+  );
   return inOrder(
     [
-      ...builtIn,
+      ...inGroups,
       // A value can be given only in a column already approved.
       ...fields.map((added) => ({
         ...addedColumn<Feature, CellChange>(added, lists),

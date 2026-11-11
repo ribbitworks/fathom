@@ -41,6 +41,8 @@ import type {
   ProjectPlan,
   RecordType,
   ReleaseNoteRequest,
+  RemovalReasonRequest,
+  ScopeHistory,
   ReleaseRequest,
   ReleaseStream,
   ReleaseStreamRequest,
@@ -85,6 +87,7 @@ import { readTeamMonths } from "./team-months.ts";
 import { readHistory, recordPersonalView } from "./history.ts";
 import { discardRecordDraft, resubmitRecordDraft } from "./records.ts";
 import * as projectData from "./projects.ts";
+import { readScopeHistory } from "./scope-history.ts";
 import type { PlanKind, PlanRecordRequest } from "./projects.ts";
 import * as releases from "./releases.ts";
 import type { Saved } from "./changes.ts";
@@ -283,6 +286,20 @@ export interface ProjectAccess {
     actor: Actor,
     featureId: string,
     request: FeatureProjectsRequest,
+  ): Promise<Saved<ProjectPlan>>;
+  // The features a project or proposal was given and had removed, as approved.
+  readScopeHistory(
+    actor: Actor,
+    type: "project" | "proposal",
+    id: string,
+  ): Promise<ScopeHistory>;
+  // Changes the reason for removing a feature from a proposal while a draft removes it, so it takes
+  // those who edit the plan.
+  changeRemovalReason(
+    actor: Actor,
+    featureId: string,
+    proposalId: string,
+    request: RemovalReasonRequest,
   ): Promise<Saved<ProjectPlan>>;
   addMilestone(
     actor: Actor,
@@ -830,6 +847,21 @@ function createProjectAccess(database: Database): ProjectAccess {
           database,
           recordEditor(actor, "project"),
           featureId,
+          request,
+        ),
+      ),
+    readScopeHistory: async (actor, type, id) => {
+      requirePermission(actor, "plan:view");
+      return readScopeHistory(database, type, id);
+    },
+    changeRemovalReason: async (actor, featureId, proposalId, request) =>
+      edited(
+        actor,
+        projectData.changeRemovalReason(
+          database,
+          recordEditor(actor, "proposal"),
+          featureId,
+          proposalId,
           request,
         ),
       ),

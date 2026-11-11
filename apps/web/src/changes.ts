@@ -95,6 +95,7 @@ const fieldNames = new Map([
   ["memberFrom", "Joining and leaving dates"],
   ["leadFrom", "Date the feature lead changes"],
   ["estimateHours", "Effort"],
+  ["removalReasons", "Reasons for removing features"],
 ]);
 
 function fieldName({ field, column }: ChangedField): string {

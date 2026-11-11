@@ -485,6 +485,14 @@ export function formatDay(value: string): string {
   return day.format(new Date(`${value}T00:00:00Z`));
 }
 
+const momentDay = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
+
+// The day of a moment, such as when something was saved, as people read it where they are, with its
+// year.
+export function formatMomentDay(moment: string): string {
+  return momentDay.format(new Date(moment));
+}
+
 const month = new Intl.DateTimeFormat(undefined, {
   month: "short",
   year: "numeric",

@@ -66,6 +66,7 @@ const proposal = (more: Partial<Plan["proposals"][number]> = {}) => ({
   customerIds: [customerId],
   statusId,
   featureIds: [],
+  removalReasons: {},
   ...more,
 });
 
@@ -430,7 +431,7 @@ describe("the side panel", () => {
     });
   });
 
-  it("separates a project's customers with commas", async () => {
+  it("lists a project's customers one to a line", async () => {
     const other = "c0000000-0000-4000-8000-000000000002";
     await openPage(
       `/projects?open=${projectId}`,
@@ -442,7 +443,10 @@ describe("the side panel", () => {
     expect(
       (await screen.findByRole("button", { name: "Fictional Customer" }))
         .parentElement?.textContent,
-    ).toBe("Fictional Customer,");
+    ).toBe("Fictional Customer");
+    expect(
+      screen.getByRole("button", { name: "Second" }).parentElement?.textContent,
+    ).toBe("Second");
   });
 
   it("leaves out a linked record it cannot name, and says None when there are none", async () => {
@@ -1743,6 +1747,528 @@ describe("the Features page", () => {
       expect(within(sidePanel()).queryByText("Proposals")).toBeNull();
     });
 
+    describe("removing a feature from a proposal", () => {
+      const featurePath = `/api/features/${first.id}/projects-and-proposals`;
+      const removeFromProposal = async () => {
+        act(() => {
+          cell(first, "proposalIds")?.focus();
+        });
+        await userEvent.keyboard("{Enter}");
+        await userEvent.click(
+          await screen.findByRole("option", { name: "Fictional Proposal" }),
+        );
+        await userEvent.keyboard("{Enter}");
+        return screen.findByRole("dialog", { name: "Reason for the removal" });
+      };
+
+      it("asks for the reason, and sends it with the change", async () => {
+        // Given a feature in a proposal
+        const { fetch } = await openNamed("/features", {
+          [`PUT ${featurePath}`]: saved(named),
+        });
+        // When it is removed from the proposal, with a reason
+        const dialog = await removeFromProposal();
+        expect(
+          within(dialog).getByText(
+            "Fictional First is removed from Fictional Proposal.",
+          ),
+        ).toBeTruthy();
+        await userEvent.type(
+          within(dialog).getByRole("textbox", { name: "Reason (optional)" }),
+          " Too costly ",
+        );
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Save" }),
+        );
+        // Then the change carries the reason, trimmed
+        await waitFor(() => {
+          expect(sent(fetch, `PUT ${featurePath}`)).toEqual([
+            { proposalIds: [], removalReason: "Too costly" },
+          ]);
+        });
+      });
+
+      it("saves with no reason once the box is cleared", async () => {
+        const { fetch } = await openNamed("/features", {
+          [`PUT ${featurePath}`]: saved(named),
+        });
+        const dialog = await removeFromProposal();
+        const box = within(dialog).getByRole("textbox", {
+          name: "Reason (optional)",
+        });
+        await userEvent.type(box, "x");
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Clear the reason" }),
+        );
+        expect((box as HTMLInputElement).value).toBe("");
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Save" }),
+        );
+        await waitFor(() => {
+          expect(sent(fetch, `PUT ${featurePath}`)).toEqual([
+            { proposalIds: [], removalReason: null },
+          ]);
+        });
+      });
+
+      it("changes nothing when cancelled", async () => {
+        const { fetch } = await openNamed();
+        const dialog = await removeFromProposal();
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Cancel" }),
+        );
+        await waitFor(() => {
+          expect(screen.queryByRole("dialog")).toBeNull();
+        });
+        expect(sentTo(fetch)).not.toContain(`PUT ${featurePath}`);
+        expect(cell(first, "proposalIds")?.textContent).toBe(
+          "Fictional Proposal",
+        );
+      });
+
+      it("asks nothing when a feature only a draft added is removed again", async () => {
+        // Given a proposal whose draft adds the feature
+        const start = featurePlan({
+          canEdit: true,
+          proposals: [
+            proposal({
+              featureIds: [first.id],
+              draft: recordDraft({
+                changed: ["featureIds"],
+                live: { featureIds: [] },
+              }),
+            }),
+          ],
+        });
+        const { fetch } = await openPage(
+          "/features",
+          start,
+          { ...answers, [`PUT ${featurePath}`]: saved(() => start) },
+          planEditor,
+        );
+        // When it is removed from the proposal
+        act(() => {
+          cell(first, "proposalIds")?.focus();
+        });
+        await userEvent.keyboard("{Enter}");
+        await userEvent.click(
+          await screen.findByRole("option", { name: "Fictional Proposal" }),
+        );
+        await userEvent.keyboard("{Enter}");
+        // Then it is saved with no reason asked for
+        await waitFor(() => {
+          expect(sent(fetch, `PUT ${featurePath}`)).toEqual([
+            { proposalIds: [] },
+          ]);
+        });
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+
+      it("asks nothing again about a proposal a draft already removed the feature from", async () => {
+        // Given a proposal whose draft already removed the feature, and another proposal
+        const otherId = crypto.randomUUID();
+        const start = featurePlan({
+          canEdit: true,
+          proposals: [
+            proposal({
+              featureIds: [],
+              draft: recordDraft({
+                changed: ["featureIds"],
+                live: { featureIds: [first.id] },
+              }),
+            }),
+            proposal({ id: otherId, name: "Fictional Other Proposal" }),
+          ],
+        });
+        const { fetch } = await openPage(
+          "/features",
+          start,
+          { ...answers, [`PUT ${featurePath}`]: saved(() => start) },
+          planEditor,
+        );
+        // When the feature is added to the other proposal
+        act(() => {
+          cell(first, "proposalIds")?.focus();
+        });
+        await userEvent.keyboard("{Enter}");
+        await userEvent.click(
+          await screen.findByRole("option", {
+            name: "Fictional Other Proposal",
+          }),
+        );
+        await userEvent.keyboard("{Enter}");
+        // Then it is saved with no reason asked for
+        await waitFor(() => {
+          expect(sent(fetch, `PUT ${featurePath}`)).toEqual([
+            { proposalIds: [otherId] },
+          ]);
+        });
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+
+      it("asks nothing when a feature is only added to a proposal", async () => {
+        const { fetch } = await openNamed("/features", {
+          [`PUT /api/features/${second.id}/projects-and-proposals`]:
+            saved(named),
+        });
+        act(() => {
+          cell(second, "proposalIds")?.focus();
+        });
+        await userEvent.keyboard("{Enter}");
+        await userEvent.click(
+          await screen.findByRole("option", { name: "Fictional Proposal" }),
+        );
+        await userEvent.keyboard("{Enter}");
+        await waitFor(() => {
+          expect(
+            sent(
+              fetch,
+              `PUT /api/features/${second.id}/projects-and-proposals`,
+            ),
+          ).toEqual([{ proposalIds: [proposalId] }]);
+        });
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+
+      it("asks for one reason when a proposal's features are removed from its side", async () => {
+        // Given a proposal with two features, on the Proposals tab
+        const proposalPath = `/api/proposals/${proposalId}`;
+        const start = featurePlan({
+          canEdit: true,
+          proposals: [proposal({ featureIds: [first.id, second.id] })],
+        });
+        const { fetch } = await openPage(
+          "/projects?tab=proposals",
+          start,
+          { ...answers, [`PUT ${proposalPath}`]: saved(() => start) },
+          planEditor,
+        );
+        // When both are removed
+        act(() => {
+          document.getElementById(`cell-${proposalId}-featureIds`)?.focus();
+        });
+        await userEvent.keyboard("{Enter}");
+        for (const name of ["Fictional First", "Fictional Second"]) {
+          await userEvent.click(await screen.findByRole("option", { name }));
+        }
+        await userEvent.keyboard("{Enter}");
+        const dialog = await screen.findByRole("dialog", {
+          name: "Reason for the removal",
+        });
+        // Then one reason is asked for both
+        expect(
+          within(dialog).getByText(
+            "Fictional Second and Fictional First are removed from Fictional Proposal.",
+          ),
+        ).toBeTruthy();
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Save" }),
+        );
+        await waitFor(() => {
+          expect(sent(fetch, `PUT ${proposalPath}`)).toMatchObject([
+            { featureIds: [], removalReason: null },
+          ]);
+        });
+      });
+    });
+
+    describe("a proposal's and a project's scope history", () => {
+      const at = "2030-01-02T10:00:00.000Z";
+      const day = (when: string) =>
+        new Intl.DateTimeFormat(undefined, { dateStyle: "medium" }).format(
+          new Date(when),
+        );
+      const historyPath = (path: string, id: string) =>
+        `GET /api/${path}/${id}/scope-history`;
+      const removing = () =>
+        featurePlan({
+          canEdit: true,
+          proposals: [
+            proposal({
+              featureIds: [],
+              removalReasons: { [first.id]: "Too costly" },
+              draft: recordDraft({
+                changed: ["featureIds", "removalReasons"],
+                live: { featureIds: [first.id], removalReasons: {} },
+              }),
+            }),
+          ],
+        });
+      const history = (
+        changes: object[] = [
+          {
+            featureId: first.id,
+            name: "Fictional First",
+            added: true,
+            at,
+            reason: null,
+          },
+        ],
+      ) => ({
+        [historyPath("proposals", proposalId)]: () =>
+          Response.json({ changes }),
+      });
+      const rows = () =>
+        within(
+          screen
+            .getByRole("heading", { name: "Scope history" })
+            .closest("section") as HTMLElement,
+        );
+
+      it("lists a draft's removal first, dated when drafted, with its reason", async () => {
+        await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          removing(),
+          { ...answers, ...history() },
+          planEditor,
+        );
+        await screen.findByText(`Added ${day(at)}`);
+        expect(
+          rows().getByText(`Removed ${day("2026-10-30T15:00:00.000Z")}`),
+        ).toBeTruthy();
+        expect(rows().getByText("Reason: Too costly")).toBeTruthy();
+        expect(
+          rows().getAllByRole("button", { name: "Fictional First" }),
+        ).toHaveLength(2);
+      });
+
+      it("changes the reason of a draft's removal", async () => {
+        // Given a feature a draft removes from a proposal, with a reason
+        const reasonPath = `/api/features/${first.id}/proposals/${proposalId}/removal-reason`;
+        const after = () => {
+          const changed = removing();
+          return {
+            ...changed,
+            proposals: changed.proposals.map((one) => ({
+              ...one,
+              removalReasons: { [first.id]: "Later" },
+            })),
+          };
+        };
+        const { fetch, held } = await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          removing(),
+          {
+            ...answers,
+            ...history(),
+            [`PUT ${reasonPath}`]: saved(after),
+          },
+          planEditor,
+        );
+        held.plan = after();
+        // When the reason is changed
+        await userEvent.click(
+          await rows().findByRole("button", { name: "Change reason" }),
+        );
+        const dialog = await screen.findByRole("dialog", {
+          name: "Change the reason for the removal",
+        });
+        const box = within(dialog).getByRole("textbox", {
+          name: "Reason (optional)",
+        });
+        expect((box as HTMLInputElement).value).toBe("Too costly");
+        await userEvent.clear(box);
+        await userEvent.type(box, "Later");
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Save" }),
+        );
+        // Then the new reason is sent, and shown at once
+        await waitFor(() => {
+          expect(sent(fetch, `PUT ${reasonPath}`)).toEqual([
+            { removalReason: "Later" },
+          ]);
+        });
+        expect(await rows().findByText("Reason: Later")).toBeTruthy();
+      });
+
+      it("shows a removal with no reason, undated when its draft has no date, and an empty reason to change", async () => {
+        await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          featurePlan({
+            canEdit: true,
+            proposals: [
+              proposal({
+                featureIds: [],
+                draft: recordDraft({
+                  changed: ["featureIds"],
+                  live: { featureIds: [first.id] },
+                  madeAt: null,
+                }),
+              }),
+            ],
+          }),
+          { ...answers, ...history() },
+          planEditor,
+        );
+        expect(await rows().findByText("Removed")).toBeTruthy();
+        expect(rows().queryByText(/^Reason:/)).toBeNull();
+        await userEvent.click(
+          rows().getByRole("button", { name: "Change reason" }),
+        );
+        const dialog = await screen.findByRole("dialog", {
+          name: "Change the reason for the removal",
+        });
+        expect(
+          within(dialog).getByRole<HTMLInputElement>("textbox", {
+            name: "Reason (optional)",
+          }).value,
+        ).toBe("");
+      });
+
+      it("offers no Change reason to those who don't edit the plan", async () => {
+        await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          { ...removing(), canEdit: false },
+          { ...answers, ...history() },
+          featureEditor,
+        );
+        await screen.findByText(`Added ${day(at)}`);
+        expect(
+          rows().queryByRole("button", { name: "Change reason" }),
+        ).toBeNull();
+      });
+
+      it("leaves out drafts beside Live only", async () => {
+        await openPage(
+          `/projects?tab=proposals&open=${proposalId}&show=live`,
+          removing(),
+          { ...answers, ...history() },
+          planEditor,
+        );
+        await screen.findByText(`Added ${day(at)}`);
+        expect(rows().queryByText(/^Removed/)).toBeNull();
+      });
+
+      it("names a feature no longer on the roadmap as the history last named it, or as removed", async () => {
+        await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          featurePlan({ canEdit: true }),
+          {
+            ...answers,
+            ...history([
+              {
+                featureId: crypto.randomUUID(),
+                name: "Fictional Gone",
+                added: false,
+                at,
+                reason: "Out of scope",
+              },
+              {
+                featureId: crypto.randomUUID(),
+                name: null,
+                added: true,
+                at,
+                reason: null,
+              },
+            ]),
+          },
+          planEditor,
+        );
+        expect(await rows().findByText("Fictional Gone")).toBeTruthy();
+        expect(rows().getByText("A removed feature")).toBeTruthy();
+        expect(rows().getByText("Reason: Out of scope")).toBeTruthy();
+      });
+
+      it("lists a project's drafted changes, with no reason to give, and opens a feature from them", async () => {
+        // Given a project whose draft adds one feature and removes another
+        const start = featurePlan({
+          canEdit: true,
+          projects: [
+            project({
+              featureIds: [second.id],
+              draft: recordDraft({
+                changed: ["featureIds"],
+                live: { featureIds: [first.id] },
+              }),
+            }),
+          ],
+        });
+        const { history: address } = await openPage(
+          `/features?open=${projectId}`,
+          start,
+          {
+            ...answers,
+            [historyPath("projects", projectId)]: () =>
+              Response.json({ changes: [] }),
+          },
+          planEditor,
+        );
+        // Then both show as drafts, the removal with no reason to change
+        const drafted = day("2026-10-30T15:00:00.000Z");
+        expect(await rows().findByText(`Added ${drafted}`)).toBeTruthy();
+        expect(rows().getByText(`Removed ${drafted}`)).toBeTruthy();
+        expect(
+          rows().queryByRole("button", { name: "Change reason" }),
+        ).toBeNull();
+        // And a feature named there opens beside Features
+        await userEvent.click(
+          rows().getByRole("button", { name: "Fictional Second" }),
+        );
+        await screen.findByRole("heading", { name: "Fictional Second" });
+        expect(address.location.search).toContain(`open=${second.id}`);
+      });
+
+      it("says when a project has no features yet", async () => {
+        await openPage(
+          `/projects?open=${projectId}`,
+          featurePlan({ canEdit: true }),
+          {
+            ...answers,
+            [historyPath("projects", projectId)]: () =>
+              Response.json({ changes: [] }),
+          },
+          planEditor,
+        );
+        expect(await rows().findByText("No features yet")).toBeTruthy();
+      });
+
+      it("says when the history can't be loaded, and tries again", async () => {
+        const path = historyPath("proposals", proposalId);
+        const { fetch } = await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          featurePlan({ canEdit: true }),
+          { ...answers, [path]: () => new Response(null, { status: 500 }) },
+          planEditor,
+        );
+        expect(
+          await rows().findByText("Fathom could not load the scope history."),
+        ).toBeTruthy();
+        const tries = () =>
+          sentTo(fetch).filter((sent) => sent === path).length;
+        const before = tries();
+        await userEvent.click(
+          rows().getByRole("button", { name: "Try again" }),
+        );
+        await waitFor(() => {
+          expect(tries()).toBeGreaterThan(before);
+        });
+      });
+    });
+
+    it("groups a feature's details under headings, in the table's order", async () => {
+      await openNamed(`/features?open=${first.id}`);
+      await screen.findByRole("heading", { name: "Fictional First" });
+      expect(
+        within(sidePanel())
+          .getAllByRole("heading", { level: 3 })
+          .map(({ textContent }) => textContent),
+      ).toEqual(["Details", "Customers and commitments", "Planning"]);
+    });
+
+    it("opens a feature's note from its details", async () => {
+      await openNamed(`/features?open=${first.id}`);
+      await userEvent.click(
+        await within(sidePanel()).findByRole("button", {
+          name: "Change Notes",
+        }),
+      );
+      expect(
+        await screen.findByRole("heading", {
+          name: "Notes for Fictional First",
+        }),
+      ).toBeTruthy();
+    });
+
     it("shows them as they are live beside Live only", async () => {
       await openPage(
         "/features?show=live",
@@ -2004,7 +2530,7 @@ describe("the Features page", () => {
     it("tells the hours of the cell with keyboard focus", async () => {
       await open(withEstimate(20), {}, inUnit("person-days"));
       await userEvent.click(
-        document.getElementById(`cell-${first.id}-release`) as HTMLElement,
+        document.getElementById(`cell-${first.id}-neededBy`) as HTMLElement,
       );
       await userEvent.keyboard("{ArrowRight}");
       expect((await screen.findByRole("tooltip")).textContent).toBe("20 hours");

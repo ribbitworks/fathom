@@ -52,7 +52,12 @@ const plan = (): ProjectPlan => ({
     },
   ],
   proposals: [
-    { ...namer("proposal", [featureId]), link: null, statusId: "open" },
+    {
+      ...namer("proposal", [featureId]),
+      link: null,
+      statusId: "open",
+      removalReasons: {},
+    },
   ],
   features: [],
   featureColumns: noFeatureColumns,

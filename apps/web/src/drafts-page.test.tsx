@@ -580,6 +580,7 @@ describe("the Drafts page", () => {
               customerIds: [],
               statusId: "f0000000-0000-4000-8000-000000000001",
               featureIds: [],
+              removalReasons: {},
               draft: recordDraft({ action: "deleted" }),
             },
           ],

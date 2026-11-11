@@ -87,6 +87,8 @@ export const recordDraftSchema = z.object({
       z.null(),
       z.array(z.string()),
       linkShape,
+      // Text by record, such as the reasons a proposal keeps by feature.
+      z.record(z.string(), z.string()),
     ]),
   ),
   uses: z.array(recordRefSchema),

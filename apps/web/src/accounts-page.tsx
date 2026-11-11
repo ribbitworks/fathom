@@ -62,6 +62,7 @@ import { PageHeader } from "./page-header.tsx";
 import classes from "./pages.module.css";
 import { type SignedInUser, sessionQuery } from "./session.ts";
 import { count } from "./numbers.ts";
+import { formatMomentDay } from "./table-view.ts";
 
 type Dialog =
   | { kind: "create" }
@@ -649,8 +650,6 @@ function DialogContent({ dialog, ...props }: DialogProps & { dialog: Dialog }) {
   }
 }
 
-const createdDate = new Intl.DateTimeFormat(undefined, { dateStyle: "medium" });
-
 type Filter = "all" | "active" | "deactivated";
 
 function matches(account: Account, search: string, filter: Filter): boolean {
@@ -740,7 +739,7 @@ function AccountRow({
       </Table.Td>
       <Table.Td c="dimmed" className={classes.figures}>
         <time dateTime={account.createdAt}>
-          {createdDate.format(new Date(account.createdAt))}
+          {formatMomentDay(account.createdAt)}
         </time>
       </Table.Td>
       {onEdit && (

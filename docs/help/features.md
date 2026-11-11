@@ -17,7 +17,7 @@ To add one quickly, type its name in the empty row at the end of the table and p
 1. Select a cell, then type, or press Enter, to change it.
 1. Press Enter to save, or Esc to leave it as it was.
 
-To work in a feature's details instead, point at its row and select the button at the right of its **Name** cell, or select **Show details** in its **⋯** menu. Each value there has a pencil that changes it.
+To work in a feature's details instead, point at its row and select the button at the right of its **Name** cell, or select **Show details** in its **⋯** menu. The details group its values under **Details**, **Customers and commitments**, **Planning** and **Columns**, in the order the table starts with. Each value there has a pencil that changes it.
 
 ### Plan When a Feature Ships
 
@@ -48,7 +48,7 @@ Select **Remove feature** in the feature's **⋯** menu. Fathom refuses while a 
 - **No team** marks a planned or in-progress feature that has no feature team yet.
 - **Needed by** gives the month the feature is wanted. Type it as digits, such as 2027-03, and it shows as Mar 2027. It's a rough wish; **Target cycle** is the commitment.
 - **Status** says how far along the feature is. The statuses are the organization's own, and each one means Possible, Planned, In progress, Done or Cancelled. A new feature starts on the first status that means Possible.
-- **Projects** and **Proposals** name the projects that need the feature and the proposals that propose it. A change to them changes that project or proposal.
+- **Projects** and **Proposals** name the projects that need the feature and the proposals that propose it. A change to them changes that project or proposal, and removing a proposal asks for a reason, as in [Projects](projects.md).
 - **Effort** gives the work the feature needs, such as 2.5 PD for person-days. Rest the pointer on it to see the hours.
 - **Release** follows from **Target cycle**, so it can't be changed.
 

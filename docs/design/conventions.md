@@ -62,7 +62,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 ## Dates
 
 - **Days:** A day shows in the reader's language with a short month and its year, such as 31 Dec 2026 or Dec 31, 2026. Every date shown includes its year. The About box's full date and Settings' day and time in a time zone are the two exceptions, as [Visual Design](visual-design.md#layout) sets out.
-  - **Drawn by:** `formatDay` in `apps/web/src/table-view.ts`, which date cells use through `cellKinds` in `apps/web/src/cell-kinds.tsx`.
+  - **Drawn by:** `formatDay` in `apps/web/src/table-view.ts`, which date cells use through `cellKinds` in `apps/web/src/cell-kinds.tsx`, and `formatMomentDay` there for the day of a moment, such as when an account was made.
   - **Example:** each release's heading on Features grouped by Release, such as Platform: Harbor 2 and the day it ships.
 - **Months:** A month shows as a short month and its year, such as Mar 2027.
   - **Drawn by:** `formatMonth` in `apps/web/src/table-view.ts`.
@@ -83,7 +83,7 @@ A short lookup of the conventions every screen follows, for those who build scre
   - **Drawn by:** `RecordLink` in `apps/web/src/record-details.tsx`.
   - **Example:** a customer in Offline Sync's details opens Projects' Customers tab with that customer's details.
 - **Several records in a cell:** A cell naming several records lists them in one line, cut short where they don't fit, with every name in its tooltip, one to a line; a details panel lists them one to a line.
-  - **Drawn by:** the cell's kind in `apps/web/src/cell-kinds.tsx`, with the tip from `TableTips` in `apps/web/src/table-tips.tsx`.
+  - **Drawn by:** the cell's kind in `apps/web/src/cell-kinds.tsx`, with the tip from `TableTips` in `apps/web/src/table-tips.tsx`, and `RecordLinkList` in `apps/web/src/record-details.tsx` in a panel.
   - **Example:** Crane Control's Features cell.
 
 ## History
@@ -94,9 +94,9 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **A change in words:** Wherever a change is described, in a record's menu, on the Drafts page or in the change history, the field is in semibold and each value is set apart on a light ground, as a value is in code.
   - **Drawn by:** `PhraseText` and `PhraseList` in `apps/web/src/phrase.tsx`.
   - **Example:** the seeded draft of the Level column, Name from Level to Grade, on the Drafts page.
-- **A record's own history:** A history inside a record's details has a row for each change, a draft's first, marked as a draft and undated until approved, then each as approved, newest first. A row is never removed.
-  - **Drawn by:** `ScopeHistory` in `apps/web/src/scope-history.tsx`, which the scope history change adds.
-  - **Example:** a project's scope history, once that change is merged.
+- **A record's own history:** A history inside a record's details has a row for each change, newest first, a draft's first, marked Draft, each dated the day it was drafted, a date it keeps once approved. A row is never removed or struck through, since history is not undone.
+  - **Drawn by:** `ScopeHistory` in `apps/web/src/scope-history.tsx`.
+  - **Example:** Fleet Tracking Bid's scope history, where Report Builder was removed with a reason.
 
 ## Details Panels
 
@@ -104,8 +104,8 @@ A short lookup of the conventions every screen follows, for those who build scre
   - **Drawn by:** `RecordSection`, `Row` and `RecordLink` in `apps/web/src/record-details.tsx`, with `useRecordEditing` in `apps/web/src/record-editing.tsx` for the pencils.
   - **Example:** any seeded person's details beside People.
 - **Columns follow the panel's order:** A table's default column order follows its details panel's sections and rows, and the other way round, defined once and used by both.
-  - **Drawn by:** `featureColumnGroups` in `apps/web/src/project-grids.tsx`, which the Feature details change adds.
-  - **Example:** Features, once that change is merged.
+  - **Drawn by:** `featureColumnGroups` in `apps/web/src/project-grids.tsx`.
+  - **Example:** Features, whose columns start Name, Status, Description, Notes, as its details' Details section does.
 - **Actions on a list in a panel:** Actions on a list inside a details panel sit under the list, at its left, as outlined buttons without an icon, the main one first, so they sit where the next item would go and the list's heading stays a plain heading, as every other section's does. Decided by the owner on 2026-11-11.
   - **Drawn by:** no shared piece yet.
   - **Example:** today a project's details have Show milestones beside the Milestones heading, with no outline, and Add milestone under the list with a + before it; both move under the list, Add milestone first.

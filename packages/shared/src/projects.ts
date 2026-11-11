@@ -23,6 +23,7 @@ import {
 export const projectLengths = {
   name: recordNameLength,
   externalId: 40,
+  removalReason: 200,
 } as const;
 
 // How drafts and decisions name each kind of record, in the server and the browser alike.
@@ -122,6 +123,8 @@ export const proposalSchema = z.object({
   statusId: z.string(),
   // The features it proposes.
   featureIds: z.array(z.string()),
+  // The reason given for removing each feature from it, by feature, while that feature is not in it.
+  removalReasons: z.record(z.string(), z.string()),
 });
 
 export type Proposal = z.infer<typeof proposalSchema>;
@@ -174,6 +177,16 @@ export type PlanChoices = z.infer<typeof planChoicesSchema>;
 
 const externalId = optionalText(projectLengths.externalId);
 
+// The reason given for removing features from a proposal, kept for each feature removed by the
+// change that gives it, or null for none.
+const givenReason = z
+  .string()
+  .trim()
+  .max(projectLengths.removalReason)
+  .nullable()
+  .transform((value) => (value === "" ? null : value));
+const removalReason = givenReason.default(null);
+
 export const customerRequestSchema = z.object({ name: recordName });
 
 export type CustomerRequest = z.infer<typeof customerRequestSchema>;
@@ -222,6 +235,7 @@ export const proposalRequestSchema = z.object({
   customerIds: picked,
   statusId: z.uuid().optional(),
   featureIds: picked,
+  removalReason,
 });
 
 export type ProposalRequest = z.infer<typeof proposalRequestSchema>;
@@ -232,11 +246,77 @@ export type ProposalRequest = z.infer<typeof proposalRequestSchema>;
 export const featureProjectsRequestSchema = z.object({
   projectIds: pickedIfNamed,
   proposalIds: pickedIfNamed,
+  removalReason: givenReason.optional(),
 });
 
 export type FeatureProjectsRequest = z.infer<
   typeof featureProjectsRequestSchema
 >;
+
+// The reason for removing a feature from a proposal, changed while the removal is a draft.
+export const removalReasonRequestSchema = z.object({ removalReason });
+
+export type RemovalReasonRequest = z.infer<typeof removalReasonRequestSchema>;
+
+// The reasons a proposal keeps, by feature, from a value as stored, or none for anything else.
+export const removalReasonsIn = (value: unknown): Record<string, string> =>
+  z.record(z.string(), z.string()).catch({}).parse(value);
+
+// The reasons a proposal keeps once it proposes the features given rather than those it had: each
+// feature removed that the live proposal proposes keeps the reason given, if any, and a feature it
+// proposes keeps none. A feature only a draft added has nothing to remove, so no reason.
+export function removalReasonsAfter(
+  reasons: Readonly<Record<string, string>>,
+  had: readonly string[],
+  featureIds: readonly string[],
+  reason: string | null,
+  live: readonly string[],
+): Record<string, string> {
+  const taken = had.filter(
+    (id) => !featureIds.includes(id) && live.includes(id),
+  );
+  const given = taken.map((id): [string, string | null] => [id, reason]);
+  return Object.fromEntries(
+    [
+      ...Object.entries(reasons).filter(([id]) => !taken.includes(id)),
+      ...given,
+    ].filter(
+      (entry): entry is [string, string] =>
+        entry[1] !== null && !featureIds.includes(entry[0]),
+    ),
+  );
+}
+
+// The reasons a proposal keeps once the reason for removing one feature from it is changed.
+export function withRemovalReason(
+  reasons: Readonly<Record<string, string>>,
+  featureId: string,
+  reason: string | null,
+): Record<string, string> {
+  const others = Object.entries(reasons).filter(([id]) => id !== featureId);
+  return Object.fromEntries(
+    reason === null ? others : [...others, [featureId, reason]],
+  );
+}
+
+// A feature a project or proposal was given or had removed, as approved, newest first, named as
+// the history last named it.
+export const scopeChangeSchema = z.object({
+  featureId: z.string(),
+  name: z.string().nullable(),
+  added: z.boolean(),
+  at: z.iso.datetime({ offset: true }),
+  // The reason given for removing it from a proposal, or null.
+  reason: z.string().nullable(),
+});
+
+export type ScopeChange = z.infer<typeof scopeChangeSchema>;
+
+export const scopeHistorySchema = z.object({
+  changes: z.array(scopeChangeSchema),
+});
+
+export type ScopeHistory = z.infer<typeof scopeHistorySchema>;
 
 // The kinds of record that name features, each by the request's field of its records.
 export const featureNamerKeys = {

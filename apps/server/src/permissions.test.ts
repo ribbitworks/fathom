@@ -782,6 +782,17 @@ const routes: Route[] = [
     needs: allOf("plan:edit"),
     body: () => ({ projectIds: [] }),
   },
+  ...["projects", "proposals"].map((path): Route => ({
+    method: "GET",
+    pattern: `/api/${path}/:id/scope-history`,
+    needs: allOf("plan:view"),
+  })),
+  {
+    method: "PUT",
+    pattern: "/api/features/:id/proposals/:proposalId/removal-reason",
+    needs: allOf("plan:edit"),
+    body: () => ({ removalReason: "Fictional reason" }),
+  },
   {
     method: "POST",
     pattern: "/api/projects/:projectId/milestones",

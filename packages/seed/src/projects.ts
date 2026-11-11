@@ -11,6 +11,7 @@
 // included in the runtime image.
 
 import {
+  type ChangeRecord,
   customers,
   features,
   type Database,
@@ -53,6 +54,8 @@ export const seededProposals: readonly {
   owner: number | null;
   // The seeded features it proposes, by key.
   features: readonly string[];
+  // A seeded feature it proposed and no longer does, by key, with the reason given for removing it.
+  removed?: { feature: string; reason: string };
 }[] = [
   {
     key: "cranes",
@@ -93,6 +96,10 @@ export const seededProposals: readonly {
     customers: ["transit"],
     owner: null,
     features: ["retention-controls", "partner-portal"],
+    removed: {
+      feature: "report-builder",
+      reason: "Reporting dropped from the bid",
+    },
   },
   {
     key: "ore",
@@ -288,6 +295,8 @@ export async function seedProjects(
         .insert(features)
         .values({ statusId: inProgress, generalForProjectId });
     const made: SeededChange[] = [];
+    // Features removed from proposals, recorded after the proposals were added, as an edit is.
+    const removals: ChangeRecord[] = [];
     for (const { key, name } of seededCustomers) {
       const id = customerId(key);
       await transaction.insert(customers).values({ id, name });
@@ -304,8 +313,42 @@ export async function seedProjects(
         statusId: String(status(proposal.status)),
         featureIds: featureIds(proposal.features),
       };
-      await transaction.insert(proposals).values({ id, ...row });
-      made.push(...recorded("proposal", id, "created", row));
+      const { removed } = proposal;
+      const proposed =
+        removed === undefined
+          ? row.featureIds
+          : featureIds([...proposal.features, removed.feature]);
+      const reasons =
+        removed === undefined
+          ? {}
+          : { [featureId(removed.feature)]: removed.reason };
+      await transaction
+        .insert(proposals)
+        .values({ id, ...row, removalReasons: reasons });
+      made.push(
+        ...recorded("proposal", id, "created", {
+          ...row,
+          featureIds: proposed,
+        }),
+      );
+      if (removed !== undefined) {
+        removals.push(
+          ...(
+            [
+              ["featureIds", proposed, row.featureIds],
+              ["removalReasons", {}, reasons],
+            ] as const
+          ).map(([field, oldValue, newValue]): ChangeRecord => ({
+            recordType: "proposal",
+            recordId: id,
+            action: "changed",
+            field,
+            tier: "general",
+            oldValue,
+            newValue,
+          })),
+        );
+      }
     }
     for (const project of seededProjects) {
       const id = projectId(project.key);
@@ -335,6 +378,7 @@ export async function seedProjects(
       }
     }
     await recordChanges(transaction, null, made);
+    await recordChanges(transaction, null, removals);
     return true;
   });
 }

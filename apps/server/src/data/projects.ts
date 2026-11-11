@@ -29,6 +29,10 @@ import {
   type Proposal,
   type ProposalRequest,
   projectDates,
+  type RemovalReasonRequest,
+  removalReasonsAfter,
+  removalReasonsIn,
+  withRemovalReason,
   type RecordType,
   sameDates,
 } from "@fathom/shared";
@@ -255,6 +259,10 @@ function projectOut(
   };
 }
 
+// The reasons a proposal keeps for the features removed from it, by feature.
+const reasonsOf = (proposal: Recorded | undefined): Record<string, string> =>
+  removalReasonsIn(proposal?.removalReasons);
+
 function proposalOut(
   state: RecordsState,
   makers: Makers,
@@ -270,6 +278,7 @@ function proposalOut(
     customerIds: linkedIds(proposal, "customerIds"),
     statusId: String(proposal.statusId),
     featureIds: linkedIds(proposal, "featureIds"),
+    removalReasons: reasonsOf(proposal),
     ...extras(state, makers, "proposal", id),
   };
 }
@@ -509,11 +518,13 @@ async function statusFor(
   return firstOfferedOrRefused(transaction, list, meaning, missing);
 }
 
+// A proposal as a request makes it, from the version shown and the live one, if any.
 async function proposalRecord(
   transaction: Transaction,
   state: RecordsState,
   request: ProposalRequest,
-  had?: unknown,
+  current?: Recorded,
+  live?: Recorded,
 ) {
   await checkOwner(transaction, request.ownerId);
   checkRoadmapFeatures(state, request.featureIds);
@@ -527,9 +538,16 @@ async function proposalRecord(
       transaction,
       "proposal-statuses",
       request.statusId,
-      had,
+      current?.statusId,
     ),
     featureIds: request.featureIds,
+    removalReasons: removalReasonsAfter(
+      reasonsOf(current),
+      linkedIds(current, "featureIds"),
+      request.featureIds,
+      request.removalReason,
+      linkedIds(live, "featureIds"),
+    ),
   };
 }
 
@@ -564,7 +582,13 @@ export async function changeProposal(
       state,
       "proposal",
       id,
-      await proposalRecord(transaction, state, request, proposal.statusId),
+      await proposalRecord(
+        transaction,
+        state,
+        request,
+        proposal,
+        stateOf(state, "proposal").live.get(id),
+      ),
     );
   });
 }
@@ -671,6 +695,31 @@ export async function changeFeature(
   });
 }
 
+// What else each kind that names features keeps once the features it names change: a proposal,
+// the reason for each feature removed from it.
+const keptWithScope: Readonly<
+  Record<
+    keyof typeof featureNamerKeys,
+    (change: {
+      record: Recorded;
+      live: Recorded | undefined;
+      featureIds: readonly string[];
+      reason: string | null;
+    }) => Recorded
+  >
+> = {
+  project: () => ({}),
+  proposal: ({ record, live, featureIds, reason }) => ({
+    removalReasons: removalReasonsAfter(
+      reasonsOf(record),
+      linkedIds(record, "featureIds"),
+      featureIds,
+      reason,
+      linkedIds(live, "featureIds"),
+    ),
+  }),
+};
+
 // Adds a feature to, or takes it from, each project and proposal whose naming of it the request
 // changes, as their drafts, in one change set. Those whose naming it keeps are left as they are, and
 // so is one drafted to be removed that the request leaves out, since a view of the drafts applied
@@ -715,17 +764,51 @@ export async function changeFeatureProjects(
         const others = linkedIds(record, "featureIds").filter(
           (other) => other !== featureId,
         );
-        return {
-          type,
-          id,
-          record: {
-            ...record,
-            featureIds: asked.has(id) ? [...others, featureId].sort() : others,
-          },
-        };
+        const featureIds = asked.has(id)
+          ? [...others, featureId].sort()
+          : others;
+        // The kind is always one of the fixed kinds above.
+        // eslint-disable-next-line security/detect-object-injection
+        const kept = keptWithScope[type]({
+          record,
+          live: stateOf(state, type).live.get(id),
+          featureIds,
+          reason: request.removalReason ?? null,
+        });
+        return { type, id, record: { ...record, featureIds, ...kept } };
       });
     });
     return saveRecordDrafts(transaction, maker, state, wanted);
+  });
+}
+
+// Changes the reason for removing a feature from a proposal, while a draft removes it.
+export async function changeRemovalReason(
+  database: Database,
+  maker: Actor,
+  featureId: string,
+  proposalId: string,
+  request: RemovalReasonRequest,
+): Promise<Saved<PlanRecords>> {
+  return changingPlan(database, maker, async (transaction, state) => {
+    const proposal = changeableRecord(state, "proposal", proposalId);
+    const live = stateOf(state, "proposal").live.get(proposalId);
+    if (
+      !linkedIds(live, "featureIds").includes(featureId) ||
+      linkedIds(proposal, "featureIds").includes(featureId)
+    ) {
+      throw new ConflictError(
+        "No draft removes this feature from the proposal, so it has no reason to change",
+      );
+    }
+    return saveRecordDraft(transaction, maker, state, "proposal", proposalId, {
+      ...proposal,
+      removalReasons: withRemovalReason(
+        reasonsOf(proposal),
+        featureId,
+        request.removalReason,
+      ),
+    });
   });
 }
 

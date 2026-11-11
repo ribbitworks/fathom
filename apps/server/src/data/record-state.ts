@@ -72,8 +72,14 @@ export interface RecordKind {
     ) => string | undefined;
   };
   // A field's value as the history says it, for a field it cannot show as it is kept, such as an
-  // allocation's months.
-  valueInWords?: (field: string, value: unknown) => string[] | undefined;
+  // allocation's months, with the records its value names by the names idsInValue asks for.
+  valueInWords?: (
+    field: string,
+    value: unknown,
+    name: (id: string) => string | undefined,
+  ) => string[] | undefined;
+  // The records a field's value names that valueInWords names, beyond the kind's links.
+  idsInValue?: (field: string, value: unknown) => string[];
   // What approving does beyond a record's own row, once the row is added and before it is removed.
   onAdded?: (transaction: Transaction, id: string) => Promise<void>;
   onRemoving?: (transaction: Transaction, id: string) => Promise<void>;

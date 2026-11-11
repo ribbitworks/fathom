@@ -15,10 +15,11 @@ import type {
   MilestoneRequest,
   Project,
   ProjectPlan,
+  Proposal,
   RecordRef,
   Show,
 } from "@fathom/shared";
-import { allOf } from "@fathom/shared";
+import { allOf, withRemovalReason } from "@fathom/shared";
 import {
   Button,
   Group,
@@ -68,6 +69,8 @@ import details from "./record-details.module.css";
 import {
   customerTable,
   dayOrEmpty,
+  addedColumnsTitle,
+  featureColumnGroups,
   featureColumns,
   featureTable,
   releaseColumnKey,
@@ -91,10 +94,12 @@ import {
 import {
   addMilestone,
   allMilestones,
+  changeRemovalReason,
   changeMilestone,
   type FeatureFields,
   type FeatureNamer,
   isFeature,
+  isProposal,
   type MilestoneAdding,
   namersIn,
   operationsOf,
@@ -105,13 +110,25 @@ import {
   type PlanRecordKind,
   type PlanTab,
   projectPlanQuery,
+  namesOf,
   projectTabs,
   type TableChoices,
   streamOfReleaseGroup,
   tableChoices,
   withNamers,
 } from "./projects.ts";
-import { inUnitsWords, RecordLink, Row } from "./record-details.tsx";
+import { proposalRemovalOf } from "./proposal-removal.ts";
+import { ScopeHistory } from "./scope-history.tsx";
+import {
+  inUnitsWords,
+  RecordLinkList,
+  RecordSection,
+  Row,
+} from "./record-details.tsx";
+import {
+  type ReasonAsked,
+  RemovalReasonModal,
+} from "./removal-reason-dialog.tsx";
 import {
   type Column,
   heldBack,
@@ -125,13 +142,18 @@ import {
 } from "./record-grid.tsx";
 import {
   type Editing,
-  type RecordEditingContext,
   useChosenUnits,
   useRecordEditing,
 } from "./record-editing.tsx";
 import { newRecordQuestion, useDiscardQuestion } from "./discard-question.tsx";
 import { entered, type FormValues, newRecordId } from "./new-record-panel.tsx";
-import { afterNote, noteQuestion, useNoteEditing } from "./note-editing.tsx";
+import {
+  afterNote,
+  type NoteContext,
+  type NoteEditing,
+  noteQuestion,
+  useNoteEditing,
+} from "./note-editing.tsx";
 import { isMilestoneField, MilestoneField } from "./milestone-field.tsx";
 import { NewPlanRecordPanel, noOthers } from "./new-plan-record-panel.tsx";
 import { focusSoon } from "./focus.ts";
@@ -322,7 +344,7 @@ export function ProjectsPage({
   const [forms, setForms] = useState(0);
   const form = beingAdded?.tab === tab ? beingAdded : undefined;
   const notes = useNoteEditing(panelTitleId);
-  const note = notes.note(form === undefined ? undefined : newRecordId);
+  const note = notes.note(form === undefined ? open : newRecordId);
   // The record just added, whose details show once the plan has it.
   const [justAdded, setJustAdded] = useState<string>();
   const openedAdded = useRef<string>(undefined);
@@ -367,10 +389,15 @@ export function ProjectsPage({
     { project: Project; milestone?: Milestone } | undefined
   >();
   const [dialogOpened, setDialogOpened] = useState(false);
+  const [reasonAsked, setReasonAsked] = useState<ReasonAsked>();
   const { save, undoable, done } = useSaving<ProjectPlan>({
     queryKey: projectPlanQuery.queryKey,
     removed: "Someone else has removed this. The plan has been refreshed.",
-    blocked: deciding || dialogOpened || columnDialog.opened,
+    blocked:
+      deciding ||
+      dialogOpened ||
+      columnDialog.opened ||
+      reasonAsked !== undefined,
   });
   const columnSaving = { save, undoable, done };
   const canEdit = query.data !== undefined && page.mayEdit(query.data);
@@ -402,6 +429,36 @@ export function ProjectsPage({
         } else {
           undoable(changeSetId, before);
         }
+      },
+    });
+  };
+
+  const changeReason = (featureId: string, proposal: Proposal) => {
+    const features = namesOf((query.data as ProjectPlan).features, [featureId]);
+    setReasonAsked({
+      removal: { features, proposals: [proposal.name] },
+      reason: new Map(Object.entries(proposal.removalReasons)).get(featureId),
+      changing: true,
+      onSave: (removalReason) => {
+        save({
+          next: (plan) =>
+            withRecord(plan, "proposal", proposal.id, (shown) => ({
+              ...shown,
+              removalReasons: withRemovalReason(
+                proposal.removalReasons,
+                featureId,
+                removalReason,
+              ),
+            })),
+          save: async () =>
+            (
+              await changeRemovalReason(featureId, proposal.id, {
+                removalReason,
+              })
+            ).changeSetId,
+          failure: `Fathom could not change the reason for removing ${allOf(features)} from ${proposal.name}. Try again in a moment.`,
+          onSaved: undoable,
+        });
       },
     });
   };
@@ -452,14 +509,31 @@ export function ProjectsPage({
           onSaved: undoable,
         });
       },
+      // A change that removes features from proposals first asks for the reason.
       update: (record, change) => {
-        save({
-          next: (plan) => withRecordChange(plan, type, record.id, change),
-          save: async () =>
-            (await operationsOf(type).change(record, change)).changeSetId,
-          failure: `Fathom could not change ${record.name}.`,
-          onSaved: undoable,
-        });
+        const saveWith = (removalReason?: string | null) => {
+          save({
+            next: (plan) => withRecordChange(plan, type, record.id, change),
+            save: async () =>
+              (
+                await operationsOf(type).change(
+                  record,
+                  removalReason === undefined
+                    ? change
+                    : { ...change, removalReason },
+                )
+              ).changeSetId,
+            failure: `Fathom could not change ${record.name}.`,
+            onSaved: undoable,
+          });
+        };
+        const removal = proposalRemovalOf(
+          query.data as ProjectPlan,
+          record,
+          change,
+        );
+        if (removal === undefined) saveWith();
+        else setReasonAsked({ removal, changing: false, onSave: saveWith });
       },
       decide,
       remove: (record) => {
@@ -585,6 +659,8 @@ export function ProjectsPage({
       onChange: (type, record, change) => {
         actionsFor<PlanRecord, unknown>(type).update(record, change);
       },
+      changeReason,
+      notes,
     });
     const shared = { canEdit, approves, saving, view, onView };
     // The form takes the panel's place while a record is being added.
@@ -813,6 +889,12 @@ export function ProjectsPage({
       )}
       <Fragment key={tab}>{content}</Fragment>
       {question.dialog}
+      <RemovalReasonModal
+        asked={reasonAsked}
+        onClose={() => {
+          setReasonAsked(undefined);
+        }}
+      />
       <DecisionModal
         decision={decision}
         opened={deciding}
@@ -993,6 +1075,8 @@ function recordPanel({
   showMilestones,
   follow,
   onChange,
+  changeReason,
+  notes,
 }: {
   tab: PlanTab;
   plan: ProjectPlan;
@@ -1015,6 +1099,9 @@ function recordPanel({
     record: PlanRecord,
     change: PlanChange,
   ) => void;
+  // Asks for a new reason for a draft removing a feature from a proposal.
+  changeReason: (featureId: string, proposal: Proposal) => void;
+  notes: Pick<NoteEditing, "start">;
 }): SidePanel | undefined {
   if (open === undefined) return undefined;
   const asShown = <Rec extends PlanRecord>(records: readonly Rec[]) =>
@@ -1059,6 +1146,33 @@ function recordPanel({
   const { type, record: shown } = found;
   const columns = found.columns();
   const canEdit = editsKind(type);
+  const identified = new Map<string, Identified>(
+    [
+      ...asShown(plan.customers),
+      ...asShown(plan.projects),
+      ...asShown(plan.proposals),
+    ].map((one) => [one.id, one]),
+  );
+  // Projects and proposals, which name features, show their scope history.
+  const scope =
+    "featureIds" in shown ? (
+      <ScopeHistory
+        type={isProposal(shown) ? "proposal" : "project"}
+        record={shown}
+        features={asShown(plan.features)}
+        show={show}
+        onShow={(featureId) => {
+          follow.showRecord("features", featureId);
+        }}
+        onChangeReason={
+          isProposal(shown) && canEdit
+            ? (featureId) => {
+                changeReason(featureId, shown);
+              }
+            : undefined
+        }
+      />
+    ) : null;
   const extra =
     type === "project" ? (
       <ProjectExtras
@@ -1071,13 +1185,6 @@ function recordPanel({
         showMilestones={showMilestones}
       />
     ) : null;
-  const identified = new Map<string, Identified>(
-    [
-      ...asShown(plan.customers),
-      ...asShown(plan.projects),
-      ...asShown(plan.proposals),
-    ].map((one) => [one.id, one]),
-  );
   return {
     key: "record",
     id: panelId,
@@ -1110,8 +1217,11 @@ function recordPanel({
             onChange={(change) => {
               onChange(type, shown, change);
             }}
+            sections={type === "feature" ? featureColumnGroups : undefined}
+            notes={notes}
           />
           {extra}
+          {scope}
         </Stack>
       </SidePanelFrame>
     ),
@@ -1145,9 +1255,6 @@ const linkedPages = new Map<string, (follow: Follow, id: string) => void>([
   ],
 ]);
 
-// Columns whose records the panel lists one to a line, as there can be many.
-const listedOnLines = new Set(["featureIds", "projectIds", "proposalIds"]);
-
 // The records a panel's links can name with an ID of their own, by identifier.
 type IdentifiedRecords = ReadonlyMap<string, Identified>;
 
@@ -1166,24 +1273,16 @@ function RecordLinks({
     const choice = column.choices.find((one) => one.id === id);
     return choice === undefined ? [] : [choice];
   });
-  const onLines = listedOnLines.has(column.key);
-  const links = named.map(({ id, label }, index) => (
-    <span key={id}>
-      <RecordLink
-        name={<RecordName record={identified.get(id) ?? { id, name: label }} />}
-        onShow={() => {
+  return (
+    <RecordLinkList
+      links={named.map(({ id, label }) => ({
+        id,
+        name: <RecordName record={identified.get(id) ?? { id, name: label }} />,
+        onShow: () => {
           onShow(id);
-        }}
-      />
-      {!onLines && index < named.length - 1 && ","}
-    </span>
-  ));
-  return onLines ? (
-    <Stack gap={0} align="flex-start">
-      {links}
-    </Stack>
-  ) : (
-    <Group gap={4}>{links}</Group>
+        },
+      }))}
+    />
   );
 }
 
@@ -1197,6 +1296,8 @@ function PlanRecordDetails({
   identified,
   follow,
   onChange,
+  sections,
+  notes,
 }: {
   columns: readonly Column<never, PlanChange>[];
   units: Pick<View, "units" | "places">;
@@ -1206,8 +1307,17 @@ function PlanRecordDetails({
   identified: IdentifiedRecords;
   follow: Follow;
   onChange: (change: PlanChange) => void;
+  // The parts its details are shown in, any column none names in a last part of its own; or one
+  // list of its columns, in the table's order.
+  sections?: typeof featureColumnGroups | undefined;
+  // Opens a note, which the page holds, since a note is written in a panel of its own.
+  notes: Pick<NoteEditing, "start">;
 }) {
-  const { closeStale, editingOf } = useRecordEditing<never, PlanChange>();
+  const { closeStale, editingOf } = useRecordEditing<
+    never,
+    PlanChange,
+    NoteContext<never, PlanChange>
+  >(notes);
   // A column that offers units is edited in the unit the table shows at first, as a new record's
   // is, and the unit can be changed while editing without changing the table.
   const editUnits = useChosenUnits(units.units);
@@ -1218,8 +1328,9 @@ function PlanRecordDetails({
   const values = Object.fromEntries(
     rows.map(({ edited }) => [edited.key, edited.value(record as never)]),
   );
-  const context: RecordEditingContext<never, PlanChange> = {
+  const context: NoteContext<never, PlanChange> = {
     id: record.id,
+    name: record.name,
     kind: onlyKind,
     values,
     save:
@@ -1236,22 +1347,45 @@ function PlanRecordDetails({
   };
   closeStale(context);
   const editing = editingOf(context);
+  const rowOf = ({ column, edited }: (typeof rows)[number]) => (
+    <DetailRow
+      key={column.key}
+      column={column}
+      units={units}
+      record={record}
+      value={column.value(record as never)}
+      beside={beside}
+      editing={editing(edited)}
+      identified={identified}
+      follow={follow}
+    />
+  );
+  if (sections === undefined) {
+    return <dl className={details.list}>{rows.map(rowOf)}</dl>;
+  }
+  const named = new Set(sections.flatMap(({ keys }) => keys));
+  const others = {
+    title: addedColumnsTitle,
+    keys: rows.map(({ column }) => column.key).filter((key) => !named.has(key)),
+  };
   return (
-    <dl className={details.list}>
-      {rows.map(({ column, edited }) => (
-        <DetailRow
-          key={column.key}
-          column={column}
-          units={units}
-          record={record}
-          value={column.value(record as never)}
-          beside={beside}
-          editing={editing(edited)}
-          identified={identified}
-          follow={follow}
-        />
-      ))}
-    </dl>
+    <Stack gap="lg">
+      {[...sections, others].map((section, index) => {
+        const shown = section.keys.flatMap((key) =>
+          rows.filter(({ column }) => column.key === key),
+        );
+        if (shown.length === 0) return null;
+        return (
+          <RecordSection
+            key={section.title}
+            id={`record-section-${String(index)}`}
+            title={section.title}
+          >
+            {shown.map(rowOf)}
+          </RecordSection>
+        );
+      })}
+    </Stack>
   );
 }
 
@@ -1280,6 +1414,19 @@ function DetailRow({
     beside && draft?.action === "changed" && draft.changed.includes(column.key);
   const linkedPage = linkedPages.get(column.key);
   const also = inUnitsWords(column, units, record);
+  const shown =
+    linkedPage !== undefined && Array.isArray(value) && value.length > 0 ? (
+      <RecordLinks
+        column={column}
+        ids={value}
+        identified={identified}
+        onShow={(id) => {
+          linkedPage(follow, id);
+        }}
+      />
+    ) : also !== undefined ? (
+      <Text>{also}</Text>
+    ) : undefined;
   return (
     <Row
       column={column}
@@ -1287,18 +1434,7 @@ function DetailRow({
       changed={changed ? { live: column.live(draft as never) } : undefined}
       editing={editing}
     >
-      {linkedPage !== undefined && Array.isArray(value) && value.length > 0 ? (
-        <RecordLinks
-          column={column}
-          ids={value}
-          identified={identified}
-          onShow={(id) => {
-            linkedPage(follow, id);
-          }}
-        />
-      ) : also !== undefined ? (
-        <Text>{also}</Text>
-      ) : undefined}
+      {shown}
     </Row>
   );
 }

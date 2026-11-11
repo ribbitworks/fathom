@@ -2,7 +2,8 @@
 
 // Customers, projects with their milestones, proposals, and features: reading them all at once,
 // with what they can be given, and drafting each added, changed, and removed, and a feature's
-// projects and proposals, as drafts of those projects and proposals. Every change answers
+// projects and proposals, as drafts of those projects and proposals, with the reason for taking it
+// off a proposal, and each project's and proposal's scope history. Every change answers
 // with the change set it was saved in, and every change but a removal with every record as the
 // editor now sees them. Discarding and resubmitting their drafts goes through the routes for every
 // plan record's draft. The data access layer checks the actor's permissions.
@@ -19,7 +20,9 @@ import {
   projectPlanSchema,
   projectRequestSchema,
   proposalRequestSchema,
+  removalReasonRequestSchema,
   savedSchema,
+  scopeHistorySchema,
 } from "@fathom/shared";
 import type { FastifyPluginCallbackZod } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -112,6 +115,37 @@ export function projectRoutes(
         const { result, changeSetId } = await projects.changeFeatureProjects(
           request.actor,
           request.params.id,
+          request.body,
+        );
+        return { plan: result, changeSetId };
+      },
+    );
+
+    for (const [path, type] of [
+      ["projects", "project"],
+      ["proposals", "proposal"],
+    ] as const) {
+      app.get(
+        `/api/${path}/:id/scope-history`,
+        { schema: { params: idParams, response: { 200: scopeHistorySchema } } },
+        async (request) =>
+          projects.readScopeHistory(request.actor, type, request.params.id),
+      );
+    }
+    app.put(
+      "/api/features/:id/proposals/:proposalId/removal-reason",
+      {
+        schema: {
+          params: z.object({ id: z.uuid(), proposalId: z.uuid() }),
+          body: removalReasonRequestSchema,
+          response: { 200: planResponse },
+        },
+      },
+      async (request) => {
+        const { result, changeSetId } = await projects.changeRemovalReason(
+          request.actor,
+          request.params.id,
+          request.params.proposalId,
           request.body,
         );
         return { plan: result, changeSetId };

@@ -28,6 +28,14 @@ Point at the record's row and select the button at the right of its **Name** cel
 
 Choose a proposal's features the same way. Features shows the same links in its **Projects** and **Proposals** columns.
 
+### Give a Reason for Removing a Feature From a Proposal
+
+Removing a feature from a proposal, here or on **Features**, asks for a **Reason**, which can be left empty. The reason shows in the proposal's **Scope history**. While the removal is a draft, **Change reason** beside it changes the reason.
+
+### See How a Project's or Proposal's Scope Changed
+
+Open its details. **Scope history**, at the end, lists each feature added or removed, newest first, with the day the change was drafted and any reason for a removal. A change still waiting for approval is marked **Draft**.
+
 ### Add a Milestone to a Project
 
 1. Open the project's details.

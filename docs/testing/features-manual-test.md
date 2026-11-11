@@ -48,7 +48,23 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select the **Features** page in the left-hand menu.
-  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Projects**, **Proposals**, **Description**, **Notes**, **Target cycle**, **Release**, **Effort**, **Feature team** and **Complexity**. Beside the search box, the count reads **11 features**.
+  - **Expected:**
+    - The page is titled **Features**.
+    - The table's columns read, from left to right:
+      - Name
+      - Status
+      - Description
+      - Notes
+      - Customers
+      - Projects
+      - Proposals
+      - Needed by
+      - Effort
+      - Release
+      - Target cycle
+      - Feature team
+      - Complexity
+    - Beside the search box, the count reads **11 features**.
   - **Notes:**
 
 - [ ] **Step 2.** Look down the **Status** column.
@@ -306,7 +322,25 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Point at the row **Offline Sync**, then select the small button with an arrow at the right of its **Name** cell.
-  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Projects**, **Proposals**, **Description**, **Notes**, **Target cycle**, **Release**, **Effort**, **Feature team** and **Complexity**.
+  - **Expected:**
+    - A side panel titled **Offline Sync** opens beside the table.
+    - Under the heading **Details**, the rows read, from the top:
+      - Name
+      - Status
+      - Description
+      - Notes
+    - Under the heading **Customers and commitments**, the rows read, from the top:
+      - Customers
+      - Projects
+      - Proposals
+    - Under the heading **Planning**, the rows read, from the top:
+      - Needed by
+      - Effort
+      - Release
+      - Target cycle
+      - Feature team
+    - Under the heading **Columns**, the rows read, from the top:
+      - Complexity
   - **Notes:**
 
 - [ ] **Step 2.** In the side panel, select a customer's name under **Customers**.

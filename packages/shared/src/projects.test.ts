@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for projects' dates from their milestones, and the requests that add and change customers,
-// projects, milestones, and proposals, and a feature's projects and proposals.
+// projects, milestones, and proposals, a feature's projects and proposals, and the reasons kept for
+// features removed from a proposal.
 
 import { describe, expect, it } from "vitest";
 import {
@@ -10,9 +11,13 @@ import {
   milestoneRequestSchema,
   projectDates,
   projectRequestSchema,
+  projectLengths,
   projectSubjects,
   proposalRequestSchema,
+  removalReasonsAfter,
+  removalReasonsIn,
   sameDates,
+  withRemovalReason,
 } from "./projects.ts";
 
 const first = "00000000-0000-4000-8000-000000000001";
@@ -144,6 +149,62 @@ describe("a feature's projects and proposals", () => {
         .success,
     ).toBe(false);
   });
+
+  it("keep a reason for removing it trimmed, and an empty one as none", () => {
+    expect(
+      featureProjectsRequestSchema.parse({ removalReason: " Too costly " }),
+    ).toEqual({ removalReason: "Too costly" });
+    expect(featureProjectsRequestSchema.parse({ removalReason: " " })).toEqual({
+      removalReason: null,
+    });
+  });
+
+  it("refuse a reason too long to read beside the removal", () => {
+    const removalReason = "a".repeat(projectLengths.removalReason + 1);
+    expect(
+      featureProjectsRequestSchema.safeParse({ removalReason }).success,
+    ).toBe(false);
+  });
+});
+
+describe("the reasons kept for features removed from a proposal", () => {
+  it("give each feature removed the reason given", () => {
+    expect(
+      removalReasonsAfter({}, [first, second], [], "Too costly", [
+        first,
+        second,
+      ]),
+    ).toEqual({
+      [first]: "Too costly",
+      [second]: "Too costly",
+    });
+  });
+
+  it("keep no reason for a feature removed without one", () => {
+    expect(
+      removalReasonsAfter({ [first]: "Old reason" }, [first], [], null, [
+        first,
+      ]),
+    ).toEqual({});
+  });
+
+  it("keep the reasons of features removed before", () => {
+    expect(
+      removalReasonsAfter({ [first]: "Too costly" }, [second], [], null, [
+        second,
+      ]),
+    ).toEqual({ [first]: "Too costly" });
+  });
+
+  it("give no reason to a feature only a draft added, then removed", () => {
+    expect(removalReasonsAfter({}, [first], [], "Too costly", [])).toEqual({});
+  });
+
+  it("drop the reason of a feature proposed again", () => {
+    expect(
+      removalReasonsAfter({ [first]: "Too costly" }, [], [first], null, []),
+    ).toEqual({});
+  });
 });
 
 describe("subjects", () => {
@@ -158,5 +219,39 @@ describe("subjects", () => {
     expect(projectSubjects.proposal("Fictional")).toBe(
       "the proposal Fictional",
     );
+  });
+});
+
+describe("changing the reason for removing one feature", () => {
+  it("sets the reason for that feature, keeping the others", () => {
+    expect(
+      withRemovalReason({ [first]: "Too costly" }, second, "Out of scope"),
+    ).toEqual({ [first]: "Too costly", [second]: "Out of scope" });
+  });
+
+  it("replaces the reason the feature had", () => {
+    expect(
+      withRemovalReason({ [first]: "Too costly" }, first, "Later"),
+    ).toEqual({ [first]: "Later" });
+  });
+
+  it("clears the reason when none is given", () => {
+    expect(
+      withRemovalReason(
+        { [first]: "Too costly", [second]: "Later" },
+        first,
+        null,
+      ),
+    ).toEqual({ [second]: "Later" });
+  });
+});
+
+describe("values as stored", () => {
+  it("read reasons by feature, and nothing from anything else", () => {
+    expect(removalReasonsIn({ [first]: "Too costly" })).toEqual({
+      [first]: "Too costly",
+    });
+    expect(removalReasonsIn(null)).toEqual({});
+    expect(removalReasonsIn({ [first]: 3 })).toEqual({});
   });
 });

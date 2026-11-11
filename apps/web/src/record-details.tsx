@@ -5,7 +5,7 @@
 // shows it instead.
 
 import type { Link as WebLink } from "@fathom/shared";
-import { ActionIcon, Anchor, Group, Text } from "@mantine/core";
+import { ActionIcon, Anchor, Group, Stack, Text } from "@mantine/core";
 import type { MouseEvent, ReactNode } from "react";
 import { cellKinds } from "./cell-kinds.tsx";
 import { Icon } from "./icons.tsx";
@@ -129,6 +129,23 @@ export function RecordLink({
     <Anchor component="button" type="button" ta="start" onClick={onShow}>
       {name}
     </Anchor>
+  );
+}
+
+// Links to records, one to a line, as a details panel lists several records.
+export function RecordLinkList({
+  links,
+}: {
+  links: readonly { id: string; name: ReactNode; onShow: () => void }[];
+}) {
+  return (
+    <Stack gap={0} align="flex-start">
+      {links.map(({ id, name, onShow }) => (
+        <span key={id}>
+          <RecordLink name={name} onShow={onShow} />
+        </span>
+      ))}
+    </Stack>
   );
 }
 

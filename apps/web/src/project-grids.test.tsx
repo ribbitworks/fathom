@@ -7,6 +7,7 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { cellKinds, flagChoice } from "./cell-kinds.tsx";
 import {
+  featureColumnGroups,
   featureColumns,
   featureTable,
   livePlanRecords,
@@ -199,19 +200,22 @@ describe("the Features table", () => {
     ).toBe(false);
   });
 
-  it("puts the columns entered first ahead of those of planning", () => {
+  it("starts its columns in the order a feature's details group them", () => {
+    expect(columns.map(({ key }) => key)).toEqual(
+      featureColumnGroups.flatMap(({ keys }) => keys),
+    );
     expect(columns.map(({ key }) => key)).toEqual([
       "name",
       "statusId",
-      "neededBy",
+      "description",
+      "note",
       "customerIds",
       "projectIds",
       "proposalIds",
-      "description",
-      "note",
-      "targetCycle",
-      "release",
+      "neededBy",
       "estimateHours",
+      "release",
+      "targetCycle",
       "featureTeamId",
     ]);
   });
@@ -392,6 +396,7 @@ describe("a column of features picked", () => {
     customerIds: [],
     statusId: "s1",
     featureIds,
+    removalReasons: {},
   });
 
   it("names every feature in one line, with each on a line of its tip", () => {
@@ -421,6 +426,7 @@ describe("the columns' values", () => {
     customerIds: [],
     statusId: "s1",
     featureIds: [],
+    removalReasons: {},
   };
 
   it("reads and saves a web link by its address, and none as nothing", () => {
