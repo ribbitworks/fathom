@@ -424,7 +424,7 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Show only this team** button at the top right of the card for **Lorenza Thiel**.
-  - **Expected:** **Lorenza Thiel** is at the top of the chart, with her reports under her. To the right of the heading, the page reads **You're seeing only the team of Lorenza Thiel.**, with **Show everyone** beside it.
+  - **Expected:** **Lorenza Thiel** is at the top of the chart, with her reports under her. To the right of the heading, the page reads **Only the team of Lorenza Thiel is shown.**, with **Show everyone** beside it.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Show everyone**. In the finder, type `Gloria`, and select **Gloria Armas Guardado**.
@@ -988,7 +988,7 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Notes:**
 
 - [ ] **Step 5.** Enter the password written down in **Current password**, and `fictional password 2` in **New password** and **New password again**, and select **Change password**.
-  - **Expected:** A green banner says **Your password has been changed, and you have been signed out everywhere else.**, and Fathom opens on the **Overview**, with the left-hand menu.
+  - **Expected:** A green banner says **The password has been changed, and every other session has been signed out.**, and Fathom opens on the **Overview**, with the left-hand menu.
   - **Notes:**
 
 #### ACC-35: A Copied Role Is Given to the New Account
@@ -1198,7 +1198,7 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Notes:**
 
 - [ ] **Step 3.** Select **Change history** in the left-hand menu.
-  - **Expected:** The page reads **No changes to data you can see yet.**
+  - **Expected:** The page reads **No changes yet to data this account can see.**
   - **Notes:**
 
 - [ ] **Step 4.** Select **People**. Copy the seven lines from the text editor, select the **Name** cell of the empty row, and paste.
@@ -1268,7 +1268,7 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Notes:**
 
 - [ ] **Step 2.** Enter the password written down in **Current password**, and `fictional password 3` in **New password** and **New password again**, and select **Change password**.
-  - **Expected:** A green banner says **Your password has been changed, and you have been signed out everywhere else.**, and Fathom opens with the left-hand menu.
+  - **Expected:** A green banner says **The password has been changed, and every other session has been signed out.**, and Fathom opens with the left-hand menu.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Releases** in the left-hand menu.

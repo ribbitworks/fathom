@@ -8,6 +8,7 @@
 import { act, fireEvent, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { notAllowedMessage } from "./api.ts";
 import {
   fictionalUser,
   greeting,
@@ -67,7 +68,7 @@ describe("home page", () => {
     });
     renderApp("/");
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "You do not have permission to do this. Your role may have changed.",
+      notAllowedMessage,
     );
   });
 

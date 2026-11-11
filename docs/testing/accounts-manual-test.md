@@ -219,7 +219,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 7.** Select **Change password**.
-  - **Expected:** A green banner says **Your password has been changed, and you have been signed out everywhere else.**, and Fathom opens on the **Overview**, with the left-hand menu and the account button.
+  - **Expected:** A green banner says **The password has been changed, and every other session has been signed out.**, and Fathom opens on the **Overview**, with the left-hand menu and the account button.
   - **Notes:**
 
 ### ACCT-05: A Reset Gives a New Password Fathom Makes

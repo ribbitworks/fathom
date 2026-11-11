@@ -983,7 +983,7 @@ export function OrgChartPage({
             {lead !== undefined && (
               <Group gap="sm">
                 <Text size="sm">
-                  You're seeing only the team of {lead.preferredName}.
+                  Only the team of {lead.preferredName} is shown.
                 </Text>
                 <Button
                   variant="default"

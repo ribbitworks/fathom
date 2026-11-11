@@ -171,7 +171,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Select the button.
-  - **Expected:** **Lorenza Thiel** is at the top of the chart, with her eight reports under her. **Silje Holm-Schrøder** is not shown. To the right of the heading, the page reads **You're seeing only the team of Lorenza Thiel.**, with **Show everyone** beside it. Her card has no org chart button.
+  - **Expected:** **Lorenza Thiel** is at the top of the chart, with her eight reports under her. **Silje Holm-Schrøder** is not shown. To the right of the heading, the page reads **Only the team of Lorenza Thiel is shown.**, with **Show everyone** beside it. Her card has no org chart button.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Show everyone**.
@@ -389,7 +389,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 3.** On the card for **TBD-3**, select the small org chart button at the top right.
-  - **Expected:** **TBD-3** is at the top of the chart, with its two planned hires under it, and the page reads **You're seeing only the team of Engineering Manager, TBD-3.**
+  - **Expected:** **TBD-3** is at the top of the chart, with its two planned hires under it, and the page reads **Only the team of Engineering Manager, TBD-3 is shown.**
   - **Notes:**
 
 - [ ] **Step 4.** Select **Show everyone**, then choose **Dark** in the Appearance menu.

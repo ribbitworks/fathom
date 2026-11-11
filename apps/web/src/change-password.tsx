@@ -178,7 +178,7 @@ function PasswordForm({
     },
     onSuccess: async () => {
       notifySuccess(
-        "Your password has been changed, and you have been signed out everywhere else.",
+        "The password has been changed, and every other session has been signed out.",
       );
       await onDone();
     },

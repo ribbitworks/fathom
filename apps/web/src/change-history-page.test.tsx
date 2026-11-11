@@ -90,7 +90,7 @@ describe("who sees the Change history page", () => {
       await screen.findByRole("heading", { name: "Change history" }),
     ).toBeDefined();
     expect(
-      await screen.findByText("No changes to data you can see yet."),
+      await screen.findByText("No changes yet to data this account can see."),
     ).toBeDefined();
   });
 
@@ -624,7 +624,7 @@ describe("the entries", () => {
     answer = page([]);
     await userEvent.click(screen.getByRole("button", { name: "Try again" }));
     expect(
-      await screen.findByText("No changes to data you can see yet."),
+      await screen.findByText("No changes yet to data this account can see."),
     ).toBeDefined();
   });
 });

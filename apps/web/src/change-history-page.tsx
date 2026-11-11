@@ -230,7 +230,7 @@ export function ChangeHistoryPage({
                 ? "None found in the changes read so far."
                 : words.length > 0
                   ? "No changes match the search."
-                  : "No changes to data you can see yet."}
+                  : "No changes yet to data this account can see."}
             </Text>
           )}
           <EntryList>

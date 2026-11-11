@@ -6,6 +6,7 @@
 import { act, screen, within } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { notAllowedMessage } from "./api.ts";
 import {
   fictionalUser,
   greeting,
@@ -193,7 +194,7 @@ describe("the time zone", () => {
     await choose("Asia/Tokyo");
     await userEvent.click(timeZoneSave());
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "You do not have permission to do this. Your role may have changed.",
+      notAllowedMessage,
     );
   });
 });
@@ -346,7 +347,7 @@ describe("the password settings", () => {
     await userEvent.click(box("A digit"));
     await userEvent.click(save());
     expect((await within(panel()).findByRole("alert")).textContent).toBe(
-      "You do not have permission to do this. Your role may have changed.",
+      notAllowedMessage,
     );
   });
 });

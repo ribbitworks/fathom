@@ -455,7 +455,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 **Preconditions:** Team Member granted only **View** on **Change history** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
-  - **Expected:** The **Change history** page is open and says **No changes to data you can see yet.** The menu shows **Change history** in the **History** section, and the **Help** section, and nothing else.
+  - **Expected:** The **Change history** page is open and says **No changes yet to data this account can see.** The menu shows **Change history** in the **History** section, and the **Help** section, and nothing else.
   - **Notes:**
 
 **Afterwards:** P3.

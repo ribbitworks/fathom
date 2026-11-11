@@ -120,13 +120,14 @@ export async function sendDeleteFor<Schema extends z.ZodType>(
 const forbidden = 403;
 const tooManyRequests = 429;
 
+export const notAllowedMessage =
+  "Not allowed for this account. Its roles may have changed.";
+
 // Puts a failed request plainly for users: the server's own message when it refused the request for
 // a reason the user can act on, and otherwise a plain sentence, never a raw error.
 export function describeProblem(error: Error, fallback: string): string {
   if (!(error instanceof ApiError)) return fallback;
-  if (error.status === forbidden) {
-    return "You do not have permission to do this. Your role may have changed.";
-  }
+  if (error.status === forbidden) return notAllowedMessage;
   if (error.status === tooManyRequests) {
     return "Too many requests. Wait a minute, then try again.";
   }

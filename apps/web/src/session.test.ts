@@ -4,7 +4,12 @@
 // the errors for responses the page does not expect, and which failed requests are tried again.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, describeProblem, shouldRetry } from "./api.ts";
+import {
+  ApiError,
+  describeProblem,
+  notAllowedMessage,
+  shouldRetry,
+} from "./api.ts";
 import { safeRedirect, sessionQuery } from "./session.ts";
 
 afterEach(() => {
@@ -80,11 +85,7 @@ describe("putting failures plainly", () => {
       fallback,
     ],
     ["a lost connection", new TypeError("Failed to fetch"), fallback],
-    [
-      "a missing permission",
-      new ApiError(403, "Forbidden"),
-      "You do not have permission to do this. Your role may have changed.",
-    ],
+    ["a missing permission", new ApiError(403, "Forbidden"), notAllowedMessage],
     [
       "too many requests",
       new ApiError(429),

@@ -245,7 +245,7 @@ describe("the org chart", () => {
         name: "Show only the team of Tatum Fictional",
       }),
     );
-    await screen.findByText("You're seeing only the team of Tatum Fictional.");
+    await screen.findByText("Only the team of Tatum Fictional is shown.");
     expect(colourOf("Uma Fictional")).toBe("var(--mantine-color-grape-filled)");
     expect(colourOf("Tatum Fictional")).toBeNull();
   });
@@ -395,7 +395,7 @@ describe("the org chart", () => {
       }),
     );
     await screen.findByText(
-      "You're seeing only the team of Fictional Engineer, TBD-7.",
+      "Only the team of Fictional Engineer, TBD-7 is shown.",
     );
   });
 
@@ -1351,9 +1351,7 @@ describe("the org chart", () => {
       }),
     );
     expect(
-      await screen.findByText(
-        "You're seeing only the team of Sasha Fictional.",
-      ),
+      await screen.findByText("Only the team of Sasha Fictional is shown."),
     ).toBeDefined();
     expect(screen.queryByRole("link", { name: "Robin Fictional" })).toBeNull();
     expect(screen.getByRole("link", { name: "Tatum Fictional" })).toBeDefined();
@@ -1497,9 +1495,7 @@ describe("the org chart", () => {
       }),
     );
     expect(
-      await screen.findByText(
-        "You're seeing only the team of Sasha Fictional.",
-      ),
+      await screen.findByText("Only the team of Sasha Fictional is shown."),
     ).toBeDefined();
     expect(history.location.search).toBe("?team=p2");
   });
@@ -1556,9 +1552,7 @@ describe("the org chart", () => {
     expect(history.location.search).toContain("team=FX-p2");
     expect(history.location.search).toContain("open=FX-p4");
     expect(
-      await screen.findByText(
-        "You're seeing only the team of Sasha Fictional.",
-      ),
+      await screen.findByText("Only the team of Sasha Fictional is shown."),
     ).toBeDefined();
   });
 
