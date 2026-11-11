@@ -17,10 +17,11 @@ import {
   proposalColumns,
 } from "./project-grids.tsx";
 import type { TableChoices } from "./projects.ts";
-import { cycleChoices, planNodes } from "./projects.ts";
+import { cycleChoices, planNodes, releaseOfCycle } from "./projects.ts";
 import { usedRecords } from "./record-drafts.ts";
 import {
   featureDraft,
+  fictionalRelease,
   fictionalStream,
   noFeatureColumns,
   recordDraft,
@@ -59,6 +60,7 @@ const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
   ],
   featureTeams: [],
   cycles: [],
+  releaseOfCycle: new Map(),
   featureColumns: noFeatureColumns,
   ...more,
 });
@@ -99,10 +101,12 @@ describe("the Features table", () => {
   const status = columns.find(({ key }) => key === "statusId");
   const neededBy = columns.find(({ key }) => key === "neededBy");
   const note = columns.find(({ key }) => key === "note");
-  const groupOf = (more: Partial<Feature>) =>
-    featureTable(choices({ cycles })).groupings?.at(0)?.of(feature(more));
-  const monthGroupOf = (more: Partial<Feature>) =>
-    featureTable(choices({ cycles })).groupings?.at(1)?.of(feature(more));
+  const groupingOf = (key: string, more: Partial<Feature>) =>
+    featureTable(choices({ cycles }))
+      .groupings?.find((grouping) => grouping.key === key)
+      ?.of(feature(more));
+  const groupOf = (more: Partial<Feature>) => groupingOf("targetCycle", more);
+  const monthGroupOf = (more: Partial<Feature>) => groupingOf("neededBy", more);
 
   it("shows a feature's target as its stream and cycle together", () => {
     expect(
@@ -206,6 +210,7 @@ describe("the Features table", () => {
       "description",
       "note",
       "targetCycle",
+      "release",
       "estimateHours",
       "featureTeamId",
     ]);
@@ -266,7 +271,11 @@ describe("the Features table", () => {
   });
 
   it("groups a feature with no target in Later, after every cycle", () => {
-    expect(groupOf({})).toEqual({ key: "later", label: "Later", rank: 2 });
+    expect(groupOf({})).toEqual({
+      key: "later",
+      label: "Later",
+      rank: Number.MAX_SAFE_INTEGER,
+    });
   });
 
   it("groups a feature on a cycle no longer offered in Later", () => {
@@ -796,6 +805,88 @@ describe("columns added to Features", () => {
     );
     expect(fields.map(({ field }) => field)).toEqual([
       { field: "Fictional Size", oldValue: ["Small"], newValue: ["Large"] },
+    ]);
+  });
+});
+
+describe("features by release", () => {
+  const streams = [
+    fictionalStream({
+      releases: [fictionalRelease({ lastCycle: "2027-04-01" })],
+    }),
+  ];
+  const offered = choices({
+    cycles: cycleChoices(streams),
+    releaseOfCycle: releaseOfCycle(streams),
+  });
+  const release = featureColumns(offered).find(({ key }) => key === "release");
+  const releaseGroupOf = (more: Partial<Feature>) =>
+    featureTable(offered)
+      .groupings?.find(({ key }) => key === "release")
+      ?.of(feature(more));
+  const targeting = (targetCycle: string) => ({
+    targetStreamId: fictionalStream().id,
+    targetCycle,
+  });
+
+  it("groups a feature under the release its target cycle is in", () => {
+    expect(releaseGroupOf(targeting("2027-04-01"))?.label).toMatch(
+      /^Fictional Majors: Fictional One, ships /,
+    );
+  });
+
+  it("groups a feature on a cycle in no release under its stream's Not released yet", () => {
+    expect(releaseGroupOf(targeting("2027-07-01"))?.label).toBe(
+      "Fictional Majors: Not released yet",
+    );
+  });
+
+  it("groups a feature with no target in Later, after every release", () => {
+    expect(releaseGroupOf({})).toMatchObject({
+      label: "Later",
+      rank: Number.MAX_SAFE_INTEGER,
+    });
+  });
+
+  it("names the release in its column, and the live one under a draft", () => {
+    const moved = feature({
+      ...targeting("2027-07-01"),
+      draft: featureDraft({
+        changed: ["targetCycle"],
+        live: targeting("2027-01-01"),
+      }),
+    });
+    const named = (ids: unknown) =>
+      (ids as string[]).map(
+        (id) => release?.choices.find((offer) => offer.id === id)?.label,
+      );
+    expect(named(release?.value(moved))).toEqual([
+      "Fictional Majors: Not released yet",
+    ]);
+    expect(named(release?.live(moved.draft as never))).toEqual([
+      "Fictional Majors: Fictional One",
+    ]);
+  });
+
+  it("leaves the column empty for a feature in Later, and read only", () => {
+    expect(release?.value(feature())).toEqual([]);
+    expect(release?.readOnly).toBe(true);
+    expect(release?.change(["anything"])).toEqual({});
+    expect(release?.emptyLabel).toBe("Later");
+  });
+
+  it("leaves the column empty for a feature on a cycle no longer offered", () => {
+    expect(
+      release?.value(
+        feature({ targetStreamId: "gone", targetCycle: "2030-01-01" }),
+      ),
+    ).toEqual([]);
+  });
+
+  it("offers the releases, then the cycles in none, by name", () => {
+    expect(release?.choices.map(({ label }) => label)).toEqual([
+      "Fictional Majors: Fictional One",
+      "Fictional Majors: Not released yet",
     ]);
   });
 });

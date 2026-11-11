@@ -70,6 +70,7 @@ import {
   dayOrEmpty,
   featureColumns,
   featureTable,
+  releaseColumnKey,
   type Identified,
   livePlanRecords,
   milestoneColumns,
@@ -106,6 +107,7 @@ import {
   projectPlanQuery,
   projectTabs,
   type TableChoices,
+  streamOfReleaseGroup,
   tableChoices,
   withNamers,
 } from "./projects.ts";
@@ -263,6 +265,7 @@ export function ProjectsPage({
   onOpen,
   onMilestonesOf,
   onFeaturesOf,
+  onReleaseStream,
 }: {
   tab: PlanTab;
   // Shows another of the plan's pages or tabs, with a record's details open if one is named.
@@ -280,6 +283,8 @@ export function ProjectsPage({
   onMilestonesOf?: (project: Project) => void;
   // Shows Features with only those a project or proposal names.
   onFeaturesOf?: (namer: FeatureNamer) => void;
+  // Shows a release stream on Releases, with its releases and cycles.
+  onReleaseStream?: (streamId: string) => void;
 }) {
   const page = planPages[tab === "features" ? "features" : "projects"];
   const query = useQuery(projectPlanQuery);
@@ -565,12 +570,17 @@ export function ProjectsPage({
         },
       },
       showMilestones: showMilestonesOf,
-      showRecord: (next, id) => {
-        // The tab is always one of the fixed tabs.
-        // eslint-disable-next-line security/detect-object-injection
-        if (detailTabs[tab].some((one) => one === next)) {
-          openRecord({ id });
-        } else onTab?.(next, id);
+      follow: {
+        showRecord: (next, id) => {
+          // The tab is always one of the fixed tabs.
+          // eslint-disable-next-line security/detect-object-injection
+          if (detailTabs[tab].some((one) => one === next)) {
+            openRecord({ id });
+          } else onTab?.(next, id);
+        },
+        showStream: (streamId) => {
+          onReleaseStream?.(streamId);
+        },
       },
       onChange: (type, record, change) => {
         actionsFor<PlanRecord, unknown>(type).update(record, change);
@@ -981,7 +991,7 @@ function recordPanel({
   onClose,
   menu,
   showMilestones,
-  showRecord,
+  follow,
   onChange,
 }: {
   tab: PlanTab;
@@ -999,7 +1009,7 @@ function recordPanel({
   onClose: () => void;
   menu: MilestoneMenu;
   showMilestones: (project: Project) => void;
-  showRecord: (tab: PlanTab, id: string) => void;
+  follow: Follow;
   onChange: (
     type: PlanRecordKind,
     record: PlanRecord,
@@ -1096,7 +1106,7 @@ function recordPanel({
             beside={show === "both"}
             canEdit={canEdit}
             identified={identified}
-            showRecord={showRecord}
+            follow={follow}
             onChange={(change) => {
               onChange(type, shown, change);
             }}
@@ -1108,12 +1118,31 @@ function recordPanel({
   };
 }
 
-// The tab whose records a column's values name, for those that can be followed.
-const linkedTabs = new Map<string, PlanTab>([
-  ["customerIds", "customers"],
-  ["projectIds", "projects"],
-  ["proposalIds", "proposals"],
-  ["featureIds", "features"],
+// What a panel's links show: a record on one of the plan's tabs, or a stream on Releases.
+interface Follow {
+  showRecord: (tab: PlanTab, id: string) => void;
+  showStream: (streamId: string) => void;
+}
+
+const onTabOf =
+  (tab: PlanTab) =>
+  (follow: Follow, id: string): void => {
+    follow.showRecord(tab, id);
+  };
+
+// How each column's values are followed, for those that can be: to the records they name, or, for
+// a feature's release, to its stream.
+const linkedPages = new Map<string, (follow: Follow, id: string) => void>([
+  ["customerIds", onTabOf("customers")],
+  ["projectIds", onTabOf("projects")],
+  ["proposalIds", onTabOf("proposals")],
+  ["featureIds", onTabOf("features")],
+  [
+    releaseColumnKey,
+    (follow, id) => {
+      follow.showStream(streamOfReleaseGroup(id));
+    },
+  ],
 ]);
 
 // Columns whose records the panel lists one to a line, as there can be many.
@@ -1166,7 +1195,7 @@ function PlanRecordDetails({
   beside,
   canEdit,
   identified,
-  showRecord,
+  follow,
   onChange,
 }: {
   columns: readonly Column<never, PlanChange>[];
@@ -1175,7 +1204,7 @@ function PlanRecordDetails({
   beside: boolean;
   canEdit: boolean;
   identified: IdentifiedRecords;
-  showRecord: (tab: PlanTab, id: string) => void;
+  follow: Follow;
   onChange: (change: PlanChange) => void;
 }) {
   const { closeStale, editingOf } = useRecordEditing<never, PlanChange>();
@@ -1219,7 +1248,7 @@ function PlanRecordDetails({
           beside={beside}
           editing={editing(edited)}
           identified={identified}
-          showRecord={showRecord}
+          follow={follow}
         />
       ))}
     </dl>
@@ -1234,7 +1263,7 @@ function DetailRow({
   beside,
   editing,
   identified,
-  showRecord,
+  follow,
 }: {
   column: Column<never, PlanChange>;
   // The units and decimal places the table shows its columns in.
@@ -1244,12 +1273,12 @@ function DetailRow({
   beside: boolean;
   editing: Editing | undefined;
   identified: IdentifiedRecords;
-  showRecord: (tab: PlanTab, id: string) => void;
+  follow: Follow;
 }) {
   const draft = record.draft;
   const changed =
     beside && draft?.action === "changed" && draft.changed.includes(column.key);
-  const linkedTab = linkedTabs.get(column.key);
+  const linkedPage = linkedPages.get(column.key);
   const also = inUnitsWords(column, units, record);
   return (
     <Row
@@ -1258,13 +1287,13 @@ function DetailRow({
       changed={changed ? { live: column.live(draft as never) } : undefined}
       editing={editing}
     >
-      {linkedTab !== undefined && Array.isArray(value) && value.length > 0 ? (
+      {linkedPage !== undefined && Array.isArray(value) && value.length > 0 ? (
         <RecordLinks
           column={column}
           ids={value}
           identified={identified}
           onShow={(id) => {
-            showRecord(linkedTab, id);
+            linkedPage(follow, id);
           }}
         />
       ) : also !== undefined ? (

@@ -377,6 +377,9 @@ const featuresRoute = createRoute({
         onTab={(next, record) => {
           void navigate(planAddress(next, record));
         }}
+        onReleaseStream={(streamId) => {
+          void navigate({ to: "/releases/{-$streamId}", params: { streamId } });
+        }}
         approves={approvableKinds(permissions)}
         {...viewProps(search, (next, replace) => {
           void navigate({ search: { ...next, open }, replace });

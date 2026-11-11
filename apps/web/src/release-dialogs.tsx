@@ -50,6 +50,8 @@ import {
   colourName,
   createStream,
   defaultColour,
+  includesCycle,
+  keptReleases,
   lastCycleEnd,
   lengthChangeOf,
   renameStream,
@@ -597,16 +599,12 @@ export function CycleLengthDialog({
 
 // The cycles no other release in the stream includes, as choices.
 function freeCycles(stream: ReleaseStream, release: Release | undefined) {
-  const others = stream.releases.filter(
-    (other) => other.id !== release?.id && other.draft?.action !== "deleted",
+  const others = keptReleases(stream).filter(
+    (other) => other.id !== release?.id,
   );
   return stream.cycles
     .filter(
-      ({ startsOn }) =>
-        !others.some(
-          (other) =>
-            startsOn >= other.firstCycle && startsOn <= other.lastCycle,
-        ),
+      ({ startsOn }) => !others.some((other) => includesCycle(other, startsOn)),
     )
     .map((cycle) => ({
       value: cycle.startsOn,

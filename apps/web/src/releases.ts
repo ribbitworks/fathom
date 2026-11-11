@@ -17,6 +17,7 @@ import {
   patternsForLength,
   planSubjects,
   type RecordRef,
+  type Release,
   knownColour,
   type PaletteColour,
   type ReleaseRequest,
@@ -175,9 +176,7 @@ export function lengthChangeOf(
     };
   }
   const cycles = cyclesOf(made.patterns, stream.cyclesUntil);
-  const kept = stream.releases.filter(
-    ({ draft }) => draft?.action !== "deleted",
-  );
+  const kept = keptReleases(stream);
   const moved = movedCycles(stream.cycles, cycles);
   const moving = movedReleases(
     [
@@ -253,6 +252,16 @@ export function cycleNamed(stream: ReleaseStream, startsOn: string): string {
     stream.cycles.find((cycle) => cycle.startsOn === startsOn)?.name ?? startsOn
   );
 }
+
+// A stream's releases, leaving out those a draft removes.
+export const keptReleases = (stream: Pick<ReleaseStream, "releases">) =>
+  stream.releases.filter(({ draft }) => draft?.action !== "deleted");
+
+// Whether a release includes the cycle that starts on a day.
+export const includesCycle = (
+  release: Pick<Release, "firstCycle" | "lastCycle">,
+  startsOn: string,
+): boolean => release.firstCycle <= startsOn && startsOn <= release.lastCycle;
 
 // The end of a release's last cycle, when it ships unless given another day.
 export const lastCycleEnd = (

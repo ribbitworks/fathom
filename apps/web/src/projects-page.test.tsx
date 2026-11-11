@@ -12,12 +12,14 @@ import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   bodyOf,
+  fictionalRelease,
   fictionalUser,
   noFeatureColumns,
   recordDraft,
   renderApp,
   serverAnswers,
 } from "./test-support.tsx";
+import { formatDay } from "./table-view.ts";
 import { operationsOf } from "./projects.ts";
 
 const customerId = "c0000000-0000-4000-8000-000000000001";
@@ -1503,7 +1505,7 @@ describe("the Features page", () => {
     name,
     months: [],
   });
-  const streams = () =>
+  const streamsWith = (releases: readonly object[]) => () =>
     Response.json({
       streams: [
         {
@@ -1517,12 +1519,22 @@ describe("the Features page", () => {
             cycle(cycleOne, "2027-03-31", "27.1"),
             cycle(cycleTwo, "2027-06-30", "27.2"),
           ],
-          releases: [],
+          releases,
         },
       ],
       canEditStreams: true,
       canEditReleases: true,
     });
+  const streams = streamsWith([]);
+  const withRelease = {
+    "GET /api/release-streams": streamsWith([
+      fictionalRelease({
+        name: "Fictional Release",
+        firstCycle: cycleOne,
+        lastCycle: cycleOne,
+      }),
+    ]),
+  };
   const possibleId = crypto.randomUUID();
   const plannedId = crypto.randomUUID();
   const choices = () =>
@@ -1992,7 +2004,7 @@ describe("the Features page", () => {
     it("tells the hours of the cell with keyboard focus", async () => {
       await open(withEstimate(20), {}, inUnit("person-days"));
       await userEvent.click(
-        document.getElementById(`cell-${first.id}-targetCycle`) as HTMLElement,
+        document.getElementById(`cell-${first.id}-release`) as HTMLElement,
       );
       await userEvent.keyboard("{ArrowRight}");
       expect((await screen.findByRole("tooltip")).textContent).toBe("20 hours");
@@ -2112,6 +2124,37 @@ describe("the Features page", () => {
     });
     expect(history.location.search).toContain("tab=customers");
     expect(history.location.search).toContain(`open=${buyer.id}`);
+  });
+
+  it("follows a feature's release from its details to its stream on Releases", async () => {
+    const { history } = await open(
+      featurePlan(),
+      withRelease,
+      `/features?open=${first.id}`,
+    );
+    await userEvent.click(
+      await screen.findByRole("button", {
+        name: "Fictional Stream: Fictional Release",
+      }),
+    );
+    await waitFor(() => {
+      expect(history.location.pathname).toBe(`/releases/${streamId}`);
+    });
+  });
+
+  it("groups features by release, then each stream's cycles in none, then Later", async () => {
+    await open(featurePlan(), withRelease);
+    await groupBy("Cycle", "Release");
+    expect(
+      screen
+        .queryAllByRole("rowheader")
+        .map((cell) => cell.textContent)
+        .filter((text) => / features?$/.test(text)),
+    ).toEqual([
+      `Fictional Stream: Fictional Release, ships ${formatDay("2027-03-31")}1 feature`,
+      "Fictional Stream: Not released yet1 feature",
+      "Later1 feature",
+    ]);
   });
 
   it("titles the page Features, with no tabs", async () => {

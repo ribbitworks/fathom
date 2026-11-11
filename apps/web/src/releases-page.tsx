@@ -61,6 +61,8 @@ import {
 import {
   discardRecordDraft,
   recordNodes,
+  includesCycle,
+  keptReleases,
   releaseCycles,
   releaseDate,
   shipsOffCycle,
@@ -483,13 +485,9 @@ function Cycles({
     actions.canEditStreams &&
     stream.heldBy === undefined &&
     stream.draft?.action !== "deleted";
+  const kept = keptReleases(stream);
   const releaseOf = (startsOn: string) =>
-    stream.releases.find(
-      (release) =>
-        release.draft?.action !== "deleted" &&
-        startsOn >= release.firstCycle &&
-        startsOn <= release.lastCycle,
-    )?.name ?? "";
+    kept.find((release) => includesCycle(release, startsOn))?.name ?? "";
   return (
     <Section title={`Cycles (${String(stream.cycles.length)})`}>
       <Table.ScrollContainer minWidth={520} type="native">

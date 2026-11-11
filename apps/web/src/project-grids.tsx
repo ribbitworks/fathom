@@ -49,6 +49,7 @@ import { noDrafts } from "./drafts.ts";
 import { choice, offered } from "./lists.ts";
 import {
   cycleChoiceId,
+  type ReleaseGroup,
   type FeatureFields,
   isFeature,
   type MilestoneAdding,
@@ -72,6 +73,7 @@ import {
   RecordGrid,
   type RecordGridProps,
   type RecordTable,
+  type RowGroup,
   type RowGrouping,
 } from "./record-grid.tsx";
 import { type CellValue, type ColumnUnit, formatMonth } from "./table-view.ts";
@@ -659,6 +661,35 @@ function effortColumn(
   };
 }
 
+export const releaseColumnKey = "release";
+
+// The release a feature's target cycle is in, or that cycle's stream when it is in none, worked out
+// rather than entered, and empty in Later.
+function releaseColumn(
+  releaseOfCycle: ReadonlyMap<string, ReleaseGroup>,
+): Column<Feature, PlanChange> {
+  const groups = new Map(
+    [...releaseOfCycle.values()].map((group) => [group.key, group]),
+  );
+  const releaseOf = (target: Partial<Feature>) =>
+    cycleOf(target).flatMap((cycle) => {
+      const group = releaseOfCycle.get(cycle);
+      return group === undefined ? [] : [group.key];
+    });
+  return {
+    ...field<Feature>(releaseColumnKey, "Release", "choice", {
+      readOnly: true,
+      emptyLabel: "Later",
+      choices: [...groups.values()]
+        .sort((a, b) => a.rank - b.rank)
+        .map(({ key, name }) => choice(key, name, false)),
+    }),
+    value: releaseOf,
+    live: (draft) => releaseOf(draft.live),
+    change: () => ({}),
+  };
+}
+
 export function featureColumns(
   choices: TableChoices,
   {
@@ -701,6 +732,7 @@ export function featureColumns(
       live: (draft) => cycleOf(draft.live as Partial<Feature>),
       change: (value) => targetOf((value as string[]).at(0)),
     },
+    releaseColumn(choices.releaseOfCycle),
     effortColumn(choices.effortConversions),
     {
       ...field<Feature>("featureTeamId", "Feature team", "choice", {
@@ -732,25 +764,36 @@ export function featureColumns(
   );
 }
 
-const laterGroup = "later";
+// After every group, for the features that target no cycle, or one no longer offered.
+const later: RowGroup = {
+  key: "later",
+  label: "Later",
+  rank: Number.MAX_SAFE_INTEGER,
+};
 
-// The rows' groups: each cycle in the choices' order, then Later.
-function byCycle(cycles: readonly Choice[]): RowGrouping<Feature> {
-  const placeOf = new Map(
-    cycles.map((offered, rank) => [offered.id, { offered, rank }]),
+// The rows' groups by the cycle each feature targets, then Later.
+const byTarget = (
+  key: string,
+  label: string,
+  groupOfCycle: ReadonlyMap<string, RowGroup>,
+): RowGrouping<Feature> => ({
+  key,
+  label,
+  of: (feature) => {
+    const [cycle = ""] = cycleOf(feature);
+    return groupOfCycle.get(cycle) ?? later;
+  },
+});
+
+// Each cycle in the choices' order.
+const byCycle = (cycles: readonly Choice[]) =>
+  byTarget(
+    "targetCycle",
+    "Cycle",
+    new Map(
+      cycles.map(({ id, label }, rank) => [id, { key: id, label, rank }]),
+    ),
   );
-  return {
-    key: "targetCycle",
-    label: "Cycle",
-    of: (feature) => {
-      const [cycle = ""] = cycleOf(feature);
-      const place = placeOf.get(cycle);
-      return place === undefined
-        ? { key: laterGroup, label: "Later", rank: cycles.length }
-        : { key: cycle, label: place.offered.label, rank: place.rank };
-    },
-  };
-}
 
 // The rows' groups: each month a feature is needed by, earliest first, then those with none.
 const byNeededBy: RowGrouping<Feature> = {
@@ -776,7 +819,11 @@ export function featureTable(
     ...wordsOf("features"),
     kinds: [newKind, savedKind],
     columns: (shown) => featureColumns(choices, { onOpen, shown, editsNamers }),
-    groupings: [byCycle(choices.cycles), byNeededBy],
+    groupings: [
+      byCycle(choices.cycles),
+      byTarget("release", "Release", choices.releaseOfCycle),
+      byNeededBy,
+    ],
     request: (changes) => {
       const request: PlanChange = {
         ...merged(changes),

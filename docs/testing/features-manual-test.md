@@ -11,60 +11,35 @@ last_updated: "2026-11-10"
 
 ## Scope
 
-Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later and by the month needed, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, and a feature's effort, shown and typed in the unit chosen. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
+Verifies the Features page: how the table of features looks and reads, its groups by cycle with Later, by release and by the month needed, the Release column, entering a month, customers and a note, the list of feature statuses, editing features as drafts, who may change them, how feature drafts show on the Drafts page and when a cycle changes length, columns added to Features, writing a note in New feature, and a feature's effort, shown and typed in the unit chosen. The projects and proposals that name a feature are verified in [Feature Links](feature-links-manual-test.md).
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- A desktop web browser.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1).
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out.
 
 ## Test Accounts
 
-R1 creates these accounts, with every other development account. They share one password, which R1 prints when it finishes.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses:
 
-- **Product Manager account:** `product.manager@fathom.test`, shown in Fathom as **Product Manager**. It holds the Product Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Project Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Product Manager:** `product.manager@fathom.test`
+- **Project Manager:** `project.manager@fathom.test`
+- **Team Member:** `team.member@fathom.test`
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Engineering Director:** `engineering.director@fathom.test`
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use after R0, before the first test case, and wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again; it keeps accounts and anything else added by hand.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data).
 
 ## Terms
 
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown in a row's first cell.
-- **⋯ menu:** the menu that opens from the **⋯** button at the end of a row.
-- **Group heading:** the full-width row above each group of features, naming its cycle or **Later** or, grouped by the month needed, its month or **No date**.
-- **Column menu:** the menu that opens when you select a column's name in the table's header.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the left-hand menu, marks, the Group by menu and group headings. This test adds:
+
+- **Group heading on Features:** it names a cycle or **Later**; grouped by release, a release or **Not released yet**; grouped by the month needed, a month or **No date**.
 
 ## Test Cases
 
-Run the test cases in order. Start with R0, then R1. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
 
 ### FEAT-01: The Table Reads Well in Light and Dark
 
@@ -72,8 +47,8 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Features** in the left-hand menu.
-  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Projects**, **Proposals**, **Description**, **Notes**, **Target cycle**, **Effort**, **Feature team** and **Complexity**. Beside the search box, the count reads **11 features**.
+- [ ] **Step 1.** Select the **Features** page in the left-hand menu.
+  - **Expected:** The page is titled **Features**. The table's columns are, in order, **Name**, **Status**, **Needed by**, **Customers**, **Projects**, **Proposals**, **Description**, **Notes**, **Target cycle**, **Release**, **Effort**, **Feature team** and **Complexity**. Beside the search box, the count reads **11 features**.
   - **Notes:**
 
 - [ ] **Step 2.** Look down the **Status** column.
@@ -178,7 +153,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Drafts** in the left-hand menu.
+- [ ] **Step 1.** Select the **Drafts** page in the left-hand menu.
   - **Expected:** The list has an entry reading **Product Manager as Product Manager drafted adding the feature Fictional Reports**.
   - **Notes:**
 
@@ -188,7 +163,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Features** in the left-hand menu.
+- [ ] **Step 1.** Select the **Features** page in the left-hand menu.
   - **Expected:** The table shows, with no **New feature** button and no empty row at its end.
   - **Notes:**
 
@@ -200,7 +175,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FEAT-07.
 
-**Preconditions:** Run R1 first. Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
+**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the table.
 
 - [ ] **Step 1.** In the side panel's **Cycles** table, find the row whose dates include today. Select the **⋯** button at the end of the row directly below it, then **Change length…**.
   - **Expected:** A dialog titled **Change the length of** that cycle opens.
@@ -218,7 +193,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The **Publish** button is gone from the top bar.
   - **Notes:**
 
-- [ ] **Step 5.** Sign out, sign in as the Project Manager, `project.manager@fathom.test`, and select **Drafts** in the left-hand menu.
+- [ ] **Step 5.** Sign out, sign in as the Project Manager, `project.manager@fathom.test`, and select the **Drafts** page in the left-hand menu.
   - **Expected:** The list has entries naming **the feature Data Retention Controls** and **the feature Report Builder**, and entries for **the cycles of Platform**.
   - **Notes:**
 
@@ -234,7 +209,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-08.
 
-**Preconditions:** Run R1 first. Signed in with this account. **Features** page open.
+**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Select the **Name** cell of the last row under a group heading, then press the Down arrow.
   - **Expected:** The selection moves to the **Name** cell of the first row under the next heading, without stopping on the heading.
@@ -288,7 +263,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-11 ended with.
 
-**Preconditions:** Run R1 first. Signed in with this account. **Features** page open.
+**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Select **Group by: Cycle** above the table, then **Needed by**.
   - **Expected:** The button reads **Group by: Needed by**. Each heading names a month and year, such as **Mar 2027**, with how many features it holds. The headings run from the earliest month to the latest, and the last heading is **No date**.
@@ -312,7 +287,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Lists** in the left-hand menu, then select **Feature statuses** in the table.
+- [ ] **Step 1.** Select the **Lists** page in the left-hand menu, then select **Feature statuses** in the table.
   - **Expected:** The list is marked **Built in**. Its choices are, in order, **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**, each beside a meaning of the same name.
   - **Notes:**
 
@@ -328,10 +303,10 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-13.
 
-**Preconditions:** Run R1 first. Signed in with this account. **Features** page open.
+**Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Point at the row **Offline Sync**, then select the small button with an arrow at the right of its **Name** cell.
-  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Projects**, **Proposals**, **Description**, **Notes**, **Target cycle**, **Effort**, **Feature team** and **Complexity**.
+  - **Expected:** A side panel titled **Offline Sync** opens beside the table, listing **Name**, **Status**, **Needed by**, **Customers**, **Projects**, **Proposals**, **Description**, **Notes**, **Target cycle**, **Release**, **Effort**, **Feature team** and **Complexity**.
   - **Notes:**
 
 - [ ] **Step 2.** In the side panel, select a customer's name under **Customers**.
@@ -342,9 +317,9 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Account:** Team Member, `team.member@fathom.test`, changed from FEAT-14.
 
-**Preconditions:** Run R1 first. Signed in with this account.
+**Preconditions:** Run Restore the Seed Data first. Signed in with this account.
 
-- [ ] **Step 1.** Select **Features** in the left-hand menu, and scroll right to the **Complexity** column.
+- [ ] **Step 1.** Select the **Features** page in the left-hand menu, and scroll right to the **Complexity** column.
   - **Expected:** There is no **New column** button. The row **Offline Sync** shows **L**, **Mobile Approvals** shows **M**, **Data Retention Controls** shows **S** and **Report Builder** shows **XL**. **Usage Alerts** is empty.
   - **Notes:**
 
@@ -404,11 +379,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Drafts** in the left-hand menu.
+- [ ] **Step 1.** Select the **Drafts** page in the left-hand menu.
   - **Expected:** The list has an entry naming **the column Fictional Risk on Features**, drafted by **Engineering Operations Manager**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Features** in the left-hand menu, then open the **Fictional Risk** column menu.
+- [ ] **Step 2.** Select the **Features** page in the left-hand menu, then open the **Fictional Risk** column menu.
   - **Expected:** The menu offers **Approve…** and **Reject…**.
   - **Notes:**
 
@@ -430,11 +405,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The cell shows **XS**, and the **Live** row's **Complexity** cell stays empty.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Drafts** in the left-hand menu, and find **the feature Usage Alerts**.
+- [ ] **Step 3.** Select the **Drafts** page in the left-hand menu, and find **the feature Usage Alerts**.
   - **Expected:** Its entry names both changes, **Fictional Risk** to **3.5** and **Complexity** to **XS**.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Features** in the left-hand menu, and point at the row **Usage Alerts**. Select the small button with an arrow at the right of its **Name** cell.
+- [ ] **Step 4.** Select the **Features** page in the left-hand menu, and point at the row **Usage Alerts**. Select the small button with an arrow at the right of its **Name** cell.
   - **Expected:** The side panel lists **Fictional Risk** and **Complexity**, each with the drafted value and the live value under it.
   - **Notes:**
 
@@ -476,13 +451,13 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The **Fictional Risk** column is gone, and the table ends with **Complexity**.
   - **Notes:**
 
-**Afterwards:** Run R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### FEAT-20: New Feature Writes a Note in Its Own Panel
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from FEAT-19.
 
-**Preconditions:** R1 run after FEAT-19. Signed in with this account. **Features** page open.
+**Preconditions:** Restore the Seed Data run after FEAT-19. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Select **New feature**.
   - **Expected:** The **New feature** panel opens beside the table, laid out as the **New person** panel on **People** is: each label at the left of its row, under the headings **Details** and **Columns**. The **Notes** row has **None** as its value and a pencil button at its right. There is no text box for the note.
@@ -540,15 +515,15 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The feature is added as a draft, and its details show beside the table, with **First words** in bold under **Notes**.
   - **Notes:**
 
-**Afterwards:** Run R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### FEAT-21: Effort Shows in the Unit Chosen
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-20 ended with.
 
-**Preconditions:** R1 run after FEAT-20. **Features** page open.
+**Preconditions:** Restore the Seed Data run after FEAT-20. **Features** page open.
 
-- [ ] **Step 1.** Find the **Effort** column, after **Target cycle**, and look at the rows **Audit Export**, **Usage Alerts** and **Scheduler API**.
+- [ ] **Step 1.** Find the **Effort** column, after **Release**, and look at the rows **Audit Export**, **Usage Alerts** and **Scheduler API**.
   - **Expected:** **Audit Export** reads **316 h**, **Usage Alerts** reads **424 h**, and **Scheduler API** is empty.
   - **Notes:**
 
@@ -556,7 +531,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** A tooltip reads **316 hours**, and nothing more.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **Target cycle** cell of **Audit Export**, then press the Right arrow key once.
+- [ ] **Step 3.** Select the **Release** cell of **Audit Export**, then press the Right arrow key once.
   - **Expected:** The **Effort** cell of **Audit Export** is selected, and a tooltip beside it reads **316 hours**.
   - **Notes:**
 
@@ -726,17 +701,17 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The panel closes.
   - **Notes:**
 
-- [ ] **Step 23.** Select **Drafts** in the left-hand menu, and find the draft of **Scheduler API**.
+- [ ] **Step 23.** Select the **Drafts** page in the left-hand menu, and find the draft of **Scheduler API**.
   - **Expected:** Its details read **Effort** set to **40 hours**.
   - **Notes:**
 
-**Afterwards:** Run R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### FEAT-23: New Feature Takes Effort in a Unit Chosen
 
 **Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-22 ended with.
 
-**Preconditions:** R1 run after FEAT-22. **Features** page open.
+**Preconditions:** Restore the Seed Data run after FEAT-22. **Features** page open.
 
 - [ ] **Step 1.** Open the column menu of **Effort**, and select **Person-weeks**.
   - **Expected:** **Audit Export** reads **8 PW**.
@@ -766,4 +741,56 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** The feature is added as a draft, and its details show beside the table, with an **Effort** row reading **0.4 person-weeks (16 hours)**. In the table, **Fictional Effort** reads **0.4 PW**.
   - **Notes:**
 
-**Afterwards:** Run R1.
+**Afterwards:** Run Restore the Seed Data.
+
+### FEAT-24: Features Group by Release
+
+**Account:** Product Manager, `product.manager@fathom.test`, the account FEAT-23 ended with.
+
+**Preconditions:** Restore the Seed Data run after FEAT-23. **Features** page open.
+
+- [ ] **Step 1.** Select **Group by: Cycle** above the table.
+  - **Expected:** The menu offers **Cycle**, **Release**, **Needed by** and **None**, with a tick beside **Cycle**.
+  - **Notes:**
+
+- [ ] **Step 2.** Select **Release**.
+  - **Expected:** The button reads **Group by: Release**. The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2** and **Platform: Harbor 3**, each followed by a comma, **ships** and a date with its day, month and year, such as **ships 31 Mar 2027**, and then **Later**. The counts beside them read **1**, **4**, **4** and **2**. No heading names a **Patches** release.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the **Releases** page in the left-hand menu, then **Platform** in the table.
+  - **Expected:** A side panel for **Platform** opens. Under **Releases**, each **Harbor** row ends with **ships** and a day, such as **26.3 to 26.4 · ships 2026-12-31**. Each is the same day as the heading noted in Step 2, such as **ships 31 Dec 2026** for **ships 2026-12-31**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the **Features** page in the left-hand menu, then **Group by: Cycle** above the table, then **Release**.
+  - **Expected:** The headings of Step 2 show again.
+  - **Notes:**
+
+- [ ] **Step 5.** In the row **Report Builder**, under **Platform: Harbor 3**, select the **Target cycle** cell and choose the cycle after the one it shows.
+  - **Expected:** The cell turns yellow, with a light green row under it, marked **Live**, showing the old cycle. The row stays under **Platform: Harbor 3** until the view next changes.
+  - **Notes:**
+
+- [ ] **Step 6.** Reload the page.
+  - **Expected:** A heading **Platform: Not released yet** with the count **1** shows after **Platform: Harbor 3** and before **Later**. **Report Builder** is under it, marked **Draft**, with its **Live** row under it showing the old cycle. **Platform: Harbor 3** now counts **3**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select **Group by: Release**, then **None**.
+  - **Expected:** The headings are gone and the rows show as one list. The button reads **Group by: None**.
+  - **Notes:**
+
+- [ ] **Step 8.** Select **Group by: None**, then **Cycle**.
+  - **Expected:** The headings name cycles again, with **Later** last.
+  - **Notes:**
+
+- [ ] **Step 9.** Find the **Release** column, after **Target cycle**, and look at the rows **Report Builder**, **Offline Sync** and **Voice Notes**.
+  - **Expected:** In **Report Builder**'s draft row, **Release** reads **Platform: Not released yet**, and in its **Live** row **Platform: Harbor 3**. **Offline Sync** reads **Platform: Harbor 2**, with no date. **Voice Notes**' **Release** is empty.
+  - **Notes:**
+
+- [ ] **Step 10.** Select the small button with an arrow out of a box at the right of **Report Builder**'s **Name** cell.
+  - **Expected:** The side panel lists **Release** after **Target cycle**, reading **Platform: Not released yet**, underlined as a link.
+  - **Notes:**
+
+- [ ] **Step 11.** Select **Platform: Not released yet** in the side panel.
+  - **Expected:** The **Releases** page opens, with the **Platform** side panel open beside its table.
+  - **Notes:**
+
+**Afterwards:** Run Restore the Seed Data.
