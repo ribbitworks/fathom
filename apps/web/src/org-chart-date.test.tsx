@@ -47,11 +47,16 @@ describe("chartDay", () => {
   });
 });
 
-function control(day: string | undefined, seesDays = true) {
+function control(day: string | undefined, seesDays = true, changes = false) {
   const onDay = vi.fn();
   render(
     <MantineProvider theme={testTheme}>
-      <OrgChartDate day={day} seesDays={seesDays} onDay={onDay} />
+      <OrgChartDate
+        day={day}
+        seesDays={seesDays}
+        changes={changes}
+        onDay={onDay}
+      />
     </MantineProvider>,
   );
   return onDay;
@@ -78,7 +83,6 @@ describe("the date control", () => {
       screen.getByRole<HTMLInputElement>("textbox", { name: "Date" }).value,
     ).toBe(now);
     expect(button("Today").disabled).toBe(true);
-    expect(screen.queryByRole("status")).toBeNull();
   });
 
   it("steps to the first day of the month before and after", async () => {
@@ -167,7 +171,7 @@ describe("the date control", () => {
   it("moves the handle with the date once it has been dragged and let go", () => {
     const shown = (day: string | undefined) => (
       <MantineProvider theme={testTheme}>
-        <OrgChartDate day={day} seesDays onDay={vi.fn()} />
+        <OrgChartDate day={day} seesDays changes={false} onDay={vi.fn()} />
       </MantineProvider>
     );
     const { rerender } = render(shown(undefined));
@@ -190,6 +194,18 @@ describe("the date control", () => {
     expect(screen.getByRole("status").textContent).toBe(
       "Showing Mar 15, 2025. Nothing can be changed on this date.",
     );
+  });
+
+  it("says changes take effect from the day shown, where they can be made", () => {
+    control("2027-05-01", true, true);
+    expect(screen.getByRole("status").textContent).toBe(
+      "Showing May 1, 2027. Changes take effect from this date.",
+    );
+  });
+
+  it("keeps the line's place, empty, while today is shown", () => {
+    control(undefined);
+    expect(screen.getByRole("status").textContent).toBe("\u00a0");
   });
 
   it("offers months alone to readers who do not see the days", () => {

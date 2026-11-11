@@ -85,13 +85,21 @@ export function DraftedWords({ drafted }: { drafted: DraftedPart }) {
   );
 }
 
-export function DraftMark({ draft }: { draft: DraftLike }) {
+export function DraftMark({
+  draft,
+  from,
+}: {
+  draft: DraftLike;
+  // When the drafted change takes effect, where that needs saying.
+  from?: string | undefined;
+}) {
   const rejected = draft.state === "rejected";
   const unpublished = draft.unpublished === true;
   if (!rejected) {
     return (
       <StatusMark tone={draftTone(draft)} spaced>
         {draftWords(draft)}
+        {from !== undefined && `, from ${from}`}
         {unpublished && <VisuallyHidden>, unpublished</VisuallyHidden>}
       </StatusMark>
     );

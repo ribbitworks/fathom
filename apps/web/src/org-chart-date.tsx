@@ -3,7 +3,7 @@
 // The Org chart's date control: a timeline to step through by month, and, for readers who see
 // Restricted details, a box for typing any day. Readers who do not see those details move by whole
 // months, since the exact days people join and leave are Restricted. While the chart shows another
-// date it is read only, which the control says.
+// date, the control says whether changes made there take effect from it, or nothing can be changed.
 
 import {
   addToMonth,
@@ -15,7 +15,7 @@ import { ActionIcon, Button, Group, Slider, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import { DayInput } from "./day-input.tsx";
 import { focusSoon } from "./focus.ts";
-import { formatDay, formatMonth } from "./table-view.ts";
+import { formatDayOrMonth, formatMonth } from "./table-view.ts";
 import { today } from "./today.ts";
 
 const dateBoxId = "org-chart-date";
@@ -25,6 +25,7 @@ const monthsBetweenLabels = 12;
 // How far down the arrows and timeline sit, to line up with the box under its label.
 const dayBoxLabelHeight = 24;
 const handleOffset = 6;
+const noBreakSpace = "\u00a0";
 
 // The day the chart draws for the month this far from the current one: the first of that month, or
 // today in the current month.
@@ -36,11 +37,14 @@ function dayOfMonthFromNow(months: number): string {
 export function OrgChartDate({
   day,
   seesDays,
+  changes,
   onDay,
 }: {
   // The day shown, or undefined for today.
   day: string | undefined;
   seesDays: boolean;
+  // Whether changes can be made on the day shown.
+  changes: boolean;
   onDay: (day: string | undefined) => void;
 }) {
   const shown = day ?? today();
@@ -78,7 +82,7 @@ export function OrgChartDate({
   });
   const belowLabel = seesDays ? dayBoxLabelHeight : 0;
   return (
-    <Stack gap="xs" mb="sm">
+    <Stack gap={0} mb="xs">
       <Group gap="sm" align="flex-start" wrap="nowrap">
         {seesDays && (
           <DayInput
@@ -122,7 +126,7 @@ export function OrgChartDate({
           styles={{ markLabel: { color: "var(--mantine-color-text)" } }}
           style={{ flex: 1 }}
           mt={belowLabel + handleOffset}
-          mb="xl"
+          mb="lg"
           mx="lg"
           min={-monthsEachWay}
           max={monthsEachWay}
@@ -161,12 +165,19 @@ export function OrgChartDate({
           Today
         </Button>
       </Group>
-      {day !== undefined && (
-        <Text size="sm" role="status">
-          Showing {seesDays ? formatDay(day) : formatMonth(monthOf(day))}.
-          Nothing can be changed on this date.
-        </Text>
-      )}
+      {/* The line keeps its place while empty, so the chart below does not move as dates change. */}
+      <Text size="sm" role="status">
+        {day === undefined ? (
+          noBreakSpace
+        ) : (
+          <>
+            Showing {formatDayOrMonth(day, seesDays)}.{" "}
+            {changes
+              ? "Changes take effect from this date."
+              : "Nothing can be changed on this date."}
+          </>
+        )}
+      </Text>
     </Stack>
   );
 }

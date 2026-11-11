@@ -480,13 +480,10 @@ export interface FeatureTeamAccess {
 function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
   return {
     read: async (actor, on) => {
-      const read =
-        on === undefined
-          ? await featureTeamData.readFeatureTeams(database, actor)
-          : await featureTeamData.readFeatureTeamsOn(database, actor, on);
+      const read = await featureTeamData.readFeatureTeams(database, actor, on);
       // The days members join or leave are Restricted, so seeing them is recorded: those a draft
-      // gives, and those a reader who sees Restricted details can tell from teams on a chosen day,
-      // which come without drafts, or from the month a team disbands, which may draw on end dates.
+      // gives, and those a reader who sees Restricted details can tell from teams on a chosen day, or
+      // from the month a team disbands, which may draw on end dates.
       const sawDays =
         on === undefined
           ? read.teams.some(

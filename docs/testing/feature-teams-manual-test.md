@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/web/src/feature-team*", "apps/server/src/data/feature-teams.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-08"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Feature Teams
 
 ## Scope
 
-Verifies feature teams on the **Org chart** page: switching the chart to feature teams, how each team is drawn under its lead in light and dark mode, a team's panel, proposing and editing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, setting from when members join, approving a team's draft on the Drafts page, and using a team's panel from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies feature teams on the **Org chart** page: switching the chart to feature teams, how each team is drawn under its lead in light and dark mode, a team's panel, proposing and editing teams as drafts with their marks on the chart and in the panel, what a reader who may not change teams sees, changing teams from another date on the chart, approving a team's draft on the Drafts page, and using a team's panel from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -126,7 +126,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch.
 
 - [ ] **Step 1.** Select the Feature teams button, then **Platform reliability**.
-  - **Expected:** The team panel opens with **Team** reading Platform reliability, **Feature lead** empty, reading **No lead**, no **Rename** button, and no **Takes effect from** box.
+  - **Expected:** The team panel opens with **Team** reading Platform reliability, **Feature lead** empty, reading **No lead**, and no **Rename** button.
   - **Notes:**
 
 - [ ] **Step 2.** In **Feature lead**, choose **Polly Smith**.
@@ -163,31 +163,19 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Both are listed as members, Branson O'Keefe with **(lead)**. On the chart, the team's first card is Branson O'Keefe's, named Fictional data team, with Priscille Adam under it.
   - **Notes:**
 
-- [ ] **Step 4.** Look at the box labelled **Takes effect from**, under **Add member** in the team panel.
-  - **Expected:** The box shows today's date, written as year, month and day, such as 2026-11-08.
-  - **Notes:**
-
-- [ ] **Step 5.** Clear the box, and type tomorrow's date as digits alone, such as 20261109.
-  - **Expected:** The digits are laid out as a date, and **Use today or an earlier date** appears in red under the box.
-  - **Notes:**
-
-- [ ] **Step 6.** Clear the box, and type yesterday's date as digits alone. In **Add member**, choose **Thad Heidenreich**.
-  - **Expected:** The red line is gone. Thad Heidenreich is listed among the members with a yellow dot and **Draft**.
-  - **Notes:**
-
-- [ ] **Step 7.** Select **Rename**, change the name to **Fictional analytics team**, and press Enter.
+- [ ] **Step 4.** Select **Rename**, change the name to **Fictional analytics team**, and press Enter.
   - **Expected:** The panel's **Team** and the card's team name read **Fictional analytics team**.
   - **Notes:**
 
-- [ ] **Step 8.** Select **Search** from the Feature teams button, then **Remove feature team**.
+- [ ] **Step 5.** Select **Search** from the Feature teams button, then **Remove feature team**.
   - **Expected:** The panel marks Search with a yellow dot and **Draft**, and the **Remove feature team** button is gone.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Discard draft**.
+- [ ] **Step 6.** Select **Discard draft**.
   - **Expected:** The draft mark goes, and Search is shown as before.
   - **Notes:**
 
-- [ ] **Step 10.** Select the Publish button.
+- [ ] **Step 7.** Select the Publish button.
   - **Expected:** A notice reads **Published** followed by the number of changes.
   - **Notes:**
 
@@ -210,7 +198,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 4.** Select **Drafts** in the left-hand menu. Clear the search box, and type **Fictional analytics team**.
-  - **Expected:** One entry, **the feature team Fictional analytics team**, with lines for **Feature lead** Branson O'Keefe, **Members** Branson O'Keefe, Priscille Adam, Thad Heidenreich, and **Joining and leaving dates** set to Thad Heidenreich and yesterday's date.
+  - **Expected:** One entry, **the feature team Fictional analytics team**, with lines for **Feature lead** Branson O'Keefe and **Members** Branson O'Keefe, Priscille Adam.
   - **Notes:**
 
 ### FT-05: A Team's Panel Works From the Keyboard
@@ -224,7 +212,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Add member** box again, and press Tab repeatedly.
-  - **Expected:** A visible outline moves in turn to **Takes effect from**, **Discard draft**, and **Remove feature team**.
+  - **Expected:** A visible outline moves in turn to **Discard draft** and **Remove feature team**.
   - **Notes:**
 
 - [ ] **Step 3.** Press Shift and Tab together to return to **Discard draft**, and press Enter.
@@ -244,23 +232,23 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Select the left arrow once.
-  - **Expected:** The **Date** box shows the first day of last month. Below the row, text reads **Showing** with that date, then **Nothing can be changed on this date.** The chart redraws without the page going blank, and the **Draft** menu is gone.
+  - **Expected:** The **Date** box shows the first day of last month. Below the row, text reads **Showing** with that date, then **Changes take effect from this date.** The chart redraws without the page going blank, and the **Draft** menu stays.
   - **Notes:**
 
 - [ ] **Step 3.** Open the Feature teams button and choose any team.
-  - **Expected:** The team's panel shows its members with no **×** beside them, no **Add member** box, and no **Takes effect from** box.
+  - **Expected:** The team's panel shows its members with an **×** beside each, and an **Add member** box, but no **Rename** or **Remove feature team** button.
   - **Notes:**
 
 - [ ] **Step 4.** Drag the timeline's handle well to the left, and let go.
-  - **Expected:** While dragging, a label shows the month under the handle. The handle stays where you let it go. The chart redraws once, showing only the teams with members that month, which may be none, and the **Date** box shows the first day of that month.
+  - **Expected:** While dragging, a label shows the month under the handle. The handle stays where you let it go. The chart redraws once, showing only the teams with members or a draft that month, which may be none, and the **Date** box shows the first day of that month.
   - **Notes:**
 
 - [ ] **Step 5.** Clear the **Date** box, and type a date in the middle of a month, as digits alone, such as 20250315.
-  - **Expected:** Below the row, text reads **Showing Mar 15, 2025. Nothing can be changed on this date.**, and the timeline's handle moves to March 2025.
+  - **Expected:** Below the row, text reads **Showing Mar 15, 2025. Changes take effect from this date.**, and the timeline's handle moves to March 2025.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Reporting teams** in the teams switch.
-  - **Expected:** The date stays. The chart shows managers and their reports as of that date.
+  - **Expected:** The date stays. The chart shows managers and their reports as of that date, and the text below the row ends **Nothing can be changed on this date.** The **Draft** menu is gone.
   - **Notes:**
 
 - [ ] **Step 7.** Select **Today**.
@@ -289,38 +277,48 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Text below the row reads **Showing** with last month and its year, such as **Showing Oct 2026.**, then **Nothing can be changed on this date.** No day of the month is shown.
   - **Notes:**
 
-### FT-08: The Takes Effect From Box Changes a Draft
+### FT-08: Changes Take Effect From the Date Shown
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FT-07.
 
-**Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch, and any team with no draft open in its panel.
+**Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch, showing today.
 
-- [ ] **Step 1.** Clear **Takes effect from**, type the first day of last month as digits alone, and press Enter.
-  - **Expected:** **Make a change first** appears in red under **Takes effect from**, which goes back to today's date.
+- [ ] **Step 1.** Select the right arrow once.
+  - **Expected:** The **Date** box shows the first day of next month, and the text below the row ends **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 2.** Choose someone in **Add member**.
-  - **Expected:** They are listed with a yellow dot and **Draft**, and the red message goes.
+- [ ] **Step 2.** Select the Feature teams button, then **Platform reliability**. In **Add member**, choose the first person listed. Note their name: the joiner.
+  - **Expected:** A notice offers **Undo**. The joiner is listed among the members with a yellow dot and **Draft**, with no date after it, and a card for them appears under the team on the chart.
   - **Notes:**
 
-- [ ] **Step 3.** Clear **Takes effect from**, type the first day of last month as digits alone, and press Enter.
-  - **Expected:** The cursor leaves **Takes effect from**, and a notice reads **Date changed**, with **Undo**.
+- [ ] **Step 3.** Select **Today**.
+  - **Expected:** The joiner is still listed in the team panel, now marked **Draft, from** and the first day of next month, such as **Draft, from Dec 1, 2026**.
   - **Notes:**
 
-- [ ] **Step 4.** Close the panel and open the same team again.
-  - **Expected:** **Takes effect from** shows the first day of last month.
+- [ ] **Step 4.** Select **Drafts** in the left-hand menu, and type **Platform reliability** in the search box.
+  - **Expected:** The entry's **Joining and leaving dates** line gives the joiner and the first day of next month.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Drafts** in the left-hand menu, and find this team's entry.
-  - **Expected:** The dates in the entry are the first day of last month.
+- [ ] **Step 5.** Select **Org chart** in the left-hand menu, and choose **Feature teams** in the teams switch. Select the Feature teams button, then **Platform reliability**, and select **Discard draft**.
+  - **Expected:** The draft mark goes, and the joiner is no longer listed.
   - **Notes:**
 
-- [ ] **Step 6.** Return to the team's panel. Click in **Takes effect from**, delete its last digit, and press Esc.
-  - **Expected:** The panel stays open, the cursor stays in **Takes effect from**, and it shows the first day of last month again.
+### FT-09: An Earlier Date Is Read Only Without the Right to Change Dates
+
+**Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from FT-08.
+
+**Preconditions:** Signed in with this account. **Org chart** open, with **Feature teams** chosen in the teams switch, showing today.
+
+- [ ] **Step 1.** Select the left arrow once.
+  - **Expected:** The text below the row ends **Nothing can be changed on this date.** The **Draft** menu is gone.
   - **Notes:**
 
-- [ ] **Step 7.** Select **Discard draft**.
-  - **Expected:** The draft mark goes, and **Takes effect from** shows today's date.
+- [ ] **Step 2.** Select the Feature teams button, then any team.
+  - **Expected:** The team's panel shows its members with no **×** beside them, and no **Add member** box.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the right arrow twice.
+  - **Expected:** The text below the row ends **Changes take effect from this date.** The **Draft** menu is back, and the team's panel shows an **×** beside each member and an **Add member** box.
   - **Notes:**
 
 **Afterwards:** R1.

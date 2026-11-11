@@ -10,9 +10,15 @@
 // have none, even when a team is shown alone. The Draft menu, as on tables, draws drafts of
 // managers, positions and team names beside the live chart, applied to it, or not at all, which
 // leaves the chart read only; its choice is kept in the address. A date control draws the chart as
-// of another day, read only, and is kept in the address too.
+// of another day, kept in the address too, where feature teams change from that day, for those who
+// may date changes then, and everything else is read only.
 
-import type { FeatureTeams, PaletteColour, Show } from "@fathom/shared";
+import {
+  type FeatureTeams,
+  mayDateTeamChange,
+  type PaletteColour,
+  type Show,
+} from "@fathom/shared";
 import {
   ActionIcon,
   Alert,
@@ -108,6 +114,7 @@ import { motionLasts, useNarrow, WithSidePanel } from "./side-panel.tsx";
 import { DraftMark, LiveLine, StatusMark } from "./status-mark.tsx";
 import { formatMonth } from "./table-view.ts";
 import { DraftMenu } from "./table-controls.tsx";
+import { today } from "./today.ts";
 
 interface CardData extends Record<string, unknown> {
   person: ChartPerson;
@@ -450,10 +457,11 @@ function Chart({
   search,
   onSearch,
   teamsList,
-  dated,
+  fixedDay,
 }: {
-  // Whether the chart shows another day, which has no drafts to choose among.
-  dated: boolean;
+  // Whether the chart shows another day on which nothing can be changed, drawn as approved, with no
+  // drafts to choose among.
+  fixedDay: boolean;
   // The list of teams beside the chart, in place of managers' teams, such as feature teams.
   teamsList?: ReactNode;
   tree: OrgTree;
@@ -758,7 +766,7 @@ function Chart({
           // Drafts are details of people, so those who do not see people see only the approved
           // chart.
           seesPeople &&
-          !dated && (
+          !fixedDay && (
             <DraftMenu
               show={show}
               onShow={(next) => {
@@ -845,6 +853,14 @@ function Chart({
   );
 }
 
+// On another day, only what takes effect from it is changed: renaming, colouring and removing a team
+// do not.
+const undatedChangesLeftOut = (edits: FeatureTeamEdits): FeatureTeamEdits => ({
+  ...edits,
+  edit: false,
+  colours: false,
+});
+
 export function OrgChartPage({
   search,
   onSearch,
@@ -866,9 +882,17 @@ export function OrgChartPage({
 }) {
   const featureView = search.view === "feature-teams";
   const day = chartDay(search.day, featureView, showDates);
-  // On another day the chart is read only. Those who do not see Restricted details see feature teams
-  // on it, with people as they are today, since reporting lines on another day are Restricted.
+  // Those who do not see Restricted details see feature teams on another day, with people as they
+  // are today, since reporting lines on another day are Restricted. Feature teams change from the
+  // day shown for those who may date changes then; reporting lines and people's details change only
+  // today.
   const dated = day !== undefined;
+  const changesOnDay =
+    day !== undefined &&
+    featureView &&
+    featureTeamEdits.propose &&
+    mayDateTeamChange(featureTeamEdits.dates, day, today());
+  const fixedDay = dated && !changesOnDay;
   const query = useQuery(orgChartQueryOn(showDates ? day : undefined));
   const narrow = useNarrow();
   // A person's details and a note of theirs being written, beside the chart.
@@ -904,7 +928,7 @@ export function OrgChartPage({
   });
   // Also read only for the moment another day's data stays on screen while today's loads.
   const readOnly =
-    dated || query.isPlaceholderData || teamsQuery.isPlaceholderData;
+    fixedDay || query.isPlaceholderData || teamsQuery.isPlaceholderData;
   const show = readOnly
     ? "live"
     : seesPeople
@@ -1010,6 +1034,7 @@ export function OrgChartPage({
         <OrgChartDate
           day={day}
           seesDays={showDates}
+          changes={changesOnDay}
           onDay={(next) => {
             setCreating(false);
             go({ ...search, day: next }, true);
@@ -1079,7 +1104,7 @@ export function OrgChartPage({
                         }}
                         notes={notes}
                         onChange={
-                          canEdit && !readOnly
+                          canEdit && !readOnly && !dated
                             ? (person, change) => {
                                 save({
                                   ...personUpdate(
@@ -1125,8 +1150,16 @@ export function OrgChartPage({
                       <FeatureTeamPanel
                         key={openedTeam?.id ?? "new"}
                         team={creating ? undefined : openedTeam}
+                        day={day}
+                        seesDays={showDates}
                         people={query.data.people}
-                        edits={readOnly ? noFeatureTeamEdits : featureTeamEdits}
+                        edits={
+                          readOnly
+                            ? noFeatureTeamEdits
+                            : dated
+                              ? undatedChangesLeftOut(featureTeamEdits)
+                              : featureTeamEdits
+                        }
                         show={show}
                         narrow={narrow}
                         actions={teamActions}
@@ -1160,7 +1193,7 @@ export function OrgChartPage({
               seesPeople={seesPeople}
               teamEdits={edits}
               show={show}
-              dated={dated}
+              fixedDay={fixedDay}
               search={search}
               onSearch={go}
               {...(featureView

@@ -2,10 +2,10 @@
 
 // A feature team's details, beside the org chart: its name, colour, lead, and members, as its draft
 // makes them, with a drafted name's live one under it and members a draft adds or removes marked, as
-// managers' teams are. Those who propose feature teams add and remove members and choose the lead,
-// those who edit them also rename and remove the team, and those who may change Restricted details
-// may say from when members join or leave. Each change is a draft, saved at once, which can be
-// undone from its notification. A new team is named first, then given members.
+// managers' teams are, and when each change takes effect, where that is not the day shown. Those
+// who propose feature teams add and remove members and choose the lead, from the day the chart
+// shows, those who edit them also rename and remove the team. Each change is a draft, saved at once,
+// which can be undone from its notification. A new team is named first, then given members.
 
 import {
   type FeatureTeam,
@@ -28,16 +28,16 @@ import {
   TextInput,
 } from "@mantine/core";
 import { useState } from "react";
-import { DayInput } from "./day-input.tsx";
-import { useDraftDateBox } from "./feature-team-date-box.ts";
 import {
   featureTeamsQuery,
   liveTeam,
+  takesEffect,
   teamPersonNamer,
 } from "./feature-teams.ts";
 import { SidePanelFrame, sidePanelScroll } from "./side-panel.tsx";
 import { DraftMark, LiveLine } from "./status-mark.tsx";
 import { TeamColourMenu } from "./team-colour-menu.tsx";
+import { today } from "./today.ts";
 
 export const featureTeamPanelId = "feature-team-panel";
 const titleId = "feature-team-panel-title";
@@ -57,7 +57,7 @@ export interface FeatureTeamEdits {
   // Also renames and removes teams.
   edit: boolean;
   colours: boolean;
-  // Says from when members join or leave.
+  // Changes teams from an earlier day than today.
   dates: boolean;
 }
 
@@ -75,8 +75,6 @@ export interface FeatureTeamActions {
     personId: string,
     from: string | undefined,
   ) => void;
-  // Moves everything the team's draft changes to a day.
-  moveChanges: (team: FeatureTeam, from: string, onFailed: () => void) => void;
   removeTeam: (team: FeatureTeam) => void;
   discard: (team: FeatureTeam) => void;
   resubmit: (team: FeatureTeam) => void;
@@ -89,6 +87,8 @@ const byName = new Intl.Collator(undefined, { sensitivity: "base" });
 
 export function FeatureTeamPanel({
   team,
+  day,
+  seesDays,
   people,
   edits,
   show,
@@ -101,6 +101,9 @@ export function FeatureTeamPanel({
 }: {
   // The team shown, or none for a new one.
   team: FeatureTeam | undefined;
+  // The day the chart shows, which changes take effect from, or undefined for today.
+  day: string | undefined;
+  seesDays: boolean;
   // Every team, to choose another from.
   teams: readonly FeatureTeam[];
   onTeam: (id: string) => void;
@@ -115,7 +118,6 @@ export function FeatureTeamPanel({
 }) {
   const [name, setName] = useState(team?.name ?? "");
   const [renaming, setRenaming] = useState(false);
-  const dateBox = useDraftDateBox(team, edits.dates, actions.moveChanges);
   const frame = (title: string, content: React.ReactNode) => (
     <SidePanelFrame
       id={featureTeamPanelId}
@@ -226,6 +228,11 @@ export function FeatureTeamPanel({
   const members = [...shown.members].sort((a, b) =>
     byName.compare(nameOf(a), nameOf(b)),
   );
+  const from = (personId: string | undefined) =>
+    draft === undefined
+      ? undefined
+      : takesEffect(draft, personId, day ?? today(), seesDays);
+  const leadFrom = from(undefined);
   return frame(
     "Feature team",
     <Stack gap="lg">
@@ -338,9 +345,7 @@ export function FeatureTeamPanel({
             ]}
             value={shown.leadId}
             onChange={(leadId) => {
-              dateBox.withDay((day) => {
-                actions.lead(team, leadId, day);
-              });
+              actions.lead(team, leadId, day);
             }}
           />
         ) : (
@@ -354,6 +359,7 @@ export function FeatureTeamPanel({
         {draft?.live.leadId !== undefined && (
           <LiveLine>
             {draft.live.leadId === null ? "None" : nameOf(draft.live.leadId)}
+            {leadFrom === undefined ? "" : `, until ${leadFrom}`}
           </LiveLine>
         )}
       </Stack>
@@ -374,7 +380,7 @@ export function FeatureTeamPanel({
                 {personId === shown.leadId ? " (lead)" : ""}
               </Text>
               {draft !== undefined && !wasMember.has(personId) && (
-                <DraftMark draft={draft} />
+                <DraftMark draft={draft} from={from(personId)} />
               )}
             </Group>
             {changes && (
@@ -382,17 +388,21 @@ export function FeatureTeamPanel({
                 size="sm"
                 aria-label={`Remove ${nameOf(personId)} from ${shown.name}`}
                 onClick={() => {
-                  dateBox.withDay((day) => {
-                    actions.remove(team, personId, day);
-                  });
+                  actions.remove(team, personId, day);
                 }}
               />
             )}
           </Group>
         ))}
-        {leaving.map((personId) => (
-          <LiveLine key={personId}>{nameOf(personId)}, leaving</LiveLine>
-        ))}
+        {leaving.map((personId) => {
+          const leaves = from(personId);
+          return (
+            <LiveLine key={personId}>
+              {nameOf(personId)}, leaving
+              {leaves === undefined ? "" : ` from ${leaves}`}
+            </LiveLine>
+          );
+        })}
         {changes && (
           <Select
             aria-label="Add member"
@@ -401,19 +411,8 @@ export function FeatureTeamPanel({
             data={choices}
             value={null}
             onChange={(personId) => {
-              dateBox.withDay((day) => {
-                actions.add(team, String(personId), day);
-              });
+              actions.add(team, String(personId), day);
             }}
-          />
-        )}
-        {changes && edits.dates && (
-          <DayInput
-            key={dateBox.boxKey}
-            label="Takes effect from"
-            required={false}
-            description="Today or earlier"
-            {...dateBox.box}
           />
         )}
       </Stack>
@@ -434,7 +433,6 @@ export function FeatureTeamPanel({
               variant="default"
               onClick={() => {
                 actions.discard(team);
-                dateBox.reset();
               }}
             >
               Discard draft

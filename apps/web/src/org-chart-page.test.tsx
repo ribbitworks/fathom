@@ -2086,123 +2086,6 @@ describe("feature teams on the org chart", () => {
     );
   });
 
-  const drafted = (days?: Record<string, string>) =>
-    featureTeam({
-      id: lighthouse,
-      name: "Fictional Lighthouse",
-      leadId: "p2",
-      members: ["p2", "p4"],
-      draft: {
-        action: "changed",
-        changed: ["members"],
-        live: { members: ["p2"] },
-        ...(days === undefined ? {} : { days }),
-        state: "waiting",
-        madeBy: "Fictional Editor",
-        madeAt: "2026-10-30T15:00:00.000Z",
-      },
-    });
-
-  it("moves a draft to the date typed, says so, and shows the draft's date", async () => {
-    const team = `/api/feature-teams/${lighthouse}`;
-    let days: Record<string, string> | undefined;
-    const { fetch } = await openFeatureTeams({
-      signedInAs: editor,
-      shown: [drafted()],
-      answers: {
-        "GET /api/feature-teams": () =>
-          Response.json({ teams: [drafted(days)] }),
-        [`PATCH ${team}`]: () => {
-          days = { p4: "2020-01-06" };
-          return saved()();
-        },
-      },
-    });
-    const panel = await openTeamPanel(/^Fictional Lighthouse/);
-    const from = within(panel).getByRole("textbox", {
-      name: /Takes effect from/,
-    });
-    await userEvent.clear(from);
-    await userEvent.type(from, "20200106{Enter}");
-    expect(await screen.findByText("Date changed")).toBeDefined();
-    expect(sent(fetch, "PATCH")).toEqual([[team, { from: "2020-01-06" }]]);
-    await waitFor(() => {
-      expect(
-        within(panel).getByRole<HTMLInputElement>("textbox", {
-          name: /Takes effect from/,
-        }).value,
-      ).toBe("2020-01-06");
-    });
-  });
-
-  it("puts the date back when moving a draft is refused", async () => {
-    const team = `/api/feature-teams/${lighthouse}`;
-    await openFeatureTeams({
-      signedInAs: editor,
-      answers: {
-        "GET /api/feature-teams": () =>
-          Response.json({ teams: [drafted({ p4: "2020-01-06" })] }),
-        [`PATCH ${team}`]: () =>
-          Response.json({ error: "Down" }, { status: 500 }),
-      },
-    });
-    const panel = await openTeamPanel(/^Fictional Lighthouse/);
-    const box = () =>
-      within(panel).getByRole<HTMLInputElement>("textbox", {
-        name: /Takes effect from/,
-      });
-    await userEvent.clear(box());
-    await userEvent.type(box(), "20200110{Enter}");
-    expect(
-      await screen.findByText(
-        "Fathom could not change the date of Fictional Lighthouse.",
-      ),
-    ).toBeDefined();
-    await waitFor(() => {
-      expect(box().value).toBe("2020-01-06");
-    });
-  });
-
-  it("gives a draft's later changes the draft's date", async () => {
-    const team = `/api/feature-teams/${lighthouse}`;
-    const { fetch } = await openFeatureTeams({
-      signedInAs: editor,
-      answers: {
-        "GET /api/feature-teams": () =>
-          Response.json({ teams: [drafted({ p4: "2020-01-06" })] }),
-        [`PATCH ${team}`]: saved(),
-      },
-    });
-    const panel = await openTeamPanel(/^Fictional Lighthouse/);
-    await userEvent.click(
-      within(panel).getByRole("combobox", { name: "Feature lead" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("option", { name: /^Uma Fictional/ }),
-    );
-    await userEvent.click(
-      within(panel).getByRole("combobox", { name: "Add member" }),
-    );
-    await userEvent.click(
-      await screen.findByRole("option", { name: /^Robin Fictional/ }),
-    );
-    await userEvent.click(
-      within(panel).getByRole("button", {
-        name: "Remove Uma Fictional from Fictional Lighthouse",
-      }),
-    );
-    await waitFor(() => {
-      expect(sent(fetch, "PATCH")).toHaveLength(3);
-    });
-    expect(sent(fetch, "PATCH")).toEqual(
-      [
-        { leadId: "p4", from: "2020-01-06" },
-        { add: ["p1"], from: "2020-01-06" },
-        { remove: ["p4"], from: "2020-01-06" },
-      ].map((body) => [team, body]),
-    );
-  });
-
   describe("on another day", () => {
     const seesDetails = session([
       "people:view",
@@ -2219,7 +2102,7 @@ describe("feature teams on the org chart", () => {
     const urls = (fetch: ReturnType<typeof serverAnswers>) =>
       fetch.mock.calls.map(([url]) => url);
 
-    it("draws the chart as of that day, read only, for those who see Restricted details", async () => {
+    it("draws the chart as of an earlier day, read only, for those who may not change earlier days", async () => {
       const { fetch } = await openFeatureTeams({
         path: `/org-chart?view=feature-teams&day=${onDay}`,
         signedInAs: seesDetails,
@@ -2235,8 +2118,80 @@ describe("feature teams on the org chart", () => {
       expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
       const panel = await openTeamPanel("Fictional Lighthouse");
       expect(
-        within(panel).queryByRole("textbox", { name: /Takes effect from/ }),
+        within(panel).queryByRole("combobox", { name: "Add member" }),
       ).toBeNull();
+    });
+
+    it("changes feature teams from a later day shown, with drafts", async () => {
+      const later = "2099-03-01";
+      const { fetch } = await openFeatureTeams({
+        path: `/org-chart?view=feature-teams&day=${later}`,
+        signedInAs: seesDetails,
+        answers: {
+          [`GET /api/feature-teams?on=${later}`]: () =>
+            Response.json({ teams }),
+          [`GET /api/org-chart?on=${later}`]: chartAnswer,
+          [`PATCH /api/feature-teams/${lighthouse}`]: saved(),
+        },
+      });
+      expect(
+        await screen.findByText(
+          "Showing Mar 1, 2099. Changes take effect from this date.",
+        ),
+      ).toBeDefined();
+      expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
+      const panel = await openTeamPanel("Fictional Lighthouse");
+      expect(
+        within(panel).queryByRole("button", { name: "Rename" }),
+      ).toBeNull();
+      expect(
+        within(panel).queryByRole("button", { name: "Remove feature team" }),
+      ).toBeNull();
+      expect(
+        within(panel).queryByRole("button", { name: /^Colour of/ }),
+      ).toBeNull();
+      await userEvent.click(
+        within(panel).getByRole("combobox", { name: "Feature lead" }),
+      );
+      await userEvent.click(
+        await screen.findByRole("option", { name: /^Uma Fictional/ }),
+      );
+      await userEvent.click(
+        within(panel).getByRole("combobox", { name: "Add member" }),
+      );
+      await userEvent.click(
+        await screen.findByRole("option", { name: /^Robin Fictional/ }),
+      );
+      await userEvent.click(
+        within(panel).getByRole("button", {
+          name: "Remove Uma Fictional from Fictional Lighthouse",
+        }),
+      );
+      await waitFor(() => {
+        expect(sent(fetch, "PATCH")).toHaveLength(3);
+      });
+      expect(sent(fetch, "PATCH")).toEqual(
+        [
+          { leadId: "p4", from: later },
+          { add: ["p1"], from: later },
+          { remove: ["p4"], from: later },
+        ].map((body) => [`/api/feature-teams/${lighthouse}`, body]),
+      );
+    });
+
+    it("changes feature teams from an earlier day for those who may change Restricted details", async () => {
+      await openFeatureTeams({
+        path: `/org-chart?view=feature-teams&day=${onDay}`,
+        signedInAs: editor,
+        answers: { ...teamsOnDay, ...chartOnDay },
+      });
+      expect(
+        await screen.findByText(/Changes take effect from this date\.$/),
+      ).toBeDefined();
+      const panel = await openTeamPanel("Fictional Lighthouse");
+      expect(
+        within(panel).getByRole("combobox", { name: "Add member" }),
+      ).toBeDefined();
     });
 
     it("shows feature teams by month, with today's people, to those who do not", async () => {
@@ -2261,7 +2216,7 @@ describe("feature teams on the org chart", () => {
         signedInAs: seesChart,
       });
       await screen.findByRole("button", { name: "Today" });
-      expect(screen.queryByRole("status")).toBeNull();
+      expect(screen.queryByText(/^Showing/)).toBeNull();
       expect(urls(fetch).join(" ")).not.toContain("?on=");
     });
 
@@ -2280,7 +2235,11 @@ describe("feature teams on the org chart", () => {
         signedInAs: seesDetails,
         answers: chartOnDay,
       });
-      expect(await screen.findByText(/^Showing Mar 1, 2025/)).toBeDefined();
+      expect(
+        await screen.findByText(
+          "Showing Mar 1, 2025. Nothing can be changed on this date.",
+        ),
+      ).toBeDefined();
       expect(urls(fetch)).toContain(`/api/org-chart?on=${onDay}`);
       expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
     });

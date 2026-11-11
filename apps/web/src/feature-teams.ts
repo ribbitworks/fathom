@@ -9,9 +9,11 @@
 import {
   type FeatureTeam,
   type FeatureTeamChange,
+  type FeatureTeamDraft,
   type FeatureTeamRequest,
   featureTeamsSchema,
   type MemberTeamsChange,
+  monthOf,
   type OrgChartPerson,
   type PaletteColour,
   savedSchema,
@@ -20,8 +22,10 @@ import {
 import { z } from "zod";
 import { dayQuery, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
 import type { ChartPerson } from "./org-chart.ts";
+import { formatDay, formatDayOrMonth, formatMonth } from "./table-view.ts";
+import { today } from "./today.ts";
 
-// The teams as they are today, with drafts, or those with members on a chosen day, as approved.
+// The teams on a day, today unless another is given, with drafts for those who see them.
 export const featureTeamsQueryOn = dayQuery(
   "feature-teams",
   "/api/feature-teams",
@@ -122,6 +126,32 @@ export function liveTeam(team: FeatureTeam): FeatureTeam | undefined {
       ? {}
       : { members: draft.live.members }),
   };
+}
+
+// When a drafted change takes effect, for someone it adds or removes, or for its change of lead,
+// unless that is the day shown: its day, or its month for readers who do not see days, or today for
+// a change given no day.
+export function takesEffect(
+  draft: FeatureTeamDraft,
+  personId: string | undefined,
+  shown: string,
+  seesDays: boolean,
+): string | undefined {
+  const heldFor = (
+    held: Record<string, string> | undefined,
+    lead: string | undefined,
+  ) =>
+    personId === undefined
+      ? lead
+      : new Map(Object.entries(held ?? {})).get(personId);
+  const day = heldFor(draft.days, draft.leadDay);
+  const month = heldFor(draft.months, draft.leadMonth);
+  if (day !== undefined) return day === shown ? undefined : formatDay(day);
+  if (month !== undefined) {
+    return month === monthOf(shown) ? undefined : formatMonth(month);
+  }
+  const now = today();
+  return shown === now ? undefined : formatDayOrMonth(now, seesDays);
 }
 
 // The card id of a person on a team, since someone on two teams has a card under each.

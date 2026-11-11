@@ -43,6 +43,9 @@ export const featureTeamDraftSchema = z.object({
   days: z.record(z.string(), daySchema).optional(),
   // The day the draft's change of lead takes effect, for readers who see Restricted details.
   leadDay: daySchema.optional(),
+  // The months of those days, for readers who do not see them.
+  months: z.record(z.string(), monthSchema).optional(),
+  leadMonth: monthSchema.optional(),
   ...draftShape,
 });
 

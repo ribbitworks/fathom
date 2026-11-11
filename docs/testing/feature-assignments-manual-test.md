@@ -287,22 +287,22 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from FA-14.
 
-**Preconditions:** R1 has been run. Signed in with this account. **Light** selected in the Appearance menu. **Org chart** open, with **Feature teams** chosen in the switch at the top right.
+**Preconditions:** R1 has been run. Signed in with this account. **Light** selected in the Appearance menu. **Org chart** open, with **Feature teams** chosen in the switch at the top right, showing today.
 
-- [ ] **Step 1.** Select the Feature teams button, then **Platform reliability**.
+- [ ] **Step 1.** Select the left arrow, left of the timeline above the chart, once.
+  - **Expected:** The **Date** box shows the first day of last month, and the text below the timeline ends **Changes take effect from this date.**
+  - **Notes:**
+
+- [ ] **Step 2.** Select the Feature teams button, then **Platform reliability**.
   - **Expected:** The team panel opens with **Team** reading **Platform reliability**, and its members listed.
   - **Notes:**
 
-- [ ] **Step 2.** Open **Add member** and choose the first person listed. Note their name: the joiner.
+- [ ] **Step 3.** Open **Add member** and choose the first person listed. Note their name: the joiner.
   - **Expected:** The joiner is listed among the members with a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 3.** Select the **×** at the right of the first member listed before step 2. Note their name: the leaver.
+- [ ] **Step 4.** Select the **×** at the right of the first member listed before step 3. Note their name: the leaver.
   - **Expected:** A line reading the leaver's name and **leaving** is shown under the members, marked **Live**.
-  - **Notes:**
-
-- [ ] **Step 4.** Clear **Takes effect from**, type the first day of last month as digits alone, such as `20261001` in November 2026, and press Enter.
-  - **Expected:** A notice reads **Date changed**, with **Undo**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Feature assignments** in the left-hand menu. Select **None** in the Group by menu, and type the joiner's name in the search box.
