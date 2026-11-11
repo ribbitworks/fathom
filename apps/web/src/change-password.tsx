@@ -171,7 +171,7 @@ function PasswordForm({
       if (isWrongPassword(error)) {
         form.setError(
           "currentPassword",
-          { type: "server", message: "Your current password is not right." },
+          { type: "server", message: "The current password is not right." },
           { shouldFocus: true },
         );
       }
@@ -201,7 +201,7 @@ function PasswordForm({
             errors.currentPassword &&
             (errors.currentPassword.type === "server"
               ? errors.currentPassword.message
-              : "Enter your current password.")
+              : "Enter the current password.")
           }
           {...form.register("currentPassword")}
         />

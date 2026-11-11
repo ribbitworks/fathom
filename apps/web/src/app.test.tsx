@@ -47,7 +47,7 @@ describe("home page", () => {
     expect(await screen.findByText("Hello, Fathom")).toBeDefined();
     expect(screen.getByRole("heading", { name: "Overview" })).toBeDefined();
     expect(
-      screen.getByRole("button", { name: "Your account, Fictional Person" }),
+      screen.getByRole("button", { name: "Account, Fictional Person" }),
     ).toBeDefined();
   });
 
@@ -193,8 +193,8 @@ describe("signing in", () => {
     const fetch = serverAnswers({ "GET /api/session": signedOut });
     renderApp("/sign-in");
     await fillIn("not an address", "");
-    expect(await screen.findByText("Enter your email address.")).toBeDefined();
-    expect(screen.getByText("Enter your password.")).toBeDefined();
+    expect(await screen.findByText("Enter the email address.")).toBeDefined();
+    expect(screen.getByText("Enter the password.")).toBeDefined();
     expect(fetch).not.toHaveBeenCalledWith(
       "/api/auth/sign-in/email",
       expect.anything(),
@@ -220,7 +220,7 @@ describe("signing in", () => {
 async function signOutFromMenu() {
   await userEvent.click(
     await screen.findByRole("button", {
-      name: "Your account, Fictional Person",
+      name: "Account, Fictional Person",
     }),
   );
   await userEvent.click(
@@ -261,10 +261,10 @@ describe("signing out", () => {
     renderApp("/");
     await signOutFromMenu();
     expect((await screen.findByRole("alert")).textContent).toMatch(
-      /could not sign you out/,
+      /could not sign out/,
     );
     expect(
-      screen.getByRole("button", { name: "Your account, Fictional Person" }),
+      screen.getByRole("button", { name: "Account, Fictional Person" }),
     ).toBeDefined();
   });
 });
@@ -310,7 +310,7 @@ describe("signing out after a time without use", () => {
     seen();
     seen();
     expect((await screen.findByRole("status")).textContent).toBe(
-      "You were signed out after 30 minutes without use.",
+      "Signed out after 30 minutes without use.",
     );
     expect(history.location.pathname).toBe("/sign-in");
     expect(history.location.search).toBe("?redirect=%2F&idle=true");

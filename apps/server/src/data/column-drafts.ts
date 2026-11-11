@@ -64,6 +64,7 @@ import {
   listTier,
   readState,
   unpublishedMark,
+  unseenDetails,
 } from "./lists.ts";
 import { builtInColumnTiers, builtInTier, type FieldRow } from "./values.ts";
 
@@ -317,7 +318,7 @@ async function saveFieldDraft(
 }
 
 const unseenTier =
-  "Choose a list, or a visibility, whose details your role lets you see";
+  "Choose a list, or a visibility, whose details this role can see";
 
 // Refuses a column whose tier the actor cannot see: the Security Plan lets a column be given only a
 // tier its creator can see, and, as with removing one, only someone who sees a column's details
@@ -414,7 +415,7 @@ export async function updateField(
   return drafting(database, actor.user.id, async (transaction, state) => {
     const field = changeableField(state, id, tableName);
     const live = state.fields.get(id);
-    const unseen = `${String(field.name)} holds people's details your role does not let you see, so someone who may must change it`;
+    const unseen = unseenDetails(String(field.name));
     refuseUnseenTier(actor, state, field, unseen);
     if (live !== undefined) refuseUnseenTier(actor, state, live, unseen);
     if (columnRow(id, field).type !== request.type) {
@@ -530,7 +531,7 @@ export async function deleteField(
         );
       }
       throw new ForbiddenError(
-        `${String(field.name)} holds people's details your role does not let you change, so someone who may must delete it`,
+        `${String(field.name)} holds people's details this role can't change, so someone who can must delete it`,
       );
     }
     return saveFieldDraft(transaction, actor, state, id, field, undefined);

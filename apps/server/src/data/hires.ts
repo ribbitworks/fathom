@@ -94,6 +94,7 @@ import {
   setRejection,
   takenEmployeeIds,
   tidy,
+  unseenDraft,
   type Viewer,
   writeDraft,
 } from "./drafts.ts";
@@ -1115,12 +1116,12 @@ export async function createHires(
     const tierOf = await readHireTier(transaction, columns);
     if (!seesSensitivity(actor, tierOf("positionId"))) {
       throw new ForbiddenError(
-        "Every planned hire needs a position, and your role doesn't let you see positions",
+        "Every planned hire needs a position, and this role can't see positions",
       );
     }
     if (!seesSensitivity(actor, tierOf("stateId"))) {
       throw new ForbiddenError(
-        "Every planned hire needs a state, and your role doesn't let you see hiring states",
+        "Every planned hire needs a state, and this role can't see hiring states",
       );
     }
     await lockDrafts(transaction);
@@ -1690,9 +1691,7 @@ async function seenHires(
   for (const [id, draft] of found) {
     const fields = draftFields(live.get(id), draft);
     if (!fields.every(seesHireField(actor, tierOf))) {
-      throw new ForbiddenError(
-        "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
-      );
+      throw new ForbiddenError(unseenDraft);
     }
   }
   await refuseHeldDecision(transaction, recordType, ids);

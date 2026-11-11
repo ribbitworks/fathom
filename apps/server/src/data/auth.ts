@@ -110,7 +110,7 @@ export function createAuth(
             const userId = context?.context.session?.user.id;
             if (userId === undefined) {
               throw new APIError("FORBIDDEN", {
-                message: "Sign in to change your password",
+                message: "Sign in to change the password",
               });
             }
             await recordEvent(database, {

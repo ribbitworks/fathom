@@ -243,7 +243,7 @@ describe("saved views", () => {
     ).toBe(404);
     expect(
       (await save(viewer.cookie, "Mine", { sort: ["startDate"] })).json(),
-    ).toEqual({ error: "Choose only columns you can see" });
+    ).toEqual({ error: "Choose only columns this role can see" });
     expect(
       (await save(viewer.cookie, "Unknown", { sort: ["nothing"] })).statusCode,
     ).toBe(400);
@@ -406,7 +406,7 @@ describe("saved views", () => {
     ).toBe(false);
     expect(
       (await save(viewer.cookie, "Mine", { breakdown: ["endDate"] })).json(),
-    ).toEqual({ error: "Choose only columns you can see" });
+    ).toEqual({ error: "Choose only columns this role can see" });
     expect(
       (await save(viewer.cookie, "Unknown", { breakdown: ["nothing"] }))
         .statusCode,
@@ -420,7 +420,7 @@ describe("saved views", () => {
     ).toBe(400);
     expect(
       (await save(viewer.cookie, "By draft", { breakdown: ["draft"] })).json(),
-    ).toEqual({ error: "Choose only columns you can see" });
+    ).toEqual({ error: "Choose only columns this role can see" });
     expect(
       (
         await save(viewer.cookie, "Three", {
@@ -462,7 +462,7 @@ describe("saved views", () => {
     // Drafts are filtered on, but not sorted on.
     expect(
       (await save(viewer.cookie, "By draft", { sort: ["-draft"] })).json(),
-    ).toEqual({ error: "Choose only columns you can see" });
+    ).toEqual({ error: "Choose only columns this role can see" });
   });
 
   it("ignore columns deleted since they were saved", async () => {
@@ -896,6 +896,6 @@ describe("built-in columns in saved views", () => {
     const viewer = await test.signedIn("resource-planner");
     expect(
       (await save(viewer.cookie, "Since", { sort: ["managerFrom"] })).json(),
-    ).toEqual({ error: "Choose only columns you can see" });
+    ).toEqual({ error: "Choose only columns this role can see" });
   });
 });

@@ -755,7 +755,7 @@ describe("a person's feature teams", () => {
       ).toEqual([
         "Fictional BeaconLead",
         "Fictional LighthouseLed by Robin Fictional",
-        "Fictional PierLed by someone you can't see",
+        "Fictional PierLed by someone this role can't see",
         "Fictional QuayNo feature lead",
       ]);
     });
@@ -1315,7 +1315,7 @@ describe("changing a person's details", () => {
       // When Robin's details are asked for, and writing is kept
       await userEvent.click(showRobin);
       const asked = await screen.findByRole("dialog", {
-        name: "Discard the note you're writing?",
+        name: "Discard changes to the note?",
       });
       await userEvent.click(
         within(asked).getByRole("button", { name: "Keep writing" }),
@@ -1324,7 +1324,7 @@ describe("changing a person's details", () => {
       await waitFor(() => {
         expect(
           screen.queryByRole("dialog", {
-            name: "Discard the note you're writing?",
+            name: "Discard changes to the note?",
           }),
         ).toBeNull();
       });
@@ -1337,7 +1337,7 @@ describe("changing a person's details", () => {
       await userEvent.click(
         within(
           await screen.findByRole("dialog", {
-            name: "Discard the note you're writing?",
+            name: "Discard changes to the note?",
           }),
         ).getByRole("button", { name: "Discard" }),
       );
@@ -1580,7 +1580,7 @@ describe("changing a person's details", () => {
       await userEvent.click(
         within(
           await screen.findByRole("dialog", {
-            name: "Discard the note you're writing?",
+            name: "Discard changes to the note?",
           }),
         ).getByRole("button", { name: "Discard" }),
       );

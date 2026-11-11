@@ -269,13 +269,13 @@ describe("who may read and change people", () => {
       "POST",
       "/api/drafts/approval",
       { people: [randomUUID()] },
-      "Your role doesn't let you approve drafts of people",
+      "This role can't approve drafts of people",
     ],
     [
       "POST",
       "/api/drafts/rejection",
       { people: [randomUUID()], reason: "Fictional" },
-      "Your role doesn't let you reject drafts of people",
+      "This role can't reject drafts of people",
     ],
   ];
   it.each(

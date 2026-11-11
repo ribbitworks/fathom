@@ -53,6 +53,7 @@ import {
   refuseRejected,
   rejectedField,
   setRejection,
+  unseenDraft,
 } from "./drafts.ts";
 import {
   notStarted,
@@ -140,9 +141,7 @@ async function seenAsked(
       throw new NotFoundError(noDraft);
     }
     if (!fields.every(seen)) {
-      throw new ForbiddenError(
-        "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
-      );
+      throw new ForbiddenError(unseenDraft);
     }
   }
   await refuseHeldDecision(transaction, "person", ids);
@@ -365,7 +364,7 @@ function refuseBeyondRole(
       throw new ForbiddenError(
         // The permission is always one of the fixed list above.
         // eslint-disable-next-line security/detect-object-injection
-        `Your role doesn't let you ${asking} drafts of ${approvedAreaNames[permission]}`,
+        `This role can't ${asking} drafts of ${approvedAreaNames[permission]}`,
       );
     }
   }

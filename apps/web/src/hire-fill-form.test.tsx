@@ -289,7 +289,7 @@ describe("filling a planned hire with a new person", () => {
       ).getByRole("button", { name: "Fill" }),
     );
     expect(
-      await screen.findByText("Discard the note you're writing?"),
+      await screen.findByText("Discard changes to the note?"),
     ).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Keep writing" }));
     expect(fetch.mock.calls.some(([, init]) => init?.method === "POST")).toBe(

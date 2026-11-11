@@ -1089,7 +1089,7 @@ describe("drafts in a stream's panel", () => {
     );
     expect(
       await screen.findByText(
-        "Only you see these changes until you publish them.",
+        "Nobody else sees these changes until they're published.",
       ),
     ).toBeDefined();
   });

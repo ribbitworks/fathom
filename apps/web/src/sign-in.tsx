@@ -94,8 +94,7 @@ export function SignIn({
               ) : (
                 idle && (
                   <Alert id={idleMessageId} role="status">
-                    You were signed out after {sessionIdleMinutes} minutes
-                    without use.
+                    Signed out after {sessionIdleMinutes} minutes without use.
                   </Alert>
                 )
               )}
@@ -103,13 +102,13 @@ export function SignIn({
                 label="Email address"
                 type="email"
                 autoComplete="username"
-                error={errors.email && "Enter your email address."}
+                error={errors.email && "Enter the email address."}
                 {...form.register("email")}
               />
               <PasswordInput
                 label="Password"
                 autoComplete="current-password"
-                error={errors.password && "Enter your password."}
+                error={errors.password && "Enter the password."}
                 {...form.register("password")}
               />
               <Button type="submit" loading={isSubmitting}>

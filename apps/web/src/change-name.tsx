@@ -46,7 +46,7 @@ function NameForm({
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: sessionQuery.queryKey });
       await router.invalidate();
-      notifySuccess("Your name has been changed.");
+      notifySuccess("The name has been changed.");
       onDone();
     },
   });
@@ -62,10 +62,10 @@ function NameForm({
       <Stack>
         <TextInput
           label="Name"
-          description="How Fathom shows you to others. Ask an Administrator to change your email address."
+          description="How Fathom shows this account to others. Only an Administrator can change the email address."
           autoComplete="name"
           data-autofocus
-          error={nameProblem(errors.name, "Enter your name.")}
+          error={nameProblem(errors.name, "Enter a name.")}
           {...form.register("name")}
         />
         <DialogActions

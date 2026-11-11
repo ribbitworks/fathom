@@ -733,7 +733,7 @@ describe("a fill's draft", () => {
 
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "This draft is part of filling a planned hire, which your role doesn't let you change",
+      "This draft is part of filling a planned hire, which this role can't change",
     );
   });
 
@@ -752,7 +752,7 @@ describe("a fill's draft", () => {
 
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "This draft is part of filling a planned hire, which your role doesn't let you decide",
+      "This draft is part of filling a planned hire, which this role can't decide",
     );
     expect((await liveHire(id))?.filledBy).toBeNull();
   });
@@ -1088,7 +1088,7 @@ describe("a fill and other users' changes", () => {
     for (const response of [approving, rejecting]) {
       expect(response.statusCode).toBe(403);
       expect(refusal(response)).toBe(
-        "This draft is part of filling a planned hire, which your role doesn't let you decide",
+        "This draft is part of filling a planned hire, which this role can't decide",
       );
     }
   });

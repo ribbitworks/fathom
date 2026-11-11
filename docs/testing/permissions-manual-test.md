@@ -83,7 +83,7 @@ Use before the first test case and at the end of the last. This deletes every ac
 2. Select **Restore template**, and confirm that the ticked boxes are **View** on **Plan**, **Allocations** and **Org chart** only.
 3. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
 
-### P4: Discard Your Unpublished Changes
+### P4: Discard the Unpublished Changes
 
 1. Select the **⋯** button beside the Publish button, then **Discard all…**.
 2. In the dialog titled **Discard 1 change?**, select **Discard**.
@@ -136,7 +136,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Harbor 4** with a hollow yellow dot and **Draft: added**. The Publish button reads **Publish 1 change**.
   - **Notes:**
 
-- [ ] **Step 3.** Discard your unpublished changes (P4).
+- [ ] **Step 3.** Discard the unpublished changes (P4).
   - **Expected:** **Harbor 4** is gone from the side panel.
   - **Notes:**
 
@@ -190,7 +190,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Expected:** The cell reads **Mobile apps team** and is yellow. The row has a hollow yellow dot and **Draft**. The Publish button reads **Publish 1 change**.
   - **Notes:**
 
-- [ ] **Step 3.** Discard your unpublished changes (P4).
+- [ ] **Step 3.** Discard the unpublished changes (P4).
   - **Expected:** The **Team name** cell reads **Mobile team**.
   - **Notes:**
 
@@ -248,7 +248,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Expected:** The cell reads **2010-01-04** and is yellow. The Publish button reads **Publish 1 change**.
   - **Notes:**
 
-- [ ] **Step 3.** Discard your unpublished changes (P4).
+- [ ] **Step 3.** Discard the unpublished changes (P4).
   - **Expected:** The **Start** cell is no longer yellow.
   - **Notes:**
 
@@ -286,7 +286,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Expected:** The cell shows the address and is yellow. The Publish button reads **Publish 1 change**.
   - **Notes:**
 
-- [ ] **Step 3.** Discard your unpublished changes (P4).
+- [ ] **Step 3.** Discard the unpublished changes (P4).
   - **Expected:** The **Offer letter** cell is empty.
   - **Notes:**
 
@@ -332,7 +332,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Expected:** The cell reads **Backend engineer 3** and is yellow. The row has a hollow yellow dot and **Draft**. The Publish button reads **Publish 1 change**.
   - **Notes:**
 
-- [ ] **Step 3.** Discard your unpublished changes (P4).
+- [ ] **Step 3.** Discard the unpublished changes (P4).
   - **Expected:** The **Name** cell reads **Backend engineer 2**.
   - **Notes:**
 
@@ -375,7 +375,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Silje Holm-Schrøder** entry's checkbox, then **Approve 1 draft**.
-  - **Expected:** A dialog titled **Another approver needed** reads **Your role doesn't let you approve these drafts:** above *the column Skills*, *the list Skills* and *the choice Rust in Skills*, with only a **Close** button.
+  - **Expected:** A dialog titled **Another approver needed** reads **This role can't approve these drafts:** above *the column Skills*, *the list Skills* and *the choice Rust in Skills*, with only a **Close** button.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Close**.
@@ -440,7 +440,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Expected:** A notification says **Drafted the new release stream.** The table has a **Testing Stream** row with a hollow yellow dot and **Draft: added**. The Publish button reads **Publish 1 change**.
   - **Notes:**
 
-- [ ] **Step 3.** Discard your unpublished changes (P4), and select **Releases**.
+- [ ] **Step 3.** Discard the unpublished changes (P4), and select **Releases**.
   - **Expected:** **Testing Stream** is gone from the table.
   - **Notes:**
 

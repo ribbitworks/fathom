@@ -157,7 +157,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Notes:**
 
 - [ ] **Step 4.** Select **Cancel**.
-  - **Expected:** A dialog asks **Discard the customer you're adding?**, with **Keep adding** and **Discard**.
+  - **Expected:** A dialog asks **Discard the new customer?**, with **Keep adding** and **Discard**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Discard**.

@@ -79,6 +79,7 @@ import {
   rejectedField,
   setRejection,
   tidy,
+  unseenDraft,
   writeDraft,
 } from "./drafts.ts";
 import { recordEvents } from "./history.ts";
@@ -1757,9 +1758,7 @@ async function seenTeams(
       (!restricted &&
         draftHoldsNotStarted(before, drafted(before, draft), everyone))
     ) {
-      throw new ForbiddenError(
-        "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
-      );
+      throw new ForbiddenError(unseenDraft);
     }
   }
   await refuseHeldDecision(transaction, recordType, ids);

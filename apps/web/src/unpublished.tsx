@@ -28,11 +28,10 @@ import {
 import { useState } from "react";
 import { describeProblem, getJson, sendJsonFor } from "./api.ts";
 import { AppMenu } from "./app-menu.tsx";
-import { MenuTitle } from "./draft-details.tsx";
+import { MenuTitle, UnpublishedNote } from "./draft-details.tsx";
 import { Icon } from "./icons.tsx";
 import { notifyFailure, notifySuccess } from "./notices.tsx";
 import { count } from "./numbers.ts";
-import classes from "./pages.module.css";
 import { type Phrase, PhraseText } from "./phrase.tsx";
 
 export const unpublishedQuery = queryOptions({
@@ -93,7 +92,7 @@ export function UnpublishedControl() {
     onSuccess: done("Published"),
     onError: (error) => {
       notifyFailure(
-        describeProblem(error, "Fathom could not publish your changes."),
+        describeProblem(error, "Fathom could not publish the changes."),
       );
     },
   });
@@ -108,7 +107,7 @@ export function UnpublishedControl() {
     onSuccess: done("Discarded"),
     onError: (error) => {
       notifyFailure(
-        describeProblem(error, "Fathom could not discard your changes."),
+        describeProblem(error, "Fathom could not discard the changes."),
       );
     },
   });
@@ -134,16 +133,14 @@ export function UnpublishedControl() {
             variant="subtle"
             color="gray"
             disabled={busy}
-            aria-label="Your unpublished changes"
+            aria-label="Unpublished changes"
           >
             <Icon name="more" />
           </ActionIcon>
         </AppMenu.Target>
         <AppMenu.Dropdown>
-          <MenuTitle>Your unpublished changes</MenuTitle>
-          <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
-            Only you see these until you publish them.
-          </Text>
+          <MenuTitle>Unpublished changes</MenuTitle>
+          <UnpublishedNote />
           {changes.slice(0, named).map((change, index) => (
             // Two records can share a name, so their place names them.
             <Text
@@ -183,7 +180,7 @@ export function UnpublishedControl() {
       >
         <Stack gap="md">
           <Text fz="sm">
-            Your unpublished changes are deleted. This cannot be undone.
+            The unpublished changes are deleted. This cannot be undone.
           </Text>
           <Group justify="flex-end">
             <Button

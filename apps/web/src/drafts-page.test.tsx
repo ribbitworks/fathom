@@ -389,9 +389,7 @@ describe("the Drafts page", () => {
       name: "Another approver needed",
     });
     expect(
-      within(dialog).getByText(
-        "Your role doesn't let you approve these drafts:",
-      ),
+      within(dialog).getByText("This role can't approve these drafts:"),
     ).toBeDefined();
     expect(within(dialog).getByText("the column Guild")).toBeDefined();
     expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([]);
@@ -430,9 +428,7 @@ describe("the Drafts page", () => {
       name: "Another approver needed",
     });
     expect(
-      within(dialog).getByText(
-        "Your role doesn't let you reject these drafts:",
-      ),
+      within(dialog).getByText("This role can't reject these drafts:"),
     ).toBeDefined();
     expect(within(dialog).getByText("Finley Fictional")).toBeDefined();
   });
@@ -1531,7 +1527,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       }),
     ]);
     expect(await entries()).toEqual([
-      "Fictional Editor drafted changes to the feature team Fictional Pier: Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone you can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone you can't see, Jan 7, 2026",
+      "Fictional Editor drafted changes to the feature team Fictional Pier: Name from Fictional Quay to Fictional Pier; Feature lead from Blake Fictional to Avery Fictional; Members from Avery Fictional to Avery Fictional, Blake Fictional, Someone this role can't see; Joining and leaving dates set to Avery Fictional, Jan 5, 2026; Blake Fictional, Jan 6, 2026; Someone this role can't see, Jan 7, 2026",
     ]);
   });
 

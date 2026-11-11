@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/accounts-page.tsx", "apps/web/src/accounts.ts", "apps/web/src/change-password.tsx", "apps/web/src/guessable.ts", "apps/web/src/password-settings.tsx", "apps/web/src/history*.ts*", "apps/web/src/layout.tsx", "apps/web/src/session.ts", "apps/web/src/names.ts", "apps/server/src/create-account.ts", "apps/server/src/create-administrator.ts", "apps/server/src/data/accounts.ts", "apps/server/src/data/settings.ts", "apps/server/src/routes/accounts.ts", "apps/server/src/routes/auth.ts", "packages/shared/src/passwords.ts", "packages/shared/src/guessable-passwords.ts", "packages/seed/src/accounts.ts"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Accounts
@@ -115,7 +115,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 3.** Look at the **Fathom Administrator** row.
-  - **Expected:** The name is followed by **You**, and the role is **Administrator**. No other row says **You**.
+  - **Expected:** The name is followed by **This account**, and the role is **Administrator**. No other row says **This account**.
   - **Notes:**
 
 - [ ] **Step 4.** Read the buttons of the filter.
@@ -127,7 +127,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 6.** Choose **Dark** in the Appearance menu.
-  - **Expected:** The page has a dark ground and every word is easy to read. The **×** in the search box is easy to see. The **You** badge is lighter than it was in light mode, and **Active** is green.
+  - **Expected:** The page has a dark ground and every word is easy to read. The **×** in the search box is easy to see. The **This account** badge is lighter than it was in light mode, and **Active** is green.
   - **Notes:**
 
 - [ ] **Step 7.** Select the **×** in the search box.

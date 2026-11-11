@@ -200,7 +200,7 @@ export function createRoleAdministration(
           const previous = await readRole(transaction, id);
           if (previous.updatedAt !== updatedAt) {
             throw new ConflictError(
-              "Someone else changed this role after you opened it; close it and open it again",
+              "Someone else changed this role after it was opened; close it and open it again",
             );
           }
           const granted = permissions.filter(

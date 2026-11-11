@@ -189,12 +189,12 @@ describe("a feature team's panel", () => {
           (text) =>
             text.endsWith("Fictional") ||
             text.includes("(lead)") ||
-            text === "Someone you can't see",
+            text === "Someone this role can't see",
         ),
     ).toEqual([
       "Avery Fictional (lead)",
       "Blake Fictional",
-      "Someone you can't see",
+      "Someone this role can't see",
     ]);
   });
 

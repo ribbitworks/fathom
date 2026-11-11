@@ -135,7 +135,7 @@ export function useNoteEditing(detailsTitleId: string) {
 export type NoteEditing = ReturnType<typeof useNoteEditing>;
 
 export const noteQuestion = {
-  title: "Discard the note you're writing?",
+  title: "Discard changes to the note?",
   keep: "Keep writing",
 };
 

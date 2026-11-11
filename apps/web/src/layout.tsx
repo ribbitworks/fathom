@@ -495,7 +495,7 @@ export function Layout({
       leave();
       await navigate({ to: "/sign-in" });
     } catch {
-      setProblem("Fathom could not sign you out. Try again in a moment.");
+      setProblem("Fathom could not sign out. Try again in a moment.");
     }
   }
 
@@ -516,7 +516,7 @@ export function Layout({
       await router.invalidate();
       setProblem(undefined);
     } catch {
-      setProblem("Fathom could not switch your role. Try again in a moment.");
+      setProblem("Fathom could not switch the role. Try again in a moment.");
     }
   }
 
@@ -583,7 +583,7 @@ export function Layout({
             {makesDrafts && <UnpublishedControl />}
             <AppMenu position="bottom-end" width="max-content">
               <AppMenu.Target>
-                <UnstyledButton aria-label={`Your account, ${user.name}`}>
+                <UnstyledButton aria-label={`Account, ${user.name}`}>
                   <Group gap="xs" wrap="nowrap">
                     <Text fz="sm" visibleFrom="xs">
                       {user.name}

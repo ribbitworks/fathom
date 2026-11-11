@@ -314,7 +314,7 @@ describe("drafting columns", () => {
       configurationOnly,
       field.id,
     );
-    await expect(refusal).rejects.toThrow(/your role does not let you change/);
+    await expect(refusal).rejects.toThrow(/this role can't change/);
     await expect(refusal).rejects.toBeInstanceOf(ForbiddenError);
   });
 
@@ -365,7 +365,7 @@ describe("drafting columns", () => {
     for (const list of [draftedOnly, raised]) {
       await expect(
         people.createField(generalOnly(), choice(list.id)),
-      ).rejects.toThrow(/whose details your role lets you see/);
+      ).rejects.toThrow(/whose details this role can see/);
     }
     await send("DELETE", `/api/lists/${draftedOnly.id}/draft`);
     await send("DELETE", `/api/lists/${raised.id}/draft`);
@@ -395,7 +395,7 @@ describe("drafting columns", () => {
         hidden.id,
         choice(general.id, hidden.name),
       ),
-    ).rejects.toThrow(/your role does not let you see/);
+    ).rejects.toThrow(/this role can't see/);
     await send("DELETE", `/api/people/columns/${hidden.id}/draft`);
   });
 
@@ -418,7 +418,7 @@ describe("drafting columns", () => {
         description: "",
         visibility: "restricted",
       }),
-    ).rejects.toThrow(/a visibility your role lets you see/);
+    ).rejects.toThrow(/a visibility this role can see/);
     const restricted = (await liveList(["B"], "restricted")).list;
     await expect(
       lists.update(generalOnly(), restricted.id, {
@@ -426,7 +426,7 @@ describe("drafting columns", () => {
         description: "",
         visibility: "general",
       }),
-    ).rejects.toThrow(/your role does not let you see/);
+    ).rejects.toThrow(/this role can't see/);
     expect(await draftCount()).toBe(before);
 
     const renamed = unique("Fictional List");

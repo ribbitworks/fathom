@@ -46,7 +46,7 @@ const notSharer =
   "Only someone who may change planning configuration can share a view they saved, or take it back";
 const notSharedViewMaker =
   "Only someone who may change planning configuration can save a shared view";
-const hiddenColumns = "Choose only columns you can see";
+const hiddenColumns = "Choose only columns this role can see";
 
 type Reader = Pick<Database, "select">;
 type ViewRow = typeof savedViews.$inferSelect;

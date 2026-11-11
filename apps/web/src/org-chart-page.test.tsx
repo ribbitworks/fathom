@@ -1374,7 +1374,7 @@ describe("the org chart", () => {
     expect(
       await screen.findByRole("link", { name: "Robin Fictional" }),
     ).toBeDefined();
-    expect(screen.queryByText(/You're seeing only/)).toBeNull();
+    expect(screen.queryByText(/Only the team of/)).toBeNull();
   });
 
   it("shows everyone when the team in the address is not on the chart", async () => {
@@ -1382,7 +1382,7 @@ describe("the org chart", () => {
     expect(
       await screen.findByRole("link", { name: "Robin Fictional" }),
     ).toBeDefined();
-    expect(screen.queryByText(/You're seeing only/)).toBeNull();
+    expect(screen.queryByText(/Only the team of/)).toBeNull();
   });
 
   it("zooms in and out, and fits the chart to the screen", async () => {
@@ -1576,7 +1576,7 @@ describe("the org chart", () => {
     expect(
       await screen.findByRole("link", { name: "Robin Fictional" }),
     ).toBeDefined();
-    expect(screen.queryByText(/You're seeing only/)).toBeNull();
+    expect(screen.queryByText(/Only the team of/)).toBeNull();
     expect(
       screen.getByRole<HTMLInputElement>("combobox", {
         name: "Find a person or team",

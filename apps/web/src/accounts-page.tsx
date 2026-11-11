@@ -574,7 +574,7 @@ function ChangeActive({
       <Stack>
         <Text size="sm">
           {own
-            ? "You will be signed out everywhere, and will not be able to sign in until an Administrator reactivates your account."
+            ? "This account will be signed out everywhere, and won't be able to sign in until an Administrator reactivates it."
             : account.active
               ? `${account.name} will be signed out everywhere, and will not be able to sign in until the account is reactivated.`
               : `${account.name} will be able to sign in again.`}
@@ -693,7 +693,7 @@ function AccountRow({
                   tt="none"
                   className={classes.ownBadge}
                 >
-                  You
+                  This account
                 </Badge>
               )}
             </Group>

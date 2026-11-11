@@ -579,7 +579,7 @@ describe("approving and rejecting", () => {
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toEqual({
       error:
-        "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
+        "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     });
     // A former employee's draft of General details is decided by one who sees only those who have
     // started, but a future starter's is not.

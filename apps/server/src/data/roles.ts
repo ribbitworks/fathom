@@ -261,7 +261,7 @@ export async function switchRole(
     const { roles } = await readRoles(transaction, userId);
     const role = roles.find(({ id }) => id === roleId);
     if (session === undefined || role === undefined) {
-      throw new NotFoundError("You do not have that role");
+      throw new NotFoundError("This account doesn't have that role");
     }
     if (session.activeRoleId === roleId) return;
     const previous = roles.find(({ id }) => id === session.activeRoleId);

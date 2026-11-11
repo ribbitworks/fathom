@@ -342,7 +342,7 @@ Run the test cases in order. Start with R2. Check each step whose expected resul
   - **Notes:**
 
 - [ ] **Step 3.** Open the **Administrator** role (P1), untick **Edit** on **Roles**, and select **Save**.
-  - **Expected:** The confirmation says **This change affects 1 account.** It lists **Fathom Administrator**, marked **(you)**, under **Loses** with **The Roles page no longer appears.**
+  - **Expected:** The confirmation says **This change affects 1 account.** It lists **Fathom Administrator**, marked **(this account)**, under **Loses** with **The Roles page no longer appears.**
   - **Notes:**
 
 - [ ] **Step 4.** Select **Save changes**.

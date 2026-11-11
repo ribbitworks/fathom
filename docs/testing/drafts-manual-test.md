@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-08"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Drafts of People, Lists and Columns
@@ -290,7 +290,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Select the **⋯** button beside **Publish 3 changes**.
-  - **Expected:** The menu shows **Your unpublished changes**, a divider, **Only you see these until you publish them.**, then **Added** the choice Laptop in Equipment, **Added** the list Equipment and **Changed** Mariana Metz, then **Discard all…**.
+  - **Expected:** The menu shows **Unpublished changes**, a divider, **Nobody else sees these changes until they're published.**, then **Added** the choice Laptop in Equipment, **Added** the list Equipment and **Changed** Mariana Metz, then **Discard all…**.
   - **Notes:**
 
 - [ ] **Step 3.** Press Esc. Type **Mariana Metz** in the search box above the table.
@@ -356,7 +356,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **⋯** button beside **Publish 3 changes**, then **Discard all…**.
-  - **Expected:** A dialog titled **Discard 3 changes?** says **Your unpublished changes are deleted. This cannot be undone.**
+  - **Expected:** A dialog titled **Discard 3 changes?** says **The unpublished changes are deleted. This cannot be undone.**
   - **Notes:**
 
 - [ ] **Step 2.** Select **Discard**.

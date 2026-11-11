@@ -97,7 +97,7 @@ Use where a test case says so. This deletes every account and record in the deve
 1. Select the Publish button in the top bar, which reads **Publish** followed by the number of changes waiting, such as **Publish 4 changes**.
 2. Confirm that a notification says **Published** followed by the number of changes, and that the button is gone.
 
-### P2: Discard Your Unpublished Changes
+### P2: Discard the Unpublished Changes
 
 1. Select the **⋯** button beside the Publish button, then **Discard all…**.
 2. In the dialog titled **Discard** followed by the number of changes, select **Discard**.
@@ -239,7 +239,7 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The **Manager** cell of **Platform engineer** reads **Fictional new lead**, and the row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 5.** Discard your unpublished changes (P2), and search for `Platform engineer TBD` again.
+- [ ] **Step 5.** Discard the unpublished changes (P2), and search for `Platform engineer TBD` again.
   - **Expected:** The **Manager** cell of **Platform engineer** reads **Engineering Manager, TBD-** and a number, and the row has no mark.
   - **Notes:**
 
@@ -702,7 +702,7 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
 **Preconditions:** Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Select **New feature**, type `Fictional Compass` in **Name**, and select **Cancel** at the foot of the panel.
-  - **Expected:** A box asks **Discard the feature you're adding?**, with **Keep adding** and **Discard**.
+  - **Expected:** A box asks **Discard the new feature?**, with **Keep adding** and **Discard**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Keep adding**.

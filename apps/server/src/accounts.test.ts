@@ -690,7 +690,7 @@ describe("administering accounts", () => {
     expect(response.statusCode).toBe(403);
     expect(response.json()).toEqual({
       error:
-        "Change your own password from your account, giving your current password",
+        "This account's own password is changed from its account menu, with the current password",
     });
   });
 
@@ -1230,7 +1230,7 @@ describe("recording one's own password change", () => {
       internalAdapter.updateAccount(String(account?.id), {
         password: "not a hash",
       }),
-    ).rejects.toThrow("Sign in to change your password");
+    ).rejects.toThrow("Sign in to change the password");
     await internalAdapter.updateAccount(String(account?.id), {
       scope: "fictional",
     });
@@ -1848,7 +1848,9 @@ describe("several roles", () => {
     const holder = await holdingTwo();
     const refused = await switchTo(holder.cookie, await roleId("executive"));
     expect(refused.statusCode).toBe(404);
-    expect(refused.json()).toEqual({ error: "You do not have that role" });
+    expect(refused.json()).toEqual({
+      error: "This account doesn't have that role",
+    });
     expect((await sessionOf(holder.cookie)).role?.key).toBe("team-member");
   });
 
@@ -1910,7 +1912,7 @@ describe("several roles", () => {
     );
     await expect(
       data.switchRole(actor, "no-such-session", await roleId("team-member")),
-    ).rejects.toThrow("You do not have that role");
+    ).rejects.toThrow("This account doesn't have that role");
     const admin = await signedIn("administrator");
     expect(await historyOf(admin.cookie, holder.id)).toMatchObject([
       { action: "role-switched", details: { role: "Administrator" } },

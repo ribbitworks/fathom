@@ -71,12 +71,12 @@ const marks: [string, ReactNode, string][] = [
   [
     "unpublished",
     <StatusMark tone="unpublished">Unpublished</StatusMark>,
-    "Your own change, which only you see until you publish it. Other marks show it with a hollow dot, such as Draft: added.",
+    "A change not yet published, which nobody else sees. Other marks show it with a hollow dot, such as Draft: added.",
   ],
   [
     "held",
     <StatusMark tone="held">Being changed</StatusMark>,
-    "Someone else has unpublished changes to this. You can't change it until they publish or discard them.",
+    "Someone else has unpublished changes to this. It can't be changed until they publish or discard them.",
   ],
   [
     "live",
@@ -88,7 +88,7 @@ const marks: [string, ReactNode, string][] = [
 const lifecycle: [string, string][] = [
   [
     "Saved",
-    "Only you see it, until you publish your changes with Publish at the top of the page.",
+    "Nobody else sees it until it's published with Publish at the top of the page.",
   ],
   [
     "Published",
@@ -137,7 +137,7 @@ function Rows({ rows }: { rows: [string, ReactNode, string][] }) {
   );
 }
 
-// A role's name, with a check before it, read aloud as "Your role", when it is the user's own.
+// A role's name, with a check before it, read aloud as "Current role", when it is the user's own.
 function RoleName({ name, own }: { name: string; own: boolean }) {
   return (
     <Group gap="xs" wrap="nowrap" align="flex-start">
@@ -145,7 +145,7 @@ function RoleName({ name, own }: { name: string; own: boolean }) {
       <span>
         {own && (
           <>
-            <VisuallyHidden>Your role:</VisuallyHidden>{" "}
+            <VisuallyHidden>Current role:</VisuallyHidden>{" "}
           </>
         )}
         {name}

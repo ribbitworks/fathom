@@ -21,6 +21,7 @@ import {
   personPanelId,
   usePersonEditing,
 } from "./person-editing.tsx";
+import { newRecordQuestion } from "./discard-question.tsx";
 import type { NoteEditing } from "./note-editing.tsx";
 import { detailKeys, reportingKeys } from "./person-panel.tsx";
 import classes from "./record-details.module.css";
@@ -50,13 +51,8 @@ export const newRecord = (): NewRecord => ({
   cleared: [],
 });
 
-export const recordQuestion = (kind: string) => ({
-  title:
-    kind === hireKind
-      ? "Discard the planned hire you're adding?"
-      : "Discard the person you're adding?",
-  keep: "Keep adding",
-});
+export const recordQuestion = (kind: string) =>
+  newRecordQuestion(kind === hireKind ? "planned hire" : "person");
 
 export function NewPersonPanel({
   record,

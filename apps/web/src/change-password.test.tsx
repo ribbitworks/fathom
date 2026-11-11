@@ -19,7 +19,7 @@ vi.mock("./guessable.ts", () => ({ useGuessableCheck: () => undefined }));
 async function openDialog(): Promise<HTMLElement> {
   await userEvent.click(
     await screen.findByRole("button", {
-      name: "Your account, Fictional Person",
+      name: "Account, Fictional Person",
     }),
   );
   await userEvent.click(

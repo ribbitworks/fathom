@@ -98,7 +98,7 @@ export async function setFeatureTeamColour(
 }
 
 // Names someone a team holds whom the reader cannot be shown.
-export const someoneUnseen = "Someone you can't see";
+export const someoneUnseen = "Someone this role can't see";
 
 // Names someone on a team: by the team's own names, which include those who have not started, then
 // by the org chart.

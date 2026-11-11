@@ -23,6 +23,7 @@ import {
   deleteDrafts,
   type Draft,
   draftsUse,
+  draftUnseen,
   refuseHeldDecision,
   refuseRejected,
   rejectedField,
@@ -58,9 +59,7 @@ async function stateWithDrafts(
         mostSensitive(versions.map((one) => columnTier(state, one))),
       )
     ) {
-      throw new ForbiddenError(
-        "One of these drafts is of a column holding details your role does not let you see, so an Approver who sees them must decide it",
-      );
+      throw new ForbiddenError(draftUnseen("is of a column whose details"));
     }
   }
   await refuseHeldDecision(transaction, "field", asked.columns);

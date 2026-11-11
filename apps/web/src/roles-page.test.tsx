@@ -641,7 +641,7 @@ describe("changing a role", () => {
       await within(dialog).findByText("This change affects 2 accounts."),
     ).toBeDefined();
     const own = within(dialog)
-      .getByText("Fictional Person (person@example.test) (you)")
+      .getByText("Fictional Person (person@example.test) (this account)")
       .closest(".mantine-Paper-root") as HTMLElement;
     expect(
       within(own).getByText("Sees the Change history page."),
@@ -706,7 +706,7 @@ describe("changing a role", () => {
     expect(
       await within(dialog).findByText("This change affects 1 account."),
     ).toBeDefined();
-    expect(within(dialog).queryByText(/\(you\)/)).toBeNull();
+    expect(within(dialog).queryByText(/\(this account\)/)).toBeNull();
     await userEvent.click(within(dialog).getByRole("button", { name: "Back" }));
     expect(box(dialog, "View People").checked).toBe(false);
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));

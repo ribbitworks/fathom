@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/person-panel*", "apps/web/src/person-change.ts", "apps/web/src/people-grid.tsx", "apps/web/src/org-chart-page.tsx", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-08"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Person Details
@@ -293,7 +293,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 5.** Type **Laptop ready** in the note, then select the name on the card for **Silje Holm-Schrøder**.
-  - **Expected:** A box asks **Discard the note you're writing?**, with **Keep writing** and **Discard**. The details behind it still show **Lorenza Thiel**.
+  - **Expected:** A box asks **Discard changes to the note?**, with **Keep writing** and **Discard**. The details behind it still show **Lorenza Thiel**.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Keep writing**.
@@ -391,7 +391,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 6.** Choose **Light** in the Appearance menu, then select the **×** at the top right of the panel.
-  - **Expected:** A box asks **Discard the planned hire you're adding?**, with **Keep adding** and **Discard**.
+  - **Expected:** A box asks **Discard the new planned hire?**, with **Keep adding** and **Discard**.
   - **Notes:**
 
 - [ ] **Step 7.** Select **Keep adding**.

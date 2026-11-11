@@ -358,7 +358,7 @@ describe("adding a record in the side panel", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(
       await screen.findByRole("dialog", {
-        name: "Discard the customer you're adding?",
+        name: "Discard the new customer?",
       }),
     ).toBeTruthy();
     await userEvent.click(screen.getByRole("button", { name: "Keep adding" }));
@@ -1281,7 +1281,9 @@ describe("a milestone's menu", () => {
       await screen.findByRole("button", { name: "Menu of Fictional Kickoff" }),
     );
     const menu = await screen.findByRole("menu");
-    expect(within(menu).getByText(/Only you see these changes/)).toBeTruthy();
+    expect(
+      within(menu).getByText(/Nobody else sees these changes/),
+    ).toBeTruthy();
     await userEvent.keyboard("a");
     expect(screen.getByRole("menu")).toBeTruthy();
     await userEvent.click(within(menu).getByText("Fictional Kickoff"));
@@ -2681,7 +2683,7 @@ describe("the Features page", () => {
         " more",
       );
       await userEvent.click(screen.getByRole("button", { name: "Add" }));
-      await screen.findByText("Discard the note you're writing?");
+      await screen.findByText("Discard changes to the note?");
       expect(sent(fetch, path)).toEqual([]);
       await userEvent.click(screen.getByRole("button", { name: "Discard" }));
       await waitFor(() => {
@@ -2719,7 +2721,7 @@ describe("the Features page", () => {
         " more",
       );
       await userEvent.click(screen.getByRole("button", { name: "Add" }));
-      await screen.findByText("Discard the note you're writing?");
+      await screen.findByText("Discard changes to the note?");
       await userEvent.click(
         screen.getByRole("button", { name: "Keep writing" }),
       );
@@ -2742,7 +2744,7 @@ describe("the Features page", () => {
           { name: "Cancel" },
         ),
       );
-      await screen.findByText("Discard the note you're writing?");
+      await screen.findByText("Discard changes to the note?");
       await userEvent.click(screen.getByRole("button", { name: "Discard" }));
       await waitFor(() => {
         expect(

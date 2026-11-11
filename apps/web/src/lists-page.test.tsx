@@ -3359,7 +3359,7 @@ describe("unpublished and held changes on the Lists page", () => {
     });
   const holder = "Second Fictional Editor";
   const held = `Being changed by ${holder}. It can be changed once they publish or discard their changes.`;
-  const mine = "Only you see these changes until you publish them.";
+  const mine = "Nobody else sees these changes until they're published.";
   const draftOf = (more: object = {}) => ({
     action: "changed",
     changed: ["description"],

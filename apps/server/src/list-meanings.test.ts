@@ -328,7 +328,7 @@ describe("a list with meanings", () => {
     const refused = await publish(editor);
     expect(refused.statusCode).toBe(409);
     expect(refusal(refused)).toBe(
-      `Your change to the choice ${label} in Hiring states no longer fits the data as it is now; change or discard it, then publish again`,
+      `The change to the choice ${label} in Hiring states no longer fits the data as it is now; change or discard it, then publish again`,
     );
     await send(
       "POST",
@@ -431,7 +431,7 @@ describe("a list with meanings", () => {
     const refused = await publish(other);
     expect(refused.statusCode).toBe(409);
     expect(refusal(refused)).toBe(
-      `Your change to the choice ${label} in Hiring states no longer fits the data as it is now; change or discard it, then publish again`,
+      `The change to the choice ${label} in Hiring states no longer fits the data as it is now; change or discard it, then publish again`,
     );
     await send(
       "POST",

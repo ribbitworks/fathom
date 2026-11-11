@@ -7,7 +7,7 @@
 import { Anchor, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { featureTeamsQuery } from "./feature-teams.ts";
+import { featureTeamsQuery, someoneUnseen } from "./feature-teams.ts";
 import { orgChartQuery } from "./org-chart.ts";
 import classes from "./record-details.module.css";
 
@@ -25,7 +25,7 @@ export function PersonFeatureTeams({
   const chart = useQuery({ ...orgChartQuery, enabled: seesChart });
   const nameOf = (id: string) =>
     chart.data?.people.find((person) => person.id === id)?.preferredName ??
-    "someone you can't see";
+    someoneUnseen.toLowerCase();
   if (!seesChart) return null;
   const teams = (query.data?.teams ?? []).filter(({ members }) =>
     members.includes(personId),

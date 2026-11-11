@@ -227,7 +227,7 @@ describe("the Position column", () => {
     const response = await add();
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "Every person needs a position, and your role doesn't let you see positions",
+      "Every person needs a position, and this role can't see positions",
     );
   });
 
@@ -243,7 +243,7 @@ describe("the Position column", () => {
     await setVisibility("positions", "restricted");
     const response = await save();
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose only columns you can see");
+    expect(refusal(response)).toBe("Choose only columns this role can see");
   });
 
   it("shows a placeholder's position only to those who see the Positions list's tier", async () => {
@@ -270,7 +270,7 @@ describe("the State column", () => {
     await setVisibility("hiring-states", "restricted");
     const response = await save();
     expect(response.statusCode).toBe(400);
-    expect(refusal(response)).toBe("Choose only columns you can see");
+    expect(refusal(response)).toBe("Choose only columns this role can see");
   });
 
   it("shows a placeholder's state to those who see the Hiring states list's tier", async () => {
@@ -424,7 +424,7 @@ describe("changes to positions and states", () => {
     const unseenState = await add();
     expect(unseenState.statusCode).toBe(403);
     expect(refusal(unseenState)).toBe(
-      "Every planned hire needs a state, and your role doesn't let you see hiring states",
+      "Every planned hire needs a state, and this role can't see hiring states",
     );
     await setVisibility("hiring-states", "general");
     // A hire added while its state could be seen can still be taken back.
@@ -436,7 +436,7 @@ describe("changes to positions and states", () => {
     await setVisibility("positions", "restricted");
     const unseenPosition = await add();
     expect(refusal(unseenPosition)).toBe(
-      "Every planned hire needs a position, and your role doesn't let you see positions",
+      "Every planned hire needs a position, and this role can't see positions",
     );
     const moved = await send(hireEditor, "PATCH", `/api/planned-hires/${id}`, {
       positionId: otherTestPosition,
@@ -485,7 +485,7 @@ describe("changes to positions and states", () => {
     });
     expect(refused.statusCode).toBe(403);
     expect(refusal(refused)).toBe(
-      "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
+      "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     );
     const approved = await send(approver, "POST", "/api/drafts/approval", {
       plannedHires: [id],

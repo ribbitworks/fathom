@@ -268,7 +268,7 @@ export function HeldNote({ by }: { by: string }) {
 export function UnpublishedNote() {
   return (
     <Text fz="xs" px="sm" pb={4} className={classes.draftLine}>
-      Only you see these changes until you publish them.
+      Nobody else sees these changes until they're published.
     </Text>
   );
 }

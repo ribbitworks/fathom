@@ -2147,7 +2147,7 @@ describe("approving a team's draft", () => {
 
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
+      "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     );
     expect(await liveRow(id)).toBeUndefined();
   });
@@ -2161,7 +2161,7 @@ describe("approving a team's draft", () => {
     const response = await approve(adding, projectManager);
     expect(response.statusCode).toBe(403);
     expect(refusal(response)).toBe(
-      "One of these drafts holds details your role does not let you see, so an Approver who sees them must decide it",
+      "One of these drafts holds details this role can't see, so an Approver who sees them must decide it",
     );
     expect((await reject(adding, projectManager)).statusCode).toBe(403);
 

@@ -167,7 +167,7 @@ export async function withFills(
       !actor.permissions.includes(approvePermissions["planned-hire"])
     ) {
       throw new ForbiddenError(
-        "This draft is part of filling a planned hire, which your role doesn't let you decide",
+        "This draft is part of filling a planned hire, which this role can't decide",
       );
     }
     for (const id of fill.people) people.add(id);
@@ -360,7 +360,7 @@ function requireFillRights(actor: Actor): void {
   for (const permission of ["people:edit", "hiring-plan:edit"] as const) {
     if (!actor.permissions.includes(permission)) {
       throw new ForbiddenError(
-        "This draft is part of filling a planned hire, which your role doesn't let you change",
+        "This draft is part of filling a planned hire, which this role can't change",
       );
     }
   }

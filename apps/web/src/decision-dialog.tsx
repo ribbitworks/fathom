@@ -108,7 +108,7 @@ function DecisionDialog({
         <Text fz="sm">
           {asking === "approve"
             ? "Approving cannot be undone."
-            : "The drafts go back to whoever made them, with your reason. Rejecting cannot be undone."}
+            : "The drafts go back to whoever made them, with the reason given. Rejecting cannot be undone."}
         </Text>
         {included.length > 0 && (
           <div>
@@ -213,7 +213,7 @@ export function DecisionModal({
     >
       {decision?.beyondRole && (
         <Undecided
-          why={`Your role doesn't let you ${verb} these drafts:`}
+          why={`This role can't ${verb} these drafts:`}
           names={decision.beyondRole}
           onClose={onClose}
         />

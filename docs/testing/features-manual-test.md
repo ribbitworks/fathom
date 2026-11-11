@@ -525,7 +525,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 11.** Select **Cancel** in the **New feature** panel.
-  - **Expected:** A box asks **Discard the feature you're adding?**, with **Keep adding** and **Discard**.
+  - **Expected:** A box asks **Discard the new feature?**, with **Keep adding** and **Discard**.
   - **Notes:**
 
 - [ ] **Step 12.** Select **Keep adding**.

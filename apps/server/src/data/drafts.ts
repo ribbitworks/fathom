@@ -77,6 +77,11 @@ export function refuseRejected(found: Iterable<Draft | undefined>): void {
   }
 }
 
+export const draftUnseen = (what: string) =>
+  `One of these drafts ${what} this role can't see, so an Approver who sees them must decide it`;
+
+export const unseenDraft = draftUnseen("holds details");
+
 // The history field that holds a rejected draft's reason, which waiting drafts do not have.
 export const rejectedField = "rejected";
 

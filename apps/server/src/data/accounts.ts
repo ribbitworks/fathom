@@ -488,7 +488,7 @@ export function createAccountAdministration(
       // to take the account over.
       if (actor.user.id === userId) {
         throw new ForbiddenError(
-          "Change your own password from your account, giving your current password",
+          "This account's own password is changed from its account menu, with the current password",
         );
       }
       await readAccount(userId);

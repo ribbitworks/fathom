@@ -914,7 +914,7 @@ export async function draftNewPeople(
   const columns = await columnsWithAdded(transaction, actor.user.id, true);
   if (!seesSensitivity(actor, columns.positionTier)) {
     throw new ForbiddenError(
-      "Every person needs a position, and your role doesn't let you see positions",
+      "Every person needs a position, and this role can't see positions",
     );
   }
   const known = await choicesAskedFor(transaction, actor.user.id, requests);

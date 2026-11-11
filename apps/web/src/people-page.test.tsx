@@ -294,7 +294,7 @@ describe("who sees the People page", () => {
     );
     expect(
       screen.getByText(
-        "You can't add people, since your role doesn't let you see positions.",
+        "This role can't add people, since it can't see positions.",
       ),
     ).toBeTruthy();
     expect(screen.queryByRole("row", { name: "New person" })).toBeNull();
@@ -3579,7 +3579,7 @@ describe("unpublished and held changes", () => {
   ]);
   const holder = "Second Fictional Editor";
   const held = `Being changed by ${holder}. It can be changed once they publish or discard their changes.`;
-  const mine = "Only you see these changes until you publish them.";
+  const mine = "Nobody else sees these changes until they're published.";
   const columnDraft = (more: object = {}) => ({
     action: "changed",
     changed: ["required"],
@@ -4111,7 +4111,7 @@ describe("adding from New", () => {
     expect(await form("New person")).toBeDefined();
     // When New is pressed, the add discarded, and the add then fails
     await userEvent.click(screen.getByRole("button", { name: "New" }));
-    await answerQuestion("Discard the person you're adding?", "Discard");
+    await answerQuestion("Discard the new person?", "Discard");
     await typeInto("Name", "Dee Fictional");
     act(() => {
       answer(new Response(null, { status: 500 }));
@@ -4142,7 +4142,7 @@ describe("adding from New", () => {
     await userEvent.click(screen.getByRole("button", { name: "Add" }));
     // When New is pressed, the add asked about, and the add then saved
     await userEvent.click(screen.getByRole("button", { name: "New" }));
-    await answerQuestion("Discard the person you're adding?", "Discard");
+    await answerQuestion("Discard the new person?", "Discard");
     await typeInto("Name", "Dee Fictional");
     act(() => {
       answer(Response.json({ ids: ["p9"], changeSetId: s1 }, { status: 201 }));
@@ -4254,12 +4254,12 @@ describe("adding from New", () => {
     const close = screen.getByRole("button", { name: "Close New person" });
     // When the form is closed, and adding kept
     await userEvent.click(close);
-    await answerQuestion("Discard the person you're adding?", "Keep adding");
+    await answerQuestion("Discard the new person?", "Keep adding");
     // Then the form stays, as it was
     expect(field("Name").value).toBe("Casey Fictional");
     // When it is closed again, and discarded
     await userEvent.click(close);
-    await answerQuestion("Discard the person you're adding?", "Discard");
+    await answerQuestion("Discard the new person?", "Discard");
     // Then it closes
     await waitFor(() => {
       expect(screen.queryByRole("region", { name: "New person" })).toBeNull();
@@ -4273,7 +4273,7 @@ describe("adding from New", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Close New planned hire" }),
     );
-    await answerQuestion("Discard the planned hire you're adding?", "Discard");
+    await answerQuestion("Discard the new planned hire?", "Discard");
     await waitFor(() => {
       expect(
         screen.queryByRole("region", { name: "New planned hire" }),

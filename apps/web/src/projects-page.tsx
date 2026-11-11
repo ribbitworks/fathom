@@ -127,7 +127,7 @@ import {
   useChosenUnits,
   useRecordEditing,
 } from "./record-editing.tsx";
-import { useDiscardQuestion } from "./discard-question.tsx";
+import { newRecordQuestion, useDiscardQuestion } from "./discard-question.tsx";
 import { entered, type FormValues, newRecordId } from "./new-record-panel.tsx";
 import { afterNote, noteQuestion, useNoteEditing } from "./note-editing.tsx";
 import { isMilestoneField, MilestoneField } from "./milestone-field.tsx";
@@ -327,10 +327,7 @@ export function ProjectsPage({
     if (beingAdded?.saving === true) return;
     question.ask(
       beingAdded !== undefined && entered(beingAdded)
-        ? {
-            title: `Discard the ${wordsOf(beingAdded.tab).one} you're adding?`,
-            keep: "Keep adding",
-          }
+        ? newRecordQuestion(wordsOf(beingAdded.tab).one)
         : notes.changing
           ? noteQuestion
           : undefined,

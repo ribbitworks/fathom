@@ -261,8 +261,7 @@ describe("choosing light or dark mode", () => {
   const stored = "mantine-color-scheme-value";
   const shown = () =>
     document.documentElement.getAttribute("data-mantine-color-scheme");
-  const accountMenu = () =>
-    screen.getByRole("button", { name: /^Your account,/ });
+  const accountMenu = () => screen.getByRole("button", { name: /^Account,/ });
 
   afterEach(() => {
     localStorage.clear();
@@ -341,8 +340,7 @@ describe("choosing light or dark mode", () => {
 });
 
 describe("switching role", () => {
-  const accountMenu = () =>
-    screen.getByRole("button", { name: /^Your account,/ });
+  const accountMenu = () => screen.getByRole("button", { name: /^Account,/ });
   const teamMember = fictionalUser.role;
   const keepers = {
     id: "00000000-0000-4000-8000-0000000000a2",
@@ -475,7 +473,7 @@ describe("switching role", () => {
       await screen.findByRole("menuitem", { name: "Fictional Keepers" }),
     );
     expect((await screen.findByRole("alert")).textContent).toBe(
-      "Fathom could not switch your role. Try again in a moment.",
+      "Fathom could not switch the role. Try again in a moment.",
     );
     expect(screen.queryByRole("link", { name: "Accounts" })).toBeNull();
   });

@@ -5,9 +5,15 @@
 import { Button, Group, Modal } from "@mantine/core";
 import { useState } from "react";
 
+export const newRecordQuestion = (thing: string) => ({
+  title: `Discard the new ${thing}?`,
+  keep: "Keep adding",
+});
+
 // Asking whether to discard what is being written before showing another record or adding one: a
 // note changed, or a record being added that holds something. Discard goes on; Keep writing, or
 // closing the question, stays.
+
 export function useDiscardQuestion() {
   const [asking, setAsking] = useState<{
     title: string;

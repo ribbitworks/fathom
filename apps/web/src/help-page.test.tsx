@@ -53,7 +53,7 @@ describe("Help's Roles page", () => {
     renderApp("/help/roles");
     const [roles] = await tables();
     expect(roles).toHaveLength(roleSchema.options.length);
-    expect(screen.queryByText(/Your role/)).toBeNull();
+    expect(screen.queryByText(/Current role/)).toBeNull();
   });
 
   it("says what each starting role lets a user do, marking the user's own, and what each sensitivity covers", async () => {
@@ -61,7 +61,7 @@ describe("Help's Roles page", () => {
     const headerName = (role: Role) =>
       // The role is always one of the starting roles.
       // eslint-disable-next-line security/detect-object-injection
-      `${role === held ? "Your role: " : ""}${startingRoles[role].name}`;
+      `${role === held ? "Current role: " : ""}${startingRoles[role].name}`;
     serverAnswers({
       "GET /api/session": () =>
         Response.json({
@@ -113,10 +113,10 @@ describe("Help's Roles page", () => {
     const [roles] = await tables();
     expect(roles).toHaveLength(roleSchema.options.length + 1);
     expect(roles?.[0]).toEqual([
-      "Your role: Fictional Auditors",
+      "Current role: Fictional Auditors",
       "Checks Restricted data for audits.",
     ]);
-    expect(screen.getAllByText(/Your role/)).toHaveLength(1);
+    expect(screen.getAllByText(/Current role/)).toHaveLength(1);
   });
 });
 

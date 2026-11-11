@@ -420,7 +420,7 @@ describe("changing a role someone else has changed", () => {
     expect(stale.statusCode).toBe(409);
     expect(stale.json()).toEqual({
       error:
-        "Someone else changed this role after you opened it; close it and open it again",
+        "Someone else changed this role after it was opened; close it and open it again",
     });
     expect((await roleNamed(role.name)).permissions).toEqual([
       "plan:view",

@@ -436,7 +436,7 @@ function Effects({
             <Stack gap="xs">
               <Text fw={600}>
                 {account.name} ({account.email})
-                {account.id === userId && " (you)"}
+                {account.id === userId && " (this account)"}
               </Text>
               <Sentences title="Gains" items={gains} />
               <Sentences title="Loses" items={losses} />

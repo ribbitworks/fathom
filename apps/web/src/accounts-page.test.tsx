@@ -264,8 +264,10 @@ describe("the list of accounts", () => {
     const ownRow = within(screen.getByRole("table"))
       .getByText("Fictional Person")
       .closest("tr");
-    expect(within(ownRow as HTMLElement).getByText("You")).toBeDefined();
-    expect(within(row as HTMLElement).queryByText("You")).toBeNull();
+    expect(
+      within(ownRow as HTMLElement).getByText("This account"),
+    ).toBeDefined();
+    expect(within(row as HTMLElement).queryByText("This account")).toBeNull();
   });
 
   it("shows every role an account holds, the default first and marked", async () => {
@@ -406,7 +408,7 @@ describe("changing one's own account", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(
       await screen.findByRole("button", {
-        name: "Your account, Fictional Self",
+        name: "Account, Fictional Self",
       }),
     ).toBeDefined();
   });
@@ -467,7 +469,7 @@ describe("changing one's own account", () => {
     });
     expect(
       within(dialog).getByText(
-        "You will be signed out everywhere, and will not be able to sign in until an Administrator reactivates your account.",
+        "This account will be signed out everywhere, and won't be able to sign in until an Administrator reactivates it.",
       ),
     ).toBeDefined();
   });
@@ -1125,7 +1127,7 @@ describe("changing one's own password", () => {
   async function openDialog(): Promise<HTMLElement> {
     await userEvent.click(
       await screen.findByRole("button", {
-        name: "Your account, Fictional Person",
+        name: "Account, Fictional Person",
       }),
     );
     await userEvent.click(
@@ -1220,7 +1222,7 @@ describe("changing one's own password", () => {
       within(dialog).getByRole("button", { name: "Change password" }),
     );
     expect(
-      await within(dialog).findByText("Enter your current password."),
+      await within(dialog).findByText("Enter the current password."),
     ).toBeDefined();
     expect(
       within(dialog).getByText(
@@ -1330,7 +1332,7 @@ describe("changing one's own password", () => {
     const dialog = await openDialog();
     await changePassword(dialog, "not the password", "fictional password 2");
     expect(
-      await within(dialog).findByText("Your current password is not right."),
+      await within(dialog).findByText("The current password is not right."),
     ).toBeDefined();
     expect(within(dialog).queryByRole("alert")).toBeNull();
     expect(document.activeElement).toBe(
@@ -1348,7 +1350,7 @@ describe("changing one's own password", () => {
     renderApp("/");
     const first = await openDialog();
     await changePassword(first, "not the password", "fictional password 2");
-    await within(first).findByText("Your current password is not right.");
+    await within(first).findByText("The current password is not right.");
     await userEvent.click(
       within(first).getByRole("button", { name: "Cancel" }),
     );
@@ -1368,7 +1370,7 @@ describe("changing one's own password", () => {
       );
     }
     expect(
-      within(dialog).queryByText("Your current password is not right."),
+      within(dialog).queryByText("The current password is not right."),
     ).toBeNull();
   });
 
@@ -1426,7 +1428,7 @@ describe("the checklist for a new password", () => {
   async function openDialog(): Promise<HTMLElement> {
     await userEvent.click(
       await screen.findByRole("button", {
-        name: "Your account, Fictional Person",
+        name: "Account, Fictional Person",
       }),
     );
     await userEvent.click(
@@ -1580,7 +1582,7 @@ describe("changing one's own name", () => {
   async function openDialog(): Promise<HTMLElement> {
     await userEvent.click(
       await screen.findByRole("button", {
-        name: "Your account, Fictional Person",
+        name: "Account, Fictional Person",
       }),
     );
     await userEvent.click(
@@ -1610,15 +1612,13 @@ describe("changing one's own name", () => {
     await userEvent.clear(name);
     await userEvent.type(name, "Fictional Renamed");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(
-      await screen.findByText("Your name has been changed."),
-    ).toBeDefined();
+    expect(await screen.findByText("The name has been changed.")).toBeDefined();
     await waitFor(() => {
       expect(screen.queryByRole("dialog", { name: "Change name" })).toBeNull();
     });
     expect(
       await screen.findByRole("button", {
-        name: "Your account, Fictional Renamed",
+        name: "Account, Fictional Renamed",
       }),
     ).toBeDefined();
     expect(fetch).toHaveBeenCalledWith(
@@ -1638,7 +1638,7 @@ describe("changing one's own name", () => {
     const dialog = await openDialog();
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
-    expect(await within(dialog).findByText("Enter your name.")).toBeDefined();
+    expect(await within(dialog).findByText("Enter a name.")).toBeDefined();
   });
 
   it("names the rule a name breaks", async () => {
@@ -1692,9 +1692,7 @@ describe("changing one's own name", () => {
     expect(screen.getByRole("dialog", { name: "Change name" })).toBeDefined();
     expect(within(dialog).queryByRole("button", { name: "Close" })).toBeNull();
     answer(new Response(null, { status: 204 }));
-    expect(
-      await screen.findByText("Your name has been changed."),
-    ).toBeDefined();
+    expect(await screen.findByText("The name has been changed.")).toBeDefined();
   });
 
   it("closes without saving on Cancel", async () => {
@@ -1859,7 +1857,7 @@ describe("changing a generated password first", () => {
     ).toBeDefined();
     expect(screen.queryByRole("navigation")).toBeNull();
     expect(
-      screen.queryByRole("button", { name: "Your account, Fictional Person" }),
+      screen.queryByRole("button", { name: "Account, Fictional Person" }),
     ).toBeNull();
     expect(history.location.pathname).toBe("/");
   });
@@ -1912,7 +1910,7 @@ describe("changing a generated password first", () => {
     await change(generated, "fictional password 2");
     expect(
       await screen.findByRole("button", {
-        name: "Your account, Fictional Person",
+        name: "Account, Fictional Person",
       }),
     ).toBeDefined();
     expect(
@@ -1953,7 +1951,7 @@ describe("changing a generated password first", () => {
       screen.getByRole("button", { name: "Change password" }),
     );
     expect(
-      await screen.findByText("Your current password is not right."),
+      await screen.findByText("The current password is not right."),
     ).toBeDefined();
     expect(screen.queryByRole("alert")).toBeNull();
   });

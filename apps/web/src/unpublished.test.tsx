@@ -61,7 +61,7 @@ describe("unpublished changes", () => {
         }),
     });
     await userEvent.click(
-      await screen.findByRole("button", { name: "Your unpublished changes" }),
+      await screen.findByRole("button", { name: "Unpublished changes" }),
     );
     const menu = await screen.findByRole("menu");
     for (const line of [
@@ -81,12 +81,14 @@ describe("unpublished changes", () => {
       "POST /api/unpublished/publish": done(2),
     });
     await userEvent.click(
-      await screen.findByRole("button", { name: "Your unpublished changes" }),
+      await screen.findByRole("button", { name: "Unpublished changes" }),
     );
     const menu = await screen.findByRole("menu");
-    expect(within(menu).getByText("Your unpublished changes")).toBeDefined();
+    expect(within(menu).getByText("Unpublished changes")).toBeDefined();
     expect(
-      within(menu).getByText("Only you see these until you publish them."),
+      within(menu).getByText(
+        "Nobody else sees these changes until they're published.",
+      ),
     ).toBeDefined();
     expect(
       within(menu).getByText(wholeText("Changed Fictional Person 2")),
@@ -103,7 +105,7 @@ describe("unpublished changes", () => {
   it("names ten and counts the rest, and says one change", async () => {
     await openHelp({ "GET /api/unpublished": changes(12) });
     await userEvent.click(
-      await screen.findByRole("button", { name: "Your unpublished changes" }),
+      await screen.findByRole("button", { name: "Unpublished changes" }),
     );
     const menu = await screen.findByRole("menu");
     expect(
@@ -127,7 +129,7 @@ describe("unpublished changes", () => {
     });
     const chooseDiscard = async () => {
       await userEvent.click(
-        await screen.findByRole("button", { name: "Your unpublished changes" }),
+        await screen.findByRole("button", { name: "Unpublished changes" }),
       );
       await userEvent.click(
         await screen.findByRole("menuitem", { name: "Discard all…" }),
@@ -142,7 +144,7 @@ describe("unpublished changes", () => {
     let dialog = await chooseDiscard();
     expect(
       within(dialog).getByText(
-        "Your unpublished changes are deleted. This cannot be undone.",
+        "The unpublished changes are deleted. This cannot be undone.",
       ),
     ).toBeDefined();
     await userEvent.click(
@@ -171,10 +173,10 @@ describe("unpublished changes", () => {
       await screen.findByRole("button", { name: "Publish 2 changes" }),
     );
     expect(
-      await screen.findByText("Fathom could not publish your changes."),
+      await screen.findByText("Fathom could not publish the changes."),
     ).toBeDefined();
     await userEvent.click(
-      screen.getByRole("button", { name: "Your unpublished changes" }),
+      screen.getByRole("button", { name: "Unpublished changes" }),
     );
     await userEvent.click(
       await screen.findByRole("menuitem", { name: "Discard all…" }),
@@ -185,7 +187,7 @@ describe("unpublished changes", () => {
       ).getByRole("button", { name: "Discard" }),
     );
     expect(
-      await screen.findByText("Fathom could not discard your changes."),
+      await screen.findByText("Fathom could not discard the changes."),
     ).toBeDefined();
   });
 

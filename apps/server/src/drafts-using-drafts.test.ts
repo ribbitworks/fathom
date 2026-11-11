@@ -484,7 +484,7 @@ describe("approving a draft with the drafts it uses", () => {
     );
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toEqual({
-      error: "Your role doesn't let you approve drafts of configuration",
+      error: "This role can't approve drafts of configuration",
     });
     expect(await isLive(lists, list.id)).toBe(false);
     expect(await isLive(fields, field.id)).toBe(false);
@@ -548,7 +548,7 @@ describe("rejecting a draft only with the drafts that use it", () => {
     );
     expect(refused.statusCode).toBe(403);
     expect(refused.json()).toEqual({
-      error: "Your role doesn't let you reject drafts of people",
+      error: "This role can't reject drafts of people",
     });
     const states = await test.connection
       .select({ state: drafts.state })
