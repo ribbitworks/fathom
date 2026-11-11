@@ -111,7 +111,7 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Draft menu:** the menu that opens from the **Draft** button above a table, beside the search box, or, on the **Org chart** page, just right of the finder.
 - **Group by menu:** the menu that opens from the button above a table whose label starts **Group by:**, such as **Group by: Cycle**, naming the grouping in use.
 - **Group heading:** the full-width row above each group of rows in a grouped table, naming the group, with how many rows it holds at its right.
-- **Column menu:** the menu that opens when you select a column's name in a table's header.
+- **Column menu:** the menu that opens from a column's name in a table's header.
 - **⋯ menu:** the menu that opens from a **⋯** button, such as the one at the end of a table row, beside a list's name at the top of its panel, or beside the Publish button.
 - **Details button:** the small button with an arrow out of a box at the right of a row's **Name** cell, shown while the row is pointed at.
 - **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. Steps also call it the details panel. It is headed with the record's name, and its close button, an **×**, is at its top right.

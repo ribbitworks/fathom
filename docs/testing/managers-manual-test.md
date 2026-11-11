@@ -33,11 +33,11 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks, the Publish button and searching for a person. This test adds:
 
-- **Manager picker:** the list of people that opens when you select a **Manager** cell and press Enter.
+- **Manager picker:** the list of people that opens when Enter is pressed in a **Manager** cell.
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Tick each step whose expected result is seen, and write anything else under its notes.
 
 ### MGR-01: Manager? Shows Who Is Marked as a Manager
 
@@ -46,11 +46,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
-  - **Expected:** **Manager?** comes straight after **Manager**, followed by **Manager assigned**, **Team** and **Team name**.
+  - **Expected:** After **Manager**, in order: **Manager?**, **Manager assigned**, **Team** and **Team name**.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**.
-  - **Expected:** The **Manager?** cell shows a checked box. The **Team name** cell reads **Mobile team**.
+  - **Expected:**
+    - The **Manager?** cell shows a checked box.
+    - The **Team name** cell reads **Mobile team**.
   - **Notes:**
 
 ### MGR-02: The Manager Picker Offers Only People Marked as Managers and Still Employed
@@ -67,12 +69,14 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Expected:** **Max Munk** is offered.
   - **Notes:**
 
-- [ ] **Step 3.** Clear what you typed, and type **Lilian**.
+- [ ] **Step 3.** Clear the text typed, and type **Lilian**.
   - **Expected:** **Lilian Lang** is not offered.
   - **Notes:**
 
 - [ ] **Step 4.** Press Esc.
-  - **Expected:** The picker closes, and the row's **Manager** cell still reads **Atmananda Ganaka**.
+  - **Expected:**
+    - The picker closes.
+    - The row's **Manager** cell still reads **Atmananda Ganaka**.
   - **Notes:**
 
 ### MGR-03: One Click Ticks Manager? as a Draft
@@ -82,11 +86,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As MGR-01.
 
 - [ ] **Step 1.** Search for **Lilian Lang**. Click once in the row's **Manager?** cell.
-  - **Expected:** The box is checked and the cell turns yellow. The row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The box is checked, and the cell turns yellow.
+    - The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the Publish button.
-  - **Expected:** A notice reads **Published 4 changes.** The Publish button is gone from the top bar.
+  - **Expected:**
+    - A notice reads **Published 4 changes.**
+    - The Publish button is gone from the top bar.
   - **Notes:**
 
 ### MGR-04: An Approved Check Makes Someone a Manager Who Can Be Picked
@@ -100,7 +108,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Select the entry's checkbox, then **Approve**. In the dialog, select **Approve**.
-  - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
+  - **Expected:**
+    - The dialog closes.
+    - A notice reads **Approved 1 draft.**
   - **Notes:**
 
 - [ ] **Step 3.** Sign in as the Workforce Administrator, `engineering.operations.manager@fathom.test`. Open **People**, search for **Samuel Richter**, select the row's **Manager** cell, press Enter, and type **Lilian**.
@@ -108,7 +118,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Press Esc.
-  - **Expected:** The picker closes, and the row's **Manager** cell still reads **Atmananda Ganaka**.
+  - **Expected:**
+    - The picker closes.
+    - The row's **Manager** cell still reads **Atmananda Ganaka**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -120,7 +132,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **Max Munk**. Click once in the row's **Manager?** cell.
-  - **Expected:** A message reads **Reassign direct reports first**. The box stays checked, and the row has no **Draft** mark.
+  - **Expected:**
+    - A message reads **Reassign direct reports first**.
+    - The box stays checked, and the row has no **Draft** mark.
   - **Notes:**
 
 ### MGR-06: Changing a Manager Moves the Person to Their New Manager's Team
@@ -130,11 +144,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **Samuel Richter**, whose **Manager** cell reads **Atmananda Ganaka** and **Team** cell **Payments team**. Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**.
-  - **Expected:** The **Manager** cell reads **Max Munk** and the row's **Team** cell reads **Mobile team**, both yellow. The **Manager assigned** cell holds today's date. The row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The **Manager** cell reads **Max Munk**, in yellow.
+    - The **Team** cell reads **Mobile team**, in yellow.
+    - The **Manager assigned** cell holds today's date.
+    - The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **⋯** button at the end of the row, then **Discard draft**.
-  - **Expected:** The **Manager** cell reads **Atmananda Ganaka** again, and the **Team** cell **Payments team**.
+  - **Expected:**
+    - The **Manager** cell reads **Atmananda Ganaka** again.
+    - The **Team** cell reads **Payments team**.
   - **Notes:**
 
 ### MGR-07: A Team Name Is Edited on Its Manager's Row
@@ -144,11 +164,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **Lorenza Thiel**. Select the row's **Team name** cell, type **Fictional Crew**, and press Enter.
-  - **Expected:** The **Team name** cell reads **Fictional Crew**, in yellow. The row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The **Team name** cell reads **Fictional Crew**, in yellow.
+    - The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **⋯** button at the end of the row, then **Discard draft**.
-  - **Expected:** The **Team name** cell is empty, and the row has no **Draft** mark.
+  - **Expected:**
+    - The **Team name** cell is empty.
+    - The row has no **Draft** mark.
   - **Notes:**
 
 ### MGR-08: A Manager Who Has Left Is Marked
@@ -168,7 +192,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Clear the search box. Open the **Manager?** column menu, select **Filter…**, and pick only **Yes**. Press Esc.
-  - **Expected:** Every row shown has a checked **Manager?** box, among them **Max Munk** and **Viktoria Holmberg**.
+  - **Expected:**
+    - Every row shown has a checked **Manager?** box.
+    - **Max Munk** and **Viktoria Holmberg** are among them.
   - **Notes:**
 
 - [ ] **Step 2.** Open the **Manager?** column menu, select **Filter…**, and clear **Yes**. Press Esc. Open the **Manager?** column menu again.
@@ -188,11 +214,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Read the column headers from left to right.
-  - **Expected:** **Manager**, **Manager?**, **Team** and **Team name** are shown. **Manager assigned**, **Start** and **End** are not.
+  - **Expected:**
+    - **Manager**, **Manager?**, **Team** and **Team name** are shown.
+    - **Manager assigned**, **Start** and **End** are not.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Click once in the row's **Manager?** cell.
-  - **Expected:** The box stays checked, and the row has no **Draft** mark.
+  - **Expected:**
+    - The box stays checked.
+    - The row has no **Draft** mark.
   - **Notes:**
 
 - [ ] **Step 3.** Search for **西尾 亮**.

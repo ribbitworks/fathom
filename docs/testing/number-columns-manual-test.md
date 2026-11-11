@@ -35,7 +35,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Reset the Database. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Reset the Database. Tick each step whose expected result is seen, and write anything else under its notes.
 
 ### NUM-01: The Dialog Offers a Number Column
 
@@ -52,11 +52,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 3.** Choose **Number**.
-  - **Expected:** **List** and **Several choices** are gone, and **Visible to** is shown.
+  - **Expected:**
+    - **List** and **Several choices** are gone.
+    - **Visible to** is shown.
   - **Notes:**
 
 - [ ] **Step 4.** Type `Score` in **Name**, then select **Add column**.
-  - **Expected:** The dialog closes and a **Score** column with empty cells is at the right end of the table. The whole of **Draft: added** shows under its name.
+  - **Expected:**
+    - The dialog closes, and a **Score** column with empty cells is at the right end of the table.
+    - The whole of **Draft: added** shows under its name.
   - **Notes:**
 
 ### NUM-02: Numbers Read Well in Cells
@@ -66,11 +70,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 **Preconditions:** As NUM-01, with the **Score** column added.
 
 - [ ] **Step 1.** In the first three rows' Score cells, type `1234.5`, `-7` and `0`, pressing Enter after each.
-  - **Expected:** The cells read **1,234.5**, **-7** and **0**, or as the browser's language writes them, and each is marked as a draft.
+  - **Expected:**
+    - The cells read **1,234.5**, **-7** and **0**, or as the browser's language writes them.
+    - Each is marked as a draft.
   - **Notes:**
 
 - [ ] **Step 2.** In the fourth row's Score cell, type `abc` and press Enter.
-  - **Expected:** The cell is marked as wrong and the message reads **Score: use a number such as 1234.5**. The words read naturally.
+  - **Expected:**
+    - The cell stays open, outlined in red.
+    - **Score: use a number such as 1234.5** shows in red under the row, in its first cell.
   - **Notes:**
 
 - [ ] **Step 3.** Press Esc.
@@ -96,19 +104,28 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Notes:**
 
 - [ ] **Step 2.** Select **Highest first**.
-  - **Expected:** Among the rows marked as drafts, **Score** reads **1,234.5**, then **0**, then **-7** from the top, and rows with no number come after them.
+  - **Expected:**
+    - Among the rows marked as drafts, **Score** reads **1,234.5**, then **0**, then **-7** from the top.
+    - Rows with no number come after them.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Score** header, then **Filter…**.
-  - **Expected:** The filter shows **At least** and **At most** fields, with **At least** ready to type in, and a **No number** checkbox. A field holding text shows an × at its right end.
+  - **Expected:**
+    - The filter shows **At least** and **At most** fields, with **At least** ready to type in.
+    - A **No number** checkbox is under them.
+    - A field holding text shows an × at its right end.
   - **Notes:**
 
 - [ ] **Step 4.** Type `0` in **At least**.
-  - **Expected:** Rows reading **1,234.5** and **0** are shown, and no row reading **-7**.
+  - **Expected:**
+    - Rows reading **1,234.5** and **0** are shown.
+    - No row reading **-7** is shown.
   - **Notes:**
 
 - [ ] **Step 5.** Type `abc` in **At most**.
-  - **Expected:** **At most** reads **Use a number such as 1234.5** under it, in red, and the rows shown do not change.
+  - **Expected:**
+    - **Use a number such as 1234.5** shows in red under **At most**.
+    - The rows shown do not change.
   - **Notes:**
 
 **Afterwards:** Run Reset the Database.

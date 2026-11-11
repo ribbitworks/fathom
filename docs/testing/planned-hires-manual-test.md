@@ -39,7 +39,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Tick each step whose expected result is seen, and write anything else under its notes.
 
 ### HIRE-01: Hire Rows Sit Under the People and Read Well in Light and Dark Mode
 
@@ -48,23 +48,36 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Light** chosen in the Appearance menu. Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
-  - **Expected:** **Name**, **ID**, **Position** and **State** come first, in that order, and **Expected** comes after **Start**. There is no **Kind** column.
+  - **Expected:**
+    - **Name**, **ID**, **Position** and **State** come first, in that order.
+    - **Expected** comes after **Start**.
+    - There is no **Kind** column.
   - **Notes:**
 
 - [ ] **Step 2.** Scroll to the bottom of the table.
-  - **Expected:** The hire rows come after every person, followed by one empty row. The empty row's cells are all blank.
+  - **Expected:**
+    - The hire rows come after every person, followed by one empty row.
+    - The empty row's cells are all blank.
   - **Notes:**
 
-- [ ] **Step 3.** Read the **Name** cells of the hire rows **REQ-2042** and **REQ-2047**.
-  - **Expected:** **SDET, REQ-2042** and **Software Engineer, REQ-2047**, in grey italics. The hire rows **Backend engineer 1**, **Backend engineer 2** and **Payments tester** show their names in the usual colour.
+- [ ] **Step 3.** Read the **Name** cells of the hire rows **REQ-2042** and **REQ-2047**, then of **Backend engineer 1**, **Backend engineer 2** and **Payments tester**.
+  - **Expected:**
+    - **SDET, REQ-2042** and **Software Engineer, REQ-2047**, in grey italics.
+    - **Backend engineer 1**, **Backend engineer 2** and **Payments tester** in the usual colour.
   - **Notes:**
 
 - [ ] **Step 4.** Read a hire row's **End**, **Manager?**, **Manager assigned** and **Team name** cells, and the **Expected** cell of a person.
-  - **Expected:** All are blank. The hire row's **Expected** cell holds a month and year, such as **Jan 2027**.
+  - **Expected:**
+    - All are blank.
+    - The hire row's **Expected** cell holds a month and year, such as **Jan 2027**.
   - **Notes:**
 
 - [ ] **Step 5.** Choose **Dark** in the Appearance menu, and look over the same rows.
-  - **Expected:** The grey names, the yellow draft cells, the red rejected cells and the light green **Live** rows under the drafted hires are all easy to read and tell apart.
+  - **Expected:** These are all easy to read and tell apart:
+    - the grey names
+    - the yellow draft cells
+    - the red rejected cells
+    - the light green **Live** rows under the drafted hires
   - **Notes:**
 
 - [ ] **Step 6.** Choose **Light** in the Appearance menu.
@@ -78,7 +91,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** As HIRE-01, with **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Search for **SDET, REQ-2042**. Select the row's **Name** cell, type **Fictional test lead**, and press Enter.
-  - **Expected:** The cell reads **Fictional test lead** in the usual colour and turns yellow. The row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The cell reads **Fictional test lead** in the usual colour and turns yellow.
+    - The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Clear the search, and search for **Fictional test lead**. Select the row's **Name** cell, press Backspace, and press Enter if an editor opened.
@@ -94,15 +109,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Search for **REQ-2047**. Select the row's **State** cell and press Enter.
-  - **Expected:** A picker opens offering **Request to hire** and **Approved to hire** only. **Hired** and **Left** are not offered.
+  - **Expected:**
+    - A picker opens offering **Request to hire** and **Approved to hire** only.
+    - **Hired** and **Left** are not offered.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **State** header, then **Filter…**, and look at the choices.
-  - **Expected:** **Request to hire**, **Approved to hire**, **Hired**, **Left** and **Empty** are listed together, with no **Retired** heading.
+  - **Expected:**
+    - **Request to hire**, **Approved to hire**, **Hired**, **Left** and **Empty** are listed together.
+    - There is no **Retired** heading.
   - **Notes:**
 
 - [ ] **Step 3.** Tick **Hired** only.
-  - **Expected:** Only people are shown, with no hire rows, and every **State** cell reads **Hired**.
+  - **Expected:**
+    - Only people are shown, with no hire rows.
+    - Every **State** cell reads **Hired**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -114,11 +135,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **Name** cell of the empty row at the bottom of the table. Using only the keyboard, move to its **State** cell, press Enter, choose **Request to hire**, and press Enter.
-  - **Expected:** The row's **State** cell reads **Request to hire**, and its other cells are blank.
+  - **Expected:**
+    - The row's **State** cell reads **Request to hire**.
+    - Its other cells are blank.
   - **Notes:**
 
 - [ ] **Step 2.** Using only the keyboard, move to the row's **Position** cell, press Enter, choose **SDET**, and press Enter.
-  - **Expected:** The row is added with an ID starting with **TBD-**, and a **Name** of **SDET, TBD-** followed by the same number, in grey italics. The row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The row is added with an ID starting with **TBD-**.
+    - Its **Name** reads **SDET, TBD-** followed by the same number, in grey italics.
+    - The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -133,7 +159,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 - Second line: Tab, **REQ-3002**, Tab, **Software Engineer**, Tab, **Request to hire**.
 
 - [ ] **Step 1.** Copy both lines. Select the **Name** cell of the empty row at the bottom of the table, and paste.
-  - **Expected:** Two hire rows are added: **Fictional pasted hire** with ID **REQ-3001**, and **Software Engineer, REQ-3002** in grey italics. Each reads **Request to hire** in **State** and has a hollow yellow dot and **Draft**.
+  - **Expected:** Two hire rows are added, each reading **Request to hire** in **State**, with a hollow yellow dot and **Draft**:
+    - **Fictional pasted hire**, with ID **REQ-3001**
+    - **Software Engineer, REQ-3002**, in grey italics
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -145,7 +173,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select **New** at the top right. In the panel, choose **Request to hire** in **State**, type **Fictional platform hire** in **Name** and **REQ-3100** in **ID**, choose **Software Engineer** in **Position**, and select **Add**.
-  - **Expected:** The panel shows **Fictional platform hire**. Its row in the table has a hollow yellow dot and **Draft**, and **Request to hire** in **State**.
+  - **Expected:**
+    - The panel shows **Fictional platform hire**.
+    - Its row in the table has a hollow yellow dot and **Draft**, and **Request to hire** in **State**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the Publish button.
@@ -157,11 +187,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Select the entry's checkbox, then **Approve**. In the dialog, select **Approve**.
-  - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
+  - **Expected:**
+    - The dialog closes.
+    - A notice reads **Approved 1 draft.**
   - **Notes:**
 
 - [ ] **Step 5.** Sign in as the Resource Planner, `resource.planner@fathom.test`, changing account. Open **People** and search for **Fictional platform hire**.
-  - **Expected:** One hire row, with no **Draft** mark, reading **REQ-3100** in **ID**, **Software Engineer** in **Position**, and **Request to hire** in **State**.
+  - **Expected:** One hire row, with no **Draft** mark, reading:
+    - **REQ-3100** in **ID**
+    - **Software Engineer** in **Position**
+    - **Request to hire** in **State**
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -173,11 +208,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
-  - **Expected:** Only hire rows are shown. None has a **Draft** mark, and there is no **Start** column. **REQ-2036** is among them, and **REQ-2050** is not.
+  - **Expected:**
+    - Only hire rows are shown, and none has a **Draft** mark.
+    - There is no **Start** column.
+    - **REQ-2036** is among them, and **REQ-2050** is not.
   - **Notes:**
 
 - [ ] **Step 2.** Read the **Name** cells of **Backend engineer 1** and **REQ-2042**, and the **Site** cell of **Backend engineer 1**.
-  - **Expected:** **Backend engineer 1** in the usual colour, and **SDET, REQ-2042** in grey italics. The **Site** cell reads **Kestrel Bay**.
+  - **Expected:**
+    - **Backend engineer 1** in the usual colour.
+    - **SDET, REQ-2042** in grey italics.
+    - The **Site** cell reads **Kestrel Bay**.
   - **Notes:**
 
 - [ ] **Step 3.** Select a hire row's **Name** cell and type a letter.
@@ -185,7 +226,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Select **Clear all** above the table, so every row is shown again. Then select **Metrics** above the table, and choose **Expected** in **Break down by**.
-  - **Expected:** A row for each month a hire is expected, such as **Jan 2027**, in month order, and an **Empty** row counting the people.
+  - **Expected:**
+    - A row for each month a hire is expected, such as **Jan 2027**, in month order.
+    - An **Empty** row counting the people.
   - **Notes:**
 
 ### HIRE-08: A Hire's Values in Added Columns Are Shown and Changed
@@ -199,7 +242,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Select the row's **Site** cell, press Enter, choose **Ashgrove**, and press Enter.
-  - **Expected:** The cell reads **Ashgrove** and turns yellow, and the row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The cell reads **Ashgrove** and turns yellow.
+    - The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -211,7 +256,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **People** page open.
 
 - [ ] **Step 1.** Select the **Skills** header, then **Edit column**.
-  - **Expected:** A dialog titled **Edit column** shows **Offered on planned hires** ticked, and **Planned hires can leave it empty** under **Must be filled in**.
+  - **Expected:**
+    - A dialog titled **Edit column** shows **Offered on planned hires** ticked.
+    - **Planned hires can leave it empty** shows under **Must be filled in**.
   - **Notes:**
 
 - [ ] **Step 2.** Untick **Offered on planned hires**.
@@ -219,11 +266,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Save**. Search for **Payments tester**, select the row's **Skills** cell, and type a letter.
-  - **Expected:** The dialog has closed. The cell is blank, and no editor opens.
+  - **Expected:**
+    - The dialog has closed.
+    - The cell is blank, and no editor opens.
   - **Notes:**
 
 - [ ] **Step 4.** Clear the search. Select the **Site** header, then **Edit column**. Untick **Offered on planned hires**, and select **Save**.
-  - **Expected:** The dialog stays open, with this message in red under the checkboxes: **3 planned hires have values in Site, so it cannot be switched off for planned hires yet. Clear them first.**
+  - **Expected:**
+    - The dialog stays open.
+    - This message shows in red under the checkboxes: **3 planned hires have values in Site, so it cannot be switched off for planned hires yet. Clear them first.**
   - **Notes:**
 
 - [ ] **Step 5.** Select **Cancel**.
@@ -285,7 +336,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Views** button after the search box, then **Save view…**. Type **Hiring plan** in **Name**, and select **Save view**.
-  - **Expected:** The dialog closes with no error, and the button now reads **Hiring plan**.
+  - **Expected:**
+    - The dialog closes with no error.
+    - The button now reads **Hiring plan**.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Hiring plan**, then **Clear view**.
@@ -297,7 +350,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Select **Hiring plan**, then **Delete view**.
-  - **Expected:** A notice reads **Deleted the Hiring plan view.**, with **Undo**. The hire rows stay as they are, and the button now reads **Views**, marked with a dot.
+  - **Expected:**
+    - A notice reads **Deleted the Hiring plan view.**, with **Undo**.
+    - The hire rows stay as they are.
+    - The button now reads **Views**, marked with a dot.
   - **Notes:**
 
 ### HIRE-12: Planned Hires Report to a Planned Manager
@@ -307,11 +363,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open, with no filters.
 
 - [ ] **Step 1.** Type **Engineering Manager TBD** in the search box.
-  - **Expected:** One row is shown, its **Name** **Engineering Manager, TBD-** and a number, in grey italics. Its **Manager?** cell shows a checked box.
+  - **Expected:**
+    - One row is shown, its **Name** **Engineering Manager, TBD-** and a number, in grey italics.
+    - Its **Manager?** cell shows a checked box.
   - **Notes:**
 
 - [ ] **Step 2.** Clear the search box, and type **Platform engineer TBD**.
-  - **Expected:** One row is shown, its **Name** **Platform engineer**. Its **Manager** and **Team** both read **Engineering Manager, TBD-** and the same number.
+  - **Expected:**
+    - One row is shown, its **Name** **Platform engineer**.
+    - Its **Manager** and **Team** both read **Engineering Manager, TBD-** and the same number.
   - **Notes:**
 
 - [ ] **Step 3.** Select the row's **Manager** cell, and press Enter.
@@ -327,7 +387,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Click once in the row's **Manager?** cell.
-  - **Expected:** A message reads **Reassign direct reports first**. The box stays checked, and the row has no **Draft** mark.
+  - **Expected:**
+    - A message reads **Reassign direct reports first**.
+    - The box stays checked, and the row has no **Draft** mark.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -339,19 +401,32 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Light** chosen in the Appearance menu. **People** page open, with no filters.
 
 - [ ] **Step 1.** Type **Backend engineer 2** in the search box, and look at the row's **Name** cell.
-  - **Expected:** A **Fill** button sits at the right of the cell, and **Backend engineer 2** is still readable beside it.
+  - **Expected:**
+    - A **Fill** button sits at the right of the cell.
+    - **Backend engineer 2** is still readable beside it.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Fill**.
-  - **Expected:** The panel beside the table is headed **Backend engineer 2**. Under **Fill this planned hire**, **New person** is selected next to **Existing person**, with fields **Name**, **ID**, **Position**, **Start** and **Manager**. **Position** reads **Software Engineer**, with no pencil. **Start** holds the same date as the row's **Start** cell in the table, and **Manager** the same name as its **Manager** cell.
+  - **Expected:**
+    - The panel beside the table is headed **Backend engineer 2**.
+    - Under **Fill this planned hire**, **New person** is selected next to **Existing person**.
+    - The fields are **Name**, **ID**, **Position**, **Start** and **Manager**.
+    - **Position** reads **Software Engineer**, with no pencil.
+    - **Start** holds the same date as the row's **Start** cell in the table.
+    - **Manager** holds the same name as the row's **Manager** cell.
   - **Notes:**
 
 - [ ] **Step 3.** Type **Fictional new starter** in **Name** and **EMP-9001** in **ID**, and select **Fill** at the foot of the panel.
-  - **Expected:** The form closes and the panel is headed **Fictional new starter**, with a hollow yellow dot and **Draft**. The **Backend engineer 2** row no longer has a **Fill** button, and has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The form closes, and the panel is headed **Fictional new starter**, with a hollow yellow dot and **Draft**.
+    - The **Backend engineer 2** row no longer has a **Fill** button, and has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 4.** Select the button with an arrow out of a box at the right of the **Backend engineer 2** row's **Name** cell.
-  - **Expected:** The panel is headed **Backend engineer 2**, with a **Filled by** section under its heading reading **Fictional new starter** in **Name** and **EMP-9001** in **ID**, each a link that shows that person in the panel.
+  - **Expected:**
+    - The panel is headed **Backend engineer 2**.
+    - A **Filled by** section under its heading reads **Fictional new starter** in **Name** and **EMP-9001** in **ID**.
+    - Each is a link that shows that person in the panel.
   - **Notes:**
 
 - [ ] **Step 5.** Clear the search box, and type **Fictional new starter**.
@@ -367,11 +442,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 8.** In the dialog, select **Approve**.
-  - **Expected:** The dialog closes, and a notice says the drafts were approved.
+  - **Expected:**
+    - The dialog closes.
+    - A notice says the drafts were approved.
   - **Notes:**
 
-- [ ] **Step 9.** Open **People** and type **Fictional new starter** in the search box.
-  - **Expected:** One row, with no **Draft** mark, reading **Software Engineer** in **Position**, a name in **Manager**, and **Ashgrove** in **Site**. Searching for **Backend engineer 2** shows no row named **Backend engineer 2**.
+- [ ] **Step 9.** Open **People** and type **Fictional new starter** in the search box, then search for **Backend engineer 2**.
+  - **Expected:**
+    - For **Fictional new starter**, one row, with no **Draft** mark, reading **Software Engineer** in **Position**, a name in **Manager**, and **Ashgrove** in **Site**.
+    - For **Backend engineer 2**, no row named **Backend engineer 2**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -383,23 +462,38 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **People** page open, with no filters.
 
 - [ ] **Step 1.** Search for **REQ-2042**, select the row's **Fill** button, and in the panel select **Existing person**.
-  - **Expected:** The **Person** row is empty, with a pencil button at its right. **Position** reads the planned hire's position, with no pencil.
+  - **Expected:**
+    - The **Person** row is empty, with a pencil button at its right.
+    - **Position** reads the planned hire's position, with no pencil.
   - **Notes:**
 
 - [ ] **Step 2.** Select the pencil, and scroll through the list.
-  - **Expected:** Each entry shows a name, an ID in brackets, and a position, in name order. No planned hires are listed. The list scrolls within itself, and the panel stays the same width as the list opens and closes.
+  - **Expected:**
+    - Each entry shows a name, an ID in brackets, and a position, in name order.
+    - No planned hires are listed.
+    - The list scrolls within itself.
+    - The panel stays the same width as the list opens and closes.
   - **Notes:**
 
 - [ ] **Step 3.** Without typing, select the first person in the list. If no **Manager assigned** row then shows, select the pencil and choose the next person in the list.
-  - **Expected:** The **Person** row shows who you chose. **Position** still reads the planned hire's position, and **Manager** the name in the row's **Manager** cell in the table. **Manager assigned** holds today's date.
+  - **Expected:**
+    - The **Person** row shows the person chosen.
+    - **Position** still reads the planned hire's position.
+    - **Manager** reads the name in the row's **Manager** cell in the table.
+    - **Manager assigned** holds today's date.
   - **Notes:**
 
 - [ ] **Step 4.** Select the pencil beside **Manager**, and choose a different name from the one shown.
-  - **Expected:** The **Manager** row shows the name you chose, and **Manager assigned** still holds today's date.
+  - **Expected:**
+    - The **Manager** row shows the name chosen.
+    - **Manager assigned** still holds today's date.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Fill** at the foot of the panel.
-  - **Expected:** The form closes and the panel is headed with the person you chose. Its **Manager** row reads the name you chose in Step 4, and its **Position** row the planned hire's position, each with a yellow dot and **Draft** beside it.
+  - **Expected:**
+    - The form closes, and the panel is headed with the person chosen in Step 3.
+    - Its **Manager** row reads the name chosen in Step 4, with a yellow dot and **Draft** beside it.
+    - Its **Position** row reads the planned hire's position, with a yellow dot and **Draft** beside it.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -410,8 +504,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 **Preconditions:** Signed in with this account. **People** page open, with no filters.
 
-- [ ] **Step 1.** Type **Engineering Manager TBD** in the search box, and look at the row's **Name** cell.
-  - **Expected:** There is no **Fill** button, since its **State** is **Request to hire**.
+- [ ] **Step 1.** Type **Engineering Manager TBD** in the search box, and look at the row's **State** and **Name** cells.
+  - **Expected:**
+    - **State** reads **Request to hire**.
+    - There is no **Fill** button in the **Name** cell.
   - **Notes:**
 
 - [ ] **Step 2.** Select the row's **State** cell, press Enter, choose **Approved to hire**, and press Enter.
@@ -423,15 +519,20 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Type **Fictional new lead** in **Name** and **EMP-9002** in **ID**, select the pencil beside **Grade**, and choose **P1**.
-  - **Expected:** The fields hold what you entered, and **Grade** reads **P1**.
+  - **Expected:** The form reads:
+    - **Fictional new lead** in **Name**
+    - **EMP-9002** in **ID**
+    - **P1** in **Grade**
   - **Notes:**
 
 - [ ] **Step 5.** Select **Fill** at the foot of the panel.
-  - **Expected:** The form closes and the panel is headed **Fictional new lead**.
+  - **Expected:** The form closes, and the panel is headed **Fictional new lead**.
   - **Notes:**
 
 - [ ] **Step 6.** Clear the search box, and type **Platform engineer TBD**.
-  - **Expected:** The **Manager** cell of **Platform engineer** reads **Fictional new lead**, and the row has a hollow yellow dot and **Draft**.
+  - **Expected:**
+    - The **Manager** cell of **Platform engineer** reads **Fictional new lead**.
+    - The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -443,7 +544,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Dark** chosen in the Appearance menu. **People** page open, with no filters.
 
 - [ ] **Step 1.** Search for **REQ-2047**, and look at the row. Select **Fill**.
-  - **Expected:** The row's **Fill** button, the panel's **New person** and **Existing person** choice, and its fields are all easy to read.
+  - **Expected:** These are all easy to read:
+    - the row's **Fill** button
+    - the panel's **New person** and **Existing person** choice
+    - the panel's fields
   - **Notes:**
 
 - [ ] **Step 2.** Type **Fictional name** in **Name**, and select **Cancel**.
@@ -451,11 +555,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Keep filling**.
-  - **Expected:** The dialog closes, and **Name** still reads **Fictional name**.
+  - **Expected:**
+    - The dialog closes.
+    - **Name** still reads **Fictional name**.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Cancel**, then **Discard**.
-  - **Expected:** The panel shows the hire's details, and a **Fill** button under its heading, with focus on it.
+  - **Expected:**
+    - The panel shows the hire's details, with a **Fill** button under its heading.
+    - Focus is on the **Fill** button.
   - **Notes:**
 
 ### HIRE-17: A Hire Under a Planned Manager Needs a Manager Chosen
@@ -469,11 +577,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Type **Fictional platform starter** in **Name** and **EMP-9003** in **ID**, and select **Fill** at the foot of the panel.
-  - **Expected:** **Manager needed** shows in red under **Manager**, and **Grade needed** under **Grade**.
+  - **Expected:**
+    - **Manager needed** shows in red under **Manager**.
+    - **Grade needed** shows in red under **Grade**.
   - **Notes:**
 
 - [ ] **Step 3.** Select the pencil beside **Manager** and choose the first name in the list. Select the pencil beside **Grade** and choose **P1**. Select **Fill** at the foot of the panel.
-  - **Expected:** The form closes and the panel is headed **Fictional platform starter**. Its **Manager** row reads the name you chose.
+  - **Expected:**
+    - The form closes, and the panel is headed **Fictional platform starter**.
+    - Its **Manager** row reads the name chosen.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.

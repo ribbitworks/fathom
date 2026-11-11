@@ -41,7 +41,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Tick each step whose expected result is seen, and write anything else under its notes. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
 
 ### NOTE-01: A Note Column Is Added
 
@@ -54,7 +54,7 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 2.** Sign in as the Engineering Director, `engineering.director@fathom.test`. Open the **Drafts** page from the left-hand menu and approve the **Background** column.
-  - **Expected:** A notification says the draft is approved.
+  - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
 ### NOTE-02: A Note Is Written in Its Panel
@@ -64,35 +64,56 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** Signed in with this account. Run after NOTE-01. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
-  - **Expected:** The panel slides in smoothly from the right over the table, which then has room beside it, with no jump. It is headed **Background**, with **Note**, **Editor** and **Markdown** at the top, **Editor** chosen, the note's text under them, the toolbar under the text, and **Clear**, **Cancel** and **Save** at the bottom. It looks like the Metrics panel.
+  - **Expected:**
+    - The panel slides in smoothly from the right over the table, which then has room beside it, with no jump.
+    - It is headed **Background**, with **Note**, **Editor** and **Markdown** at the top, and **Editor** chosen.
+    - The note's text is under them, and the toolbar under the text.
+    - **Clear**, **Cancel** and **Save** are at the bottom.
   - **Notes:**
 
 - [ ] **Step 2.** Drag the panel's left edge to the left, then to the right.
-  - **Expected:** The panel widens and narrows, and the table beside it stays usable.
+  - **Expected:**
+    - The panel widens and narrows.
+    - The table beside it stays usable.
   - **Notes:**
 
 - [ ] **Step 3.** Type `Joined from the platform team`. Make `Joined` bold and `platform` teal from the toolbar. Press Enter, start a bullet list, and type `Mentor: Lilian`, Enter, `Speaks Japanese`. Make `Lilian` a link to `wiki.example.test/lilian` with the toolbar's link button. Then click in `Lilian`, press the link button again, and change the text to show to `Lilian Lang`.
-  - **Expected:** Each format shows as you apply it, and the toolbar's buttons are clear about what they do. The link button opens the same form as a Web link cell's, under the button.
+  - **Expected:**
+    - Each format shows as soon as it is applied.
+    - The toolbar's buttons are clear about what they do.
+    - The link button opens a form under the button, with **Address** and **Text to show**.
   - **Notes:**
 
 - [ ] **Step 4.** Press Enter twice to leave the list, type `Plans`, and make it heading 2. Press Enter, start a checkbox list, and type `Meet the team`, Enter, `Set goals`. Tick the box before **Meet the team**.
-  - **Expected:** **Plans** reads as a heading, and the checkboxes line up with their text.
+  - **Expected:**
+    - **Plans** reads as a heading.
+    - The checkboxes line up with their text.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Note**, **Markdown**, then **Editor**, a few times, then **Note**, and click the link.
-  - **Expected:** The text starts in the same place in every view, so nothing jumps, and the note reads the same each time. On **Note**, the link reads **Lilian Lang** and opens the wiki page in a new tab.
+  - **Expected:**
+    - The text starts in the same place in every view, so nothing jumps.
+    - The note reads the same each time.
+    - On **Note**, the link reads **Lilian Lang** and opens the wiki page in a new tab.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Save**.
-  - **Expected:** The panel slides out smoothly to the right over the table, which is already full width, with no jump. The cell shows the note's words on one line, cut short where they do not fit, and the row is marked **Draft**.
+  - **Expected:**
+    - The panel slides out smoothly to the right over the table, which is already full width, with no jump.
+    - The cell shows the note's words on one line, cut short where they do not fit.
+    - The row is marked **Draft**.
   - **Notes:**
 
 - [ ] **Step 7.** Select Max Munk's **Background** cell again, then **Editor**. Type a space and `again` at the end of `Set goals`, then press Cmd+Z on a Mac, or Ctrl+Z otherwise.
-  - **Expected:** Only the space and **again** go, leaving **Set goals**. The rest of the note is as saved.
+  - **Expected:**
+    - Only the space and **again** go, leaving **Set goals**.
+    - The rest of the note is as saved.
   - **Notes:**
 
 - [ ] **Step 8.** Select **Cancel**.
-  - **Expected:** The panel closes. The cell still shows the note's words, and the row is still marked **Draft**.
+  - **Expected:**
+    - The panel closes.
+    - The cell still shows the note's words, and the row is still marked **Draft**.
   - **Notes:**
 
 ### NOTE-03: Text Is Pasted From Another App
@@ -102,11 +123,17 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** Signed in with this account. Run after NOTE-02. **People** page open, with **Lilian Lang** searched for.
 
 - [ ] **Step 1.** In a word processor or web page, copy a passage holding a heading, bold text, highlighted text, a numbered list, a table, and an image. Select Lilian Lang's **Background** cell and paste it into the editor.
-  - **Expected:** The heading and bold stay, highlighting and the image are gone, and the numbered list becomes a bullet list. What is left reads sensibly.
+  - **Expected:**
+    - The heading and bold stay.
+    - Highlighting and the image are gone.
+    - The numbered list becomes a bullet list.
+    - What is left reads sensibly.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Clear**, then **Cancel**.
-  - **Expected:** The note empties, the panel stays open until **Cancel**, and Lilian Lang's cell is still empty.
+  - **Expected:**
+    - The note empties, and the panel stays open until **Cancel**.
+    - Lilian Lang's cell is still empty.
   - **Notes:**
 
 ### NOTE-04: Notes Read Well and Work From the Keyboard
@@ -116,15 +143,22 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** Signed in with this account. Run after NOTE-03. **Light** chosen in the Appearance menu. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Using only the keyboard, move to Max Munk's **Background** cell and press Enter.
-  - **Expected:** The panel opens on **Note**. Tab reaches **Note**, **Editor** and **Markdown**, the arrow keys choose **Editor**, and Tab then puts the cursor in the note, ready to type.
+  - **Expected:**
+    - The panel opens on **Note**.
+    - Tab reaches **Note**, **Editor** and **Markdown**, and the arrow keys choose **Editor**.
+    - Tab then puts the cursor in the note, ready to type.
   - **Notes:**
 
 - [ ] **Step 2.** Look at the note.
-  - **Expected:** **platform** is teal, and the heading, bullets, link and checkboxes are easy to read against the panel.
+  - **Expected:**
+    - **platform** is teal.
+    - The heading, bullets, link and checkboxes are easy to read against the panel.
   - **Notes:**
 
 - [ ] **Step 3.** Choose **Dark** in the Appearance menu.
-  - **Expected:** **platform** is still teal, and the heading, bullets, link and checkboxes are easy to read against the dark panel.
+  - **Expected:**
+    - **platform** is still teal.
+    - The heading, bullets, link and checkboxes are easy to read against the dark panel.
   - **Notes:**
 
 - [ ] **Step 4.** Choose **Light** in the Appearance menu.
@@ -132,15 +166,24 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 5.** Press Tab until **Cancel** has focus, and press Enter.
-  - **Expected:** Focus is visible on each control on the way, and once the panel closes, focus is back on Max Munk's **Background** cell.
+  - **Expected:**
+    - Focus is visible on each control on the way.
+    - Once the panel closes, focus is back on Max Munk's **Background** cell.
   - **Notes:**
 
 - [ ] **Step 6.** Select **Metrics** above the table, then Max Munk's **Background** cell. Drag the edge between the two panels up and down, then close the note with its close button and open it again.
-  - **Expected:** The panels keep their width as the note opens and closes. The note shows above the Metrics panel on **Note**, with a close button and no **Clear**, **Cancel** or **Save**, each panel easy to read and scrolling on its own, and the edge shares the height between them. The note shrinks away as it closes and grows back as it opens, with Metrics moving smoothly to make room.
+  - **Expected:**
+    - The panels keep their width as the note opens and closes.
+    - The note shows above the Metrics panel on **Note**, with a close button and no **Clear**, **Cancel** or **Save**.
+    - Each panel is easy to read and scrolls on its own, and the edge shares the height between them.
+    - The note shrinks away as it closes and grows back as it opens, with Metrics moving smoothly to make room.
   - **Notes:**
 
 - [ ] **Step 7.** Clear the search, select Lilian Lang's **Background** cell, then its close button, then the Metrics panel's close button.
-  - **Expected:** Lilian Lang's empty note replaces Max Munk's, open in **Editor**. Once it closes, the Metrics panel fills the place again, and once that closes, the table fills the page.
+  - **Expected:**
+    - Lilian Lang's empty note replaces Max Munk's, open in **Editor**.
+    - Once it closes, the Metrics panel fills the place again.
+    - Once that closes, the table fills the page.
   - **Notes:**
 
 - [ ] **Step 8.** Turn on reduced motion in the computer's accessibility settings. Open Max Munk's **Background** cell, then close it with its close button. Turn reduced motion off again.
@@ -148,7 +191,9 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
   - **Notes:**
 
 - [ ] **Step 9.** Make the browser window as narrow as a phone's screen. Open Max Munk's **Background** cell, press Tab several times, then close it with its close button and widen the window again.
-  - **Expected:** The panel covers the table, and focus stays within it until it closes.
+  - **Expected:**
+    - The panel covers the table.
+    - Focus stays within it until it closes.
   - **Notes:**
 
 ### NOTE-05: A Note Is Read, Approved, and Recorded
@@ -158,9 +203,13 @@ Run the test cases in order, in about 30 minutes. Start with Start Fathom, then 
 **Preconditions:** Run after NOTE-04. Run Publish as the Workforce Administrator, then sign in with this account. **People** page open, with **Max Munk** searched for.
 
 - [ ] **Step 1.** Select Max Munk's **Background** cell.
-  - **Expected:** The panel shows the note as it reads, with a close button, and nothing to change it with.
+  - **Expected:**
+    - The panel shows the note as it reads, with a close button.
+    - Nothing in it changes the note.
   - **Notes:**
 
 - [ ] **Step 2.** Press Esc. Sign in as the Engineering Director, `engineering.director@fathom.test`, open the **Drafts** page from the left-hand menu, and approve Max Munk's draft. Then open **Change history**.
-  - **Expected:** The draft and the history show the note's words without formatting, and read clearly.
+  - **Expected:**
+    - The draft and the history show the note's words without formatting.
+    - Both read clearly.
   - **Notes:**

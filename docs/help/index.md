@@ -10,4 +10,4 @@ How to use each page of Fathom.
 
 ## Changes
 
-- [Drafts](drafts.md): what the marks on a draft mean, and what happens to it.
+- [Drafts](drafts.md): what the marks on a draft mean, what happens to it, and undoing a change.
