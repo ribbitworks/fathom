@@ -3,8 +3,9 @@
 // Tests for the org chart, against a migrated PostgreSQL server: who appears, under whom, with
 // which details, as the lines approved for today have it, with drafts of managers, positions and
 // team names beside, as each reader may see them; managers whose end date has passed, and what each
-// reader is told of them; planned hires as placeholders, and their drafts; and what each role may
-// read.
+// reader is told of them; planned hires as placeholders, and their drafts; the chart on a chosen
+// day, with drafts laid over it for those who may change reporting lines from it; and what each
+// role may read.
 
 import {
   accessHistory,
@@ -114,14 +115,19 @@ async function chart(
 
 const drafted = (as = cookie) => chart(as, "drafted");
 
-async function chartOn(day: string, as = cookie) {
+async function chartOn(
+  day: string,
+  as = cookie,
+  part: "people" | "drafted" = "people",
+) {
   const response = await test.request(as, "GET", `/api/org-chart?on=${day}`);
   expect(response.statusCode, response.body).toBe(200);
   const read = response.json<{
     people: OrgChartPerson[];
     drafted: OrgChartPerson[];
   }>();
-  return new Map(read.people.map((one) => [one.id, one]));
+  const shown = part === "people" ? read.people : read.drafted;
+  return new Map(shown.map((one) => [one.id, one]));
 }
 
 describe("the org chart on a chosen day", () => {
@@ -145,14 +151,128 @@ describe("the org chart on a chosen day", () => {
     expect((await chartOn("2024-06-01")).has(starter)).toBe(true);
   });
 
-  it("shows the chart as approved, without drafts", async () => {
+  // A report under one manager from 2024-01-01, drafted to another from the day given.
+  async function draftedReport(from: string) {
+    const first = await person();
+    const second = await person();
+    const report = await person({ isManager: false });
+    await changed(report, { managerId: first, managerFrom: "2024-01-01" });
+    await approved([report]);
+    await changed(report, { managerId: second, managerFrom: from });
+    return { first, second, report };
+  }
+
+  it("lays drafts over an earlier day for those who may change reporting lines then", async () => {
+    const { first, second, report } = await draftedReport("2024-03-01");
+
+    expect((await chartOn("2024-06-01")).get(report)).toMatchObject({
+      managerId: first,
+      draft: { managerId: second, managerFrom: "2024-03-01" },
+    });
+    expect(
+      (await chartOn("2024-06-01", cookie, "drafted")).get(report)?.managerId,
+    ).toBe(second);
+  });
+
+  it("leaves a line drafted from a later day out of an earlier one", async () => {
+    const { first, report } = await draftedReport("2024-03-01");
+
+    const shown = (await chartOn("2024-02-01")).get(report);
+
+    expect(shown?.managerId).toBe(first);
+    expect(shown?.draft).toBeUndefined();
+    expect(
+      (await chartOn("2024-02-01", cookie, "drafted")).get(report)?.managerId,
+    ).toBe(first);
+  });
+
+  it("dates a draft changing only the manager as the current line is", async () => {
+    const { report } = await draftedReport("2024-03-01");
+    await approved([report]);
+    const third = await person();
+    await changed(report, { managerId: third, managerFrom: "2024-03-01" });
+
+    expect((await chartOn("2024-02-01")).get(report)?.draft).toBeUndefined();
+    expect((await chartOn("2024-06-01")).get(report)?.draft).toEqual({
+      managerId: third,
+      managerFrom: "2024-03-01",
+      state: "waiting",
+      unpublished: false,
+    });
+  });
+
+  it("lays a draft moving only the line's date over an earlier day, with the date", async () => {
     const manager = await person();
     const report = await person({ isManager: false });
-    await changed(report, { managerId: manager, managerFrom: "2024-03-01" });
+    await changed(report, { managerId: manager, managerFrom: "2024-01-01" });
+    await approved([report]);
+    await changed(report, { managerFrom: "2024-04-01" });
 
-    const shown = (await chartOn("2024-06-01")).get(report);
+    expect((await chartOn("2024-03-01")).get(report)?.draft).toEqual({
+      managerId: null,
+      managerFrom: "2024-04-01",
+      state: "waiting",
+      unpublished: false,
+    });
+  });
 
-    expect(shown?.managerId).toBeNull();
+  it("draws someone drafted to be added under their manager on an earlier day", async () => {
+    const manager = await person();
+    const added = await test.request(cookie, "POST", "/api/people", {
+      people: [
+        {
+          preferredName: unique("Fictional Person"),
+          employeeId: unique("OC"),
+          positionId: testPosition,
+          startDate: "2020-01-01",
+          managerId: manager,
+          managerFrom: "2024-01-01",
+        },
+      ],
+    });
+    const id = String(added.json<{ ids: string[] }>().ids[0]);
+
+    const drafted = await chartOn("2024-06-01", cookie, "drafted");
+
+    expect(drafted.get(id)?.managerId).toBe(manager);
+  });
+
+  it.each([
+    ["people:edit", "restricted:view"],
+    ["restricted:edit", "restricted:view"],
+  ])(
+    "shows an earlier day as approved, without drafts, to those with %s alone",
+    async (...granted) => {
+      const { first, report } = await draftedReport("2024-03-01");
+      const reader = await test.signedIn([
+        "people:view",
+        "org-chart:view",
+        ...granted,
+      ] as Permission[]);
+
+      const shown = (await chartOn("2024-06-01", reader.cookie)).get(report);
+
+      expect(shown?.managerId).toBe(first);
+      expect(shown?.draft).toBeUndefined();
+    },
+  );
+
+  it("shows the chart as approved, without drafts, to those who may not change reporting lines", async () => {
+    const { first, report } = await draftedReport("2024-03-01");
+    const reader = await test.signedIn("engineering-manager");
+
+    const shown = (await chartOn("2024-06-01", reader.cookie)).get(report);
+
+    expect(shown?.managerId).toBe(first);
+    expect(shown?.draft).toBeUndefined();
+  });
+
+  it("shows a later day as approved, without drafts, since reporting lines are not dated ahead", async () => {
+    const { first, report } = await draftedReport("2024-03-01");
+
+    const shown = (await chartOn("2026-07-01")).get(report);
+
+    expect(shown?.managerId).toBe(first);
     expect(shown?.draft).toBeUndefined();
   });
 
@@ -309,6 +429,7 @@ describe("the org chart", () => {
     const executive = await test.signedIn("executive");
     expect((await chart(executive.cookie)).get(report)?.draft).toEqual({
       managerId: second,
+      managerFrom: "2026-06-15",
       state: "waiting",
       unpublished: false,
     });

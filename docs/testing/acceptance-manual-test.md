@@ -251,7 +251,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** **People** page open, with no filters.
 
 - [ ] **Step 1.** Search for `Samuel Richter`, whose **Manager** cell reads **Atmananda Ganaka** and **Team** cell **Payments team**. Select the row's **Manager** cell, press Enter, type `Max`, and choose **Max Munk**.
-  - **Expected:** The **Manager** cell reads **Max Munk** and the **Team** cell **Mobile team**, both yellow. The **Manager since** cell holds today's date. The row has a hollow yellow dot and **Draft**.
+  - **Expected:** The **Manager** cell reads **Max Munk** and the **Team** cell **Mobile team**, both yellow. The **Manager assigned** cell holds today's date. The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the row's details button, and read the **Reporting** section.
@@ -1307,7 +1307,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 **Preconditions:** ACC-47 done. Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **Manager** cell of **Bram Oakes**, press Enter, type `Ada`, and choose **Ada Quill**.
-  - **Expected:** The **Manager** cell reads **Ada Quill**, in yellow, and **Manager since** holds today's date. The row has a hollow yellow dot and **Draft**.
+  - **Expected:** The **Manager** cell reads **Ada Quill**, in yellow, and **Manager assigned** holds today's date. The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** In the same way, choose **Ada Quill** as the manager of **Cleo Marsh** and **Freya Holt**, and **Odile Brandt** as the manager of **Ada Quill**, **Dara Finch** and **Emil Stone**.
@@ -1444,8 +1444,8 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** Every person is listed under **No feature team**, and no cell in any month holds a label.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Org chart**, choose **Feature teams** in the teams switch, and select the Feature teams button.
-  - **Expected:** The menu reads **No feature teams yet**, then offers **New feature team**.
+- [ ] **Step 2.** Select **Org chart**, and choose **Feature teams** in the teams switch. Clear the date box, type the first day of six months ago, such as `20260501`, and press Enter. Select the Feature teams button.
+  - **Expected:** Below the date row, text reads **Showing** and that day, such as **Showing May 1, 2026.**, then **Changes take effect from this date.** The menu reads **No feature teams yet**, then offers **New feature team**.
   - **Notes:**
 
 - [ ] **Step 3.** Press Esc. Clear the date box, type the first day of six months ago, such as `20260501`, and press Enter.

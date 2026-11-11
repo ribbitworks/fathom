@@ -68,3 +68,30 @@ export const defaultLineFrom = (
   today: string,
 ): string =>
   typeof startDate === "string" && startDate > today ? startDate : today;
+
+// Whether a change, such as to a feature team, may take effect from a day: a day before today needs
+// the right to change Restricted details.
+export const mayDateChange = (
+  changesDates: boolean,
+  day: string,
+  today: string,
+): boolean => changesDates || day >= today;
+
+// Whether reporting lines may be changed from a day other than today: only an earlier one, as any
+// change may be, since later days wait for planned reporting changes.
+export const mayDateLineChange = (
+  changesDates: boolean,
+  day: string,
+  today: string,
+): boolean => day < today && mayDateChange(changesDates, day, today);
+
+// Whether someone's reporting line can change from a day: a change takes the place of their current
+// line, never one before it, so the day is on or after the current line's and their own start.
+export const lineChangesFrom = (
+  person: {
+    startDate?: string | null | undefined;
+    managerFrom?: string | null | undefined;
+  },
+  day: string,
+): boolean =>
+  (person.managerFrom ?? day) <= day && (person.startDate ?? day) <= day;

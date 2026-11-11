@@ -21,8 +21,8 @@ import {
 } from "@fathom/shared";
 import { z } from "zod";
 import { dayQuery, sendDeleteFor, sendJson, sendJsonFor } from "./api.ts";
-import type { ChartPerson } from "./org-chart.ts";
-import { formatDay, formatDayOrMonth, formatMonth } from "./table-view.ts";
+import { type ChartPerson, dayUnlessShown } from "./org-chart.ts";
+import { formatDayOrMonth, formatMonth } from "./table-view.ts";
 import { today } from "./today.ts";
 
 // The teams on a day, today unless another is given, with drafts for those who see them.
@@ -146,7 +146,7 @@ export function takesEffect(
       : new Map(Object.entries(held ?? {})).get(personId);
   const day = heldFor(draft.days, draft.leadDay);
   const month = heldFor(draft.months, draft.leadMonth);
-  if (day !== undefined) return day === shown ? undefined : formatDay(day);
+  if (day !== undefined) return dayUnlessShown(day, shown);
   if (month !== undefined) {
     return month === monthOf(shown) ? undefined : formatMonth(month);
   }

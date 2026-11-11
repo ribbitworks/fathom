@@ -12,7 +12,7 @@
 // only as People names them, by name and team, at the top of their part of the chart.
 
 import { z } from "zod";
-import { monthSchema } from "./days.ts";
+import { daySchema, monthSchema } from "./days.ts";
 import { draftStateSchema } from "./drafts.ts";
 import { paletteColourSchema } from "./palette.ts";
 
@@ -21,6 +21,8 @@ import { paletteColourSchema } from "./palette.ts";
 // draft keeps it as it is.
 export const orgChartDraftSchema = z.object({
   managerId: z.string().nullable().optional(),
+  // The day a person's drafted manager takes effect from, given with the manager.
+  managerFrom: daySchema.optional(),
   position: z.string().optional(),
   teamName: z.string().nullable().optional(),
   state: draftStateSchema,

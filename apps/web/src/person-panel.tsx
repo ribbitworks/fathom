@@ -9,9 +9,15 @@
 // report shows them instead. Those who may change people, and planned hires for a planned hire,
 // change each value there as in its People cell, with the same editors and checks, each change a
 // draft; the live values alone, and a record drafted to be removed or held by another's changes, are
-// only read.
+// only read. Beside the org chart on an earlier day, only a person's manager changes, from that day,
+// while their current line was already in force then.
 
-import { type PaletteColour, type Person, type Show } from "@fathom/shared";
+import {
+  lineChangesFrom,
+  type PaletteColour,
+  type Person,
+  type Show,
+} from "@fathom/shared";
 import { Alert, Button, Group, Loader, Stack, Text } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
 import { type ReactNode, useEffect, useEffectEvent } from "react";
@@ -30,6 +36,7 @@ import {
   recordProblem,
 } from "./people-grid.tsx";
 import { isHire, rowName, type RowChange } from "./people-rows.ts";
+import { datedChange } from "./person-change.ts";
 import type { NoteEditing } from "./note-editing.tsx";
 import { peopleQuery } from "./people.ts";
 import {
@@ -76,6 +83,9 @@ export const detailKeys = [
   "isManager",
 ];
 
+// The only value changed from an earlier day of the org chart beside, since the rest take no date.
+const datedKey = "managerId";
+
 const sameId = (person: Person, employeeId: string) =>
   person.employeeId.toLowerCase() === employeeId.toLowerCase();
 
@@ -93,9 +103,12 @@ export function PersonPanel({
   onFollow,
   onClose,
   onChange,
+  changesFrom,
   notes,
   hireFill,
 }: {
+  // The earlier day the org chart beside shows, from which only a change of manager is made.
+  changesFrom?: string | undefined;
   employeeId: string;
   // What the Draft menu of the page beside it shows.
   show: Show;
@@ -257,6 +270,17 @@ export function PersonPanel({
   // The live values alone are only read, as on People, since every change makes a draft; so is a
   // record drafted to be removed or held by another's changes, and a planned hire to those who may
   // not change planned hires. Its values are checked beside everyone else's, as People shows them.
+  const live = livePeople(query.data.people).find(({ id }) => id === person.id);
+  // How a change is sent: as made, or, from an earlier day, dated, while the person's line can
+  // change from it.
+  const sent: ((change: RowChange) => RowChange) | undefined =
+    changesFrom === undefined
+      ? (change) => change
+      : !isHire(person) &&
+          live !== undefined &&
+          lineChangesFrom(live, changesFrom)
+        ? (change) => datedChange(change, live, changesFrom)
+        : undefined;
   const context: EditingContext = {
     id: person.id,
     kind,
@@ -266,10 +290,11 @@ export function PersonPanel({
       onChange === undefined ||
       show === "live" ||
       heldBack(person) ||
-      (isHire(person) && !canEditHires)
+      (isHire(person) && !canEditHires) ||
+      sent === undefined
         ? undefined
         : (change) => {
-            onChange(person, change);
+            onChange(person, sent(change));
           },
     others: () => asShown.filter(({ id }) => id !== person.id).map(valuesOf),
     recordProblem,
@@ -314,7 +339,11 @@ export function PersonPanel({
         changed={
           draft === undefined ? undefined : { live: column.live(draft), draft }
         }
-        editing={editing(column)}
+        editing={
+          changesFrom === undefined || column.key === datedKey
+            ? editing(column)
+            : undefined
+        }
       >
         {special}
       </Row>

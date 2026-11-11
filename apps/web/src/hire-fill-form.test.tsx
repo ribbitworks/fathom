@@ -522,9 +522,9 @@ describe("filling a planned hire with someone already in Fathom", () => {
     await pick("Person", /Sasha/);
     expect(row("Position").textContent).toContain("Fictional Engineer");
     await userEvent.clear(
-      screen.getByRole("textbox", { name: "Manager since" }),
+      screen.getByRole("textbox", { name: "Manager assigned" }),
     );
-    await type("Manager since", "2026-01-05");
+    await type("Manager assigned", "2026-01-05");
     await userEvent.tab();
 
     await fillNow();
@@ -550,7 +550,9 @@ describe("filling a planned hire with someone already in Fathom", () => {
 
     await pick("Person", /Sam/);
 
-    expect(screen.queryByRole("textbox", { name: "Manager since" })).toBeNull();
+    expect(
+      screen.queryByRole("textbox", { name: "Manager assigned" }),
+    ).toBeNull();
   });
 
   it("keeps their manager when a hire under a planned manager has none chosen", async () => {

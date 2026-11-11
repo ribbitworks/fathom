@@ -10,6 +10,9 @@ import {
   isDay,
   isFirstOfMonth,
   isMonth,
+  lineChangesFrom,
+  mayDateChange,
+  mayDateLineChange,
   monthNumber,
   monthOf,
   typedDay,
@@ -85,6 +88,44 @@ describe("the day a new reporting line starts", () => {
 
   it("is their start date for someone who has not started", () => {
     expect(defaultLineFrom("2027-01-01", "2026-11-08")).toBe("2027-01-01");
+  });
+});
+
+describe("the days a change may take effect from", () => {
+  it.each([
+    ["today", false, "2027-03-10", true],
+    ["a later day", false, "2027-04-01", true],
+    ["an earlier day, without changing dates", false, "2027-03-01", false],
+    ["an earlier day, changing dates", true, "2027-03-01", true],
+  ])("include %s", (_, changesDates, day, may) => {
+    expect(mayDateChange(changesDates, day, "2027-03-10")).toBe(may);
+  });
+});
+
+describe("the days reporting lines may be changed from", () => {
+  it.each([
+    [true, "2026-11-07", true],
+    [false, "2026-11-07", false],
+    [true, "2026-11-08", false],
+    [true, "2026-11-09", false],
+  ])(
+    "with the right to change dates %s, from %s, is %s",
+    (changesDates, day, may) => {
+      expect(mayDateLineChange(changesDates, day, "2026-11-08")).toBe(may);
+    },
+  );
+});
+
+describe("whether someone's line can change from a day", () => {
+  it.each([
+    [{ startDate: "2020-01-01", managerFrom: "2024-01-01" }, true],
+    [{ startDate: "2020-01-01", managerFrom: "2024-03-01" }, true],
+    [{ startDate: "2020-01-01", managerFrom: "2024-03-02" }, false],
+    [{ startDate: "2024-03-02", managerFrom: null }, false],
+    [{ startDate: null, managerFrom: null }, true],
+    [{}, true],
+  ])("for %o from 2024-03-01 is %s", (person, changes) => {
+    expect(lineChangesFrom(person, "2024-03-01")).toBe(changes);
   });
 });
 

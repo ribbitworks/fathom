@@ -719,7 +719,7 @@ describe("managers and teams", () => {
     expect(counts.of(["p3"])).toBe(1);
   });
 
-  it("leaves Manager since out for those who may not see dates", () => {
+  it("leaves Manager assigned out for those who may not see dates", () => {
     expect(columnsFor([], [], [], false, people).map(({ key }) => key)).toEqual(
       [
         "preferredName",
@@ -872,7 +872,7 @@ describe("managers and teams", () => {
     expect(update).not.toHaveBeenCalled();
     expect(text("p4", "managerFrom")).toBe(formatDay("2024-02-01"));
     await userEvent.keyboard("{Enter}{Control>}a{/Control}{Backspace}{Enter}");
-    expect(screen.getByRole("alert").textContent).toBe("Manager since needed");
+    expect(screen.getByRole("alert").textContent).toBe("Date needed");
     expect(update).not.toHaveBeenCalled();
   });
 
@@ -1010,7 +1010,7 @@ describe("managers and teams", () => {
     );
   });
 
-  it("refuses Manager since for someone with no manager and no line, but moves a line with no manager", async () => {
+  it("refuses Manager assigned for someone with no manager and no line, but moves a line with no manager", async () => {
     const update = vi.fn();
     render(
       grid({
@@ -1024,7 +1024,7 @@ describe("managers and teams", () => {
     focus("p1", "managerFrom");
     await userEvent.keyboard("{Enter}2024-05-01{Enter}");
     expect(screen.getByRole("alert").textContent).toBe(
-      "Choose a manager, or leave Manager since empty",
+      "Choose a manager, or leave Manager assigned empty",
     );
     expect(update).not.toHaveBeenCalled();
     await userEvent.keyboard("{Escape}");
@@ -1043,7 +1043,7 @@ describe("managers and teams", () => {
     expect(team()).toBe(team());
   });
 
-  it("refuses a new person's Manager since without a manager", async () => {
+  it("refuses a new person's Manager assigned without a manager", async () => {
     const add = vi.fn();
     render(
       grid({
@@ -1055,7 +1055,7 @@ describe("managers and teams", () => {
     await userEvent.paste("Fictional p6\tp6\t2024-05-01");
     expect(add).not.toHaveBeenCalled();
     expect(screen.getByRole("alert").textContent).toBe(
-      "Choose a manager, or leave Manager since empty",
+      "Choose a manager, or leave Manager assigned empty",
     );
   });
 

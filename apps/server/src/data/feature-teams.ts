@@ -32,7 +32,7 @@ import {
   type FeatureTeams,
   isFirstOfMonth,
   knownColour,
-  mayDateTeamChange,
+  mayDateChange,
   type MemberTeamsChange,
   monthOf,
   type PaletteColour,
@@ -845,7 +845,7 @@ const changesDates = (actor: Actor) =>
 // they try can tell them no more than a month.
 function fromDay(actor: Actor, from: string | undefined, today: string) {
   if (from === undefined || from === today) return undefined;
-  if (!mayDateTeamChange(changesDates(actor), from, today)) {
+  if (!mayDateChange(changesDates(actor), from, today)) {
     throw new ForbiddenError(
       "This role can't choose an earlier date. Use today or a later date.",
     );
@@ -870,7 +870,7 @@ function refuseDaysPutBack(
     for (const [personId, day] of Object.entries(days(wanted))) {
       if (
         before.get(personId) !== day &&
-        (!seesDays || !mayDateTeamChange(changesDates(actor), day, today))
+        (!seesDays || !mayDateChange(changesDates(actor), day, today))
       ) {
         throw new ForbiddenError(
           "This change would bring back a date this role can't choose, so it can't be undone.",

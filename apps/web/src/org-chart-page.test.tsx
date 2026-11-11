@@ -202,6 +202,31 @@ describe("who sees the Org chart page", () => {
 });
 
 describe("the org chart", () => {
+  it("says under a moved person's position when their move takes effect, if not the day shown", async () => {
+    await openChart(() =>
+      chartJson({
+        people: [
+          person("p1", "Robin Fictional", null),
+          person("p2", "Sasha Fictional", "p1"),
+          person("p3", "Tatum Fictional", "p1", {
+            draft: {
+              managerId: "p2",
+              managerFrom: "2020-01-02",
+              state: "waiting",
+              unpublished: false,
+            },
+          }),
+        ],
+      }),
+    );
+    const moved = await screen.findByRole("link", { name: "Tatum Fictional" });
+    expect(
+      within(moved.closest("div.react-flow__node") as HTMLElement).getByText(
+        "From Jan 2, 2020",
+      ),
+    ).toBeDefined();
+  });
+
   it("shows each person's name, position, and the team they lead, and marks a manager who has left", async () => {
     await openChart();
     await screen.findByRole("link", { name: "Robin Fictional" });
@@ -2242,6 +2267,50 @@ describe("feature teams on the org chart", () => {
       ).toBeDefined();
       expect(urls(fetch)).toContain(`/api/org-chart?on=${onDay}`);
       expect(screen.queryByRole("button", { name: /^Draft/ })).toBeNull();
+    });
+
+    it("changes reporting lines from an earlier day for those who change people and Restricted details", async () => {
+      await openFeatureTeams({
+        path: `/org-chart?day=${onDay}`,
+        signedInAs: session([
+          "people:view",
+          "people:edit",
+          "org-chart:view",
+          "restricted:view",
+          "restricted:edit",
+        ]),
+        answers: chartOnDay,
+      });
+      expect(
+        await screen.findByText(
+          "Showing Mar 1, 2025. Changes take effect from this date.",
+        ),
+      ).toBeDefined();
+      expect(screen.getByRole("button", { name: /^Draft/ })).toBeDefined();
+      expect(screen.queryByRole("button", { name: "Teams" })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Rename Fictional team" }),
+      ).toBeNull();
+    });
+
+    it("draws reporting teams on a later day read only, even for those who change Restricted details", async () => {
+      const later = "2099-03-01";
+      await openFeatureTeams({
+        path: `/org-chart?day=${later}`,
+        signedInAs: session([
+          "people:view",
+          "people:edit",
+          "org-chart:view",
+          "restricted:view",
+          "restricted:edit",
+        ]),
+        answers: { [`GET /api/org-chart?on=${later}`]: chartAnswer },
+      });
+      expect(
+        await screen.findByText(
+          "Showing Mar 1, 2099. Nothing can be changed on this date.",
+        ),
+      ).toBeDefined();
     });
 
     it("offers no date on reporting teams to those who do not", async () => {

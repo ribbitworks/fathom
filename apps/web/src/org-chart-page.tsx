@@ -10,12 +10,13 @@
 // have none, even when a team is shown alone. The Draft menu, as on tables, draws drafts of
 // managers, positions and team names beside the live chart, applied to it, or not at all, which
 // leaves the chart read only; its choice is kept in the address. A date control draws the chart as
-// of another day, kept in the address too, where feature teams change from that day, for those who
-// may date changes then, and everything else is read only.
+// of another day, kept in the address too, where feature teams and reporting lines change from that
+// day, for those who may date changes then, and everything else is read only.
 
 import {
   type FeatureTeams,
-  mayDateTeamChange,
+  mayDateLineChange,
+  mayDateChange,
   type PaletteColour,
   type Show,
 } from "@fathom/shared";
@@ -386,6 +387,11 @@ function PersonCard({ data }: NodeProps<CardNode>) {
         )}
       </div>
       <PositionRow person={person} />
+      {person.movedFrom !== undefined && (
+        <Text size="xs" c="dimmed">
+          From {person.movedFrom}
+        </Text>
+      )}
       {planned !== undefined && (
         <StatusMark tone="planned">
           Planned, expected {formatMonth(planned.expected)}
@@ -867,6 +873,7 @@ export function OrgChartPage({
   seesPeople,
   showDates = false,
   canEdit = false,
+  changesDates = false,
   teamEdits,
   featureTeamEdits = noFeatureTeamEdits,
 }: {
@@ -875,6 +882,8 @@ export function OrgChartPage({
   seesPeople: boolean;
   // Whether the reader may change people, in a person's details.
   canEdit?: boolean;
+  // Whether the reader may change Restricted details, which dating a change earlier needs.
+  changesDates?: boolean;
   // Whether the reader sees Restricted details, such as dates, in a person's details.
   showDates?: boolean;
   teamEdits: TeamEdits;
@@ -883,15 +892,20 @@ export function OrgChartPage({
   const featureView = search.view === "feature-teams";
   const day = chartDay(search.day, featureView, showDates);
   // Those who do not see Restricted details see feature teams on another day, with people as they
-  // are today, since reporting lines on another day are Restricted. Feature teams change from the
-  // day shown for those who may date changes then; reporting lines and people's details change only
-  // today.
+  // are today, since reporting lines on another day are Restricted. Feature teams and reporting
+  // lines change from the day shown for those who may date changes then; people's other details
+  // change only today.
   const dated = day !== undefined;
+  const linesChangeOnDay =
+    day !== undefined &&
+    canEdit &&
+    mayDateLineChange(changesDates, day, today());
   const changesOnDay =
     day !== undefined &&
-    featureView &&
-    featureTeamEdits.propose &&
-    mayDateTeamChange(featureTeamEdits.dates, day, today());
+    (featureView
+      ? featureTeamEdits.propose &&
+        mayDateChange(featureTeamEdits.dates, day, today())
+      : linesChangeOnDay);
   const fixedDay = dated && !changesOnDay;
   const query = useQuery(orgChartQueryOn(showDates ? day : undefined));
   const narrow = useNarrow();
@@ -937,13 +951,15 @@ export function OrgChartPage({
   const [creating, setCreating] = useState(false);
   const everyone = useMemo(() => {
     if (query.data === undefined) return undefined;
-    if (!featureView) return treeOf(chartPeople(query.data, show));
+    if (!featureView) {
+      return treeOf(chartPeople(query.data, show, day ?? today()));
+    }
     return teamsQuery.data === undefined
       ? undefined
       : treeOf(
           featureTeamPeople(teamsQuery.data.teams, query.data.people, show),
         );
-  }, [query.data, show, featureView, teamsQuery.data]);
+  }, [query.data, show, featureView, teamsQuery.data, day]);
   const openTeam = (id: string | undefined) => {
     setCreating(false);
     go({ ...search, person: undefined, featureTeam: id }, false);
@@ -952,9 +968,10 @@ export function OrgChartPage({
   const openedTeam = teamsQuery.data?.teams.find(
     ({ id }) => id === search.featureTeam,
   );
-  // Live only is read only, as on tables, and managers' teams are not changed on the feature team
-  // chart.
-  const edits = show === "live" || featureView ? noTeamEdits : teamEdits;
+  // Live only is read only, as on tables, managers' teams are not changed on the feature team chart,
+  // and team names and colours, which take no date, change only today.
+  const edits =
+    show === "live" || featureView || dated ? noTeamEdits : teamEdits;
   const lead =
     everyone === undefined
       ? undefined
@@ -1103,8 +1120,9 @@ export function OrgChartPage({
                           onSearch({ ...search, open: employeeId }, true);
                         }}
                         notes={notes}
+                        changesFrom={linesChangeOnDay ? day : undefined}
                         onChange={
-                          canEdit && !readOnly && !dated
+                          canEdit && !readOnly && (!dated || linesChangeOnDay)
                             ? (person, change) => {
                                 save({
                                   ...personUpdate(

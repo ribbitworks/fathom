@@ -518,6 +518,7 @@ const orgChartRoute = createRoute({
         seesPeople={permissions.includes("people:view")}
         showDates={permissions.includes("restricted:view")}
         canEdit={permissions.includes("people:edit")}
+        changesDates={permissions.includes("restricted:edit")}
         teamEdits={teamEdits}
         featureTeamEdits={featureTeamEdits}
         search={orgChartRoute.useSearch()}

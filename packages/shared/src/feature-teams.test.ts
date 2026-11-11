@@ -13,7 +13,6 @@ import {
   featureTeamRequestSchema,
   memberTeamsChangeSchema,
   maxTeamsChanged,
-  mayDateTeamChange,
 } from "./feature-teams.ts";
 
 describe("the month a team disbands", () => {
@@ -191,15 +190,6 @@ describe("changing the teams someone is on", () => {
       memberTeamsChangeSchema.safeParse({ add: teams(maxTeamsChanged + 1) })
         .success,
     ).toBe(false);
-  });
-
-  it.each([
-    ["today", false, "2027-03-10", true],
-    ["a later day", false, "2027-04-01", true],
-    ["an earlier day, without changing dates", false, "2027-03-01", false],
-    ["an earlier day, changing dates", true, "2027-03-01", true],
-  ])("takes effect from %s", (_, changesDates, day, may) => {
-    expect(mayDateTeamChange(changesDates, day, "2027-03-10")).toBe(may);
   });
 
   it("takes the teams added and removed, and a day, or none of them", () => {

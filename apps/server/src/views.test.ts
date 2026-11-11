@@ -879,10 +879,10 @@ describe("built-in columns in saved views", () => {
     expect(response.statusCode).toBe(201);
   });
 
-  it("on Manager since are kept from readers who do not see Restricted details", async () => {
+  it("on Manager assigned are kept from readers who do not see Restricted details", async () => {
     const administrator = await test.signedIn("workforce-administrator");
     const { view } = (
-      await save(administrator.cookie, "Manager since", {
+      await save(administrator.cookie, "Manager assigned", {
         sort: ["managerFrom"],
       })
     ).json<Saved>();
@@ -892,7 +892,7 @@ describe("built-in columns in saved views", () => {
     ).toBe(false);
   });
 
-  it("on Manager since are refused to readers who do not see Restricted details", async () => {
+  it("on Manager assigned are refused to readers who do not see Restricted details", async () => {
     const viewer = await test.signedIn("resource-planner");
     expect(
       (await save(viewer.cookie, "Since", { sort: ["managerFrom"] })).json(),

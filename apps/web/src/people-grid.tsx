@@ -11,6 +11,7 @@
 // rows have the same ID, a person's end date cannot be before their start date, and an ID typed in
 // cannot look like a temporary one.
 
+import { dayNeeded } from "./day-input.tsx";
 import { FillHireButton, ShowDetailsButton } from "./show-details-button.tsx";
 import type { Choice, Field, List, Person, Show } from "@fathom/shared";
 import {
@@ -539,13 +540,13 @@ export function recordProblem(
   const from = values.managerFrom;
   const managed = Array.isArray(manager) && manager.length > 0;
   if (changed === "managerFrom" && managed && from === "") {
-    return { message: "Manager since needed", column: "managerFrom" };
+    return { message: dayNeeded, column: "managerFrom" };
   }
   // A line with no manager may move, but someone with no line has none to move.
   const noLine = changed === undefined || before?.managerFrom === "";
   if (noLine && !managed && typeof from === "string" && from !== "") {
     return {
-      message: "Choose a manager, or leave Manager since empty",
+      message: "Choose a manager, or leave Manager assigned empty",
       column: "managerFrom",
     };
   }

@@ -416,6 +416,20 @@ describe("a reporting line", () => {
     ).toBe(400);
   });
 
+  it("counts a draft that changes only the manager, keeping the line's date, when looking for loops", async () => {
+    const top = await person();
+    const first = await person();
+    const second = await person();
+    await reportsTo(first, top, "2024-01-01");
+    await reportsTo(second, top, "2024-01-01");
+    // The first is drafted to the second from the same day, so the draft holds no date of its own.
+    await changed(first, { managerId: second, managerFrom: "2024-01-01" });
+    expect(
+      (await change(second, { managerId: first, managerFrom: "2024-02-01" }))
+        .statusCode,
+    ).toBe(400);
+  });
+
   it("refuses a loop in the gap left when a line moves later", async () => {
     const manager = await person();
     const report = await person();

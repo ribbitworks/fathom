@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Managers and Teams on People
 
 ## Scope
 
-Verifies the People table's **Manager**, **Manager?**, **Manager since**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the mark on a manager who has left, filtering and sorting by **Manager?**, and what a Resource Planner sees.
+Verifies the People table's **Manager**, **Manager?**, **Manager assigned**, **Team** and **Team name** columns: who can be picked as a manager, checking and clearing **Manager?** as drafts, the rule that refuses clearing it, team names, the mark on a manager who has left, filtering and sorting by **Manager?**, and what a Resource Planner sees.
 
 ## Test Environment
 
@@ -73,7 +73,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Read the column headers from left to right.
-  - **Expected:** **Manager?** comes straight after **Manager**, followed by **Manager since**, **Team** and **Team name**.
+  - **Expected:** **Manager?** comes straight after **Manager**, followed by **Manager assigned**, **Team** and **Team name**.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**.
@@ -157,7 +157,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** As MGR-05.
 
 - [ ] **Step 1.** Search for **Samuel Richter**, whose **Manager** cell reads **Atmananda Ganaka** and **Team** cell **Payments team**. Select the row's **Manager** cell, press Enter, type **Max**, and choose **Max Munk**.
-  - **Expected:** The **Manager** cell reads **Max Munk** and the row's **Team** cell reads **Mobile team**, both yellow. The **Manager since** cell holds today's date. The row has a hollow yellow dot and **Draft**.
+  - **Expected:** The **Manager** cell reads **Max Munk** and the row's **Team** cell reads **Mobile team**, both yellow. The **Manager assigned** cell holds today's date. The row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **⋯** button at the end of the row, then **Discard draft**.
@@ -215,7 +215,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Read the column headers from left to right.
-  - **Expected:** **Manager**, **Manager?**, **Team** and **Team name** are shown. **Manager since**, **Start** and **End** are not.
+  - **Expected:** **Manager**, **Manager?**, **Team** and **Team name** are shown. **Manager assigned**, **Start** and **End** are not.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Click once in the row's **Manager?** cell.

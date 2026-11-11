@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Saving a change to one person or planned hire, as People's cells and the Person details panel both
-// do: shown at once, then saved as a draft.
+// do: shown at once, then saved as a draft, and dating a change of manager made from an earlier day.
 
 import type { Person } from "@fathom/shared";
 import { withCellChange } from "./added-columns.ts";
@@ -53,3 +53,15 @@ export const personUpdate = (
       : updatePerson(person.id, personOnly(change)),
   failure: `Fathom could not save the change to ${name}.`,
 });
+
+// A change of manager from an earlier day: from that day, or, back to the live manager, from the
+// live line's own date, so the drafted change is withdrawn rather than the line moved.
+export function datedChange(
+  change: RowChange,
+  live: Person,
+  day: string,
+): RowChange {
+  const managerFrom =
+    change.managerId === (live.manager?.id ?? null) ? live.managerFrom : day;
+  return typeof managerFrom === "string" ? { ...change, managerFrom } : change;
+}

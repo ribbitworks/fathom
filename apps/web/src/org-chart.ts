@@ -21,10 +21,11 @@ import {
   isFirstOfMonth,
 } from "@fathom/shared";
 import { dayQuery, sendJson } from "./api.ts";
+import { formatDay } from "./table-view.ts";
 import { today } from "./today.ts";
 
 // The chart as it is today, with drafts, or as approved on a chosen day, for readers who see
-// Restricted details.
+// Restricted details, with drafts laid over it where reporting lines change from that day.
 export const orgChartQueryOn = dayQuery(
   "org-chart",
   "/api/org-chart",
@@ -41,7 +42,7 @@ export const findFieldId = "org-chart-find";
 export const cardWidth = 240;
 export const cardHeight = 104;
 // A card whose position or team's name is drafted shows the live one, if any, under the drafted
-// one, on a line of its own.
+// one, on a line of its own, and one moved by a draft from another day says so on a line too.
 const liveLineHeight = 18;
 
 // A person as the chart draws them, for the Draft menu's choice: with drafts beside live, a person
@@ -54,6 +55,8 @@ export interface ChartPerson extends OrgChartPerson {
   liveCopyOf?: string;
   // The draft moving the person to the manager they are drawn under.
   moved?: OrgChartDraft;
+  // The day that move takes effect from, unless it is the day shown.
+  movedFrom?: string;
   // The person's live position, with the draft giving them another.
   repositioned?: { live: string; draft: OrgChartDraft };
   // The team's live name, with the draft naming it otherwise.
@@ -71,8 +74,12 @@ export interface ChartPerson extends OrgChartPerson {
 // The people as the Draft menu's choice draws them: the approved chart, with each person's draft,
 // which it draws nowhere else, aside; the chart as drafts make it, as the server applies them; or
 // the approved chart with drafts of managers, positions and team names beside, rejected ones
-// included, marked.
-export function chartPeople(chart: OrgChart, show: Show): ChartPerson[] {
+// included, marked, with the day each move takes effect from when it is not the day shown.
+export function chartPeople(
+  chart: OrgChart,
+  show: Show,
+  shownDay: string,
+): ChartPerson[] {
   if (show === "live") return [...chart.people];
   if (show === "drafts") {
     const live = new Map(chart.people.map((person) => [person.id, person]));
@@ -96,6 +103,8 @@ export function chartPeople(chart: OrgChart, show: Show): ChartPerson[] {
     if (draft.managerId === undefined) return [shown];
     shown.managerId = draft.managerId;
     shown.moved = draft;
+    const from = dayUnlessShown(draft.managerFrom, shownDay);
+    if (from !== undefined) shown.movedFrom = from;
     return [
       shown,
       {
@@ -110,6 +119,13 @@ export function chartPeople(chart: OrgChart, show: Show): ChartPerson[] {
   });
 }
 
+// The day a drafted change takes effect from, unless it is the day shown.
+export const dayUnlessShown = (
+  day: string | undefined,
+  shown: string,
+): string | undefined =>
+  day === undefined || day === shown ? undefined : formatDay(day);
+
 // A draft on the chart changes someone, so it is marked as a change.
 export const changeOf = (draft: OrgChartDraft) => ({
   action: "changed" as const,
@@ -118,7 +134,7 @@ export const changeOf = (draft: OrgChartDraft) => ({
 
 export const heightOf = (person: ChartPerson | undefined): number =>
   cardHeight +
-  [person?.repositioned?.live, person?.renamed?.live].filter(
+  [person?.repositioned?.live, person?.renamed?.live, person?.movedFrom].filter(
     (live) => typeof live === "string",
   ).length *
     liveLineHeight;

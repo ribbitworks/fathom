@@ -154,6 +154,38 @@ function withLine(
   ].sort((a, b) => a.fromDate.localeCompare(b.fromDate));
 }
 
+// The line a draft changing a person's line gives them: its manager, or the current one when it
+// moves only the date, from the date it gives, or the current line's when it changes only the
+// manager; none for someone with neither a line nor a date.
+export function draftedLine(
+  lines: readonly Line[],
+  fields: Recorded,
+  today: string,
+): Line | undefined {
+  const current = currentRecordOn(lines, today);
+  const fromDate = text(fields.managerFrom) ?? current?.fromDate ?? null;
+  if (fromDate === null) return undefined;
+  return {
+    fromDate,
+    managerId:
+      "managerId" in fields
+        ? text(fields.managerId)
+        : (current?.managerId ?? null),
+  };
+}
+
+// A person's lines, earliest first, with the line a draft changing them gives in place.
+export function draftedLines(
+  lines: readonly Line[],
+  fields: Recorded,
+  today: string,
+): Line[] {
+  const line = draftedLine(lines, fields, today);
+  return line === undefined
+    ? [...lines]
+    : withLine(lines, line.managerId, line.fromDate, today);
+}
+
 // Who a person reports to, and their team, as a reader sees them: the live manager for those who
 // see only General details, since a draft's manager is Restricted until approved, and, for those who
 // see Restricted details, since when, and whether the manager has left. Managers are found among
@@ -307,10 +339,13 @@ export async function refuseUnmarkingManagers(
   }
 }
 
+// Whether a draft's fields change a line: its manager, or the date it runs from.
+export const changesLineFields = (fields: Recorded) =>
+  Object.keys(fields).some((field) => lineFields.has(field));
+
 // Whether a draft changes a person's line.
 export const changesLine = (draft: Draft) =>
-  draft.action === "created" ||
-  Object.keys(draft.fields).some((field) => lineFields.has(field));
+  draft.action === "created" || changesLineFields(draft.fields);
 
 // What the rules need of a person who may be named as a manager.
 export interface Manager {
@@ -459,16 +494,12 @@ async function linesSeen(
     undefined,
     editor,
   )) {
-    const from = text(draft.fields.managerFrom);
     if (draft.action === "deleted") all.delete(personId);
-    else if (from !== null) {
-      const own = all.get(personId) ?? [];
-      // A draft that moves only a line's date moves a line the person has.
-      const managerId =
-        "managerId" in draft.fields
-          ? text(draft.fields.managerId)
-          : (currentRecordOn(own, today) as Line).managerId;
-      all.set(personId, withLine(own, managerId, from, today));
+    else if (changesLine(draft)) {
+      all.set(
+        personId,
+        draftedLines(all.get(personId) ?? [], draft.fields, today),
+      );
     }
   }
   return all;

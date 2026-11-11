@@ -190,14 +190,6 @@ const teamIds = z
   .max(maxTeamsChanged)
   .refine((ids) => new Set(ids).size === ids.length, "Each team once");
 
-// Whether a team change may take effect from a day: a day before today needs the right to change
-// Restricted details.
-export const mayDateTeamChange = (
-  changesDates: boolean,
-  day: string,
-  today: string,
-): boolean => changesDates || day >= today;
-
 // Changes the teams someone is on from a day, as a cell of the monthly grid does: they join the
 // teams added and leave those removed, each change drafted on its team, from the day given, as for
 // featureTeamChangeSchema, or from today.

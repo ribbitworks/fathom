@@ -11,7 +11,7 @@ import {
   addToMonth,
   byName,
   dayReadingMonth,
-  mayDateTeamChange,
+  mayDateChange,
   type MemberTeamsChange,
   type MonthRange,
   monthOf,
@@ -152,7 +152,7 @@ export interface TeamMonthEdits {
 const editableMonth = (
   month: string,
   { today, changesDates }: TeamMonthEdits,
-) => mayDateTeamChange(changesDates, dayReadingMonth(month, today), today);
+) => mayDateChange(changesDates, dayReadingMonth(month, today), today);
 
 // The table of the monthly grid: a row's name, frozen on the left, then a column for each month,
 // whose cells show what the content gives, shaded outside someone's employment.

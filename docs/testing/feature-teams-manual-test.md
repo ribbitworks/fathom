@@ -248,11 +248,11 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 6.** Select **Reporting teams** in the teams switch.
-  - **Expected:** The date stays. The chart shows managers and their reports as of that date, and the text below the row ends **Nothing can be changed on this date.** The **Draft** menu is gone.
+  - **Expected:** The date stays. The chart shows managers and their reports as of that date, and the text below the row still ends **Changes take effect from this date.**
   - **Notes:**
 
 - [ ] **Step 7.** Select **Today**.
-  - **Expected:** The text below the row goes, **Today** is greyed out, the **Date** box shows today's date, and the **Draft** menu is back.
+  - **Expected:** The text below the row goes, **Today** is greyed out, and the **Date** box shows today's date.
   - **Notes:**
 
 - [ ] **Step 8.** Switch Fathom between light and dark mode.

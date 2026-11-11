@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/org-chart*", "apps/server/src/data/org-chart.ts", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-07"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Org Chart
 
 ## Scope
 
-Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, showing a person's details beside the chart from a card, the mark on a manager who has left, and drafts of managers, positions and team names drawn beside the chart, applied to it, or left out with the Draft menu.
+Verifies the **Org chart** page: the levels it opens on, each person's card, showing reports, finding a person or team, one team shown alone, teams' colours and choosing them, naming teams, panning and zooming, showing a person's details beside the chart from a card, the mark on a manager who has left, drafts of managers, positions and team names drawn beside the chart, applied to it, or left out with the Draft menu, and changing a manager from an earlier date.
 
 ## Test Environment
 
@@ -63,6 +63,8 @@ Use after R0, before the first test case, and wherever a test case says so. Fath
 - **Mark:** a coloured dot followed by a word, such as a red dot and **Left**, shown beside a person's name.
 - **Draft menu:** the menu opened by the **Draft** button just right of the finder.
 - **Publish button:** the button in the top bar, beside your name, that reads **Publish** followed by a number of changes.
+- **Date row:** the row between the page's heading and the chart, holding a **Date** box, a left arrow, a timeline, a right arrow and **Today**.
+- **Change button:** a small pencil at the right of a value in the details panel, shown to accounts that may change people.
 
 ## Test Cases
 
@@ -395,3 +397,31 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 - [ ] **Step 4.** Select **Show everyone**, then choose **Dark** in the Appearance menu.
   - **Expected:** The dashed edges and the hollow dots are easy to see on the dark cards.
   - **Notes:**
+
+### ORG-17: A Manager Is Changed From an Earlier Date
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ORG-16.
+
+**Preconditions:** R1 has been run. Signed in with this account. **Org chart** page open from the left-hand menu, showing today.
+
+- [ ] **Step 1.** Select **Reporting teams** in the switch at the top right, then **Show levels**, then **All levels**. In the date row, select the left arrow once.
+  - **Expected:** The chart shows managers and their reports. The **Date** box shows the first day of last month. Below the row, text reads **Showing** with that date, then **Changes take effect from this date.** **Draft** stays just right of the finder, and **Teams** is gone.
+  - **Notes:**
+
+- [ ] **Step 2.** In the finder, type `Candice`, select **Candice Swift**, then select the name on her card.
+  - **Expected:** Her details slide out in a panel on the right. **Manager** reads **Lorenza Thiel** with a change button. **Manager assigned**, **Reporting team name**, and every value under **Details** and **Columns** have no change button, and **Manager?** reads **No** with no checkbox.
+  - **Notes:**
+
+- [ ] **Step 3.** Select the change button beside **Manager**, and choose **Max Munk**.
+  - **Expected:** A notice offers **Undo**. In the panel, **Manager** reads **Max Munk**, followed by a yellow dot and **Draft**, and **Manager assigned** reads the first day of last month, such as **Oct 1, 2026**. On the chart, the card for **Candice Swift** is under **Max Munk**, tinted blue, with a yellow dot and **Draft** after the name and no date, and a light green copy marked **Live** is under **Lorenza Thiel**.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Today** in the date row.
+  - **Expected:** The text below the row goes, and **Teams** is back. On the card for **Candice Swift** under **Max Munk**, her full name is followed by a yellow dot and **Draft**, and under **SDET** a grey line reads **From** and the first day of last month, such as **From Oct 1, 2026**. Nothing on the card is cut off.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the left arrow twice.
+  - **Expected:** The text below the row ends **Changes take effect from this date.** The card for **Candice Swift** is under **Lorenza Thiel**, untinted and with no mark, and there is no card for her under **Max Munk**.
+  - **Notes:**
+
+**Afterwards:** R1.

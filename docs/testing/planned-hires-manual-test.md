@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-08"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Planned Hires on People
@@ -85,7 +85,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** **SDET, REQ-2042** and **Software Engineer, REQ-2047**, in grey italics. The hire rows **Backend engineer 1**, **Backend engineer 2** and **Payments tester** show their names in the usual colour.
   - **Notes:**
 
-- [ ] **Step 4.** Read a hire row's **End**, **Manager?**, **Manager since** and **Team name** cells, and the **Expected** cell of a person.
+- [ ] **Step 4.** Read a hire row's **End**, **Manager?**, **Manager assigned** and **Team name** cells, and the **Expected** cell of a person.
   - **Expected:** All are blank. The hire row's **Expected** cell holds a month and year, such as **Jan 2027**.
   - **Notes:**
 
@@ -414,12 +414,12 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Expected:** Each entry shows a name, an ID in brackets, and a position, in name order. No planned hires are listed. The list scrolls within itself, and the panel stays the same width as the list opens and closes.
   - **Notes:**
 
-- [ ] **Step 3.** Without typing, select the first person in the list. If no **Manager since** row then shows, select the pencil and choose the next person in the list.
-  - **Expected:** The **Person** row shows who you chose. **Position** still reads the planned hire's position, and **Manager** the name in the row's **Manager** cell in the table. **Manager since** holds today's date.
+- [ ] **Step 3.** Without typing, select the first person in the list. If no **Manager assigned** row then shows, select the pencil and choose the next person in the list.
+  - **Expected:** The **Person** row shows who you chose. **Position** still reads the planned hire's position, and **Manager** the name in the row's **Manager** cell in the table. **Manager assigned** holds today's date.
   - **Notes:**
 
 - [ ] **Step 4.** Select the pencil beside **Manager**, and choose a different name from the one shown.
-  - **Expected:** The **Manager** row shows the name you chose, and **Manager since** still holds today's date.
+  - **Expected:** The **Manager** row shows the name you chose, and **Manager assigned** still holds today's date.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Fill** at the foot of the panel.

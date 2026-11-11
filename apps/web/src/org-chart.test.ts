@@ -20,6 +20,9 @@ import {
   teamOf,
   treeOf,
 } from "./org-chart.ts";
+import { formatDay } from "./table-view.ts";
+
+const shownDay = "2026-11-10";
 
 const person = (
   id: string,
@@ -255,7 +258,7 @@ describe("the people the Draft menu draws", () => {
   };
 
   it("draws a moved person under their new manager, with a Live copy under their current one", () => {
-    const tree = treeOf(chartPeople(chart, "both"));
+    const tree = treeOf(chartPeople(chart, "both", shownDay));
     expect(tree.reports.get("m2")).toEqual(["r1"]);
     expect(tree.reports.get("m1")).toEqual(["r1 live"]);
     expect(tree.people.get("r1")?.moved).toEqual({ ...draft, managerId: "m2" });
@@ -265,42 +268,75 @@ describe("the people the Draft menu draws", () => {
     });
   });
 
+  it("says on a taller card when a move takes effect, only when it is not the day shown", () => {
+    const moved = (managerFrom: string) =>
+      chartPeople(
+        {
+          ...chart,
+          people: [
+            person("m1", null, "Blake"),
+            person("m2", null, "Avery"),
+            {
+              ...person("r1", "m1", "Drew"),
+              draft: { ...draft, managerId: "m2", managerFrom },
+            },
+          ],
+        },
+        "both",
+        shownDay,
+      ).find(({ id }) => id === "r1");
+    const earlier = moved("2026-10-01");
+    expect(earlier?.movedFrom).toBe(formatDay("2026-10-01"));
+    expect(heightOf(earlier)).toBeGreaterThan(cardHeight);
+    const onTheDay = moved(shownDay);
+    expect(onTheDay?.movedFrom).toBeUndefined();
+    expect(heightOf(onTheDay)).toBe(cardHeight);
+  });
+
   it("draws a drafted team name, with the live one, on a taller card", () => {
-    const shown = chartPeople(chart, "both").find(({ id }) => id === "m3");
+    const shown = chartPeople(chart, "both", shownDay).find(
+      ({ id }) => id === "m3",
+    );
     expect(shown?.teamName).toBe("Fictional crew");
     expect(shown?.renamed?.live).toBe("Fictional team");
     expect(heightOf(shown)).toBeGreaterThan(cardHeight);
   });
 
   it("draws a drafted position, with the live one, on a taller card", () => {
-    const shown = chartPeople(chart, "both").find(({ id }) => id === "r2");
+    const shown = chartPeople(chart, "both", shownDay).find(
+      ({ id }) => id === "r2",
+    );
     expect(shown?.position).toBe("Fictional Lead");
     expect(shown?.repositioned?.live).toBe("Fictional Engineer");
     expect(shown?.renamed).toBeUndefined();
     expect(heightOf(shown)).toBe(
-      heightOf(chartPeople(chart, "both").find(({ id }) => id === "m3")),
+      heightOf(
+        chartPeople(chart, "both", shownDay).find(({ id }) => id === "m3"),
+      ),
     );
   });
 
   it("draws no drafted position beside a position not shown", () => {
-    const shown = chartPeople(chart, "both").find(({ id }) => id === "r3");
+    const shown = chartPeople(chart, "both", shownDay).find(
+      ({ id }) => id === "r3",
+    );
     expect(shown?.position).toBeNull();
     expect(shown?.repositioned).toBeUndefined();
     expect(heightOf(shown)).toBe(cardHeight);
   });
 
   it("makes a card taller still for both a drafted position and a drafted team name", () => {
-    const shown = chartPeople(chart, "both");
+    const shown = chartPeople(chart, "both", shownDay);
     const height = (id: string) => heightOf(shown.find((one) => one.id === id));
     expect(height("m4") - height("r2")).toBe(height("r2") - cardHeight);
   });
 
   it("draws the chart as drafts make it, and the live chart alone", () => {
-    expect(chartPeople(chart, "drafts").map(({ id }) => id)).toEqual([
+    expect(chartPeople(chart, "drafts", shownDay).map(({ id }) => id)).toEqual([
       "head",
       "new",
     ]);
-    const live = chartPeople(chart, "live");
+    const live = chartPeople(chart, "live", shownDay);
     expect(live.find(({ id }) => id === "r1")?.managerId).toBe("m1");
     expect(live.some(({ id }) => id === "r1 live")).toBe(false);
   });

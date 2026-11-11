@@ -161,7 +161,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 4.** Let go of the mouse button.
-  - **Expected:** The details panel slides out on the right, headed **Lorenza Thiel**, with the link **Show on org chart** under her position, and the table narrows to make room. **Details** shows no **Start** or **End**, and **Reporting** shows no **Manager since**.
+  - **Expected:** The details panel slides out on the right, headed **Lorenza Thiel**, with the link **Show on org chart** under her position, and the table narrows to make room. **Details** shows no **Start** or **End**, and **Reporting** shows no **Manager assigned**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Show on org chart**.
@@ -347,7 +347,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
 **Preconditions:** **People** page open from the left-hand menu. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Select **New** at the top right of the page.
-  - **Expected:** The details panel opens, headed **New person**. Its first row is **State**, reading **Hired**, with a change button. **Name**, **ID**, **Start**, **End**, **Manager since** and **Team name** are empty boxes to type in, **Manager?** is an empty checkbox, and the other values have change buttons. **Cancel** and **Add** are at the foot of the panel.
+  - **Expected:** The details panel opens, headed **New person**. Its first row is **State**, reading **Hired**, with a change button. **Name**, **ID**, **Start**, **End**, **Manager assigned** and **Team name** are empty boxes to type in, **Manager?** is an empty checkbox, and the other values have change buttons. **Cancel** and **Add** are at the foot of the panel.
   - **Notes:**
 
 - [ ] **Step 2.** Type **Fictional Newcomer** in **Name**, press Tab, type **E10007** in **ID**, and press Tab.
@@ -379,7 +379,7 @@ Run the test cases in order. Start with R0, then R1. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 3.** Choose **Request to hire**.
-  - **Expected:** The heading reads **New planned hire**. Under **State**, a grey line reads **End was cleared, since a planned hire doesn't have it.** **Name** still holds **Fictional Opening**, and there is no **End**, **Manager since** or **Team name**.
+  - **Expected:** The heading reads **New planned hire**. Under **State**, a grey line reads **End was cleared, since a planned hire doesn't have it.** **Name** still holds **Fictional Opening**, and there is no **End**, **Manager assigned** or **Team name**.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **×** in the **Name** box, choose **SDET** in **Position** from its change button, then type **REQ-4100** in **ID** and press Tab.

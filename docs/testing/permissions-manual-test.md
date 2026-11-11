@@ -167,7 +167,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Read the column headers, and the top right of the page.
-  - **Expected:** **Start**, **End** and **Manager since** are not shown. There is no **New** and no **New column** button.
+  - **Expected:** **Start**, **End** and **Manager assigned** are not shown. There is no **New** and no **New column** button.
   - **Notes:**
 
 - [ ] **Step 3.** Search for **Viktoria Holmberg**.
@@ -183,7 +183,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 **Preconditions:** Team Member granted only **Edit** on **People** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** **New** is at the top right, and there is no **New column** button. **Start**, **End** and **Manager since** are not shown.
+  - **Expected:** **New** is at the top right, and there is no **New column** button. **Start**, **End** and **Manager assigned** are not shown.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Team name** cell, press Enter, replace the text with `Mobile apps team`, and press Enter.
@@ -225,7 +225,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 **Preconditions:** Team Member granted only **View** on **People** and **View** on **Restricted details** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** **Start**, **End** and **Manager since** are shown. There is no **New** button.
+  - **Expected:** **Start**, **End** and **Manager assigned** are shown. There is no **New** button.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Viktoria Holmberg**.
@@ -241,7 +241,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 **Preconditions:** Team Member granted only **Edit** on **People** and **Edit** on **Restricted details** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** **Start**, **End** and **Manager since** are shown. **New** is at the top right, and there is no **New column** button.
+  - **Expected:** **Start**, **End** and **Manager assigned** are shown. **New** is at the top right, and there is no **New column** button.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Start** cell, press Enter, type `2010-01-04`, and press Enter.
@@ -263,7 +263,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 **Preconditions:** R2, then R3, then Team Member granted only **View** on **People** and **View** on **Confidential data** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** An **Offer letter** column is shown. **Start**, **End** and **Manager since** are not shown. There is no **New** button.
+  - **Expected:** An **Offer letter** column is shown. **Start**, **End** and **Manager assigned** are not shown. There is no **New** button.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **State** header, then **Filter…**. Tick **Request to hire** and **Approved to hire**, and press Esc.
@@ -279,7 +279,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
 **Preconditions:** R3 done since the last reset, as for PERM-09, then Team Member granted only **Edit** on **People** and **Edit** on **Confidential data** (P2), signed in with this account.
 
 - [ ] **Step 1.** Look at the column headers and the top right of the page.
-  - **Expected:** An **Offer letter** column is shown, and **New** is at the top right. **Start**, **End** and **Manager since** are not shown.
+  - **Expected:** An **Offer letter** column is shown, and **New** is at the top right. **Start**, **End** and **Manager assigned** are not shown.
   - **Notes:**
 
 - [ ] **Step 2.** Search for **Max Munk**. Select the row's **Offer letter** cell, press Enter, type `https://example.test/offer` in **Address**, and press Enter.
@@ -305,7 +305,7 @@ Run the test cases in order. Start with R0, then R2. Check each step whose expec
   - **Notes:**
 
 - [ ] **Step 2.** Read the column headers, then the **Start** cell of **REQ-2050**.
-  - **Expected:** **Start** is shown, and **End** and **Manager since** are not. The **Start** cell of **REQ-2050** shows a date.
+  - **Expected:** **Start** is shown, and **End** and **Manager assigned** are not. The **Start** cell of **REQ-2050** shows a date.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Clear all** above the table, and search for **Max Munk**.

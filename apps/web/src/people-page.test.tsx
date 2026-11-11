@@ -4333,11 +4333,11 @@ describe("adding from New", () => {
     });
     await typeInto("End", "2027-01-31");
     await choose("Manager", "Avery Fictional");
-    await typeInto("Manager since", "2026-12-01");
+    await typeInto("Manager assigned", "2026-12-01");
     await choose("State", "Request to hire");
     expect(
       await screen.findByText(
-        "End and Manager since were cleared, since a planned hire doesn't have them.",
+        "End and Manager assigned were cleared, since a planned hire doesn't have them.",
       ),
     ).toBeDefined();
   });
