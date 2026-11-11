@@ -49,6 +49,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 - **Team composition:** Reports per manager compared with a target, without filters.
 - **Hiring plan:** Planned hires and ramp-up, without the role-controlled hiring workflow.
 - **Planned managers:** Added by the owner on 2026-11-07. A planned hire can be marked as a manager in People's Manager? column, as a person is, so other planned hires can report to it, and the org chart shows it heading its planned team. People keep reporting to people until planned reporting changes come in The Organization stage. Filling a planned manager moves the hires that report to it to the person who fills it. It follows the Left state.
+- **People on a date:** Added by the owner on 2026-11-11. People read as of a chosen date, as the org chart is, with the planned hires not yet filled beside today's people, as [People over time](decisions.md#workforce) sets out. Built after the current changes that reach across many pages.
 - **Demand forecasting:** One estimate per feature.
 - **Roles:** A fixed set of roles, with access tiers and access history for start and end dates, and the hiring plan. Project Managers see feature teams on the org chart, approve them, and may give other input, still to be confirmed in the [Product Brief](brief.md)'s open questions.
 
@@ -67,6 +68,7 @@ Covers the owner's immediate needs. Each goal starts in its simplest useful form
 ## Stage: The Organization
 
 - **Org structure:** Planned reporting changes.
+- **Dated columns:** Added by the owner on 2026-11-11, beside planned reporting changes, as [People over time](decisions.md#workforce) sets out: first, drafts that hold several dated changes for each person; then dated values, with Position first and each person's history in their details; then the "Changes over time" setting on added columns, with reporting lines moved onto the same store.
 - **Own record and reports:** Users see their own record and their reports' records through a link to their person record, as proposed in [Roles](roles.md).
 - **Unified people view**
 - **Team composition:** The remaining measures, such as test-to-development ratios.
@@ -91,6 +93,7 @@ Goals the owner has added that are not yet placed in a stage:
 - **Importing people:** Added by the owner. Adding and updating people from a CSV or TSV file. Moved out of the first stage and v1 by the owner on 2026-11-07, for v1.1, so the remaining v1 work goes to its core: filling planned hires, feature teams, and team composition.
 - **Publishing chosen drafts:** On the Drafts page, a user ticks some of their own unpublished drafts and publishes them for approval, or discards them, leaving the rest unpublished. Today Publish and Discard all act on every unpublished draft at once. Asked for by the owner on 2026-11-05.
 - **Building up an estimate:** A spreadsheet-like worksheet for a feature, where its estimate is built up from rows of work, each with its own effort, whose total becomes the feature's estimate. A v2 feature, added by the owner on 2026-11-09.
+- **Private tables:** A user creates pages of their own that are tables, private to them for now. Their columns link to records anywhere in Fathom, or are read-only lookups showing a linked record's values, only those the user may see. Values save at once, with Undo and no drafts. A v2 feature, added by the owner on 2026-11-11.
 - **Automated UI tests:** The manual tests' journeys run in a real browser with Playwright, as [ADR 0002](../adr/0002-libraries.md) chose, against a database of their own, starting with the happy path of Releases, so the manual tests keep only what a person must judge, such as how a screen looks and whether it is clear. A low priority, added by the owner on 2026-11-04.
 
 These five stages make up v1. Broader configuration for other domains, and the future possibilities listed in the brief, come after v1.
