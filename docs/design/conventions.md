@@ -31,7 +31,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **A move:** A moved item is marked Draft: moved, with a dimmed copy in its old place marked Live.
   - **Drawn by:** the list's panel in `apps/web/src/list-panel.tsx`.
   - **Example:** on the Lists page, move a choice of Sites to another place.
-- **Retiring:** A list, choice or stream drafted to be retired or restored stays where it is until approved, marked Draft: retired or Draft: restored. Retired records show only when asked for.
+- **Retiring:** A list, choice or stream drafted to be retired or restored stays where it is until approved, marked Draft: retired or Draft: restored. Retired records show only when asked for. Drafting a retirement or a restore is a change seen in place, so it shows no notification, and Cmd+Z or Ctrl+Z undoes it. Decided by the owner on 2026-11-11.
   - **Drawn by:** `DraftMark`, with `retiring` set on the draft.
   - **Example:** on the Releases page, select Patches, then Retire.
 - **A draft from another day:** Where a draft takes effect from a day other than the one shown, its mark says so in the same words everywhere, such as Draft, from Dec 1, 2026. Where there's little room, such as on an org chart card, the words may sit on a line of their own. The org chart card still reads From Oct 1, 2026, as [Issues](../issues.md#people) records. Decided by the owner on 2026-11-11.
@@ -46,16 +46,16 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **Read-only values:** A value that follows from another is read only, shows no pencil, and ignores what is pasted into it. Those who may not change a record see its values with no pencils and no empty row.
   - **Drawn by:** a column's `readOnly` in `apps/web/src/record-grid.tsx`, and `Row` without `editing` in `apps/web/src/record-details.tsx`.
   - **Example:** Release on Features, which follows from Target cycle.
-- **Empty values:** An empty cell is blank. In a details panel, an empty value reads None, dimmed, or the column's own word for empty.
+- **Empty values:** An empty cell is blank. In a details panel, an empty value reads None, dimmed, or the column's own word for empty, and so does an empty list in a panel, such as a project with no milestones. Decided by the owner on 2026-11-11.
   - **Drawn by:** `Row` in `apps/web/src/record-details.tsx`, with the column's `emptyLabel`.
   - **Example:** Voice Notes' Target cycle reads Later in its details.
 - **Values Fathom fills in:** An empty cell Fathom fills in from other values shows that text in grey italics, and editing it starts empty.
   - **Drawn by:** `apps/web/src/record-grid.tsx`, with the org chart and the Teams panel drawing their own; no shared piece yet.
   - **Example:** a seeded planned hire with no name, named by its position and ID on People.
-- **Warnings on a value:** A warning about a value is marked after a red dot in its cell, in words, and read aloud with why.
+- **Warnings on a value:** A warning about a value is marked after a red dot in its cell, in words, and read aloud with why. A status a value is in, such as Over and Under on Feature assignments, isn't a warning: it shows in words, with its figures in a tooltip, and no red dot, which marks a rejected draft. Decided by the owner on 2026-11-11.
   - **Drawn by:** `StatusMark` with the `warning` tone.
   - **Example:** No team, in Scheduler API's Feature team cell.
-- **Values in units:** An amount shows its unit's code in a table, such as 2.5 PD, and spells the unit out in a panel, such as 2.5 person-days (20 hours).
+- **Values in units:** An amount shows its unit's code in a table, such as 2.5 PD, and spells the unit out in a panel, such as 2.5 person-days (20 hours). Totals of one unit, such as Feature assignments' capacity totals, name it once, in their heading. Decided by the owner on 2026-11-11.
   - **Drawn by:** `EffortCell` in `apps/web/src/effort-cell.tsx`, and `inUnitsWords` in `apps/web/src/record-details.tsx`.
   - **Example:** Audit Export's Effort.
 
@@ -76,10 +76,10 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Links to Records
 
-- **A record with an ID:** Wherever a project or proposal is named, in a cell, a link, a picker or a filter, its ID comes first, dimmed in cells and links, then its name, so records with similar names are told apart.
+- **A record with an ID:** Wherever a project or proposal is named, in a cell, a link, a picker or a filter, its ID comes first, dimmed in cells and links, then its name, so records with similar names are told apart. The title of its details panel does the same; notifications name it alone. Decided by the owner on 2026-11-11.
   - **Drawn by:** `RecordName` in `apps/web/src/project-grids.tsx`.
   - **Example:** P-2001 Crane Control.
-- **Following a link:** A record named in a details panel is a link that opens that record's details, on its own page or tab, and the browser's back button goes back. A link from one page to a record on another, such as Show in People on the Org chart, opens that page with the record's details open, not only a search for it. Decided by the owner on 2026-11-11.
+- **Following a link:** A record named in a details panel is a link that opens that record's details, on its own page or tab, and the browser's back button goes back. A link from one page to a record on another, such as Show in People on the Org chart, opens that page with the record's details open, not only a search for it. A project or proposal named in a feature's details on Features opens on Projects in the same way, and Back returns to Features as it was. Decided by the owner on 2026-11-11.
   - **Drawn by:** `RecordLink` in `apps/web/src/record-details.tsx`.
   - **Example:** a customer in Offline Sync's details opens Projects' Customers tab with that customer's details.
 - **Several records in a cell:** A cell naming several records lists them in one line, cut short where they don't fit, with every name in its tooltip, one to a line; a details panel lists them one to a line.
@@ -106,7 +106,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 - **Columns follow the panel's order:** A table's default column order follows its details panel's sections and rows, and the other way round, defined once and used by both.
   - **Drawn by:** `featureColumnGroups` in `apps/web/src/project-grids.tsx`.
   - **Example:** Features, whose columns start Name, Status, Description, Notes, as its details' Details section does.
-- **Actions on a list in a panel:** Actions on a list inside a details panel sit under the list, at its left, as outlined buttons without an icon, the main one first, so they sit where the next item would go and the list's heading stays a plain heading, as every other section's does. Decided by the owner on 2026-11-11.
+- **Actions on a list in a panel:** Actions on a list inside a details panel sit under the list, at its left, as outlined buttons without an icon, the main one first, so they sit where the next item would go and the list's heading stays a plain heading, as every other section's does. A picker that adds to the list, such as a feature team's Add member, is such an action: an outlined button under the list that opens the picker. Decided by the owner on 2026-11-11.
   - **Drawn by:** no shared piece yet.
   - **Example:** today a project's details have Show milestones beside the Milestones heading, with no outline, and Add milestone under the list with a + before it; both move under the list, Add milestone first.
 
@@ -142,13 +142,13 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Words
 
-- **The principles:** Every word on screen follows Visual Design's [Principles](visual-design.md#principles): words people say, never the second person, and no instructional text. The rule against instructions is for text always on screen: a refusal may say what to do next, such as Choose a manager, or leave Manager assigned empty. Decided by the owner on 2026-11-11. On top of those, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off".
+- **The principles:** Every word on screen follows Visual Design's [Principles](visual-design.md#principles): words people say, never the second person, and no instructional text. The rule against instructions is for text always on screen: a refusal may say what to do next, such as Choose a manager, or leave Manager assigned empty. On top of those, use the plain verb: added, removed, changed, retired, restored, never "comes off" or "taking off". A naming pattern reads in words, such as named by year and number, like 27.1, never as the pattern typed, such as {YY}.{N}. Decided by the owner on 2026-11-11.
   - **Drawn by:** the words themselves, with `draftWords` and `DraftedWords` in `apps/web/src/status-mark.tsx` for drafts.
   - **Example:** Draft: removed.
 
 ## Entering Data
 
-- **From the keyboard:** Wherever items are added or changed, everything works from the keyboard. Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items. Leaving an item by clicking or tabbing elsewhere saves it too, and pasting several lines adds one item for each.
+- **From the keyboard:** Wherever items are added or changed, everything works from the keyboard. Tab moves between fields, Enter saves and starts the next item, Esc cancels, and arrow keys move between items. Leaving an item by clicking or tabbing elsewhere saves it too, and pasting several lines adds one item for each. A record's parts, such as a project's milestones, are added from the record's details, or from their own table's New form, which asks which record they belong to. Decided by the owner on 2026-11-11.
   - **Drawn by:** `RecordGrid` in `apps/web/src/record-grid.tsx` for tables, and `apps/web/src/list-panel.tsx` for a list's choices.
   - **Example:** on the Lists page, select Sites and type a new choice in its empty row.
 - **Like a spreadsheet:** Tables where many records are entered work like a spreadsheet. Arrow keys, Home, End and Tab move between cells, and Ctrl+Home and Ctrl+End go to the first and last. Enter, F2 or typing edits a cell; Enter saves and moves down, Tab saves and moves across, Esc cancels, and Delete clears. Pasting rows copied from a spreadsheet into an empty row adds one record for each.
@@ -163,9 +163,9 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Saving and Undo
 
-- **Saved at once:** Changes save at once, without asking. The latest can be undone with Cmd+Z or Ctrl+Z, except in a field with something typed in it, the note editor included, where the keys undo the typing alone. Changes seen in place show no notification. A change that takes something out of view, such as retiring or removing it, shows a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made. Sharing a view, or taking it back, shows one too, since nothing changes in view and it affects others. Decided by the owner on 2026-11-11.
+- **Saved at once:** Changes save at once, without asking. The latest can be undone with Cmd+Z or Ctrl+Z, except in a field with something typed in it, the note editor included, where the keys undo the typing alone. Undo covers every kind of record, the plan's included, checked by the same rules approving uses. Changes seen in place show no notification. A change that takes something out of view, such as discarding the draft of a record only drafted to be added, or deleting a saved view, shows a notification at the top right offering Undo, which closes after a few seconds or when a newer change is made. Sharing a view, or taking it back, shows one too, since nothing changes in view and it affects others. So does a change that takes a part of a record out of view, such as a team label a draft removes while Drafts applied is shown. The plan's records, sharing a view and parts leaving view decided by the owner on 2026-11-11.
   - **Drawn by:** `useSaving` and `isUndo` in `apps/web/src/saving.ts`, and `notifyUndoable` in `apps/web/src/notices.tsx`.
-  - **Example:** on the Lists page, retire a choice of Sites.
+  - **Example:** on People, save a view, then delete it.
 - **Asking first:** Only approving and rejecting drafts ask first, since they can't be undone.
   - **Drawn by:** `DecisionModal` in `apps/web/src/decision-dialog.tsx`.
   - **Example:** Approve… in a seeded person's draft menu on People.
@@ -175,13 +175,13 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Leaving Unsaved Work
 
-- **Asking before discarding:** Leaving a form or a note with anything changed in it, by Cancel, the close button, another tab or another record, asks first, such as Discard the new customer? with Keep adding and Discard, or Discard changes to the note? with Keep writing and Discard. The question always starts with Discard and names what is lost, such as Discard the fill of TBD-3? Decided by the owner on 2026-11-11. A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
+- **Asking before discarding:** Leaving a form or a note with anything changed in it, by Cancel, the close button, another tab or another record, asks first, such as Discard the new customer? with Keep adding and Discard, or Discard changes to the note? with Keep writing and Discard. The question always starts with Discard and names what is lost, such as Discard the fill of TBD-3? A dialog with anything typed in it is a form here. Decided by the owner on 2026-11-11. A form can't be left while its record is being added, and a dialog can't be closed while a change is being saved.
   - **Drawn by:** `useDiscardQuestion` and `newRecordQuestion` in `apps/web/src/discard-question.tsx`.
   - **Example:** on Projects' Customers tab, select New customer, type a name, then Cancel.
 
 ## Refusals
 
-- **A value refused:** A value refused when saved, by the page or by the server, keeps its editor open with what was typed, outlined in red, with the reason in red under it, so nothing is lost, in tables and panels alike; in a table, the reason is under the row, in its first cell. Esc leaves the value as it was. Decided by the owner on 2026-11-11.
+- **A value refused:** A value refused when saved, by the page or by the server, keeps its editor open with what was typed, outlined in red, with the reason in red under it, so nothing is lost, in tables, panels and dialogs alike; in a table, the reason is under the row, in its first cell, and in a dialog, under the field it's about, or at the foot when it's about no one field. Esc leaves the value as it was. Decided by the owner on 2026-11-11.
   - **Drawn by:** `useRecordEditing` in `apps/web/src/record-editing.tsx` for a panel, and `RecordGrid` in `apps/web/src/record-grid.tsx` for a table.
   - **Example:** type 203013 in a Needed by cell on Features: Needed by: use a month such as 2027-03.
 - **Controls turned off:** A control for a change the server would refuse is turned off, with a line saying why wherever the reason isn't plain to see. A control the reader might expect, such as Fill on a planned hire or New under Live only, is turned off with its reason rather than hidden; a control is hidden only when the role can never use it. Decided by the owner on 2026-11-11.
@@ -196,7 +196,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## The Address
 
-- **Kept in the address:** Everything a page shows is kept in its address: the tab, the mode, the view (its search, filters, sort, grouping, metrics, frozen columns, column order, widths and units), the record shown in a panel, an open form, such as New or Fill, a note's panel, and the date shown. So reloading shows the same, a link shared shows it to others who may see it, and the browser's Back goes back through what was shown. A dialog isn't kept. A page opened from the menu starts afresh. Decided by the owner on 2026-11-11 for forms, notes and dialogs.
+- **Kept in the address:** Everything a page shows is kept in its address: the tab, the mode, the view (its search, filters, sort, grouping, metrics, frozen columns, column order, widths and units), the record shown in a panel, an open form, such as New or Fill, a note's panel, and the date shown. So reloading shows the same, a link shared shows it to others who may see it, and the browser's Back goes back through what was shown. A dialog isn't kept. A page opened from the menu starts afresh. Changing the date shown adds to Back's history, as moving to another page does; a chart's zoom and pan aren't kept. Forms, notes, dialogs, the date and zoom decided by the owner on 2026-11-11.
   - **Drawn by:** each page's search parameters in `apps/web/src/router.tsx`, with a table's view in `apps/web/src/table-view.ts`.
   - **Example:** on Projects, select the Customers tab and reload.
 - **Back to another page:** The browser's Back is the way back. A Back to button is offered only where Fathom itself jumps to another page.
@@ -208,7 +208,7 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Panels and Focus
 
-- **Opening and closing:** Choosing a record opens its details in a side panel, at its own address. Esc, the close button, or a click on the page outside the panel, the rows and the controls closes it. On a narrow screen, the panel covers the screen and keeps focus until it is closed.
+- **Opening and closing:** Choosing a record opens its details in a side panel, at its own address. Esc, the close button, or a click on the page outside the panel, the rows and the controls closes it. On a narrow screen, the panel covers the screen and keeps focus until it is closed. A panel listing records, such as the Org chart's Teams, is a side panel at its own address too, never a drawer. Decided by the owner on 2026-11-11.
   - **Drawn by:** `WithSidePanel` and `SidePanelFrame` in `apps/web/src/side-panel.tsx`.
   - **Example:** Offline Sync's details on Features.
 - **Focus goes where expected:** Opening a panel or dialog puts focus on its first thing to read or change, such as the record's name. Closing it puts focus back where it was opened from, such as the record's Name cell. Choosing the × in a field keeps focus in the field.
@@ -223,6 +223,6 @@ A short lookup of the conventions every screen follows, for those who build scre
 
 ## Search
 
-- **Finding rows:** A search field above a table finds rows with every word typed anywhere in them, ignoring letter case and accents. Cmd+F on a Mac, or Ctrl+F elsewhere, goes to it from anywhere but a dialog, and Esc clears it, then leaves it, going back to the table where it can. When nothing matches, the table says so.
+- **Finding rows:** A search field above a table finds rows with every word typed anywhere in them, ignoring letter case and accents. Cmd+F on a Mac, or Ctrl+F elsewhere, goes to it from anywhere but a dialog, and Esc clears it, then leaves it, going back to the table where it can. When nothing matches, the table says so. The Org chart's finder follows the same keys: Cmd+F or Ctrl+F goes to it, and Esc clears it. Decided by the owner on 2026-11-11.
   - **Drawn by:** `TableSearch` in `apps/web/src/table-controls.tsx`.
   - **Example:** type offline in the search field on Features.

@@ -34,7 +34,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
 ### LINK-01: Projects and Proposals Name a Feature
 
@@ -55,7 +55,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Switch Fathom between light and dark mode, and look at the **Projects** and **Proposals** cells.
-  - **Expected:** In both modes the grey IDs are easy to read, and are clearly lighter than the names.
+  - **Expected:**
+    - In both modes the grey IDs are easy to read.
+    - They are clearly lighter than the names.
   - **Notes:**
 
 ### LINK-02: A Project's Details Open on Features
@@ -65,15 +67,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Features** page open.
 
 - [ ] **Step 1.** Select **Show details** in the **⋯** menu of **Offline Sync**.
-  - **Expected:** The side panel lists **Clinic Booking** and **Crane Control** under **Projects**, and **Clinic Scheduling Pilot** and **Harbour Cranes Upgrade** under **Proposals**, each a link on a line of its own, with its ID in grey before it where it has one.
+  - **Expected:**
+    - The side panel lists **Clinic Booking** and **Crane Control** under **Projects**.
+    - It lists **Clinic Scheduling Pilot** and **Harbour Cranes Upgrade** under **Proposals**.
+    - Each name is a link on a line of its own, with its ID in grey before it where it has one.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Crane Control** under **Projects**.
-  - **Expected:** The page is still titled **Features**, with the table of features in view. The side panel is headed **Crane Control**, listing **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones**.
+  - **Expected:**
+    - The page is still titled **Features**, with the table of features in view.
+    - The side panel is headed **Crane Control**, listing **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones**.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Audit Export** under **Features** in the side panel.
-  - **Expected:** The page is still **Features**, and the side panel is headed **Audit Export**.
+  - **Expected:**
+    - The page is still **Features**.
+    - The side panel is headed **Audit Export**.
   - **Notes:**
 
 - [ ] **Step 4.** Select the browser's back button.
@@ -81,11 +90,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Select the browser's back button again, then select **Harbour Cranes Upgrade** under **Proposals**.
-  - **Expected:** The page is still **Features**, and the side panel is headed **Harbour Cranes Upgrade**, listing the proposal's **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**.
+  - **Expected:**
+    - The page is still **Features**.
+    - The side panel is headed **Harbour Cranes Upgrade**, listing the proposal's **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**.
   - **Notes:**
 
 - [ ] **Step 6.** Close the side panel.
-  - **Expected:** The panel closes, and the table fills the page.
+  - **Expected:**
+    - The panel closes.
+    - The table fills the page.
   - **Notes:**
 
 ### LINK-03: Changing a Feature's Projects Drafts the Project
@@ -95,15 +108,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Features** page open.
 
 - [ ] **Step 1.** Select the **Projects** cell of **Bulk Import**, and press Enter.
-  - **Expected:** A list of projects opens, with a search box, each project named by its ID, where it has one, then its name, such as **P-1984 Transit Displays**. None is picked.
+  - **Expected:**
+    - A list of projects opens, with a search box, each project named by its ID, where it has one, then its name, such as **P-1984 Transit Displays**.
+    - None is picked.
   - **Notes:**
 
 - [ ] **Step 2.** Pick **P-1984 Transit Displays**, and press Enter.
-  - **Expected:** The list closes, and the cell names **Transit Displays**, with **P-1984** in grey before it. **Bulk Import** has no mark.
+  - **Expected:**
+    - The list closes, and the cell names **Transit Displays**, with **P-1984** in grey before it.
+    - **Bulk Import** has no mark.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Projects** page in the left-hand menu.
-  - **Expected:** **Transit Displays** has a hollow yellow dot and **Draft**. Its **Features** cell names **Bulk Import** and **Data Retention Controls**, and the light green **Live** row under it names **Data Retention Controls** alone.
+  - **Expected:**
+    - **Transit Displays** has a hollow yellow dot and **Draft**.
+    - Its **Features** cell names **Bulk Import** and **Data Retention Controls**, and the light green **Live** row under it names **Data Retention Controls** alone.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Features** page in the left-hand menu, then **New feature**.
@@ -153,5 +172,7 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Select **Show details** in the **⋯** menu of **Offline Sync**.
-  - **Expected:** The side panel shows no pencil button beside **Projects** or **Proposals**, and shows one beside **Name**.
+  - **Expected:**
+    - The side panel shows no pencil button beside **Projects** or **Proposals**.
+    - It shows one beside **Name**.
   - **Notes:**

@@ -41,7 +41,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Tick each step whose expected result is seen, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
 ### FA-01: The Page Opens at the Current Month
 
@@ -476,8 +476,8 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 
 - [ ] **Step 1.** In the current month's column, find a cell whose last line reads **Over**, and one whose last line reads **Under**.
   - **Expected:**
-    - **Over** and its percentage are red and bold.
-    - **Under** and its percentage are grey.
+    - **Over** is red and bold.
+    - **Under** is grey.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Dark** in the Appearance menu, then **Light**.

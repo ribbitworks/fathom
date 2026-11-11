@@ -25,7 +25,7 @@ Every change to the plan and its people is a draft until an approver approves it
 
 ## Undo
 
-Cmd+Z on a Mac, or Ctrl+Z elsewhere, undoes the latest change. In a field with something typed in it, it undoes the typing instead. A change that takes something out of view, such as retiring it, also shows a notice with **Undo** for a few seconds. Approving and rejecting can't be undone.
+Cmd+Z on a Mac, or Ctrl+Z elsewhere, undoes the latest change. In a field with something typed in it, it undoes the typing instead. A change that takes something out of view, such as deleting a saved view, also shows a notice with **Undo** for a few seconds. Approving and rejecting can't be undone.
 
 ## What the Draft Menu Shows
 

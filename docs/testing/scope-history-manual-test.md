@@ -37,7 +37,7 @@ As [Manual Test Basics](manual-test-basics.md#terms) sets out, and:
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
 ### SCOPE-01: A Feature's Customers and Notes in Its Details
 

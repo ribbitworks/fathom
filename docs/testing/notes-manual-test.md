@@ -41,7 +41,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the 
 
 ## Test Cases
 
-Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Tick each step whose expected result is seen, and write anything else under its notes. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
+Run the test cases in order, in about 30 minutes. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out. To run the test again, delete the **Background** column first from its column menu, and approve the deletion.
 
 ### NOTE-01: A Note Column Is Added
 

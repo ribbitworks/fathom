@@ -39,7 +39,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Restore t
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Restore the Seed Data. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
 ### FEAT-01: The Table Reads Well in Light and Dark
 
@@ -72,7 +72,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Switch Fathom between light and dark mode, and look at the group headings, the rows, the column headers and the lines between the rows.
-  - **Expected:** In both modes every word is easy to read, and the group headings are clearly set apart from the rows. Each line between rows, above and below the group headings too, is one thin line running straight across the whole table, no heavier under **Name** than under the other columns.
+  - **Expected:**
+    - In both modes every word is easy to read, and the group headings are clearly set apart from the rows.
+    - Each line between rows, above and below the group headings too, is one thin line running straight across the whole table, no heavier under **Name** than under the other columns.
   - **Notes:**
 
 ### FEAT-02: Features Are Grouped by Cycle, With Later Last
@@ -82,7 +84,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Features** page open.
 
 - [ ] **Step 1.** Read the group headings from top to bottom.
-  - **Expected:** Each heading names the stream and the cycle, such as **Platform: 27.1**, with how many features it holds. The headings run from the earliest cycle to the latest, and the last heading is **Later**.
+  - **Expected:**
+    - Each heading names the stream and the cycle, such as **Platform: 27.1**, with how many features it holds.
+    - The headings run from the earliest cycle to the latest, and the last heading is **Later**.
   - **Notes:**
 
 - [ ] **Step 2.** Look under the heading **Later**.
@@ -90,7 +94,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Type `offline` in the search box.
-  - **Expected:** Only the row **Offline Sync** shows, under its cycle's heading. No heading without a row shows.
+  - **Expected:**
+    - Only the row **Offline Sync** shows, under its cycle's heading.
+    - No heading without a row shows.
   - **Notes:**
 
 - [ ] **Step 4.** Empty the search box.
@@ -134,7 +140,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** In the empty row at the end of the table, type `Fictional Reports` in **Name**, then press Enter.
-  - **Expected:** The row is tinted as a draft, with a hollow yellow dot and **Draft: added**, and its **Status** reads **Possible**. It stays where it is until the view next changes.
+  - **Expected:**
+    - The row is tinted as a draft, with a hollow yellow dot and **Draft: added**, and its **Status** reads **Possible**.
+    - It stays where it is until the view next changes.
   - **Notes:**
 
 - [ ] **Step 3.** Reload the page.
@@ -142,7 +150,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** In the row **Report Builder**, select the **Target cycle** cell and choose another cycle from the list.
-  - **Expected:** Each choice names its stream and cycle. The cell turns yellow, with a light green row under it, marked **Live**, showing the old cycle. The row keeps its place until the view next changes.
+  - **Expected:**
+    - Each choice names its stream and cycle.
+    - The cell turns yellow, with a light green row under it, marked **Live**, showing the old cycle.
+    - The row keeps its place until the view next changes.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Publish** in the top bar.
@@ -156,11 +167,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Select the **⋯** menu of the row **Report Builder**.
-  - **Expected:** The menu names the feature and the change to **Target cycle**, and offers **Approve…** and **Reject…**.
+  - **Expected:**
+    - The menu names the feature and the change to **Target cycle**.
+    - It offers **Approve…** and **Reject…**.
   - **Notes:**
 
 - [ ] **Step 2.** Select **Approve…**, then **Approve**.
-  - **Expected:** The row has no mark and no **Live** row, and shows under the heading of its new cycle.
+  - **Expected:**
+    - The row has no mark and no **Live** row.
+    - It shows under the heading of its new cycle.
   - **Notes:**
 
 ### FEAT-06: Feature Drafts Show on the Drafts Page
@@ -198,11 +213,13 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Replace **3** in **Length** with `2`.
-  - **Expected:** Below **New dates**, **Releases that move** names **Harbor 3**, and **Features that move** names **Data Retention Controls** and **Report Builder**.
+  - **Expected:**
+    - Below **New dates**, **Releases that move** names **Harbor 3**.
+    - **Features that move** names **Data Retention Controls** and **Report Builder**.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Change length**.
-  - **Expected:** A notification says **Drafted the new length.**
+  - **Expected:** The dialog closes.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Publish** in the top bar.
@@ -210,7 +227,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** Sign out, sign in as the Project Manager, `project.manager@fathom.test`, and select the **Drafts** page in the left-hand menu.
-  - **Expected:** The list has entries naming **the feature Data Retention Controls** and **the feature Report Builder**, and entries for **the cycles of Platform**.
+  - **Expected:**
+    - The list has entries naming **the feature Data Retention Controls** and **the feature Report Builder**.
+    - It has entries for **the cycles of Platform**.
   - **Notes:**
 
 - [ ] **Step 6.** Tick one entry for **the cycles of Platform**, then select **Reject**.
@@ -238,11 +257,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Features** page open.
 
 - [ ] **Step 1.** In the row **Voice Notes**, select the **Needed by** cell, type `203003`, then press Enter.
-  - **Expected:** While typing, the cell reads **2030-03**. Afterwards it reads **Mar 2030**, and the cell turns yellow, with a light green row under it, marked **Live**, showing an empty **Needed by**.
+  - **Expected:**
+    - While typing, the cell reads **2030-03**.
+    - Afterwards it reads **Mar 2030**, and the cell turns yellow, with a light green row under it, marked **Live**, showing an empty **Needed by**.
   - **Notes:**
 
 - [ ] **Step 2.** In the row **Scheduler API**, select the **Needed by** cell, type `203013`, then press Enter.
-  - **Expected:** The value is refused, and the message reads **Needed by: use a month such as 2027-03**.
+  - **Expected:**
+    - The value is refused.
+    - The message reads **Needed by: use a month such as 2027-03**.
   - **Notes:**
 
 - [ ] **Step 3.** Press Escape.
@@ -256,11 +279,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** **Features** page open.
 
 - [ ] **Step 1.** In the row **Scheduler API**, select the **Customers** cell and pick the first two customers offered.
-  - **Expected:** The cell shows both customers' names, and turns yellow as a draft.
+  - **Expected:**
+    - The cell shows both customers' names.
+    - It turns yellow as a draft.
   - **Notes:**
 
 - [ ] **Step 2.** In the row **Scheduler API**, select the **Description** cell, replace its text with 201 letters, then press Enter.
-  - **Expected:** The value is refused, and the message reads **Description too long**.
+  - **Expected:**
+    - The value is refused.
+    - The message reads **Description too long**.
   - **Notes:**
 
 - [ ] **Step 3.** Press Escape.
@@ -282,7 +309,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Run Restore the Seed Data first. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Select **Group by: Cycle** above the table, then **Needed by**.
-  - **Expected:** The button reads **Group by: Needed by**. Each heading names a month and year, such as **Mar 2027**, with how many features it holds. The headings run from the earliest month to the latest, and the last heading is **No date**.
+  - **Expected:**
+    - The button reads **Group by: Needed by**.
+    - Each heading names a month and year, such as **Mar 2027**, with how many features it holds.
+    - The headings run from the earliest month to the latest, and the last heading is **No date**.
   - **Notes:**
 
 - [ ] **Step 2.** Reload the page.
@@ -290,7 +320,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Group by: Needed by**, then **None**.
-  - **Expected:** The headings are gone and the rows show as one list. The button reads **Group by: None**.
+  - **Expected:**
+    - The headings are gone and the rows show as one list.
+    - The button reads **Group by: None**.
   - **Notes:**
 
 - [ ] **Step 4.** Select **Group by: None**, then **Cycle**.
@@ -304,11 +336,16 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account.
 
 - [ ] **Step 1.** Select the **Lists** page in the left-hand menu, then select **Feature statuses** in the table.
-  - **Expected:** The list is marked **Built in**. Its choices are, in order, **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**, each beside a meaning of the same name.
+  - **Expected:**
+    - The list is marked **Built in**.
+    - Its choices are, in order, **Possible**, **Planned**, **In progress**, **Done** and **Cancelled**, each beside a meaning of the same name.
   - **Notes:**
 
 - [ ] **Step 2.** Read the lines under the choices.
-  - **Expected:** They invite renaming, adding and retiring, say what each of the five meanings is, and end with **Keep at least one choice for each.**
+  - **Expected:**
+    - They invite renaming, adding and retiring.
+    - They say what each of the five meanings is.
+    - The lines end with **Keep at least one choice for each.**
   - **Notes:**
 
 - [ ] **Step 3.** In the empty row of the choices, type `Long shot`, choose the meaning **Possible**, then press Enter.
@@ -354,7 +391,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Run Restore the Seed Data first. Signed in with this account.
 
 - [ ] **Step 1.** Select the **Features** page in the left-hand menu, and scroll right to the **Complexity** column.
-  - **Expected:** There is no **New column** button. The row **Offline Sync** shows **L**, **Mobile Approvals** shows **M**, **Data Retention Controls** shows **S** and **Report Builder** shows **XL**. **Usage Alerts** is empty.
+  - **Expected:**
+    - There is no **New column** button.
+    - The row **Offline Sync** shows **L**, **Mobile Approvals** shows **M**, **Data Retention Controls** shows **S** and **Report Builder** shows **XL**.
+    - **Usage Alerts** is empty.
   - **Notes:**
 
 - [ ] **Step 2.** Open the **Complexity** column menu.
@@ -372,7 +412,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Select **New column**.
-  - **Expected:** The **New column** dialog opens, with the fields **Name**, **Type**, **List**, **Several choices** and **Must be filled in**. There is no **Offered on planned hires**.
+  - **Expected:**
+    - The **New column** dialog opens, with the fields **Name**, **Type**, **List**, **Several choices** and **Must be filled in**.
+    - There is no **Offered on planned hires**.
   - **Notes:**
 
 - [ ] **Step 2.** Open the **List** box.
@@ -382,11 +424,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Set **Type** to **Number**.
-  - **Expected:** The **List** box and **Several choices** go, and no box asking who may see the values appears.
+  - **Expected:**
+    - The **List** box and **Several choices** go.
+    - No box asking who may see the values appears.
   - **Notes:**
 
 - [ ] **Step 4.** Type `Fictional Risk` in **Name**, then select **Add column**.
-  - **Expected:** The dialog closes. A **Fictional Risk** column is added at the right end of the table, tinted blue, with a yellow dot and **Draft** under its name.
+  - **Expected:**
+    - The dialog closes.
+    - A **Fictional Risk** column is added at the right end of the table, tinted blue, with a yellow dot and **Draft** under its name.
   - **Notes:**
 
 - [ ] **Step 5.** Double-click the **Fictional Risk** cell of any row.
@@ -424,7 +470,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select **Approve…**, then **Approve**.
-  - **Expected:** The **Draft** mark goes from the **Fictional Risk** header and the blue tint goes from the column. **Fictional Risk** stays at the right end of the table, after **Complexity**.
+  - **Expected:**
+    - The **Draft** mark goes from the **Fictional Risk** header and the blue tint goes from the column.
+    - **Fictional Risk** stays at the right end of the table, after **Complexity**.
   - **Notes:**
 
 ### FEAT-18: A Value in an Added Column Is Part of a Feature's Draft
@@ -434,11 +482,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Double-click the **Fictional Risk** cell of the row **Usage Alerts**, type `3.5` and press Enter.
-  - **Expected:** The cell shows **3.5**, and the row has a yellow dot and **Draft**, with a **Live** row under it whose **Fictional Risk** cell is empty.
+  - **Expected:**
+    - The cell shows **3.5**.
+    - The row has a yellow dot and **Draft**, with a **Live** row under it whose **Fictional Risk** cell is empty.
   - **Notes:**
 
 - [ ] **Step 2.** Double-click the **Complexity** cell of the same row, and choose **XS**.
-  - **Expected:** The cell shows **XS**, and the **Live** row's **Complexity** cell stays empty.
+  - **Expected:**
+    - The cell shows **XS**.
+    - The **Live** row's **Complexity** cell stays empty.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Drafts** page in the left-hand menu, and find **the feature Usage Alerts**.
@@ -462,7 +514,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 8.** Sign in as the Project Manager account, `project.manager@fathom.test`, open **Features**, open the **⋯** menu of the row **Usage Alerts**, and select **Approve…**, then **Approve**.
-  - **Expected:** The row has no mark and no **Live** row, and still shows **3.5** and **XS**.
+  - **Expected:**
+    - The row has no mark and no **Live** row.
+    - It still shows **3.5** and **XS**.
   - **Notes:**
 
 ### FEAT-19: Deleting a Column Removes It From Features
@@ -476,7 +530,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Select **Delete column**.
-  - **Expected:** The dialog closes, and a notice reads **Deleted the Fictional Risk column.** The column stays in the table, with a yellow dot and **Draft** under its name.
+  - **Expected:**
+    - The dialog closes.
+    - The column stays in the table, with a yellow dot and **Draft** under its name.
   - **Notes:**
 
 - [ ] **Step 3.** Select **Publish** in the top bar.
@@ -484,7 +540,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Open the **Fictional Risk** column menu, and select **Approve…**, then **Approve**.
-  - **Expected:** The **Fictional Risk** column is gone, and the table ends with **Complexity**.
+  - **Expected:**
+    - The **Fictional Risk** column is gone.
+    - The table ends with **Complexity**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -496,7 +554,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Restore the Seed Data run after FEAT-19. Signed in with this account. **Features** page open.
 
 - [ ] **Step 1.** Select **New feature**.
-  - **Expected:** The **New feature** panel opens beside the table, laid out as the **New person** panel on **People** is: each label at the left of its row, under the headings **Details** and **Columns**. The **Notes** row has **None** as its value and a pencil button at its right. There is no text box for the note.
+  - **Expected:**
+    - The **New feature** panel opens beside the table, laid out as the **New person** panel on **People** is: each label at the left of its row, under the headings **Details** and **Columns**.
+    - The **Notes** row has **None** as its value and a pencil button at its right.
+    - There is no text box for the note.
   - **Notes:**
 
 - [ ] **Step 2.** Type `Fictional Atlas` in **Name**.
@@ -504,7 +565,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 3.** Select the pencil button in the **Notes** row.
-  - **Expected:** A second panel opens under **New feature**, titled **Notes for New feature**, with **Note**, **Editor** and **Markdown** at its top, on **Editor**, and a toolbar under the text. **Fictional Atlas** is still in **Name**.
+  - **Expected:**
+    - A second panel opens under **New feature**, titled **Notes for New feature**, with **Note**, **Editor** and **Markdown** at its top, on **Editor**, and a toolbar under the text.
+    - **Fictional Atlas** is still in **Name**.
   - **Notes:**
 
 - [ ] **Step 4.** Switch the page to dark mode and back to light mode.
@@ -520,11 +583,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 7.** In the **New feature** panel, change **Name** to `Fictional Atlas Two`.
-  - **Expected:** **Name** shows what was typed, and the note's panel stays open.
+  - **Expected:**
+    - **Name** shows what was typed.
+    - The note's panel stays open.
   - **Notes:**
 
 - [ ] **Step 8.** Select **Save** in the note's panel.
-  - **Expected:** The note's panel closes. The **Notes** row shows **First words** in bold, and **Name** still reads **Fictional Atlas Two**.
+  - **Expected:**
+    - The note's panel closes.
+    - The **Notes** row shows **First words** in bold, and **Name** still reads **Fictional Atlas Two**.
   - **Notes:**
 
 - [ ] **Step 9.** Select the pencil button in the **Notes** row.
@@ -540,15 +607,21 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 12.** Select **Keep adding**.
-  - **Expected:** The box closes, and both panels stay open.
+  - **Expected:**
+    - The box closes.
+    - Both panels stay open.
   - **Notes:**
 
 - [ ] **Step 13.** Select **Cancel** in the note's panel.
-  - **Expected:** The note's panel closes, and the **Notes** row still shows only **First words**.
+  - **Expected:**
+    - The note's panel closes.
+    - The **Notes** row still shows only **First words**.
   - **Notes:**
 
 - [ ] **Step 14.** Select **Add** at the foot of the **New feature** panel.
-  - **Expected:** The feature is added as a draft, and its details show beside the table, with **First words** in bold under **Notes**.
+  - **Expected:**
+    - The feature is added as a draft.
+    - Its details show beside the table, with **First words** in bold under **Notes**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -560,23 +633,34 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
 **Preconditions:** Restore the Seed Data run after FEAT-20. **Features** page open.
 
 - [ ] **Step 1.** Find the **Effort** column, after **Release**, and look at the rows **Audit Export**, **Usage Alerts** and **Scheduler API**.
-  - **Expected:** **Audit Export** reads **316 h**, **Usage Alerts** reads **424 h**, and **Scheduler API** is empty.
+  - **Expected:**
+    - **Audit Export** reads **316 h**.
+    - **Usage Alerts** reads **424 h**.
+    - **Scheduler API** is empty.
   - **Notes:**
 
 - [ ] **Step 2.** Rest the pointer on **316 h**.
-  - **Expected:** A tooltip reads **316 hours**, and nothing more.
+  - **Expected:**
+    - A tooltip reads **316 hours**, and nothing more.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Release** cell of **Audit Export**, then press the Right arrow key once.
-  - **Expected:** The **Effort** cell of **Audit Export** is selected, and a tooltip beside it reads **316 hours**.
+  - **Expected:**
+    - The **Effort** cell of **Audit Export** is selected.
+    - A tooltip beside it reads **316 hours**.
   - **Notes:**
 
 - [ ] **Step 4.** Open the column menu of **Effort**.
-  - **Expected:** Under **Show in**, the menu lists **Hours**, **Person-days**, **Person-weeks**, **Person-months** and **Person-quarters**, in that order, with a tick beside **Hours** only. Under **Decimal places**, it lists **0**, **1** and **2**, with a tick beside **2** only. It has no **Break down by**.
+  - **Expected:**
+    - Under **Show in**, the menu lists **Hours**, **Person-days**, **Person-weeks**, **Person-months** and **Person-quarters**, in that order, with a tick beside **Hours** only.
+    - Under **Decimal places**, it lists **0**, **1** and **2**, with a tick beside **2** only.
+    - It has no **Break down by**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Person-days**.
-  - **Expected:** The menu closes. **Audit Export** reads **39.5 PD**, and **Usage Alerts** reads **53 PD**.
+  - **Expected:**
+    - The menu closes.
+    - **Audit Export** reads **39.5 PD**, and **Usage Alerts** reads **53 PD**.
   - **Notes:**
 
 - [ ] **Step 6.** Rest the pointer on **39.5 PD**.
@@ -584,7 +668,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 7.** Open the column menu of **Effort**, and select **Person-weeks**.
-  - **Expected:** **Audit Export** reads **8 PW**, and **Usage Alerts** reads **10.6 PW**.
+  - **Expected:**
+    - **Audit Export** reads **8 PW**.
+    - **Usage Alerts** reads **10.6 PW**.
   - **Notes:**
 
 - [ ] **Step 8.** Rest the pointer on **8 PW**.
@@ -592,11 +678,17 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 9.** Open the column menu of **Effort**, and select **Person-months**.
-  - **Expected:** **Audit Export** reads **2 PM**, **Usage Alerts** reads **2.65 PM**, and **Bulk Import** reads **1.5 PM**.
+  - **Expected:**
+    - **Audit Export** reads **2 PM**.
+    - **Usage Alerts** reads **2.65 PM**.
+    - **Bulk Import** reads **1.5 PM**.
   - **Notes:**
 
 - [ ] **Step 10.** Open the column menu of **Effort**, and select **Person-quarters**.
-  - **Expected:** **Audit Export** reads **0.67 PQ**, **Usage Alerts** reads **0.89 PQ**, and **Bulk Import** reads **0.5 PQ**.
+  - **Expected:**
+    - **Audit Export** reads **0.67 PQ**.
+    - **Usage Alerts** reads **0.89 PQ**.
+    - **Bulk Import** reads **0.5 PQ**.
   - **Notes:**
 
 - [ ] **Step 11.** Open the column menu of **Effort**, and select **Person-months**.
@@ -604,7 +696,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 12.** Open the column menu of **Effort**, and select **1** under **Decimal places**.
-  - **Expected:** **Audit Export** reads **2 PM**, **Usage Alerts** reads **2.7 PM**, and **Bulk Import** reads **1.5 PM**.
+  - **Expected:**
+    - **Audit Export** reads **2 PM**.
+    - **Usage Alerts** reads **2.7 PM**.
+    - **Bulk Import** reads **1.5 PM**.
   - **Notes:**
 
 - [ ] **Step 13.** Rest the pointer on **2.7 PM**.
@@ -612,7 +707,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 14.** Open the column menu of **Effort**, and select **0** under **Decimal places**.
-  - **Expected:** **Usage Alerts** reads **3 PM**, and **Bulk Import** reads **2 PM**.
+  - **Expected:**
+    - **Usage Alerts** reads **3 PM**.
+    - **Bulk Import** reads **2 PM**.
   - **Notes:**
 
 - [ ] **Step 15.** Reload the page.
@@ -662,11 +759,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 4.** Press Enter without changing the field.
-  - **Expected:** The field closes, and the cell still reads **2.5 PD**.
+  - **Expected:**
+    - The field closes.
+    - The cell still reads **2.5 PD**.
   - **Notes:**
 
 - [ ] **Step 5.** Select the yellow **Effort** cell of **Scheduler API** again, type `-1`, then press Enter.
-  - **Expected:** The value is refused, and the message reads **Effort: use 0 or more**.
+  - **Expected:**
+    - The value is refused.
+    - The message reads **Effort: use 0 or more**.
   - **Notes:**
 
 - [ ] **Step 6.** Press Escape.
@@ -682,11 +783,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 9.** Press Tab twice, past the field's **×**.
-  - **Expected:** The menu beside the field has focus, and the field stays open.
+  - **Expected:**
+    - The menu beside the field has focus.
+    - The field stays open.
   - **Notes:**
 
 - [ ] **Step 10.** Press Escape.
-  - **Expected:** The field closes, and the **Effort** row still reads **2.5 person-days (20 hours)**.
+  - **Expected:**
+    - The field closes.
+    - The **Effort** row still reads **2.5 person-days (20 hours)**.
   - **Notes:**
 
 - [ ] **Step 11.** Select the pencil button in the **Effort** row.
@@ -694,19 +799,27 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 12.** Select **hours** in the menu beside the field.
-  - **Expected:** The field now holds **20**, and the menu reads **hours**.
+  - **Expected:**
+    - The field now holds **20**.
+    - The menu reads **hours**.
   - **Notes:**
 
 - [ ] **Step 13.** Change the field to `28`, then press Enter.
-  - **Expected:** The **Effort** row reads **3.5 person-days (28 hours)**, and in the table **Scheduler API** reads **3.5 PD**.
+  - **Expected:**
+    - The **Effort** row reads **3.5 person-days (28 hours)**.
+    - In the table **Scheduler API** reads **3.5 PD**.
   - **Notes:**
 
 - [ ] **Step 14.** Select the pencil button in the **Effort** row, then press Tab twice.
-  - **Expected:** The field holds **3.5**, and the menu beside it, reading **person-days**, has focus.
+  - **Expected:**
+    - The field holds **3.5**.
+    - The menu beside it, reading **person-days**, has focus.
   - **Notes:**
 
 - [ ] **Step 15.** Using only the keyboard, choose **person-weeks** in the menu.
-  - **Expected:** The menu reads **person-weeks**, and the field holds **0.8**.
+  - **Expected:**
+    - The menu reads **person-weeks**.
+    - The field holds **0.8**.
   - **Notes:**
 
 - [ ] **Step 16.** Press Shift+Tab twice, then type `1` in place of what the field holds.
@@ -714,11 +827,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 17.** Press Tab three times, until neither the field nor the menu has focus.
-  - **Expected:** The field closes, and the **Effort** row reads **5 person-days (40 hours)**.
+  - **Expected:**
+    - The field closes.
+    - The **Effort** row reads **5 person-days (40 hours)**.
   - **Notes:**
 
 - [ ] **Step 18.** Close the details panel.
-  - **Expected:** The panel closes, and **Scheduler API** reads **5 PD**.
+  - **Expected:**
+    - The panel closes.
+    - **Scheduler API** reads **5 PD**.
   - **Notes:**
 
 - [ ] **Step 19.** Open the column menu of **Effort**.
@@ -754,7 +871,9 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Select **New feature**.
-  - **Expected:** The **New feature** panel opens. Its **Effort** row has an empty field, with a menu beside it reading **person-weeks**.
+  - **Expected:**
+    - The **New feature** panel opens.
+    - Its **Effort** row has an empty field, with a menu beside it reading **person-weeks**.
   - **Notes:**
 
 - [ ] **Step 3.** Type `Fictional Effort` in **Name**.
@@ -770,11 +889,15 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 6.** Select **person-days**.
-  - **Expected:** The menu reads **person-days**, and **Effort** still holds **2**. The table's **Effort** column still shows person-weeks.
+  - **Expected:**
+    - The menu reads **person-days**, and **Effort** still holds **2**.
+    - The table's **Effort** column still shows person-weeks.
   - **Notes:**
 
 - [ ] **Step 7.** Select **Add** at the foot of the **New feature** panel.
-  - **Expected:** The feature is added as a draft, and its details show beside the table, with an **Effort** row reading **0.4 person-weeks (16 hours)**. In the table, **Fictional Effort** reads **0.4 PW**.
+  - **Expected:**
+    - The feature is added as a draft, and its details show beside the table, with an **Effort** row reading **0.4 person-weeks (16 hours)**.
+    - In the table, **Fictional Effort** reads **0.4 PW**.
   - **Notes:**
 
 **Afterwards:** Run Restore the Seed Data.
@@ -790,11 +913,18 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 2.** Select **Release**.
-  - **Expected:** The button reads **Group by: Release**. The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2** and **Platform: Harbor 3**, each followed by a comma, **ships** and a date with its day, month and year, such as **ships 31 Mar 2027**, and then **Later**. The counts beside them read **1**, **4**, **4** and **2**. No heading names a **Patches** release.
+  - **Expected:**
+    - The button reads **Group by: Release**.
+    - The headings are, from top to bottom, **Platform: Harbor 1**, **Platform: Harbor 2** and **Platform: Harbor 3**, each followed by a comma, **ships** and a date with its day, month and year, such as **ships 31 Mar 2027**, and then **Later**.
+    - The counts beside them read **1**, **4**, **4** and **2**.
+    - No heading names a **Patches** release.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Releases** page in the left-hand menu, then **Platform** in the table.
-  - **Expected:** A side panel for **Platform** opens. Under **Releases**, each **Harbor** row ends with **ships** and a day, such as **26.3 to 26.4 · ships 2026-12-31**. Each is the same day as the heading noted in Step 2, such as **ships 31 Dec 2026** for **ships 2026-12-31**.
+  - **Expected:**
+    - A side panel for **Platform** opens.
+    - Under **Releases**, each **Harbor** row ends with **ships** and a day, such as **26.3 to 26.4 · ships 2026-12-31**.
+    - Each is the same day as the heading noted in Step 2, such as **ships 31 Dec 2026** for **ships 2026-12-31**.
   - **Notes:**
 
 - [ ] **Step 4.** Select the **Features** page in the left-hand menu, then **Group by: Cycle** above the table, then **Release**.
@@ -802,15 +932,22 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 5.** In the row **Report Builder**, under **Platform: Harbor 3**, select the **Target cycle** cell and choose the cycle after the one it shows.
-  - **Expected:** The cell turns yellow, with a light green row under it, marked **Live**, showing the old cycle. The row stays under **Platform: Harbor 3** until the view next changes.
+  - **Expected:**
+    - The cell turns yellow, with a light green row under it, marked **Live**, showing the old cycle.
+    - The row stays under **Platform: Harbor 3** until the view next changes.
   - **Notes:**
 
 - [ ] **Step 6.** Reload the page.
-  - **Expected:** A heading **Platform: Not released yet** with the count **1** shows after **Platform: Harbor 3** and before **Later**. **Report Builder** is under it, marked **Draft**, with its **Live** row under it showing the old cycle. **Platform: Harbor 3** now counts **3**.
+  - **Expected:**
+    - A heading **Platform: Not released yet** with the count **1** shows after **Platform: Harbor 3** and before **Later**.
+    - **Report Builder** is under it, marked **Draft**, with its **Live** row under it showing the old cycle.
+    - **Platform: Harbor 3** now counts **3**.
   - **Notes:**
 
 - [ ] **Step 7.** Select **Group by: Release**, then **None**.
-  - **Expected:** The headings are gone and the rows show as one list. The button reads **Group by: None**.
+  - **Expected:**
+    - The headings are gone and the rows show as one list.
+    - The button reads **Group by: None**.
   - **Notes:**
 
 - [ ] **Step 8.** Select **Group by: None**, then **Cycle**.
@@ -818,7 +955,10 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
   - **Notes:**
 
 - [ ] **Step 9.** Find the **Release** column, after **Target cycle**, and look at the rows **Report Builder**, **Offline Sync** and **Voice Notes**.
-  - **Expected:** In **Report Builder**'s draft row, **Release** reads **Platform: Not released yet**, and in its **Live** row **Platform: Harbor 3**. **Offline Sync** reads **Platform: Harbor 2**, with no date. **Voice Notes**' **Release** is empty.
+  - **Expected:**
+    - In **Report Builder**'s draft row, **Release** reads **Platform: Not released yet**, and in its **Live** row **Platform: Harbor 3**.
+    - **Offline Sync** reads **Platform: Harbor 2**, with no date.
+    - **Voice Notes**' **Release** is empty.
   - **Notes:**
 
 - [ ] **Step 10.** Select the small button with an arrow out of a box at the right of **Report Builder**'s **Name** cell.

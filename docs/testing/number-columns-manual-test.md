@@ -35,7 +35,7 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom) and [Reset the
 
 ## Test Cases
 
-Run the test cases in order. Start with Start Fathom, then Reset the Database. Tick each step whose expected result is seen, and write anything else under its notes.
+Run the test cases in order. Start with Start Fathom, then Reset the Database. Record each step's result as [Manual Test Basics](manual-test-basics.md#recording-results) sets out.
 
 ### NUM-01: The Dialog Offers a Number Column
 

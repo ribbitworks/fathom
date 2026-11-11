@@ -24,7 +24,7 @@ What every manual test in `docs/testing/` shares: the environment, where the acc
 
 ## Recording Results
 
-Mark each step's checkbox as you run it, and write anything else under its **Notes:**:
+Mark each step's checkbox while running it, and write anything else under its **Notes:**:
 
 - `- [x]`: the step passes.
 - `- [?]`: the step passes, with questions or suggestions in its notes.
