@@ -11,7 +11,7 @@ last_updated: "2026-11-10"
 
 ## Scope
 
-Verifies Fathom's common use by every persona in [Roles](../product/roles.md#roles-by-persona), in journeys that pass work from one account to the next: hiring and People, saved views, the org chart and feature teams, the plan from projects to releases, administration, and an organization setting Fathom up from an empty database, with feature teams that change over the months. Each feature is run once as it is usually used and once in a less usual way. The feature manual tests in `docs/testing/` cover each feature in depth.
+Verifies Fathom's common use by every persona in [Roles](../product/roles.md#roles-by-persona), in journeys that pass work from one account to the next: hiring and People, saved views, the org chart, feature teams and feature assignments, the plan from projects to releases, administration, and an organization setting Fathom up from an empty database, with feature teams recorded from months ago and planned months ahead. Each feature is run once as it is usually used and once in a less usual way. The feature manual tests in `docs/testing/` cover each feature in depth.
 
 ## Test Environment
 
@@ -35,8 +35,8 @@ R2 and R3 create these accounts, with every other development account, as [Devel
 - **Executive account:** `executive@fathom.test`, shown in Fathom as **Executive**. It holds the Executive role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds the Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **New account:** `fictional.newcomer@fathom.test`, shown in Fathom as **Fictional Newcomer**. ACC-34 creates it with the Team Member role, and its password is the one ACC-34 shows, until ACC-34 changes it to `fictional password 2`. ACC-35 gives it the **Fictional Reader** role in place of Team Member.
-- **Planning lead account:** `fictional.planning.lead@fathom.test`, shown in Fathom as **Fictional Planning Lead**. ACC-43 creates it with the Workforce Administrator role, its default, and the Product Manager role, and its password is the one ACC-43 shows, until ACC-47 changes it to `fictional password 3`.
+- **New account:** `fictional.newcomer@fathom.test`, shown in Fathom as **Fictional Newcomer**. ACC-37 creates it with the Team Member role, and its password is the one ACC-37 shows, until ACC-37 changes it to `fictional password 2`. ACC-38 gives it the **Fictional Reader** role in place of Team Member.
+- **Planning lead account:** `fictional.planning.lead@fathom.test`, shown in Fathom as **Fictional Planning Lead**. ACC-46 creates it with the Workforce Administrator role, its default, and the Product Manager role, and its password is the one ACC-46 shows, until ACC-50 changes it to `fictional password 3`.
 
 ## Common Procedures
 
@@ -124,14 +124,15 @@ Use where a test case says so. This deletes every account and record in the deve
 - **Group by menu:** the button above a table that starts **Group by:** and names the grouping in use.
 - **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today. **Next quarter's cycle** is the Platform stream's cycle for the quarter after the one today is in. A cycle's name is the year it ends in and its number in that year, such as **27.1**. The examples after "such as" are as the seed data is when added in November 2026.
 - **Dates:** the steps type dates as digits, such as `20300315`; the tables and panels show them as the browser's language writes them, such as **Mar 15, 2030**.
-- **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, a number of **months ago**, such as **six months ago**, that many months before it, and **three months from now** the third month after it. The steps type a month's first day as digits; the examples after "such as" are for a run in November 2026, such as `20260501` for the first day of six months ago.
+- **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, **next month** the one after it, a number of **months ago**, such as **six months ago**, that many months before it, and **three months from now** the third month after it. The steps type a month's first day as digits; the examples after "such as" are for a run in November 2026, such as `20260501` for the first day of six months ago.
 - **Empty row:** the row at the end of a table, with blank cells, where a new record is typed or pasted.
-- **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**.
-- **Takes effect from:** the date box under **Add member** in the team panel.
+- **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**. Accounts that don't see Restricted details have the arrows, timeline and **Today** without it.
+- **Mode switch:** the switch under the **Feature assignments** heading, reading **Teams** and **Allocations**.
+- **Team list:** the list of feature teams that opens below a month's cell in **Feature assignments** for editing, with a box to type in at its top.
 
 ## Test Cases
 
-Run the test cases in order, in about three hours and ten minutes: two and a half hours for Journeys 1 to 5, and 40 minutes for Journey 6. Start with R0, then R2; Journey 6 starts again from an empty database with R3. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about three and a half hours: two hours and 50 minutes for Journeys 1 to 5, and 40 minutes for Journey 6. Start with R0, then R2; Journey 6 starts again from an empty database with R3. Check each step whose expected result you see, and write anything else under its notes.
 
 ### Journey 1: Hiring and People
 
@@ -498,7 +499,7 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
 **Preconditions:** Signed in with this account, acting as **Feature Lead**. **Org chart** page open, with **Feature teams** chosen in the teams switch.
 
 - [ ] **Step 1.** Select the Feature teams button, then **Platform reliability**.
-  - **Expected:** The team panel opens with **Team** reading **Platform reliability**, **Feature lead** reading **No lead**, no **Rename** button, and no **Takes effect from** box.
+  - **Expected:** The team panel opens with **Team** reading **Platform reliability**, **Feature lead** reading **No lead**, and no **Rename** button.
   - **Notes:**
 
 - [ ] **Step 2.** In **Feature lead**, choose **Polly Smith**.
@@ -535,18 +536,18 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-15. Step 5 signs in as another account.
 
-**Preconditions:** Signed in with this account. **Org chart** page open, with **Feature teams** chosen in the teams switch.
+**Preconditions:** Signed in with this account. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
 
-- [ ] **Step 1.** Select the Feature teams button, then **Search**. In **Add member**, type `Branson`, and choose **Branson O'Keefe**.
-  - **Expected:** **Branson O'Keefe** is listed among the members with a yellow dot and **Draft**. A **Takes effect from** box under **Add member** shows today's date, such as **2026-11-09**.
+- [ ] **Step 1.** Select the left arrow once.
+  - **Expected:** The date box shows the first day of last month. Below the row, text reads **Showing** with that day, then **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 2.** Clear **Takes effect from**, type the first day of last month as digits alone, such as `20261001`, and press Enter.
-  - **Expected:** The cursor leaves the box, and a notice reads **Date changed**, with **Undo**.
+- [ ] **Step 2.** Select the Feature teams button, then **Search**. In **Add member**, type `Branson`, and choose **Branson O'Keefe**.
+  - **Expected:** **Branson O'Keefe** is listed among the members with a yellow dot and **Draft**, with no date after it.
   - **Notes:**
 
-- [ ] **Step 3.** Close the panel, and open **Search** again from the Feature teams button.
-  - **Expected:** **Takes effect from** shows the first day of last month.
+- [ ] **Step 3.** Select **Today**.
+  - **Expected:** The text below the row goes. In the team panel, **Branson O'Keefe** is now marked **Draft, from** and the first day of last month, such as **Draft, from Oct 1, 2026**.
   - **Notes:**
 
 - [ ] **Step 4.** Publish (P1).
@@ -587,9 +588,57 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** In both modes, the labels, headings and group names are easy to read.
   - **Notes:**
 
-#### ACC-18: A Team Member Groups Feature Assignments Only by Feature Team
+#### ACC-18: Allocations Show Each Month's Features and Their Totals
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACC-17.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, the same as ACC-17.
+
+**Preconditions:** **Light** chosen in the Appearance menu. **Feature assignments** open, with **Teams** chosen in the mode switch, **Feature team** chosen in the Group by menu, and nothing in the search box. The **Person** filter from ACC-17 removed with **Clear all** in the bar above the table.
+
+- [ ] **Step 1.** Select **Allocations** in the mode switch.
+  - **Expected:** The table opens at the current month again, still grouped by **Feature team**. Cells list features, each on a line of its own with its percentage at the right, such as **50%**.
+  - **Notes:**
+
+- [ ] **Step 2.** In the current month's column, find a cell that lists two features.
+  - **Expected:** Under the two features, set off by a thin line above it, a last line gives the two percentages added up, at the right.
+  - **Notes:**
+
+- [ ] **Step 3.** In the current month's column, find a cell whose last line reads **Over**, and one whose last line reads **Under**.
+  - **Expected:** **Over** and its percentage are red and bold. **Under** and its percentage are grey.
+  - **Notes:**
+
+- [ ] **Step 4.** Choose **Dark** in the Appearance menu, then **Light**.
+  - **Expected:** In both modes the feature names, the percentages, and the **Over** and **Under** lines are easy to read and to tell apart.
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Teams** in the mode switch.
+  - **Expected:** The cells show feature teams as labels again, still grouped by **Feature team**.
+  - **Notes:**
+
+#### ACC-19: A Feature Lead Plans a Team Change in Feature Assignments
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-18.
+
+**Preconditions:** ACC-16 done. Signed in with this account, acting as **Feature Lead**. **Light** chosen in the Appearance menu. **Feature assignments** open from the left-hand menu, with **Teams** chosen in the mode switch, **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** Type `Branson` in the search box.
+  - **Expected:** Only **Branson O'Keefe**'s row is listed, with a **Search** label in the current month's cell.
+  - **Notes:**
+
+- [ ] **Step 2.** Select his cell two months after the current month, and press Enter.
+  - **Expected:** The team list opens, with **Search** shown as chosen.
+  - **Notes:**
+
+- [ ] **Step 3.** Type `Payments`, and press Tab.
+  - **Expected:** The team list closes. The row is tinted blue, with a hollow yellow dot and **Draft** beside the name, and a light green row under it marked **Live**. The cells before the one selected are not yellow. From the cell selected on, each cell is yellow and holds a **Payments core** label with a hollow yellow dot inside it, beside the **Search** label.
+  - **Notes:**
+
+- [ ] **Step 4.** Select **Org chart** in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button and **Payments core**.
+  - **Expected:** The team panel lists **Branson O'Keefe** among the members, marked **Draft, from** and the month two months after the current one, such as **Draft, from Jan 2027**.
+  - **Notes:**
+
+#### ACC-20: A Team Member Groups Feature Assignments Only by Feature Team
+
+**Account:** Team Member, `team.member@fathom.test`, changed from ACC-19.
 
 **Preconditions:** Signed in with this account.
 
@@ -609,11 +658,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
 
 ### Journey 4: The Plan
 
-#### ACC-19: A Product Manager Adds a Customer, a Proposal and a Project With Milestones
+#### ACC-21: A Product Manager Adds a Customer, a Proposal and a Project With Milestones
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-18.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-20.
 
-**Preconditions:** R1 run after ACC-18. Signed in with this account. **Projects** page open from the left-hand menu.
+**Preconditions:** R1 run after ACC-20. Signed in with this account. **Projects** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select the **Customers** tab, then **New customer**. Type `Fictional Ferry Co-op` in **Name**, and select **Add**.
   - **Expected:** The side panel is headed **Fictional Ferry Co-op**, with a hollow yellow dot and **Draft: added**, and the table has a row for it with the same mark.
@@ -639,11 +688,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The marks on the project and both milestones are now solid yellow dots with **Draft: added**.
   - **Notes:**
 
-#### ACC-20: A Project Manager Approves the Project and Its Milestones
+#### ACC-22: A Project Manager Approves the Project and Its Milestones
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from ACC-19.
+**Account:** Project Manager, `project.manager@fathom.test`, changed from ACC-21.
 
-**Preconditions:** ACC-19 done. Signed in with this account. **Projects** page open, on the **Projects** tab.
+**Preconditions:** ACC-21 done. Signed in with this account. **Projects** page open, on the **Projects** tab.
 
 - [ ] **Step 1.** Open the ⋯ menu of **Fictional Harbour Lights**, and select **Approve draft**.
   - **Expected:** A dialog asks to approve the drafts. Under **Also approves the drafts these depend on:**, it lists **the proposal Fictional Ferry Proposal** and **the customer Fictional Ferry Co-op**.
@@ -665,9 +714,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** In dark mode, the text, the tabs and the ticked **Customer delivery** box are easy to read.
   - **Notes:**
 
-#### ACC-21: A Product Manager Adds a Feature With a Formatted Note
+#### ACC-23: A Product Manager Adds a Feature With a Formatted Note
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-20. Step 6 signs in as another account.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-22. Step 6 signs in as another account.
 
 **Preconditions:** Signed in with this account. **Features** page open from the left-hand menu.
 
@@ -695,9 +744,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** A notice reads **Approved 1 draft.** **Fictional Atlas** has no mark.
   - **Notes:**
 
-#### ACC-22: Leaving the New Feature Panel Asks First
+#### ACC-24: Leaving the New Feature Panel Asks First
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-21.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-23.
 
 **Preconditions:** Signed in with this account. **Features** page open.
 
@@ -713,9 +762,43 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The panel closes. No row for **Fictional Compass** is in the table, and no Publish button is in the top bar.
   - **Notes:**
 
-#### ACC-23: A Feature Status Is Added to Its List
+#### ACC-25: A Feature Linked From Features Is Found From Its Project
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-22. Step 4 signs in as another account.
+**Account:** Product Manager, `product.manager@fathom.test`, the same as ACC-24. Step 4 signs in as another account.
+
+**Preconditions:** ACC-22 and ACC-23 done. **Features** page open.
+
+- [ ] **Step 1.** Select the **Projects** cell of **Fictional Atlas**, and press Enter.
+  - **Expected:** A list of projects opens, with a search box, each project named by its ID, where it has one, then its name, such as **FHL-1 Fictional Harbour Lights**.
+  - **Notes:**
+
+- [ ] **Step 2.** Pick **FHL-1 Fictional Harbour Lights**, and press Enter. Select the **Proposals** cell of **Fictional Atlas**, press Enter, pick **Fictional Ferry Proposal**, and press Enter.
+  - **Expected:** The **Projects** cell names **Fictional Harbour Lights**, with **FHL-1** in grey before it, and the **Proposals** cell names **Fictional Ferry Proposal**. **Fictional Atlas** has no mark.
+  - **Notes:**
+
+- [ ] **Step 3.** Publish (P1).
+  - **Expected:** The Publish button is gone.
+  - **Notes:**
+
+- [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Select **Drafts**, and type `Fictional` in the search box.
+  - **Expected:** Two entries are shown, one for the project **Fictional Harbour Lights** and one for the proposal **Fictional Ferry Proposal**, each with a checkbox.
+  - **Notes:**
+
+- [ ] **Step 5.** Select both entries' checkboxes, then **Approve 2 drafts**, then **Approve** in the dialog.
+  - **Expected:** A notice reads **Approved 2 drafts.**
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Projects** in the left-hand menu, and on the **Projects** tab, select **Show features** in the ⋯ menu of **Fictional Harbour Lights**.
+  - **Expected:** The **Features** page opens showing only **Fictional Atlas**, with a pill above the table reading **Projects: FHL-1 Fictional Harbour Lights**.
+  - **Notes:**
+
+- [ ] **Step 7.** Select the **×** on the pill.
+  - **Expected:** Every feature shows again.
+  - **Notes:**
+
+#### ACC-26: A Feature Status Is Added to Its List
+
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-25. Step 4 signs in as another account.
 
 **Preconditions:** Signed in with this account. **Lists** page open from the left-hand menu.
 
@@ -735,9 +818,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The dialog closes, and **Long shot** has no mark.
   - **Notes:**
 
-#### ACC-24: The Last Status for a Meaning Is Kept
+#### ACC-27: The Last Status for a Meaning Is Kept
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-23.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-26.
 
 **Preconditions:** Signed in with this account. **Lists** page open, with the **Feature statuses** panel open.
 
@@ -753,11 +836,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The menu closes, and nothing has changed.
   - **Notes:**
 
-#### ACC-25: A Feature Lead's Change Is Rejected With a Reason
+#### ACC-28: A Feature Lead's Change Is Rejected With a Reason
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-24. Step 3 signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-27. Step 3 signs in as another account.
 
-**Preconditions:** ACC-23 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
+**Preconditions:** ACC-26 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
 
 - [ ] **Step 1.** In the row **Voice Notes**, select the **Status** cell, press Enter, choose **Long shot**, and press Enter.
   - **Expected:** The cell reads **Long shot** and is yellow. The row has a hollow yellow dot and **Draft**, with a Live row under it reading **Possible**.
@@ -779,11 +862,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** A notice reads **Rejected 1 draft.** The **Voice Notes** row shows a red dot and **Rejected**.
   - **Notes:**
 
-#### ACC-26: A Rejected Change Is Resubmitted and Approved
+#### ACC-29: A Rejected Change Is Resubmitted and Approved
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-25. Step 3 signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-28. Step 3 signs in as another account.
 
-**Preconditions:** ACC-25 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
+**Preconditions:** ACC-28 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
 
 - [ ] **Step 1.** Open the ⋯ menu of **Voice Notes**.
   - **Expected:** The menu shows a red dot and **Rejected**, and **Reason: Fictional reason: wait for the customer day.**, and offers **Resubmit** and **Discard draft**.
@@ -805,11 +888,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** **Voice Notes** reads **Long shot** in **Status**, with no mark.
   - **Notes:**
 
-#### ACC-27: The Change History Tells How a Draft Went
+#### ACC-30: The Change History Tells How a Draft Went
 
-**Account:** Engineering Director, `engineering.director@fathom.test`, changed from ACC-26.
+**Account:** Engineering Director, `engineering.director@fathom.test`, changed from ACC-29.
 
-**Preconditions:** ACC-26 done. Signed in with this account.
+**Preconditions:** ACC-29 done. Signed in with this account.
 
 - [ ] **Step 1.** Select **Change history** in the left-hand menu, and type `Voice Notes` in the search box.
   - **Expected:** The entries, newest first, say that Product Manager approved the changes to **Voice Notes**, Feature Lead sent its draft for approval again, Product Manager rejected its draft, with the reason **Fictional reason: wait for the customer day.**, and Feature Lead drafted changing **Status** from **Possible** to **Long shot**.
@@ -819,9 +902,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** In both modes, the entries are easy to read.
   - **Notes:**
 
-#### ACC-28: A Shorter Cycle Moves a Release and Its Features
+#### ACC-31: A Shorter Cycle Moves a Release and Its Features
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-27. Step 4 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-30. Step 4 signs in as another account.
 
 **Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
 
@@ -845,9 +928,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** A notification says **Approved 6 drafts.** No row under **Cycle schedule** or **Releases** has a mark, and **Harbor 3** still ships on the new day.
   - **Notes:**
 
-#### ACC-29: A Product Manager Makes a Release
+#### ACC-32: A Product Manager Makes a Release
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-28. Step 4 signs in as another account.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-31. Step 4 signs in as another account.
 
 **Preconditions:** Signed in with this account. **Releases** page open from the left-hand menu, with **Platform** selected in the streams table.
 
@@ -867,11 +950,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** A notification says **Approved 1 draft.** **Fictional Harbor 4** has no mark.
   - **Notes:**
 
-#### ACC-30: An Executive Reads the Plan
+#### ACC-33: An Executive Reads the Plan
 
-**Account:** Executive, `executive@fathom.test`, changed from ACC-29.
+**Account:** Executive, `executive@fathom.test`, changed from ACC-32.
 
-**Preconditions:** ACC-29 done. Signed in with this account. **Light** chosen in the Appearance menu.
+**Preconditions:** ACC-32 done. Signed in with this account. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Look at the page and the left-hand menu.
   - **Expected:** The **Overview** page is open. The menu shows **Overview**, **Projects**, **Features** and **Releases** in the **Plan** section; **People**, **Org chart**, **Feature assignments**, **Drafts**, **Capacity** tagged **Later**, and **Lists** in the **People** section; **Accounts**, **Roles** and **Settings** in the **Administration** section; **Change history** and **Access history** in the **History** section; and the **Help** section.
@@ -897,9 +980,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The headings name cycles again, with **Later** last. In dark mode, every word, the group headings and the lines between rows are easy to read.
   - **Notes:**
 
-#### ACC-31: An Executive Sees People and Administration Without Changing Them
+#### ACC-34: An Executive Sees People and Administration Without Changing Them
 
-**Account:** Executive, `executive@fathom.test`, the same as ACC-30.
+**Account:** Executive, `executive@fathom.test`, the same as ACC-33.
 
 **Preconditions:** Signed in with this account.
 
@@ -915,9 +998,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** Every account is in the table with its roles. There is no **New account** button and no **Edit** button in any row.
   - **Notes:**
 
-#### ACC-32: A Team Member Reads the Plan Without Changing It
+#### ACC-35: A Team Member Reads the Plan Without Changing It
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACC-31.
+**Account:** Team Member, `team.member@fathom.test`, changed from ACC-34.
 
 **Preconditions:** Signed in with this account.
 
@@ -937,11 +1020,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** **Fictional Harbor 4** is under **Releases**. No row has a **⋯** button, and there is no **New release…** button.
   - **Notes:**
 
-#### ACC-33: Removing a Project Removes Its Milestones
+#### ACC-36: Removing a Project Removes Its Milestones
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-32. Step 3 signs in as another account.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-35. Step 3 signs in as another account.
 
-**Preconditions:** ACC-20 done. Signed in with this account. **Projects** page open, on the **Projects** tab.
+**Preconditions:** ACC-22 done. Signed in with this account. **Projects** page open, on the **Projects** tab.
 
 - [ ] **Step 1.** Open the ⋯ menu of **Fictional Harbour Lights**, and select **Remove project**.
   - **Expected:** **Fictional Harbour Lights** is struck through, with a hollow yellow dot and **Draft: removed**.
@@ -965,9 +1048,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
 
 ### Journey 5: Administration
 
-#### ACC-34: A New Account Signs In for the First Time
+#### ACC-37: A New Account Signs In for the First Time
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, changed from ACC-33. The second browser signs in as the new account in step 4.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, changed from ACC-36. The second browser signs in as the new account in step 4.
 
 **Preconditions:** Signed in with this account in the main browser. **Light** chosen in the Appearance menu.
 
@@ -991,11 +1074,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** A green banner says **The password has been changed, and every other session has been signed out.**, and Fathom opens on the **Overview**, with the left-hand menu.
   - **Notes:**
 
-#### ACC-35: A Copied Role Is Given to the New Account
+#### ACC-38: A Copied Role Is Given to the New Account
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ACC-34. The second browser stays signed in as the new account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ACC-37. The second browser stays signed in as the new account.
 
-**Preconditions:** ACC-34 done. **Roles** page open from the left-hand menu.
+**Preconditions:** ACC-37 done. **Roles** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select **Copy** in the **Team Member** row.
   - **Expected:** A dialog titled **Copy Team Member**, with the name **Copy of Team Member**, and **View** ticked on **Plan**, **Allocations** and **Org chart**. Its main button is **Create role**.
@@ -1013,9 +1096,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The left-hand menu shows **Change history** in the **History** section.
   - **Notes:**
 
-#### ACC-36: Restore Template Brings Back a Starting Role
+#### ACC-39: Restore Template Brings Back a Starting Role
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ACC-35.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ACC-38.
 
 **Preconditions:** **Roles** page open.
 
@@ -1031,11 +1114,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The dialog closes, and the **Executive** row is unchanged.
   - **Notes:**
 
-#### ACC-37: A Deactivated Account Is Signed Out, Then Reactivated
+#### ACC-40: A Deactivated Account Is Signed Out, Then Reactivated
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ACC-36. The second browser stays signed in as the new account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ACC-39. The second browser stays signed in as the new account.
 
-**Preconditions:** ACC-35 done. **Accounts** page open.
+**Preconditions:** ACC-38 done. **Accounts** page open.
 
 - [ ] **Step 1.** Select **Edit** in the **Fictional Newcomer** row, then **Deactivate**.
   - **Expected:** A dialog titled **Deactivate Fictional Newcomer** says **Fictional Newcomer will be signed out everywhere, and will not be able to sign in until the account is reactivated.**, with **Cancel** and a red **Deactivate**.
@@ -1057,11 +1140,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** Fathom opens, with **Change history** in the left-hand menu.
   - **Notes:**
 
-#### ACC-38: The Access History Records What Was Done to the Account
+#### ACC-41: The Access History Records What Was Done to the Account
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ACC-37.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, the same as ACC-40.
 
-**Preconditions:** ACC-34 to ACC-37 done.
+**Preconditions:** ACC-37 to ACC-40 done.
 
 - [ ] **Step 1.** Select **Access history** in the left-hand menu, and type `Fictional Newcomer` in the search box at the top of the page.
   - **Expected:** The entries include, from newest to oldest: Fathom Administrator **reactivated the account for** Fictional Newcomer; **deactivated the account for** Fictional Newcomer, marked as worth checking; **changed the role of** Fictional Newcomer, from Team Member to Fictional Reader, marked as worth checking; Fictional Newcomer **changed their own password**; and Fathom Administrator **created the account for** Fictional Newcomer.
@@ -1071,9 +1154,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** In both modes, the entries and their marks are easy to read.
   - **Notes:**
 
-#### ACC-39: Switching Role Changes What Can Be Done at Once
+#### ACC-42: Switching Role Changes What Can Be Done at Once
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from ACC-38.
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, changed from ACC-41.
 
 **Preconditions:** Signed in with this account, acting as **Feature Lead**. **Releases** page open, with **Platform** selected in the streams table.
 
@@ -1089,11 +1172,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The menu closes, and the page stays on **Releases** with **Platform** open, without the browser reloading. Each row under **Releases** now ends with a **⋯** button, and **New release…** shows.
   - **Notes:**
 
-#### ACC-40: The Change History Names the Role a Change Was Made As
+#### ACC-43: The Change History Names the Role a Change Was Made As
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as ACC-39.
+**Account:** Feature Lead, `feature.lead@fathom.test`, in the main browser, the same as ACC-42.
 
-**Preconditions:** ACC-39 done, acting as **Engineering Manager**. **Releases** page open, with **Platform** selected in the streams table.
+**Preconditions:** ACC-42 done, acting as **Engineering Manager**. **Releases** page open, with **Platform** selected in the streams table.
 
 - [ ] **Step 1.** Select the **⋯** button at the end of the **Harbor 3** row, then **Change…**. Replace the name with `Fictional Harbor Three`, and select **Save**.
   - **Expected:** A notification says **Drafted the change to the release.** The row reads **Fictional Harbor Three**, with a hollow yellow dot and **Draft**.
@@ -1111,9 +1194,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The rows under **Releases** have no **⋯** button again.
   - **Notes:**
 
-#### ACC-41: Each Browser Keeps Its Own Appearance
+#### ACC-44: Each Browser Keeps Its Own Appearance
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, changed from ACC-40. Step 4 signs in again with this account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, in the main browser, changed from ACC-43. Step 4 signs in again with this account.
 
 **Preconditions:** The computer's appearance set to light. Signed in with this account. **Light** chosen in the Appearance menu.
 
@@ -1141,9 +1224,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The page stays light, and the tick in the menu is beside **Light**.
   - **Notes:**
 
-#### ACC-42: Put Everything Back
+#### ACC-45: Put Everything Back
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ACC-41. Step 1 signs in again with this account.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ACC-44. Step 1 signs in again with this account.
 
 **Preconditions:** All the test cases above run.
 
@@ -1157,9 +1240,9 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
 
 ### Journey 6: An Organization Starts From Nothing
 
-#### ACC-43: The Administrator Adds an Account With Two Roles
+#### ACC-46: The Administrator Adds an Account With Two Roles
 
-**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ACC-42.
+**Account:** Administrator, `fathom.administrator@fathom.test`, the same as ACC-45.
 
 **Preconditions:** R3 run. Signed in with this account. **Light** chosen in the Appearance menu.
 
@@ -1175,11 +1258,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The dialog is titled **Password for Fictional Planning Lead**. Once **Done** is selected, a green banner says **Created the account for Fictional Planning Lead.**, and the row's **Roles** cell shows **Workforce Administrator (default)** then **Product Manager**.
   - **Notes:**
 
-#### ACC-44: People Are Pasted Into an Empty People Table and Approved
+#### ACC-47: People Are Pasted Into an Empty People Table and Approved
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-43. Step 7 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-46. Step 7 signs in as another account.
 
-**Preconditions:** ACC-43 done. Signed in with this account. In the text editor, seven lines, typed with the Tab key where shown:
+**Preconditions:** ACC-46 done. Signed in with this account. In the text editor, seven lines, typed with the Tab key where shown:
 
 - **Odile Brandt**, Tab, **EMP-100**, Tab, **Manager**, Tab, **Hired**
 - **Ada Quill**, Tab, **EMP-101**, Tab, **Manager**, Tab, **Hired**
@@ -1217,11 +1300,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** A notice reads **Approved 7 drafts.**, and the page says **No drafts waiting for approval.**
   - **Notes:**
 
-#### ACC-45: Reporting Lines and a Planned Hire Are Added
+#### ACC-48: Reporting Lines and a Planned Hire Are Added
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-44. Step 4 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-47. Step 4 signs in as another account.
 
-**Preconditions:** ACC-44 done. Signed in with this account. **People** page open.
+**Preconditions:** ACC-47 done. Signed in with this account. **People** page open.
 
 - [ ] **Step 1.** Select the **Manager** cell of **Bram Oakes**, press Enter, type `Ada`, and choose **Ada Quill**.
   - **Expected:** The **Manager** cell reads **Ada Quill**, in yellow, and **Manager since** holds today's date. The row has a hollow yellow dot and **Draft**.
@@ -1239,11 +1322,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** A notice reads **Approved 7 drafts.**, and the page says **No drafts waiting for approval.**
   - **Notes:**
 
-#### ACC-46: A Team Member Reads the New Organization
+#### ACC-49: A Team Member Reads the New Organization
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACC-45.
+**Account:** Team Member, `team.member@fathom.test`, changed from ACC-48.
 
-**Preconditions:** ACC-45 done. Signed in with this account. **Light** chosen in the Appearance menu.
+**Preconditions:** ACC-48 done. Signed in with this account. **Light** chosen in the Appearance menu.
 
 - [ ] **Step 1.** Select **Org chart** in the left-hand menu.
   - **Expected:** **Odile Brandt** is at the top, with **Manager** under the name, and her card ends with **Hide 3 reports**. **Dara Finch** and **Emil Stone** are in a column under her, and **Ada Quill**, with **Manager** under the name, is to the right of that column, her card ending with **Show 4 reports**.
@@ -1257,13 +1340,13 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The menu reads **No feature teams yet**, and offers no **New feature team**.
   - **Notes:**
 
-#### ACC-47: The Planning Lead Sets Up a Release Stream and Makes a Release
+#### ACC-50: The Planning Lead Sets Up a Release Stream and Makes a Release
 
-**Account:** Planning lead, `fictional.planning.lead@fathom.test`, changed from ACC-46.
+**Account:** Planning lead, `fictional.planning.lead@fathom.test`, changed from ACC-49.
 
-**Preconditions:** ACC-43 done. Signed out.
+**Preconditions:** ACC-46 done. Signed out.
 
-- [ ] **Step 1.** Sign in as the planning lead, with the password written down in ACC-43.
+- [ ] **Step 1.** Sign in as the planning lead, with the password written down in ACC-46.
   - **Expected:** A panel headed **Change password** says **Fathom generated this password. A new password is required to continue.**
   - **Notes:**
 
@@ -1299,11 +1382,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Fictional Mainline 1**, with a yellow dot and **Draft: added**, then **27.1 to 27.2 · ships 2027-06-15**, followed in bold by **15 days before 27.2 ends**.
   - **Notes:**
 
-#### ACC-48: A Product Manager Starts the Plan
+#### ACC-51: A Product Manager Starts the Plan
 
-**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-47.
+**Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-50.
 
-**Preconditions:** ACC-45 done. Signed in with this account.
+**Preconditions:** ACC-48 done. Signed in with this account.
 
 - [ ] **Step 1.** Select **Projects** in the left-hand menu.
   - **Expected:** The **Projects** tab is chosen. The table has only its empty row, and the count above it reads **0 projects**.
@@ -1333,11 +1416,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-#### ACC-49: A Project Manager Approves the Plan and the Release Together
+#### ACC-52: A Project Manager Approves the Plan and the Release Together
 
-**Account:** Project Manager, `project.manager@fathom.test`, changed from ACC-48.
+**Account:** Project Manager, `project.manager@fathom.test`, changed from ACC-51.
 
-**Preconditions:** ACC-47 and ACC-48 done. Signed in with this account.
+**Preconditions:** ACC-50 and ACC-51 done. Signed in with this account.
 
 - [ ] **Step 1.** Select **Drafts** in the left-hand menu.
   - **Expected:** Seven entries, each with a checkbox, one each for the release stream **Fictional Mainline**, its cycles from **2027-01-01**, the release **Fictional Mainline 1**, the customer **Fictional Lighthouse Trust**, the proposal **Fictional Lighthouse Bid**, the project **Fictional Lamp Room** and the feature **Fictional Tide Tables**.
@@ -1351,11 +1434,11 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** No row in the side panel has a mark. **Fictional Mainline 1** still ships on **2027-06-15**, **15 days before 27.2 ends**.
   - **Notes:**
 
-#### ACC-50: Feature Teams Are Recorded From Six Months Ago
+#### ACC-53: Feature Teams Are Recorded From Six Months Ago
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-49. Step 8 signs in as another account.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-52. Step 10 signs in as another account.
 
-**Preconditions:** ACC-45 done. Signed in with this account.
+**Preconditions:** ACC-48 done. Signed in with this account.
 
 - [ ] **Step 1.** Select **Feature assignments** in the left-hand menu, then **Feature team** in the Group by menu.
   - **Expected:** Every person is listed under **No feature team**, and no cell in any month holds a label.
@@ -1365,105 +1448,121 @@ Run the test cases in order, in about three hours and ten minutes: two and a hal
   - **Expected:** The menu reads **No feature teams yet**, then offers **New feature team**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **New feature team**.
+- [ ] **Step 3.** Press Esc. Clear the date box, type the first day of six months ago, such as `20260501`, and press Enter.
+  - **Expected:** Below the row, text reads **Showing** and that day, such as **Showing May 1, 2026.**, then **Changes take effect from this date.**
+  - **Notes:**
+
+- [ ] **Step 4.** Select the Feature teams button, then **New feature team**.
   - **Expected:** A panel titled **New feature team** opens, with a **Name** box, the line **Name the team first; then add its members and choose its lead.**, and **Add feature team** greyed out.
   - **Notes:**
 
-- [ ] **Step 4.** Type `Tide team`, and press Enter.
+- [ ] **Step 5.** Type `Tide team`, and press Enter.
   - **Expected:** The panel's **Team** reads **Tide team**, with a hollow yellow dot and **Draft: added**, and **Members** reads **No members yet.** On the chart, a card named **Tide team** reads **No feature lead**.
   - **Notes:**
 
-- [ ] **Step 5.** In **Add member**, choose **Ada Quill**, then **Bram Oakes**, then **Cleo Marsh**. Clear **Takes effect from**, type the first day of six months ago, such as `20260501`, and press Enter.
-  - **Expected:** The three are listed among the members, each with a yellow dot and **Draft: added**. A notice reads **Date changed**, with **Undo**.
+- [ ] **Step 6.** In **Add member**, choose **Ada Quill**, then **Bram Oakes**, then **Cleo Marsh**.
+  - **Expected:** The three are listed among the members, each with a yellow dot and **Draft: added**, with no date after it.
   - **Notes:**
 
-- [ ] **Step 6.** From the Feature teams button, select **New feature team**, type `Harbour team`, and press Enter. Add **Dara Finch** and **Emil Stone**, choose **Dara Finch** in **Feature lead**, and set **Takes effect from** to the first day of six months ago.
-  - **Expected:** The members read **Dara Finch (lead)** and **Emil Stone**. A notice reads **Date changed**, with **Undo**.
+- [ ] **Step 7.** From the Feature teams button, select **New feature team**, type `Harbour team`, and press Enter. Add **Dara Finch** and **Emil Stone**, and choose **Dara Finch** in **Feature lead**.
+  - **Expected:** The members read **Dara Finch (lead)** and **Emil Stone**.
   - **Notes:**
 
-- [ ] **Step 7.** Add a new feature team, `Beacon team`, the same way, with **Cleo Marsh** and **Freya Holt** as members and no lead, and set **Takes effect from** to the first day of six months ago.
+- [ ] **Step 8.** Add a new feature team, `Beacon team`, the same way, with **Cleo Marsh** and **Freya Holt** as members and no lead.
   - **Expected:** **Cleo Marsh** is offered in **Add member**, though she is on **Tide team** too. On the chart, a card for **Cleo Marsh** is under both **Tide team** and **Beacon team**.
   - **Notes:**
 
-- [ ] **Step 8.** Publish (P1). Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
+- [ ] **Step 9.** Select **Today**.
+  - **Expected:** The text below the row goes. The chart still draws **Tide team**, **Harbour team** and **Beacon team**, each with the same members.
+  - **Notes:**
+
+- [ ] **Step 10.** Publish (P1). Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 3 drafts.**
   - **Notes:**
 
-#### ACC-51: A Lead Starts Later, Someone Moves Team, and a Team Disbands
+#### ACC-54: A Feature Lead Plans Team Changes Months Ahead
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-50. Step 4 signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-53. Step 6 signs in as another account.
 
-**Preconditions:** ACC-50 done. Signed in with this account. **Org chart** page open, with **Feature teams** chosen in the teams switch.
+**Preconditions:** ACC-53 done. Signed in with this account, acting as **Feature Lead**. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
 
-- [ ] **Step 1.** Select the Feature teams button, then **Tide team**. Choose **Ada Quill** in **Feature lead**, and select the **×** at the right of **Bram Oakes**. Set **Takes effect from** to the first day of three months ago, such as `20260801`.
-  - **Expected:** The members read **Ada Quill (lead)** and **Cleo Marsh**, and a line under them reads **Bram Oakes, leaving**, marked **Live**. A notice reads **Date changed**, with **Undo**.
+- [ ] **Step 1.** Select the right arrow once.
+  - **Expected:** There is no date box. Text below the row reads **Showing** with next month and its year, such as **Showing Dec 2026.**, then **Changes take effect from this date.**
   - **Notes:**
 
-- [ ] **Step 2.** Open **Harbour team** from the Feature teams button. Add **Bram Oakes**, and set **Takes effect from** to the first day of three months ago.
+- [ ] **Step 2.** Select the Feature teams button, then **Tide team**. Choose **Ada Quill** in **Feature lead**, and select the **×** at the right of **Bram Oakes**.
+  - **Expected:** The members read **Ada Quill (lead)** and **Cleo Marsh**, and a line under them reads **Bram Oakes, leaving**, marked **Live**.
+  - **Notes:**
+
+- [ ] **Step 3.** Open **Harbour team** from the Feature teams button, and add **Bram Oakes**.
   - **Expected:** **Bram Oakes** is listed among the members with a yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 3.** Open **Beacon team**. Select the **×** at the right of **Cleo Marsh**, then of **Freya Holt**, and set **Takes effect from** to the first day of last month, such as `20261001`.
-  - **Expected:** No members are listed. Lines read **Cleo Marsh, leaving** and **Freya Holt, leaving**, each marked **Live**.
+- [ ] **Step 4.** Select the right arrow twice. Open **Beacon team** from the Feature teams button, and select the **×** at the right of **Cleo Marsh**, then of **Freya Holt**.
+  - **Expected:** Text below the row reads **Showing** with the month three months from now, such as **Showing Feb 2027.** No members are listed. Lines read **Cleo Marsh, leaving** and **Freya Holt, leaving**, each marked **Live**.
   - **Notes:**
 
-- [ ] **Step 4.** Publish (P1). Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
+- [ ] **Step 5.** Select **Today**, and open **Tide team** from the Feature teams button.
+  - **Expected:** The text below the row goes. The line for the member leaving gives next month, such as **Bram Oakes, leaving from Dec 2026**.
+  - **Notes:**
+
+- [ ] **Step 6.** Publish (P1). Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 3 drafts.**
   - **Notes:**
 
-#### ACC-52: The Org Chart Shows Each Team as It Was Month by Month
+#### ACC-55: The Org Chart Shows Each Team Month by Month
 
-**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-51.
+**Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`, changed from ACC-54.
 
-**Preconditions:** ACC-51 done. Signed in with this account. **Org chart** page open, with **Feature teams** chosen in the teams switch.
+**Preconditions:** ACC-54 done. Signed in with this account. **Org chart** page open, with **Feature teams** chosen in the teams switch, showing today.
 
 - [ ] **Step 1.** Read the chart.
-  - **Expected:** **Ada Quill**'s card is named **Tide team**, with **Cleo Marsh** under it. **Dara Finch**'s card is named **Harbour team**, with **Bram Oakes** and **Emil Stone** under it. A card named **Beacon team** reads **No feature lead**, with no cards under it.
+  - **Expected:** A card named **Tide team** reads **No feature lead**, with **Ada Quill**, **Bram Oakes** and **Cleo Marsh** under it. **Dara Finch**'s card is named **Harbour team**, with **Emil Stone** under it. A card named **Beacon team** reads **No feature lead**, with **Cleo Marsh** and **Freya Holt** under it.
   - **Notes:**
 
 - [ ] **Step 2.** Clear the date box, type the first day of six months ago, such as `20260501`, and press Enter.
-  - **Expected:** Below the row, text reads **Showing** and that day, such as **Showing May 1, 2026.**, then **Nothing can be changed on this date.** A card named **Tide team** reads **No feature lead**, with **Ada Quill**, **Bram Oakes** and **Cleo Marsh** under it. **Dara Finch**'s card is named **Harbour team**, with **Emil Stone** under it. A card named **Beacon team** reads **No feature lead**, with **Cleo Marsh** and **Freya Holt** under it.
+  - **Expected:** Below the row, text reads **Showing** and that day, such as **Showing May 1, 2026.**, then **Changes take effect from this date.** The chart is as in step 1.
   - **Notes:**
 
-- [ ] **Step 3.** Select the right arrow three times.
-  - **Expected:** The date box shows the first day of three months ago. **Ada Quill**'s card is named **Tide team**, with **Cleo Marsh** under it, and **Bram Oakes** is under **Harbour team**. **Beacon team** is as in step 2.
+- [ ] **Step 3.** Select **Today**, then the right arrow once.
+  - **Expected:** The date box shows the first day of next month. **Ada Quill**'s card is named **Tide team**, with **Cleo Marsh** under it. **Bram Oakes** and **Emil Stone** are under **Harbour team**. **Beacon team** is as in step 1.
   - **Notes:**
 
 - [ ] **Step 4.** Select the right arrow twice.
-  - **Expected:** The date box shows the first day of last month. Only **Tide team** and **Harbour team** are drawn, and no card names **Beacon team**.
+  - **Expected:** The date box shows the first day of three months from now. Only **Tide team** and **Harbour team** are drawn, and no card names **Beacon team**.
   - **Notes:**
 
 - [ ] **Step 5.** Select **Today**.
   - **Expected:** The text below the row goes, and the chart is as in step 1.
   - **Notes:**
 
-#### ACC-53: Feature Assignments Show the Changes by Month
+#### ACC-56: Feature Assignments Show the Changes by Month
 
-**Account:** Team Member, `team.member@fathom.test`, changed from ACC-52.
+**Account:** Team Member, `team.member@fathom.test`, changed from ACC-55.
 
-**Preconditions:** ACC-51 done. Signed in with this account.
+**Preconditions:** ACC-54 done. Signed in with this account.
 
 - [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
   - **Expected:** The button reads **Group by: Feature team**. The groups are **Beacon team**, **Harbour team**, **Tide team** and **No feature team**, in that order, and **Odile Brandt** is under **No feature team**.
   - **Notes:**
 
 - [ ] **Step 2.** Open the **Person** column menu, select **Filter…**, type `Bram`, and press Esc.
-  - **Expected:** **Bram Oakes** is listed under **Harbour team** and under **Tide team**. In each of his rows, the current month's cell holds a **Harbour team** label.
+  - **Expected:** **Bram Oakes** is listed under **Harbour team** and under **Tide team**. In each of his rows, the current month's cell holds a **Tide team** label, and next month's a **Harbour team** label.
   - **Notes:**
 
 - [ ] **Step 3.** Scroll the table to the left until the column for seven months ago is in view, and read one of **Bram Oakes**'s rows from left to right.
-  - **Expected:** The cell for seven months ago holds no label. From six months ago to four months ago, each cell holds a **Tide team** label. From three months ago on, each holds a **Harbour team** label.
+  - **Expected:** The cell for seven months ago holds no label. From six months ago to the current month, each cell holds a **Tide team** label. From next month on, each holds a **Harbour team** label.
   - **Notes:**
 
 - [ ] **Step 4.** Open the **Person** column menu, select **Filter…**, replace `Bram` with `Cleo`, and press Esc; then do the same with `Freya`. Read their rows the same way.
-  - **Expected:** From six months ago to two months ago, **Cleo Marsh**'s cells hold a **Beacon team** label and a **Tide team** label, and from last month on, only **Tide team**. **Freya Holt**'s cells hold a **Beacon team** label from six months ago to two months ago, and none from last month on.
+  - **Expected:** From six months ago to two months from now, **Cleo Marsh**'s cells hold a **Beacon team** label and a **Tide team** label, and from three months from now on, only **Tide team**. **Freya Holt**'s cells hold a **Beacon team** label from six months ago to two months from now, and none from three months from now on.
   - **Notes:**
 
-#### ACC-54: A Feature Lead Gives the Feature Its Team and Cycle
+#### ACC-57: A Feature Lead Gives the Feature Its Team and Cycle
 
-**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-53. Step 4 signs in as another account.
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from ACC-56. Step 4 signs in as another account.
 
-**Preconditions:** ACC-49 and ACC-50 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
+**Preconditions:** ACC-52 and ACC-53 done. Signed in with this account, acting as **Feature Lead**. **Features** page open.
 
 - [ ] **Step 1.** Select the **Feature team** cell of **Fictional Tide Tables**, and press Enter.
   - **Expected:** The choices are **Beacon team**, **Harbour team** and **Tide team**.
