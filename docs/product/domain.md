@@ -12,7 +12,7 @@ The terms Fathom uses, defined so they fit any software organization, whatever i
 - **Customer:** Who a project's work is for, external or internal.
 - **Product:** What a feature is part of.
 - **Feature:** The unit Fathom plans: a body of related work, sized in weeks to months of effort, that one feature team delivers. A feature is like an epic: it groups stories or tasks, which Fathom does not hold. What counts as one feature is set out in the [Decisions Log](decisions.md#planning).
-- **Initiative:** A larger effort made of several related features, such as the increments of work too large for one cycle. Not built in; an organization that uses initiatives adds them as a column.
+- **Initiative:** A larger effort made of several related features, such as parts an organization chooses to split a large feature into. Not built in; an organization that uses initiatives adds them as a column.
 - **Milestone:** A dated point in a project or a feature.
 - **Cycle:** A repeating planning period of a set length, such as six months, a quarter, or a program increment. Features target cycles.
 - **Release:** A named delivery that includes one or more cycles, and ships the features that target them.

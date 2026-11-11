@@ -100,7 +100,6 @@ import {
   type PlanRecordKind,
   type PlanTab,
   projectPlanQuery,
-  type ProjectTab,
   projectTabs,
   type TableChoices,
   tableChoices,
@@ -243,7 +242,8 @@ export function ProjectsPage({
   onMilestonesOf,
 }: {
   tab: PlanTab;
-  onTab?: (tab: ProjectTab, open?: string) => void;
+  // Shows another of the plan's pages or tabs, with a record's details open if one is named.
+  onTab?: (tab: PlanTab, open?: string) => void;
   // The kinds of draft the user's role approves and rejects.
   approves?: readonly DraftKind[];
   // Whether the user may add and change the columns on Features.
@@ -613,13 +613,15 @@ export function ProjectsPage({
     ): ReactElement {
       const actions = actionsFor<Rec, Request>(type);
       return (
-        <PlanGrid
-          {...shared}
-          panels={panelsWith(type, table, records, actions)}
-          records={records}
-          table={table}
-          actions={actions}
-        />
+        <TableTips>
+          <PlanGrid
+            {...shared}
+            panels={panelsWith(type, table, records, actions)}
+            records={records}
+            table={table}
+            actions={actions}
+          />
+        </TableTips>
       );
     }
     const filteredTo = view.filters.projectId?.any?.at(0);
@@ -935,7 +937,7 @@ function recordPanel({
   onClose: () => void;
   menu: MilestoneMenu;
   showMilestones: (project: Project) => void;
-  showRecord: (tab: ProjectTab, id: string) => void;
+  showRecord: (tab: PlanTab, id: string) => void;
   onChange: (
     type: PlanRecordKind,
     record: PlanRecord,
@@ -1034,10 +1036,14 @@ function recordPanel({
 }
 
 // The tab whose records a column's values name, for those that can be followed.
-const linkedTabs = new Map<string, ProjectTab>([
+const linkedTabs = new Map<string, PlanTab>([
   ["customerIds", "customers"],
   ["proposalIds", "proposals"],
+  ["featureIds", "features"],
 ]);
+
+// Columns whose records the panel lists one to a line, as there can be many.
+const listedOnLines = new Set(["featureIds"]);
 
 function RecordLinks({
   column,
@@ -1052,20 +1058,24 @@ function RecordLinks({
     const choice = column.choices.find((one) => one.id === id);
     return choice === undefined ? [] : [choice];
   });
-  return (
-    <Group gap={4}>
-      {named.map(({ id, label }, index) => (
-        <span key={id}>
-          <RecordLink
-            name={label}
-            onShow={() => {
-              onShow(id);
-            }}
-          />
-          {index < named.length - 1 && ","}
-        </span>
-      ))}
-    </Group>
+  const onLines = listedOnLines.has(column.key);
+  const links = named.map(({ id, label }, index) => (
+    <span key={id}>
+      <RecordLink
+        name={label}
+        onShow={() => {
+          onShow(id);
+        }}
+      />
+      {!onLines && index < named.length - 1 && ","}
+    </span>
+  ));
+  return onLines ? (
+    <Stack gap={0} align="flex-start">
+      {links}
+    </Stack>
+  ) : (
+    <Group gap={4}>{links}</Group>
   );
 }
 
@@ -1084,7 +1094,7 @@ function PlanRecordDetails({
   record: PlanRecord;
   beside: boolean;
   canEdit: boolean;
-  showRecord: (tab: ProjectTab, id: string) => void;
+  showRecord: (tab: PlanTab, id: string) => void;
   onChange: (change: PlanChange) => void;
 }) {
   const { closeStale, editingOf } = useRecordEditing<never, PlanChange>();
@@ -1150,7 +1160,7 @@ function DetailRow({
   value: CellValue;
   beside: boolean;
   editing: Editing | undefined;
-  showRecord: (tab: ProjectTab, id: string) => void;
+  showRecord: (tab: PlanTab, id: string) => void;
 }) {
   const draft = record.draft;
   const changed =

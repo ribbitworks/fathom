@@ -2,7 +2,8 @@
 
 // Customers, projects with their milestones, and proposals, as the Decisions Log sets out. Each is
 // one of the plan's records, changed through drafts, and shown as its draft makes it, with the
-// draft beside. A project's dates are not entered: they come from its milestones.
+// draft beside. A project's dates are not entered: they come from its milestones. A project names
+// the features it needs, and a proposal those it proposes.
 
 import { z } from "zod";
 import { daySchema } from "./days.ts";
@@ -98,6 +99,8 @@ export const projectSchema = z.object({
   ownerId: z.string().nullable(),
   customerIds: z.array(z.string()),
   proposalIds: z.array(z.string()),
+  // The features it needs: its scope.
+  featureIds: z.array(z.string()),
   milestones: z.array(milestoneSchema),
   dates: projectDatesSchema,
   liveDates: projectDatesSchema.optional(),
@@ -116,6 +119,8 @@ export const proposalSchema = z.object({
   customerIds: z.array(z.string()),
   // A choice in the built-in proposal statuses list.
   statusId: z.string(),
+  // The features it proposes.
+  featureIds: z.array(z.string()),
 });
 
 export type Proposal = z.infer<typeof proposalSchema>;
@@ -178,6 +183,7 @@ export const projectRequestSchema = z.object({
   ownerId: z.uuid().nullable().default(null),
   customerIds: picked,
   proposalIds: picked,
+  featureIds: picked,
 });
 
 export type ProjectRequest = z.infer<typeof projectRequestSchema>;
@@ -214,6 +220,7 @@ export const proposalRequestSchema = z.object({
   ownerId: z.uuid().nullable().default(null),
   customerIds: picked,
   statusId: z.uuid().optional(),
+  featureIds: picked,
 });
 
 export type ProposalRequest = z.infer<typeof proposalRequestSchema>;

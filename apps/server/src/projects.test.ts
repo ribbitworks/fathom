@@ -6,7 +6,14 @@
 // drafts, approved with the drafts they use, removed together where they belong together, and named
 // in the change history and among unpublished changes.
 
-import { listItems, lists, milestones, people, projects } from "@fathom/db";
+import {
+  features,
+  listItems,
+  lists,
+  milestones,
+  people,
+  projects,
+} from "@fathom/db";
 import type {
   ChangeHistory,
   Permission,
@@ -81,6 +88,11 @@ async function addProject(body: object = {}) {
 async function addProposal(body: object = {}) {
   const name = unique("Fictional Proposal");
   return byName((await added("proposals", { name, ...body })).proposals, name);
+}
+
+async function addFeature() {
+  const name = unique("Fictional Feature");
+  return byName((await added("features", { name })).features, name);
 }
 
 async function addMilestone(projectId: string, body: object) {
@@ -690,6 +702,114 @@ describe("proposals", () => {
       `/api/lists/${listId}/choices/${String(added?.id)}`,
     );
     expect(live.statusCode).toBe(409);
+  });
+});
+
+describe("the features projects and proposals name", () => {
+  it("are kept each once, in order, and use the drafts of features only drafted to be added", async () => {
+    // Given two features only drafted to be added
+    const first = await addFeature();
+    const second = await addFeature();
+    // When a project and a proposal name them
+    const project = await addProject({
+      featureIds: [second.id, first.id, second.id],
+    });
+    const proposal = await addProposal({ featureIds: [first.id] });
+    // Then each is named once, in order, and approving them approves the features
+    expect(project.featureIds).toEqual([first.id, second.id].sort());
+    expect(proposal.featureIds).toEqual([first.id]);
+    expect(project.draft?.uses).toEqual(
+      expect.arrayContaining([
+        { type: "feature", id: first.id },
+        { type: "feature", id: second.id },
+      ]),
+    );
+    await approve([
+      { type: "project", id: project.id },
+      { type: "proposal", id: proposal.id },
+    ]);
+    const plan = await readPlan(viewer.cookie);
+    expect(byName(plan.projects, project.name)).toMatchObject({
+      featureIds: [first.id, second.id].sort(),
+    });
+    expect(byName(plan.proposals, proposal.name)).toMatchObject({
+      featureIds: [first.id],
+    });
+    expect(byName(plan.features, first.name).draft).toBeUndefined();
+  });
+
+  it("are changed as a draft of the project or proposal", async () => {
+    const feature = await addFeature();
+    const project = await addProject();
+    const proposal = await addProposal();
+    await approve([
+      { type: "feature", id: feature.id },
+      { type: "project", id: project.id },
+      { type: "proposal", id: proposal.id },
+    ]);
+    const changed = await send("PUT", `/api/projects/${project.id}`, {
+      name: project.name,
+      featureIds: [feature.id],
+    });
+    expect(changed.statusCode).toBe(200);
+    const proposed = await send("PUT", `/api/proposals/${proposal.id}`, {
+      name: proposal.name,
+      featureIds: [feature.id],
+    });
+    expect(proposed.statusCode).toBe(200);
+    const plan = await readPlan();
+    expect(byName(plan.projects, project.name).draft).toMatchObject({
+      changed: ["featureIds"],
+      live: { featureIds: [] },
+    });
+    expect(byName(plan.proposals, proposal.name).draft).toMatchObject({
+      changed: ["featureIds"],
+      live: { featureIds: [] },
+    });
+  });
+
+  it("refuse a project's general feature, which is off the roadmap", async () => {
+    const project = await addProject();
+    await approve([{ type: "project", id: project.id }]);
+    const [general] = await test.connection
+      .select({ id: features.id })
+      .from(features)
+      .where(eq(features.generalForProjectId, project.id));
+    const generalId = String(general?.id);
+    for (const path of ["projects", "proposals"]) {
+      const response = await send("POST", `/api/${path}`, {
+        name: unique("Fictional Record"),
+        featureIds: [generalId],
+      });
+      expect(response.statusCode).toBe(400);
+      expect(errorOf(response)).toBe("Choose features from Features");
+    }
+  });
+
+  it("refuse a feature that does not exist", async () => {
+    const response = await send("POST", "/api/proposals", {
+      name: unique("Fictional Proposal"),
+      featureIds: [missing],
+    });
+    expect(response.statusCode).toBe(404);
+  });
+
+  it("keep a feature from being removed while a project or proposal names it", async () => {
+    const feature = await addFeature();
+    await approve([{ type: "feature", id: feature.id }]);
+    // Given a live feature a proposal names
+    const proposal = await addProposal({ featureIds: [feature.id] });
+    // When its removal is drafted, it is refused, naming the proposal, then the project
+    const refused = await send("DELETE", `/api/features/${feature.id}`);
+    expect(refused.statusCode).toBe(409);
+    expect(errorOf(refused)).toBe(
+      `This is used by the proposal ${proposal.name}; change that first`,
+    );
+    await send("DELETE", `/api/proposals/${proposal.id}`);
+    const project = await addProject({ featureIds: [feature.id] });
+    expect(errorOf(await send("DELETE", `/api/features/${feature.id}`))).toBe(
+      `This is used by the project ${project.name}; change that first`,
+    );
   });
 });
 

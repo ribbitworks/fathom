@@ -3,6 +3,7 @@
 // Tests for the Projects page's tables: what their columns save from what is typed into a cell.
 
 import type { Customer, Feature, RecordDraft } from "@fathom/shared";
+import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { cellKinds, flagChoice } from "./cell-kinds.tsx";
 import {
@@ -50,6 +51,7 @@ const choices = (more: Partial<TableChoices> = {}): TableChoices => ({
   customers: [],
   proposals: [],
   projects: [],
+  features: [],
   statuses: [],
   featureStatuses: [
     { ...cycleChoice("possible-first", "Long shot"), meaning: "possible" },
@@ -359,6 +361,41 @@ describe("the plan's records as they are live", () => {
   });
 });
 
+describe("a column of features picked", () => {
+  const named = (id: string, name: string) => ({ ...feature({ id }), name });
+  const column = () => {
+    const found = proposalColumns(
+      choices({
+        features: [named("f1", "Fictional One"), named("f2", "Fictional Two")],
+      }),
+    ).find(({ key }) => key === "featureIds");
+    if (found?.content === undefined) throw new Error("No Features column");
+    return found.content;
+  };
+  const proposal = (featureIds: string[]) => ({
+    id: "p1",
+    name: "Proposal",
+    externalId: null,
+    link: null,
+    ownerId: null,
+    customerIds: [],
+    statusId: "s1",
+    featureIds,
+  });
+
+  it("names every feature in one line, with each on a line of its tip", () => {
+    const { container } = render(<>{column()(proposal(["f1", "f2"]))}</>);
+    const cell = container.querySelector("[data-tip]");
+    expect(cell?.textContent).toBe("Fictional One, Fictional Two");
+    expect(cell?.getAttribute("data-tip")).toBe("Fictional One\nFictional Two");
+  });
+
+  it("shows nothing for no features, or only those it cannot name", () => {
+    expect(column()(proposal([]))).toBeNull();
+    expect(column()(proposal(["gone"]))).toBeNull();
+  });
+});
+
 describe("the columns' values", () => {
   const proposalColumn = (key: string, given = choices()) => {
     const column = proposalColumns(given).find((each) => each.key === key);
@@ -372,6 +409,7 @@ describe("the columns' values", () => {
     ownerId: null,
     customerIds: [],
     statusId: "s1",
+    featureIds: [],
   };
 
   it("reads and saves a web link by its address, and none as nothing", () => {

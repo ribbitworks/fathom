@@ -2,12 +2,13 @@
 
 // The fictional organization's customers, proposals, and projects with their milestones, added live
 // and dated from the day they are added, each recorded in the change history as made by Fathom
-// itself. Proposals are in every status, some linked from projects; projects have customer
-// deliveries before and after that day, and one has no milestones. Owners are people the seed data
-// adds, left out when they are not there. Each project has its general feature, in the first status
-// meaning In progress, as approving gives one. Removing them first discards every draft, published
-// or not, of their records, and keeps any that something added by hand uses. A development-only
-// package, never included in the runtime image.
+// itself. Proposals are in every status, some linked from projects, and projects and proposals name
+// some of the seeded features, which are added first; projects have customer deliveries before and
+// after that day, and one has no milestones. Owners are people the seed data adds, left out when
+// they are not there. Each project has its general feature, in the first status meaning In
+// progress, as approving gives one. Removing them first discards every draft, published or not, of
+// their records, and keeps any that something added by hand uses. A development-only package, never
+// included in the runtime image.
 
 import {
   customers,
@@ -50,6 +51,8 @@ export const seededProposals: readonly {
   customers: readonly CustomerKey[];
   // Which of the organization's managers owns it, by their place among them, if anyone does.
   owner: number | null;
+  // The seeded features it proposes, by key.
+  features: readonly string[];
 }[] = [
   {
     key: "cranes",
@@ -59,6 +62,7 @@ export const seededProposals: readonly {
     status: "Won",
     customers: ["harbour"],
     owner: 0,
+    features: ["audit-export", "offline-sync"],
   },
   {
     key: "scheduling",
@@ -68,6 +72,7 @@ export const seededProposals: readonly {
     status: "Won",
     customers: ["clinics"],
     owner: 1,
+    features: ["offline-sync", "scheduler-api"],
   },
   {
     key: "wifi",
@@ -77,6 +82,7 @@ export const seededProposals: readonly {
     status: "Open",
     customers: ["air"],
     owner: 2,
+    features: ["mobile-approvals", "voice-notes"],
   },
   {
     key: "fleet",
@@ -86,6 +92,7 @@ export const seededProposals: readonly {
     status: "Lost",
     customers: ["transit"],
     owner: null,
+    features: ["retention-controls", "partner-portal"],
   },
   {
     key: "ore",
@@ -95,6 +102,7 @@ export const seededProposals: readonly {
     status: "Withdrawn",
     customers: ["mining"],
     owner: null,
+    features: ["partner-portal"],
   },
 ];
 
@@ -106,6 +114,8 @@ export const seededProjects: readonly {
   customers: readonly CustomerKey[];
   proposals: readonly string[];
   owner: number | null;
+  // The seeded features it needs, by key.
+  features: readonly string[];
   milestones: readonly {
     key: string;
     name: string;
@@ -120,6 +130,7 @@ export const seededProjects: readonly {
     customers: ["harbour"],
     proposals: ["cranes"],
     owner: 0,
+    features: ["audit-export", "offline-sync"],
     milestones: [
       { key: "kickoff", name: "Kickoff", days: -60, customerDelivery: false },
       {
@@ -144,6 +155,7 @@ export const seededProjects: readonly {
     customers: ["clinics"],
     proposals: ["scheduling"],
     owner: 1,
+    features: ["offline-sync", "scheduler-api"],
     milestones: [
       {
         key: "design-review",
@@ -161,6 +173,7 @@ export const seededProjects: readonly {
     customers: ["transit", "air"],
     proposals: [],
     owner: null,
+    features: ["retention-controls"],
     milestones: [
       {
         key: "delivered",
@@ -183,6 +196,7 @@ export const seededProjects: readonly {
     customers: [],
     proposals: [],
     owner: null,
+    features: ["usage-alerts"],
     milestones: [],
   },
 ];
@@ -190,12 +204,27 @@ export const seededProjects: readonly {
 export const customerId = (key: string) => fictionalId(`customer:${key}`);
 export const proposalId = (key: string) => fictionalId(`proposal:${key}`);
 export const projectId = (key: string) => fictionalId(`project:${key}`);
+export const featureId = (key: string) => fictionalId(`feature:${key}`);
 export const milestoneId = (project: string, key: string) =>
   fictionalId(`milestone:${project}:${key}`);
 
 const customerIds = (keys: readonly string[]) => keys.map(customerId).sort();
+const featureIds = (keys: readonly string[]) => keys.map(featureId).sort();
 
 type Reader = Pick<Database, "select">;
+
+// Whether a draft's fields link, by a list of identifiers under a name, to any of these.
+export const linksAny = (
+  fields: unknown,
+  name: string,
+  ids: readonly string[],
+) =>
+  ids.length === 0
+    ? undefined
+    : sql`jsonb_exists_any(${fields}->${name}, ARRAY[${sql.join(
+        ids.map((id) => sql`${id}`),
+        sql`, `,
+      )}]::text[])`;
 
 // The built-in proposal statuses' choices by label, in lower case, and the first in the list's
 // order, for a status renamed since.
@@ -273,6 +302,7 @@ export async function seedProjects(
         ownerId: owner(proposal.owner),
         customerIds: customerIds(proposal.customers),
         statusId: String(status(proposal.status)),
+        featureIds: featureIds(proposal.features),
       };
       await transaction.insert(proposals).values({ id, ...row });
       made.push(...recorded("proposal", id, "created", row));
@@ -285,6 +315,7 @@ export async function seedProjects(
         ownerId: owner(project.owner),
         customerIds: customerIds(project.customers),
         proposalIds: project.proposals.map(proposalId).sort(),
+        featureIds: featureIds(project.features),
       };
       await transaction.insert(projects).values({ id, ...row });
       await addGeneralFeature(id);
@@ -407,13 +438,6 @@ export async function unseedProjects(database: Database): Promise<string[]> {
       ...customerIdsRemoved,
     ];
     // Drafts made by hand that link to a record removed go with it.
-    const linksAny = (fields: unknown, name: string, ids: readonly string[]) =>
-      ids.length === 0
-        ? undefined
-        : sql`jsonb_exists_any(${fields}->${name}, ARRAY[${sql.join(
-            ids.map((id) => sql`${id}`),
-            sql`, `,
-          )}]::text[])`;
     for (const table of [drafts, unpublishedDrafts]) {
       const linking = or(
         linksAny(table.fields, "customerIds", customerIdsRemoved),

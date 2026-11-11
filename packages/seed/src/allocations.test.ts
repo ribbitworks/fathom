@@ -19,7 +19,8 @@ import {
   seededAllocationRows,
   unseedAllocations,
 } from "./allocations.ts";
-import { featureId, seededFeatures } from "./features.ts";
+import { seededFeatures } from "./features.ts";
+import { featureId } from "./projects.ts";
 
 let database: TestDatabase;
 let pool: ReturnType<typeof createPool>;

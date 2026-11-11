@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Customers, proposals, projects, features, and milestones, as kinds of the plan's records, in the
+// Customers, features, proposals, projects, and milestones, as kinds of the plan's records, in the
 // order approving adds them, so each comes after the records it links to. A project and its
 // milestones are removed together: the draft removing a project uses the drafts removing its
 // milestones, and each of those uses the project's, so they are approved, rejected, and discarded
@@ -62,8 +62,16 @@ export const customerKind: RecordKind = {
 export const proposalKind: RecordKind = {
   type: "proposal",
   table: proposals,
-  fields: ["name", "externalId", "link", "ownerId", "customerIds", "statusId"],
-  links: { customerIds: "customer" },
+  fields: [
+    "name",
+    "externalId",
+    "link",
+    "ownerId",
+    "customerIds",
+    "statusId",
+    "featureIds",
+  ],
+  links: { customerIds: "customer", featureIds: "feature" },
   refers: { ownerId: "person", statusId: "choice" },
   unique: [
     { field: "name", message: "There is already a proposal with that name" },
@@ -80,8 +88,19 @@ export const proposalKind: RecordKind = {
 export const projectKind: RecordKind = {
   type: "project",
   table: projects,
-  fields: ["name", "externalId", "ownerId", "customerIds", "proposalIds"],
-  links: { customerIds: "customer", proposalIds: "proposal" },
+  fields: [
+    "name",
+    "externalId",
+    "ownerId",
+    "customerIds",
+    "proposalIds",
+    "featureIds",
+  ],
+  links: {
+    customerIds: "customer",
+    proposalIds: "proposal",
+    featureIds: "feature",
+  },
   refers: { ownerId: "person" },
   unique: [
     { field: "name", message: "There is already a project with that name" },
@@ -143,8 +162,8 @@ export const milestoneKind: RecordKind = {
 
 export const projectKinds = [
   customerKind,
+  featureKind,
   proposalKind,
   projectKind,
-  featureKind,
   milestoneKind,
 ] as const;

@@ -310,7 +310,7 @@ const choicesFor = (column: AnyColumn, value: readonly string[]) =>
 const chosen = (value: CellValue) => value as string[];
 
 // The names of the choices a value holds, leaving out any no longer known.
-const labels = (column: Choices, value: CellValue): string[] =>
+export const labels = (column: Choices, value: CellValue): string[] =>
   chosen(value).flatMap((id) => {
     const label = column.choices.find((option) => option.id === id)?.label;
     return label === undefined ? [] : [label];

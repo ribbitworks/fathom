@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/data/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-09"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Projects, Proposals, Customers and Milestones
@@ -95,11 +95,11 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
 **Preconditions:** [R1](#r1-restore-the-seed-data) run, then signed in with this account.
 
 - [ ] **Step 1.** In the left-hand menu, select **Projects**.
-  - **Expected:** The **Projects** page opens, with no **Later** tag beside **Projects** in the menu. The **Projects** tab is chosen. The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **First milestone**, **Last milestone** and **Next delivery**, with a row for each seeded project. There is no **New project** button.
+  - **Expected:** The **Projects** page opens, with no **Later** tag beside **Projects** in the menu. The **Projects** tab is chosen. The table's columns are **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, with a row for each seeded project. There is no **New project** button.
   - **Notes:**
 
 - [ ] **Step 2.** Select the **Proposals** tab.
-  - **Expected:** A table with **Name**, **Proposal ID**, **Link**, **Owner**, **Customers** and **Status**. The address bar changes.
+  - **Expected:** A table with **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**. The address bar changes.
   - **Notes:**
 
 - [ ] **Step 3.** Select the **Customers** tab.
@@ -127,7 +127,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Notes:**
 
 - [ ] **Step 9.** Open the project's ⋯ menu and select **Show details**.
-  - **Expected:** The side panel opens, headed with the project's name, listing **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date. There is no **Add milestone** button, and no milestone has a ⋯ button.
+  - **Expected:** The side panel opens, headed with the project's name, listing **Name**, **Project ID**, **Owner**, **Customers**, **Proposals**, **Features**, **First milestone**, **Last milestone** and **Next delivery**, then **Milestones** with each of the project's milestones and its date. There is no **Add milestone** button, and no milestone has a ⋯ button.
   - **Notes:**
 
 - [ ] **Step 10.** Select **Light** in the Appearance menu.
@@ -191,7 +191,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
   - **Notes:**
 
 - [ ] **Step 2.** Select **New proposal**.
-  - **Expected:** The side panel opens, headed **New proposal**, with **Name**, **Proposal ID**, **Link**, **Owner**, **Customers** and **Status**. **Status** already reads **Open**.
+  - **Expected:** The side panel opens, headed **New proposal**, with **Name**, **Proposal ID**, **Link**, **Owner**, **Customers**, **Status** and **Features**. **Status** already reads **Open**.
   - **Notes:**
 
 - [ ] **Step 3.** Type `Testing Proposal` in **Name**.
@@ -221,7 +221,7 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
 **Preconditions:** Signed in with this account. Run after PROJ-03.
 
 - [ ] **Step 1.** Select the **Projects** tab, then **New project**.
-  - **Expected:** The side panel opens, headed **New project**, with **Name**, **Project ID**, **Owner**, **Customers** and **Proposals**.
+  - **Expected:** The side panel opens, headed **New project**, with **Name**, **Project ID**, **Owner**, **Customers**, **Proposals** and **Features**.
   - **Notes:**
 
 - [ ] **Step 2.** Type `Testing Project` in **Name** and `TP-1` in **Project ID**.
@@ -530,4 +530,48 @@ Run the test cases in order, starting with [R0](#r0-start-fathom), then [R1](#r1
 
 - [ ] **Step 6.** Open the **Draft** menu and select **Live only**.
   - **Expected:** The panel shows no pencil buttons, and **Proposal ID** shows its earlier value.
+  - **Notes:**
+
+### PROJ-11: A Project's and a Proposal's Features
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-10.
+
+**Preconditions:** Signed in with this account. [R1](#r1-restore-the-seed-data) run. **Projects** page open, **Projects** tab chosen.
+
+- [ ] **Step 1.** Look at the **Features** column.
+  - **Expected:** Each project names the features it needs, separated by commas.
+  - **Notes:**
+
+- [ ] **Step 2.** Point at a **Features** cell that names two features.
+  - **Expected:** A tip lists the project's features, each on a line of its own.
+  - **Notes:**
+
+- [ ] **Step 3.** Open **Show details** of the same project.
+  - **Expected:** The side panel lists the same features under **Features**, each a link on a line of its own.
+  - **Notes:**
+
+- [ ] **Step 4.** Select the first feature under **Features**.
+  - **Expected:** The **Features** page opens, with that feature's side panel beside the table.
+  - **Notes:**
+
+- [ ] **Step 5.** Select the browser's back button.
+  - **Expected:** The **Projects** page shows again, with the project's side panel.
+  - **Notes:**
+
+- [ ] **Step 6.** Select the **Proposals** tab.
+  - **Expected:** The **Features** column names each proposal's features the same way, with the same tip.
+  - **Notes:**
+
+### PROJ-12: The Product Manager Adds a Feature a Project Needs
+
+**Account:** Product Manager, `product.manager@fathom.test`, the same as PROJ-11.
+
+**Preconditions:** Signed in with this account. Run after PROJ-11. **Projects** page open, **Projects** tab chosen.
+
+- [ ] **Step 1.** Select the **Features** cell of a project that names one feature, write the project's name in the notes, and press Enter.
+  - **Expected:** A list of features opens, with a search box, and that feature marked as picked.
+  - **Notes:**
+
+- [ ] **Step 2.** Pick one more feature from the list, and press Esc.
+  - **Expected:** The list closes, and the cell names both features. The row is tinted light blue, with a hollow yellow dot and **Draft** after the project's name, and under it a light green **Live** row whose **Features** cell names the one feature it had.
   - **Notes:**

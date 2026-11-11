@@ -85,6 +85,7 @@ describe("requests", () => {
       ownerId: null,
       customerIds: [first, second],
       proposalIds: [],
+      featureIds: [],
     });
     expect(
       projectRequestSchema.parse({ name: "Fictional", externalId: " P-1 " })

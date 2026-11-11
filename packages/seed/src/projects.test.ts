@@ -25,12 +25,14 @@ import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { eq, isNotNull, isNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { seededFeatures } from "./features.ts";
 import {
   customerId,
   projectId,
   proposalId,
   seededCustomers,
   seededProjects,
+  seededProposals,
   seedProjects,
   unseedProjects,
 } from "./projects.ts";
@@ -107,6 +109,17 @@ describe("seeding projects", () => {
       (project) => project.proposalIds,
     );
     expect(linked.length).toBeGreaterThan(0);
+  });
+
+  it("names seeded features from projects and proposals, leaving some unnamed as ideas", () => {
+    const named = new Set(
+      [...seededProjects, ...seededProposals].flatMap(
+        (record) => record.features,
+      ),
+    );
+    const keys = seededFeatures.map(({ key }) => key);
+    expect(keys).toEqual(expect.arrayContaining([...named]));
+    expect(keys.filter((key) => !named.has(key)).length).toBeGreaterThan(0);
   });
 
   it("gives owners only to people there, and dates milestones on both sides of the seed day", async () => {

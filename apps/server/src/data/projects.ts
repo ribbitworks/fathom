@@ -240,6 +240,7 @@ function projectOut(
     ownerId: text(project.ownerId),
     customerIds: linkedIds(project, "customerIds"),
     proposalIds: linkedIds(project, "proposalIds"),
+    featureIds: linkedIds(project, "featureIds"),
     milestones: found
       .map((milestone) => milestoneOut(state, makers, milestone))
       .sort(
@@ -265,6 +266,7 @@ function proposalOut(
     ownerId: text(proposal.ownerId),
     customerIds: linkedIds(proposal, "customerIds"),
     statusId: String(proposal.statusId),
+    featureIds: linkedIds(proposal, "featureIds"),
     ...extras(state, makers, "proposal", id),
   };
 }
@@ -373,6 +375,16 @@ async function checkOwner(
   }
 }
 
+// Refuses a project's general feature, which is off the roadmap, as a feature a record names.
+function checkRoadmapFeatures(
+  state: RecordsState,
+  featureIds: readonly string[],
+): void {
+  if (featureIds.some((id) => isGeneralFeature(state, id))) {
+    throw new BadRequestError("Choose features from Features");
+  }
+}
+
 // A customer, project, proposal, or feature, as a request adds or changes it.
 export type PlanRecordRequest =
   | { type: "customer"; request: CustomerRequest }
@@ -414,6 +426,7 @@ const projectRecord = (request: ProjectRequest) => ({
   ownerId: request.ownerId,
   customerIds: request.customerIds,
   proposalIds: request.proposalIds,
+  featureIds: request.featureIds,
 });
 
 export async function addProject(
@@ -423,6 +436,7 @@ export async function addProject(
 ): Promise<Saved<PlanRecords>> {
   return changingPlan(database, maker, async (transaction, state) => {
     await checkOwner(transaction, request.ownerId);
+    checkRoadmapFeatures(state, request.featureIds);
     return saveRecordDraft(
       transaction,
       maker,
@@ -443,6 +457,7 @@ export async function changeProject(
   return changingPlan(database, maker, async (transaction, state) => {
     changeableRecord(state, "project", id);
     await checkOwner(transaction, request.ownerId);
+    checkRoadmapFeatures(state, request.featureIds);
     return saveRecordDraft(
       transaction,
       maker,
@@ -493,10 +508,12 @@ async function statusFor(
 
 async function proposalRecord(
   transaction: Transaction,
+  state: RecordsState,
   request: ProposalRequest,
   had?: unknown,
 ) {
   await checkOwner(transaction, request.ownerId);
+  checkRoadmapFeatures(state, request.featureIds);
   return {
     name: request.name,
     externalId: request.externalId,
@@ -509,6 +526,7 @@ async function proposalRecord(
       request.statusId,
       had,
     ),
+    featureIds: request.featureIds,
   };
 }
 
@@ -524,7 +542,7 @@ export async function addProposal(
       state,
       "proposal",
       randomUUID(),
-      await proposalRecord(transaction, request),
+      await proposalRecord(transaction, state, request),
     ),
   );
 }
@@ -543,7 +561,7 @@ export async function changeProposal(
       state,
       "proposal",
       id,
-      await proposalRecord(transaction, request, proposal.statusId),
+      await proposalRecord(transaction, state, request, proposal.statusId),
     );
   });
 }

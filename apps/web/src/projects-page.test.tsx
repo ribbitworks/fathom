@@ -49,6 +49,7 @@ const project = (more: Partial<Project> = {}): Project => ({
   ownerId,
   customerIds: [customerId],
   proposalIds: [proposalId],
+  featureIds: [],
   milestones: [],
   dates: { first: null, last: null, nextDelivery: null },
   ...more,
@@ -62,6 +63,7 @@ const proposal = (more: Partial<Plan["proposals"][number]> = {}) => ({
   ownerId: null,
   customerIds: [customerId],
   statusId,
+  featureIds: [],
   ...more,
 });
 
@@ -253,6 +255,7 @@ describe("adding a record in the side panel", () => {
           ownerId: null,
           customerIds: [],
           statusId,
+          featureIds: [],
         },
       ]);
     });
@@ -280,6 +283,7 @@ describe("adding a record in the side panel", () => {
           ownerId: null,
           customerIds: [],
           proposalIds: [],
+          featureIds: [],
         },
       ]);
     });
@@ -1581,6 +1585,29 @@ describe("the Features page", () => {
           /Fictional (Later|Second|First)/.exec(textContent)?.[0],
       )
       .filter((name) => name !== undefined);
+
+  it("lists a project's features in its panel, each a link to its details on Features", async () => {
+    // Given a project needing two features, open beside Projects
+    const { history } = await open(
+      featurePlan({
+        projects: [project({ featureIds: [first.id, second.id] })],
+      }),
+      {},
+      `/projects?open=${projectId}`,
+    );
+    const link = await within(sidePanel()).findByRole("button", {
+      name: "Fictional First",
+    });
+    expect(link.parentElement?.textContent).toBe("Fictional First");
+    // When the first is chosen
+    await userEvent.click(link);
+    // Then Features opens with its details beside the table
+    await waitFor(() => {
+      expect(history.location.pathname).toBe("/features");
+    });
+    expect(history.location.search).toContain(first.id);
+    await screen.findByRole("heading", { name: "Fictional First" });
+  });
 
   it("opens a feature's details beside the table from its Name cell", async () => {
     const { history } = await open();

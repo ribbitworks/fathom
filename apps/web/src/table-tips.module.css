@@ -11,6 +11,8 @@
    from one cell to the next keeps the tooltip open, so it follows at once. */
 .tip {
   animation: tip-appears 1ms 350ms backwards;
+  /* A tip listing several names puts each on a line of its own. */
+  white-space: pre-line;
 }
 
 @keyframes tip-appears {

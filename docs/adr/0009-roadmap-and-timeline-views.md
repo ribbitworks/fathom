@@ -3,7 +3,7 @@
 - **ADR:** 0009
 - **Status:** Proposed
 - **Date:** 2026-11-03
-- **Revised:** 2026-11-03, to point to the Decisions Log's answer on how a cycle's demand is counted, and to the board's test page in the Implementation Plan
+- **Revised:** 2026-11-03, to point to the Decisions Log's answer on how a cycle's demand is counted, and to the board's test page in the Implementation Plan; 2026-11-10, since large work is no longer split into a feature for each increment
 
 ## Context
 
@@ -12,7 +12,7 @@ The [Product Brief](../product/brief.md#goals-for-v1) asks for a roadmap view, w
 What the views move is coarse, as the [Decisions Log](../product/decisions.md#planning) sets out:
 
 - **Features target cycles:** A feature's start and end are months that follow from its allocations, and only milestones have dates to the day. Moving a feature means changing its target cycle, or its feature team, not dragging free dates.
-- **Work can take longer than a cycle:** Work may need allocations over several cycles. As the Decisions Log's feature scope sets out, it is then split into one feature for each increment, each targeting its own cycle, or kept as one feature behind a feature flag, whose allocations span the cycles before the one it targets.
+- **Work can take longer than a cycle:** Work may need allocations over several cycles. As the Decisions Log's feature scope sets out, it stays one feature, which targets the cycle it is delivered in, and whose allocations span the cycles before it.
 - **No dependency lines:** Dependencies between features are not recorded, and Fathom plans features, never tasks.
 - **Every change is a draft:** Moves are drafts, private until published, as [ADR 0007](0007-draft-rows.md) and [ADR 0008](0008-unpublished-drafts.md) set out, shown with the marks every other table uses.
 

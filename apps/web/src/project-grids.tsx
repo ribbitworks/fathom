@@ -40,7 +40,12 @@ import {
   type AddedColumns,
   cellRequest,
 } from "./added-columns.ts";
-import { type CellChange, cellKinds, flagChoice } from "./cell-kinds.tsx";
+import {
+  type CellChange,
+  cellKinds,
+  flagChoice,
+  labels,
+} from "./cell-kinds.tsx";
 import { EffortCell } from "./effort-cell.tsx";
 import { effortColumnUnits, hoursWords } from "./effort.ts";
 import { decimalUpTo } from "./numbers.ts";
@@ -60,6 +65,7 @@ import {
 } from "./projects.ts";
 import { ShowDetailsButton } from "./show-details-button.tsx";
 import { StatusMark } from "./status-mark.tsx";
+import { tipAttribute } from "./table-tips.tsx";
 import {
   fieldColumn,
   inOrder,
@@ -310,6 +316,30 @@ const customersColumn = <Rec extends PlanRecord>(
     multiple: true,
   });
 
+// A column of records picked by name, several in one cell, which cuts a long list short, so its
+// tip gives every name, one to a line.
+function pickedColumn<Rec extends PlanRecord>(
+  key: string,
+  label: string,
+  records: Parameters<typeof named>[0],
+): Column<Rec, PlanChange> {
+  const column = field<Rec>(key, label, "choice", {
+    choices: named(records),
+    multiple: true,
+  });
+  return {
+    ...column,
+    content: (record) => {
+      const names = labels(column, column.value(record));
+      return names.length === 0 ? null : (
+        <span {...{ [tipAttribute]: names.join("\n") }}>
+          {names.join(", ")}
+        </span>
+      );
+    },
+  };
+}
+
 // The columns of a project's dates, which follow from its milestones.
 export const projectDateColumns: readonly [keyof Project["dates"], string][] = [
   ["first", "First milestone"],
@@ -340,10 +370,8 @@ export function projectColumns(
     idColumn<Project>("Project ID"),
     ownerColumn<Project>(choices.people),
     customersColumn<Project>(choices.customers),
-    field<Project>("proposalIds", "Proposals", "choice", {
-      choices: named(choices.proposals),
-      multiple: true,
-    }),
+    pickedColumn<Project>("proposalIds", "Proposals", choices.proposals),
+    pickedColumn<Project>("featureIds", "Features", choices.features),
     ...projectDateColumns.map(([key, label]) => projectDateColumn(key, label)),
   ];
 }
@@ -403,6 +431,7 @@ export function proposalColumns(
       // A new proposal starts in the first status offered.
       newRowValue: () => firstStatus(choices.statuses),
     },
+    pickedColumn<Proposal>("featureIds", "Features", choices.features),
   ];
 }
 

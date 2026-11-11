@@ -135,6 +135,7 @@ export const projectRequest = (project: Project): ProjectRequest => ({
   ownerId: project.ownerId,
   customerIds: project.customerIds,
   proposalIds: project.proposalIds,
+  featureIds: project.featureIds,
 });
 
 export const proposalRequest = (proposal: Proposal): ProposalRequest => ({
@@ -144,6 +145,7 @@ export const proposalRequest = (proposal: Proposal): ProposalRequest => ({
   ownerId: proposal.ownerId,
   customerIds: proposal.customerIds,
   statusId: proposal.statusId,
+  featureIds: proposal.featureIds,
 });
 
 export const milestoneRequest = (milestone: Milestone): MilestoneRequest => ({
@@ -327,6 +329,7 @@ const planRecordOperations: Readonly<
       ownerId: null,
       customerIds: [],
       proposalIds: [],
+      featureIds: [],
       milestones: [],
       dates: noDates,
     },
@@ -342,6 +345,7 @@ const planRecordOperations: Readonly<
       ownerId: null,
       customerIds: [],
       statusId: "",
+      featureIds: [],
     },
     all: (plan) => plan.proposals,
     withAll: (plan, records) => ({
@@ -421,6 +425,7 @@ export interface TableChoices {
   customers: readonly Customer[];
   proposals: readonly Proposal[];
   projects: readonly Project[];
+  features: readonly Feature[];
   statuses: Choice[];
   // In their list's order, each with its meaning.
   featureStatuses: Choice[];
@@ -487,6 +492,7 @@ export const tableChoices = (
   customers: plan.customers,
   proposals: plan.proposals,
   projects: plan.projects,
+  features: plan.features,
   featureColumns: plan.featureColumns,
   effortConversions,
 });

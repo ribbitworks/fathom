@@ -19,19 +19,16 @@ import {
   fieldValues,
   listItems,
   lists,
+  projects,
+  proposals,
 } from "@fathom/db";
 import { startTestDatabase, type TestDatabase } from "@fathom/test-utils";
 import { addMonths, monthOf } from "@fathom/shared";
 import { eq, inArray, isNull } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import {
-  featureId,
-  seededFeatures,
-  seedFeatures,
-  unseedFeatures,
-} from "./features.ts";
-import { customerId } from "./projects.ts";
+import { seededFeatures, seedFeatures, unseedFeatures } from "./features.ts";
+import { customerId, featureId } from "./projects.ts";
 import { seedReleases, unseedReleases } from "./releases.ts";
 
 const today = "2026-11-08";
@@ -49,6 +46,8 @@ beforeAll(async () => {
 
 afterEach(async () => {
   await connection.delete(drafts);
+  await connection.delete(projects);
+  await connection.delete(proposals);
   await connection.delete(features);
   await connection.delete(featureTeams);
   await unseedReleases(connection);
@@ -310,6 +309,74 @@ describe("removing features", () => {
     });
     await unseedFeatures(connection, []);
     expect((await everyFeature()).map(({ id }) => id)).toEqual([hand]);
+    expect(await connection.select().from(drafts)).toEqual([]);
+  });
+
+  it("takes them off projects and proposals, and discards drafts of those naming them", async () => {
+    // Given a project and a proposal added by hand naming a seeded feature, and a draft naming it
+    await seeded();
+    const hand = await addHandFeature();
+    const seededOne = featureId("offline-sync");
+    const projectId = randomUUID();
+    const proposalId = randomUUID();
+    await connection.insert(projects).values({
+      id: projectId,
+      name: "Fictional Hand Project",
+      featureIds: [seededOne, hand],
+    });
+    await connection.insert(proposals).values({
+      id: proposalId,
+      name: "Fictional Hand Proposal",
+      statusId: await anyStatus(),
+      featureIds: [seededOne],
+    });
+    await connection.insert(drafts).values({
+      recordType: "proposal",
+      recordId: proposalId,
+      action: "changed",
+      fields: { featureIds: [seededOne, hand] },
+    });
+    // When the seeded features are removed
+    await unseedFeatures(connection, []);
+    // Then each loses the seeded feature, recorded in the change history, and the draft is gone
+    const [project] = await connection.select().from(projects);
+    const [proposal] = await connection.select().from(proposals);
+    expect(project?.featureIds).toEqual([hand]);
+    expect(proposal?.featureIds).toEqual([]);
+    expect(await connection.select().from(drafts)).toEqual([]);
+    const recorded = await connection
+      .select({ oldValue: changes.oldValue, newValue: changes.newValue })
+      .from(changes)
+      .where(eq(changes.recordId, projectId));
+    expect(recorded).toEqual([
+      { oldValue: [seededOne, hand], newValue: [hand] },
+    ]);
+  });
+
+  it("discards the milestones' drafts of a project only drafted to be added that names them", async () => {
+    // Given a project drafted to be added, naming a seeded feature, with a milestone drafted on it
+    await seeded();
+    const projectId = randomUUID();
+    await connection.insert(drafts).values([
+      {
+        recordType: "project",
+        recordId: projectId,
+        action: "created",
+        fields: {
+          name: "Fictional Drafted",
+          featureIds: [featureId("offline-sync")],
+        },
+      },
+      {
+        recordType: "milestone",
+        recordId: randomUUID(),
+        action: "created",
+        fields: { projectId, name: "Fictional Kickoff" },
+      },
+    ]);
+    // When the seeded features are removed
+    await unseedFeatures(connection, []);
+    // Then both drafts are gone
     expect(await connection.select().from(drafts)).toEqual([]);
   });
 

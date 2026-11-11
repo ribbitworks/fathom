@@ -2,11 +2,12 @@
 
 // The fictional organization's features, added live and placed relative to the cycle the seed day
 // falls in, across the cycles of the Platform release stream, some in Later, each recorded in the
-// change history as made by Fathom itself. Removing them discards every draft of them, and takes
-// the seeded feature teams off features added by hand, so the teams can go. A development-only
-// package, never included in the runtime image.
+// change history as made by Fathom itself. Removing them discards every draft of them, takes the
+// seeded feature teams off features added by hand, so the teams can go, and takes the features off
+// every project and proposal. A development-only package, never included in the runtime image.
 
 import {
+  type ChangeRecord,
   type Database,
   drafts,
   features,
@@ -14,6 +15,8 @@ import {
   fieldValues,
   listItems,
   lists,
+  projects,
+  proposals,
   recordChanges,
   releaseStreams,
   unpublishedDrafts,
@@ -21,8 +24,8 @@ import {
 } from "@fathom/db";
 import { fictionalId } from "@fathom/fixtures";
 import { addMonths, cyclesOf, type Meaning, monthOf } from "@fathom/shared";
-import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
-import { customerId } from "./projects.ts";
+import { and, arrayOverlaps, asc, eq, inArray, or, sql } from "drizzle-orm";
+import { customerId, featureId, linksAny } from "./projects.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
 import { type SeededStream, seededStreams, streamId } from "./releases.ts";
 
@@ -163,8 +166,6 @@ export const seededFeatures: readonly {
     description: null,
   },
 ];
-
-export const featureId = (key: string) => fictionalId(`feature:${key}`);
 
 const seededIds = () => seededFeatures.map(({ key }) => featureId(key));
 
@@ -398,8 +399,53 @@ async function unseedComplexity(
   return kept;
 }
 
-// Removes the features seeding added, every draft of them, and every draft that names the seeded
-// feature teams, whose features added by hand then have no feature team.
+// Takes the seeded features off every project and proposal that names them, including those kept
+// for what was added by hand, each table in one update, returning the changes for the change
+// history.
+async function takeOffProjectsAndProposals(
+  transaction: Pick<Database, "select" | "update">,
+  ids: readonly string[],
+): Promise<ChangeRecord[]> {
+  const removed = sql`ARRAY[${sql.join(
+    ids.map((id) => sql`${id}`),
+    sql`, `,
+  )}]::uuid[]`;
+  const changed: ChangeRecord[] = [];
+  for (const [recordType, table] of [
+    ["project", projects],
+    ["proposal", proposals],
+  ] as const) {
+    const naming = arrayOverlaps(table.featureIds, [...ids]);
+    const before = await transaction
+      .select({ id: table.id, featureIds: table.featureIds })
+      .from(table)
+      .where(naming);
+    if (before.length === 0) continue;
+    await transaction
+      .update(table)
+      .set({
+        featureIds: sql`array(select kept from unnest(${table.featureIds}) with ordinality as named(kept, place) where kept <> all(${removed}) order by place)`,
+      })
+      .where(naming);
+    changed.push(
+      ...before.map(({ id, featureIds }) => ({
+        recordType,
+        recordId: id,
+        action: "changed" as const,
+        field: "featureIds",
+        tier: "general",
+        oldValue: featureIds,
+        newValue: featureIds.filter((featureId) => !ids.includes(featureId)),
+      })),
+    );
+  }
+  return changed;
+}
+
+// Removes the features seeding added, every draft of them, every draft that names the seeded
+// feature teams, whose features added by hand then have no feature team, and every draft of a
+// project or proposal naming them, with the milestones of a project only drafted to be added; the
+// features are taken off every project and proposal.
 export async function unseedFeatures(
   database: Database,
   teamIds: readonly string[],
@@ -407,18 +453,44 @@ export async function unseedFeatures(
   return database.transaction(async (transaction) => {
     const ids = seededIds();
     for (const table of [drafts, unpublishedDrafts]) {
+      const naming = and(
+        inArray(table.recordType, ["project", "proposal"]),
+        linksAny(table.fields, "featureIds", ids),
+      );
+      // A project only drafted to be added goes with its draft, so the drafts of its milestones go
+      // too.
+      const addedProjects = (
+        await transaction
+          .select({ id: table.recordId })
+          .from(table)
+          .where(
+            and(
+              naming,
+              eq(table.recordType, "project"),
+              eq(table.action, "created"),
+            ),
+          )
+      ).map(({ id }) => id);
       await transaction
         .delete(table)
         .where(
-          and(
-            eq(table.recordType, "feature"),
-            or(
-              inArray(table.recordId, ids),
-              inArray(sql`${table.fields}->>'featureTeamId'`, [...teamIds]),
+          or(
+            and(
+              eq(table.recordType, "feature"),
+              or(
+                inArray(table.recordId, ids),
+                inArray(sql`${table.fields}->>'featureTeamId'`, [...teamIds]),
+              ),
+            ),
+            naming,
+            and(
+              eq(table.recordType, "milestone"),
+              inArray(sql`${table.fields}->>'projectId'`, addedProjects),
             ),
           ),
         );
     }
+    const unlinked = await takeOffProjectsAndProposals(transaction, ids);
     const unteamed = await transaction
       .select({ id: features.id, teamId: features.featureTeamId })
       .from(features)
@@ -445,6 +517,7 @@ export async function unseedFeatures(
       .where(inArray(features.id, ids))
       .returning();
     await recordChanges(transaction, null, [
+      ...unlinked,
       ...unteamed.map(({ id, teamId }) => ({
         recordType: "feature",
         recordId: id,

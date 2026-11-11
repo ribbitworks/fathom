@@ -583,6 +583,7 @@ describe("the Drafts page", () => {
               ownerId: null,
               customerIds: [],
               statusId: "f0000000-0000-4000-8000-000000000001",
+              featureIds: [],
               draft: recordDraft({ action: "deleted" }),
             },
           ],
@@ -594,6 +595,7 @@ describe("the Drafts page", () => {
               ownerId: null,
               customerIds: [],
               proposalIds: [],
+              featureIds: [],
               dates: { first: null, last: null, nextDelivery: null },
               draft: recordDraft({ action: "created" }),
               milestones: [

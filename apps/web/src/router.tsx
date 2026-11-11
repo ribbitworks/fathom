@@ -42,6 +42,7 @@ import { setTimeZone } from "./today.ts";
 import { ReleasesPage } from "./releases-page.tsx";
 import { PeoplePage } from "./people-page.tsx";
 import { ProjectsPage, projectTabSchema } from "./projects-page.tsx";
+import type { PlanTab } from "./projects.ts";
 import { PageNotFound, ServerProblem } from "./problems.tsx";
 import { RolesPage } from "./roles-page.tsx";
 import { sessionQuery } from "./session.ts";
@@ -350,6 +351,12 @@ const projectsTabSearch = (
   ...(record === undefined ? {} : { open: record }),
 });
 
+// The address of one of the plan's pages or tabs, with a record's details open if one is named.
+const planAddress = (next: PlanTab, record?: string) =>
+  next === "features"
+    ? { to: "/features" as const, search: { open: record } }
+    : { to: "/projects" as const, search: projectsTabSearch(next, record) };
+
 const featuresRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/features",
@@ -364,10 +371,7 @@ const featuresRoute = createRoute({
         tab="features"
         canEditColumns={permissions.includes("configuration:edit")}
         onTab={(next, record) => {
-          void navigate({
-            to: "/projects",
-            search: projectsTabSearch(next, record),
-          });
+          void navigate(planAddress(next, record));
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(search, (next, replace) => {
@@ -395,7 +399,7 @@ const projectsRoute = createRoute({
       <ProjectsPage
         tab={tab ?? "projects"}
         onTab={(next, record) => {
-          void navigate({ search: projectsTabSearch(next, record) });
+          void navigate(planAddress(next, record));
         }}
         approves={approvableKinds(permissions)}
         {...viewProps(search, (next, replace) => {

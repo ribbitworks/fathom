@@ -20,8 +20,8 @@ import {
 import { fictionalId, type FictionalOrganization } from "@fathom/fixtures";
 import { addToMonth, type AllocationMonths, monthOf } from "@fathom/shared";
 import { and, eq, inArray, or, sql } from "drizzle-orm";
-import { featureId, seededFeatures } from "./features.ts";
-import { projectId, seededProjects } from "./projects.ts";
+import { seededFeatures } from "./features.ts";
+import { featureId, projectId, seededProjects } from "./projects.ts";
 import { filledIn, recorded, type SeededChange } from "./recorded.ts";
 
 // Who is allocated: a member of a seeded feature team, by the team's place and the member's place
