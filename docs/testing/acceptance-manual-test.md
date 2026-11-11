@@ -4,7 +4,7 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/**", "apps/server/src/**", "packages/seed/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md", "docs/product/roles.md"]
-last_updated: "2026-11-10"
+last_updated: "2026-11-11"
 ---
 
 # Manual Test: End-to-End Acceptance
@@ -15,124 +15,48 @@ Verifies Fathom's common use by every persona in [Roles](../product/roles.md#rol
 
 ## Test Environment
 
-- A clone of Fathom set up as [Development Setup](../design/development-setup.md) describes, with the `.dev/` folder in place.
-- Roles as Fathom starts them: R2 puts them back before the first test case.
-- A desktop web browser at least 1,440 pixels wide, on a computer whose appearance can be switched between light and dark.
+As [Manual Test Basics](manual-test-basics.md#test-environment) sets out, with:
+
+- A browser window at least 1,440 pixels wide, on a computer whose appearance can be switched between light and dark.
 - A second browser, or a private window, for signing in as a second account while the first stays signed in.
 - A plain text editor, for typing lines to copy and paste into a table.
-- Two terminals open at the repository root: the first runs Fathom (R0), the second the data commands (R1, R2 and R3).
 
 ## Test Accounts
 
-R2 and R3 create these accounts, with every other development account, as [Development Setup](../design/development-setup.md#development-accounts) lists. They share one password, which R2 and R3 print when they finish. Each holds the role its persona has in [Roles](../product/roles.md#roles-by-persona), as Fathom starts it.
+As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test uses the account of each persona in [Roles](../product/roles.md#roles-by-persona):
 
-- **Product Manager account:** `product.manager@fathom.test`, shown in Fathom as **Product Manager**. It holds the Product Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Project Manager account:** `project.manager@fathom.test`, shown in Fathom as **Project Manager**. It holds the Project Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Manager account:** `engineering.manager@fathom.test`, shown in Fathom as **Engineering Manager**. It holds the Engineering Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Feature Lead account:** `feature.lead@fathom.test`, shown in Fathom as **Feature Lead**. It holds the Feature Lead role, its default, and the Engineering Manager role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Engineering Director account:** `engineering.director@fathom.test`, shown in Fathom as **Engineering Director**. It holds the Engineering Director role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Executive account:** `executive@fathom.test`, shown in Fathom as **Executive**. It holds the Executive role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
-- **Administrator account:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**. It holds the Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Product Manager:** `product.manager@fathom.test`
+- **Project Manager:** `project.manager@fathom.test`
+- **Engineering Manager:** `engineering.manager@fathom.test`
+- **Feature Lead:** `feature.lead@fathom.test`, holding the Feature Lead role, its default, and the Engineering Manager role
+- **Engineering Director:** `engineering.director@fathom.test`
+- **Workforce Administrator:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**
+- **Executive:** `executive@fathom.test`
+- **Team Member:** `team.member@fathom.test`
+- **Administrator:** `fathom.administrator@fathom.test`, shown in Fathom as **Fathom Administrator**
+
+This test creates:
+
 - **New account:** `fictional.newcomer@fathom.test`, shown in Fathom as **Fictional Newcomer**. ACC-37 creates it with the Team Member role, and its password is the one ACC-37 shows, until ACC-37 changes it to `fictional password 2`. ACC-38 gives it the **Fictional Reader** role in place of Team Member.
 - **Planning lead account:** `fictional.planning.lead@fathom.test`, shown in Fathom as **Fictional Planning Lead**. ACC-46 creates it with the Workforce Administrator role, its default, and the Product Manager role, and its password is the one ACC-46 shows, until ACC-50 changes it to `fictional password 3`.
 
 ## Common Procedures
 
-### R0: Start Fathom
-
-1. In the first terminal, run:
-
-   ```sh
-   pnpm dev
-   ```
-
-2. Confirm that the browser opens Fathom at the address the terminal prints, such as `https://localhost:8443`, showing the **Sign in** page or the page last open.
-3. Leave the terminal running for the whole test.
-
-### R1: Restore the Seed Data
-
-Use wherever a test case says so. Fathom keeps running. This removes the seed data and every draft of it, including drafts made during the test, then adds the seed data again. It keeps accounts, roles, and records added during the test and approved, such as a planned hire or a project. No test case here approves a draft the seed data holds, which R1 could not restore.
-
-1. In the second terminal, run:
-
-   ```sh
-   pnpm db:reseed
-   ```
-
-2. Confirm that the last line printed gives the shared password, with no error above it.
-3. Reload the browser page.
-
-### R2: Reset the Database
-
-Use before the first test case and in the last. This deletes every account and record in the development database, including anything added by hand, and puts every role back as Fathom starts it. Ask the owner before running it on a database others use.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again (R0).
-
-### R3: Start From an Empty Database
-
-Use where a test case says so. This deletes every account and record in the development database, including anything added by hand, puts every role back as Fathom starts it, and adds back only the development accounts, with no other data. Ask the owner before running it on a database others use.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed:accounts
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Start Fathom again (R0).
-
-### P1: Publish
-
-1. Select the Publish button in the top bar, which reads **Publish** followed by the number of changes waiting, such as **Publish 4 changes**.
-2. Confirm that a notification says **Published** followed by the number of changes, and that the button is gone.
-
-### P2: Discard the Unpublished Changes
-
-1. Select the **⋯** button beside the Publish button, then **Discard all…**.
-2. In the dialog titled **Discard** followed by the number of changes, select **Discard**.
-3. Confirm that a notice says **Discarded** followed by the number of changes, and that the Publish button is gone.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data), [Start From an Empty Database](manual-test-basics.md#start-from-an-empty-database), [Publish](manual-test-basics.md#publish) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes).
 
 ## Terms
 
-- **Appearance menu:** the choices **System**, **Light** and **Dark** under **Appearance**, in the menu that opens from your name and initials at the top right of every page.
-- **Role menu:** the choices under **Role** in the same menu, shown only for an account with more than one role.
-- **Publish button:** the button in the top bar, beside your name, that reads **Publish** followed by a number of changes.
-- **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown after a record's name, in a row's first cell, or under a column's name. A hollow dot means the change is still unpublished.
-- **Live row:** the light green row, marked with a green dot and **Live**, under a row with a draft, showing the record as it is now.
-- **⋯ menu:** the menu that opens from the **⋯** button at the end of a row.
-- **Column menu:** the menu that opens when you select a column's name in a table's header.
-- **Draft menu:** the menu that opens from the **Draft** button above a table or the org chart.
-- **Views menu:** the menu that opens from the last of the buttons after the search box above the People table. The button reads **Views**, or the name of the view applied.
-- **Search for:** type the text in the search box above the table, so only the matching rows are shown.
-- **Details button:** the small button with an arrow out of a box at the right of a row's **Name** cell, shown while the pointer is over the row.
-- **Details panel:** the panel that slides out on the right of a table or the org chart, headed with a record's name, with an **×** at its top right.
-- **Finder:** the box reading **Find a person or team** at the top left of the **Org chart** page.
-- **Teams switch:** the two-part switch reading **Reporting teams** and **Feature teams** at the top right of the **Org chart** page.
-- **Feature teams button:** the button reading **Feature teams** above the chart, at its right, once the chart shows feature teams.
-- **Team panel:** the panel titled **Feature team** that opens beside the chart, with a **Team** drop-down at its top.
-- **Group by menu:** the button above a table that starts **Group by:** and names the grouping in use.
-- **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today. **Next quarter's cycle** is the Platform stream's cycle for the quarter after the one today is in. A cycle's name is the year it ends in and its number in that year, such as **27.1**. The examples after "such as" are as the seed data is when added in November 2026.
-- **Dates:** the steps type dates as digits, such as `20300315`; the tables and panels show them as the browser's language writes them, such as **Mar 15, 2030**.
+[Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the account menu, marks, the Publish button, the finder, the teams switch, the team panel and seeded dates. This test adds:
+
+- **Seeded dates in this test:** **Next quarter's cycle** is the Platform stream's cycle for the quarter after the one today is in. The examples after "such as" are as the seed data is when added in November 2026.
+- **Typed dates:** unlike the Basics' dates, this test's steps type dates as digits with no separators, such as `20300315`.
 - **Months from today:** the steps name months by where they fall from the current month: **last month** is the one before it, **next month** the one after it, a number of **months ago**, such as **six months ago**, that many months before it, and **three months from now** the third month after it. The steps type a month's first day as digits; the examples after "such as" are for a run in November 2026, such as `20260501` for the first day of six months ago.
 - **Empty row:** the row at the end of a table, with blank cells, where a new record is typed or pasted.
 - **Date box:** the box labelled **Date** between the **Org chart** heading and the chart, before the left arrow, timeline, right arrow and **Today**. Accounts that don't see Restricted details have the arrows, timeline and **Today** without it.
-- **Mode switch:** the switch under the **Feature assignments** heading, reading **Teams** and **Allocations**.
-- **Team list:** the list of feature teams that opens below a month's cell in **Feature assignments** for editing, with a box to type in at its top.
 
 ## Test Cases
 
-Run the test cases in order, in about three and a half hours: two hours and 50 minutes for Journeys 1 to 5, and 40 minutes for Journey 6. Start with R0, then R2; Journey 6 starts again from an empty database with R3. Check each step whose expected result you see, and write anything else under its notes.
+Run the test cases in order, in about three and a half hours: two hours and 50 minutes for Journeys 1 to 5, and 40 minutes for Journey 6. Start with Start Fathom, then Reset the Database; Journey 6 starts again with Start From an Empty Database, and the last test case runs Reset the Database to put everything back. Check each step whose expected result you see, and write anything else under its notes.
 
 ### Journey 1: Hiring and People
 
@@ -140,7 +64,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Workforce Administrator, `engineering.operations.manager@fathom.test`; the first test case. Step 4 signs in as another account.
 
-**Preconditions:** R2 run. **Light** chosen in the Appearance menu. Signed in with this account. **People** page open from the left-hand menu.
+**Preconditions:** Reset the Database run. **Light** chosen in the Appearance menu. Signed in with this account. **People** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select **New** at the top right of the page. Select the change button beside **State**, and choose **Request to hire**.
   - **Expected:** The details panel is headed **New planned hire**.
@@ -150,11 +74,11 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The panel shows **Fictional mobile tester**. Its row in the table has a hollow yellow dot and a **Draft** mark, and reads **Request to hire** in **State**.
   - **Notes:**
 
-- [ ] **Step 3.** Publish (P1).
+- [ ] **Step 3.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
-- [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Select **Drafts** in the left-hand menu, and type `REQ-5001` in the search box.
+- [ ] **Step 4.** Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Select the **Drafts** page in the left-hand menu, and type `REQ-5001` in the search box.
   - **Expected:** One entry is shown, adding the planned hire **Fictional mobile tester**, with a checkbox.
   - **Notes:**
 
@@ -162,7 +86,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The dialog closes, and a notice reads **Approved 1 draft.**
   - **Notes:**
 
-- [ ] **Step 6.** Select **People** in the left-hand menu, and search for `Fictional mobile tester`.
+- [ ] **Step 6.** Select the **People** page in the left-hand menu, and search for `Fictional mobile tester`.
   - **Expected:** One hire row, with no mark, reading **REQ-5001** in **ID**, **SDET** in **Position** and **Request to hire** in **State**.
   - **Notes:**
 
@@ -176,7 +100,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** No row is shown. The table has no **Start** or **End** column.
   - **Notes:**
 
-- [ ] **Step 2.** Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`. Select **People** in the left-hand menu, and search for `Chatura Abbott`.
+- [ ] **Step 2.** Sign out, and sign in as the Engineering Manager, `engineering.manager@fathom.test`. Select the **People** page in the left-hand menu, and search for `Chatura Abbott`.
   - **Expected:** One row, for **Chatura Abbott**, whose **Start** cell holds a date after today.
   - **Notes:**
 
@@ -202,7 +126,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The panel is headed **Backend engineer 2**, with a **Filled by** section reading **Fictional new starter** in **Name** and **EMP-9001** in **ID**.
   - **Notes:**
 
-- [ ] **Step 4.** Publish (P1).
+- [ ] **Step 4.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
@@ -240,7 +164,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The **Manager** cell of **Platform engineer** reads **Fictional new lead**, and the row has a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 5.** Discard the unpublished changes (P2), and search for `Platform engineer TBD` again.
+- [ ] **Step 5.** Run Discard the Unpublished Changes, and search for `Platform engineer TBD` again.
   - **Expected:** The **Manager** cell of **Platform engineer** reads **Engineering Manager, TBD-** and a number, and the row has no mark.
   - **Notes:**
 
@@ -262,7 +186,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** In dark mode, every value, mark and change button in the panel, and the yellow cells in the row, are easy to read.
   - **Notes:**
 
-- [ ] **Step 4.** Publish (P1). Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, type `Samuel Richter` in the search box, select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog.
+- [ ] **Step 4.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, type `Samuel Richter` in the search box, select the entry's checkbox, then **Approve 1 draft**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 1 draft.**
   - **Notes:**
 
@@ -284,7 +208,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The dialog closes. An **On-call weeks** column with empty cells is at the right end of the table, with a hollow yellow dot and **Draft: added** under its name.
   - **Notes:**
 
-- [ ] **Step 3.** Publish (P1). Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Select **Drafts**, and type `On-call` in the search box.
+- [ ] **Step 3.** Run Publish. Sign out, and sign in as the Project Manager, `project.manager@fathom.test`. Select **Drafts**, and type `On-call` in the search box.
   - **Expected:** One entry is shown, for the column **On-call weeks**, with a checkbox.
   - **Notes:**
 
@@ -332,7 +256,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The panel closes, and the **Metrics** button has the keyboard focus.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### Journey 2: Saved Views
 
@@ -340,7 +264,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Engineering Manager, `engineering.manager@fathom.test`, changed from ACC-08.
 
-**Preconditions:** R1 run after ACC-08. Signed in with this account. **Light** chosen in the Appearance menu. **People** page open, with no view applied.
+**Preconditions:** Restore the Seed Data run after ACC-08. Signed in with this account. **Light** chosen in the Appearance menu. **People** page open, with no view applied.
 
 - [ ] **Step 1.** Open the **ID** column menu, and select **Freeze up to this column**. Scroll the table sideways to the right.
   - **Expected:** **Name** and **ID** stay in place, with a thin grey line and a soft shadow at the right of **ID**, and the other columns pass under them.
@@ -420,7 +344,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** Signed in with this account, in the main browser. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Select **Org chart** in the **People** section of the left-hand menu, and select the name on the card for **Lorenza Thiel**.
+- [ ] **Step 1.** Select the **Org chart** page in the left-hand menu, and select the name on the card for **Lorenza Thiel**.
   - **Expected:** The chart shows each person's name, position, and the team they lead. The card opens nothing, and the page stays on the chart.
   - **Notes:**
 
@@ -510,7 +434,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** **Rosendo Champlin** is listed among the members with a yellow dot and **Draft**. On the chart, a card for him under Polly Smith is marked as a draft, and his card in **Mobile apps** stays.
   - **Notes:**
 
-- [ ] **Step 4.** Publish (P1).
+- [ ] **Step 4.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
@@ -520,7 +444,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-14 done. Signed in with this account.
 
-- [ ] **Step 1.** Select **Drafts** in the left-hand menu, and type `Platform reliability` in the search box.
+- [ ] **Step 1.** Select the **Drafts** page in the left-hand menu, and type `Platform reliability` in the search box.
   - **Expected:** One entry, **the feature team Platform reliability**, with lines for **Feature lead** set to **Polly Smith** and **Members** with **Rosendo Champlin** added, made by **Feature Lead**.
   - **Notes:**
 
@@ -550,7 +474,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The text below the row goes. In the team panel, **Branson O'Keefe** is now marked **Draft, from** and the first day of last month, such as **Draft, from Oct 1, 2026**.
   - **Notes:**
 
-- [ ] **Step 4.** Publish (P1).
+- [ ] **Step 4.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
@@ -568,7 +492,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-16 done. Signed in with this account. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
+- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
   - **Expected:** The page is headed **Feature assignments**, with **Group by: Manager** above the table. The table has a **Person** column on the left and a column for each month, starting with the current month.
   - **Notes:**
 
@@ -632,7 +556,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The team list closes. The row is tinted blue, with a hollow yellow dot and **Draft** beside the name, and a light green row under it marked **Live**. The cells before the one selected are not yellow. From the cell selected on, each cell is yellow and holds a **Payments core** label with a hollow yellow dot inside it, beside the **Search** label.
   - **Notes:**
 
-- [ ] **Step 4.** Select **Org chart** in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button and **Payments core**.
+- [ ] **Step 4.** Select the **Org chart** page in the left-hand menu, choose **Feature teams** in the teams switch, then select the Feature teams button and **Payments core**.
   - **Expected:** The team panel lists **Branson O'Keefe** among the members, marked **Draft, from** and the month two months after the current one, such as **Draft, from Jan 2027**.
   - **Notes:**
 
@@ -642,7 +566,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** Signed in with this account.
 
-- [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
+- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
   - **Expected:** The button reads **Group by: Feature team**.
   - **Notes:**
 
@@ -654,7 +578,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** No box for editing opens, and nothing in the cell changes.
   - **Notes:**
 
-**Afterwards:** R1.
+**Afterwards:** Run Restore the Seed Data.
 
 ### Journey 4: The Plan
 
@@ -662,7 +586,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Product Manager, `product.manager@fathom.test`, changed from ACC-20.
 
-**Preconditions:** R1 run after ACC-20. Signed in with this account. **Projects** page open from the left-hand menu.
+**Preconditions:** Restore the Seed Data run after ACC-20. Signed in with this account. **Projects** page open from the left-hand menu.
 
 - [ ] **Step 1.** Select the **Customers** tab, then **New customer**. Type `Fictional Ferry Co-op` in **Name**, and select **Add**.
   - **Expected:** The side panel is headed **Fictional Ferry Co-op**, with a hollow yellow dot and **Draft: added**, and the table has a row for it with the same mark.
@@ -684,7 +608,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** **Go live** is listed after **Pilot**. **First milestone** shows 2030-03-15, **Last milestone** 2030-06-30, and **Next delivery** 2030-03-15. The table's row for **Fictional Harbour Lights** shows the same three dates.
   - **Notes:**
 
-- [ ] **Step 6.** Publish (P1).
+- [ ] **Step 6.** Run Publish.
   - **Expected:** The marks on the project and both milestones are now solid yellow dots with **Draft: added**.
   - **Notes:**
 
@@ -736,7 +660,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The feature's details show beside the table, headed **Fictional Atlas** with a hollow yellow dot and **Draft: added**, with **Ferry routes first** in bold under **Notes**.
   - **Notes:**
 
-- [ ] **Step 5.** Publish (P1), and reload the page.
+- [ ] **Step 5.** Run Publish, and reload the page.
   - **Expected:** **Fictional Atlas** is under the heading **Later**, with a solid yellow dot and **Draft: added**.
   - **Notes:**
 
@@ -776,7 +700,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The **Projects** cell names **Fictional Harbour Lights**, with **FHL-1** in grey before it, and the **Proposals** cell names **Fictional Ferry Proposal**. **Fictional Atlas** has no mark.
   - **Notes:**
 
-- [ ] **Step 3.** Publish (P1).
+- [ ] **Step 3.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
@@ -788,7 +712,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** A notice reads **Approved 2 drafts.**
   - **Notes:**
 
-- [ ] **Step 6.** Select **Projects** in the left-hand menu, and on the **Projects** tab, select **Show features** in the ⋯ menu of **Fictional Harbour Lights**.
+- [ ] **Step 6.** Select the **Projects** page in the left-hand menu, and on the **Projects** tab, select **Show features** in the ⋯ menu of **Fictional Harbour Lights**.
   - **Expected:** The **Features** page opens showing only **Fictional Atlas**, with a pill above the table reading **Projects: FHL-1 Fictional Harbour Lights**.
   - **Notes:**
 
@@ -810,7 +734,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** A row **Long shot** appears above the empty row, with a hollow yellow dot and **Draft: added**, and **Possible** at the end of the row.
   - **Notes:**
 
-- [ ] **Step 3.** Publish (P1).
+- [ ] **Step 3.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
@@ -846,7 +770,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The cell reads **Long shot** and is yellow. The row has a hollow yellow dot and **Draft**, with a Live row under it reading **Possible**.
   - **Notes:**
 
-- [ ] **Step 2.** Publish (P1).
+- [ ] **Step 2.** Run Publish.
   - **Expected:** The dot on the **Voice Notes** row is filled.
   - **Notes:**
 
@@ -894,7 +818,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-29 done. Signed in with this account.
 
-- [ ] **Step 1.** Select **Change history** in the left-hand menu, and type `Voice Notes` in the search box.
+- [ ] **Step 1.** Select the **Change history** page in the left-hand menu, and type `Voice Notes` in the search box.
   - **Expected:** The entries, newest first, say that Product Manager approved the changes to **Voice Notes**, Feature Lead sent its draft for approval again, Product Manager rejected its draft, with the reason **Fictional reason: wait for the customer day.**, and Feature Lead drafted changing **Status** from **Possible** to **Long shot**.
   - **Notes:**
 
@@ -916,7 +840,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** **New dates** lists that cycle two months long, then the next cycles each starting a month earlier than before. **Releases that move** names **Harbor 3**, and **Features that move** names **Data Retention Controls** and **Report Builder**.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Change length**, then publish (P1).
+- [ ] **Step 3.** Select **Change length**, then run Publish.
   - **Expected:** A notification says **Drafted the new length.** The **Harbor 3** row under **Releases** has a yellow dot and **Draft**, and ships on the first half-year cycle's new last day, such as **27.1 to 27.3 · ships 2027-11-30**.
   - **Notes:**
 
@@ -942,7 +866,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** Under **Ships on**, the dialog reads **Leave empty to ship at the end of its last cycle, on** that cycle's last day.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Make release**, then publish (P1).
+- [ ] **Step 3.** Select **Make release**, then run Publish.
   - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Fictional Harbor 4**, with a yellow dot and **Draft: added**.
   - **Notes:**
 
@@ -1030,7 +954,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** **Fictional Harbour Lights** is struck through, with a hollow yellow dot and **Draft: removed**.
   - **Notes:**
 
-- [ ] **Step 2.** Publish (P1).
+- [ ] **Step 2.** Run Publish.
   - **Expected:** The mark becomes a solid yellow dot.
   - **Notes:**
 
@@ -1146,7 +1070,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-37 to ACC-40 done.
 
-- [ ] **Step 1.** Select **Access history** in the left-hand menu, and type `Fictional Newcomer` in the search box at the top of the page.
+- [ ] **Step 1.** Select the **Access history** page in the left-hand menu, and type `Fictional Newcomer` in the search box at the top of the page.
   - **Expected:** The entries include, from newest to oldest: Fathom Administrator **reactivated the account for** Fictional Newcomer; **deactivated the account for** Fictional Newcomer, marked as worth checking; **changed the role of** Fictional Newcomer, from Team Member to Fictional Reader, marked as worth checking; Fictional Newcomer **changed their own password**; and Fathom Administrator **created the account for** Fictional Newcomer.
   - **Notes:**
 
@@ -1160,7 +1084,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** Signed in with this account, acting as **Feature Lead**. **Releases** page open, with **Platform** selected in the streams table.
 
-- [ ] **Step 1.** Open the menu from your name and initials at the top right.
+- [ ] **Step 1.** Open the account menu.
   - **Expected:** **Role** lists **Engineering Manager** and **Feature Lead**, with a tick beside **Feature Lead** only.
   - **Notes:**
 
@@ -1182,7 +1106,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** A notification says **Drafted the change to the release.** The row reads **Fictional Harbor Three**, with a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 2.** Publish (P1), then select **Change history** in the left-hand menu.
+- [ ] **Step 2.** Run Publish, then select the **Change history** page in the left-hand menu.
   - **Expected:** The latest entry names **Fictional Harbor Three** and starts with **Feature Lead as Engineering Manager**.
   - **Notes:**
 
@@ -1230,11 +1154,11 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** All the test cases above run.
 
-- [ ] **Step 1.** Reset the database (R2), and sign in as the Administrator, `fathom.administrator@fathom.test`. Select **Accounts** in the left-hand menu.
+- [ ] **Step 1.** Run Reset the Database, and sign in as the Administrator, `fathom.administrator@fathom.test`. Select the **Accounts** page in the left-hand menu.
   - **Expected:** The table lists the development accounts, with no **Fictional Newcomer**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Roles** in the left-hand menu.
+- [ ] **Step 2.** Select the **Roles** page in the left-hand menu.
   - **Expected:** The roles are listed as [Roles](../product/roles.md#starting-roles) sets out, with the Superuser role, and no **Fictional Reader**.
   - **Notes:**
 
@@ -1244,9 +1168,9 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Account:** Administrator, `fathom.administrator@fathom.test`, the same as ACC-45.
 
-**Preconditions:** R3 run. Signed in with this account. **Light** chosen in the Appearance menu.
+**Preconditions:** Start From an Empty Database run. Signed in with this account. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Select **Accounts** in the left-hand menu.
+- [ ] **Step 1.** Select the **Accounts** page in the left-hand menu.
   - **Expected:** The table lists the development accounts, as [Development Setup](../design/development-setup.md#development-accounts) lists them, and no other. The filter beside the search box reads **All 12**, **Active 12** and **Deactivated 0**.
   - **Notes:**
 
@@ -1272,15 +1196,15 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 - **Emil Stone**, Tab, **EMP-105**, Tab, **Employee**, Tab, **Hired**
 - **Freya Holt**, Tab, **EMP-106**, Tab, **Employee**, Tab, **Hired**
 
-- [ ] **Step 1.** Select **People** in the left-hand menu.
+- [ ] **Step 1.** Select the **People** page in the left-hand menu.
   - **Expected:** The table has its column names and only the empty row. The count above the table reads **0 people**.
   - **Notes:**
 
-- [ ] **Step 2.** Select **Org chart** in the left-hand menu.
+- [ ] **Step 2.** Select the **Org chart** page in the left-hand menu.
   - **Expected:** The page reads **Nobody is on the org chart yet.**
   - **Notes:**
 
-- [ ] **Step 3.** Select **Change history** in the left-hand menu.
+- [ ] **Step 3.** Select the **Change history** page in the left-hand menu.
   - **Expected:** The page reads **No changes yet to data this account can see.**
   - **Notes:**
 
@@ -1292,7 +1216,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** Both boxes are checked. The other rows' boxes stay clear.
   - **Notes:**
 
-- [ ] **Step 6.** Publish (P1).
+- [ ] **Step 6.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
@@ -1318,7 +1242,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The panel shows **Fictional tide engineer**. Its row reads **Request to hire** in **State** and **Ada Quill** in **Manager**, with a hollow yellow dot and **Draft**.
   - **Notes:**
 
-- [ ] **Step 4.** Publish (P1). Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 7 drafts**, then **Approve** in the dialog.
+- [ ] **Step 4.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 7 drafts**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 7 drafts.**, and the page says **No drafts waiting for approval.**
   - **Notes:**
 
@@ -1328,7 +1252,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-48 done. Signed in with this account. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Select **Org chart** in the left-hand menu.
+- [ ] **Step 1.** Select the **Org chart** page in the left-hand menu.
   - **Expected:** **Odile Brandt** is at the top, with **Manager** under the name, and her card ends with **Hide 3 reports**. **Dara Finch** and **Emil Stone** are in a column under her, and **Ada Quill**, with **Manager** under the name, is to the right of that column, her card ending with **Show 4 reports**.
   - **Notes:**
 
@@ -1354,7 +1278,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** A green banner says **The password has been changed, and every other session has been signed out.**, and Fathom opens with the left-hand menu.
   - **Notes:**
 
-- [ ] **Step 3.** Select **Releases** in the left-hand menu.
+- [ ] **Step 3.** Select the **Releases** page in the left-hand menu.
   - **Expected:** The page reads **No release streams yet.**, with a **New release stream** button at the top right.
   - **Notes:**
 
@@ -1366,7 +1290,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** Under **First cycles**: **27.1** with **2027-01-01 to 2027-03-31**, **27.2** with **2027-04-01 to 2027-06-30**, and **27.3** with **2027-07-01 to 2027-09-30**.
   - **Notes:**
 
-- [ ] **Step 6.** Select **Set up cycles**, then publish (P1).
+- [ ] **Step 6.** Select **Set up cycles**, then run Publish.
   - **Expected:** A notification says **Drafted the cycles.** Under **Cycle schedule**, a row reads **From 2027-01-01**, then **Every 3 months, named {YY}.{N}**.
   - **Notes:**
 
@@ -1378,7 +1302,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** Under **Ships on**, the dialog reads **Ships 15 days before 27.2 ends**.
   - **Notes:**
 
-- [ ] **Step 9.** Select **Make release**, then publish (P1).
+- [ ] **Step 9.** Select **Make release**, then run Publish.
   - **Expected:** A notification says **Drafted the new release.** Under **Releases**, a row reads **Fictional Mainline 1**, with a yellow dot and **Draft: added**, then **27.1 to 27.2 · ships 2027-06-15**, followed in bold by **15 days before 27.2 ends**.
   - **Notes:**
 
@@ -1388,7 +1312,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-48 done. Signed in with this account.
 
-- [ ] **Step 1.** Select **Projects** in the left-hand menu.
+- [ ] **Step 1.** Select the **Projects** page in the left-hand menu.
   - **Expected:** The **Projects** tab is chosen. The table has only its empty row, and the count above it reads **0 projects**.
   - **Notes:**
 
@@ -1404,7 +1328,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The side panel is headed **Fictional Lamp Room** with a hollow yellow dot and **Draft: added**, and under **Milestones** reads **No milestones yet**.
   - **Notes:**
 
-- [ ] **Step 5.** Select **Features** in the left-hand menu.
+- [ ] **Step 5.** Select the **Features** page in the left-hand menu.
   - **Expected:** The table has no group headings and only its empty row, and the count above it reads **0 features**.
   - **Notes:**
 
@@ -1412,7 +1336,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The feature's details are headed **Fictional Tide Tables** with a hollow yellow dot and **Draft: added**. In the table, its **Feature team** cell shows a **No team** mark.
   - **Notes:**
 
-- [ ] **Step 7.** Publish (P1).
+- [ ] **Step 7.** Run Publish.
   - **Expected:** The Publish button is gone.
   - **Notes:**
 
@@ -1422,7 +1346,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-50 and ACC-51 done. Signed in with this account.
 
-- [ ] **Step 1.** Select **Drafts** in the left-hand menu.
+- [ ] **Step 1.** Select the **Drafts** page in the left-hand menu.
   - **Expected:** Seven entries, each with a checkbox, one each for the release stream **Fictional Mainline**, its cycles from **2027-01-01**, the release **Fictional Mainline 1**, the customer **Fictional Lighthouse Trust**, the proposal **Fictional Lighthouse Bid**, the project **Fictional Lamp Room** and the feature **Fictional Tide Tables**.
   - **Notes:**
 
@@ -1440,7 +1364,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-48 done. Signed in with this account.
 
-- [ ] **Step 1.** Select **Feature assignments** in the left-hand menu, then **Feature team** in the Group by menu.
+- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu, then **Feature team** in the Group by menu.
   - **Expected:** Every person is listed under **No feature team**, and no cell in any month holds a label.
   - **Notes:**
 
@@ -1476,7 +1400,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The text below the row goes. The chart still draws **Tide team**, **Harbour team** and **Beacon team**, each with the same members.
   - **Notes:**
 
-- [ ] **Step 10.** Publish (P1). Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
+- [ ] **Step 10.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 3 drafts.**
   - **Notes:**
 
@@ -1506,7 +1430,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The text below the row goes. The line for the member leaving gives next month, such as **Bram Oakes, leaving from Dec 2026**.
   - **Notes:**
 
-- [ ] **Step 6.** Publish (P1). Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
+- [ ] **Step 6.** Run Publish. Sign out, and sign in as the Engineering Director, `engineering.director@fathom.test`. Select **Drafts**, tick **Select all waiting**, then select **Approve 3 drafts**, then **Approve** in the dialog.
   - **Expected:** A notice reads **Approved 3 drafts.**
   - **Notes:**
 
@@ -1542,7 +1466,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
 
 **Preconditions:** ACC-54 done. Signed in with this account.
 
-- [ ] **Step 1.** Select **Feature assignments** in the left-hand menu.
+- [ ] **Step 1.** Select the **Feature assignments** page in the left-hand menu.
   - **Expected:** The button reads **Group by: Feature team**. The groups are **Beacon team**, **Harbour team**, **Tide team** and **No feature team**, in that order, and **Odile Brandt** is under **No feature team**.
   - **Notes:**
 
@@ -1572,7 +1496,7 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** The cell reads **Tide team**, in yellow, and the **No team** mark is gone. The row has a hollow yellow dot and **Draft**, with a Live row under it.
   - **Notes:**
 
-- [ ] **Step 3.** Select the row's **Target cycle** cell, press Enter, choose **Fictional Mainline: 27.1**, and press Enter. Publish (P1).
+- [ ] **Step 3.** Select the row's **Target cycle** cell, press Enter, choose **Fictional Mainline: 27.1**, and press Enter. Run Publish.
   - **Expected:** The cell reads **Fictional Mainline: 27.1**, in yellow, and the dot on the row is filled.
   - **Notes:**
 
@@ -1580,4 +1504,4 @@ Run the test cases in order, in about three and a half hours: two hours and 50 m
   - **Expected:** A notice reads **Approved 1 draft.** **Fictional Tide Tables** has no mark, reads **Tide team** in **Feature team**, and is under the heading **Fictional Mainline: 27.1**.
   - **Notes:**
 
-**Afterwards:** R2.
+**Afterwards:** Run Reset the Database.

@@ -312,11 +312,11 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The page stays light, as the computer is set.
   - **Notes:**
 
-- [ ] **Step 2.** Open the menu from your name and initials at the top right.
+- [ ] **Step 2.** Open the account menu.
   - **Expected:** Under **Appearance**, **System**, **Light** and **Dark**, with a tick beside **System** only.
   - **Notes:**
 
-- [ ] **Step 3.** Press Escape, then press Tab until the button with your name and initials has focus, and press Enter.
+- [ ] **Step 3.** Press Escape, then press Tab until the button with the account's name and initials has focus, and press Enter.
   - **Expected:** The menu opens, and the first item has focus.
   - **Notes:**
 
@@ -328,7 +328,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The page opens dark.
   - **Notes:**
 
-- [ ] **Step 6.** Open the menu from your name and initials.
+- [ ] **Step 6.** Open the account menu.
   - **Expected:** The tick is beside **Dark**.
   - **Notes:**
 
@@ -388,7 +388,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** In the second browser, select **Sign out** on the **Change password** panel ACCT-08 left open, and sign in with this account. **Light** chosen in the Appearance menu.
 
-- [ ] **Step 1.** Open the menu from your name and initials at the top right.
+- [ ] **Step 1.** Open the account menu.
   - **Expected:** Under `feature.lead@fathom.test`, **Role** lists **Engineering Manager** and **Feature Lead**, with a tick beside **Feature Lead** only, followed by **Change name**, **Change password**, **Appearance**, and **Sign out**.
   - **Notes:**
 
@@ -400,7 +400,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The menu closes, and the page stays on **Releases** with **Platform** open, without the browser reloading. Under **Releases**, each row now ends with a **⋯** button, and **New release…** shows.
   - **Notes:**
 
-- [ ] **Step 4.** Open the menu from your name and initials, and press Escape.
+- [ ] **Step 4.** Open the account menu, and press Escape.
   - **Expected:** The tick is beside **Engineering Manager** only.
   - **Notes:**
 
@@ -424,7 +424,7 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
   - **Expected:** The page stays on **Drafts**, and the entry for **Harbor Three** still starts with **Feature Lead as Engineering Manager**.
   - **Notes:**
 
-- [ ] **Step 10.** Choose **Dark** in the Appearance menu, open the menu from your name and initials, then press Escape and choose **Light** in the Appearance menu.
+- [ ] **Step 10.** Choose **Dark** in the Appearance menu, open the account menu, then press Escape and choose **Light** in the Appearance menu.
   - **Expected:** In dark mode, the role menu's ticks and names are easy to read.
   - **Notes:**
 
@@ -434,15 +434,15 @@ Run the test cases in order. Start with Start Fathom, then Reset the Database. C
 
 **Preconditions:** ACCT-11 run, with **Feature Lead** chosen in the role menu in the second browser.
 
-- [ ] **Step 1.** Choose **Engineering Manager** in the role menu. Sign out, sign in with this account again, and open the menu from your name and initials.
+- [ ] **Step 1.** Choose **Engineering Manager** in the role menu. Sign out, sign in with this account again, and open the account menu.
   - **Expected:** The tick is beside **Engineering Manager** only.
   - **Notes:**
 
-- [ ] **Step 2.** In the first browser, sign out, sign in as the Feature Lead, `feature.lead@fathom.test`, and open the menu from your name and initials.
+- [ ] **Step 2.** In the first browser, sign out, sign in as the Feature Lead, `feature.lead@fathom.test`, and open the account menu.
   - **Expected:** The tick is beside **Feature Lead** only.
   - **Notes:**
 
-- [ ] **Step 3.** In the first browser, sign out, sign in as the Administrator, `fathom.administrator@fathom.test`, and open the menu from your name and initials.
+- [ ] **Step 3.** In the first browser, sign out, sign in as the Administrator, `fathom.administrator@fathom.test`, and open the account menu.
   - **Expected:** Under `fathom.administrator@fathom.test`, the menu shows **Administrator**, with no **Role** heading and nothing to choose, then **Change name**.
   - **Notes:**
 

@@ -20,7 +20,7 @@ What every manual test in `docs/testing/` shares: the environment, where the acc
 
 ## Test Accounts
 
-[Restore the Seed Data](#restore-the-seed-data) and [Reset the Database](#reset-the-database) create every account [Development Accounts](../design/development-setup.md#development-accounts) lists, with the name Fathom shows for each and the roles it holds, as [Roles](../product/roles.md#starting-roles) sets out. They share one password, which both procedures print when they finish. Each test names the accounts it uses by role and email address.
+[Restore the Seed Data](#restore-the-seed-data), [Reset the Database](#reset-the-database) and [Start From an Empty Database](#start-from-an-empty-database) create every account [Development Accounts](../design/development-setup.md#development-accounts) lists, with the name Fathom shows for each and the roles it holds, as [Roles](../product/roles.md#starting-roles) sets out. They share one password, which each of them prints when it finishes. Each test names the accounts it uses by role and email address.
 
 ## Common Procedures
 
@@ -67,6 +67,20 @@ Run only where a test says so. This deletes every account and record in the deve
 4. Run Start Fathom.
 5. Sign in again with the account the test case names.
 
+### Start From an Empty Database
+
+Run only where a test says so. This deletes every account and record in the development database, including anything added by hand, puts every role back as Fathom starts it, and adds back only the development accounts, with no other data. Ask the owner before running it on a database others use.
+
+1. Stop Fathom: press Ctrl+C in the first terminal.
+2. In the second terminal, run:
+
+   ```sh
+   pnpm db:reset && pnpm db:seed:accounts
+   ```
+
+3. Confirm that the last line printed gives the shared password, with no error above it.
+4. Run Start Fathom.
+
 ### Open a Role
 
 1. Select the **Roles** page in the left-hand menu.
@@ -75,7 +89,13 @@ Run only where a test says so. This deletes every account and record in the deve
 ### Publish
 
 1. Select the Publish button.
-2. Confirm that a notification says **Published**, and that the button is gone.
+2. Confirm that a notification says **Published** followed by the number of changes, and that the button is gone.
+
+### Discard the Unpublished Changes
+
+1. Select the **⋯** button beside the Publish button, then **Discard all…**.
+2. In the dialog titled **Discard** followed by the number of changes, select **Discard**.
+3. Confirm that a notice says **Discarded** followed by the number of changes, and that the Publish button is gone.
 
 ## Terms
 
@@ -94,7 +114,7 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Column menu:** the menu that opens when you select a column's name in a table's header.
 - **⋯ menu:** the menu that opens from a **⋯** button, such as the one at the end of a table row, beside a list's name at the top of its panel, or beside the Publish button.
 - **Details button:** the small button with an arrow out of a box at the right of a row's **Name** cell, shown while the row is pointed at.
-- **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. It is headed with the record's name, and its close button, an **×**, is at its top right.
+- **Side panel:** the panel on the right that opens from **Show details** in a row's ⋯ menu, or from the details button. Steps also call it the details panel. It is headed with the record's name, and its close button, an **×**, is at its top right.
 - **Change button:** a small pencil at the right of a value in a side panel, shown to accounts that may change it.
 - **Grid:** the table on the left of the role dialog, with an area in each row and the columns **View**, **Draft**, **Approve** and **Edit**.
 - **Chart:** on the **Org chart** page, the large panel under the heading that holds the cards.
@@ -106,4 +126,5 @@ Run only where a test says so. This deletes every account and record in the deve
 - **Team panel:** the panel titled **Feature team** that opens to the right of the chart, with a **Team** drop-down at its top.
 - **Mode switch:** the switch under the **Feature assignments** heading, reading **Teams** and **Allocations**.
 - **Team list:** the list of feature teams that opens below a month's cell on the **Feature assignments** page for editing, with a box to type in at its top.
+- **Seeded dates:** the seed data is dated from the day it is added, as [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and steps name them by where they fall. A cycle's name is the year it ends in and its number in that year, such as **27.1**.
 - **Dates:** steps type dates as digits, such as `2030-03-15`; tables and panels show them as the browser's language writes them, such as **15 Mar 2030** or **Mar 15, 2030**.

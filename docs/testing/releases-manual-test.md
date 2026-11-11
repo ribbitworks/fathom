@@ -26,31 +26,15 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 - **Project Manager:** `project.manager@fathom.test`
 - **Team Member:** `team.member@fathom.test`
 
-Start From an Empty Database creates them, with every other development account.
-
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Publish](manual-test-basics.md#publish). It adds:
-
-### Start From an Empty Database
-
-Use only where a test case says so. This deletes every account and record in the development database, including anything added by hand, puts every role back as Fathom starts it, and adds back only the development accounts, with no other data. Ask the owner before running it on a database others use.
-
-1. Stop Fathom: press Ctrl+C in the first terminal.
-2. In the second terminal, run:
-
-   ```sh
-   pnpm db:reset && pnpm db:seed:accounts
-   ```
-
-3. Confirm that the last line printed gives the shared password, with no error above it.
-4. Run Start Fathom.
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Start From an Empty Database](manual-test-basics.md#start-from-an-empty-database), [Restore the Seed Data](manual-test-basics.md#restore-the-seed-data) and [Publish](manual-test-basics.md#publish).
 
 ## Terms
 
 [Manual Test Basics](manual-test-basics.md#terms) defines the terms every test uses, such as the Appearance menu, marks and the Publish button. This test adds:
 
-- **Seeded dates:** the seed data is dated from the day it is added, as the [Fictional Seed Data](../design/development-setup.md#fictional-seed-data) sets out, so its cycles and releases move with today, and the steps name them by where they fall. **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. A cycle's name is the year it ends in and its number in that year, such as **26.4** or **P24.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
+- **Seeded dates in this test:** **This quarter** is the quarter today is in, and **the first half** is Platform's first half-year cycle, three quarters after this quarter. Patches' cycles are named such as **P24.3**. The examples after "such as" are as the seed data is when added on 7 November 2026.
 - **Streams table:** the table on the Releases page, with a row for each release stream and the columns **Stream**, **Cycle schedule** and **Releases**. Selecting a row opens the stream in the side panel.
 - **Side panel on Releases:** the panel beside the streams table for the selected stream, which the table narrows to make room for, with the sections **Cycle schedule**, **Releases** and **Cycles**. Dragging its left edge resizes it.
 - **Timeline:** the section headed **Timeline** below the streams table, with **Today**, **−** and **+** buttons and the zoom buttons **All**, **Year**, **6 months**, **Quarter**, **Month**, **Week** and **Days** at its top right. It has a row for each stream that is not retired, named on the left, with a lane of the stream's cycles above a lane of its releases, under an axis of two rows of dates. Hovering over a cycle or a release shows its name and dates.

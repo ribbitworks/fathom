@@ -28,7 +28,7 @@ As [Manual Test Basics](manual-test-basics.md#test-accounts) sets out, this test
 
 ## Common Procedures
 
-This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database) and [Open a Role](manual-test-basics.md#open-a-role). It adds:
+This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Database](manual-test-basics.md#reset-the-database), [Open a Role](manual-test-basics.md#open-a-role) and [Discard the Unpublished Changes](manual-test-basics.md#discard-the-unpublished-changes). It adds:
 
 ### Add a Confidential Column
 
@@ -52,12 +52,6 @@ This test uses [Start Fathom](manual-test-basics.md#start-fathom), [Reset the Da
 1. Sign in as the Administrator, `fathom.administrator@fathom.test`, and open the **Team Member** role, as Open a Role describes.
 2. Select **Restore template**, and confirm that the ticked boxes are **View** on **Plan**, **Allocations** and **Org chart** only.
 3. Select **Save**, then **Save changes**, and confirm that a green banner says **The role has been changed.**
-
-### Discard the Unpublished Changes
-
-1. Select the **⋯** button beside the Publish button, then **Discard all…**.
-2. In the dialog titled **Discard 1 change?**, select **Discard**.
-3. Confirm that a notice reads **Discarded 1 change.**, and that the Publish button is gone.
 
 ## Terms
 
