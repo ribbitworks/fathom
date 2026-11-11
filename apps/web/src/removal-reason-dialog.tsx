@@ -9,6 +9,7 @@ import { Modal, Stack, Text } from "@mantine/core";
 import { useState } from "react";
 import { ClearableInput } from "./clearable-input.tsx";
 import { DialogActions } from "./dialog-actions.tsx";
+import { useDiscardQuestion } from "./discard-question.tsx";
 import pages from "./pages.module.css";
 import type { ProposalRemoval } from "./proposal-removal.ts";
 
@@ -21,60 +22,9 @@ export interface ReasonAsked {
   onSave: (reason: string | null) => void;
 }
 
-function ReasonForm({
-  asked,
-  onClose,
-}: {
-  asked: ReasonAsked;
-  onClose: () => void;
-}) {
-  const [reason, setReason] = useState(asked.reason ?? "");
-  const { features, proposals } = asked.removal;
-  const save = (given: string) => {
-    onClose();
-    asked.onSave(given.trim() === "" ? null : given.trim());
-  };
-  return (
-    <form
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault();
-        save(reason);
-      }}
-    >
-      <Stack gap="md">
-        <Text fz="sm">
-          {allOf(features)} {features.length === 1 ? "is" : "are"} removed from{" "}
-          {allOf(proposals)}.
-        </Text>
-        <ClearableInput
-          label={
-            <>
-              Reason <span className={pages.optional}>(optional)</span>
-            </>
-          }
-          maxLength={projectLengths.removalReason}
-          value={reason}
-          onChange={(event) => {
-            setReason(event.currentTarget.value);
-          }}
-          onClear={() => {
-            setReason("");
-          }}
-          clearLabel="Clear the reason"
-          data-autofocus
-        />
-        <DialogActions
-          error={null}
-          pending={false}
-          label="Save"
-          onCancel={onClose}
-        />
-      </Stack>
-    </form>
-  );
-}
-
+// The dialog, which holds the reason as typed, starting afresh each time a reason is asked for.
+// Leaving it with the reason changed, by Cancel, Esc, or its close button, asks first. It stays
+// mounted while closed, so closing puts focus back where it was.
 export function RemovalReasonModal({
   asked,
   onClose,
@@ -82,17 +32,75 @@ export function RemovalReasonModal({
   asked: ReasonAsked | undefined;
   onClose: () => void;
 }) {
+  const [shown, setShown] = useState(asked);
+  const [reason, setReason] = useState(asked?.reason ?? "");
+  if (asked !== shown) {
+    setShown(asked);
+    setReason(asked?.reason ?? "");
+  }
+  const question = useDiscardQuestion();
+  const leave = () => {
+    question.ask(
+      reason === (asked?.reason ?? "")
+        ? undefined
+        : { title: "Discard the reason?", keep: "Keep writing" },
+      onClose,
+    );
+  };
+  const save = () => {
+    onClose();
+    asked?.onSave(reason.trim() === "" ? null : reason.trim());
+  };
+  const features = asked?.removal.features ?? [];
   return (
     <Modal
       opened={asked !== undefined}
-      onClose={onClose}
+      onClose={leave}
+      closeOnEscape={!question.asking}
       title={
         asked?.changing === true
           ? "Change the reason for the removal"
           : "Reason for the removal"
       }
     >
-      {asked !== undefined && <ReasonForm asked={asked} onClose={onClose} />}
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          save();
+        }}
+      >
+        <Stack gap="md">
+          <Text fz="sm">
+            {allOf(features)} {features.length === 1 ? "is" : "are"} removed
+            from {allOf(asked?.removal.proposals ?? [])}.
+          </Text>
+          <ClearableInput
+            label={
+              <>
+                Reason <span className={pages.optional}>(optional)</span>
+              </>
+            }
+            maxLength={projectLengths.removalReason}
+            value={reason}
+            onChange={(event) => {
+              setReason(event.currentTarget.value);
+            }}
+            onClear={() => {
+              setReason("");
+            }}
+            clearLabel="Clear the reason"
+            data-autofocus
+          />
+          <DialogActions
+            error={null}
+            pending={false}
+            label="Save"
+            onCancel={leave}
+          />
+        </Stack>
+      </form>
+      {question.dialog}
     </Modal>
   );
 }

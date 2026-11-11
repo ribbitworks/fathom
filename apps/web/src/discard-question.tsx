@@ -53,5 +53,6 @@ export function useDiscardQuestion() {
       </Group>
     </Modal>
   );
-  return { ask, dialog };
+  // Whether the question is showing, so a dialog under it leaves Esc to it.
+  return { ask, dialog, asking: asking !== undefined };
 }

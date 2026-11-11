@@ -1826,6 +1826,64 @@ describe("the Features page", () => {
         );
       });
 
+      it("asks before discarding a reason typed, and changes nothing once discarded", async () => {
+        // Given a reason typed for a removal
+        const { fetch } = await openNamed();
+        const dialog = await removeFromProposal();
+        await userEvent.type(
+          within(dialog).getByRole("textbox", { name: "Reason (optional)" }),
+          "Too costly",
+        );
+        // When it is cancelled, it asks first, and Keep writing stays
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Cancel" }),
+        );
+        await userEvent.click(
+          await screen.findByRole("button", { name: "Keep writing" }),
+        );
+        expect(
+          screen.getByRole("dialog", { name: "Reason for the removal" }),
+        ).toBeTruthy();
+        // And Discard closes it with nothing changed
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Cancel" }),
+        );
+        expect(
+          await screen.findByRole("dialog", { name: "Discard the reason?" }),
+        ).toBeTruthy();
+        await userEvent.click(screen.getByRole("button", { name: "Discard" }));
+        await waitFor(() => {
+          expect(screen.queryByRole("dialog")).toBeNull();
+        });
+        expect(sentTo(fetch)).not.toContain(`PUT ${featurePath}`);
+      });
+
+      it("keeps the reason when Esc closes the question, and asks from the close button too", async () => {
+        await openNamed();
+        const dialog = await removeFromProposal();
+        await userEvent.type(
+          within(dialog).getByRole("textbox", { name: "Reason (optional)" }),
+          "Too costly",
+        );
+        // The close button, which has no name yet, as Issues records, asks first
+        await userEvent.click(
+          document.querySelector(".mantine-Modal-close") as HTMLElement,
+        );
+        await screen.findByRole("dialog", { name: "Discard the reason?" });
+        // And Esc on the question keeps writing
+        await userEvent.keyboard("{Escape}");
+        await waitFor(() => {
+          expect(
+            screen.queryByRole("dialog", { name: "Discard the reason?" }),
+          ).toBeNull();
+        });
+        expect(
+          within(dialog).getByRole<HTMLInputElement>("textbox", {
+            name: "Reason (optional)",
+          }).value,
+        ).toBe("Too costly");
+      });
+
       it("asks nothing when a feature only a draft added is removed again", async () => {
         // Given a proposal whose draft adds the feature
         const start = featurePlan({
@@ -2113,6 +2171,31 @@ describe("the Features page", () => {
             name: "Reason (optional)",
           }).value,
         ).toBe("");
+      });
+
+      it("closes at once when the reason is left as it was, putting focus back", async () => {
+        await openPage(
+          `/projects?tab=proposals&open=${proposalId}`,
+          removing(),
+          { ...answers, ...history() },
+          planEditor,
+        );
+        const change = await rows().findByRole("button", {
+          name: "Change reason",
+        });
+        await userEvent.click(change);
+        const dialog = await screen.findByRole("dialog", {
+          name: "Change the reason for the removal",
+        });
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Cancel" }),
+        );
+        await waitFor(() => {
+          expect(screen.queryByRole("dialog")).toBeNull();
+        });
+        await waitFor(() => {
+          expect(document.activeElement).toBe(change);
+        });
       });
 
       it("offers no Change reason to those who don't edit the plan", async () => {

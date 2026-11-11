@@ -142,13 +142,28 @@ Run the test cases in order. Start with Start Fathom, then Restore the Seed Data
     - The **Proposals** cell of **Offline Sync** still names both proposals.
   - **Notes:**
 
-- [ ] **Step 4.** Repeat steps 1 and 2, type `Customer chose another supplier` in **Reason (optional)**, and press Enter.
+- [ ] **Step 4.** Repeat steps 1 and 2, type `x` in **Reason (optional)**, and press Esc.
+  - **Expected:**
+    - A dialog titled **Discard the reason?** opens.
+    - Its buttons read, from left to right:
+      - Keep writing
+      - Discard
+  - **Notes:**
+
+- [ ] **Step 5.** Select **Discard**.
+  - **Expected:**
+    - Both dialogs close.
+    - The **Proposals** cell of **Offline Sync** still names both proposals.
+    - The keyboard focus is back on the **Proposals** cell of **Offline Sync**.
+  - **Notes:**
+
+- [ ] **Step 6.** Repeat steps 1 and 2, type `Customer chose another supplier` in **Reason (optional)**, and press Enter.
   - **Expected:**
     - The dialog closes.
     - The **Proposals** cell names **Clinic Scheduling Pilot** alone.
   - **Notes:**
 
-- [ ] **Step 5.** Select the **Projects** page in the left-hand menu, then the **Proposals** tab, and select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
+- [ ] **Step 7.** Select the **Projects** page in the left-hand menu, then the **Proposals** tab, and select **Show details** in the **⋯** menu of **Harbour Cranes Upgrade**.
   - **Expected:**
     - Under **Scope history**, the rows read, from the top:
       - Offline Sync

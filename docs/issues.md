@@ -210,6 +210,7 @@ Each item starts with a label, such as **Bug · P3** or **Debt · Next**. A **Bu
 
 ## Development
 
+- **Bug · P3** **Dialogs' close buttons have no name:** The × at the top right of every dialog, drawn by Mantine's `Modal`, has no accessible name, so a screen reader announces only "button". Naming it once, in the theme in `apps/web/src/theme.ts`, would fix every dialog, a change across pages to make on its own. Found in review on 2026-11-11.
 - **Debt · Later** **New ids made in place:** The data layer makes each new record's id by calling `randomUUID()` directly, in ten files under `apps/server/src/data/`, rather than through an id source passed in, as the core principles ask for random values. Tests therefore look a new record's id up after saving it rather than knowing it ahead. Changing it means passing the source from the server's start-up to every function that adds records, so it is one change across the whole data layer. Accepted by the owner on 2026-11-10.
 - **Debt · Later** **Seed records empty fields for releases and projects:** The seed's change history for release streams, releases, customers, proposals, and projects records fields with no value, which the other seeded records leave out. Found by review on 2026-11-08.
 - **Bug · P3** **The change history calls some kinds "a record":** Customers, projects, proposals, milestones, and any other kind of plan record the history has no wording for are named "a record" in the change history, in `apps/web/src/changes.ts`, not by their kind. Found by review on 2026-11-08.
