@@ -473,6 +473,10 @@ export {
   featureTeamSchema,
   disbandedMonth,
   featureTeamsSchema,
+  maxTeamsChanged,
+  mayDateTeamChange,
+  type MemberTeamsChange,
+  memberTeamsChangeSchema,
   type TeamMonths,
   teamMonthsSchema,
 } from "./feature-teams.ts";

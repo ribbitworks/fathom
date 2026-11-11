@@ -15,7 +15,12 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  bodyOf,
+  fictionalUser,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
 
 const session = (permissions: string[]) => () =>
   Response.json({ ...fictionalUser, permissions });
@@ -813,12 +818,6 @@ describe("changing a person's details", () => {
     });
   }
 
-  function bodies(fetch: ReturnType<typeof serverAnswers>, url: string) {
-    return fetch.mock.calls
-      .filter(([called, init]) => called === url && init?.method === "PATCH")
-      .map(([, init]) => JSON.parse(init?.body as string) as unknown);
-  }
-
   const undone = (fetch: ReturnType<typeof serverAnswers>) =>
     fetch.mock.calls.filter(([url]) => url === `/api/undo/${saved}`).length;
 
@@ -914,7 +913,7 @@ describe("changing a person's details", () => {
     // When their team's name is typed and Enter pressed
     await typeInto("Reporting team name", "Harbour team{Enter}");
     // Then the change is saved, and focus is back on its button
-    expect(bodies(fetch, "/api/people/1")).toEqual([
+    expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([
       { teamName: "Harbour team" },
     ]);
     await waitFor(() => {
@@ -951,7 +950,7 @@ describe("changing a person's details", () => {
     expect(
       screen.getByRole("region", { name: "Robin Fictional" }),
     ).toBeDefined();
-    expect(bodies(fetch, "/api/people/1")).toEqual([]);
+    expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([]);
     await waitFor(() => {
       expect(document.activeElement).toBe(change("ID"));
     });
@@ -987,12 +986,14 @@ describe("changing a person's details", () => {
     const problem = screen.getByText("Someone already has that ID");
     expect(field.getAttribute("aria-describedby")).toContain(problem.id);
     expect(field.getAttribute("aria-invalid")).toBe("true");
-    expect(bodies(fetch, "/api/people/1")).toEqual([]);
+    expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([]);
     // When an ID nobody has is given instead
     await userEvent.clear(field);
     await userEvent.type(field, "E7{Enter}");
     // Then it is saved, and the problem has gone
-    expect(bodies(fetch, "/api/people/1")).toEqual([{ employeeId: "E7" }]);
+    expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([
+      { employeeId: "E7" },
+    ]);
     expect(screen.queryByText("Someone already has that ID")).toBeNull();
   });
 
@@ -1012,7 +1013,7 @@ describe("changing a person's details", () => {
     expect(
       screen.queryByText("The end date cannot be before the start date"),
     ).toBeNull();
-    expect(bodies(fetch, "/api/people/1")).toEqual([]);
+    expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([]);
   });
 
   describe("when a person's ID changes", () => {
@@ -1086,7 +1087,7 @@ describe("changing a person's details", () => {
     await userEvent.click(
       await screen.findByRole("option", { name: "Fictional Architect" }),
     );
-    expect(bodies(fetch, "/api/people/1")).toEqual([
+    expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([
       { positionId: "position-2" },
     ]);
   });
@@ -1098,7 +1099,9 @@ describe("changing a person's details", () => {
     await userEvent.click(
       screen.getByRole("checkbox", { name: "Manager? Yes" }),
     );
-    expect(bodies(fetch, "/api/people/1")).toEqual([{ isManager: false }]);
+    expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([
+      { isManager: false },
+    ]);
   });
 
   it("marks a drafted checkbox, with the live value under it", async () => {
@@ -1172,7 +1175,7 @@ describe("changing a person's details", () => {
     await userEvent.keyboard("{Tab}");
     // Then the problem shows under the value, and nothing is saved
     expect(within(row("Skills")).getByText("Skills needed")).toBeDefined();
-    expect(bodies(fetch, "/api/people/1")).toEqual([]);
+    expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([]);
   });
 
   it("neither shows nor changes a column drafted away, with the drafts applied", async () => {
@@ -1255,7 +1258,9 @@ describe("changing a person's details", () => {
       await userEvent.click(screen.getByRole("button", { name: "Clear" }));
       await userEvent.click(screen.getByRole("button", { name: "Save" }));
       // Then it is saved, its panel closes, and focus is on the note's button
-      expect(bodies(fetch, "/api/people/2")).toEqual([{ notes: { f1: null } }]);
+      expect(bodyOf(fetch, "PATCH", "/api/people/2")).toEqual([
+        { notes: { f1: null } },
+      ]);
       await waitFor(() => {
         expect(screen.queryByRole("region", { name: sashasNote })).toBeNull();
       });
@@ -1341,7 +1346,7 @@ describe("changing a person's details", () => {
       await waitFor(() => {
         expect(screen.queryByRole("region", { name: sashasNote })).toBeNull();
       });
-      expect(bodies(fetch, "/api/people/2")).toEqual([]);
+      expect(bodyOf(fetch, "PATCH", "/api/people/2")).toEqual([]);
     });
 
     it("closes, with no changes, once the address names an ID nobody has", async () => {
@@ -1381,7 +1386,7 @@ describe("changing a person's details", () => {
           }),
         ).toBeNull();
       });
-      expect(bodies(fetch, "/api/people/1")).toEqual([]);
+      expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([]);
     });
 
     it("stays open when its person's ID changes", async () => {
@@ -1500,7 +1505,7 @@ describe("changing a person's details", () => {
       // Then it stays open, naming why, and nothing is saved
       expect(await screen.findByText("Background needed")).toBeDefined();
       expect(screen.getByRole("region", { name: sashasNote })).toBeDefined();
-      expect(bodies(fetch, "/api/people/2")).toEqual([]);
+      expect(bodyOf(fetch, "PATCH", "/api/people/2")).toEqual([]);
     });
 
     it("leaves Cmd+Z in the note to the note's own undo, undoing no saved change", async () => {
@@ -1624,7 +1629,7 @@ describe("changing a person's details", () => {
       // When their team's name is changed
       await typeInto("Reporting team name", "Harbour team{Enter}");
       // Then it is saved, and the chart drawn again
-      expect(bodies(fetch, "/api/people/1")).toEqual([
+      expect(bodyOf(fetch, "PATCH", "/api/people/1")).toEqual([
         { teamName: "Harbour team" },
       ]);
       await waitFor(() => {

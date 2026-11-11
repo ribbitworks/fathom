@@ -4,14 +4,14 @@ category: "How-To"
 audience: "AI Coding Assistant"
 applies_to: ["apps/web/src/feature-assignments-page*", "apps/web/src/team-months*", "apps/web/src/team-labels*", "packages/seed/src/**", "packages/fixtures/src/**"]
 dependencies: ["docs/standards/testing.md", "docs/design/development-setup.md", "docs/design/visual-design.md"]
-last_updated: "2026-11-09"
+last_updated: "2026-11-10"
 ---
 
 # Manual Test: Feature Assignments
 
 ## Scope
 
-Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, what a reader without Restricted details or without people sees, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
+Verifies the **Feature assignments** page: how the table of feature teams by month looks and scrolls in light and dark mode, grouping its rows, searching and filtering it, how it agrees with the **Org chart** on a chosen month, how drafts made on the **Org chart** show in it, changing a month's teams in it and finding the change on the **Org chart**, what a reader without Restricted details or without people sees, and moving around it from the keyboard. The seeded feature teams are listed in [Development Setup](../design/development-setup.md#fictional-seed-data).
 
 ## Test Environment
 
@@ -25,6 +25,7 @@ R1 creates these accounts, with every other development account, so they exist o
 
 - **Workforce Administrator account:** `engineering.operations.manager@fathom.test`, shown in Fathom as **Engineering Operations Manager**. It holds the Workforce Administrator role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Resource Planner account:** `resource.planner@fathom.test`, shown in Fathom as **Resource Planner**. It holds the Resource Planner role, as [Roles](../product/roles.md#starting-roles) sets out.
+- **Feature Lead account:** `feature.lead@fathom.test`, shown in Fathom as **Feature Lead**. It holds the Feature Lead role, as [Roles](../product/roles.md#starting-roles) sets out.
 - **Team Member account:** `team.member@fathom.test`, shown in Fathom as **Team Member**. It holds the Team Member role, as [Roles](../product/roles.md#starting-roles) sets out.
 
 ## Common Procedures
@@ -60,6 +61,7 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 - **Draft menu:** the menu that opens from the **Draft** button above the table, next to the search box.
 - **Feature teams button:** on the **Org chart**, the button reading **Feature teams** above the chart, at its right, once the chart shows feature teams.
 - **Team panel:** on the **Org chart**, the panel titled **Feature team** that opens to the right of the chart.
+- **Team list:** the list of feature teams that opens below a month's cell for editing, with a box to type in at its top.
 - **Mark:** a coloured dot followed by a word, such as a yellow dot and **Draft**, shown beside a person's name.
 
 ## Test Cases
@@ -346,6 +348,62 @@ Use after R0, before the first test case. Fathom keeps running. This removes the
 
 - [ ] **Step 5.** Open the Draft menu and select **Drafts beside live**.
   - **Expected:** The joiner and the leaver are both listed under **Platform reliability**, with the yellow cells, the struck-through label and the light green rows, as in FA-15.
+  - **Notes:**
+
+**Afterwards:** R1.
+
+### FA-17: A Month's Teams Change From That Month On
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, changed from FA-16.
+
+**Preconditions:** R1 has been run. Signed in with this account. **Light** selected in the Appearance menu. **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** Note the name in the first row of the table: the person. Type it in the search box.
+  - **Expected:** Only the person's row is listed.
+  - **Notes:**
+
+- [ ] **Step 2.** Select the person's cell two months after the current month, and press Enter.
+  - **Expected:** The team list opens, with the teams already in the cell shown as chosen.
+  - **Notes:**
+
+- [ ] **Step 3.** Type the first letters of a team that is not in the cell, and note its name: the new team. Press Tab.
+  - **Expected:** The team list closes. The person's row is tinted blue, with a hollow yellow dot and **Draft** beside their name, and a light green row under it marked **Live**. The cells before the one selected are not yellow. From the cell selected on, each cell is yellow and holds the new team's label with a hollow yellow dot inside it.
+  - **Notes:**
+
+- [ ] **Step 4.** Press Cmd+Z, or Ctrl+Z outside a Mac.
+  - **Expected:** The person's row is as it was in step 1, with no **Draft** mark and no yellow cells.
+  - **Notes:**
+
+- [ ] **Step 5.** Repeat steps 2 and 3, choosing the same new team.
+  - **Expected:** The row shows the change as in step 3.
+  - **Notes:**
+
+- [ ] **Step 6.** Select **Org chart** in the left-hand menu, select **Feature teams** in the switch at the top right, then select the Feature teams button and the new team.
+  - **Expected:** The team panel opens for the new team, with the person listed among the members with a hollow yellow dot and **Draft**.
+  - **Notes:**
+
+### FA-18: The Current Month Changes From Today
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as FA-17.
+
+**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu, nothing in the search box and no filters.
+
+- [ ] **Step 1.** Select a cell in the current month's column that holds one label, in a row with no **Draft** mark, and press Delete.
+  - **Expected:** The cell and every cell to its right are yellow, and the label in them is struck through.
+  - **Notes:**
+
+- [ ] **Step 2.** Press Cmd+Z, or Ctrl+Z outside a Mac.
+  - **Expected:** The row is as it was before step 1.
+  - **Notes:**
+
+### FA-19: A Change the Draft Can't Hold Is Explained
+
+**Account:** Feature Lead, `feature.lead@fathom.test`, the same as FA-18.
+
+**Preconditions:** **Feature assignments** open, with **None** chosen in the Group by menu and the person's name from FA-17 in the search box, after FA-17.
+
+- [ ] **Step 1.** Select the person's cell four months after the current month, and press Enter. Type the first letters of the new team from FA-17 and press Enter to take it out, then select the person's name with the mouse.
+  - **Expected:** A notice reads that the draft of the new team already changes the person from another month, and to approve or discard that draft first. The cell still holds the new team's label.
   - **Notes:**
 
 **Afterwards:** R1.

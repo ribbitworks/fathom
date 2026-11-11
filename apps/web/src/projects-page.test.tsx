@@ -11,11 +11,12 @@ import { userEvent } from "@testing-library/user-event";
 import { act } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  bodyOf,
   fictionalUser,
+  noFeatureColumns,
   recordDraft,
   renderApp,
   serverAnswers,
-  noFeatureColumns,
 } from "./test-support.tsx";
 import { operationsOf } from "./projects.ts";
 
@@ -113,10 +114,11 @@ async function openPage(
   return { fetch, history, held };
 }
 
-const sent = (fetch: ReturnType<typeof serverAnswers>, key: string) =>
-  fetch.mock.calls
-    .filter(([url, init]) => `${init?.method ?? "GET"} ${url}` === key)
-    .map(([, init]) => JSON.parse(init?.body as string) as unknown);
+// The bodies sent with a request named as its method and address, such as "POST /api/customers".
+const sent = (fetch: ReturnType<typeof serverAnswers>, key: string) => {
+  const [method = "", url = ""] = key.split(" ");
+  return bodyOf(fetch, method, url);
+};
 
 const sentTo = (fetch: ReturnType<typeof serverAnswers>) =>
   fetch.mock.calls.map(([url, init]) => `${init?.method ?? "GET"} ${url}`);

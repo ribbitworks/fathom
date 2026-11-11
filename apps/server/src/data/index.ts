@@ -18,6 +18,7 @@ import type {
   Field,
   FieldRequest,
   FeatureTeamChange,
+  MemberTeamsChange,
   FeatureTeamRequest,
   FeatureTeams,
   HireChange,
@@ -460,6 +461,12 @@ export interface FeatureTeamAccess {
     id: string,
     change: FeatureTeamChange,
   ): Promise<ChangeSetId>;
+  // Changes the teams someone is on from a day, drafted on each team.
+  changeMemberTeams(
+    actor: Actor,
+    personId: string,
+    change: MemberTeamsChange,
+  ): Promise<ChangeSetId>;
   delete(actor: Actor, id: string): Promise<ChangeSetId>;
   discardDraft(actor: Actor, id: string): Promise<ChangeSetId>;
   resubmitDraft(actor: Actor, id: string): Promise<ChangeSetId>;
@@ -520,6 +527,8 @@ function createFeatureTeamAccess(database: Database): FeatureTeamAccess {
     },
     update: async (actor, id, change) =>
       featureTeamData.updateFeatureTeam(database, actor, id, change),
+    changeMemberTeams: async (actor, personId, change) =>
+      featureTeamData.changeMemberTeams(database, actor, personId, change),
     delete: async (actor, id) =>
       featureTeamData.deleteFeatureTeam(database, actor, id),
     discardDraft: async (actor, id) =>

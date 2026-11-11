@@ -28,7 +28,7 @@ import {
 } from "@fathom/shared";
 import { and, asc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { readToday } from "./data/settings.ts";
 import {
   builtInChoice,
@@ -36,6 +36,11 @@ import {
   type TestApp,
   testPosition,
 } from "./test-app.ts";
+
+// The server takes today's date from the clock, so the tests fix it, to give the same days on every
+// run, however long the run takes.
+vi.useFakeTimers({ toFake: ["Date"] });
+vi.setSystemTime(new Date("2026-06-15T12:00:00.000Z"));
 
 interface User {
   id: string;
@@ -1298,6 +1303,244 @@ describe("changing a feature team", () => {
   });
 });
 
+describe("changing the teams someone is on from a month", () => {
+  const changeTeams = (personId: string, body: object, who = editor) =>
+    send(who, "PATCH", `/api/feature-teams/members/${personId}`, body);
+
+  async function teamsChanged(personId: string, body: object, who = editor) {
+    return (
+      await ok<{ changeSetId: string | null }>(
+        await changeTeams(personId, body, who),
+      )
+    ).changeSetId;
+  }
+
+  // A fictional person with a known name.
+  async function named(): Promise<{ id: string; name: string }> {
+    const name = unique("Fictional Person");
+    return { id: await person({ preferredName: name }), name };
+  }
+
+  async function namedTeam(body: object = {}) {
+    const name = unique("Fictional Feature Team");
+    return { id: await liveTeam({ name, ...body }), name };
+  }
+
+  it("drafts joining the teams added and leaving those removed, from the day given, undone together", async () => {
+    // Given
+    const member = await person();
+    const leaving = await liveTeam({ members: [member], from: "2025-01-01" });
+    const joining = await liveTeam();
+
+    // When
+    const changeSetId = await teamsChanged(member, {
+      add: [joining],
+      remove: [leaving],
+      from: "2026-08-01",
+    });
+
+    // Then
+    expect((await teamSeen(joining))?.draft?.days).toEqual({
+      [member]: "2026-08-01",
+    });
+    expect((await teamSeen(leaving))?.draft?.days).toEqual({
+      [member]: "2026-08-01",
+    });
+    await ok(await send(editor, "POST", `/api/undo/${String(changeSetId)}`));
+    expect((await teamSeen(joining))?.draft).toBeUndefined();
+    expect((await teamSeen(leaving))?.draft).toBeUndefined();
+  });
+
+  it("drafts a change from today when no day is given", async () => {
+    const member = await person();
+    const id = await liveTeam();
+
+    await teamsChanged(member, { add: [id] });
+    await approved(id);
+
+    expect(await memberships(id)).toEqual([
+      { personId: member, member: true, fromDate: today },
+    ]);
+  });
+
+  it("moves a change the draft already makes to an earlier month", async () => {
+    const joining = await person();
+    const leaving = await person();
+    const id = await liveTeam({ members: [leaving], from: "2025-01-01" });
+    await changed(id, {
+      add: [joining],
+      remove: [leaving],
+      from: "2026-10-01",
+    });
+
+    await teamsChanged(joining, { add: [id], from: "2026-08-01" });
+    await teamsChanged(leaving, { remove: [id] });
+
+    expect((await teamSeen(id))?.draft?.days).toEqual({
+      [joining]: "2026-08-01",
+    });
+  });
+
+  it("takes back a change the draft makes from the same month", async () => {
+    const member = await person();
+    const id = await liveTeam({ from: "2025-01-01" });
+    await changed(id, { add: [member], from: "2026-08-01" });
+
+    expect(
+      await teamsChanged(member, { remove: [id], from: "2026-08-01" }),
+    ).not.toBeNull();
+
+    expect((await teamSeen(id))?.draft).toBeUndefined();
+  });
+
+  it("takes back a change the draft makes from today, in the current month", async () => {
+    const member = await person();
+    const id = await liveTeam();
+    await changed(id, { add: [member] });
+
+    await teamsChanged(member, { remove: [id] });
+
+    expect((await teamSeen(id))?.draft).toBeUndefined();
+  });
+
+  it("is refused taking back a change the draft makes from another month", async () => {
+    const { id: member, name } = await named();
+    const team = await namedTeam({ from: "2025-01-01" });
+    await changed(team.id, { add: [member], from: "2026-08-01" });
+
+    const response = await changeTeams(member, {
+      remove: [team.id],
+      from: "2026-10-01",
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(refusal(response)).toBe(
+      `The draft of ${team.name} already changes ${name} from another month. Approve or discard that draft first.`,
+    );
+  });
+
+  it("is refused a month after an approved change still to come", async () => {
+    const { id: member, name } = await named();
+    const team = await namedTeam({ members: [member], from: "2025-01-01" });
+    await changed(team.id, { remove: [member], from: "2026-09-01" });
+    await approved(team.id);
+
+    const response = await changeTeams(member, {
+      add: [team.id],
+      from: "2026-10-01",
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(refusal(response)).toBe(
+      `${name} has an approved change on ${team.name} before this month. This month can change once it takes effect.`,
+    );
+  });
+
+  it("is refused a month in or before an approved change", async () => {
+    const { id: member, name } = await named();
+    const team = await namedTeam({ from: "2025-01-01" });
+    await changed(team.id, { add: [member], from: "2026-09-01" });
+    await approved(team.id);
+
+    const response = await changeTeams(member, {
+      add: [team.id],
+      from: "2026-09-01",
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(refusal(response)).toBe(
+      `${name} has an approved change on ${team.name} in this month or later, so this month can't change here.`,
+    );
+  });
+
+  it("changes a past month for a role that may change Restricted details, and refuses one for a role that may not", async () => {
+    const member = await person();
+    const id = await liveTeam({ members: [member], from: "2025-01-01" });
+
+    const response = await changeTeams(
+      member,
+      { remove: [id], from: "2026-03-01" },
+      proposer,
+    );
+    await teamsChanged(member, { remove: [id], from: "2026-03-01" });
+
+    expect(response.statusCode).toBe(403);
+    expect((await teamSeen(id))?.draft?.days).toEqual({
+      [member]: "2026-03-01",
+    });
+  });
+
+  it("lets a proposer change a later month", async () => {
+    const member = await person();
+    const id = await liveTeam();
+
+    await teamsChanged(member, { add: [id], from: "2026-08-01" }, proposer);
+
+    expect((await teamSeen(id, proposer))?.members).toContain(member);
+  });
+
+  it("is refused for someone who is not a person, or has left", async () => {
+    const id = await liveTeam();
+    const gone = await person();
+    await endDated(gone, "2026-01-31");
+
+    const missing = await changeTeams(randomUUID(), { add: [id] });
+    const left = await changeTeams(gone, { add: [id] });
+
+    expect(missing.statusCode).toBe(404);
+    expect(refusal(missing)).toBe("There is no such person");
+    expect(left.statusCode).toBe(400);
+    expect(refusal(left)).toBe(
+      "Someone who has left can't join or leave a team",
+    );
+  });
+
+  it("is refused for a team its draft removes", async () => {
+    const member = await person();
+    const id = await liveTeam({ members: [member], from: "2025-01-01" });
+    await ok(await remove(id));
+
+    const response = await changeTeams(member, { remove: [id] });
+
+    expect(response.statusCode).toBe(409);
+  });
+
+  it("is refused, as for no one, for someone who hasn't started, to a proposer who doesn't see them", async () => {
+    const id = await liveTeam();
+    const starting = await person({ startDate: "2026-09-01" });
+
+    const response = await changeTeams(
+      starting,
+      { add: [id], from: "2026-10-01" },
+      proposer,
+    );
+
+    expect(response.statusCode).toBe(404);
+    expect(refusal(response)).toBe("There is no such person");
+  });
+
+  it.each([
+    ["adds someone already on the team", true, { from: "2026-08-01" }],
+    ["takes away someone not on it", false, { from: "2026-08-01" }],
+    ["adds someone already on it from today", true, {}],
+  ])("saves nothing when it %s", async (_, onTeam, day) => {
+    const member = await person();
+    const id = await liveTeam(onTeam ? { members: [member] } : {});
+
+    expect(
+      await teamsChanged(member, {
+        ...(onTeam ? { add: [id] } : { remove: [id] }),
+        ...day,
+      }),
+    ).toBeNull();
+    expect((await teamSeen(id))?.draft).toBeUndefined();
+  });
+
+  it("saves nothing when it changes nothing", async () => {
+    expect(await teamsChanged(await person(), {})).toBeNull();
+  });
+});
+
 describe("the names of those on a team", () => {
   it("names members and leads, drafted or live, to readers who see them, including someone who has not started", async () => {
     // Given a team with a lead, and a draft adding someone who has not started
@@ -2140,6 +2383,50 @@ describe("undoing a change to a team", () => {
 
     expect((await teamSeen(id))?.draft).toBeUndefined();
   });
+
+  it("is made by a proposer for a change of members from a later month", async () => {
+    const member = await person();
+    const maker = await test.signedIn("feature-lead");
+    const id = await liveTeam();
+    const added = await changed(
+      id,
+      { add: [member], from: "2026-08-01" },
+      maker,
+    );
+
+    await ok(await undo(added, maker));
+
+    expect((await teamSeen(id))?.draft).toBeUndefined();
+  });
+
+  it("is made by a proposer for a change of lead from a later month", async () => {
+    const member = await person();
+    const maker = await test.signedIn("feature-lead");
+    const id = await liveTeam({ members: [member] });
+    const led = await changed(
+      id,
+      { leadId: member, from: "2026-08-01" },
+      maker,
+    );
+
+    await ok(await undo(led, maker));
+
+    expect((await teamSeen(id))?.draft).toBeUndefined();
+  });
+
+  // Any answer that turned on the day would say something of it to someone who may not see it.
+  it.each(["2026-03-01", "2026-08-01", "2026-08-15"])(
+    "is refused to a proposer who doesn't see the days, putting back any day, %s",
+    async (day) => {
+      const member = await person({ startDate: "2026-01-01" });
+      const maker = await test.signedIn("feature-lead");
+      const id = await liveTeam();
+      await changed(id, { add: [member], from: day });
+      const removed = await changed(id, { remove: [member] }, maker);
+
+      expect((await undo(removed, maker)).statusCode).toBe(403);
+    },
+  );
 
   it("records the access history of people whose days it puts back", async () => {
     const member = await person();

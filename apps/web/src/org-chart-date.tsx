@@ -20,7 +20,8 @@ import { today } from "./today.ts";
 
 const dateBoxId = "org-chart-date";
 const monthsEachWay = 24;
-const monthsBetweenMarks = 12;
+// Every month has a mark, and every twelfth its name, which is all there is room for.
+const monthsBetweenLabels = 12;
 // How far down the arrows and timeline sit, to line up with the box under its label.
 const dayBoxLabelHeight = 24;
 const handleOffset = 6;
@@ -69,13 +70,12 @@ export function OrgChartDate({
   const stepTo = (months: number) => {
     choose(dayOfMonthFromNow(months));
   };
-  const marks = Array.from(
-    { length: (2 * monthsEachWay) / monthsBetweenMarks + 1 },
-    (_, index) => {
-      const value = -monthsEachWay + index * monthsBetweenMarks;
-      return { value, label: formatMonth(monthOf(dayOfMonthFromNow(value))) };
-    },
-  );
+  const marks = Array.from({ length: 2 * monthsEachWay + 1 }, (_, index) => {
+    const value = index - monthsEachWay;
+    return value % monthsBetweenLabels === 0
+      ? { value, label: formatMonth(monthOf(dayOfMonthFromNow(value))) }
+      : { value };
+  });
   const belowLabel = seesDays ? dayBoxLabelHeight : 0;
   return (
     <Stack gap="xs" mb="sm">

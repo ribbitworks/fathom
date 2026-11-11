@@ -16,6 +16,7 @@ import {
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  bodyOf,
   fictionalUser,
   greeting,
   renderApp,
@@ -148,16 +149,6 @@ function focusRow(id: string) {
 
 function entryName() {
   return screen.getByLabelText<HTMLInputElement>("New choice name");
-}
-
-function bodyOf(
-  fetch: ReturnType<typeof serverAnswers>,
-  method: string,
-  url: string,
-): unknown[] {
-  return fetch.mock.calls
-    .filter(([called, init]) => called === url && init?.method === method)
-    .map(([, init]) => JSON.parse(init?.body as string) as unknown);
 }
 
 // The change sets the page asked the server to undo, in order.

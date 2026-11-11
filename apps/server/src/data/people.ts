@@ -126,7 +126,7 @@ type PersonRow = typeof people.$inferSelect;
 
 export type { Recorded } from "./drafts.ts";
 
-const noPerson = "There is no such person";
+export const noPerson = "There is no such person";
 const duplicateEmployeeId = "Someone already has that ID";
 const toBeRemoved =
   "This person's draft removes them; discard the draft to change them";

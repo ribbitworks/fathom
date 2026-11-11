@@ -1,18 +1,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Tests for feature teams month by month as a table of records: the months shown around today, what
-// a table that never changes anything answers, and a person's months as drafts change them.
+// the table answers for whole records, which months can be changed, what a cell's change asks for and
+// shows at once, and a person's months as drafts change them.
 
 import type { TeamMonths } from "@fathom/shared";
-import { describe, expect, it } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { renderHook } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   featureTeamGrouping,
   gridMonthsAround,
-  noTeamMonthActions,
+  monthChange,
+  noWholeRecordActions,
+  type PersonMonths,
   personDraft,
   teamMonthRecords,
   teamMonthsTable,
+  useTeamMonthActions,
+  withMonthChange,
 } from "./team-months.tsx";
+import { serverAnswers } from "./test-support.tsx";
+
+const edits = { today: "2027-03-10", changesDates: false };
 
 describe("gridMonthsAround", () => {
   it("is twelve months back to eleven ahead of the current month", () => {
@@ -28,9 +39,10 @@ describe("the table", () => {
     { months: [], teams: [], people: [] },
     false,
     "both",
+    edits,
   );
 
-  it("is never asked to change anything, and has nothing to say if it were", () => {
+  it("is never asked to add or remove records, and has nothing to say if it were", () => {
     expect(table.request([], "")).toEqual({});
     expect(table.newRowLabel("")).toBe("");
     expect(table.drafts([]).people).toEqual([]);
@@ -39,7 +51,7 @@ describe("the table", () => {
     expect(table.recordProblem({}, () => [])).toBeUndefined();
     expect(table.removeLabel({} as never)).toBe("");
     expect(() => {
-      (noTeamMonthActions.add as () => void)();
+      (noWholeRecordActions.add as () => void)();
     }).not.toThrow();
   });
 
@@ -156,7 +168,7 @@ describe("a person's months as drafts change them", () => {
 
   it("keeps the person as approved for the Live row", () => {
     const [record] = teamMonthRecords(data, undefined, "both");
-    const table = teamMonthsTable(data, true, "both");
+    const table = teamMonthsTable(data, true, "both", edits);
 
     const [live] = table.liveRecords(record === undefined ? [] : [record]);
 
@@ -210,7 +222,7 @@ describe("a person's months as drafts change them", () => {
   it("leaves out a team a draft removes once drafts are applied, striking it through beside live", () => {
     const [record] = teamMonthRecords(data, undefined, "both");
     const month = (show: "both" | "drafts") =>
-      teamMonthsTable(data, true, show)
+      teamMonthsTable(data, true, show, edits)
         .columnsFor([], [], [], [])
         .find(({ key }) => key === "2027-04");
 
@@ -224,6 +236,172 @@ describe("a person's months as drafts change them", () => {
           { ...search, drafted: "removed" },
         ],
       },
+    });
+  });
+});
+
+describe("the months that can be changed", () => {
+  const data: TeamMonths = {
+    months: ["2027-02", "2027-03", "2027-04"],
+    teams: [],
+    people: [],
+  };
+  const readOnly = (changesDates: boolean) =>
+    teamMonthsTable(data, true, "both", { ...edits, changesDates })
+      .columnsFor([], [], [], [])
+      .map(({ key, readOnly: fixed }) => [key, fixed]);
+
+  it("are the current month and later, never the person", () => {
+    expect(readOnly(false)).toEqual([
+      ["name", true],
+      ["2027-02", true],
+      ["2027-03", false],
+      ["2027-04", false],
+    ]);
+  });
+
+  it("include earlier months for those who may change Restricted details", () => {
+    expect(readOnly(true)).toEqual([
+      ["name", true],
+      ["2027-02", false],
+      ["2027-03", false],
+      ["2027-04", false],
+    ]);
+  });
+});
+
+describe("a cell's change", () => {
+  const record = {
+    id: "t-search p-casey",
+    personId: "p-casey",
+    values: { "2027-04": ["t-search", "t-web"] },
+  } as unknown as PersonMonths;
+
+  it("adds and removes teams from the first of a later month", () => {
+    expect(
+      monthChange(
+        record,
+        { values: { "2027-04": ["t-mobile", "t-web"] } },
+        "2027-03-10",
+      ),
+    ).toEqual({
+      month: "2027-04",
+      request: {
+        add: ["t-mobile"],
+        remove: ["t-search"],
+        from: "2027-04-01",
+      },
+    });
+  });
+
+  it("changes the current month from today, giving no day", () => {
+    expect(
+      monthChange(
+        record,
+        { values: { "2027-03": ["t-mobile"] } },
+        "2027-03-10",
+      ),
+    ).toEqual({
+      month: "2027-03",
+      request: { add: ["t-mobile"], remove: [] },
+    });
+  });
+
+  it("asks for nothing when the teams are as they were, or no month is given", () => {
+    expect(
+      monthChange(
+        record,
+        { values: { "2027-04": ["t-web", "t-search"] } },
+        "2027-03-10",
+      ),
+    ).toBeUndefined();
+    expect(monthChange(record, {}, "2027-03-10")).toBeUndefined();
+  });
+});
+
+describe("changing a month's teams", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("saves nothing when the teams are as they were", () => {
+    const fetch = serverAnswers({});
+    const client = new QueryClient();
+    const { result } = renderHook(
+      () =>
+        useTeamMonthActions({ from: "2027-03", to: "2027-04" }, "2027-03-10"),
+      {
+        wrapper: ({ children }: { children: ReactNode }) => (
+          <QueryClientProvider client={client}>{children}</QueryClientProvider>
+        ),
+      },
+    );
+    const record = {
+      personId: "p-casey",
+      values: { "2027-04": ["t-search"] },
+    } as unknown as PersonMonths;
+
+    result.current.update(record, { values: { "2027-04": ["t-search"] } });
+
+    expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("the months shown at once while a change saves", () => {
+  const data: TeamMonths = {
+    months: ["2027-03", "2027-04", "2027-05"],
+    teams: [],
+    people: [
+      {
+        id: "p-casey",
+        preferredName: "Casey Fictional",
+        manager: null,
+        teams: { "2027-03": ["t-search"], "2027-04": ["t-search"] },
+        drafted: { teams: { "2027-05": [] }, by: ["t-search"] },
+      },
+      {
+        id: "p-avery",
+        preferredName: "Avery Fictional",
+        manager: null,
+        teams: { "2027-04": ["t-web"] },
+      },
+    ],
+    drafts: [{ teamId: "t-search", action: "changed", state: "waiting" }],
+  };
+
+  it("changes that month and every later one as the person's own draft, leaving others as they were", () => {
+    const shown = withMonthChange(data, "p-casey", "2027-04", {
+      add: ["t-mobile"],
+      remove: ["t-search"],
+    });
+
+    expect(shown.people[0]?.drafted).toEqual({
+      teams: { "2027-04": ["t-mobile"], "2027-05": ["t-mobile"] },
+      by: ["t-search", "t-mobile"],
+    });
+    expect(shown.people[1]).toBe(data.people[1]);
+    expect(shown.drafts).toEqual([
+      { teamId: "t-search", action: "changed", state: "waiting" },
+      {
+        teamId: "t-mobile",
+        action: "changed",
+        state: "waiting",
+        unpublished: true,
+      },
+    ]);
+  });
+
+  it("starts a draft for someone with none", () => {
+    const shown = withMonthChange(
+      { months: data.months, teams: data.teams, people: data.people },
+      "p-avery",
+      "2027-05",
+      { add: [], remove: ["t-web"] },
+    );
+
+    expect(shown.people[1]?.drafted).toEqual({
+      teams: { "2027-05": [] },
+      by: ["t-web"],
     });
   });
 });

@@ -179,6 +179,38 @@ export const featureTeamChangeSchema = z.object({
 
 export type FeatureTeamChange = z.infer<typeof featureTeamChangeSchema>;
 
+// The most teams one change of someone's teams may add or remove.
+export const maxTeamsChanged = 50;
+
+const teamIds = z
+  .array(z.uuid())
+  .max(maxTeamsChanged)
+  .refine((ids) => new Set(ids).size === ids.length, "Each team once");
+
+// Whether a team change may take effect from a day: a day before today needs the right to change
+// Restricted details.
+export const mayDateTeamChange = (
+  changesDates: boolean,
+  day: string,
+  today: string,
+): boolean => changesDates || day >= today;
+
+// Changes the teams someone is on from a day, as a cell of the monthly grid does: they join the
+// teams added and leave those removed, each change drafted on its team, from the day given, as for
+// featureTeamChangeSchema, or from today.
+export const memberTeamsChangeSchema = z
+  .object({
+    add: teamIds.default([]),
+    remove: teamIds.default([]),
+    from: daySchema.optional(),
+  })
+  .refine(
+    ({ add, remove }) => !add.some((id) => remove.includes(id)),
+    "A team can't be added and removed at once",
+  );
+
+export type MemberTeamsChange = z.infer<typeof memberTeamsChangeSchema>;
+
 // A feature team's colour, chosen on the chart, or null for none. It is not part of any draft, so it
 // changes at once.
 export const featureTeamColourSchema = z.object({

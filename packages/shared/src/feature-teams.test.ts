@@ -11,6 +11,9 @@ import {
   featureTeamDraftSchema,
   featureTeamLengths,
   featureTeamRequestSchema,
+  memberTeamsChangeSchema,
+  maxTeamsChanged,
+  mayDateTeamChange,
 } from "./feature-teams.ts";
 
 describe("the month a team disbands", () => {
@@ -168,6 +171,62 @@ describe("changing a feature team", () => {
     expect(
       featureTeamChangeSchema.safeParse({ remove: [other, other] }).success,
     ).toBe(false);
+  });
+});
+
+describe("changing the teams someone is on", () => {
+  it("changes at most so many teams at once", () => {
+    const teams = (count: number) =>
+      Array.from(
+        { length: count },
+        (_, index) =>
+          `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`,
+      );
+
+    expect(
+      memberTeamsChangeSchema.safeParse({ add: teams(maxTeamsChanged) })
+        .success,
+    ).toBe(true);
+    expect(
+      memberTeamsChangeSchema.safeParse({ add: teams(maxTeamsChanged + 1) })
+        .success,
+    ).toBe(false);
+  });
+
+  it.each([
+    ["today", false, "2027-03-10", true],
+    ["a later day", false, "2027-04-01", true],
+    ["an earlier day, without changing dates", false, "2027-03-01", false],
+    ["an earlier day, changing dates", true, "2027-03-01", true],
+  ])("takes effect from %s", (_, changesDates, day, may) => {
+    expect(mayDateTeamChange(changesDates, day, "2027-03-10")).toBe(may);
+  });
+
+  it("takes the teams added and removed, and a day, or none of them", () => {
+    expect(memberTeamsChangeSchema.parse({})).toEqual({ add: [], remove: [] });
+    expect(
+      memberTeamsChangeSchema.parse({
+        add: [person],
+        remove: [other],
+        from: "2026-01-01",
+      }),
+    ).toEqual({ add: [person], remove: [other], from: "2026-01-01" });
+  });
+
+  it("refuses a team named twice, or both added and removed", () => {
+    for (const asked of [
+      { add: [person, person] },
+      { remove: [other, other] },
+      { add: [person], remove: [person] },
+    ]) {
+      expect(memberTeamsChangeSchema.safeParse(asked).success).toBe(false);
+    }
+  });
+
+  it("refuses a team not named by an identifier, and a day that is not one", () => {
+    for (const asked of [{ add: ["search"] }, { from: "soon" }]) {
+      expect(memberTeamsChangeSchema.safeParse(asked).success).toBe(false);
+    }
   });
 });
 

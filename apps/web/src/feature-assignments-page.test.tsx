@@ -2,13 +2,25 @@
 
 // Tests for the Feature assignments page: people as rows and months as columns, their teams shown as
 // labels, the three ways of grouping them, each person counted once, months outside someone's
-// employment, a label's tooltip, drafts and the Draft menu, and what it shows when it cannot load.
+// employment, a label's tooltip, drafts and the Draft menu, changing a month's teams, and what it
+// shows when it cannot load.
 
 import { monthsBetween, type TeamMonths } from "@fathom/shared";
-import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  bodyOf,
+  fictionalUser,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
 
 const now = "2027-03-10";
 const monthsUrl = "GET /api/feature-teams/months?from=2026-03&to=2028-02";
@@ -82,6 +94,108 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+});
+
+describe("changing a month's teams", () => {
+  const proposes = session([
+    "org-chart:view",
+    "people:view",
+    "feature-teams:propose",
+  ]);
+  const caseyUrl = "/api/feature-teams/members/p-casey";
+  const saved = "00000000-0000-4000-8000-000000000001";
+  const undone = "00000000-0000-4000-8000-000000000002";
+
+  async function openEditing(permissions = proposes) {
+    const fetch = serverAnswers({
+      "GET /api/session": permissions,
+      [monthsUrl]: () => Response.json(months),
+      [`PATCH ${caseyUrl}`]: () => Response.json({ changeSetId: saved }),
+      [`POST /api/undo/${saved}`]: () => Response.json({ changeSetId: undone }),
+    });
+    renderApp("/feature-assignments?grouping=none");
+    await screen.findByRole("grid", { name: "Feature teams by month" });
+    return fetch;
+  }
+
+  const cell = (month: string) =>
+    document.getElementById(`cell-p-casey-${month}`) as HTMLElement;
+
+  it("adds a team from a later month's first day", async () => {
+    const fetch = await openEditing();
+    act(() => {
+      cell("2027-05").focus();
+    });
+
+    await userEvent.keyboard("mob");
+    await screen.findByRole("option", { name: "Mobile apps" });
+    await userEvent.keyboard("{Tab}");
+
+    expect(bodyOf(fetch, "PATCH", caseyUrl)).toEqual([
+      { add: [mobile.id], remove: [], from: "2027-05-01" },
+    ]);
+  });
+
+  it("takes a team away in the current month from today", async () => {
+    const fetch = await openEditing();
+    act(() => {
+      cell("2027-03").focus();
+    });
+
+    await userEvent.keyboard("{Delete}");
+
+    expect(bodyOf(fetch, "PATCH", caseyUrl)).toEqual([
+      { add: [], remove: [platform.id] },
+    ]);
+  });
+
+  it("undoes a change with Cmd+Z", async () => {
+    const fetch = await openEditing();
+    act(() => {
+      cell("2027-03").focus();
+    });
+    await userEvent.keyboard("{Delete}");
+
+    // Undo is offered once the change is saved; pressing it before then does nothing.
+    await waitFor(async () => {
+      await userEvent.keyboard("{Meta>}z{/Meta}");
+      expect(bodyOf(fetch, "POST", `/api/undo/${saved}`)).toEqual([{}]);
+    });
+  });
+
+  it("leaves earlier months and the person as they are, with no row menu", async () => {
+    await openEditing();
+
+    expect(cell("2027-02").getAttribute("aria-readonly")).toBe("true");
+    expect(cell("2027-03").hasAttribute("aria-readonly")).toBe(false);
+    expect(cell("name").getAttribute("aria-readonly")).toBe("true");
+    expect(screen.queryByRole("button", { name: /^Actions for/u })).toBeNull();
+  });
+
+  it("lets those who may change Restricted details change earlier months", async () => {
+    await openEditing(
+      session([
+        "org-chart:view",
+        "people:view",
+        "feature-teams:propose",
+        "restricted:edit",
+      ]),
+    );
+
+    expect(cell("2027-02").hasAttribute("aria-readonly")).toBe(false);
+  });
+
+  it("changes nothing for those who may not propose team changes", async () => {
+    const fetch = await openEditing(seesPeople);
+    act(() => {
+      cell("2027-03").focus();
+    });
+
+    await userEvent.keyboard("{Delete}");
+
+    expect(bodyOf(fetch, "PATCH", caseyUrl)).toEqual([]);
+    expect(within(cell("2027-03")).getByText(platform.name)).toBeDefined();
+  });
 });
 
 describe("the Feature assignments page", () => {

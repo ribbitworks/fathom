@@ -36,6 +36,17 @@ export function serverAnswers(answers: Record<string, () => Answer>) {
   return fetch;
 }
 
+// The bodies of the requests sent with a method to an address, in order.
+export function bodyOf(
+  fetch: ReturnType<typeof serverAnswers>,
+  method: string,
+  url: string,
+): unknown[] {
+  return fetch.mock.calls
+    .filter(([called, init]) => called === url && init?.method === method)
+    .map(([, init]) => JSON.parse(init?.body as string) as unknown);
+}
+
 export const fictionalUser = {
   user: {
     id: "user-1",

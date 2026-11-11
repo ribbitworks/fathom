@@ -1,7 +1,7 @@
 # Fathom: Implementation Plan
 
 **Status:** Proposal for the owner's review
-**Last updated:** 2026-11-09
+**Last updated:** 2026-11-10
 
 A proposed way to build the first stage of the [Roadmap](../product/roadmap.md): groundwork first, then a sequence of thin vertical slices. Each slice goes through every layer (browser, server, database, deployment), follows the roadmap's [Guiding Principles](../product/roadmap.md#guiding-principles), the [Agent Workflow](../standards/shared/agent-workflow.md), and the [Data](../../AGENTS.md#data) rules.
 
@@ -44,7 +44,7 @@ The slices are built in this order, which may change as work progresses. The tab
 | Number Columns | Done |
 | Teams and Reporting Lines | In progress: schema, server, seed, Drafts, People's columns, the Manager flag, the org chart, and manual tests |
 | Org Chart Additions | In progress: team colours, drafts on the chart, and person details; next chart fields, filters, and sort |
-| Projects and Feature Teams | In progress: feature teams on the org chart, with the feature team chart, a team's panel, its members and lead as drafts, a person's feature teams in their details, and the read-only Feature assignments page, showing feature team drafts; editing its cells, one at a time, and projects next |
+| Projects and Feature Teams | In progress: feature teams on the org chart, with the feature team chart, a team's panel, its members and lead as drafts, a person's feature teams in their details, and the Feature assignments page, showing feature team drafts, with its cells edited one at a time; projects next |
 | General Features | Done |
 | Allocations and Capacity | In progress: allocations on the server, each person's or planned hire's allocation to a feature one draft, approved with Approve allocations, with the employment and removal rules, the change history, and the seed's fictional allocations; a planned hire with allocations can't be filled, and a filled one can't be allocated, until filling moves its allocations; next the Allocations mode of the Feature assignments grid, read only |
 | Features and the Roadmap | In progress: schema, and features on the server as drafts approved with Approve Plan, following their cycles when those move, with the seed's fictional features; Edit Features is built; the Features page, grouped by cycle, with feature drafts on the Drafts page and in the change-length dialog; a feature's status as a list with meanings, the month it is needed by, customers, a note, and grouping by that month; columns added to Features, with their values in a feature's draft; the conversions between units of effort on the server; the Effort column, shown in the unit and decimal places the view names; next moving columns on Features, with the conversions' settings deferred, as [Issues](../issues.md) records |

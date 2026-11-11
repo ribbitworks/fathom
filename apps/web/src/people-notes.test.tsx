@@ -16,7 +16,12 @@ import {
 } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { fictionalUser, renderApp, serverAnswers } from "./test-support.tsx";
+import {
+  bodyOf,
+  fictionalUser,
+  renderApp,
+  serverAnswers,
+} from "./test-support.tsx";
 
 const s1 = "00000000-0000-4000-8000-000000000001";
 
@@ -111,16 +116,6 @@ async function openPeople(answers: Answers = {}, session = editor) {
 
 const cell = (row: string) =>
   document.getElementById(`cell-${row}-f1`) as HTMLElement;
-
-function bodyOf(
-  fetch: ReturnType<typeof serverAnswers>,
-  method: string,
-  url: string,
-): unknown[] {
-  return fetch.mock.calls
-    .filter(([called, init]) => called === url && init?.method === method)
-    .map(([, init]) => JSON.parse(init?.body as string) as unknown);
-}
 
 const panel = () => screen.findByRole("region", { name: "Background" });
 

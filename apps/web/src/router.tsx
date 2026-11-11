@@ -456,6 +456,12 @@ const peopleRoute = createRoute({
   },
 });
 
+// Whether a role may draft changes to feature teams, which needs seeing the people on them.
+const proposesFeatureTeams = (permissions: readonly string[]) =>
+  permissions.includes("people:view") &&
+  (permissions.includes("feature-teams:propose") ||
+    permissions.includes("feature-teams:edit"));
+
 const orgChartRoute = createRoute({
   getParentRoute: () => signedInRoute,
   path: "/org-chart",
@@ -473,10 +479,7 @@ const orgChartRoute = createRoute({
     );
     const featureTeamEdits = useMemo(
       () => ({
-        propose:
-          permissions.includes("people:view") &&
-          (permissions.includes("feature-teams:propose") ||
-            permissions.includes("feature-teams:edit")),
+        propose: proposesFeatureTeams(permissions),
         edit:
           permissions.includes("people:view") &&
           permissions.includes("feature-teams:edit"),
@@ -518,6 +521,8 @@ const featureAssignmentsRoute = createRoute({
     return (
       <FeatureAssignmentsPage
         seesPeople={permissions.includes("people:view")}
+        proposesTeams={proposesFeatureTeams(permissions)}
+        changesDates={permissions.includes("restricted:edit")}
         view={view}
         onView={onView}
       />

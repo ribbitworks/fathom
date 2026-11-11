@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Feature teams: reading them, for everyone who sees the org chart, and drafting teams added,
-// changed, and removed, discarding drafts, sending rejected ones for approval again, and setting a
-// team's colour. Approving and rejecting drafts is in drafts.ts. The data access layer checks the
-// actor's permissions.
+// changed, and removed, and the teams someone is on changed, discarding drafts, sending rejected
+// ones for approval again, and setting a team's colour. Approving and rejecting drafts is in
+// drafts.ts. The data access layer checks the actor's permissions.
 
 import {
   changeSetIdSchema,
@@ -12,6 +12,7 @@ import {
   featureTeamColourSchema,
   featureTeamRequestSchema,
   featureTeamsSchema,
+  memberTeamsChangeSchema,
   monthRangeQuerySchema,
   savedSchema,
   teamMonthsSchema,
@@ -23,6 +24,7 @@ import type { FeatureTeamAccess } from "../data/index.ts";
 const created = 201;
 const noContent = 204;
 const teamParams = z.object({ teamId: z.uuid() });
+const memberParams = z.object({ personId: z.uuid() });
 const saved = { 200: savedSchema };
 
 export function featureTeamRoutes(
@@ -86,6 +88,25 @@ export function featureTeamRoutes(
         changeSetId: await teams.update(
           request.actor,
           request.params.teamId,
+          request.body,
+        ),
+      }),
+    );
+
+    // Changes the teams someone is on from a day, as a month of the monthly grid does.
+    app.patch(
+      "/api/feature-teams/members/:personId",
+      {
+        schema: {
+          params: memberParams,
+          body: memberTeamsChangeSchema,
+          response: saved,
+        },
+      },
+      async (request) => ({
+        changeSetId: await teams.changeMemberTeams(
+          request.actor,
+          request.params.personId,
           request.body,
         ),
       }),

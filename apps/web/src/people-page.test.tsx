@@ -16,6 +16,7 @@ import {
 import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  bodyOf,
   fictionalUser,
   greeting,
   renderApp,
@@ -221,16 +222,6 @@ function focusCell(row: string, key: string) {
   act(() => {
     cell(row, key).focus();
   });
-}
-
-function bodyOf(
-  fetch: ReturnType<typeof serverAnswers>,
-  method: string,
-  url: string,
-): unknown[] {
-  return fetch.mock.calls
-    .filter(([called, init]) => called === url && init?.method === method)
-    .map(([, init]) => JSON.parse(init?.body as string) as unknown);
 }
 
 function undone(fetch: ReturnType<typeof serverAnswers>): string[] {
@@ -1780,6 +1771,7 @@ describe("columns", () => {
     );
     await waitFor(() => {
       expect(place("Role on team")).toBe(rolePlace - 1);
+      expect(screen.queryByRole("menu")).toBeNull();
     });
 
     // Built-in columns move too, to the very start, and no further.

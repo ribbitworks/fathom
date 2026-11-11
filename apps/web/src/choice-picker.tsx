@@ -3,12 +3,13 @@
 // Picking choices in a cell of the People table, built on Mantine's Combobox. The cell keeps its own
 // input, the same size as when it is not being edited, and the choices drop down below it. Typing
 // narrows the choices, the arrow keys move through them, and Enter picks one; for a column that
-// takes several, Enter adds or removes one and keeps the list open. Tab picks the highlighted choice
-// when something has been typed, then moves on, Esc cancels, and leaving the cell keeps what was
-// picked.
+// takes several, Enter adds or removes one and keeps the list open, with no choice highlighted, so
+// Enter again finishes, as it does in other cells. Tab picks the highlighted choice when something
+// has been typed, then moves on, Esc cancels, and leaving the cell keeps what was picked. Where
+// several can be picked, a check marks each one picked.
 
-import { Combobox, useCombobox } from "@mantine/core";
-import { type KeyboardEvent, useEffect, useState } from "react";
+import { CheckIcon, Combobox, Group, useCombobox } from "@mantine/core";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import classes from "./pages.module.css";
 
 // How editing a cell ended: Enter, Tab or Shift+Tab, or leaving the cell.
@@ -51,9 +52,17 @@ export function ChoicePicker({
     option.label.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
+  // Whether a choice was picked since anything was typed or the arrow keys moved, which leaves no
+  // choice highlighted, so Enter finishes.
+  const justPicked = useRef(false);
+
   // The first choice that matches is highlighted, so Enter or Tab picks it.
   useEffect(() => {
-    store.selectFirstOption();
+    if (justPicked.current) {
+      store.resetSelectedOption();
+    } else {
+      store.selectFirstOption();
+    }
   }, [search, store]);
 
   const toggled = (value: string) =>
@@ -68,6 +77,8 @@ export function ChoicePicker({
       onDone([value], "enter");
       return;
     }
+    justPicked.current = true;
+    store.resetSelectedOption();
     setPicked(toggled(value));
     setSearch("");
   };
@@ -75,7 +86,9 @@ export function ChoicePicker({
   const highlighted = () => shown[store.getSelectedOptionIndex()]?.value;
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Escape") {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      justPicked.current = false;
+    } else if (event.key === "Escape") {
       event.preventDefault();
       onCancel();
     } else if (event.key === "Tab") {
@@ -118,6 +131,7 @@ export function ChoicePicker({
           placeholder={labels}
           autoComplete="off"
           onChange={(event) => {
+            justPicked.current = false;
             setSearch(event.currentTarget.value);
           }}
           onKeyDown={onKeyDown}
@@ -135,7 +149,21 @@ export function ChoicePicker({
               active={picked.includes(option.value)}
               aria-selected={picked.includes(option.value)}
             >
-              {option.label}
+              {multiple ? (
+                <Group gap="xs" wrap="nowrap">
+                  {/* Hidden, not left out, so every label starts in line. */}
+                  <CheckIcon
+                    size={12}
+                    aria-hidden
+                    visibility={
+                      picked.includes(option.value) ? "visible" : "hidden"
+                    }
+                  />
+                  <span>{option.label}</span>
+                </Group>
+              ) : (
+                option.label
+              )}
             </Combobox.Option>
           ))}
           {shown.length === 0 && <Combobox.Empty>No matches</Combobox.Empty>}

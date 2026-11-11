@@ -32,6 +32,9 @@ import {
   type FeatureTeams,
   isFirstOfMonth,
   knownColour,
+  mayDateTeamChange,
+  type MemberTeamsChange,
+  monthOf,
   type PaletteColour,
   type Tier,
 } from "@fathom/shared";
@@ -80,7 +83,7 @@ import {
 } from "./drafts.ts";
 import { recordEvents } from "./history.ts";
 import { bySubject, inForceOn, inForceOrLater } from "./in-force.ts";
-import { currentOn, notStarted } from "./people.ts";
+import { currentOn, noPerson, notStarted } from "./people.ts";
 import { recordNaming } from "./records.ts";
 import { text } from "./reporting.ts";
 import { readToday } from "./settings.ts";
@@ -795,12 +798,15 @@ function checkMembers(
   if (refusal !== undefined) throw new BadRequestError(refusal);
 }
 
+const changesDates = (actor: Actor) =>
+  actor.permissions.includes("restricted:edit");
+
 // The day members join or leave from: today or later, an earlier day needing the right to change
 // Restricted details. Those who do not see Restricted details plan by whole months, so that a day
 // they try can tell them no more than a month.
 function fromDay(actor: Actor, from: string | undefined, today: string) {
   if (from === undefined || from === today) return undefined;
-  if (from < today && !actor.permissions.includes("restricted:edit")) {
+  if (!mayDateTeamChange(changesDates(actor), from, today)) {
     throw new ForbiddenError(
       "This role can't choose an earlier date. Use today or a later date.",
     );
@@ -809,6 +815,30 @@ function fromDay(actor: Actor, from: string | undefined, today: string) {
     throw new BadRequestError("Choose the first day of a month");
   }
   return from;
+}
+
+// Refuses putting back a joining, leaving or lead day the actor could not choose today. Those who
+// do not see the days are refused any, since which they could choose would say what the day is.
+function refuseDaysPutBack(
+  actor: Actor,
+  wanted: Recorded | undefined,
+  now: Recorded | undefined,
+  today: string,
+): void {
+  const seesDays = seesRestrictedDetails(actor);
+  for (const days of [datesOf, leadDatesOf]) {
+    const before = new Map(Object.entries(days(now)));
+    for (const [personId, day] of Object.entries(days(wanted))) {
+      if (
+        before.get(personId) !== day &&
+        (!seesDays || !mayDateTeamChange(changesDates(actor), day, today))
+      ) {
+        throw new ForbiddenError(
+          "This change would bring back a date this role can't choose, so it can't be undone.",
+        );
+      }
+    }
+  }
 }
 
 interface MemberDay {
@@ -1134,145 +1164,296 @@ export async function updateFeatureTeam(
   const from = fromDay(actor, change.from, today);
   return database.transaction(async (transaction) => {
     await lockDrafts(transaction);
-    const { before, draft, team } = await draftedTeam(
+    const made = await draftTeamChange(
       transaction,
       actor,
-      id,
-      today,
+      { id, change, from, today },
+      await draftedTeam(transaction, actor, id, today),
+      refusalsWhenDrafting(seesRestrictedDetails(actor)),
     );
-    if (team === undefined) {
-      throw new ConflictError(
-        "This feature team's draft removes it; discard the draft to change it",
-      );
-    }
-    if (change.name !== undefined) {
-      await refuseTakenName(transaction, change.name, id);
-    }
-    const current = membersOf(team);
-    // A lead chosen from outside the team joins it, so the lead is always a member.
-    const asked = [
-      ...(change.add ?? []),
-      ...(typeof change.leadId === "string" ? [change.leadId] : []),
-    ];
-    const added = [...new Set(asked)].filter((one) => !current.includes(one));
-    const removed = (change.remove ?? []).filter((one) =>
-      current.includes(one),
+    return made.length === 0 ? null : saved(transaction, actor, made);
+  });
+}
+
+type DraftedTeamNow = Awaited<ReturnType<typeof draftedTeam>>;
+
+// Writes a team's draft with a change made, once the drafts lock is held, as updateFeatureTeam
+// describes, returning the changes to record; none when it changes nothing. Adding someone the
+// draft already adds, or removing someone it already removes, moves their change to the day given.
+async function draftTeamChange(
+  transaction: Transaction,
+  actor: Actor,
+  {
+    id,
+    change,
+    from,
+    today,
+  }: {
+    id: string;
+    change: FeatureTeamChange;
+    from: string | undefined;
+    today: string;
+  },
+  { before, draft, team }: DraftedTeamNow,
+  dayRefusals: DayRefusals,
+): Promise<Change[]> {
+  if (team === undefined) {
+    throw new ConflictError(
+      "This feature team's draft removes it; discard the draft to change it",
     );
-    const members = [
-      ...current.filter((one) => !removed.includes(one)),
-      ...added,
-    ].sort();
-    // A lead who leaves the team leaves it with no lead, unless another is chosen.
-    const leadId =
-      change.leadId !== undefined
-        ? change.leadId
-        : removed.includes(String(team.leadId))
-          ? null
-          : text(team.leadId);
-    // A request giving only a day moves everything the draft changes to that day.
-    const moving =
-      change.from !== undefined &&
-      change.name === undefined &&
-      change.leadId === undefined &&
-      change.add === undefined &&
-      change.remove === undefined;
-    const wasMembers = membersOf(before);
-    const dayPeople = moving
-      ? [...new Set([...members, ...wasMembers])].filter(
-          (one) => members.includes(one) !== wasMembers.includes(one),
-        )
-      : [...added, ...removed];
-    const everyone = await peopleOf(
-      transaction,
-      [...dayPeople, ...(leadId === null ? [] : [leadId])],
-      today,
-    );
-    checkMembers(actor, added, members, leadId, everyone);
-    // A day is kept for each member a draft adds or removes, so approving it records when; a change
-    // taken back leaves none.
-    const days = moving ? {} : { ...datesOf(team) };
-    if (from !== undefined) {
-      // Each is a person the change names.
-      // eslint-disable-next-line security/detect-object-injection
-      for (const personId of dayPeople) days[personId] = from;
-    }
-    const dates = new Map(
-      Object.entries(days).filter(
-        ([personId]) =>
-          members.includes(personId) !== membersOf(before).includes(personId),
-      ),
-    );
-    // A change of lead keeps its own day, set only by the edit that changes the lead, and held
-    // under the new lead, or the old one when none replaces them.
-    const wasLead = text(before?.leadId);
-    const setsLead =
-      moving || change.leadId !== undefined || leadId !== text(team.leadId);
-    const leadChanges = setsLead && leadId !== wasLead;
-    const [keptLeadDay] = Object.values(leadDatesOf(team));
-    const leadDay = setsLead ? from : keptLeadDay;
-    const usesEmployment = seesRestrictedDetails(actor);
-    // Someone hidden from the actor gets the same answer whatever day is tried, so no day can tell
-    // them about that person's records.
-    if (
-      from !== undefined &&
-      !usesEmployment &&
-      [...dayPeople, ...(leadChanges && leadId !== null ? [leadId] : [])].some(
-        (one) => everyone.get(one)?.started === false,
+  }
+  if (change.name !== undefined) {
+    await refuseTakenName(transaction, change.name, id);
+  }
+  const current = membersOf(team);
+  // A lead chosen from outside the team joins it, so the lead is always a member.
+  const asked = [
+    ...(change.add ?? []),
+    ...(typeof change.leadId === "string" ? [change.leadId] : []),
+  ];
+  const added = [...new Set(asked)].filter((one) => !current.includes(one));
+  const removed = (change.remove ?? []).filter((one) => current.includes(one));
+  const wasMembers = membersOf(before);
+  const redated = [
+    ...(change.add ?? []).filter(
+      (one) => current.includes(one) && !wasMembers.includes(one),
+    ),
+    ...(change.remove ?? []).filter(
+      (one) => !current.includes(one) && wasMembers.includes(one),
+    ),
+  ];
+  const members = [
+    ...current.filter((one) => !removed.includes(one)),
+    ...added,
+  ].sort();
+  // A lead who leaves the team leaves it with no lead, unless another is chosen.
+  const leadId =
+    change.leadId !== undefined
+      ? change.leadId
+      : removed.includes(String(team.leadId))
+        ? null
+        : text(team.leadId);
+  // A request giving only a day moves everything the draft changes to that day.
+  const moving =
+    change.from !== undefined &&
+    change.name === undefined &&
+    change.leadId === undefined &&
+    change.add === undefined &&
+    change.remove === undefined;
+  const dayPeople = moving
+    ? [...new Set([...members, ...wasMembers])].filter(
+        (one) => members.includes(one) !== wasMembers.includes(one),
       )
-    ) {
-      throw new BadRequestError(chooseFromPeople);
+    : [...added, ...removed, ...redated];
+  const everyone = await peopleOf(
+    transaction,
+    [...dayPeople, ...(leadId === null ? [] : [leadId])],
+    today,
+  );
+  checkMembers(actor, added, members, leadId, everyone);
+  // A day is kept for each member a draft adds or removes, so approving it records when; a change
+  // taken back leaves none.
+  const days = new Map(moving ? [] : Object.entries(datesOf(team)));
+  for (const personId of dayPeople) {
+    if (from === undefined) days.delete(personId);
+    else days.set(personId, from);
+  }
+  const dates = new Map(
+    [...days].filter(
+      ([personId]) =>
+        members.includes(personId) !== membersOf(before).includes(personId),
+    ),
+  );
+  // A change of lead keeps its own day, set only by the edit that changes the lead, and held
+  // under the new lead, or the old one when none replaces them.
+  const wasLead = text(before?.leadId);
+  const setsLead =
+    moving || change.leadId !== undefined || leadId !== text(team.leadId);
+  const leadChanges = setsLead && leadId !== wasLead;
+  const [keptLeadDay] = Object.values(leadDatesOf(team));
+  const leadDay = setsLead ? from : keptLeadDay;
+  const usesEmployment = seesRestrictedDetails(actor);
+  // Someone hidden from the actor gets the same answer whatever day is tried, so no day can tell
+  // them about that person's records.
+  if (
+    from !== undefined &&
+    !usesEmployment &&
+    [...dayPeople, ...(leadChanges && leadId !== null ? [leadId] : [])].some(
+      (one) => everyone.get(one)?.started === false,
+    )
+  ) {
+    throw new BadRequestError(chooseFromPeople);
+  }
+  if (from !== undefined) {
+    await refuseDaysOutOfOrder(
+      transaction,
+      dayPeople
+        .filter((personId) => dates.has(personId))
+        .map((personId) => ({ teamId: id, personId, from })),
+      everyone,
+      dayRefusals,
+      usesEmployment,
+    );
+    if (leadChanges) {
+      await refuseLeadDayOutOfOrder(transaction, id, from, usesEmployment);
     }
-    if (from !== undefined) {
-      await refuseDaysOutOfOrder(
-        transaction,
-        dayPeople
-          .filter((personId) => dates.has(personId))
-          .map((personId) => ({ teamId: id, personId, from })),
+  }
+  if (leadChanges && leadId !== null) {
+    const joinsInDraft = !membersOf(before).includes(leadId);
+    await refuseLeadOffTeam(
+      transaction,
+      id,
+      leadId,
+      from ?? today,
+      joinsInDraft ? (dates.get(leadId) ?? today) : undefined,
+    );
+    if (from !== undefined && usesEmployment) {
+      refuseOutsideEmployment(
+        { teamId: id, personId: leadId, from },
         everyone,
         refusalsWhenDrafting(usesEmployment),
-        usesEmployment,
       );
-      if (leadChanges) {
-        await refuseLeadDayOutOfOrder(transaction, id, from, usesEmployment);
-      }
     }
-    if (leadChanges && leadId !== null) {
-      const joinsInDraft = !membersOf(before).includes(leadId);
-      await refuseLeadOffTeam(
-        transaction,
-        id,
-        leadId,
-        from ?? today,
-        joinsInDraft ? (dates.get(leadId) ?? today) : undefined,
+  }
+  const after = tidy({
+    name: change.name ?? team.name,
+    leadId,
+    members,
+    ...(dates.size === 0 ? {} : { memberFrom: Object.fromEntries(dates) }),
+    ...(leadId === wasLead || leadDay === undefined
+      ? {}
+      : { leadFrom: { [String(leadId ?? wasLead)]: leadDay } }),
+  });
+  const made = teamChanges(id, "changed", team, after);
+  if (made.length === 0) return [];
+  const cleared = await clearedTeamRejection(
+    transaction,
+    id,
+    before,
+    draft,
+    today,
+  );
+  await writeDraft(transaction, actor.user.id, recordType, id, before, after);
+  return [...asDraft(made), ...cleared];
+}
+
+// Refusals for a change of someone's teams from a month, naming the person and the team, by month
+// alone, as the monthly grid shows them.
+function monthRefusals(
+  personName: string,
+  teamName: string,
+  seesDays: boolean,
+): DayRefusals {
+  return {
+    ...refusalsWhenDrafting(seesDays),
+    outOfOrder: () =>
+      `${personName} has an approved change on ${teamName} in this month or later, so this month can't change here.`,
+  };
+}
+
+// Whether a change of someone's team from a day changes anything, refusing one that the team's draft
+// can't hold beside what it holds already, since it holds one change for each person: one the
+// approved records make before the day and after today, or one the draft makes from another month.
+function changesHeldTeam(
+  { before, team }: DraftedTeamNow,
+  personId: string,
+  { member, liveOnDay }: { member: boolean; liveOnDay: boolean },
+  { day, today }: { day: string; today: string },
+  names: { personName: string; teamName: string },
+): boolean {
+  // A team its draft removes is refused when the change is drafted.
+  if (team === undefined) return true;
+  const live = membersOf(before).includes(personId);
+  const drafted = membersOf(team).includes(personId);
+  const { personName, teamName } = names;
+  if (drafted === live) {
+    if (member !== live) return true;
+    if (member === liveOnDay) return false;
+    throw new BadRequestError(
+      `${personName} has an approved change on ${teamName} before this month. This month can change once it takes effect.`,
+    );
+  }
+  if (member === drafted) return true;
+  const draftDay =
+    new Map(Object.entries(datesOf(team))).get(personId) ?? today;
+  if (monthOf(draftDay) !== monthOf(day)) {
+    throw new BadRequestError(
+      `The draft of ${teamName} already changes ${personName} from another month. Approve or discard that draft first.`,
+    );
+  }
+  return true;
+}
+
+// Drafts someone joining the teams added and leaving those removed, from the day given, or from
+// today, as editing a month of the monthly grid does, on each team's draft and in one change set.
+export async function changeMemberTeams(
+  database: Database,
+  actor: Actor,
+  personId: string,
+  change: MemberTeamsChange,
+  asOf?: string,
+): Promise<string | null> {
+  requireChanging(actor);
+  const today = asOf ?? (await readToday(database));
+  const from = fromDay(actor, change.from, today);
+  const seesDays = seesRestrictedDetails(actor);
+  return database.transaction(async (transaction) => {
+    await lockDrafts(transaction);
+    const person = (await peopleOf(transaction, [personId], today)).get(
+      personId,
+    );
+    // Someone the actor may not see is not there for them.
+    if (person === undefined || (!seesDays && !person.started)) {
+      throw new NotFoundError(noPerson);
+    }
+    if (person.left) {
+      throw new BadRequestError(
+        "Someone who has left can't join or leave a team",
       );
-      if (from !== undefined && usesEmployment) {
-        refuseOutsideEmployment(
-          { teamId: id, personId: leadId, from },
-          everyone,
-          refusalsWhenDrafting(usesEmployment),
+    }
+    const made: Change[] = [];
+    for (const [teamIds, member] of [
+      [change.add, true],
+      [change.remove, false],
+    ] as const) {
+      for (const id of teamIds) {
+        const now = await draftedTeam(transaction, actor, id, today);
+        const names = {
+          personName: person.preferredName,
+          teamName: String((now.team ?? now.before)?.name),
+        };
+        const day = from ?? today;
+        const onDay = (await readLiveTeams(transaction, day, { ids: [id] }))
+          .teams;
+        const liveOnDay = membersOf(onDay.get(id)).includes(personId);
+        if (
+          !changesHeldTeam(
+            now,
+            personId,
+            { member, liveOnDay },
+            { day, today },
+            names,
+          )
+        ) {
+          continue;
+        }
+        made.push(
+          ...(await draftTeamChange(
+            transaction,
+            actor,
+            {
+              id,
+              change: member ? { add: [personId] } : { remove: [personId] },
+              from,
+              today,
+            },
+            now,
+            monthRefusals(names.personName, names.teamName, seesDays),
+          )),
         );
       }
     }
-    const after = tidy({
-      name: change.name ?? team.name,
-      leadId,
-      members,
-      ...(dates.size === 0 ? {} : { memberFrom: Object.fromEntries(dates) }),
-      ...(leadId === wasLead || leadDay === undefined
-        ? {}
-        : { leadFrom: { [String(leadId ?? wasLead)]: leadDay } }),
-    });
-    const made = teamChanges(id, "changed", team, after);
-    if (made.length === 0) return null;
-    const cleared = await clearedTeamRejection(
-      transaction,
-      id,
-      before,
-      draft,
-      today,
-    );
-    await writeDraft(transaction, actor.user.id, recordType, id, before, after);
-    return saved(transaction, actor, [...asDraft(made), ...cleared]);
+    return made.length === 0 ? null : saved(transaction, actor, made);
   });
 }
 
@@ -1677,6 +1858,7 @@ export async function undoTeamDrafts(
     today,
   );
   for (const { id, team, now } of undone) {
+    refuseDaysPutBack(actor, team, now, today);
     const wanted = team && withoutLeavers(team, everyone);
     if (wanted !== undefined) {
       const name = String(wanted.name);

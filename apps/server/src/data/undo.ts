@@ -122,6 +122,12 @@ const planRecordTypes: ReadonlySet<string> = new Set(recordTypeSchema.options);
 const changedSince =
   "This has been changed since, so it can no longer be undone";
 
+// A feature team's joining, leaving and lead days are Restricted, yet those who only propose teams
+// may draft some of them, so undoing checks the days themselves, as drafting them does.
+const isTeamDay = ({ recordType, field }: StoredChange) =>
+  recordType === "feature-team" &&
+  (field === "memberFrom" || field === "leadFrom");
+
 // The permissions each kind of record needs to change it: planned hires, those to edit people and
 // the hiring plan.
 const editPermissions = {
@@ -948,7 +954,7 @@ async function undoIn(
     for (const tier of new Set(tiersOf(change))) {
       if (change.recordType === "saved-view") {
         if (!seesSensitivity(actor, tier)) throw new ForbiddenError();
-      } else if (tier !== "general") {
+      } else if (tier !== "general" && !isTeamDay(change)) {
         requireSensitivityEdit(actor, tier);
       }
     }

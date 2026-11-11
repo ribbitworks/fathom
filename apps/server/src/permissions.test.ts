@@ -597,6 +597,12 @@ const routes: Route[] = [
     body: () => ({ leadId: null }),
   },
   {
+    method: "PATCH",
+    pattern: "/api/feature-teams/members/:personId",
+    needs: changingTeams,
+    body: () => ({}),
+  },
+  {
     method: "DELETE",
     pattern: "/api/feature-teams/:teamId",
     needs: allOf("org-chart:view", "people:view", "feature-teams:edit"),

@@ -1510,6 +1510,7 @@ describe("what a table can ask of its columns and rows", () => {
     gadgets: Gadget[],
     more: {
       canEdit?: boolean;
+      rowActions?: boolean;
       opensAtColumn?: string;
       withDrafts?: boolean;
       view?: View;
@@ -1534,6 +1535,9 @@ describe("what a table can ask of its columns and rows", () => {
           {...(more.withDrafts === undefined
             ? {}
             : { withDrafts: more.withDrafts })}
+          {...(more.rowActions === undefined
+            ? {}
+            : { rowActions: more.rowActions })}
         />
       </MantineProvider>,
     );
@@ -1644,6 +1648,33 @@ describe("what a table can ask of its columns and rows", () => {
       renderTable(gadgetTable(), [gadget("a")], { opensAtColumn: "missing" });
 
       expect(screen.getByRole("grid").parentElement?.scrollLeft).toBe(0);
+    });
+  });
+
+  describe("without row actions", () => {
+    it("lets cells be edited, with no row menu", async () => {
+      renderTable(gadgetTable(), [gadget("a")], {
+        canEdit: true,
+        rowActions: false,
+      });
+
+      act(() => {
+        document.getElementById("cell-a-name")?.focus();
+      });
+      await userEvent.keyboard("{Enter}");
+
+      expect(screen.getByRole("textbox", { name: "Name" })).toBeDefined();
+      expect(
+        screen.queryByRole("button", { name: "Actions for Gadget a" }),
+      ).toBeNull();
+    });
+
+    it("keeps the row menu for a table with them", () => {
+      renderTable(gadgetTable(), [gadget("a")], { canEdit: true });
+
+      expect(
+        screen.getByRole("button", { name: "Actions for Gadget a" }),
+      ).toBeDefined();
     });
   });
 

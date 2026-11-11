@@ -11,6 +11,7 @@ import {
   type FeatureTeamChange,
   type FeatureTeamRequest,
   featureTeamsSchema,
+  type MemberTeamsChange,
   type OrgChartPerson,
   type PaletteColour,
   savedSchema,
@@ -48,6 +49,21 @@ export async function updateFeatureTeam(
 ): Promise<string | null> {
   return (await sendJsonFor("PATCH", teamPath(id), change, savedSchema))
     .changeSetId;
+}
+
+// Changes the teams someone is on from a day, drafted on each team.
+export async function changeMemberTeams(
+  personId: string,
+  change: MemberTeamsChange,
+): Promise<string | null> {
+  return (
+    await sendJsonFor(
+      "PATCH",
+      `/api/feature-teams/members/${encodeURIComponent(personId)}`,
+      change,
+      savedSchema,
+    )
+  ).changeSetId;
 }
 
 // Drafts removing a team, or discards the draft of one only drafted to be added.

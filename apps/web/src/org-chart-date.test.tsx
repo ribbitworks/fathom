@@ -61,6 +61,17 @@ const button = (name: string) =>
   screen.getByRole<HTMLButtonElement>("button", { name });
 
 describe("the date control", () => {
+  it("marks every month on the timeline and names every twelfth", () => {
+    control(undefined);
+
+    expect(document.querySelectorAll(".mantine-Slider-mark")).toHaveLength(49);
+    expect(
+      [...document.querySelectorAll(".mantine-Slider-markLabel")].map(
+        (label) => label.textContent,
+      ),
+    ).toEqual(["Mar 2025", "Mar 2026", "Mar 2027", "Mar 2028", "Mar 2029"]);
+  });
+
   it("shows today with nothing to go back to", () => {
     control(undefined);
     expect(

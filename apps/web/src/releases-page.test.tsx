@@ -18,10 +18,13 @@ import { focusManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ReleasesTimeline } from "./releases-timeline.tsx";
 import {
+  bodyOf,
+  featureDraft,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
   fictionalUser,
+  noFeatureColumns,
   quarters,
   recordDraft,
   renderApp,
@@ -29,8 +32,6 @@ import {
   signedIn,
   streamId,
   testTheme,
-  noFeatureColumns,
-  featureDraft,
 } from "./test-support.tsx";
 
 afterEach(() => {
@@ -1819,12 +1820,6 @@ describe("a release's note", () => {
   const noteButton = () =>
     screen.getByRole("button", { name: "Fictional One note" });
 
-  function bodiesOf(fetch: ReturnType<typeof serverAnswers>, url: string) {
-    return fetch.mock.calls
-      .filter(([called, init]) => called === url && init?.method === "PUT")
-      .map(([, init]) => JSON.parse(init?.body as string) as unknown);
-  }
-
   it("makes the name of a release that has a note a link to it", async () => {
     await openStream([fictionalStream({ releases: [noted] })]);
     expect(noteButton()).toBeDefined();
@@ -1871,7 +1866,7 @@ describe("a release's note", () => {
     expect(
       await screen.findByText("Drafted the note on Fictional One."),
     ).toBeDefined();
-    expect(bodiesOf(fetch, notePath)).toEqual([{ note: "Ships _late_" }]);
+    expect(bodyOf(fetch, "PUT", notePath)).toEqual([{ note: "Ships _late_" }]);
   });
 
   it("is offered only by its link once the release has one", async () => {
@@ -1905,7 +1900,7 @@ describe("a release's note", () => {
     expect(
       await screen.findByText("Drafted removing the note on Fictional One."),
     ).toBeDefined();
-    expect(bodiesOf(fetch, notePath)).toEqual([{ note: null }]);
+    expect(bodyOf(fetch, "PUT", notePath)).toEqual([{ note: null }]);
   });
 
   it("keeps the panel open, with what was written and why, when the note is refused", async () => {

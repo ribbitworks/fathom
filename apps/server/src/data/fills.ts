@@ -48,6 +48,7 @@ import {
   draftPersonAsLive,
   draftPersonChange,
   linksOf,
+  noPerson,
   notesOf,
   numbersOf,
   notStarted,
@@ -199,7 +200,7 @@ async function fillingPerson(
   ).get(personId);
   const restricted = seesSensitivity(actor, "restricted");
   if (live === undefined || (!restricted && notStarted(live, today))) {
-    throw new NotFoundError("There is no such person");
+    throw new NotFoundError(noPerson);
   }
   const name = String(live.preferredName);
   const [held] = (

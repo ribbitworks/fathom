@@ -1092,6 +1092,9 @@ export interface RecordGridProps<Rec extends GridRecord, Change, Request> {
   canEdit: boolean;
   // Whether new records can be added, for those who may edit; true unless told otherwise.
   canAdd?: boolean;
+  // Whether those who may edit records may also discard, resubmit and remove them from each row's
+  // menu; true unless told otherwise. False where a row's draft is seen to elsewhere.
+  rowActions?: boolean;
   // The kinds of draft the user's role approves and rejects.
   approves?: readonly DraftKind[];
   // Whether a change is still saving, which approving all shown waits for, so it never sends a
@@ -1153,6 +1156,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   lists,
   canEdit: mayEdit,
   canAdd = true,
+  rowActions = true,
   approves: mayApprove = [],
   saving = false,
   canEditColumns,
@@ -1407,7 +1411,9 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
 
   // The actions column, for those who may edit records or approve drafts.
   const withActions =
-    canEdit || approves.length > 0 || table.menuItems !== undefined;
+    (canEdit && rowActions) ||
+    approves.length > 0 ||
+    table.menuItems !== undefined;
   // Whether the user may change a record, as they may the table's others, unless it is one they
   // may only view.
   const mayChange = (record: Rec) =>
@@ -1416,7 +1422,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
   // record, for those who may change it, and whatever else the table offers, such as its details.
   const hasMenu = (record: Rec) =>
     !isPending(record) &&
-    (mayChange(record) ||
+    ((rowActions && mayChange(record)) ||
       (record.draft !== undefined && approvesRecord(record)) ||
       Boolean(table.menuItems?.(record)));
   // Whether a record's cells cannot be changed: by those who may only view it, while it is drafted
@@ -2535,7 +2541,7 @@ export function RecordGrid<Rec extends GridRecord, Change, Request>({
             </Menu.Item>
           </>
         )}
-        {mayChange(record) && record.heldBy === undefined && (
+        {rowActions && mayChange(record) && record.heldBy === undefined && (
           <>
             {((decidable(record) && approvesRecord(record)) ||
               Boolean(ownItems)) && <Menu.Divider />}

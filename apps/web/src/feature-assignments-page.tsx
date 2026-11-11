@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Feature assignments page: people as rows and months as columns, each cell holding the feature
-// teams someone is on that month, as approved, and as drafted for those who see drafts. Allocations
-// join as a second mode.
+// teams someone is on that month, as approved, and as drafted for those who see drafts, changed by
+// those who may propose team changes. Allocations join as a second mode.
 
 import { monthOf } from "@fathom/shared";
 import { Center, Group, Loader, SegmentedControl, Stack } from "@mantine/core";
@@ -16,31 +16,41 @@ import { activeGrouping, type View } from "./table-view.ts";
 import { TableTips } from "./table-tips.tsx";
 import {
   gridMonthsAround,
-  noTeamMonthActions,
   teamMonthRecords,
   teamMonthsQuery,
   teamMonthsTable,
+  useTeamMonthActions,
 } from "./team-months.tsx";
 import { today } from "./today.ts";
 
 export function FeatureAssignmentsPage({
   seesPeople,
+  proposesTeams,
+  changesDates,
   view,
   onView,
 }: {
   seesPeople: boolean;
+  proposesTeams: boolean;
+  // Whether the reader may change Restricted details, and so months before the current one.
+  changesDates: boolean;
   view: View;
   onView: (view: View, replace?: boolean) => void;
 }) {
   const [now] = useState(today);
-  const query = useQuery(teamMonthsQuery(gridMonthsAround(now)));
+  const [range] = useState(() => gridMonthsAround(now));
+  const query = useQuery(teamMonthsQuery(range));
+  const actions = useTeamMonthActions(range, now);
   const { data } = query;
   const table = useMemo(
     () =>
       data === undefined
         ? undefined
-        : teamMonthsTable(data, seesPeople, view.show),
-    [data, seesPeople, view.show],
+        : teamMonthsTable(data, seesPeople, view.show, {
+            today: now,
+            changesDates,
+          }),
+    [data, seesPeople, view.show, now, changesDates],
   );
   const grouping = activeGrouping(view, table?.groupings)?.key;
   const records = useMemo(
@@ -83,9 +93,11 @@ export function FeatureAssignmentsPage({
             fields={[]}
             order={[]}
             lists={[]}
-            canEdit={false}
+            canEdit={proposesTeams}
+            canAdd={false}
+            rowActions={false}
             canEditColumns={false}
-            actions={noTeamMonthActions}
+            actions={actions}
             view={view}
             onView={onView}
             opensAtColumn={monthOf(now)}

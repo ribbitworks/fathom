@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
-// Who is on which feature team, month by month, through the server's API, as a read-only table of
-// records: a row for each person and a column for each month, with the months team drafts change
-// shown as a draft of the person's row. Grouped by feature team, someone who was on two teams has a
-// row under each.
+// Who is on which feature team, month by month, through the server's API, as a table of records: a
+// row for each person and a column for each month, with the months team drafts change shown as a
+// draft of the person's row. Grouped by feature team, someone who was on two teams has a row under
+// each. Those who may propose team changes change a month's teams, drafted on each team from that
+// month on.
 
 import {
   addToMonth,
   byName,
+  dayReadingMonth,
+  mayDateTeamChange,
+  type MemberTeamsChange,
   type MonthRange,
   monthOf,
   type Show,
@@ -27,6 +31,8 @@ import {
   type RecordTable,
   type RowGrouping,
 } from "./record-grid.tsx";
+import { changeMemberTeams, featureTeamsQuery } from "./feature-teams.ts";
+import { useSaving } from "./saving.ts";
 import { formatMonth } from "./table-view.ts";
 import type { DraftLike } from "./status-mark.tsx";
 import { type DraftedLabel, TeamLabels } from "./team-labels.tsx";
@@ -129,10 +135,23 @@ const labelsShown = (labels: readonly MonthLabel[], show: Show) =>
     ? labels.filter(({ drafted }) => drafted !== "removed")
     : labels;
 
+// Who may change a month's teams: those who may propose team changes, the current month and later,
+// and earlier months too for those who may change Restricted details.
+export interface TeamMonthEdits {
+  today: string;
+  changesDates: boolean;
+}
+
+const editableMonth = (
+  month: string,
+  { today, changesDates }: TeamMonthEdits,
+) => mayDateTeamChange(changesDates, dayReadingMonth(month, today), today);
+
 export function teamMonthsTable(
   data: TeamMonths,
   seesPeople: boolean,
   show: Show,
+  edits: TeamMonthEdits,
 ): Table {
   const choices = [...data.teams].sort(byName).map(({ id, name }) => ({
     id,
@@ -160,15 +179,19 @@ export function teamMonthsTable(
         ) : undefined,
       cellChars: monthCellChars,
       headingCentred: true,
+      readOnly: !editableMonth(month, edits),
     }),
   );
   const columns = [
-    cellColumn<PersonMonths, CellChange>("name", "text", {
-      label: "Person",
-      required: true,
-      choices: [],
-      multiple: false,
-    }),
+    {
+      ...cellColumn<PersonMonths, CellChange>("name", "text", {
+        label: "Person",
+        required: true,
+        choices: [],
+        multiple: false,
+      }),
+      readOnly: true,
+    },
     ...monthColumns,
   ];
   return {
@@ -194,14 +217,78 @@ export function teamMonthsTable(
 
 const nothing = () => undefined;
 
-// The table never changes anything, so its actions are never called.
-export const noTeamMonthActions: RecordActions<
-  PersonMonths,
-  CellChange,
-  CellChange
+// A month's teams as a cell changes them: the teams added and removed, from the day the month is
+// read as of; undefined when the cell changes nothing.
+export function monthChange(
+  record: PersonMonths,
+  change: CellChange,
+  today: string,
+): { month: string; request: MemberTeamsChange } | undefined {
+  const [entry] = Object.entries(change.values ?? {});
+  if (entry === undefined) return undefined;
+  const [month, chosen] = entry;
+  const was = new Map(Object.entries(record.values)).get(month) ?? [];
+  const add = chosen.filter((id) => !was.includes(id));
+  const remove = was.filter((id) => !chosen.includes(id));
+  if (add.length === 0 && remove.length === 0) return undefined;
+  const from = dayReadingMonth(month, today);
+  return {
+    month,
+    request: { add, remove, ...(from === today ? {} : { from }) },
+  };
+}
+
+// The months as a change of someone's teams from a month makes them, shown at once while it saves:
+// the teams added and removed in that month and every later one, as the person's own draft.
+export function withMonthChange(
+  data: TeamMonths,
+  personId: string,
+  month: string,
+  { add, remove }: MemberTeamsChange,
+): TeamMonths {
+  const changed = [...add, ...remove];
+  const knownDrafts = new Set((data.drafts ?? []).map(({ teamId }) => teamId));
+  return {
+    ...data,
+    people: data.people.map((person) => {
+      if (person.id !== personId) return person;
+      const teams = new Map(Object.entries(person.drafted?.teams ?? {}));
+      const approved = new Map(Object.entries(person.teams));
+      for (const later of data.months.filter((one) => one >= month)) {
+        const before = teams.get(later) ?? approved.get(later) ?? [];
+        teams.set(
+          later,
+          [...before.filter((id) => !changed.includes(id)), ...add].sort(),
+        );
+      }
+      return {
+        ...person,
+        drafted: {
+          teams: Object.fromEntries(teams),
+          by: [...new Set([...(person.drafted?.by ?? []), ...changed])],
+        },
+      };
+    }),
+    drafts: [
+      ...(data.drafts ?? []),
+      ...changed
+        .filter((teamId) => !knownDrafts.has(teamId))
+        .map((teamId) => ({
+          teamId,
+          action: "changed" as const,
+          state: "waiting" as const,
+          unpublished: true,
+        })),
+    ],
+  };
+}
+
+// The table never adds, removes or decides on whole records, so these are never called.
+export const noWholeRecordActions: Omit<
+  RecordActions<PersonMonths, CellChange, CellChange>,
+  "update"
 > = {
   add: nothing,
-  update: nothing,
   remove: nothing,
   discard: nothing,
   resubmit: nothing,
@@ -210,6 +297,38 @@ export const noTeamMonthActions: RecordActions<
   discardColumn: nothing,
   resubmitColumn: nothing,
 };
+
+// Changing a month's teams, shown at once and saved as the team drafts, which can be undone; the
+// table changes nothing else.
+export function useTeamMonthActions(
+  range: MonthRange,
+  today: string,
+): RecordActions<PersonMonths, CellChange, CellChange> {
+  const { queryKey } = teamMonthsQuery(range);
+  const { save, undoable } = useSaving<TeamMonths>({
+    queryKey,
+    refreshes: [featureTeamsQuery.queryKey],
+    removed:
+      "Someone else has removed this. The feature assignments have been refreshed.",
+    blocked: false,
+  });
+  return {
+    ...noWholeRecordActions,
+    update: (record, change) => {
+      const changing = monthChange(record, change, today);
+      if (changing === undefined) return;
+      const { month, request } = changing;
+      save({
+        next: (data) => withMonthChange(data, record.personId, month, request),
+        save: () => changeMemberTeams(record.personId, request),
+        failure: `Fathom could not change the feature teams of ${record.name}.`,
+        onSaved: (changeSetId, before) => {
+          undoable(changeSetId, before);
+        },
+      });
+    },
+  };
+}
 
 // The draft a person's row shows for the team drafts changing their months: rejected while any is,
 // so it is seen to, otherwise the reader's own while any holds their unpublished changes.

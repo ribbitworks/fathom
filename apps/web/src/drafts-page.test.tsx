@@ -10,17 +10,18 @@ import { userEvent } from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { drafts } from "./decision-dialog.tsx";
 import {
+  bodyOf,
+  featureDraft,
   fictionalPattern,
   fictionalRelease,
   fictionalStream,
   fictionalUser,
+  noFeatureColumns,
   recordDraft,
   renderApp,
   serverAnswers,
   streamId,
   wholeText,
-  noFeatureColumns,
-  featureDraft,
 } from "./test-support.tsx";
 
 // No release streams, for drafts of other kinds.
@@ -158,12 +159,6 @@ const entries = async () =>
     textContent.replace(/^.*?(AM|PM|\d\d:\d\d)/, ""),
   );
 
-function bodiesOf(fetch: ReturnType<typeof serverAnswers>, url: string) {
-  return fetch.mock.calls
-    .filter(([called, init]) => called === url && init?.method === "POST")
-    .map(([, init]) => JSON.parse(init?.body as string) as unknown);
-}
-
 describe("the Drafts page", () => {
   it("puts each draft in words, newest first, with what it changes", async () => {
     await openDrafts();
@@ -255,7 +250,7 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     await waitFor(() => {
-      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: [],
           plannedHires: [],
@@ -336,7 +331,7 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     await waitFor(() => {
-      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: ["p6"],
           plannedHires: [],
@@ -399,7 +394,7 @@ describe("the Drafts page", () => {
       ),
     ).toBeDefined();
     expect(within(dialog).getByText("the column Guild")).toBeDefined();
-    expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([]);
+    expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([]);
   });
 
   it("names the drafts of other areas that rejecting would take with it", async () => {
@@ -516,7 +511,7 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     await waitFor(() => {
-      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: [],
           plannedHires: [],
@@ -869,7 +864,7 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     await waitFor(() => {
-      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         expect.objectContaining({
           records: [
             { type: "release", id: fictionalRelease().id },
@@ -1024,7 +1019,7 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     expect(await screen.findByText("Approved 2 drafts.")).toBeDefined();
-    expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+    expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
       {
         people: ["p1", "p2"],
         plannedHires: [],
@@ -1109,7 +1104,7 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     expect(await screen.findByText("Approved 1 draft.")).toBeDefined();
-    expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+    expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
       {
         people: [],
         plannedHires: ["h1"],
@@ -1211,7 +1206,7 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     await waitFor(() => {
-      expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+      expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
         {
           people: ["p1"],
           plannedHires: [],
@@ -1251,7 +1246,7 @@ describe("the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Reject" }),
     );
     expect(await screen.findByText("Rejected 1 draft.")).toBeDefined();
-    expect(bodiesOf(fetch, "/api/drafts/rejection")).toEqual([
+    expect(bodyOf(fetch, "POST", "/api/drafts/rejection")).toEqual([
       {
         people: ["p3"],
         plannedHires: [],
@@ -1706,7 +1701,7 @@ describe("drafts of feature teams on the Drafts page", () => {
       within(dialog).getByRole("button", { name: "Approve" }),
     );
     expect(await screen.findByText("Approved 1 draft.")).toBeDefined();
-    expect(bodiesOf(fetch, "/api/drafts/approval")).toEqual([
+    expect(bodyOf(fetch, "POST", "/api/drafts/approval")).toEqual([
       expect.objectContaining({ featureTeams: [t1], people: [] }),
     ]);
   });
